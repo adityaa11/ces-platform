@@ -4,6 +4,12 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { extname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { canonicalJson, compilePolicyManifest } from "@company/ces-policy-engine";
+import { PolicyManifestSchema } from "@company/ces-policy-manifest";
+import {
+  compileImplementationArtifacts,
+  type ImplementationCompilationResult,
+} from "@company/ces-implementation-compiler";
+import type { AdapterDefinition } from "@company/ces-adapter-sdk";
 import {
   parseProjectText,
   splitProjectContext,
@@ -24,16 +30,20 @@ Usage:
   ces validate-requirement --input <file> [--output <file>]
   ces validate-project --input <file> [--output <file>]
   ces resolve-policy --requirement <file> --project <file> --output <file>
+  ces compile-adapter --policy-manifest <file> --project <file> --adapter <id> --output <directory> [--test-mode true]
+  ces compile --requirement <file> --project <file> --adapter <id> --output <directory> [--test-mode true]
   ces help
 
 Inputs may be JSON (.json) or YAML (.yaml/.yml). Validation output is normalized JSON.
 resolve-policy writes a stack-agnostic Policy Manifest and never loads an adapter.
+compile-adapter and compile support laravel, test-fixture, and explicit gap fixtures.
 
 Exit codes:
   0  success
   2  input, argument, or schema error
   3  blocked obligation (diagnostic manifest is written)
   4  registry or policy conflict (diagnostic manifest is written)
+  5  adapter gap (adapter-report.json is written; no partial adapter artifacts)
 `;
 
 export async function runCli(
@@ -86,6 +96,52 @@ export async function runCli(
       return result.exit_code;
     }
 
+    if (command === "compile-adapter") {
+      const manifestPath = requireOption(options, "policy-manifest");
+      const projectPath = requireOption(options, "project");
+      const adapterId = requireOption(options, "adapter");
+      const outputDirectory = requireOption(options, "output");
+      const manifest = await parseJsonFile(manifestPath, PolicyManifestSchema.parse);
+      const project = await parseFile(projectPath, parseProjectText);
+      const { technical } = splitProjectContext(project);
+      const adapter = await loadAdapter(adapterId, options["test-mode"] === "true");
+      const result = compileImplementationArtifacts({ manifest, technical, adapter });
+      await writeCompilationResult(outputDirectory, result);
+      return result.exit_code;
+    }
+
+    if (command === "compile") {
+      const requirementPath = requireOption(options, "requirement");
+      const projectPath = requireOption(options, "project");
+      const adapterId = requireOption(options, "adapter");
+      const outputDirectory = requireOption(options, "output");
+      const requirement = await parseFile(requirementPath, parseRequirementText);
+      const project = await parseFile(projectPath, parseProjectText);
+      const { assurance, technical, ces } = splitProjectContext(project);
+      const policy = compilePolicyManifest({
+        requirement,
+        assurance,
+        ces_baseline_version: ces.baseline_version,
+      });
+      await writeOutput(
+        resolve(outputDirectory, "requirement-package.json"),
+        canonicalJson(requirement),
+      );
+      await writeOutput(
+        resolve(outputDirectory, "policy-manifest.json"),
+        canonicalJson(policy.manifest),
+      );
+      if (policy.exit_code !== 0) return policy.exit_code;
+      const adapter = await loadAdapter(adapterId, options["test-mode"] === "true");
+      const result = compileImplementationArtifacts({
+        manifest: policy.manifest,
+        technical,
+        adapter,
+      });
+      await writeCompilationResult(outputDirectory, result);
+      return result.exit_code;
+    }
+
     throw new CliInputError(`Unknown command: ${command}`);
   } catch (error) {
     io.stderr(`${formatError(error)}\n`);
@@ -135,6 +191,62 @@ async function parseFile<T>(
   } catch (error) {
     throw new CliInputError(`${path}: ${formatError(error)}`);
   }
+}
+
+async function parseJsonFile<T>(
+  path: string,
+  parser: (value: unknown) => T,
+): Promise<T> {
+  try {
+    return parser(JSON.parse(await readFile(path, "utf8")));
+  } catch (error) {
+    throw new CliInputError(`${path}: ${formatError(error)}`);
+  }
+}
+
+async function loadAdapter(id: string, testMode: boolean): Promise<AdapterDefinition> {
+  if (id === "laravel" || id === "laravel-gap-fixture") {
+    const { laravelAdapterRegistry } = await import("@company/ces-laravel-adapter");
+    return laravelAdapterRegistry.get(id, "0.1.0");
+  }
+  if (id === "test-fixture" || id === "test-fixture-with-gap") {
+    const { testFixtureAdapterRegistry } = await import(
+      "@company/ces-test-fixture-adapter"
+    );
+    return testFixtureAdapterRegistry.get(id, "0.1.0", { test_mode: testMode });
+  }
+  throw new CliInputError(`Unknown adapter: ${id}`);
+}
+
+async function writeCompilationResult(
+  outputDirectory: string,
+  result: ImplementationCompilationResult,
+): Promise<void> {
+  if (!result.ok) {
+    if (result.kind === "adapter_gap") {
+      await writeOutput(
+        resolve(outputDirectory, "adapter-report.json"),
+        canonicalJson(result.report),
+      );
+    }
+    return;
+  }
+  await writeOutput(
+    resolve(outputDirectory, "implementation-plan.json"),
+    canonicalJson(result.artifacts.implementation_plan),
+  );
+  await writeOutput(
+    resolve(outputDirectory, "implementation-task.md"),
+    result.artifacts.implementation_task,
+  );
+  await writeOutput(
+    resolve(outputDirectory, "test-manifest.json"),
+    canonicalJson(result.artifacts.test_manifest),
+  );
+  await writeOutput(
+    resolve(outputDirectory, "verification-manifest.json"),
+    canonicalJson(result.artifacts.verification_manifest),
+  );
 }
 
 function formatError(error: unknown): string {

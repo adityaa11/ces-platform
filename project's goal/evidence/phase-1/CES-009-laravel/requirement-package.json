@@ -1,0 +1,48 @@
+{
+  "actor": {
+    "type": "authenticated_user"
+  },
+  "asserted_capabilities": [],
+  "business_rules": [
+    {
+      "id": "BR-USER-031",
+      "statement": "A user may replace only their own profile picture.",
+      "type": "authorization"
+    },
+    {
+      "id": "BR-USER-033",
+      "statement": "Delete the old image after commit using retry-safe cleanup.",
+      "type": "lifecycle"
+    }
+  ],
+  "effects": [
+    "persistent_write",
+    "replaces_existing_resource"
+  ],
+  "inputs": [
+    {
+      "constraints": {
+        "allowed_media_types": [
+          "image/jpeg",
+          "image/png"
+        ],
+        "maximum_size_bytes": 5242880
+      },
+      "media_category": "image",
+      "name": "profile_picture",
+      "type": "binary_file"
+    }
+  ],
+  "operation": {
+    "action": "replace",
+    "resource": "profile_picture",
+    "target_scope": "own_resource"
+  },
+  "outputs": [],
+  "requirement": {
+    "id": "REQ-USER-014",
+    "title": "Replace profile picture"
+  },
+  "schema_version": "1.0.0",
+  "uncertainties": []
+}

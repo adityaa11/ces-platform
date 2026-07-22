@@ -1,0 +1,18 @@
+schema_version: 1.0.0
+project:
+  id: ces-evidence
+  name: CES Evidence Project
+assurance:
+  exposure: public_internet
+  criticality: business_critical
+  data_classes: [personal]
+technical:
+  language: php
+  framework: laravel
+  framework_version: "12"
+  test_framework: phpunit
+ces:
+  baseline_version: 0.1.0
+  adapter:
+    id: laravel
+    version: 0.1.0

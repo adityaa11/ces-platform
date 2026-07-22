@@ -9,9 +9,14 @@
   "exports": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "dependencies": {
+    "@company/ces-adapter-sdk": "workspace:*",
+    "@company/ces-implementation-compiler": "workspace:*",
+    "@company/ces-laravel-adapter": "workspace:*",
     "@company/ces-policy-engine": "workspace:*",
+    "@company/ces-policy-manifest": "workspace:*",
     "@company/ces-project-schema": "workspace:*",
     "@company/ces-requirement-schema": "workspace:*",
+    "@company/ces-test-fixture-adapter": "workspace:*",
     "zod": "4.4.3"
   },
   "devDependencies": {

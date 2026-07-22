@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -111,5 +111,59 @@ describe("core CLI", () => {
     await writeFile(projectPath, projectYaml);
     expect(await runCli(["resolve-policy", "--requirement", requirementPath, "--project", projectPath, "--output", outputPath], capture().io)).toBe(4);
     expect(JSON.parse(await readFile(outputPath, "utf8")).obligations).toContainEqual(expect.objectContaining({ policy_id: "FILE_SIZE_LIMIT", resolution_state: "conflict" }));
+  });
+
+  it("orchestrates deterministic two-stage compilation", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "ces-cli-"));
+    const requirementPath = join(directory, "requirement.json");
+    const projectPath = join(directory, "project.yaml");
+    const first = join(directory, "first");
+    const second = join(directory, "second");
+    await writeFile(requirementPath, JSON.stringify(requirement));
+    await writeFile(projectPath, projectYaml);
+    const args = ["compile", "--requirement", requirementPath, "--project", projectPath, "--adapter", "test-fixture", "--output"];
+    expect(await runCli([...args, first, "--test-mode", "true"], capture().io)).toBe(0);
+    expect(await runCli([...args, second, "--test-mode", "true"], capture().io)).toBe(0);
+    const expectedFiles = [
+      "implementation-plan.json",
+      "implementation-task.md",
+      "policy-manifest.json",
+      "requirement-package.json",
+      "test-manifest.json",
+      "verification-manifest.json",
+    ];
+    expect((await readdir(first)).sort()).toEqual(expectedFiles);
+    for (const file of expectedFiles) {
+      expect(await readFile(join(first, file), "utf8")).toBe(
+        await readFile(join(second, file), "utf8"),
+      );
+    }
+  });
+
+  it("writes only core diagnostics when compile is blocked", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "ces-cli-"));
+    const requirementPath = join(directory, "requirement.json");
+    const projectPath = join(directory, "project.yaml");
+    const outputPath = join(directory, "output");
+    await writeFile(requirementPath, JSON.stringify({ ...requirement, business_rules: [] }));
+    await writeFile(projectPath, projectYaml);
+    expect(await runCli(["compile", "--requirement", requirementPath, "--project", projectPath, "--adapter", "missing-adapter", "--output", outputPath], capture().io)).toBe(3);
+    expect((await readdir(outputPath)).sort()).toEqual([
+      "policy-manifest.json",
+      "requirement-package.json",
+    ]);
+  });
+
+  it("writes only adapter-report.json when adapter compilation finds gaps", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "ces-cli-"));
+    const requirementPath = join(directory, "requirement.json");
+    const projectPath = join(directory, "project.yaml");
+    const manifestPath = join(directory, "policy-manifest.json");
+    const outputPath = join(directory, "output");
+    await writeFile(requirementPath, JSON.stringify(requirement));
+    await writeFile(projectPath, projectYaml);
+    expect(await runCli(["resolve-policy", "--requirement", requirementPath, "--project", projectPath, "--output", manifestPath], capture().io)).toBe(0);
+    expect(await runCli(["compile-adapter", "--policy-manifest", manifestPath, "--project", projectPath, "--adapter", "test-fixture-with-gap", "--output", outputPath, "--test-mode", "true"], capture().io)).toBe(5);
+    expect(await readdir(outputPath)).toEqual(["adapter-report.json"]);
   });
 });

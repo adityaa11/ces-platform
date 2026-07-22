@@ -44,15 +44,30 @@ importers:
 
   apps/cli:
     dependencies:
+      '@company/ces-adapter-sdk':
+        specifier: workspace:*
+        version: link:../../packages/adapter-sdk
+      '@company/ces-implementation-compiler':
+        specifier: workspace:*
+        version: link:../../packages/implementation-compiler
+      '@company/ces-laravel-adapter':
+        specifier: workspace:*
+        version: link:../../adapters/laravel
       '@company/ces-policy-engine':
         specifier: workspace:*
         version: link:../../packages/policy-engine
+      '@company/ces-policy-manifest':
+        specifier: workspace:*
+        version: link:../../packages/policy-manifest
       '@company/ces-project-schema':
         specifier: workspace:*
         version: link:../../packages/project-schema
       '@company/ces-requirement-schema':
         specifier: workspace:*
         version: link:../../packages/requirement-schema
+      '@company/ces-test-fixture-adapter':
+        specifier: workspace:*
+        version: link:../../adapters/test-fixture
       zod:
         specifier: 4.4.3
         version: 4.4.3
@@ -99,6 +114,18 @@ importers:
       zod:
         specifier: 4.4.3
         version: 4.4.3
+
+  packages/implementation-compiler:
+    dependencies:
+      '@company/ces-adapter-sdk':
+        specifier: workspace:*
+        version: link:../adapter-sdk
+      '@company/ces-policy-manifest':
+        specifier: workspace:*
+        version: link:../policy-manifest
+      '@company/ces-project-schema':
+        specifier: workspace:*
+        version: link:../project-schema
 
   packages/policy-engine:
     dependencies:

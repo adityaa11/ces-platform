@@ -1,0 +1,19 @@
+{
+  "adapter": {
+    "id": "laravel-gap-fixture",
+    "mapping_version": "0.1.0",
+    "version": "0.1.0"
+  },
+  "gaps": [
+    {
+      "adapter_id": "laravel-gap-fixture",
+      "adapter_version": "0.1.0",
+      "policy_id": "REPLACED_RESOURCE_LIFECYCLE",
+      "reason": "The selected adapter version has no mapping for this policy",
+      "status": "unsupported"
+    }
+  ],
+  "schema_version": "1.0.0",
+  "source_compilation_id": "sha256:c39bf3df838631b6cd3a645af16d29e514ee86bf6b1c94e793d4d74c14cd082d",
+  "status": "gaps_found"
+}
