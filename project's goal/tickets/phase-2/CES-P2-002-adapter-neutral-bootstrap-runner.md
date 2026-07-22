@@ -2,7 +2,7 @@
 
 **Phase:** 2 — Thin Adapter-Neutral Integration Layer  
 **Parent:** None  
-**Status:** Implemented
+**Status:** Implemented and hardened locally; hosted CI pending
 
 **Evidence:** [`packages/bootstrap-runner`](../../../packages/bootstrap-runner/),
 [`scripts/run-ces.mjs`](../../../scripts/run-ces.mjs), and

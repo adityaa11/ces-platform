@@ -13,4 +13,6 @@ node examples/phase-2-client/scripts/run-ces.mjs
 ```
 
 The clean-run guarantee requires network access and the exact Node.js and pnpm
-versions declared by the pinned CES checkout.
+versions declared by the pinned CES checkout. Every run uses an isolated
+OS-temporary checkout; `.ces-runtime/` contains only local coordination state
+such as publication locks and is safe to delete when no runner is active.

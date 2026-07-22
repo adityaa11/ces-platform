@@ -130,15 +130,21 @@ async function clientWorkspace(): Promise<string> {
 }
 
 function integrationDependencies(workspace: string, calls: string[][] = []): RunnerDependencies {
+  void workspace;
   return {
     nodeVersion: "24.12.0",
     execute: async (command, args) => {
       calls.push([command, ...args]);
-      const checkout = join(workspace, ".ces-runtime", "checkout");
-      if (command === "git" && args[0] === "clone") {
+      const cloneIndex = args.indexOf("clone");
+      if (command === "git" && cloneIndex >= 0) {
+        const checkout = args.at(-1)!;
         await mkdir(join(checkout, ".git"), { recursive: true });
+        await mkdir(join(checkout, "apps", "cli", "src"), { recursive: true });
+        await mkdir(join(checkout, "apps", "cli", "dist"), { recursive: true });
         await writeFile(join(checkout, "package.json"), JSON.stringify({ packageManager: "pnpm@11.15.1", engines: { node: "24.12.0", pnpm: "11.15.1" } }), "utf8");
         await writeFile(join(checkout, ".node-version"), "24.12.0\n", "utf8");
+        await writeFile(join(checkout, "apps", "cli", "src", "index.ts"), "", "utf8");
+        await writeFile(join(checkout, "apps", "cli", "dist", "index.js"), "", "utf8");
         return processResult(0);
       }
       if (command === "git" && args.includes("get-url")) return processResult(0, "https://github.com/adityaa11/ces-platform.git\n");
