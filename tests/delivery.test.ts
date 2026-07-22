@@ -1,4 +1,7 @@
-import { readFileSync, readdirSync } from "node:fs";
+import { mkdtempSync, readFileSync, readdirSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { spawnSync } from "node:child_process";
 import { compilePolicyManifest } from "../packages/policy-engine/src/index.js";
 import { parseProjectText, splitProjectContext } from "../packages/project-schema/src/index.js";
 import { parseRequirementText } from "../packages/requirement-schema/src/index.js";
@@ -61,6 +64,31 @@ describe("Phase 1 delivery", () => {
     expect(workflow).not.toContain("workflow_call");
     expect(workflow).toContain("corepack pnpm check");
     expect(workflow).toContain("docker build -t ces-cli:local .");
+    expect(workflow).toContain("Mounted project-pinned compilation");
+    for (const artifact of [
+      "core/requirement-package.json",
+      "core/policy-manifest.json",
+      "adapters/laravel/implementation-plan.json",
+      "adapters/laravel/implementation-task.md",
+      "adapters/laravel/test-manifest.json",
+      "adapters/laravel/verification-manifest.json",
+    ]) {
+      expect(workflow).toContain(artifact);
+    }
+    expect(workflow).toContain("test -w");
+    expect(workflow).toContain("source_compilation_id");
+    expect(workflow).toContain("/app|/workspace");
+  });
+
+  it("fails mounted-output validation when any required artifact is missing", () => {
+    const emptyOutput = mkdtempSync(join(tmpdir(), "ces-mounted-missing-"));
+    const result = spawnSync(
+      process.execPath,
+      ["scripts/validate-mounted-output.mjs", emptyOutput],
+      { encoding: "utf8" },
+    );
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Mounted output validation failed");
   });
 
   it("documents deferred scope without implementing it", () => {

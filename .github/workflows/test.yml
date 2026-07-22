@@ -21,3 +21,17 @@ jobs:
       - run: corepack pnpm check
       - run: docker build -t ces-cli:local .
       - run: docker run --rm ces-cli:local --help
+      - name: Mounted project-pinned compilation
+        run: |
+          mkdir -p .ces/ci-mounted
+          docker run --rm --user "$(id -u):$(id -g)" -v "$PWD:/workspace" ces-cli:local compile --requirement /workspace/examples/profile-picture.requirement.yaml --project /workspace/examples/laravel-project.yaml --output /workspace/.ces/ci-mounted
+          node scripts/validate-mounted-output.mjs .ces/ci-mounted
+          test -w .ces/ci-mounted/core/requirement-package.json
+          test -w .ces/ci-mounted/core/policy-manifest.json
+          test -w .ces/ci-mounted/adapters/laravel/implementation-plan.json
+          test -w .ces/ci-mounted/adapters/laravel/implementation-task.md
+          test -w .ces/ci-mounted/adapters/laravel/test-manifest.json
+          test -w .ces/ci-mounted/adapters/laravel/verification-manifest.json
+          test "$(jq -r .compilation_id .ces/ci-mounted/core/policy-manifest.json)" = "$(jq -r .source_compilation_id .ces/ci-mounted/adapters/laravel/implementation-plan.json)"
+          test "$(jq -r '.adapter.id + "@" + .adapter.version' .ces/ci-mounted/adapters/laravel/implementation-plan.json)" = "laravel@0.1.0"
+          if grep -R -E '/app|/workspace' .ces/ci-mounted; then exit 1; fi

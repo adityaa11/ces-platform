@@ -1,0 +1,31 @@
+IMAGE BUILD
+command: docker build -t ces-cli:local .
+exit: 0
+result: Node 24.12.0 image built; frozen pnpm install and all workspace builds passed.
+
+MOUNTED COMPILE
+command: docker run --rm --mount type=bind,source=<repository>,target=/workspace ces-cli:local compile --requirement /workspace/examples/profile-picture.requirement.yaml --project /workspace/examples/laravel-project.yaml --output "/workspace/project's goal/evidence/phase-1/CES-017-mounted"
+exit: 0
+adapter argument: none; project pin selected laravel@0.1.0
+
+VALIDATION
+command: node scripts/validate-mounted-output.mjs "project's goal/evidence/phase-1/CES-017-mounted"
+exit: 0
+output: Validated 6 writable mounted artifacts.
+
+artifact listing:
+adapters/laravel/implementation-plan.json | bytes=3728 | readOnly=False
+adapters/laravel/implementation-task.md | bytes=2118 | readOnly=False
+adapters/laravel/test-manifest.json | bytes=3624 | readOnly=False
+adapters/laravel/verification-manifest.json | bytes=3708 | readOnly=False
+core/policy-manifest.json | bytes=10716 | readOnly=False
+core/requirement-package.json | bytes=1075 | readOnly=False
+
+policy.compilation_id=sha256:97032de6542b7f0beac0b3dd8a7ef6979cb39ebf26d215c67f45d1e53d49bc12
+plan.source_compilation_id=sha256:97032de6542b7f0beac0b3dd8a7ef6979cb39ebf26d215c67f45d1e53d49bc12
+container-only path matches: none
+
+NEGATIVE CI CONTRACT
+The repository test invokes the same mounted-output validator against an empty directory.
+exit: 1
+diagnostic: Mounted output validation failed

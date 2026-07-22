@@ -2,7 +2,7 @@
 
 **Phase:** 1 — Deterministic Core and Reference Adapter
 **Parent:** [CES-000](CES-000-parent-mvp.md)
-**Status:** Planned
+**Status:** Done
 
 ## Goal
 
@@ -23,17 +23,17 @@ Finalize the independent Stage A output contract and prove the project-pinned tw
 
 ## Acceptance criteria
 
-- [ ] Independent core resolution always writes both normalized core artifacts before exit.
-- [ ] YAML and JSON inputs generate byte-identical normalized Stage A output.
-- [ ] Mounted Docker compilation requires no separate adapter argument.
-- [ ] The mounted output follows the final `core/` and `adapters/<id>/` layout.
-- [ ] Expected files are host-writable and contain no container-only absolute paths.
+- [x] Independent core resolution always writes both normalized core artifacts before exit.
+- [x] YAML and JSON inputs generate byte-identical normalized Stage A output.
+- [x] Mounted Docker compilation requires no separate adapter argument.
+- [x] The mounted output follows the final `core/` and `adapters/<id>/` layout.
+- [x] Expected files are host-writable and contain no container-only absolute paths.
 
 ## Required evidence
 
-- [ ] Attach successful, blocked, and conflicting Stage A directories with exit codes.
-- [ ] Attach mounted Docker command output and complete artifact listing.
-- [ ] Attach repository CI output proving the mounted smoke test fails on any missing artifact.
+- [x] Attach successful, blocked, and conflicting Stage A directories with exit codes.
+- [x] Attach mounted Docker command output and complete artifact listing.
+- [x] Attach repository CI output proving the mounted smoke test fails on any missing artifact.
 
 ## Note
 

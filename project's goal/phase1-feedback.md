@@ -1,5 +1,7 @@
 # CES Phase 1 Final Hardening Feedback
 
+**Final disposition (2026-07-22):** CES-013 through CES-017 are complete with reproducible evidence. All accepted hardening priorities are closed, the full repository check and mounted Docker contract pass, and Phase 1 is now **Done**.
+
 ## Repository review disposition — 2026-07-22
 
 **Accepted with current-state corrections.** Priorities 1–5 describe verified implementation gaps and are approved as Phase 1 hardening work. They do not require a core redesign.

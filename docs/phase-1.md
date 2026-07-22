@@ -45,7 +45,7 @@ Compile the successful Laravel example:
 node apps/cli/dist/index.js compile \
   --requirement examples/profile-picture.requirement.yaml \
   --project examples/laravel-project.yaml \
-  --output .ces/generated/REQ-USER-014/laravel
+  --output .ces/generated/REQ-USER-014
 ```
 
 Compile the same Policy Manifest with the contract fixture:
@@ -56,7 +56,7 @@ node apps/cli/dist/index.js compile \
   --project examples/laravel-project.yaml \
   --override-adapter test-fixture@0.1.0 \
   --test-mode true \
-  --output .ces/generated/REQ-USER-014/fixture
+  --output .ces/generated/REQ-USER-014
 ```
 
 The blocked example stops after core resolution, writes its diagnostic Policy Manifest, emits no adapter files, and exits 3:
@@ -65,14 +65,14 @@ The blocked example stops after core resolution, writes its diagnostic Policy Ma
 node apps/cli/dist/index.js compile \
   --requirement examples/profile-picture.blocked.yaml \
   --project examples/laravel-project.yaml \
-  --output .ces/generated/REQ-USER-014/blocked
+  --output .ces/generated/REQ-USER-014-blocked
 ```
 
 Verify an implementation project after adding `.ces/verification.json` and real evidence files:
 
 ```sh
 node apps/cli/dist/index.js verify \
-  --manifest .ces/generated/REQ-USER-014/laravel/verification-manifest.json \
+  --manifest .ces/generated/REQ-USER-014/adapters/laravel/verification-manifest.json \
   --project-root /path/to/client-project
 ```
 
@@ -93,8 +93,21 @@ docker run --rm \
   ces-cli:local compile \
   --requirement /workspace/examples/profile-picture.requirement.yaml \
   --project /workspace/examples/laravel-project.yaml \
-  --output /workspace/.ces/generated/REQ-USER-014/laravel
+  --output /workspace/.ces/generated/REQ-USER-014
 ```
+
+Combined compilation always uses this deterministic layout:
+
+```text
+<output>/core/requirement-package.json
+<output>/core/policy-manifest.json
+<output>/adapters/<configured-id>/implementation-plan.json
+<output>/adapters/<configured-id>/implementation-task.md
+<output>/adapters/<configured-id>/test-manifest.json
+<output>/adapters/<configured-id>/verification-manifest.json
+```
+
+`resolve-policy --output <directory>` is the independent Stage A workflow. It writes `requirement-package.json` and `policy-manifest.json` directly inside that directory before returning success (0), blocked (3), or conflict (4).
 
 ## Exit codes
 

@@ -37,7 +37,7 @@ const HELP = `CES core CLI
 Usage:
   ces validate-requirement --input <file> [--output <file>]
   ces validate-project --input <file> [--output <file>]
-  ces resolve-policy --requirement <file> --project <file> --output <file>
+  ces resolve-policy --requirement <file> --project <file> --output <directory>
   ces compile-adapter --policy-manifest <file> --project <file> --output <directory> [--override-adapter <id>@<version>] [--test-mode true]
   ces compile --requirement <file> --project <file> --output <directory> [--override-adapter <id>@<version>] [--test-mode true]
   ces verify --manifest <verification-manifest.json> --project-root <directory>
@@ -92,7 +92,7 @@ export async function runCli(
     if (command === "resolve-policy") {
       const requirementPath = requireOption(options, "requirement");
       const projectPath = requireOption(options, "project");
-      const outputPath = requireOption(options, "output");
+      const outputDirectory = requireOption(options, "output");
       const requirement = await parseFile(requirementPath, parseRequirementText);
       const project = await parseFile(projectPath, parseProjectText);
       const { assurance, ces } = splitProjectContext(project);
@@ -101,8 +101,15 @@ export async function runCli(
         assurance,
         ces_baseline_version: ces.baseline_version,
       });
-      await writeOutput(outputPath, canonicalJson(result.manifest));
-      io.stdout(`Policy Manifest written to ${outputPath}\n`);
+      await writeOutput(
+        resolve(outputDirectory, "requirement-package.json"),
+        canonicalJson(requirement),
+      );
+      await writeOutput(
+        resolve(outputDirectory, "policy-manifest.json"),
+        canonicalJson(result.manifest),
+      );
+      io.stdout(`Core artifacts written to ${outputDirectory}\n`);
       return result.exit_code;
     }
 
@@ -133,12 +140,13 @@ export async function runCli(
         assurance,
         ces_baseline_version: ces.baseline_version,
       });
+      const coreDirectory = resolve(outputDirectory, "core");
       await writeOutput(
-        resolve(outputDirectory, "requirement-package.json"),
+        resolve(coreDirectory, "requirement-package.json"),
         canonicalJson(requirement),
       );
       await writeOutput(
-        resolve(outputDirectory, "policy-manifest.json"),
+        resolve(coreDirectory, "policy-manifest.json"),
         canonicalJson(policy.manifest),
       );
       if (policy.exit_code !== 0) return policy.exit_code;
@@ -149,7 +157,10 @@ export async function runCli(
         technical,
         adapter,
       });
-      await writeCompilationResult(outputDirectory, result);
+      await writeCompilationResult(
+        resolve(outputDirectory, "adapters", selection.id),
+        result,
+      );
       return result.exit_code;
     }
 
@@ -161,7 +172,7 @@ export async function runCli(
         VerificationManifestSchema.parse,
       );
       const policyManifest = await parseJsonFile(
-        resolve(manifestPath, "..", "policy-manifest.json"),
+        resolve(manifestPath, "..", "..", "..", "core", "policy-manifest.json"),
         PolicyManifestSchema.parse,
       );
       const configuration = await readVerificationConfiguration(projectRoot);

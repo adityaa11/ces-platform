@@ -32,6 +32,21 @@ ces:
     version: 0.1.0
 `;
 
+const project = {
+  schema_version: "1.0.0",
+  project: { id: "sample", name: "Sample" },
+  assurance: {
+    exposure: "public_internet",
+    criticality: "business_critical",
+    data_classes: ["personal"],
+  },
+  technical: { language: "php", framework: "laravel" },
+  ces: {
+    baseline_version: "0.1.0",
+    adapter: { id: "test-fixture", version: "0.1.0" },
+  },
+};
+
 function capture() {
   const stdout: string[] = [];
   const stderr: string[] = [];
@@ -80,11 +95,33 @@ describe("core CLI", () => {
     const directory = await mkdtemp(join(tmpdir(), "ces-cli-"));
     const requirementPath = join(directory, "requirement.json");
     const projectPath = join(directory, "project.yaml");
-    const outputPath = join(directory, "generated", "policy-manifest.json");
+    const outputPath = join(directory, "generated");
     await writeFile(requirementPath, JSON.stringify(requirement));
     await writeFile(projectPath, projectYaml);
     expect(await runCli(["resolve-policy", "--requirement", requirementPath, "--project", projectPath, "--output", outputPath], capture().io)).toBe(0);
-    expect(JSON.parse(await readFile(outputPath, "utf8"))).toMatchObject({ requirement_id: "REQ-1", policy_registry_hash: expect.stringMatching(/^sha256:/u) });
+    expect((await readdir(outputPath)).sort()).toEqual(["policy-manifest.json", "requirement-package.json"]);
+    expect(JSON.parse(await readFile(join(outputPath, "policy-manifest.json"), "utf8"))).toMatchObject({ requirement_id: "REQ-1", policy_registry_hash: expect.stringMatching(/^sha256:/u) });
+  });
+
+  it("writes byte-identical Stage A directories for YAML and JSON inputs", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "ces-cli-"));
+    const requirementJson = join(directory, "requirement.json");
+    const requirementYaml = join(directory, "requirement.yaml");
+    const projectJson = join(directory, "project.json");
+    const projectYamlPath = join(directory, "project.yaml");
+    await writeFile(requirementJson, JSON.stringify(requirement));
+    await writeFile(requirementYaml, `schema_version: 1.0.0\nrequirement:\n  id: REQ-1\n  title: Replace profile picture\nactor:\n  type: authenticated_user\noperation:\n  action: replace\n  resource: profile_picture\n  target_scope: own_resource\ninputs:\n  - name: picture\n    type: binary_file\n    trust_boundary: external\n    media_category: image\n    constraints:\n      allowed_media_types: [image/png]\n      maximum_size_bytes: 1024\neffects: [persistent_write, replaces_existing_resource]\nbusiness_rules:\n  - id: BR-1\n    type: lifecycle\n    statement: Delete replaced resource after commit\n`);
+    await writeFile(projectJson, JSON.stringify(project));
+    await writeFile(projectYamlPath, projectYaml);
+    const jsonOutput = join(directory, "json");
+    const yamlOutput = join(directory, "yaml");
+    expect(await runCli(["resolve-policy", "--requirement", requirementJson, "--project", projectJson, "--output", jsonOutput], capture().io)).toBe(0);
+    expect(await runCli(["resolve-policy", "--requirement", requirementYaml, "--project", projectYamlPath, "--output", yamlOutput], capture().io)).toBe(0);
+    for (const file of ["requirement-package.json", "policy-manifest.json"]) {
+      expect(await readFile(join(yamlOutput, file), "utf8")).toBe(
+        await readFile(join(jsonOutput, file), "utf8"),
+      );
+    }
   });
 
   it("reports the file failure without a stack trace", async () => {
@@ -110,18 +147,19 @@ describe("core CLI", () => {
     const directory = await mkdtemp(join(tmpdir(), "ces-cli-"));
     const requirementPath = join(directory, "requirement.json");
     const projectPath = join(directory, "project.yaml");
-    const outputPath = join(directory, "policy-manifest.json");
+    const outputPath = join(directory, "core");
     await writeFile(requirementPath, JSON.stringify({ ...requirement, business_rules: [] }));
     await writeFile(projectPath, projectYaml);
     expect(await runCli(["resolve-policy", "--requirement", requirementPath, "--project", projectPath, "--output", outputPath], capture().io)).toBe(3);
-    expect(JSON.parse(await readFile(outputPath, "utf8")).obligations).toContainEqual(expect.objectContaining({ policy_id: "REPLACED_RESOURCE_LIFECYCLE", resolution_state: "blocked" }));
+    expect((await readdir(outputPath)).sort()).toEqual(["policy-manifest.json", "requirement-package.json"]);
+    expect(JSON.parse(await readFile(join(outputPath, "policy-manifest.json"), "utf8")).obligations).toContainEqual(expect.objectContaining({ policy_id: "REPLACED_RESOURCE_LIFECYCLE", resolution_state: "blocked" }));
   });
 
   it("writes a conflict diagnostic manifest before returning 4", async () => {
     const directory = await mkdtemp(join(tmpdir(), "ces-cli-"));
     const requirementPath = join(directory, "requirement.json");
     const projectPath = join(directory, "project.yaml");
-    const outputPath = join(directory, "policy-manifest.json");
+    const outputPath = join(directory, "core");
     const secondInput = {
       ...requirement.inputs[0],
       name: "second_picture",
@@ -130,7 +168,8 @@ describe("core CLI", () => {
     await writeFile(requirementPath, JSON.stringify({ ...requirement, inputs: [...requirement.inputs, secondInput] }));
     await writeFile(projectPath, projectYaml);
     expect(await runCli(["resolve-policy", "--requirement", requirementPath, "--project", projectPath, "--output", outputPath], capture().io)).toBe(4);
-    expect(JSON.parse(await readFile(outputPath, "utf8")).obligations).toContainEqual(expect.objectContaining({ policy_id: "FILE_SIZE_LIMIT", resolution_state: "conflict" }));
+    expect((await readdir(outputPath)).sort()).toEqual(["policy-manifest.json", "requirement-package.json"]);
+    expect(JSON.parse(await readFile(join(outputPath, "policy-manifest.json"), "utf8")).obligations).toContainEqual(expect.objectContaining({ policy_id: "FILE_SIZE_LIMIT", resolution_state: "conflict" }));
   });
 
   it("orchestrates deterministic two-stage compilation", async () => {
@@ -144,18 +183,23 @@ describe("core CLI", () => {
     const args = ["compile", "--requirement", requirementPath, "--project", projectPath, "--output"];
     expect(await runCli([...args, first, "--test-mode", "true"], capture().io)).toBe(0);
     expect(await runCli([...args, second, "--test-mode", "true"], capture().io)).toBe(0);
-    const expectedFiles = [
+    const expectedCoreFiles = ["policy-manifest.json", "requirement-package.json"];
+    const expectedAdapterFiles = [
       "implementation-plan.json",
       "implementation-task.md",
-      "policy-manifest.json",
-      "requirement-package.json",
       "test-manifest.json",
       "verification-manifest.json",
     ];
-    expect((await readdir(first)).sort()).toEqual(expectedFiles);
-    for (const file of expectedFiles) {
-      expect(await readFile(join(first, file), "utf8")).toBe(
-        await readFile(join(second, file), "utf8"),
+    expect((await readdir(join(first, "core"))).sort()).toEqual(expectedCoreFiles);
+    expect((await readdir(join(first, "adapters", "test-fixture"))).sort()).toEqual(expectedAdapterFiles);
+    for (const file of expectedCoreFiles) {
+      expect(await readFile(join(first, "core", file), "utf8")).toBe(
+        await readFile(join(second, "core", file), "utf8"),
+      );
+    }
+    for (const file of expectedAdapterFiles) {
+      expect(await readFile(join(first, "adapters", "test-fixture", file), "utf8")).toBe(
+        await readFile(join(second, "adapters", "test-fixture", file), "utf8"),
       );
     }
   });
@@ -171,7 +215,7 @@ describe("core CLI", () => {
       "compile", "--requirement", requirementPath, "--project", projectPath,
       "--output", outputPath,
     ], capture().io)).toBe(0);
-    expect(JSON.parse(await readFile(join(outputPath, "implementation-plan.json"), "utf8")).adapter)
+    expect(JSON.parse(await readFile(join(outputPath, "adapters", "laravel", "implementation-plan.json"), "utf8")).adapter)
       .toMatchObject({ id: "laravel", version: "0.1.0" });
   });
 
@@ -228,21 +272,23 @@ describe("core CLI", () => {
     await writeFile(requirementPath, JSON.stringify({ ...requirement, business_rules: [] }));
     await writeFile(projectPath, projectYaml);
     expect(await runCli(["compile", "--requirement", requirementPath, "--project", projectPath, "--output", outputPath], capture().io)).toBe(3);
-    expect((await readdir(outputPath)).sort()).toEqual([
+    expect((await readdir(join(outputPath, "core"))).sort()).toEqual([
       "policy-manifest.json",
       "requirement-package.json",
     ]);
+    expect(await readdir(outputPath)).toEqual(["core"]);
   });
 
   it("writes only adapter-report.json when adapter compilation finds gaps", async () => {
     const directory = await mkdtemp(join(tmpdir(), "ces-cli-"));
     const requirementPath = join(directory, "requirement.json");
     const projectPath = join(directory, "project.yaml");
-    const manifestPath = join(directory, "policy-manifest.json");
+    const corePath = join(directory, "core");
+    const manifestPath = join(corePath, "policy-manifest.json");
     const outputPath = join(directory, "output");
     await writeFile(requirementPath, JSON.stringify(requirement));
     await writeFile(projectPath, projectYaml);
-    expect(await runCli(["resolve-policy", "--requirement", requirementPath, "--project", projectPath, "--output", manifestPath], capture().io)).toBe(0);
+    expect(await runCli(["resolve-policy", "--requirement", requirementPath, "--project", projectPath, "--output", corePath], capture().io)).toBe(0);
     expect(await runCli(["compile-adapter", "--policy-manifest", manifestPath, "--project", projectPath, "--override-adapter", "test-fixture-with-gap@0.1.0", "--output", outputPath, "--test-mode", "true"], capture().io)).toBe(5);
     expect(await readdir(outputPath)).toEqual(["adapter-report.json"]);
   });
@@ -262,8 +308,9 @@ describe("core CLI", () => {
       test_commands: [{ id: "CLIENT-TESTS", command: process.execPath, args: ["-e", "process.exit(9)"] }],
     }));
 
-    expect(await runCli(["verify", "--manifest", join(generated, "verification-manifest.json"), "--project-root", projectRoot], capture().io)).toBe(6);
-    expect(JSON.parse(await readFile(join(generated, "verification-report.json"), "utf8"))).toMatchObject({
+    const adapterOutput = join(generated, "adapters", "test-fixture");
+    expect(await runCli(["verify", "--manifest", join(adapterOutput, "verification-manifest.json"), "--project-root", projectRoot], capture().io)).toBe(6);
+    expect(JSON.parse(await readFile(join(adapterOutput, "verification-report.json"), "utf8"))).toMatchObject({
       status: "failed",
       exit_code: 6,
     });

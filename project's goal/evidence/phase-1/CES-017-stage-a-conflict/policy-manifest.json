@@ -1,0 +1,483 @@
+{
+  "capability_registry_hash": "sha256:8c4354e3ea61c464fe8031f1f6a113f9884e534db0fee756e02193a790c38b22",
+  "capability_registry_version": "0.1.0",
+  "ces_baseline_version": "0.1.0",
+  "compilation_id": "sha256:3b2c6bbad8829b7c50f0d6ec830681a779922fcad5db229ac3e3f986a4190dfc",
+  "input_hash": "sha256:bacc97ae94ea60a4ed08fd1429e533c0539ab4b89d083cbdaab4710188daebff",
+  "obligations": [
+    {
+      "business_rule_ids": [],
+      "evidence": [
+        {
+          "path": "effects[1]",
+          "value": "replaces_existing_resource"
+        }
+      ],
+      "missing_inputs": [],
+      "parameters": {},
+      "policy_id": "ATOMIC_RESOURCE_REPLACEMENT",
+      "reasons": [
+        "Trait REPLACEABLE_RESOURCE requires atomic replacement"
+      ],
+      "requirement_level": "mandatory",
+      "resolution_state": "resolved",
+      "source_rule_ids": [
+        "POL-CONSISTENCY-001"
+      ]
+    },
+    {
+      "business_rule_ids": [],
+      "evidence": [
+        {
+          "path": "inputs[0].type",
+          "value": "binary_file"
+        },
+        {
+          "path": "inputs[1].type",
+          "value": "binary_file"
+        }
+      ],
+      "missing_inputs": [],
+      "parameters": {},
+      "policy_id": "FILE_CONTENT_VERIFICATION",
+      "reasons": [
+        "Capability FILE_UPLOAD requires verification of actual file content"
+      ],
+      "requirement_level": "mandatory",
+      "resolution_state": "resolved",
+      "source_rule_ids": [
+        "POL-FILE-002"
+      ]
+    },
+    {
+      "business_rule_ids": [],
+      "evidence": [
+        {
+          "path": "inputs[0].constraints.allowed_media_types[0]",
+          "value": "image/jpeg"
+        },
+        {
+          "path": "inputs[0].constraints.allowed_media_types[1]",
+          "value": "image/png"
+        },
+        {
+          "path": "inputs[0].type",
+          "value": "binary_file"
+        },
+        {
+          "path": "inputs[1].constraints.allowed_media_types[0]",
+          "value": "image/jpeg"
+        },
+        {
+          "path": "inputs[1].constraints.allowed_media_types[1]",
+          "value": "image/png"
+        },
+        {
+          "path": "inputs[1].type",
+          "value": "binary_file"
+        }
+      ],
+      "missing_inputs": [],
+      "parameters": {
+        "allowed_media_types": [
+          "image/jpeg",
+          "image/png"
+        ]
+      },
+      "policy_id": "FILE_MEDIA_TYPE_ALLOWLIST",
+      "reasons": [
+        "Capability FILE_UPLOAD requires an explicit media type allowlist"
+      ],
+      "requirement_level": "mandatory",
+      "resolution_state": "resolved",
+      "source_rule_ids": [
+        "POL-FILE-ALLOWLIST-001"
+      ]
+    },
+    {
+      "business_rule_ids": [],
+      "evidence": [
+        {
+          "path": "inputs[0].constraints.maximum_size_bytes",
+          "value": 5242880
+        },
+        {
+          "path": "inputs[0].type",
+          "value": "binary_file"
+        },
+        {
+          "path": "inputs[1].constraints.maximum_size_bytes",
+          "value": 10485760
+        },
+        {
+          "path": "inputs[1].type",
+          "value": "binary_file"
+        }
+      ],
+      "missing_inputs": [],
+      "parameters": {
+        "maximum_bytes": {
+          "conflict_values": [
+            5242880,
+            10485760
+          ]
+        }
+      },
+      "policy_id": "FILE_SIZE_LIMIT",
+      "reasons": [
+        "Capability FILE_UPLOAD requires an explicit size limit"
+      ],
+      "requirement_level": "mandatory",
+      "resolution_state": "conflict",
+      "source_rule_ids": [
+        "POL-FILE-001"
+      ]
+    },
+    {
+      "business_rule_ids": [],
+      "evidence": [
+        {
+          "path": "inputs[0].constraints.allowed_media_types[0]",
+          "value": "image/jpeg"
+        },
+        {
+          "path": "inputs[0].constraints.allowed_media_types[1]",
+          "value": "image/png"
+        },
+        {
+          "path": "inputs[0].constraints.maximum_size_bytes",
+          "value": 5242880
+        },
+        {
+          "path": "inputs[0].trust_boundary",
+          "value": "external"
+        },
+        {
+          "path": "inputs[0].type",
+          "value": "binary_file"
+        },
+        {
+          "path": "inputs[1].constraints.allowed_media_types[0]",
+          "value": "image/jpeg"
+        },
+        {
+          "path": "inputs[1].constraints.allowed_media_types[1]",
+          "value": "image/png"
+        },
+        {
+          "path": "inputs[1].constraints.maximum_size_bytes",
+          "value": 10485760
+        },
+        {
+          "path": "inputs[1].trust_boundary",
+          "value": "external"
+        },
+        {
+          "path": "inputs[1].type",
+          "value": "binary_file"
+        }
+      ],
+      "missing_inputs": [],
+      "parameters": {},
+      "policy_id": "INPUT_VALIDATION",
+      "reasons": [
+        "Policy FILE_CONTENT_VERIFICATION requires INPUT_VALIDATION",
+        "Policy FILE_MEDIA_TYPE_ALLOWLIST requires INPUT_VALIDATION",
+        "Policy FILE_SIZE_LIMIT requires INPUT_VALIDATION",
+        "Trait EXTERNAL_INPUT requires input validation"
+      ],
+      "requirement_level": "mandatory",
+      "resolution_state": "resolved",
+      "source_rule_ids": [
+        "CLOSURE:FILE_CONTENT_VERIFICATION:INPUT_VALIDATION",
+        "CLOSURE:FILE_MEDIA_TYPE_ALLOWLIST:INPUT_VALIDATION",
+        "CLOSURE:FILE_SIZE_LIMIT:INPUT_VALIDATION",
+        "POL-INPUT-001"
+      ]
+    },
+    {
+      "business_rule_ids": [
+        "BR-USER-033"
+      ],
+      "evidence": [
+        {
+          "path": "business_rules[1].type",
+          "value": "lifecycle"
+        },
+        {
+          "path": "effects[1]",
+          "value": "replaces_existing_resource"
+        }
+      ],
+      "missing_inputs": [],
+      "parameters": {},
+      "policy_id": "REPLACED_RESOURCE_LIFECYCLE",
+      "reasons": [
+        "Trait REPLACEABLE_RESOURCE requires an explicit lifecycle rule"
+      ],
+      "requirement_level": "mandatory",
+      "resolution_state": "resolved",
+      "source_rule_ids": [
+        "POL-LIFECYCLE-001"
+      ]
+    },
+    {
+      "business_rule_ids": [],
+      "evidence": [
+        {
+          "path": "operation.target_scope",
+          "value": "own_resource"
+        }
+      ],
+      "missing_inputs": [],
+      "parameters": {},
+      "policy_id": "RESOURCE_LEVEL_AUTHORIZATION",
+      "reasons": [
+        "Trait USER_OWNED_RESOURCE requires authorization against the target resource"
+      ],
+      "requirement_level": "mandatory",
+      "resolution_state": "resolved",
+      "source_rule_ids": [
+        "POL-AUTH-001"
+      ]
+    },
+    {
+      "business_rule_ids": [],
+      "evidence": [
+        {
+          "path": "exposure",
+          "value": "public_internet"
+        },
+        {
+          "path": "inputs[0].media_category",
+          "value": "image"
+        },
+        {
+          "path": "inputs[1].media_category",
+          "value": "image"
+        }
+      ],
+      "missing_inputs": [],
+      "parameters": {},
+      "policy_id": "SAFE_IMAGE_DELIVERY",
+      "reasons": [
+        "Capability IMAGE_PROCESSING may produce browser-delivered content",
+        "Public internet exposure requires safe image delivery"
+      ],
+      "requirement_level": "mandatory",
+      "resolution_state": "resolved",
+      "source_rule_ids": [
+        "POL-IMAGE-001",
+        "POL-IMAGE-PUBLIC-001"
+      ]
+    },
+    {
+      "business_rule_ids": [],
+      "evidence": [
+        {
+          "path": "inputs[0].trust_boundary",
+          "value": "external"
+        },
+        {
+          "path": "inputs[1].trust_boundary",
+          "value": "external"
+        }
+      ],
+      "missing_inputs": [],
+      "parameters": {},
+      "policy_id": "SAFE_LOGGING",
+      "reasons": [
+        "Trait EXTERNAL_INPUT requires safe logging"
+      ],
+      "requirement_level": "mandatory",
+      "resolution_state": "resolved",
+      "source_rule_ids": [
+        "POL-LOG-001"
+      ]
+    },
+    {
+      "business_rule_ids": [],
+      "evidence": [
+        {
+          "path": "inputs[0].type",
+          "value": "binary_file"
+        },
+        {
+          "path": "inputs[1].type",
+          "value": "binary_file"
+        }
+      ],
+      "missing_inputs": [],
+      "parameters": {},
+      "policy_id": "SERVER_GENERATED_STORAGE_KEY",
+      "reasons": [
+        "Capability FILE_UPLOAD requires a trusted storage key"
+      ],
+      "requirement_level": "mandatory",
+      "resolution_state": "resolved",
+      "source_rule_ids": [
+        "POL-FILE-003"
+      ]
+    }
+  ],
+  "policy_registry_hash": "sha256:0acd4ef0bc110a9df6dd9384fe875eb7cf53d04cb6c13ac931f6981700f80b71",
+  "policy_registry_version": "0.1.0",
+  "requirement_id": "REQ-USER-014-CONFLICT",
+  "resolved_capabilities": [
+    {
+      "evidence": [
+        {
+          "path": "inputs[0].type",
+          "value": "binary_file"
+        },
+        {
+          "path": "inputs[1].type",
+          "value": "binary_file"
+        }
+      ],
+      "id": "FILE_UPLOAD",
+      "reason": "A binary file enters the system",
+      "registry_version": "0.1.0",
+      "rule_id": "CAP-FILE-001",
+      "source": "resolver_rule"
+    },
+    {
+      "evidence": [
+        {
+          "path": "inputs[0].media_category",
+          "value": "image"
+        },
+        {
+          "path": "inputs[1].media_category",
+          "value": "image"
+        }
+      ],
+      "id": "IMAGE_PROCESSING",
+      "reason": "An input is categorized as image media",
+      "registry_version": "0.1.0",
+      "rule_id": "CAP-IMAGE-001",
+      "source": "resolver_rule"
+    },
+    {
+      "evidence": [
+        {
+          "path": "operation.resource",
+          "value": "profile_picture"
+        }
+      ],
+      "id": "PROFILE_MANAGEMENT",
+      "reason": "The operation manages a profile resource",
+      "registry_version": "0.1.0",
+      "rule_id": "CAP-PROFILE-001",
+      "source": "resolver_rule"
+    }
+  ],
+  "resolved_traits": [
+    {
+      "evidence": [
+        {
+          "path": "actor.type",
+          "value": "authenticated_user"
+        }
+      ],
+      "id": "AUTHENTICATED_ACTOR",
+      "reason": "The actor is authenticated",
+      "registry_version": "0.2.0",
+      "rule_id": "TRAIT-AUTH-001",
+      "source": "resolver_rule"
+    },
+    {
+      "evidence": [
+        {
+          "path": "inputs[0].type",
+          "value": "binary_file"
+        },
+        {
+          "path": "inputs[1].type",
+          "value": "binary_file"
+        }
+      ],
+      "id": "BINARY_DATA",
+      "reason": "The requirement accepts binary data",
+      "registry_version": "0.2.0",
+      "rule_id": "TRAIT-BINARY-001",
+      "source": "resolver_rule"
+    },
+    {
+      "evidence": [
+        {
+          "path": "inputs[0].media_category",
+          "value": "image"
+        },
+        {
+          "path": "inputs[1].media_category",
+          "value": "image"
+        }
+      ],
+      "id": "BROWSER_RENDERED_CONTENT",
+      "reason": "The image resource can be rendered by a browser",
+      "registry_version": "0.2.0",
+      "rule_id": "TRAIT-BROWSER-001",
+      "source": "resolver_rule"
+    },
+    {
+      "evidence": [
+        {
+          "path": "inputs[0].trust_boundary",
+          "value": "external"
+        },
+        {
+          "path": "inputs[1].trust_boundary",
+          "value": "external"
+        }
+      ],
+      "id": "EXTERNAL_INPUT",
+      "reason": "An input explicitly crosses the external trust boundary",
+      "registry_version": "0.2.0",
+      "rule_id": "TRAIT-EXTERNAL-001",
+      "source": "resolver_rule"
+    },
+    {
+      "evidence": [
+        {
+          "path": "effects[0]",
+          "value": "persistent_write"
+        }
+      ],
+      "id": "PERSISTENT_DATA",
+      "reason": "The operation performs a persistent write",
+      "registry_version": "0.2.0",
+      "rule_id": "TRAIT-PERSIST-001",
+      "source": "resolver_rule"
+    },
+    {
+      "evidence": [
+        {
+          "path": "effects[1]",
+          "value": "replaces_existing_resource"
+        }
+      ],
+      "id": "REPLACEABLE_RESOURCE",
+      "reason": "The operation replaces an existing resource",
+      "registry_version": "0.2.0",
+      "rule_id": "TRAIT-REPLACE-001",
+      "source": "resolver_rule"
+    },
+    {
+      "evidence": [
+        {
+          "path": "operation.target_scope",
+          "value": "own_resource"
+        }
+      ],
+      "id": "USER_OWNED_RESOURCE",
+      "reason": "The target scope is the actor's own resource",
+      "registry_version": "0.2.0",
+      "rule_id": "TRAIT-OWNED-001",
+      "source": "resolver_rule"
+    }
+  ],
+  "schema_version": "1.0.0",
+  "trait_registry_hash": "sha256:500b658c9dab9770db8d1c03c5de4172817bf3bcd01b92061442fddceb70a9c4",
+  "trait_registry_version": "0.2.0"
+}

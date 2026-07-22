@@ -2,7 +2,7 @@
 
 **Phase:** 1 — Deterministic Core and Reference Adapter
 **Parent:** None
-**Status:** In Progress
+**Status:** Done
 
 ## Objective
 
@@ -61,11 +61,11 @@ The CES core must support any present or future stack. Laravel is only the first
 
 ## Final hardening gates
 
-- [ ] Concrete file-size and media-type parameters survive every generated stage.
-- [ ] Policy-relevant requirement and assurance facts use controlled vocabulary and explicit trust boundaries.
-- [ ] Normal compilation loads the exact adapter ID/version pinned by the combined project context.
-- [ ] Capability, trait, and policy registry content hashes participate in compilation identity.
-- [ ] Independent core output and mounted Docker compilation use the finalized deterministic directory contract.
+- [x] Concrete file-size and media-type parameters survive every generated stage.
+- [x] Policy-relevant requirement and assurance facts use controlled vocabulary and explicit trust boundaries.
+- [x] Normal compilation loads the exact adapter ID/version pinned by the combined project context.
+- [x] Capability, trait, and policy registry content hashes participate in compilation identity.
+- [x] Independent core output and mounted Docker compilation use the finalized deterministic directory contract.
 
 ## Parent acceptance criteria
 
@@ -91,7 +91,7 @@ An acceptance checkbox may be marked complete only when its corresponding reprod
 - [x] The local Docker smoke-test command and successful output are recorded.
 - [x] A consumer-compatibility review proves canonical artifacts contain no required Codex-, Claude Code-, IDE-, or vendor-specific instructions.
 
-Consolidated evidence is recorded in [CES-009](../../evidence/phase-1/CES-009.md), [CES-010](../../evidence/phase-1/CES-010.md), [CES-011](../../evidence/phase-1/CES-011.md), and [CES-012](../../evidence/phase-1/CES-012.md).
+Consolidated evidence is recorded in [CES-009](../../evidence/phase-1/CES-009.md), [CES-010](../../evidence/phase-1/CES-010.md), [CES-011](../../evidence/phase-1/CES-011.md), [CES-012](../../evidence/phase-1/CES-012.md), [CES-013](../../evidence/phase-1/CES-013.md), [CES-014](../../evidence/phase-1/CES-014.md), [CES-015](../../evidence/phase-1/CES-015.md), [CES-016](../../evidence/phase-1/CES-016.md), and [CES-017](../../evidence/phase-1/CES-017.md).
 
 ## Out of scope
 
