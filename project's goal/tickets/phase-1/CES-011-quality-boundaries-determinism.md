@@ -2,7 +2,7 @@
 
 **Phase:** 1 — Deterministic Core and Reference Adapter
 **Parent:** [CES-000](CES-000-parent-mvp.md)
-**Status:** Planned
+**Status:** Done
 
 ## Goal
 
@@ -20,17 +20,19 @@ Turn the architectural promises into automated checks that fail the build when v
 
 ## Acceptance criteria
 
-- [ ] An intentional forbidden dependency makes the architecture test fail.
-- [ ] Removing Laravel leaves core tests green.
-- [ ] Determinism tests compare every deterministic JSON and Markdown artifact.
-- [ ] Registry content changes alter content-derived IDs even without a version change.
-- [ ] Blocked, conflict, adapter-gap, and verification failures produce the specified diagnostics and exit codes.
+- [x] An intentional forbidden dependency makes the architecture test fail.
+- [x] Removing Laravel leaves core tests green.
+- [x] Determinism tests compare every deterministic JSON and Markdown artifact.
+- [x] Registry content changes alter content-derived IDs even without a version change.
+- [x] Blocked, conflict, adapter-gap, and verification failures produce the specified diagnostics and exit codes.
 
 ## Required evidence
 
-- [ ] Attach the full architecture-test report, including an intentional forbidden-dependency fixture.
-- [ ] Attach before/after output showing core tests pass with Laravel excluded.
-- [ ] Attach byte hashes and comparison output for two complete compilation directories.
-- [ ] Attach a registry-content mutation test showing the compilation ID changes.
-- [ ] Attach the CLI exit-code test matrix and paths to every diagnostic artifact.
+- [x] Attach the full architecture-test report, including an intentional forbidden-dependency fixture.
+- [x] Attach before/after output showing core tests pass with Laravel excluded.
+- [x] Attach byte hashes and comparison output for two complete compilation directories.
+- [x] Attach a registry-content mutation test showing the compilation ID changes.
+- [x] Attach the CLI exit-code test matrix and paths to every diagnostic artifact.
+
+Evidence: [CES-011 verification record](../../evidence/phase-1/CES-011.md)
 

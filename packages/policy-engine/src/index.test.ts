@@ -211,6 +211,29 @@ describe("compilePolicyManifest", () => {
     );
   });
 
+  it("changes compilation identity when registry content changes without a version change", () => {
+    const changedRegistry: PolicyRegistry = {
+      ...defaultPolicyRegistry,
+      rules: defaultPolicyRegistry.rules.map((rule) =>
+        rule.id === "POL-INPUT-001"
+          ? { ...rule, reason: `${rule.reason} (content mutation)` }
+          : rule,
+      ),
+    };
+    const original = compile();
+    const changed = compile(createRequirement(), changedRegistry);
+
+    expect(changed.manifest.policy_registry_version).toBe(
+      original.manifest.policy_registry_version,
+    );
+    expect(changed.manifest.policy_registry_hash).not.toBe(
+      original.manifest.policy_registry_hash,
+    );
+    expect(changed.manifest.compilation_id).not.toBe(
+      original.manifest.compilation_id,
+    );
+  });
+
   it("is byte-deterministic and independent of registry ordering", () => {
     const reversedRegistry: PolicyRegistry = {
       ...defaultPolicyRegistry,
