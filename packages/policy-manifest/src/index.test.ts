@@ -12,6 +12,7 @@ const manifest = {
   capability_registry_version: "0.1.0",
   trait_registry_version: "0.1.0",
   policy_registry_version: "0.1.0",
+  policy_registry_hash: `sha256:${"a".repeat(64)}`,
   obligations: [
     {
       policy_id: "RESOURCE_LEVEL_AUTHORIZATION",

@@ -177,6 +177,40 @@ describe("compilePolicyManifest", () => {
     });
   });
 
+  it("returns a diagnostic manifest and exit code 4 for registry conflicts", () => {
+    const registry: PolicyRegistry = {
+      ...defaultPolicyRegistry,
+      definitions: [
+        ...defaultPolicyRegistry.definitions,
+        defaultPolicyRegistry.definitions[0]!,
+      ],
+    };
+    const result = compile(createRequirement(), registry);
+
+    expect(result.exit_code).toBe(4);
+    expect(result.manifest.obligations).toEqual([
+      expect.objectContaining({
+        policy_id: "POLICY_REGISTRY",
+        resolution_state: "conflict",
+        reasons: ["Duplicate policy definition INPUT_VALIDATION"],
+      }),
+    ]);
+  });
+
+  it("records a content-derived policy registry hash", () => {
+    const original = compile();
+    const changedRegistry: PolicyRegistry = {
+      ...defaultPolicyRegistry,
+      version: "0.1.0+changed",
+    };
+    const changed = compile(createRequirement(), changedRegistry);
+
+    expect(original.manifest.policy_registry_hash).toMatch(/^sha256:[a-f0-9]{64}$/u);
+    expect(changed.manifest.policy_registry_hash).not.toBe(
+      original.manifest.policy_registry_hash,
+    );
+  });
+
   it("is byte-deterministic and independent of registry ordering", () => {
     const reversedRegistry: PolicyRegistry = {
       ...defaultPolicyRegistry,
@@ -192,7 +226,9 @@ describe("compilePolicyManifest", () => {
   it("keeps technical and adapter terminology out of the manifest", () => {
     const serialized = canonicalJson(compile().manifest);
 
-    expect(serialized).not.toMatch(/adapter|framework|implementation_pattern/iu);
+    expect(serialized).not.toMatch(
+      /adapter|framework|implementation_pattern|typescript|react|codex|claude/iu,
+    );
   });
 
   it("does not change policy meaning when source traceability changes", () => {

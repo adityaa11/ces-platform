@@ -58,6 +58,7 @@ export const PolicyManifestSchema = z
     capability_registry_version: NonEmptyString,
     trait_registry_version: NonEmptyString,
     policy_registry_version: NonEmptyString,
+    policy_registry_hash: z.string().regex(/^sha256:[a-f0-9]{64}$/u),
     resolved_capabilities: z.array(ResolvedVocabularyItemSchema).default([]),
     resolved_traits: z.array(ResolvedVocabularyItemSchema).default([]),
     obligations: z.array(PolicyObligationSchema).default([]),

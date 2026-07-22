@@ -1,8 +1,8 @@
 {
   "capability_registry_version": "0.1.0",
   "ces_baseline_version": "0.1.0",
-  "compilation_id": "sha256:9fa28166547f3a3d005face99576d3c5745009baa1b86d9d388762addcf07d8a",
-  "input_hash": "sha256:7ad55c4d8e05d8083a363baf7c8b3ed656c5b143a21ddf9b2a4467d49ae1a63d",
+  "compilation_id": "sha256:240139824b60a83ac65a17fcbf2db171c604f0fd9bc924f3a24402dfe3a545fa",
+  "input_hash": "sha256:10baec461483350a1554a0fc2f3b5790ce2bd495d42c35dd6669cb18a77212c1",
   "obligations": [
     {
       "business_rule_ids": [],
@@ -128,6 +128,7 @@
     }
   ],
   "policy_registry_version": "0.1.0",
+  "policy_registry_hash": "sha256:03482572b9a6b26f4c14e54a62b8dbb35773b838f196e61185cf503be912534e",
   "requirement_id": "REQ-USER-014",
   "resolved_capabilities": [
     {

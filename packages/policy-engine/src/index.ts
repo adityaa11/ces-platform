@@ -54,17 +54,7 @@ export function compilePolicyManifest(
   input: PolicyCompilationInput,
 ): PolicyCompilationResult {
   const registry = input.registry ?? defaultPolicyRegistry;
-  validateRegistry(registry);
   const vocabulary = resolveCapabilitiesAndTraits(input.requirement);
-  const contributions = resolveRuleContributions(
-    input.requirement,
-    input.assurance,
-    vocabulary,
-    registry,
-  );
-  applyPolicyClosure(contributions, registry.definitions);
-  const obligations = mergeContributions(contributions);
-
   const policyRelevantRequirement = getPolicyRelevantRequirement(input.requirement);
   const inputHash = hashCanonical({
     requirement: policyRelevantRequirement,
@@ -75,11 +65,38 @@ export function compilePolicyManifest(
     definitions: [...registry.definitions].sort(compareById),
     rules: [...registry.rules].sort(compareById),
   };
+  const policyRegistryHash = hashCanonical(registryHashInput);
+  const registryErrors = validateRegistry(registry);
+  let obligations: PolicyObligation[];
+  if (registryErrors.length > 0) {
+    obligations = [
+      PolicyObligationSchema.parse({
+        policy_id: "POLICY_REGISTRY",
+        requirement_level: "mandatory",
+        resolution_state: "conflict",
+        parameters: {},
+        reasons: registryErrors,
+        evidence: [],
+        source_rule_ids: [],
+        business_rule_ids: [],
+        missing_inputs: [],
+      }),
+    ];
+  } else {
+    const contributions = resolveRuleContributions(
+      input.requirement,
+      input.assurance,
+      vocabulary,
+      registry,
+    );
+    applyPolicyClosure(contributions, registry.definitions);
+    obligations = mergeContributions(contributions);
+  }
   const compilationId = hashCanonical({
     input_hash: inputHash,
     capability_registry_version: vocabulary.capability_registry_version,
     trait_registry_version: vocabulary.trait_registry_version,
-    policy_registry: registryHashInput,
+    policy_registry_hash: policyRegistryHash,
     ces_baseline_version: input.ces_baseline_version,
   });
 
@@ -92,6 +109,7 @@ export function compilePolicyManifest(
     capability_registry_version: vocabulary.capability_registry_version,
     trait_registry_version: vocabulary.trait_registry_version,
     policy_registry_version: registry.version,
+    policy_registry_hash: policyRegistryHash,
     resolved_capabilities: vocabulary.resolved_capabilities,
     resolved_traits: vocabulary.resolved_traits,
     obligations,
@@ -318,20 +336,37 @@ function determineExitCode(
   return 0;
 }
 
-function validateRegistry(registry: PolicyRegistry): void {
+function validateRegistry(registry: PolicyRegistry): string[] {
+  const errors: string[] = [];
   const definitions = new Set<PolicyId>();
   for (const definition of registry.definitions) {
-    const parsed = PolicyIdSchema.parse(definition.id);
+    const parsedResult = PolicyIdSchema.safeParse(definition.id);
+    if (!parsedResult.success) {
+      errors.push(`Unknown policy definition ${String(definition.id)}`);
+      continue;
+    }
+    const parsed = parsedResult.data;
     if (definitions.has(parsed)) {
-      throw new Error(`Duplicate policy definition ${parsed}`);
+      errors.push(`Duplicate policy definition ${parsed}`);
     }
     definitions.add(parsed);
   }
+  const ruleIds = new Set<string>();
   for (const rule of registry.rules) {
+    if (ruleIds.has(rule.id)) errors.push(`Duplicate policy rule ${rule.id}`);
+    ruleIds.add(rule.id);
     if (!definitions.has(rule.policy_id)) {
-      throw new Error(`Policy rule ${rule.id} targets undefined policy ${rule.policy_id}`);
+      errors.push(`Policy rule ${rule.id} targets undefined policy ${rule.policy_id}`);
     }
   }
+  for (const definition of registry.definitions) {
+    for (const required of definition.requires) {
+      if (!definitions.has(required)) {
+        errors.push(`Policy definition ${definition.id} requires undefined policy ${required}`);
+      }
+    }
+  }
+  return uniqueSorted(errors);
 }
 
 function readFactPath(
