@@ -1,4 +1,8 @@
-# CES-001 — Establish the Workspace Foundation
+# CES-001 — Phase 1: Establish the Workspace Foundation
+
+**Phase:** 1 — Deterministic Core and Reference Adapter
+**Parent:** [CES-000](CES-000-parent-mvp.md)
+**Status:** Planned
 
 ## Goal
 

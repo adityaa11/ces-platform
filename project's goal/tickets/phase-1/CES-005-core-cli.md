@@ -1,4 +1,8 @@
-# CES-005 — Deliver the Independent Core CLI
+# CES-005 — Phase 1: Deliver the Independent Core CLI
+
+**Phase:** 1 — Deterministic Core and Reference Adapter
+**Parent:** [CES-000](CES-000-parent-mvp.md)
+**Status:** Planned
 
 ## Goal
 

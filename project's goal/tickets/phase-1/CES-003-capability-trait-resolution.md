@@ -1,4 +1,8 @@
-# CES-003 — Implement Capability and Trait Resolution
+# CES-003 — Phase 1: Implement Capability and Trait Resolution
+
+**Phase:** 1 — Deterministic Core and Reference Adapter
+**Parent:** [CES-000](CES-000-parent-mvp.md)
+**Status:** Planned
 
 ## Goal
 

@@ -1,4 +1,8 @@
-# CES-004 — Compile the Stack-Agnostic Policy Manifest
+# CES-004 — Phase 1: Compile the Stack-Agnostic Policy Manifest
+
+**Phase:** 1 — Deterministic Core and Reference Adapter
+**Parent:** [CES-000](CES-000-parent-mvp.md)
+**Status:** Planned
 
 ## Goal
 

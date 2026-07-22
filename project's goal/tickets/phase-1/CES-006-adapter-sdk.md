@@ -1,4 +1,8 @@
-# CES-006 — Define the Versioned Adapter SDK
+# CES-006 — Phase 1: Define the Versioned Adapter SDK
+
+**Phase:** 1 — Deterministic Core and Reference Adapter
+**Parent:** [CES-000](CES-000-parent-mvp.md)
+**Status:** Planned
 
 ## Goal
 

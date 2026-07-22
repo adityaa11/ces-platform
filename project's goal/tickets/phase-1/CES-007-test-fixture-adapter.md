@@ -1,4 +1,8 @@
-# CES-007 — Build the Framework-Neutral Test-Fixture Adapter
+# CES-007 — Phase 1: Build the Framework-Neutral Test-Fixture Adapter
+
+**Phase:** 1 — Deterministic Core and Reference Adapter
+**Parent:** [CES-000](CES-000-parent-mvp.md)
+**Status:** Planned
 
 ## Goal
 

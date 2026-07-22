@@ -1,4 +1,8 @@
-# CES-012 — Complete Examples, Documentation, and Local Docker Delivery
+# CES-012 — Phase 1: Complete Examples, Documentation, and Local Docker Delivery
+
+**Phase:** 1 — Deterministic Core and Reference Adapter
+**Parent:** [CES-000](CES-000-parent-mvp.md)
+**Status:** Planned
 
 ## Goal
 

@@ -1,4 +1,8 @@
-# CES-002 — Define Stack-Agnostic Core Contracts
+# CES-002 — Phase 1: Define Stack-Agnostic Core Contracts
+
+**Phase:** 1 — Deterministic Core and Reference Adapter
+**Parent:** [CES-000](CES-000-parent-mvp.md)
+**Status:** Planned
 
 ## Goal
 

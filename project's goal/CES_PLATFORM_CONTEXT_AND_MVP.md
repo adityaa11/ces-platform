@@ -15,7 +15,7 @@ It is intended for a software house that develops many client projects using dif
 
 CES is **not** a runtime dependency of client applications. It runs around the development lifecycle:
 
-- before Codex generates code;
+- before a developer or coding agent generates code;
 - while requirements are compiled;
 - during pull-request verification;
 - when company policies are upgraded;
@@ -765,12 +765,12 @@ Example output:
 ├── requirement-package.json
 ├── policy-manifest.json
 ├── implementation-plan.json
-├── codex-task.md
+├── implementation-task.md
 ├── test-manifest.json
 └── verification-manifest.json
 ```
 
-## Example `codex-task.md`
+## Example `implementation-task.md`
 
 ```md
 # Requirement
@@ -808,7 +808,7 @@ Authenticated users can replace their own profile pictures.
 - cleanup retry is safe.
 ```
 
-Codex receives only relevant obligations and adapters.
+A human developer, Codex, Claude Code, or another coding agent receives only relevant obligations and adapter guidance.
 
 It does not need the complete:
 
@@ -905,8 +905,8 @@ Examples:
 
 Semantic verification may require:
 
-- Codex;
-- another model;
+- a coding or review agent such as Codex or Claude Code;
+- another model or verification tool;
 - a human reviewer;
 - a combination of these.
 
@@ -1072,13 +1072,11 @@ client-project/
 ├── .github/
 │   └── workflows/
 │       └── ces.yml
-├── .codex/
-│   └── skills/
-│       └── ces-implementation/
-│           └── SKILL.md
 ├── src/
 └── tests/
 ```
+
+Agent-specific configuration such as Codex skills or Claude Code instructions is optional and is not part of the required CES client footprint. Such integrations consume CES artifacts; CES core contracts must not depend on them.
 
 ## Example `ces.lock`
 
@@ -1119,9 +1117,9 @@ This makes requirement compilation reproducible.
        ↓
 9. Project technical context selects Laravel, Spring, .NET, NestJS, or Go adapter
        ↓
-10. Adapter compiler generates Codex task, tests, and verification manifest
+10. Adapter compiler generates a universal implementation task, tests, and verification manifest
        ↓
-11. Codex implements code and tests
+11. A developer, Codex, Claude Code, or another compatible agent implements code and tests
        ↓
 12. Verification Engine validates the implementation
        ↓
@@ -1215,7 +1213,7 @@ Policy Manifest
 Output:
 
 ```text
-Codex Task
+Implementation Task
 Implementation Plan
 Test Manifest
 Verification Manifest
@@ -1236,7 +1234,7 @@ Expected output:
 ```text
 generated/laravel/
 ├── implementation-plan.json
-├── codex-task.md
+├── implementation-task.md
 ├── test-manifest.json
 └── verification-manifest.json
 ```
@@ -1348,7 +1346,7 @@ This is an implementation choice, not an architectural requirement.
 
 ---
 
-# 17. Codex Implementation Brief
+# 17. CES Implementation Brief
 
 ## Objective
 
@@ -1396,7 +1394,7 @@ The core must deterministically generate:
 
 The Laravel reference adapter must translate the Policy Manifest into:
 
-- a concise Codex implementation task;
+- a concise, agent-neutral implementation task;
 - an implementation plan;
 - a required-test manifest;
 - a verification manifest.
@@ -1597,7 +1595,7 @@ generated/
 └── adapters/
     └── laravel/
         ├── implementation-plan.json
-        ├── codex-task.md
+        ├── implementation-task.md
         ├── test-manifest.json
         └── verification-manifest.json
 ```
@@ -1679,6 +1677,20 @@ Document:
 Every CES core decision must remain valid for any current or future technology stack. The core is a universal, stack-agnostic policy compiler; it is not a universal implementation generator and must not use Laravel as its internal model.
 
 The same Policy Manifest must be consumable by Laravel, Spring Boot, .NET, NestJS, Go, the framework-neutral test-fixture adapter, and future adapters without changing core schemas or policy-resolution code.
+
+## Universal Consumer Compatibility
+
+CES outputs must not be coupled to a particular coding agent. `implementation-task.md` is the canonical human-readable task and must be understandable without Codex-, Claude Code-, IDE-, or vendor-specific commands. Its structured sources remain `implementation-plan.json`, `test-manifest.json`, and `verification-manifest.json`.
+
+The same Implementation Package must be consumable by:
+
+- a human developer;
+- Codex;
+- Claude Code;
+- another coding agent;
+- CI and internal engineering tools.
+
+Agent-specific prompt renderers or repository instructions may be added as optional integrations. They must be derived from the same Implementation Package and must not change requirement facts, the Policy Manifest, adapter mappings, test obligations, or verification requirements. Selecting a coding agent is a presentation concern, not policy resolution or stack adaptation.
 
 ## Toolchain and Monorepo
 
@@ -1784,7 +1796,7 @@ This must succeed without loading Laravel or any framework adapter.
 The same Policy Manifest
 + one Laravel technical context
 + Laravel reference adapter
-→ one concise Codex task
+→ one concise, agent-neutral implementation task
 → one implementation plan
 → one test manifest
 → one verification manifest

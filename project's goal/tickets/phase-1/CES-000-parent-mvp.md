@@ -1,4 +1,8 @@
-# CES-000 — Deterministic, Stack-Agnostic CES MVP
+# CES-000 — Phase 1: Deterministic, Stack-Agnostic CES MVP
+
+**Phase:** 1 — Deterministic Core and Reference Adapter
+**Parent:** None
+**Status:** Planned
 
 ## Objective
 
@@ -21,7 +25,7 @@ The CES core must support any present or future stack. Laravel is only the first
 - Versioned Adapter SDK and adapter registry.
 - Framework-neutral test-fixture adapter.
 - Laravel reference adapter.
-- Deterministic implementation, Codex-task, test, and verification outputs.
+- Deterministic implementation, agent-neutral task, test, and verification outputs.
 - Initial verification engine and CLI.
 - Local Docker image, examples, documentation, and automated tests.
 
@@ -59,6 +63,7 @@ The CES core must support any present or future stack. Laravel is only the first
 - [ ] `pnpm build`, `pnpm typecheck`, and `pnpm test` pass.
 - [ ] Two clean compilations produce byte-for-byte identical deterministic artifacts.
 - [ ] The compiled CLI and local Docker image execute the documented workflow.
+- [ ] The same neutral Implementation Package can be handed to a human developer, Codex, or Claude Code without changing core or adapter output.
 
 ## Required evidence
 
@@ -70,6 +75,7 @@ An acceptance checkbox may be marked complete only when its corresponding reprod
 - [ ] Architecture-test output proves the core builds without Laravel and contains no forbidden adapter dependency.
 - [ ] Failure demonstrations include the blocked Policy Manifest, policy-conflict diagnostic, `adapter-report.json`, verification report, and expected exit codes.
 - [ ] The local Docker smoke-test command and successful output are recorded.
+- [ ] A consumer-compatibility review proves canonical artifacts contain no required Codex-, Claude Code-, IDE-, or vendor-specific instructions.
 
 ## Out of scope
 

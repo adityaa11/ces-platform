@@ -1,4 +1,8 @@
-# CES-011 — Prove Boundaries, Determinism, and Failure Contracts
+# CES-011 — Phase 1: Prove Boundaries, Determinism, and Failure Contracts
+
+**Phase:** 1 — Deterministic Core and Reference Adapter
+**Parent:** [CES-000](CES-000-parent-mvp.md)
+**Status:** Planned
 
 ## Goal
 

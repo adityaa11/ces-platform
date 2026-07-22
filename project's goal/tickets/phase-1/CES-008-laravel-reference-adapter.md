@@ -1,4 +1,8 @@
-# CES-008 — Build the Laravel Reference Adapter
+# CES-008 — Phase 1: Build the Laravel Reference Adapter
+
+**Phase:** 1 — Deterministic Core and Reference Adapter
+**Parent:** [CES-000](CES-000-parent-mvp.md)
+**Status:** Planned
 
 ## Goal
 

@@ -1,4 +1,8 @@
-# CES-010 — Implement Initial Verification
+# CES-010 — Phase 1: Implement Initial Verification
+
+**Phase:** 1 — Deterministic Core and Reference Adapter
+**Parent:** [CES-000](CES-000-parent-mvp.md)
+**Status:** Planned
 
 ## Goal
 
