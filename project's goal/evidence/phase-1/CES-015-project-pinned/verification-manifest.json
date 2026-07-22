@@ -1,0 +1,101 @@
+{
+  "adapter": {
+    "id": "laravel",
+    "mapping_version": "0.1.0",
+    "version": "0.1.0"
+  },
+  "ces_baseline_version": "0.1.0",
+  "checks": [
+    {
+      "guidance": "Require source comment marker CES-EVIDENCE:ATOMIC_RESOURCE_REPLACEMENT",
+      "id": "LARAVEL-VERIFY-ATOMIC_RESOURCE_REPLACEMENT",
+      "mapping_id": "LARAVEL-MAP-ATOMIC_RESOURCE_REPLACEMENT",
+      "mapping_version": "0.1.0",
+      "parameters": {},
+      "source_policy_id": "ATOMIC_RESOURCE_REPLACEMENT"
+    },
+    {
+      "guidance": "Require source comment marker CES-EVIDENCE:FILE_CONTENT_VERIFICATION",
+      "id": "LARAVEL-VERIFY-FILE_CONTENT_VERIFICATION",
+      "mapping_id": "LARAVEL-MAP-FILE_CONTENT_VERIFICATION",
+      "mapping_version": "0.1.0",
+      "parameters": {},
+      "source_policy_id": "FILE_CONTENT_VERIFICATION"
+    },
+    {
+      "guidance": "Require source comment marker CES-EVIDENCE:FILE_MEDIA_TYPE_ALLOWLIST",
+      "id": "LARAVEL-VERIFY-FILE_MEDIA_TYPE_ALLOWLIST",
+      "mapping_id": "LARAVEL-MAP-FILE_MEDIA_TYPE_ALLOWLIST",
+      "mapping_version": "0.1.0",
+      "parameters": {
+        "allowed_media_types": [
+          "image/jpeg",
+          "image/png"
+        ]
+      },
+      "source_policy_id": "FILE_MEDIA_TYPE_ALLOWLIST"
+    },
+    {
+      "guidance": "Require source comment marker CES-EVIDENCE:FILE_SIZE_LIMIT",
+      "id": "LARAVEL-VERIFY-FILE_SIZE_LIMIT",
+      "mapping_id": "LARAVEL-MAP-FILE_SIZE_LIMIT",
+      "mapping_version": "0.1.0",
+      "parameters": {
+        "maximum_bytes": 5242880
+      },
+      "source_policy_id": "FILE_SIZE_LIMIT"
+    },
+    {
+      "guidance": "Require source comment marker CES-EVIDENCE:INPUT_VALIDATION",
+      "id": "LARAVEL-VERIFY-INPUT_VALIDATION",
+      "mapping_id": "LARAVEL-MAP-INPUT_VALIDATION",
+      "mapping_version": "0.1.0",
+      "parameters": {},
+      "source_policy_id": "INPUT_VALIDATION"
+    },
+    {
+      "guidance": "Require source comment marker CES-EVIDENCE:REPLACED_RESOURCE_LIFECYCLE",
+      "id": "LARAVEL-VERIFY-REPLACED_RESOURCE_LIFECYCLE",
+      "mapping_id": "LARAVEL-MAP-REPLACED_RESOURCE_LIFECYCLE",
+      "mapping_version": "0.1.0",
+      "parameters": {},
+      "source_policy_id": "REPLACED_RESOURCE_LIFECYCLE"
+    },
+    {
+      "guidance": "Require source comment marker CES-EVIDENCE:RESOURCE_LEVEL_AUTHORIZATION",
+      "id": "LARAVEL-VERIFY-RESOURCE_LEVEL_AUTHORIZATION",
+      "mapping_id": "LARAVEL-MAP-RESOURCE_LEVEL_AUTHORIZATION",
+      "mapping_version": "0.1.0",
+      "parameters": {},
+      "source_policy_id": "RESOURCE_LEVEL_AUTHORIZATION"
+    },
+    {
+      "guidance": "Require source comment marker CES-EVIDENCE:SAFE_IMAGE_DELIVERY",
+      "id": "LARAVEL-VERIFY-SAFE_IMAGE_DELIVERY",
+      "mapping_id": "LARAVEL-MAP-SAFE_IMAGE_DELIVERY",
+      "mapping_version": "0.1.0",
+      "parameters": {},
+      "source_policy_id": "SAFE_IMAGE_DELIVERY"
+    },
+    {
+      "guidance": "Require source comment marker CES-EVIDENCE:SAFE_LOGGING",
+      "id": "LARAVEL-VERIFY-SAFE_LOGGING",
+      "mapping_id": "LARAVEL-MAP-SAFE_LOGGING",
+      "mapping_version": "0.1.0",
+      "parameters": {},
+      "source_policy_id": "SAFE_LOGGING"
+    },
+    {
+      "guidance": "Require source comment marker CES-EVIDENCE:SERVER_GENERATED_STORAGE_KEY",
+      "id": "LARAVEL-VERIFY-SERVER_GENERATED_STORAGE_KEY",
+      "mapping_id": "LARAVEL-MAP-SERVER_GENERATED_STORAGE_KEY",
+      "mapping_version": "0.1.0",
+      "parameters": {},
+      "source_policy_id": "SERVER_GENERATED_STORAGE_KEY"
+    }
+  ],
+  "policy_registry_version": "0.1.0",
+  "schema_version": "1.0.0",
+  "source_compilation_id": "sha256:c01e12a5e81d3e0298f313f668cbb3bc53294221f88b0a9657066a75daeb401a",
+  "source_requirement_id": "REQ-USER-014"
+}

@@ -16,6 +16,8 @@ The core receives requirement facts and assurance context. Technical context is 
 
 The Policy Manifest is portable: the Laravel and test-fixture adapters consume the same bytes. The fixture is a test-only contract probe, is rejected outside explicit test mode, and is not approved production guidance or the future Phase 4 `generic-guidance` adapter.
 
+Normal `compile` and `compile-adapter` runs load the exact adapter ID and version declared at `project.ces.adapter`; no CLI adapter selection is required. The legacy `--adapter` option is rejected. A deliberate diagnostic workflow may use `--override-adapter <id>@<version>`, and test-fixture adapters additionally require `--test-mode true`. Unknown IDs and unavailable versions fail with exit code 2 before adapter artifacts are emitted.
+
 An unsupported mandatory mapping produces `adapter-report.json` and exit code 5 without partial implementation artifacts. Verification performs bounded schema, identity, file, text-pattern, prohibited-pattern, and configured-test checks. Semantic correctness remains `human_review_required` and is not claimed as automated proof.
 
 ### Controlled facts and trust boundaries
@@ -41,7 +43,6 @@ Compile the successful Laravel example:
 node apps/cli/dist/index.js compile \
   --requirement examples/profile-picture.requirement.yaml \
   --project examples/laravel-project.yaml \
-  --adapter laravel \
   --output .ces/generated/REQ-USER-014/laravel
 ```
 
@@ -51,7 +52,7 @@ Compile the same Policy Manifest with the contract fixture:
 node apps/cli/dist/index.js compile \
   --requirement examples/profile-picture.requirement.yaml \
   --project examples/laravel-project.yaml \
-  --adapter test-fixture \
+  --override-adapter test-fixture@0.1.0 \
   --test-mode true \
   --output .ces/generated/REQ-USER-014/fixture
 ```
@@ -62,7 +63,6 @@ The blocked example stops after core resolution, writes its diagnostic Policy Ma
 node apps/cli/dist/index.js compile \
   --requirement examples/profile-picture.blocked.yaml \
   --project examples/laravel-project.yaml \
-  --adapter laravel \
   --output .ces/generated/REQ-USER-014/blocked
 ```
 
@@ -91,7 +91,6 @@ docker run --rm \
   ces-cli:local compile \
   --requirement /workspace/examples/profile-picture.requirement.yaml \
   --project /workspace/examples/laravel-project.yaml \
-  --adapter laravel \
   --output /workspace/.ces/generated/REQ-USER-014/laravel
 ```
 

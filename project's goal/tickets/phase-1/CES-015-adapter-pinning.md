@@ -2,7 +2,7 @@
 
 **Phase:** 1 — Deterministic Core and Reference Adapter
 **Parent:** [CES-000](CES-000-parent-mvp.md)
-**Status:** Planned
+**Status:** Done
 
 ## Goal
 
@@ -18,14 +18,14 @@ Make the combined project context authoritative for normal adapter ID and versio
 
 ## Acceptance criteria
 
-- [ ] Normal compilation uses the project adapter ID and version.
-- [ ] An unavailable or incompatible version fails clearly.
-- [ ] An override conflicting with project configuration fails unless it is an explicit permitted diagnostic workflow.
-- [ ] The fixture remains unavailable outside explicit test mode.
-- [ ] Normal compilation succeeds without `--adapter`.
+- [x] Normal compilation uses the project adapter ID and version.
+- [x] An unavailable or incompatible version fails clearly.
+- [x] An override conflicting with project configuration fails unless it is an explicit permitted diagnostic workflow.
+- [x] The fixture remains unavailable outside explicit test mode.
+- [x] Normal compilation succeeds without `--adapter`.
 
 ## Required evidence
 
-- [ ] Attach adapter-loading and compatibility tests.
-- [ ] Attach unavailable-version and mismatch diagnostics.
-- [ ] Attach accepted/rejected fixture override runs.
+- [x] Attach adapter-loading and compatibility tests.
+- [x] Attach unavailable-version and mismatch diagnostics.
+- [x] Attach accepted/rejected fixture override runs.

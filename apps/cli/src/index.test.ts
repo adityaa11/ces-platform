@@ -28,7 +28,7 @@ technical:
 ces:
   baseline_version: 0.1.0
   adapter:
-    id: unavailable-for-core-test
+    id: test-fixture
     version: 0.1.0
 `;
 
@@ -141,7 +141,7 @@ describe("core CLI", () => {
     const second = join(directory, "second");
     await writeFile(requirementPath, JSON.stringify(requirement));
     await writeFile(projectPath, projectYaml);
-    const args = ["compile", "--requirement", requirementPath, "--project", projectPath, "--adapter", "test-fixture", "--output"];
+    const args = ["compile", "--requirement", requirementPath, "--project", projectPath, "--output"];
     expect(await runCli([...args, first, "--test-mode", "true"], capture().io)).toBe(0);
     expect(await runCli([...args, second, "--test-mode", "true"], capture().io)).toBe(0);
     const expectedFiles = [
@@ -160,6 +160,66 @@ describe("core CLI", () => {
     }
   });
 
+  it("uses the exact project-pinned adapter without a CLI adapter option", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "ces-cli-"));
+    const requirementPath = join(directory, "requirement.json");
+    const projectPath = join(directory, "project.yaml");
+    const outputPath = join(directory, "output");
+    await writeFile(requirementPath, JSON.stringify(requirement));
+    await writeFile(projectPath, projectYaml.replace("id: test-fixture", "id: laravel"));
+    expect(await runCli([
+      "compile", "--requirement", requirementPath, "--project", projectPath,
+      "--output", outputPath,
+    ], capture().io)).toBe(0);
+    expect(JSON.parse(await readFile(join(outputPath, "implementation-plan.json"), "utf8")).adapter)
+      .toMatchObject({ id: "laravel", version: "0.1.0" });
+  });
+
+  it("rejects unavailable pinned versions with a stable diagnostic", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "ces-cli-"));
+    const requirementPath = join(directory, "requirement.json");
+    const projectPath = join(directory, "project.yaml");
+    await writeFile(requirementPath, JSON.stringify(requirement));
+    await writeFile(projectPath, projectYaml.replace("    version: 0.1.0", "    version: 9.9.9"));
+    const output = capture();
+    expect(await runCli([
+      "compile", "--requirement", requirementPath, "--project", projectPath,
+      "--output", join(directory, "output"), "--test-mode", "true",
+    ], output.io)).toBe(2);
+    expect(output.stderr.join("")).toContain("test-fixture@9.9.9 is not registered");
+  });
+
+  it("permits an exact fixture override only in explicit test mode", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "ces-cli-"));
+    const requirementPath = join(directory, "requirement.json");
+    const projectPath = join(directory, "project.yaml");
+    await writeFile(requirementPath, JSON.stringify(requirement));
+    await writeFile(projectPath, projectYaml.replace("id: test-fixture", "id: laravel"));
+    const args = [
+      "compile", "--requirement", requirementPath, "--project", projectPath,
+      "--output", join(directory, "output"),
+      "--override-adapter", "test-fixture@0.1.0",
+    ];
+    const rejected = capture();
+    expect(await runCli(args, rejected.io)).toBe(2);
+    expect(rejected.stderr.join("")).toMatch(/requires explicit test mode/iu);
+    expect(await runCli([...args, "--test-mode", "true"], capture().io)).toBe(0);
+  });
+
+  it("rejects the legacy adapter selector even when it conflicts with the project", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "ces-cli-"));
+    const requirementPath = join(directory, "requirement.json");
+    const projectPath = join(directory, "project.yaml");
+    await writeFile(requirementPath, JSON.stringify(requirement));
+    await writeFile(projectPath, projectYaml);
+    const output = capture();
+    expect(await runCli([
+      "compile", "--requirement", requirementPath, "--project", projectPath,
+      "--output", join(directory, "output"), "--adapter", "laravel",
+    ], output.io)).toBe(2);
+    expect(output.stderr.join("")).toContain("--adapter is not supported");
+  });
+
   it("writes only core diagnostics when compile is blocked", async () => {
     const directory = await mkdtemp(join(tmpdir(), "ces-cli-"));
     const requirementPath = join(directory, "requirement.json");
@@ -167,7 +227,7 @@ describe("core CLI", () => {
     const outputPath = join(directory, "output");
     await writeFile(requirementPath, JSON.stringify({ ...requirement, business_rules: [] }));
     await writeFile(projectPath, projectYaml);
-    expect(await runCli(["compile", "--requirement", requirementPath, "--project", projectPath, "--adapter", "missing-adapter", "--output", outputPath], capture().io)).toBe(3);
+    expect(await runCli(["compile", "--requirement", requirementPath, "--project", projectPath, "--output", outputPath], capture().io)).toBe(3);
     expect((await readdir(outputPath)).sort()).toEqual([
       "policy-manifest.json",
       "requirement-package.json",
@@ -183,7 +243,7 @@ describe("core CLI", () => {
     await writeFile(requirementPath, JSON.stringify(requirement));
     await writeFile(projectPath, projectYaml);
     expect(await runCli(["resolve-policy", "--requirement", requirementPath, "--project", projectPath, "--output", manifestPath], capture().io)).toBe(0);
-    expect(await runCli(["compile-adapter", "--policy-manifest", manifestPath, "--project", projectPath, "--adapter", "test-fixture-with-gap", "--output", outputPath, "--test-mode", "true"], capture().io)).toBe(5);
+    expect(await runCli(["compile-adapter", "--policy-manifest", manifestPath, "--project", projectPath, "--override-adapter", "test-fixture-with-gap@0.1.0", "--output", outputPath, "--test-mode", "true"], capture().io)).toBe(5);
     expect(await readdir(outputPath)).toEqual(["adapter-report.json"]);
   });
 
@@ -196,7 +256,7 @@ describe("core CLI", () => {
     await mkdir(join(projectRoot, ".ces"), { recursive: true });
     await writeFile(requirementPath, JSON.stringify(requirement));
     await writeFile(projectPath, projectYaml);
-    expect(await runCli(["compile", "--requirement", requirementPath, "--project", projectPath, "--adapter", "test-fixture", "--output", generated, "--test-mode", "true"], capture().io)).toBe(0);
+    expect(await runCli(["compile", "--requirement", requirementPath, "--project", projectPath, "--output", generated, "--test-mode", "true"], capture().io)).toBe(0);
     await writeFile(join(projectRoot, "source.txt"), "no evidence markers");
     await writeFile(join(projectRoot, ".ces", "verification.json"), JSON.stringify({
       test_commands: [{ id: "CLIENT-TESTS", command: process.execPath, args: ["-e", "process.exit(9)"] }],

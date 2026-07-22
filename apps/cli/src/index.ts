@@ -38,14 +38,14 @@ Usage:
   ces validate-requirement --input <file> [--output <file>]
   ces validate-project --input <file> [--output <file>]
   ces resolve-policy --requirement <file> --project <file> --output <file>
-  ces compile-adapter --policy-manifest <file> --project <file> --adapter <id> --output <directory> [--test-mode true]
-  ces compile --requirement <file> --project <file> --adapter <id> --output <directory> [--test-mode true]
+  ces compile-adapter --policy-manifest <file> --project <file> --output <directory> [--override-adapter <id>@<version>] [--test-mode true]
+  ces compile --requirement <file> --project <file> --output <directory> [--override-adapter <id>@<version>] [--test-mode true]
   ces verify --manifest <verification-manifest.json> --project-root <directory>
   ces help
 
 Inputs may be JSON (.json) or YAML (.yaml/.yml). Validation output is normalized JSON.
 resolve-policy writes a stack-agnostic Policy Manifest and never loads an adapter.
-compile-adapter and compile support laravel, test-fixture, and explicit gap fixtures.
+compile uses the exact adapter ID and version pinned in the project. Diagnostic overrides must use --override-adapter <id>@<version>.
 
 Exit codes:
   0  success
@@ -109,12 +109,12 @@ export async function runCli(
     if (command === "compile-adapter") {
       const manifestPath = requireOption(options, "policy-manifest");
       const projectPath = requireOption(options, "project");
-      const adapterId = requireOption(options, "adapter");
       const outputDirectory = requireOption(options, "output");
       const manifest = await parseJsonFile(manifestPath, PolicyManifestSchema.parse);
       const project = await parseFile(projectPath, parseProjectText);
-      const { technical } = splitProjectContext(project);
-      const adapter = await loadAdapter(adapterId, options["test-mode"] === "true");
+      const { technical, ces } = splitProjectContext(project);
+      const selection = resolveAdapterSelection(options, ces.adapter);
+      const adapter = await loadAdapter(selection.id, selection.version, options["test-mode"] === "true");
       const result = compileImplementationArtifacts({ manifest, technical, adapter });
       await writeCompilationResult(outputDirectory, result);
       return result.exit_code;
@@ -123,8 +123,8 @@ export async function runCli(
     if (command === "compile") {
       const requirementPath = requireOption(options, "requirement");
       const projectPath = requireOption(options, "project");
-      const adapterId = requireOption(options, "adapter");
       const outputDirectory = requireOption(options, "output");
+      rejectLegacyAdapterOption(options);
       const requirement = await parseFile(requirementPath, parseRequirementText);
       const project = await parseFile(projectPath, parseProjectText);
       const { assurance, technical, ces } = splitProjectContext(project);
@@ -142,7 +142,8 @@ export async function runCli(
         canonicalJson(policy.manifest),
       );
       if (policy.exit_code !== 0) return policy.exit_code;
-      const adapter = await loadAdapter(adapterId, options["test-mode"] === "true");
+      const selection = resolveAdapterSelection(options, ces.adapter);
+      const adapter = await loadAdapter(selection.id, selection.version, options["test-mode"] === "true");
       const result = compileImplementationArtifacts({
         manifest: policy.manifest,
         technical,
@@ -243,18 +244,40 @@ async function parseJsonFile<T>(
   }
 }
 
-async function loadAdapter(id: string, testMode: boolean): Promise<AdapterDefinition> {
+function rejectLegacyAdapterOption(options: Readonly<Record<string, string>>): void {
+  if (options.adapter) {
+    throw new CliInputError(
+      "--adapter is not supported; configure ces.adapter in the project or use --override-adapter <id>@<version>",
+    );
+  }
+}
+
+function resolveAdapterSelection(
+  options: Readonly<Record<string, string>>,
+  configured: { readonly id: string; readonly version: string },
+): { readonly id: string; readonly version: string } {
+  rejectLegacyAdapterOption(options);
+  const override = options["override-adapter"];
+  if (!override) return configured;
+  const separator = override.lastIndexOf("@");
+  if (separator <= 0 || separator === override.length - 1) {
+    throw new CliInputError("--override-adapter must use <id>@<version>");
+  }
+  return { id: override.slice(0, separator), version: override.slice(separator + 1) };
+}
+
+async function loadAdapter(id: string, version: string, testMode: boolean): Promise<AdapterDefinition> {
   if (id === "laravel" || id === "laravel-gap-fixture") {
     const { laravelAdapterRegistry } = await import("@company/ces-laravel-adapter");
-    return laravelAdapterRegistry.get(id, "0.1.0");
+    return laravelAdapterRegistry.get(id, version);
   }
   if (id === "test-fixture" || id === "test-fixture-with-gap") {
     const { testFixtureAdapterRegistry } = await import(
       "@company/ces-test-fixture-adapter"
     );
-    return testFixtureAdapterRegistry.get(id, "0.1.0", { test_mode: testMode });
+    return testFixtureAdapterRegistry.get(id, version, { test_mode: testMode });
   }
-  throw new CliInputError(`Unknown adapter: ${id}`);
+  throw new CliInputError(`Unknown adapter: ${id}@${version}`);
 }
 
 async function loadVerificationRules(id: string): Promise<AdapterVerificationRules> {

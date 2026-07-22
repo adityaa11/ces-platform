@@ -1,0 +1,14 @@
+COMMAND: ces compile --requirement profile-picture.requirement.yaml --project CES-015-unavailable-project.yaml --output CES-015-unavailable
+EXIT: 2
+Adapter laravel@9.9.9 is not registered
+
+COMMAND: ces compile --requirement profile-picture.requirement.yaml --project laravel-project.yaml --output CES-015-fixture-rejected --override-adapter test-fixture@0.1.0
+EXIT: 2
+Test-fixture adapter test-fixture@0.1.0 requires explicit test mode
+
+COMMAND: ces compile --requirement profile-picture.requirement.yaml --project laravel-project.yaml --output CES-015-fixture-override --override-adapter test-fixture@0.1.0 --test-mode true
+EXIT: 0
+
+COMMAND: ces compile --requirement profile-picture.requirement.yaml --project laravel-project.yaml --output generated --adapter test-fixture
+EXIT: 2
+--adapter is not supported; configure ces.adapter in the project or use --override-adapter <id>@<version>

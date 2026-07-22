@@ -1,0 +1,101 @@
+{
+  "adapter": {
+    "id": "test-fixture",
+    "mapping_version": "0.1.0",
+    "version": "0.1.0"
+  },
+  "ces_baseline_version": "0.1.0",
+  "policy_registry_version": "0.1.0",
+  "schema_version": "1.0.0",
+  "source_compilation_id": "sha256:c01e12a5e81d3e0298f313f668cbb3bc53294221f88b0a9657066a75daeb401a",
+  "source_requirement_id": "REQ-USER-014",
+  "tests": [
+    {
+      "guidance": "Test that commit replacement state atomically",
+      "id": "FIXTURE-TEST-ATOMIC_RESOURCE_REPLACEMENT",
+      "mapping_id": "FIXTURE-MAP-ATOMIC_RESOURCE_REPLACEMENT",
+      "mapping_version": "0.1.0",
+      "parameters": {},
+      "source_policy_id": "ATOMIC_RESOURCE_REPLACEMENT"
+    },
+    {
+      "guidance": "Test that verify file content independently of its supplied name",
+      "id": "FIXTURE-TEST-FILE_CONTENT_VERIFICATION",
+      "mapping_id": "FIXTURE-MAP-FILE_CONTENT_VERIFICATION",
+      "mapping_version": "0.1.0",
+      "parameters": {},
+      "source_policy_id": "FILE_CONTENT_VERIFICATION"
+    },
+    {
+      "guidance": "Test that accept only these media types: image/jpeg, image/png",
+      "id": "FIXTURE-TEST-FILE_MEDIA_TYPE_ALLOWLIST",
+      "mapping_id": "FIXTURE-MAP-FILE_MEDIA_TYPE_ALLOWLIST",
+      "mapping_version": "0.1.0",
+      "parameters": {
+        "allowed_media_types": [
+          "image/jpeg",
+          "image/png"
+        ]
+      },
+      "source_policy_id": "FILE_MEDIA_TYPE_ALLOWLIST"
+    },
+    {
+      "guidance": "Test that reject files exceeding 5242880 bytes",
+      "id": "FIXTURE-TEST-FILE_SIZE_LIMIT",
+      "mapping_id": "FIXTURE-MAP-FILE_SIZE_LIMIT",
+      "mapping_version": "0.1.0",
+      "parameters": {
+        "maximum_bytes": 5242880
+      },
+      "source_policy_id": "FILE_SIZE_LIMIT"
+    },
+    {
+      "guidance": "Test that validate external values at the system boundary",
+      "id": "FIXTURE-TEST-INPUT_VALIDATION",
+      "mapping_id": "FIXTURE-MAP-INPUT_VALIDATION",
+      "mapping_version": "0.1.0",
+      "parameters": {},
+      "source_policy_id": "INPUT_VALIDATION"
+    },
+    {
+      "guidance": "Test that clean up the replaced resource after successful commit",
+      "id": "FIXTURE-TEST-REPLACED_RESOURCE_LIFECYCLE",
+      "mapping_id": "FIXTURE-MAP-REPLACED_RESOURCE_LIFECYCLE",
+      "mapping_version": "0.1.0",
+      "parameters": {},
+      "source_policy_id": "REPLACED_RESOURCE_LIFECYCLE"
+    },
+    {
+      "guidance": "Test that authorize access against the target resource",
+      "id": "FIXTURE-TEST-RESOURCE_LEVEL_AUTHORIZATION",
+      "mapping_id": "FIXTURE-MAP-RESOURCE_LEVEL_AUTHORIZATION",
+      "mapping_version": "0.1.0",
+      "parameters": {},
+      "source_policy_id": "RESOURCE_LEVEL_AUTHORIZATION"
+    },
+    {
+      "guidance": "Test that deliver image content using a safe media response",
+      "id": "FIXTURE-TEST-SAFE_IMAGE_DELIVERY",
+      "mapping_id": "FIXTURE-MAP-SAFE_IMAGE_DELIVERY",
+      "mapping_version": "0.1.0",
+      "parameters": {},
+      "source_policy_id": "SAFE_IMAGE_DELIVERY"
+    },
+    {
+      "guidance": "Test that exclude unsafe external values from structured logs",
+      "id": "FIXTURE-TEST-SAFE_LOGGING",
+      "mapping_id": "FIXTURE-MAP-SAFE_LOGGING",
+      "mapping_version": "0.1.0",
+      "parameters": {},
+      "source_policy_id": "SAFE_LOGGING"
+    },
+    {
+      "guidance": "Test that generate storage identifiers inside the trusted boundary",
+      "id": "FIXTURE-TEST-SERVER_GENERATED_STORAGE_KEY",
+      "mapping_id": "FIXTURE-MAP-SERVER_GENERATED_STORAGE_KEY",
+      "mapping_version": "0.1.0",
+      "parameters": {},
+      "source_policy_id": "SERVER_GENERATED_STORAGE_KEY"
+    }
+  ]
+}

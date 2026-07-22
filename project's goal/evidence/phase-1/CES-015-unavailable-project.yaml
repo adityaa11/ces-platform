@@ -1,0 +1,16 @@
+schema_version: 1.0.0
+project:
+  id: unavailable-adapter-version
+  name: Unavailable Adapter Version
+assurance:
+  exposure: public_internet
+  criticality: business_critical
+  data_classes: [personal]
+technical:
+  language: php
+  framework: laravel
+ces:
+  baseline_version: 0.1.0
+  adapter:
+    id: laravel
+    version: 9.9.9
