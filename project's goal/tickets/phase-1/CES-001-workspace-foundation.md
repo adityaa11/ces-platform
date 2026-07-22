@@ -2,7 +2,7 @@
 
 **Phase:** 1 — Deterministic Core and Reference Adapter
 **Parent:** [CES-000](CES-000-parent-mvp.md)
-**Status:** Planned
+**Status:** Done
 
 ## Goal
 
@@ -19,18 +19,20 @@ Create the TypeScript/Node.js ES-module monorepo on pnpm with strict dependency 
 
 ## Acceptance criteria
 
-- [ ] A clean `pnpm install` creates one committed lockfile.
-- [ ] `pnpm build`, `pnpm typecheck`, and `pnpm test` are available at the root.
-- [ ] Packages cannot import undeclared or phantom dependencies.
-- [ ] Workspace cycles fail validation.
-- [ ] Node and pnpm versions are pinned consistently.
+- [x] A clean `pnpm install` creates one committed lockfile.
+- [x] `pnpm build`, `pnpm typecheck`, and `pnpm test` are available at the root.
+- [x] Packages cannot import undeclared or phantom dependencies.
+- [x] Workspace cycles fail validation.
+- [x] Node and pnpm versions are pinned consistently.
 
 ## Required evidence
 
-- [ ] Commit or diff shows the root workspace, package, TypeScript, and Vitest configuration files.
-- [ ] Attach output from clean `pnpm install`, `pnpm build`, `pnpm typecheck`, and `pnpm test` runs.
-- [ ] Attach a negative-test result proving an undeclared dependency or workspace cycle is rejected.
-- [ ] Record the installed Node and pnpm versions and confirm they match the pinned versions.
+- [x] Commit or diff shows the root workspace, package, TypeScript, and Vitest configuration files.
+- [x] Attach output from clean `pnpm install`, `pnpm build`, `pnpm typecheck`, and `pnpm test` runs.
+- [x] Attach a negative-test result proving an undeclared dependency or workspace cycle is rejected.
+- [x] Record the installed Node and pnpm versions and confirm they match the pinned versions.
+
+Evidence: [CES-001 implementation evidence](../../evidence/phase-1/CES-001.md)
 
 ## Exclusions
 

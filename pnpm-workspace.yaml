@@ -1,0 +1,14 @@
+packages:
+  - apps/*
+  - packages/*
+  - adapters/*
+
+nodeLinker: isolated
+sharedWorkspaceLockfile: true
+linkWorkspacePackages: false
+saveWorkspaceProtocol: rolling
+strictPeerDependencies: true
+disallowWorkspaceCycles: true
+failIfNoMatch: true
+shamefullyHoist: false
+publicHoistPattern: []

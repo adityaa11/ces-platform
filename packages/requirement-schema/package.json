@@ -1,0 +1,17 @@
+{
+  "name": "@company/ces-requirement-schema",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "dependencies": {
+    "@company/ces-business-rule-schema": "workspace:*",
+    "yaml": "2.9.0",
+    "zod": "4.4.3"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "typecheck": "tsc --build --pretty false"
+  }
+}
