@@ -190,7 +190,7 @@ Adding a Spring, .NET, NestJS, or Go adapter must not require changes to:
 - Policy Manifest schemas;
 - core compiler contracts.
 
-A new stack should require:
+A new stack must not require rewriting the core. During Phase 1, a complete reference adapter requires:
 
 ```text
 New adapter package
@@ -198,7 +198,7 @@ New adapter package
 + adapter contract tests
 ```
 
-It should not require rewriting the CES core.
+In the Phase 4 production ecosystem, new stack support may instead add or combine independently versioned adapter components. Neither model may require changes to the CES core or Policy Manifest.
 
 ## Dependency Direction
 
@@ -932,7 +932,9 @@ Not every engineering obligation can be proven through static analysis.
 
 ---
 
-# 10. Reusable GitHub Workflow
+# 10. Target Phase 2 Reusable GitHub Workflow
+
+This workflow is target Phase 2 functionality. Phase 1 provides local compilation, local verification, automated repository tests, and a locally buildable Docker image; it does not publish images or enforce pull requests.
 
 The reusable workflow connects CES to client repositories.
 
@@ -992,7 +994,9 @@ For maximum reproducibility, use an exact commit SHA.
 
 ---
 
-# 11. Published CES Image
+# 11. Target Phase 2 Published CES Image
+
+Publishing the CES image to a registry is Phase 2 functionality. Phase 1 includes only a locally buildable image used to validate packaging and execution.
 
 The central repository publishes a versioned CES container image.
 
@@ -1074,9 +1078,29 @@ Go
 
 ---
 
-# 13. Minimum Client Repository Footprint
+# 13. Client Repository Footprints
 
-Each project should contain only a small CES integration layer.
+## Current Phase 1 Footprint
+
+Phase 1 requires only the local CES configuration, structured inputs, reproducibility lock, and generated artifacts:
+
+```text
+client-project/
+├── .ces/
+│   ├── project.yaml
+│   ├── requirements/
+│   │   └── REQ-USER-014.yaml
+│   ├── generated/
+│   └── ces.lock
+├── src/
+└── tests/
+```
+
+There is no Phase 1 `.ces/overrides/` contract or required GitHub workflow.
+
+## Target Footprint After Later Phases
+
+Later phases may extend the small CES integration layer with governed overrides and pull-request automation:
 
 ```text
 client-project/
@@ -1112,7 +1136,7 @@ adapter:
 
 This makes requirement compilation reproducible.
 
-The `.ces/overrides/` location is reserved for future governance capabilities. Phase 1 must not define or implement policy override precedence, approved exceptions, approval metadata, expiration, or review workflows.
+The `.github/workflows/ces.yml` caller belongs to Phase 2. The `.ces/overrides/` location belongs to Phase 5 governance. Phase 1 must not define or implement policy override precedence, approved exceptions, approval metadata, expiration, or review workflows.
 
 ---
 
@@ -1261,7 +1285,9 @@ generated/laravel/
 └── verification-manifest.json
 ```
 
-## Phase 2: Verification
+## Phase 2: Verification Integration, Publication, and Pull-Request Enforcement
+
+Phase 1 already implements initial local manifest and source/test verification. Phase 2 operationalizes it across client repositories.
 
 Add:
 

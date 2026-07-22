@@ -51,6 +51,19 @@ Structured Requirement YAML or JSON
 
 Natural-language PRD and PDF extraction are not part of Phase 1.
 
+## Client footprint by phase
+
+Phase 1 client projects need only:
+
+```text
+.ces/project.yaml
+.ces/requirements/
+.ces/generated/
+.ces/ces.lock
+```
+
+The reusable `.github/workflows/ces.yml` integration is a Phase 2 target. Structured `.ces/overrides/` and exception governance are Phase 5 targets, not Phase 1 contracts.
+
 ## Deferred capabilities
 
 - Phase 2: verification integration, container publication, and pull-request enforcement.
