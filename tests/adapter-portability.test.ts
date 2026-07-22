@@ -10,7 +10,7 @@ describe("cross-adapter Policy Manifest portability", () => {
     const manifest = PolicyManifestSchema.parse(
       JSON.parse(
         readFileSync(
-          resolve("project's goal/evidence/phase-1/CES-004-policy-manifest.json"),
+          resolve("project's goal/evidence/phase-1/CES-016-profile-policy-manifest.json"),
           "utf8",
         ),
       ),

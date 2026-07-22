@@ -1,7 +1,10 @@
 import { createHash } from "node:crypto";
 import {
+  defaultCapabilityTraitRegistry,
   resolveCapabilitiesAndTraits,
+  type CapabilityTraitRegistry,
   type CapabilityTraitResolution,
+  type ResolutionRule,
 } from "@company/ces-capability-resolver";
 import {
   PolicyManifestSchema,
@@ -31,6 +34,7 @@ export interface PolicyCompilationInput {
   readonly assurance: ProjectAssuranceContext;
   readonly ces_baseline_version: string;
   readonly registry?: PolicyRegistry;
+  readonly vocabulary_registry?: CapabilityTraitRegistry;
 }
 
 export interface PolicyCompilationResult {
@@ -54,16 +58,38 @@ export function compilePolicyManifest(
   input: PolicyCompilationInput,
 ): PolicyCompilationResult {
   const registry = input.registry ?? defaultPolicyRegistry;
-  const vocabulary = resolveCapabilitiesAndTraits(input.requirement);
+  const vocabularyRegistry = input.vocabulary_registry ?? defaultCapabilityTraitRegistry;
+  const vocabulary = resolveCapabilitiesAndTraits(input.requirement, vocabularyRegistry);
   const policyRelevantRequirement = getPolicyRelevantRequirement(input.requirement);
   const inputHash = hashCanonical({
     requirement: policyRelevantRequirement,
     assurance: input.assurance,
   });
+  const capabilityRegistryHash = hashCanonical({
+    version: vocabularyRegistry.capability_registry_version,
+    definitions: [...vocabularyRegistry.capabilities].sort(compareText),
+    rules: normalizeResolutionRules(
+      vocabularyRegistry.rules.filter(({ target_kind }) => target_kind === "capability"),
+    ),
+  });
+  const traitRegistryHash = hashCanonical({
+    version: vocabularyRegistry.trait_registry_version,
+    definitions: [...vocabularyRegistry.traits].sort(compareText),
+    rules: normalizeResolutionRules(
+      vocabularyRegistry.rules.filter(({ target_kind }) => target_kind === "trait"),
+    ),
+  });
   const registryHashInput = {
     version: registry.version,
-    definitions: [...registry.definitions].sort(compareById),
-    rules: [...registry.rules].sort(compareById),
+    definitions: [...registry.definitions]
+      .map((definition) => ({ ...definition, requires: [...definition.requires].sort(compareText) }))
+      .sort(compareById),
+    rules: [...registry.rules]
+      .map((rule) => ({
+        ...rule,
+        parameters: [...rule.parameters].sort((left, right) => compareText(left.name, right.name)),
+      }))
+      .sort(compareById),
   };
   const policyRegistryHash = hashCanonical(registryHashInput);
   const registryErrors = validateRegistry(registry);
@@ -94,10 +120,15 @@ export function compilePolicyManifest(
   }
   const compilationId = hashCanonical({
     input_hash: inputHash,
-    capability_registry_version: vocabulary.capability_registry_version,
-    trait_registry_version: vocabulary.trait_registry_version,
+    requirement: policyRelevantRequirement,
+    assurance: input.assurance,
+    capability_registry_hash: capabilityRegistryHash,
+    trait_registry_hash: traitRegistryHash,
     policy_registry_hash: policyRegistryHash,
     ces_baseline_version: input.ces_baseline_version,
+    resolved_capabilities: vocabulary.resolved_capabilities,
+    resolved_traits: vocabulary.resolved_traits,
+    obligations,
   });
 
   const manifest = PolicyManifestSchema.parse({
@@ -107,7 +138,9 @@ export function compilePolicyManifest(
     requirement_id: input.requirement.requirement.id,
     ces_baseline_version: input.ces_baseline_version,
     capability_registry_version: vocabulary.capability_registry_version,
+    capability_registry_hash: capabilityRegistryHash,
     trait_registry_version: vocabulary.trait_registry_version,
+    trait_registry_hash: traitRegistryHash,
     policy_registry_version: registry.version,
     policy_registry_hash: policyRegistryHash,
     resolved_capabilities: vocabulary.resolved_capabilities,
@@ -462,6 +495,17 @@ function compareById(
   right: { readonly id: string },
 ): number {
   return compareText(left.id, right.id);
+}
+
+function normalizeResolutionRules(rules: readonly ResolutionRule[]): unknown[] {
+  return [...rules]
+    .map((rule) => ({
+      ...rule,
+      all: [...rule.all].sort((left, right) =>
+        compareText(canonicalJson(left), canonicalJson(right)),
+      ),
+    }))
+    .sort(compareById);
 }
 
 function compareText(left: string, right: string): number {

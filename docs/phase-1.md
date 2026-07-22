@@ -14,6 +14,8 @@ structured Requirement Package
 
 The core receives requirement facts and assurance context. Technical context is passed only to the adapter stage. Adapters may explain how to implement an obligation but cannot add, remove, weaken, or reinterpret policies. Every generated adapter item records its source Policy Manifest, policy ID, adapter version, mapping ID, and mapping version.
 
+Each Policy Manifest records content-derived SHA-256 identities for the capability, trait, and policy registries alongside their declared versions. Registry definitions, rules, predicates, dependencies, and parameter bindings are normalized before hashing, so semantic reordering is stable while content mutations change identity. The final `compilation_id` covers normalized requirement and assurance input, all registry hashes, the resolved vocabulary, final obligations, and the CES baseline version.
+
 The Policy Manifest is portable: the Laravel and test-fixture adapters consume the same bytes. The fixture is a test-only contract probe, is rejected outside explicit test mode, and is not approved production guidance or the future Phase 4 `generic-guidance` adapter.
 
 Normal `compile` and `compile-adapter` runs load the exact adapter ID and version declared at `project.ces.adapter`; no CLI adapter selection is required. The legacy `--adapter` option is rejected. A deliberate diagnostic workflow may use `--override-adapter <id>@<version>`, and test-fixture adapters additionally require `--test-mode true`. Unknown IDs and unavailable versions fail with exit code 2 before adapter artifacts are emitted.

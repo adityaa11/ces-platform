@@ -18,6 +18,12 @@ import {
 } from "@company/ces-requirement-schema";
 import { z } from "zod";
 
+export { defaultCapabilityTraitRegistry } from "@company/ces-capability-registry";
+export type {
+  CapabilityTraitRegistry,
+  ResolutionRule,
+} from "@company/ces-capability-registry";
+
 export const CAPABILITY_RESOLUTION_SCHEMA_VERSION = "1.0.0" as const;
 
 export type ResolverErrorCode =

@@ -1,4 +1,8 @@
 import { defaultPolicyRegistry, type PolicyRegistry } from "@company/ces-policy-registry";
+import {
+  defaultCapabilityTraitRegistry,
+  type CapabilityTraitRegistry,
+} from "@company/ces-capability-resolver";
 import { parseRequirementPackage } from "@company/ces-requirement-schema";
 import type { ProjectAssuranceContext } from "@company/ces-project-schema";
 import { describe, expect, it } from "vitest";
@@ -65,12 +69,14 @@ function createRequirement(options?: {
 function compile(
   requirement = createRequirement(),
   registry: PolicyRegistry = defaultPolicyRegistry,
+  vocabularyRegistry: CapabilityTraitRegistry = defaultCapabilityTraitRegistry,
 ) {
   return compilePolicyManifest({
     requirement,
     assurance,
     ces_baseline_version: "0.1.0",
     registry,
+    vocabulary_registry: vocabularyRegistry,
   });
 }
 
@@ -242,16 +248,109 @@ describe("compilePolicyManifest", () => {
     );
   });
 
+  it("changes the matching registry hash for every registry mutation category", () => {
+    const original = compile().manifest;
+    const capabilityDefinition: CapabilityTraitRegistry = {
+      ...defaultCapabilityTraitRegistry,
+      capabilities: defaultCapabilityTraitRegistry.capabilities.filter(
+        (id) => id !== "IMAGE_PROCESSING",
+      ),
+      rules: defaultCapabilityTraitRegistry.rules.filter(
+        ({ target_id }) => target_id !== "IMAGE_PROCESSING",
+      ),
+    };
+    const traitDefinition: CapabilityTraitRegistry = {
+      ...defaultCapabilityTraitRegistry,
+      traits: defaultCapabilityTraitRegistry.traits.filter(
+        (id) => id !== "BROWSER_RENDERED_CONTENT",
+      ),
+      rules: defaultCapabilityTraitRegistry.rules.filter(
+        ({ target_id }) => target_id !== "BROWSER_RENDERED_CONTENT",
+      ),
+    };
+    const resolverRule: CapabilityTraitRegistry = {
+      ...defaultCapabilityTraitRegistry,
+      rules: defaultCapabilityTraitRegistry.rules.map((rule) =>
+        rule.id === "CAP-FILE-001" ? { ...rule, reason: `${rule.reason} mutated` } : rule,
+      ),
+    };
+    const policyRule: PolicyRegistry = {
+      ...defaultPolicyRegistry,
+      rules: defaultPolicyRegistry.rules.map((rule) =>
+        rule.id === "POL-INPUT-001" ? { ...rule, reason: `${rule.reason} mutated` } : rule,
+      ),
+    };
+    const policyDefinition: PolicyRegistry = {
+      ...defaultPolicyRegistry,
+      definitions: defaultPolicyRegistry.definitions.map((definition) =>
+        definition.id === "SAFE_LOGGING"
+          ? { ...definition, category: "consistency" as const }
+          : definition,
+      ),
+    };
+    const parameterBinding: PolicyRegistry = {
+      ...defaultPolicyRegistry,
+      rules: defaultPolicyRegistry.rules.map((rule) =>
+        rule.id === "POL-FILE-001"
+          ? {
+              ...rule,
+              parameters: rule.parameters.map((binding) => ({
+                ...binding,
+                name: "maximum_upload_bytes",
+              })),
+            }
+          : rule,
+      ),
+    };
+
+    const mutations = [
+      [compile(createRequirement(), defaultPolicyRegistry, capabilityDefinition).manifest, "capability_registry_hash"],
+      [compile(createRequirement(), defaultPolicyRegistry, traitDefinition).manifest, "trait_registry_hash"],
+      [compile(createRequirement(), defaultPolicyRegistry, resolverRule).manifest, "capability_registry_hash"],
+      [compile(createRequirement(), policyDefinition).manifest, "policy_registry_hash"],
+      [compile(createRequirement(), policyRule).manifest, "policy_registry_hash"],
+      [compile(createRequirement(), parameterBinding).manifest, "policy_registry_hash"],
+    ] as const;
+    for (const [changed, hashField] of mutations) {
+      expect(changed[hashField]).not.toBe(original[hashField]);
+      expect(changed.compilation_id).not.toBe(original.compilation_id);
+    }
+  });
+
   it("is byte-deterministic and independent of registry ordering", () => {
     const reversedRegistry: PolicyRegistry = {
       ...defaultPolicyRegistry,
-      definitions: [...defaultPolicyRegistry.definitions].reverse(),
-      rules: [...defaultPolicyRegistry.rules].reverse(),
+      definitions: [...defaultPolicyRegistry.definitions]
+        .reverse()
+        .map((definition) => ({ ...definition, requires: [...definition.requires].reverse() })),
+      rules: [...defaultPolicyRegistry.rules]
+        .reverse()
+        .map((rule) => ({ ...rule, parameters: [...rule.parameters].reverse() })),
     };
 
     expect(canonicalJson(compile().manifest)).toBe(
       canonicalJson(compile(createRequirement(), reversedRegistry).manifest),
     );
+  });
+
+  it("normalizes vocabulary definitions, rules, and predicate ordering", () => {
+    const rules = defaultCapabilityTraitRegistry.rules.map((rule) =>
+      rule.id === "CAP-FILE-001"
+        ? { ...rule, all: [...rule.all, { ...rule.all[0]! }] }
+        : rule,
+    );
+    const forward: CapabilityTraitRegistry = {
+      ...defaultCapabilityTraitRegistry,
+      rules,
+    };
+    const reversed: CapabilityTraitRegistry = {
+      ...defaultCapabilityTraitRegistry,
+      capabilities: [...defaultCapabilityTraitRegistry.capabilities].reverse(),
+      traits: [...defaultCapabilityTraitRegistry.traits].reverse(),
+      rules: [...rules].reverse().map((rule) => ({ ...rule, all: [...rule.all].reverse() })),
+    };
+    expect(canonicalJson(compile(createRequirement(), defaultPolicyRegistry, reversed).manifest))
+      .toBe(canonicalJson(compile(createRequirement(), defaultPolicyRegistry, forward).manifest));
   });
 
   it("keeps technical and adapter terminology out of the manifest", () => {

@@ -2,7 +2,7 @@
 
 **Phase:** 1 — Deterministic Core and Reference Adapter
 **Parent:** [CES-000](CES-000-parent-mvp.md)
-**Status:** Planned
+**Status:** Done
 
 ## Goal
 
@@ -18,12 +18,12 @@ Make compilation identity sensitive to normalized capability, trait, and policy 
 
 ## Acceptance criteria
 
-- [ ] Mutating any definition, resolver rule, policy rule, or parameter binding changes compilation identity without a version change.
-- [ ] Reordering equivalent registry content does not change hashes or output.
-- [ ] Identical content and versions reproduce byte-identical manifests.
+- [x] Mutating any definition, resolver rule, policy rule, or parameter binding changes compilation identity without a version change.
+- [x] Reordering equivalent registry content does not change hashes or output.
+- [x] Identical content and versions reproduce byte-identical manifests.
 
 ## Required evidence
 
-- [ ] Attach before/after hashes for every mutation category.
-- [ ] Attach ordering-invariance and repeat-compilation tests.
-- [ ] Attach the updated profile-picture Policy Manifest.
+- [x] Attach before/after hashes for every mutation category.
+- [x] Attach ordering-invariance and repeat-compilation tests.
+- [x] Attach the updated profile-picture Policy Manifest.

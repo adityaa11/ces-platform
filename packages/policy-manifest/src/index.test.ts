@@ -10,7 +10,9 @@ const manifest = {
   requirement_id: "REQ-USER-014",
   ces_baseline_version: "0.1.0",
   capability_registry_version: "0.1.0",
+  capability_registry_hash: `sha256:${"b".repeat(64)}`,
   trait_registry_version: "0.1.0",
+  trait_registry_hash: `sha256:${"c".repeat(64)}`,
   policy_registry_version: "0.1.0",
   policy_registry_hash: `sha256:${"a".repeat(64)}`,
   obligations: [
