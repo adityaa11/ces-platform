@@ -19,6 +19,8 @@ jobs:
       - run: corepack enable
       - run: corepack pnpm install --frozen-lockfile
       - run: corepack pnpm check
+      - name: Phase 2 client integration boundary
+        run: corepack pnpm exec vitest run tests/phase-2-integration.test.ts
       - run: docker build -t ces-cli:local .
       - run: docker run --rm ces-cli:local --help
       - name: Mounted project-pinned compilation

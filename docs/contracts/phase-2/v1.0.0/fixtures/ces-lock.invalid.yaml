@@ -1,0 +1,6 @@
+schema_version: "1.0.0"
+ces:
+  commit: main
+adapter:
+  id: example-adapter
+  version: "0.1.0"

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ces.example/contracts/phase-2/v1.0.0/ces-lock.schema.json",
+  "title": "CES lock",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "ces", "adapter"],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "ces": {
+      "type": "object", "additionalProperties": false, "required": ["commit"],
+      "properties": { "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" } }
+    },
+    "adapter": {
+      "type": "object", "additionalProperties": false, "required": ["id", "version"],
+      "properties": { "id": { "type": "string", "minLength": 1 }, "version": { "type": "string", "minLength": 1 } }
+    }
+  }
+}

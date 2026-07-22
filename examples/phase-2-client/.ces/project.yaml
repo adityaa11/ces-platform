@@ -1,0 +1,21 @@
+schema_version: 1.0.0
+project:
+  id: phase-2-reference-client
+  name: Phase 2 Reference Client
+assurance:
+  exposure: public_internet
+  criticality: business_critical
+  data_classes: [personal]
+technical:
+  language: php
+  framework: laravel
+  framework_version: "12"
+  database: postgresql
+  queue: redis
+  storage: s3_compatible
+  test_framework: phpunit
+ces:
+  baseline_version: 0.1.0
+  adapter:
+    id: laravel
+    version: 0.1.0

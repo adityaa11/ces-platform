@@ -1,0 +1,6 @@
+schema_version: "1.0.0"
+ces:
+  commit: "200ff6dbda67efc846e024ec99b80f60e29737de"
+adapter:
+  id: laravel
+  version: "0.1.0"

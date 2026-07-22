@@ -91,6 +91,19 @@ importers:
         specifier: 4.4.3
         version: 4.4.3
 
+  packages/bootstrap-runner:
+    dependencies:
+      '@company/ces-integration-contracts':
+        specifier: workspace:*
+        version: link:../integration-contracts
+      '@company/ces-project-schema':
+        specifier: workspace:*
+        version: link:../project-schema
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
+
   packages/business-rule-schema:
     dependencies:
       zod:
@@ -129,6 +142,22 @@ importers:
       '@company/ces-project-schema':
         specifier: workspace:*
         version: link:../project-schema
+
+  packages/integration-contracts:
+    dependencies:
+      '@company/ces-project-schema':
+        specifier: workspace:*
+        version: link:../project-schema
+      yaml:
+        specifier: 2.9.0
+        version: 2.9.0
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
 
   packages/policy-engine:
     dependencies:

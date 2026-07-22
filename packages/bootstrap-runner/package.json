@@ -1,0 +1,19 @@
+{
+  "name": "@company/ces-bootstrap-runner",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "dependencies": {
+    "@company/ces-integration-contracts": "workspace:*",
+    "@company/ces-project-schema": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "typecheck": "tsc --build --pretty false"
+  }
+}
