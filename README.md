@@ -50,8 +50,7 @@ corepack pnpm check
 node apps/cli/dist/index.js compile \
   --requirement examples/profile-picture.requirement.yaml \
   --project examples/laravel-project.yaml \
-  --adapter laravel \
-  --output .ces/generated/REQ-USER-014/laravel
+  --output .ces/generated/REQ-USER-014
 ```
 
 The blocked example uses `examples/profile-picture.blocked.yaml`; it writes a diagnostic Policy Manifest and exits before adapter compilation.

@@ -15,14 +15,13 @@ docker run --rm ces-cli:local --help
 docker run --rm -v "${PWD}:/workspace" ces-cli:local compile \
   --requirement /workspace/examples/profile-picture.requirement.yaml \
   --project /workspace/examples/laravel-project.yaml \
-  --adapter laravel \
-  --output /workspace/.ces/generated/REQ-USER-014/docker-laravel
+  --output /workspace/.ces/generated/REQ-USER-014
 
   exit code: 0
   mounted output files:
-    implementation-plan.json
-    implementation-task.md
-    policy-manifest.json
-    requirement-package.json
-    test-manifest.json
-    verification-manifest.json
+    core/requirement-package.json
+    core/policy-manifest.json
+    adapters/laravel/implementation-plan.json
+    adapters/laravel/implementation-task.md
+    adapters/laravel/test-manifest.json
+    adapters/laravel/verification-manifest.json

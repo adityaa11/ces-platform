@@ -10,7 +10,7 @@ Generate deterministic implementation artifacts from a resolved Policy Manifest,
 
 ## Work
 
-- Implement `compile-adapter --policy-manifest --project --adapter --output`.
+- Implement `compile-adapter --policy-manifest --project --output`, with adapter selection supplied by project configuration.
 - Implement `compile` as `resolve-policy → validate unblocked → compile-adapter` orchestration.
 - Generate `implementation-plan.json`, `implementation-task.md`, `test-manifest.json`, and `verification-manifest.json`.
 - Use stable keys, arrays, Markdown sections, whitespace, UTF-8, and LF endings.
