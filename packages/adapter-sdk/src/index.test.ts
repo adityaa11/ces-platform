@@ -46,6 +46,7 @@ const adapter = {
   metadata: {
     schema_version: "1.0.0" as const,
     adapter: { id: "contract-fixture", version: "0.1.0", mapping_version: "0.1.0" },
+    classification: "production" as const,
     compatible_policy_manifest_versions: ["1.0.0"],
     technical_compatibility: { languages: ["fixture-language"], frameworks: ["fixture-framework"] },
   },

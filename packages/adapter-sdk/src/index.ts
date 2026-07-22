@@ -18,6 +18,7 @@ export const AdapterMetadataSchema = z
   .object({
     schema_version: z.literal(ADAPTER_SDK_SCHEMA_VERSION),
     adapter: VersionedAdapterSchema,
+    classification: z.enum(["production", "test_fixture"]),
     compatible_policy_manifest_versions: z.array(NonEmptyString).min(1),
     technical_compatibility: z
       .object({
@@ -77,7 +78,33 @@ export const AdapterDefinitionSchema = z
     metadata: AdapterMetadataSchema,
     mappings: z.array(AdapterPolicyMappingSchema),
   })
-  .strict();
+  .strict()
+  .superRefine((definition, context) => {
+    const policyIds = new Set<string>();
+    for (const [mappingIndex, mapping] of definition.mappings.entries()) {
+      if (policyIds.has(mapping.policy_id)) {
+        context.addIssue({
+          code: "custom",
+          path: ["mappings", mappingIndex, "policy_id"],
+          message: `Duplicate mapping for policy ${mapping.policy_id}`,
+        });
+      }
+      policyIds.add(mapping.policy_id);
+      for (const item of [
+        ...mapping.implementation,
+        ...mapping.tests,
+        ...mapping.verification,
+      ]) {
+        if (item.mapping_version !== definition.metadata.adapter.mapping_version) {
+          context.addIssue({
+            code: "custom",
+            path: ["mappings", mappingIndex],
+            message: `Guidance ${item.id} must use adapter mapping version ${definition.metadata.adapter.mapping_version}`,
+          });
+        }
+      }
+    }
+  });
 
 export const AdapterGapSchema = z
   .object({
@@ -220,9 +247,18 @@ export function createAdapterRegistry(adapters: readonly AdapterDefinition[]) {
     byKey.set(key, adapter);
   }
   return {
-    get(id: string, version: string): AdapterDefinition {
+    get(
+      id: string,
+      version: string,
+      options: { readonly test_mode?: boolean } = {},
+    ): AdapterDefinition {
       const adapter = byKey.get(adapterKey(id, version));
       if (!adapter) throw new AdapterCompatibilityError(`Adapter ${id}@${version} is not registered`);
+      if (adapter.metadata.classification === "test_fixture" && options.test_mode !== true) {
+        throw new AdapterCompatibilityError(
+          `Test-fixture adapter ${id}@${version} requires explicit test mode`,
+        );
+      }
       return adapter;
     },
   };

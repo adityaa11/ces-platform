@@ -1,0 +1,3 @@
+production mode: rejected — Test-fixture adapter test-fixture@0.1.0 requires explicit test mode
+test mode: accepted — exit code 0, all nine initial policy mappings selected
+deliberate gap fixture: exit code 5, ATOMIC_RESOURCE_REPLACEMENT unsupported, no implementation package emitted

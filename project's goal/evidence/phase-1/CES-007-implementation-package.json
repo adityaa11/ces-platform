@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "source_requirement_id": "REQ-USER-014",
+  "source_compilation_id": "sha256:240139824b60a83ac65a17fcbf2db171c604f0fd9bc924f3a24402dfe3a545fa",
+  "ces_baseline_version": "0.1.0",
+  "policy_registry_version": "0.1.0",
+  "adapter": {
+    "id": "test-fixture",
+    "version": "0.1.0",
+    "mapping_version": "0.1.0"
+  },
+  "implementation_items": [
+    { "id": "FIXTURE-IMPLEMENT-ATOMIC_RESOURCE_REPLACEMENT", "source_policy_id": "ATOMIC_RESOURCE_REPLACEMENT", "mapping_id": "FIXTURE-MAP-ATOMIC_RESOURCE_REPLACEMENT", "mapping_version": "0.1.0", "guidance": "Commit replacement state atomically" },
+    { "id": "FIXTURE-IMPLEMENT-FILE_CONTENT_VERIFICATION", "source_policy_id": "FILE_CONTENT_VERIFICATION", "mapping_id": "FIXTURE-MAP-FILE_CONTENT_VERIFICATION", "mapping_version": "0.1.0", "guidance": "Verify file content independently of its supplied name" },
+    { "id": "FIXTURE-IMPLEMENT-FILE_SIZE_LIMIT", "source_policy_id": "FILE_SIZE_LIMIT", "mapping_id": "FIXTURE-MAP-FILE_SIZE_LIMIT", "mapping_version": "0.1.0", "guidance": "Reject files exceeding the resolved byte limit" },
+    { "id": "FIXTURE-IMPLEMENT-INPUT_VALIDATION", "source_policy_id": "INPUT_VALIDATION", "mapping_id": "FIXTURE-MAP-INPUT_VALIDATION", "mapping_version": "0.1.0", "guidance": "Validate external values at the system boundary" },
+    { "id": "FIXTURE-IMPLEMENT-REPLACED_RESOURCE_LIFECYCLE", "source_policy_id": "REPLACED_RESOURCE_LIFECYCLE", "mapping_id": "FIXTURE-MAP-REPLACED_RESOURCE_LIFECYCLE", "mapping_version": "0.1.0", "guidance": "Clean up the replaced resource after successful commit" },
+    { "id": "FIXTURE-IMPLEMENT-RESOURCE_LEVEL_AUTHORIZATION", "source_policy_id": "RESOURCE_LEVEL_AUTHORIZATION", "mapping_id": "FIXTURE-MAP-RESOURCE_LEVEL_AUTHORIZATION", "mapping_version": "0.1.0", "guidance": "Authorize access against the target resource" },
+    { "id": "FIXTURE-IMPLEMENT-SAFE_IMAGE_DELIVERY", "source_policy_id": "SAFE_IMAGE_DELIVERY", "mapping_id": "FIXTURE-MAP-SAFE_IMAGE_DELIVERY", "mapping_version": "0.1.0", "guidance": "Deliver image content using a safe media response" },
+    { "id": "FIXTURE-IMPLEMENT-SAFE_LOGGING", "source_policy_id": "SAFE_LOGGING", "mapping_id": "FIXTURE-MAP-SAFE_LOGGING", "mapping_version": "0.1.0", "guidance": "Exclude unsafe external values from structured logs" },
+    { "id": "FIXTURE-IMPLEMENT-SERVER_GENERATED_STORAGE_KEY", "source_policy_id": "SERVER_GENERATED_STORAGE_KEY", "mapping_id": "FIXTURE-MAP-SERVER_GENERATED_STORAGE_KEY", "mapping_version": "0.1.0", "guidance": "Generate storage identifiers inside the trusted boundary" }
+  ]
+}

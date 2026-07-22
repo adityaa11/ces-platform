@@ -2,9 +2,15 @@
   "name": "@company/ces-test-fixture-adapter",
   "version": "0.0.0",
   "private": true,
+  "description": "Test-only CES contract fixture; unsafe and unapproved for production guidance",
   "type": "module",
   "exports": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "dependencies": {
+    "@company/ces-adapter-sdk": "workspace:*",
+    "@company/ces-policy-manifest": "workspace:*",
+    "@company/ces-project-schema": "workspace:*"
+  },
   "scripts": {
     "build": "tsc --build",
     "typecheck": "tsc --build --pretty false"

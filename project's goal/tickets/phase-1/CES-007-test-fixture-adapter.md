@@ -2,7 +2,7 @@
 
 **Phase:** 1 — Deterministic Core and Reference Adapter
 **Parent:** [CES-000](CES-000-parent-mvp.md)
-**Status:** Planned
+**Status:** In progress — cross-adapter hash evidence awaits CES-008
 
 ## Goal
 
@@ -22,24 +22,26 @@ It is test-only. It must not be selected for production project compilation, and
 
 ## Acceptance criteria
 
-- [ ] The adapter consumes the profile-picture Policy Manifest unchanged.
-- [ ] Its outputs contain generic patterns and no Laravel terminology.
-- [ ] Its documentation and package metadata explicitly mark it as test-only and unsafe as production guidance.
-- [ ] Production compilation rejects the fixture adapter unless explicit test mode is active.
-- [ ] Its output is never described as approved production guidance.
-- [ ] Core schemas and resolution code need no modification.
-- [ ] Adapter contract and gap tests pass.
-- [ ] Removing every production adapter still leaves core and fixture tests green.
+- [x] The adapter consumes the profile-picture Policy Manifest unchanged.
+- [x] Its outputs contain generic patterns and no Laravel terminology.
+- [x] Its documentation and package metadata explicitly mark it as test-only and unsafe as production guidance.
+- [x] Production compilation rejects the fixture adapter unless explicit test mode is active.
+- [x] Its output is never described as approved production guidance.
+- [x] Core schemas and resolution code need no modification.
+- [x] Adapter contract and gap tests pass.
+- [x] Removing every production adapter still leaves core and fixture tests green.
 - [ ] Laravel and fixture compilation consume the same unchanged Policy Manifest.
 
 ## Required evidence
 
-- [ ] Attach the fixture implementation package generated from the shared Policy Manifest.
-- [ ] Attach adapter contract-test and deliberate adapter-gap test output.
-- [ ] Attach a scan proving fixture output contains no Laravel terminology.
-- [ ] Attach a core-and-fixture test run with production adapters unavailable.
-- [ ] Attach a package/documentation check proving the fixture cannot be mistaken for the future production `generic-guidance` adapter.
-- [ ] Attach fixture metadata showing its test-only classification.
-- [ ] Attach rejected production-mode and accepted test-mode selection results.
+- [x] Attach the fixture implementation package generated from the shared Policy Manifest.
+- [x] Attach adapter contract-test and deliberate adapter-gap test output.
+- [x] Attach a scan proving fixture output contains no Laravel terminology.
+- [x] Attach a core-and-fixture test run with production adapters unavailable.
+- [x] Attach a package/documentation check proving the fixture cannot be mistaken for the future production `generic-guidance` adapter.
+- [x] Attach fixture metadata showing its test-only classification.
+- [x] Attach rejected production-mode and accepted test-mode selection results.
 - [ ] Attach source-manifest hashes from Laravel and fixture compilation proving identical input.
+
+Evidence: [CES-007 verification record](../../evidence/phase-1/CES-007.md)
 

@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0.0",
+  "adapter": {
+    "id": "test-fixture",
+    "version": "0.1.0",
+    "mapping_version": "0.1.0"
+  },
+  "classification": "test_fixture",
+  "compatible_policy_manifest_versions": ["1.0.0"],
+  "technical_compatibility": {
+    "languages": [],
+    "frameworks": []
+  }
+}
