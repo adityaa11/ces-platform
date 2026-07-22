@@ -39,6 +39,18 @@ importers:
         specifier: 24.13.3
         version: 24.13.3
 
+  packages/adapter-sdk:
+    dependencies:
+      '@company/ces-policy-manifest':
+        specifier: workspace:*
+        version: link:../policy-manifest
+      '@company/ces-project-schema':
+        specifier: workspace:*
+        version: link:../project-schema
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+
   packages/business-rule-schema:
     dependencies:
       zod:

@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "source_compilation_id": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "adapter": {
+    "id": "contract-fixture",
+    "version": "0.1.0",
+    "mapping_version": "0.1.0"
+  },
+  "status": "gaps_found",
+  "gaps": [
+    {
+      "policy_id": "INPUT_VALIDATION",
+      "adapter_id": "contract-fixture",
+      "adapter_version": "0.1.0",
+      "status": "unsupported",
+      "reason": "The selected adapter version has no mapping for this policy"
+    }
+  ]
+}
