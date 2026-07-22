@@ -8,7 +8,9 @@
 
 Prove that CES policy output is portable and that Laravel is not the core's internal model.
 
-The test-fixture adapter exists only to prove Policy Manifest portability, Adapter SDK correctness, framework independence of the CES core, and deterministic adapter compilation. It is not a production generic-guidance fallback. Production generic guidance is a separate Phase 4 capability.
+The test-fixture adapter exists only to prove Policy Manifest portability, Adapter SDK correctness, framework independence of the CES core, and deterministic adapter compilation.
+
+It is test-only. It must not be selected for production project compilation, and it is not the Phase 4 production generic-guidance fallback.
 
 ## Work
 
@@ -16,15 +18,19 @@ The test-fixture adapter exists only to prove Policy Manifest portability, Adapt
 - Produce generic implementation, test, and verification guidance.
 - Implement at least one deliberate unsupported-policy fixture for gap tests.
 - Register the adapter only through the Adapter SDK and registry.
+- Mark its adapter metadata as a test fixture and require explicit test mode before selection.
 
 ## Acceptance criteria
 
 - [ ] The adapter consumes the profile-picture Policy Manifest unchanged.
 - [ ] Its outputs contain generic patterns and no Laravel terminology.
 - [ ] Its documentation and package metadata explicitly mark it as test-only and unsafe as production guidance.
+- [ ] Production compilation rejects the fixture adapter unless explicit test mode is active.
+- [ ] Its output is never described as approved production guidance.
 - [ ] Core schemas and resolution code need no modification.
 - [ ] Adapter contract and gap tests pass.
 - [ ] Removing every production adapter still leaves core and fixture tests green.
+- [ ] Laravel and fixture compilation consume the same unchanged Policy Manifest.
 
 ## Required evidence
 
@@ -33,4 +39,7 @@ The test-fixture adapter exists only to prove Policy Manifest portability, Adapt
 - [ ] Attach a scan proving fixture output contains no Laravel terminology.
 - [ ] Attach a core-and-fixture test run with production adapters unavailable.
 - [ ] Attach a package/documentation check proving the fixture cannot be mistaken for the future production `generic-guidance` adapter.
+- [ ] Attach fixture metadata showing its test-only classification.
+- [ ] Attach rejected production-mode and accepted test-mode selection results.
+- [ ] Attach source-manifest hashes from Laravel and fixture compilation proving identical input.
 

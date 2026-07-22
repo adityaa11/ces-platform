@@ -39,7 +39,7 @@ The CES core must support any present or future stack. Laravel is only the first
 | 4 | [CES-004](CES-004-policy-engine.md) | Deterministic Policy Manifest compilation | CES-002, CES-003 |
 | 5 | [CES-005](CES-005-core-cli.md) | Independently executable core CLI | CES-004 |
 | 6 | [CES-006](CES-006-adapter-sdk.md) | Versioned, stack-neutral adapter contract | CES-002, CES-004 |
-| 7 | [CES-007](CES-007-test-fixture-adapter.md) | Generic adapter proving core portability | CES-006 |
+| 7 | [CES-007](CES-007-test-fixture-adapter.md) | Test-fixture adapter proving core portability | CES-006 |
 | 8 | [CES-008](CES-008-laravel-reference-adapter.md) | Laravel mapping without core leakage | CES-006 |
 | 9 | [CES-009](CES-009-implementation-compiler.md) | Deterministic adapter-derived artifacts | CES-007, CES-008 |
 | 10 | [CES-010](CES-010-verification-engine.md) | Manifest, source, test, and review checks | CES-009 |

@@ -1090,15 +1090,14 @@ client-project/
 │   ├── project.yaml
 │   ├── requirements/
 │   │   └── REQ-USER-014.yaml
-│   ├── generated/
-│   └── ces.lock
+│   └── generated/
 ├── src/
 └── tests/
 ```
 
-There is no Phase 1 `.ces/overrides/` contract or required GitHub workflow.
+There is no Phase 1 `.ces/overrides/` contract, client `ces.lock`, or required GitHub workflow. Phase 1 deterministic outputs still record their input and registry versions; client lock and upgrade behavior belong to later packaging/versioning work.
 
-## Target Footprint After Later Phases
+## Target Client Repository Footprint — Phase 2 and Later
 
 Later phases may extend the small CES integration layer with governed overrides and pull-request automation:
 
@@ -1120,7 +1119,9 @@ client-project/
 
 Agent-specific configuration such as Codex skills or Claude Code instructions is optional and is not part of the required CES client footprint. Such integrations consume CES artifacts; CES core contracts must not depend on them.
 
-## Example `ces.lock`
+## Target `ces.lock` Example
+
+The client lock file and upgrade behavior are later packaging/versioning capabilities, not Phase 1 deliverables.
 
 ```yaml
 ces_image: ghcr.io/company/ces-cli:0.1.0
@@ -1140,18 +1141,40 @@ The `.github/workflows/ces.yml` caller belongs to Phase 2. The `.ces/overrides/`
 
 ---
 
-# 14. Target End-to-End Flow
+# 14. Phase 1 and Target Workflows
+
+## Phase 1 MVP Flow
+
+```text
+Structured Requirement YAML/JSON
+        ↓
+Requirement validation
+        ↓
+Capability and trait resolution
+        ↓
+Stack-agnostic policy resolution
+        ↓
+Policy Manifest
+        ↓
+Laravel reference adapter or test-fixture adapter
+        ↓
+Implementation package
+        ↓
+Local verification
+```
+
+## Target End-to-End Flow — Phase 3 and Later
 
 This is the target workflow after Phase 3 requirement extraction exists. In Phase 1, the flow starts with an already structured Requirement Package in YAML or JSON; CES does not read or extract a natural-language PRD.
 
 ```text
-1. Analyst writes PRD
+1. Analyst writes a PRD, FSD, or Change Request
        ↓
-2. PRD is placed in .ces/requirements
+2. Requirement Engine extracts business rules and uncertainties
        ↓
-3. Requirement Engine extracts Requirement IR
+3. Missing or conflicting information is clarified
        ↓
-4. Evidence, conflicts, and unknowns are validated
+4. A structured Requirement Package is validated with source evidence
        ↓
 5. Capability Resolver selects capabilities and traits
        ↓
@@ -1161,7 +1184,7 @@ This is the target workflow after Phase 3 requirement extraction exists. In Phas
        ↓
 8. Core compiler produces the Policy Manifest
        ↓
-9. Project technical context selects Laravel, Spring, .NET, NestJS, or Go adapter
+9. Project technical context resolves the approved production adapter ecosystem
        ↓
 10. Adapter compiler generates a universal implementation task, tests, and verification manifest
        ↓
@@ -1484,7 +1507,7 @@ The Phase 1 Adapter SDK should avoid decisions that make future component metada
 
 ---
 
-# 16. Suggested CES Repository Structure
+# 16. Suggested Phase 1 CES Repository Structure
 
 ```text
 ces-platform/
@@ -1524,12 +1547,14 @@ ces-platform/
 │   └── end-to-end/
 ├── .github/
 │   └── workflows/
-│       ├── test.yml
-│       ├── publish-image.yml
-│       └── ces-verify.yml
+│       └── test.yml
 ├── Dockerfile
 └── README.md
 ```
+
+The Phase 1 `test.yml` validates the CES monorepo itself and may run installation, type checking, unit and contract tests, architecture-boundary tests, deterministic-output tests, and Docker build validation. It is not a reusable workflow consumed by client repositories.
+
+GHCR publication, `.github/workflows/publish-image.yml`, and the reusable client-project `.github/workflows/ces-verify.yml` are Phase 2 deliverables and must not be implemented during Phase 1.
 
 A TypeScript implementation is reasonable for an MVP because it offers:
 
@@ -1631,7 +1656,10 @@ Create:
 
 - verification engine;
 - CLI;
-- reusable workflow support.
+- local CLI support;
+- local verification support;
+- repository CI support for testing the CES monorepo;
+- a working local Docker image.
 
 No stack-agnostic core package may import from `adapters/`.
 

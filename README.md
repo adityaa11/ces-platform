@@ -26,7 +26,8 @@ Phase 1 proves:
 - framework independence through a test-fixture adapter;
 - one production-shaped Laravel reference adapter;
 - deterministic implementation and verification artifacts;
-- local verification and Docker execution.
+- local verification and Docker execution;
+- repository CI that validates the CES monorepo itself.
 
 ## Planning documents
 
@@ -59,10 +60,9 @@ Phase 1 client projects need only:
 .ces/project.yaml
 .ces/requirements/
 .ces/generated/
-.ces/ces.lock
 ```
 
-The reusable `.github/workflows/ces.yml` integration is a Phase 2 target. Structured `.ces/overrides/` and exception governance are Phase 5 targets, not Phase 1 contracts.
+The reusable `.github/workflows/ces.yml` integration is a Phase 2 target. Client `ces.lock` and upgrade behavior belong to later packaging/versioning work. Structured `.ces/overrides/` and exception governance are Phase 5 targets, not Phase 1 contracts.
 
 ## Deferred capabilities
 
