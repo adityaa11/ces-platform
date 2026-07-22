@@ -2,7 +2,7 @@
 
 **Phase:** 1 — Deterministic Core and Reference Adapter
 **Parent:** None
-**Status:** Planned
+**Status:** Done
 
 ## Objective
 
@@ -55,27 +55,29 @@ The CES core must support any present or future stack. Laravel is only the first
 
 ## Parent acceptance criteria
 
-- [ ] The profile-picture example resolves without loading an adapter.
-- [ ] Its core Policy Manifest is byte-for-byte identical regardless of the adapter later selected.
-- [ ] Laravel and the test-fixture adapter consume that same manifest and produce different valid implementation packages.
-- [ ] Removing Laravel does not break core build or tests.
-- [ ] Blocked requirements, policy conflicts, and adapter gaps write diagnostic output and return their specified nonzero exit codes.
-- [ ] `pnpm build`, `pnpm typecheck`, and `pnpm test` pass.
-- [ ] Two clean compilations produce byte-for-byte identical deterministic artifacts.
-- [ ] The compiled CLI and local Docker image execute the documented workflow.
-- [ ] The same neutral Implementation Package can be handed to a human developer, Codex, or Claude Code without changing core or adapter output.
+- [x] The profile-picture example resolves without loading an adapter.
+- [x] Its core Policy Manifest is byte-for-byte identical regardless of the adapter later selected.
+- [x] Laravel and the test-fixture adapter consume that same manifest and produce different valid implementation packages.
+- [x] Removing Laravel does not break core build or tests.
+- [x] Blocked requirements, policy conflicts, and adapter gaps write diagnostic output and return their specified nonzero exit codes.
+- [x] `pnpm build`, `pnpm typecheck`, and `pnpm test` pass.
+- [x] Two clean compilations produce byte-for-byte identical deterministic artifacts.
+- [x] The compiled CLI and local Docker image execute the documented workflow.
+- [x] The same neutral Implementation Package can be handed to a human developer, Codex, or Claude Code without changing core or adapter output.
 
 ## Required evidence
 
 An acceptance checkbox may be marked complete only when its corresponding reproducible evidence is attached or linked. A code diff by itself is not proof of completion. Evidence produced by commands must include the command, exit code, relevant output, and artifact path; generated deterministic artifacts must include a SHA-256 hash where requested.
 
-- [ ] A clean-run report records `pnpm install`, `pnpm build`, `pnpm typecheck`, and `pnpm test` succeeding.
-- [ ] Generated core, Laravel, and fixture artifacts are attached or linked with their SHA-256 hashes.
-- [ ] A byte-comparison report proves two independent compilations produced identical deterministic artifacts.
-- [ ] Architecture-test output proves the core builds without Laravel and contains no forbidden adapter dependency.
-- [ ] Failure demonstrations include the blocked Policy Manifest, policy-conflict diagnostic, `adapter-report.json`, verification report, and expected exit codes.
-- [ ] The local Docker smoke-test command and successful output are recorded.
-- [ ] A consumer-compatibility review proves canonical artifacts contain no required Codex-, Claude Code-, IDE-, or vendor-specific instructions.
+- [x] A clean-run report records `pnpm install`, `pnpm build`, `pnpm typecheck`, and `pnpm test` succeeding.
+- [x] Generated core, Laravel, and fixture artifacts are attached or linked with their SHA-256 hashes.
+- [x] A byte-comparison report proves two independent compilations produced identical deterministic artifacts.
+- [x] Architecture-test output proves the core builds without Laravel and contains no forbidden adapter dependency.
+- [x] Failure demonstrations include the blocked Policy Manifest, policy-conflict diagnostic, `adapter-report.json`, verification report, and expected exit codes.
+- [x] The local Docker smoke-test command and successful output are recorded.
+- [x] A consumer-compatibility review proves canonical artifacts contain no required Codex-, Claude Code-, IDE-, or vendor-specific instructions.
+
+Consolidated evidence is recorded in [CES-009](../../evidence/phase-1/CES-009.md), [CES-010](../../evidence/phase-1/CES-010.md), [CES-011](../../evidence/phase-1/CES-011.md), and [CES-012](../../evidence/phase-1/CES-012.md).
 
 ## Out of scope
 

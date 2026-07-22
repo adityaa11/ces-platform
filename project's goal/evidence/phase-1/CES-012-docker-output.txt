@@ -1,7 +1,28 @@
-docker version --format '{{.Server.Version}}'
+Docker Engine: 29.1.3
 
-Docker client warning: local Docker configuration was not readable in the sandbox.
-Docker daemon result: unavailable at npipe:////./pipe/docker_engine.
+docker build -t ces-cli:local .
+  result: success
+  pinned base: node:24.12.0-bookworm-slim
+  pnpm: 11.15.1
+  build: all 14 implementation workspace projects compiled
+  image: ces-cli:local
+  manifest list: sha256:f34bed075ddbe271e310b0da7a6e006cb05b60ed6840a00e01ba19f5e0358e14
 
-The Dockerfile and repository workflow are committed and statically tested, but the required
-successful image build and mounted-workspace run remain pending until a Docker daemon is available.
+docker run --rm ces-cli:local --help
+  result: success
+  output: all Phase 1 commands and exit codes 0 through 6
+
+docker run --rm -v "${PWD}:/workspace" ces-cli:local compile \
+  --requirement /workspace/examples/profile-picture.requirement.yaml \
+  --project /workspace/examples/laravel-project.yaml \
+  --adapter laravel \
+  --output /workspace/.ces/generated/REQ-USER-014/docker-laravel
+
+  exit code: 0
+  mounted output files:
+    implementation-plan.json
+    implementation-task.md
+    policy-manifest.json
+    requirement-package.json
+    test-manifest.json
+    verification-manifest.json

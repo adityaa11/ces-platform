@@ -2,7 +2,7 @@
 
 **Phase:** 1 — Deterministic Core and Reference Adapter
 **Parent:** [CES-000](CES-000-parent-mvp.md)
-**Status:** In progress — Docker daemon validation pending
+**Status:** Done
 
 ## Goal
 
@@ -27,7 +27,7 @@ Make the MVP understandable and executable locally from a clean checkout.
 - [x] The successful example generates all expected core and Laravel artifacts.
 - [x] The fixture adapter consumes the same manifest successfully.
 - [x] The blocked example writes its diagnostic manifest and stops before adapter compilation.
-- [ ] `docker build -t ces-cli:local .` succeeds and the documented mounted-workspace command works.
+- [x] `docker build -t ces-cli:local .` succeeds and the documented mounted-workspace command works.
 - [x] The repository `test.yml` validates CES itself and is not reusable by client repositories.
 - [x] Documentation consistently describes CES as requirement → stack-agnostic Policy Manifest → adapter integration.
 - [x] Documentation distinguishes the fixture adapter from Phase 4 production generic guidance.
@@ -37,8 +37,8 @@ Make the MVP understandable and executable locally from a clean checkout.
 - [x] Attach a clean-checkout transcript for install, build, typecheck, tests, and compiled CLI execution.
 - [x] Attach generated outputs for the successful core, Laravel, and fixture workflows.
 - [x] Attach the blocked-example diagnostic manifest and exit code.
-- [ ] Attach `docker build` output and a successful mounted-workspace container run.
-- [ ] Attach a successful repository CI run covering type checking, tests, boundaries, deterministic output, and Docker build validation.
+- [x] Attach `docker build` output and a successful mounted-workspace container run.
+- [x] Attach a successful repository CI run covering type checking, tests, boundaries, deterministic output, and Docker build validation.
 - [x] Link documentation sections for adding capabilities, traits, policies, and adapters.
 - [x] Attach a documentation scan showing the prohibited Laravel-centric pipeline description is absent except where explicitly negated.
 - [x] Attach a scope review proving Phase 1 does not implement PRD extraction, overrides, adapter composition, support levels, generic production fallback, or adapter approval.
