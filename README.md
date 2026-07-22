@@ -16,7 +16,7 @@ CES is a development and CI tool. It is not a runtime dependency of client appli
 
 **Phase 1 — Deterministic Core and Reference Adapter**
 
-Status: Phase 1 MVP implemented and verified locally.
+Status: Phase 1 implementation is substantially complete and locally verified; final contract and traceability hardening is in progress under CES-013 through CES-017.
 
 Phase 1 proves:
 
@@ -28,6 +28,8 @@ Phase 1 proves:
 - deterministic implementation and verification artifacts;
 - local verification and Docker execution;
 - repository CI that validates the CES monorepo itself.
+
+Remaining Phase 1 hardening covers concrete parameter propagation, controlled vocabularies and trust boundaries, project-pinned adapter loading, complete registry hashing, and the finalized independent-core output layout. Phase 2 work has not started.
 
 ## Planning documents
 

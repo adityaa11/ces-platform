@@ -6,7 +6,7 @@ Ticket IDs remain stable even if scheduling changes. Phase membership is recorde
 
 | Phase | Scope | Ticket plan | Status |
 |---:|---|---|---|
-| 1 | Deterministic Core and Reference Adapter | [CES-000](phase-1/CES-000-parent-mvp.md) | Planned |
+| 1 | Deterministic Core and Reference Adapter | [CES-000](phase-1/CES-000-parent-mvp.md) | In Progress |
 | 2 | Verification Integration, Container Publishing, and Pull-Request Enforcement | To be planned | Not started |
 | 3 | Evidence-Backed PRD and Business-Document Extraction | To be planned | Not started |
 | 4 | Production Adapter Ecosystem and Incremental Stack Support | See the main architecture roadmap | Not started |

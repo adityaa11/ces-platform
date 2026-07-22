@@ -2,7 +2,7 @@
 
 **Phase:** 1 — Deterministic Core and Reference Adapter
 **Parent:** None
-**Status:** Done
+**Status:** In Progress
 
 ## Objective
 
@@ -45,6 +45,11 @@ The CES core must support any present or future stack. Laravel is only the first
 | 10 | [CES-010](CES-010-verification-engine.md) | Manifest, source, test, and review checks | CES-009 |
 | 11 | [CES-011](CES-011-quality-boundaries-determinism.md) | Boundary, determinism, and failure-contract proof | CES-001–CES-010 |
 | 12 | [CES-012](CES-012-examples-docs-docker.md) | Executable examples, documentation, and Docker | CES-005, CES-009–CES-011 |
+| 13 | [CES-013](CES-013-parameter-propagation.md) | Concrete policy parameter propagation | CES-004, CES-009 |
+| 14 | [CES-014](CES-014-controlled-vocabulary.md) | Controlled facts and explicit trust boundaries | CES-002, CES-003 |
+| 15 | [CES-015](CES-015-adapter-pinning.md) | Project-pinned adapter loading | CES-005, CES-006, CES-009 |
+| 16 | [CES-016](CES-016-registry-identity.md) | Complete registry content identity | CES-003, CES-004 |
+| 17 | [CES-017](CES-017-core-output-docker.md) | Final core output and mounted Docker contract | CES-013, CES-015, CES-016 |
 
 ## Milestones
 
@@ -52,6 +57,15 @@ The CES core must support any present or future stack. Laravel is only the first
 2. **Adapter boundary proven:** CES-006 and CES-007.
 3. **Reference integration complete:** CES-008 and CES-009.
 4. **MVP releasable locally:** CES-010 through CES-012.
+5. **Final contract hardening:** CES-013 through CES-017.
+
+## Final hardening gates
+
+- [ ] Concrete file-size and media-type parameters survive every generated stage.
+- [ ] Policy-relevant requirement and assurance facts use controlled vocabulary and explicit trust boundaries.
+- [ ] Normal compilation loads the exact adapter ID/version pinned by the combined project context.
+- [ ] Capability, trait, and policy registry content hashes participate in compilation identity.
+- [ ] Independent core output and mounted Docker compilation use the finalized deterministic directory contract.
 
 ## Parent acceptance criteria
 
