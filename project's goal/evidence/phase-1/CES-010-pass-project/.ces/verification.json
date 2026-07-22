@@ -1,0 +1,18 @@
+{
+  "required_files": ["tests/Feature/ProfilePictureTest.php"],
+  "simple_patterns": [
+    {
+      "id": "PATTERN-VALIDATION-BOUNDARY",
+      "policy_id": "INPUT_VALIDATION",
+      "pattern": "validatedBoundary"
+    }
+  ],
+  "test_commands": [
+    {
+      "id": "CONFIGURED-TESTS",
+      "command": "node",
+      "args": ["-e", "console.log('fixture tests passed')"]
+    }
+  ],
+  "gate_human_review": false
+}

@@ -2,7 +2,7 @@
 
 **Phase:** 1 — Deterministic Core and Reference Adapter
 **Parent:** [CES-000](CES-000-parent-mvp.md)
-**Status:** Planned
+**Status:** Done
 
 ## Goal
 
@@ -20,19 +20,21 @@ Verify generated contracts and limited adapter-specific implementation evidence 
 
 ## Acceptance criteria
 
-- [ ] Missing evidence and prohibited patterns fail deterministic checks.
-- [ ] Laravel evidence comments are discoverable without a client runtime dependency.
-- [ ] Semantic authorization and transaction claims are reported for human review.
-- [ ] Human review does not fail by default but can be gated by assurance policy.
-- [ ] Verification failures return exit code 6 and produce a readable report.
+- [x] Missing evidence and prohibited patterns fail deterministic checks.
+- [x] Laravel evidence comments are discoverable without a client runtime dependency.
+- [x] Semantic authorization and transaction claims are reported for human review.
+- [x] Human review does not fail by default but can be gated by assurance policy.
+- [x] Verification failures return exit code 6 and produce a readable report.
 
 ## Required evidence
 
-- [ ] Attach a passing verification report with references to real source and test files.
-- [ ] Attach failing reports for missing evidence, prohibited patterns, and failed tests.
-- [ ] Attach a report containing `human_review_required` and show the default successful exit behavior.
-- [ ] Attach an assurance-gated run showing configured human-review failure behavior.
-- [ ] Attach the exit-code-6 command output and its persisted verification report.
+- [x] Attach a passing verification report with references to real source and test files.
+- [x] Attach failing reports for missing evidence, prohibited patterns, and failed tests.
+- [x] Attach a report containing `human_review_required` and show the default successful exit behavior.
+- [x] Attach an assurance-gated run showing configured human-review failure behavior.
+- [x] Attach the exit-code-6 command output and its persisted verification report.
+
+Evidence: [CES-010 verification record](../../evidence/phase-1/CES-010.md)
 
 ## Exclusions
 

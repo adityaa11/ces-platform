@@ -1,0 +1,10 @@
+{
+  "test_commands": [
+    {
+      "id": "CONFIGURED-TESTS",
+      "command": "node",
+      "args": ["-e", "process.stderr.write('fixture tests failed'); process.exit(7)"]
+    }
+  ],
+  "gate_human_review": false
+}

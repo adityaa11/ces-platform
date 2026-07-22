@@ -1,4 +1,4 @@
-import { mkdtemp, readdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -165,5 +165,27 @@ describe("core CLI", () => {
     expect(await runCli(["resolve-policy", "--requirement", requirementPath, "--project", projectPath, "--output", manifestPath], capture().io)).toBe(0);
     expect(await runCli(["compile-adapter", "--policy-manifest", manifestPath, "--project", projectPath, "--adapter", "test-fixture-with-gap", "--output", outputPath, "--test-mode", "true"], capture().io)).toBe(5);
     expect(await readdir(outputPath)).toEqual(["adapter-report.json"]);
+  });
+
+  it("persists verification reports and returns exit code 6 on failure", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "ces-cli-"));
+    const requirementPath = join(directory, "requirement.json");
+    const projectPath = join(directory, "project.yaml");
+    const generated = join(directory, "generated");
+    const projectRoot = join(directory, "client");
+    await mkdir(join(projectRoot, ".ces"), { recursive: true });
+    await writeFile(requirementPath, JSON.stringify(requirement));
+    await writeFile(projectPath, projectYaml);
+    expect(await runCli(["compile", "--requirement", requirementPath, "--project", projectPath, "--adapter", "test-fixture", "--output", generated, "--test-mode", "true"], capture().io)).toBe(0);
+    await writeFile(join(projectRoot, "source.txt"), "no evidence markers");
+    await writeFile(join(projectRoot, ".ces", "verification.json"), JSON.stringify({
+      test_commands: [{ id: "CLIENT-TESTS", command: process.execPath, args: ["-e", "process.exit(9)"] }],
+    }));
+
+    expect(await runCli(["verify", "--manifest", join(generated, "verification-manifest.json"), "--project-root", projectRoot], capture().io)).toBe(6);
+    expect(JSON.parse(await readFile(join(generated, "verification-report.json"), "utf8"))).toMatchObject({
+      status: "failed",
+      exit_code: 6,
+    });
   });
 });

@@ -1,0 +1,165 @@
+{
+  "adapter": {
+    "id": "laravel",
+    "mapping_version": "0.1.0",
+    "version": "0.1.0"
+  },
+  "checks": [
+    {
+      "check_id": "SCHEMA-VALID",
+      "files": [],
+      "message": "Verification and Policy Manifests match their schemas",
+      "status": "passed",
+      "type": "schema"
+    },
+    {
+      "check_id": "SOURCE-IDENTITY",
+      "files": [],
+      "message": "Generated manifest identity matches the source Policy Manifest",
+      "status": "passed",
+      "type": "identity"
+    },
+    {
+      "check_id": "LARAVEL-VERIFY-ATOMIC_RESOURCE_REPLACEMENT",
+      "files": [],
+      "message": "Missing CES-EVIDENCE:ATOMIC_RESOURCE_REPLACEMENT",
+      "policy_id": "ATOMIC_RESOURCE_REPLACEMENT",
+      "status": "failed",
+      "type": "evidence"
+    },
+    {
+      "check_id": "LARAVEL-VERIFY-FILE_CONTENT_VERIFICATION",
+      "files": [],
+      "message": "Missing CES-EVIDENCE:FILE_CONTENT_VERIFICATION",
+      "policy_id": "FILE_CONTENT_VERIFICATION",
+      "status": "failed",
+      "type": "evidence"
+    },
+    {
+      "check_id": "LARAVEL-VERIFY-FILE_SIZE_LIMIT",
+      "files": [],
+      "message": "Missing CES-EVIDENCE:FILE_SIZE_LIMIT",
+      "policy_id": "FILE_SIZE_LIMIT",
+      "status": "failed",
+      "type": "evidence"
+    },
+    {
+      "check_id": "LARAVEL-VERIFY-INPUT_VALIDATION",
+      "files": [],
+      "message": "Missing CES-EVIDENCE:INPUT_VALIDATION",
+      "policy_id": "INPUT_VALIDATION",
+      "status": "failed",
+      "type": "evidence"
+    },
+    {
+      "check_id": "LARAVEL-VERIFY-REPLACED_RESOURCE_LIFECYCLE",
+      "files": [],
+      "message": "Missing CES-EVIDENCE:REPLACED_RESOURCE_LIFECYCLE",
+      "policy_id": "REPLACED_RESOURCE_LIFECYCLE",
+      "status": "failed",
+      "type": "evidence"
+    },
+    {
+      "check_id": "LARAVEL-VERIFY-RESOURCE_LEVEL_AUTHORIZATION",
+      "files": [],
+      "message": "Missing CES-EVIDENCE:RESOURCE_LEVEL_AUTHORIZATION",
+      "policy_id": "RESOURCE_LEVEL_AUTHORIZATION",
+      "status": "failed",
+      "type": "evidence"
+    },
+    {
+      "check_id": "LARAVEL-VERIFY-SAFE_IMAGE_DELIVERY",
+      "files": [],
+      "message": "Missing CES-EVIDENCE:SAFE_IMAGE_DELIVERY",
+      "policy_id": "SAFE_IMAGE_DELIVERY",
+      "status": "failed",
+      "type": "evidence"
+    },
+    {
+      "check_id": "LARAVEL-VERIFY-SAFE_LOGGING",
+      "files": [],
+      "message": "Missing CES-EVIDENCE:SAFE_LOGGING",
+      "policy_id": "SAFE_LOGGING",
+      "status": "failed",
+      "type": "evidence"
+    },
+    {
+      "check_id": "LARAVEL-VERIFY-SERVER_GENERATED_STORAGE_KEY",
+      "files": [],
+      "message": "Missing CES-EVIDENCE:SERVER_GENERATED_STORAGE_KEY",
+      "policy_id": "SERVER_GENERATED_STORAGE_KEY",
+      "status": "failed",
+      "type": "evidence"
+    },
+    {
+      "check_id": "LARAVEL-PROHIBIT-CLIENT-STORAGE-PATH",
+      "files": [
+        "app/UnsafeUpload.php"
+      ],
+      "message": "Prohibited pattern found: Client filenames must not determine persistent storage paths",
+      "policy_id": "SERVER_GENERATED_STORAGE_KEY",
+      "status": "failed",
+      "type": "prohibited_pattern"
+    },
+    {
+      "check_id": "LARAVEL-PROHIBIT-RAW-REQUEST-LOG",
+      "files": [],
+      "message": "Raw request and file content must not be logged",
+      "policy_id": "SAFE_LOGGING",
+      "status": "passed",
+      "type": "prohibited_pattern"
+    },
+    {
+      "check_id": "SEMANTIC-ATOMIC_RESOURCE_REPLACEMENT",
+      "files": [],
+      "message": "Semantic correctness for ATOMIC_RESOURCE_REPLACEMENT requires human review",
+      "policy_id": "ATOMIC_RESOURCE_REPLACEMENT",
+      "status": "human_review_required",
+      "type": "semantic_review"
+    },
+    {
+      "check_id": "SEMANTIC-REPLACED_RESOURCE_LIFECYCLE",
+      "files": [],
+      "message": "Semantic correctness for REPLACED_RESOURCE_LIFECYCLE requires human review",
+      "policy_id": "REPLACED_RESOURCE_LIFECYCLE",
+      "status": "human_review_required",
+      "type": "semantic_review"
+    },
+    {
+      "check_id": "SEMANTIC-RESOURCE_LEVEL_AUTHORIZATION",
+      "files": [],
+      "message": "Semantic correctness for RESOURCE_LEVEL_AUTHORIZATION requires human review",
+      "policy_id": "RESOURCE_LEVEL_AUTHORIZATION",
+      "status": "human_review_required",
+      "type": "semantic_review"
+    },
+    {
+      "check_id": "CONFIGURED-TESTS",
+      "command": [
+        "node",
+        "-e",
+        "process.stderr.write('fixture tests failed'); process.exit(7)"
+      ],
+      "exit_code": 7,
+      "files": [],
+      "message": "Configured test command exited with 7",
+      "status": "failed",
+      "stderr": "fixture tests failed",
+      "stdout": "",
+      "type": "test_execution"
+    }
+  ],
+  "exit_code": 6,
+  "schema_version": "1.0.0",
+  "source_compilation_id": "sha256:c39bf3df838631b6cd3a645af16d29e514ee86bf6b1c94e793d4d74c14cd082d",
+  "source_requirement_id": "REQ-USER-014",
+  "status": "failed",
+  "summary": {
+    "blocked": 0,
+    "failed": 11,
+    "human_review_required": 3,
+    "not_applicable": 0,
+    "passed": 3,
+    "unsupported": 0
+  }
+}

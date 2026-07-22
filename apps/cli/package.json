@@ -17,6 +17,7 @@
     "@company/ces-project-schema": "workspace:*",
     "@company/ces-requirement-schema": "workspace:*",
     "@company/ces-test-fixture-adapter": "workspace:*",
+    "@company/ces-verification-engine": "workspace:*",
     "zod": "4.4.3"
   },
   "devDependencies": {

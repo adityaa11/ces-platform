@@ -1,0 +1,5 @@
+passing verification exit code: 0
+missing evidence + prohibited pattern + failed configured tests exit code: 6
+human-review-gated verification exit code: 6
+
+All three commands persisted verification-report.json beside their source Verification Manifest.

@@ -9,7 +9,15 @@ import {
   compileImplementationArtifacts,
   type ImplementationCompilationResult,
 } from "@company/ces-implementation-compiler";
-import type { AdapterDefinition } from "@company/ces-adapter-sdk";
+import {
+  VerificationManifestSchema,
+  type AdapterDefinition,
+} from "@company/ces-adapter-sdk";
+import {
+  VerificationConfigurationSchema,
+  verifyImplementation,
+  type AdapterVerificationRules,
+} from "@company/ces-verification-engine";
 import {
   parseProjectText,
   splitProjectContext,
@@ -32,6 +40,7 @@ Usage:
   ces resolve-policy --requirement <file> --project <file> --output <file>
   ces compile-adapter --policy-manifest <file> --project <file> --adapter <id> --output <directory> [--test-mode true]
   ces compile --requirement <file> --project <file> --adapter <id> --output <directory> [--test-mode true]
+  ces verify --manifest <verification-manifest.json> --project-root <directory>
   ces help
 
 Inputs may be JSON (.json) or YAML (.yaml/.yml). Validation output is normalized JSON.
@@ -44,6 +53,7 @@ Exit codes:
   3  blocked obligation (diagnostic manifest is written)
   4  registry or policy conflict (diagnostic manifest is written)
   5  adapter gap (adapter-report.json is written; no partial adapter artifacts)
+  6  verification failure (verification-report.json is written)
 `;
 
 export async function runCli(
@@ -142,6 +152,35 @@ export async function runCli(
       return result.exit_code;
     }
 
+    if (command === "verify") {
+      const manifestPath = requireOption(options, "manifest");
+      const projectRoot = requireOption(options, "project-root");
+      const verificationManifest = await parseJsonFile(
+        manifestPath,
+        VerificationManifestSchema.parse,
+      );
+      const policyManifest = await parseJsonFile(
+        resolve(manifestPath, "..", "policy-manifest.json"),
+        PolicyManifestSchema.parse,
+      );
+      const configuration = await readVerificationConfiguration(projectRoot);
+      const adapterRules = await loadVerificationRules(
+        verificationManifest.adapter.id,
+      );
+      const report = await verifyImplementation({
+        verification_manifest: verificationManifest,
+        policy_manifest: policyManifest,
+        project_root: projectRoot,
+        adapter_rules: adapterRules,
+        ...(configuration ? { configuration } : {}),
+      });
+      await writeOutput(
+        resolve(manifestPath, "..", "verification-report.json"),
+        canonicalJson(report),
+      );
+      return report.exit_code;
+    }
+
     throw new CliInputError(`Unknown command: ${command}`);
   } catch (error) {
     io.stderr(`${formatError(error)}\n`);
@@ -216,6 +255,43 @@ async function loadAdapter(id: string, testMode: boolean): Promise<AdapterDefini
     return testFixtureAdapterRegistry.get(id, "0.1.0", { test_mode: testMode });
   }
   throw new CliInputError(`Unknown adapter: ${id}`);
+}
+
+async function loadVerificationRules(id: string): Promise<AdapterVerificationRules> {
+  if (id === "laravel" || id === "laravel-gap-fixture") {
+    const { laravelProhibitedPatterns } = await import("@company/ces-laravel-adapter");
+    return {
+      prohibited_patterns: laravelProhibitedPatterns,
+      semantic_review_policy_ids: [
+        "ATOMIC_RESOURCE_REPLACEMENT",
+        "REPLACED_RESOURCE_LIFECYCLE",
+        "RESOURCE_LEVEL_AUTHORIZATION",
+      ],
+      supported: true,
+    };
+  }
+  if (id === "test-fixture" || id === "test-fixture-with-gap") {
+    return { supported: true, semantic_review_policy_ids: [] };
+  }
+  return { supported: false };
+}
+
+async function readVerificationConfiguration(projectRoot: string) {
+  const path = resolve(projectRoot, ".ces", "verification.json");
+  try {
+    return VerificationConfigurationSchema.parse(
+      JSON.parse(await readFile(path, "utf8")),
+    );
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      "code" in error &&
+      error.code === "ENOENT"
+    ) {
+      return undefined;
+    }
+    throw new CliInputError(`${path}: ${formatError(error)}`);
+  }
 }
 
 async function writeCompilationResult(

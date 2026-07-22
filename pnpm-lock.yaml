@@ -68,6 +68,9 @@ importers:
       '@company/ces-test-fixture-adapter':
         specifier: workspace:*
         version: link:../../adapters/test-fixture
+      '@company/ces-verification-engine':
+        specifier: workspace:*
+        version: link:../../packages/verification-engine
       zod:
         specifier: 4.4.3
         version: 4.4.3
@@ -187,6 +190,22 @@ importers:
       zod:
         specifier: 4.4.3
         version: 4.4.3
+
+  packages/verification-engine:
+    dependencies:
+      '@company/ces-adapter-sdk':
+        specifier: workspace:*
+        version: link:../adapter-sdk
+      '@company/ces-policy-manifest':
+        specifier: workspace:*
+        version: link:../policy-manifest
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
 
 packages:
 
