@@ -20,7 +20,24 @@ importers:
 
   adapters/test-fixture: {}
 
-  apps/cli: {}
+  apps/cli:
+    dependencies:
+      '@company/ces-policy-engine':
+        specifier: workspace:*
+        version: link:../../packages/policy-engine
+      '@company/ces-project-schema':
+        specifier: workspace:*
+        version: link:../../packages/project-schema
+      '@company/ces-requirement-schema':
+        specifier: workspace:*
+        version: link:../../packages/requirement-schema
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
 
   packages/business-rule-schema:
     dependencies:

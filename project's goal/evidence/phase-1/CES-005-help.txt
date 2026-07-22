@@ -1,0 +1,16 @@
+CES core CLI
+
+Usage:
+  ces validate-requirement --input <file> [--output <file>]
+  ces validate-project --input <file> [--output <file>]
+  ces resolve-policy --requirement <file> --project <file> --output <file>
+  ces help
+
+Inputs may be JSON (.json) or YAML (.yaml/.yml). Validation output is normalized JSON.
+resolve-policy writes a stack-agnostic Policy Manifest and never loads an adapter.
+
+Exit codes:
+  0  success
+  2  input, argument, or schema error
+  3  blocked obligation (diagnostic manifest is written)
+  4  registry or policy conflict (diagnostic manifest is written)

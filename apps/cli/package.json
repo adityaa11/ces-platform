@@ -3,8 +3,20 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "bin": {
+    "ces": "./dist/index.js"
+  },
   "exports": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "dependencies": {
+    "@company/ces-policy-engine": "workspace:*",
+    "@company/ces-project-schema": "workspace:*",
+    "@company/ces-requirement-schema": "workspace:*",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3"
+  },
   "scripts": {
     "build": "tsc --build",
     "typecheck": "tsc --build --pretty false"
