@@ -66,6 +66,7 @@ export const PolicyManifestSchema = z
 
 export type PolicyManifest = z.infer<typeof PolicyManifestSchema>;
 export type PolicyObligation = z.infer<typeof PolicyObligationSchema>;
+export type ResolutionEvidence = z.infer<typeof ResolutionEvidenceSchema>;
 export type ResolvedVocabularyItem = z.infer<
   typeof ResolvedVocabularyItemSchema
 >;

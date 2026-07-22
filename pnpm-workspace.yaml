@@ -12,3 +12,4 @@ disallowWorkspaceCycles: true
 failIfNoMatch: true
 shamefullyHoist: false
 publicHoistPattern: []
+confirmModulesPurge: false

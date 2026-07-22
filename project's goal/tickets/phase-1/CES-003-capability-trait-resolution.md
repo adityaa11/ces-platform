@@ -2,7 +2,7 @@
 
 **Phase:** 1 — Deterministic Core and Reference Adapter
 **Parent:** [CES-000](CES-000-parent-mvp.md)
-**Status:** Planned
+**Status:** Done
 
 ## Goal
 
@@ -19,18 +19,20 @@ Derive the initial controlled capabilities and traits from explicit requirement 
 
 ## Acceptance criteria
 
-- [ ] The profile-picture requirement resolves the expected capabilities and traits.
-- [ ] Changing rule input order does not change normalized output.
-- [ ] Unsupported assertions cannot introduce policies or bypass resolution.
-- [ ] Duplicate evidence is normalized and sorted.
-- [ ] Resolver tests cover positive, negative, unknown-ID, and contradictory-fact cases.
+- [x] The profile-picture requirement resolves the expected capabilities and traits.
+- [x] Changing rule input order does not change normalized output.
+- [x] Unsupported assertions cannot introduce policies or bypass resolution.
+- [x] Duplicate evidence is normalized and sorted.
+- [x] Resolver tests cover positive, negative, unknown-ID, and contradictory-fact cases.
 
 ## Required evidence
 
-- [ ] Attach the resolved capability/trait artifact for the profile-picture fixture.
-- [ ] Show rule IDs, evidence paths, reasons, and registry versions in that artifact.
-- [ ] Attach passing resolver-test output, including unsupported assertion and unknown-ID cases.
-- [ ] Attach a comparison proving reordered equivalent input produces identical normalized output.
+- [x] Attach the resolved capability/trait artifact for the profile-picture fixture.
+- [x] Show rule IDs, evidence paths, reasons, and registry versions in that artifact.
+- [x] Attach passing resolver-test output, including unsupported assertion and unknown-ID cases.
+- [x] Attach a comparison proving reordered equivalent input produces identical normalized output.
+
+Evidence: [CES-003 implementation evidence](../../evidence/phase-1/CES-003.md)
 
 ## Exclusions
 

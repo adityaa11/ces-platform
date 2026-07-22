@@ -1,0 +1,99 @@
+{
+  "schema_version": "1.0.0",
+  "capability_registry_version": "0.1.0",
+  "trait_registry_version": "0.1.0",
+  "declared_facts": [
+    { "path": "actor.type", "value": "authenticated_user" },
+    { "path": "effects[0]", "value": "persistent_write" },
+    { "path": "effects[1]", "value": "replaces_existing_resource" },
+    { "path": "inputs[0].media_category", "value": "image" },
+    { "path": "inputs[0].type", "value": "binary_file" },
+    { "path": "operation.resource", "value": "profile_picture" },
+    { "path": "operation.target_scope", "value": "own_resource" }
+  ],
+  "asserted_capabilities": [],
+  "resolved_capabilities": [
+    {
+      "id": "FILE_UPLOAD",
+      "source": "resolver_rule",
+      "rule_id": "CAP-FILE-001",
+      "evidence": [{ "path": "inputs[0].type", "value": "binary_file" }],
+      "reason": "A binary file enters the system",
+      "registry_version": "0.1.0"
+    },
+    {
+      "id": "IMAGE_PROCESSING",
+      "source": "resolver_rule",
+      "rule_id": "CAP-IMAGE-001",
+      "evidence": [{ "path": "inputs[0].media_category", "value": "image" }],
+      "reason": "An input is categorized as image media",
+      "registry_version": "0.1.0"
+    },
+    {
+      "id": "PROFILE_MANAGEMENT",
+      "source": "resolver_rule",
+      "rule_id": "CAP-PROFILE-001",
+      "evidence": [{ "path": "operation.resource", "value": "profile_picture" }],
+      "reason": "The operation manages a profile resource",
+      "registry_version": "0.1.0"
+    }
+  ],
+  "resolved_traits": [
+    {
+      "id": "AUTHENTICATED_ACTOR",
+      "source": "resolver_rule",
+      "rule_id": "TRAIT-AUTH-001",
+      "evidence": [{ "path": "actor.type", "value": "authenticated_user" }],
+      "reason": "The actor is authenticated",
+      "registry_version": "0.1.0"
+    },
+    {
+      "id": "BINARY_DATA",
+      "source": "resolver_rule",
+      "rule_id": "TRAIT-BINARY-001",
+      "evidence": [{ "path": "inputs[0].type", "value": "binary_file" }],
+      "reason": "The requirement accepts binary data",
+      "registry_version": "0.1.0"
+    },
+    {
+      "id": "BROWSER_RENDERED_CONTENT",
+      "source": "resolver_rule",
+      "rule_id": "TRAIT-BROWSER-001",
+      "evidence": [{ "path": "inputs[0].media_category", "value": "image" }],
+      "reason": "The image resource can be rendered by a browser",
+      "registry_version": "0.1.0"
+    },
+    {
+      "id": "EXTERNAL_INPUT",
+      "source": "resolver_rule",
+      "rule_id": "TRAIT-EXTERNAL-001",
+      "evidence": [{ "path": "inputs[0].type", "value": "binary_file" }],
+      "reason": "The operation accepts input from outside its trust boundary",
+      "registry_version": "0.1.0"
+    },
+    {
+      "id": "PERSISTENT_DATA",
+      "source": "resolver_rule",
+      "rule_id": "TRAIT-PERSIST-001",
+      "evidence": [{ "path": "effects[0]", "value": "persistent_write" }],
+      "reason": "The operation performs a persistent write",
+      "registry_version": "0.1.0"
+    },
+    {
+      "id": "REPLACEABLE_RESOURCE",
+      "source": "resolver_rule",
+      "rule_id": "TRAIT-REPLACE-001",
+      "evidence": [{ "path": "effects[1]", "value": "replaces_existing_resource" }],
+      "reason": "The operation replaces an existing resource",
+      "registry_version": "0.1.0"
+    },
+    {
+      "id": "USER_OWNED_RESOURCE",
+      "source": "resolver_rule",
+      "rule_id": "TRAIT-OWNED-001",
+      "evidence": [{ "path": "operation.target_scope", "value": "own_resource" }],
+      "reason": "The target scope is the actor's own resource",
+      "registry_version": "0.1.0"
+    }
+  ]
+}

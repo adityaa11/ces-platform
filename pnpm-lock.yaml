@@ -28,6 +28,27 @@ importers:
         specifier: 4.4.3
         version: 4.4.3
 
+  packages/capability-registry:
+    dependencies:
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+
+  packages/capability-resolver:
+    dependencies:
+      '@company/ces-capability-registry':
+        specifier: workspace:*
+        version: link:../capability-registry
+      '@company/ces-policy-manifest':
+        specifier: workspace:*
+        version: link:../policy-manifest
+      '@company/ces-requirement-schema':
+        specifier: workspace:*
+        version: link:../requirement-schema
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+
   packages/policy-manifest:
     dependencies:
       zod:
