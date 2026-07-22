@@ -85,4 +85,7 @@ An acceptance checkbox may be marked complete only when its corresponding reprod
 - Sophisticated semantic analysis.
 - Registry dashboards and approval workflows.
 - Published images and reusable GitHub workflows; these begin in Phase 2.
+- Natural-language requirement extraction; this begins in Phase 3.
+- Adapter composition, component resolution, production generic fallback, support levels, and approval workflows; these begin in Phase 4.
+- Project policy overrides, approved exceptions, precedence, expiration, and review workflows; these begin in Phase 5.
 

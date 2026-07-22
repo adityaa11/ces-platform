@@ -27,7 +27,11 @@ The main principle is:
 
 ---
 
-# High-Level Architecture
+# Target Architecture
+
+This section describes the long-term CES architecture. It includes capabilities scheduled after Phase 1, such as published container images, reusable workflows, PRD extraction, composable production adapters, and organizational governance.
+
+The current Phase 1 implementation scope is narrower and is defined separately under **Recommended MVP Build Order**.
 
 ```text
                        GitHub Organization
@@ -290,6 +294,20 @@ Example Requirement Package:
   "uncertainties": []
 }
 ```
+
+The Phase 1 Requirement Package must preserve optional source traceability even though automated PRD extraction is deferred:
+
+```yaml
+source:
+  document_id: PRD-USER-MANAGEMENT
+  document_version: "2.0"
+  section: "4.3.2"
+  change_request_id: CR-104
+  parent_requirement_ids:
+    - REQ-USER-001
+```
+
+These fields are optional for manually authored requirements. They allow Phase 3 extraction to add evidence without redesigning the core Requirement Package.
 
 ## Boundary
 
@@ -1094,9 +1112,13 @@ adapter:
 
 This makes requirement compilation reproducible.
 
+The `.ces/overrides/` location is reserved for future governance capabilities. Phase 1 must not define or implement policy override precedence, approved exceptions, approval metadata, expiration, or review workflows.
+
 ---
 
-# 14. End-to-End Flow
+# 14. Target End-to-End Flow
+
+This is the target workflow after Phase 3 requirement extraction exists. In Phase 1, the flow starts with an already structured Requirement Package in YAML or JSON; CES does not read or extract a natural-language PRD.
 
 ```text
 1. Analyst writes PRD
@@ -1128,7 +1150,7 @@ This makes requirement compilation reproducible.
 
 ---
 
-# 15. Recommended MVP Build Order
+# 15. Current MVP Scope and Build Order
 
 Do not begin with:
 
@@ -1253,7 +1275,7 @@ Add:
 
 The core verification suite must also run with a fake or test adapter so that Laravel is not required to test core behavior.
 
-## Phase 3: Requirement Extraction
+## Phase 3: Evidence-Backed Requirement Extraction
 
 After deterministic compilation is reliable, add:
 
@@ -1271,19 +1293,168 @@ Require:
 - conflict detection;
 - duplicate merging.
 
-## Phase 4: Additional Adapters
+## Phase 4: Production Adapter Ecosystem and Incremental Stack Support
 
-Add adapters one at a time:
+Establish a production adapter ecosystem rather than manually creating one monolithic adapter for every possible combination of language, framework, database, messaging system, object storage provider, and test framework.
+
+Phase 4 should introduce:
+
+- a production `generic-guidance` fallback;
+- adapter component kinds;
+- adapter discovery and resolution;
+- compatibility rules;
+- adapter composition;
+- independently versioned adapter components;
+- optional stack profiles that bundle compatible components;
+- adapter scaffolding;
+- adapter contract tests;
+- adapter approval and publication processes;
+- support diagnostics and adapter-gap reporting.
+
+Approved adapter components should be added incrementally according to real project demand.
+
+Example component kinds include language, application framework, persistence, database, messaging, queue, cache, object storage, testing, and verification. A project may use a convenience stack profile, but the underlying adapter components must remain independently versioned and composable.
+
+Phase 4 must avoid a package for every complete stack combination. Instead, the future resolution model is:
 
 ```text
-Laravel
-→ Spring
-→ NestJS
-→ .NET
-→ Go
+Policy Manifest
++ ProjectTechnicalContext
+        ↓
+Adapter Resolver
+        ↓
+Compatible approved adapter components
+        ├── language
+        ├── application framework
+        ├── persistence
+        ├── database
+        ├── messaging or queue
+        ├── storage
+        └── testing and verification
+        ↓
+Composed Implementation Package
 ```
 
-Each adapter should pass the same policy-registry contract tests.
+This component model is target architecture only. Phase 1 continues to treat the Laravel reference adapter and test-fixture adapter as complete adapters.
+
+### Future support levels
+
+Phase 4 adapter resolution should report one of these support levels per policy and component:
+
+```text
+full        approved stack-specific mapping, tests, and available verification
+generic     implementation-neutral guidance without stack-specific verification
+partial     only part of the policy is mapped; manual work or review remains
+unsupported no approved safe guidance is available
+```
+
+Generic or partial support must disclose its limitations and may be disallowed by the project assurance profile. An unsupported mandatory obligation continues to fail compilation. Generic guidance must never be represented as equivalent to an approved stack-specific mapping, and the original adapter gap must remain visible.
+
+```json
+{
+  "policy_id": "RESOURCE_LEVEL_AUTHORIZATION",
+  "component_kind": "application_framework",
+  "component_id": "fastapi",
+  "support_level": "unsupported",
+  "reason": "No approved FastAPI mapping exists"
+}
+```
+
+### Production generic guidance
+
+The future `generic-guidance` adapter may provide safe, implementation-neutral instructions when no approved component mapping exists. It must not invent framework APIs or claim full support. It is separate from the Phase 1 test-fixture adapter, which exists only to test portability and is not production guidance.
+
+### Future adapter metadata
+
+A future adapter component may declare metadata such as:
+
+```yaml
+schema_version: "1.0.0"
+
+adapter:
+  id: spring-boot
+  version: "1.0.0"
+  kind: application_framework
+
+supports:
+  policies:
+    - INPUT_VALIDATION
+    - RESOURCE_LEVEL_AUTHORIZATION
+    - TRANSACTION_BOUNDARY
+
+requires:
+  - kind: language
+    ids: [java]
+
+compatible_with:
+  - kind: persistence
+    ids: [spring_data_jpa, jooq]
+
+compatibility:
+  technology_versions: ["3.x", "4.x"]
+```
+
+This descriptor is roadmap documentation, not a Phase 1 schema requirement.
+
+### Stack profiles
+
+A stack profile is a versioned convenience bundle that expands into independently versioned adapter components. It is not a source of policy rules, and projects must be able to override individual component selections.
+
+```yaml
+stack_profile:
+  id: spring-standard
+  version: "1.0.0"
+
+components:
+  language: java
+  application_framework: spring_boot
+  persistence: spring_data_jpa
+  database: postgresql
+  testing: junit
+```
+
+### Project technical-context evolution
+
+The simple Phase 1 technical schema remains unchanged. Phase 4 may introduce a new schema version with typed component sections such as `language`, `application_framework`, `persistence`, `database`, `queue`, `object_storage`, and `testing`. This must be a deliberate schema migration rather than a premature Phase 1 expansion.
+
+```yaml
+technical:
+  language:
+    id: php
+    version: "8.4"
+  application_framework:
+    id: laravel
+    version: "12"
+  persistence:
+    id: eloquent
+  database:
+    id: postgresql
+  queue:
+    id: laravel_queue
+    driver: redis
+  object_storage:
+    id: s3_compatible
+  testing:
+    id: phpunit
+```
+
+### Adapter scaffolding and approval
+
+Future commands may include:
+
+```bash
+ces adapter scaffold fastapi
+ces adapter validate adapters/fastapi
+ces adapter test adapters/fastapi
+```
+
+A coding agent may generate an adapter candidate from policy definitions, the Adapter SDK, official documentation, company conventions, and representative repositories. The candidate remains untrusted until it passes schema validation, contract tests, compatibility tests, deterministic-output tests, policy-coverage checks, security review, engineering approval, and versioned publication.
+
+CES must never silently generate and activate a framework adapter during normal project compilation.
+
+### Phase 1 compatibility constraint
+
+The Phase 1 Adapter SDK should avoid decisions that make future component metadata and composition impossible. It must not implement adapter dependency solving, profile expansion, dynamic downloading, production generic fallback, marketplace behavior, or approval workflows during Phase 1.
 
 ---
 
@@ -1836,6 +2007,11 @@ The MVP should not yet attempt:
 - sophisticated semantic verification;
 - dashboards and policy approval systems;
 - full organizational policy-upgrade automation.
+- project policy overrides and approved exceptions;
+- exception approval metadata, expiration, precedence, and review workflows;
+- adapter component composition and compatibility solving;
+- production generic-guidance fallback and adapter support levels;
+- adapter marketplace, approval, and publication workflows.
 
 These capabilities come only after:
 
@@ -1843,3 +2019,21 @@ These capabilities come only after:
 2. the adapter contract has been validated through the Laravel reference adapter and a framework-neutral test adapter.
 
 The deferred milestone must never be described as a “structured-requirement-to-Laravel pipeline.” Laravel is only the first adapter after the stack-agnostic core boundary.
+
+---
+
+# 21. Five-Phase Roadmap
+
+```text
+Phase 1 — Prove the deterministic compiler and adapter boundary
+
+Phase 2 — Integrate verification, Docker publication, and pull-request enforcement
+
+Phase 3 — Convert PRDs and business documents into evidence-backed structured requirements
+
+Phase 4 — Establish the production adapter ecosystem and incrementally support real stacks
+
+Phase 5 — Add organizational governance, exceptions, upgrades, and impact analysis
+```
+
+Phase 4 does not mean manually completing every possible stack. It establishes a scalable component and composition model, generic fallback, compatibility rules, approval workflow, and incremental approved support driven by real projects.

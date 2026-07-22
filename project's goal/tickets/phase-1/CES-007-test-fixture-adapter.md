@@ -8,6 +8,8 @@
 
 Prove that CES policy output is portable and that Laravel is not the core's internal model.
 
+The test-fixture adapter exists only to prove Policy Manifest portability, Adapter SDK correctness, framework independence of the CES core, and deterministic adapter compilation. It is not a production generic-guidance fallback. Production generic guidance is a separate Phase 4 capability.
+
 ## Work
 
 - Implement every initial mandatory policy mapping with generic pattern names.
@@ -19,6 +21,7 @@ Prove that CES policy output is portable and that Laravel is not the core's inte
 
 - [ ] The adapter consumes the profile-picture Policy Manifest unchanged.
 - [ ] Its outputs contain generic patterns and no Laravel terminology.
+- [ ] Its documentation and package metadata explicitly mark it as test-only and unsafe as production guidance.
 - [ ] Core schemas and resolution code need no modification.
 - [ ] Adapter contract and gap tests pass.
 - [ ] Removing every production adapter still leaves core and fixture tests green.
@@ -29,4 +32,5 @@ Prove that CES policy output is portable and that Laravel is not the core's inte
 - [ ] Attach adapter contract-test and deliberate adapter-gap test output.
 - [ ] Attach a scan proving fixture output contains no Laravel terminology.
 - [ ] Attach a core-and-fixture test run with production adapters unavailable.
+- [ ] Attach a package/documentation check proving the fixture cannot be mistaken for the future production `generic-guidance` adapter.
 

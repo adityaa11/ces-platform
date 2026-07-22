@@ -16,6 +16,7 @@ Create the only supported boundary through which an adapter consumes a Policy Ma
 - Define adapter-gap collection and a stack-neutral `adapter-report.json`.
 - Create an explicit adapter registry and compatibility checks.
 - Prevent adapters from changing requirement facts, capabilities, traits, policies, or the source manifest.
+- Document extension points that allow a future schema version to add component kinds and composition metadata without changing the Policy Manifest.
 
 ## Acceptance criteria
 
@@ -24,6 +25,7 @@ Create the only supported boundary through which an adapter consumes a Policy Ma
 - [ ] Adapter gaps prevent successful implementation artifacts and map to exit code 5.
 - [ ] Adapter-derived schemas include adapter and mapping versions.
 - [ ] The SDK contains no Laravel-specific types or defaults.
+- [ ] The SDK does not implement Phase 4 component resolution, dependency solving, generic production fallback, downloading, marketplace, or approval behavior.
 
 ## Required evidence
 
@@ -32,6 +34,7 @@ Create the only supported boundary through which an adapter consumes a Policy Ma
 - [ ] Attach an example `adapter-report.json` containing an unsupported mandatory-policy gap.
 - [ ] Attach a scan proving the SDK contains no Laravel-specific defaults or terminology.
 - [ ] Show that no incomplete implementation artifacts are emitted on the gap path.
+- [ ] Attach an architecture note showing how future component metadata can be added through versioned SDK evolution without changing core policy contracts.
 
 ## Dependency rule
 

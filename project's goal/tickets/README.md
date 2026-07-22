@@ -7,10 +7,12 @@ Ticket IDs remain stable even if scheduling changes. Phase membership is recorde
 | Phase | Scope | Ticket plan | Status |
 |---:|---|---|---|
 | 1 | Deterministic Core and Reference Adapter | [CES-000](phase-1/CES-000-parent-mvp.md) | Planned |
-| 2 | Container Publishing and GitHub Integration | To be planned | Not started |
-| 3 | Structured Requirement Extraction | To be planned | Not started |
-| 4 | Additional Production Adapters | To be planned | Not started |
-| 5 | Advanced Semantic Verification and Governance | To be planned | Not started |
+| 2 | Verification Integration, Container Publishing, and Pull-Request Enforcement | To be planned | Not started |
+| 3 | Evidence-Backed PRD and Business-Document Extraction | To be planned | Not started |
+| 4 | Production Adapter Ecosystem and Incremental Stack Support | See the main architecture roadmap | Not started |
+| 5 | Organizational Governance, Exceptions, Upgrades, and Impact Analysis | To be planned | Not started |
+
+Phase 4 establishes composable, independently versioned adapter components, compatibility rules, production generic guidance, support levels, approval, and incremental stack support driven by real projects. It does not require one monolithic adapter for every possible technology combination. None of those Phase 4 capabilities are part of Phase 1.
 
 ## Ticket metadata
 

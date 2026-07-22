@@ -11,6 +11,7 @@ Define versioned Zod schemas and TypeScript types for all core inputs and output
 ## Work
 
 - Define Requirement Package, business rule, uncertainty, operation, input, constraint, and effect schemas.
+- Add optional source traceability fields for document ID/version, section, change request, and parent requirement IDs.
 - Define the combined project-file schema and separate parsed `ProjectAssuranceContext` and `ProjectTechnicalContext` types.
 - Define Capability, Trait, Policy, Policy Obligation, and Policy Manifest contracts.
 - Model `requirement_level` separately from `resolution_state`.
@@ -24,6 +25,7 @@ Define versioned Zod schemas and TypeScript types for all core inputs and output
 - [ ] The Policy Manifest cannot contain adapter IDs or framework implementation fields.
 - [ ] Contract tests cover valid inputs, invalid inputs, unknown fields, and schema-version mismatches.
 - [ ] Core-contract source contains no Laravel, Spring, .NET, NestJS, Go API, or framework-package references.
+- [ ] Manually authored requirements validate without source metadata, while traceable requirements preserve all supplied source references.
 
 ## Required evidence
 
@@ -31,6 +33,7 @@ Define versioned Zod schemas and TypeScript types for all core inputs and output
 - [ ] Attach passing contract-test output for valid, invalid, unknown-field, and version-mismatch fixtures.
 - [ ] Attach normalized YAML-versus-JSON comparison output.
 - [ ] Attach a terminology/dependency scan proving core contracts contain no framework-specific references.
+- [ ] Attach contract fixtures proving optional source traceability round-trips without enabling PRD extraction.
 
 ## Exclusions
 
