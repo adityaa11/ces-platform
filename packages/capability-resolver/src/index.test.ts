@@ -25,6 +25,7 @@ const profilePictureRequirement = parseRequirementPackage({
     {
       name: "profile_picture",
       type: "binary_file",
+      trust_boundary: "external",
       media_category: "image",
     },
   ],
@@ -64,6 +65,21 @@ describe("resolveCapabilitiesAndTraits", () => {
       registry_version: "0.1.0",
       evidence: [{ path: "inputs[0].type", value: "binary_file" }],
     });
+  });
+
+  it("derives external input only from the explicit trust boundary", () => {
+    const external = resolveCapabilitiesAndTraits(profilePictureRequirement);
+    expect(external.resolved_traits.find(({ id }) => id === "EXTERNAL_INPUT")?.evidence)
+      .toEqual([{ path: "inputs[0].trust_boundary", value: "external" }]);
+
+    const internal = resolveCapabilitiesAndTraits(parseRequirementPackage({
+      ...profilePictureRequirement,
+      inputs: profilePictureRequirement.inputs.map((input) => ({
+        ...input,
+        trust_boundary: "internal",
+      })),
+    }));
+    expect(internal.resolved_traits.map(({ id }) => id)).not.toContain("EXTERNAL_INPUT");
   });
 
   it("is independent of registry rule order", () => {

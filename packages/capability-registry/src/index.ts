@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const CAPABILITY_REGISTRY_VERSION = "0.1.0" as const;
-export const TRAIT_REGISTRY_VERSION = "0.1.0" as const;
+export const TRAIT_REGISTRY_VERSION = "0.2.0" as const;
 
 export const CapabilityIdSchema = z.enum([
   "PROFILE_MANAGEMENT",
@@ -102,8 +102,8 @@ export const defaultCapabilityTraitRegistry: CapabilityTraitRegistry = {
       id: "TRAIT-EXTERNAL-001",
       target_kind: "trait",
       target_id: "EXTERNAL_INPUT",
-      all: [{ path: "inputs.*.type", operator: "exists" }],
-      reason: "The operation accepts input from outside its trust boundary",
+      all: [{ path: "inputs.*.trust_boundary", operator: "equals", value: "external" }],
+      reason: "An input explicitly crosses the external trust boundary",
     },
     {
       id: "TRAIT-OWNED-001",

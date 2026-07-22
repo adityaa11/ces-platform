@@ -1,0 +1,9 @@
+COMMAND: ces validate-requirement --input CES-014-invalid-requirement.yaml
+EXIT: 2
+operation.target_scope: Invalid input: expected "own_resource"
+inputs.0.type: Invalid input: expected "binary_file"
+inputs.0.media_category: Invalid input: expected "image"
+
+COMMAND: ces validate-project --input CES-014-invalid-project.yaml
+EXIT: 2
+assurance.exposure: Invalid option: expected one of "public_internet"|"private_network"

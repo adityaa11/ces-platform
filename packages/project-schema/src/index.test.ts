@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  CriticalitySchema,
+  DataClassSchema,
+  DeliverySemanticsSchema,
+  ExposureSchema,
+  TenancySchema,
   parseProjectText,
   splitProjectContext,
 } from "./index.js";
@@ -44,5 +49,22 @@ describe("ProjectContextSchema", () => {
     expect(() =>
       parseProjectText(projectYaml.replace("1.0.0", "2.0.0"), "yaml"),
     ).toThrow();
+  });
+
+  it("accepts every controlled assurance vocabulary member", () => {
+    for (const schema of [
+      ExposureSchema,
+      CriticalitySchema,
+      TenancySchema,
+      DataClassSchema,
+      DeliverySemanticsSchema,
+    ]) {
+      for (const value of schema.options) expect(schema.parse(value)).toBe(value);
+    }
+  });
+
+  it("rejects ambiguous exposure vocabulary", () => {
+    expect(() => parseProjectText(projectYaml.replace("public_internet", "public"), "yaml"))
+      .toThrow();
   });
 });

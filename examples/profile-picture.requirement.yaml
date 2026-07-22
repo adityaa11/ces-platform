@@ -11,6 +11,7 @@ operation:
 inputs:
   - name: profile_picture
     type: binary_file
+    trust_boundary: external
     media_category: image
     constraints:
       allowed_media_types: [image/jpeg, image/png]

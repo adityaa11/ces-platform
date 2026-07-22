@@ -9,7 +9,7 @@ const requirement = {
   requirement: { id: "REQ-1", title: "Replace profile picture" },
   actor: { type: "authenticated_user" },
   operation: { action: "replace", resource: "profile_picture", target_scope: "own_resource" },
-  inputs: [{ name: "picture", type: "binary_file", media_category: "image", constraints: { allowed_media_types: ["image/png"], maximum_size_bytes: 1024 } }],
+  inputs: [{ name: "picture", type: "binary_file", trust_boundary: "external", media_category: "image", constraints: { allowed_media_types: ["image/png"], maximum_size_bytes: 1024 } }],
   effects: ["persistent_write", "replaces_existing_resource"],
   business_rules: [{ id: "BR-1", type: "lifecycle", statement: "Delete replaced resource after commit" }],
 };
@@ -54,6 +54,26 @@ describe("core CLI", () => {
     await writeFile(projectPath, projectYaml);
     expect(await runCli(["validate-requirement", "--input", requirementPath], capture().io)).toBe(0);
     expect(await runCli(["validate-project", "--input", projectPath], capture().io)).toBe(0);
+  });
+
+  it.each([
+    ["input type", { ...requirement, inputs: [{ ...requirement.inputs[0], type: "binary-file" }] }],
+    ["media category", { ...requirement, inputs: [{ ...requirement.inputs[0], media_category: "images" }] }],
+    ["target scope", { ...requirement, operation: { ...requirement.operation, target_scope: "own" } }],
+  ])("returns exit code 2 for invalid %s vocabulary", async (_, invalid) => {
+    const directory = await mkdtemp(join(tmpdir(), "ces-cli-"));
+    const inputPath = join(directory, "invalid-requirement.json");
+    await writeFile(inputPath, JSON.stringify(invalid));
+    const output = capture();
+    expect(await runCli(["validate-requirement", "--input", inputPath], output.io)).toBe(2);
+    expect(output.stderr.join("")).toContain(inputPath);
+  });
+
+  it("returns exit code 2 for ambiguous assurance vocabulary", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "ces-cli-"));
+    const inputPath = join(directory, "invalid-project.yaml");
+    await writeFile(inputPath, projectYaml.replace("public_internet", "public"));
+    expect(await runCli(["validate-project", "--input", inputPath], capture().io)).toBe(2);
   });
 
   it("resolves policy without loading the configured adapter", async () => {

@@ -11,12 +11,14 @@ operation:
 inputs:
   - name: profile_picture
     type: binary_file
+    trust_boundary: external
     media_category: image
     constraints:
       allowed_media_types: [image/jpeg, image/png]
       maximum_size_bytes: 5242880
   - name: alternate_profile_picture
     type: binary_file
+    trust_boundary: external
     media_category: image
     constraints:
       allowed_media_types: [image/jpeg, image/png]

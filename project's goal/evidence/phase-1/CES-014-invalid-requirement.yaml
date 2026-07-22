@@ -1,0 +1,16 @@
+schema_version: 1.0.0
+requirement:
+  id: REQ-INVALID-VOCABULARY
+  title: Invalid controlled facts
+actor:
+  type: authenticated_user
+operation:
+  action: replace
+  resource: profile_picture
+  target_scope: own
+inputs:
+  - name: picture
+    type: binary-file
+    trust_boundary: external
+    media_category: images
+effects: [persistent_write]

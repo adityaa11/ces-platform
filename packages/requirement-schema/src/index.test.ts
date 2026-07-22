@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  ActorTypeSchema,
+  EffectSchema,
+  InputTrustBoundarySchema,
+  InputTypeSchema,
+  MediaCategorySchema,
+  MediaTypeSchema,
+  OperationActionSchema,
+  ResourceTypeSchema,
+  TargetScopeSchema,
   getPolicyRelevantRequirement,
   parseRequirementPackage,
   parseRequirementText,
@@ -108,6 +117,39 @@ business_rules:
         implementation_framework: "example_framework",
       }),
     ).toThrow();
+  });
+
+  it("accepts every controlled requirement vocabulary member", () => {
+    for (const schema of [
+      ActorTypeSchema,
+      OperationActionSchema,
+      ResourceTypeSchema,
+      TargetScopeSchema,
+      InputTypeSchema,
+      InputTrustBoundarySchema,
+      MediaCategorySchema,
+      MediaTypeSchema,
+      EffectSchema,
+    ]) {
+      for (const value of schema.options) expect(schema.parse(value)).toBe(value);
+    }
+  });
+
+  it.each(["binary-file", "images", "own"])(
+    "rejects unknown policy-relevant vocabulary %s",
+    (value) => {
+      expect(() => parseRequirementPackage({
+        ...baseRequirement,
+        operation: { ...baseRequirement.operation, target_scope: value },
+      })).toThrow();
+    },
+  );
+
+  it("requires an explicit input trust boundary", () => {
+    expect(() => parseRequirementPackage({
+      ...baseRequirement,
+      inputs: [{ name: "picture", type: "binary_file", media_category: "image" }],
+    })).toThrow();
   });
 
   it("produces the public RequirementPackage type", () => {

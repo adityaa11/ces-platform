@@ -1,9 +1,10 @@
 import { defaultPolicyRegistry, type PolicyRegistry } from "@company/ces-policy-registry";
 import { parseRequirementPackage } from "@company/ces-requirement-schema";
+import type { ProjectAssuranceContext } from "@company/ces-project-schema";
 import { describe, expect, it } from "vitest";
 import { canonicalJson, compilePolicyManifest } from "./index.js";
 
-const assurance = {
+const assurance: ProjectAssuranceContext = {
   exposure: "public_internet",
   criticality: "business_critical",
   data_classes: ["personal"],
@@ -34,6 +35,7 @@ function createRequirement(options?: {
     inputs: sizes.map((maximumSizeBytes, index) => ({
       name: `profile_picture_${index}`,
       type: "binary_file",
+      trust_boundary: "external",
       media_category: "image",
       constraints: {
         allowed_media_types: ["image/jpeg", "image/png"],

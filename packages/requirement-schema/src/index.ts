@@ -3,6 +3,17 @@ import { parse as parseYaml } from "yaml";
 import { z } from "zod";
 
 export const REQUIREMENT_SCHEMA_VERSION = "1.0.0" as const;
+export const REQUIREMENT_VOCABULARY_VERSION = "1.0.0" as const;
+
+export const ActorTypeSchema = z.enum(["authenticated_user"]);
+export const OperationActionSchema = z.enum(["replace"]);
+export const ResourceTypeSchema = z.enum(["profile_picture"]);
+export const TargetScopeSchema = z.enum(["own_resource"]);
+export const InputTypeSchema = z.enum(["binary_file"]);
+export const InputTrustBoundarySchema = z.enum(["external", "internal"]);
+export const MediaCategorySchema = z.enum(["image"]);
+export const MediaTypeSchema = z.enum(["image/jpeg", "image/png"]);
+export const EffectSchema = z.enum(["persistent_write", "replaces_existing_resource"]);
 
 export const RequirementSourceSchema = z
   .object({
@@ -16,7 +27,7 @@ export const RequirementSourceSchema = z
 
 export const RequirementConstraintSchema = z
   .object({
-    allowed_media_types: z.array(z.string().trim().min(1)).default([]),
+    allowed_media_types: z.array(MediaTypeSchema).default([]),
     maximum_size_bytes: z.number().int().positive().optional(),
   })
   .strict();
@@ -24,8 +35,9 @@ export const RequirementConstraintSchema = z
 export const RequirementInputSchema = z
   .object({
     name: z.string().trim().min(1),
-    type: z.string().trim().min(1),
-    media_category: z.string().trim().min(1).optional(),
+    type: InputTypeSchema,
+    trust_boundary: InputTrustBoundarySchema,
+    media_category: MediaCategorySchema.optional(),
     constraints: RequirementConstraintSchema.optional(),
   })
   .strict();
@@ -49,19 +61,19 @@ export const RequirementPackageSchema = z
     source: RequirementSourceSchema.optional(),
     actor: z
       .object({
-        type: z.string().trim().min(1),
+        type: ActorTypeSchema,
       })
       .strict(),
     operation: z
       .object({
-        action: z.string().trim().min(1),
-        resource: z.string().trim().min(1),
-        target_scope: z.string().trim().min(1).optional(),
+        action: OperationActionSchema,
+        resource: ResourceTypeSchema,
+        target_scope: TargetScopeSchema.optional(),
       })
       .strict(),
     inputs: z.array(RequirementInputSchema).default([]),
     outputs: z.array(z.string().trim().min(1)).default([]),
-    effects: z.array(z.string().trim().min(1)).default([]),
+    effects: z.array(EffectSchema).default([]),
     business_rules: z.array(BusinessRuleSchema).default([]),
     uncertainties: z.array(RequirementUncertaintySchema).default([]),
     asserted_capabilities: z.array(z.string().trim().min(1)).default([]),

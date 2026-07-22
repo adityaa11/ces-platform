@@ -2,16 +2,23 @@ import { parse as parseYaml } from "yaml";
 import { z } from "zod";
 
 export const PROJECT_SCHEMA_VERSION = "1.0.0" as const;
+export const PROJECT_ASSURANCE_VOCABULARY_VERSION = "1.0.0" as const;
+
+export const ExposureSchema = z.enum(["public_internet", "private_network"]);
+export const CriticalitySchema = z.enum(["business_critical", "standard"]);
+export const TenancySchema = z.enum(["single_tenant", "multi_tenant"]);
+export const DataClassSchema = z.enum(["public", "internal", "personal", "sensitive"]);
+export const DeliverySemanticsSchema = z.enum(["synchronous", "asynchronous"]);
 
 const NonEmptyString = z.string().trim().min(1);
 
 export const ProjectAssuranceContextSchema = z
   .object({
-    exposure: NonEmptyString,
-    criticality: NonEmptyString,
-    tenancy: NonEmptyString.optional(),
-    data_classes: z.array(NonEmptyString).default([]),
-    delivery_semantics: NonEmptyString.optional(),
+    exposure: ExposureSchema,
+    criticality: CriticalitySchema,
+    tenancy: TenancySchema.optional(),
+    data_classes: z.array(DataClassSchema).default([]),
+    delivery_semantics: DeliverySemanticsSchema.optional(),
   })
   .strict();
 

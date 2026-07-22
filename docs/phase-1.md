@@ -18,6 +18,12 @@ The Policy Manifest is portable: the Laravel and test-fixture adapters consume t
 
 An unsupported mandatory mapping produces `adapter-report.json` and exit code 5 without partial implementation artifacts. Verification performs bounded schema, identity, file, text-pattern, prohibited-pattern, and configured-test checks. Semantic correctness remains `human_review_required` and is not claimed as automated proof.
 
+### Controlled facts and trust boundaries
+
+Policy-relevant actor, operation, input type, trust boundary, media, effect, and assurance facts use exported versioned enums. Unknown spellings are rejected during schema validation with exit code 2; Phase 1 does not silently coerce them or treat them as an `unknown` value. In particular, use `binary_file`, `image`, `own_resource`, and `public_internet` exactly.
+
+Every input declares `trust_boundary` as either `external` or `internal`. The resolver derives `EXTERNAL_INPUT` only from the explicit `external` value—not from the presence or type of an input. This fact controls input-validation and safe-logging policies.
+
 ## Local setup
 
 Requirements are Node.js 24.12.0 and Corepack. The repository pins pnpm 11.15.1.

@@ -2,7 +2,7 @@
 
 **Phase:** 1 — Deterministic Core and Reference Adapter
 **Parent:** [CES-000](CES-000-parent-mvp.md)
-**Status:** Planned
+**Status:** Done
 
 ## Goal
 
@@ -17,16 +17,16 @@ Prevent silent policy omission caused by misspelled or ambiguous policy-relevant
 
 ## Acceptance criteria
 
-- [ ] Typos such as `binary-file`, `images`, `own`, and `public` cannot silently pass.
-- [ ] External-input policies require an explicit external trust-boundary fact.
-- [ ] Every supported vocabulary member has positive schema coverage.
-- [ ] Unknown-value behavior is deterministic and documented.
+- [x] Typos such as `binary-file`, `images`, `own`, and `public` cannot silently pass.
+- [x] External-input policies require an explicit external trust-boundary fact.
+- [x] Every supported vocabulary member has positive schema coverage.
+- [x] Unknown-value behavior is deterministic and documented.
 
 ## Required evidence
 
-- [ ] Attach invalid-vocabulary CLI diagnostics and exit codes.
-- [ ] Attach positive enumeration coverage.
-- [ ] Attach resolver evidence proving explicit trust-boundary derivation.
+- [x] Attach invalid-vocabulary CLI diagnostics and exit codes.
+- [x] Attach positive enumeration coverage.
+- [x] Attach resolver evidence proving explicit trust-boundary derivation.
 
 ## Migration note
 
