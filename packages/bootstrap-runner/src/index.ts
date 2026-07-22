@@ -217,9 +217,9 @@ function assertInside(root: string, path: string, label: string): void { const r
 function stagingPath(finalOutput: string): string { return join(dirname(finalOutput), `.${basename(finalOutput)}.ces-next`); }
 function backupPath(finalOutput: string): string { return join(dirname(finalOutput), `.${basename(finalOutput)}.ces-backup`); }
 function compareText(left: string, right: string): number { return left < right ? -1 : left > right ? 1 : 0; }
-function corepackInvocation(args: readonly string[]): { command: string; args: readonly string[] } {
-  return process.platform === "win32"
-    ? { command: process.env.ComSpec ?? "cmd.exe", args: ["/d", "/s", "/c", "corepack", ...args] }
+export function corepackInvocation(args: readonly string[], platform: NodeJS.Platform = process.platform, commandProcessor = process.env.ComSpec ?? "cmd.exe"): { command: string; args: readonly string[] } {
+  return platform === "win32"
+    ? { command: commandProcessor, args: ["/d", "/s", "/c", "corepack", ...args] }
     : { command: "corepack", args };
 }
 function isMissing(error: unknown): boolean { return error instanceof Error && "code" in error && error.code === "ENOENT"; }

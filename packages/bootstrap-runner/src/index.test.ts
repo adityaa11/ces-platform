@@ -2,11 +2,15 @@ import { mkdtemp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { CANONICAL_CES_REPOSITORY, runCes, type ProcessResult, type RunnerDependencies } from "./index.js";
+import { CANONICAL_CES_REPOSITORY, corepackInvocation, runCes, type ProcessResult, type RunnerDependencies } from "./index.js";
 
 const commit = "0123456789abcdef0123456789abcdef01234567";
 
 describe("adapter-neutral bootstrap runner", () => {
+  it("uses direct Corepack execution on POSIX and the command processor on Windows", () => {
+    expect(corepackInvocation(["pnpm", "--version"], "linux")).toEqual({ command: "corepack", args: ["pnpm", "--version"] });
+    expect(corepackInvocation(["pnpm", "--version"], "win32", "cmd.exe")).toEqual({ command: "cmd.exe", args: ["/d", "/s", "/c", "corepack", "pnpm", "--version"] });
+  });
   it("checks out the lock, validates toolchains, compiles without an adapter flag, and reports current artifacts", async () => {
     const workspace = await fixture();
     const calls: string[][] = [];
@@ -200,7 +204,7 @@ function fakeDependencies(workspace: string, calls: string[][], compile: (args: 
         return result(0);
       }
       if (command === "git" && args.includes("rev-parse")) return result(0, `${commit}\n`);
-      if (args.includes("corepack") && args.includes("--version")) return result(0, "11.15.1\n");
+      if ((command === "corepack" || args.includes("corepack")) && args.includes("--version")) return result(0, "11.15.1\n");
       if (command === process.execPath) return compile(args);
       return result(0);
     },

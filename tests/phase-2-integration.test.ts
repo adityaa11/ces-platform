@@ -143,7 +143,7 @@ function integrationDependencies(workspace: string, calls: string[][] = []): Run
       }
       if (command === "git" && args.includes("get-url")) return processResult(0, "https://github.com/adityaa11/ces-platform.git\n");
       if (command === "git" && args.includes("rev-parse")) return processResult(0, `${LOCKED_COMMIT}\n`);
-      if (args.includes("corepack") && args.includes("--version")) return processResult(0, "11.15.1\n");
+      if ((command === "corepack" || args.includes("corepack")) && args.includes("--version")) return processResult(0, "11.15.1\n");
       if (command === process.execPath) {
         const exitCode = await runCli(args.slice(1), { stdout: () => undefined, stderr: () => undefined });
         return processResult(exitCode);
