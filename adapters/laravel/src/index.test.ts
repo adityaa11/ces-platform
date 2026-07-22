@@ -9,6 +9,7 @@ import {
 const policyIds = [
   "ATOMIC_RESOURCE_REPLACEMENT",
   "FILE_CONTENT_VERIFICATION",
+  "FILE_MEDIA_TYPE_ALLOWLIST",
   "FILE_SIZE_LIMIT",
   "INPUT_VALIDATION",
   "REPLACED_RESOURCE_LIFECYCLE",
@@ -33,7 +34,11 @@ const manifest: PolicyManifest = {
     policy_id: policyId,
     requirement_level: "mandatory",
     resolution_state: "resolved",
-    parameters: {},
+    parameters: policyId === "FILE_SIZE_LIMIT"
+      ? { maximum_bytes: 5_242_880 }
+      : policyId === "FILE_MEDIA_TYPE_ALLOWLIST"
+        ? { allowed_media_types: ["image/jpeg", "image/png"] }
+        : {},
     reasons: [`Requirement for ${policyId}`],
     evidence: [],
     source_rule_ids: [`POL-${policyId}`],
@@ -48,12 +53,26 @@ describe("Laravel reference adapter", () => {
     const result = compileLaravelAdapter({ manifest, technical });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.implementation_package.implementation_items).toHaveLength(9);
+    expect(result.implementation_package.implementation_items).toHaveLength(10);
     for (const item of result.implementation_package.implementation_items) {
       expect(item.mapping_id).toBe(`LARAVEL-MAP-${item.source_policy_id}`);
       expect(item.mapping_version).toBe("0.1.0");
     }
     expect(result.implementation_package.source_compilation_id).toBe(manifest.compilation_id);
+    expect(result.implementation_package.implementation_items).toContainEqual(
+      expect.objectContaining({
+        source_policy_id: "FILE_SIZE_LIMIT",
+        parameters: { maximum_bytes: 5_242_880 },
+        guidance: expect.stringContaining("5242880 bytes"),
+      }),
+    );
+    expect(result.implementation_package.implementation_items).toContainEqual(
+      expect.objectContaining({
+        source_policy_id: "FILE_MEDIA_TYPE_ALLOWLIST",
+        parameters: { allowed_media_types: ["image/jpeg", "image/png"] },
+        guidance: expect.stringContaining("image/jpeg, image/png"),
+      }),
+    );
   });
 
   it("defines PHPUnit tests and evidence markers for every mapping", () => {

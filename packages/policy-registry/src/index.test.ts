@@ -6,10 +6,11 @@ import {
 } from "./index.js";
 
 describe("policy registry", () => {
-  it("contains the nine canonical initial policies", () => {
+  it("contains the canonical policies", () => {
     expect(defaultPolicyRegistry.definitions.map(({ id }) => id).sort()).toEqual([
       "ATOMIC_RESOURCE_REPLACEMENT",
       "FILE_CONTENT_VERIFICATION",
+      "FILE_MEDIA_TYPE_ALLOWLIST",
       "FILE_SIZE_LIMIT",
       "INPUT_VALIDATION",
       "REPLACED_RESOURCE_LIFECYCLE",

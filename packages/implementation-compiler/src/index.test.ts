@@ -82,6 +82,35 @@ describe("implementation compiler", () => {
     expect(second).toEqual(first);
   });
 
+  it("preserves and renders exact policy parameters in every artifact", () => {
+    const parameterManifest: PolicyManifest = {
+      ...manifest,
+      obligations: [{
+        ...manifest.obligations[0]!,
+        policy_id: "FILE_SIZE_LIMIT",
+        parameters: { maximum_bytes: 5_242_880 },
+      }],
+    };
+    const adapter = createAdapter(["FILE_SIZE_LIMIT"]);
+    const mapping = adapter.mappings[0]!;
+    adapter.mappings = [{
+      ...mapping,
+      implementation: [{ ...mapping.implementation[0]!, guidance: "Reject above {{maximum_bytes}} bytes" }],
+      tests: [{ ...mapping.tests[0]!, guidance: "Test {{maximum_bytes}} bytes" }],
+      verification: [{ ...mapping.verification[0]!, guidance: "Verify {{maximum_bytes}} bytes" }],
+    }];
+    const result = compileImplementationArtifacts({ manifest: parameterManifest, technical, adapter });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.artifacts.implementation_task).toContain("5242880 bytes");
+    expect(result.artifacts.implementation_plan.implementation_items[0]?.parameters)
+      .toEqual({ maximum_bytes: 5_242_880 });
+    expect(result.artifacts.test_manifest.tests[0]?.parameters)
+      .toEqual({ maximum_bytes: 5_242_880 });
+    expect(result.artifacts.verification_manifest.checks[0]?.parameters)
+      .toEqual({ maximum_bytes: 5_242_880 });
+  });
+
   it("stops blocked and conflicting manifests before adapter preflight", () => {
     for (const state of ["blocked", "conflict"] as const) {
       const result = compileImplementationArtifacts({

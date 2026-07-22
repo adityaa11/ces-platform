@@ -166,7 +166,14 @@ function resolveRuleContributions(
         missingInputs.push(binding.fact_path);
         continue;
       }
+      if (binding.value_mode === "set" && values.length > 0) {
+        parameters[binding.name] = uniqueCanonicalValues(values.map(({ value }) => value));
+      }
       for (const fact of values) {
+        if (binding.value_mode === "set") {
+          evidence.push(toEvidence(fact));
+          continue;
+        }
         if (parameters[binding.name] === undefined) {
           parameters[binding.name] = fact.value;
         } else if (!deepEqual(parameters[binding.name], fact.value)) {

@@ -3,6 +3,7 @@ import {
   TestManifestSchema,
   VerificationManifestSchema,
   createAdapterRegistry,
+  materializeGuidance,
   prepareAdapterCompilation,
   type AdapterDefinition,
   type AdapterPreparationResult,
@@ -18,7 +19,8 @@ export const LARAVEL_ADAPTER_PACKAGE_ID = "@company/ces-laravel-adapter";
 const POLICY_GUIDANCE = {
   INPUT_VALIDATION: "Use a Laravel Form Request with explicit validation rules",
   RESOURCE_LEVEL_AUTHORIZATION: "Use a Laravel Policy and authorize the target model instance",
-  FILE_SIZE_LIMIT: "Apply the resolved maximum size in the Form Request file rule",
+  FILE_SIZE_LIMIT: "Reject files larger than {{maximum_bytes}} bytes using a Laravel Form Request file rule",
+  FILE_MEDIA_TYPE_ALLOWLIST: "Allow only these media types in the Laravel Form Request: {{allowed_media_types}}",
   FILE_CONTENT_VERIFICATION: "Verify detected MIME content and decode images before acceptance",
   SERVER_GENERATED_STORAGE_KEY: "Generate a trusted storage path and write through Laravel Storage",
   SAFE_IMAGE_DELIVERY: "Return the stored image with an explicit safe content type",
@@ -30,7 +32,8 @@ const POLICY_GUIDANCE = {
 const TEST_GUIDANCE = {
   INPUT_VALIDATION: "PHPUnit feature test rejects malformed and missing input",
   RESOURCE_LEVEL_AUTHORIZATION: "PHPUnit feature tests deny another user's resource",
-  FILE_SIZE_LIMIT: "PHPUnit feature test rejects a file above the resolved limit",
+  FILE_SIZE_LIMIT: "PHPUnit feature test rejects a file above {{maximum_bytes}} bytes",
+  FILE_MEDIA_TYPE_ALLOWLIST: "PHPUnit feature test rejects media types outside {{allowed_media_types}}",
   FILE_CONTENT_VERIFICATION: "PHPUnit integration test rejects spoofed file content",
   SERVER_GENERATED_STORAGE_KEY: "PHPUnit test proves client filenames never select storage paths",
   SAFE_IMAGE_DELIVERY: "PHPUnit feature test asserts safe response media headers",
@@ -181,20 +184,25 @@ export function compileLaravelAdapter(input: {
     policy_registry_version: input.manifest.policy_registry_version,
     adapter: adapter.metadata.adapter,
   };
+  const parametersByPolicy = new Map(
+    input.manifest.obligations.map(({ policy_id, parameters }) => [policy_id, parameters]),
+  );
+  const materialize = (item: Parameters<typeof materializeGuidance>[0]) =>
+    materializeGuidance(item, parametersByPolicy.get(item.source_policy_id) ?? {});
   return {
     ok: true,
     exit_code: 0,
     implementation_package: ImplementationPackageSchema.parse({
       ...header,
-      implementation_items: preparation.applicable_mappings.flatMap(({ implementation }) => implementation),
+      implementation_items: preparation.applicable_mappings.flatMap(({ implementation }) => implementation.map(materialize)),
     }),
     test_manifest: TestManifestSchema.parse({
       ...header,
-      tests: preparation.applicable_mappings.flatMap(({ tests }) => tests),
+      tests: preparation.applicable_mappings.flatMap(({ tests }) => tests.map(materialize)),
     }),
     verification_manifest: VerificationManifestSchema.parse({
       ...header,
-      checks: preparation.applicable_mappings.flatMap(({ verification }) => verification),
+      checks: preparation.applicable_mappings.flatMap(({ verification }) => verification.map(materialize)),
     }),
   };
 }

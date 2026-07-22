@@ -10,6 +10,7 @@ import {
 const policyIds = [
   "ATOMIC_RESOURCE_REPLACEMENT",
   "FILE_CONTENT_VERIFICATION",
+  "FILE_MEDIA_TYPE_ALLOWLIST",
   "FILE_SIZE_LIMIT",
   "INPUT_VALIDATION",
   "REPLACED_RESOURCE_LIFECYCLE",
@@ -35,7 +36,11 @@ const manifest: PolicyManifest = {
     policy_id: policyId,
     requirement_level: "mandatory",
     resolution_state: "resolved",
-    parameters: {},
+    parameters: policyId === "FILE_SIZE_LIMIT"
+      ? { maximum_bytes: 5_242_880 }
+      : policyId === "FILE_MEDIA_TYPE_ALLOWLIST"
+        ? { allowed_media_types: ["image/jpeg", "image/png"] }
+        : {},
     reasons: [`Fixture requires ${policyId}`],
     evidence: [],
     source_rule_ids: [`POL-${policyId}`],
@@ -61,9 +66,19 @@ describe("test-fixture adapter", () => {
     const result = compileTestFixture({ manifest, technical, test_mode: true });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.implementation_package.implementation_items).toHaveLength(9);
-    expect(result.test_manifest.tests).toHaveLength(9);
-    expect(result.verification_manifest.checks).toHaveLength(9);
+    expect(result.implementation_package.implementation_items).toHaveLength(10);
+    expect(result.test_manifest.tests).toHaveLength(10);
+    expect(result.verification_manifest.checks).toHaveLength(10);
+    for (const items of [
+      result.implementation_package.implementation_items,
+      result.test_manifest.tests,
+      result.verification_manifest.checks,
+    ]) {
+      expect(items.find(({ source_policy_id }) => source_policy_id === "FILE_SIZE_LIMIT")?.parameters)
+        .toEqual({ maximum_bytes: 5_242_880 });
+      expect(items.find(({ source_policy_id }) => source_policy_id === "FILE_MEDIA_TYPE_ALLOWLIST")?.parameters)
+        .toEqual({ allowed_media_types: ["image/jpeg", "image/png"] });
+    }
   });
 
   it("consumes the source manifest unchanged", () => {

@@ -2,7 +2,7 @@
 
 **Phase:** 1 — Deterministic Core and Reference Adapter
 **Parent:** [CES-000](CES-000-parent-mvp.md)
-**Status:** Planned
+**Status:** Done
 
 ## Goal
 
@@ -17,17 +17,17 @@ Preserve concrete file constraints from the Requirement Package through policy r
 
 ## Acceptance criteria
 
-- [ ] The Policy Manifest contains `maximum_bytes: 5242880` and `allowed_media_types: [image/jpeg, image/png]`.
-- [ ] Both adapters preserve those parameters unchanged.
-- [ ] Implementation plans and tasks state the exact limit and allowlist.
-- [ ] Test and verification manifests retain the same concrete values.
-- [ ] Parameter conflicts remain deterministic policy conflicts.
+- [x] The Policy Manifest contains `maximum_bytes: 5242880` and `allowed_media_types: [image/jpeg, image/png]`.
+- [x] Both adapters preserve those parameters unchanged.
+- [x] Implementation plans and tasks state the exact limit and allowlist.
+- [x] Test and verification manifests retain the same concrete values.
+- [x] Parameter conflicts remain deterministic policy conflicts.
 
 ## Required evidence
 
-- [ ] Attach updated Policy Manifest and adapter-derived artifacts.
-- [ ] Attach propagation tests for every stage.
-- [ ] Attach an incompatible-parameter failure with exit code 4.
+- [x] Attach updated Policy Manifest and adapter-derived artifacts.
+- [x] Attach propagation tests for every stage.
+- [x] Attach an incompatible-parameter failure with exit code 4.
 
 ## Exclusions
 

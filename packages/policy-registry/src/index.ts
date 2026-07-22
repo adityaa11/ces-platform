@@ -10,6 +10,7 @@ export const PolicyIdSchema = z.enum([
   "INPUT_VALIDATION",
   "RESOURCE_LEVEL_AUTHORIZATION",
   "FILE_SIZE_LIMIT",
+  "FILE_MEDIA_TYPE_ALLOWLIST",
   "FILE_CONTENT_VERIFICATION",
   "SERVER_GENERATED_STORAGE_KEY",
   "SAFE_IMAGE_DELIVERY",
@@ -31,6 +32,7 @@ export const PolicyParameterBindingSchema = z
     name: z.string().trim().min(1),
     fact_path: z.string().trim().min(1),
     required: z.boolean().default(false),
+    value_mode: z.enum(["scalar", "set"]).default("scalar"),
   })
   .strict();
 
@@ -69,6 +71,7 @@ export const defaultPolicyRegistry: PolicyRegistry = {
     { id: "INPUT_VALIDATION", category: "security", requires: [] },
     { id: "RESOURCE_LEVEL_AUTHORIZATION", category: "security", requires: [] },
     { id: "FILE_SIZE_LIMIT", category: "security", requires: ["INPUT_VALIDATION"] },
+    { id: "FILE_MEDIA_TYPE_ALLOWLIST", category: "security", requires: ["INPUT_VALIDATION"] },
     { id: "FILE_CONTENT_VERIFICATION", category: "security", requires: ["INPUT_VALIDATION"] },
     { id: "SERVER_GENERATED_STORAGE_KEY", category: "security", requires: [] },
     { id: "SAFE_IMAGE_DELIVERY", category: "security", requires: [] },
@@ -104,6 +107,19 @@ export const defaultPolicyRegistry: PolicyRegistry = {
           required: true,
         },
       ],
+    },
+    {
+      id: "POL-FILE-ALLOWLIST-001",
+      when: { capability: "FILE_UPLOAD" },
+      policy_id: "FILE_MEDIA_TYPE_ALLOWLIST",
+      requirement_level: "mandatory",
+      reason: "Capability FILE_UPLOAD requires an explicit media type allowlist",
+      parameters: [{
+        name: "allowed_media_types",
+        fact_path: "inputs.*.constraints.allowed_media_types.*",
+        required: true,
+        value_mode: "set",
+      }],
     },
     {
       id: "POL-FILE-002",

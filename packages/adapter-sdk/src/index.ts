@@ -36,6 +36,7 @@ export const MappingGuidanceSchema = z
     mapping_id: NonEmptyString,
     mapping_version: NonEmptyString,
     guidance: NonEmptyString,
+    parameters: z.record(z.string(), z.unknown()).optional(),
   })
   .strict();
 
@@ -157,6 +158,35 @@ export type AdapterReport = z.infer<typeof AdapterReportSchema>;
 export type ImplementationPackage = z.infer<typeof ImplementationPackageSchema>;
 export type TestManifest = z.infer<typeof TestManifestSchema>;
 export type VerificationManifest = z.infer<typeof VerificationManifestSchema>;
+export type MappingGuidance = z.infer<typeof MappingGuidanceSchema>;
+
+export function materializeGuidance(
+  item: MappingGuidance,
+  parameters: Readonly<Record<string, unknown>>,
+): MappingGuidance {
+  const parsed = MappingGuidanceSchema.parse(item);
+  return MappingGuidanceSchema.parse({
+    ...parsed,
+    guidance: parsed.guidance.replace(/\{\{([^{}]+)\}\}/gu, (_, rawName: string) => {
+      const name = rawName.trim();
+      if (!(name in parameters)) {
+        throw new AdapterCompatibilityError(
+          `Guidance ${parsed.id} requires missing policy parameter ${name}`,
+        );
+      }
+      return formatParameter(parameters[name]);
+    }),
+    parameters,
+  });
+}
+
+function formatParameter(value: unknown): string {
+  if (Array.isArray(value)) return value.map(formatParameter).join(", ");
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  return JSON.stringify(value);
+}
 
 export type AdapterPreparationResult =
   | {

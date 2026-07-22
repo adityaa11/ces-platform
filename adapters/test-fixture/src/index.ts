@@ -3,6 +3,7 @@ import {
   TestManifestSchema,
   VerificationManifestSchema,
   createAdapterRegistry,
+  materializeGuidance,
   prepareAdapterCompilation,
   type AdapterDefinition,
   type AdapterPreparationResult,
@@ -20,7 +21,8 @@ export const TEST_FIXTURE_ADAPTER_WARNING =
 const POLICY_GUIDANCE = {
   INPUT_VALIDATION: "Validate external values at the system boundary",
   RESOURCE_LEVEL_AUTHORIZATION: "Authorize access against the target resource",
-  FILE_SIZE_LIMIT: "Reject files exceeding the resolved byte limit",
+  FILE_SIZE_LIMIT: "Reject files exceeding {{maximum_bytes}} bytes",
+  FILE_MEDIA_TYPE_ALLOWLIST: "Accept only these media types: {{allowed_media_types}}",
   FILE_CONTENT_VERIFICATION: "Verify file content independently of its supplied name",
   SERVER_GENERATED_STORAGE_KEY: "Generate storage identifiers inside the trusted boundary",
   SAFE_IMAGE_DELIVERY: "Deliver image content using a safe media response",
@@ -138,23 +140,28 @@ export function compileTestFixture(input: {
     policy_registry_version: input.manifest.policy_registry_version,
     adapter: adapter.metadata.adapter,
   };
+  const parametersByPolicy = new Map(
+    input.manifest.obligations.map(({ policy_id, parameters }) => [policy_id, parameters]),
+  );
+  const materialize = (item: Parameters<typeof materializeGuidance>[0]) =>
+    materializeGuidance(item, parametersByPolicy.get(item.source_policy_id) ?? {});
   return {
     ok: true,
     exit_code: 0,
     implementation_package: ImplementationPackageSchema.parse({
       ...header,
       implementation_items: preparation.applicable_mappings.flatMap(
-        ({ implementation }) => implementation,
+        ({ implementation }) => implementation.map(materialize),
       ),
     }),
     test_manifest: TestManifestSchema.parse({
       ...header,
-      tests: preparation.applicable_mappings.flatMap(({ tests }) => tests),
+      tests: preparation.applicable_mappings.flatMap(({ tests }) => tests.map(materialize)),
     }),
     verification_manifest: VerificationManifestSchema.parse({
       ...header,
       checks: preparation.applicable_mappings.flatMap(
-        ({ verification }) => verification,
+        ({ verification }) => verification.map(materialize),
       ),
     }),
   };

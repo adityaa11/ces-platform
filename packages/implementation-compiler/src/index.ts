@@ -2,6 +2,7 @@ import {
   ImplementationPackageSchema,
   TestManifestSchema,
   VerificationManifestSchema,
+  materializeGuidance,
   prepareAdapterCompilation,
   type AdapterDefinition,
   type AdapterReport,
@@ -76,20 +77,25 @@ export function compileImplementationArtifacts(input: {
     policy_registry_version: input.manifest.policy_registry_version,
     adapter: preparation.adapter.metadata.adapter,
   };
+  const parametersByPolicy = new Map(
+    input.manifest.obligations.map(({ policy_id, parameters }) => [policy_id, parameters]),
+  );
+  const materialize = (item: Parameters<typeof materializeGuidance>[0]) =>
+    materializeGuidance(item, parametersByPolicy.get(item.source_policy_id) ?? {});
   const implementationPlan = ImplementationPackageSchema.parse({
     ...header,
     implementation_items: preparation.applicable_mappings.flatMap(
-      ({ implementation }) => implementation,
+      ({ implementation }) => implementation.map(materialize),
     ),
   });
   const testManifest = TestManifestSchema.parse({
     ...header,
-    tests: preparation.applicable_mappings.flatMap(({ tests }) => tests),
+    tests: preparation.applicable_mappings.flatMap(({ tests }) => tests.map(materialize)),
   });
   const verificationManifest = VerificationManifestSchema.parse({
     ...header,
     checks: preparation.applicable_mappings.flatMap(
-      ({ verification }) => verification,
+      ({ verification }) => verification.map(materialize),
     ),
   });
   return {

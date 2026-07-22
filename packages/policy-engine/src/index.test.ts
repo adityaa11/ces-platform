@@ -80,6 +80,7 @@ describe("compilePolicyManifest", () => {
     expect(result.manifest.obligations.map(({ policy_id }) => policy_id)).toEqual([
       "ATOMIC_RESOURCE_REPLACEMENT",
       "FILE_CONTENT_VERIFICATION",
+      "FILE_MEDIA_TYPE_ALLOWLIST",
       "FILE_SIZE_LIMIT",
       "INPUT_VALIDATION",
       "REPLACED_RESOURCE_LIFECYCLE",
@@ -93,6 +94,11 @@ describe("compilePolicyManifest", () => {
         ({ policy_id }) => policy_id === "FILE_SIZE_LIMIT",
       )?.parameters,
     ).toEqual({ maximum_bytes: 5_242_880 });
+    expect(
+      result.manifest.obligations.find(
+        ({ policy_id }) => policy_id === "FILE_MEDIA_TYPE_ALLOWLIST",
+      )?.parameters,
+    ).toEqual({ allowed_media_types: ["image/jpeg", "image/png"] });
   });
 
   it("blocks lifecycle when the business lifecycle fact is absent", () => {
