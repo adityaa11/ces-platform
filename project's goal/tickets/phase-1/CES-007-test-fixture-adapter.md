@@ -2,7 +2,7 @@
 
 **Phase:** 1 — Deterministic Core and Reference Adapter
 **Parent:** [CES-000](CES-000-parent-mvp.md)
-**Status:** In progress — cross-adapter hash evidence awaits CES-008
+**Status:** Done
 
 ## Goal
 
@@ -30,7 +30,7 @@ It is test-only. It must not be selected for production project compilation, and
 - [x] Core schemas and resolution code need no modification.
 - [x] Adapter contract and gap tests pass.
 - [x] Removing every production adapter still leaves core and fixture tests green.
-- [ ] Laravel and fixture compilation consume the same unchanged Policy Manifest.
+- [x] Laravel and fixture compilation consume the same unchanged Policy Manifest.
 
 ## Required evidence
 
@@ -41,7 +41,7 @@ It is test-only. It must not be selected for production project compilation, and
 - [x] Attach a package/documentation check proving the fixture cannot be mistaken for the future production `generic-guidance` adapter.
 - [x] Attach fixture metadata showing its test-only classification.
 - [x] Attach rejected production-mode and accepted test-mode selection results.
-- [ ] Attach source-manifest hashes from Laravel and fixture compilation proving identical input.
+- [x] Attach source-manifest hashes from Laravel and fixture compilation proving identical input.
 
 Evidence: [CES-007 verification record](../../evidence/phase-1/CES-007.md)
 
