@@ -1,0 +1,25 @@
+schema_version: 1.0.0
+requirement:
+  id: REQ-USER-014
+  title: Replace profile picture
+actor:
+  type: authenticated_user
+operation:
+  action: replace
+  resource: profile_picture
+  target_scope: own_resource
+inputs:
+  - name: profile_picture
+    type: binary_file
+    media_category: image
+    constraints:
+      allowed_media_types: [image/jpeg, image/png]
+      maximum_size_bytes: 5242880
+effects: [persistent_write, replaces_existing_resource]
+business_rules:
+  - id: BR-USER-031
+    type: authorization
+    statement: A user may replace only their own profile picture.
+  - id: BR-USER-033
+    type: lifecycle
+    statement: Delete the old image after commit using retry-safe cleanup.

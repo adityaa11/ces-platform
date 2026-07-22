@@ -1,0 +1,77 @@
+{
+  "adapter": {
+    "id": "laravel",
+    "mapping_version": "0.1.0",
+    "version": "0.1.0"
+  },
+  "ces_baseline_version": "0.1.0",
+  "policy_registry_version": "0.1.0",
+  "schema_version": "1.0.0",
+  "source_compilation_id": "sha256:c39bf3df838631b6cd3a645af16d29e514ee86bf6b1c94e793d4d74c14cd082d",
+  "source_requirement_id": "REQ-USER-014",
+  "tests": [
+    {
+      "guidance": "PHPUnit integration test proves rollback preserves prior state",
+      "id": "LARAVEL-TEST-ATOMIC_RESOURCE_REPLACEMENT",
+      "mapping_id": "LARAVEL-MAP-ATOMIC_RESOURCE_REPLACEMENT",
+      "mapping_version": "0.1.0",
+      "source_policy_id": "ATOMIC_RESOURCE_REPLACEMENT"
+    },
+    {
+      "guidance": "PHPUnit integration test rejects spoofed file content",
+      "id": "LARAVEL-TEST-FILE_CONTENT_VERIFICATION",
+      "mapping_id": "LARAVEL-MAP-FILE_CONTENT_VERIFICATION",
+      "mapping_version": "0.1.0",
+      "source_policy_id": "FILE_CONTENT_VERIFICATION"
+    },
+    {
+      "guidance": "PHPUnit feature test rejects a file above the resolved limit",
+      "id": "LARAVEL-TEST-FILE_SIZE_LIMIT",
+      "mapping_id": "LARAVEL-MAP-FILE_SIZE_LIMIT",
+      "mapping_version": "0.1.0",
+      "source_policy_id": "FILE_SIZE_LIMIT"
+    },
+    {
+      "guidance": "PHPUnit feature test rejects malformed and missing input",
+      "id": "LARAVEL-TEST-INPUT_VALIDATION",
+      "mapping_id": "LARAVEL-MAP-INPUT_VALIDATION",
+      "mapping_version": "0.1.0",
+      "source_policy_id": "INPUT_VALIDATION"
+    },
+    {
+      "guidance": "PHPUnit tests prove after-commit dispatch and retry-safe cleanup",
+      "id": "LARAVEL-TEST-REPLACED_RESOURCE_LIFECYCLE",
+      "mapping_id": "LARAVEL-MAP-REPLACED_RESOURCE_LIFECYCLE",
+      "mapping_version": "0.1.0",
+      "source_policy_id": "REPLACED_RESOURCE_LIFECYCLE"
+    },
+    {
+      "guidance": "PHPUnit feature tests deny another user's resource",
+      "id": "LARAVEL-TEST-RESOURCE_LEVEL_AUTHORIZATION",
+      "mapping_id": "LARAVEL-MAP-RESOURCE_LEVEL_AUTHORIZATION",
+      "mapping_version": "0.1.0",
+      "source_policy_id": "RESOURCE_LEVEL_AUTHORIZATION"
+    },
+    {
+      "guidance": "PHPUnit feature test asserts safe response media headers",
+      "id": "LARAVEL-TEST-SAFE_IMAGE_DELIVERY",
+      "mapping_id": "LARAVEL-MAP-SAFE_IMAGE_DELIVERY",
+      "mapping_version": "0.1.0",
+      "source_policy_id": "SAFE_IMAGE_DELIVERY"
+    },
+    {
+      "guidance": "PHPUnit test proves raw uploaded content is absent from logs",
+      "id": "LARAVEL-TEST-SAFE_LOGGING",
+      "mapping_id": "LARAVEL-MAP-SAFE_LOGGING",
+      "mapping_version": "0.1.0",
+      "source_policy_id": "SAFE_LOGGING"
+    },
+    {
+      "guidance": "PHPUnit test proves client filenames never select storage paths",
+      "id": "LARAVEL-TEST-SERVER_GENERATED_STORAGE_KEY",
+      "mapping_id": "LARAVEL-MAP-SERVER_GENERATED_STORAGE_KEY",
+      "mapping_version": "0.1.0",
+      "source_policy_id": "SERVER_GENERATED_STORAGE_KEY"
+    }
+  ]
+}

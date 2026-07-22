@@ -1,4 +1,4 @@
-name: CES repository checks
+name: CES repository tests
 
 on:
   push:
@@ -8,15 +8,16 @@ permissions:
   contents: read
 
 jobs:
-  check:
+  repository-check:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
-          cache: pnpm
       - run: corepack enable
       - run: corepack pnpm install --frozen-lockfile
       - run: corepack pnpm check
+      - run: docker build -t ces-cli:local .
+      - run: docker run --rm ces-cli:local --help

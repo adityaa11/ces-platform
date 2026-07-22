@@ -16,7 +16,7 @@ CES is a development and CI tool. It is not a runtime dependency of client appli
 
 **Phase 1 — Deterministic Core and Reference Adapter**
 
-Status: planning complete; implementation not started.
+Status: Phase 1 MVP implemented and verified locally.
 
 Phase 1 proves:
 
@@ -36,6 +36,23 @@ Phase 1 proves:
 - [Phase 1 parent ticket](<project's goal/tickets/phase-1/CES-000-parent-mvp.md>)
 
 The parent ticket lists the ordered Phase 1 children, dependencies, acceptance criteria, and required evidence.
+
+See the [Phase 1 guide](docs/phase-1.md) for local installation, compilation, verification, Docker usage, exit codes, architecture boundaries, and extension procedures.
+
+## Quick start
+
+```sh
+corepack enable
+corepack pnpm install --frozen-lockfile
+corepack pnpm check
+node apps/cli/dist/index.js compile \
+  --requirement examples/profile-picture.requirement.yaml \
+  --project examples/laravel-project.yaml \
+  --adapter laravel \
+  --output .ces/generated/REQ-USER-014/laravel
+```
+
+The blocked example uses `examples/profile-picture.blocked.yaml`; it writes a diagnostic Policy Manifest and exits before adapter compilation.
 
 ## Phase 1 workflow
 

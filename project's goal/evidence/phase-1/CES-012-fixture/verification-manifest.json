@@ -1,0 +1,77 @@
+{
+  "adapter": {
+    "id": "test-fixture",
+    "mapping_version": "0.1.0",
+    "version": "0.1.0"
+  },
+  "ces_baseline_version": "0.1.0",
+  "checks": [
+    {
+      "guidance": "Verify evidence that commit replacement state atomically",
+      "id": "FIXTURE-VERIFY-ATOMIC_RESOURCE_REPLACEMENT",
+      "mapping_id": "FIXTURE-MAP-ATOMIC_RESOURCE_REPLACEMENT",
+      "mapping_version": "0.1.0",
+      "source_policy_id": "ATOMIC_RESOURCE_REPLACEMENT"
+    },
+    {
+      "guidance": "Verify evidence that verify file content independently of its supplied name",
+      "id": "FIXTURE-VERIFY-FILE_CONTENT_VERIFICATION",
+      "mapping_id": "FIXTURE-MAP-FILE_CONTENT_VERIFICATION",
+      "mapping_version": "0.1.0",
+      "source_policy_id": "FILE_CONTENT_VERIFICATION"
+    },
+    {
+      "guidance": "Verify evidence that reject files exceeding the resolved byte limit",
+      "id": "FIXTURE-VERIFY-FILE_SIZE_LIMIT",
+      "mapping_id": "FIXTURE-MAP-FILE_SIZE_LIMIT",
+      "mapping_version": "0.1.0",
+      "source_policy_id": "FILE_SIZE_LIMIT"
+    },
+    {
+      "guidance": "Verify evidence that validate external values at the system boundary",
+      "id": "FIXTURE-VERIFY-INPUT_VALIDATION",
+      "mapping_id": "FIXTURE-MAP-INPUT_VALIDATION",
+      "mapping_version": "0.1.0",
+      "source_policy_id": "INPUT_VALIDATION"
+    },
+    {
+      "guidance": "Verify evidence that clean up the replaced resource after successful commit",
+      "id": "FIXTURE-VERIFY-REPLACED_RESOURCE_LIFECYCLE",
+      "mapping_id": "FIXTURE-MAP-REPLACED_RESOURCE_LIFECYCLE",
+      "mapping_version": "0.1.0",
+      "source_policy_id": "REPLACED_RESOURCE_LIFECYCLE"
+    },
+    {
+      "guidance": "Verify evidence that authorize access against the target resource",
+      "id": "FIXTURE-VERIFY-RESOURCE_LEVEL_AUTHORIZATION",
+      "mapping_id": "FIXTURE-MAP-RESOURCE_LEVEL_AUTHORIZATION",
+      "mapping_version": "0.1.0",
+      "source_policy_id": "RESOURCE_LEVEL_AUTHORIZATION"
+    },
+    {
+      "guidance": "Verify evidence that deliver image content using a safe media response",
+      "id": "FIXTURE-VERIFY-SAFE_IMAGE_DELIVERY",
+      "mapping_id": "FIXTURE-MAP-SAFE_IMAGE_DELIVERY",
+      "mapping_version": "0.1.0",
+      "source_policy_id": "SAFE_IMAGE_DELIVERY"
+    },
+    {
+      "guidance": "Verify evidence that exclude unsafe external values from structured logs",
+      "id": "FIXTURE-VERIFY-SAFE_LOGGING",
+      "mapping_id": "FIXTURE-MAP-SAFE_LOGGING",
+      "mapping_version": "0.1.0",
+      "source_policy_id": "SAFE_LOGGING"
+    },
+    {
+      "guidance": "Verify evidence that generate storage identifiers inside the trusted boundary",
+      "id": "FIXTURE-VERIFY-SERVER_GENERATED_STORAGE_KEY",
+      "mapping_id": "FIXTURE-MAP-SERVER_GENERATED_STORAGE_KEY",
+      "mapping_version": "0.1.0",
+      "source_policy_id": "SERVER_GENERATED_STORAGE_KEY"
+    }
+  ],
+  "policy_registry_version": "0.1.0",
+  "schema_version": "1.0.0",
+  "source_compilation_id": "sha256:c39bf3df838631b6cd3a645af16d29e514ee86bf6b1c94e793d4d74c14cd082d",
+  "source_requirement_id": "REQ-USER-014"
+}

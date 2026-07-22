@@ -1,0 +1,24 @@
+corepack pnpm install --frozen-lockfile
+  result: success; lockfile unchanged and dependencies linked
+
+corepack pnpm check
+  result: success; typecheck, 19 test files / 98 tests, and production builds passed
+
+node apps/cli/dist/index.js --help
+  result: success; compiled Node.js CLI displayed all Phase 1 commands and exit codes
+
+successful Laravel example
+  exit code: 0
+  files: requirement-package.json, policy-manifest.json, implementation-plan.json,
+         implementation-task.md, test-manifest.json, verification-manifest.json
+
+successful fixture example
+  exit code: 0
+  source Policy Manifest: byte-identical to Laravel
+  files: requirement-package.json, policy-manifest.json, implementation-plan.json,
+         implementation-task.md, test-manifest.json, verification-manifest.json
+
+blocked lifecycle example
+  exit code: 3
+  files: requirement-package.json, policy-manifest.json
+  adapter artifacts: none

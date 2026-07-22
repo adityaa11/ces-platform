@@ -1,0 +1,7 @@
+docker version --format '{{.Server.Version}}'
+
+Docker client warning: local Docker configuration was not readable in the sandbox.
+Docker daemon result: unavailable at npipe:////./pipe/docker_engine.
+
+The Dockerfile and repository workflow are committed and statically tested, but the required
+successful image build and mounted-workspace run remain pending until a Docker daemon is available.
