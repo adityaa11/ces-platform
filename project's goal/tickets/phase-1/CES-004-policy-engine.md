@@ -2,7 +2,7 @@
 
 **Phase:** 1 — Deterministic Core and Reference Adapter
 **Parent:** [CES-000](CES-000-parent-mvp.md)
-**Status:** Planned
+**Status:** Done
 
 ## Goal
 
@@ -20,20 +20,22 @@ Resolve capabilities, traits, business rules, uncertainties, and assurance conte
 
 ## Acceptance criteria
 
-- [ ] The complete profile-picture example produces resolved initial obligations.
-- [ ] Omitting the replaced-resource lifecycle fact blocks `REPLACED_RESOURCE_LIFECYCLE`.
-- [ ] Compatible duplicate policies merge evidence; incompatible parameters fail.
-- [ ] A mandatory/prohibited combination becomes a conflict.
-- [ ] The manifest contains no technical context or adapter terminology.
-- [ ] Repeated normalized inputs generate byte-identical manifests.
+- [x] The complete profile-picture example produces resolved initial obligations.
+- [x] Omitting the replaced-resource lifecycle fact blocks `REPLACED_RESOURCE_LIFECYCLE`.
+- [x] Compatible duplicate policies merge evidence; incompatible parameters fail.
+- [x] A mandatory/prohibited combination becomes a conflict.
+- [x] The manifest contains no technical context or adapter terminology.
+- [x] Repeated normalized inputs generate byte-identical manifests.
 
 ## Required evidence
 
-- [ ] Attach the successful profile-picture Policy Manifest and its input/registry hashes.
-- [ ] Attach a blocked lifecycle manifest and show exit code 3.
-- [ ] Attach conflict and incompatible-parameter diagnostics and show exit code 4.
-- [ ] Attach test output proving duplicate-evidence merging and byte-identical recompilation.
-- [ ] Attach a scan proving the Policy Manifest contains no adapter or framework terminology.
+- [x] Attach the successful profile-picture Policy Manifest and its input/registry hashes.
+- [x] Attach a blocked lifecycle manifest and show exit code 3.
+- [x] Attach conflict and incompatible-parameter diagnostics and show exit code 4.
+- [x] Attach test output proving duplicate-evidence merging and byte-identical recompilation.
+- [x] Attach a scan proving the Policy Manifest contains no adapter or framework terminology.
+
+Evidence: [CES-004 verification record](../../evidence/phase-1/CES-004.md)
 
 ## Exit behavior
 

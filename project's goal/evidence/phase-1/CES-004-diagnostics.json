@@ -1,0 +1,38 @@
+{
+  "success": {
+    "exit_code": 0,
+    "compilation_id": "sha256:9fa28166547f3a3d005face99576d3c5745009baa1b86d9d388762addcf07d8a",
+    "input_hash": "sha256:7ad55c4d8e05d8083a363baf7c8b3ed656c5b143a21ddf9b2a4467d49ae1a63d",
+    "byte_equal_with_reversed_registry": true
+  },
+  "blocked": {
+    "exit_code": 3,
+    "policy_id": "REPLACED_RESOURCE_LIFECYCLE",
+    "requirement_level": "mandatory",
+    "resolution_state": "blocked",
+    "missing_inputs": ["business_rules[type=lifecycle]"]
+  },
+  "parameter_conflict": {
+    "exit_code": 4,
+    "policy_id": "FILE_SIZE_LIMIT",
+    "requirement_level": "mandatory",
+    "resolution_state": "conflict",
+    "parameters": {
+      "maximum_bytes": {
+        "conflict_values": [5242880, 10485760]
+      }
+    }
+  },
+  "level_conflict": {
+    "exit_code": 4,
+    "policy_id": "INPUT_VALIDATION",
+    "requirement_level": "mandatory",
+    "resolution_state": "conflict",
+    "source_rule_ids": [
+      "CLOSURE:FILE_CONTENT_VERIFICATION:INPUT_VALIDATION",
+      "CLOSURE:FILE_SIZE_LIMIT:INPUT_VALIDATION",
+      "POL-INPUT-001",
+      "POL-INPUT-PROHIBIT-001"
+    ]
+  }
+}

@@ -49,8 +49,42 @@ importers:
         specifier: 4.4.3
         version: 4.4.3
 
+  packages/policy-engine:
+    dependencies:
+      '@company/ces-capability-resolver':
+        specifier: workspace:*
+        version: link:../capability-resolver
+      '@company/ces-policy-manifest':
+        specifier: workspace:*
+        version: link:../policy-manifest
+      '@company/ces-policy-registry':
+        specifier: workspace:*
+        version: link:../policy-registry
+      '@company/ces-project-schema':
+        specifier: workspace:*
+        version: link:../project-schema
+      '@company/ces-requirement-schema':
+        specifier: workspace:*
+        version: link:../requirement-schema
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
+
   packages/policy-manifest:
     dependencies:
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+
+  packages/policy-registry:
+    dependencies:
+      '@company/ces-capability-registry':
+        specifier: workspace:*
+        version: link:../capability-registry
       zod:
         specifier: 4.4.3
         version: 4.4.3
