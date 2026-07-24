@@ -33,7 +33,7 @@ Natural-language PRD
         ↓
 CES Atlas
         ↓
-Approved Requirement Package and system-intent graph
+Approved Requirement Collection and system-intent graph
         ↓
 CES Architect
         ↓
@@ -190,7 +190,7 @@ The four products must not independently generate contradictory representations.
 
 They share:
 
-- Requirement Package;
+- Requirement Collection and individual Requirement Packages;
 - Business Rule records;
 - project facts and uncertainties;
 - capability and trait resolution;
@@ -246,7 +246,7 @@ flowchart TD
     D --> F
     E --> F
 
-    F --> G[Approved Requirement Package]
+    F --> G[Approved Requirement Collection]
     G --> H[CES Architect]
     H --> I[Architecture Options]
     I --> J[Approved Architecture Decision]
@@ -332,7 +332,8 @@ Atlas must:
 7. identify contradictions and unresolved facts;
 8. generate targeted clarification questions;
 9. allow user approval, rejection, or correction;
-10. produce an approved Requirement Package compatible with the existing deterministic core;
+10. produce an approved Requirement Collection containing individually valid
+    Requirement Packages compatible with the existing deterministic core;
 11. render a requirements/system-intent graph;
 12. produce machine-readable and human-readable outputs.
 
@@ -397,7 +398,11 @@ skills:
 ├── conflicts.json
 ├── clarification-questions.md
 ├── review-decisions.json
-├── requirement-package.json
+├── requirement-collection.json
+├── requirement-packages/
+│   ├── REQ-001.json
+│   ├── REQ-002.json
+│   └── REQ-003.json
 ├── system-intent-graph.json
 ├── system-intent-graph.md
 └── extraction-report.json
@@ -506,7 +511,7 @@ ces atlas approve \
   --decisions .ces/reviews/atlas-review.yaml
 
 ces atlas graph \
-  --requirement-package .ces/generated/atlas/requirement-package.json
+  --requirement-collection .ces/generated/atlas/requirement-collection.json
 ```
 
 ## 5.11 Diagram requirements
@@ -531,8 +536,9 @@ Atlas MVP is complete when:
 - every candidate has provenance;
 - explicit and inferred facts are visibly separated;
 - unresolved high-impact questions are produced;
-- user decisions generate an approved Requirement Package;
-- the approved package can enter the existing capability and policy pipeline unchanged;
+- user decisions generate an approved Requirement Collection;
+- every referenced Requirement Package can enter the existing capability and
+  policy pipeline unchanged;
 - a requirements graph is generated with stable identifiers;
 - repeated runs with the same approved inputs produce deterministic approved artifacts.
 
@@ -581,7 +587,7 @@ Architect operates **before adapter selection**.
 It does not change the Policy Manifest. It produces an approved `ArchitectureDecision` and `ProjectTechnicalContext` that the existing adapter stage consumes.
 
 ```text
-Approved Requirement Package
+Approved Requirement Collection
 + ProjectIntent
 + resolved capabilities
 + project constraints
@@ -745,7 +751,7 @@ selection to produce the existing complete `ProjectContext`.
 
 ```bash
 ces architect analyze \
-  --requirement-package .ces/generated/atlas/requirement-package.json \
+  --requirement-collection .ces/generated/atlas/requirement-collection.json \
   --project-intent .ces/project-intent.yaml
 
 ces architect compare \
@@ -812,7 +818,7 @@ Assurance does not decide policies independently.
 
 Its authoritative inputs are:
 
-- approved Requirement Package;
+- approved Requirement Collection and its referenced Requirement Packages;
 - resolved Policy Manifest;
 - adapter implementation package;
 - verification results;
@@ -952,7 +958,7 @@ The existing `verification-engine` remains authoritative for verification execut
 
 ```bash
 ces assurance build \
-  --requirement-package .ces/generated/atlas/requirement-package.json \
+  --requirement-collection .ces/generated/atlas/requirement-collection.json \
   --policy-manifest .ces/generated/core/policy-manifest.json \
   --implementation-package .ces/generated/adapters/<adapter> \
   --standards-pack owasp-web@2026.07
@@ -1065,7 +1071,8 @@ baseline scaffold
 
 Forge must:
 
-1. consume an approved Requirement Package;
+1. consume an approved Requirement Collection and its referenced Requirement
+   Packages;
 2. consume an approved Architecture Decision and `ProjectTechnicalContext`;
 3. consume the Policy Manifest;
 4. consume the selected adapter mapping;
@@ -1256,7 +1263,7 @@ Forge must fail safely when regeneration would overwrite user-owned modification
 
 ```bash
 ces forge plan \
-  --requirement-package .ces/generated/atlas/requirement-package.json \
+  --requirement-collection .ces/generated/atlas/requirement-collection.json \
   --architecture .ces/generated/architect/architecture-decision.json \
   --policy-manifest .ces/generated/core/policy-manifest.json
 
@@ -1535,7 +1542,7 @@ Deliver:
 
 - clarification workflow;
 - approval records;
-- approved Requirement Package generation;
+- approved Requirement Collection and individual Requirement Package generation;
 - requirement relationship graph;
 - Mermaid/Markdown visualization;
 - end-to-end path into the existing deterministic core.
@@ -1653,7 +1660,7 @@ Use one greenfield multi-tenant project-management application.
 PRD
 → Atlas extraction
 → user clarification
-→ approved Requirement Package
+→ approved Requirement Collection
 → Architect recommendation
 → approved technical context
 → deterministic Policy Manifest
