@@ -47,12 +47,33 @@ importers:
       '@company/ces-adapter-sdk':
         specifier: workspace:*
         version: link:../../packages/adapter-sdk
+      '@company/ces-agent-provider-sdk':
+        specifier: workspace:*
+        version: link:../../packages/agent-provider-sdk
+      '@company/ces-atlas-extraction':
+        specifier: workspace:*
+        version: link:../../packages/atlas-extraction
+      '@company/ces-atlas-intent-graph':
+        specifier: workspace:*
+        version: link:../../packages/atlas-intent-graph
+      '@company/ces-atlas-review':
+        specifier: workspace:*
+        version: link:../../packages/atlas-review
+      '@company/ces-document-ingestion':
+        specifier: workspace:*
+        version: link:../../packages/document-ingestion
+      '@company/ces-greenfield-contracts':
+        specifier: workspace:*
+        version: link:../../packages/greenfield-contracts
       '@company/ces-implementation-compiler':
         specifier: workspace:*
         version: link:../../packages/implementation-compiler
       '@company/ces-laravel-adapter':
         specifier: workspace:*
         version: link:../../adapters/laravel
+      '@company/ces-pdf-ingestion':
+        specifier: workspace:*
+        version: link:../../packages/pdf-ingestion
       '@company/ces-policy-engine':
         specifier: workspace:*
         version: link:../../packages/policy-engine
@@ -62,6 +83,9 @@ importers:
       '@company/ces-project-schema':
         specifier: workspace:*
         version: link:../../packages/project-schema
+      '@company/ces-requirement-collection-schema':
+        specifier: workspace:*
+        version: link:../../packages/requirement-collection-schema
       '@company/ces-requirement-schema':
         specifier: workspace:*
         version: link:../../packages/requirement-schema

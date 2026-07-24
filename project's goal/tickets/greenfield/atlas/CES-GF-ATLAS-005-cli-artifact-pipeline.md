@@ -2,7 +2,9 @@
 
 **Phase:** 3C — Atlas Operationalization  
 **Parent:** Greenfield Product Suite  
-**Status:** Planned
+**Status:** Implemented locally; hosted and real-provider validation pending
+
+**Evidence:** [`evidence/CES-GF-ATLAS-005-local-cli-pipeline.md`](evidence/CES-GF-ATLAS-005-local-cli-pipeline.md)
 
 ## Goal
 
@@ -71,29 +73,29 @@ approval.
 
 ## Acceptance criteria
 
-- [ ] A real Markdown PRD completes extraction through graph generation after
+- [x] A real Markdown PRD completes extraction through graph generation after
       explicit human review.
-- [ ] A supported real PDF PRD completes the same workflow through ATLAS-004.
-- [ ] Blocking questions and missing decisions pause the workflow with a
+- [x] A supported real PDF PRD completes the same workflow through ATLAS-004.
+- [x] Blocking questions and missing decisions pause the workflow with a
       non-success exit code and resumable artifacts.
-- [ ] No agent can approve, correct, or supersede its own candidates.
-- [ ] Replaced source, candidate, decision, or configuration revisions invalidate
+- [x] No agent can approve, correct, or supersede its own candidates.
+- [x] Replaced source, candidate, decision, or configuration revisions invalidate
       stale resume state.
-- [ ] Repeated runs with equivalent approved inputs produce byte-identical
+- [x] Repeated runs with equivalent approved inputs produce byte-identical
       approved artifacts.
-- [ ] Generated Mermaid renders without editing and matches graph JSON identity.
-- [ ] Provider secrets never appear in arguments, artifacts, logs, or hashes.
-- [ ] Failed runs do not partially replace the last valid output.
-- [ ] Existing Phase 1 and Phase 2 CLI behavior remains compatible.
+- [x] Generated Mermaid renders without editing and matches graph JSON identity.
+- [x] Provider secrets never appear in arguments, artifacts, logs, or hashes.
+- [x] Failed runs do not partially replace the last valid output.
+- [x] Existing Phase 1 and Phase 2 CLI behavior remains compatible.
 
 ## Required evidence
 
-- [ ] End-to-end Markdown fixture using the deterministic provider.
-- [ ] End-to-end native-text PDF fixture.
-- [ ] Mocked HTTPS provider fixture with redacted request evidence.
-- [ ] Pause, review, resume, stale-resume, and correction fixtures.
-- [ ] Atomic-output and interrupted-run fixtures.
-- [ ] JSON/Markdown/Mermaid artifact determinism fixtures.
+- [x] End-to-end Markdown fixture using the deterministic provider.
+- [x] End-to-end native-text PDF fixture.
+- [x] Mocked HTTPS provider fixture with redacted request evidence.
+- [x] Pause, review, resume, stale-resume, and correction fixtures.
+- [x] Atomic-output and interrupted-run fixtures.
+- [x] JSON/Markdown/Mermaid artifact determinism fixtures.
 - [ ] Hosted CLI smoke test with no external secret.
 - [ ] Manual real-provider run evidence stored without PRD text or credentials.
 
@@ -108,4 +110,3 @@ approval.
 ## Depends on
 
 - `CES-GF-ATLAS-004`
-

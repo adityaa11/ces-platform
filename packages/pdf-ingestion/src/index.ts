@@ -126,13 +126,14 @@ export async function ingestPdfDocument(
       maximum_bytes: limits.maximum_bytes,
     });
   }
-  if (!hasPdfHeader(input.bytes)) {
+  const pdfBytes = Uint8Array.from(input.bytes);
+  if (!hasPdfHeader(pdfBytes)) {
     throw new PdfIngestionError("invalid_pdf", "Input does not contain a PDF header");
   }
-  if (containsEncryptionMarker(input.bytes)) {
+  if (containsEncryptionMarker(pdfBytes)) {
     throw new PdfIngestionError("encrypted_pdf", "Encrypted PDFs are not supported");
   }
-  const originalHash = sha256Bytes(input.bytes);
+  const originalHash = sha256Bytes(pdfBytes);
   const virtualPath = input.virtual_markdown_path
     ?? `${input.path.slice(0, -4)}.pdf.md`;
   validateVirtualPath(virtualPath);
@@ -141,7 +142,7 @@ export async function ingestPdfDocument(
     documentId,
     originalPath: input.path,
     virtualPath,
-    bytes: input.bytes,
+    bytes: pdfBytes,
     originalHash,
     limits,
     ...(options.ocr ? { ocr: options.ocr } : {}),
