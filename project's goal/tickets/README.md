@@ -8,9 +8,9 @@ Ticket IDs remain stable even if scheduling changes. Phase membership is recorde
 |---:|---|---|---|
 | 1 | Deterministic Core and Reference Adapter | [CES-000](phase-1/CES-000-parent-mvp.md) | Implemented locally |
 | 2 | Thin Adapter-Neutral Integration Layer | [3-ticket plan](phase-2/README.md) | Implemented and hardened locally; CI pending |
-| 3 | Evidence-Backed PRD and Business-Document Extraction | To be planned | Not started |
-| 4 | Production Adapter Ecosystem and Incremental Stack Support | See the main architecture roadmap | Not started |
-| 5 | Organizational Governance, Exceptions, Upgrades, and Impact Analysis | To be planned | Not started |
+| 3 | Greenfield Atlas and shared contracts | [Greenfield product plan](greenfield/README.md) | Planned; baseline gate open |
+| 4 | Architect and Forge | [Greenfield product plan](greenfield/README.md) | Planned |
+| 5 | Assurance and advanced governance | [Greenfield product plan](greenfield/README.md) | Planned |
 
 Phase 4 establishes composable, independently versioned adapter components, compatibility rules, production generic guidance, support levels, approval, and incremental stack support driven by real projects. It does not require one monolithic adapter for every possible technology combination. None of those Phase 4 capabilities are part of Phase 1.
 
