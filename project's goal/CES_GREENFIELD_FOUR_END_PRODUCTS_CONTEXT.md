@@ -1549,6 +1549,25 @@ Deliver:
 
 This is the first greenfield product milestone.
 
+## Phase 3C — Atlas operationalization
+
+Deliver:
+
+- deterministic native-text PDF ingestion;
+- optional pinned OCR for scanned pages;
+- page-level provenance and OCR confidence;
+- a resumable Atlas CLI that pauses for human review;
+- atomic Requirement Collection, Requirement Package, review, core-handoff,
+  JSON, Markdown, and Mermaid artifact output.
+
+PDF parsing and OCR do not perform requirement inference and do not call an
+agent. Normalized source text enters the existing schema-constrained agent
+boundary only during candidate extraction. Original PDF bytes are not sent to
+the agent provider.
+
+Complete `CES-GF-ATLAS-004` and `CES-GF-ATLAS-005` before beginning the
+Architect implementation sequence.
+
 ## Phase 4A — Architect
 
 Deliver:

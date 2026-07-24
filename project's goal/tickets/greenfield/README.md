@@ -1,6 +1,6 @@
 # CES Greenfield Product Suite Ticket Plan
 
-**Status:** In progress; Atlas MVP validated, ARCH-001 ready to begin
+**Status:** In progress; Atlas MVP validated, ATLAS-004 ready to begin
 
 The authoritative product direction is
 [CES Greenfield Product Suite Context](../../CES_GREENFIELD_FOUR_END_PRODUCTS_CONTEXT.md).
@@ -37,12 +37,14 @@ proceed in declared dependency order.
 | 1 | [CES-GF-ATLAS-001](atlas/CES-GF-ATLAS-001-candidate-extraction.md) | Provenance-preserving Markdown extraction behind an agent-provider boundary | FND-002 |
 | 2 | [CES-GF-ATLAS-002](atlas/CES-GF-ATLAS-002-review-and-approval.md) | Human-reviewed approved Requirement Collection | ATLAS-001 |
 | 3 | [CES-GF-ATLAS-003](atlas/CES-GF-ATLAS-003-intent-graph.md) | Stable system-intent graph and core handoff | ATLAS-002 |
+| 4 | [CES-GF-ATLAS-004](atlas/CES-GF-ATLAS-004-pdf-ingestion.md) | Agent-free PDF/OCR ingestion with page provenance | ATLAS-003 |
+| 5 | [CES-GF-ATLAS-005](atlas/CES-GF-ATLAS-005-cli-artifact-pipeline.md) | Resumable end-to-end Atlas CLI and artifact pipeline | ATLAS-004 |
 
 ## CES Architect
 
 | Order | Ticket | Outcome | Depends on |
 |---:|---|---|---|
-| 1 | [CES-GF-ARCH-001](architect/CES-GF-ARCH-001-catalog-and-rubric.md) | Versioned technology catalog and deterministic scoring rubric | ATLAS-003 |
+| 1 | [CES-GF-ARCH-001](architect/CES-GF-ARCH-001-catalog-and-rubric.md) | Versioned technology catalog and deterministic scoring rubric | ATLAS-005 |
 | 2 | [CES-GF-ARCH-002](architect/CES-GF-ARCH-002-decision-and-context.md) | Approved ADR and exact technical-context emission | ARCH-001 |
 
 ## CES Forge

@@ -79,5 +79,6 @@ Build:     passed
 
 ## Gate decision
 
-ATLAS-003 and the Atlas MVP milestone are accepted. `CES-GF-ARCH-001` may
-begin.
+ATLAS-003 and the Atlas MVP milestone are accepted. The subsequently approved
+operationalization sequence begins with `CES-GF-ATLAS-004`; Architect
+implementation begins after `CES-GF-ATLAS-005`.
