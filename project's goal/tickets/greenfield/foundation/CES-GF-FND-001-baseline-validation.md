@@ -2,7 +2,9 @@
 
 **Phase:** 0 — Preserve and Baseline Current Work  
 **Parent:** Greenfield Product Suite  
-**Status:** Planned
+**Status:** In progress
+
+**Evidence:** [`evidence/CES-GF-FND-001-local-baseline.md`](evidence/CES-GF-FND-001-local-baseline.md)
 
 ## Goal
 
@@ -20,17 +22,18 @@ product milestone is represented as complete.
 
 ## Acceptance criteria
 
-- [ ] `corepack pnpm check` passes without skipped regression tests.
-- [ ] Timeout, cancellation, bounded-output, and process-tree tests pass reliably.
+- [x] `corepack pnpm check` passes without skipped regression tests.
+- [x] Timeout, cancellation, bounded-output, and process-tree tests pass reliably
+  when Windows process-tree control is permitted.
 - [ ] Hosted CI passes on the same commit.
-- [ ] Phase 1 and Phase 2 contract versions are recorded.
-- [ ] Existing deterministic artifact comparisons remain byte-identical.
+- [x] Phase 1 and Phase 2 contract versions are recorded.
+- [x] Existing deterministic artifact comparisons remain byte-identical.
 
 ## Required evidence
 
-- [ ] Local command output and commit identity.
+- [x] Local command output and commit identity.
 - [ ] Hosted workflow link and commit identity.
-- [ ] Regression-test results for runner hardening and determinism.
+- [x] Regression-test results for runner hardening and determinism.
 
 ## Out of scope
 
