@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-002 Local Review Evidence
 
 **Validated:** 24 July 2026  
-**Status:** Implemented locally; hosted validation pending
+**Status:** Validated locally and in hosted CI
 
 ## Delivered package
 
@@ -80,7 +80,14 @@ Test files: 28 passed
 Build:     passed
 ```
 
-## Remaining evidence
+## Hosted validation
 
-Hosted CI must pass on the committed ATLAS-002 implementation before
-`CES-GF-ATLAS-003` begins.
+- Workflow: `CES repository tests`
+- Run: [`30106024913`](https://github.com/adityaa11/ces-platform/actions/runs/30106024913)
+- Job: [`89523525920`](https://github.com/adityaa11/ces-platform/actions/runs/30106024913/job/89523525920)
+- Result: passed
+- Commit: `15159e763707c735f62887c0eeb228107c121942`
+
+## Gate decision
+
+ATLAS-002 is accepted. `CES-GF-ATLAS-003` may begin.

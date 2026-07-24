@@ -2,7 +2,7 @@
 
 **Phase:** 3B — Atlas Review  
 **Parent:** Greenfield Product Suite  
-**Status:** Implemented locally
+**Status:** Validated
 
 **Evidence:** [`evidence/CES-GF-ATLAS-002-local-review.md`](evidence/CES-GF-ATLAS-002-local-review.md)
 
