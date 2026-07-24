@@ -2,7 +2,7 @@
 
 **Phase:** 3B — Atlas Graph and Core Handoff  
 **Parent:** Greenfield Product Suite  
-**Status:** Implemented locally
+**Status:** Validated
 
 **Evidence:** [`evidence/CES-GF-ATLAS-003-local-intent-graph.md`](evidence/CES-GF-ATLAS-003-local-intent-graph.md)
 

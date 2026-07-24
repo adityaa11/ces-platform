@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-003 Local Intent Graph Evidence
 
 **Validated:** 24 July 2026  
-**Status:** Implemented locally; hosted validation pending
+**Status:** Validated locally and in hosted CI
 
 ## Delivered package
 
@@ -69,7 +69,15 @@ Test files: 29 passed
 Build:     passed
 ```
 
-## Remaining evidence
+## Hosted validation
 
-Hosted CI must pass on the committed ATLAS-003 implementation before the Atlas
-MVP milestone is accepted and `CES-GF-ARCH-001` begins.
+- Workflow: `CES repository tests`
+- Run: [`30106911212`](https://github.com/adityaa11/ces-platform/actions/runs/30106911212)
+- Job: [`89526452817`](https://github.com/adityaa11/ces-platform/actions/runs/30106911212/job/89526452817)
+- Result: passed
+- Commit: `3c27b4a2064803392820360df55babf9b77155c6`
+
+## Gate decision
+
+ATLAS-003 and the Atlas MVP milestone are accepted. `CES-GF-ARCH-001` may
+begin.
