@@ -8,7 +8,7 @@ Ticket IDs remain stable even if scheduling changes. Phase membership is recorde
 |---:|---|---|---|
 | 1 | Deterministic Core and Reference Adapter | [CES-000](phase-1/CES-000-parent-mvp.md) | Implemented locally |
 | 2 | Thin Adapter-Neutral Integration Layer | [3-ticket plan](phase-2/README.md) | Implemented and hardened locally; CI pending |
-| 3 | Greenfield Atlas and shared contracts | [Greenfield product plan](greenfield/README.md) | Planned; baseline gate open |
+| 3 | Greenfield Atlas and shared contracts | [Greenfield product plan](greenfield/README.md) | Planned; baseline gate closed |
 | 4 | Architect and Forge | [Greenfield product plan](greenfield/README.md) | Planned |
 | 5 | Assurance and advanced governance | [Greenfield product plan](greenfield/README.md) | Planned |
 

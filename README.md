@@ -26,9 +26,9 @@ documents and tickets provide supporting context but do not override it.
 | Phase 1 deterministic compiler | Implemented locally | [`apps/cli`](apps/cli/), [`tests/delivery.test.ts`](tests/delivery.test.ts) |
 | Policy Manifest and Adapter SDK | Implemented locally | [`packages/policy-manifest`](packages/policy-manifest/), [`packages/adapter-sdk`](packages/adapter-sdk/) |
 | Phase 2 integration contracts | Implemented locally | [`packages/integration-contracts`](packages/integration-contracts/), [`docs/contracts/phase-2`](docs/contracts/phase-2/) |
-| Phase 2 bootstrap runner | Implemented and hardened locally; validation pending | [`packages/bootstrap-runner`](packages/bootstrap-runner/), [`tests/phase-2-integration.test.ts`](tests/phase-2-integration.test.ts) |
-| Hosted validation | Evidence pending for the accepted baseline commit | [repository workflow](.github/workflows/test.yml) |
-| Greenfield product suite | Planned; implementation blocked by the Phase 0 gate | [greenfield ticket plan](<project's goal/tickets/greenfield/README.md>) |
+| Phase 2 bootstrap runner | Implemented and hardened; hosted CI passing | [`packages/bootstrap-runner`](packages/bootstrap-runner/), [`tests/phase-2-integration.test.ts`](tests/phase-2-integration.test.ts) |
+| Hosted validation | Passing on baseline commit `b4928cc` | [workflow run](https://github.com/adityaa11/ces-platform/actions/runs/30102005721/job/89510123198) |
+| Greenfield product suite | Planned; Phase 0 gate closed, shared contracts next | [greenfield ticket plan](<project's goal/tickets/greenfield/README.md>) |
 | Release | Unreleased | Exact development toolchain: Node.js 24.12.0 and pnpm 11.15.1 |
 
 Phase 1 provides deterministic requirement-to-policy compilation, a portable

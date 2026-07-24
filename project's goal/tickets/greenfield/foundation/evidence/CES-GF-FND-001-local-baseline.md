@@ -66,7 +66,20 @@ These contracts remain backward-compatible inputs to the planned greenfield
 collection and orchestration boundary. FND-002 must add new versioned contracts
 without invalidating the existing profile-picture fixture.
 
-## Remaining gate
+## Hosted validation
 
-FND-001 remains in progress until a hosted workflow passes on the exact accepted
-commit and its URL and commit identity are recorded here.
+The repository workflow passed for baseline commit `b4928cc`:
+
+- Run: [`30102005721`](https://github.com/adityaa11/ces-platform/actions/runs/30102005721)
+- Job: [`repository-check` (`89510123198`)](https://github.com/adityaa11/ces-platform/actions/runs/30102005721/job/89510123198)
+- Result: succeeded
+- Observed duration: 39 seconds
+
+The successful job includes dependency installation, `corepack pnpm check`,
+the Phase 2 client integration boundary, Docker image construction, container
+CLI execution, and mounted project-pinned compilation.
+
+## Gate decision
+
+Local and hosted validation evidence is complete. FND-001 is accepted and the
+Phase 0 implementation gate is closed. FND-002 may begin.

@@ -1,6 +1,6 @@
 # CES Greenfield Product Suite Ticket Plan
 
-**Status:** Planned; Phase 0 baseline gate open
+**Status:** Planned; Phase 0 baseline gate closed
 
 The authoritative product direction is
 [CES Greenfield Product Suite Context](../../CES_GREENFIELD_FOUR_END_PRODUCTS_CONTEXT.md).
@@ -27,6 +27,8 @@ CES-GF-FND-001 is accepted. While the gate remains open, work is limited to:
 - contract inventory and compatibility analysis.
 
 FND-002 and every product implementation ticket depend on this gate.
+FND-001 was accepted on baseline commit `b4928cc`; implementation may now
+proceed in declared dependency order.
 
 ## CES Atlas
 
