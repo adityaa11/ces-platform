@@ -32,6 +32,9 @@ Layer rules:
   contracts, never the reverse.
 - Pre-approval greenfield candidate contracts may reuse controlled domain
   vocabularies, but the deterministic core must not consume candidate records.
+- Atlas extraction depends on document ingestion, the provider SDK, and
+  pre-approval greenfield contracts. None of those packages may be imported by
+  the approved Requirement Package or deterministic policy layers.
 
 Checks cover declared workspace dependencies, static and dynamic imports,
 relative cross-package imports, and cycles. Unknown packages and edges fail

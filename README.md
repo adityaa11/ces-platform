@@ -29,7 +29,8 @@ documents and tickets provide supporting context but do not override it.
 | Phase 2 bootstrap runner | Implemented and hardened; hosted CI passing | [`packages/bootstrap-runner`](packages/bootstrap-runner/), [`tests/phase-2-integration.test.ts`](tests/phase-2-integration.test.ts) |
 | Hosted validation | Passing on baseline commit `b4928cc` | [workflow run](https://github.com/adityaa11/ces-platform/actions/runs/30102005721/job/89510123198) |
 | Greenfield shared contracts | FND-002 validated in hosted CI on `b4bac82` | [workflow job](https://github.com/adityaa11/ces-platform/actions/runs/30103309530/job/89514514085) |
-| Greenfield product suite | In progress; Atlas candidate extraction next | [greenfield ticket plan](<project's goal/tickets/greenfield/README.md>) |
+| Atlas candidate extraction | ATLAS-001 implemented locally; hosted validation pending | [`packages/atlas-extraction`](packages/atlas-extraction/), [`packages/agent-provider-sdk`](packages/agent-provider-sdk/) |
+| Greenfield product suite | In progress; Atlas review waits for ATLAS-001 hosted validation | [greenfield ticket plan](<project's goal/tickets/greenfield/README.md>) |
 | Release | Unreleased | Exact development toolchain: Node.js 24.12.0 and pnpm 11.15.1 |
 
 Phase 1 provides deterministic requirement-to-policy compilation, a portable

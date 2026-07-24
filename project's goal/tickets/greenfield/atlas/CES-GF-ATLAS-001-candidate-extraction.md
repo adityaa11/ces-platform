@@ -2,7 +2,9 @@
 
 **Phase:** 3A — Atlas Candidate Extraction  
 **Parent:** Greenfield Product Suite  
-**Status:** Planned
+**Status:** Implemented locally
+
+**Evidence:** [`evidence/CES-GF-ATLAS-001-local-extraction.md`](evidence/CES-GF-ATLAS-001-local-extraction.md)
 
 ## Goal
 
@@ -22,19 +24,19 @@ allowing agent output into the deterministic core.
 
 ## Acceptance criteria
 
-- [ ] Every candidate contains source provenance and review state.
-- [ ] Explicit source facts and inferred candidates are distinguishable.
-- [ ] Fixture-provider runs are byte-deterministic.
-- [ ] Real-provider output is never described as deterministic or approved.
-- [ ] Invalid provider output cannot reach review or core contracts.
-- [ ] No provider can write stable registries.
+- [x] Every candidate contains source provenance and review state.
+- [x] Explicit source facts and inferred candidates are distinguishable.
+- [x] Fixture-provider runs are byte-deterministic.
+- [x] Real-provider output is never described as deterministic or approved.
+- [x] Invalid provider output cannot reach review or core contracts.
+- [x] No provider can write stable registries.
 
 ## Required evidence
 
-- [ ] Provider contract and schema fixtures.
-- [ ] Deterministic fixture-provider tests.
-- [ ] Redacted real-provider integration example.
-- [ ] Boundary test proving candidates are rejected by core parsers.
+- [x] Provider contract and schema fixtures.
+- [x] Deterministic fixture-provider tests.
+- [x] Redacted real-provider integration example.
+- [x] Boundary test proving candidates are rejected by core parsers.
 
 ## Out of scope
 
