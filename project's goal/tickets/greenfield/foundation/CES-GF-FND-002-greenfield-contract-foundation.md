@@ -3,7 +3,7 @@
 **Phase:** 3 — Shared Greenfield Contracts  
 **Parent:** Greenfield Product Suite  
 **Depends on:** CES-GF-FND-001
-**Status:** Implemented locally
+**Status:** Validated in CI
 
 **Evidence:** [`evidence/CES-GF-FND-002-local-contracts.md`](evidence/CES-GF-FND-002-local-contracts.md)
 ## Goal

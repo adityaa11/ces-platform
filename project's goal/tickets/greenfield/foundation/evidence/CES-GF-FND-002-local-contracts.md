@@ -1,7 +1,7 @@
 # CES-GF-FND-002 Local Contract Evidence
 
 **Validated:** 24 July 2026  
-**Status:** Implemented locally; hosted validation pending
+**Status:** Validated in CI
 
 ## Delivered boundaries
 
@@ -72,7 +72,12 @@ isolation, source ranges, corrected review decisions, Project Intent strictness,
 state transitions, architecture boundaries, and all existing Phase 1 and Phase
 2 regressions.
 
-## Remaining evidence
+## Hosted validation
 
-Hosted CI must pass on the committed FND-002 implementation before Atlas work
-begins.
+The repository workflow passed for FND-002 commit `b4bac82`:
+
+- Run: [`30103309530`](https://github.com/adityaa11/ces-platform/actions/runs/30103309530)
+- Job: [`repository-check` (`89514514085`)](https://github.com/adityaa11/ces-platform/actions/runs/30103309530/job/89514514085)
+- Result: succeeded
+
+FND-002 is accepted. `CES-GF-ATLAS-001` may begin.

@@ -28,8 +28,8 @@ documents and tickets provide supporting context but do not override it.
 | Phase 2 integration contracts | Implemented locally | [`packages/integration-contracts`](packages/integration-contracts/), [`docs/contracts/phase-2`](docs/contracts/phase-2/) |
 | Phase 2 bootstrap runner | Implemented and hardened; hosted CI passing | [`packages/bootstrap-runner`](packages/bootstrap-runner/), [`tests/phase-2-integration.test.ts`](tests/phase-2-integration.test.ts) |
 | Hosted validation | Passing on baseline commit `b4928cc` | [workflow run](https://github.com/adityaa11/ces-platform/actions/runs/30102005721/job/89510123198) |
-| Greenfield shared contracts | FND-002 implemented locally; hosted validation pending | [`packages/requirement-collection-schema`](packages/requirement-collection-schema/), [`packages/greenfield-contracts`](packages/greenfield-contracts/) |
-| Greenfield product suite | Planned; Atlas waits for FND-002 hosted validation | [greenfield ticket plan](<project's goal/tickets/greenfield/README.md>) |
+| Greenfield shared contracts | FND-002 validated in hosted CI on `b4bac82` | [workflow job](https://github.com/adityaa11/ces-platform/actions/runs/30103309530/job/89514514085) |
+| Greenfield product suite | In progress; Atlas candidate extraction next | [greenfield ticket plan](<project's goal/tickets/greenfield/README.md>) |
 | Release | Unreleased | Exact development toolchain: Node.js 24.12.0 and pnpm 11.15.1 |
 
 Phase 1 provides deterministic requirement-to-policy compilation, a portable
