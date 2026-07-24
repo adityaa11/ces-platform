@@ -2,7 +2,9 @@
 
 **Phase:** 3B — Atlas Graph and Core Handoff  
 **Parent:** Greenfield Product Suite  
-**Status:** Planned
+**Status:** Implemented locally
+
+**Evidence:** [`evidence/CES-GF-ATLAS-003-local-intent-graph.md`](evidence/CES-GF-ATLAS-003-local-intent-graph.md)
 
 ## Goal
 
@@ -20,17 +22,17 @@ and human-readable system intent.
 
 ## Acceptance criteria
 
-- [ ] Every graph edge has a reason and source.
-- [ ] Invalid or dangling edges fail with structured diagnostics.
-- [ ] Equivalent graph inputs emit byte-identical JSON and Markdown.
-- [ ] Graph presentation does not modify approved artifacts.
-- [ ] Approved requirements enter the existing core without graph-specific fields.
+- [x] Every graph edge has a reason and source.
+- [x] Invalid or dangling edges fail with structured diagnostics.
+- [x] Equivalent graph inputs emit byte-identical JSON and Markdown.
+- [x] Graph presentation does not modify approved artifacts.
+- [x] Approved requirements enter the existing core without graph-specific fields.
 
 ## Required evidence
 
-- [ ] Positive and negative graph fixtures.
-- [ ] Determinism tests.
-- [ ] Core handoff demonstration.
+- [x] Positive and negative graph fixtures.
+- [x] Determinism tests.
+- [x] Core handoff demonstration.
 
 ## Out of scope
 
