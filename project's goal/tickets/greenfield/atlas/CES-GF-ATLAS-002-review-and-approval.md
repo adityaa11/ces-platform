@@ -2,7 +2,9 @@
 
 **Phase:** 3B — Atlas Review  
 **Parent:** Greenfield Product Suite  
-**Status:** Planned
+**Status:** Implemented locally
+
+**Evidence:** [`evidence/CES-GF-ATLAS-002-local-review.md`](evidence/CES-GF-ATLAS-002-local-review.md)
 
 ## Goal
 
@@ -20,18 +22,18 @@ Requirement Packages through human decisions.
 
 ## Acceptance criteria
 
-- [ ] An agent cannot approve its own inference.
-- [ ] Every approved field traces to a source or explicit human answer.
-- [ ] Stale decisions fail closed after source changes.
-- [ ] Unresolved blocking facts prevent affected packages from approval.
-- [ ] Equivalent approved inputs produce byte-identical approved artifacts.
-- [ ] Existing core compilation accepts each emitted package unchanged.
+- [x] An agent cannot approve its own inference.
+- [x] Every approved field traces to a source or explicit human answer.
+- [x] Stale decisions fail closed after source changes.
+- [x] Unresolved blocking facts prevent affected packages from approval.
+- [x] Equivalent approved inputs produce byte-identical approved artifacts.
+- [x] Existing core compilation accepts each emitted package unchanged.
 
 ## Required evidence
 
-- [ ] Review-state transition tests.
-- [ ] Stale-review and conflict fixtures.
-- [ ] End-to-end candidate-to-core compilation test.
+- [x] Review-state transition tests.
+- [x] Stale-review and conflict fixtures.
+- [x] End-to-end candidate-to-core compilation test.
 
 ## Out of scope
 

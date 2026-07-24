@@ -116,6 +116,28 @@ importers:
         specifier: workspace:*
         version: link:../greenfield-contracts
 
+  packages/atlas-review:
+    dependencies:
+      '@company/ces-agent-provider-sdk':
+        specifier: workspace:*
+        version: link:../agent-provider-sdk
+      '@company/ces-greenfield-contracts':
+        specifier: workspace:*
+        version: link:../greenfield-contracts
+      '@company/ces-requirement-collection-schema':
+        specifier: workspace:*
+        version: link:../requirement-collection-schema
+      '@company/ces-requirement-schema':
+        specifier: workspace:*
+        version: link:../requirement-schema
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
+
   packages/bootstrap-runner:
     dependencies:
       '@company/ces-integration-contracts':

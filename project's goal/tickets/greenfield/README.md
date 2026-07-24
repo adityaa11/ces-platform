@@ -1,6 +1,6 @@
 # CES Greenfield Product Suite Ticket Plan
 
-**Status:** In progress; ATLAS-001 implemented locally, hosted validation pending
+**Status:** In progress; ATLAS-002 implemented locally, hosted validation pending
 
 The authoritative product direction is
 [CES Greenfield Product Suite Context](../../CES_GREENFIELD_FOUR_END_PRODUCTS_CONTEXT.md).
