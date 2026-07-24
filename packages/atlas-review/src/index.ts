@@ -172,7 +172,12 @@ export function compileAtlasReview(input: unknown): AtlasReviewOutput {
           source: {
             document_id: candidate.source.document_id,
             document_version: candidate.source.content_hash,
+            path: candidate.source.path,
             section: candidate.source.section,
+            page_start: candidate.source.page_start,
+            page_end: candidate.source.page_end,
+            page_revision_hashes: candidate.source.page_revision_hashes,
+            extraction: candidate.source.extraction,
             parent_requirement_ids: [],
           },
           actor: candidate.actor,

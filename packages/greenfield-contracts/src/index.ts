@@ -20,6 +20,20 @@ export const SourceReferenceSchema = z
     section: NonEmptyString.optional(),
     line_start: z.number().int().positive().optional(),
     line_end: z.number().int().positive().optional(),
+    page_start: z.number().int().positive().optional(),
+    page_end: z.number().int().positive().optional(),
+    page_revision_hashes: z.array(Sha256Schema).optional(),
+    extraction: z
+      .object({
+        method: z.enum(["native_text", "ocr", "mixed"]),
+        parser: NonEmptyString,
+        parser_version: NonEmptyString,
+        ocr_engine: NonEmptyString.optional(),
+        ocr_version: NonEmptyString.optional(),
+        confidence: z.number().min(0).max(1).optional(),
+      })
+      .strict()
+      .optional(),
     content_hash: Sha256Schema,
   })
   .strict()
@@ -27,6 +41,11 @@ export const SourceReferenceSchema = z
     ({ line_start, line_end }) =>
       line_start === undefined || line_end === undefined || line_end >= line_start,
     { message: "Source reference line_end must not precede line_start" },
+  )
+  .refine(
+    ({ page_start, page_end }) =>
+      page_start === undefined || page_end === undefined || page_end >= page_start,
+    { message: "Source reference page_end must not precede page_start" },
   );
 
 export const ArtifactOriginSchema = z.enum([

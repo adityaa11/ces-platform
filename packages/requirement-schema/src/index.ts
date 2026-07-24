@@ -60,11 +60,33 @@ export const RequirementSourceSchema = z
   .object({
     document_id: z.string().trim().min(1).optional(),
     document_version: z.string().trim().min(1).optional(),
+    path: z.string().trim().min(1).optional(),
     section: z.string().trim().min(1).optional(),
+    page_start: z.number().int().positive().optional(),
+    page_end: z.number().int().positive().optional(),
+    page_revision_hashes: z
+      .array(z.string().regex(/^sha256:[0-9a-f]{64}$/u))
+      .optional(),
+    extraction: z
+      .object({
+        method: z.enum(["native_text", "ocr", "mixed"]),
+        parser: z.string().trim().min(1),
+        parser_version: z.string().trim().min(1),
+        ocr_engine: z.string().trim().min(1).optional(),
+        ocr_version: z.string().trim().min(1).optional(),
+        confidence: z.number().min(0).max(1).optional(),
+      })
+      .strict()
+      .optional(),
     change_request_id: z.string().trim().min(1).optional(),
     parent_requirement_ids: z.array(z.string().trim().min(1)).default([]),
   })
-  .strict();
+  .strict()
+  .refine(
+    ({ page_start, page_end }) =>
+      page_start === undefined || page_end === undefined || page_end >= page_start,
+    { message: "Requirement source page_end must not precede page_start" },
+  );
 
 export const RequirementConstraintSchema = z
   .object({

@@ -2,7 +2,9 @@
 
 **Phase:** 3C — Atlas Operationalization  
 **Parent:** Greenfield Product Suite  
-**Status:** Planned
+**Status:** Implemented locally
+
+**Evidence:** [`evidence/CES-GF-ATLAS-004-local-pdf-ingestion.md`](evidence/CES-GF-ATLAS-004-local-pdf-ingestion.md)
 
 ## Goal
 
@@ -29,27 +31,27 @@ boundary without using an agent to invent or rewrite source text.
 
 ## Acceptance criteria
 
-- [ ] Ingestion itself does not call an agent or infer requirements.
-- [ ] Identical supported PDFs with identical pinned tool versions produce
+- [x] Ingestion itself does not call an agent or infer requirements.
+- [x] Identical supported PDFs with identical pinned tool versions produce
       byte-identical normalized text and provenance.
-- [ ] Every extracted span traces to the original PDF, page, and page revision.
-- [ ] OCR-derived text is visibly distinct from native PDF text.
-- [ ] Low-confidence OCR produces reviewable uncertainty and cannot silently
+- [x] Every extracted span traces to the original PDF, page, and page revision.
+- [x] OCR-derived text is visibly distinct from native PDF text.
+- [x] Low-confidence OCR produces reviewable uncertainty and cannot silently
       become confirmed source text.
-- [ ] Encrypted, malformed, empty, oversized, or over-limit inputs fail closed
+- [x] Encrypted, malformed, empty, oversized, or over-limit inputs fail closed
       with structured diagnostics.
-- [ ] Existing Markdown ingestion remains backward-compatible.
-- [ ] Normalized PDF output can enter ATLAS-001 candidate extraction.
+- [x] Existing Markdown ingestion remains backward-compatible.
+- [x] Normalized PDF output can enter ATLAS-001 candidate extraction.
 
 ## Required evidence
 
-- [ ] Native-text, scanned, mixed-content, multi-page, and repeated-run fixtures.
-- [ ] Page provenance and content-hash fixtures.
-- [ ] OCR confidence and unavailable-OCR fixtures.
-- [ ] Encrypted, malformed, oversized, decompression-limit, and timeout fixtures.
-- [ ] Architecture test proving no PDF-ingestion-to-agent dependency.
-- [ ] PDF-to-ATLAS-001 integration test.
-- [ ] License and supply-chain review for the selected parser and optional OCR
+- [x] Native-text, scanned, mixed-content, multi-page, and repeated-run fixtures.
+- [x] Page provenance and content-hash fixtures.
+- [x] OCR confidence and unavailable-OCR fixtures.
+- [x] Encrypted, malformed, oversized, decompression-limit, and timeout fixtures.
+- [x] Architecture test proving no PDF-ingestion-to-agent dependency.
+- [x] PDF-to-ATLAS-001 integration test.
+- [x] License and supply-chain review for the selected parser and optional OCR
       runtime.
 
 ## Security and privacy
@@ -74,4 +76,3 @@ boundary without using an agent to invent or rewrite source text.
 ## Depends on
 
 - `CES-GF-ATLAS-003`
-
