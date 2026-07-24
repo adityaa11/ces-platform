@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-001 Local Extraction Evidence
 
 **Validated:** 24 July 2026  
-**Status:** Implemented locally; hosted validation pending
+**Status:** Validated locally and in hosted CI
 
 ## Delivered packages
 
@@ -85,7 +85,14 @@ Windows path semantics explicitly and also rejects Windows drive-relative paths.
 Regression coverage includes drive-qualified, drive-relative, UNC, POSIX
 absolute, parent-traversal, and non-Markdown paths.
 
-## Remaining evidence
+## Hosted validation
 
-Hosted CI must pass on the committed ATLAS-001 implementation before
-CES-GF-ATLAS-002 begins.
+- Workflow: `CES repository tests`
+- Run: [`30104896323`](https://github.com/adityaa11/ces-platform/actions/runs/30104896323)
+- Job: [`89519808383`](https://github.com/adityaa11/ces-platform/actions/runs/30104896323/job/89519808383)
+- Result: passed
+- Commit: `161cf6604e04a5f0fde93dabe18058b78d751b4f`
+
+## Gate decision
+
+ATLAS-001 is accepted. `CES-GF-ATLAS-002` may begin.
