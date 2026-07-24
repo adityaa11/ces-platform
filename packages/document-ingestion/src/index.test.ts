@@ -31,6 +31,8 @@ describe("Markdown document ingestion", () => {
 
   it.each([
     "C:\\outside\\prd.md",
+    "C:outside\\prd.md",
+    "\\\\server\\share\\prd.md",
     "../outside.md",
     "/outside.md",
     "docs/prd.pdf",

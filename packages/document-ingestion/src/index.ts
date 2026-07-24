@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { isAbsolute } from "node:path";
+import { posix, win32 } from "node:path";
 import { z } from "zod";
 
 export const SOURCE_INDEX_SCHEMA_VERSION = "1.0.0" as const;
@@ -68,7 +68,9 @@ export function sourceContentHash(content: string): string {
 function normalizeSourcePath(path: string): string {
   const normalized = path.replaceAll("\\", "/");
   if (
-    isAbsolute(path)
+    posix.isAbsolute(path)
+    || win32.isAbsolute(path)
+    || /^[a-z]:/iu.test(path)
     || normalized.startsWith("/")
     || normalized.split("/").includes("..")
   ) {

@@ -71,10 +71,19 @@ No network service or secret is required for repository tests.
 corepack pnpm check
 
 Typecheck: passed
-Tests:     189 passed, 0 failed, 0 skipped
+Tests:     191 passed, 0 failed, 0 skipped
 Test files: 27 passed
 Build:     passed
 ```
+
+## Cross-platform CI correction
+
+Linux-hosted validation exposed that Node's default `path.isAbsolute()` follows
+the runner operating system and therefore did not recognize a Windows
+drive-qualified path as absolute. Document ingestion now applies POSIX and
+Windows path semantics explicitly and also rejects Windows drive-relative paths.
+Regression coverage includes drive-qualified, drive-relative, UNC, POSIX
+absolute, parent-traversal, and non-Markdown paths.
 
 ## Remaining evidence
 
