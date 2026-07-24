@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-004 Local PDF Ingestion Evidence
 
-**Validated:** 24 July 2026  
-**Status:** Implemented locally; hosted validation pending
+**Validated:** 25 July 2026  
+**Status:** Validated locally and in hosted CI
 
 ## Delivered package
 
@@ -85,7 +85,14 @@ Test files: 31 passed
 Build:     passed
 ```
 
-## Remaining evidence
+## Hosted validation
 
-Hosted CI must pass on the committed ATLAS-004 implementation before
-`CES-GF-ATLAS-005` begins.
+- Workflow: `CES repository tests`
+- Run: [`30110305657`](https://github.com/adityaa11/ces-platform/actions/runs/30110305657)
+- Job: [`89537899452`](https://github.com/adityaa11/ces-platform/actions/runs/30110305657/job/89537899452)
+- Result: passed
+- Commit: `ee7805ec2d7266219f0c343627ab36218ccf2398`
+
+## Gate decision
+
+ATLAS-004 is accepted. `CES-GF-ATLAS-005` may begin.

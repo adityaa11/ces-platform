@@ -2,7 +2,7 @@
 
 **Phase:** 3C — Atlas Operationalization  
 **Parent:** Greenfield Product Suite  
-**Status:** Implemented locally
+**Status:** Validated
 
 **Evidence:** [`evidence/CES-GF-ATLAS-004-local-pdf-ingestion.md`](evidence/CES-GF-ATLAS-004-local-pdf-ingestion.md)
 
