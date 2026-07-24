@@ -1,6 +1,6 @@
 # CES-GF-ASR-001 — Assurance: Traceability and Evidence Contracts
 
-**Phase:** 5A — Assurance Foundation  
+**Phase:** 5A — Traceability and Evidence Contracts
 **Parent:** Greenfield Product Suite  
 **Status:** Planned
 

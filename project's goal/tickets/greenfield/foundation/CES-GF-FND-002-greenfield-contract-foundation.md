@@ -2,6 +2,7 @@
 
 **Phase:** 3 — Shared Greenfield Contracts  
 **Parent:** Greenfield Product Suite  
+**Depends on:** CES-GF-FND-001
 **Status:** Planned
 
 ## Goal

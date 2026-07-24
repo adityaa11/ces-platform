@@ -997,9 +997,12 @@ Assurance MVP is complete when:
 - required implementation and test evidence is visible;
 - verification results update the same policy view;
 - a developer report and management report are generated;
-- at least one versioned standards pack can be attached;
-- changing a standards-pack version does not change the Policy Manifest;
 - reports clearly avoid certification claims.
+
+The first end-to-end greenfield demonstration requires Assurance traceability
+and evidence-state visibility. It does not require an external standards pack.
+Standards packs enrich policy visibility only after the core
+requirement-to-evidence lifecycle is proven.
 
 ---
 
@@ -1216,7 +1219,7 @@ Possible adapter layout:
 
 ```text
 adapters/
-└── nextjs-supabase/
+└── laravel/
     ├── mappings/
     ├── guidance/
     ├── verification/
@@ -1242,7 +1245,7 @@ path: src/platform/authorization/index.ts
 ownership: generated_once
 template_hash: sha256:...
 generated_by:
-  adapter_id: nextjs-supabase
+  adapter_id: laravel
   adapter_version: "0.1.0"
   scaffold_version: "0.1.0"
 ```
@@ -1258,7 +1261,7 @@ ces forge plan \
   --policy-manifest .ces/generated/core/policy-manifest.json
 
 ces forge scaffold \
-  --adapter nextjs-supabase \
+  --adapter laravel \
   --output .
 
 ces forge tasks \
@@ -1466,7 +1469,11 @@ Recommended greenfield project footprint:
 │   └── assurance-exceptions.yaml
 │
 ├── requirements/
-│   └── approved-requirement-package.yaml
+│   ├── requirement-collection.json
+│   └── packages/
+│       ├── REQ-001.json
+│       ├── REQ-002.json
+│       └── REQ-003.json
 │
 ├── generated/
 │   ├── atlas/
@@ -1481,6 +1488,11 @@ Recommended greenfield project footprint:
 ```
 
 `.ces-runtime/` remains temporary runner state.
+
+`requirement-collection.json` records the collection schema version, persistent
+collection ID, immutable collection revision hash, normalized ordering, and
+approval metadata. Each entry references a Requirement Package by persistent
+logical ID and immutable revision hash; it does not redefine package content.
 
 ---
 
@@ -1497,9 +1509,12 @@ Before product expansion:
 - tag an initial baseline;
 - retain the existing profile-picture fixture as a deterministic regression scenario.
 
-No product milestone may be marked complete while this gate is open. Contract
-design and ticket refinement may proceed, but product implementation must not
-be represented as validated on an unvalidated baseline.
+No greenfield package or feature implementation may begin while this gate is
+open. Permitted work is limited to documentation and ticket refinement,
+investigation and design validation, Phase 1 and Phase 2 baseline corrections,
+local and hosted validation, and contract inventory or compatibility analysis.
+`CES-GF-FND-002` and every product implementation ticket depend on acceptance
+of `CES-GF-FND-001`.
 
 ## Phase 3A — Atlas candidate extraction
 
@@ -1560,21 +1575,36 @@ Deliver:
 - fixture projects;
 - positive and negative adapter tests.
 
-## Phase 5A — Assurance visibility
+## Phase 5A — Traceability and evidence contracts
 
 Deliver:
 
 - traceability report;
 - policy graph;
+- evidence requirements and evidence status.
+
+## Phase 5B — Assurance views
+
+Deliver:
+
 - developer and management views;
-- evidence status;
-- semantic-review contract;
+- verification-result integration;
+- explicit automated and human-review states.
+
+The first end-to-end greenfield demonstration depends on Phase 5A and Phase 5B.
+It does not depend on a standards pack.
+
+## Phase 5C — Versioned standards packs
+
+Deliver:
+
 - first versioned standards pack.
 
-## Phase 5B — Advanced governance
+## Phase 5D — Advanced governance
 
 Later:
 
+- semantic-review contract and controlled semantic-review integration;
 - approved exceptions;
 - policy overrides with governance;
 - organization registries;

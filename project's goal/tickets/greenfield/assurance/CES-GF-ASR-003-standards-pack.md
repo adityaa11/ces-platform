@@ -1,6 +1,6 @@
 # CES-GF-ASR-003 — Assurance: First Versioned Standards Pack
 
-**Phase:** 5A — Assurance Standards Mapping  
+**Phase:** 5C — Versioned Standards Packs
 **Parent:** Greenfield Product Suite  
 **Status:** Planned
 

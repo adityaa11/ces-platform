@@ -27,7 +27,8 @@ documents and tickets provide supporting context but do not override it.
 | Policy Manifest and Adapter SDK | Implemented locally | [`packages/policy-manifest`](packages/policy-manifest/), [`packages/adapter-sdk`](packages/adapter-sdk/) |
 | Phase 2 integration contracts | Implemented locally | [`packages/integration-contracts`](packages/integration-contracts/), [`docs/contracts/phase-2`](docs/contracts/phase-2/) |
 | Phase 2 bootstrap runner | Implemented and hardened locally; CI pending | [`packages/bootstrap-runner`](packages/bootstrap-runner/), [`tests/phase-2-integration.test.ts`](tests/phase-2-integration.test.ts) |
-| Hosted validation | Revalidation pending | [repository workflow](.github/workflows/test.yml) |
+| Hosted validation | Evidence pending for the accepted baseline commit | [repository workflow](.github/workflows/test.yml) |
+| Greenfield product suite | Planned; implementation blocked by the Phase 0 gate | [greenfield ticket plan](<project's goal/tickets/greenfield/README.md>) |
 | Release | Unreleased | Exact development toolchain: Node.js 24.12.0 and pnpm 11.15.1 |
 
 Phase 1 provides deterministic requirement-to-policy compilation, a portable

@@ -10,14 +10,23 @@ foundation, Atlas, Architect, Forge, Assurance, and integration.
 Ticket IDs describe ownership, not scheduling. Product work may overlap only
 when its declared dependencies and the Phase 0 gate permit it.
 
-## Phase 0 gate
+## Phase 0 implementation gate
 
-| Order | Ticket | Outcome |
-|---:|---|---|
-| 1 | [CES-GF-FND-001](foundation/CES-GF-FND-001-baseline-validation.md) | Passing local and hosted baseline |
-| 2 | [CES-GF-FND-002](foundation/CES-GF-FND-002-greenfield-contract-foundation.md) | Backward-compatible collection, identity, and generalized vocabulary contracts |
+| Order | Ticket | Outcome | Depends on |
+|---:|---|---|---|
+| 1 | [CES-GF-FND-001](foundation/CES-GF-FND-001-baseline-validation.md) | Passing local and hosted baseline | Phase 1 and Phase 2 implementation |
+| 2 | [CES-GF-FND-002](foundation/CES-GF-FND-002-greenfield-contract-foundation.md) | Backward-compatible collection, identity, and generalized vocabulary contracts | FND-001 |
 
-Product milestones cannot be marked complete until CES-GF-FND-001 passes.
+No greenfield package or feature implementation may begin until
+CES-GF-FND-001 is accepted. While the gate remains open, work is limited to:
+
+- documentation and ticket refinement;
+- investigation and design validation;
+- Phase 1 and Phase 2 baseline corrections;
+- local and hosted validation;
+- contract inventory and compatibility analysis.
+
+FND-002 and every product implementation ticket depend on this gate.
 
 ## CES Atlas
 
@@ -48,6 +57,9 @@ Product milestones cannot be marked complete until CES-GF-FND-001 passes.
 | 1 | [CES-GF-ASR-001](assurance/CES-GF-ASR-001-traceability-and-evidence.md) | Traceability and evidence-state contracts | ATLAS-003 |
 | 2 | [CES-GF-ASR-002](assurance/CES-GF-ASR-002-assurance-views.md) | Developer and delivery views connected to verification | ASR-001, FORGE-001 |
 | 3 | [CES-GF-ASR-003](assurance/CES-GF-ASR-003-standards-pack.md) | First independent versioned standards pack | ASR-002 |
+
+ASR-001 and ASR-002 are required for the first integrated demonstration.
+ASR-003 is an independent enrichment and does not block that demonstration.
 
 ## Integrated demonstration
 

@@ -1,6 +1,6 @@
 # CES-GF-ASR-002 — Assurance: Obligation and Verification Views
 
-**Phase:** 5A — Assurance Visibility  
+**Phase:** 5B — Assurance Views
 **Parent:** Greenfield Product Suite  
 **Status:** Planned
 
