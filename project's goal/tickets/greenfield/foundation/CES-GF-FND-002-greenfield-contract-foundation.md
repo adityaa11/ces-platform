@@ -3,8 +3,9 @@
 **Phase:** 3 — Shared Greenfield Contracts  
 **Parent:** Greenfield Product Suite  
 **Depends on:** CES-GF-FND-001
-**Status:** Planned
+**Status:** Implemented locally
 
+**Evidence:** [`evidence/CES-GF-FND-002-local-contracts.md`](evidence/CES-GF-FND-002-local-contracts.md)
 ## Goal
 
 Add the minimum backward-compatible contracts needed for multiple greenfield
@@ -24,18 +25,18 @@ requirements without weakening the existing deterministic core.
 
 ## Acceptance criteria
 
-- [ ] Existing Phase 1 requirement fixtures remain valid without migration.
-- [ ] A collection can contain multiple approved Requirement Packages.
-- [ ] Editing a requirement preserves its logical ID and changes its revision hash.
-- [ ] Unknown vocabulary values fail with structured diagnostics.
-- [ ] Candidate artifacts cannot be parsed as approved core inputs.
-- [ ] Collection output is byte-identical for semantically equivalent ordering.
+- [x] Existing Phase 1 requirement fixtures remain valid without migration.
+- [x] A collection can contain multiple approved Requirement Packages.
+- [x] Editing a requirement preserves its logical ID and changes its revision hash.
+- [x] Unknown vocabulary values fail with structured diagnostics.
+- [x] Candidate artifacts cannot be parsed as approved core inputs.
+- [x] Collection output is byte-identical for semantically equivalent ordering.
 
 ## Required evidence
 
-- [ ] Versioned schemas and valid/invalid fixtures.
-- [ ] Backward-compatibility and determinism tests.
-- [ ] Architecture-boundary tests for every new package edge.
+- [x] Versioned schemas and valid/invalid fixtures.
+- [x] Backward-compatibility and determinism tests.
+- [x] Architecture-boundary tests for every new package edge.
 
 ## Out of scope
 

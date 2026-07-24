@@ -28,6 +28,10 @@ Layer rules:
 - The bootstrap runner depends on integration and project contracts, never a
   concrete adapter.
 - The CLI is the composition root.
+- Approved greenfield collections may depend on individual Requirement Package
+  contracts, never the reverse.
+- Pre-approval greenfield candidate contracts may reuse controlled domain
+  vocabularies, but the deterministic core must not consume candidate records.
 
 Checks cover declared workspace dependencies, static and dynamic imports,
 relative cross-package imports, and cycles. Unknown packages and edges fail

@@ -8,6 +8,7 @@ import {
   MediaTypeSchema,
   OperationActionSchema,
   ResourceTypeSchema,
+  RequirementStateSchema,
   TargetScopeSchema,
   getPolicyRelevantRequirement,
   parseRequirementPackage,
@@ -124,6 +125,7 @@ business_rules:
       ActorTypeSchema,
       OperationActionSchema,
       ResourceTypeSchema,
+      RequirementStateSchema,
       TargetScopeSchema,
       InputTypeSchema,
       InputTrustBoundarySchema,
@@ -156,5 +158,29 @@ business_rules:
     const result: RequirementPackage = parseRequirementPackage(baseRequirement);
 
     expect(result.requirement.id).toBe("REQ-USER-014");
+  });
+
+  it("accepts project-management vocabulary without changing the Phase 1 shape", () => {
+    expect(parseRequirementPackage({
+      ...baseRequirement,
+      requirement: { id: "REQ-TASK-002", title: "Reopen a completed task" },
+      actor: { type: "project_manager" },
+      operation: {
+        action: "reopen",
+        resource: "task",
+        target_scope: "own_company",
+      },
+      state_transition: { from: "completed", to: "reopened" },
+    })).toMatchObject({
+      requirement: { id: "REQ-TASK-002" },
+      state_transition: { from: "completed", to: "reopened" },
+    });
+  });
+
+  it("rejects state transitions that do not change state", () => {
+    expect(() => parseRequirementPackage({
+      ...baseRequirement,
+      state_transition: { from: "completed", to: "completed" },
+    })).toThrow("A state transition must change state");
   });
 });

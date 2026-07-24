@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const BUSINESS_RULE_SCHEMA_VERSION = "1.0.0" as const;
+export const BUSINESS_RULE_SCHEMA_VERSION = "1.1.0" as const;
 
 export const BusinessRuleTypeSchema = z.enum([
   "authorization",
@@ -9,6 +9,9 @@ export const BusinessRuleTypeSchema = z.enum([
   "consistency",
   "financial",
   "audit",
+  "ownership",
+  "state_transition",
+  "uniqueness",
   "other",
 ]);
 

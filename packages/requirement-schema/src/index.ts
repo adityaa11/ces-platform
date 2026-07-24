@@ -3,17 +3,58 @@ import { parse as parseYaml } from "yaml";
 import { z } from "zod";
 
 export const REQUIREMENT_SCHEMA_VERSION = "1.0.0" as const;
-export const REQUIREMENT_VOCABULARY_VERSION = "1.0.0" as const;
+export const REQUIREMENT_VOCABULARY_VERSION = "1.1.0" as const;
 
-export const ActorTypeSchema = z.enum(["authenticated_user"]);
-export const OperationActionSchema = z.enum(["replace"]);
-export const ResourceTypeSchema = z.enum(["profile_picture"]);
-export const TargetScopeSchema = z.enum(["own_resource"]);
+export const ActorTypeSchema = z.enum([
+  "authenticated_user",
+  "company_administrator",
+  "company_member",
+  "project_manager",
+  "system",
+]);
+export const OperationActionSchema = z.enum([
+  "archive",
+  "assign",
+  "create",
+  "invite",
+  "reopen",
+  "replace",
+  "transition",
+  "update",
+  "view",
+]);
+export const ResourceTypeSchema = z.enum([
+  "audit_event",
+  "company",
+  "invitation",
+  "membership",
+  "notification",
+  "profile_picture",
+  "project",
+  "task",
+  "task_assignment",
+  "user",
+]);
+export const TargetScopeSchema = z.enum([
+  "own_company",
+  "own_resource",
+  "project",
+  "system",
+]);
 export const InputTypeSchema = z.enum(["binary_file"]);
 export const InputTrustBoundarySchema = z.enum(["external", "internal"]);
 export const MediaCategorySchema = z.enum(["image"]);
 export const MediaTypeSchema = z.enum(["image/jpeg", "image/png"]);
 export const EffectSchema = z.enum(["persistent_write", "replaces_existing_resource"]);
+export const RequirementStateSchema = z.enum([
+  "active",
+  "archived",
+  "completed",
+  "draft",
+  "pending",
+  "reopened",
+  "suspended",
+]);
 
 export const RequirementSourceSchema = z
   .object({
@@ -49,6 +90,16 @@ export const RequirementUncertaintySchema = z
   })
   .strict();
 
+export const RequirementStateTransitionSchema = z
+  .object({
+    from: RequirementStateSchema,
+    to: RequirementStateSchema,
+  })
+  .strict()
+  .refine(({ from, to }) => from !== to, {
+    message: "A state transition must change state",
+  });
+
 export const RequirementPackageSchema = z
   .object({
     schema_version: z.literal(REQUIREMENT_SCHEMA_VERSION),
@@ -74,6 +125,7 @@ export const RequirementPackageSchema = z
     inputs: z.array(RequirementInputSchema).default([]),
     outputs: z.array(z.string().trim().min(1)).default([]),
     effects: z.array(EffectSchema).default([]),
+    state_transition: RequirementStateTransitionSchema.optional(),
     business_rules: z.array(BusinessRuleSchema).default([]),
     uncertainties: z.array(RequirementUncertaintySchema).default([]),
     asserted_capabilities: z.array(z.string().trim().min(1)).default([]),

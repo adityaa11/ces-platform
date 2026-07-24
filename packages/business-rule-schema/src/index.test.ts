@@ -26,4 +26,15 @@ describe("BusinessRuleSchema", () => {
       }),
     ).toThrow();
   });
+
+  it.each(["ownership", "state_transition", "uniqueness"] as const)(
+    "accepts greenfield business-rule type %s",
+    (type) => {
+      expect(BusinessRuleSchema.parse({
+        id: `BR-${type}`,
+        type,
+        statement: `A stack-neutral ${type} rule.`,
+      }).type).toBe(type);
+    },
+  );
 });

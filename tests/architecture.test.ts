@@ -18,6 +18,8 @@ const ALLOWED_WORKSPACE_DEPENDENCIES: Readonly<Record<string, readonly string[]>
   "@company/ces-policy-manifest": [],
   "@company/ces-project-schema": [],
   "@company/ces-requirement-schema": ["@company/ces-business-rule-schema"],
+  "@company/ces-requirement-collection-schema": ["@company/ces-requirement-schema"],
+  "@company/ces-greenfield-contracts": ["@company/ces-business-rule-schema", "@company/ces-requirement-schema"],
   "@company/ces-policy-registry": ["@company/ces-capability-registry"],
   "@company/ces-capability-resolver": ["@company/ces-capability-registry", "@company/ces-policy-manifest", "@company/ces-requirement-schema"],
   "@company/ces-policy-engine": ["@company/ces-capability-resolver", "@company/ces-policy-manifest", "@company/ces-policy-registry", "@company/ces-project-schema", "@company/ces-requirement-schema"],

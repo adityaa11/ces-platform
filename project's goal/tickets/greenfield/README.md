@@ -1,6 +1,6 @@
 # CES Greenfield Product Suite Ticket Plan
 
-**Status:** Planned; Phase 0 baseline gate closed
+**Status:** In progress; FND-002 implemented locally, hosted validation pending
 
 The authoritative product direction is
 [CES Greenfield Product Suite Context](../../CES_GREENFIELD_FOUR_END_PRODUCTS_CONTEXT.md).
