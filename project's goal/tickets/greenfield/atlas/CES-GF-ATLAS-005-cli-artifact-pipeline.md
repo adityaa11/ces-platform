@@ -2,7 +2,7 @@
 
 **Phase:** 3C — Atlas Operationalization  
 **Parent:** Greenfield Product Suite  
-**Status:** Implemented locally; hosted and real-provider validation pending
+**Status:** Hosted CI passing; real-provider validation pending
 
 **Evidence:** [`evidence/CES-GF-ATLAS-005-local-cli-pipeline.md`](evidence/CES-GF-ATLAS-005-local-cli-pipeline.md)
 
@@ -96,7 +96,7 @@ approval.
 - [x] Pause, review, resume, stale-resume, and correction fixtures.
 - [x] Atomic-output and interrupted-run fixtures.
 - [x] JSON/Markdown/Mermaid artifact determinism fixtures.
-- [ ] Hosted CLI smoke test with no external secret.
+- [x] Hosted CLI smoke test with no external secret.
 - [ ] Manual real-provider run evidence stored without PRD text or credentials.
 
 ## Out of scope

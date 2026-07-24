@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-005 Local CLI Pipeline Evidence
 
 **Validated:** 25 July 2026  
-**Status:** Implemented locally; hosted and real-provider validation pending
+**Status:** Hosted CI passing; real-provider validation pending
 
 ## Delivered command surface
 
@@ -81,11 +81,17 @@ Test files: 32 passed
 Build:     passed
 ```
 
+## Hosted validation
+
+- Workflow: `CES repository tests`
+- Run: [`30114729732`](https://github.com/adityaa11/ces-platform/actions/runs/30114729732)
+- Job: [`89552500118`](https://github.com/adityaa11/ces-platform/actions/runs/30114729732/job/89552500118)
+- Result: passed
+- Commit: `e7123161123cc35616e6784ed83320c1daa3fdfb`
+
 ## Remaining evidence
 
-- Hosted CI smoke test on the committed ATLAS-005 implementation.
-- Manual compatible real-provider run with evidence that excludes PRD content
-  and credentials.
+A manual compatible real-provider run must be recorded without PRD content or
+credentials.
 
 Architect implementation remains gated until both items are accepted.
-
