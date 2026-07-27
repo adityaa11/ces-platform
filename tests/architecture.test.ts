@@ -23,6 +23,7 @@ const ALLOWED_WORKSPACE_DEPENDENCIES: Readonly<Record<string, readonly string[]>
   "@company/ces-document-ingestion": [],
   "@company/ces-domain-concept-schema": [],
   "@company/ces-source-unit-schema": [],
+  "@company/ces-semantic-record-schema": [],
   "@company/ces-agent-provider-sdk": ["@company/ces-greenfield-contracts"],
   "@company/ces-atlas-extraction": ["@company/ces-agent-provider-sdk", "@company/ces-document-ingestion", "@company/ces-greenfield-contracts"],
   "@company/ces-atlas-review": ["@company/ces-agent-provider-sdk", "@company/ces-greenfield-contracts", "@company/ces-requirement-collection-schema", "@company/ces-requirement-schema"],
