@@ -1,0 +1,248 @@
+import { createHash } from "node:crypto";
+import { z } from "zod";
+
+export const ATLAS_ROLE_CONTRACT_VERSION = "1.0.0" as const;
+export const ATLAS_ROLE_IDS = [
+  "atlas.structure-classifier",
+  "atlas.domain-discovery",
+  "atlas.section-extractor",
+] as const;
+
+const Id = z.string().regex(/^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u);
+const Hash = z.string().regex(/^sha256:[0-9a-f]{64}$/u);
+const Text = z.string().trim().min(1);
+
+export const AtlasRevisionTupleSchema = z.object({
+  source_revision_id: Id,
+  source_content_hash: Hash,
+  lexicon_revision_id: Id,
+  lexicon_content_hash: Hash,
+  lexicon_state: z.enum(["seed", "candidate_pinned", "reviewed", "approved", "superseded"]),
+  semantic_schema_version: Text,
+  prompt_contract_version: Text,
+}).strict();
+
+export const AtlasRoleBudgetSchema = z.object({
+  maximum_source_units: z.number().int().positive(),
+  maximum_input_characters: z.number().int().positive(),
+  maximum_output_candidates: z.number().int().positive(),
+  maximum_output_tokens: z.number().int().positive(),
+}).strict();
+
+export const BoundedSourceUnitSchema = z.object({
+  id: Id,
+  order: z.number().int().nonnegative(),
+  section_path: z.array(Text),
+  kind: Text,
+  text: Text,
+  content_hash: Hash,
+}).strict();
+
+export const AtlasRoleInputSchema = z.object({
+  contract_version: z.literal(ATLAS_ROLE_CONTRACT_VERSION),
+  role_id: z.enum(ATLAS_ROLE_IDS),
+  partition_id: Id,
+  revisions: AtlasRevisionTupleSchema,
+  budget: AtlasRoleBudgetSchema,
+  source_units: z.array(BoundedSourceUnitSchema).min(1),
+}).strict().superRefine((value, context) => {
+  if (value.source_units.length > value.budget.maximum_source_units) {
+    context.addIssue({ code: "custom", message: "Source-unit budget exceeded" });
+  }
+  const characters = value.source_units.reduce((total, unit) => total + unit.text.length, 0);
+  if (characters > value.budget.maximum_input_characters) {
+    context.addIssue({ code: "custom", message: "Input-character budget exceeded" });
+  }
+  if (value.role_id === "atlas.section-extractor"
+    && !["candidate_pinned", "reviewed"].includes(value.revisions.lexicon_state)) {
+    context.addIssue({ code: "custom",
+      message: "Section extraction requires pinned L1 or reviewed pinned L2 lexicon" });
+  }
+});
+
+export const StructureClassificationSchema = z.object({
+  source_unit_id: Id,
+  classification: z.enum(["normative", "context", "heading", "example", "unknown"]),
+  rationale: Text,
+}).strict();
+
+export const DomainConceptProposalEnvelopeSchema = z.object({
+  proposal_id: Id,
+  source_unit_ids: z.array(Id).min(1),
+  kind: z.enum(["actor", "entity", "field", "state", "action", "event", "calculation", "report"]),
+  label: Text,
+  aliases: z.array(Text).default([]),
+}).strict();
+
+export const SemanticCandidateEnvelopeSchema = z.object({
+  candidate_id: Id,
+  source_unit_ids: z.array(Id).min(1),
+  semantic_kind: z.enum([
+    "functional_requirement", "business_rule", "permission", "validation", "calculation",
+    "state_model", "workflow", "data", "report", "acceptance_criterion", "deliverable",
+    "nonfunctional_requirement",
+  ]),
+  payload_hash: Hash,
+}).strict();
+
+export const AtlasRoleOutputSchema = z.object({
+  contract_version: z.literal(ATLAS_ROLE_CONTRACT_VERSION),
+  role_id: z.enum(ATLAS_ROLE_IDS),
+  partition_id: Id,
+  revisions: AtlasRevisionTupleSchema,
+  classifications: z.array(StructureClassificationSchema).default([]),
+  concept_proposals: z.array(DomainConceptProposalEnvelopeSchema).default([]),
+  semantic_candidates: z.array(SemanticCandidateEnvelopeSchema).default([]),
+  uncertainties: z.array(z.object({
+    id: Id, source_unit_ids: z.array(Id).min(1), statement: Text,
+  }).strict()).default([]),
+  conflicts: z.array(z.object({
+    id: Id, source_unit_ids: z.array(Id).min(1), statement: Text,
+  }).strict()).default([]),
+}).strict();
+
+export const AtlasMergeReportSchema = z.object({
+  contract_version: z.literal(ATLAS_ROLE_CONTRACT_VERSION),
+  revisions: AtlasRevisionTupleSchema,
+  partition_ids: z.array(Id),
+  classifications: z.array(StructureClassificationSchema),
+  concept_proposals: z.array(DomainConceptProposalEnvelopeSchema),
+  semantic_candidates: z.array(SemanticCandidateEnvelopeSchema),
+  uncertainties: z.array(z.object({
+    id: Id, source_unit_ids: z.array(Id).min(1), statement: Text,
+  }).strict()),
+  conflicts: z.array(z.object({
+    id: Id, source_unit_ids: z.array(Id).min(1), statement: Text,
+  }).strict()),
+  duplicate_candidate_groups: z.array(z.array(Id).min(2)),
+  content_hash: Hash,
+}).strict();
+
+export type AtlasRoleInput = z.infer<typeof AtlasRoleInputSchema>;
+export type AtlasRoleOutput = z.input<typeof AtlasRoleOutputSchema>;
+
+export function partitionSourceUnits(input: {
+  readonly role_id: typeof ATLAS_ROLE_IDS[number];
+  readonly revisions: z.input<typeof AtlasRevisionTupleSchema>;
+  readonly budget: z.input<typeof AtlasRoleBudgetSchema>;
+  readonly source_units: readonly z.input<typeof BoundedSourceUnitSchema>[];
+}): readonly AtlasRoleInput[] {
+  const revisions = AtlasRevisionTupleSchema.parse(input.revisions);
+  const budget = AtlasRoleBudgetSchema.parse(input.budget);
+  const units = input.source_units.map((unit) => BoundedSourceUnitSchema.parse(unit))
+    .sort((a, b) => a.order - b.order);
+  assertUnique(units.map(({ id }) => id), "source unit");
+  const partitions: AtlasRoleInput[] = [];
+  let current: typeof units = [];
+  let characters = 0;
+  for (const unit of units) {
+    if (unit.text.length > budget.maximum_input_characters) {
+      throw new Error(`Source unit exceeds role input budget: ${unit.id}`);
+    }
+    if (current.length >= budget.maximum_source_units
+      || characters + unit.text.length > budget.maximum_input_characters) {
+      partitions.push(makePartition(input.role_id, revisions, budget, current, partitions.length));
+      current = [];
+      characters = 0;
+    }
+    current.push(unit);
+    characters += unit.text.length;
+  }
+  if (current.length > 0) {
+    partitions.push(makePartition(input.role_id, revisions, budget, current, partitions.length));
+  }
+  return deepFreeze(partitions);
+}
+
+export function mergeAtlasRoleOutputs(input: {
+  readonly expected_revisions: z.input<typeof AtlasRevisionTupleSchema>;
+  readonly allowed_source_unit_ids: readonly string[];
+  readonly outputs: readonly AtlasRoleOutput[];
+}): z.infer<typeof AtlasMergeReportSchema> {
+  const revisions = AtlasRevisionTupleSchema.parse(input.expected_revisions);
+  const allowed = new Set(input.allowed_source_unit_ids.map((id) => Id.parse(id)));
+  const outputs = input.outputs.map((output) => AtlasRoleOutputSchema.parse(output));
+  assertUnique(outputs.map(({ partition_id }) => partition_id), "partition");
+  for (const output of outputs) {
+    if (canonicalJson(output.revisions) !== canonicalJson(revisions)) {
+      throw new Error(`Revision tuple mismatch: ${output.partition_id}`);
+    }
+    const referenced = [
+      ...output.classifications.map(({ source_unit_id }) => source_unit_id),
+      ...output.concept_proposals.flatMap(({ source_unit_ids }) => source_unit_ids),
+      ...output.semantic_candidates.flatMap(({ source_unit_ids }) => source_unit_ids),
+      ...output.uncertainties.flatMap(({ source_unit_ids }) => source_unit_ids),
+      ...output.conflicts.flatMap(({ source_unit_ids }) => source_unit_ids),
+    ];
+    const invented = referenced.filter((id) => !allowed.has(id));
+    if (invented.length > 0) throw new Error(`Agent referenced unknown source unit: ${invented[0]}`);
+  }
+  const classifications = outputs.flatMap(({ classifications: values }) => values)
+    .sort((a, b) => compare(a.source_unit_id, b.source_unit_id));
+  const conceptProposals = outputs.flatMap(({ concept_proposals: values }) => values)
+    .sort((a, b) => compare(a.proposal_id, b.proposal_id));
+  const semanticCandidates = outputs.flatMap(({ semantic_candidates: values }) => values)
+    .sort((a, b) => compare(a.candidate_id, b.candidate_id));
+  const uncertainties = outputs.flatMap(({ uncertainties: values }) => values)
+    .sort((a, b) => compare(a.id, b.id));
+  const conflicts = outputs.flatMap(({ conflicts: values }) => values)
+    .sort((a, b) => compare(a.id, b.id));
+  assertUnique(classifications.map(({ source_unit_id }) => source_unit_id), "classification");
+  assertUnique(conceptProposals.map(({ proposal_id }) => proposal_id), "concept proposal");
+  assertUnique(semanticCandidates.map(({ candidate_id }) => candidate_id), "semantic candidate");
+  const byPayload = Map.groupBy(semanticCandidates, ({ payload_hash }) => payload_hash);
+  const duplicateGroups = [...byPayload.values()].filter((group) => group.length > 1)
+    .map((group) => group.map(({ candidate_id }) => candidate_id).sort(compare))
+    .sort((a, b) => compare(a[0]!, b[0]!));
+  const core = {
+    contract_version: ATLAS_ROLE_CONTRACT_VERSION,
+    revisions,
+    partition_ids: outputs.map(({ partition_id }) => partition_id).sort(compare),
+    classifications,
+    concept_proposals: conceptProposals,
+    semantic_candidates: semanticCandidates,
+    uncertainties,
+    conflicts,
+    duplicate_candidate_groups: duplicateGroups,
+  };
+  return deepFreeze(AtlasMergeReportSchema.parse({
+    ...core,
+    content_hash: hash(canonicalJson(core)),
+  }));
+}
+
+function makePartition(roleId: typeof ATLAS_ROLE_IDS[number],
+  revisions: z.infer<typeof AtlasRevisionTupleSchema>,
+  budget: z.infer<typeof AtlasRoleBudgetSchema>,
+  units: readonly z.infer<typeof BoundedSourceUnitSchema>[], index: number): AtlasRoleInput {
+  return AtlasRoleInputSchema.parse({
+    contract_version: ATLAS_ROLE_CONTRACT_VERSION,
+    role_id: roleId,
+    partition_id: `atlas.partition.${String(index + 1).padStart(5, "0")}`,
+    revisions, budget, source_units: units,
+  });
+}
+
+function assertUnique(values: readonly string[], label: string): void {
+  if (new Set(values).size !== values.length) throw new Error(`Duplicate ${label}`);
+}
+function canonicalJson(value: unknown): string { return JSON.stringify(canonical(value)); }
+function canonical(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonical);
+  if (value !== null && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    return Object.fromEntries(Object.keys(record).sort().map((key) => [key, canonical(record[key])]));
+  }
+  return value;
+}
+function hash(value: string): string {
+  return `sha256:${createHash("sha256").update(value).digest("hex")}`;
+}
+function compare(a: string, b: string): number { return a < b ? -1 : a > b ? 1 : 0; }
+function deepFreeze<T>(value: T): T {
+  if (value !== null && typeof value === "object") {
+    Object.freeze(value);
+    for (const child of Object.values(value)) deepFreeze(child);
+  }
+  return value;
+}
