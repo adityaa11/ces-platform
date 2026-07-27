@@ -1,4 +1,4 @@
-# CES-GF-AGB-004 — Agents Bridge: Atlas-to-Gemini Vertical Slice
+# CES-GF-AGB-004 — Agents Bridge: Atlas Requirement Extraction Agent
 
 **Phase:** 3D — Central Agent Provider Foundation  
 **Parent:** Greenfield Product Suite  
@@ -6,15 +6,20 @@
 
 ## Goal
 
-Implement `POST /v1/atlas/analyze` as a complete adapter from the existing Atlas
-HTTP provider protocol to Gemini structured extraction and back to a validated
-`AtlasProviderResult`.
+Implement Atlas requirement extraction as the first registered agent and
+preserve the existing Atlas HTTP provider protocol through a compatibility
+route.
 
 ## Work
 
-- Validate the strict Atlas HTTP envelope and its contract version.
+- Register `atlas.requirement-extractor` version `1.0.0` with its input,
+  intermediate, output, policy, prompt, and transformation definitions.
+- Allow only the structured-generation mode, controlled model aliases, no
+  tools, bounded execution, and mandatory human review.
+- Validate the strict Atlas compatibility envelope and its contract version.
 - Validate the nested request with `AtlasProviderRequestSchema`.
-- Reject unsupported or mismatched models before a provider call.
+- Map the legacy allowlisted Atlas model field to a server-controlled model
+  alias; generic callers cannot select a physical model.
 - Convert Markdown source content to a stable line-numbered prompt
   representation without changing stored source hashes.
 - Resolve every Gemini source reference against the original Atlas request.
@@ -29,6 +34,10 @@ HTTP provider protocol to Gemini structured extraction and back to a validated
 - Validate all references and the final result with
   `AtlasProviderResultSchema`.
 - Return the result directly, without a bridge or Gemini response envelope.
+- Make `POST /v1/atlas/analyze` delegate through the same registered-agent
+  executor used by `POST /v1/agents/atlas.requirement-extractor/execute`.
+- Add adversarial prompt-injection fixtures proving source text cannot change
+  provider, model, tools, schema, metadata, or review policy.
 
 ## Acceptance criteria
 
@@ -46,6 +55,11 @@ HTTP provider protocol to Gemini structured extraction and back to a validated
       code `7` without incompatible changes.
 - [ ] No candidate is approved, corrected, rejected, or superseded by the
       bridge.
+- [ ] Generic and compatibility routes produce the same validated agent result
+      for equivalent input.
+- [ ] Given the same normalized intermediate result, excluding array order and
+      temporary model-generated identifiers, normalization produces
+      byte-equivalent ordering, identifiers, and references.
 
 ## Required evidence
 
@@ -57,15 +71,16 @@ HTTP provider protocol to Gemini structured extraction and back to a validated
       fixtures.
 - [ ] Mocked end-to-end Atlas CLI-to-bridge integration test.
 - [ ] Final Atlas schema validation fixture.
+- [ ] Prompt-injection, model-remapping, generic-route equivalence, and
+      mandatory-human-review fixtures.
 
 ## Out of scope
 
 - Human review automation.
 - Sending original PDF bytes to Gemini.
-- Non-Atlas agent workflows.
+- Additional production agent workflows.
 - Production public ingress.
 
 ## Depends on
 
 - `CES-GF-AGB-003`
-

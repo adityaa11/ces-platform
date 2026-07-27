@@ -8,8 +8,8 @@ protocol backed by Gemini. Shared runtime infrastructure may later host other
 agent workflows, but each workflow retains its own versioned, fail-closed
 contract and endpoint.
 
-The implementation specification is
-[CES Atlas Bridge Provider](../../../CES_ATLAS_BRIDGE_PROVIDER.md).
+The authoritative architecture and implementation specification is
+[CES Agents Bridge](../../../CES_ATLAS_BRIDGE_PROVIDER.md).
 
 ## Delivery order
 
@@ -25,6 +25,8 @@ The implementation specification is
 
 - Centralize provider credentials, transport controls, retries, quotas, and
   redacted operational telemetry.
+- Register agents, providers, and model aliases explicitly and fail startup on
+  invalid or duplicate definitions.
 - Keep workflow contracts and prompts isolated behind distinct endpoints.
 - Never expose provider credentials to CES callers.
 - Never allow callers to select arbitrary provider URLs, API versions, models,
@@ -44,13 +46,14 @@ Atlas CLI / CI jobs / authorized workers
                     | HTTPS + caller credential
                     v
           Central CES Agents Bridge
-          /v1/atlas/analyze
+          /v1/agents/:agentId/execute
+          /v1/atlas/analyze (compatibility)
                     |
                     | server-side provider credential
                     v
              Gemini generateContent
 ```
 
-Future endpoints require their own contracts and tickets. They are not implied
-by completion of the Atlas endpoint.
-
+The initial generic execution mode is structured generation. Future execution
+modes and tools remain reserved extension points until a proven workflow
+requires them.

@@ -11,12 +11,17 @@ agent-provider endpoints safely and test them without real network access.
 
 ## Work
 
-- Create the `apps/atlas-gemini-bridge` TypeScript workspace application.
+- Create the `apps/agents-bridge` TypeScript workspace application with service
+  identity `ces-agents-bridge`.
 - Separate configuration parsing, server construction, route handling, and
   executable startup.
-- Add `GET /healthz` without exposing environment or quota details.
+- Implement agent, provider, and model registries plus the shared structured
+  execution coordinator.
+- Add `GET /healthz` and `GET /readyz` without exposing secrets or quota
+  details.
 - Require bearer authentication with distinct missing, malformed, and incorrect
   credential responses and timing-safe token comparison where practical.
+- Authorize each authenticated client for specific agents and routes.
 - Apply configurable request-body limits before JSON parsing.
 - Generate or safely accept a bounded request correlation ID.
 - Add request deadlines and clean shutdown behavior.
@@ -24,6 +29,8 @@ agent-provider endpoints safely and test them without real network access.
 - Inject transport, clock, retry delay, randomness, and logger dependencies
   needed for deterministic tests.
 - Fail startup when required configuration is absent or invalid.
+- Implement `POST /v1/agents/:agentId/execute` so it accepts only agent version,
+  agent-specific input, and bounded correlation metadata.
 
 ## Acceptance criteria
 
@@ -37,6 +44,10 @@ agent-provider endpoints safely and test them without real network access.
       never appear in logs or errors.
 - [ ] Health checks reveal no configuration or provider information.
 - [ ] The runtime is stateless and supports multiple concurrent instances.
+- [ ] Unknown agents, unsupported versions, and unauthorized agents fail before
+      provider execution.
+- [ ] The generic route cannot accept caller-supplied prompts, providers,
+      models, schemas, credentials, or tools.
 
 ## Required evidence
 
@@ -45,10 +56,12 @@ agent-provider endpoints safely and test them without real network access.
 - [ ] Streaming body-limit tests.
 - [ ] Log-redaction tests using sentinel secrets and source text.
 - [ ] Server lifecycle and clean-shutdown tests.
+- [ ] Generic routing, registry, authorization, and execution-context tests
+      using a deterministic fixture agent and provider.
 
 ## Out of scope
 
-- Gemini response transformation.
+- Concrete provider adapters.
 - Atlas semantic extraction.
 - Organization-wide identity federation.
 - Durable job queues.
@@ -56,4 +69,3 @@ agent-provider endpoints safely and test them without real network access.
 ## Depends on
 
 - `CES-GF-AGB-001`
-

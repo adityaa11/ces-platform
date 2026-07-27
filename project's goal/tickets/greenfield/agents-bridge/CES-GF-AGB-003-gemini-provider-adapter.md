@@ -6,26 +6,30 @@
 
 ## Goal
 
-Add a hardened server-side Gemini adapter that produces validated structured
-extraction data without exposing Gemini-specific behavior to CES callers.
+Implement Gemini as the first provider adapter for the provider-neutral
+structured-generation contract.
 
 ## Work
 
 - Call the trusted Gemini `generateContent` endpoint with native `fetch`.
 - Keep `GEMINI_API_KEY` server-side and separate from caller credentials.
-- Enforce an explicit model allowlist and require configured, requested, and
-  invoked models to agree.
-- Generate a Gemini-compatible JSON Schema from the internal extraction schema,
-  simplifying unsupported JSON Schema constructs when required.
-- Build system and user prompts that clearly separate project intent, source
-  index, and line-numbered source content.
-- Parse text from the first valid candidate and handle joined text parts.
+- Resolve controlled model aliases to allowlisted physical Gemini models.
+- Translate provider-neutral system instructions, messages, response schema,
+  and budgets into Gemini `generateContent`.
+- Simplify unsupported JSON Schema constructs when required without weakening
+  application-side validation.
+- Parse exactly the single requested candidate and join its text parts.
 - Detect missing candidates, safety blocks, truncation, malformed JSON, and
   intermediate-schema violations.
+- Bound provider response bytes and require an explicitly successful completion
+  state.
 - Apply abort-based timeouts and bounded retries with jitter only for transient
   network failures and permitted HTTP statuses.
 - Honor reasonable `Retry-After` values without allowing unbounded waits.
-- Return provider-neutral typed failures to the Atlas route.
+- Return provider-neutral output, resolved-model metadata, bounded usage
+  metadata, and typed failures to the shared executor.
+- Keep Atlas schemas, prompts, provenance, IDs, and review rules out of the
+  provider adapter.
 
 ## Acceptance criteria
 
@@ -40,6 +44,7 @@ extraction data without exposing Gemini-specific behavior to CES callers.
       reaches a workflow transformer as valid data.
 - [ ] Provider responses, prompts, source documents, and secrets remain
       redacted from errors and logs.
+- [ ] The provider package has no Atlas import or Atlas-specific behavior.
 
 ## Required evidence
 
@@ -47,11 +52,12 @@ extraction data without exposing Gemini-specific behavior to CES callers.
 - [ ] Model allowlist and URL-construction tests.
 - [ ] Retry, `Retry-After`, timeout, and no-retry fixtures.
 - [ ] Candidate parsing and every invalid-response fixture.
+- [ ] Response-size, finish-state, resolved-model, and bounded-usage fixtures.
 - [ ] Network-denial test for the normal test suite.
 
 ## Out of scope
 
-- Atlas candidate metadata transformation.
+- Agent-specific schemas, prompts, and result transformation.
 - Alternative model providers.
 - Provider billing aggregation.
 - Automatic model fallback.
@@ -59,4 +65,3 @@ extraction data without exposing Gemini-specific behavior to CES callers.
 ## Depends on
 
 - `CES-GF-AGB-002`
-
