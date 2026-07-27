@@ -78,6 +78,9 @@ importers:
       '@company/ces-atlas-intent-graph':
         specifier: workspace:*
         version: link:../../packages/atlas-intent-graph
+      '@company/ces-atlas-quality-evidence':
+        specifier: workspace:*
+        version: link:../../packages/atlas-quality-evidence
       '@company/ces-atlas-review':
         specifier: workspace:*
         version: link:../../packages/atlas-review
@@ -217,6 +220,16 @@ importers:
       '@company/ces-requirement-schema':
         specifier: workspace:*
         version: link:../requirement-schema
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
+
+  packages/atlas-quality-evidence:
+    dependencies:
       zod:
         specifier: 4.4.3
         version: 4.4.3

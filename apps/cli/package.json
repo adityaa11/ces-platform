@@ -15,6 +15,7 @@
     "@company/ces-atlas-coverage": "workspace:*",
     "@company/ces-atlas-extraction": "workspace:*",
     "@company/ces-atlas-intent-graph": "workspace:*",
+    "@company/ces-atlas-quality-evidence": "workspace:*",
     "@company/ces-atlas-review": "workspace:*",
     "@company/ces-document-ingestion": "workspace:*",
     "@company/ces-greenfield-contracts": "workspace:*",

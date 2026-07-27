@@ -17,6 +17,10 @@ import {
 import { analyzeAtlasCandidates } from "@company/ces-atlas-extraction";
 import { CoverageReportSchema } from "@company/ces-atlas-coverage";
 import {
+  AtlasQualityEvidenceInputSchema,
+  calculateAtlasQualityEvidence,
+} from "@company/ces-atlas-quality-evidence";
+import {
   buildIntentGraph,
   compileAtlasCoreHandoff,
   renderIntentGraphJson,
@@ -86,6 +90,7 @@ Usage:
   ces atlas approve --output <directory> --publication-input <json>
   ces atlas approve --output <directory> --decisions <json> --assurance <json> --baseline-version <version> [--links <json>]
   ces atlas graph --output <directory> [--format json|markdown|mermaid]
+  ces atlas quality-report --input <redacted-mapping.json> [--output <report.json>]
   ces atlas resume --output <directory> --decisions <json> --assurance <json> --baseline-version <version> [--links <json>]
   ces atlas inspect --output <directory>
   ces help
@@ -105,6 +110,7 @@ Exit codes:
   8  Atlas incomplete normative coverage
   9  Atlas unsupported or distorted candidate
   10 Atlas semantic conflict
+  12 Atlas real-provider semantic quality gate failed
 `;
 
 export async function runCli(
@@ -475,6 +481,17 @@ async function runAtlasCommand(
     if (!file) throw new CliInputError("Atlas graph --format must be json, markdown, or mermaid");
     io.stdout(await readFile(resolve(outputDirectory, file), "utf8"));
     return 0;
+  }
+  if (subcommand === "quality-report") {
+    const input = AtlasQualityEvidenceInputSchema.parse(
+      await readJsonValue(requireOption(options, "input")),
+    );
+    const report = calculateAtlasQualityEvidence(input);
+    const rendered = collectionCanonicalJson(report);
+    if (options.output) await writeOutput(options.output, rendered);
+    else io.stdout(rendered);
+    return report.release_decision === "pass" ? 0
+      : report.release_decision === "quality_gate_failed" ? 12 : 7;
   }
   if (subcommand === "inspect") {
     const outputDirectory = requireOption(options, "output");
