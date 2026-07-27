@@ -125,6 +125,23 @@ describe("Gemini structured-generation provider", () => {
     expect(body.generationConfig.responseJsonSchema.properties.value.pattern).toBeUndefined();
   });
 
+  it("ignores Gemini thinking parts when parsing structured output", async () => {
+    const response = new Response(JSON.stringify({
+      candidates: [{
+        content: {
+          parts: [
+            { thought: true, text: "internal reasoning that is not JSON" },
+            { text: JSON.stringify({ value: "ok" }) },
+          ],
+        },
+        finishReason: "STOP",
+      }],
+    }));
+    const { provider } = adapter([response]);
+    await expect(provider.executeStructured(request, outputSchema, context()))
+      .resolves.toMatchObject({ output: { value: "ok" } });
+  });
+
   it("rejects an unknown or mismatched controlled model before fetch", async () => {
     const { provider, fetchMock } = adapter([success()]);
     await expect(provider.executeStructured(
@@ -150,6 +167,25 @@ describe("Gemini structured-generation provider", () => {
     await expect(provider.executeStructured(request, outputSchema, context())).resolves.toBeTruthy();
     expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(delays).toEqual([2000, 100]);
+  });
+
+  it("emits bounded provider metrics without request or credential content", async () => {
+    const metrics: unknown[] = [];
+    const { provider } = adapter([
+      new Response("unavailable", { status: 503 }),
+      success(),
+    ], { observe: (event) => metrics.push(event) });
+    await provider.executeStructured(request, outputSchema, context());
+    expect(metrics).toEqual([{
+      provider_id: "gemini",
+      status: 200,
+      retry_count: 1,
+      duration_ms: 0,
+    }]);
+    const serialized = JSON.stringify(metrics);
+    expect(serialized).not.toContain(apiKey);
+    expect(serialized).not.toContain("source sentinel");
+    expect(serialized).not.toContain(request.system_instructions);
   });
 
   it("retries temporary network failures but not non-transient HTTP failures", async () => {

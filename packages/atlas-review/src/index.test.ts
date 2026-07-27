@@ -102,6 +102,23 @@ describe("Atlas human review", () => {
     expect(() => assertCollectionPackages(first.collection, first.packages)).not.toThrow();
   });
 
+  it("resolves extracted candidate references to approved logical IDs", () => {
+    const extractedRule = {
+      ...rule,
+      source_requirement_ids: [requirement.candidate_id],
+    };
+    const result = compileAtlasReview({
+      collection_id: "COLLECTION-PROJECT",
+      analysis: {
+        ...analysis,
+        candidate_business_rules: [extractedRule],
+      },
+      decisions: [decision(requirement), decision(extractedRule)],
+      clarification_answers: [],
+    });
+    expect(result.packages["REQ-PROJECT-001"]?.business_rules).toHaveLength(1);
+  });
+
   it("fails closed when a candidate or source revision changed", () => {
     const valid = decision(requirement);
     expect(() => compileAtlasReview({

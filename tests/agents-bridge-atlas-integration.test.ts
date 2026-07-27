@@ -148,7 +148,7 @@ function bridgeHandler() {
         max_timeout_ms: 90_000,
       },
       clients: [{
-        credential,
+        credentials: [credential],
         identity: {
           client_id: "atlas-cli",
           audit_identity: "Atlas CLI",

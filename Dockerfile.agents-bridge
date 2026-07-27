@@ -1,0 +1,22 @@
+FROM node:24.12.0-bookworm-slim AS build
+
+WORKDIR /app
+RUN corepack enable && corepack prepare pnpm@11.15.1 --activate
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
+COPY apps ./apps
+COPY packages ./packages
+COPY adapters ./adapters
+
+RUN pnpm install --frozen-lockfile
+RUN pnpm --filter @company/ces-agents-bridge build
+
+FROM node:24.12.0-bookworm-slim AS runtime
+
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=build /app /app
+
+USER node
+EXPOSE 8787
+ENTRYPOINT ["node", "apps/agents-bridge/dist/main.js"]

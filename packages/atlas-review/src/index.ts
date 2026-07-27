@@ -131,6 +131,7 @@ export function compileAtlasReview(input: unknown): AtlasReviewOutput {
   assertBlockingIssuesResolved(parsed.analysis, parsed.clarification_answers);
 
   const approvedRequirements = new Map<string, CandidateRequirement>();
+  const approvedRequirementReferences = new Map<string, string>();
   const approvedRules: CandidateBusinessRule[] = [];
   for (const decision of decisions) {
     if (!["approved", "corrected"].includes(decision.decision)) continue;
@@ -143,10 +144,17 @@ export function compileAtlasReview(input: unknown): AtlasReviewOutput {
         );
       }
       approvedRequirements.set(reviewed.proposed_logical_id, reviewed);
+      approvedRequirementReferences.set(reviewed.candidate_id, reviewed.proposed_logical_id);
     } else approvedRules.push(reviewed);
   }
+  const resolvedApprovedRules = approvedRules.map((rule) => ({
+    ...rule,
+    source_requirement_ids: rule.source_requirement_ids.map(
+      (id) => approvedRequirementReferences.get(id) ?? id,
+    ),
+  }));
   assertUnique(
-    approvedRules.map(({ proposed_logical_id }) => proposed_logical_id),
+    resolvedApprovedRules.map(({ proposed_logical_id }) => proposed_logical_id),
     "approved Business Rule logical ID",
   );
 
@@ -158,7 +166,7 @@ export function compileAtlasReview(input: unknown): AtlasReviewOutput {
     [...approvedRequirements.entries()]
       .sort(([left], [right]) => compareText(left, right))
       .map(([logicalId, candidate]) => {
-        const businessRules = approvedRules
+        const businessRules = resolvedApprovedRules
           .filter(({ source_requirement_ids }) => source_requirement_ids.includes(logicalId))
           .sort((left, right) => compareText(left.proposed_logical_id, right.proposed_logical_id))
           .map((rule) => ({
@@ -193,7 +201,7 @@ export function compileAtlasReview(input: unknown): AtlasReviewOutput {
       }),
   );
 
-  for (const rule of approvedRules) {
+  for (const rule of resolvedApprovedRules) {
     for (const requirementId of rule.source_requirement_ids) {
       if (!packages[requirementId]) {
         throw new Error(`Approved Business Rule ${rule.candidate_id} references unapproved requirement ${requirementId}`);

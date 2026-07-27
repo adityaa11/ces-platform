@@ -140,6 +140,16 @@ describe("agent provider SDK", () => {
       provider: "configured-http",
       model: "analysis-model",
     })).toThrow("must use HTTPS");
+    expect(() => new HttpAtlasProvider({
+      endpoint: "http://127.0.0.1:8787/v1/atlas/analyze",
+      provider: "configured-http",
+      model: "analysis-model",
+    })).not.toThrow();
+    expect(() => new HttpAtlasProvider({
+      endpoint: "http://localhost:8787/v1/atlas/analyze",
+      provider: "configured-http",
+      model: "analysis-model",
+    })).not.toThrow();
 
     const provider = new HttpAtlasProvider({
       endpoint: "https://provider.example/analyze",

@@ -33,7 +33,12 @@ function setup(options: {
   timeout?: number;
   pending?: boolean;
   maxRequestBytes?: number;
+  requestsPerMinute?: number;
+  clientConcurrency?: number;
+  providerConcurrency?: number;
 } = {}) {
+  let releasePending: () => void = () => {};
+  const pendingGate = new Promise<void>((resolve) => { releasePending = resolve; });
   const execute = vi.fn((_request: unknown) => undefined);
   const provider: AgentProvider = {
     provider_id: "fixture",
@@ -43,7 +48,7 @@ function setup(options: {
       outputSchema: ZodType<TOutput>,
     ) {
       execute(generationRequest);
-      if (options.pending) return await new Promise<never>(() => undefined);
+      if (options.pending) await pendingGate;
       return {
         output: outputSchema.parse("provider result") as TOutput,
         provider_id: "fixture",
@@ -97,6 +102,7 @@ function setup(options: {
   });
   const tools = new ToolRegistry();
   const events: unknown[] = [];
+  const metrics: unknown[] = [];
   const logger: BridgeLogger = { log: (event) => events.push(event) };
   const config = parseRuntimeConfig({
     host: "127.0.0.1",
@@ -107,19 +113,25 @@ function setup(options: {
       max_request_bytes: options.maxRequestBytes ?? ceilings.max_request_bytes,
     },
     clients: [{
-      credential,
+      credentials: [credential],
       identity: {
         client_id: "fixture-client",
         audit_identity: "Fixture Client",
         allowed_agents: options.allowed === false ? ["other.agent"] : ["fixture.agent"],
         allowed_routes: ["/v1/agents/:agentId/execute"],
-        max_concurrency: 2,
-        requests_per_minute: 10,
+        max_concurrency: options.clientConcurrency ?? 2,
+        requests_per_minute: options.requestsPerMinute ?? 10,
       },
     }],
+    provider_max_concurrency: options.providerConcurrency ?? 16,
   });
-  const runtime = { config, registries: { agents, providers, models, tools }, logger };
-  return { handle: createBridgeHandler(runtime), runtime, execute, events };
+  const runtime = {
+    config,
+    registries: { agents, providers, models, tools },
+    logger,
+    metrics: { record: (event: unknown) => metrics.push(event) },
+  };
+  return { handle: createBridgeHandler(runtime), runtime, execute, events, metrics, releasePending };
 }
 
 function request(input: Partial<BridgeRequest> & { json?: unknown } = {}): BridgeRequest {
@@ -213,7 +225,7 @@ describe("Agents Bridge shared runtime", () => {
 
   it("applies a deadline and emits only bounded redacted log fields", async () => {
     const sentinel = "CONFIDENTIAL-PRD-SENTINEL";
-    const { handle, events } = setup({ pending: true, timeout: 5 });
+    const { handle, events, metrics } = setup({ pending: true, timeout: 5 });
     const response = await handle(request({
       headers: {
         authorization: `Bearer ${credential}`,
@@ -222,15 +234,56 @@ describe("Agents Bridge shared runtime", () => {
       json: { agent_version: "1.0.0", input: { value: sentinel } },
     }));
     expect(response.status).toBe(504);
-    const serialized = JSON.stringify({ response, events });
+    expect(metrics).toEqual([expect.objectContaining({
+      route: "/v1/agents/:agentId/execute",
+      status: 504,
+      input_bytes: expect.any(Number),
+      source_documents: 0,
+      agent_id: "fixture.agent",
+      provider_id: "fixture",
+    })]);
+    const serialized = JSON.stringify({ response, events, metrics });
     expect(serialized).not.toContain(credential);
     expect(serialized).not.toContain(sentinel);
     expect(serialized).not.toContain("authorization");
   });
 
+  it("enforces per-client rate, client concurrency, and provider concurrency limits", async () => {
+    const rateLimited = setup({ requestsPerMinute: 1 });
+    const payload = { agent_version: "1.0.0", input: { value: "limited" } };
+    expect((await rateLimited.handle(request({ json: payload }))).status).toBe(200);
+    expect((await rateLimited.handle(request({ json: payload }))).status).toBe(429);
+
+    const concurrent = setup({
+      pending: true,
+      timeout: 1000,
+      clientConcurrency: 2,
+      providerConcurrency: 1,
+    });
+    const first = concurrent.handle(request({ json: payload }));
+    await vi.waitFor(() => expect(concurrent.execute).toHaveBeenCalledOnce());
+    expect((await concurrent.handle(request({ json: payload }))).status).toBe(429);
+    concurrent.releasePending();
+    expect((await first).status).toBe(200);
+  });
+
   it("validates configuration and constructs or closes a server without listening", async () => {
     expect(() => runtimeConfigFromEnvironment({})).toThrow("AGENTS_BRIDGE_API_KEY");
     expect(runtimeConfigFromEnvironment({ AGENTS_BRIDGE_API_KEY: credential }).port).toBe(8787);
+    const rotated = runtimeConfigFromEnvironment({
+      AGENTS_BRIDGE_CLIENTS_JSON: JSON.stringify([{
+        credentials: [credential, "replacement-secret-value"],
+        identity: {
+          client_id: "rotating-client",
+          audit_identity: "Rotating Client",
+          allowed_agents: ["fixture.agent"],
+          allowed_routes: ["/v1/agents/:agentId/execute"],
+          max_concurrency: 1,
+          requests_per_minute: 1,
+        },
+      }]),
+    });
+    expect(rotated.clients[0]?.credentials).toHaveLength(2);
     expect(() => parseRuntimeConfig({
       host: "localhost",
       port: 1,

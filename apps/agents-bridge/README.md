@@ -3,7 +3,7 @@
 The centralized CES Agents Bridge executes explicitly registered,
 schema-validated agents through controlled provider and model registries.
 
-The AGB-002 runtime currently provides:
+The runtime provides:
 
 - `GET /healthz`;
 - `GET /readyz`;
@@ -29,13 +29,20 @@ human review.
 
 ## Configuration
 
-`runtimeConfigFromEnvironment` requires `AGENTS_BRIDGE_API_KEY` and supports
-the service ceilings documented in the architecture. Production deployments
-will replace the temporary global key with per-client credentials.
+`runtimeConfigFromEnvironment` accepts `AGENTS_BRIDGE_CLIENTS_JSON` for
+per-client identities, rotating credentials, authorization, concurrency, and
+request-rate limits. `AGENTS_BRIDGE_API_KEY` remains a single-client local
+fallback. Production deployments must use the per-client form and inject it
+from a secret manager.
 
 Secrets are accepted only by the runtime configuration boundary. They are not
 part of agent, provider-neutral request, execution-context, log, or response
 contracts.
+
+Production deployment, rotation, incident response, retention, scaling, and
+live-test procedures are in `docs/agents-bridge-operations.md`. Production
+traffic must use HTTPS through a trusted ingress; direct HTTP is local or
+protected-container-network use only.
 
 ## Development verification
 
@@ -43,4 +50,5 @@ contracts.
 corepack pnpm --filter @company/ces-agents-bridge typecheck
 corepack pnpm exec vitest run apps/agents-bridge/src/server.test.ts
 corepack pnpm --filter @company/ces-agents-bridge build
+docker build -f Dockerfile.agents-bridge -t ces-agents-bridge:local .
 ```

@@ -163,8 +163,10 @@ export class HttpAtlasProvider implements AtlasAgentProvider {
 
   constructor(config: HttpAtlasProviderConfig) {
     const endpoint = new URL(config.endpoint);
-    if (endpoint.protocol !== "https:") {
-      throw new Error("Atlas HTTP provider endpoint must use HTTPS");
+    const loopbackHttp = endpoint.protocol === "http:"
+      && ["127.0.0.1", "::1", "localhost"].includes(endpoint.hostname);
+    if (endpoint.protocol !== "https:" && !loopbackHttp) {
+      throw new Error("Atlas HTTP provider endpoint must use HTTPS except on loopback");
     }
     this.endpoint = endpoint.toString();
     this.apiKey = config.apiKey;

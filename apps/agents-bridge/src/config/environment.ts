@@ -8,7 +8,7 @@ import {
 
 const RuntimeClientSchema = z.object({
   identity: AuthenticatedClientSchema,
-  credential: z.string().min(16),
+  credentials: z.array(z.string().min(16)).min(1),
 }).strict();
 
 const RuntimeConfigSchema = z.object({
@@ -17,6 +17,7 @@ const RuntimeConfigSchema = z.object({
   request_timeout_ms: z.number().int().positive(),
   ceilings: ServiceExecutionCeilingsSchema,
   clients: z.array(RuntimeClientSchema).min(1),
+  provider_max_concurrency: z.number().int().positive().default(16),
   atlas: z.object({
     legacy_model: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]*$/u),
     agent_version: z.literal("1.0.0"),
@@ -25,7 +26,7 @@ const RuntimeConfigSchema = z.object({
 
 export interface RuntimeClient {
   readonly identity: AuthenticatedClient;
-  readonly credential: string;
+  readonly credentials: readonly string[];
 }
 
 export interface BridgeRuntimeConfig {
@@ -34,6 +35,7 @@ export interface BridgeRuntimeConfig {
   readonly request_timeout_ms: number;
   readonly ceilings: ServiceExecutionCeilings;
   readonly clients: readonly RuntimeClient[];
+  readonly provider_max_concurrency: number;
   readonly atlas?: {
     readonly legacy_model: string;
     readonly agent_version: "1.0.0";
@@ -42,9 +44,10 @@ export interface BridgeRuntimeConfig {
 
 export function parseRuntimeConfig(value: unknown): BridgeRuntimeConfig {
   const config = RuntimeConfigSchema.parse(value);
-  const credentials = new Set(config.clients.map(({ credential }) => credential));
+  const allCredentials = config.clients.flatMap(({ credentials }) => credentials);
+  const credentials = new Set(allCredentials);
   const clientIds = new Set(config.clients.map(({ identity }) => identity.client_id));
-  if (credentials.size !== config.clients.length) throw new Error("Duplicate bridge credential");
+  if (credentials.size !== allCredentials.length) throw new Error("Duplicate bridge credential");
   if (clientIds.size !== config.clients.length) throw new Error("Duplicate bridge client ID");
   if (config.request_timeout_ms > config.ceilings.max_timeout_ms) {
     throw new Error("Request timeout exceeds the service ceiling");
@@ -58,6 +61,7 @@ export function parseRuntimeConfig(value: unknown): BridgeRuntimeConfig {
     request_timeout_ms: config.request_timeout_ms,
     ceilings: config.ceilings,
     clients: config.clients,
+    provider_max_concurrency: config.provider_max_concurrency,
     ...(config.atlas ? { atlas: config.atlas } : {}),
   };
 }
@@ -65,7 +69,19 @@ export function parseRuntimeConfig(value: unknown): BridgeRuntimeConfig {
 export function runtimeConfigFromEnvironment(
   environment: Readonly<Record<string, string | undefined>>,
 ): BridgeRuntimeConfig {
-  const credential = required(environment, "AGENTS_BRIDGE_API_KEY");
+  const configuredClients = environment.AGENTS_BRIDGE_CLIENTS_JSON
+    ? JSON.parse(environment.AGENTS_BRIDGE_CLIENTS_JSON) as unknown
+    : [{
+      credentials: [required(environment, "AGENTS_BRIDGE_API_KEY")],
+      identity: {
+        client_id: "atlas-cli",
+        audit_identity: "Atlas CLI",
+        allowed_agents: ["atlas.requirement-extractor"],
+        allowed_routes: ["/v1/atlas/analyze", "/v1/agents/:agentId/execute"],
+        max_concurrency: integer(environment.CLIENT_MAX_CONCURRENCY, 4),
+        requests_per_minute: integer(environment.CLIENT_REQUESTS_PER_MINUTE, 60),
+      },
+    }];
   return parseRuntimeConfig({
     host: environment.HOST ?? "0.0.0.0",
     port: integer(environment.PORT, 8787),
@@ -80,17 +96,8 @@ export function runtimeConfigFromEnvironment(
       max_provider_attempts: integer(environment.MAX_PROVIDER_ATTEMPTS, 3),
       max_timeout_ms: integer(environment.MAX_TIMEOUT_MS, 90_000),
     },
-    clients: [{
-      credential,
-      identity: {
-        client_id: "atlas-cli",
-        audit_identity: "Atlas CLI",
-        allowed_agents: ["atlas.requirement-extractor"],
-        allowed_routes: ["/v1/atlas/analyze", "/v1/agents/:agentId/execute"],
-        max_concurrency: integer(environment.CLIENT_MAX_CONCURRENCY, 4),
-        requests_per_minute: integer(environment.CLIENT_REQUESTS_PER_MINUTE, 60),
-      },
-    }],
+    clients: configuredClients,
+    provider_max_concurrency: integer(environment.PROVIDER_MAX_CONCURRENCY, 16),
     atlas: {
       legacy_model: environment.GEMINI_MODEL ?? "gemini-2.5-flash",
       agent_version: "1.0.0",

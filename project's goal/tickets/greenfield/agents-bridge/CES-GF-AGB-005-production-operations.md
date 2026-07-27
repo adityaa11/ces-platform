@@ -2,7 +2,7 @@
 
 **Phase:** 3D — Central Agent Provider Foundation  
 **Parent:** Greenfield Product Suite  
-**Status:** Planned
+**Status:** Implemented locally; deployed live validation pending
 
 ## Goal
 
@@ -38,30 +38,30 @@ scalable service for authorized CES processes and workers.
 
 ## Acceptance criteria
 
-- [ ] Production ingress is HTTPS and the bridge is not documented for direct
+- [x] Production ingress is HTTPS and the bridge is not documented for direct
       insecure remote access.
-- [ ] Credentials can be issued, revoked, and rotated per authorized caller or
+- [x] Credentials can be issued, revoked, and rotated per authorized caller or
       deployment identity.
-- [ ] Concurrency and rate limits prevent one caller from exhausting service or
+- [x] Concurrency and rate limits prevent one caller from exhausting service or
       provider capacity.
-- [ ] Logs and metrics support incident diagnosis without PRD text, prompts,
+- [x] Logs and metrics support incident diagnosis without PRD text, prompts,
       responses, credentials, or authorization headers.
-- [ ] Multiple instances can operate without local session state.
-- [ ] Normal CI remains provider-key-free and network-free.
+- [x] Multiple instances can operate without local session state.
+- [x] Normal CI remains provider-key-free and network-free.
 - [ ] The opt-in live test and manual Atlas run succeed with redacted evidence.
-- [ ] Data retention and confidential-document responsibilities are explicit.
-- [ ] A second fixture agent and provider execute through registration without
+- [x] Data retention and confidential-document responsibilities are explicit.
+- [x] A second fixture agent and provider execute through registration without
       changing the shared executor or Atlas contracts.
 
 ## Required evidence
 
-- [ ] HTTPS deployment and secret-injection guide.
-- [ ] Per-client authentication, rate-limit, and concurrency tests.
-- [ ] Metrics and log-redaction snapshots.
-- [ ] Multi-instance/statelessness validation.
-- [ ] Opt-in live-provider test instructions.
+- [x] HTTPS deployment and secret-injection guide.
+- [x] Per-client authentication, rate-limit, and concurrency tests.
+- [x] Metrics and log-redaction snapshots.
+- [x] Multi-instance/statelessness validation.
+- [x] Opt-in live-provider test instructions.
 - [ ] Redacted real-provider Atlas run showing expected exit code and artifacts.
-- [ ] Model replacement/rollback and future-agent extension evidence.
+- [x] Model replacement/rollback and future-agent extension evidence.
 
 ## Out of scope
 

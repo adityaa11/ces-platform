@@ -19,6 +19,7 @@ export class BridgeExecutionError extends Error {
     readonly status: number,
     readonly code: string,
     message: string,
+    readonly diagnostic_stage?: string,
   ) {
     super(message);
   }

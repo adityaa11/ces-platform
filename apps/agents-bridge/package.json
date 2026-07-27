@@ -15,6 +15,7 @@
   },
   "scripts": {
     "build": "tsc --build",
-    "typecheck": "tsc --build --pretty false"
+    "typecheck": "tsc --build --pretty false",
+    "start": "node dist/main.js"
   }
 }

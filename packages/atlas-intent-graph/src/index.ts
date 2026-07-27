@@ -394,8 +394,22 @@ function normalizeNodes(nodes: readonly GraphNode[]): GraphNode[] {
   const unique: GraphNode[] = [];
   for (const value of nodes) {
     const node = GraphNodeSchema.parse(value);
-    const existing = unique.find(({ id }) => id === node.id);
-    if (!existing || canonicalJson(existing) !== canonicalJson(node)) unique.push(node);
+    const existingIndex = unique.findIndex(({ id }) => id === node.id);
+    if (existingIndex < 0) {
+      unique.push(node);
+      continue;
+    }
+    const existing = unique[existingIndex]!;
+    const { provenance: existingProvenance, ...existingIdentity } = existing;
+    const { provenance: nodeProvenance, ...nodeIdentity } = node;
+    if (canonicalJson(existingIdentity) === canonicalJson(nodeIdentity)) {
+      unique[existingIndex] = {
+        ...existing,
+        provenance: [...new Set([...existingProvenance, ...nodeProvenance])].sort(compareText),
+      };
+    } else {
+      unique.push(node);
+    }
   }
   return unique
     .sort((left, right) => compareText(left.id, right.id));

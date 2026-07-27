@@ -5,6 +5,10 @@ import { z } from "zod";
 import { BridgeIdentifierSchema, GenericAgentExecutionRequestSchema, authorizeAgent } from "./core/contracts.js";
 import { BridgeExecutionError, executeRegisteredAgent, type BridgeRegistries } from "./core/executor.js";
 import { validateRegistries } from "./core/registry.js";
+import {
+  InMemoryAdmissionController,
+  type BridgeAdmissionController,
+} from "./core/admission.js";
 import type { BridgeRuntimeConfig, RuntimeClient } from "./config/environment.js";
 
 const AtlasCompatibilityEnvelopeSchema = z.object({
@@ -20,6 +24,20 @@ export interface BridgeLogger {
     status: number;
     duration_ms: number;
     agent_id?: string;
+    error_code?: string;
+    diagnostic_stage?: string;
+  }>): void;
+}
+
+export interface BridgeMetrics {
+  record(event: Readonly<{
+    route: string;
+    status: number;
+    duration_ms: number;
+    input_bytes: number;
+    source_documents: number;
+    agent_id?: string;
+    provider_id?: string;
   }>): void;
 }
 
@@ -40,12 +58,16 @@ export interface BridgeRuntime {
   readonly config: BridgeRuntimeConfig;
   readonly registries: BridgeRegistries;
   readonly logger: BridgeLogger;
+  readonly metrics?: BridgeMetrics;
+  readonly admission?: BridgeAdmissionController;
   readonly now?: () => number;
   readonly requestId?: () => string;
 }
 
 export function createBridgeHandler(runtime: BridgeRuntime) {
   validateRegistries(runtime.registries);
+  const admission = runtime.admission
+    ?? new InMemoryAdmissionController(runtime.config.provider_max_concurrency, runtime.now);
   return async (request: BridgeRequest): Promise<BridgeResponse> => {
     const started = runtime.now?.() ?? Date.now();
     const requestId = validRequestId(header(request.headers, "x-request-id"))
@@ -53,6 +75,10 @@ export function createBridgeHandler(runtime: BridgeRuntime) {
       ?? randomUUID();
     let route = "unknown";
     let agentId: string | undefined;
+    let inputBytes = 0;
+    let sourceDocuments = 0;
+    let errorCode: string | undefined;
+    let diagnosticStage: string | undefined;
     let response: BridgeResponse;
     try {
       const pathname = new URL(request.url ?? "/", "http://bridge.invalid").pathname;
@@ -71,6 +97,7 @@ export function createBridgeHandler(runtime: BridgeRuntime) {
         const client = authenticate(request.headers, runtime.config.clients);
         authorize(client, agentId, route);
         const raw = await readBody(request.body, runtime.config.ceilings.max_request_bytes);
+        inputBytes = Buffer.byteLength(raw, "utf8");
         let envelope: ReturnType<typeof AtlasCompatibilityEnvelopeSchema.parse>;
         try {
           envelope = AtlasCompatibilityEnvelopeSchema.parse(JSON.parse(raw));
@@ -80,13 +107,14 @@ export function createBridgeHandler(runtime: BridgeRuntime) {
         if (envelope.model !== atlas.legacy_model) {
           throw error(400, "INVALID_ATLAS_REQUEST", "The Atlas provider request is invalid.");
         }
+        sourceDocuments = envelope.request.source_documents.length;
         response = await runAgent(runtime, {
           agent_id: agentId,
           agent_version: atlas.agent_version,
           value: envelope.request,
           request_id: requestId,
           client,
-        });
+        }, admission);
       } else {
         const match = /^\/v1\/agents\/([^/]+)\/execute$/u.exec(pathname);
         if (!match) throw error(404, "AGENT_NOT_FOUND", "The route was not found.");
@@ -100,6 +128,7 @@ export function createBridgeHandler(runtime: BridgeRuntime) {
         const client = authenticate(request.headers, runtime.config.clients);
         authorize(client, agentId, route);
         const raw = await readBody(request.body, runtime.config.ceilings.max_request_bytes);
+        inputBytes = Buffer.byteLength(raw, "utf8");
         let envelope: ReturnType<typeof GenericAgentExecutionRequestSchema.parse>;
         try {
           envelope = GenericAgentExecutionRequestSchema.parse(JSON.parse(raw));
@@ -112,9 +141,11 @@ export function createBridgeHandler(runtime: BridgeRuntime) {
           value: envelope.input,
           request_id: envelope.correlation?.request_id ?? requestId,
           client,
-        });
+        }, admission);
       }
     } catch (caught) {
+      errorCode = caught instanceof BridgeExecutionError ? caught.code : "INTERNAL_ERROR";
+      diagnosticStage = caught instanceof BridgeExecutionError ? caught.diagnostic_stage : undefined;
       response = errorResponse(caught, requestId);
     }
     runtime.logger.log({
@@ -123,6 +154,18 @@ export function createBridgeHandler(runtime: BridgeRuntime) {
       status: response.status,
       duration_ms: Math.max(0, (runtime.now?.() ?? Date.now()) - started),
       ...(agentId ? { agent_id: agentId } : {}),
+      ...(errorCode ? { error_code: errorCode } : {}),
+      ...(diagnosticStage ? { diagnostic_stage: diagnosticStage } : {}),
+    });
+    const providerId = agentId ? providerForAgent(runtime, agentId) : undefined;
+    runtime.metrics?.record({
+      route,
+      status: response.status,
+      duration_ms: Math.max(0, (runtime.now?.() ?? Date.now()) - started),
+      input_bytes: inputBytes,
+      source_documents: sourceDocuments,
+      ...(agentId ? { agent_id: agentId } : {}),
+      ...(providerId ? { provider_id: providerId } : {}),
     });
     return response;
   };
@@ -137,7 +180,16 @@ async function runAgent(
     readonly request_id: string;
     readonly client: RuntimeClient["identity"];
   },
+  admission: BridgeAdmissionController,
 ): Promise<BridgeResponse> {
+  const providerId = providerForAgent(runtime, input.agent_id);
+  const lease = providerId
+    ? await admission.acquire({
+      client: input.client,
+      agent_id: input.agent_id,
+      provider_id: providerId,
+    })
+    : undefined;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), runtime.config.request_timeout_ms);
   try {
@@ -150,7 +202,14 @@ async function runAgent(
     return json(200, output);
   } finally {
     clearTimeout(timeout);
+    lease?.release();
   }
+}
+
+function providerForAgent(runtime: BridgeRuntime, agentId: string): string | undefined {
+  const agent = runtime.registries.agents.values().find(({ id }) => id === agentId);
+  const alias = agent?.execution_policy.allowed_model_aliases[0];
+  return alias ? runtime.registries.models.get(alias)?.provider_id : undefined;
 }
 
 export function createBridgeServer(runtime: BridgeRuntime): Server {
@@ -191,7 +250,9 @@ function authenticate(
   const supplied = digest(match[1]!);
   let matched: RuntimeClient | undefined;
   for (const client of clients) {
-    if (timingSafeEqual(supplied, digest(client.credential))) matched = client;
+    for (const credential of client.credentials) {
+      if (timingSafeEqual(supplied, digest(credential))) matched = client;
+    }
   }
   if (!matched) throw error(403, "AUTHENTICATION_FAILED", "Authentication failed.");
   return matched.identity;

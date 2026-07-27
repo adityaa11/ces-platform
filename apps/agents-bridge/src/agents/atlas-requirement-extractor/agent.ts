@@ -32,7 +32,8 @@ Rules:
 6. Omit optional source locations when they cannot be established reliably.
 7. Keep business rules separate from requirements and avoid duplicates.
 8. Temporary references must point to candidates returned in the same result.
-9. Return only JSON matching the supplied schema.`;
+9. Every temporary_id and temporary source_requirement_id must match TMP-[A-Z]+-[0-9]+ exactly; examples include TMP-REQ-1, TMP-RULE-1, TMP-UNCERTAINTY-1, TMP-CONFLICT-1, and TMP-QUESTION-1.
+10. Return only JSON matching the supplied schema.`;
 
 export function createAtlasRequirementExtractor(options: {
   readonly model_alias: string;

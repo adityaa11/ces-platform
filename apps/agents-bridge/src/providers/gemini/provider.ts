@@ -20,7 +20,10 @@ const supportedSchemaKeys = new Set([
 const GeminiResponseSchema = z.object({
   candidates: z.array(z.object({
     content: z.object({
-      parts: z.array(z.object({ text: z.string().optional() }).passthrough()).min(1),
+      parts: z.array(z.object({
+        text: z.string().optional(),
+        thought: z.boolean().optional(),
+      }).passthrough()).min(1),
     }).passthrough(),
     finishReason: z.string(),
   }).passthrough()).length(1),
@@ -37,6 +40,12 @@ export interface GeminiProviderDependencies {
   readonly sleep: (milliseconds: number, signal: AbortSignal) => Promise<void>;
   readonly random: () => number;
   readonly now: () => number;
+  readonly observe?: (event: Readonly<{
+    provider_id: "gemini";
+    status?: number;
+    retry_count: number;
+    duration_ms: number;
+  }>) => void;
 }
 
 const defaultDependencies: GeminiProviderDependencies = {
@@ -63,6 +72,7 @@ export class GeminiStructuredGenerationProvider implements AgentProvider {
     outputSchema: ZodType<TOutput>,
     context: ProviderExecutionContext,
   ): Promise<StructuredGenerationResponse<TOutput>> {
+    const started = this.dependencies.now();
     const configuredModel = this.config.models[request.model_alias];
     if (!configuredModel || configuredModel !== context.resolved_model) {
       throw providerError("PROVIDER_REQUEST_FAILED", "The configured Gemini model is unavailable.");
@@ -84,9 +94,11 @@ export class GeminiStructuredGenerationProvider implements AgentProvider {
         });
       } catch (caught) {
         if (context.signal.aborted || isAbortError(caught)) {
+          this.observe(undefined, attempt - 1, started);
           throw providerError("PROVIDER_TIMEOUT", "The Gemini request timed out.", 504);
         }
         if (attempt === context.max_attempts) {
+          this.observe(undefined, attempt - 1, started);
           throw providerError("PROVIDER_REQUEST_FAILED", "The Gemini request failed.");
         }
         await this.delay(attempt, undefined, context.signal);
@@ -94,6 +106,7 @@ export class GeminiStructuredGenerationProvider implements AgentProvider {
       }
       if (!response.ok) {
         if (!retryableStatuses.has(response.status) || attempt === context.max_attempts) {
+          this.observe(response.status, attempt - 1, started);
           if (response.status === 429) {
             throw providerError("PROVIDER_RATE_LIMITED", "The Gemini provider rate limit was reached.", 429);
           }
@@ -103,15 +116,31 @@ export class GeminiStructuredGenerationProvider implements AgentProvider {
         continue;
       }
       const bytes = Math.min(context.max_response_bytes, Number.MAX_SAFE_INTEGER);
-      const responseText = await readBoundedResponse(response, bytes, context.signal);
-      return parseGeminiResult(
-        responseText,
-        request.model_alias,
-        configuredModel,
-        outputSchema,
-      );
+      try {
+        const responseText = await readBoundedResponse(response, bytes, context.signal);
+        const result = parseGeminiResult(
+          responseText,
+          request.model_alias,
+          configuredModel,
+          outputSchema,
+        );
+        this.observe(response.status, attempt - 1, started);
+        return result;
+      } catch (caught) {
+        this.observe(response.status, attempt - 1, started);
+        throw caught;
+      }
     }
     throw providerError("PROVIDER_REQUEST_FAILED", "The Gemini request failed.");
+  }
+
+  private observe(status: number | undefined, retryCount: number, started: number): void {
+    this.dependencies.observe?.({
+      provider_id: "gemini",
+      ...(status === undefined ? {} : { status }),
+      retry_count: retryCount,
+      duration_ms: Math.max(0, this.dependencies.now() - started),
+    });
   }
 
   private async delay(
@@ -178,19 +207,28 @@ function parseGeminiResult<TOutput>(
     throw providerInvalid();
   }
   const parsed = GeminiResponseSchema.safeParse(raw);
-  if (!parsed.success || parsed.data.promptFeedback?.blockReason) throw providerInvalid();
+  if (!parsed.success) throw providerInvalid("envelope");
+  if (parsed.data.promptFeedback?.blockReason) throw providerInvalid("blocked");
   const candidate = parsed.data.candidates[0]!;
-  if (candidate.finishReason !== "STOP") throw providerInvalid();
-  const content = candidate.content.parts.map(({ text: part }) => part ?? "").join("");
-  if (content.trim().length === 0) throw providerInvalid();
+  if (candidate.finishReason !== "STOP") throw providerInvalid("completion");
+  const content = candidate.content.parts
+    .filter(({ thought }) => thought !== true)
+    .map(({ text: part }) => part ?? "")
+    .join("");
+  if (content.trim().length === 0) throw providerInvalid("empty-content");
   let outputValue: unknown;
   try {
     outputValue = JSON.parse(content);
   } catch {
-    throw providerInvalid();
+    throw providerInvalid("content-json");
   }
   const output = outputSchema.safeParse(outputValue);
-  if (!output.success) throw providerInvalid();
+  if (!output.success) {
+    const issues = output.error.issues.slice(0, 5)
+      .map(({ code, path }) => `${path.join(".") || "root"}:${code}`)
+      .join(",");
+    throw providerInvalid(`output-schema:${issues}`);
+  }
   const usage = parsed.data.usageMetadata;
   return {
     output: output.data,
@@ -248,8 +286,13 @@ function parseRetryAfter(value: string | null | undefined, now: number): number 
   return Math.max(0, timestamp - now);
 }
 
-function providerInvalid(): BridgeExecutionError {
-  return providerError("PROVIDER_RESPONSE_INVALID", "The Gemini response is invalid.");
+function providerInvalid(stage = "response-body"): BridgeExecutionError {
+  return new BridgeExecutionError(
+    502,
+    "PROVIDER_RESPONSE_INVALID",
+    "The Gemini response is invalid.",
+    stage,
+  );
 }
 
 function providerError(code: string, message: string, status = 502): BridgeExecutionError {

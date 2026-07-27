@@ -58,6 +58,10 @@ const viewProject: CandidateRequirement = {
     resource: "project",
     target_scope: "own_company",
   },
+  source: {
+    ...createProject.source,
+    section: "Project views",
+  },
 };
 const rule: CandidateBusinessRule = {
   schema_version: "1.0.0",
@@ -132,6 +136,9 @@ describe("Atlas system-intent graph", () => {
         affected_requirement_ids: ["REQ-PROJECT-001"],
       }],
     });
+    expect(first.nodes.filter(({ id }) => id === "source:PRD")).toHaveLength(1);
+    expect(first.nodes.find(({ id }) => id === "source:PRD")?.provenance)
+      .toEqual(["Project views", "Projects"]);
 
     expect(renderIntentGraphJson(first)).toBe(renderIntentGraphJson(second));
     expect(renderIntentGraphMarkdown(first)).toContain("## Relationships");

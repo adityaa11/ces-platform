@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "project": {
+    "id": "safara-buyer",
+    "lifecycle": "greenfield",
+    "application_type": "transactional_web_application",
+    "business_domain": "buyer_marketplace"
+  },
+  "delivery": {
+    "team_size": 3,
+    "expected_delivery_months": 6,
+    "deployment_preference": "managed_cloud"
+  },
+  "constraints": {
+    "expected_users": 1000,
+    "data_sensitivity": "sensitive",
+    "multi_tenant": false
+  },
+  "skills": {
+    "preferred_languages": ["typescript"],
+    "preferred_databases": ["postgresql"]
+  }
+}
