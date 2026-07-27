@@ -2,24 +2,25 @@
 
 **Status:** Planned
 
-This work introduces a centrally deployable provider service for CES agent
-workflows. The first supported workflow is the existing Atlas provider
-protocol backed by Gemini. Shared runtime infrastructure may later host other
-agent workflows, but each workflow retains its own versioned, fail-closed
-contract and endpoint.
+This work introduces a centralized, contract-driven, agent-agnostic and
+provider-agnostic execution gateway for authorized CES workflows.
+
+Atlas requirement extraction is the first registered agent, and Gemini
+structured generation is the first provider adapter. Each workflow retains its
+own versioned, fail-closed contracts and policy.
 
 The authoritative architecture and implementation specification is
-[CES Agents Bridge](../../../CES_ATLAS_BRIDGE_PROVIDER.md).
+[CES Agents Bridge](../../../CES_AGENTS_BRIDGE_ARCHITECTURE.md).
 
 ## Delivery order
 
 | Order | Ticket | Outcome | Depends on |
 |---:|---|---|---|
-| 1 | [CES-GF-AGB-001](CES-GF-AGB-001-service-boundary-and-contracts.md) | Approved centralized service boundary and Atlas endpoint contract | ATLAS-005 |
-| 2 | [CES-GF-AGB-002](CES-GF-AGB-002-secure-shared-runtime.md) | Reusable authenticated, bounded, testable bridge runtime | AGB-001 |
-| 3 | [CES-GF-AGB-003](CES-GF-AGB-003-gemini-provider-adapter.md) | Hardened Gemini structured-output adapter | AGB-002 |
-| 4 | [CES-GF-AGB-004](CES-GF-AGB-004-atlas-gemini-vertical-slice.md) | Atlas-to-Gemini endpoint that returns validated Atlas results | AGB-003 |
-| 5 | [CES-GF-AGB-005](CES-GF-AGB-005-production-operations.md) | Deployable, observable, rate-limited centralized service | AGB-004 |
+| 1 | [CES-GF-AGB-001](CES-GF-AGB-001-service-boundary-and-contracts.md) | Versioned agent, provider, registry, and execution contracts | ATLAS-005 |
+| 2 | [CES-GF-AGB-002](CES-GF-AGB-002-secure-shared-runtime.md) | Secure generic Agents Bridge runtime | AGB-001 |
+| 3 | [CES-GF-AGB-003](CES-GF-AGB-003-gemini-provider-adapter.md) | Gemini structured-generation provider adapter | AGB-002 |
+| 4 | [CES-GF-AGB-004](CES-GF-AGB-004-atlas-gemini-vertical-slice.md) | Registered Atlas extraction agent and compatibility route | AGB-003 |
+| 5 | [CES-GF-AGB-005](CES-GF-AGB-005-production-operations.md) | Production-ready centralized deployment | AGB-004 |
 
 ## Architectural rules
 

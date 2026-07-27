@@ -56,9 +56,9 @@ Atlas through the existing HTTP provider contract. See the
 
 | Order | Ticket | Outcome | Depends on |
 |---:|---|---|---|
-| 1 | [CES-GF-AGB-001](agents-bridge/CES-GF-AGB-001-service-boundary-and-contracts.md) | Central service boundary and workflow-specific contracts | ATLAS-005 |
-| 2 | [CES-GF-AGB-002](agents-bridge/CES-GF-AGB-002-secure-shared-runtime.md) | Secure reusable bridge runtime | AGB-001 |
-| 3 | [CES-GF-AGB-003](agents-bridge/CES-GF-AGB-003-gemini-provider-adapter.md) | Hardened Gemini structured-output adapter | AGB-002 |
+| 1 | [CES-GF-AGB-001](agents-bridge/CES-GF-AGB-001-service-boundary-and-contracts.md) | Versioned agent, provider, registry, and execution contracts | ATLAS-005 |
+| 2 | [CES-GF-AGB-002](agents-bridge/CES-GF-AGB-002-secure-shared-runtime.md) | Secure generic Agents Bridge runtime | AGB-001 |
+| 3 | [CES-GF-AGB-003](agents-bridge/CES-GF-AGB-003-gemini-provider-adapter.md) | Gemini structured-generation provider adapter | AGB-002 |
 | 4 | [CES-GF-AGB-004](agents-bridge/CES-GF-AGB-004-atlas-gemini-vertical-slice.md) | Registered Atlas extraction agent and compatibility endpoint | AGB-003 |
 | 5 | [CES-GF-AGB-005](agents-bridge/CES-GF-AGB-005-production-operations.md) | Production-ready centralized deployment | AGB-004 |
 

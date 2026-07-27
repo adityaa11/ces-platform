@@ -13,18 +13,22 @@ an unrestricted model proxy.
 ## Work
 
 - Record the service boundary, trust zones, callers, secrets, and data flows.
-- Define versioned agent, provider, model-alias, execution-context, execution
-  policy, and provider-neutral structured-generation contracts.
+- Define a versioned, mode-specific structured-generation agent contract plus
+  provider, model-alias, execution-context, execution-policy, and
+  provider-neutral request contracts.
 - Define explicit agent, provider, and model registries that reject invalid,
   duplicate, or unresolved definitions during startup.
-- Reserve `tool-assisted`, `remote-agent`, and `deterministic` execution modes
-  as extension points; implement only `structured-generation` initially.
+- Reserve `tool-assisted`, `remote-agent`, and `deterministic` identifiers as
+  extension points without giving them the structured-generation lifecycle;
+  implement only `structured-generation` initially.
 - Define a versioned tool contract and allowlist policy without implementing
   tools for the first Atlas agent.
 - Define authentication identities, per-client agent authorization, quotas,
   and audit identity.
 - Define `POST /v1/agents/:agentId/execute` for registered agents and
   compatibility-route delegation rules for `POST /v1/atlas/analyze`.
+- Declare the generic route canonical and allow a compatibility route only for
+  a proven existing client contract.
 - Define common sanitized error, version negotiation, completion, execution
   budget, and bounded diagnostic rules.
 - Define the rule that agents own workflow schemas, prompts, transformation,
@@ -34,11 +38,19 @@ an unrestricted model proxy.
   application and only its proven dependencies.
 - Prohibit arbitrary prompts, response schemas, credentials, provider URLs,
   physical models, and tools in caller input.
+- Define exact canonical comparison keys, absent-location behavior, semantic
+  hash tie-breakers, run-local ID guarantees, and reference remapping for every
+  Atlas result collection.
+- Define service execution ceilings for request bytes, source count, aggregate
+  and per-source characters, provider response bytes, output tokens, and
+  provider attempts.
 
 ## Acceptance criteria
 
 - [ ] A new agent can be registered without changing shared execution logic.
 - [ ] A new provider can be registered without changing agent contracts.
+- [ ] A new execution mode can be introduced without changing the meaning of
+      the structured-generation agent contract.
 - [ ] Duplicate or unresolved agent, provider, and model registrations fail
       during startup.
 - [ ] Agent definitions cannot access provider credentials and provider
@@ -51,6 +63,8 @@ an unrestricted model proxy.
 - [ ] Human review remains mandatory after successful extraction.
 - [ ] Callers are authorized for specific registered agents and cannot submit
       arbitrary execution configuration.
+- [ ] Canonical ordering and run-local identifier behavior are implementable
+      without an unspecified comparison or semantic-equivalence judgment.
 
 ## Required evidence
 
@@ -59,6 +73,8 @@ an unrestricted model proxy.
 - [ ] Registry duplicate, unresolved-reference, and version fixtures.
 - [ ] Architecture dependency assignment and boundary test.
 - [ ] Trust-boundary, compatibility-route, and authorization examples.
+- [ ] Golden canonical-ordering, tie-breaker, missing-location, and
+      reference-remapping fixtures.
 
 ## Out of scope
 
