@@ -2,7 +2,9 @@
 
 **Phase:** 3D — Central Agent Provider Foundation  
 **Parent:** Greenfield Product Suite  
-**Status:** Planned
+**Status:** Implemented locally; hosted CI pending
+
+**Evidence:** [`evidence/CES-GF-AGB-003-local-gemini-provider.md`](evidence/CES-GF-AGB-003-local-gemini-provider.md)
 
 ## Goal
 
@@ -33,27 +35,27 @@ structured-generation contract.
 
 ## Acceptance criteria
 
-- [ ] Callers cannot control the Gemini URL, API version, API key, or arbitrary
+- [x] Callers cannot control the Gemini URL, API version, API key, or arbitrary
       model identifier.
-- [ ] Normal tests make no external network requests.
-- [ ] Transient `429` and supported `5xx` responses retry within configured
+- [x] Normal tests make no external network requests.
+- [x] Transient `429` and supported `5xx` responses retry within configured
       bounds.
-- [ ] Gemini `400`, authentication failures, and invalid output do not retry.
-- [ ] Timeout produces a distinct provider-timeout failure.
-- [ ] Malformed, blocked, empty, truncated, or schema-invalid output never
+- [x] Gemini `400`, authentication failures, and invalid output do not retry.
+- [x] Timeout produces a distinct provider-timeout failure.
+- [x] Malformed, blocked, empty, truncated, or schema-invalid output never
       reaches a workflow transformer as valid data.
-- [ ] Provider responses, prompts, source documents, and secrets remain
+- [x] Provider responses, prompts, source documents, and secrets remain
       redacted from errors and logs.
-- [ ] The provider package has no Atlas import or Atlas-specific behavior.
+- [x] The provider package has no Atlas import or Atlas-specific behavior.
 
 ## Required evidence
 
-- [ ] Captured mock request proving headers and structured-output configuration.
-- [ ] Model allowlist and URL-construction tests.
-- [ ] Retry, `Retry-After`, timeout, and no-retry fixtures.
-- [ ] Candidate parsing and every invalid-response fixture.
-- [ ] Response-size, finish-state, resolved-model, and bounded-usage fixtures.
-- [ ] Network-denial test for the normal test suite.
+- [x] Captured mock request proving headers and structured-output configuration.
+- [x] Model allowlist and URL-construction tests.
+- [x] Retry, `Retry-After`, timeout, and no-retry fixtures.
+- [x] Candidate parsing and every invalid-response fixture.
+- [x] Response-size, finish-state, resolved-model, and bounded-usage fixtures.
+- [x] Network-denial test for the normal test suite.
 
 ## Out of scope
 

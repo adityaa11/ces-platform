@@ -76,6 +76,9 @@ export async function executeRegisteredAgent(input: {
   const providerContext: ProviderExecutionContext = {
     ...context,
     signal: AbortSignal.any([input.signal, AbortSignal.timeout(policy.timeout_ms)]),
+    resolved_model: model.physical_model,
+    max_attempts: policy.max_attempts,
+    max_response_bytes: policy.max_output_bytes,
   };
   const response = await abortable(
     provider.executeStructured(request, agent.intermediate_schema, providerContext),

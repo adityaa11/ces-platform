@@ -44,6 +44,9 @@ export interface StructuredGenerationResponse<TOutput> {
 
 export interface ProviderExecutionContext extends ExecutionContext {
   readonly signal: AbortSignal;
+  readonly resolved_model: string;
+  readonly max_attempts: number;
+  readonly max_response_bytes: number;
 }
 
 export interface AgentProvider {

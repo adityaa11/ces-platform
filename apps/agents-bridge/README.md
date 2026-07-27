@@ -15,7 +15,12 @@ The AGB-002 runtime currently provides:
   construction.
 
 Atlas compatibility routing and concrete provider adapters are delivered by
-later tickets.
+later tickets. AGB-003 adds the first concrete adapter:
+
+- Gemini `generateContent` structured output;
+- server-controlled endpoint, API key, model aliases, and physical models;
+- bounded responses, completion validation, transient retries, and normalized
+  provider failures.
 
 ## Configuration
 
@@ -34,4 +39,3 @@ corepack pnpm --filter @company/ces-agents-bridge typecheck
 corepack pnpm exec vitest run apps/agents-bridge/src/server.test.ts
 corepack pnpm --filter @company/ces-agents-bridge build
 ```
-

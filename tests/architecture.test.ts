@@ -180,4 +180,13 @@ describe("architecture boundaries", () => {
     ].join("\n");
     expect(content).not.toMatch(/laravel|symfony|spring|nestjs|django|eloquent|artisan/iu);
   });
+
+  it("keeps Agents Bridge provider adapters independent from Atlas contracts", () => {
+    const providerSources = sourceFiles(join("apps", "agents-bridge", "src", "providers"))
+      .filter((path) => !path.endsWith(".test.ts"));
+    const content = providerSources.map((path) => readFileSync(path, "utf8")).join("\n");
+    expect(content).not.toMatch(
+      /@company\/ces-(?:agent-provider-sdk|greenfield-contracts)|AtlasProviderRequestSchema|AtlasProviderResultSchema|CandidateRequirementSchema|CandidateBusinessRuleSchema/u,
+    );
+  });
 });
