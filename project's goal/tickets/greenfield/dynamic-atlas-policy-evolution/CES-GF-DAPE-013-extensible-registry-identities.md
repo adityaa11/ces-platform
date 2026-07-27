@@ -29,7 +29,9 @@ verification artifacts, generalized Safara semantics, compatibility adapters.
 ## Contract changes
 
 Syntactic RegistryId plus loaded-registry membership; independent versions for
-definitions, triggers, dependencies, adapter mappings, guidance and evidence.
+definitions, triggers, dependencies, adapter mappings, implementation guidance,
+evidence, verification methods, and standards mappings. A standards-mapping
+update does not change core CES policy meaning.
 
 ## Package ownership
 
@@ -86,4 +88,3 @@ public-contract compatibility.
 ## Explicit non-goals
 
 Project compilation, standards research, or registry publication.
-

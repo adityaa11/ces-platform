@@ -85,7 +85,7 @@ Atlas through the existing HTTP provider contract. See the
 
 | Order | Ticket | Outcome | Depends on |
 |---:|---|---|---|
-| 1 | [CES-GF-ASR-001](assurance/CES-GF-ASR-001-traceability-and-evidence.md) | Traceability and evidence-state contracts | ATLAS-003 |
+| 1 | [CES-GF-ASR-001](assurance/CES-GF-ASR-001-traceability-and-evidence.md) | Traceability and evidence-state contracts | DAPE-009; acceptance completes with DAPE-016A |
 | 2 | [CES-GF-ASR-002](assurance/CES-GF-ASR-002-assurance-views.md) | Developer and delivery views connected to verification | ASR-001, FORGE-001 |
 | 3 | [CES-GF-ASR-003](assurance/CES-GF-ASR-003-standards-pack.md) | First independent versioned standards pack | ASR-002 |
 

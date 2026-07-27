@@ -29,7 +29,9 @@ relationships, uncertainties, conflicts, and merge report.
 
 ## Contract changes
 
-Versioned role input/output and merge contracts with budgets and revision tuple.
+Versioned role input/output and merge contracts with budgets and revision
+tuple. Define lexicon states `seed`, `candidate_pinned`, `reviewed`, `approved`,
+and `superseded`.
 
 ## Package ownership
 
@@ -40,6 +42,9 @@ deterministic merge remains outside providers.
 
 Partitioning, bounded inputs, revision checks, ID normalization, canonical
 merge/order, deduplication proposals, provenance validation, and conflicts.
+Start with L0, deterministically merge discovery proposals into immutable
+candidate-pinned L1, and use L1 for every section. Section additions enter L2
+without mutating L1; only reviewed pinned L2 may drive targeted retry.
 
 ## Agent responsibilities
 
@@ -71,13 +76,14 @@ Role schemas, budgets, revision tuple, normalization, merge, and provenance.
 
 ## Integration tests
 
-All Safara sections execute with one pinned revision tuple and merge
-identically regardless of completion order.
+All Safara sections execute with the same immutable source revision,
+candidate-lexicon revision L1, semantic-schema version, and prompt-contract
+version, and merge identically regardless of completion order.
 
 ## Negative tests
 
-Agent-generated source IDs, revision mixing, cross-section silent mutation,
-arbitrary prompts/models, and agent approval fail.
+Agent-generated source IDs, L1 mutation, silent L2 adoption, revision mixing,
+cross-section silent mutation, arbitrary prompts/models, and approval fail.
 
 ## Completion evidence
 
@@ -87,4 +93,3 @@ errors, rerun and bridge-compatibility evidence.
 ## Explicit non-goals
 
 Coverage certification, human approval, standards research, or deployment gate.
-

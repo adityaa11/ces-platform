@@ -5,8 +5,8 @@
 
 ## Objective
 
-Make Architect, core, Assurance, Forge, Verification, and graph projections
-consume the same ApprovedProjectModel revision.
+Propagate one ApprovedProjectModel revision through core, Assurance, Forge,
+Verification, and graph projections. Architect already consumes it in ARCH-001.
 
 ## Business and architectural reason
 
@@ -24,7 +24,7 @@ assurance contexts.
 
 ## Outputs
 
-Revision-pinned architecture characteristics, Assurance traceability, Forge
+Revision-pinned cross-product traceability, core integration, Assurance, Forge
 tasks, verification obligations/results, and graph projections.
 
 ## Contract changes
@@ -33,8 +33,8 @@ Add project-model ID/hash and source semantic IDs to every downstream artifact.
 
 ## Package ownership
 
-Architect, Assurance, implementation compiler/Forge, verification, integration,
-and graph packages retain their existing authority boundaries.
+Core, Assurance, implementation compiler/Forge, verification, integration, and
+graph packages retain their existing authority boundaries.
 
 ## Deterministic responsibilities
 
@@ -83,5 +83,5 @@ Artifact samples, exact commands, deterministic rerun, compatibility suite.
 
 ## Explicit non-goals
 
-Registry upgrades, standards research, or migration impact views.
-
+Introducing Architect's canonical input, registry upgrades, standards research,
+or migration impact views.

@@ -1,11 +1,12 @@
 # CES Dynamic Atlas and Policy Evolution Ticket Plan
 
-**Status:** Documentation corrected; DAPE-001 may begin after DAPE-000 oracle acceptance
+**Status:** Final contract clarification applied; DAPE-000 is implementation-ready
 
 This plan implements
 [CES Dynamic Atlas and Policy Evolution Update](../../../CES_DYNAMIC_ATLAS_AND_POLICY_EVOLUTION_UPDATE.md)
-under the controlling corrections in
+incorporating the accepted corrections documented in
 [CES DAPE Ticket Review Feedback](../../../CES_DAPE_TICKET_REVIEW_FEEDBACK.md).
+The current README and ticket files are authoritative for implementation.
 
 ## Delivery order
 
@@ -20,15 +21,17 @@ under the controlling corrections in
 | 6 | P0 | [DAPE-006](CES-GF-DAPE-006-coverage-aware-human-review.md) | Human correction of candidates and omissions | DAPE-005 |
 | 7 | P0 | [DAPE-007](CES-GF-DAPE-007-approved-project-model-and-projections.md) | Immutable ApprovedProjectModel and projections | DAPE-006 |
 | 8 | P0 gate | [DAPE-008](CES-GF-DAPE-008-safara-golden-regression-and-cli.md) | End-to-end Safara oracle and staged CLI | DAPE-007 |
+| 8R | Release validation | [DAPE-008R](CES-GF-DAPE-008R-real-provider-safara-validation.md) | Honest real-provider semantic-quality evidence | DAPE-008, AGB-005 |
 | 9 | P1 | [DAPE-009](CES-GF-DAPE-009-shared-identity-and-traceability.md) | One identity/revision chain across CES | DAPE-008 |
 | 10 | P1 | [DAPE-010](CES-GF-DAPE-010-semantic-mapping-and-disposition.md) | Multi-channel mappings, gaps, terminal status | DAPE-009 |
 | 11 | P2 | [DAPE-012](CES-GF-DAPE-012-registry-composition-and-policy-packs.md) | Policy-pack composition and locks | DAPE-010 |
 | 12 | P2 | [DAPE-013](CES-GF-DAPE-013-extensible-registry-identities.md) | Extensible IDs, triggers, evidence, compatibility | DAPE-012 |
 | 13 | P1 core | [DAPE-011](CES-GF-DAPE-011-project-policy-compilation.md) | Project-level compiler against pinned packs | DAPE-013 |
 | 14 | Early adoption | [DAPE-016A](CES-GF-DAPE-016A-early-shared-model-adoption.md) | Architect, core, Assurance, Forge, Verification adoption | DAPE-011 |
-| 15 | P3 | [DAPE-014](CES-GF-DAPE-014-policy-gap-analysis-and-standards-research.md) | Controlled research and smallest-change proposals | DAPE-013 |
-| 16 | P3 | [DAPE-015](CES-GF-DAPE-015-registry-governance-versioning-and-impact.md) | Governance, immutable publication, diff, impact | DAPE-014 |
-| 17 | Evolution operations | [DAPE-016B](CES-GF-DAPE-016B-policy-evolution-operations.md) | Upgrade and migration operational views | DAPE-015, DAPE-016A |
+| 15 | P3 | [DAPE-014A](CES-GF-DAPE-014A-standards-source-and-retrieval-foundation.md) | Controlled sources, retrieval, snapshots, and offline fixtures | DAPE-013 |
+| 16 | P3 | [DAPE-014B](CES-GF-DAPE-014B-agent-assisted-policy-research.md) | Evidence-backed smallest-change proposals | DAPE-014A |
+| 17 | P3 | [DAPE-015](CES-GF-DAPE-015-registry-governance-versioning-and-impact.md) | Governance, immutable publication, diff, impact | DAPE-014B |
+| 18 | Evolution operations | [DAPE-016B](CES-GF-DAPE-016B-policy-evolution-operations.md) | Upgrade and migration operational views | DAPE-015, DAPE-016A |
 
 ## Program gates
 
@@ -37,6 +40,10 @@ under the controlling corrections in
 - Every extraction run pins source, lexicon, semantic-schema, and prompt revisions.
 - P0 publication requires complete normative coverage, zero unsupported
   candidates, resolved blocking issues, human approval, and atomic output.
+- Canonical model publication is independent of legacy projection support;
+  projection gaps block only affected downstream consumers.
+- DAPE-008R is required for release-quality claims but does not make CI
+  provider-dependent.
 - Every approved semantic record receives multi-channel mappings or explicit gaps.
 - Registry versions and project locks are immutable and never upgrade silently.
 - Existing Phase 1, Phase 2, profile-picture, Agents Bridge, adapter, compiler,
@@ -49,4 +56,3 @@ Atlas distinguishes `success`, `incomplete_coverage`, `unsupported_candidate`,
 `input_error`, and `execution_error`. Later stages add `mapping_gap`,
 `policy_gap`, `capability_gap`, `adapter_gap`, `registry_lock_error`,
 `registry_conflict`, and `upgrade_required`.
-

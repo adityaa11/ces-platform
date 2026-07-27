@@ -6,13 +6,19 @@
 
 ## Goal
 
-Produce explainable architecture candidates from approved requirements and
-project constraints using versioned data and deterministic scoring.
+Produce explainable architecture candidates directly from the authoritative
+ApprovedProjectModel revision and project constraints using deterministic,
+versioned scoring.
 
 ## Work
 
 - Define Project Intent, System Characteristic, and technology-catalog contracts.
-- Derive characteristics from approved facts with traceable rules.
+- Accept the DAPE-008 ApprovedProjectModel revision/hash as authoritative input.
+- Derive characteristics from approved requirements, business rules,
+  permissions, validations, calculations, state models, nonfunctional
+  requirements, and project intent with traceable rules.
+- Prohibit independent PRD reinterpretation and legacy RequirementCollection as
+  the primary truth.
 - Define versioned scoring factors, weights, exclusions, and missing-input behavior.
 - Catalog the controlled initial architecture styles and candidate stacks.
 - Report adapter availability independently from architectural suitability.
@@ -25,15 +31,22 @@ project constraints using versioned data and deterministic scoring.
 - [ ] Missing high-impact inputs block or visibly reduce a recommendation.
 - [ ] Adapter unavailability cannot silently lower policy obligations.
 - [ ] Laravel is not hard-coded as the universally preferred stack.
+- [ ] Every characteristic cites approved semantic IDs and the project-model
+      revision.
 
 ## Required evidence
 
 - [ ] Catalog and rubric schemas.
 - [ ] Golden scoring fixtures and boundary cases.
 - [ ] Adapter-availability fixtures.
+- [ ] ApprovedProjectModel input and legacy-input rejection fixtures.
 
 ## Out of scope
 
 - Human approval and ADR emission.
 - Benchmark guarantees.
 - Automatic adapter creation.
+
+## Depends on
+
+- `CES-GF-DAPE-008`

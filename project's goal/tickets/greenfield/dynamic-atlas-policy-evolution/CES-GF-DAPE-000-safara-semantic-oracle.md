@@ -1,17 +1,18 @@
-# CES-GF-DAPE-000 — Safara Semantic Oracle
+# CES-GF-DAPE-000 — Contract-Neutral Safara Semantic Oracle
 
 **Stage:** Preparation
-**Status:** Planned
+**Status:** Ready
 
 ## Objective
 
-Define the reviewed semantic truth used to shape and test P0 before implementing
-the extraction pipeline.
+Define a contract-neutral, human-reviewed inventory of Safara business meaning
+before production source-unit, lexicon, semantic-record, or project-model
+schemas exist.
 
 ## Business and architectural reason
 
-Contracts built only against small fixtures can appear correct while omitting
-real business meaning. Safara must be a concrete oracle from the first ticket.
+The oracle must shape later contracts without circularly freezing their final
+serialization. It answers what meaning must survive, not how packages encode it.
 
 ## Dependencies
 
@@ -20,31 +21,37 @@ real business meaning. Safara must be a concrete oracle from the first ticket.
 ## Inputs
 
 - Approved-to-use Safara source or redacted equivalent.
-- Reviewed source text and the controlling DAPE architecture.
+- Reviewed normalized text and DAPE architecture.
 
 ## Outputs
 
-- Fixture source and normalized text.
-- Expected structure, units, concepts, semantic records, business-rule
-  inventory, coverage map, review decisions, and ApprovedProjectModel.
-- A failing golden test that later P0 tickets progressively satisfy.
+- `semantic-oracle.yaml`
+- `expected-source-spans.yaml`
+- `expected-concepts.yaml`
+- `expected-business-rules.yaml`
+- `expected-acceptance-items.yaml`
+- `oracle-review-record.yaml`
+- Projection checklist for DAPE-001, DAPE-002, DAPE-003, and DAPE-007.
+
+Each entry uses a stable human oracle key, page/section/text anchors, category,
+expected meaning, and mandatory flag. It does not use production serialization.
 
 ## Contract changes
 
-No production contract; fixture schemas must name versions and stable identities.
+Add only a fixture-local oracle schema. Production packages do not consume it.
 
 ## Package ownership
 
-`fixtures/safara` and cross-package golden tests.
+`fixtures/safara`; later owning packages create versioned projections from it.
 
 ## Deterministic responsibilities
 
-Concrete IDs, counts, source citations, constraints, hashes, and expected
-coverage are reviewed and checked exactly.
+Validate oracle keys, source anchors, expected constraints, category counts,
+mandatory flags, and human review identity.
 
 ## Agent responsibilities
 
-None. An agent may assist inventory drafting but cannot define the oracle.
+An agent may assist inventory drafting but cannot define or approve the oracle.
 
 ## Failure statuses
 
@@ -52,39 +59,42 @@ None. An agent may assist inventory drafting but cannot define the oracle.
 
 ## Exit codes
 
-Existing test-runner conventions; any mismatch fails CI.
+Existing test-runner conventions; any oracle mismatch fails CI.
 
 ## Backward-compatibility requirements
 
-No source PDF is committed without authorization; existing fixtures remain.
+Do not commit a confidential source without authorization. Existing fixtures
+remain unchanged.
 
 ## Required fixtures
 
-At minimum: 9 numbered areas, 3 roles, 10 main rules, 12 inspection scenarios,
-9 deliverables, and 10 acceptance criteria, plus detailed validations,
-calculations, statuses, permissions, retention, filters, exports, readiness,
+At minimum: 9 numbered areas, 3 roles, 10 primary rules, 12 inspection
+scenarios, 9 deliverables, and 10 acceptance criteria, plus detailed fields,
+statuses, calculations, permissions, retention, reports, exports, readiness,
 and finalization semantics.
 
 ## Unit tests
 
-Fixture schema, identity uniqueness, source-reference, and hash validation.
+Oracle format, key uniqueness, source-anchor validation, category counts, and
+review record.
 
 ## Integration tests
 
-Golden test names concrete records such as registration quota, cites exact
-units, preserves constraints, and requires coverage.
+Concrete oracle meaning such as registration quota retains exact source anchors
+and constraints. Later ticket tests project it into their own contracts.
 
 ## Negative tests
 
-Broad category presence, invented semantics, missing inventory entries, and
-uncited records cannot satisfy the oracle.
+Premature production artifacts, broad category-only assertions, invented
+meaning, missing entries, and unanchored meaning cannot satisfy the oracle.
 
 ## Completion evidence
 
-Exact fixture paths, review record, expected counts/IDs, and initially failing
-golden command.
+Fixture paths, review record, counts/keys, and the commands validating the
+contract-neutral inventory.
 
 ## Explicit non-goals
 
-Extraction implementation, provider calls, registries, or downstream products.
+Production source-unit IDs, domain/semantic schemas, ApprovedProjectModel
+serialization, extraction, provider calls, or downstream registries.
 

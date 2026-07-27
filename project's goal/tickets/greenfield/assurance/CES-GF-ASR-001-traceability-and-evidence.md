@@ -11,6 +11,7 @@ policies, implementation tasks, evidence requirements, and verification results.
 
 ## Work
 
+- Consume the DAPE-009 ApprovedProjectModel identity and traceability chain.
 - Define traceability, evidence-requirement, evidence-record, and status contracts.
 - Distinguish required, supplied, observed, validated, rejected, and missing evidence.
 - Connect existing Policy and Verification Manifests without changing them.
@@ -25,6 +26,9 @@ policies, implementation tasks, evidence requirements, and verification results.
 - [ ] Generated claims are distinct from observed evidence.
 - [ ] Assurance cannot mutate Policy or Verification Manifests.
 - [ ] Equivalent inputs produce byte-identical traceability reports.
+- [ ] Every report pins the ApprovedProjectModel revision and traces source
+      units through semantic records, mappings, obligations, evidence, and
+      verification.
 
 ## Required evidence
 
@@ -37,3 +41,10 @@ policies, implementation tasks, evidence requirements, and verification results.
 - External standards packs.
 - Certification claims.
 - Exception governance.
+
+## Depends on
+
+- `CES-GF-DAPE-009`
+
+Implementation cannot be accepted as complete until DAPE-016A propagates the
+shared model through core, Forge, and Verification.

@@ -5,8 +5,8 @@
 
 ## Objective
 
-Resolve immutable, pinned policy-pack compositions and move current policies
-into the first backward-compatible pack.
+Resolve immutable, pinned policy-pack compositions and reproduce current
+behavior through a temporary compatibility pack.
 
 ## Business and architectural reason
 
@@ -34,7 +34,9 @@ precedence, conflict, and compatibility schemas.
 ## Package ownership
 
 New `policy-pack-schema`, `registry-composition`, and `registry-lock-schema`;
-current policies move to `web-file-handling@1.0.0`.
+current policies move to `legacy-profile-picture-baseline@1.0.0`. Document that
+generic validation, authorization, and logging policies later migrate to their
+proper families through compatibility mappings.
 
 ## Deterministic responsibilities
 
@@ -59,8 +61,9 @@ All ten existing policy IDs, profile-picture fixture, and outputs remain valid.
 
 ## Required fixtures
 
-Initial pack, multiple packs, missing dependency, cycle, precedence conflict,
-hash mismatch, compatible/incompatible range, explicit upgrade.
+Compatibility pack, future split families, multiple packs, missing dependency,
+cycle, precedence conflict, hash mismatch, compatible/incompatible range, and
+explicit upgrade.
 
 ## Unit tests
 
@@ -83,4 +86,3 @@ profile-picture compatibility.
 ## Explicit non-goals
 
 Dynamic IDs, project compiler, research, or publication governance.
-

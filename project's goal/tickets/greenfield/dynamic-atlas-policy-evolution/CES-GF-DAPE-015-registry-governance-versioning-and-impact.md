@@ -15,7 +15,7 @@ change projects.
 
 ## Dependencies
 
-- DAPE-014 controlled proposals.
+- DAPE-014B controlled research proposals.
 
 ## Inputs
 
@@ -90,4 +90,3 @@ migration reports, commands, failures and reproducibility.
 ## Explicit non-goals
 
 Automatic upgrade, implementation changes, or certification.
-

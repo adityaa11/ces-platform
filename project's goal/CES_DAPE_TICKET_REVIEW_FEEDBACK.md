@@ -1,5 +1,9 @@
 # CES DAPE Ticket Review and Required Corrections
 
+**Status:** Accepted corrections incorporated by commit `43b3a7d`.
+**Authority:** Historical review rationale. The current DAPE README and ticket
+files are authoritative for implementation.
+
 **Repository:** `adityaa11/ces-platform`  
 **Branch:** `worker1`  
 **Reviewed commit:** `3f6367c`  
