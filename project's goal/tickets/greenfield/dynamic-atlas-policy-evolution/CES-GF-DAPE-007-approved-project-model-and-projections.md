@@ -1,31 +1,90 @@
 # CES-GF-DAPE-007 — Approved Project Model and Legacy Projections
 
-**Priority:** P0 — Atlas completeness  
+**Stage:** P0 Atlas completeness
 **Status:** Planned
 
-## Goal
+## Objective
 
-Publish one immutable, versioned `ApprovedProjectModel` as business truth while
-preserving existing deterministic Requirement Collection and Package paths.
+Atomically publish one immutable ApprovedProjectModel and derive graphs and
+legacy Requirement artifacts from it.
 
-## Work
+## Business and architectural reason
 
-- Add approved-project-model schema, publisher, revision hash, and lock data.
-- Include confirmed concepts, semantic records, source mappings, review
-  evidence, coverage state, and clarification resolutions.
-- Make graph, Requirement Collection, and Requirement Packages derived views.
-- Define lossless versus lossy compatibility projections and explicit gaps.
-- Prevent downstream mutation or independent PDF reinterpretation.
+All CES products need one approved business truth; projections cannot become
+competing canonical interpretations.
 
-## Acceptance criteria
+## Dependencies
 
-- [ ] Publication is impossible with incomplete normative coverage.
-- [ ] Equivalent approved inputs publish byte-identical models and hashes.
-- [ ] Every projection references the same model revision.
-- [ ] Unsupported legacy projection semantics become explicit projection gaps.
-- [ ] Existing single-package compilation remains backward compatible.
+- DAPE-006 completed human review.
 
-## Depends on
+## Inputs
 
-- `CES-GF-DAPE-006`
+Reviewed lexicon, semantic records/relationships, source mappings, coverage,
+clarifications, decisions, and revision tuple.
+
+## Outputs
+
+ApprovedProjectModel, revision/hash/lock metadata, Requirement Collection and
+Packages, graph inputs, projection-gap report, and publication manifest.
+
+## Contract changes
+
+Add approved-project-model, publisher, projection, lock, and ownership schemas.
+
+## Package ownership
+
+New `approved-project-model-schema` and `project-model-publisher`; existing
+review/graph/core packages consume derived projections.
+
+## Deterministic responsibilities
+
+Publication gate, canonical serialization, IDs/hashes, immutable revision,
+atomic replacement, projections, and explicit loss/gaps.
+
+## Agent responsibilities
+
+None in publication or projection.
+
+## Failure statuses
+
+`incomplete_coverage`, `unsupported_candidate`, `review_required`,
+`clarification_required`, `conflict`, `projection_gap`, `publication_error`.
+
+## Exit codes
+
+Success only after all publication conditions; each blocking class remains
+distinguishable.
+
+## Backward-compatibility requirements
+
+Existing Requirement Collection/Package consumers and single-package compiler
+remain valid; lossy new semantics are never silently discarded.
+
+## Required fixtures
+
+Safara model, legacy profile-picture projection, projection gap, stale lock,
+partial output, and atomic replacement.
+
+## Unit tests
+
+Gate predicates, canonical hashes, immutability, ownership, projections, gaps.
+
+## Integration tests
+
+Equivalent reviewed input publishes identical model/projections; every artifact
+cites the model revision.
+
+## Negative tests
+
+Incomplete coverage, unsupported record, mixed revision, agent metadata in
+business truth, silent projection loss, and stale artifacts fail.
+
+## Completion evidence
+
+Exact artifacts/packages, schema versions, commands, failure samples,
+deterministic rerun and compatibility results.
+
+## Explicit non-goals
+
+Semantic-to-policy mapping, Architect interpretation, or registry evolution.
 

@@ -1,35 +1,89 @@
 # CES-GF-DAPE-003 — Domain-Open Semantic Record Contracts
 
-**Priority:** P0 — Atlas completeness  
+**Stage:** P0 Atlas completeness
 **Status:** Planned
 
-## Goal
+## Objective
 
-Replace the single actor-action-resource candidate shape with controlled,
-domain-open semantic record kinds.
+Define structurally controlled, domain-open semantic records and relationships.
 
-## Work
+## Business and architectural reason
 
-- Add a discriminated semantic-record union for functional requirements,
-  business, permission, validation, calculation and workflow rules, data
-  requirements, state models, reports, acceptance criteria, deliverables, and
-  nonfunctional requirements.
-- Reference project concepts and exact source units.
-- Define explicit origin, confidence, review status, uncertainty, correction,
-  identity, ordering, and revision hashing.
-- Validate cross-record and cross-concept references deterministically.
-- Preserve agent-neutral and provider-neutral contracts.
+Actor-action-resource alone cannot preserve validations, formulas, permissions,
+states, workflows, reports, scenarios, deliverables, or nonfunctional meaning.
 
-## Acceptance criteria
+## Dependencies
 
-- [ ] Safara NIK validation, balance formula, Finance permission, payment state
-      model, readiness workflow, report, scenario, and deliverable each fit a
-      faithful semantic kind.
-- [ ] Arbitrary domain values do not weaken structural validation.
-- [ ] Agent output cannot assign approval state.
-- [ ] Invalid, duplicate, dangling, or stale records fail closed.
+- DAPE-002 reviewed lexicon contract.
 
-## Depends on
+## Inputs
 
-- `CES-GF-DAPE-002`
+Pinned source-unit and lexicon revisions.
+
+## Outputs
+
+Candidate records, relationships, conflicts, uncertainties, revision hashes,
+and explicit compatibility-projection results.
+
+## Contract changes
+
+Add a discriminated union for functional requirement, business rule,
+permission, validation, calculation, state model, workflow, data, report,
+acceptance criterion, deliverable, and nonfunctional requirement.
+
+## Package ownership
+
+New `semantic-record-schema`; greenfield contracts retain legacy projections.
+
+## Deterministic responsibilities
+
+Schema/version validation, identity, hashing, ordering, reference integrity,
+relationship validation, and lossless/lossy projection classification.
+
+## Agent responsibilities
+
+Propose records with explicit/inferred origin and candidate review state only.
+
+## Failure statuses
+
+`input_error`, `unsupported_candidate`, `conflict`, `revision_mismatch`,
+`projection_gap`.
+
+## Exit codes
+
+Input/schema `2`; unsupported/distorted candidate blocks workflow publication.
+
+## Backward-compatibility requirements
+
+Existing candidate and Requirement Package contracts remain readable and gain
+explicit compatibility projections.
+
+## Required fixtures
+
+Safara examples for every kind, multi-record source units, multi-unit records,
+relationships, inference, conflicts, and projection gaps.
+
+## Unit tests
+
+Every variant, hash/order, relationships, references, and compatibility.
+
+## Integration tests
+
+Concrete Safara formula, permission, state, validation, readiness, report,
+scenario, and deliverable preserve their oracle identities.
+
+## Negative tests
+
+Unknown kinds, dangling concepts/units, approved agent output, unrelated
+citations, fabricated facts, invalid relationships, and generic catch-all
+records fail.
+
+## Completion evidence
+
+Schema/API files, fixtures, commands, expected artifacts and errors,
+deterministic rerun, compatibility suite.
+
+## Explicit non-goals
+
+Agent orchestration, coverage completion, review, or policy mapping.
 

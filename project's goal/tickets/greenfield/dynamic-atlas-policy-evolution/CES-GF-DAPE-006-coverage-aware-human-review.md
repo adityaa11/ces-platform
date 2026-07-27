@@ -1,32 +1,91 @@
 # CES-GF-DAPE-006 — Coverage-Aware Human Review
 
-**Priority:** P0 — Atlas completeness  
+**Stage:** P0 Atlas completeness
 **Status:** Planned
 
-## Goal
+## Objective
 
-Let reviewers govern extracted meaning, terminology, omissions, exclusions,
-conflicts, and corrections before publication.
+Let reviewers correct meaning and omissions while preserving revision-bound
+source, candidate, concept, and coverage integrity.
 
-## Work
+## Business and architectural reason
 
-- Show source units beside candidate records and coverage dispositions.
-- Show uncovered, uncertain, conflicting, duplicated, and context-only units.
-- Support approve, reject, correct, merge, split, defer, create-from-source,
-  exclude-with-reason, and concept-confirmation decisions.
-- Bind every decision to candidate, source, lexicon, and coverage revisions.
-- Require answers for blocking clarifications.
-- Keep review publication atomic and resumable.
+Review limited to model-produced candidates cannot recover rules the model
+never exposed.
 
-## Acceptance criteria
+## Dependencies
 
-- [ ] Reviewers can create a missing rule directly from a source span.
-- [ ] Stale source, candidate, concept, or coverage revisions are rejected.
-- [ ] Coverage cannot complete through silent exclusion.
-- [ ] Agents cannot author the human approval identity.
-- [ ] Review output is deterministic for equivalent ordered decisions.
+- DAPE-005 coverage and precision reports.
 
-## Depends on
+## Inputs
 
-- `CES-GF-DAPE-005`
+Candidates, lexicon, source units, coverage/critic diagnostics, uncertainties,
+conflicts, and all revision hashes.
+
+## Outputs
+
+Decisions to approve/reject/correct/merge/split/defer/create-from-source,
+concept confirmations, exclusions with reasons, clarification answers, and
+review report.
+
+## Contract changes
+
+Expand review decisions and immutable revision bindings; add split/merge/create
+and coverage-disposition review contracts.
+
+## Package ownership
+
+`atlas-review` owns human decision compilation and atomic reviewed artifacts.
+
+## Deterministic responsibilities
+
+Stale checks, correction application, identity/reference remapping, coverage
+recalculation, ordering, hashes, and atomic publication.
+
+## Agent responsibilities
+
+May explain diagnostics or draft corrections; never assign reviewer identity or
+approval.
+
+## Failure statuses
+
+`review_required`, `clarification_required`, `conflict`,
+`incomplete_coverage`, `unsupported_candidate`, `revision_mismatch`.
+
+## Exit codes
+
+Review pending remains distinct from invalid decisions and blocking coverage.
+
+## Backward-compatibility requirements
+
+Current approve/reject/correct/defer decisions remain valid where semantics are
+unchanged.
+
+## Required fixtures
+
+Missing-record creation, split, merge, corrected concept, stale revisions,
+approved exclusion, blocking clarification, and reviewer identity.
+
+## Unit tests
+
+All decisions, remapping, stale checks, deterministic hashes and publication.
+
+## Integration tests
+
+Safara publication moves from blocked to reviewable only after the reviewer
+adds/splits missing semantics and resolves every blocking unit.
+
+## Negative tests
+
+Silent exclusion, agent approval, unrelated source creation, stale correction,
+and unresolved normative unit fail.
+
+## Completion evidence
+
+Review schemas, fixtures, CLI commands, before/after coverage, failure
+artifacts, rerun and legacy-review evidence.
+
+## Explicit non-goals
+
+Automatic approval, policy mapping, or ApprovedProjectModel publication.
 

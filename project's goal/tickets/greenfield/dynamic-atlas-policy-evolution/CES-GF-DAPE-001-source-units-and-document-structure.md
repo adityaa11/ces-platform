@@ -1,39 +1,91 @@
-# CES-GF-DAPE-001 — Deterministic Source Units and Document Structure
+# CES-GF-DAPE-001 — Deterministic Source Units and Mechanical Structure
 
-**Priority:** P0 — Atlas completeness  
-**Status:** Planned
+**Stage:** P0 Atlas completeness
+**Status:** Ready after DAPE-000 acceptance
 
-## Goal
+## Objective
 
-Convert ingested documents into immutable, deterministically identified source
-units and a versioned document-structure artifact without semantic rewriting.
+Create immutable document revisions, deterministic source units, and mechanical
+document structure without agent interpretation.
 
-## Work
+## Business and architectural reason
 
-- Add `source-unit-schema` with document, section, page/line, text, hash,
-  source-kind, and extraction-confidence fields.
-- Generate stable source-unit and section IDs from document identity and
-  normalized location.
-- Segment headings, paragraphs, bullets, numbered items, formulas, table rows,
-  scenarios, and role statements.
-- Preserve PDF-native, OCR, and Markdown provenance.
-- Publish `document-structure.json`, `section-index.json`, and
-  `source-units.json`.
-- Reject overlapping, dangling, reordered, or hash-inconsistent units.
+Coverage and provenance are trustworthy only when source identity and text are
+stable, complete, and independent from model output.
 
-## Acceptance criteria
+## Dependencies
 
-- [ ] Repeated ingestion produces byte-identical units and IDs.
-- [ ] Every unit maps to immutable source content and location.
-- [ ] No agent creates or mutates source-unit identity.
-- [ ] Safara headings, bullets, formulas, scenarios, and seven pages are
-      represented without missing text.
+- DAPE-000 Safara oracle.
+- `CES-GF-ATLAS-005` PDF/Markdown normalization baseline.
 
-## Out of scope
+## Inputs
 
-- Domain concepts, semantic extraction, or coverage classification.
+Normalized PDF/Markdown documents with page/line provenance.
 
-## Depends on
+## Outputs
 
-- `CES-GF-AGB-005`
+`document-revision.json`, `document-structure.json`, `section-index.json`, and
+`source-units.json`.
+
+## Contract changes
+
+Add versioned document-revision and source-unit schemas with kind, text,
+location, section path, parent, order, content hash, and deterministic IDs.
+
+## Package ownership
+
+New `source-unit-schema`; deterministic segmentation belongs with document/PDF
+ingestion, not an agent package.
+
+## Deterministic responsibilities
+
+Own bytes/revision, headings, paragraphs, bullets, numbered items, table rows,
+captions, page/line ranges, hierarchy, ordering, text, hashes, and IDs.
+
+## Agent responsibilities
+
+None. Later agents may classify but never create, rewrite, reorder, merge, or
+replace source units.
+
+## Failure statuses
+
+`input_error`, `source_revision_invalid`, `segmentation_error`,
+`provenance_error`.
+
+## Exit codes
+
+Use input/schema error `2`; execution/publication error uses a distinct nonzero
+code defined with the CLI integration.
+
+## Backward-compatibility requirements
+
+Preserve current PDF/Markdown outputs and page provenance; add artifacts
+without changing existing approved hashes.
+
+## Required fixtures
+
+Safara normalized source plus headings, bullets, numbered items, formulas,
+tables, mixed newline, OCR-confidence, and malformed-location fixtures.
+
+## Unit tests
+
+Stable IDs, normalized newlines, order, hierarchy, hash, and atomic publication.
+
+## Integration tests
+
+Safara seven-page source inventory matches the DAPE-000 oracle byte-for-byte.
+
+## Negative tests
+
+Overlap, missing text, unrelated bullet merge, reorder, dangling parent, stale
+hash, and agent-supplied identity fail closed.
+
+## Completion evidence
+
+Exact packages/files, schema versions, fixture paths, commands, generated and
+failure artifacts, rerun equality, and legacy-ingestion results.
+
+## Explicit non-goals
+
+Normative classification, domain concepts, semantic extraction, or agents.
 

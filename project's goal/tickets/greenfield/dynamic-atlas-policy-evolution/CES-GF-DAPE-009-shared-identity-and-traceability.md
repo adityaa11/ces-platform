@@ -1,29 +1,85 @@
 # CES-GF-DAPE-009 — Shared Identity and Traceability Chain
 
-**Priority:** P1 — Shared model  
+**Stage:** P1 shared lifecycle
 **Status:** Planned
 
-## Goal
+## Objective
 
-Pin Architect, core, Assurance, Forge, and Verification artifacts to the same
-approved business-model revision and stable semantic identities.
+Pin every downstream artifact to one ApprovedProjectModel revision and preserve
+the complete source-to-verification identity chain.
 
-## Work
+## Business and architectural reason
 
-- Add traceability contracts from source unit through semantic record, model
-  revision, mapping, policy, task, implementation evidence, and verification.
-- Require downstream artifacts to declare project-model version and hash.
-- Detect stale, mixed-revision, dangling, and rewritten identities.
-- Add a traceability engine and cross-product audit report.
+No CES product may reread, reinterpret, or silently simplify business truth.
 
-## Acceptance criteria
+## Dependencies
 
-- [ ] No downstream artifact can silently target a different model revision.
-- [ ] Every generated obligation, task, and test traces to approved semantics.
-- [ ] Graphs remain derived views rather than identity authorities.
-- [ ] Mixed or stale revision chains fail closed.
+- DAPE-008 P0 gate.
 
-## Depends on
+## Inputs
 
-- `CES-GF-DAPE-008`
+ApprovedProjectModel and existing downstream artifact contracts.
+
+## Outputs
+
+Traceability records/report linking source units, semantics, concepts, mappings,
+policies, architecture, tasks, tests, evidence, and verification.
+
+## Contract changes
+
+Require project ID, model revision/hash, and source semantic IDs downstream.
+
+## Package ownership
+
+New `traceability-engine`; each producer owns its artifact and trace links.
+
+## Deterministic responsibilities
+
+Reference validation, traversal, stale/mixed revision detection, ordering and
+hashes.
+
+## Agent responsibilities
+
+None in identity assignment; agents may present trace explanations.
+
+## Failure statuses
+
+`revision_mismatch`, `traceability_gap`, `input_error`, `conflict`.
+
+## Exit codes
+
+Traceability and revision failures are distinct from product execution errors.
+
+## Backward-compatibility requirements
+
+Legacy artifact identities project into the new chain without changing existing
+hash semantics where avoidable.
+
+## Required fixtures
+
+Complete Safara chain, legacy chain, stale model, mixed revision, dangling and
+rewritten IDs.
+
+## Unit tests
+
+Every edge/reference, traversal, hash, ordering, and revision check.
+
+## Integration tests
+
+One approved record is traceable end-to-end across all existing product
+boundaries.
+
+## Negative tests
+
+Independent PRD interpretation, mixed revisions, missing semantic IDs, and
+graph-as-authority fail.
+
+## Completion evidence
+
+Contracts, package/file list, reports, commands, failure artifacts, rerun and
+compatibility evidence.
+
+## Explicit non-goals
+
+Semantic mapping decisions or product behavior changes.
 

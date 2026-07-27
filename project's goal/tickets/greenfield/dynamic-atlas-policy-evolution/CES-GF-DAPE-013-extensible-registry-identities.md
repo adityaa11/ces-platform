@@ -1,32 +1,89 @@
 # CES-GF-DAPE-013 — Extensible Registry Identities and Triggers
 
-**Priority:** P2 — Extensible registries  
+**Stage:** P2 registry foundation
 **Status:** Planned
 
-## Goal
+## Objective
 
-Replace authoritative closed capability, trait, and policy enums with
-registry-validated identifiers while retaining deterministic behavior.
+Validate capability, trait, policy, evidence, and verification identities
+against pinned registries and separate definition, trigger, and obligation.
 
-## Work
+## Business and architectural reason
 
-- Validate capability, trait, policy, trigger, dependency, implementation,
-  evidence, verification, and standards IDs against pinned registries.
-- Separate policy definitions from triggers and resolved obligations.
-- Version definitions, triggers, dependencies, adapter mappings, guidance,
-  evidence, and verification methods independently where practical.
-- Add generalized transactional, state, audit, privacy, snapshot, calculation,
-  and concurrency semantics required by Safara.
-- Preserve additive compatibility adapters for existing enum consumers.
+Closed source enums cannot remain the complete CES engineering vocabulary, but
+dynamic IDs must remain controlled and reproducible.
 
-## Acceptance criteria
+## Dependencies
 
-- [ ] Unknown IDs cannot enter deterministic compilation.
-- [ ] Registry extensions require no core source-code enum edit.
-- [ ] Trigger changes are distinguishable from policy-meaning changes.
-- [ ] Adapter gaps and evidence gaps remain explicit.
+- DAPE-012 pack composition and locks.
 
-## Depends on
+## Inputs
 
-- `CES-GF-DAPE-012`
+Pinned registry composition and current closed-ID contracts.
+
+## Outputs
+
+Registry-validated IDs, separate definition/trigger/dependency/evidence/
+verification artifacts, generalized Safara semantics, compatibility adapters.
+
+## Contract changes
+
+Syntactic RegistryId plus loaded-registry membership; independent versions for
+definitions, triggers, dependencies, adapter mappings, guidance and evidence.
+
+## Package ownership
+
+Capability/policy registries and resolver retain authority; new trigger and
+composition packages provide loaded context.
+
+## Deterministic responsibilities
+
+Membership, pin/hash, trigger evaluation, dependency/conflict resolution,
+obligation derivation and version checks.
+
+## Agent responsibilities
+
+May propose identities or mappings; cannot inject unknown IDs into compilation.
+
+## Failure statuses
+
+`registry_lock_error`, `registry_conflict`, `mapping_gap`, `policy_gap`,
+`capability_gap`, `adapter_gap`.
+
+## Exit codes
+
+Registry identity/lock errors are distinct from valid semantic gaps.
+
+## Backward-compatibility requirements
+
+Existing constants and public contracts remain as compatibility surfaces with
+identical fixture behavior.
+
+## Required fixtures
+
+Old IDs, additive new IDs, unknown IDs, trigger-only change, policy-definition
+change, generalized transaction/state/audit/privacy/snapshot semantics.
+
+## Unit tests
+
+Syntax/membership, pinning, triggers, separate versions, dependencies and
+compatibility adapters.
+
+## Integration tests
+
+Safara mappings validate against loaded packs while old fixtures remain stable.
+
+## Negative tests
+
+Unknown/unpinned IDs, closed-enum authority, trigger-definition conflation,
+missing adapter/evidence and incompatible versions fail or remain explicit.
+
+## Completion evidence
+
+Schemas/packages, registry fixtures, commands, errors, deterministic rerun and
+public-contract compatibility.
+
+## Explicit non-goals
+
+Project compilation, standards research, or registry publication.
 

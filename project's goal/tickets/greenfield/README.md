@@ -40,11 +40,23 @@ proceed in declared dependency order.
 | 4 | [CES-GF-ATLAS-004](atlas/CES-GF-ATLAS-004-pdf-ingestion.md) | Agent-free PDF/OCR ingestion with page provenance | ATLAS-003 |
 | 5 | [CES-GF-ATLAS-005](atlas/CES-GF-ATLAS-005-cli-artifact-pipeline.md) | Resumable end-to-end Atlas CLI and artifact pipeline | ATLAS-004 |
 
+## Dynamic Atlas completeness gate
+
+Atlas candidate extraction is not complete until
+[DAPE-000 through DAPE-008](dynamic-atlas-policy-evolution/README.md) prove
+domain-faithful extraction, deterministic source coverage, unsupported-output
+detection, human correction of omissions, and publication of a
+coverage-complete Approved Project Model.
+
+Architect implementation is blocked until `CES-GF-DAPE-008` is accepted.
+Deterministic DAPE source modeling depends on the accepted Atlas ingestion
+baseline, while agent orchestration begins only at DAPE-004.
+
 ## CES Architect
 
 | Order | Ticket | Outcome | Depends on |
 |---:|---|---|---|
-| 1 | [CES-GF-ARCH-001](architect/CES-GF-ARCH-001-catalog-and-rubric.md) | Versioned technology catalog and deterministic scoring rubric | ATLAS-005 |
+| 1 | [CES-GF-ARCH-001](architect/CES-GF-ARCH-001-catalog-and-rubric.md) | Versioned technology catalog and deterministic scoring rubric | DAPE-008 |
 | 2 | [CES-GF-ARCH-002](architect/CES-GF-ARCH-002-decision-and-context.md) | Approved ADR and exact technical-context emission | ARCH-001 |
 
 ## CES Central Agents Bridge

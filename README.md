@@ -31,7 +31,7 @@ documents and tickets provide supporting context but do not override it.
 | Greenfield shared contracts | FND-002 validated in hosted CI on `b4bac82` | [workflow job](https://github.com/adityaa11/ces-platform/actions/runs/30103309530/job/89514514085) |
 | Atlas extraction, review, graph, and PDF ingestion | ATLAS-001 through ATLAS-004 validated in hosted CI | [`packages/atlas-extraction`](packages/atlas-extraction/), [`packages/atlas-review`](packages/atlas-review/), [`packages/atlas-intent-graph`](packages/atlas-intent-graph/), [`packages/pdf-ingestion`](packages/pdf-ingestion/) |
 | Atlas CLI artifact pipeline | ATLAS-005 hosted CI passing; manual real-provider validation pending | [`apps/cli`](apps/cli/), [Atlas CLI guide](docs/atlas-cli.md) |
-| Greenfield product suite | In progress; ATLAS-005 validation precedes Architect | [greenfield ticket plan](<project's goal/tickets/greenfield/README.md>) |
+| Greenfield product suite | In progress; Dynamic Atlas completeness gate DAPE-000 through DAPE-008 precedes Architect | [greenfield ticket plan](<project's goal/tickets/greenfield/README.md>) |
 | Release | Unreleased | Exact development toolchain: Node.js 24.12.0 and pnpm 11.15.1 |
 
 Phase 1 provides deterministic requirement-to-policy compilation, a portable

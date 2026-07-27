@@ -1,32 +1,93 @@
-# CES-GF-DAPE-015 — Registry Governance, Versioning, and Impact
+# CES-GF-DAPE-015 — Registry Governance, Publication, Diff, and Impact
 
-**Priority:** P3 — Governed policy evolution  
+**Stage:** P3 policy evolution
 **Status:** Planned
 
-## Goal
+## Objective
 
-Approve, publish, compare, and assess immutable registry versions through an
-auditable human-governed workflow.
+Govern, approve, immutably publish, compare, migrate, and assess registry
+changes through explicit auditable roles.
 
-## Work
+## Business and architectural reason
 
-- Add policy-change proposal, governance decision, publication, semantic-diff,
-  migration, and impact-analysis contracts.
-- Classify patch, minor, and major semantic changes.
-- Publish new immutable versions; never mutate an existing version.
-- Calculate affected projects, manifests, adapters, tasks, tests, evidence,
-  mappings, and architecture decisions.
-- Require explicit lock upgrades and revalidation.
+Agent proposals must not mutate stable knowledge, weaken controls, or silently
+change projects.
 
-## Acceptance criteria
+## Dependencies
 
-- [ ] Agents cannot approve or publish their proposals.
-- [ ] Publication is atomic, immutable, signed/hashed, and auditable.
-- [ ] Semantic version classification has deterministic tests.
-- [ ] Impact reports identify stale evidence and unsupported adapters.
-- [ ] Projects remain on old versions until explicitly upgraded.
+- DAPE-014 controlled proposals.
 
-## Depends on
+## Inputs
 
-- `CES-GF-DAPE-014`
+Proposal/research record, current immutable versions, governance roles and
+decision, project locks, mappings, adapters, tasks, tests and evidence.
+
+## Outputs
+
+Governance decision, new immutable version, semantic diff/version class,
+migration plan, affected-project/artifact report, and explicit upgrade option.
+
+## Contract changes
+
+Add governance-role/decision, publication, semantic-diff, migration,
+weakening-review, and impact-analysis contracts.
+
+## Package ownership
+
+New `registry-governance`, `registry-versioning`, `policy-semantic-diff`,
+`registry-migration`, and `registry-impact-analysis`.
+
+## Deterministic responsibilities
+
+Approval authorization, immutable version/hash, patch/minor/major
+classification, old-version preservation, impact and stale-evidence analysis.
+
+## Agent responsibilities
+
+Explain proposals/diffs and draft migrations; cannot approve, sign, publish, or
+update project locks.
+
+## Failure statuses
+
+`review_required`, `publication_error`, `registry_conflict`,
+`upgrade_required`, `migration_blocked`, `evidence_stale`.
+
+## Exit codes
+
+Unauthorized/unapproved publication, invalid diff, blocked migration and impact
+failure remain distinct.
+
+## Backward-compatibility requirements
+
+Old registry versions remain addressable and unchanged; projects upgrade only
+through approved lock changes.
+
+## Required fixtures
+
+Patch/minor/major, additive policy/trigger/evidence, merge/removal/weakening,
+adapter gap, stale evidence, architecture revisit and multiple affected projects.
+
+## Unit tests
+
+Role authorization, publication immutability, version classification,
+weakening elevation, migration and impact calculations.
+
+## Integration tests
+
+An approved new pack version identifies changed manifests, adapters, tasks,
+tests, evidence and revisit conditions without mutating old versions/projects.
+
+## Negative tests
+
+Agent/self approval, in-place mutation, silent upgrade, unjustified weakening,
+incomplete impact and missing migration fail.
+
+## Completion evidence
+
+Role/contracts/packages, before/after immutable artifacts, diffs, impact and
+migration reports, commands, failures and reproducibility.
+
+## Explicit non-goals
+
+Automatic upgrade, implementation changes, or certification.
 
