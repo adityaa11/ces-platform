@@ -47,6 +47,21 @@ proceed in declared dependency order.
 | 1 | [CES-GF-ARCH-001](architect/CES-GF-ARCH-001-catalog-and-rubric.md) | Versioned technology catalog and deterministic scoring rubric | ATLAS-005 |
 | 2 | [CES-GF-ARCH-002](architect/CES-GF-ARCH-002-decision-and-context.md) | Approved ADR and exact technical-context emission | ARCH-001 |
 
+## CES Central Agents Bridge
+
+The centralized bridge is operational infrastructure for agent-backed CES
+workflows, not a fifth greenfield end product. Its first vertical slice serves
+Atlas through the existing HTTP provider contract. See the
+[agents bridge ticket plan](agents-bridge/README.md).
+
+| Order | Ticket | Outcome | Depends on |
+|---:|---|---|---|
+| 1 | [CES-GF-AGB-001](agents-bridge/CES-GF-AGB-001-service-boundary-and-contracts.md) | Central service boundary and workflow-specific contracts | ATLAS-005 |
+| 2 | [CES-GF-AGB-002](agents-bridge/CES-GF-AGB-002-secure-shared-runtime.md) | Secure reusable bridge runtime | AGB-001 |
+| 3 | [CES-GF-AGB-003](agents-bridge/CES-GF-AGB-003-gemini-provider-adapter.md) | Hardened Gemini structured-output adapter | AGB-002 |
+| 4 | [CES-GF-AGB-004](agents-bridge/CES-GF-AGB-004-atlas-gemini-vertical-slice.md) | Validated Atlas-to-Gemini endpoint | AGB-003 |
+| 5 | [CES-GF-AGB-005](agents-bridge/CES-GF-AGB-005-production-operations.md) | Production-ready centralized deployment | AGB-004 |
+
 ## CES Forge
 
 | Order | Ticket | Outcome | Depends on |
