@@ -2,7 +2,9 @@
 
 **Phase:** 3D — Central Agent Provider Foundation  
 **Parent:** Greenfield Product Suite  
-**Status:** Planned
+**Status:** Implemented locally; hosted CI pending
+
+**Evidence:** [`evidence/CES-GF-AGB-004-local-atlas-agent.md`](evidence/CES-GF-AGB-004-local-atlas-agent.md)
 
 ## Goal
 
@@ -41,37 +43,37 @@ route.
 
 ## Acceptance criteria
 
-- [ ] A valid Atlas request returns a direct, schema-valid
+- [x] A valid Atlas request returns a direct, schema-valid
       `AtlasProviderResult`.
-- [ ] Source paths and hashes exactly match the original Atlas request.
-- [ ] Gemini cannot override provider, model, prompt-contract, schema, or review
+- [x] Source paths and hashes exactly match the original Atlas request.
+- [x] Gemini cannot override provider, model, prompt-contract, schema, or review
       metadata.
-- [ ] Duplicate IDs, unknown documents, invalid ranges, dangling references,
+- [x] Duplicate IDs, unknown documents, invalid ranges, dangling references,
       and forbidden review states fail closed.
-- [ ] Equivalent semantic Gemini output produces deterministic candidate IDs
+- [x] Equivalent semantic Gemini output produces deterministic candidate IDs
       and ordering.
-- [ ] Provider failures map to sanitized Atlas bridge errors.
-- [ ] The existing Atlas CLI completes candidate extraction and returns exit
+- [x] Provider failures map to sanitized Atlas bridge errors.
+- [x] The existing Atlas CLI completes candidate extraction and returns exit
       code `7` without incompatible changes.
-- [ ] No candidate is approved, corrected, rejected, or superseded by the
+- [x] No candidate is approved, corrected, rejected, or superseded by the
       bridge.
-- [ ] Generic and compatibility routes produce the same validated agent result
+- [x] Generic and compatibility routes produce the same validated agent result
       for equivalent input.
-- [ ] Given the same normalized intermediate result, excluding array order and
+- [x] Given the same normalized intermediate result, excluding array order and
       temporary model-generated identifiers, normalization produces
       byte-equivalent ordering, identifiers, and references.
 
 ## Required evidence
 
-- [ ] Health and complete successful-route tests.
-- [ ] Invalid envelope, contract, model, and Atlas request fixtures.
-- [ ] Trusted metadata and source-resolution tests.
-- [ ] Deterministic sorting, ID assignment, and reference-remapping tests.
-- [ ] Unknown-source, dangling-reference, duplicate-ID, and forbidden-state
+- [x] Health and complete successful-route tests.
+- [x] Invalid envelope, contract, model, and Atlas request fixtures.
+- [x] Trusted metadata and source-resolution tests.
+- [x] Deterministic sorting, ID assignment, and reference-remapping tests.
+- [x] Unknown-source, dangling-reference, duplicate-ID, and forbidden-state
       fixtures.
-- [ ] Mocked end-to-end Atlas CLI-to-bridge integration test.
-- [ ] Final Atlas schema validation fixture.
-- [ ] Prompt-injection, model-remapping, generic-route equivalence, and
+- [x] Mocked end-to-end Atlas CLI-to-bridge integration test.
+- [x] Final Atlas schema validation fixture.
+- [x] Prompt-injection, model-remapping, generic-route equivalence, and
       mandatory-human-review fixtures.
 
 ## Out of scope

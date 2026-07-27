@@ -36,6 +36,7 @@ function context(overrides: Partial<ProviderExecutionContext> = {}): ProviderExe
     agent_id: "fixture.agent",
     agent_version: "1.0.0",
     model_alias: "atlas-default",
+    provider_id: "gemini",
     resolved_model: "gemini-2.5-flash",
     max_attempts: 3,
     max_response_bytes: 4096,

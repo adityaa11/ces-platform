@@ -6,4 +6,5 @@ export * from "./server.js";
 export * from "./providers/gemini/config.js";
 export * from "./providers/gemini/provider.js";
 export * from "./agents/atlas-requirement-extractor/contracts.js";
+export * from "./agents/atlas-requirement-extractor/agent.js";
 export * from "./agents/atlas-requirement-extractor/normalize.js";

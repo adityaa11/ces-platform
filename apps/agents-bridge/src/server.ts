@@ -1,9 +1,17 @@
 import { createHash, randomUUID, timingSafeEqual } from "node:crypto";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
+import { AtlasProviderRequestSchema } from "@company/ces-agent-provider-sdk";
+import { z } from "zod";
 import { BridgeIdentifierSchema, GenericAgentExecutionRequestSchema, authorizeAgent } from "./core/contracts.js";
 import { BridgeExecutionError, executeRegisteredAgent, type BridgeRegistries } from "./core/executor.js";
 import { validateRegistries } from "./core/registry.js";
 import type { BridgeRuntimeConfig, RuntimeClient } from "./config/environment.js";
+
+const AtlasCompatibilityEnvelopeSchema = z.object({
+  contract: z.literal("1.0.0"),
+  model: z.string().trim().min(1),
+  request: AtlasProviderRequestSchema,
+}).strict();
 
 export interface BridgeLogger {
   log(event: Readonly<{
@@ -54,6 +62,31 @@ export function createBridgeHandler(runtime: BridgeRuntime) {
         response = json(200, pathname === "/healthz"
           ? { status: "ok", service: "ces-agents-bridge" }
           : { status: "ready", service: "ces-agents-bridge" });
+      } else if (pathname === "/v1/atlas/analyze") {
+        route = pathname;
+        agentId = "atlas.requirement-extractor";
+        if (request.method !== "POST") throw error(405, "METHOD_NOT_ALLOWED", "The method is not allowed.");
+        const atlas = runtime.config.atlas;
+        if (!atlas) throw error(503, "BRIDGE_NOT_READY", "The bridge is not ready.");
+        const client = authenticate(request.headers, runtime.config.clients);
+        authorize(client, agentId, route);
+        const raw = await readBody(request.body, runtime.config.ceilings.max_request_bytes);
+        let envelope: ReturnType<typeof AtlasCompatibilityEnvelopeSchema.parse>;
+        try {
+          envelope = AtlasCompatibilityEnvelopeSchema.parse(JSON.parse(raw));
+        } catch {
+          throw error(400, "INVALID_ATLAS_REQUEST", "The Atlas provider request is invalid.");
+        }
+        if (envelope.model !== atlas.legacy_model) {
+          throw error(400, "INVALID_ATLAS_REQUEST", "The Atlas provider request is invalid.");
+        }
+        response = await runAgent(runtime, {
+          agent_id: agentId,
+          agent_version: atlas.agent_version,
+          value: envelope.request,
+          request_id: requestId,
+          client,
+        });
       } else {
         const match = /^\/v1\/agents\/([^/]+)\/execute$/u.exec(pathname);
         if (!match) throw error(404, "AGENT_NOT_FOUND", "The route was not found.");
@@ -73,23 +106,13 @@ export function createBridgeHandler(runtime: BridgeRuntime) {
         } catch {
           throw error(400, "INVALID_REQUEST", "The request body is invalid.");
         }
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), runtime.config.request_timeout_ms);
-        try {
-          const output = await withAbort(executeRegisteredAgent({
-            agent_id: agentId,
-            agent_version: envelope.agent_version,
-            value: envelope.input,
-            request_id: envelope.correlation?.request_id ?? requestId,
-            client,
-            ceilings: runtime.config.ceilings,
-            registries: runtime.registries,
-            signal: controller.signal,
-          }), controller.signal);
-          response = json(200, output);
-        } finally {
-          clearTimeout(timeout);
-        }
+        response = await runAgent(runtime, {
+          agent_id: agentId,
+          agent_version: envelope.agent_version,
+          value: envelope.input,
+          request_id: envelope.correlation?.request_id ?? requestId,
+          client,
+        });
       }
     } catch (caught) {
       response = errorResponse(caught, requestId);
@@ -103,6 +126,31 @@ export function createBridgeHandler(runtime: BridgeRuntime) {
     });
     return response;
   };
+}
+
+async function runAgent(
+  runtime: BridgeRuntime,
+  input: {
+    readonly agent_id: string;
+    readonly agent_version: string;
+    readonly value: unknown;
+    readonly request_id: string;
+    readonly client: RuntimeClient["identity"];
+  },
+): Promise<BridgeResponse> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), runtime.config.request_timeout_ms);
+  try {
+    const output = await withAbort(executeRegisteredAgent({
+      ...input,
+      ceilings: runtime.config.ceilings,
+      registries: runtime.registries,
+      signal: controller.signal,
+    }), controller.signal);
+    return json(200, output);
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 export function createBridgeServer(runtime: BridgeRuntime): Server {

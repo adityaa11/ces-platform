@@ -60,12 +60,17 @@ export async function executeRegisteredAgent(input: {
     agent_id: agent.id,
     agent_version: agent.version,
     model_alias: alias,
+    provider_id: provider.provider_id,
+    resolved_model: model.physical_model,
   });
   let validatedInput: unknown;
   try {
     validatedInput = agent.input_schema.parse(input.value);
   } catch {
     throw new BridgeExecutionError(400, "INVALID_REQUEST", "The registered agent input is invalid.");
+  }
+  if (Buffer.byteLength(JSON.stringify(validatedInput), "utf8") > policy.max_input_bytes) {
+    throw new BridgeExecutionError(413, "REQUEST_TOO_LARGE", "The registered agent input is too large.");
   }
   const request = StructuredGenerationRequestSchema.parse(
     agent.buildExecutionRequest(validatedInput, context),
@@ -85,10 +90,11 @@ export async function executeRegisteredAgent(input: {
     providerContext.signal,
   );
   const intermediate = agent.intermediate_schema.parse(response.output);
-  const transformed = await agent.transformResult(intermediate, validatedInput, context);
   try {
+    const transformed = await agent.transformResult(intermediate, validatedInput, context);
     return agent.output_schema.parse(transformed);
-  } catch {
+  } catch (caught) {
+    if (caught instanceof BridgeExecutionError) throw caught;
     throw new BridgeExecutionError(422, "INVALID_AGENT_RESULT", "The registered agent result is invalid.");
   }
 }

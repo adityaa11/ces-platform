@@ -17,6 +17,10 @@ const RuntimeConfigSchema = z.object({
   request_timeout_ms: z.number().int().positive(),
   ceilings: ServiceExecutionCeilingsSchema,
   clients: z.array(RuntimeClientSchema).min(1),
+  atlas: z.object({
+    legacy_model: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]*$/u),
+    agent_version: z.literal("1.0.0"),
+  }).strict().optional(),
 }).strict();
 
 export interface RuntimeClient {
@@ -30,6 +34,10 @@ export interface BridgeRuntimeConfig {
   readonly request_timeout_ms: number;
   readonly ceilings: ServiceExecutionCeilings;
   readonly clients: readonly RuntimeClient[];
+  readonly atlas?: {
+    readonly legacy_model: string;
+    readonly agent_version: "1.0.0";
+  };
 }
 
 export function parseRuntimeConfig(value: unknown): BridgeRuntimeConfig {
@@ -44,7 +52,14 @@ export function parseRuntimeConfig(value: unknown): BridgeRuntimeConfig {
   if (config.ceilings.max_single_source_characters > config.ceilings.max_total_source_characters) {
     throw new Error("Single-source character limit exceeds the aggregate limit");
   }
-  return config;
+  return {
+    host: config.host,
+    port: config.port,
+    request_timeout_ms: config.request_timeout_ms,
+    ceilings: config.ceilings,
+    clients: config.clients,
+    ...(config.atlas ? { atlas: config.atlas } : {}),
+  };
 }
 
 export function runtimeConfigFromEnvironment(
@@ -76,6 +91,10 @@ export function runtimeConfigFromEnvironment(
         requests_per_minute: integer(environment.CLIENT_REQUESTS_PER_MINUTE, 60),
       },
     }],
+    atlas: {
+      legacy_model: environment.GEMINI_MODEL ?? "gemini-2.5-flash",
+      agent_version: "1.0.0",
+    },
   });
 }
 

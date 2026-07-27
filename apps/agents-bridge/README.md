@@ -22,6 +22,11 @@ later tickets. AGB-003 adds the first concrete adapter:
 - bounded responses, completion validation, transient retries, and normalized
   provider failures.
 
+AGB-004 registers `atlas.requirement-extractor@1.0.0`, adds the existing
+`POST /v1/atlas/analyze` compatibility contract, and delegates both Atlas entry
+routes through the same executor. Atlas outputs remain candidates requiring
+human review.
+
 ## Configuration
 
 `runtimeConfigFromEnvironment` requires `AGENTS_BRIDGE_API_KEY` and supports

@@ -83,6 +83,8 @@ export const ExecutionContextSchema = z.object({
   agent_id: BridgeIdentifierSchema,
   agent_version: BridgeVersionSchema,
   model_alias: BridgeIdentifierSchema,
+  provider_id: BridgeIdentifierSchema,
+  resolved_model: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]*$/u),
 }).strict();
 
 export const BridgeErrorCodeSchema = z.enum([

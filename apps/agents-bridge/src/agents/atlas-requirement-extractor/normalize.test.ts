@@ -52,7 +52,9 @@ const requirementB = {
 } as const;
 
 function extraction(reverse: boolean): any {
-  const requirements = reverse ? [requirementA, requirementB] : [requirementB, requirementA];
+  const requirements = structuredClone(
+    reverse ? [requirementA, requirementB] : [requirementB, requirementA],
+  );
   return {
     candidate_requirements: requirements,
     candidate_business_rules: [{
@@ -113,6 +115,19 @@ describe("Atlas canonical normalization", () => {
       .toEqual(["REQ-CAND-001"]);
     expect(first.conflicts[0]?.source_requirement_ids)
       .toEqual(["REQ-CAND-001", "REQ-CAND-002"]);
+
+    const renamed = extraction(true);
+    renamed.candidate_requirements[0].temporary_id = "TMP-REQ-20";
+    renamed.uncertainties[0].affected_requirement_ids = ["TMP-REQ-20"];
+    renamed.conflicts[0].source_requirement_ids = ["TMP-REQ-20", "TMP-REQ-2"];
+    renamed.clarification_questions[0].affected_requirement_ids = ["TMP-REQ-20"];
+    renamed.candidate_requirements[1].temporary_id = "TMP-REQ-10";
+    renamed.candidate_business_rules[0].source_requirement_ids = ["TMP-REQ-10"];
+    renamed.conflicts[0].source_requirement_ids[1] = "TMP-REQ-10";
+    expect(normalizeAtlasExtraction(renamed, request, {
+      provider: "gemini",
+      model: "gemini-2.5-flash",
+    })).toEqual(first);
   });
 
   it("sorts absent locations last and normalizes semantic text", () => {

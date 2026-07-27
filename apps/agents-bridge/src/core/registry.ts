@@ -10,6 +10,8 @@ import {
   type StructuredGenerationRequest,
 } from "./contracts.js";
 
+export type OutputSchema<T> = ZodType<T>;
+
 export interface StructuredGenerationAgentDefinition<TInput, TIntermediate, TOutput> {
   readonly id: string;
   readonly version: string;
@@ -44,7 +46,6 @@ export interface StructuredGenerationResponse<TOutput> {
 
 export interface ProviderExecutionContext extends ExecutionContext {
   readonly signal: AbortSignal;
-  readonly resolved_model: string;
   readonly max_attempts: number;
   readonly max_response_bytes: number;
 }
