@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { calculateCoverage } from "@company/ces-atlas-coverage";
 import { createSemanticCollection } from "@company/ces-semantic-record-schema";
 import { describe, expect, it } from "vitest";
-import { runCli } from "./index.js";
+import { primaryBusinessRuleCoverage, runCli } from "./index.js";
 
 const sha = (value: string) =>
   `sha256:${createHash("sha256").update(value).digest("hex")}`;
@@ -98,6 +98,33 @@ function publicationBundle() {
 }
 
 describe("DAPE-008 canonical CLI publication", () => {
+  it("requires separate source-anchored candidates for every explicit primary rule", () => {
+    const content = [
+      "# PRD",
+      "Aturan Bisnis Utama",
+      "Rule one.",
+      "Rule two continues",
+      "on another line.",
+      "Skenario Pemeriksaan Hasil",
+    ].join("\n");
+    const candidate = {
+      candidate_id: "BR-CAND-001",
+      source: { line_start: 3, line_end: 3 },
+    } as never;
+    expect(primaryBusinessRuleCoverage(content, [candidate])).toEqual({
+      schema_version: "1.0.0",
+      heading: "Aturan Bisnis Utama",
+      rules: [{
+        id: "primary-rule-01", line_start: 3, line_end: 3,
+        candidate_ids: ["BR-CAND-001"],
+      }, {
+        id: "primary-rule-02", line_start: 4, line_end: 5,
+        candidate_ids: [],
+      }],
+      status: "incomplete_coverage",
+    });
+  });
+
   it("publishes atomically and reruns byte-identically with projection gaps", async () => {
     const directory = await mkdtemp(join(tmpdir(), "ces-dape-publish-"));
     try {

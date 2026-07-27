@@ -642,15 +642,27 @@ async function runAtlasExtraction(
     })).sort((left, right) => compareText(left.candidate_id, right.candidate_id)),
     clarification_questions: extracted.analysis.clarification_questions,
   });
+  const primaryRuleCoverage = primaryBusinessRuleCoverage(
+    documents[0]?.content ?? "",
+    extracted.analysis.candidate_business_rules,
+  );
+  const incompletePrimaryRules = primaryRuleCoverage
+    ? primaryRuleCoverage.rules.filter(({ candidate_ids }) => candidate_ids.length === 0)
+    : [];
   const manifest = {
     schema_version: "1.0.0",
-    status: "awaiting_human_review",
+    status: incompletePrimaryRules.length > 0
+      ? "incomplete_coverage"
+      : "awaiting_human_review",
     tool: CLI_PACKAGE_ID,
     prompt_contract_version: promptContractVersion,
     provider: provider.metadata,
     project_intent_hash: hashCanonical(projectIntent),
     analysis_revision_hash: analysisRevisionHash,
     source_hashes: extracted.extraction_report.source_hashes,
+    ...(primaryRuleCoverage ? {
+      primary_business_rule_coverage_hash: hashCanonical(primaryRuleCoverage),
+    } : {}),
   };
   const artifacts: Record<string, string> = {
     "run-manifest.json": collectionCanonicalJson({
@@ -665,9 +677,74 @@ async function runAtlasExtraction(
     "review-input.json": collectionCanonicalJson(reviewInput),
   };
   if (pdfArtifact) artifacts["pdf-ingestion.json"] = pdfArtifact;
+  if (primaryRuleCoverage) {
+    artifacts["primary-business-rule-coverage.json"] =
+      collectionCanonicalJson(primaryRuleCoverage);
+  }
   await publishAtlasArtifacts(outputDirectory, artifacts);
+  if (incompletePrimaryRules.length > 0) {
+    io.stdout(`Atlas coverage artifacts written to ${outputDirectory}; ${incompletePrimaryRules.length} primary business rules are uncovered\n`);
+    return 8;
+  }
   io.stdout(`Atlas review artifacts written to ${outputDirectory}\n`);
   return 7;
+}
+
+export function primaryBusinessRuleCoverage(
+  content: string,
+  candidates: readonly z.infer<typeof AtlasProviderResultSchema>["candidate_business_rules"][number][],
+): {
+  readonly schema_version: "1.0.0";
+  readonly heading: string;
+  readonly rules: readonly {
+    readonly id: string;
+    readonly line_start: number;
+    readonly line_end: number;
+    readonly candidate_ids: readonly string[];
+  }[];
+  readonly status: "complete" | "incomplete_coverage";
+} | undefined {
+  const lines = content.split(/\r\n|\n|\r/u);
+  const headings = new Set(["Aturan Bisnis Utama", "Main Business Rules", "Primary Business Rules"]);
+  const headingIndex = lines.findIndex((line) => headings.has(line.trim()));
+  if (headingIndex < 0) return undefined;
+  const endHeadings = new Set(["Skenario Pemeriksaan Hasil", "Result Inspection Scenarios",
+    "Acceptance Scenarios"]);
+  const endIndex = lines.findIndex((line, index) =>
+    index > headingIndex && endHeadings.has(line.trim()));
+  if (endIndex < 0) throw new CliInputError("Primary business-rule section has no deterministic end heading");
+  const rules: Array<{ id: string; line_start: number; line_end: number;
+    candidate_ids: string[] }> = [];
+  let start: number | undefined;
+  for (let index = headingIndex + 1; index < endIndex; index += 1) {
+    const text = lines[index]!.trim();
+    if (!text || /^[•*-]+$/u.test(text)) continue;
+    start ??= index + 1;
+    if (/[.!?]$/u.test(text)) {
+      const lineStart = start;
+      const lineEnd = index + 1;
+      const matched = candidates.filter(({ source }) =>
+        source.line_start !== undefined && source.line_end !== undefined
+        && source.line_start <= lineStart && source.line_end >= lineEnd)
+        .map(({ candidate_id }) => candidate_id).sort(compareText);
+      rules.push({
+        id: `primary-rule-${String(rules.length + 1).padStart(2, "0")}`,
+        line_start: lineStart,
+        line_end: lineEnd,
+        candidate_ids: matched,
+      });
+      start = undefined;
+    }
+  }
+  if (start !== undefined) throw new CliInputError("Primary business-rule item has no terminal punctuation");
+  if (rules.length === 0) throw new CliInputError("Primary business-rule section is empty");
+  return {
+    schema_version: "1.0.0",
+    heading: lines[headingIndex]!.trim(),
+    rules,
+    status: rules.every(({ candidate_ids }) => candidate_ids.length > 0)
+      ? "complete" : "incomplete_coverage",
+  };
 }
 
 async function resumeAtlasRun(
@@ -831,6 +908,7 @@ async function retainedPendingArtifacts(
     "clarification-questions.json",
     "review-input.json",
     "pdf-ingestion.json",
+    "primary-business-rule-coverage.json",
   ]) {
     const content = await readOptionalText(resolve(outputDirectory, path));
     if (content !== undefined) retained[path] = content;

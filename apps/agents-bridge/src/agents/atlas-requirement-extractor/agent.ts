@@ -33,7 +33,12 @@ Rules:
 7. Keep business rules separate from requirements and avoid duplicates.
 8. Temporary references must point to candidates returned in the same result.
 9. Every temporary_id and temporary source_requirement_id must match TMP-[A-Z]+-[0-9]+ exactly; examples include TMP-REQ-1, TMP-RULE-1, TMP-UNCERTAINTY-1, TMP-CONFLICT-1, and TMP-QUESTION-1.
-10. Return only JSON matching the supplied schema.`;
+10. Return only JSON matching the supplied schema.
+11. Extraction is exhaustive, not representative: inspect every section and do not stop after finding examples.
+12. Return a separate candidate business rule for every explicit numbered or bulleted rule under headings such as Main Business Rules, Business Rules, Aturan Bisnis Utama, constraints, validations, permissions, retention, readiness, and finalization.
+13. Never combine multiple independently testable source rules into one candidate merely because they concern the same entity or workflow.
+14. If an explicit rule needs a parent requirement, return the smallest faithful parent requirement and link the rule to it; never omit a rule because the controlled actor, action, or resource vocabulary is narrower than the source domain.
+15. Before returning, re-scan the source from first line to last and ensure every explicit rule-list item has a candidate or a blocking uncertainty naming its exact source location.`;
 
 export function createAtlasRequirementExtractor(options: {
   readonly model_alias: string;
