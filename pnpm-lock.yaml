@@ -42,6 +42,22 @@ importers:
         specifier: workspace:*
         version: link:../../packages/project-schema
 
+  apps/agents-bridge:
+    dependencies:
+      '@company/ces-agent-provider-sdk':
+        specifier: workspace:*
+        version: link:../../packages/agent-provider-sdk
+      '@company/ces-greenfield-contracts':
+        specifier: workspace:*
+        version: link:../../packages/greenfield-contracts
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
+
   apps/cli:
     dependencies:
       '@company/ces-adapter-sdk':
