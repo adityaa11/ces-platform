@@ -66,6 +66,9 @@ importers:
       '@company/ces-agent-provider-sdk':
         specifier: workspace:*
         version: link:../../packages/agent-provider-sdk
+      '@company/ces-approved-project-model':
+        specifier: workspace:*
+        version: link:../../packages/approved-project-model
       '@company/ces-atlas-coverage':
         specifier: workspace:*
         version: link:../../packages/atlas-coverage
@@ -108,6 +111,9 @@ importers:
       '@company/ces-requirement-schema':
         specifier: workspace:*
         version: link:../../packages/requirement-schema
+      '@company/ces-semantic-record-schema':
+        specifier: workspace:*
+        version: link:../../packages/semantic-record-schema
       '@company/ces-test-fixture-adapter':
         specifier: workspace:*
         version: link:../../adapters/test-fixture

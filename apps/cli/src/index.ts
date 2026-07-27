@@ -9,6 +9,11 @@ import {
   HttpAtlasProvider,
   AtlasProviderResultSchema,
 } from "@company/ces-agent-provider-sdk";
+import {
+  ApprovedConceptSchema,
+  projectApprovedModel,
+  publishApprovedProjectModel,
+} from "@company/ces-approved-project-model";
 import { analyzeAtlasCandidates } from "@company/ces-atlas-extraction";
 import { CoverageReportSchema } from "@company/ces-atlas-coverage";
 import {
@@ -55,6 +60,7 @@ import {
 } from "@company/ces-project-schema";
 import { parseRequirementText } from "@company/ces-requirement-schema";
 import { canonicalJson as collectionCanonicalJson } from "@company/ces-requirement-collection-schema";
+import { SemanticCollectionSchema } from "@company/ces-semantic-record-schema";
 import { z, ZodError } from "zod";
 
 export const CLI_PACKAGE_ID = "@company/ces-cli";
@@ -77,6 +83,7 @@ Usage:
   ces atlas analyze --prd <file.md|file.pdf> --project-intent <json> --output <directory> (--provider-result <json> | --provider-endpoint <https-url> --provider <id> --model <id>)
   ces atlas coverage --output <directory>
   ces atlas questions --output <directory>
+  ces atlas approve --output <directory> --publication-input <json>
   ces atlas approve --output <directory> --decisions <json> --assurance <json> --baseline-version <version> [--links <json>]
   ces atlas graph --output <directory> [--format json|markdown|mermaid]
   ces atlas resume --output <directory> --decisions <json> --assurance <json> --baseline-version <version> [--links <json>]
@@ -436,6 +443,9 @@ async function runAtlasCommand(
   if (subcommand === "run" || subcommand === "analyze") {
     return runAtlasExtraction(options, io);
   }
+  if (subcommand === "approve" && options["publication-input"]) {
+    return publishCanonicalAtlasModel(options, io);
+  }
   if (subcommand === "resume" || subcommand === "approve") {
     return resumeAtlasRun(options, io);
   }
@@ -472,6 +482,77 @@ async function runAtlasCommand(
     return 0;
   }
   throw new CliInputError(`Unknown Atlas command: ${subcommand}`);
+}
+
+const CanonicalPublicationInputSchema = z.object({
+  schema_version: z.literal("1.0.0"),
+  project_id: z.string(),
+  source_revision_id: z.string(),
+  source_content_hash: Sha256Schema,
+  lexicon_revision_id: z.string(),
+  lexicon_content_hash: Sha256Schema,
+  concepts: z.array(ApprovedConceptSchema),
+  semantic_collection: SemanticCollectionSchema,
+  coverage_report: CoverageReportSchema,
+  review: z.object({
+    status: z.enum(["reviewed", "review_required", "clarification_required"]),
+    source_revision_id: z.string(),
+    lexicon_revision_id: z.string(),
+    semantic_revision_id: z.string(),
+    decision_hash: Sha256Schema,
+    approved_by: z.array(z.string().trim().min(1)),
+    approved_at: z.string(),
+    reviewed_payloads: z.record(z.string(), z.record(z.string(), z.unknown())),
+  }).strict(),
+  projection_consumers: z.array(z.string()).default(["legacy-core"]),
+}).strict();
+
+async function publishCanonicalAtlasModel(
+  options: Readonly<Record<string, string>>,
+  io: CliIo,
+): Promise<number> {
+  const outputDirectory = requireOption(options, "output");
+  const publicationInput = CanonicalPublicationInputSchema.parse(
+    await readJsonValue(requireOption(options, "publication-input")),
+  );
+  const model = publishApprovedProjectModel(publicationInput);
+  const projections = publicationInput.projection_consumers
+    .map((consumer) => projectApprovedModel(model, consumer))
+    .sort((left, right) => compareText(left.consumer, right.consumer));
+  const retained = await retainedPendingArtifacts(outputDirectory);
+  const manifestBase = {
+    schema_version: "1.0.0",
+    status: "completed",
+    tool: CLI_PACKAGE_ID,
+    pipeline: "dynamic-atlas-p0",
+    project_model_id: model.id,
+    project_model_hash: model.content_hash,
+    source_revision_id: model.source_revision_id,
+    lexicon_revision_id: model.lexicon_revision_id,
+    semantic_revision_id: model.semantic_revision_id,
+    coverage_hash: model.coverage_content_hash,
+    review_decision_hash: model.review_decision_hash,
+    projection_statuses: Object.fromEntries(
+      projections.map(({ consumer, status }) => [consumer, status]),
+    ),
+  };
+  const artifacts: Record<string, string> = {
+    ...retained,
+    "approved-project-model.json": collectionCanonicalJson(model),
+    "coverage-report.json": collectionCanonicalJson(publicationInput.coverage_report),
+    "semantic-collection.json": collectionCanonicalJson(publicationInput.semantic_collection),
+    "run-manifest.json": collectionCanonicalJson({
+      ...manifestBase,
+      run_revision_hash: hashCanonical(manifestBase),
+    }),
+  };
+  for (const projection of projections) {
+    artifacts[`projections/${projection.consumer}.json`] =
+      collectionCanonicalJson(projection);
+  }
+  await publishAtlasArtifacts(outputDirectory, artifacts);
+  io.stdout(`ApprovedProjectModel written to ${outputDirectory}\n`);
+  return 0;
 }
 
 async function runAtlasExtraction(

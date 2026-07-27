@@ -11,6 +11,7 @@
   "dependencies": {
     "@company/ces-adapter-sdk": "workspace:*",
     "@company/ces-agent-provider-sdk": "workspace:*",
+    "@company/ces-approved-project-model": "workspace:*",
     "@company/ces-atlas-coverage": "workspace:*",
     "@company/ces-atlas-extraction": "workspace:*",
     "@company/ces-atlas-intent-graph": "workspace:*",
@@ -25,6 +26,7 @@
     "@company/ces-pdf-ingestion": "workspace:*",
     "@company/ces-requirement-collection-schema": "workspace:*",
     "@company/ces-requirement-schema": "workspace:*",
+    "@company/ces-semantic-record-schema": "workspace:*",
     "@company/ces-test-fixture-adapter": "workspace:*",
     "@company/ces-verification-engine": "workspace:*",
     "zod": "4.4.3"
