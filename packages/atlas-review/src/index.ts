@@ -3,6 +3,7 @@ import {
   AtlasProviderResultSchema,
   type AtlasProviderResult,
 } from "@company/ces-agent-provider-sdk";
+import { CoverageReportSchema } from "@company/ces-atlas-coverage";
 import {
   CandidateBusinessRuleSchema,
   CandidateRequirementSchema,
@@ -362,4 +363,205 @@ function sha256(value: unknown): string {
 
 function compareText(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0;
+}
+
+const ReviewIdSchema = z.string().regex(/^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u);
+
+export const CoverageReviewCandidateSchema = z.object({
+  id: ReviewIdSchema,
+  source_revision_id: ReviewIdSchema,
+  lexicon_revision_id: ReviewIdSchema,
+  semantic_revision_id: ReviewIdSchema,
+  source_unit_ids: z.array(ReviewIdSchema).min(1),
+  payload: z.record(z.string(), z.unknown()),
+  candidate_hash: Sha256Schema,
+}).strict();
+
+export const CoverageReviewDecisionSchema = z.object({
+  id: ReviewIdSchema,
+  action: z.enum([
+    "approve", "reject", "correct", "merge", "split", "defer",
+    "create_from_source", "exclude_with_reason",
+  ]),
+  candidate_ids: z.array(ReviewIdSchema),
+  source_unit_ids: z.array(ReviewIdSchema).min(1),
+  expected_candidate_hashes: z.record(ReviewIdSchema, Sha256Schema),
+  replacement_payloads: z.array(z.record(z.string(), z.unknown())).default([]),
+  reason: NonEmptyString.optional(),
+  reviewer: z.object({
+    kind: z.literal("human"),
+    identity: NonEmptyString,
+  }).strict(),
+}).strict().superRefine((value, context) => {
+  const expectedCandidates = ["approve", "reject", "correct", "merge", "split", "defer"]
+    .includes(value.action);
+  if (expectedCandidates && value.candidate_ids.length === 0) {
+    context.addIssue({ code: "custom", message: `${value.action} requires candidate_ids` });
+  }
+  if (value.action === "create_from_source" && value.candidate_ids.length > 0) {
+    context.addIssue({ code: "custom", message: "create_from_source cannot reference candidates" });
+  }
+  if (["correct", "merge", "split", "create_from_source"].includes(value.action)
+    && value.replacement_payloads.length === 0) {
+    context.addIssue({ code: "custom", message: `${value.action} requires replacement payloads` });
+  }
+  if (["reject", "defer", "exclude_with_reason"].includes(value.action) && !value.reason) {
+    context.addIssue({ code: "custom", message: `${value.action} requires a reason` });
+  }
+});
+
+export const CoverageAwareReviewInputSchema = z.object({
+  source_revision_id: ReviewIdSchema,
+  lexicon_revision_id: ReviewIdSchema,
+  semantic_revision_id: ReviewIdSchema,
+  source_unit_ids: z.array(ReviewIdSchema).min(1),
+  candidates: z.array(CoverageReviewCandidateSchema),
+  coverage_report: CoverageReportSchema,
+  decisions: z.array(CoverageReviewDecisionSchema),
+}).strict();
+
+export const CoverageAwareReviewOutputSchema = z.object({
+  schema_version: z.literal(ATLAS_REVIEW_VERSION),
+  source_revision_id: ReviewIdSchema,
+  lexicon_revision_id: ReviewIdSchema,
+  semantic_revision_id: ReviewIdSchema,
+  status: z.enum(["reviewed", "review_required", "clarification_required"]),
+  records: z.array(z.object({
+    id: ReviewIdSchema,
+    source_unit_ids: z.array(ReviewIdSchema).min(1),
+    payload: z.record(z.string(), z.unknown()),
+    review_action: z.enum(["approved", "corrected", "merged", "split", "created"]),
+  }).strict()),
+  rejected_candidate_ids: z.array(ReviewIdSchema),
+  deferred_candidate_ids: z.array(ReviewIdSchema),
+  remapping: z.record(ReviewIdSchema, z.array(ReviewIdSchema)),
+  source_dispositions: z.record(ReviewIdSchema,
+    z.enum(["represented", "excluded_with_reason", "review_required"])),
+  decision_hash: Sha256Schema,
+}).strict();
+
+export function coverageReviewCandidateHash(value: {
+  readonly source_revision_id: string;
+  readonly lexicon_revision_id: string;
+  readonly semantic_revision_id: string;
+  readonly source_unit_ids: readonly string[];
+  readonly payload: Readonly<Record<string, unknown>>;
+}): string {
+  return sha256({
+    source_revision_id: value.source_revision_id,
+    lexicon_revision_id: value.lexicon_revision_id,
+    semantic_revision_id: value.semantic_revision_id,
+    source_unit_ids: value.source_unit_ids,
+    payload: value.payload,
+  });
+}
+
+export function compileCoverageAwareReview(
+  inputValue: z.input<typeof CoverageAwareReviewInputSchema>,
+): z.infer<typeof CoverageAwareReviewOutputSchema> {
+  const input = CoverageAwareReviewInputSchema.parse(inputValue);
+  if (input.coverage_report.source_revision_id !== input.source_revision_id
+    || input.coverage_report.semantic_collection_id !== input.semantic_revision_id) {
+    throw new Error("Coverage report revision mismatch");
+  }
+  const sourceIds = new Set(input.source_unit_ids);
+  const candidates = new Map(input.candidates.map((candidate) => [candidate.id, candidate]));
+  assertUnique([...candidates.keys()], "coverage-review candidate");
+  for (const candidate of candidates.values()) {
+    if (candidate.source_revision_id !== input.source_revision_id
+      || candidate.lexicon_revision_id !== input.lexicon_revision_id
+      || candidate.semantic_revision_id !== input.semantic_revision_id) {
+      throw new Error(`Candidate revision mismatch: ${candidate.id}`);
+    }
+    assertReviewSources(candidate.source_unit_ids, sourceIds);
+    const expected = coverageReviewCandidateHash(candidate);
+    if (candidate.candidate_hash !== expected) throw new Error(`Stale candidate hash: ${candidate.id}`);
+  }
+  const decisions = [...input.decisions].sort((a, b) => compareText(a.id, b.id));
+  assertUnique(decisions.map(({ id }) => id), "coverage-review decision");
+  const handled = new Set<string>();
+  const records: z.infer<typeof CoverageAwareReviewOutputSchema>["records"] = [];
+  const rejected: string[] = [];
+  const deferred: string[] = [];
+  const remapping: Record<string, string[]> = {};
+  const dispositions: Record<string, "represented" | "excluded_with_reason" | "review_required">
+    = Object.fromEntries(input.source_unit_ids.map((id) => [id, "review_required"]));
+
+  for (const decision of decisions) {
+    assertReviewSources(decision.source_unit_ids, sourceIds);
+    const selected = decision.candidate_ids.map((id) => {
+      const candidate = candidates.get(id);
+      if (!candidate) throw new Error(`Unknown review candidate: ${id}`);
+      if (handled.has(id)) throw new Error(`Candidate reviewed more than once: ${id}`);
+      if (decision.expected_candidate_hashes[id] !== candidate.candidate_hash) {
+        throw new Error(`Stale review decision for ${id}`);
+      }
+      handled.add(id);
+      return candidate;
+    });
+    if (decision.action === "reject") rejected.push(...decision.candidate_ids);
+    else if (decision.action === "defer") deferred.push(...decision.candidate_ids);
+    else if (decision.action === "exclude_with_reason") {
+      for (const id of decision.source_unit_ids) dispositions[id] = "excluded_with_reason";
+    } else {
+      const payloads = decision.action === "approve"
+        ? selected.map(({ payload }) => payload)
+        : decision.replacement_payloads;
+      payloads.forEach((payload, index) => {
+        const recordId = `atlas.reviewed.${digestForReview({
+          decision: decision.id, index, payload,
+        }).slice(0, 16)}`;
+        const reviewAction = decision.action === "approve" ? "approved"
+          : decision.action === "correct" ? "corrected"
+          : decision.action === "merge" ? "merged"
+          : decision.action === "split" ? "split" : "created";
+        records.push({
+          id: recordId,
+          source_unit_ids: [...decision.source_unit_ids].sort(compareText),
+          payload,
+          review_action: reviewAction,
+        });
+        for (const candidate of selected) (remapping[candidate.id] ??= []).push(recordId);
+      });
+      for (const id of decision.source_unit_ids) dispositions[id] = "represented";
+    }
+  }
+  const missingCandidates = [...candidates.keys()].filter((id) => !handled.has(id));
+  if (missingCandidates.length > 0) {
+    throw new Error(`Candidates require coverage-aware review: ${missingCandidates.sort().join(", ")}`);
+  }
+  const blockingUnits = input.coverage_report.entries.filter(({ normative, disposition }) =>
+    normative && !["covered", "duplicate", "excluded_with_reason"].includes(disposition))
+    .map(({ source_unit_id }) => source_unit_id);
+  const unresolved = blockingUnits.filter((id) => dispositions[id] === "review_required");
+  const status = unresolved.length > 0 || deferred.length > 0 ? "review_required" : "reviewed";
+  const normalizedRecords = records.sort((a, b) => compareText(a.id, b.id));
+  return deepFreezeReview(CoverageAwareReviewOutputSchema.parse({
+    schema_version: ATLAS_REVIEW_VERSION,
+    source_revision_id: input.source_revision_id,
+    lexicon_revision_id: input.lexicon_revision_id,
+    semantic_revision_id: input.semantic_revision_id,
+    status,
+    records: normalizedRecords,
+    rejected_candidate_ids: rejected.sort(compareText),
+    deferred_candidate_ids: deferred.sort(compareText),
+    remapping,
+    source_dispositions: dispositions,
+    decision_hash: sha256(decisions),
+  }));
+}
+
+function assertReviewSources(values: readonly string[], allowed: ReadonlySet<string>): void {
+  const unknown = values.find((id) => !allowed.has(id));
+  if (unknown) throw new Error(`Review references unknown source unit: ${unknown}`);
+}
+function digestForReview(value: unknown): string {
+  return createHash("sha256").update(canonicalJson(value)).digest("hex");
+}
+function deepFreezeReview<T>(value: T): T {
+  if (value !== null && typeof value === "object") {
+    Object.freeze(value);
+    for (const child of Object.values(value)) deepFreezeReview(child);
+  }
+  return value;
 }

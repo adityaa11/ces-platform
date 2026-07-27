@@ -205,6 +205,9 @@ importers:
       '@company/ces-agent-provider-sdk':
         specifier: workspace:*
         version: link:../agent-provider-sdk
+      '@company/ces-atlas-coverage':
+        specifier: workspace:*
+        version: link:../atlas-coverage
       '@company/ces-greenfield-contracts':
         specifier: workspace:*
         version: link:../greenfield-contracts
