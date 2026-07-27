@@ -11,7 +11,88 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, it } from "vitest";
 import { ingestPdfDocument } from "@company/ces-pdf-ingestion";
+import { calculateCoverage } from "@company/ces-atlas-coverage";
 import { runCli } from "./index.js";
+
+describe("DAPE-008 staged Atlas commands", () => {
+  it("supports analyze, coverage, questions, and graph without changing legacy commands", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "ces-atlas-staged-"));
+    try {
+      const setup = await writeAtlasInputs(directory);
+      const output = join(directory, "generated");
+      expect(await runCli([
+        "atlas", "analyze",
+        "--prd", setup.prd,
+        "--project-intent", setup.intent,
+        "--provider-result", setup.provider,
+        "--output", output,
+      ], capture().io)).toBe(7);
+      const questionsIo = capture();
+      expect(await runCli(["atlas", "questions", "--output", output], questionsIo.io)).toBe(0);
+      expect(JSON.parse(questionsIo.stdout.join(""))).toEqual([]);
+
+      const unit = "safara.unit.00001.01234567";
+      const report = calculateCoverage({
+        source_revision_id: "safara.rev.0123456789ab",
+        semantic_collection_id: "safara.semantics.0123456789ab",
+        source_unit_ids: [unit],
+        candidate_ids: [],
+        entries: [{
+          source_unit_id: unit, normative: false, disposition: "context_only",
+          candidate_ids: [], reason: "Heading",
+        }],
+        candidate_evidence: [],
+      });
+      await writeFile(join(output, "coverage-report.json"), JSON.stringify(report));
+      const coverageIo = capture();
+      expect(await runCli(["atlas", "coverage", "--output", output], coverageIo.io)).toBe(0);
+      expect(JSON.parse(coverageIo.stdout.join(""))).toEqual(report);
+
+      await writeFile(join(output, "system-intent-graph.json"), "{\"graph\":\"json\"}\n");
+      await writeFile(join(output, "system-intent-graph.md"), "# Graph\n");
+      await writeFile(join(output, "system-intent-graph.mmd"), "graph TD\n");
+      const graphIo = capture();
+      expect(await runCli([
+        "atlas", "graph", "--output", output, "--format", "mermaid",
+      ], graphIo.io)).toBe(0);
+      expect(graphIo.stdout.join("")).toBe("graph TD\n");
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("maps incomplete and unsupported coverage to distinct exits", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "ces-atlas-status-"));
+    try {
+      const unit = "safara.unit.00001.01234567";
+      const candidate = "safara.semantic.rule";
+      const make = (supported: boolean, disposition: "covered" | "uncovered") =>
+        calculateCoverage({
+          source_revision_id: "safara.rev.0123456789ab",
+          semantic_collection_id: "safara.semantics.0123456789ab",
+          source_unit_ids: [unit],
+          candidate_ids: [candidate],
+          entries: [{
+            source_unit_id: unit, normative: true, disposition,
+            candidate_ids: disposition === "covered" ? [candidate] : [],
+          }],
+          candidate_evidence: [{
+            candidate_id: candidate, source_unit_ids: [unit], supported,
+            distortion_detected: false,
+            ...(!supported ? { diagnostic: "Unsupported claim" } : {}),
+          }],
+        });
+      await writeFile(join(directory, "coverage-report.json"),
+        JSON.stringify(make(true, "uncovered")));
+      expect(await runCli(["atlas", "coverage", "--output", directory], capture().io)).toBe(8);
+      await writeFile(join(directory, "coverage-report.json"),
+        JSON.stringify(make(false, "covered")));
+      expect(await runCli(["atlas", "coverage", "--output", directory], capture().io)).toBe(9);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+});
 
 const content = "# Projects\nAdministrators create projects.";
 

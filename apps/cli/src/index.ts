@@ -10,6 +10,7 @@ import {
   AtlasProviderResultSchema,
 } from "@company/ces-agent-provider-sdk";
 import { analyzeAtlasCandidates } from "@company/ces-atlas-extraction";
+import { CoverageReportSchema } from "@company/ces-atlas-coverage";
 import {
   buildIntentGraph,
   compileAtlasCoreHandoff,
@@ -73,6 +74,11 @@ Usage:
   ces compile --requirement <file> --project <file> --output <directory> [--override-adapter <id>@<version>] [--test-mode true]
   ces verify --manifest <verification-manifest.json> --project-root <directory>
   ces atlas run --prd <file.md|file.pdf> --project-intent <json> --output <directory> (--provider-result <json> | --provider-endpoint <https-url> --provider <id> --model <id>)
+  ces atlas analyze --prd <file.md|file.pdf> --project-intent <json> --output <directory> (--provider-result <json> | --provider-endpoint <https-url> --provider <id> --model <id>)
+  ces atlas coverage --output <directory>
+  ces atlas questions --output <directory>
+  ces atlas approve --output <directory> --decisions <json> --assurance <json> --baseline-version <version> [--links <json>]
+  ces atlas graph --output <directory> [--format json|markdown|mermaid]
   ces atlas resume --output <directory> --decisions <json> --assurance <json> --baseline-version <version> [--links <json>]
   ces atlas inspect --output <directory>
   ces help
@@ -89,6 +95,9 @@ Exit codes:
   5  adapter gap (adapter-report.json is written; no partial adapter artifacts)
   6  verification failure (verification-report.json is written)
   7  Atlas paused for human review (resumable review artifacts are written)
+  8  Atlas incomplete normative coverage
+  9  Atlas unsupported or distorted candidate
+  10 Atlas semantic conflict
 `;
 
 export async function runCli(
@@ -424,8 +433,39 @@ async function runAtlasCommand(
     return 0;
   }
   const options = parseOptions(args.slice(1));
-  if (subcommand === "run") return runAtlasExtraction(options, io);
-  if (subcommand === "resume") return resumeAtlasRun(options, io);
+  if (subcommand === "run" || subcommand === "analyze") {
+    return runAtlasExtraction(options, io);
+  }
+  if (subcommand === "resume" || subcommand === "approve") {
+    return resumeAtlasRun(options, io);
+  }
+  if (subcommand === "coverage") {
+    const outputDirectory = requireOption(options, "output");
+    const report = CoverageReportSchema.parse(
+      await readJsonValue(resolve(outputDirectory, "coverage-report.json")),
+    );
+    io.stdout(collectionCanonicalJson(report));
+    return report.status === "success" ? 0
+      : report.status === "incomplete_coverage" ? 8
+      : report.status === "unsupported_candidate" ? 9
+      : report.status === "conflict" ? 10 : 7;
+  }
+  if (subcommand === "questions") {
+    const outputDirectory = requireOption(options, "output");
+    io.stdout(await readFile(resolve(outputDirectory, "clarification-questions.json"), "utf8"));
+    return 0;
+  }
+  if (subcommand === "graph") {
+    const outputDirectory = requireOption(options, "output");
+    const format = options.format ?? "json";
+    const file = format === "json" ? "system-intent-graph.json"
+      : format === "markdown" ? "system-intent-graph.md"
+      : format === "mermaid" ? "system-intent-graph.mmd"
+      : undefined;
+    if (!file) throw new CliInputError("Atlas graph --format must be json, markdown, or mermaid");
+    io.stdout(await readFile(resolve(outputDirectory, file), "utf8"));
+    return 0;
+  }
   if (subcommand === "inspect") {
     const outputDirectory = requireOption(options, "output");
     io.stdout(await readFile(resolve(outputDirectory, "run-manifest.json"), "utf8"));

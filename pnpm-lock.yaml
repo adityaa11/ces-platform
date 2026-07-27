@@ -66,6 +66,9 @@ importers:
       '@company/ces-agent-provider-sdk':
         specifier: workspace:*
         version: link:../../packages/agent-provider-sdk
+      '@company/ces-atlas-coverage':
+        specifier: workspace:*
+        version: link:../../packages/atlas-coverage
       '@company/ces-atlas-extraction':
         specifier: workspace:*
         version: link:../../packages/atlas-extraction
