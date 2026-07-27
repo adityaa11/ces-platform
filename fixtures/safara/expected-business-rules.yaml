@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0.0",
+  "rules": [
+    {"key":"rule.unique_active_registration","meaning":"One pilgrim cannot have two active registrations for the same departure.","anchor_key":"span.rules","mandatory":true},
+    {"key":"rule.capacity","meaning":"Active registrations cannot exceed departure quota.","anchor_key":"span.rules","mandatory":true},
+    {"key":"rule.price_snapshot","meaning":"An agreed registration price is not changed by later package price changes.","anchor_key":"span.rules","mandatory":true},
+    {"key":"rule.accepted_payment_only","meaning":"Pending or rejected payments do not reduce the remaining balance.","anchor_key":"span.rules","mandatory":true},
+    {"key":"rule.rejection_reason","meaning":"Rejected payments and documents require a reason.","anchor_key":"span.rules","mandatory":true},
+    {"key":"rule.invalid_document_blocks","meaning":"A required missing, rejected, or expired document blocks readiness.","anchor_key":"span.rules","mandatory":true},
+    {"key":"rule.blocked_manifest","meaning":"A blocked pilgrim cannot enter the final manifest.","anchor_key":"span.rules","mandatory":true},
+    {"key":"rule.all_blockers","meaning":"All readiness blockers are displayed together.","anchor_key":"span.rules","mandatory":true},
+    {"key":"rule.history_retained","meaning":"Cancellation or deactivation does not erase prior history.","anchor_key":"span.rules","mandatory":true},
+    {"key":"rule.confidentiality","meaning":"Pilgrim information and documents are visible only to interested authorized users.","anchor_key":"span.rules","mandatory":true},
+    {"key":"rule.closed_or_full","meaning":"Registration is rejected when a departure is closed or full.","anchor_key":"span.area.1","mandatory":true},
+    {"key":"rule.manifest_snapshot","meaning":"A finalized manifest does not change automatically after pilgrim data changes.","anchor_key":"span.area.7","mandatory":true}
+  ]
+}

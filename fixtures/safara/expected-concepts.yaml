@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "concepts": [
+    {"key":"role.owner_admin","category":"role","label":"Owner/Admin","anchor_key":"span.roles","mandatory":true},
+    {"key":"role.finance","category":"role","label":"Finance","anchor_key":"span.roles","mandatory":true},
+    {"key":"role.operations","category":"role","label":"Operations","anchor_key":"span.roles","mandatory":true},
+    {"key":"entity.package","category":"entity","label":"paket umrah","anchor_key":"span.area.1","mandatory":true},
+    {"key":"entity.departure","category":"entity","label":"jadwal keberangkatan","anchor_key":"span.area.1","mandatory":true},
+    {"key":"entity.pilgrim","category":"entity","label":"jemaah","anchor_key":"span.area.2","mandatory":true},
+    {"key":"entity.registration","category":"entity","label":"pendaftaran","anchor_key":"span.area.3","mandatory":true},
+    {"key":"entity.payment","category":"entity","label":"pembayaran","anchor_key":"span.area.4","mandatory":true},
+    {"key":"entity.document","category":"entity","label":"dokumen jemaah","anchor_key":"span.area.5","mandatory":true},
+    {"key":"entity.manifest","category":"entity","label":"manifest final","anchor_key":"span.area.7","mandatory":true},
+    {"key":"state.payment","category":"state","label":"Menunggu Pemeriksaan | Diterima | Ditolak","anchor_key":"span.area.4","mandatory":true},
+    {"key":"state.payment_summary","category":"state","label":"Belum Bayar | Sebagian | Lunas","anchor_key":"span.area.4","mandatory":true},
+    {"key":"state.document","category":"state","label":"Belum Ada | Menunggu Pemeriksaan | Valid | Ditolak | Kedaluwarsa","anchor_key":"span.area.5","mandatory":true},
+    {"key":"state.readiness","category":"state","label":"Siap | Terhambat","anchor_key":"span.area.6","mandatory":true},
+    {"key":"calculation.remaining_balance","category":"calculation","label":"Sisa Pembayaran = Total Tagihan - Total Pembayaran Diterima","anchor_key":"span.area.4","mandatory":true},
+    {"key":"report.operational","category":"report","label":"laporan operasional dan manifest","anchor_key":"span.area.8","mandatory":true}
+  ]
+}

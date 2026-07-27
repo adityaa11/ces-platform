@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "spans": [
+    {"key":"span.roles","page":2,"section":"Pengguna","anchor":"Owner/Admin","mandatory":true},
+    {"key":"span.flow","page":2,"section":"Alur Utama","anchor":"Admin membuat paket umrah dan jadwal keberangkatan.","mandatory":true},
+    {"key":"span.area.1","page":2,"section":"1. Paket dan Jadwal Keberangkatan","anchor":"Admin dapat membuat, melihat, mengubah, dan menonaktifkan paket umrah.","mandatory":true},
+    {"key":"span.area.2","page":3,"section":"2. Data Jemaah","anchor":"Admin dapat menambah, melihat, mengubah, mencari, dan menonaktifkan data jemaah.","mandatory":true},
+    {"key":"span.area.3","page":3,"section":"3. Pendaftaran Jemaah","anchor":"Admin dapat memilih jemaah dan mendaftarkannya ke jadwal keberangkatan yang masih terbuka.","mandatory":true},
+    {"key":"span.area.4","page":3,"section":"4. Tagihan dan Pembayaran","anchor":"Setiap pendaftaran menampilkan total tagihan, total pembayaran yang sudah diterima, dan sisa pembayaran.","mandatory":true},
+    {"key":"span.area.5","page":4,"section":"5. Dokumen Jemaah","anchor":"Setiap jemaah memiliki daftar dokumen yang perlu dilengkapi.","mandatory":true},
+    {"key":"span.area.6","page":4,"section":"6. Status Perjalanan dan Kesiapan","anchor":"Kesiapan jemaah ditentukan dari enam bagian:","mandatory":true},
+    {"key":"span.area.7","page":5,"section":"7. Manifest Keberangkatan","anchor":"Hanya jemaah berstatus Siap yang dapat dimasukkan ke manifest final.","mandatory":true},
+    {"key":"span.area.8","page":5,"section":"8. Dashboard dan Laporan","anchor":"Dashboard minimum menampilkan:","mandatory":true},
+    {"key":"span.area.9","page":5,"section":"9. Riwayat Aktivitas","anchor":"Aplikasi menyimpan riwayat tindakan penting yang dilakukan pengguna.","mandatory":true},
+    {"key":"span.rules","page":6,"section":"Aturan Bisnis Utama","anchor":"Satu jemaah dapat memiliki beberapa riwayat pendaftaran","mandatory":true},
+    {"key":"span.scenarios","page":6,"section":"Skenario Pemeriksaan Hasil","anchor":"Sebelum pekerjaan dinyatakan selesai, kami akan mencoba minimal skenario berikut:","mandatory":true},
+    {"key":"span.deliverables","page":7,"section":"Hasil yang Harus Diserahkan","anchor":"Aplikasi web yang siap digunakan untuk operasional satu perusahaan dan satu cabang.","mandatory":true},
+    {"key":"span.acceptance","page":7,"section":"Kriteria Penerimaan","anchor":"Pekerjaan dianggap selesai apabila:","mandatory":true}
+  ]
+}

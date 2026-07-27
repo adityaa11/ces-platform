@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "oracle_id": "safara-buyer-business-prd-2026-07-27",
+  "language": "id",
+  "source": {
+    "path": "docs/prd/Safara_Buyer_Business_PRD.pdf",
+    "title": "Safara - Sistem Administrasi Travel Umrah",
+    "pages": 7
+  },
+  "inventories": {
+    "source_spans": "expected-source-spans.yaml",
+    "concepts": "expected-concepts.yaml",
+    "business_rules": "expected-business-rules.yaml",
+    "acceptance_items": "expected-acceptance-items.yaml"
+  },
+  "minimum_counts": {
+    "functional_areas": 9,
+    "roles": 3,
+    "primary_business_rules": 10,
+    "inspection_scenarios": 12,
+    "deliverables": 9,
+    "acceptance_criteria": 10
+  },
+  "projection_checklist": {
+    "DAPE-001": ["all anchors resolve to immutable source text", "page and section provenance survives"],
+    "DAPE-002": ["roles, entities, fields, states, actions, reports and aliases survive"],
+    "DAPE-003": ["rules, permissions, validations, calculations, states, workflows, reports, scenarios, deliverables and nonfunctional meaning survive"],
+    "DAPE-007": ["every mandatory oracle key is represented or has an explicit reviewed disposition"]
+  }
+}

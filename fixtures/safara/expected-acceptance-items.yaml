@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0.0",
+  "inspection_scenarios": [
+    {"key":"scenario.01","meaning":"Create package/departure and observe remaining quota","anchor_key":"span.scenarios","mandatory":true},
+    {"key":"scenario.02","meaning":"Fill quota and reject the next registration","anchor_key":"span.scenarios","mandatory":true},
+    {"key":"scenario.03","meaning":"Reject duplicate active registration","anchor_key":"span.scenarios","mandatory":true},
+    {"key":"scenario.04","meaning":"Pending payment leaves balance unchanged","anchor_key":"span.scenarios","mandatory":true},
+    {"key":"scenario.05","meaning":"Accepted payment reduces balance correctly","anchor_key":"span.scenarios","mandatory":true},
+    {"key":"scenario.06","meaning":"Rejected payment or document requires a reason","anchor_key":"span.scenarios","mandatory":true},
+    {"key":"scenario.07","meaning":"One invalid required document blocks readiness","anchor_key":"span.scenarios","mandatory":true},
+    {"key":"scenario.08","meaning":"Blocked pilgrim is rejected from final manifest","anchor_key":"span.scenarios","mandatory":true},
+    {"key":"scenario.09","meaning":"Finalized manifest can be downloaded","anchor_key":"span.scenarios","mandatory":true},
+    {"key":"scenario.10","meaning":"Finance and Operations are restricted to their responsibilities","anchor_key":"span.scenarios","mandatory":true},
+    {"key":"scenario.11","meaning":"Dashboard/report values match entered data","anchor_key":"span.scenarios","mandatory":true},
+    {"key":"scenario.12","meaning":"Activity history identifies the actor for important changes","anchor_key":"span.scenarios","mandatory":true}
+  ],
+  "deliverables": [
+    {"key":"deliverable.01","meaning":"Operational single-company single-branch web application","anchor_key":"span.deliverables","mandatory":true},
+    {"key":"deliverable.02","meaning":"Complete package-to-manifest workflow","anchor_key":"span.deliverables","mandatory":true},
+    {"key":"deliverable.03","meaning":"Accessible application address","anchor_key":"span.deliverables","mandatory":true},
+    {"key":"deliverable.04","meaning":"Initial accounts for all three roles","anchor_key":"span.deliverables","mandatory":true},
+    {"key":"deliverable.05","meaning":"Short guide for each user type","anchor_key":"span.deliverables","mandatory":true},
+    {"key":"deliverable.06","meaning":"Training or handover session","anchor_key":"span.deliverables","mandatory":true},
+    {"key":"deliverable.07","meaning":"Downloadable reports and manifests","anchor_key":"span.deliverables","mandatory":true},
+    {"key":"deliverable.08","meaning":"Company-owned access and project files handed over","anchor_key":"span.deliverables","mandatory":true},
+    {"key":"deliverable.09","meaning":"Fourteen-day defect warranty after acceptance","anchor_key":"span.deliverables","mandatory":true}
+  ],
+  "acceptance_criteria": [
+    {"key":"acceptance.01","meaning":"All three roles can sign in and perform authorized duties","anchor_key":"span.acceptance","mandatory":true},
+    {"key":"acceptance.02","meaning":"Package-to-manifest flow works with agreed sample data","anchor_key":"span.acceptance","mandatory":true},
+    {"key":"acceptance.03","meaning":"Quota, invoice, payment and remaining balance calculations are correct","anchor_key":"span.acceptance","mandatory":true},
+    {"key":"acceptance.04","meaning":"Readiness reflects payment and travel requirements","anchor_key":"span.acceptance","mandatory":true},
+    {"key":"acceptance.05","meaning":"All blockers are clearly visible","anchor_key":"span.acceptance","mandatory":true},
+    {"key":"acceptance.06","meaning":"Blocked pilgrims cannot enter final manifest","anchor_key":"span.acceptance","mandatory":true},
+    {"key":"acceptance.07","meaning":"Reports and manifests download with displayed data","anchor_key":"span.acceptance","mandatory":true},
+    {"key":"acceptance.08","meaning":"Unauthorized users cannot view pilgrim documents","anchor_key":"span.acceptance","mandatory":true},
+    {"key":"acceptance.09","meaning":"Important action history remains viewable","anchor_key":"span.acceptance","mandatory":true},
+    {"key":"acceptance.10","meaning":"Guide, initial accounts, training and handover are received","anchor_key":"span.acceptance","mandatory":true}
+  ]
+}
