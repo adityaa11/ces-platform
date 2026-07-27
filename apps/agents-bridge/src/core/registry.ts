@@ -42,13 +42,17 @@ export interface StructuredGenerationResponse<TOutput> {
   };
 }
 
+export interface ProviderExecutionContext extends ExecutionContext {
+  readonly signal: AbortSignal;
+}
+
 export interface AgentProvider {
   readonly provider_id: string;
   readonly capabilities: readonly string[];
   executeStructured<TOutput>(
     request: StructuredGenerationRequest,
     outputSchema: ZodType<TOutput>,
-    context: ExecutionContext,
+    context: ProviderExecutionContext,
   ): Promise<StructuredGenerationResponse<TOutput>>;
 }
 
@@ -87,6 +91,10 @@ export class AgentRegistry {
 
   get(id: string, version: string): AnyAgent | undefined {
     return this.definitions.get(agentKey(id, version));
+  }
+
+  hasId(id: string): boolean {
+    return this.values().some((definition) => definition.id === id);
   }
 
   values(): readonly AnyAgent[] {

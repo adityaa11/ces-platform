@@ -2,7 +2,9 @@
 
 **Phase:** 3D — Central Agent Provider Foundation  
 **Parent:** Greenfield Product Suite  
-**Status:** Planned
+**Status:** Implemented locally; hosted CI pending
+
+**Evidence:** [`evidence/CES-GF-AGB-002-local-runtime.md`](evidence/CES-GF-AGB-002-local-runtime.md)
 
 ## Goal
 
@@ -34,29 +36,29 @@ agent-provider endpoints safely and test them without real network access.
 
 ## Acceptance criteria
 
-- [ ] The server can be instantiated in tests without listening on a real port.
-- [ ] Missing authorization returns `401`; incorrect authorization returns
+- [x] The server can be instantiated in tests without listening on a real port.
+- [x] Missing authorization returns `401`; incorrect authorization returns
       `403`.
-- [ ] Oversized requests return `413` without buffering the full body.
-- [ ] Invalid JSON, unknown routes, and unsupported methods have stable
+- [x] Oversized requests return `413` without buffering the full body.
+- [x] Invalid JSON, unknown routes, and unsupported methods have stable
       sanitized responses.
-- [ ] Secrets, authorization headers, request bodies, and complete prompts
+- [x] Secrets, authorization headers, request bodies, and complete prompts
       never appear in logs or errors.
-- [ ] Health checks reveal no configuration or provider information.
-- [ ] The runtime is stateless and supports multiple concurrent instances.
-- [ ] Unknown agents, unsupported versions, and unauthorized agents fail before
+- [x] Health checks reveal no configuration or provider information.
+- [x] The runtime is stateless and supports multiple concurrent instances.
+- [x] Unknown agents, unsupported versions, and unauthorized agents fail before
       provider execution.
-- [ ] The generic route cannot accept caller-supplied prompts, providers,
+- [x] The generic route cannot accept caller-supplied prompts, providers,
       models, schemas, credentials, or tools.
 
 ## Required evidence
 
-- [ ] Configuration boundary and invalid-configuration tests.
-- [ ] Authentication and timing-safe comparison tests.
-- [ ] Streaming body-limit tests.
-- [ ] Log-redaction tests using sentinel secrets and source text.
-- [ ] Server lifecycle and clean-shutdown tests.
-- [ ] Generic routing, registry, authorization, and execution-context tests
+- [x] Configuration boundary and invalid-configuration tests.
+- [x] Authentication and timing-safe comparison tests.
+- [x] Streaming body-limit tests.
+- [x] Log-redaction tests using sentinel secrets and source text.
+- [x] Server lifecycle and clean-shutdown tests.
+- [x] Generic routing, registry, authorization, and execution-context tests
       using a deterministic fixture agent and provider.
 
 ## Out of scope
