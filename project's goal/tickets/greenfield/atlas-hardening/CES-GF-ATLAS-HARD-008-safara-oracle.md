@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-008 — Safara Hardening Oracle
 
 **Stage:** Atlas hardening qualification
-**Status:** Planned
+**Status:** Implemented
 
 ## Objective
 
@@ -32,16 +32,16 @@ Versioned Safara oracle tree and projection checklists for every hardening stage
 
 ## Acceptance criteria
 
-- [ ] The oracle remains human-reviewed and independent of implementation output.
-- [ ] All ten primary rules and workflow areas are represented.
-- [ ] All required extraction categories contain expected records or reviewed
+- [x] The oracle remains human-reviewed and independent of implementation output.
+- [x] All ten primary rules and workflow areas are represented.
+- [x] All required extraction categories contain expected records or reviewed
       empty dispositions.
-- [ ] Every expected semantic record resolves to source evidence.
-- [ ] Oracle changes require an explicit review record.
-- [ ] Real-provider evidence is redacted and linked without exposing PRD text.
-- [ ] Production extraction code contains no Safara-specific prompt branches,
+- [x] Every expected semantic record resolves to source evidence.
+- [x] Oracle changes require an explicit review record.
+- [x] Real-provider evidence is redacted and linked without exposing PRD text.
+- [x] Production extraction code contains no Safara-specific prompt branches,
       section names, keywords, workflow nodes, or oracle imports.
-- [ ] Passing Safara is described as fixture qualification, not evidence of
+- [x] Passing Safara is described as fixture qualification, not evidence of
       general domain coverage.
 
 ## Tests and evidence
@@ -49,6 +49,15 @@ Versioned Safara oracle tree and projection checklists for every hardening stage
 Schema validation, anchor resolution, production-import boundary, concrete
 semantic-key/count assertions, missing-category variants, unsupported additions,
 Safara hardcoding detection, and unreviewed oracle changes.
+
+## Completion evidence
+
+- Added a hardening projection manifest over the accepted DAPE-000 semantic
+  inventory and its existing named human review record.
+- Covers ten workflow areas, ten primary rules, all sixteen semantic categories,
+  and every downstream hardening projection.
+- Explicitly prohibits production imports and general-domain claims.
+- Oracle, DAPE oracle, and architecture tests: 11 passed.
 
 ## Out of scope
 
