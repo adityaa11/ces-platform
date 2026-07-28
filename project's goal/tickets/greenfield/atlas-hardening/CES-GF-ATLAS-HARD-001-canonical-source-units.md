@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-001 — Canonical Source Units
 
 **Stage:** Atlas hardening foundation
-**Status:** Planned
+**Status:** Implemented
 
 ## Objective
 
@@ -33,21 +33,29 @@ existing DAPE schemas.
 
 ## Acceptance criteria
 
-- [ ] Every parsed page or Markdown section produces traceable source units.
-- [ ] Identical accepted input and parser configuration produce identical IDs.
-- [ ] Exact source text and section/page provenance survive the full pipeline.
-- [ ] OCR-derived units retain confidence and source-kind metadata.
-- [ ] Unfamiliar headings, layouts, and unrelated-domain documents use the same
+- [x] Every parsed page or Markdown section produces traceable source units.
+- [x] Identical accepted input and parser configuration produce identical IDs.
+- [x] Exact source text and section/page provenance survive the full pipeline.
+- [x] OCR-derived units retain confidence and source-kind metadata.
+- [x] Unfamiliar headings, layouts, and unrelated-domain documents use the same
       source-unit contract without domain-specific parser code.
-- [ ] Production packages do not import Safara oracle data or fixture rules.
-- [ ] Changed document bytes invalidate stale source revisions.
-- [ ] No duplicate source-unit schema or identity algorithm is introduced.
+- [x] Production packages do not import Safara oracle data or fixture rules.
+- [x] Changed document bytes invalidate stale source revisions.
+- [x] No duplicate source-unit schema or identity algorithm is introduced.
 
 ## Tests and evidence
 
 Native PDF, OCR PDF, Markdown, unrelated-domain and unfamiliar-layout documents,
 repeated-run, changed-input, reordered-section, and attempted-agent-mutation
 fixtures; schema validation and artifact hashes.
+
+## Completion evidence
+
+- `packages/source-unit-schema` schema version 1.1.0.
+- Focused source-unit, architecture, and PDF integration tests: 14 passed.
+- Package TypeScript build passed.
+- Full repository run: 303 passed, 1 skipped; two unrelated bootstrap-runner
+  process-timeout tests exceeded their existing five-second test limit.
 
 ## Out of scope
 
