@@ -123,6 +123,9 @@ importers:
       '@company/ces-semantic-record-schema':
         specifier: workspace:*
         version: link:../../packages/semantic-record-schema
+      '@company/ces-source-unit-schema':
+        specifier: workspace:*
+        version: link:../../packages/source-unit-schema
       '@company/ces-test-fixture-adapter':
         specifier: workspace:*
         version: link:../../adapters/test-fixture

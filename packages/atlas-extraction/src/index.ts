@@ -2,6 +2,7 @@ import {
   AtlasProviderRequestSchema,
   runAtlasProvider,
   type AtlasAgentProvider,
+  type AtlasProviderRequest,
   type AtlasProviderResult,
 } from "@company/ces-agent-provider-sdk";
 import {
@@ -22,6 +23,7 @@ export interface AtlasAnalysisInput {
   readonly projectIntent: ProjectIntent;
   readonly provider: AtlasAgentProvider;
   readonly promptContractVersion: string;
+  readonly extractionFocus?: AtlasProviderRequest["extraction_focus"];
 }
 
 export interface AtlasExtractionReport {
@@ -57,6 +59,7 @@ export async function analyzeAtlasCandidates(
       content: document.content,
     })),
     project_intent: projectIntent,
+    ...(input.extractionFocus ? { extraction_focus: input.extractionFocus } : {}),
   });
   const analysis = normalizeAnalysis(
     await runAtlasProvider(input.provider, request),

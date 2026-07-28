@@ -25,6 +25,22 @@ export const AtlasProviderRequestSchema = z
     prompt_contract_version: NonEmptyString,
     source_documents: z.array(ProviderSourceDocumentSchema).min(1),
     project_intent: ProjectIntentSchema,
+    extraction_focus: z.object({
+      mode: z.enum([
+        "broad_discovery",
+        "rules_validations_permissions",
+        "calculations_states_workflows",
+        "reporting_audit_data",
+        "acceptance_deliverables_terminology",
+        "targeted_retry",
+      ]),
+      instructions: NonEmptyString,
+      target_line_ranges: z.array(z.object({
+        document_id: NonEmptyString,
+        line_start: z.number().int().positive(),
+        line_end: z.number().int().positive(),
+      }).strict()).default([]),
+    }).strict().optional(),
   })
   .strict();
 

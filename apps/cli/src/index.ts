@@ -78,6 +78,7 @@ import {
   createSemanticKindRegistry,
   SemanticCollectionSchema,
 } from "@company/ces-semantic-record-schema";
+import { buildSourceArtifacts } from "@company/ces-source-unit-schema";
 import { z, ZodError } from "zod";
 
 export const CLI_PACKAGE_ID = "@company/ces-cli";
@@ -641,11 +642,8 @@ async function runAtlasExtraction(
   } else {
     throw new CliInputError("Atlas PRD input must use .md or .pdf");
   }
-  const extracted = await analyzeAtlasCandidates({
-    documents,
-    projectIntent,
-    provider,
-    promptContractVersion,
+  const extracted = await analyzeHardenedAtlasCandidates({
+    documents, projectIntent, provider, promptContractVersion,
   });
   const analysisRevisionHash = hashCanonical(extracted.analysis);
   const reviewInput = AtlasReviewInputFileSchema.parse({
@@ -670,6 +668,7 @@ async function runAtlasExtraction(
     : [];
   const proposedArtifacts = buildProposedAtlasArtifacts({
     analysis: extracted.analysis,
+    documents,
     projectIntent,
     sourceHashes: extracted.extraction_report.source_hashes,
     promptContractVersion,
@@ -717,8 +716,198 @@ async function runAtlasExtraction(
   return 7;
 }
 
+async function analyzeHardenedAtlasCandidates(
+  input: Parameters<typeof analyzeAtlasCandidates>[0],
+): Promise<Awaited<ReturnType<typeof analyzeAtlasCandidates>>> {
+  const focuses = [
+    {
+      mode: "broad_discovery" as const,
+      instructions: "Extract every material functional requirement and independently testable rule across every section.",
+    },
+    {
+      mode: "rules_validations_permissions" as const,
+      instructions: "Extract all business rules, validations, uniqueness constraints, permissions, prohibitions, ownership, security, retention, and consistency requirements.",
+    },
+    {
+      mode: "calculations_states_workflows" as const,
+      instructions: "Extract all calculations, derived values, states, transitions, lifecycle conditions, workflow steps, branches, approvals, readiness criteria, and finalization rules.",
+    },
+    {
+      mode: "reporting_audit_data" as const,
+      instructions: "Extract all reporting, export, dashboard, audit-history, traceability, data-field, document, notification, and acceptance requirements.",
+    },
+    {
+      mode: "acceptance_deliverables_terminology" as const,
+      instructions: "Extract every deliverable, acceptance criterion, acceptance scenario, business objective, named role, defined term, handover obligation, warranty, training, access, and documentation requirement.",
+    },
+  ];
+  const passes: Awaited<ReturnType<typeof analyzeAtlasCandidates>>[] = [];
+  for (let index = 0; index < focuses.length; index += 2) {
+    passes.push(...await Promise.all(focuses.slice(index, index + 2).map((focus) =>
+      analyzeAtlasCandidates({
+        ...input,
+        extractionFocus: { ...focus, target_line_ranges: [] },
+      }))));
+  }
+  const citedRanges = passes.flatMap(({ analysis }) => [
+    ...analysis.candidate_requirements,
+    ...analysis.candidate_business_rules,
+  ]).flatMap(({ source }) =>
+    source.line_start === undefined || source.line_end === undefined
+      ? [] : [{
+        document_id: source.document_id,
+        line_start: source.line_start,
+        line_end: source.line_end,
+      }]);
+  const retryRanges = input.documents.flatMap((document) => {
+    const artifacts = buildSourceArtifacts({
+      document_id: stableId(document.document_id),
+      path: document.path,
+      content: document.content,
+      paragraph_mode: document.path.toLowerCase().endsWith(".pdf.md") ? "line" : "contiguous",
+    });
+    return artifacts.source_units
+      .filter((unit) => unit.kind !== "heading")
+      .filter((unit) => !citedRanges.some((range) =>
+        range.document_id === document.document_id
+        && range.line_start <= unit.location.line_end
+        && range.line_end >= unit.location.line_start))
+      .map((unit) => ({
+        document_id: document.document_id,
+        line_start: unit.location.line_start,
+        line_end: unit.location.line_end,
+      }));
+  });
+  if (retryRanges.length > 0) {
+    passes.push(await analyzeAtlasCandidates({
+      ...input,
+      extractionFocus: {
+        mode: "targeted_retry",
+        instructions: "Reinspect only the listed uncovered source ranges. Extract every material statement not represented by the earlier passes, including objectives, roles, terminology, small constraints, and acceptance obligations.",
+        target_line_ranges: retryRanges,
+      },
+    }));
+  }
+  const first = passes[0]!;
+  const requirementKeys = new Map<string, typeof first.analysis.candidate_requirements[number]>();
+  const proposedRequirementIds = new Set<string>();
+  const usedRequirementCandidateIds = new Set<string>();
+  const requirementMaps: Map<string, string>[] = [];
+  for (const pass of passes) {
+    const references = new Map<string, string>();
+    for (const candidate of pass.analysis.candidate_requirements) {
+      const key = semanticCandidateKey(candidate.title, candidate.source);
+      let stored = requirementKeys.get(key);
+      if (!stored) {
+        const sequence = requirementKeys.size + 1;
+        stored = {
+          ...candidate,
+          candidate_id: usedRequirementCandidateIds.has(candidate.candidate_id)
+            ? `REQ-CAND-${String(sequence).padStart(3, "0")}`
+            : candidate.candidate_id,
+          proposed_logical_id: proposedRequirementIds.has(candidate.proposed_logical_id)
+            ? `REQ-HARD-${String(sequence).padStart(3, "0")}`
+            : candidate.proposed_logical_id,
+        };
+        usedRequirementCandidateIds.add(stored.candidate_id);
+        proposedRequirementIds.add(stored.proposed_logical_id);
+        requirementKeys.set(key, stored);
+      }
+      references.set(candidate.candidate_id, stored.candidate_id);
+      references.set(candidate.proposed_logical_id, stored.candidate_id);
+    }
+    requirementMaps.push(references);
+  }
+  const ruleKeys = new Map<string, typeof first.analysis.candidate_business_rules[number]>();
+  const usedRuleCandidateIds = new Set<string>();
+  passes.forEach((pass, passIndex) => {
+    for (const candidate of pass.analysis.candidate_business_rules) {
+      const key = semanticCandidateKey(candidate.statement, candidate.source);
+      if (ruleKeys.has(key)) continue;
+      const sequence = ruleKeys.size + 1;
+      const mappedRequirements = candidate.source_requirement_ids
+        .map((id) => requirementMaps[passIndex]!.get(id))
+        .filter((id): id is string => id !== undefined);
+      if (mappedRequirements.length === 0) continue;
+      ruleKeys.set(key, {
+        ...candidate,
+        candidate_id: usedRuleCandidateIds.has(candidate.candidate_id)
+          ? `BR-CAND-${String(sequence).padStart(3, "0")}`
+          : candidate.candidate_id,
+        proposed_logical_id: `RULE-HARD-${String(sequence).padStart(3, "0")}`,
+        source_requirement_ids: [...new Set(mappedRequirements)].sort(compareText),
+      });
+      usedRuleCandidateIds.add(ruleKeys.get(key)!.candidate_id);
+    }
+  });
+  const requirements = [...requirementKeys.values()];
+  const requirementIds = new Set(requirements.map(({ candidate_id }) => candidate_id));
+  const remapAffected = (ids: readonly string[], passIndex: number) =>
+    [...new Set(ids.map((id) => requirementMaps[passIndex]!.get(id))
+      .filter((id): id is string => id !== undefined && requirementIds.has(id)))].sort(compareText);
+  const uncertainties = passes.flatMap((pass, passIndex) =>
+    pass.analysis.uncertainties.map((item) => ({
+      ...item,
+      id: `UNC-${String(passIndex + 1)}-${stableId(item.id)}`,
+      affected_requirement_ids: remapAffected(item.affected_requirement_ids, passIndex),
+    })));
+  const conflicts = passes.flatMap((pass, passIndex) =>
+    pass.analysis.conflicts.flatMap((item) => {
+      const ids = remapAffected(item.source_requirement_ids, passIndex);
+      return ids.length < 2 ? [] : [{
+        ...item,
+        id: `CONFLICT-${String(passIndex + 1)}-${stableId(item.id)}`,
+        source_requirement_ids: ids,
+      }];
+    }));
+  const questions = passes.flatMap((pass, passIndex) =>
+    pass.analysis.clarification_questions.map((item) => ({
+      ...item,
+      id: `QUESTION-${String(passIndex + 1)}-${stableId(item.id)}`,
+      affected_requirement_ids: remapAffected(item.affected_requirement_ids, passIndex),
+    })));
+  return {
+    ...first,
+    analysis: AtlasProviderResultSchema.parse({
+      schema_version: "1.0.0",
+      candidate_requirements: requirements,
+      candidate_business_rules: [...ruleKeys.values()],
+      uncertainties: uniqueBy(uncertainties, ({ reason }) => reason),
+      conflicts: uniqueBy(conflicts, ({ statement }) => statement),
+      clarification_questions: uniqueBy(questions, ({ question }) => question),
+    }),
+  };
+}
+
+function semanticCandidateKey(
+  statement: string,
+  source: {
+    document_id: string;
+    line_start?: number | undefined;
+    line_end?: number | undefined;
+  },
+): string {
+  return [
+    statement.trim().toLocaleLowerCase(),
+    source.document_id,
+    source.line_start ?? "",
+    source.line_end ?? "",
+  ].join("\u0000");
+}
+
+function uniqueBy<T>(values: readonly T[], identify: (value: T) => string): T[] {
+  const seen = new Set<string>();
+  return values.filter((value) => {
+    const id = identify(value).trim().toLocaleLowerCase();
+    if (seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+}
+
 function buildProposedAtlasArtifacts(input: {
   readonly analysis: z.infer<typeof AtlasProviderResultSchema>;
+  readonly documents: readonly { document_id: string; path: string; content: string }[];
   readonly projectIntent: z.infer<typeof ProjectIntentSchema>;
   readonly sourceHashes: readonly { document_id: string; content_hash: string }[];
   readonly promptContractVersion: string;
@@ -730,6 +919,17 @@ function buildProposedAtlasArtifacts(input: {
   const requirements = input.analysis.candidate_requirements;
   const rules = input.analysis.candidate_business_rules;
   const legacyCandidates = [...requirements, ...rules];
+  const sourceArtifacts = input.documents.map((document) => buildSourceArtifacts({
+    document_id: stableId(document.document_id),
+    path: document.path,
+    content: document.content,
+    paragraph_mode: document.path.toLowerCase().endsWith(".pdf.md") ? "line" : "contiguous",
+  }));
+  const units = sourceArtifacts.flatMap(({ source_units }) => source_units);
+  const artifactsByDocument = new Map(input.documents.map((document, index) => [
+    document.document_id,
+    sourceArtifacts[index]!,
+  ]));
   const candidateIds = new Map(legacyCandidates.map((candidate) => [
     candidate.candidate_id,
     `${projectId}.candidate.${stableId(candidate.candidate_id)}`,
@@ -742,10 +942,22 @@ function buildProposedAtlasArtifacts(input: {
     candidate.candidate_id,
     `${projectId}.${"title" in candidate ? "workflow" : "rule"}.${stableId(candidate.candidate_id)}`,
   ]));
-  const sourceUnitIds = new Map(legacyCandidates.map((candidate, index) => [
-    candidate.candidate_id,
-    `${projectId}.unit.${String(index + 1).padStart(5, "0")}.${candidate.source.content_hash.slice(7, 15)}`,
-  ]));
+  const sourceUnitIds = new Map(legacyCandidates.map((candidate) => {
+    const artifacts = artifactsByDocument.get(candidate.source.document_id);
+    const overlapping = artifacts?.source_units.filter((unit) =>
+      candidate.source.line_start !== undefined
+      && candidate.source.line_end !== undefined
+      && unit.location.line_start <= candidate.source.line_end
+      && unit.location.line_end >= candidate.source.line_start) ?? [];
+    const sectionMatches = overlapping.length === 0 && candidate.source.section
+      ? artifacts?.source_units.filter((unit) =>
+        unit.section_path.includes(candidate.source.section!)) ?? []
+      : [];
+    const selected = overlapping.length > 0 ? overlapping
+      : sectionMatches.length > 0 ? sectionMatches
+        : artifacts?.source_units.slice(0, 1) ?? [];
+    return [candidate.candidate_id, selected.map(({ id }) => id)] as const;
+  }));
   const kindFor = (candidate: typeof legacyCandidates[number]): string => {
     if ("title" in candidate) return "ces.kind.workflow";
     return ({
@@ -765,7 +977,7 @@ function buildProposedAtlasArtifacts(input: {
     candidate_id: candidateIds.get(candidate.candidate_id)!,
     statement: statementFor(candidate),
     provisional_kind: kindFor(candidate),
-    source_unit_ids: [sourceUnitIds.get(candidate.candidate_id)!],
+    source_unit_ids: sourceUnitIds.get(candidate.candidate_id)!,
     confidence: candidate.inference.confidence,
     extraction_role: "atlas.section-extractor",
     classification_status: "classified" as const,
@@ -784,7 +996,7 @@ function buildProposedAtlasArtifacts(input: {
     semantic_kind_registry_id: registry.id,
     semantic_kind_registry_hash: registry.content_hash,
     prompt_contract_version: input.promptContractVersion,
-    allowed_source_unit_ids: [...sourceUnitIds.values()],
+    allowed_source_unit_ids: units.map(({ id }) => id),
     candidates: inventoryCandidates,
   });
   const issueCodes = (candidateId: string) => {
@@ -804,7 +1016,7 @@ function buildProposedAtlasArtifacts(input: {
       candidate_ids: [candidateIds.get(candidate.candidate_id)!],
       semantic_kind_id: kindFor(candidate),
       statement: statementFor(candidate),
-      source_unit_ids: [sourceUnitIds.get(candidate.candidate_id)!],
+      source_unit_ids: sourceUnitIds.get(candidate.candidate_id)!,
       classification_status: "classified" as const,
       origin: derived ? "derived" as const : "explicit" as const,
       review_status: "pending" as const,
@@ -822,7 +1034,7 @@ function buildProposedAtlasArtifacts(input: {
     id: nodeIds.get(candidate.candidate_id)!,
     label: statementFor(candidate),
     semantic_record_ids: [recordIds.get(candidate.candidate_id)!],
-    source_unit_ids: [sourceUnitIds.get(candidate.candidate_id)!],
+    source_unit_ids: sourceUnitIds.get(candidate.candidate_id)!,
   }));
   const requirementByReference = new Map(requirements.flatMap((candidate) => [
     [candidate.proposed_logical_id, candidate] as const,
@@ -837,38 +1049,66 @@ function buildProposedAtlasArtifacts(input: {
         from_id: nodeIds.get(rule.candidate_id)!,
         to_id: nodeIds.get(requirement.candidate_id)!,
         kind: "ces.relationship.constrains",
-        source_unit_ids: [sourceUnitIds.get(rule.candidate_id)!],
+        source_unit_ids: sourceUnitIds.get(rule.candidate_id)!,
       }];
     }));
   const coverage = calculatePipelineCoverage({
     source_revision_id: sourceRevisionId,
     semantic_kind_registry_id: registry.id,
-    source_unit_ids: [...sourceUnitIds.values()],
+    source_unit_ids: units.map(({ id }) => id),
     candidate_sources: Object.fromEntries(legacyCandidates.map((candidate) => [
       candidateIds.get(candidate.candidate_id)!,
-      [sourceUnitIds.get(candidate.candidate_id)!],
+      sourceUnitIds.get(candidate.candidate_id)!,
     ])),
     normalized_record_ids: [...recordIds.values()],
     workflow_node_ids: [...nodeIds.values()],
     graph_node_ids: [...nodeIds.values()],
-    source_coverage: legacyCandidates.map((candidate) => ({
-      source_unit_id: sourceUnitIds.get(candidate.candidate_id)!,
-      normative: true,
-      current_stage: "projected" as const,
-      candidate_ids: [candidateIds.get(candidate.candidate_id)!],
-      normalized_record_ids: [recordIds.get(candidate.candidate_id)!],
-      workflow_node_ids: [nodeIds.get(candidate.candidate_id)!],
-      graph_node_ids: [nodeIds.get(candidate.candidate_id)!],
-      stage_history: [{ stage: "projected" as const, status: "included" as const }],
-    })),
+    source_coverage: units.map((unit) => {
+      const linked = legacyCandidates.filter((candidate) =>
+        sourceUnitIds.get(candidate.candidate_id)!.includes(unit.id));
+      const normative = unit.kind !== "heading";
+      const covered = linked.length > 0;
+      return {
+        source_unit_id: unit.id,
+        normative,
+        current_stage: !normative ? "non_normative" as const
+          : covered ? "projected" as const : "unmapped" as const,
+        candidate_ids: linked.map((candidate) => candidateIds.get(candidate.candidate_id)!),
+        normalized_record_ids: linked.map((candidate) => recordIds.get(candidate.candidate_id)!),
+        workflow_node_ids: linked.map((candidate) => nodeIds.get(candidate.candidate_id)!),
+        graph_node_ids: linked.map((candidate) => nodeIds.get(candidate.candidate_id)!),
+        ...(!normative ? { reason: "Mechanical heading unit; content retained as context." } : {}),
+        stage_history: [{
+          stage: !normative ? "non_normative" as const
+            : covered ? "projected" as const : "unmapped" as const,
+          status: covered || !normative ? "included" as const : "lost" as const,
+        }],
+      };
+    }),
     record_coverage: legacyCandidates.map((candidate) => ({
       record_id: recordIds.get(candidate.candidate_id)!,
       semantic_kind_id: kindFor(candidate),
       candidate_ids: [candidateIds.get(candidate.candidate_id)!],
-      source_unit_ids: [sourceUnitIds.get(candidate.candidate_id)!],
+      source_unit_ids: sourceUnitIds.get(candidate.candidate_id)!,
     })),
   });
-  const findings = createCompletenessCriticReport({ coverage, findings: [] });
+  const uncoveredUnits = coverage.source_coverage.filter(({ normative, current_stage }) =>
+    normative && current_stage === "unmapped");
+  const findings = createCompletenessCriticReport({
+    coverage,
+    findings: uncoveredUnits.map((unit) => ({
+      finding_type: "uncovered_normative_source" as const,
+      pipeline_stage: "unmapped" as const,
+      source_unit_ids: [unit.source_unit_id],
+      candidate_ids: [],
+      record_ids: [],
+      semantic_kind_ids: [],
+      severity: "blocking" as const,
+      statement: "Normative source unit has no extracted candidate.",
+      recommended_action: "targeted_retry" as const,
+      resolution_history: [],
+    })),
+  });
   const blockers = [
     ...input.analysis.uncertainties.map(({ id }) => `uncertainty-${stableId(id)}`),
     ...input.analysis.conflicts.map(({ id }) => `conflict-${stableId(id)}`),
@@ -884,10 +1124,10 @@ function buildProposedAtlasArtifacts(input: {
     records,
     workflow_nodes: workflowNodes,
     relationships,
-    source_documents: input.sourceHashes.map((source) => ({
-      document_id: stableId(source.document_id),
-      document_version: source.content_hash,
-      content_hash: source.content_hash,
+    source_documents: sourceArtifacts.map(({ document_revision }) => ({
+      document_id: document_revision.document_id,
+      document_version: document_revision.revision_hash,
+      content_hash: document_revision.content_hash,
     })),
     source_coverage: coverage,
     extraction_findings: findings,
@@ -899,6 +1139,9 @@ function buildProposedAtlasArtifacts(input: {
   });
   const graph = projectProposedWorkflowGraph(model);
   return {
+    "source-units.json": collectionCanonicalJson(units),
+    "source-coverage.json": collectionCanonicalJson(coverage),
+    "extraction-findings.json": collectionCanonicalJson(findings),
     "proposed-project-model.json": collectionCanonicalJson(model),
     "proposed-system-intent-graph.json": renderWorkflowGraphJson(graph),
     "proposed-system-intent-graph.md": renderWorkflowGraphMarkdown(graph),
@@ -1127,6 +1370,9 @@ async function retainedPendingArtifacts(
     "proposed-system-intent-graph.json",
     "proposed-system-intent-graph.md",
     "proposed-system-intent-graph.mmd",
+    "source-units.json",
+    "source-coverage.json",
+    "extraction-findings.json",
     "pdf-ingestion.json",
     "primary-business-rule-coverage.json",
   ]) {

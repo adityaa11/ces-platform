@@ -30,6 +30,7 @@
     "@company/ces-requirement-collection-schema": "workspace:*",
     "@company/ces-requirement-schema": "workspace:*",
     "@company/ces-semantic-record-schema": "workspace:*",
+    "@company/ces-source-unit-schema": "workspace:*",
     "@company/ces-test-fixture-adapter": "workspace:*",
     "@company/ces-verification-engine": "workspace:*",
     "zod": "4.4.3"

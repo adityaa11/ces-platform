@@ -80,6 +80,7 @@ export interface SourceDocumentInput {
   readonly path: string;
   readonly content: string;
   readonly original_content_hash?: string;
+  readonly paragraph_mode?: "contiguous" | "line";
   readonly parser?: {
     readonly id: string;
     readonly version: string;
@@ -141,7 +142,9 @@ export function buildSourceArtifacts(input: SourceDocumentInput): SourceArtifact
     id: Id.parse(input.parser?.id ?? "source-unit-mechanical"),
     version: Text.parse(input.parser?.version ?? "1.0.0"),
     configuration_hash: Hash.parse(
-      input.parser?.configuration_hash ?? sha256("default"),
+      input.parser?.configuration_hash ?? sha256(stableJson({
+        paragraph_mode: input.paragraph_mode ?? "contiguous",
+      })),
     ),
   };
   const revisionHash = sha256(stableJson({
@@ -150,7 +153,7 @@ export function buildSourceArtifacts(input: SourceDocumentInput): SourceArtifact
     parser,
   }));
   const revisionId = `${documentId}.rev.${revisionHash.slice(7, 19)}`;
-  const blocks = mechanicalBlocks(content);
+  const blocks = mechanicalBlocks(content, input.paragraph_mode ?? "contiguous");
   if (blocks.length === 0) throw new Error("Document segmentation produced no source units");
   const sourceSpans = parseSourceSpans(input.source_spans ?? [], content.split("\n").length);
 
@@ -308,7 +311,10 @@ function provenanceFor(block: Block, spans: readonly SourceSpan[]): {
   };
 }
 
-function mechanicalBlocks(content: string): Block[] {
+function mechanicalBlocks(
+  content: string,
+  paragraphMode: "contiguous" | "line",
+): Block[] {
   const lines = content.split("\n");
   const blocks: Block[] = [];
   let page: number | undefined;
@@ -359,6 +365,7 @@ function mechanicalBlocks(content: string): Block[] {
       paragraph ??= { lines: [], exactLines: [], start: lineNumber };
       paragraph.lines.push(line);
       paragraph.exactLines.push(raw);
+      if (paragraphMode === "line") flush(lineNumber);
     }
   });
   flush(lines.length);
