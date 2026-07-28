@@ -3,6 +3,7 @@ import { z } from "zod";
 
 export const ATLAS_ROLE_CONTRACT_VERSION = "1.0.0" as const;
 export const ATLAS_CANDIDATE_CONTRACT_VERSION = "1.0.0" as const;
+export const ATLAS_SECTION_CLASSIFIER_CONTRACT_VERSION = "1.0.0" as const;
 export const ATLAS_ROLE_IDS = [
   "atlas.structure-classifier",
   "atlas.domain-discovery",
@@ -208,6 +209,145 @@ export const BoundedSourceUnitSchema = z.object({
   text: Text,
   content_hash: Hash,
 }).strict();
+
+export const SectionPurposeDefinitionSchema = z.object({
+  purpose_id: Id,
+  description: Text,
+  registered_by: z.enum(["ces", "organization"]),
+}).strict();
+
+export const SectionPurposeRegistrySchema = z.object({
+  contract_version: z.literal(ATLAS_SECTION_CLASSIFIER_CONTRACT_VERSION),
+  id: Id,
+  organization_id: Id.optional(),
+  purposes: z.array(SectionPurposeDefinitionSchema).min(1),
+  content_hash: Hash,
+}).strict();
+
+const BUILT_IN_SECTION_PURPOSES = [
+  ["ces.section.normative-rules", "Business rules, constraints, and validations."],
+  ["ces.section.workflows", "Processes, scenarios, steps, branches, and approvals."],
+  ["ces.section.roles-permissions", "Actors, ownership, permissions, and prohibitions."],
+  ["ces.section.calculations", "Formulas, derived values, thresholds, and rounding."],
+  ["ces.section.states-lifecycle", "States, transitions, readiness, and finalization."],
+  ["ces.section.reporting-audit", "Reports, exports, dashboards, audit, and traceability."],
+  ["ces.section.data", "Entities, fields, documents, retention, and data constraints."],
+  ["ces.section.acceptance-deliverables", "Acceptance criteria, deliverables, and handover."],
+  ["ces.section.terminology", "Definitions, vocabulary, aliases, and abbreviations."],
+  ["ces.section.context", "Objectives, background, scope, and non-normative context."],
+  ["ces.section.unknown", "Purpose cannot be classified reliably from the content."],
+] as const;
+
+export function createSectionPurposeRegistry(input: {
+  readonly organization_id?: string;
+  readonly organization_purposes?: readonly z.input<typeof SectionPurposeDefinitionSchema>[];
+} = {}): z.infer<typeof SectionPurposeRegistrySchema> {
+  const organizationId = input.organization_id ? Id.parse(input.organization_id) : undefined;
+  const extensions = (input.organization_purposes ?? [])
+    .map((item) => SectionPurposeDefinitionSchema.parse(item));
+  if (extensions.length > 0 && !organizationId) {
+    throw new Error("Organization section purposes require organization_id");
+  }
+  if (extensions.some(({ registered_by }) => registered_by !== "organization")) {
+    throw new Error("Organization section purposes must be registered_by organization");
+  }
+  const purposes = [
+    ...BUILT_IN_SECTION_PURPOSES.map(([purpose_id, description]) =>
+      SectionPurposeDefinitionSchema.parse({
+        purpose_id, description, registered_by: "ces",
+      })),
+    ...extensions,
+  ].sort((left, right) => compare(left.purpose_id, right.purpose_id));
+  assertUnique(purposes.map(({ purpose_id }) => purpose_id), "section purpose");
+  const core = {
+    contract_version: ATLAS_SECTION_CLASSIFIER_CONTRACT_VERSION,
+    ...(organizationId ? { organization_id: organizationId } : {}),
+    purposes,
+  };
+  const contentHash = hash(canonicalJson(core));
+  return deepFreeze(SectionPurposeRegistrySchema.parse({
+    ...core,
+    id: `${organizationId ?? "ces"}.section-purposes.${contentHash.slice(7, 19)}`,
+    content_hash: contentHash,
+  }));
+}
+
+export const SectionPurposeClassificationSchema = z.object({
+  source_unit_id: Id,
+  purpose_ids: z.array(Id).min(1),
+  confidence: z.number().min(0).max(1),
+  status: z.enum(["classified", "ambiguous", "unknown"]),
+  rationale: Text,
+}).strict();
+
+export const SectionClassifierInputSchema = z.object({
+  contract_version: z.literal(ATLAS_SECTION_CLASSIFIER_CONTRACT_VERSION),
+  revisions: AtlasRevisionTupleSchema,
+  purpose_registry: SectionPurposeRegistrySchema,
+  source_units: z.array(BoundedSourceUnitSchema).min(1),
+}).strict();
+
+export const SectionClassifierOutputSchema = z.object({
+  contract_version: z.literal(ATLAS_SECTION_CLASSIFIER_CONTRACT_VERSION),
+  revisions: AtlasRevisionTupleSchema,
+  purpose_registry_id: Id,
+  classifier: z.object({
+    agent_id: Id,
+    agent_version: Text,
+    provider_id: Id,
+    model_id: Text,
+  }).strict(),
+  classifications: z.array(SectionPurposeClassificationSchema).min(1),
+  content_hash: Hash,
+}).strict();
+
+export function finalizeSectionClassifications(inputValue: unknown, values: unknown, execution: {
+  readonly agent_id?: string;
+  readonly agent_version?: string;
+  readonly provider_id?: string;
+  readonly model_id?: string;
+} = {}):
+z.infer<typeof SectionClassifierOutputSchema> {
+  const input = SectionClassifierInputSchema.parse(inputValue);
+  const classifications = z.array(SectionPurposeClassificationSchema).parse(values)
+    .map((classification) => ({
+      ...classification,
+      purpose_ids: [...classification.purpose_ids].sort(compare),
+    }))
+    .sort((left, right) => compare(left.source_unit_id, right.source_unit_id));
+  assertUnique(classifications.map(({ source_unit_id }) => source_unit_id), "section classification");
+  const expected = new Set(input.source_units.map(({ id }) => id));
+  const registered = new Set(input.purpose_registry.purposes.map(({ purpose_id }) => purpose_id));
+  for (const classification of classifications) {
+    if (!expected.delete(classification.source_unit_id)) {
+      throw new Error(`Classification references unknown source unit: ${classification.source_unit_id}`);
+    }
+    const invalid = classification.purpose_ids.find((id) => !registered.has(id));
+    if (invalid) throw new Error(`Classification references unknown purpose: ${invalid}`);
+    const usesUnknown = classification.purpose_ids.includes("ces.section.unknown");
+    if ((classification.status === "unknown") !== usesUnknown) {
+      throw new Error(`Unknown classification status mismatch: ${classification.source_unit_id}`);
+    }
+  }
+  if (expected.size > 0) {
+    throw new Error(`Missing source-unit classification: ${[...expected].sort(compare)[0]}`);
+  }
+  const core = {
+    contract_version: ATLAS_SECTION_CLASSIFIER_CONTRACT_VERSION,
+    revisions: input.revisions,
+    purpose_registry_id: input.purpose_registry.id,
+    classifier: {
+      agent_id: Id.parse(execution.agent_id ?? "atlas.structure-classifier"),
+      agent_version: Text.parse(execution.agent_version ?? "1.0.0"),
+      provider_id: Id.parse(execution.provider_id ?? "fixture"),
+      model_id: Text.parse(execution.model_id ?? "deterministic-fixture"),
+    },
+    classifications,
+  };
+  return deepFreeze(SectionClassifierOutputSchema.parse({
+    ...core, content_hash: hash(canonicalJson(core)),
+  }));
+}
 
 export const AtlasRoleInputSchema = z.object({
   contract_version: z.literal(ATLAS_ROLE_CONTRACT_VERSION),

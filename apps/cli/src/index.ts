@@ -20,7 +20,12 @@ import {
   CoverageReportSchema,
   createCompletenessCriticReport,
 } from "@company/ces-atlas-coverage";
-import { createAtlasCandidateInventory } from "@company/ces-atlas-role-contracts";
+import {
+  createAtlasCandidateInventory,
+  createSectionPurposeRegistry,
+  finalizeSectionClassifications,
+  SectionClassifierOutputSchema,
+} from "@company/ces-atlas-role-contracts";
 import {
   AtlasQualityEvidenceInputSchema,
   calculateAtlasQualityEvidence,
@@ -642,6 +647,9 @@ async function runAtlasExtraction(
   } else {
     throw new CliInputError("Atlas PRD input must use .md or .pdf");
   }
+  const sectionClassification = await classifyAtlasSections({
+    options, documents, projectIntent, promptContractVersion,
+  });
   const extracted = await analyzeHardenedAtlasCandidates({
     documents, projectIntent, provider, promptContractVersion,
   });
@@ -659,13 +667,6 @@ async function runAtlasExtraction(
     })).sort((left, right) => compareText(left.candidate_id, right.candidate_id)),
     clarification_questions: extracted.analysis.clarification_questions,
   });
-  const primaryRuleCoverage = primaryBusinessRuleCoverage(
-    documents[0]?.content ?? "",
-    extracted.analysis.candidate_business_rules,
-  );
-  const incompletePrimaryRules = primaryRuleCoverage
-    ? primaryRuleCoverage.rules.filter(({ candidate_ids }) => candidate_ids.length === 0)
-    : [];
   const proposedArtifacts = buildProposedAtlasArtifacts({
     analysis: extracted.analysis,
     documents,
@@ -676,21 +677,22 @@ async function runAtlasExtraction(
   });
   const manifest = {
     schema_version: "1.0.0",
-    status: incompletePrimaryRules.length > 0
-      ? "incomplete_coverage"
-      : "awaiting_human_review",
+    status: "awaiting_human_review",
     tool: CLI_PACKAGE_ID,
     prompt_contract_version: promptContractVersion,
     provider: provider.metadata,
     project_intent_hash: hashCanonical(projectIntent),
     analysis_revision_hash: analysisRevisionHash,
     source_hashes: extracted.extraction_report.source_hashes,
-    ...(primaryRuleCoverage ? {
-      primary_business_rule_coverage_hash: hashCanonical(primaryRuleCoverage),
-    } : {}),
   };
   const artifacts: Record<string, string> = {
     ...proposedArtifacts,
+    "section-purpose-registry.json":
+      collectionCanonicalJson(sectionClassification.registry),
+    "section-classifications.json":
+      collectionCanonicalJson(sectionClassification.output),
+    "document-structure.json":
+      collectionCanonicalJson(sectionClassification.documentStructures),
     "run-manifest.json": collectionCanonicalJson({
       ...manifest,
       run_revision_hash: hashCanonical(manifest),
@@ -703,17 +705,87 @@ async function runAtlasExtraction(
     "review-input.json": collectionCanonicalJson(reviewInput),
   };
   if (pdfArtifact) artifacts["pdf-ingestion.json"] = pdfArtifact;
-  if (primaryRuleCoverage) {
-    artifacts["primary-business-rule-coverage.json"] =
-      collectionCanonicalJson(primaryRuleCoverage);
-  }
   await publishAtlasArtifacts(outputDirectory, artifacts);
-  if (incompletePrimaryRules.length > 0) {
-    io.stdout(`Atlas coverage artifacts written to ${outputDirectory}; ${incompletePrimaryRules.length} primary business rules are uncovered\n`);
-    return 8;
-  }
   io.stdout(`Atlas review artifacts written to ${outputDirectory}\n`);
   return 7;
+}
+
+async function classifyAtlasSections(input: {
+  readonly options: Readonly<Record<string, string>>;
+  readonly documents: readonly { document_id: string; path: string; content: string }[];
+  readonly projectIntent: z.infer<typeof ProjectIntentSchema>;
+  readonly promptContractVersion: string;
+}) {
+  const registry = createSectionPurposeRegistry();
+  const sourceArtifacts = input.documents.map((document) => buildSourceArtifacts({
+    document_id: stableId(document.document_id),
+    path: document.path,
+    content: document.content,
+    paragraph_mode: document.path.toLowerCase().endsWith(".pdf") ? "line" : "contiguous",
+  }));
+  const units = sourceArtifacts.flatMap(({ source_units }) => source_units).map((unit) => ({
+    id: unit.id,
+    order: unit.order,
+    section_path: unit.section_path,
+    kind: unit.kind,
+    text: unit.text,
+    content_hash: unit.content_hash,
+  }));
+  const sourceHash = hashCanonical(input.documents.map(({ document_id, content }) => ({
+    document_id, content_hash: sourceContentHash(content),
+  })));
+  const projectId = stableId(input.projectIntent.project.id);
+  const classifierInput = {
+    contract_version: "1.0.0" as const,
+    revisions: {
+      source_revision_id: `${projectId}.rev.${sourceHash.slice(7, 19)}`,
+      source_content_hash: sourceHash,
+      lexicon_revision_id: `${projectId}.lexicon.default`,
+      lexicon_content_hash: hashCanonical({ state: "default" }),
+      lexicon_state: "candidate_pinned" as const,
+      semantic_schema_version: "1.0.0",
+      prompt_contract_version: input.promptContractVersion,
+    },
+    purpose_registry: registry,
+    source_units: units,
+  };
+  if (input.options["provider-result"]) {
+    return {
+      registry,
+      documentStructures: sourceArtifacts.map(({ document_structure }) => document_structure),
+      output: finalizeSectionClassifications(classifierInput, units.map((unit) => ({
+        source_unit_id: unit.id,
+        purpose_ids: ["ces.section.unknown"],
+        confidence: 0,
+        status: "unknown",
+        rationale: "Provider fixture supplied no structure-classifier result.",
+      }))),
+    };
+  }
+  const configuredEndpoint = requireOption(input.options, "provider-endpoint");
+  const endpoint = new URL(configuredEndpoint);
+  endpoint.pathname = "/v1/agents/atlas.structure-classifier/execute";
+  endpoint.search = "";
+  const apiKey = process.env.CES_ATLAS_API_KEY ?? process.env.AGENTS_BRIDGE_API_KEY;
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      ...(apiKey ? { authorization: `Bearer ${apiKey}` } : {}),
+    },
+    body: JSON.stringify({
+      agent_version: "1.0.0",
+      input: classifierInput,
+    }),
+  });
+  if (!response.ok) {
+    throw new CliInputError(`Atlas structure classifier failed with status ${response.status}`);
+  }
+  return {
+    registry,
+    documentStructures: sourceArtifacts.map(({ document_structure }) => document_structure),
+    output: SectionClassifierOutputSchema.parse(await response.json()),
+  };
 }
 
 async function analyzeHardenedAtlasCandidates(
@@ -748,24 +820,6 @@ async function analyzeHardenedAtlasCandidates(
       extractionFocus: { ...focus, target_line_ranges: [] },
     }));
   }
-  const primaryRuleRanges = input.documents.flatMap((document) => {
-    const report = primaryBusinessRuleCoverage(document.content, []);
-    return report?.rules.map(({ line_start, line_end }) => ({
-      document_id: document.document_id,
-      line_start,
-      line_end,
-    })) ?? [];
-  });
-  if (primaryRuleRanges.length > 0) {
-    passes.push(await analyzeAtlasCandidates({
-      ...input,
-      extractionFocus: {
-        mode: "targeted_retry",
-        instructions: "Extract each listed primary business-rule item separately and verbatim. Every range must yield a business-rule candidate with that exact source range; create the smallest faithful parent requirement when needed.",
-        target_line_ranges: primaryRuleRanges,
-      },
-    }));
-  }
   const citedRanges = passes.flatMap(({ analysis }) => [
     ...analysis.candidate_requirements,
     ...analysis.candidate_business_rules,
@@ -781,7 +835,7 @@ async function analyzeHardenedAtlasCandidates(
       document_id: stableId(document.document_id),
       path: document.path,
       content: document.content,
-      paragraph_mode: document.path.toLowerCase().endsWith(".pdf.md") ? "line" : "contiguous",
+      paragraph_mode: document.path.toLowerCase().endsWith(".pdf") ? "line" : "contiguous",
     });
     return artifacts.source_units
       .filter((unit) => unit.kind !== "heading")
@@ -940,7 +994,7 @@ function buildProposedAtlasArtifacts(input: {
     document_id: stableId(document.document_id),
     path: document.path,
     content: document.content,
-    paragraph_mode: document.path.toLowerCase().endsWith(".pdf.md") ? "line" : "contiguous",
+    paragraph_mode: document.path.toLowerCase().endsWith(".pdf") ? "line" : "contiguous",
   }));
   const units = sourceArtifacts.flatMap(({ source_units }) => source_units);
   const artifactsByDocument = new Map(input.documents.map((document, index) => [
@@ -1166,63 +1220,6 @@ function buildProposedAtlasArtifacts(input: {
   };
 }
 
-export function primaryBusinessRuleCoverage(
-  content: string,
-  candidates: readonly z.infer<typeof AtlasProviderResultSchema>["candidate_business_rules"][number][],
-): {
-  readonly schema_version: "1.0.0";
-  readonly heading: string;
-  readonly rules: readonly {
-    readonly id: string;
-    readonly line_start: number;
-    readonly line_end: number;
-    readonly candidate_ids: readonly string[];
-  }[];
-  readonly status: "complete" | "incomplete_coverage";
-} | undefined {
-  const lines = content.split(/\r\n|\n|\r/u);
-  const headings = new Set(["Aturan Bisnis Utama", "Main Business Rules", "Primary Business Rules"]);
-  const headingIndex = lines.findIndex((line) => headings.has(line.trim()));
-  if (headingIndex < 0) return undefined;
-  const endHeadings = new Set(["Skenario Pemeriksaan Hasil", "Result Inspection Scenarios",
-    "Acceptance Scenarios"]);
-  const endIndex = lines.findIndex((line, index) =>
-    index > headingIndex && endHeadings.has(line.trim()));
-  if (endIndex < 0) throw new CliInputError("Primary business-rule section has no deterministic end heading");
-  const rules: Array<{ id: string; line_start: number; line_end: number;
-    candidate_ids: string[] }> = [];
-  let start: number | undefined;
-  for (let index = headingIndex + 1; index < endIndex; index += 1) {
-    const text = lines[index]!.trim();
-    if (!text || /^[•*-]+$/u.test(text)) continue;
-    start ??= index + 1;
-    if (/[.!?]$/u.test(text)) {
-      const lineStart = start;
-      const lineEnd = index + 1;
-      const matched = candidates.filter(({ source }) =>
-        source.line_start !== undefined && source.line_end !== undefined
-        && source.line_start <= lineStart && source.line_end >= lineEnd)
-        .map(({ candidate_id }) => candidate_id).sort(compareText);
-      rules.push({
-        id: `primary-rule-${String(rules.length + 1).padStart(2, "0")}`,
-        line_start: lineStart,
-        line_end: lineEnd,
-        candidate_ids: matched,
-      });
-      start = undefined;
-    }
-  }
-  if (start !== undefined) throw new CliInputError("Primary business-rule item has no terminal punctuation");
-  if (rules.length === 0) throw new CliInputError("Primary business-rule section is empty");
-  return {
-    schema_version: "1.0.0",
-    heading: lines[headingIndex]!.trim(),
-    rules,
-    status: rules.every(({ candidate_ids }) => candidate_ids.length > 0)
-      ? "complete" : "incomplete_coverage",
-  };
-}
-
 async function resumeAtlasRun(
   options: Readonly<Record<string, string>>,
   io: CliIo,
@@ -1391,7 +1388,9 @@ async function retainedPendingArtifacts(
     "source-coverage.json",
     "extraction-findings.json",
     "pdf-ingestion.json",
-    "primary-business-rule-coverage.json",
+    "section-purpose-registry.json",
+    "section-classifications.json",
+    "document-structure.json",
   ]) {
     const content = await readOptionalText(resolve(outputDirectory, path));
     if (content !== undefined) retained[path] = content;

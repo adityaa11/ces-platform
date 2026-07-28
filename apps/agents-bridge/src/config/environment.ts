@@ -76,7 +76,7 @@ export function runtimeConfigFromEnvironment(
       identity: {
         client_id: "atlas-cli",
         audit_identity: "Atlas CLI",
-        allowed_agents: ["atlas.requirement-extractor"],
+        allowed_agents: ["atlas.requirement-extractor", "atlas.structure-classifier"],
         allowed_routes: ["/v1/atlas/analyze", "/v1/agents/:agentId/execute"],
         max_concurrency: integer(environment.CLIENT_MAX_CONCURRENCY, 4),
         requests_per_minute: integer(environment.CLIENT_REQUESTS_PER_MINUTE, 60),

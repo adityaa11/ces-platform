@@ -13,6 +13,7 @@ import {
   geminiConfigFromEnvironment,
 } from "./providers/gemini/index.js";
 import { createAtlasRequirementExtractor } from "./agents/atlas-requirement-extractor/agent.js";
+import { createAtlasStructureClassifier } from "./agents/atlas-structure-classifier/agent.js";
 import { createJsonTelemetry } from "./operations/telemetry.js";
 import { closeBridgeServer, listenBridgeServer, type BridgeRuntime } from "./server.js";
 
@@ -59,6 +60,17 @@ export function createProductionRuntime(
       max_documents: config.ceilings.max_source_documents,
       max_total_characters: config.ceilings.max_total_source_characters,
       max_single_characters: config.ceilings.max_single_source_characters,
+    },
+  }));
+  agents.register(createAtlasStructureClassifier({
+    model_alias: environment.ATLAS_MODEL_ALIAS ?? "atlas-default",
+    provider_id: provider.provider_id,
+    policy: {
+      timeout_ms: config.ceilings.max_timeout_ms,
+      max_attempts: config.ceilings.max_provider_attempts,
+      max_input_bytes: config.ceilings.max_request_bytes,
+      max_output_bytes: config.ceilings.max_provider_response_bytes,
+      max_output_tokens: config.ceilings.max_output_tokens,
     },
   }));
   const providers = new ProviderRegistry();

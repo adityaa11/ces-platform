@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   createCategoryExtractorRegistry,
   createAtlasCandidateInventory,
+  createSectionPurposeRegistry,
+  finalizeSectionClassifications,
   inspectLegacyCandidateMigration,
   mergeCategoryExtractorRuns,
   mergeAtlasRoleOutputs,
@@ -44,6 +46,51 @@ const output = (partition: string, candidate: string): AtlasRoleOutput => ({
 });
 
 describe("DAPE-004 bounded Atlas roles", () => {
+  it("classifies every unit through an open semantic-purpose registry", () => {
+    const registry = createSectionPurposeRegistry({
+      organization_id: "acme",
+      organization_purposes: [{
+        purpose_id: "acme.section.compliance",
+        description: "Organization-specific compliance obligations.",
+        registered_by: "organization",
+      }],
+    });
+    const result = finalizeSectionClassifications({
+      contract_version: "1.0.0",
+      revisions,
+      purpose_registry: registry,
+      source_units: units,
+    }, units.map((unit) => ({
+      source_unit_id: unit.id,
+      purpose_ids: unit.order === 3
+        ? ["ces.section.unknown"]
+        : ["acme.section.compliance", "ces.section.normative-rules"],
+      confidence: unit.order === 3 ? 0.2 : 0.9,
+      status: unit.order === 3 ? "unknown" : "ambiguous",
+      rationale: "Classified from the unit content.",
+    })));
+    expect(result.classifications).toHaveLength(units.length);
+    expect(result.purpose_registry_id).toBe(registry.id);
+    expect(result.content_hash).toMatch(/^sha256:[0-9a-f]{64}$/u);
+  });
+
+  it("rejects incomplete or invented section classifications", () => {
+    const registry = createSectionPurposeRegistry();
+    const input = {
+      contract_version: "1.0.0",
+      revisions,
+      purpose_registry: registry,
+      source_units: units,
+    };
+    expect(() => finalizeSectionClassifications(input, [{
+      source_unit_id: units[0]!.id,
+      purpose_ids: ["ces.section.normative-rules"],
+      confidence: 1,
+      status: "classified",
+      rationale: "Normative language.",
+    }])).toThrow("Missing source-unit classification");
+  });
+
   it("builds a generic source-grounded candidate inventory", () => {
     const candidate = {
       contract_version: "1.0.0" as const,
