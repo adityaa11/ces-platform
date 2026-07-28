@@ -742,12 +742,11 @@ async function analyzeHardenedAtlasCandidates(
     },
   ];
   const passes: Awaited<ReturnType<typeof analyzeAtlasCandidates>>[] = [];
-  for (let index = 0; index < focuses.length; index += 2) {
-    passes.push(...await Promise.all(focuses.slice(index, index + 2).map((focus) =>
-      analyzeAtlasCandidates({
-        ...input,
-        extractionFocus: { ...focus, target_line_ranges: [] },
-      }))));
+  for (const focus of focuses) {
+    passes.push(await analyzeAtlasCandidates({
+      ...input,
+      extractionFocus: { ...focus, target_line_ranges: [] },
+    }));
   }
   const citedRanges = passes.flatMap(({ analysis }) => [
     ...analysis.candidate_requirements,

@@ -17,7 +17,7 @@
 6. one finding-scoped retry over only uncovered document line ranges;
 7. non-authoritative proposed model and pre-approval graph publication.
 
-Category calls use concurrency two to respect bridge/provider admission limits.
+Category calls run sequentially to respect bridge/provider admission limits.
 Provider failure remains non-success and does not publish partial output.
 
 ## Safara observations
