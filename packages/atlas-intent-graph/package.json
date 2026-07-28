@@ -12,6 +12,7 @@
     "@company/ces-policy-engine": "workspace:*",
     "@company/ces-policy-manifest": "workspace:*",
     "@company/ces-project-schema": "workspace:*",
+    "@company/ces-proposed-project-model": "workspace:*",
     "@company/ces-requirement-collection-schema": "workspace:*",
     "@company/ces-requirement-schema": "workspace:*",
     "zod": "4.4.3"

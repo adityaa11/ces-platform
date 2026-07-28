@@ -214,6 +214,9 @@ importers:
       '@company/ces-project-schema':
         specifier: workspace:*
         version: link:../project-schema
+      '@company/ces-proposed-project-model':
+        specifier: workspace:*
+        version: link:../proposed-project-model
       '@company/ces-requirement-collection-schema':
         specifier: workspace:*
         version: link:../requirement-collection-schema

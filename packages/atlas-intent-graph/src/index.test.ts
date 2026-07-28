@@ -12,10 +12,40 @@ import {
   AtlasGraphValidationError,
   buildIntentGraph,
   compileAtlasCoreHandoff,
+  projectWorkflowGraph,
   renderIntentGraphJson,
   renderIntentGraphMarkdown,
   renderIntentGraphMermaid,
 } from "./index.js";
+
+const workflowInput = {
+  project_id: "domain-project", model_revision: 1,
+  model_hash: `sha256:${"f".repeat(64)}`,
+  lifecycle: "review_in_progress" as const, authoritative: false,
+  downstream_execution_allowed: false,
+  nodes: ["submit", "review-a", "review-b", "join"].map((name, index) => ({
+    id: `domain.workflow.${name}`,
+    kind_id: index === 2 ? "ces.graph.unknown" : "ces.graph.workflow-step",
+    label: name, semantic_record_ids: [`domain.record.${name}`],
+    source_unit_ids: [`domain.unit.${String(index + 1).padStart(5, "0")}.aaaaaaaa`],
+    item_review_states: [index === 2 ? "ambiguous" as const : "pending" as const],
+    issue_codes: index === 2 ? ["classification-required"] : [],
+  })),
+  relationships: [
+    ["branch-a", "submit", "review-a", "ces.relationship.branch"],
+    ["branch-b", "submit", "review-b", "ces.relationship.branch"],
+    ["join-a", "review-a", "join", "ces.relationship.join"],
+    ["join-b", "review-b", "join", "ces.relationship.join"],
+    ["loop", "join", "review-a", "ces.relationship.retry"],
+  ].map(([id, from, to, kind], index) => ({
+    id: `domain.edge.${id}`, from_id: `domain.workflow.${from}`,
+    to_id: `domain.workflow.${to}`, kind_id: kind!,
+    source_unit_ids: [`domain.unit.${String(index % 4 + 1).padStart(5, "0")}.aaaaaaaa`],
+  })),
+  source_documents: [{ document_id: "domain-prd", document_version: "1.0",
+    content_hash: `sha256:${"e".repeat(64)}` }],
+  finding_ids: ["atlas.finding.ambiguous.aaaaaaaaaaaa"],
+};
 
 const sourceHash = `sha256:${"a".repeat(64)}`;
 const inference = {
@@ -103,6 +133,31 @@ function approvedReview() {
 }
 
 describe("Atlas system-intent graph", () => {
+  it("projects arbitrary pre-approval workflow shapes deterministically", () => {
+    const first = projectWorkflowGraph(workflowInput);
+    const second = projectWorkflowGraph({
+      ...workflowInput, nodes: [...workflowInput.nodes].reverse(),
+      relationships: [...workflowInput.relationships].reverse(),
+    });
+    expect(first).toEqual(second);
+    expect(first).toMatchObject({
+      authoritative: false, downstream_execution_allowed: false,
+      banner: "PROPOSED -- NOT YET APPROVED",
+      approval_summary: { total_nodes: 4, exception_nodes: 1 },
+    });
+    expect(first.edges).toHaveLength(5);
+  });
+
+  it("rejects lifecycle authority escalation and dangling relationships", () => {
+    expect(() => projectWorkflowGraph({ ...workflowInput, authoritative: true }))
+      .toThrow("authority");
+    expect(() => projectWorkflowGraph({
+      ...workflowInput,
+      relationships: [{ ...workflowInput.relationships[0]!,
+        to_id: "domain.workflow.missing" }],
+    })).toThrow("Dangling");
+  });
+
   it("emits deterministic JSON, Markdown, and Mermaid without changing approval artifacts", () => {
     const review = approvedReview();
     const before = JSON.stringify(review);

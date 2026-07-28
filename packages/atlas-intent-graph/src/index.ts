@@ -13,6 +13,7 @@ import type { PolicyManifest } from "@company/ces-policy-manifest";
 import {
   ProjectAssuranceContextSchema,
 } from "@company/ces-project-schema";
+import { ProposedProjectModelSchema } from "@company/ces-proposed-project-model";
 import {
   assertCollectionPackages,
   canonicalJson,
@@ -22,9 +23,175 @@ import type { RequirementPackage } from "@company/ces-requirement-schema";
 import { z } from "zod";
 
 export const ATLAS_INTENT_GRAPH_VERSION = "1.0.0" as const;
+export const ATLAS_WORKFLOW_GRAPH_VERSION = "1.0.0" as const;
 
 const NonEmptyString = z.string().trim().min(1);
 const Sha256Schema = z.string().regex(/^sha256:[0-9a-f]{64}$/u);
+const StableId = z.string().regex(/^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u);
+
+const ReviewStateSchema = z.enum([
+  "pending", "approved", "rejected", "correction_requested", "ambiguous",
+  "unsupported", "conflict", "source_missing",
+]);
+
+export const WorkflowGraphProjectionInputSchema = z.object({
+  project_id: StableId,
+  model_revision: z.number().int().positive(),
+  model_hash: Sha256Schema,
+  lifecycle: z.enum(["proposed", "review_in_progress", "approved", "superseded"]),
+  authoritative: z.boolean(),
+  downstream_execution_allowed: z.boolean(),
+  nodes: z.array(z.object({
+    id: StableId,
+    kind_id: StableId,
+    label: NonEmptyString,
+    semantic_record_ids: z.array(StableId),
+    source_unit_ids: z.array(StableId).min(1),
+    item_review_states: z.array(ReviewStateSchema),
+    issue_codes: z.array(StableId),
+  }).strict()),
+  relationships: z.array(z.object({
+    id: StableId, from_id: StableId, to_id: StableId, kind_id: StableId,
+    source_unit_ids: z.array(StableId).min(1),
+  }).strict()),
+  source_documents: z.array(z.object({
+    document_id: StableId, document_version: NonEmptyString, content_hash: Sha256Schema,
+  }).strict()),
+  finding_ids: z.array(StableId),
+}).strict().superRefine((value, context) => {
+  const approved = value.lifecycle === "approved";
+  if (approved !== value.authoritative || approved !== value.downstream_execution_allowed) {
+    context.addIssue({ code: "custom", message: "Graph lifecycle authority mismatch" });
+  }
+});
+
+export const WorkflowGraphSchema = z.object({
+  schema_version: z.literal(ATLAS_WORKFLOW_GRAPH_VERSION),
+  project_id: StableId,
+  model_revision: z.number().int().positive(),
+  model_hash: Sha256Schema,
+  model_lifecycle: z.enum(["proposed", "review_in_progress", "approved", "superseded"]),
+  graph_purpose: z.enum(["extraction_approval", "approved_baseline"]),
+  authoritative: z.boolean(),
+  approval_required: z.boolean(),
+  downstream_execution_allowed: z.boolean(),
+  banner: NonEmptyString,
+  nodes: z.array(z.object({
+    id: StableId, kind_id: StableId, label: NonEmptyString,
+    semantic_record_ids: z.array(StableId), source_unit_ids: z.array(StableId).min(1),
+    review_status: z.enum(["pending", "approved", "exception"]),
+    issue_codes: z.array(StableId),
+  }).strict()),
+  edges: z.array(z.object({
+    id: StableId, source_id: StableId, target_id: StableId, kind_id: StableId,
+    source_unit_ids: z.array(StableId).min(1),
+  }).strict()),
+  documents: z.array(z.object({
+    document_id: StableId, document_version: NonEmptyString, content_hash: Sha256Schema,
+  }).strict()),
+  finding_ids: z.array(StableId),
+  approval_summary: z.object({
+    total_nodes: z.number().int().nonnegative(),
+    approved_nodes: z.number().int().nonnegative(),
+    pending_nodes: z.number().int().nonnegative(),
+    exception_nodes: z.number().int().nonnegative(),
+  }).strict(),
+  content_hash: Sha256Schema,
+}).strict();
+
+export function projectWorkflowGraph(
+  inputValue: z.input<typeof WorkflowGraphProjectionInputSchema>,
+): z.infer<typeof WorkflowGraphSchema> {
+  const input = WorkflowGraphProjectionInputSchema.parse(inputValue);
+  const nodes = input.nodes.map((node) => {
+    const exceptions = new Set([
+      "rejected", "correction_requested", "ambiguous", "unsupported", "conflict", "source_missing",
+    ]);
+    const reviewStatus = node.item_review_states.length > 0
+      && node.item_review_states.every((state) => state === "approved")
+      ? "approved" as const
+      : node.item_review_states.some((state) => exceptions.has(state))
+        || node.issue_codes.length > 0
+        || node.kind_id === "ces.graph.unknown"
+        ? "exception" as const : "pending" as const;
+    return {
+      id: node.id, kind_id: node.kind_id, label: node.label,
+      semantic_record_ids: [...node.semantic_record_ids].sort(compareText),
+      source_unit_ids: [...node.source_unit_ids].sort(compareText),
+      review_status: reviewStatus,
+      issue_codes: [...node.issue_codes].sort(compareText),
+    };
+  }).sort((a, b) => compareText(a.id, b.id));
+  const nodeIds = new Set(nodes.map(({ id }) => id));
+  const edges = input.relationships.map((edge) => {
+    if (!nodeIds.has(edge.from_id) || !nodeIds.has(edge.to_id)) {
+      throw new Error(`Dangling workflow relationship: ${edge.id}`);
+    }
+    return {
+      id: edge.id, source_id: edge.from_id, target_id: edge.to_id,
+      kind_id: edge.kind_id, source_unit_ids: [...edge.source_unit_ids].sort(compareText),
+    };
+  }).sort((a, b) => compareText(a.id, b.id));
+  const approved = input.lifecycle === "approved";
+  const core = {
+    schema_version: ATLAS_WORKFLOW_GRAPH_VERSION,
+    project_id: input.project_id,
+    model_revision: input.model_revision,
+    model_hash: input.model_hash,
+    model_lifecycle: input.lifecycle,
+    graph_purpose: approved ? "approved_baseline" as const : "extraction_approval" as const,
+    authoritative: input.authoritative,
+    approval_required: !approved,
+    downstream_execution_allowed: input.downstream_execution_allowed,
+    banner: approved ? "APPROVED BASELINE" : "PROPOSED -- NOT YET APPROVED",
+    nodes, edges,
+    documents: [...input.source_documents].sort((a, b) =>
+      compareText(a.document_id, b.document_id)),
+    finding_ids: [...input.finding_ids].sort(compareText),
+    approval_summary: {
+      total_nodes: nodes.length,
+      approved_nodes: nodes.filter(({ review_status }) => review_status === "approved").length,
+      pending_nodes: nodes.filter(({ review_status }) => review_status === "pending").length,
+      exception_nodes: nodes.filter(({ review_status }) => review_status === "exception").length,
+    },
+  };
+  return WorkflowGraphSchema.parse({ ...core, content_hash: workflowHash(core) });
+}
+
+export function projectProposedWorkflowGraph(
+  modelValue: z.input<typeof ProposedProjectModelSchema>,
+): z.infer<typeof WorkflowGraphSchema> {
+  const model = ProposedProjectModelSchema.parse(modelValue);
+  const records = new Map(model.records.map((record) => [record.id, record]));
+  return projectWorkflowGraph({
+    project_id: model.project_id,
+    model_revision: model.proposal_revision,
+    model_hash: model.content_hash,
+    lifecycle: model.lifecycle,
+    authoritative: model.authoritative,
+    downstream_execution_allowed: model.downstream_execution_allowed,
+    nodes: model.workflow_nodes.map((node) => {
+      const contained = node.semantic_record_ids.map((id) => records.get(id)!);
+      return {
+        id: node.id,
+        kind_id: contained.some(({ semantic_kind_id }) =>
+          semantic_kind_id === "ces.kind.unknown")
+          ? "ces.graph.unknown" : "ces.graph.workflow-step",
+        label: node.label,
+        semantic_record_ids: node.semantic_record_ids,
+        source_unit_ids: node.source_unit_ids,
+        item_review_states: contained.map(({ review_status }) => review_status),
+        issue_codes: contained.flatMap(({ issues }) => issues.map(({ code }) => code)),
+      };
+    }),
+    relationships: model.relationships.map((edge) => ({
+      id: edge.id, from_id: edge.from_id, to_id: edge.to_id,
+      kind_id: edge.kind, source_unit_ids: edge.source_unit_ids,
+    })),
+    source_documents: model.source_documents,
+    finding_ids: model.extraction_findings.findings.map(({ id }) => id),
+  });
+}
 
 export const GraphNodeSchema = z.object({
   id: NonEmptyString,
@@ -445,4 +612,18 @@ function sha256(value: unknown): string {
 
 function compareText(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0;
+}
+
+function workflowHash(value: unknown): string {
+  const canonicalize = (item: unknown): unknown => {
+    if (Array.isArray(item)) return item.map(canonicalize);
+    if (item !== null && typeof item === "object") {
+      const record = item as Record<string, unknown>;
+      return Object.fromEntries(Object.keys(record).sort()
+        .map((key) => [key, canonicalize(record[key])]));
+    }
+    return item;
+  };
+  return `sha256:${createHash("sha256")
+    .update(JSON.stringify(canonicalize(value))).digest("hex")}`;
 }

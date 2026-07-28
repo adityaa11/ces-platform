@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-010 — Proposed Graph Projection
 
 **Stage:** Atlas hardening proposal
-**Status:** Planned
+**Status:** Implemented
 
 ## Objective
 
@@ -34,23 +34,32 @@ proposal identity and review metadata.
 
 ## Acceptance criteria
 
-- [ ] A graph is available before any approval decision.
-- [ ] Proposed and approved graphs use one shared projection contract.
-- [ ] Every graph item resolves to proposal and source identities.
-- [ ] Review and exception states remain precise in the backend contract.
-- [ ] Linear, conditional, parallel, cyclic, and disconnected review-required
+- [x] A graph is available before any approval decision.
+- [x] Proposed and approved graphs use one shared projection contract.
+- [x] Every graph item resolves to proposal and source identities.
+- [x] Review and exception states remain precise in the backend contract.
+- [x] Linear, conditional, parallel, cyclic, and disconnected review-required
       graph shapes project without domain-specific code.
-- [ ] Unknown node and relationship kinds retain source evidence and issues.
-- [ ] The graph input uses generic semantic nodes and relationships rather than
+- [x] Unknown node and relationship kinds retain source evidence and issues.
+- [x] The graph input uses generic semantic nodes and relationships rather than
       Safara-specific workflow fields.
-- [ ] Proposed graph artifacts cannot enable downstream execution.
-- [ ] Node/edge ordering and rendered projections are deterministic.
+- [x] Proposed graph artifacts cannot enable downstream execution.
+- [x] Node/edge ordering and rendered projections are deterministic.
 
 ## Tests and evidence
 
 Linear, branch/join, parallel, loop, optional-step, actor-lane, state-transition,
 unknown-node, pending, approved, correction, ambiguity, conflict, unsupported,
 source-missing, broken-link, authority-escalation, and deterministic fixtures.
+
+## Completion evidence
+
+- Added a lifecycle-neutral workflow projection contract to the existing Atlas
+  graph package and a `ProposedProjectModel` adapter.
+- Supports arbitrary directed relationships, loops, branches, joins, parallel
+  paths, extensible kinds, unknown nodes, findings, and source evidence.
+- Derives precise node review summaries and enforces lifecycle authority.
+- Graph and architecture tests: 13 passed; package typecheck passed.
 
 ## Out of scope
 
