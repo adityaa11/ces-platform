@@ -84,6 +84,9 @@ importers:
       '@company/ces-atlas-review':
         specifier: workspace:*
         version: link:../../packages/atlas-review
+      '@company/ces-atlas-role-contracts':
+        specifier: workspace:*
+        version: link:../../packages/atlas-role-contracts
       '@company/ces-document-ingestion':
         specifier: workspace:*
         version: link:../../packages/document-ingestion
@@ -108,6 +111,9 @@ importers:
       '@company/ces-project-schema':
         specifier: workspace:*
         version: link:../../packages/project-schema
+      '@company/ces-proposed-project-model':
+        specifier: workspace:*
+        version: link:../../packages/proposed-project-model
       '@company/ces-requirement-collection-schema':
         specifier: workspace:*
         version: link:../../packages/requirement-collection-schema

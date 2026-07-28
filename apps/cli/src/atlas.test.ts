@@ -127,6 +127,10 @@ describe("Atlas CLI pipeline", () => {
       expect(await fileNames(output)).toEqual([
         "candidate-analysis.json",
         "clarification-questions.json",
+        "proposed-project-model.json",
+        "proposed-system-intent-graph.json",
+        "proposed-system-intent-graph.md",
+        "proposed-system-intent-graph.mmd",
         "review-input.json",
         "run-manifest.json",
         "source-index.json",
@@ -135,6 +139,21 @@ describe("Atlas CLI pipeline", () => {
         status: "awaiting_human_review",
         provider: { provider: "fixture", model: "deterministic-fixture" },
       });
+      const proposedGraphIo = capture();
+      expect(await runCli([
+        "atlas", "graph", "--output", output, "--format", "mermaid",
+      ], proposedGraphIo.io)).toBe(0);
+      expect(proposedGraphIo.stdout.join("")).toContain("PROPOSED -- NOT YET APPROVED");
+      expect(await json(join(output, "proposed-project-model.json"))).toMatchObject({
+        authoritative: false,
+        approval_required: true,
+        downstream_execution_allowed: false,
+      });
+      const proposedGraph = await json(join(
+        output,
+        "proposed-system-intent-graph.json",
+      )) as { nodes: unknown[] };
+      expect(proposedGraph.nodes.length).toBeGreaterThan(0);
 
       const reviewInput = await json(join(output, "review-input.json")) as {
         candidates: Array<{
@@ -166,6 +185,10 @@ describe("Atlas CLI pipeline", () => {
         "clarification-questions.json",
         "core-handoff/REQ-PROJECT-001.policy-manifest.json",
         "core-handoff/summary.json",
+        "proposed-project-model.json",
+        "proposed-system-intent-graph.json",
+        "proposed-system-intent-graph.md",
+        "proposed-system-intent-graph.mmd",
         "requirement-collection.json",
         "requirement-packages/REQ-PROJECT-001.json",
         "review-input.json",
@@ -247,6 +270,7 @@ describe("Atlas CLI pipeline", () => {
         "--api-key", "must-not-be-accepted",
       ], io.io)).toBe(2);
       expect(io.stderr.join("")).toContain("CES_ATLAS_API_KEY");
+      expect(io.stderr.join("")).toContain("AGENTS_BRIDGE_API_KEY");
       await expect(readFile(join(output, "marker.txt"), "utf8")).resolves.toBe("previous");
       expect(await runCli([
         "atlas", "run",

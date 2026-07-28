@@ -36,7 +36,27 @@ Create `project-intent.json`:
 
 ## 2. Extract Candidates
 
-For a CES-compatible HTTPS provider:
+For the local Agents Bridge, load the git-ignored `agent.env` file. Atlas uses
+`CES_ATLAS_API_KEY` when present and otherwise reuses
+`AGENTS_BRIDGE_API_KEY`:
+
+```powershell
+node --env-file=agent.env apps/agents-bridge/dist/main.js
+```
+
+In another terminal:
+
+```powershell
+node --env-file=agent.env apps/cli/dist/index.js atlas run `
+  --prd docs/prd/Safara_Buyer_Business_PRD.pdf `
+  --project-intent docs/prd/safara-project-intent.json `
+  --provider-endpoint http://127.0.0.1:8787/v1/atlas/analyze `
+  --provider agents-bridge `
+  --model gemini-flash-latest `
+  --output .ces/generated/atlas
+```
+
+For another CES-compatible HTTPS provider:
 
 ```powershell
 $env:CES_ATLAS_API_KEY = "<provider-api-key>"
@@ -58,8 +78,9 @@ For deterministic tests, replace the provider options with:
 --provider-result fixtures/atlas-provider-result.json
 ```
 
-API keys, tokens, and secrets are rejected as CLI arguments. The HTTPS provider
-reads only `CES_ATLAS_API_KEY`.
+API keys, tokens, and secrets are rejected as CLI arguments. An HTTPS provider
+reads `CES_ATLAS_API_KEY`; the local bridge may use the
+`AGENTS_BRIDGE_API_KEY` fallback.
 
 ## 3. Review
 

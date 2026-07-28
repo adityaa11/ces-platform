@@ -29,8 +29,8 @@ using the same deterministic projection boundary as approved models.
 
 ## Outputs
 
-`proposed-workflow-graph.json` and supported Markdown/Mermaid views carrying
-proposal identity and review metadata.
+`proposed-system-intent-graph.json` and supported Markdown/Mermaid views
+carrying proposal identity and review metadata.
 
 ## Acceptance criteria
 
@@ -60,6 +60,13 @@ source-missing, broken-link, authority-escalation, and deterministic fixtures.
   paths, extensible kinds, unknown nodes, findings, and source evidence.
 - Derives precise node review summaries and enforces lifecycle authority.
 - Graph and architecture tests: 13 passed; package typecheck passed.
+- The live `atlas run` command now publishes the non-authoritative proposed
+  model and JSON, Markdown, and Mermaid graphs before review. `atlas graph`
+  selects these views while approval is pending and the approved views after
+  publication.
+- The Safara review run was backfilled deterministically from its stored
+  candidates and contains 23 proposed nodes and 15 source-backed constraint
+  edges.
 
 ## Out of scope
 

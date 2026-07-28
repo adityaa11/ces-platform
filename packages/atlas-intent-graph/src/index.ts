@@ -193,6 +193,55 @@ export function projectProposedWorkflowGraph(
   });
 }
 
+export function renderWorkflowGraphJson(
+  graphValue: z.input<typeof WorkflowGraphSchema>,
+): string {
+  return `${JSON.stringify(WorkflowGraphSchema.parse(graphValue), null, 2)}\n`;
+}
+
+export function renderWorkflowGraphMarkdown(
+  graphValue: z.input<typeof WorkflowGraphSchema>,
+): string {
+  const graph = WorkflowGraphSchema.parse(graphValue);
+  const lines = [
+    `# ${graph.banner}`,
+    "",
+    `Project: \`${graph.project_id}\``,
+    `Authority: **${graph.authoritative ? "authoritative" : "non-authoritative"}**`,
+    `Downstream execution: **${graph.downstream_execution_allowed ? "allowed" : "blocked"}**`,
+    "",
+    "## Proposed nodes",
+    "",
+    ...graph.nodes.map((node) =>
+      `- \`${node.id}\` — ${node.label} (${node.review_status}; ${node.kind_id})`),
+    "",
+    "## Evidence-backed relationships",
+    "",
+    ...(graph.edges.length > 0
+      ? graph.edges.map((edge) =>
+        `- \`${edge.source_id}\` → \`${edge.target_id}\` (${edge.kind_id})`)
+      : ["No workflow ordering relationship was extracted; review must not infer one."]),
+    "",
+  ];
+  return `${lines.join("\n")}\n`;
+}
+
+export function renderWorkflowGraphMermaid(
+  graphValue: z.input<typeof WorkflowGraphSchema>,
+): string {
+  const graph = WorkflowGraphSchema.parse(graphValue);
+  const aliases = new Map(graph.nodes.map((node, index) => [node.id, `n${index + 1}`]));
+  const lines = [
+    "flowchart TD",
+    `  %% ${graph.banner}; downstream execution is blocked`,
+    ...graph.nodes.map((node) =>
+      `  ${aliases.get(node.id)}["${escapeMermaid(node.label)}"]`),
+    ...graph.edges.map((edge) =>
+      `  ${aliases.get(edge.source_id)} -->|"${escapeMermaid(edge.kind_id)}"| ${aliases.get(edge.target_id)}`),
+  ];
+  return `${lines.join("\n")}\n`;
+}
+
 export const GraphNodeSchema = z.object({
   id: NonEmptyString,
   kind: z.enum(["source", "requirement", "business_rule", "uncertainty", "capability"]),
