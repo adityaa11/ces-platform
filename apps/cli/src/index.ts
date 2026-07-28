@@ -748,6 +748,24 @@ async function analyzeHardenedAtlasCandidates(
       extractionFocus: { ...focus, target_line_ranges: [] },
     }));
   }
+  const primaryRuleRanges = input.documents.flatMap((document) => {
+    const report = primaryBusinessRuleCoverage(document.content, []);
+    return report?.rules.map(({ line_start, line_end }) => ({
+      document_id: document.document_id,
+      line_start,
+      line_end,
+    })) ?? [];
+  });
+  if (primaryRuleRanges.length > 0) {
+    passes.push(await analyzeAtlasCandidates({
+      ...input,
+      extractionFocus: {
+        mode: "targeted_retry",
+        instructions: "Extract each listed primary business-rule item separately and verbatim. Every range must yield a business-rule candidate with that exact source range; create the smallest faithful parent requirement when needed.",
+        target_line_ranges: primaryRuleRanges,
+      },
+    }));
+  }
   const citedRanges = passes.flatMap(({ analysis }) => [
     ...analysis.candidate_requirements,
     ...analysis.candidate_business_rules,
