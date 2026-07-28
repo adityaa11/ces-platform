@@ -2,9 +2,64 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 
 export const ATLAS_COVERAGE_VERSION = "1.0.0" as const;
+export const ATLAS_PIPELINE_COVERAGE_VERSION = "1.0.0" as const;
 const Id = z.string().regex(/^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u);
 const Hash = z.string().regex(/^sha256:[0-9a-f]{64}$/u);
 const Text = z.string().trim().min(1);
+
+export const PipelineStageSchema = z.enum([
+  "evaluated", "non_normative", "candidate", "classified", "normalized",
+  "deduplicated", "assigned", "projected", "unmapped", "ambiguous",
+  "conflicting", "excluded",
+]);
+
+export const SourcePipelineCoverageSchema = z.object({
+  source_unit_id: Id,
+  normative: z.boolean(),
+  current_stage: PipelineStageSchema,
+  candidate_ids: z.array(Id),
+  normalized_record_ids: z.array(Id),
+  workflow_node_ids: z.array(Id),
+  graph_node_ids: z.array(Id),
+  reason: Text.optional(),
+  stage_history: z.array(z.object({
+    stage: PipelineStageSchema,
+    status: z.enum(["included", "lost", "review_required"]),
+    entity_id: Id.optional(),
+    reason: Text.optional(),
+  }).strict()).min(1),
+}).strict().superRefine((value, context) => {
+  if (["non_normative", "excluded"].includes(value.current_stage) && !value.reason) {
+    context.addIssue({ code: "custom", message: `${value.current_stage} requires reviewed reason` });
+  }
+  if (value.normative && value.current_stage === "non_normative") {
+    context.addIssue({ code: "custom", message: "Normative source cannot be non_normative" });
+  }
+});
+
+export const NormalizedRecordCoverageSchema = z.object({
+  record_id: Id,
+  semantic_kind_id: Id,
+  candidate_ids: z.array(Id).min(1),
+  source_unit_ids: z.array(Id).min(1),
+}).strict();
+
+export const PipelineCoverageReportSchema = z.object({
+  schema_version: z.literal(ATLAS_PIPELINE_COVERAGE_VERSION),
+  source_revision_id: Id,
+  semantic_kind_registry_id: Id,
+  source_coverage: z.array(SourcePipelineCoverageSchema),
+  record_coverage: z.array(NormalizedRecordCoverageSchema),
+  counts: z.object({
+    source_units: z.number().int().nonnegative(),
+    normative: z.number().int().nonnegative(),
+    unmapped_normative: z.number().int().nonnegative(),
+    unknown_records: z.number().int().nonnegative(),
+    organization_records: z.number().int().nonnegative(),
+  }).strict(),
+  loss_by_stage: z.record(PipelineStageSchema, z.number().int().nonnegative()),
+  content_hash: Hash,
+}).strict();
 
 export const CoverageDispositionSchema = z.enum([
   "covered", "context_only", "duplicate", "uncertain", "conflicting",
@@ -159,6 +214,89 @@ export function calculateCoverage(input: {
   return deepFreeze(CoverageReportSchema.parse({
     ...core, content_hash: hashJson(core),
   }));
+}
+
+export function calculatePipelineCoverage(input: {
+  readonly source_revision_id: string;
+  readonly semantic_kind_registry_id: string;
+  readonly source_unit_ids: readonly string[];
+  readonly candidate_sources: Readonly<Record<string, readonly string[]>>;
+  readonly normalized_record_ids: readonly string[];
+  readonly workflow_node_ids: readonly string[];
+  readonly graph_node_ids: readonly string[];
+  readonly source_coverage: readonly z.input<typeof SourcePipelineCoverageSchema>[];
+  readonly record_coverage: readonly z.input<typeof NormalizedRecordCoverageSchema>[];
+}): z.infer<typeof PipelineCoverageReportSchema> {
+  const sourceIds = new Set(input.source_unit_ids.map((id) => Id.parse(id)));
+  const candidateSources = new Map(Object.entries(input.candidate_sources).map(([id, sources]) => [
+    Id.parse(id), new Set(sources.map((source) => Id.parse(source))),
+  ]));
+  const recordIds = new Set(input.normalized_record_ids.map((id) => Id.parse(id)));
+  const workflowIds = new Set(input.workflow_node_ids.map((id) => Id.parse(id)));
+  const graphIds = new Set(input.graph_node_ids.map((id) => Id.parse(id)));
+  const sources = input.source_coverage.map((item) => SourcePipelineCoverageSchema.parse(item))
+    .sort((a, b) => compare(a.source_unit_id, b.source_unit_id));
+  assertUnique(sources.map(({ source_unit_id }) => source_unit_id), "pipeline source unit");
+  if (sources.length !== sourceIds.size
+    || sources.some(({ source_unit_id }) => !sourceIds.has(source_unit_id))) {
+    throw new Error("Pipeline coverage must disposition every source unit exactly once");
+  }
+  for (const source of sources) {
+    assertMembers(source.candidate_ids, new Set(candidateSources.keys()), "candidate");
+    assertMembers(source.normalized_record_ids, recordIds, "normalized record");
+    assertMembers(source.workflow_node_ids, workflowIds, "workflow node");
+    assertMembers(source.graph_node_ids, graphIds, "graph node");
+  }
+  const records = input.record_coverage
+    .map((item) => NormalizedRecordCoverageSchema.parse(item))
+    .sort((a, b) => compare(a.record_id, b.record_id));
+  assertUnique(records.map(({ record_id }) => record_id), "record coverage");
+  if (records.length !== recordIds.size || records.some(({ record_id }) => !recordIds.has(record_id))) {
+    throw new Error("Record coverage must include every normalized record exactly once");
+  }
+  for (const record of records) {
+    assertMembers(record.candidate_ids, new Set(candidateSources.keys()), "candidate");
+    assertMembers(record.source_unit_ids, sourceIds, "source unit");
+    const inherited = new Set(record.candidate_ids.flatMap((id) =>
+      [...(candidateSources.get(id) ?? [])]));
+    const unrelated = record.source_unit_ids.find((id) => !inherited.has(id));
+    if (unrelated) throw new Error(`Record provenance is not inherited from candidates: ${unrelated}`);
+  }
+  const lossByStage = Object.fromEntries(PipelineStageSchema.options.map((stage) => [
+    stage,
+    sources.filter(({ stage_history }) => stage_history.some((entry) =>
+      entry.stage === stage && entry.status === "lost")).length,
+  ])) as Record<z.infer<typeof PipelineStageSchema>, number>;
+  const core = {
+    schema_version: ATLAS_PIPELINE_COVERAGE_VERSION,
+    source_revision_id: Id.parse(input.source_revision_id),
+    semantic_kind_registry_id: Id.parse(input.semantic_kind_registry_id),
+    source_coverage: sources,
+    record_coverage: records,
+    counts: {
+      source_units: sources.length,
+      normative: sources.filter(({ normative }) => normative).length,
+      unmapped_normative: sources.filter(({ normative, current_stage }) =>
+        normative && ["unmapped", "ambiguous", "conflicting"].includes(current_stage)).length,
+      unknown_records: records.filter(({ semantic_kind_id }) =>
+        semantic_kind_id === "ces.kind.unknown").length,
+      organization_records: records.filter(({ semantic_kind_id }) =>
+        !semantic_kind_id.startsWith("ces.kind.")).length,
+    },
+    loss_by_stage: lossByStage,
+  };
+  return deepFreeze(PipelineCoverageReportSchema.parse({
+    ...core, content_hash: hashJson(core),
+  }));
+}
+
+export function assertPipelineCoverageComplete(
+  reportValue: z.infer<typeof PipelineCoverageReportSchema>,
+): void {
+  const report = PipelineCoverageReportSchema.parse(reportValue);
+  if (report.counts.unmapped_normative > 0) {
+    throw new Error("Atlas pipeline coverage gate blocked: unmapped normative source");
+  }
 }
 
 export function createTargetedRetry(input: {

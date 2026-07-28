@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  assertPipelineCoverageComplete,
   assertPublishableCoverage,
   calculateCoverage,
+  calculatePipelineCoverage,
   createTargetedRetry,
 } from "./index.js";
 
@@ -21,6 +23,82 @@ const base = {
 };
 
 describe("DAPE-005 Atlas coverage gate", () => {
+  it("tracks deterministic stage lineage for built-in, unknown, and organization kinds", () => {
+    const recordIds = ["project.record.unknown", "project.record.temperature"];
+    const input = {
+      source_revision_id: base.source_revision_id,
+      semantic_kind_registry_id: "project.semantic-kinds.0123456789ab",
+      source_unit_ids: units,
+      candidate_sources: {
+        "project.candidate.unknown": [units[0]!],
+        "project.candidate.temperature": [units[0]!, units[1]!],
+      },
+      normalized_record_ids: recordIds,
+      workflow_node_ids: ["project.workflow.release"],
+      graph_node_ids: ["project.graph.release"],
+      source_coverage: [
+        {
+          source_unit_id: units[1]!, normative: true, current_stage: "unmapped" as const,
+          candidate_ids: ["project.candidate.temperature"], normalized_record_ids: [],
+          workflow_node_ids: [], graph_node_ids: [],
+          stage_history: [
+            { stage: "candidate" as const, status: "included" as const },
+            { stage: "assigned" as const, status: "lost" as const, reason: "No workflow assignment" },
+          ],
+        },
+        {
+          source_unit_id: units[0]!, normative: true, current_stage: "projected" as const,
+          candidate_ids: ["project.candidate.unknown", "project.candidate.temperature"],
+          normalized_record_ids: recordIds,
+          workflow_node_ids: ["project.workflow.release"],
+          graph_node_ids: ["project.graph.release"],
+          stage_history: [{ stage: "projected" as const, status: "included" as const }],
+        },
+      ],
+      record_coverage: [
+        { record_id: recordIds[0]!, semantic_kind_id: "ces.kind.unknown",
+          candidate_ids: ["project.candidate.unknown"], source_unit_ids: [units[0]!] },
+        { record_id: recordIds[1]!, semantic_kind_id: "cold-chain.kind.temperature-release",
+          candidate_ids: ["project.candidate.temperature"], source_unit_ids: units },
+      ],
+    };
+    const first = calculatePipelineCoverage(input);
+    const second = calculatePipelineCoverage({
+      ...input,
+      source_coverage: [...input.source_coverage].reverse(),
+      record_coverage: [...input.record_coverage].reverse(),
+    });
+    expect(first).toEqual(second);
+    expect(first.counts).toMatchObject({
+      unmapped_normative: 1, unknown_records: 1, organization_records: 1,
+    });
+    expect(first.loss_by_stage.assigned).toBe(1);
+    expect(() => assertPipelineCoverageComplete(first)).toThrow("unmapped normative");
+  });
+
+  it("rejects missing links and attach-all provenance", () => {
+    expect(() => calculatePipelineCoverage({
+      source_revision_id: base.source_revision_id,
+      semantic_kind_registry_id: "ces.semantic-kinds.0123456789ab",
+      source_unit_ids: units,
+      candidate_sources: { "project.candidate.one": [units[0]!] },
+      normalized_record_ids: ["project.record.one"],
+      workflow_node_ids: [],
+      graph_node_ids: [],
+      source_coverage: units.map((source_unit_id) => ({
+        source_unit_id, normative: true, current_stage: "normalized" as const,
+        candidate_ids: source_unit_id === units[0] ? ["project.candidate.one"] : [],
+        normalized_record_ids: source_unit_id === units[0] ? ["project.record.one"] : [],
+        workflow_node_ids: [], graph_node_ids: [],
+        stage_history: [{ stage: "normalized" as const, status: "included" as const }],
+      })),
+      record_coverage: [{
+        record_id: "project.record.one", semantic_kind_id: "ces.kind.business-rule",
+        candidate_ids: ["project.candidate.one"], source_unit_ids: units,
+      }],
+    })).toThrow("not inherited");
+  });
+
   it("publishes only complete and supported coverage", () => {
     const report = calculateCoverage({
       ...base,
