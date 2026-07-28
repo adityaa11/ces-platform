@@ -102,6 +102,51 @@ export const CompletenessCriticReportSchema = z.object({
   content_hash: Hash,
 }).strict();
 
+export const RetryCapabilitySchema = z.object({
+  extractor_id: Id,
+  contract_version: Text,
+  mode: z.enum(["category", "broad_discovery", "deterministic_stage"]),
+  supported_finding_types: z.array(Text).min(1),
+  supported_semantic_kind_ids: z.array(Id),
+}).strict();
+
+export const HardenedRetryRequestSchema = z.object({
+  id: Id,
+  finding_id: Id,
+  source_revision_id: Id,
+  critic_report_hash: Hash,
+  attempt: z.number().int().positive(),
+  extractor_id: Id,
+  extractor_contract_version: Text,
+  retry_scope: z.object({
+    source_unit_ids: z.array(Id).min(1),
+    candidate_ids: z.array(Id),
+    record_ids: z.array(Id),
+    pipeline_stage: PipelineStageSchema,
+  }).strict(),
+}).strict();
+
+export const HardenedRetryAttemptSchema = z.object({
+  request_id: Id,
+  finding_id: Id,
+  attempt: z.number().int().positive(),
+  status: z.enum(["succeeded", "unresolved", "provider_error", "exhausted"]),
+  prior_candidate_ids: z.array(Id),
+  appended_candidate_ids: z.array(Id),
+  diagnostic: Text,
+}).strict();
+
+export const HardenedRetryPlanSchema = z.object({
+  source_revision_id: Id,
+  critic_report_hash: Hash,
+  maximum_attempts: z.number().int().positive(),
+  requests: z.array(HardenedRetryRequestSchema),
+  unrouteable_finding_ids: z.array(Id),
+  exhausted_finding_ids: z.array(Id),
+  status: z.enum(["ready", "review_required", "exhausted"]),
+  content_hash: Hash,
+}).strict();
+
 export const CoverageDispositionSchema = z.enum([
   "covered", "context_only", "duplicate", "uncertain", "conflicting",
   "excluded_with_reason", "uncovered",
@@ -396,6 +441,111 @@ export function createCompletenessCriticReport(input: {
   };
   return deepFreeze(CompletenessCriticReportSchema.parse({
     ...core, content_hash: hashJson(core),
+  }));
+}
+
+export function createHardenedRetryPlan(input: {
+  readonly report: z.input<typeof CompletenessCriticReportSchema>;
+  readonly expected_source_revision_id: string;
+  readonly expected_report_hash: string;
+  readonly capabilities: readonly z.input<typeof RetryCapabilitySchema>[];
+  readonly prior_attempts?: readonly z.input<typeof HardenedRetryAttemptSchema>[];
+  readonly maximum_attempts: number;
+}): z.infer<typeof HardenedRetryPlanSchema> {
+  const report = CompletenessCriticReportSchema.parse(input.report);
+  if (report.source_revision_id !== Id.parse(input.expected_source_revision_id)
+    || report.content_hash !== Hash.parse(input.expected_report_hash)) {
+    throw new Error("Stale critic report or source revision");
+  }
+  const maximumAttempts = z.number().int().positive().parse(input.maximum_attempts);
+  const capabilities = input.capabilities.map((item) => RetryCapabilitySchema.parse(item))
+    .sort((a, b) => compare(a.extractor_id, b.extractor_id));
+  assertUnique(capabilities.map(({ extractor_id }) => extractor_id), "retry capability");
+  const attempts = (input.prior_attempts ?? []).map((item) =>
+    HardenedRetryAttemptSchema.parse(item));
+  const requests: z.infer<typeof HardenedRetryRequestSchema>[] = [];
+  const unrouteable: string[] = [];
+  const exhausted: string[] = [];
+  for (const finding of report.findings.filter(({ status }) => status === "open")) {
+    const prior = attempts.filter(({ finding_id }) => finding_id === finding.id);
+    const attempt = prior.length + 1;
+    if (attempt > maximumAttempts) {
+      exhausted.push(finding.id);
+      continue;
+    }
+    const matching = capabilities.filter((capability) =>
+      capability.supported_finding_types.includes(finding.finding_type)
+      && (capability.supported_semantic_kind_ids.length === 0
+        || finding.semantic_kind_ids.some((id) =>
+          capability.supported_semantic_kind_ids.includes(id))));
+    const capability = matching.find(({ mode }) => mode !== "broad_discovery")
+      ?? matching.find(({ mode }) => mode === "broad_discovery");
+    if (!capability) {
+      unrouteable.push(finding.id);
+      continue;
+    }
+    const scope = {
+      source_unit_ids: finding.source_unit_ids,
+      candidate_ids: finding.candidate_ids,
+      record_ids: finding.record_ids,
+      pipeline_stage: finding.pipeline_stage,
+    };
+    const identity = digest(JSON.stringify(canonical({
+      finding_id: finding.id, attempt, extractor_id: capability.extractor_id, scope,
+    }))).slice(0, 12);
+    requests.push(HardenedRetryRequestSchema.parse({
+      id: `atlas.retry.${String(attempt).padStart(3, "0")}.${identity}`,
+      finding_id: finding.id,
+      source_revision_id: report.source_revision_id,
+      critic_report_hash: report.content_hash,
+      attempt,
+      extractor_id: capability.extractor_id,
+      extractor_contract_version: capability.contract_version,
+      retry_scope: scope,
+    }));
+  }
+  requests.sort((a, b) => compare(a.id, b.id));
+  const status = exhausted.length > 0 ? "exhausted" as const
+    : unrouteable.length > 0 ? "review_required" as const : "ready" as const;
+  const core = {
+    source_revision_id: report.source_revision_id,
+    critic_report_hash: report.content_hash,
+    maximum_attempts: maximumAttempts,
+    requests,
+    unrouteable_finding_ids: unrouteable.sort(compare),
+    exhausted_finding_ids: exhausted.sort(compare),
+    status,
+  };
+  return deepFreeze(HardenedRetryPlanSchema.parse({
+    ...core, content_hash: hashJson(core),
+  }));
+}
+
+export function recordHardenedRetryAttempt(input: {
+  readonly request: z.input<typeof HardenedRetryRequestSchema>;
+  readonly status: z.input<typeof HardenedRetryAttemptSchema>["status"];
+  readonly prior_candidate_ids: readonly string[];
+  readonly appended_candidate_ids: readonly string[];
+  readonly output_source_unit_ids: readonly string[];
+  readonly diagnostic: string;
+}): z.infer<typeof HardenedRetryAttemptSchema> {
+  const request = HardenedRetryRequestSchema.parse(input.request);
+  const allowed = new Set(request.retry_scope.source_unit_ids);
+  const expanded = input.output_source_unit_ids.find((id) => !allowed.has(Id.parse(id)));
+  if (expanded) throw new Error(`Retry output expanded beyond requested scope: ${expanded}`);
+  const prior = input.prior_candidate_ids.map((id) => Id.parse(id)).sort(compare);
+  const appended = input.appended_candidate_ids.map((id) => Id.parse(id)).sort(compare);
+  if (appended.some((id) => prior.includes(id))) {
+    throw new Error("Retry output must append candidates without replacing prior evidence");
+  }
+  return deepFreeze(HardenedRetryAttemptSchema.parse({
+    request_id: request.id,
+    finding_id: request.finding_id,
+    attempt: request.attempt,
+    status: input.status,
+    prior_candidate_ids: prior,
+    appended_candidate_ids: appended,
+    diagnostic: input.diagnostic,
   }));
 }
 

@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-007 — Targeted Retry
 
 **Stage:** Atlas hardening quality
-**Status:** Planned
+**Status:** Implemented
 
 ## Objective
 
@@ -35,21 +35,32 @@ final unresolved/review-required state.
 
 ## Acceptance criteria
 
-- [ ] Every retry is linked to one or more unresolved findings.
-- [ ] Retry scope cannot silently expand to the whole extraction.
-- [ ] Original candidates and evidence remain available.
-- [ ] Attempt limits and terminal statuses are deterministic.
-- [ ] Revision mismatch or stale findings reject the retry.
-- [ ] Unresolved exhaustion requires human review rather than false success.
-- [ ] Registered organization extractors can receive applicable retries without
+- [x] Every retry is linked to one or more unresolved findings.
+- [x] Retry scope cannot silently expand to the whole extraction.
+- [x] Original candidates and evidence remain available.
+- [x] Attempt limits and terminal statuses are deterministic.
+- [x] Revision mismatch or stale findings reject the retry.
+- [x] Unresolved exhaustion requires human review rather than false success.
+- [x] Registered organization extractors can receive applicable retries without
       core routing changes.
-- [ ] Unknown findings remain visible when no extractor capability matches.
+- [x] Unknown findings remain visible when no extractor capability matches.
 
 ## Tests and evidence
 
 Validation-only retry, registered-extension retry, unknown/unclaimed finding,
 workflow-assignment retry, duplicate review, stale finding, scope expansion,
 retry success, retry exhaustion, and provider failure.
+
+## Completion evidence
+
+- Added revision-bound retry capability, request, plan, and attempt contracts.
+- Routing uses registered finding/kind capabilities with category-first and
+  broad-discovery fallback; unmatched findings remain review-required.
+- Requests retain exact source/candidate/record scope and reject expansion.
+- Attempts append candidate identities without replacing prior evidence.
+- Attempt limits produce deterministic exhaustion rather than false success.
+- Focused coverage and architecture tests: 14 passed.
+- Package TypeScript build passed.
 
 ## Out of scope
 

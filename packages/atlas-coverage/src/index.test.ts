@@ -5,7 +5,9 @@ import {
   calculateCoverage,
   calculatePipelineCoverage,
   createCompletenessCriticReport,
+  createHardenedRetryPlan,
   createTargetedRetry,
+  recordHardenedRetryAttempt,
 } from "./index.js";
 
 const units = ["safara.unit.00001.aaaa1111", "safara.unit.00002.bbbb2222"];
@@ -24,6 +26,70 @@ const base = {
 };
 
 describe("DAPE-005 Atlas coverage gate", () => {
+  it("routes bounded retries through registered capabilities and preserves history", () => {
+    const coverage = calculatePipelineCoverage({
+      source_revision_id: base.source_revision_id,
+      semantic_kind_registry_id: "cold-chain.semantic-kinds.0123456789ab",
+      source_unit_ids: [units[0]!],
+      candidate_sources: {},
+      normalized_record_ids: [],
+      workflow_node_ids: [],
+      graph_node_ids: [],
+      source_coverage: [{
+        source_unit_id: units[0]!, normative: true, current_stage: "unmapped",
+        candidate_ids: [], normalized_record_ids: [], workflow_node_ids: [], graph_node_ids: [],
+        stage_history: [{ stage: "candidate", status: "lost", reason: "No candidate" }],
+      }],
+      record_coverage: [],
+    });
+    const report = createCompletenessCriticReport({
+      coverage,
+      findings: [{
+        finding_type: "uncovered_normative_source", pipeline_stage: "candidate",
+        source_unit_ids: [units[0]!], candidate_ids: [], record_ids: [],
+        semantic_kind_ids: ["cold-chain.kind.temperature-release"],
+        severity: "blocking", statement: "Missing temperature release rule.",
+        recommended_action: "targeted_retry", resolution_history: [],
+      }],
+    });
+    const capability = {
+      extractor_id: "cold-chain.extractor.temperature",
+      contract_version: "1.0.0",
+      mode: "category" as const,
+      supported_finding_types: ["uncovered_normative_source"],
+      supported_semantic_kind_ids: ["cold-chain.kind.temperature-release"],
+    };
+    const plan = createHardenedRetryPlan({
+      report, expected_source_revision_id: report.source_revision_id,
+      expected_report_hash: report.content_hash, capabilities: [capability],
+      maximum_attempts: 1,
+    });
+    expect(plan.status).toBe("ready");
+    expect(plan.requests[0]).toMatchObject({
+      extractor_id: "cold-chain.extractor.temperature", attempt: 1,
+    });
+    const attempt = recordHardenedRetryAttempt({
+      request: plan.requests[0]!, status: "unresolved", prior_candidate_ids: [],
+      appended_candidate_ids: ["cold-chain.candidate.retry-one"],
+      output_source_unit_ids: [units[0]!], diagnostic: "Still ambiguous.",
+    });
+    expect(createHardenedRetryPlan({
+      report, expected_source_revision_id: report.source_revision_id,
+      expected_report_hash: report.content_hash, capabilities: [capability],
+      prior_attempts: [attempt], maximum_attempts: 1,
+    }).status).toBe("exhausted");
+    expect(() => recordHardenedRetryAttempt({
+      request: plan.requests[0]!, status: "succeeded", prior_candidate_ids: [],
+      appended_candidate_ids: [], output_source_unit_ids: [units[1]!],
+      diagnostic: "Invalid expanded scope.",
+    })).toThrow("expanded");
+    expect(() => createHardenedRetryPlan({
+      report, expected_source_revision_id: "other.rev.0123456789ab",
+      expected_report_hash: report.content_hash, capabilities: [capability],
+      maximum_attempts: 1,
+    })).toThrow("Stale");
+  });
+
   it("creates deterministic source-validated completeness findings", () => {
     const coverage = calculatePipelineCoverage({
       source_revision_id: base.source_revision_id,
