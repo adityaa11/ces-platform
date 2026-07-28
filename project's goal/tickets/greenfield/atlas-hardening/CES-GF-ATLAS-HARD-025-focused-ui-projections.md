@@ -1,0 +1,53 @@
+# CES-GF-ATLAS-HARD-025 — Focused Backend-Owned UI Projections
+
+**Stage:** Canonical model and workflow projection refinement
+**Status:** Proposed
+
+## Objective
+
+Generate focused UI projections from one complete canonical model instead of
+presenting every normalized record in one buyer-facing graph.
+
+## Dependencies
+
+- ATLAS-HARD-010 and ATLAS-HARD-018 through ATLAS-HARD-024.
+
+## Work
+
+- Generate project overview, workflow detail, rules and controls, source
+  traceability, and approval-exception projections.
+- Restrict overview membership to major process semantics and summaries.
+- Render operations, decisions, states, transitions, branches, loops, and
+  dependencies in workflow detail.
+- Preserve detailed controls in focused views.
+- Link traceability through document, source unit, atomic claim, candidate,
+  record, workflow, and operation.
+- Reclassify the all-record graph as experimental semantic or
+  rules-and-controls output.
+- Keep membership and summaries backend-owned.
+
+## Outputs
+
+`proposed-project-overview-graph.json`,
+`proposed-workflow-detail-graphs.json`,
+`proposed-rules-controls-graph.json`, `proposed-traceability-graph.json`, and
+`proposed-approval-exceptions.json`, plus rendered equivalents.
+
+## Acceptance criteria
+
+- [ ] Overview excludes detailed controls and delivery/commercial clutter.
+- [ ] Workflow detail retains operations, decisions, states, and transitions.
+- [ ] Detailed requirements remain accessible in focused tabs.
+- [ ] Rendered items resolve to canonical identity and exact evidence.
+- [ ] Heuristic hints are not established projection edges.
+- [ ] Frontend does not reconstruct semantic membership.
+- [ ] Proposed and approved projections share neutral contracts.
+
+## Tests and evidence
+
+Large-model readability, membership, exact traceability, workflow detail,
+exceptions, proposed/approved parity, and deterministic rendering.
+
+## Out of scope
+
+Approval and eligibility are extended by ATLAS-HARD-026.

@@ -12,6 +12,8 @@ block production approval UI integration until every mandatory gate passes.
 
 - ATLAS-HARD-001 through ATLAS-HARD-014.
 - ATLAS-HARD-016 and ATLAS-HARD-017 corrective production integration.
+- ATLAS-HARD-018 through ATLAS-HARD-026 canonical-model and projection
+  refinement.
 - Completed and reconciled DAPE-008R real-provider evidence.
 
 ## Work
@@ -22,6 +24,9 @@ block production approval UI integration until every mandatory gate passes.
   final reviewed coverage, source grounding, distortion, ambiguity/conflict
   surfacing, determinism, pre-approval graph availability, authority flags, and
   downstream blocking.
+- Prove claim-level completeness, identity stability, multilingual
+  equivalence, assignment correctness, relationship correctness, and focused
+  projection correctness.
 - Attribute each failure to parsing, extraction, classification, normalization,
   deduplication, assignment, projection, review, or publication.
 - Store redacted evidence, commands, versions, hashes, exit codes, and reviewer
@@ -44,8 +49,16 @@ block production approval UI integration until every mandatory gate passes.
 - 100% approved-record source references and preserved exact text where
   available.
 - 100% ambiguity/conflict surfacing.
-- Deterministic output, pre-approval graph, non-authoritative proposal, and
-  blocked downstream execution before publication.
+- Every normative atomic claim has a valid disposition and no uncovered claim
+  remains.
+- Stable record IDs survive duplicate discovery, retry, ordering, language,
+  and workflow-assignment changes.
+- Lexical hints are not published as established relationships; derived and
+  multi-target relationships remain reviewable.
+- Project overview contains only major process semantics while workflow detail,
+  rules and controls, traceability, and exceptions preserve the complete model.
+- Deterministic output, focused pre-approval projections, non-authoritative
+  proposal, and blocked downstream execution before publication.
 
 ## Acceptance criteria
 
@@ -55,6 +68,7 @@ block production approval UI integration until every mandatory gate passes.
       gated on human review.
 - [ ] Human review is recorded; Atlas does not self-certify.
 - [ ] Existing DAPE, Atlas, CLI, and greenfield regressions remain green.
+- [ ] All ATLAS-HARD-018 through ATLAS-HARD-026 acceptance criteria pass.
 - [x] Production approval UI integration remains blocked until acceptance.
 - [x] Qualification reports contain no claim that Safara alone proves
       domain-agnostic extraction.

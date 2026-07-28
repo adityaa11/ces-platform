@@ -2,6 +2,7 @@
 
 **Status:** Planned
 **Authority:** [`CES_ATLAS_HARDENING_PLAN.md`](../../../CES_ATLAS_HARDENING_PLAN.md)
+**Refinement:** [`CES_ATLAS_CANONICAL_MODEL_WORKFLOW_PROJECTION_FEEDBACK.md`](../../../CES_ATLAS_CANONICAL_MODEL_WORKFLOW_PROJECTION_FEEDBACK.md)
 **Foundation:** DAPE-000 through DAPE-008R are completed prerequisites.
 
 This program closes the gap between the completed DAPE extraction foundation
@@ -30,9 +31,19 @@ parallel semantic model, source identity system, or approval path.
 | 15 | [ATLAS-HARD-015](CES-GF-ATLAS-HARD-015-safara-qualification-gate.md) | Production integration gate | 001–014 |
 | 16 | [ATLAS-HARD-016](CES-GF-ATLAS-HARD-016-live-semantic-section-classifier.md) | Live semantic section classification | 001–004 |
 | 17 | [ATLAS-HARD-017](CES-GF-ATLAS-HARD-017-canonical-provider-candidates.md) | Generic candidates and registry routing | 003–007, 016 |
+| 18 | [ATLAS-HARD-018](CES-GF-ATLAS-HARD-018-atomic-claims-coverage.md) | Atomic claims and claim-level completeness | 001, 005–007, 017 |
+| 19 | [ATLAS-HARD-019](CES-GF-ATLAS-HARD-019-stable-canonical-record-identity.md) | Stable language-independent record identity | 009, 017–018 |
+| 20 | [ATLAS-HARD-020](CES-GF-ATLAS-HARD-020-multilingual-canonical-representation.md) | Reviewable multilingual equivalence | 018–019 |
+| 21 | [ATLAS-HARD-021](CES-GF-ATLAS-HARD-021-first-class-workflows-operations.md) | First-class workflows and operations | 009, 017–020 |
+| 22 | [ATLAS-HARD-022](CES-GF-ATLAS-HARD-022-reviewable-workflow-assignments.md) | Multi-workflow and cross-cutting assignments | 019–021 |
+| 23 | [ATLAS-HARD-023](CES-GF-ATLAS-HARD-023-reviewable-relationship-candidates.md) | Evidence-backed relationship candidates | 019, 021–022 |
+| 24 | [ATLAS-HARD-024](CES-GF-ATLAS-HARD-024-multi-target-relationships.md) | Zero-, one-, and multi-target relationships | 022–023 |
+| 25 | [ATLAS-HARD-025](CES-GF-ATLAS-HARD-025-focused-ui-projections.md) | Focused backend-owned UI projections | 010, 018–024 |
+| 26 | [ATLAS-HARD-026](CES-GF-ATLAS-HARD-026-expanded-approval-and-eligibility.md) | Approval and eligibility across governed entities | 011–013, 022–025 |
 
-ATLAS-HARD-015 is reopened and must be rerun after ATLAS-HARD-017. Earlier
-library-level completion is not production integration evidence.
+ATLAS-HARD-015 is reopened and must be rerun only after ATLAS-HARD-018 through
+ATLAS-HARD-026. Earlier library-level completion or cleaner graph output is not
+production integration evidence.
 
 ## Program rules
 
@@ -66,6 +77,7 @@ library-level completion is not production integration evidence.
 
 ## Final artifact boundary
 
-Before approval, the UI consumes the proposed project model, proposed workflow
-graph, source documents, coverage, and findings. After approval, downstream CES
-modules consume only the authoritative approved project model.
+Before approval, the UI consumes the proposed project model, focused proposed
+projections, source documents, atomic-claim coverage, relationship candidates,
+assignments, and findings. After approval, downstream CES modules consume only
+the authoritative approved project model and its approved projections.
