@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  createAtlasCandidateInventory,
+  inspectLegacyCandidateMigration,
   mergeAtlasRoleOutputs,
   partitionSourceUnits,
   type AtlasRoleOutput,
@@ -40,6 +42,63 @@ const output = (partition: string, candidate: string): AtlasRoleOutput => ({
 });
 
 describe("DAPE-004 bounded Atlas roles", () => {
+  it("builds a generic source-grounded candidate inventory", () => {
+    const candidate = {
+      contract_version: "1.0.0" as const,
+      candidate_id: "cold-chain.candidate.temperature-release",
+      statement: "Release requires an in-range temperature history.",
+      provisional_kind: "cold-chain.kind.temperature-release",
+      source_unit_ids: [units[0]!.id],
+      confidence: 0.84,
+      extraction_role: "atlas.domain-discovery",
+      classification_status: "classification_required" as const,
+      evidence_status: "support_review_required" as const,
+      payload_hash: `sha256:${"3".repeat(64)}`,
+      provider_metadata: {
+        provider_id: "fixture",
+        model_id: "domain-neutral-v1",
+        contract_version: "1.0.0",
+      },
+    };
+    const input = {
+      source_revision_id: revisions.source_revision_id,
+      lexicon_revision_id: revisions.lexicon_revision_id,
+      semantic_schema_version: revisions.semantic_schema_version,
+      semantic_kind_registry_id: "ces.semantic-kinds.0123456789ab",
+      semantic_kind_registry_hash: `sha256:${"4".repeat(64)}`,
+      prompt_contract_version: revisions.prompt_contract_version,
+      allowed_source_unit_ids: units.map(({ id }) => id),
+      candidates: [
+        { ...candidate, candidate_id: "cold-chain.candidate.z-secondary" },
+        candidate,
+      ],
+    };
+    expect(createAtlasCandidateInventory(input).candidates[0]).toMatchObject({
+      candidate_id: "cold-chain.candidate.temperature-release",
+      provisional_kind: "cold-chain.kind.temperature-release",
+      classification_status: "classification_required",
+      evidence_status: "support_review_required",
+    });
+    expect(createAtlasCandidateInventory(input)).toEqual(createAtlasCandidateInventory({
+      ...input, candidates: [...input.candidates].reverse(),
+    }));
+    expect(() => createAtlasCandidateInventory({
+      ...input,
+      candidates: [{ ...candidate, source_unit_ids: ["invented.unit"] }],
+    })).toThrow("unknown source unit");
+  });
+
+  it("rejects lossy migration from the narrow legacy envelope", () => {
+    const migration = inspectLegacyCandidateMigration(
+      output("atlas.partition.00001", "safara.candidate.a").semantic_candidates![0]!,
+    );
+    expect(migration).toEqual({
+      candidate_id: "safara.candidate.a",
+      status: "rejected_lossy",
+      losses: ["statement", "confidence", "provider_metadata"],
+    });
+  });
+
   it("partitions deterministically within configured budgets", () => {
     const partitions = partitionSourceUnits({
       role_id: "atlas.section-extractor", revisions,
