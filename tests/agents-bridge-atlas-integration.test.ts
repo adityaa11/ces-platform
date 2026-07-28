@@ -9,6 +9,8 @@ import {
   ProviderRegistry,
   ToolRegistry,
   createAtlasRequirementExtractor,
+  createAtlasStructureClassifier,
+  createAtlasCandidateExtractor,
   createBridgeHandler,
   parseRuntimeConfig,
   type AgentProvider,
@@ -42,7 +44,7 @@ describe("Atlas CLI to Agents Bridge integration", () => {
         const headers = Object.fromEntries(new Headers(init?.headers).entries());
         const response = await handle({
           ...(init?.method ? { method: init.method } : {}),
-          url: "/v1/atlas/analyze",
+          url: new URL(String(_url)).pathname,
           headers,
           body: (async function* () { yield String(init?.body ?? ""); })(),
         });
@@ -66,20 +68,30 @@ describe("Atlas CLI to Agents Bridge integration", () => {
         stdout: (text) => stdout.push(text),
         stderr: (text) => stderr.push(text),
       });
-      expect(exitCode).toBe(7);
       expect(stderr).toEqual([]);
+      expect(exitCode).toBe(7);
       expect(stdout.join("")).toContain("review artifacts");
-      const analysis = JSON.parse(await readFile(join(output, "candidate-analysis.json"), "utf8"));
-      expect(analysis).toMatchObject({
-        schema_version: "1.0.0",
-        candidate_requirements: [{
-          candidate_id: "REQ-CAND-001",
-          inference: {
-            agent: { provider: "gemini", model: "gemini-2.5-flash" },
-            review: { status: "candidate" },
-          },
-        }],
+      const inventory = JSON.parse(await readFile(join(output, "candidate-inventory.json"), "utf8"));
+      expect(inventory.candidates).toEqual(expect.arrayContaining([expect.objectContaining({
+        provisional_kind: "ces.kind.capability",
+        source_unit_ids: [expect.any(String)],
+        provider_metadata: { provider_id: "gemini", model_id: "gemini-2.5-flash",
+          contract_version: "1.0.0" },
+      })]));
+      const losses = JSON.parse(await readFile(
+        join(output, "legacy-projection-losses.json"), "utf8",
+      ));
+      expect(losses).toMatchObject({
+        direction: "canonical-to-legacy",
+        adapter_id: "atlas.adapter.legacy-review-v1",
       });
+      const proposed = JSON.parse(await readFile(
+        join(output, "proposed-project-model.json"), "utf8",
+      ));
+      expect(proposed.records.length).toBeLessThan(inventory.candidates.length);
+      expect(proposed.relationships).toEqual(expect.arrayContaining([
+        expect.objectContaining({ kind: expect.stringMatching(/^ces\.relationship\./u) }),
+      ]));
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
@@ -94,7 +106,59 @@ function bridgeHandler() {
       request: StructuredGenerationRequest,
       schema: OutputSchema<TOutput>,
     ) {
-      expect(request.messages[0]?.content).toContain("[L0002]");
+      const content = request.messages[0]!.content;
+      if (request.system_instructions.includes("semantic purpose")) {
+        const units = JSON.parse(content.split("SOURCE UNITS\n")[1]!) as Array<{ id: string; kind: string }>;
+        return {
+          output: schema.parse({
+            classifications: units.map((unit) => ({
+              source_unit_id: unit.id,
+              purpose_ids: unit.kind === "heading"
+                ? ["ces.section.context"]
+                : ["ces.section.workflows", "ces.section.normative-rules"],
+              disposition: unit.kind === "heading" ? "structural" : "normative",
+              confidence: 1,
+              status: "classified",
+              rationale: "Deterministic integration fixture.",
+            })),
+          }) as TOutput,
+          provider_id: "gemini",
+          requested_model_alias: request.model_alias,
+          resolved_model: "gemini-2.5-flash",
+          finish_reason: "completed",
+        };
+      }
+      if (request.system_instructions.includes("generic candidates")) {
+        const units = JSON.parse(content.split("SOURCE UNITS\n")[1]!) as Array<{ id: string }>;
+        const kinds = JSON.parse(content.split("ALLOWED SEMANTIC KINDS\n")[1]!
+          .split("\n\n")[0]!) as string[];
+        const selectedKind = kinds.includes("ces.kind.capability")
+          ? "ces.kind.capability" : kinds[0]!;
+        const targetKind = ["ces.kind.capability", "ces.kind.workflow",
+          "ces.kind.operational-procedure"].includes(selectedKind);
+        return {
+          output: schema.parse({
+            candidates: [{
+              temporary_id: "provider-local-1",
+              statement: targetKind
+                ? "A project manager can create a project."
+                : "Only a project manager may create a project.",
+              provisional_kind: selectedKind,
+              source_unit_ids: [units.at(-1)!.id],
+              confidence: 0.95,
+              classification_status: "classified",
+              evidence_status: "source_anchored",
+            }],
+            uncertainties: [],
+            conflicts: [],
+          }) as TOutput,
+          provider_id: "gemini",
+          requested_model_alias: request.model_alias,
+          resolved_model: "gemini-2.5-flash",
+          finish_reason: "completed",
+        };
+      }
+      expect(content).toContain("[L0002]");
       return {
         output: schema.parse({
           candidate_requirements: [{
@@ -122,6 +186,12 @@ function bridgeHandler() {
   agents.register(createAtlasRequirementExtractor({
     model_alias: "atlas-default",
     provider_id: "gemini",
+  }));
+  agents.register(createAtlasStructureClassifier({
+    model_alias: "atlas-default", provider_id: "gemini", policy: {},
+  }));
+  agents.register(createAtlasCandidateExtractor({
+    model_alias: "atlas-default", provider_id: "gemini", policy: {},
   }));
   const providers = new ProviderRegistry();
   providers.register(provider);
@@ -152,8 +222,12 @@ function bridgeHandler() {
         identity: {
           client_id: "atlas-cli",
           audit_identity: "Atlas CLI",
-          allowed_agents: ["atlas.requirement-extractor"],
-          allowed_routes: ["/v1/atlas/analyze"],
+          allowed_agents: [
+            "atlas.requirement-extractor",
+            "atlas.structure-classifier",
+            "atlas.candidate-extractor",
+          ],
+          allowed_routes: ["/v1/atlas/analyze", "/v1/agents/:agentId/execute"],
           max_concurrency: 2,
           requests_per_minute: 10,
         },

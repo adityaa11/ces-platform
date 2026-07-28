@@ -22,6 +22,7 @@ import {
 } from "@company/ces-atlas-coverage";
 import {
   createAtlasCandidateInventory,
+  AtlasCandidateSchema,
   createCategoryExtractorRegistry,
   CategoryExtractorRegistrySchema,
   createSectionPurposeRegistry,
@@ -790,6 +791,7 @@ async function classifyAtlasSections(input: {
       output: finalizeSectionClassifications(classifierInput, units.map((unit) => ({
         source_unit_id: unit.id,
         purpose_ids: ["ces.section.unknown"],
+        disposition: unit.kind === "heading" ? "structural" : "normative",
         confidence: 0,
         status: "unknown",
         rationale: "Provider fixture supplied no structure-classifier result.",
@@ -910,15 +912,48 @@ async function extractCanonicalAtlasCandidates(input: {
   } else {
     const broad = await executeCanonicalExtractor(input.options, broadInput);
     runs = [broad];
-    const discoveredKinds = new Set(broad.inventory.candidates
-      .map(({ provisional_kind }) => provisional_kind));
+    const purposeKinds = new Map<string, readonly string[]>([
+      ["ces.section.normative-rules", [
+        "ces.kind.business-rule", "ces.kind.validation-constraint",
+        "ces.kind.uniqueness-constraint", "ces.kind.security-sensitive-restriction",
+      ]],
+      ["ces.section.workflows", [
+        "ces.kind.workflow", "ces.kind.operational-procedure", "ces.kind.capability",
+      ]],
+      ["ces.section.roles-permissions", ["ces.kind.role-permission"]],
+      ["ces.section.calculations", ["ces.kind.calculation"]],
+      ["ces.section.states-lifecycle", [
+        "ces.kind.state-definition", "ces.kind.state-transition", "ces.kind.lifecycle-rule",
+      ]],
+      ["ces.section.reporting-audit", [
+        "ces.kind.reporting-requirement", "ces.kind.business-rule",
+      ]],
+      ["ces.section.data", [
+        "ces.kind.capability", "ces.kind.validation-constraint",
+        "ces.kind.uniqueness-constraint",
+      ]],
+      ["ces.section.acceptance-deliverables", [
+        "ces.kind.acceptance-criterion", "ces.kind.acceptance-scenario",
+      ]],
+      ["ces.section.terminology", ["ces.kind.terminology"]],
+    ]);
     for (const extractor of extractorRegistry.extractors) {
+      const registeredPurposes = [...purposeKinds.entries()]
+        .filter(([, kinds]) => kinds.some((kind) =>
+          extractor.supported_semantic_kind_ids.includes(kind)));
+      const matchingPurposes = registeredPurposes.length > 0
+        ? registeredPurposes
+        : extractor.registered_by === "organization"
+          ? [...purposeKinds.entries()] : [];
       const selectedKinds = extractor.supported_semantic_kind_ids
-        .filter((kind) => discoveredKinds.has(kind));
+        .filter((kind) => registeredPurposes.length === 0
+          || matchingPurposes.some(([, kinds]) => kinds.includes(kind)));
       if (selectedKinds.length === 0) continue;
-      const candidateUnits = new Set(broad.inventory.candidates
-        .filter(({ provisional_kind }) => selectedKinds.includes(provisional_kind))
-        .flatMap(({ source_unit_ids }) => source_unit_ids));
+      const matchingPurposeIds = new Set(matchingPurposes.map(([purpose]) => purpose));
+      const candidateUnits = new Set(input.sectionClassification.output.classifications
+        .filter(({ purpose_ids, disposition }) => disposition === "normative"
+          && purpose_ids.some((purpose) => matchingPurposeIds.has(purpose)))
+        .map(({ source_unit_id }) => source_unit_id));
       const scopedUnits = units.filter(({ id }) => candidateUnits.has(id));
       const scopedClassifications = input.sectionClassification.output.classifications
         .filter(({ source_unit_id }) => candidateUnits.has(source_unit_id));
@@ -934,10 +969,10 @@ async function extractCanonicalAtlasCandidates(input: {
     const covered = new Set(runs.flatMap(({ inventory }) => inventory.candidates)
       .flatMap(({ source_unit_ids }) => source_unit_ids));
     const unresolvedIds = new Set(input.sectionClassification.output.classifications
-      .filter(({ purpose_ids }) =>
-        !(purpose_ids.length === 1 && purpose_ids[0] === "ces.section.context"))
-      .map(({ source_unit_id }) => source_unit_id)
-      .filter((id) => !covered.has(id)));
+      .filter(({ disposition }) => disposition === "normative")
+      .filter(({ source_unit_id, status }) =>
+        status !== "classified" || !covered.has(source_unit_id))
+      .map(({ source_unit_id }) => source_unit_id));
     const retryUnits = units.filter(({ id, kind }) =>
       kind !== "heading" && unresolvedIds.has(id));
     const retryClassifications = input.sectionClassification.output.classifications
@@ -946,6 +981,14 @@ async function extractCanonicalAtlasCandidates(input: {
       runs.push(await executeCanonicalExtractor(input.options, {
         ...broadInput,
         extractor_id: "atlas.extractor.targeted-retry",
+        objective: "For each unresolved source unit, atomically decompose every independently testable statement, including each numbered or bulleted rule, threshold, prohibition, permission, validation, calculation, state, report, and acceptance condition. Do not treat one candidate from the unit as coverage of its other statements.",
+        source_units: retryUnits,
+        section_classifications: retryClassifications,
+      }));
+      runs.push(await executeCanonicalExtractor(input.options, {
+        ...broadInput,
+        extractor_id: "atlas.extractor.atomic-retry",
+        objective: "Independently re-scan each unresolved unit from beginning to end. Emit one generic candidate for every atomic list item or independently testable clause, including small display-together, retention, confidentiality, quota, and blocking conditions. Do not summarize or omit a clause because another candidate covers the same unit.",
         source_units: retryUnits,
         section_classifications: retryClassifications,
       }));
@@ -988,6 +1031,7 @@ async function extractCanonicalAtlasCandidates(input: {
   };
   return {
     inventory, ledger, mergeReport, runs, sourceArtifacts,
+    sectionClassifications: input.sectionClassification.output.classifications,
     ...(input.legacyFixture ? { legacyFixture: input.legacyFixture } : {}),
   };
 }
@@ -1324,6 +1368,169 @@ function uniqueBy<T>(values: readonly T[], identify: (value: T) => string): T[] 
   });
 }
 
+function consolidateAtlasCandidates(
+  candidates: readonly z.infer<typeof AtlasCandidateSchema>[],
+): readonly { readonly candidates: readonly z.infer<typeof AtlasCandidateSchema>[] }[] {
+  const ordered = [...candidates].sort((left, right) =>
+    compareText(left.candidate_id, right.candidate_id));
+  const parent = ordered.map((_, index) => index);
+  const find = (index: number): number => {
+    let root = index;
+    while (parent[root] !== root) root = parent[root]!;
+    while (parent[index] !== index) {
+      const next = parent[index]!;
+      parent[index] = root;
+      index = next;
+    }
+    return root;
+  };
+  const union = (left: number, right: number) => {
+    const leftRoot = find(left);
+    const rightRoot = find(right);
+    if (leftRoot !== rightRoot) parent[Math.max(leftRoot, rightRoot)] = Math.min(leftRoot, rightRoot);
+  };
+  for (let left = 0; left < ordered.length; left += 1) {
+    for (let right = left + 1; right < ordered.length; right += 1) {
+      if (candidateMeaningsMatch(ordered[left]!, ordered[right]!)) union(left, right);
+    }
+  }
+  const clustered = new Map<number, z.infer<typeof AtlasCandidateSchema>[]>();
+  for (const [index, candidate] of ordered.entries()) {
+    const root = find(index);
+    const values = clustered.get(root) ?? [];
+    values.push(candidate);
+    clustered.set(root, values);
+  }
+  const kindPriority = new Map([
+    "ces.kind.state-transition", "ces.kind.calculation", "ces.kind.role-permission",
+    "ces.kind.validation-constraint", "ces.kind.uniqueness-constraint",
+    "ces.kind.security-sensitive-restriction", "ces.kind.lifecycle-rule",
+    "ces.kind.business-rule", "ces.kind.acceptance-scenario",
+    "ces.kind.acceptance-criterion", "ces.kind.reporting-requirement",
+    "ces.kind.operational-procedure", "ces.kind.workflow",
+    "ces.kind.state-definition", "ces.kind.terminology", "ces.kind.capability",
+    "ces.kind.unknown",
+  ].map((kind, index) => [kind, index]));
+  return [...clustered.values()].map((values) => ({
+    candidates: values.sort((left, right) =>
+      (kindPriority.get(left.provisional_kind) ?? 999)
+      - (kindPriority.get(right.provisional_kind) ?? 999)
+      || right.confidence - left.confidence
+      || compareText(left.statement, right.statement)),
+  })).sort((left, right) =>
+    compareText(left.candidates[0]!.candidate_id, right.candidates[0]!.candidate_id));
+}
+
+function candidateMeaningsMatch(
+  left: z.infer<typeof AtlasCandidateSchema>,
+  right: z.infer<typeof AtlasCandidateSchema>,
+): boolean {
+  const leftText = semanticTokens(left.statement);
+  const rightText = semanticTokens(right.statement);
+  const exact = [...leftText].sort(compareText).join(" ")
+    === [...rightText].sort(compareText).join(" ");
+  if (exact) return true;
+  if (left.provisional_kind !== right.provisional_kind) return false;
+  if (!left.source_unit_ids.some((id) => right.source_unit_ids.includes(id))) return false;
+  return jaccard(leftText, rightText) >= 0.65;
+}
+
+function semanticTokens(statement: string): Set<string> {
+  const ignored = new Set([
+    "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "in",
+    "can", "if", "is", "it", "may", "must", "of", "on", "or", "should",
+    "the", "to", "with",
+    "adalah", "atau", "dan", "dapat", "dari", "dengan", "di", "harus", "ke",
+    "oleh", "pada", "yang",
+  ]);
+  return new Set(statement.normalize("NFKD").toLocaleLowerCase()
+    .replaceAll(/\p{M}/gu, "")
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter((token) => token.length > 1 && !ignored.has(token)));
+}
+
+function jaccard(left: ReadonlySet<string>, right: ReadonlySet<string>): number {
+  if (left.size === 0 || right.size === 0) return 0;
+  const intersection = [...left].filter((token) => right.has(token)).length;
+  return intersection / (left.size + right.size - intersection);
+}
+
+function buildGroundedAtlasRelationships(input: {
+  readonly projectId: string;
+  readonly records: readonly {
+    readonly id: string;
+    readonly semantic_kind_id: string;
+    readonly statement: string;
+    readonly source_unit_ids: readonly string[];
+  }[];
+  readonly workflowNodes: readonly {
+    readonly id: string;
+    readonly semantic_record_ids: readonly string[];
+    readonly source_unit_ids: readonly string[];
+  }[];
+}) {
+  const nodeByRecord = new Map(input.workflowNodes.flatMap((node) =>
+    node.semantic_record_ids.map((recordId) => [recordId, node] as const)));
+  const targetKinds = new Set([
+    "ces.kind.capability", "ces.kind.workflow", "ces.kind.operational-procedure",
+    "ces.kind.state-definition", "ces.kind.state-transition",
+  ]);
+  const relationshipFor = (kind: string): { kind: string; reverse: boolean } | undefined => {
+    if (["ces.kind.business-rule", "ces.kind.validation-constraint",
+      "ces.kind.uniqueness-constraint", "ces.kind.lifecycle-rule",
+      "ces.kind.security-sensitive-restriction"].includes(kind)) {
+      return { kind: "ces.relationship.constrains", reverse: false };
+    }
+    if (kind === "ces.kind.role-permission") {
+      return { kind: "ces.relationship.governs", reverse: false };
+    }
+    if (kind === "ces.kind.calculation") {
+      return { kind: "ces.relationship.produces", reverse: true };
+    }
+    if (kind === "ces.kind.reporting-requirement") {
+      return { kind: "ces.relationship.produces", reverse: true };
+    }
+    if (["ces.kind.acceptance-criterion", "ces.kind.acceptance-scenario"].includes(kind)) {
+      return { kind: "ces.relationship.verifies", reverse: true };
+    }
+    return undefined;
+  };
+  const edges: Array<{
+    id: string; from_id: string; to_id: string; kind: string; source_unit_ids: string[];
+  }> = [];
+  for (const record of input.records) {
+    const relationship = relationshipFor(record.semantic_kind_id);
+    if (!relationship) continue;
+    const targets = input.records.filter((target) =>
+      target.id !== record.id && targetKinds.has(target.semantic_kind_id))
+      .map((target) => ({
+        target,
+        evidence: record.source_unit_ids.filter((id) => target.source_unit_ids.includes(id)),
+        score: jaccard(semanticTokens(record.statement), semanticTokens(target.statement)),
+      }))
+      .filter(({ evidence }) => evidence.length > 0)
+      .sort((left, right) => right.score - left.score
+        || compareText(left.target.id, right.target.id));
+    const selected = targets[0];
+    if (!selected || selected.score < 0.15) continue;
+    const modifierNode = nodeByRecord.get(record.id)!;
+    const targetNode = nodeByRecord.get(selected.target.id)!;
+    const from = relationship.reverse ? targetNode.id : modifierNode.id;
+    const to = relationship.reverse ? modifierNode.id : targetNode.id;
+    const core = {
+      from_id: from,
+      to_id: to,
+      kind: relationship.kind,
+      source_unit_ids: [...selected.evidence].sort(compareText),
+    };
+    edges.push({
+      id: `${input.projectId}.relationship.${hashCanonical(core).slice(7, 19)}`,
+      ...core,
+    });
+  }
+  return edges.sort((left, right) => compareText(left.id, right.id));
+}
+
 function buildCanonicalProposedAtlasArtifacts(input: {
   readonly canonicalExtraction: Awaited<ReturnType<typeof extractCanonicalAtlasCandidates>>;
   readonly documents: readonly { document_id: string; path: string; content: string }[];
@@ -1337,46 +1544,70 @@ function buildCanonicalProposedAtlasArtifacts(input: {
   const registry = createSemanticKindRegistry();
   const units = input.canonicalExtraction.sourceArtifacts
     .flatMap(({ source_units }) => source_units);
-  const recordIds = new Map(inventory.candidates.map((candidate) => [
-    candidate.candidate_id,
-    `${projectId}.record.${hashCanonical(candidate.candidate_id).slice(7, 19)}`,
-  ]));
-  const nodeIds = new Map(inventory.candidates.map((candidate) => [
-    candidate.candidate_id,
-    `${projectId}.node.${hashCanonical(candidate.candidate_id).slice(7, 19)}`,
-  ]));
-  const records = inventory.candidates.map((candidate) => ({
-    id: recordIds.get(candidate.candidate_id)!,
-    candidate_ids: [candidate.candidate_id],
-    semantic_kind_id: candidate.provisional_kind,
-    statement: candidate.statement,
-    source_unit_ids: candidate.source_unit_ids,
-    classification_status: candidate.classification_status === "classified"
+  const groups = consolidateAtlasCandidates(inventory.candidates);
+  const recordIds = new Map<string, string>();
+  const nodeIds = new Map<string, string>();
+  for (const group of groups) {
+    const identity = hashCanonical(group.candidates.map(({ candidate_id }) => candidate_id)
+      .sort(compareText)).slice(7, 19);
+    for (const candidate of group.candidates) {
+      recordIds.set(candidate.candidate_id, `${projectId}.record.${identity}`);
+      nodeIds.set(candidate.candidate_id, `${projectId}.node.${identity}`);
+    }
+  }
+  const records = groups.map((group) => {
+    const representative = group.candidates[0]!;
+    const kinds = [...new Set(group.candidates.map(({ provisional_kind }) => provisional_kind))];
+    const roles = [...new Set(group.candidates.map(({ extraction_role }) => extraction_role))]
+      .sort(compareText);
+    return {
+    id: recordIds.get(representative.candidate_id)!,
+    candidate_ids: group.candidates.map(({ candidate_id }) => candidate_id).sort(compareText),
+    semantic_kind_id: representative.provisional_kind,
+    statement: representative.statement,
+    source_unit_ids: [...new Set(group.candidates.flatMap(({ source_unit_ids }) =>
+      source_unit_ids))].sort(compareText),
+    classification_status: group.candidates.every(({ classification_status }) =>
+      classification_status === "classified")
       ? "classified" as const : "classification_required" as const,
     origin: "explicit" as const,
     review_status: "pending" as const,
-    details: [{
-      key: "extraction-role",
-      value: candidate.extraction_role,
-    }],
+    details: [
+      { key: "extraction-roles", value: roles },
+      { key: "consolidated-candidate-count", value: group.candidates.length },
+    ],
     issues: [
-      ...(candidate.evidence_status === "support_review_required" ? [{
+      ...(group.candidates.some(({ evidence_status }) =>
+        evidence_status === "support_review_required") ? [{
         code: "support-review-required",
         severity: "review_required" as const,
       }] : []),
-      ...(candidate.classification_status !== "classified" ? [{
+      ...(group.candidates.some(({ classification_status }) =>
+        classification_status !== "classified") ? [{
         code: "classification-required",
         severity: "review_required" as const,
       }] : []),
+      ...(kinds.length > 1 ? [{
+        code: "semantic-kind-conflict",
+        severity: "review_required" as const,
+      }] : []),
     ],
-  }));
-  const workflowNodes = inventory.candidates.map((candidate) => ({
-    id: nodeIds.get(candidate.candidate_id)!,
-    label: candidate.statement,
-    semantic_record_ids: [recordIds.get(candidate.candidate_id)!],
-    source_unit_ids: candidate.source_unit_ids,
-  }));
+  }});
+  const workflowNodes = groups.map((group) => {
+    const representative = group.candidates[0]!;
+    return {
+    id: nodeIds.get(representative.candidate_id)!,
+    label: representative.statement,
+    semantic_record_ids: [recordIds.get(representative.candidate_id)!],
+    source_unit_ids: [...new Set(group.candidates.flatMap(({ source_unit_ids }) =>
+      source_unit_ids))].sort(compareText),
+  }});
+  const relationships = buildGroundedAtlasRelationships({
+    projectId, records, workflowNodes,
+  });
   const byUnit = new Map<string, string[]>();
+  const classificationByUnit = new Map(input.canonicalExtraction.sectionClassifications
+    .map((classification) => [classification.source_unit_id, classification] as const));
   for (const candidate of inventory.candidates) {
     for (const sourceUnitId of candidate.source_unit_ids) {
       const linked = byUnit.get(sourceUnitId) ?? [];
@@ -1391,12 +1622,13 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     candidate_sources: Object.fromEntries(inventory.candidates.map((candidate) => [
       candidate.candidate_id, candidate.source_unit_ids,
     ])),
-    normalized_record_ids: [...recordIds.values()],
-    workflow_node_ids: [...nodeIds.values()],
-    graph_node_ids: [...nodeIds.values()],
+    normalized_record_ids: [...new Set(recordIds.values())],
+    workflow_node_ids: [...new Set(nodeIds.values())],
+    graph_node_ids: [...new Set(nodeIds.values())],
     source_coverage: units.map((unit) => {
       const candidateIds = byUnit.get(unit.id) ?? [];
-      const normative = unit.kind !== "heading";
+      const classification = classificationByUnit.get(unit.id);
+      const normative = classification?.disposition === "normative";
       const covered = candidateIds.length > 0;
       return {
         source_unit_id: unit.id,
@@ -1404,9 +1636,9 @@ function buildCanonicalProposedAtlasArtifacts(input: {
         current_stage: !normative ? "non_normative" as const
           : covered ? "projected" as const : "unmapped" as const,
         candidate_ids: candidateIds,
-        normalized_record_ids: candidateIds.map((id) => recordIds.get(id)!),
-        workflow_node_ids: candidateIds.map((id) => nodeIds.get(id)!),
-        graph_node_ids: candidateIds.map((id) => nodeIds.get(id)!),
+        normalized_record_ids: [...new Set(candidateIds.map((id) => recordIds.get(id)!))],
+        workflow_node_ids: [...new Set(candidateIds.map((id) => nodeIds.get(id)!))],
+        graph_node_ids: [...new Set(candidateIds.map((id) => nodeIds.get(id)!))],
         ...(!normative ? { reason: "Mechanical heading unit retained as context." } : {}),
         stage_history: [{
           stage: !normative ? "non_normative" as const
@@ -1415,11 +1647,11 @@ function buildCanonicalProposedAtlasArtifacts(input: {
         }],
       };
     }),
-    record_coverage: inventory.candidates.map((candidate) => ({
-      record_id: recordIds.get(candidate.candidate_id)!,
-      semantic_kind_id: candidate.provisional_kind,
-      candidate_ids: [candidate.candidate_id],
-      source_unit_ids: candidate.source_unit_ids,
+    record_coverage: records.map((record) => ({
+      record_id: record.id,
+      semantic_kind_id: record.semantic_kind_id,
+      candidate_ids: record.candidate_ids,
+      source_unit_ids: record.source_unit_ids,
     })),
   });
   const findings = createCompletenessCriticReport({
@@ -1447,7 +1679,7 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     candidate_inventory: inventory,
     records,
     workflow_nodes: workflowNodes,
-    relationships: [],
+    relationships,
     source_documents: input.canonicalExtraction.sourceArtifacts.map(
       ({ document_revision }) => ({
         document_id: document_revision.document_id,

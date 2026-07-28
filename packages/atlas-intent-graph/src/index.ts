@@ -174,9 +174,8 @@ export function projectProposedWorkflowGraph(
       const contained = node.semantic_record_ids.map((id) => records.get(id)!);
       return {
         id: node.id,
-        kind_id: contained.some(({ semantic_kind_id }) =>
-          semantic_kind_id === "ces.kind.unknown")
-          ? "ces.graph.unknown" : "ces.graph.workflow-step",
+        kind_id: proposedGraphKind(contained.map(({ semantic_kind_id }) =>
+          semantic_kind_id)),
         label: node.label,
         semantic_record_ids: node.semantic_record_ids,
         source_unit_ids: node.source_unit_ids,
@@ -193,6 +192,19 @@ export function projectProposedWorkflowGraph(
   });
 }
 
+function proposedGraphKind(kinds: readonly string[]): string {
+  if (kinds.includes("ces.kind.unknown")) return "ces.graph.unknown";
+  const priority = [
+    "state-transition", "state-definition", "workflow", "operational-procedure",
+    "capability", "calculation", "role-permission", "validation-constraint",
+    "uniqueness-constraint", "security-sensitive-restriction", "lifecycle-rule",
+    "business-rule", "reporting-requirement", "acceptance-scenario",
+    "acceptance-criterion", "terminology",
+  ];
+  const selected = priority.find((suffix) => kinds.includes(`ces.kind.${suffix}`));
+  return selected ? `ces.graph.${selected}` : "ces.graph.semantic-record";
+}
+
 export function renderWorkflowGraphJson(
   graphValue: z.input<typeof WorkflowGraphSchema>,
 ): string {
@@ -203,6 +215,7 @@ export function renderWorkflowGraphMarkdown(
   graphValue: z.input<typeof WorkflowGraphSchema>,
 ): string {
   const graph = WorkflowGraphSchema.parse(graphValue);
+  const labels = new Map(graph.nodes.map((node) => [node.id, node.label]));
   const lines = [
     `# ${graph.banner}`,
     "",
@@ -219,7 +232,8 @@ export function renderWorkflowGraphMarkdown(
     "",
     ...(graph.edges.length > 0
       ? graph.edges.map((edge) =>
-        `- \`${edge.source_id}\` → \`${edge.target_id}\` (${edge.kind_id})`)
+        `- **${labels.get(edge.source_id)}** → **${labels.get(edge.target_id)}** `
+        + `(${edge.kind_id}; \`${edge.source_id}\` → \`${edge.target_id}\`)`)
       : ["No workflow ordering relationship was extracted; review must not infer one."]),
     "",
   ];

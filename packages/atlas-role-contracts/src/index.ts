@@ -50,6 +50,7 @@ export const CanonicalCandidateExtractionInputSchema = z.object({
   contract_version: z.literal(ATLAS_CANDIDATE_CONTRACT_VERSION),
   revisions: z.lazy(() => AtlasRevisionTupleSchema),
   extractor_id: Id,
+  objective: Text.optional(),
   semantic_kind_registry_id: Id,
   semantic_kind_registry_hash: Hash,
   allowed_semantic_kind_ids: z.array(Id).min(1),
@@ -58,7 +59,7 @@ export const CanonicalCandidateExtractionInputSchema = z.object({
 }).strict();
 
 export const AtlasCandidateDraftSchema = z.object({
-  temporary_id: z.string().regex(/^TMP-CANDIDATE-\d+$/u),
+  temporary_id: Text,
   statement: Text,
   provisional_kind: Id,
   source_unit_ids: z.array(Id).min(1),
@@ -72,12 +73,12 @@ export const AtlasCandidateDraftSchema = z.object({
 export const CanonicalCandidateExtractionIntermediateSchema = z.object({
   candidates: z.array(AtlasCandidateDraftSchema),
   uncertainties: z.array(z.object({
-    temporary_id: z.string().regex(/^TMP-UNCERTAINTY-\d+$/u),
+    temporary_id: Text,
     statement: Text,
     source_unit_ids: z.array(Id).min(1),
   }).strict()).default([]),
   conflicts: z.array(z.object({
-    temporary_id: z.string().regex(/^TMP-CONFLICT-\d+$/u),
+    temporary_id: Text,
     statement: Text,
     source_unit_ids: z.array(Id).min(1),
   }).strict()).default([]),
@@ -106,12 +107,7 @@ export function finalizeCanonicalCandidateExtraction(
   const intermediate = CanonicalCandidateExtractionIntermediateSchema.parse(intermediateValue);
   const units = new Set(input.source_units.map(({ id }) => id));
   const allowedKinds = new Set(input.allowed_semantic_kind_ids);
-  const seenTemporary = new Set<string>();
-  const candidates = intermediate.candidates.map((draft) => {
-    if (seenTemporary.has(draft.temporary_id)) {
-      throw new Error(`Duplicate temporary candidate: ${draft.temporary_id}`);
-    }
-    seenTemporary.add(draft.temporary_id);
+  const candidates = intermediate.candidates.map((draft, occurrence) => {
     if (!allowedKinds.has(draft.provisional_kind)) {
       throw new Error(`Candidate kind is outside extractor scope: ${draft.provisional_kind}`);
     }
@@ -122,6 +118,7 @@ export function finalizeCanonicalCandidateExtraction(
       statement: draft.statement,
       provisional_kind: draft.provisional_kind,
       source_unit_ids: [...draft.source_unit_ids].sort(compare),
+      occurrence,
     });
     const candidateId = `${input.extractor_id}.candidate.${hash(identity).slice(7, 19)}`;
     const core = {
@@ -405,6 +402,7 @@ export function createSectionPurposeRegistry(input: {
 export const SectionPurposeClassificationSchema = z.object({
   source_unit_id: Id,
   purpose_ids: z.array(Id).min(1),
+  disposition: z.enum(["normative", "contextual", "structural"]),
   confidence: z.number().min(0).max(1),
   status: z.enum(["classified", "ambiguous", "unknown"]),
   rationale: Text,

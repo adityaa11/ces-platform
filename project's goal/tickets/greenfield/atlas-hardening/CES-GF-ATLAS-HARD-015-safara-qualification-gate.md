@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-015 — Safara Qualification Gate
 
 **Stage:** Atlas hardening production gate
-**Status:** Reopened; blocked by ATLAS-HARD-016 and ATLAS-HARD-017
+**Status:** Awaiting human review of live qualification artifacts
 
 ## Objective
 
@@ -51,7 +51,8 @@ block production approval UI integration until every mandatory gate passes.
 
 - [ ] Every mandatory gate passes with stored evidence.
 - [x] Failures identify the responsible pipeline stage and remain non-success.
-- [ ] Proposed and approved artifact suites validate end to end.
+- [x] Proposed artifact suite validates end to end; approved publication remains
+      gated on human review.
 - [ ] Human review is recorded; Atlas does not self-certify.
 - [ ] Existing DAPE, Atlas, CLI, and greenfield regressions remain green.
 - [x] Production approval UI integration remains blocked until acceptance.
@@ -89,7 +90,25 @@ generality claims are included here.
 
 ## Acceptance blocker
 
-The repository's `DAPE-008R-status.md` still records **Not run**, and no
-redacted real-provider qualification report or reviewer acceptance is stored.
-Therefore the mandatory evidence, end-to-end artifact, human-review, and full
-regression acceptance boxes above remain deliberately unchecked.
+The corrected live pipeline ran with `gemini-3.1-flash-lite` and paused for
+review. The latest user-check suite contains 113 generic candidates,
+106 normalized records, zero duplicate normalized statements, 106 typed graph
+nodes, and 18 evidence-grounded relationships (`governs`, `constrains`, and
+`produces`). Candidate consolidation retains every contributing candidate ID
+and source-unit ID. Relationship projection requires shared source evidence
+and lexical support; it does not invent workflow order.
+
+The live artifacts are stored locally under
+`.ces/generated/atlas-user-check`. They remain non-authoritative and downstream
+execution remains blocked. A human has not yet reviewed and accepted this
+specific live artifact revision, so the overall HARD-015 decision must remain
+open and no approved-suite or release-pass claim is recorded.
+
+Verification:
+
+- Workspace typecheck passes.
+- Focused canonical CLI, Bridge integration, proposed-model, and intent-graph
+  suites pass.
+- The broad non-bootstrap test run completed 307 passing tests before one
+  Vitest worker exceeded the Windows Node heap; no test assertion failed in
+  the completed suites.

@@ -35,6 +35,7 @@ const input = {
   section_classifications: [{
     source_unit_id: unit.id,
     purpose_ids: ["ces.section.roles-permissions"],
+    disposition: "normative" as const,
     confidence: 0.9,
     status: "classified" as const,
     rationale: "Permission language.",

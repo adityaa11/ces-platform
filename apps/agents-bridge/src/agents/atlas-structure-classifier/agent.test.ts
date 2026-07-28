@@ -56,6 +56,7 @@ describe("Atlas live structure classifier", () => {
       classifications: [{
         source_unit_id: "sample.unit.1",
         purpose_ids: ["ces.section.roles-permissions", "ces.section.workflows"],
+        disposition: "normative",
         confidence: 0.9,
         status: "ambiguous",
         rationale: "Approval and delivery workflow.",

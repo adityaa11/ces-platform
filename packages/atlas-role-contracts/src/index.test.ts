@@ -65,6 +65,7 @@ describe("DAPE-004 bounded Atlas roles", () => {
       purpose_ids: unit.order === 3
         ? ["ces.section.unknown"]
         : ["acme.section.compliance", "ces.section.normative-rules"],
+      disposition: unit.order === 1 ? "structural" : "normative",
       confidence: unit.order === 3 ? 0.2 : 0.9,
       status: unit.order === 3 ? "unknown" : "ambiguous",
       rationale: "Classified from the unit content.",
@@ -85,6 +86,7 @@ describe("DAPE-004 bounded Atlas roles", () => {
     expect(() => finalizeSectionClassifications(input, [{
       source_unit_id: units[0]!.id,
       purpose_ids: ["ces.section.normative-rules"],
+      disposition: "normative",
       confidence: 1,
       status: "classified",
       rationale: "Normative language.",
