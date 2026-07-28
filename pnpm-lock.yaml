@@ -438,6 +438,25 @@ importers:
         specifier: 4.4.3
         version: 4.4.3
 
+  packages/proposed-project-model:
+    dependencies:
+      '@company/ces-atlas-coverage':
+        specifier: workspace:*
+        version: link:../atlas-coverage
+      '@company/ces-atlas-role-contracts':
+        specifier: workspace:*
+        version: link:../atlas-role-contracts
+      '@company/ces-semantic-record-schema':
+        specifier: workspace:*
+        version: link:../semantic-record-schema
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
+
   packages/requirement-collection-schema:
     dependencies:
       '@company/ces-requirement-schema':

@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-009 — ProposedProjectModel
 
 **Stage:** Atlas hardening proposal
-**Status:** Planned
+**Status:** Implemented
 
 ## Objective
 
@@ -37,17 +37,17 @@ and run-manifest reference.
 
 ## Acceptance criteria
 
-- [ ] The model exists before approval and is immutable after publication.
-- [ ] `authoritative` and `downstream_execution_allowed` are always false.
-- [ ] Findings, source coverage, and approval blockers are included.
-- [ ] Unknown and organization-specific semantic records survive proposal
+- [x] The model exists before approval and is immutable after publication.
+- [x] `authoritative` and `downstream_execution_allowed` are always false.
+- [x] Findings, source coverage, and approval blockers are included.
+- [x] Unknown and organization-specific semantic records survive proposal
       materialization without coercion or loss.
-- [ ] Derived records are visibly distinct and ineligible for bulk approval
+- [x] Derived records are visibly distinct and ineligible for bulk approval
       until explicitly confirmed.
-- [ ] Compatibility projections cannot omit canonical records silently.
-- [ ] All semantic and workflow records preserve canonical stable identities.
-- [ ] Summary counts are derived and validated, never provider-authored.
-- [ ] The original proposal remains available after approval.
+- [x] Compatibility projections cannot omit canonical records silently.
+- [x] All semantic and workflow records preserve canonical stable identities.
+- [x] Summary counts are derived and validated, never provider-authored.
+- [x] The original proposal remains available after approval.
 
 ## Tests and evidence
 
@@ -55,6 +55,17 @@ Valid proposal, unknown and organization-kind records, derived record, lossy
 compatibility projection, missing source link, inconsistent count, attempted
 authority escalation, mutation, stale revision, atomic failure, and
 repeated-run fixtures.
+
+## Completion evidence
+
+- Added the dedicated `@company/ces-proposed-project-model` package.
+- Proposal invariants make authority and downstream execution impossible.
+- Extensible records retain candidates, kinds, evidence, origin, issues, and
+  compatibility disposition.
+- Coverage, findings, blockers, revision pins, and derived summaries validate
+  deterministically.
+- Atomic create-once publication retains the original proposal.
+- Proposal and architecture tests passed; package typecheck passed.
 
 ## Out of scope
 
