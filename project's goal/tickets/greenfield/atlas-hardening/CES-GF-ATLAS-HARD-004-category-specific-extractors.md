@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-004 — Category-Specific Extractors
 
 **Stage:** Atlas hardening extraction
-**Status:** Planned
+**Status:** Implemented
 
 ## Objective
 
@@ -35,15 +35,15 @@ and revision metadata.
 
 ## Acceptance criteria
 
-- [ ] Every extractor has a bounded, versioned input/output schema.
-- [ ] Each output remains source-grounded and identifies its extractor.
-- [ ] All roles use the same pinned source/lexicon/schema revision tuple.
-- [ ] Merge order is deterministic and does not silently resolve conflicts.
-- [ ] Extractors cannot approve records or write authoritative registries.
-- [ ] Partial provider failure is explicit and cannot appear complete.
-- [ ] Unknown candidates survive every category pass unchanged and remain
+- [x] Every extractor has a bounded, versioned input/output schema.
+- [x] Each output remains source-grounded and identifies its extractor.
+- [x] All roles use the same pinned source/lexicon/schema revision tuple.
+- [x] Merge order is deterministic and does not silently resolve conflicts.
+- [x] Extractors cannot approve records or write authoritative registries.
+- [x] Partial provider failure is explicit and cannot appear complete.
+- [x] Unknown candidates survive every category pass unchanged and remain
       reviewable.
-- [ ] A registered organization-specific extractor can be added without
+- [x] A registered organization-specific extractor can be added without
       modifying unrelated extractor implementations.
 
 ## Tests and evidence
@@ -51,6 +51,16 @@ and revision metadata.
 Per-role and registered-extension fixtures, unclaimed unknown candidate,
 cross-role duplicate/conflict fixtures, revision mismatch, missing evidence,
 provider failure, and merge-order determinism.
+
+## Completion evidence
+
+- Added a hashed registry for ten bounded CES extractor capabilities and
+  versioned organization-specific extensions.
+- Added revision-bound extractor-run and deterministic merge contracts.
+- Merge preserves the immutable candidate inventory, reports unclaimed unknowns,
+  rejects unsupported assignments, and makes partial failures incomplete.
+- Focused role-contract and architecture tests: 12 passed.
+- Package TypeScript build passed.
 
 ## Out of scope
 

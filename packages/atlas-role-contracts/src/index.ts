@@ -51,6 +51,118 @@ export const LegacyCandidateMigrationSchema = z.object({
   losses: z.array(z.enum(["statement", "confidence", "provider_metadata"])).min(1),
 }).strict();
 
+export const CategoryExtractorDefinitionSchema = z.object({
+  extractor_id: Id,
+  contract_version: Text,
+  registered_by: z.enum(["ces", "organization"]),
+  supported_semantic_kind_ids: z.array(Id).min(1),
+}).strict();
+
+export const CategoryExtractorRegistrySchema = z.object({
+  contract_version: z.literal(ATLAS_CANDIDATE_CONTRACT_VERSION),
+  id: Id,
+  organization_id: Id.optional(),
+  extractors: z.array(CategoryExtractorDefinitionSchema).min(1),
+  content_hash: Hash,
+}).strict();
+
+const BUILT_IN_EXTRACTORS = [
+  ["atlas.extractor.capability", ["ces.kind.capability"]],
+  ["atlas.extractor.workflow", ["ces.kind.workflow", "ces.kind.operational-procedure"]],
+  ["atlas.extractor.business-rule", ["ces.kind.business-rule"]],
+  ["atlas.extractor.validation", ["ces.kind.validation-constraint", "ces.kind.uniqueness-constraint"]],
+  ["atlas.extractor.role-permission", ["ces.kind.role-permission", "ces.kind.security-sensitive-restriction"]],
+  ["atlas.extractor.state-lifecycle", ["ces.kind.state-definition", "ces.kind.state-transition", "ces.kind.lifecycle-rule"]],
+  ["atlas.extractor.calculation", ["ces.kind.calculation"]],
+  ["atlas.extractor.reporting", ["ces.kind.reporting-requirement"]],
+  ["atlas.extractor.acceptance", ["ces.kind.acceptance-criterion", "ces.kind.acceptance-scenario"]],
+  ["atlas.extractor.terminology", ["ces.kind.terminology"]],
+] as const;
+
+export function createCategoryExtractorRegistry(input: {
+  readonly organization_id?: string;
+  readonly organization_extractors?: readonly z.input<typeof CategoryExtractorDefinitionSchema>[];
+} = {}): z.infer<typeof CategoryExtractorRegistrySchema> {
+  const organizationId = input.organization_id ? Id.parse(input.organization_id) : undefined;
+  const extensions = (input.organization_extractors ?? [])
+    .map((item) => CategoryExtractorDefinitionSchema.parse(item));
+  if (extensions.length > 0 && !organizationId) {
+    throw new Error("Organization extractors require organization_id");
+  }
+  if (extensions.some(({ registered_by }) => registered_by !== "organization")) {
+    throw new Error("Organization extractors must be registered_by organization");
+  }
+  const extractors = [
+    ...BUILT_IN_EXTRACTORS.map(([extractor_id, supported_semantic_kind_ids]) =>
+      CategoryExtractorDefinitionSchema.parse({
+        extractor_id,
+        contract_version: "1.0.0",
+        registered_by: "ces",
+        supported_semantic_kind_ids: [...supported_semantic_kind_ids],
+      })),
+    ...extensions,
+  ].sort((left, right) => compare(left.extractor_id, right.extractor_id));
+  assertUnique(extractors.map(({ extractor_id }) => extractor_id), "extractor");
+  const core = {
+    contract_version: ATLAS_CANDIDATE_CONTRACT_VERSION,
+    ...(organizationId ? { organization_id: organizationId } : {}),
+    extractors,
+  };
+  const contentHash = hash(canonicalJson(core));
+  return deepFreeze(CategoryExtractorRegistrySchema.parse({
+    ...core,
+    id: `${organizationId ?? "ces"}.atlas-extractors.${contentHash.slice(7, 19)}`,
+    content_hash: contentHash,
+  }));
+}
+
+export function mergeCategoryExtractorRuns(input: {
+  readonly registry: z.input<typeof CategoryExtractorRegistrySchema>;
+  readonly inventory: z.input<typeof AtlasCandidateInventorySchema>;
+  readonly expected_revisions: z.input<typeof AtlasRevisionTupleSchema>;
+  readonly runs: readonly z.input<typeof CategoryExtractorRunSchema>[];
+}): z.infer<typeof CategoryExtractorMergeSchema> {
+  const registry = CategoryExtractorRegistrySchema.parse(input.registry);
+  const inventory = AtlasCandidateInventorySchema.parse(input.inventory);
+  const revisions = AtlasRevisionTupleSchema.parse(input.expected_revisions);
+  const candidates = [...inventory.candidates].sort((a, b) => compare(a.candidate_id, b.candidate_id));
+  const byCandidate = new Map(candidates.map((candidate) => [candidate.candidate_id, candidate]));
+  const byExtractor = new Map(registry.extractors.map((extractor) =>
+    [extractor.extractor_id, extractor]));
+  const runs = input.runs.map((run) => CategoryExtractorRunSchema.parse(run))
+    .sort((a, b) => compare(a.extractor_id, b.extractor_id));
+  assertUnique(runs.map(({ extractor_id }) => extractor_id), "extractor run");
+  const claimed = new Set<string>();
+  for (const run of runs) {
+    if (canonicalJson(run.revisions) !== canonicalJson(revisions)) {
+      throw new Error(`Revision tuple mismatch: ${run.extractor_id}`);
+    }
+    const extractor = byExtractor.get(run.extractor_id);
+    if (!extractor) throw new Error(`Unregistered extractor: ${run.extractor_id}`);
+    for (const candidateId of run.candidate_ids) {
+      const candidate = byCandidate.get(candidateId);
+      if (!candidate) throw new Error(`Unknown candidate: ${candidateId}`);
+      if (!extractor.supported_semantic_kind_ids.includes(candidate.provisional_kind)) {
+        throw new Error(`Extractor does not support candidate kind: ${candidateId}`);
+      }
+      claimed.add(candidateId);
+    }
+  }
+  const core = {
+    contract_version: ATLAS_CANDIDATE_CONTRACT_VERSION,
+    extractor_registry_id: registry.id,
+    candidate_inventory_hash: inventory.content_hash,
+    status: runs.some(({ status }) => status !== "success") ? "incomplete" as const : "success" as const,
+    runs,
+    candidates,
+    unclaimed_candidate_ids: candidates.map(({ candidate_id }) => candidate_id)
+      .filter((id) => !claimed.has(id)),
+  };
+  return deepFreeze(CategoryExtractorMergeSchema.parse({
+    ...core, content_hash: hash(canonicalJson(core)),
+  }));
+}
+
 export const AtlasRevisionTupleSchema = z.object({
   source_revision_id: Id,
   source_content_hash: Hash,
@@ -59,6 +171,26 @@ export const AtlasRevisionTupleSchema = z.object({
   lexicon_state: z.enum(["seed", "candidate_pinned", "reviewed", "approved", "superseded"]),
   semantic_schema_version: Text,
   prompt_contract_version: Text,
+}).strict();
+
+export const CategoryExtractorRunSchema = z.object({
+  extractor_id: Id,
+  contract_version: Text,
+  revisions: AtlasRevisionTupleSchema,
+  status: z.enum(["success", "provider_error", "partial_failure"]),
+  candidate_ids: z.array(Id),
+  diagnostics: z.array(Text),
+}).strict();
+
+export const CategoryExtractorMergeSchema = z.object({
+  contract_version: z.literal(ATLAS_CANDIDATE_CONTRACT_VERSION),
+  extractor_registry_id: Id,
+  candidate_inventory_hash: Hash,
+  status: z.enum(["success", "incomplete"]),
+  runs: z.array(CategoryExtractorRunSchema),
+  candidates: z.array(AtlasCandidateSchema),
+  unclaimed_candidate_ids: z.array(Id),
+  content_hash: Hash,
 }).strict();
 
 export const AtlasRoleBudgetSchema = z.object({

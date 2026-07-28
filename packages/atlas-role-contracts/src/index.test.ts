@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  createCategoryExtractorRegistry,
   createAtlasCandidateInventory,
   inspectLegacyCandidateMigration,
+  mergeCategoryExtractorRuns,
   mergeAtlasRoleOutputs,
   partitionSourceUnits,
   type AtlasRoleOutput,
@@ -97,6 +99,60 @@ describe("DAPE-004 bounded Atlas roles", () => {
       status: "rejected_lossy",
       losses: ["statement", "confidence", "provider_metadata"],
     });
+  });
+
+  it("merges registered extractor runs without dropping unknown candidates", () => {
+    const registry = createCategoryExtractorRegistry({
+      organization_id: "cold-chain-co",
+      organization_extractors: [{
+        extractor_id: "cold-chain.extractor.temperature",
+        contract_version: "1.0.0",
+        registered_by: "organization",
+        supported_semantic_kind_ids: ["cold-chain.kind.temperature-release"],
+      }],
+    });
+    const candidate = (candidate_id: string, provisional_kind: string) => ({
+      contract_version: "1.0.0" as const,
+      candidate_id,
+      statement: `Statement for ${candidate_id}`,
+      provisional_kind,
+      source_unit_ids: [units[0]!.id],
+      confidence: 0.7,
+      extraction_role: "atlas.domain-discovery",
+      classification_status: "classification_required" as const,
+      evidence_status: "support_review_required" as const,
+      payload_hash: `sha256:${(candidate_id.endsWith("unknown") ? "5" : "6").repeat(64)}`,
+      provider_metadata: {
+        provider_id: "fixture", model_id: "neutral-v1", contract_version: "1.0.0",
+      },
+    });
+    const inventory = createAtlasCandidateInventory({
+      source_revision_id: revisions.source_revision_id,
+      lexicon_revision_id: revisions.lexicon_revision_id,
+      semantic_schema_version: revisions.semantic_schema_version,
+      semantic_kind_registry_id: "cold-chain.semantic-kinds.0123456789ab",
+      semantic_kind_registry_hash: `sha256:${"7".repeat(64)}`,
+      prompt_contract_version: revisions.prompt_contract_version,
+      allowed_source_unit_ids: units.map(({ id }) => id),
+      candidates: [
+        candidate("cold-chain.candidate.temperature", "cold-chain.kind.temperature-release"),
+        candidate("cold-chain.candidate.unknown", "ces.kind.unknown"),
+      ],
+    });
+    const result = mergeCategoryExtractorRuns({
+      registry, inventory, expected_revisions: revisions,
+      runs: [{
+        extractor_id: "cold-chain.extractor.temperature",
+        contract_version: "1.0.0",
+        revisions,
+        status: "partial_failure",
+        candidate_ids: ["cold-chain.candidate.temperature"],
+        diagnostics: ["Provider stopped after one candidate."],
+      }],
+    });
+    expect(result.status).toBe("incomplete");
+    expect(result.unclaimed_candidate_ids).toEqual(["cold-chain.candidate.unknown"]);
+    expect(result.candidates).toHaveLength(2);
   });
 
   it("partitions deterministically within configured budgets", () => {
