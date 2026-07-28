@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-017 — Canonical Provider Candidates and Routing
 
 **Stage:** Corrective Atlas hardening
-**Status:** Planned
+**Status:** Implemented
 
 ## Objective
 
@@ -40,21 +40,21 @@ history, and explicit legacy-projection losses.
 
 ## Acceptance criteria
 
-- [ ] Production Bridge output is generic `AtlasCandidate`, not two legacy
+- [x] Production Bridge output is generic `AtlasCandidate`, not two legacy
       arrays.
-- [ ] Calculations, terminology, reporting, acceptance scenarios, states,
+- [x] Calculations, terminology, reporting, acceptance scenarios, states,
       permissions, procedures, organization kinds, and unknowns remain distinct.
-- [ ] Every candidate cites supplied canonical source-unit IDs.
-- [ ] Extractor selection is registry-driven and domain-neutral.
-- [ ] Partial category failure cannot appear complete.
-- [ ] Retry scope contains only unresolved findings and affected source units.
-- [ ] Legacy conversion is one-way, explicit, and absent from canonical logic.
-- [ ] Novel-kind fixtures pass without core changes.
-- [ ] Command-level tests prove the canonical implementation executes through
+- [x] Every candidate cites supplied canonical source-unit IDs.
+- [x] Extractor selection is registry-driven and domain-neutral.
+- [x] Partial category failure cannot appear complete.
+- [x] Retry scope contains only unresolved findings and affected source units.
+- [x] Legacy conversion is one-way, explicit, and absent from canonical logic.
+- [x] Novel-kind fixtures pass without core changes.
+- [x] Command-level tests prove the canonical implementation executes through
       the real user command.
-- [ ] Existing legacy consumers remain functional through explicit adapters,
+- [x] Existing legacy consumers remain functional through explicit adapters,
       with every lossy projection reported.
-- [ ] Canonical-stage failure is visible and never replaced by an accidental
+- [x] Canonical-stage failure is visible and never replaced by an accidental
       legacy execution path.
 
 ## Tests and evidence
@@ -62,6 +62,22 @@ history, and explicit legacy-projection losses.
 All built-in categories, organization extension, unknown kind, mixed-purpose
 sections, duplicate/conflict, unsupported evidence, partial failure, bounded
 retry, legacy-loss reporting, and deterministic merge.
+
+Implemented with the live `atlas.candidate-extractor`, canonical candidate
+contracts, registry-selected extractor runs, unresolved-unit retry, and a
+canonical proposed-model projection. `atlas run` now publishes
+`candidate-inventory.json`, `extractor-ledger.json`,
+`candidate-merge-report.json`, and `legacy-projection-losses.json`.
+Legacy review/resume consumers are fed only through the named
+`atlas.adapter.legacy-review-v1` compatibility boundary; fixture input uses
+the same explicit adaptation boundary and preserves existing candidate IDs.
+
+Verification:
+
+- `corepack pnpm --filter @company/ces-atlas-role-contracts typecheck`
+- `corepack pnpm --filter @company/ces-agents-bridge typecheck`
+- `corepack pnpm --filter @company/ces-cli typecheck`
+- `corepack pnpm vitest run packages/atlas-role-contracts/src/index.test.ts apps/agents-bridge/src/agents/atlas-candidate-extractor/agent.test.ts apps/agents-bridge/src/agents/atlas-structure-classifier/agent.test.ts apps/cli/src/atlas.test.ts apps/cli/src/dape.test.ts`
 
 ## Out of scope
 

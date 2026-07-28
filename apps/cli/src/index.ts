@@ -22,7 +22,10 @@ import {
 } from "@company/ces-atlas-coverage";
 import {
   createAtlasCandidateInventory,
+  createCategoryExtractorRegistry,
+  CategoryExtractorRegistrySchema,
   createSectionPurposeRegistry,
+  CanonicalCandidateExtractionOutputSchema,
   finalizeSectionClassifications,
   SectionClassifierOutputSchema,
 } from "@company/ces-atlas-role-contracts";
@@ -48,6 +51,7 @@ import {
 } from "@company/ces-atlas-review";
 import {
   SourceIndexSchema,
+  ingestMarkdownDocuments,
   sourceContentHash,
 } from "@company/ces-document-ingestion";
 import {
@@ -81,6 +85,7 @@ import { parseRequirementText } from "@company/ces-requirement-schema";
 import { canonicalJson as collectionCanonicalJson } from "@company/ces-requirement-collection-schema";
 import {
   createSemanticKindRegistry,
+  SemanticKindRegistrySchema,
   SemanticCollectionSchema,
 } from "@company/ces-semantic-record-schema";
 import { buildSourceArtifacts } from "@company/ces-source-unit-schema";
@@ -650,8 +655,26 @@ async function runAtlasExtraction(
   const sectionClassification = await classifyAtlasSections({
     options, documents, projectIntent, promptContractVersion,
   });
-  const extracted = await analyzeHardenedAtlasCandidates({
-    documents, projectIntent, provider, promptContractVersion,
+  const canonicalExtraction = await extractCanonicalAtlasCandidates({
+    options,
+    documents,
+    projectIntent,
+    promptContractVersion,
+    sectionClassification,
+    ...(options["provider-result"] ? {
+      legacyFixture: AtlasProviderResultSchema.parse(
+        await readJsonValue(options["provider-result"]),
+      ),
+    } : {}),
+    providerMetadata: provider.metadata,
+  });
+  const extracted = projectCanonicalCandidatesToLegacy({
+    documents,
+    promptContractVersion,
+    providerMetadata: provider.metadata,
+    canonicalExtraction,
+    ...(canonicalExtraction.legacyFixture
+      ? { legacyFixture: canonicalExtraction.legacyFixture } : {}),
   });
   const analysisRevisionHash = hashCanonical(extracted.analysis);
   const reviewInput = AtlasReviewInputFileSchema.parse({
@@ -667,8 +690,8 @@ async function runAtlasExtraction(
     })).sort((left, right) => compareText(left.candidate_id, right.candidate_id)),
     clarification_questions: extracted.analysis.clarification_questions,
   });
-  const proposedArtifacts = buildProposedAtlasArtifacts({
-    analysis: extracted.analysis,
+  const proposedArtifacts = buildCanonicalProposedAtlasArtifacts({
+    canonicalExtraction,
     documents,
     projectIntent,
     sourceHashes: extracted.extraction_report.source_hashes,
@@ -683,6 +706,9 @@ async function runAtlasExtraction(
     provider: provider.metadata,
     project_intent_hash: hashCanonical(projectIntent),
     analysis_revision_hash: analysisRevisionHash,
+    canonical_candidate_inventory_hash: canonicalExtraction.inventory.content_hash,
+    section_classification_hash: sectionClassification.output.content_hash,
+    extractor_ledger_hash: hashCanonical(canonicalExtraction.ledger),
     source_hashes: extracted.extraction_report.source_hashes,
   };
   const artifacts: Record<string, string> = {
@@ -693,6 +719,14 @@ async function runAtlasExtraction(
       collectionCanonicalJson(sectionClassification.output),
     "document-structure.json":
       collectionCanonicalJson(sectionClassification.documentStructures),
+    "candidate-inventory.json":
+      collectionCanonicalJson(canonicalExtraction.inventory),
+    "extractor-ledger.json":
+      collectionCanonicalJson(canonicalExtraction.ledger),
+    "candidate-merge-report.json":
+      collectionCanonicalJson(canonicalExtraction.mergeReport),
+    "legacy-projection-losses.json":
+      collectionCanonicalJson(extracted.projectionLosses),
     "run-manifest.json": collectionCanonicalJson({
       ...manifest,
       run_revision_hash: hashCanonical(manifest),
@@ -788,7 +822,321 @@ async function classifyAtlasSections(input: {
   };
 }
 
-async function analyzeHardenedAtlasCandidates(
+async function extractCanonicalAtlasCandidates(input: {
+  readonly options: Readonly<Record<string, string>>;
+  readonly documents: readonly { document_id: string; path: string; content: string }[];
+  readonly projectIntent: z.infer<typeof ProjectIntentSchema>;
+  readonly promptContractVersion: string;
+  readonly sectionClassification: Awaited<ReturnType<typeof classifyAtlasSections>>;
+  readonly legacyFixture?: z.infer<typeof AtlasProviderResultSchema>;
+  readonly providerMetadata: { readonly provider: string; readonly model: string };
+}) {
+  const semanticRegistry = input.options["semantic-kind-registry"]
+    ? SemanticKindRegistrySchema.parse(
+      await readJsonValue(input.options["semantic-kind-registry"]),
+    )
+    : createSemanticKindRegistry();
+  const extractorRegistry = input.options["extractor-registry"]
+    ? CategoryExtractorRegistrySchema.parse(
+      await readJsonValue(input.options["extractor-registry"]),
+    )
+    : createCategoryExtractorRegistry();
+  const sourceArtifacts = input.documents.map((document) => buildSourceArtifacts({
+    document_id: stableId(document.document_id),
+    path: document.path,
+    content: document.content,
+    paragraph_mode: document.path.toLowerCase().endsWith(".pdf") ? "line" : "contiguous",
+  }));
+  const units = sourceArtifacts.flatMap(({ source_units }) => source_units).map((unit) => ({
+    id: unit.id, order: unit.order, section_path: unit.section_path,
+    kind: unit.kind, text: unit.text, content_hash: unit.content_hash,
+  }));
+  const revisions = input.sectionClassification.output.revisions;
+  const broadInput = {
+    contract_version: "1.0.0" as const,
+    revisions,
+    extractor_id: "atlas.extractor.broad-discovery",
+    semantic_kind_registry_id: semanticRegistry.id,
+    semantic_kind_registry_hash: semanticRegistry.content_hash,
+    allowed_semantic_kind_ids: semanticRegistry.definitions.map(({ id }) => id),
+    source_units: units,
+    section_classifications: input.sectionClassification.output.classifications,
+  };
+  let runs: z.infer<typeof CanonicalCandidateExtractionOutputSchema>[];
+  if (input.legacyFixture) {
+    const artifactsByDocument = new Map(input.documents.map((document, index) => [
+      document.document_id, sourceArtifacts[index]!,
+    ]));
+    const legacy = [
+      ...input.legacyFixture.candidate_requirements.map((candidate) => ({
+        statement: candidate.title,
+        kind: "ces.kind.capability",
+        source: candidate.source,
+        confidence: candidate.inference.confidence,
+      })),
+      ...input.legacyFixture.candidate_business_rules.map((candidate) => ({
+        statement: candidate.statement,
+        kind: "ces.kind.business-rule",
+        source: candidate.source,
+        confidence: candidate.inference.confidence,
+      })),
+    ];
+    const drafts = legacy.map((candidate, index) => {
+      const sourceUnits = artifactsByDocument.get(candidate.source.document_id)?.source_units ?? [];
+      const cited = sourceUnits.filter((unit) =>
+        candidate.source.line_start !== undefined
+        && candidate.source.line_end !== undefined
+        && unit.location.line_start <= candidate.source.line_end
+        && unit.location.line_end >= candidate.source.line_start);
+      return {
+        temporary_id: `TMP-CANDIDATE-${index + 1}`,
+        statement: candidate.statement,
+        provisional_kind: candidate.kind,
+        source_unit_ids: (cited.length > 0 ? cited : sourceUnits.slice(0, 1))
+          .map(({ id }) => id),
+        confidence: candidate.confidence,
+        classification_status: "classified" as const,
+        evidence_status: "source_anchored" as const,
+      };
+    });
+    const { finalizeCanonicalCandidateExtraction } =
+      await import("@company/ces-atlas-role-contracts");
+    runs = [finalizeCanonicalCandidateExtraction(broadInput, {
+      candidates: drafts, uncertainties: [], conflicts: [],
+    }, {
+      provider_id: stableId(input.providerMetadata.provider),
+      model_id: input.providerMetadata.model,
+    })];
+  } else {
+    const broad = await executeCanonicalExtractor(input.options, broadInput);
+    runs = [broad];
+    const discoveredKinds = new Set(broad.inventory.candidates
+      .map(({ provisional_kind }) => provisional_kind));
+    for (const extractor of extractorRegistry.extractors) {
+      const selectedKinds = extractor.supported_semantic_kind_ids
+        .filter((kind) => discoveredKinds.has(kind));
+      if (selectedKinds.length === 0) continue;
+      const candidateUnits = new Set(broad.inventory.candidates
+        .filter(({ provisional_kind }) => selectedKinds.includes(provisional_kind))
+        .flatMap(({ source_unit_ids }) => source_unit_ids));
+      const scopedUnits = units.filter(({ id }) => candidateUnits.has(id));
+      const scopedClassifications = input.sectionClassification.output.classifications
+        .filter(({ source_unit_id }) => candidateUnits.has(source_unit_id));
+      if (scopedUnits.length === 0 || scopedClassifications.length === 0) continue;
+      runs.push(await executeCanonicalExtractor(input.options, {
+        ...broadInput,
+        extractor_id: extractor.extractor_id,
+        allowed_semantic_kind_ids: selectedKinds,
+        source_units: scopedUnits,
+        section_classifications: scopedClassifications,
+      }));
+    }
+    const covered = new Set(runs.flatMap(({ inventory }) => inventory.candidates)
+      .flatMap(({ source_unit_ids }) => source_unit_ids));
+    const unresolvedIds = new Set(input.sectionClassification.output.classifications
+      .filter(({ purpose_ids }) =>
+        !(purpose_ids.length === 1 && purpose_ids[0] === "ces.section.context"))
+      .map(({ source_unit_id }) => source_unit_id)
+      .filter((id) => !covered.has(id)));
+    const retryUnits = units.filter(({ id, kind }) =>
+      kind !== "heading" && unresolvedIds.has(id));
+    const retryClassifications = input.sectionClassification.output.classifications
+      .filter(({ source_unit_id }) => unresolvedIds.has(source_unit_id));
+    if (retryUnits.length > 0 && retryClassifications.length > 0) {
+      runs.push(await executeCanonicalExtractor(input.options, {
+        ...broadInput,
+        extractor_id: "atlas.extractor.targeted-retry",
+        source_units: retryUnits,
+        section_classifications: retryClassifications,
+      }));
+    }
+  }
+  const candidates = runs.flatMap(({ inventory }) => inventory.candidates)
+    .sort((left, right) => compareText(left.candidate_id, right.candidate_id));
+  const inventory = createAtlasCandidateInventory({
+    source_revision_id: revisions.source_revision_id,
+    lexicon_revision_id: revisions.lexicon_revision_id,
+    semantic_schema_version: revisions.semantic_schema_version,
+    semantic_kind_registry_id: semanticRegistry.id,
+    semantic_kind_registry_hash: semanticRegistry.content_hash,
+    prompt_contract_version: revisions.prompt_contract_version,
+    allowed_source_unit_ids: units.map(({ id }) => id),
+    candidates,
+  });
+  const ledger = {
+    schema_version: "1.0.0",
+    registry_id: extractorRegistry.id,
+    status: "success",
+    runs: runs.map((run) => ({
+      extractor_id: run.extractor_id,
+      status: "success",
+      candidate_inventory_hash: run.inventory.content_hash,
+      candidate_ids: run.inventory.candidates.map(({ candidate_id }) => candidate_id),
+    })),
+  };
+  const mergeReport = {
+    schema_version: "1.0.0",
+    status: "success",
+    inventory_hash: inventory.content_hash,
+    candidate_count: inventory.candidates.length,
+    duplicate_payload_groups: [...Map.groupBy(inventory.candidates, ({ statement, provisional_kind }) =>
+      hashCanonical({ statement, provisional_kind })).values()]
+      .filter((group) => group.length > 1)
+      .map((group) => group.map(({ candidate_id }) => candidate_id).sort(compareText)),
+    uncertainties: runs.flatMap(({ uncertainties }) => uncertainties),
+    conflicts: runs.flatMap(({ conflicts }) => conflicts),
+  };
+  return {
+    inventory, ledger, mergeReport, runs, sourceArtifacts,
+    ...(input.legacyFixture ? { legacyFixture: input.legacyFixture } : {}),
+  };
+}
+
+async function executeCanonicalExtractor(
+  options: Readonly<Record<string, string>>,
+  input: unknown,
+): Promise<z.infer<typeof CanonicalCandidateExtractionOutputSchema>> {
+  const endpoint = new URL(requireOption(options, "provider-endpoint"));
+  endpoint.pathname = "/v1/agents/atlas.candidate-extractor/execute";
+  endpoint.search = "";
+  const apiKey = process.env.CES_ATLAS_API_KEY ?? process.env.AGENTS_BRIDGE_API_KEY;
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      ...(apiKey ? { authorization: `Bearer ${apiKey}` } : {}),
+    },
+    body: JSON.stringify({ agent_version: "1.0.0", input }),
+  });
+  if (!response.ok) {
+    throw new CliInputError(`Atlas canonical candidate extractor failed with status ${response.status}`);
+  }
+  return CanonicalCandidateExtractionOutputSchema.parse(await response.json());
+}
+
+function projectCanonicalCandidatesToLegacy(input: {
+  readonly documents: readonly { document_id: string; path: string; content: string }[];
+  readonly promptContractVersion: string;
+  readonly providerMetadata: { readonly provider: string; readonly model: string };
+  readonly canonicalExtraction: Awaited<ReturnType<typeof extractCanonicalAtlasCandidates>>;
+  readonly legacyFixture?: z.infer<typeof AtlasProviderResultSchema>;
+}) {
+  const sourceIndex = ingestMarkdownDocuments(input.documents);
+  const sourceUnit = new Map(input.canonicalExtraction.sourceArtifacts.flatMap(
+    (artifact, documentIndex) => artifact.source_units.map((unit) => [
+      unit.id, { unit, document: sourceIndex.documents[documentIndex]! },
+    ] as const),
+  ));
+  const requirements = input.canonicalExtraction.inventory.candidates.map((candidate) => {
+    const evidence = sourceUnit.get(candidate.source_unit_ids[0]!)!;
+    return {
+      schema_version: "1.0.0" as const,
+      candidate_id: `LEGACY-REQ-${stableId(candidate.candidate_id)}`,
+      proposed_logical_id: `legacy.req.${stableId(candidate.candidate_id)}`,
+      title: candidate.statement,
+      actor: { type: "system" as const },
+      operation: { action: "view" as const, resource: "project" as const },
+      source: {
+        document_id: evidence.document.document_id,
+        path: evidence.document.path,
+        section: evidence.unit.section_path.at(-1),
+        line_start: evidence.unit.location.line_start,
+        line_end: evidence.unit.location.line_end,
+        content_hash: evidence.document.content_hash,
+      },
+      inference: {
+        origin: "explicit" as const,
+        confidence: candidate.confidence,
+        agent: {
+          provider: candidate.provider_metadata.provider_id,
+          model: candidate.provider_metadata.model_id,
+          prompt_contract_version: input.promptContractVersion,
+        },
+        review: {
+          status: candidate.classification_status === "classified"
+            && candidate.evidence_status === "source_anchored"
+            ? "candidate" as const : "needs_confirmation" as const,
+        },
+      },
+    };
+  });
+  const requirementByCandidate = new Map(input.canonicalExtraction.inventory.candidates
+    .map((candidate, index) => [candidate.candidate_id, requirements[index]!] as const));
+  const ruleKind = new Set([
+    "ces.kind.business-rule", "ces.kind.validation-constraint",
+    "ces.kind.uniqueness-constraint", "ces.kind.role-permission",
+    "ces.kind.state-transition", "ces.kind.lifecycle-rule",
+    "ces.kind.security-sensitive-restriction",
+  ]);
+  const rules = input.canonicalExtraction.inventory.candidates
+    .filter(({ provisional_kind }) => ruleKind.has(provisional_kind))
+    .map((candidate) => {
+      const parent = requirementByCandidate.get(candidate.candidate_id)!;
+      return {
+        schema_version: "1.0.0" as const,
+        candidate_id: `LEGACY-RULE-${stableId(candidate.candidate_id)}`,
+        proposed_logical_id: `legacy.rule.${stableId(candidate.candidate_id)}`,
+        type: candidate.provisional_kind.includes("permission") ? "authorization" as const
+          : candidate.provisional_kind.includes("validation") ? "validation" as const
+            : candidate.provisional_kind.includes("uniqueness") ? "uniqueness" as const
+              : candidate.provisional_kind.includes("state") ? "state_transition" as const
+                : candidate.provisional_kind.includes("lifecycle") ? "lifecycle" as const
+                  : "other" as const,
+        statement: candidate.statement,
+        source_requirement_ids: [parent.proposed_logical_id],
+        source: parent.source,
+        inference: parent.inference,
+      };
+    });
+  const projectedAnalysis = AtlasProviderResultSchema.parse({
+    schema_version: "1.0.0",
+    candidate_requirements: requirements,
+    candidate_business_rules: rules,
+    uncertainties: [],
+    conflicts: [],
+    clarification_questions: input.canonicalExtraction.inventory.candidates
+      .filter(({ classification_status, provisional_kind }) =>
+        classification_status !== "classified" || provisional_kind === "ces.kind.unknown")
+      .map((candidate) => ({
+        id: `LEGACY-QUESTION-${stableId(candidate.candidate_id)}`,
+        question: `Classify canonical candidate ${candidate.candidate_id}.`,
+        affected_requirement_ids: [
+          requirementByCandidate.get(candidate.candidate_id)!.candidate_id,
+        ],
+        blocking: true,
+      })),
+  });
+  const analysis = input.legacyFixture ?? projectedAnalysis;
+  return {
+    schema_version: "1.0.0" as const,
+    source_index: sourceIndex,
+    analysis,
+    extraction_report: {
+      schema_version: "1.0.0" as const,
+      provider: input.providerMetadata.provider,
+      model: input.providerMetadata.model,
+      prompt_contract_version: input.promptContractVersion,
+      source_hashes: sourceIndex.documents.map(({ document_id, content_hash }) => ({
+        document_id, content_hash,
+      })),
+    },
+    projectionLosses: {
+      schema_version: "1.0.0",
+      direction: "canonical-to-legacy",
+      adapter_id: "atlas.adapter.legacy-review-v1",
+      projections: input.canonicalExtraction.inventory.candidates.map((candidate) => ({
+        candidate_id: candidate.candidate_id,
+        legacy_requirement_id: requirementByCandidate.get(candidate.candidate_id)!.candidate_id,
+        classification: candidate.provisional_kind === "ces.kind.capability"
+          ? "lossless" : "lossy",
+        losses: candidate.provisional_kind === "ces.kind.capability" ? []
+          : ["semantic-kind-specific-structure", "canonical-source-unit-identity"],
+      })),
+    },
+  };
+}
+
+export async function analyzeHardenedAtlasCandidates(
   input: Parameters<typeof analyzeAtlasCandidates>[0],
 ): Promise<Awaited<ReturnType<typeof analyzeAtlasCandidates>>> {
   const focuses = [
@@ -976,7 +1324,163 @@ function uniqueBy<T>(values: readonly T[], identify: (value: T) => string): T[] 
   });
 }
 
-function buildProposedAtlasArtifacts(input: {
+function buildCanonicalProposedAtlasArtifacts(input: {
+  readonly canonicalExtraction: Awaited<ReturnType<typeof extractCanonicalAtlasCandidates>>;
+  readonly documents: readonly { document_id: string; path: string; content: string }[];
+  readonly projectIntent: z.infer<typeof ProjectIntentSchema>;
+  readonly sourceHashes: readonly { document_id: string; content_hash: string }[];
+  readonly promptContractVersion: string;
+  readonly provider: { readonly provider: string; readonly model: string };
+}): Record<string, string> {
+  const projectId = stableId(input.projectIntent.project.id);
+  const inventory = input.canonicalExtraction.inventory;
+  const registry = createSemanticKindRegistry();
+  const units = input.canonicalExtraction.sourceArtifacts
+    .flatMap(({ source_units }) => source_units);
+  const recordIds = new Map(inventory.candidates.map((candidate) => [
+    candidate.candidate_id,
+    `${projectId}.record.${hashCanonical(candidate.candidate_id).slice(7, 19)}`,
+  ]));
+  const nodeIds = new Map(inventory.candidates.map((candidate) => [
+    candidate.candidate_id,
+    `${projectId}.node.${hashCanonical(candidate.candidate_id).slice(7, 19)}`,
+  ]));
+  const records = inventory.candidates.map((candidate) => ({
+    id: recordIds.get(candidate.candidate_id)!,
+    candidate_ids: [candidate.candidate_id],
+    semantic_kind_id: candidate.provisional_kind,
+    statement: candidate.statement,
+    source_unit_ids: candidate.source_unit_ids,
+    classification_status: candidate.classification_status === "classified"
+      ? "classified" as const : "classification_required" as const,
+    origin: "explicit" as const,
+    review_status: "pending" as const,
+    details: [{
+      key: "extraction-role",
+      value: candidate.extraction_role,
+    }],
+    issues: [
+      ...(candidate.evidence_status === "support_review_required" ? [{
+        code: "support-review-required",
+        severity: "review_required" as const,
+      }] : []),
+      ...(candidate.classification_status !== "classified" ? [{
+        code: "classification-required",
+        severity: "review_required" as const,
+      }] : []),
+    ],
+  }));
+  const workflowNodes = inventory.candidates.map((candidate) => ({
+    id: nodeIds.get(candidate.candidate_id)!,
+    label: candidate.statement,
+    semantic_record_ids: [recordIds.get(candidate.candidate_id)!],
+    source_unit_ids: candidate.source_unit_ids,
+  }));
+  const byUnit = new Map<string, string[]>();
+  for (const candidate of inventory.candidates) {
+    for (const sourceUnitId of candidate.source_unit_ids) {
+      const linked = byUnit.get(sourceUnitId) ?? [];
+      linked.push(candidate.candidate_id);
+      byUnit.set(sourceUnitId, linked);
+    }
+  }
+  const coverage = calculatePipelineCoverage({
+    source_revision_id: inventory.source_revision_id,
+    semantic_kind_registry_id: registry.id,
+    source_unit_ids: units.map(({ id }) => id),
+    candidate_sources: Object.fromEntries(inventory.candidates.map((candidate) => [
+      candidate.candidate_id, candidate.source_unit_ids,
+    ])),
+    normalized_record_ids: [...recordIds.values()],
+    workflow_node_ids: [...nodeIds.values()],
+    graph_node_ids: [...nodeIds.values()],
+    source_coverage: units.map((unit) => {
+      const candidateIds = byUnit.get(unit.id) ?? [];
+      const normative = unit.kind !== "heading";
+      const covered = candidateIds.length > 0;
+      return {
+        source_unit_id: unit.id,
+        normative,
+        current_stage: !normative ? "non_normative" as const
+          : covered ? "projected" as const : "unmapped" as const,
+        candidate_ids: candidateIds,
+        normalized_record_ids: candidateIds.map((id) => recordIds.get(id)!),
+        workflow_node_ids: candidateIds.map((id) => nodeIds.get(id)!),
+        graph_node_ids: candidateIds.map((id) => nodeIds.get(id)!),
+        ...(!normative ? { reason: "Mechanical heading unit retained as context." } : {}),
+        stage_history: [{
+          stage: !normative ? "non_normative" as const
+            : covered ? "projected" as const : "unmapped" as const,
+          status: covered || !normative ? "included" as const : "lost" as const,
+        }],
+      };
+    }),
+    record_coverage: inventory.candidates.map((candidate) => ({
+      record_id: recordIds.get(candidate.candidate_id)!,
+      semantic_kind_id: candidate.provisional_kind,
+      candidate_ids: [candidate.candidate_id],
+      source_unit_ids: candidate.source_unit_ids,
+    })),
+  });
+  const findings = createCompletenessCriticReport({
+    coverage,
+    findings: coverage.source_coverage
+      .filter(({ normative, current_stage }) => normative && current_stage === "unmapped")
+      .map((unit) => ({
+        finding_type: "uncovered_normative_source" as const,
+        pipeline_stage: "unmapped" as const,
+        source_unit_ids: [unit.source_unit_id],
+        candidate_ids: [],
+        record_ids: [],
+        semantic_kind_ids: [],
+        severity: "blocking" as const,
+        statement: "Normative source unit has no canonical candidate.",
+        recommended_action: "targeted_retry" as const,
+        resolution_history: [],
+      })),
+  });
+  const model = createProposedProjectModel({
+    project_id: projectId,
+    proposal_revision: 1,
+    source_revision_id: inventory.source_revision_id,
+    kind_registry: registry,
+    candidate_inventory: inventory,
+    records,
+    workflow_nodes: workflowNodes,
+    relationships: [],
+    source_documents: input.canonicalExtraction.sourceArtifacts.map(
+      ({ document_revision }) => ({
+        document_id: document_revision.document_id,
+        document_version: document_revision.revision_hash,
+        content_hash: document_revision.content_hash,
+      })),
+    source_coverage: coverage,
+    extraction_findings: findings,
+    compatibility_projections: records.map(({ id, semantic_kind_id }) => ({
+      record_id: id,
+      classification: semantic_kind_id === "ces.kind.capability"
+        ? "lossless" as const : "lossy" as const,
+      ...(semantic_kind_id === "ces.kind.capability" ? {} : {
+        reason: "Legacy review projection cannot represent the full canonical semantic kind.",
+      }),
+    })),
+    approval_blockers: findings.findings
+      .filter(({ severity }) => severity === "blocking")
+      .map(({ id }) => id),
+  });
+  const graph = projectProposedWorkflowGraph(model);
+  return {
+    "source-units.json": collectionCanonicalJson(units),
+    "source-coverage.json": collectionCanonicalJson(coverage),
+    "extraction-findings.json": collectionCanonicalJson(findings),
+    "proposed-project-model.json": collectionCanonicalJson(model),
+    "proposed-system-intent-graph.json": renderWorkflowGraphJson(graph),
+    "proposed-system-intent-graph.md": renderWorkflowGraphMarkdown(graph),
+    "proposed-system-intent-graph.mmd": renderWorkflowGraphMermaid(graph),
+  };
+}
+
+export function buildProposedAtlasArtifacts(input: {
   readonly analysis: z.infer<typeof AtlasProviderResultSchema>;
   readonly documents: readonly { document_id: string; path: string; content: string }[];
   readonly projectIntent: z.infer<typeof ProjectIntentSchema>;
@@ -1391,6 +1895,10 @@ async function retainedPendingArtifacts(
     "section-purpose-registry.json",
     "section-classifications.json",
     "document-structure.json",
+    "candidate-inventory.json",
+    "candidate-merge-report.json",
+    "extractor-ledger.json",
+    "legacy-projection-losses.json",
   ]) {
     const content = await readOptionalText(resolve(outputDirectory, path));
     if (content !== undefined) retained[path] = content;

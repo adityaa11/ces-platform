@@ -46,6 +46,136 @@ export const AtlasCandidateInventorySchema = z.object({
   content_hash: Hash,
 }).strict();
 
+export const CanonicalCandidateExtractionInputSchema = z.object({
+  contract_version: z.literal(ATLAS_CANDIDATE_CONTRACT_VERSION),
+  revisions: z.lazy(() => AtlasRevisionTupleSchema),
+  extractor_id: Id,
+  semantic_kind_registry_id: Id,
+  semantic_kind_registry_hash: Hash,
+  allowed_semantic_kind_ids: z.array(Id).min(1),
+  source_units: z.array(z.lazy(() => BoundedSourceUnitSchema)).min(1),
+  section_classifications: z.array(z.lazy(() => SectionPurposeClassificationSchema)).min(1),
+}).strict();
+
+export const AtlasCandidateDraftSchema = z.object({
+  temporary_id: z.string().regex(/^TMP-CANDIDATE-\d+$/u),
+  statement: Text,
+  provisional_kind: Id,
+  source_unit_ids: z.array(Id).min(1),
+  confidence: z.number().min(0).max(1),
+  classification_status: z.enum([
+    "unclassified", "classified", "classification_required",
+  ]),
+  evidence_status: z.enum(["source_anchored", "support_review_required"]),
+}).strict();
+
+export const CanonicalCandidateExtractionIntermediateSchema = z.object({
+  candidates: z.array(AtlasCandidateDraftSchema),
+  uncertainties: z.array(z.object({
+    temporary_id: z.string().regex(/^TMP-UNCERTAINTY-\d+$/u),
+    statement: Text,
+    source_unit_ids: z.array(Id).min(1),
+  }).strict()).default([]),
+  conflicts: z.array(z.object({
+    temporary_id: z.string().regex(/^TMP-CONFLICT-\d+$/u),
+    statement: Text,
+    source_unit_ids: z.array(Id).min(1),
+  }).strict()).default([]),
+}).strict();
+
+export const CanonicalCandidateExtractionOutputSchema = z.object({
+  contract_version: z.literal(ATLAS_CANDIDATE_CONTRACT_VERSION),
+  extractor_id: Id,
+  revisions: z.lazy(() => AtlasRevisionTupleSchema),
+  inventory: AtlasCandidateInventorySchema,
+  uncertainties: z.array(z.object({
+    id: Id, statement: Text, source_unit_ids: z.array(Id).min(1),
+  }).strict()),
+  conflicts: z.array(z.object({
+    id: Id, statement: Text, source_unit_ids: z.array(Id).min(1),
+  }).strict()),
+  content_hash: Hash,
+}).strict();
+
+export function finalizeCanonicalCandidateExtraction(
+  inputValue: unknown,
+  intermediateValue: unknown,
+  provider: { readonly provider_id: string; readonly model_id: string },
+): z.infer<typeof CanonicalCandidateExtractionOutputSchema> {
+  const input = CanonicalCandidateExtractionInputSchema.parse(inputValue);
+  const intermediate = CanonicalCandidateExtractionIntermediateSchema.parse(intermediateValue);
+  const units = new Set(input.source_units.map(({ id }) => id));
+  const allowedKinds = new Set(input.allowed_semantic_kind_ids);
+  const seenTemporary = new Set<string>();
+  const candidates = intermediate.candidates.map((draft) => {
+    if (seenTemporary.has(draft.temporary_id)) {
+      throw new Error(`Duplicate temporary candidate: ${draft.temporary_id}`);
+    }
+    seenTemporary.add(draft.temporary_id);
+    if (!allowedKinds.has(draft.provisional_kind)) {
+      throw new Error(`Candidate kind is outside extractor scope: ${draft.provisional_kind}`);
+    }
+    const invented = draft.source_unit_ids.find((id) => !units.has(id));
+    if (invented) throw new Error(`Candidate references unknown source unit: ${invented}`);
+    const identity = canonicalJson({
+      extractor_id: input.extractor_id,
+      statement: draft.statement,
+      provisional_kind: draft.provisional_kind,
+      source_unit_ids: [...draft.source_unit_ids].sort(compare),
+    });
+    const candidateId = `${input.extractor_id}.candidate.${hash(identity).slice(7, 19)}`;
+    const core = {
+      contract_version: ATLAS_CANDIDATE_CONTRACT_VERSION,
+      candidate_id: candidateId,
+      statement: draft.statement,
+      provisional_kind: draft.provisional_kind,
+      source_unit_ids: [...draft.source_unit_ids].sort(compare),
+      confidence: draft.confidence,
+      extraction_role: input.extractor_id,
+      classification_status: draft.classification_status,
+      evidence_status: draft.evidence_status,
+      provider_metadata: {
+        provider_id: Id.parse(provider.provider_id),
+        model_id: Text.parse(provider.model_id),
+        contract_version: ATLAS_CANDIDATE_CONTRACT_VERSION,
+      },
+    };
+    return AtlasCandidateSchema.parse({ ...core, payload_hash: hash(canonicalJson(core)) });
+  }).sort((left, right) => compare(left.candidate_id, right.candidate_id));
+  const inventory = createAtlasCandidateInventory({
+    source_revision_id: input.revisions.source_revision_id,
+    lexicon_revision_id: input.revisions.lexicon_revision_id,
+    semantic_schema_version: input.revisions.semantic_schema_version,
+    semantic_kind_registry_id: input.semantic_kind_registry_id,
+    semantic_kind_registry_hash: input.semantic_kind_registry_hash,
+    prompt_contract_version: input.revisions.prompt_contract_version,
+    allowed_source_unit_ids: [...units],
+    candidates,
+  });
+  const issues = <T extends { temporary_id: string; statement: string;
+    source_unit_ids: string[] }>(values: readonly T[], prefix: string) =>
+    values.map((value) => {
+      const invented = value.source_unit_ids.find((id) => !units.has(id));
+      if (invented) throw new Error(`Issue references unknown source unit: ${invented}`);
+      return {
+        id: `${input.extractor_id}.${prefix}.${hash(canonicalJson(value)).slice(7, 19)}`,
+        statement: value.statement,
+        source_unit_ids: [...value.source_unit_ids].sort(compare),
+      };
+    }).sort((left, right) => compare(left.id, right.id));
+  const core = {
+    contract_version: ATLAS_CANDIDATE_CONTRACT_VERSION,
+    extractor_id: input.extractor_id,
+    revisions: input.revisions,
+    inventory,
+    uncertainties: issues(intermediate.uncertainties, "uncertainty"),
+    conflicts: issues(intermediate.conflicts, "conflict"),
+  };
+  return deepFreeze(CanonicalCandidateExtractionOutputSchema.parse({
+    ...core, content_hash: hash(canonicalJson(core)),
+  }));
+}
+
 export const LegacyCandidateMigrationSchema = z.object({
   candidate_id: Id,
   status: z.literal("rejected_lossy"),

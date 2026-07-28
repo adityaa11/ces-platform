@@ -12,3 +12,4 @@ export * from "./agents/atlas-requirement-extractor/contracts.js";
 export * from "./agents/atlas-requirement-extractor/agent.js";
 export * from "./agents/atlas-requirement-extractor/normalize.js";
 export * from "./agents/atlas-structure-classifier/agent.js";
+export * from "./agents/atlas-candidate-extractor/agent.js";

@@ -124,16 +124,36 @@ describe("Atlas CLI pipeline", () => {
         "--output", output,
       ], firstIo.io)).toBe(7);
       expect(firstIo.stderr).toEqual([]);
+      const canonicalInventory = JSON.parse(
+        await readFile(join(output, "candidate-inventory.json"), "utf8"),
+      );
+      expect(canonicalInventory.candidates).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          provisional_kind: "ces.kind.capability",
+          source_unit_ids: expect.arrayContaining([expect.any(String)]),
+        }),
+      ]));
+      const projection = JSON.parse(
+        await readFile(join(output, "legacy-projection-losses.json"), "utf8"),
+      );
+      expect(projection.direction).toBe("canonical-to-legacy");
       expect(await fileNames(output)).toEqual([
         "candidate-analysis.json",
+        "candidate-inventory.json",
+        "candidate-merge-report.json",
         "clarification-questions.json",
+        "document-structure.json",
         "extraction-findings.json",
+        "extractor-ledger.json",
+        "legacy-projection-losses.json",
         "proposed-project-model.json",
         "proposed-system-intent-graph.json",
         "proposed-system-intent-graph.md",
         "proposed-system-intent-graph.mmd",
         "review-input.json",
         "run-manifest.json",
+        "section-classifications.json",
+        "section-purpose-registry.json",
         "source-coverage.json",
         "source-index.json",
         "source-units.json",
@@ -185,10 +205,15 @@ describe("Atlas CLI pipeline", () => {
       expect(await runCli(resumeArgs, capture().io)).toBe(0);
       expect(await fileNames(output)).toEqual([
         "candidate-analysis.json",
+        "candidate-inventory.json",
+        "candidate-merge-report.json",
         "clarification-questions.json",
         "core-handoff/REQ-PROJECT-001.policy-manifest.json",
         "core-handoff/summary.json",
+        "document-structure.json",
         "extraction-findings.json",
+        "extractor-ledger.json",
+        "legacy-projection-losses.json",
         "proposed-project-model.json",
         "proposed-system-intent-graph.json",
         "proposed-system-intent-graph.md",
@@ -198,6 +223,8 @@ describe("Atlas CLI pipeline", () => {
         "review-input.json",
         "review-report.json",
         "run-manifest.json",
+        "section-classifications.json",
+        "section-purpose-registry.json",
         "source-coverage.json",
         "source-index.json",
         "source-units.json",
