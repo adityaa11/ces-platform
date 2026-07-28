@@ -55,5 +55,5 @@ mismatch, and deterministic replay.
 
 ## Out of scope
 
-Canonical provider output and CLI cutover are handled by ATLAS-HARD-017/018.
-
+Canonical provider output and runtime integration are handled by
+ATLAS-HARD-017.

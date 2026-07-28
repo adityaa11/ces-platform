@@ -26,6 +26,12 @@ than the legacy requirement/business-rule envelope.
 - Normalize and deduplicate only after generic discovery.
 - Generate findings and retries from canonical candidates and source coverage.
 - Retain legacy input only through an explicit loss-detecting adapter.
+- Wire the canonical flow into the actual `atlas run`, review, graph, resume,
+  and approval entry points rather than stopping at library-level completion.
+- Reuse valid legacy behavior and preserve existing consumers through explicit,
+  tested compatibility adapters; do not duplicate working functionality.
+- Ensure legacy schema limits never narrow generic candidate discovery or the
+  canonical proposed model.
 
 ## Outputs
 
@@ -44,6 +50,12 @@ history, and explicit legacy-projection losses.
 - [ ] Retry scope contains only unresolved findings and affected source units.
 - [ ] Legacy conversion is one-way, explicit, and absent from canonical logic.
 - [ ] Novel-kind fixtures pass without core changes.
+- [ ] Command-level tests prove the canonical implementation executes through
+      the real user command.
+- [ ] Existing legacy consumers remain functional through explicit adapters,
+      with every lossy projection reported.
+- [ ] Canonical-stage failure is visible and never replaced by an accidental
+      legacy execution path.
 
 ## Tests and evidence
 
@@ -53,5 +65,5 @@ retry, legacy-loss reporting, and deterministic merge.
 
 ## Out of scope
 
-User-facing command cutover is handled by ATLAS-HARD-018.
-
+Removal of legacy code that still has consumers. Compatibility is adjusted at
+tested boundaries and removal requires separate justification.

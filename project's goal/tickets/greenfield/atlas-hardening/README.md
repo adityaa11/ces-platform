@@ -30,9 +30,8 @@ parallel semantic model, source identity system, or approval path.
 | 15 | [ATLAS-HARD-015](CES-GF-ATLAS-HARD-015-safara-qualification-gate.md) | Production integration gate | 001–014 |
 | 16 | [ATLAS-HARD-016](CES-GF-ATLAS-HARD-016-live-semantic-section-classifier.md) | Live semantic section classification | 001–004 |
 | 17 | [ATLAS-HARD-017](CES-GF-ATLAS-HARD-017-canonical-provider-candidates.md) | Generic candidates and registry routing | 003–007, 016 |
-| 18 | [ATLAS-HARD-018](CES-GF-ATLAS-HARD-018-canonical-cli-cutover.md) | Canonical default CLI and legacy isolation | 009–014, 016–017 |
 
-ATLAS-HARD-015 is reopened and must be rerun after ATLAS-HARD-018. Earlier
+ATLAS-HARD-015 is reopened and must be rerun after ATLAS-HARD-017. Earlier
 library-level completion is not production integration evidence.
 
 ## Program rules
@@ -61,8 +60,9 @@ library-level completion is not production integration evidence.
   coverage.
 - Every ticket must preserve existing DAPE, Atlas, CLI, and greenfield
   regressions.
-- The default command fails closed on canonical-pipeline failure and never
-  falls back silently to legacy extraction, review, or publication.
+- Runtime integration must prove which implementation executes. Existing
+  legacy consumers remain supported through explicit, tested adapters, but
+  legacy contract limits must not narrow the canonical semantic model.
 
 ## Final artifact boundary
 

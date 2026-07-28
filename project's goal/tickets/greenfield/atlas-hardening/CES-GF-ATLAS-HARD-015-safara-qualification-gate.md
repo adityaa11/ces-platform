@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-015 — Safara Qualification Gate
 
 **Stage:** Atlas hardening production gate
-**Status:** Reopened; blocked by ATLAS-HARD-016 through ATLAS-HARD-018
+**Status:** Reopened; blocked by ATLAS-HARD-016 and ATLAS-HARD-017
 
 ## Objective
 
@@ -11,7 +11,7 @@ block production approval UI integration until every mandatory gate passes.
 ## Dependencies
 
 - ATLAS-HARD-001 through ATLAS-HARD-014.
-- ATLAS-HARD-016 through ATLAS-HARD-018 corrective production integration.
+- ATLAS-HARD-016 and ATLAS-HARD-017 corrective production integration.
 - Completed and reconciled DAPE-008R real-provider evidence.
 
 ## Work
