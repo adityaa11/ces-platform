@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-013 — Approved Model Materialization
 
 **Stage:** Atlas hardening publication
-**Status:** Planned
+**Status:** Implemented
 
 ## Objective
 
@@ -38,22 +38,33 @@ from an immutable proposal and validated human approval decisions.
 
 ## Acceptance criteria
 
-- [ ] Only human-approved semantic content enters the authoritative model.
-- [ ] Stable IDs survive corrections; separate requirements receive new IDs.
-- [ ] Split and merge materialization follows the documented identity and
+- [x] Only human-approved semantic content enters the authoritative model.
+- [x] Stable IDs survive corrections; separate requirements receive new IDs.
+- [x] Split and merge materialization follows the documented identity and
       lineage rules deterministically.
-- [ ] Accepted organization-specific semantic kinds remain lossless and pinned
+- [x] Accepted organization-specific semantic kinds remain lossless and pinned
       to their reviewed registry revision.
-- [ ] Published artifacts are authoritative and proposal/decision traceable.
-- [ ] Unresolved blockers, stale decisions, or invalid links prevent publication.
-- [ ] Downstream execution becomes allowed only after successful publication.
-- [ ] Failed publication does not partially replace the last valid revision.
+- [x] Published artifacts are authoritative and proposal/decision traceable.
+- [x] Unresolved blockers, stale decisions, or invalid links prevent publication.
+- [x] Downstream execution becomes allowed only after successful publication.
+- [x] Failed publication does not partially replace the last valid revision.
 
 ## Tests and evidence
 
 Approve/reject/correct replay, classification change, split/merge lineage,
 organization kind, stable/new ID, unresolved blocker, stale proposal, atomic
 failure, graph parity, and downstream-gate fixtures.
+
+## Completion evidence
+
+- Added deterministic proposal/ledger replay beside the legacy DAPE publisher.
+- Approval, correction, rejection, split, merge, and human-added record paths
+  preserve proposal, decision, candidate, source, parent, and kind lineage.
+- Approved authority and downstream execution are enabled only in the
+  successfully materialized model.
+- Approved graph uses the same lifecycle-neutral projection contract.
+- Atomic directory publication prevents partial replacement.
+- Approved-model, graph, and architecture tests passed; typecheck passed.
 
 ## Out of scope
 

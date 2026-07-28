@@ -161,6 +161,15 @@ importers:
       '@company/ces-atlas-coverage':
         specifier: workspace:*
         version: link:../atlas-coverage
+      '@company/ces-atlas-intent-graph':
+        specifier: workspace:*
+        version: link:../atlas-intent-graph
+      '@company/ces-atlas-review':
+        specifier: workspace:*
+        version: link:../atlas-review
+      '@company/ces-proposed-project-model':
+        specifier: workspace:*
+        version: link:../proposed-project-model
       '@company/ces-semantic-record-schema':
         specifier: workspace:*
         version: link:../semantic-record-schema
