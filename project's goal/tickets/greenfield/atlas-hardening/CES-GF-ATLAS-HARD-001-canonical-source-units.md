@@ -19,6 +19,9 @@ immutable source identity layer required by Atlas hardening.
   path, exact text, source kind, normalized bounding box, and OCR confidence.
 - Define deterministic source-unit boundaries and IDs for every supported
   parser path.
+- Keep segmentation generic across document structures; production parsing
+  must not recognize Safara headings, entities, terminology, or layout as
+  special cases.
 - Prevent semantic agents and later pipeline stages from changing source text,
   anchors, ordering, or identity.
 - Add explicit document revision and source-unit revision/hash metadata.
@@ -34,13 +37,17 @@ existing DAPE schemas.
 - [ ] Identical accepted input and parser configuration produce identical IDs.
 - [ ] Exact source text and section/page provenance survive the full pipeline.
 - [ ] OCR-derived units retain confidence and source-kind metadata.
+- [ ] Unfamiliar headings, layouts, and unrelated-domain documents use the same
+      source-unit contract without domain-specific parser code.
+- [ ] Production packages do not import Safara oracle data or fixture rules.
 - [ ] Changed document bytes invalidate stale source revisions.
 - [ ] No duplicate source-unit schema or identity algorithm is introduced.
 
 ## Tests and evidence
 
-Native PDF, OCR PDF, Markdown, repeated-run, changed-input, reordered-section,
-and attempted-agent-mutation fixtures; schema validation and artifact hashes.
+Native PDF, OCR PDF, Markdown, unrelated-domain and unfamiliar-layout documents,
+repeated-run, changed-input, reordered-section, and attempted-agent-mutation
+fixtures; schema validation and artifact hashes.
 
 ## Out of scope
 

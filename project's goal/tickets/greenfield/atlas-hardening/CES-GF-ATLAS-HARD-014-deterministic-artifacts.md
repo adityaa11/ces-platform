@@ -23,6 +23,9 @@ byte-stable for identical accepted inputs and pinned configuration.
 - Add semantic hashes, cross-artifact identity checks, atomic staging, and
   golden regression fixtures.
 - Ensure reports and Mermaid projections do not introduce nondeterminism.
+- Define determinism over identical accepted provider results and pinned
+  configuration. Raw stochastic provider calls are separately qualified and
+  are not falsely claimed to rediscover identical semantics on every call.
 
 ## Outputs
 
@@ -32,6 +35,8 @@ and regression evidence.
 ## Acceptance criteria
 
 - [ ] Equivalent accepted inputs produce byte-identical semantic artifacts.
+- [ ] The determinism claim names accepted normalized provider output and pinned
+      configuration as part of the input boundary.
 - [ ] Current timestamps never appear in semantic content.
 - [ ] All arrays, graph nodes, edges, findings, and decisions have stable order.
 - [ ] Every artifact resolves to one pinned model/source/configuration revision.
@@ -40,10 +45,11 @@ and regression evidence.
 
 ## Tests and evidence
 
-Repeated runs, permuted provider output, locale/timezone variation, newline
-variation, changed configuration, changed source, atomic interruption, and
-golden hash fixtures.
+Repeated accepted-result runs, permuted equivalent provider output, distinct raw
+provider results, locale/timezone variation, newline variation, changed
+configuration, changed source, atomic interruption, and golden hash fixtures.
 
 ## Out of scope
 
-Guaranteeing that nondeterministic providers return identical raw text.
+Guaranteeing that nondeterministic providers discover identical semantics or
+return identical raw text on independent calls.

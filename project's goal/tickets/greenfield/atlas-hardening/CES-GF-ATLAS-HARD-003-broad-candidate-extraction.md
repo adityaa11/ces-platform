@@ -17,6 +17,12 @@ classification, normalization, deduplication, and workflow assignment.
 
 - Add a source-unit-bounded discovery contract that may emit provisional or
   unknown categories.
+- Introduce one generic `AtlasCandidate` provider contract with candidate ID,
+  statement, provisional kind, source-unit IDs, confidence, extraction role,
+  classification status, and pinned provider metadata.
+- Migrate compatibility adapters away from provider output restricted to
+  `candidate_requirements` and `candidate_business_rules`; narrow legacy arrays
+  may be projections but cannot be the canonical discovery contract.
 - Require every candidate to cite one or more valid canonical source units.
 - Pin source, lexicon, schema, prompt, provider, and model revisions.
 - Keep discovery output append-only through later classification and retry.
@@ -30,6 +36,10 @@ kind, confidence, extraction role, and revision tuple.
 ## Acceptance criteria
 
 - [ ] Candidate discovery does not require final classification.
+- [ ] The canonical provider contract accepts candidates that are neither
+      requirements nor business rules.
+- [ ] Legacy narrow provider output is converted through an explicit,
+      loss-detecting compatibility adapter.
 - [ ] Every candidate has resolvable canonical source evidence.
 - [ ] Small technical requirements are not filtered by headline importance.
 - [ ] Unsupported provider claims are blocked or explicitly flagged.
@@ -38,9 +48,9 @@ kind, confidence, extraction role, and revision tuple.
 
 ## Tests and evidence
 
-Safara high-recall fixture, unknown-category fixture, unsupported claim,
-missing/foreign citation, duplicate wording, provider failure, and deterministic
-normalization tests.
+Safara high-recall fixture, unrelated-domain and novel-kind fixtures,
+unsupported claim, missing/foreign citation, lossy legacy-adapter case,
+duplicate wording, provider failure, and deterministic normalization tests.
 
 ## Out of scope
 

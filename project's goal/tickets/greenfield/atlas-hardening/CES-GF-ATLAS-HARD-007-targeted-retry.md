@@ -19,6 +19,11 @@ identified by unresolved completeness findings.
   extractor contract, revision tuple, attempt number, and retry scope.
 - Route each request to the smallest applicable bounded extractor or
   deterministic pipeline stage.
+- Select extractor capabilities through the pinned registry using finding kind,
+  supported semantic kinds, and contract version; do not hardcode a closed
+  category-to-extractor switch.
+- Route unclaimed or novel findings to broad discovery or human review without
+  discarding them.
 - Preserve prior candidates and evidence; append retry output and resolution.
 - Enforce deterministic attempt limits and explicit exhaustion status.
 - Recalculate only affected coverage and findings without hiding history.
@@ -36,11 +41,15 @@ final unresolved/review-required state.
 - [ ] Attempt limits and terminal statuses are deterministic.
 - [ ] Revision mismatch or stale findings reject the retry.
 - [ ] Unresolved exhaustion requires human review rather than false success.
+- [ ] Registered organization extractors can receive applicable retries without
+      core routing changes.
+- [ ] Unknown findings remain visible when no extractor capability matches.
 
 ## Tests and evidence
 
-Validation-only retry, workflow-assignment retry, duplicate review, stale
-finding, scope expansion, retry success, retry exhaustion, and provider failure.
+Validation-only retry, registered-extension retry, unknown/unclaimed finding,
+workflow-assignment retry, duplicate review, stale finding, scope expansion,
+retry success, retry exhaustion, and provider failure.
 
 ## Out of scope
 

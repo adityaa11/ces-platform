@@ -18,6 +18,8 @@ clients do not infer approval safety from presentation data.
 - Require valid source anchors, acceptable confidence, resolved ambiguity,
   absence of conflicts/unsupported claims, resolved deduplication, and no open
   correction request.
+- Define mandatory blockers for `unknown_semantic_kind`,
+  `classification_required`, and `derived_interpretation_requires_review`.
 - Calculate item, selection, workflow, and all-eligible summaries
   deterministically.
 - Pin policy/configuration version and threshold in run metadata.
@@ -34,6 +36,8 @@ approval summaries.
 - [ ] Every ineligible item has at least one machine-readable blocker.
 - [ ] Ambiguous, conflicting, unsupported, source-missing, low-confidence, and
       correction-requested items cannot be bulk approved.
+- [ ] Unknown, unclassified, and unconfirmed derived records cannot be bulk
+      approved.
 - [ ] Eligibility policy and threshold revisions are pinned.
 - [ ] Clients cannot override backend ineligibility.
 - [ ] Exceptions remain individually reviewable.

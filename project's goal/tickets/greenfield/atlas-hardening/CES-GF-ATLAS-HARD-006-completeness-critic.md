@@ -20,6 +20,8 @@ pipeline state without granting the critic approval or suppression authority.
   and suspiciously sparse categories.
 - Define versioned finding types, severity, evidence, recommended action, and
   stable finding identity.
+- Base completeness on source coverage and registered contracts, never on an
+  assumed domain vocabulary, fixed workflow, or presence of Safara concepts.
 - Deterministically validate findings against canonical source units.
 - Preserve all findings and their resolution history.
 
@@ -37,12 +39,16 @@ summary suitable for the proposal and approval UI.
 - [ ] Invalid or unsupported findings are rejected explicitly.
 - [ ] Repeated equivalent input produces deterministic finding identities.
 - [ ] Blocking findings remain visible until a recorded resolution exists.
+- [ ] Unrelated-domain documents and novel workflow shapes are not marked
+      incomplete merely because they differ from Safara.
+- [ ] Qualification-oracle expectations are unavailable to production critic
+      execution.
 
 ## Tests and evidence
 
-Missing Safara rule, false context, distorted candidate, unsupported record,
-empty workflow, sparse category, duplicate/conflict, and critic overreach
-fixtures.
+Missing Safara rule, unrelated-domain workflow, novel semantic kind, false
+context, distorted candidate, unsupported record, empty workflow, sparse
+category, duplicate/conflict, and critic overreach fixtures.
 
 ## Out of scope
 

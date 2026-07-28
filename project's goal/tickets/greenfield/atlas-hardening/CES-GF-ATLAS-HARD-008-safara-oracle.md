@@ -17,6 +17,8 @@ dataset for the complete Atlas hardening lifecycle.
 
 - Reuse the contract-neutral oracle rather than generating expected output from
   current implementation behavior.
+- Store the oracle only in test/qualification data and enforce an import
+  boundary preventing production extraction packages from reading it.
 - Add explicit expected projections for source units, workflows, capabilities,
   all requirement categories, traceability, findings, and review eligibility.
 - Cover ten workflow areas, ten primary rules, detailed validations,
@@ -37,11 +39,16 @@ Versioned Safara oracle tree and projection checklists for every hardening stage
 - [ ] Every expected semantic record resolves to source evidence.
 - [ ] Oracle changes require an explicit review record.
 - [ ] Real-provider evidence is redacted and linked without exposing PRD text.
+- [ ] Production extraction code contains no Safara-specific prompt branches,
+      section names, keywords, workflow nodes, or oracle imports.
+- [ ] Passing Safara is described as fixture qualification, not evidence of
+      general domain coverage.
 
 ## Tests and evidence
 
-Schema validation, anchor resolution, concrete semantic-key/count assertions,
-missing-category variants, unsupported additions, and unreviewed oracle changes.
+Schema validation, anchor resolution, production-import boundary, concrete
+semantic-key/count assertions, missing-category variants, unsupported additions,
+Safara hardcoding detection, and unreviewed oracle changes.
 
 ## Out of scope
 

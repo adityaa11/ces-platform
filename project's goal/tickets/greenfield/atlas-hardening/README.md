@@ -33,6 +33,16 @@ parallel semantic model, source identity system, or approval path.
 
 - DAPE source-unit IDs, semantic IDs, revision tuples, and canonical schemas
   remain authoritative.
+- Atlas remains domain-agnostic: Safara terminology, headings, entities,
+  workflow nodes, and oracle output must never become production extraction
+  logic.
+- Dynamic meaning is represented through stable contracts: built-in semantic
+  kinds, registered organization-specific kinds, and a source-grounded
+  `unknown` fallback.
+- Generic candidate discovery precedes classification; provider contracts must
+  not limit discovery to requirement and business-rule arrays.
+- Workflow relationships support arbitrary directed graphs, including branches,
+  joins, loops, parallel paths, optional steps, actor lanes, and unknown nodes.
 - A proposal is immutable, non-authoritative, and never enables downstream
   execution.
 - Agents may propose, classify, criticize, and retry; they may not approve,
@@ -40,6 +50,9 @@ parallel semantic model, source identity system, or approval path.
 - Approval is represented by immutable human decisions and materialization,
   never by mutation of the proposal.
 - The production approval UI remains blocked until ATLAS-HARD-015 passes.
+- Safara acceptance qualifies one reviewed fixture and the lifecycle gate; a
+  separate multi-domain suite is required before claiming general domain
+  coverage.
 - Every ticket must preserve existing DAPE, Atlas, CLI, and greenfield
   regressions.
 

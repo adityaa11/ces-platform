@@ -18,6 +18,8 @@ that omission and distortion can be assigned to the responsible stage.
 - Extend the canonical DAPE coverage contract with stage-specific transitions:
   evaluated, non-normative, candidate, classified, normalized, deduplicated,
   assigned, projected, unmapped, ambiguous, conflicting, and excluded.
+- Apply identical coverage accounting to built-in, organization-specific, and
+  unknown semantic candidates and records.
 - Record one-to-many and many-to-one source/record mappings.
 - Require reviewed reasons for exclusion or context-only disposition.
 - Validate all source, candidate, normalized-record, workflow, and graph links.
@@ -31,6 +33,8 @@ pipeline-stage loss report.
 ## Acceptance criteria
 
 - [ ] Every source unit has an explicit current disposition.
+- [ ] Unknown and organization-specific records participate in coverage counts,
+      mappings, findings, and projection checks.
 - [ ] Every normalized record links to its source units and candidates.
 - [ ] Unmapped normative content is visible and blocks publication.
 - [ ] Silent exclusion and attach-all provenance are rejected.
@@ -39,8 +43,9 @@ pipeline-stage loss report.
 
 ## Tests and evidence
 
-One-to-many, many-to-one, duplicate, context, exclusion, missing-link,
-wrong-document, workflow-assignment loss, and graph-projection loss fixtures.
+One-to-many, many-to-one, unknown and organization-kind, duplicate, context,
+exclusion, missing-link, wrong-document, workflow-assignment loss, and
+graph-projection loss fixtures.
 
 ## Out of scope
 
