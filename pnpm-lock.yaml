@@ -181,6 +181,16 @@ importers:
         specifier: 24.13.3
         version: 24.13.3
 
+  packages/atlas-artifacts:
+    dependencies:
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
+
   packages/atlas-coverage:
     dependencies:
       zod:

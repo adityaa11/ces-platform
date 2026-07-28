@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-014 — Deterministic Artifacts
 
 **Stage:** Atlas hardening publication
-**Status:** Planned
+**Status:** Implemented
 
 ## Objective
 
@@ -34,20 +34,30 @@ and regression evidence.
 
 ## Acceptance criteria
 
-- [ ] Equivalent accepted inputs produce byte-identical semantic artifacts.
-- [ ] The determinism claim names accepted normalized provider output and pinned
+- [x] Equivalent accepted inputs produce byte-identical semantic artifacts.
+- [x] The determinism claim names accepted normalized provider output and pinned
       configuration as part of the input boundary.
-- [ ] Current timestamps never appear in semantic content.
-- [ ] All arrays, graph nodes, edges, findings, and decisions have stable order.
-- [ ] Every artifact resolves to one pinned model/source/configuration revision.
-- [ ] Semantic drift changes a reviewed regression hash.
-- [ ] Failed runs publish no partial artifact set.
+- [x] Current timestamps never appear in semantic content.
+- [x] All arrays, graph nodes, edges, findings, and decisions have stable order.
+- [x] Every artifact resolves to one pinned model/source/configuration revision.
+- [x] Semantic drift changes a reviewed regression hash.
+- [x] Failed runs publish no partial artifact set.
 
 ## Tests and evidence
 
 Repeated accepted-result runs, permuted equivalent provider output, distinct raw
 provider results, locale/timezone variation, newline variation, changed
 configuration, changed source, atomic interruption, and golden hash fixtures.
+
+## Completion evidence
+
+- Added the dependency-neutral `@company/ces-atlas-artifacts` package.
+- Canonical semantic bytes and per-artifact/bundle hashes are isolated from the
+  timestamped run manifest.
+- Manifest pins Atlas, contract, provider, model, input, configuration, and
+  proposal revisions.
+- Atomic directory publication cleans failed staging output.
+- Artifact and architecture tests passed; package typecheck passed.
 
 ## Out of scope
 
