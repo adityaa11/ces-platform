@@ -52,7 +52,7 @@ node --env-file=agent.env apps/cli/dist/index.js atlas run `
   --project-intent docs/prd/safara-project-intent.json `
   --provider-endpoint http://127.0.0.1:8787/v1/atlas/analyze `
   --provider agents-bridge `
-  --model gemini-flash-latest `
+  --model gemini-3.1-flash-lite `
   --output .ces/generated/atlas
 ```
 
