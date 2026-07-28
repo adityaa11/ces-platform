@@ -252,6 +252,9 @@ importers:
       '@company/ces-greenfield-contracts':
         specifier: workspace:*
         version: link:../greenfield-contracts
+      '@company/ces-proposed-project-model':
+        specifier: workspace:*
+        version: link:../proposed-project-model
       '@company/ces-requirement-collection-schema':
         specifier: workspace:*
         version: link:../requirement-collection-schema

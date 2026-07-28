@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-012 — Immutable Approval Decisions
 
 **Stage:** Atlas hardening approval
-**Status:** Planned
+**Status:** Implemented
 
 ## Objective
 
@@ -37,18 +37,18 @@ deterministic replay order.
 
 ## Acceptance criteria
 
-- [ ] The proposal remains byte-identical after decisions.
-- [ ] Every decision is revision-bound and attributable to a human reviewer.
-- [ ] Corrected wording preserves original proposal content and reviewer note.
-- [ ] Classification correction changes the accepted interpretation without
+- [x] The proposal remains byte-identical after decisions.
+- [x] Every decision is revision-bound and attributable to a human reviewer.
+- [x] Corrected wording preserves original proposal content and reviewer note.
+- [x] Classification correction changes the accepted interpretation without
       replacing candidate or source evidence.
-- [ ] Split and merge decisions preserve complete parent/child lineage and do
+- [x] Split and merge decisions preserve complete parent/child lineage and do
       not reuse an identity for multiple meanings.
-- [ ] Human-added records and category registrations are explicitly marked,
+- [x] Human-added records and category registrations are explicitly marked,
       attributable, source-grounded where applicable, and never agent-authored.
-- [ ] Agent self-approval and client-forced bulk approval are rejected.
-- [ ] Conflicting or stale decisions fail explicitly.
-- [ ] Decision history is replayable and append-only.
+- [x] Agent self-approval and client-forced bulk approval are rejected.
+- [x] Conflicting or stale decisions fail explicitly.
+- [x] Decision history is replayable and append-only.
 
 ## Tests and evidence
 
@@ -56,6 +56,16 @@ All decision kinds, classification correction, split, merge, human-added record
 and organization kind, correction history, stale revision,
 duplicate/conflicting decision, agent identity, invalid bulk selection, replay,
 and tamper fixtures.
+
+## Completion evidence
+
+- Added proposal-bound immutable decision and ledger contracts to Atlas review.
+- Supports approval, rejection, correction, classification change, ambiguity,
+  split, merge, human-added records, and category registration.
+- Requires human identity, timestamp, note, contiguous sequence, and stable
+  proposal revision/hash.
+- Enforces backend bulk eligibility and rejects stale or conflicting decisions.
+- Review, proposal-decision, and architecture tests passed; typecheck passed.
 
 ## Out of scope
 

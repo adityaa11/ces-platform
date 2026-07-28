@@ -9,6 +9,7 @@
     "@company/ces-agent-provider-sdk": "workspace:*",
     "@company/ces-atlas-coverage": "workspace:*",
     "@company/ces-greenfield-contracts": "workspace:*",
+    "@company/ces-proposed-project-model": "workspace:*",
     "@company/ces-requirement-collection-schema": "workspace:*",
     "@company/ces-requirement-schema": "workspace:*",
     "zod": "4.4.3"

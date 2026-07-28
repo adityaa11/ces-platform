@@ -19,6 +19,10 @@ import {
   type RequirementCollection,
 } from "@company/ces-requirement-collection-schema";
 import {
+  assertBulkApprovalSelection,
+  BulkApprovalEligibilitySchema,
+} from "@company/ces-proposed-project-model";
+import {
   RequirementPackageSchema,
   type RequirementPackage,
 } from "@company/ces-requirement-schema";
@@ -564,4 +568,123 @@ function deepFreezeReview<T>(value: T): T {
     for (const child of Object.values(value)) deepFreezeReview(child);
   }
   return value;
+}
+
+const DecisionRecordPayloadSchema = z.object({
+  id: ReviewIdSchema,
+  statement: NonEmptyString,
+  semantic_kind_id: ReviewIdSchema,
+  source_unit_ids: z.array(ReviewIdSchema).min(1),
+  candidate_ids: z.array(ReviewIdSchema),
+}).strict();
+
+export const ProposalApprovalDecisionInputSchema = z.object({
+  sequence: z.number().int().positive(),
+  action: z.enum([
+    "approve", "reject", "correction_requested", "corrected_approve",
+    "mark_ambiguous", "correct_classification", "split", "merge",
+    "add_record", "register_category",
+  ]),
+  target_record_ids: z.array(ReviewIdSchema),
+  bulk: z.boolean().default(false),
+  reviewer: z.object({
+    kind: z.literal("human"),
+    identity: NonEmptyString,
+  }).strict(),
+  decided_at: z.string().datetime({ offset: true }),
+  note: NonEmptyString,
+  approved_statement: NonEmptyString.optional(),
+  approved_semantic_kind_id: ReviewIdSchema.optional(),
+  replacement_records: z.array(DecisionRecordPayloadSchema).default([]),
+  registered_kind_id: ReviewIdSchema.optional(),
+}).strict().superRefine((value, context) => {
+  if (["approve", "reject", "correction_requested", "corrected_approve",
+    "mark_ambiguous", "correct_classification"].includes(value.action)
+    && value.target_record_ids.length !== 1) {
+    context.addIssue({ code: "custom", message: `${value.action} requires one target record` });
+  }
+  if (value.action === "split"
+    && (value.target_record_ids.length !== 1 || value.replacement_records.length < 2)) {
+    context.addIssue({ code: "custom", message: "Split requires one target and multiple replacements" });
+  }
+  if (value.action === "merge"
+    && (value.target_record_ids.length < 2 || value.replacement_records.length !== 1)) {
+    context.addIssue({ code: "custom", message: "Merge requires multiple targets and one replacement" });
+  }
+  if (value.action === "add_record"
+    && (value.target_record_ids.length !== 0 || value.replacement_records.length !== 1)) {
+    context.addIssue({ code: "custom", message: "Add record requires one replacement and no target" });
+  }
+  if ((value.action === "register_category") !== (value.registered_kind_id !== undefined)) {
+    context.addIssue({ code: "custom", message: "Category registration requires registered_kind_id" });
+  }
+  if (value.bulk && value.action !== "approve") {
+    context.addIssue({ code: "custom", message: "Only approve decisions may be bulk" });
+  }
+});
+
+export const ProposalApprovalDecisionSchema = ProposalApprovalDecisionInputSchema.extend({
+  id: ReviewIdSchema,
+  proposal_hash: Sha256Schema,
+  proposal_revision: z.number().int().positive(),
+}).strict();
+
+export const ProposalApprovalLedgerSchema = z.object({
+  schema_version: z.literal(ATLAS_REVIEW_VERSION),
+  proposal_hash: Sha256Schema,
+  proposal_revision: z.number().int().positive(),
+  decisions: z.array(ProposalApprovalDecisionSchema),
+  content_hash: Sha256Schema,
+}).strict();
+
+export function createProposalApprovalLedger(input: {
+  readonly proposal_hash: string;
+  readonly proposal_revision: number;
+  readonly proposal_record_ids: readonly string[];
+  readonly eligibility: z.input<typeof BulkApprovalEligibilitySchema>;
+  readonly decisions: readonly z.input<typeof ProposalApprovalDecisionInputSchema>[];
+}): z.infer<typeof ProposalApprovalLedgerSchema> {
+  const proposalHash = Sha256Schema.parse(input.proposal_hash);
+  const proposalRevision = z.number().int().positive().parse(input.proposal_revision);
+  const recordIds = new Set(input.proposal_record_ids.map((id) => ReviewIdSchema.parse(id)));
+  const eligibility = BulkApprovalEligibilitySchema.parse(input.eligibility);
+  if (eligibility.proposal_hash !== proposalHash) throw new Error("Approval eligibility is stale");
+  const parsed = input.decisions.map((decision) =>
+    ProposalApprovalDecisionInputSchema.parse(decision))
+    .sort((a, b) => a.sequence - b.sequence);
+  const states = new Map<string, "pending" | "correction_requested" | "terminal">(
+    [...recordIds].map((id) => [id, "pending"]),
+  );
+  parsed.forEach((decision, index) => {
+    if (decision.sequence !== index + 1) throw new Error("Approval decision sequence must be contiguous");
+    for (const id of decision.target_record_ids) {
+      if (!recordIds.has(id)) throw new Error(`Approval references unknown record: ${id}`);
+      const state = states.get(id);
+      if (state === "terminal") throw new Error(`Conflicting terminal decision for ${id}`);
+      if (decision.action === "corrected_approve" && state !== "correction_requested") {
+        throw new Error(`Corrected approval requires correction request for ${id}`);
+      }
+    }
+    if (decision.bulk) assertBulkApprovalSelection(eligibility, decision.target_record_ids);
+    for (const id of decision.target_record_ids) {
+      states.set(id, decision.action === "correction_requested"
+        ? "correction_requested" : "terminal");
+    }
+  });
+  const decisions = parsed.map((decision) => {
+    const core = { proposal_hash: proposalHash, proposal_revision: proposalRevision, ...decision };
+    return ProposalApprovalDecisionSchema.parse({
+      ...core,
+      id: `atlas.decision.${String(decision.sequence).padStart(5, "0")}.${digestForReview(core).slice(0, 12)}`,
+    });
+  });
+  const core = {
+    schema_version: ATLAS_REVIEW_VERSION,
+    proposal_hash: proposalHash,
+    proposal_revision: proposalRevision,
+    decisions,
+  };
+  return deepFreezeReview(ProposalApprovalLedgerSchema.parse({
+    ...core, content_hash: sha256(core),
+  }));
 }
