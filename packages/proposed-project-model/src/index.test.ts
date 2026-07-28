@@ -8,7 +8,13 @@ import { describe, expect, it } from "vitest";
 import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createProposedProjectModel, publishProposedProjectModel } from "./index.js";
+import {
+  assertBulkApprovalSelection,
+  calculateBulkApprovalEligibility,
+  createBulkApprovalPolicy,
+  createProposedProjectModel,
+  publishProposedProjectModel,
+} from "./index.js";
 
 const hash = (value: string) => `sha256:${value.repeat(64)}`;
 const source = "project.unit.00001.aaaaaaaa";
@@ -79,14 +85,16 @@ function fixture() {
     { id: "project.record.unknown", candidate_ids: ["project.candidate.unknown"],
       semantic_kind_id: "ces.kind.unknown", statement: "Unknown normative meaning.",
       source_unit_ids: [source], classification_status: "classification_required" as const,
-      origin: "explicit" as const, review_status: "pending" as const, details: [],
-      issues: [{ code: "classification-required", severity: "review_required" as const }] },
+      origin: "derived" as const, review_status: "pending" as const, details: [],
+      issues: [
+        { code: "classification-required", severity: "review_required" as const },
+        { code: "derived-interpretation-requires-review", severity: "review_required" as const },
+      ] },
     { id: "project.record.temperature", candidate_ids: ["project.candidate.temperature"],
       semantic_kind_id: "example.kind.temperature-release", statement: "Temperature release.",
       source_unit_ids: [source], classification_status: "classified" as const,
-      origin: "derived" as const, review_status: "pending" as const, details: [],
-      issues: [{ code: "derived-interpretation-requires-review",
-        severity: "review_required" as const }] },
+      origin: "explicit" as const, review_status: "pending" as const, details: [],
+      issues: [] },
   ];
   return { registry, inventory, coverage, findings, records };
 }
@@ -114,6 +122,22 @@ describe("ATLAS-HARD-009 ProposedProjectModel", () => {
       summary: { requirements: 2, unknown_items: 1, derived_items: 1 },
     });
     expect(Object.isFrozen(model.records[0])).toBe(true);
+    const eligibility = calculateBulkApprovalEligibility({
+      model, candidate_inventory: data.inventory,
+      policy: createBulkApprovalPolicy("1.0.0", 0.75),
+    });
+    expect(eligibility.summary).toEqual({
+      total_items: 2, eligible_items: 1, blocked_items: 1,
+    });
+    expect(eligibility.items.find(({ record_id }) =>
+      record_id === "project.record.unknown")?.blockers)
+      .toContain("unknown-semantic-kind");
+    expect(() => assertBulkApprovalSelection(
+      eligibility, ["project.record.temperature"],
+    )).not.toThrow();
+    expect(() => assertBulkApprovalSelection(
+      eligibility, ["project.record.unknown"],
+    )).toThrow("Bulk approval blocked");
     const directory = await mkdtemp(join(tmpdir(), "atlas-proposal-"));
     const path = join(directory, "proposed-project-model.json");
     await publishProposedProjectModel(path, model);
@@ -136,8 +160,8 @@ describe("ATLAS-HARD-009 ProposedProjectModel", () => {
     })).toThrow("disposition every record");
     expect(() => createProposedProjectModel({
       ...common,
-      records: [{ ...data.records[1]!, issues: [] }],
-      compatibility_projections: [{ record_id: data.records[1]!.id,
+      records: [{ ...data.records[0]!, issues: [] }],
+      compatibility_projections: [{ record_id: data.records[0]!.id,
         classification: "projection_gap", reason: "No legacy representation" }],
     })).toThrow("Derived record");
   });

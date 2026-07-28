@@ -80,6 +80,35 @@ export const ProposedProjectModelSchema = z.object({
   content_hash: Hash,
 }).strict();
 
+export const BulkApprovalPolicySchema = z.object({
+  version: Text,
+  confidence_threshold: z.number().min(0).max(1),
+  content_hash: Hash,
+}).strict();
+
+export const BulkApprovalEligibilitySchema = z.object({
+  proposal_hash: Hash,
+  policy_version: Text,
+  policy_hash: Hash,
+  items: z.array(z.object({
+    record_id: Id,
+    eligible: z.boolean(),
+    blockers: z.array(Id),
+  }).strict()),
+  workflows: z.array(z.object({
+    workflow_id: Id,
+    eligible: z.boolean(),
+    eligible_record_ids: z.array(Id),
+    blocked_record_ids: z.array(Id),
+  }).strict()),
+  summary: z.object({
+    total_items: z.number().int().nonnegative(),
+    eligible_items: z.number().int().nonnegative(),
+    blocked_items: z.number().int().nonnegative(),
+  }).strict(),
+  content_hash: Hash,
+}).strict();
+
 export function createProposedProjectModel(input: {
   readonly project_id: string;
   readonly proposal_revision: number;
@@ -190,6 +219,94 @@ export async function publishProposedProjectModel(
     await link(staging, filePath);
   } finally {
     await unlink(staging).catch(() => undefined);
+  }
+}
+
+export function calculateBulkApprovalEligibility(input: {
+  readonly model: z.input<typeof ProposedProjectModelSchema>;
+  readonly candidate_inventory: z.input<typeof AtlasCandidateInventorySchema>;
+  readonly policy: z.input<typeof BulkApprovalPolicySchema>;
+}): z.infer<typeof BulkApprovalEligibilitySchema> {
+  const model = ProposedProjectModelSchema.parse(input.model);
+  const inventory = AtlasCandidateInventorySchema.parse(input.candidate_inventory);
+  const policy = BulkApprovalPolicySchema.parse(input.policy);
+  if (inventory.content_hash !== model.candidate_inventory_hash) {
+    throw new Error("Bulk eligibility candidate inventory mismatch");
+  }
+  const candidates = new Map(inventory.candidates.map((candidate) =>
+    [candidate.candidate_id, candidate]));
+  const items = model.records.map((record) => {
+    const blockers = new Set<string>();
+    const linked = record.candidate_ids.map((id) => candidates.get(id)!);
+    if (record.source_unit_ids.length === 0) blockers.add("source-missing");
+    if (record.semantic_kind_id === "ces.kind.unknown") blockers.add("unknown-semantic-kind");
+    if (record.classification_status === "classification_required") {
+      blockers.add("classification-required");
+    }
+    if (record.origin === "derived") blockers.add("derived-interpretation-requires-review");
+    if (linked.some(({ confidence }) => confidence < policy.confidence_threshold)) {
+      blockers.add("low-confidence");
+    }
+    for (const issue of record.issues) {
+      if (issue.severity !== "warning") blockers.add(issue.code);
+    }
+    return { record_id: record.id, eligible: blockers.size === 0,
+      blockers: [...blockers].sort(compare) };
+  }).sort((a, b) => compare(a.record_id, b.record_id));
+  const byRecord = new Map(items.map((item) => [item.record_id, item]));
+  const workflows = model.workflow_nodes.map((workflow) => {
+    const contained = workflow.semantic_record_ids.map((id) => byRecord.get(id)!);
+    return {
+      workflow_id: workflow.id,
+      eligible: contained.length > 0 && contained.every(({ eligible }) => eligible),
+      eligible_record_ids: contained.filter(({ eligible }) => eligible)
+        .map(({ record_id }) => record_id).sort(compare),
+      blocked_record_ids: contained.filter(({ eligible }) => !eligible)
+        .map(({ record_id }) => record_id).sort(compare),
+    };
+  }).sort((a, b) => compare(a.workflow_id, b.workflow_id));
+  const core = {
+    proposal_hash: model.content_hash,
+    policy_version: policy.version,
+    policy_hash: policy.content_hash,
+    items, workflows,
+    summary: {
+      total_items: items.length,
+      eligible_items: items.filter(({ eligible }) => eligible).length,
+      blocked_items: items.filter(({ eligible }) => !eligible).length,
+    },
+  };
+  return freeze(BulkApprovalEligibilitySchema.parse({
+    ...core, content_hash: hash(core),
+  }));
+}
+
+export function createBulkApprovalPolicy(
+  version: string,
+  confidenceThreshold: number,
+): z.infer<typeof BulkApprovalPolicySchema> {
+  const core = {
+    version: Text.parse(version),
+    confidence_threshold: z.number().min(0).max(1).parse(confidenceThreshold),
+  };
+  return freeze(BulkApprovalPolicySchema.parse({
+    ...core, content_hash: hash(core),
+  }));
+}
+
+export function assertBulkApprovalSelection(
+  eligibilityValue: z.input<typeof BulkApprovalEligibilitySchema>,
+  selectedRecordIds: readonly string[],
+): void {
+  const eligibility = BulkApprovalEligibilitySchema.parse(eligibilityValue);
+  const byRecord = new Map(eligibility.items.map((item) => [item.record_id, item]));
+  for (const idValue of selectedRecordIds) {
+    const id = Id.parse(idValue);
+    const item = byRecord.get(id);
+    if (!item) throw new Error(`Unknown bulk approval record: ${id}`);
+    if (!item.eligible) {
+      throw new Error(`Bulk approval blocked for ${id}: ${item.blockers.join(",")}`);
+    }
   }
 }
 

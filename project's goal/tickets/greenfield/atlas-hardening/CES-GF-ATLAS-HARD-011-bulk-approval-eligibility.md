@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-011 — Bulk Approval Eligibility
 
 **Stage:** Atlas hardening approval
-**Status:** Planned
+**Status:** Implemented
 
 ## Objective
 
@@ -32,20 +32,30 @@ approval summaries.
 
 ## Acceptance criteria
 
-- [ ] Eligibility is backend-calculated and deterministic.
-- [ ] Every ineligible item has at least one machine-readable blocker.
-- [ ] Ambiguous, conflicting, unsupported, source-missing, low-confidence, and
+- [x] Eligibility is backend-calculated and deterministic.
+- [x] Every ineligible item has at least one machine-readable blocker.
+- [x] Ambiguous, conflicting, unsupported, source-missing, low-confidence, and
       correction-requested items cannot be bulk approved.
-- [ ] Unknown, unclassified, and unconfirmed derived records cannot be bulk
+- [x] Unknown, unclassified, and unconfirmed derived records cannot be bulk
       approved.
-- [ ] Eligibility policy and threshold revisions are pinned.
-- [ ] Clients cannot override backend ineligibility.
-- [ ] Exceptions remain individually reviewable.
+- [x] Eligibility policy and threshold revisions are pinned.
+- [x] Clients cannot override backend ineligibility.
+- [x] Exceptions remain individually reviewable.
 
 ## Tests and evidence
 
 One fixture per blocker, multiple blockers, threshold boundary, stale policy,
 workflow aggregation, all-eligible selection, and attempted client override.
+
+## Completion evidence
+
+- Added hashed policy, item/workflow eligibility, summary, and selection-guard
+  contracts to the proposal package.
+- Eligibility derives from canonical evidence, candidate confidence, kind,
+  classification, origin, and machine-readable issues.
+- Unknown, classification-required, derived, and review-risk records are
+  blocked while exact eligible records remain selectable.
+- Proposal and architecture tests passed; package typecheck passed.
 
 ## Out of scope
 
