@@ -61,6 +61,47 @@ export const PipelineCoverageReportSchema = z.object({
   content_hash: Hash,
 }).strict();
 
+export const CompletenessFindingInputSchema = z.object({
+  finding_type: z.enum([
+    "uncovered_normative_source", "distorted_candidate", "unsupported_candidate",
+    "conflict", "suspiciously_sparse_category", "empty_workflow_area",
+    "false_non_normative", "over_combination", "duplicate",
+  ]),
+  pipeline_stage: PipelineStageSchema,
+  source_unit_ids: z.array(Id).min(1),
+  candidate_ids: z.array(Id),
+  record_ids: z.array(Id),
+  semantic_kind_ids: z.array(Id),
+  severity: z.enum(["material", "blocking", "warning"]),
+  statement: Text,
+  recommended_action: z.enum(["targeted_retry", "human_review", "inspect_stage"]),
+  resolution_history: z.array(z.object({
+    sequence: z.number().int().positive(),
+    actor_type: z.enum(["human", "deterministic_pipeline"]),
+    actor_id: Text,
+    action: z.enum(["resolved", "accepted_risk", "retry_completed", "reopened"]),
+    note: Text,
+  }).strict()).default([]),
+}).strict();
+
+export const CompletenessFindingSchema = CompletenessFindingInputSchema.extend({
+  id: Id,
+  status: z.enum(["open", "resolved"]),
+}).strict();
+
+export const CompletenessCriticReportSchema = z.object({
+  schema_version: z.literal(ATLAS_PIPELINE_COVERAGE_VERSION),
+  source_revision_id: Id,
+  pipeline_coverage_hash: Hash,
+  findings: z.array(CompletenessFindingSchema),
+  counts: z.object({
+    total: z.number().int().nonnegative(),
+    open: z.number().int().nonnegative(),
+    blocking_open: z.number().int().nonnegative(),
+  }).strict(),
+  content_hash: Hash,
+}).strict();
+
 export const CoverageDispositionSchema = z.enum([
   "covered", "context_only", "duplicate", "uncertain", "conflicting",
   "excluded_with_reason", "uncovered",
@@ -297,6 +338,65 @@ export function assertPipelineCoverageComplete(
   if (report.counts.unmapped_normative > 0) {
     throw new Error("Atlas pipeline coverage gate blocked: unmapped normative source");
   }
+}
+
+export function createCompletenessCriticReport(input: {
+  readonly coverage: z.input<typeof PipelineCoverageReportSchema>;
+  readonly findings: readonly z.input<typeof CompletenessFindingInputSchema>[];
+}): z.infer<typeof CompletenessCriticReportSchema> {
+  const coverage = PipelineCoverageReportSchema.parse(input.coverage);
+  const sourceIds = new Set(coverage.source_coverage.map(({ source_unit_id }) => source_unit_id));
+  const candidateIds = new Set(coverage.source_coverage.flatMap(({ candidate_ids }) => candidate_ids));
+  const recordIds = new Set(coverage.record_coverage.map(({ record_id }) => record_id));
+  const findings = input.findings.map((value) => {
+    const parsed = CompletenessFindingInputSchema.parse(value);
+    assertMembers(parsed.source_unit_ids, sourceIds, "finding source unit");
+    assertMembers(parsed.candidate_ids, candidateIds, "finding candidate");
+    assertMembers(parsed.record_ids, recordIds, "finding record");
+    const history = [...parsed.resolution_history].sort((a, b) => a.sequence - b.sequence);
+    history.forEach((entry, index) => {
+      if (entry.sequence !== index + 1) throw new Error("Finding resolution history must be contiguous");
+    });
+    const identityCore = {
+      finding_type: parsed.finding_type,
+      pipeline_stage: parsed.pipeline_stage,
+      source_unit_ids: [...parsed.source_unit_ids].sort(compare),
+      candidate_ids: [...parsed.candidate_ids].sort(compare),
+      record_ids: [...parsed.record_ids].sort(compare),
+      semantic_kind_ids: [...parsed.semantic_kind_ids].sort(compare),
+      statement: parsed.statement,
+    };
+    const status = history.at(-1)?.action === "resolved"
+      || history.at(-1)?.action === "accepted_risk"
+      || history.at(-1)?.action === "retry_completed"
+      ? "resolved" as const : "open" as const;
+    return CompletenessFindingSchema.parse({
+      ...parsed,
+      source_unit_ids: identityCore.source_unit_ids,
+      candidate_ids: identityCore.candidate_ids,
+      record_ids: identityCore.record_ids,
+      semantic_kind_ids: identityCore.semantic_kind_ids,
+      resolution_history: history,
+      id: `atlas.finding.${parsed.finding_type}.${digest(JSON.stringify(canonical(identityCore))).slice(0, 12)}`,
+      status,
+    });
+  }).sort((a, b) => compare(a.id, b.id));
+  assertUnique(findings.map(({ id }) => id), "completeness finding");
+  const core = {
+    schema_version: ATLAS_PIPELINE_COVERAGE_VERSION,
+    source_revision_id: coverage.source_revision_id,
+    pipeline_coverage_hash: coverage.content_hash,
+    findings,
+    counts: {
+      total: findings.length,
+      open: findings.filter(({ status }) => status === "open").length,
+      blocking_open: findings.filter(({ status, severity }) =>
+        status === "open" && severity === "blocking").length,
+    },
+  };
+  return deepFreeze(CompletenessCriticReportSchema.parse({
+    ...core, content_hash: hashJson(core),
+  }));
 }
 
 export function createTargetedRetry(input: {

@@ -4,6 +4,7 @@ import {
   assertPublishableCoverage,
   calculateCoverage,
   calculatePipelineCoverage,
+  createCompletenessCriticReport,
   createTargetedRetry,
 } from "./index.js";
 
@@ -23,6 +24,60 @@ const base = {
 };
 
 describe("DAPE-005 Atlas coverage gate", () => {
+  it("creates deterministic source-validated completeness findings", () => {
+    const coverage = calculatePipelineCoverage({
+      source_revision_id: base.source_revision_id,
+      semantic_kind_registry_id: "ces.semantic-kinds.0123456789ab",
+      source_unit_ids: units,
+      candidate_sources: { "project.candidate.one": [units[0]!] },
+      normalized_record_ids: ["project.record.one"],
+      workflow_node_ids: [],
+      graph_node_ids: [],
+      source_coverage: [
+        { source_unit_id: units[0]!, normative: true, current_stage: "normalized",
+          candidate_ids: ["project.candidate.one"], normalized_record_ids: ["project.record.one"],
+          workflow_node_ids: [], graph_node_ids: [],
+          stage_history: [{ stage: "normalized", status: "included" }] },
+        { source_unit_id: units[1]!, normative: true, current_stage: "unmapped",
+          candidate_ids: [], normalized_record_ids: [], workflow_node_ids: [], graph_node_ids: [],
+          stage_history: [{ stage: "candidate", status: "lost", reason: "No candidate" }] },
+      ],
+      record_coverage: [{ record_id: "project.record.one",
+        semantic_kind_id: "ces.kind.unknown", candidate_ids: ["project.candidate.one"],
+        source_unit_ids: [units[0]!] }],
+    });
+    const finding = {
+      finding_type: "uncovered_normative_source" as const,
+      pipeline_stage: "candidate" as const,
+      source_unit_ids: [units[1]!],
+      candidate_ids: [],
+      record_ids: [],
+      semantic_kind_ids: ["ces.kind.unknown"],
+      severity: "blocking" as const,
+      statement: "Normative source produced no candidate.",
+      recommended_action: "targeted_retry" as const,
+      resolution_history: [],
+    };
+    const first = createCompletenessCriticReport({ coverage, findings: [finding] });
+    const second = createCompletenessCriticReport({ coverage, findings: [finding] });
+    expect(first).toEqual(second);
+    expect(first.findings[0]).toMatchObject({ status: "open", pipeline_stage: "candidate" });
+    expect(first.counts.blocking_open).toBe(1);
+    const resolved = createCompletenessCriticReport({
+      coverage,
+      findings: [{ ...finding, resolution_history: [{
+        sequence: 1, actor_type: "human" as const, actor_id: "reviewer-1",
+        action: "resolved" as const, note: "Created missing record.",
+      }] }],
+    });
+    expect(resolved.findings[0]?.status).toBe("resolved");
+    expect(resolved.findings).toHaveLength(1);
+    expect(() => createCompletenessCriticReport({
+      coverage,
+      findings: [{ ...finding, source_unit_ids: ["invented.unit"] }],
+    })).toThrow("Unknown finding source unit");
+  });
+
   it("tracks deterministic stage lineage for built-in, unknown, and organization kinds", () => {
     const recordIds = ["project.record.unknown", "project.record.temperature"];
     const input = {

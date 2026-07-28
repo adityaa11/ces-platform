@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-006 — Completeness Critic
 
 **Stage:** Atlas hardening quality
-**Status:** Planned
+**Status:** Implemented
 
 ## Objective
 
@@ -32,16 +32,16 @@ summary suitable for the proposal and approval UI.
 
 ## Acceptance criteria
 
-- [ ] Findings identify affected source units and pipeline stage.
-- [ ] Uncovered, distorted, unsupported, conflicting, and suspiciously sparse
+- [x] Findings identify affected source units and pipeline stage.
+- [x] Uncovered, distorted, unsupported, conflicting, and suspiciously sparse
       extraction states are distinguishable.
-- [ ] The critic cannot approve, suppress, rewrite, or publish records.
-- [ ] Invalid or unsupported findings are rejected explicitly.
-- [ ] Repeated equivalent input produces deterministic finding identities.
-- [ ] Blocking findings remain visible until a recorded resolution exists.
-- [ ] Unrelated-domain documents and novel workflow shapes are not marked
+- [x] The critic cannot approve, suppress, rewrite, or publish records.
+- [x] Invalid or unsupported findings are rejected explicitly.
+- [x] Repeated equivalent input produces deterministic finding identities.
+- [x] Blocking findings remain visible until a recorded resolution exists.
+- [x] Unrelated-domain documents and novel workflow shapes are not marked
       incomplete merely because they differ from Safara.
-- [ ] Qualification-oracle expectations are unavailable to production critic
+- [x] Qualification-oracle expectations are unavailable to production critic
       execution.
 
 ## Tests and evidence
@@ -49,6 +49,17 @@ summary suitable for the proposal and approval UI.
 Missing Safara rule, unrelated-domain workflow, novel semantic kind, false
 context, distorted candidate, unsupported record, empty workflow, sparse
 category, duplicate/conflict, and critic overreach fixtures.
+
+## Completion evidence
+
+- Added structured, stage-specific completeness finding and report contracts.
+- Finding IDs derive deterministically from type, stage, evidence, semantic
+  kinds, and statement.
+- Source, candidate, and record references validate against pipeline coverage.
+- Resolution history remains in place and permits only human or deterministic
+  pipeline actors; no approval or suppression action exists.
+- Focused coverage and architecture tests: 13 passed.
+- Package TypeScript build passed.
 
 ## Out of scope
 
