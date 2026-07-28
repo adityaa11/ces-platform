@@ -2,9 +2,125 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 
 export const SEMANTIC_RECORD_SCHEMA_VERSION = "1.0.0" as const;
+export const SEMANTIC_KIND_REGISTRY_SCHEMA_VERSION = "1.0.0" as const;
 const Id = z.string().regex(/^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u);
 const Hash = z.string().regex(/^sha256:[0-9a-f]{64}$/u);
 const Text = z.string().trim().min(1);
+const Semver = z.string().regex(/^\d+\.\d+\.\d+$/u);
+
+export const SemanticKindDefinitionSchema = z.object({
+  id: Id,
+  schema_version: Semver,
+  registered_by: z.enum(["ces", "organization"]),
+  description: Text,
+  representation_kind: z.enum([
+    "functional_requirement", "business_rule", "permission", "validation",
+    "calculation", "state_model", "workflow", "data", "report",
+    "acceptance_criterion", "deliverable", "nonfunctional_requirement",
+    "extensible_record", "unknown",
+  ]),
+  representation_status: z.enum(["lossless", "structured_extension", "classification_required"]),
+}).strict();
+
+export const SemanticKindRegistrySchema = z.object({
+  schema_version: z.literal(SEMANTIC_KIND_REGISTRY_SCHEMA_VERSION),
+  id: Id,
+  organization_id: Id.optional(),
+  definitions: z.array(SemanticKindDefinitionSchema).min(1),
+  content_hash: Hash,
+}).strict();
+
+export const SemanticKindResolutionSchema = z.object({
+  registry_id: Id,
+  requested_kind: Text,
+  semantic_kind_id: Id,
+  classification_status: z.enum(["classified", "classification_required"]),
+}).strict();
+
+const BUILT_IN_KIND_INPUTS = [
+  ["capability", "A business capability.", "extensible_record", "structured_extension"],
+  ["workflow", "A workflow or workflow step.", "workflow", "lossless"],
+  ["business_rule", "An explicit business rule.", "business_rule", "lossless"],
+  ["validation_constraint", "A validation constraint.", "validation", "lossless"],
+  ["calculation", "A calculation or formula.", "calculation", "lossless"],
+  ["role_permission", "A role permission or restriction.", "permission", "lossless"],
+  ["state_definition", "A state definition.", "state_model", "lossless"],
+  ["state_transition", "A state transition.", "state_model", "lossless"],
+  ["lifecycle_rule", "A lifecycle or retention rule.", "extensible_record", "structured_extension"],
+  ["uniqueness_constraint", "A uniqueness constraint.", "validation", "lossless"],
+  ["reporting_requirement", "A reporting or export requirement.", "report", "lossless"],
+  ["acceptance_criterion", "An acceptance criterion.", "acceptance_criterion", "lossless"],
+  ["acceptance_scenario", "An acceptance scenario.", "acceptance_criterion", "lossless"],
+  ["terminology", "Source-defined terminology.", "extensible_record", "structured_extension"],
+  ["operational_procedure", "An operational procedure.", "workflow", "lossless"],
+  ["security_sensitive_restriction", "A security-sensitive restriction.",
+    "nonfunctional_requirement", "lossless"],
+  ["unknown", "Normative meaning requiring classification.", "unknown",
+    "classification_required"],
+] as const;
+
+export const BUILT_IN_SEMANTIC_KIND_DEFINITIONS = Object.freeze(
+  BUILT_IN_KIND_INPUTS.map(([id, description, representation_kind, representation_status]) =>
+    SemanticKindDefinitionSchema.parse({
+      id: `ces.kind.${id.replaceAll("_", "-")}`,
+      schema_version: "1.0.0",
+      registered_by: "ces",
+      description,
+      representation_kind,
+      representation_status,
+    })),
+);
+
+export type SemanticKindDefinition = z.input<typeof SemanticKindDefinitionSchema>;
+export type SemanticKindRegistry = z.infer<typeof SemanticKindRegistrySchema>;
+
+export function createSemanticKindRegistry(input: {
+  readonly organization_id?: string;
+  readonly organization_definitions?: readonly SemanticKindDefinition[];
+} = {}): SemanticKindRegistry {
+  const organizationId = input.organization_id
+    ? Id.parse(input.organization_id)
+    : undefined;
+  const extensions = (input.organization_definitions ?? [])
+    .map((definition) => SemanticKindDefinitionSchema.parse(definition));
+  if (extensions.length > 0 && !organizationId) {
+    throw new Error("Organization semantic kinds require organization_id");
+  }
+  if (extensions.some(({ registered_by }) => registered_by !== "organization")) {
+    throw new Error("Organization extensions must be registered_by organization");
+  }
+  const definitions = [...BUILT_IN_SEMANTIC_KIND_DEFINITIONS, ...extensions]
+    .sort((left, right) => compare(left.id, right.id));
+  assertUnique(definitions.map(({ id }) => id), "semantic kind");
+  const core = {
+    schema_version: SEMANTIC_KIND_REGISTRY_SCHEMA_VERSION,
+    ...(organizationId ? { organization_id: organizationId } : {}),
+    definitions,
+  };
+  const contentHash = hashJson(core);
+  return deepFreeze(SemanticKindRegistrySchema.parse({
+    ...core,
+    id: `${organizationId ?? "ces"}.semantic-kinds.${contentHash.slice(7, 19)}`,
+    content_hash: contentHash,
+  }));
+}
+
+export function resolveSemanticKind(
+  registryInput: SemanticKindRegistry,
+  requestedKind: string,
+): z.infer<typeof SemanticKindResolutionSchema> {
+  const registry = SemanticKindRegistrySchema.parse(registryInput);
+  const requested = Text.parse(requestedKind);
+  const definition = registry.definitions.find(({ id }) => id === requested);
+  const unknown = registry.definitions.find(({ id }) => id === "ces.kind.unknown");
+  if (!unknown) throw new Error("Semantic kind registry requires unknown fallback");
+  return SemanticKindResolutionSchema.parse({
+    registry_id: registry.id,
+    requested_kind: requested,
+    semantic_kind_id: definition?.id ?? unknown.id,
+    classification_status: definition ? "classified" : "classification_required",
+  });
+}
 
 const Common = {
   schema_version: z.literal(SEMANTIC_RECORD_SCHEMA_VERSION),

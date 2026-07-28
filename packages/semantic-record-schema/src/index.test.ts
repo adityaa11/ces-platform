@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  BUILT_IN_SEMANTIC_KIND_DEFINITIONS,
   classifyLegacyProjection,
+  createSemanticKindRegistry,
   createSemanticCollection,
+  resolveSemanticKind,
   SemanticRecordSchema,
 } from "./index.js";
 
@@ -26,6 +29,49 @@ const rule = {
 };
 
 describe("DAPE-003 semantic records", () => {
+  it("registers all hardening categories with deterministic unknown fallback", () => {
+    const registry = createSemanticKindRegistry();
+    expect(BUILT_IN_SEMANTIC_KIND_DEFINITIONS).toHaveLength(17);
+    expect(registry.definitions.map(({ id }) => id)).toContain("ces.kind.capability");
+    expect(resolveSemanticKind(registry, "ces.kind.validation-constraint"))
+      .toMatchObject({ classification_status: "classified" });
+    expect(resolveSemanticKind(registry, "provider.kind.temperature-excursion"))
+      .toMatchObject({
+        requested_kind: "provider.kind.temperature-excursion",
+        semantic_kind_id: "ces.kind.unknown",
+        classification_status: "classification_required",
+      });
+  });
+
+  it("pins organization-specific kinds without changing built-ins", () => {
+    const registry = createSemanticKindRegistry({
+      organization_id: "cold-chain-co",
+      organization_definitions: [{
+        id: "cold-chain.kind.temperature-release",
+        schema_version: "1.0.0",
+        registered_by: "organization",
+        description: "Temperature-history release restriction.",
+        representation_kind: "extensible_record",
+        representation_status: "structured_extension",
+      }],
+    });
+    expect(resolveSemanticKind(registry, "cold-chain.kind.temperature-release"))
+      .toMatchObject({
+        semantic_kind_id: "cold-chain.kind.temperature-release",
+        classification_status: "classified",
+      });
+    expect(() => createSemanticKindRegistry({
+      organization_definitions: [{
+        id: "unowned.kind.example",
+        schema_version: "1.0.0",
+        registered_by: "organization",
+        description: "Invalid unowned extension.",
+        representation_kind: "extensible_record",
+        representation_status: "structured_extension",
+      }],
+    })).toThrow("organization_id");
+  });
+
   it.each([
     ["functional_requirement", { action: "register", outcomes: ["Registration saved"] }],
     ["business_rule", { constraint: "Quota cannot be exceeded" }],

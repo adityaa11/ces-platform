@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-002 — Requirement Taxonomy
 
 **Stage:** Atlas hardening foundation
-**Status:** Planned
+**Status:** Implemented
 
 ## Objective
 
@@ -36,18 +36,18 @@ coverage matrix referencing the existing DAPE packages.
 
 ## Acceptance criteria
 
-- [ ] Every hardening category has a canonical kind or documented lossless
+- [x] Every hardening category has a canonical kind or documented lossless
       representation.
-- [ ] Validation, calculation, permission, lifecycle, reporting, and security
+- [x] Validation, calculation, permission, lifecycle, reporting, and security
       records remain distinguishable.
-- [ ] Unknown normative content is reviewable and source-grounded.
-- [ ] Organization-specific kinds can be registered through a versioned
+- [x] Unknown normative content is reviewable and source-grounded.
+- [x] Organization-specific kinds can be registered through a versioned
       contract without changing unrelated extractors.
-- [ ] An unregistered kind remains `unknown` with
+- [x] An unregistered kind remains `unknown` with
       `classification_required`; it is never coerced into a built-in kind.
-- [ ] Free-form unregistered provider kind strings cannot bypass the registry.
-- [ ] Category relationships and compatibility projections are deterministic.
-- [ ] Existing DAPE and legacy Atlas consumers remain compatible or receive an
+- [x] Free-form unregistered provider kind strings cannot bypass the registry.
+- [x] Category relationships and compatibility projections are deterministic.
+- [x] Existing DAPE and legacy Atlas consumers remain compatible or receive an
       explicit migration path.
 
 ## Tests and evidence
@@ -56,6 +56,15 @@ Positive fixtures for every built-in category and a registered organization
 kind; negative fixtures for generic-rule collapse, forced classification,
 unknown-category loss, unpinned/unregistered kinds, invalid relationships, and
 lossy projections.
+
+## Completion evidence
+
+- Added a versioned, hashed semantic-kind registry alongside the unchanged
+  legacy semantic-record union.
+- Registered all 16 hardening categories plus the mandatory `unknown` fallback.
+- Added pinned organization extensions and exact registry resolution.
+- Focused semantic-schema and architecture tests: 23 passed.
+- Package TypeScript build passed.
 
 ## Out of scope
 
