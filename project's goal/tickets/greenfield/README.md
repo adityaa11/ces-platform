@@ -52,6 +52,17 @@ Architect implementation is blocked until `CES-GF-DAPE-008` is accepted.
 Deterministic DAPE source modeling depends on the accepted Atlas ingestion
 baseline, while agent orchestration begins only at DAPE-004.
 
+## Atlas hardening gate
+
+The [Atlas hardening ticket plan](atlas-hardening/README.md) extends the
+completed DAPE-000 through DAPE-008R foundation with the production
+pre-approval proposal, graph-review, immutable decision, publication, and
+Safara qualification lifecycle. The hardening tickets reuse canonical DAPE
+contracts and do not create a parallel extraction or identity system.
+
+Production approval UI integration is blocked until
+`CES-GF-ATLAS-HARD-015` is accepted.
+
 ## CES Architect
 
 | Order | Ticket | Outcome | Depends on |

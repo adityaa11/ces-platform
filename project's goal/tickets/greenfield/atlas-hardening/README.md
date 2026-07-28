@@ -1,0 +1,50 @@
+# CES Atlas Hardening Ticket Plan
+
+**Status:** Planned
+**Authority:** [`CES_ATLAS_HARDENING_PLAN.md`](../../../CES_ATLAS_HARDENING_PLAN.md)
+**Foundation:** DAPE-000 through DAPE-008R are completed prerequisites.
+
+This program closes the gap between the completed DAPE extraction foundation
+and a production-safe, pre-approval Atlas review and publication lifecycle. It
+must extend the canonical DAPE contracts and packages rather than create a
+parallel semantic model, source identity system, or approval path.
+
+## Delivery order
+
+| Order | Ticket | Outcome | Depends on |
+|---:|---|---|---|
+| 1 | [ATLAS-HARD-001](CES-GF-ATLAS-HARD-001-canonical-source-units.md) | Qualify canonical source units for hardening | DAPE-001 |
+| 2 | [ATLAS-HARD-002](CES-GF-ATLAS-HARD-002-requirement-taxonomy.md) | Qualify the complete requirement taxonomy | 001, DAPE-002/003 |
+| 3 | [ATLAS-HARD-003](CES-GF-ATLAS-HARD-003-broad-candidate-extraction.md) | High-recall discovery before classification | 001–002, DAPE-004 |
+| 4 | [ATLAS-HARD-004](CES-GF-ATLAS-HARD-004-category-specific-extractors.md) | Bounded category extraction contracts | 003, DAPE-004 |
+| 5 | [ATLAS-HARD-005](CES-GF-ATLAS-HARD-005-source-coverage-map.md) | End-to-end source-unit coverage | 003–004, DAPE-005 |
+| 6 | [ATLAS-HARD-006](CES-GF-ATLAS-HARD-006-completeness-critic.md) | Evidence-based completeness findings | 005, DAPE-005 |
+| 7 | [ATLAS-HARD-007](CES-GF-ATLAS-HARD-007-targeted-retry.md) | Finding-scoped bounded retry | 006, DAPE-005 |
+| 8 | [ATLAS-HARD-008](CES-GF-ATLAS-HARD-008-safara-oracle.md) | Hardening qualification oracle | 001–007, DAPE-000/008R |
+| 9 | [ATLAS-HARD-009](CES-GF-ATLAS-HARD-009-proposed-project-model.md) | Immutable non-authoritative proposal | 005–008 |
+| 10 | [ATLAS-HARD-010](CES-GF-ATLAS-HARD-010-proposed-graph-projection.md) | Workflow graph before approval | 009, DAPE-007 |
+| 11 | [ATLAS-HARD-011](CES-GF-ATLAS-HARD-011-bulk-approval-eligibility.md) | Backend-owned approval eligibility | 009–010 |
+| 12 | [ATLAS-HARD-012](CES-GF-ATLAS-HARD-012-approval-decisions.md) | Immutable human decision ledger | 009–011, DAPE-006 |
+| 13 | [ATLAS-HARD-013](CES-GF-ATLAS-HARD-013-approved-model-materialization.md) | Authoritative model publication | 012, DAPE-007 |
+| 14 | [ATLAS-HARD-014](CES-GF-ATLAS-HARD-014-deterministic-artifacts.md) | Deterministic artifact suite | 009–013, DAPE-008 |
+| 15 | [ATLAS-HARD-015](CES-GF-ATLAS-HARD-015-safara-qualification-gate.md) | Production integration gate | 001–014 |
+
+## Program rules
+
+- DAPE source-unit IDs, semantic IDs, revision tuples, and canonical schemas
+  remain authoritative.
+- A proposal is immutable, non-authoritative, and never enables downstream
+  execution.
+- Agents may propose, classify, criticize, and retry; they may not approve,
+  suppress findings, publish registries, or manufacture source evidence.
+- Approval is represented by immutable human decisions and materialization,
+  never by mutation of the proposal.
+- The production approval UI remains blocked until ATLAS-HARD-015 passes.
+- Every ticket must preserve existing DAPE, Atlas, CLI, and greenfield
+  regressions.
+
+## Final artifact boundary
+
+Before approval, the UI consumes the proposed project model, proposed workflow
+graph, source documents, coverage, and findings. After approval, downstream CES
+modules consume only the authoritative approved project model.
