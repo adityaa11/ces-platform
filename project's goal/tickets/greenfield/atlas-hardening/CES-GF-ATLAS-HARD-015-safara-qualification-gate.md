@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-015 — Safara Qualification Gate
 
 **Stage:** Atlas hardening production gate
-**Status:** Planned
+**Status:** Implementation complete; qualification evidence pending
 
 ## Objective
 
@@ -49,14 +49,14 @@ block production approval UI integration until every mandatory gate passes.
 ## Acceptance criteria
 
 - [ ] Every mandatory gate passes with stored evidence.
-- [ ] Failures identify the responsible pipeline stage and remain non-success.
+- [x] Failures identify the responsible pipeline stage and remain non-success.
 - [ ] Proposed and approved artifact suites validate end to end.
 - [ ] Human review is recorded; Atlas does not self-certify.
 - [ ] Existing DAPE, Atlas, CLI, and greenfield regressions remain green.
-- [ ] Production approval UI integration remains blocked until acceptance.
-- [ ] Qualification reports contain no claim that Safara alone proves
+- [x] Production approval UI integration remains blocked until acceptance.
+- [x] Qualification reports contain no claim that Safara alone proves
       domain-agnostic extraction.
-- [ ] A separately tracked multi-domain gate and minimum cross-domain acceptance
+- [x] A separately tracked multi-domain gate and minimum cross-domain acceptance
       criteria are documented before closing the program.
 
 ## Outputs and evidence
@@ -71,3 +71,24 @@ The report must distinguish “Safara/lifecycle qualified” from
 Production approval UI implementation. Execution of the multi-domain suite
 follows Safara acceptance, but defining its gate and preventing premature
 generality claims are included here.
+
+## Implementation evidence
+
+- `packages/atlas-quality-evidence` contains a strict, deterministic Safara
+  qualification report contract and mandatory-gate calculator.
+- Failed gates remain failed and identify parsing, extraction, classification,
+  normalization, deduplication, assignment, projection, review, or publication.
+- Reports require a human reviewer, fixture and real-provider evidence hashes,
+  artifact hashes, the Safara-only claim scope, and an explicit false general
+  domain-coverage claim.
+- `MULTI_DOMAIN_QUALIFICATION_PLAN.md` defines the later cross-domain gate.
+- Workspace typecheck and build pass. The Atlas qualification tests pass.
+- The full workspace test run passes 326 tests; two unrelated
+  `bootstrap-runner` process-timeout tests exceed 15 seconds on Windows.
+
+## Acceptance blocker
+
+The repository's `DAPE-008R-status.md` still records **Not run**, and no
+redacted real-provider qualification report or reviewer acceptance is stored.
+Therefore the mandatory evidence, end-to-end artifact, human-review, and full
+regression acceptance boxes above remain deliberately unchecked.

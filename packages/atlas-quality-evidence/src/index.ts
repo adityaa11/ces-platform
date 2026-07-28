@@ -87,6 +87,103 @@ export const AtlasQualityEvidenceSchema = z.object({
   content_hash: Hash,
 }).strict();
 
+export const SafaraHardeningGateInputSchema = z.object({
+  schema_version: z.literal(ATLAS_QUALITY_EVIDENCE_VERSION),
+  qualification_id: Id,
+  oracle_id: Id,
+  fixture_evidence_hash: Hash,
+  real_provider_evidence_hash: Hash,
+  reviewer: z.object({
+    kind: z.literal("human"),
+    identity: Text,
+    reviewed_at: z.string().datetime({ offset: true }),
+  }).strict(),
+  metrics: z.object({
+    primary_rules_total: z.literal(10),
+    primary_rules_after_retry: z.number().int().min(0).max(10),
+    workflow_areas_total: z.literal(10),
+    workflow_areas_represented: z.number().int().min(0).max(10),
+    broader_normative_recall_before_review: z.number().min(0).max(1),
+    final_reviewed_normative_coverage: z.number().min(0).max(1),
+    unsupported_approved_records: z.number().int().nonnegative(),
+    distorted_approved_records: z.number().int().nonnegative(),
+    approved_records_total: z.number().int().positive(),
+    approved_records_with_source: z.number().int().nonnegative(),
+    exact_text_available_total: z.number().int().nonnegative(),
+    exact_text_preserved: z.number().int().nonnegative(),
+    ambiguities_total: z.number().int().nonnegative(),
+    ambiguities_surfaced: z.number().int().nonnegative(),
+    conflicts_total: z.number().int().nonnegative(),
+    conflicts_surfaced: z.number().int().nonnegative(),
+  }).strict(),
+  lifecycle_checks: z.object({
+    deterministic_artifacts: z.boolean(),
+    proposed_graph_available: z.boolean(),
+    proposal_authoritative: z.boolean(),
+    preapproval_downstream_execution_allowed: z.boolean(),
+    proposed_artifacts_valid: z.boolean(),
+    approved_artifacts_valid: z.boolean(),
+  }).strict(),
+  artifact_hashes: z.record(Id, Hash),
+  claim_scope: z.literal("safara_fixture_and_atlas_lifecycle_only"),
+  general_domain_coverage_claimed: z.literal(false),
+}).strict();
+
+export const SafaraHardeningGateReportSchema = SafaraHardeningGateInputSchema.extend({
+  gates: z.array(z.object({
+    id: Id,
+    passed: z.boolean(),
+    failure_stage: z.enum([
+      "parsing", "extraction", "classification", "normalization",
+      "deduplication", "assignment", "projection", "review", "publication",
+    ]).optional(),
+  }).strict()),
+  decision: z.enum(["pass", "failed"]),
+  content_hash: Hash,
+}).strict();
+
+export function calculateSafaraHardeningGate(
+  inputValue: z.input<typeof SafaraHardeningGateInputSchema>,
+): z.infer<typeof SafaraHardeningGateReportSchema> {
+  assertRedactedEvidence(inputValue);
+  const input = SafaraHardeningGateInputSchema.parse(inputValue);
+  const metrics = input.metrics;
+  const checks = input.lifecycle_checks;
+  const gateValues: [string, boolean, z.infer<typeof SafaraHardeningGateReportSchema>["gates"][number]["failure_stage"]][] = [
+    ["primary-rules", metrics.primary_rules_after_retry === 10, "extraction"],
+    ["workflow-areas", metrics.workflow_areas_represented === 10, "assignment"],
+    ["pre-review-recall", metrics.broader_normative_recall_before_review >= 0.9, "extraction"],
+    ["final-coverage", metrics.final_reviewed_normative_coverage === 1, "review"],
+    ["approved-quality", metrics.unsupported_approved_records === 0
+      && metrics.distorted_approved_records === 0, "review"],
+    ["source-grounding", metrics.approved_records_with_source === metrics.approved_records_total,
+      "normalization"],
+    ["exact-text", metrics.exact_text_preserved === metrics.exact_text_available_total, "parsing"],
+    ["ambiguities", metrics.ambiguities_surfaced === metrics.ambiguities_total, "classification"],
+    ["conflicts", metrics.conflicts_surfaced === metrics.conflicts_total, "deduplication"],
+    ["determinism", checks.deterministic_artifacts, "publication"],
+    ["proposed-graph", checks.proposed_graph_available, "projection"],
+    ["proposal-authority", !checks.proposal_authoritative
+      && !checks.preapproval_downstream_execution_allowed, "publication"],
+    ["artifact-suites", checks.proposed_artifacts_valid
+      && checks.approved_artifacts_valid, "publication"],
+  ];
+  const gates = gateValues.map(([id, passed, failureStage]) => ({
+    id: `safara.gate.${id}`, passed,
+    ...(passed ? {} : { failure_stage: failureStage }),
+  })).sort((a, b) => compare(a.id, b.id));
+  const core = {
+    ...input,
+    artifact_hashes: Object.fromEntries(Object.entries(input.artifact_hashes)
+      .sort(([a], [b]) => compare(a, b))),
+    gates,
+    decision: gates.every(({ passed }) => passed) ? "pass" as const : "failed" as const,
+  };
+  return deepFreeze(SafaraHardeningGateReportSchema.parse({
+    ...core, content_hash: hashJson(core),
+  }));
+}
+
 export type AtlasQualityEvidenceInput = z.input<typeof AtlasQualityEvidenceInputSchema>;
 
 export function calculateAtlasQualityEvidence(
