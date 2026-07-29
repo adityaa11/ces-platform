@@ -3,9 +3,328 @@ import { z } from "zod";
 
 export const ATLAS_COVERAGE_VERSION = "1.0.0" as const;
 export const ATLAS_PIPELINE_COVERAGE_VERSION = "1.0.0" as const;
+export const ATLAS_ATOMIC_CLAIMS_VERSION = "1.0.0" as const;
 const Id = z.string().regex(/^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u);
 const Hash = z.string().regex(/^sha256:[0-9a-f]{64}$/u);
 const Text = z.string().trim().min(1);
+
+export const AtomicClaimDispositionSchema = z.enum([
+  "represented",
+  "duplicate",
+  "not_applicable",
+  "ambiguous",
+  "conflicting",
+  "unsupported",
+  "uncovered",
+  "human_review_required",
+]);
+
+export const AtomicClaimSchema = z.object({
+  claim_id: Id,
+  source_revision_id: Id,
+  source_unit_id: Id,
+  statement: Text,
+  exact_text: Text,
+  span: z.object({
+    start_offset: z.number().int().nonnegative(),
+    end_offset: z.number().int().positive(),
+  }).strict(),
+  boundary_confidence: z.number().min(0).max(1),
+  decomposition_method: z.enum(["deterministic", "provider", "human"]),
+  review_required: z.boolean(),
+}).strict().refine(
+  ({ span }) => span.end_offset > span.start_offset,
+  "Atomic claim span must be non-empty",
+);
+
+export const AtomicClaimsArtifactSchema = z.object({
+  schema_version: z.literal(ATLAS_ATOMIC_CLAIMS_VERSION),
+  source_revision_id: Id,
+  claims: z.array(AtomicClaimSchema),
+  content_hash: Hash,
+}).strict();
+
+export const AtomicClaimCoverageEntrySchema = z.object({
+  claim_id: Id,
+  disposition: AtomicClaimDispositionSchema,
+  candidate_ids: z.array(Id),
+  record_ids: z.array(Id),
+  duplicate_of_claim_id: Id.optional(),
+  reason: Text.optional(),
+}).strict().superRefine((value, context) => {
+  if (value.disposition === "represented"
+    && (value.candidate_ids.length === 0 || value.record_ids.length === 0)) {
+    context.addIssue({
+      code: "custom",
+      message: "Represented claims require candidate and canonical record mappings",
+    });
+  }
+  if (value.disposition === "duplicate" && !value.duplicate_of_claim_id) {
+    context.addIssue({ code: "custom", message: "Duplicate claims require a canonical claim" });
+  }
+  if (value.disposition !== "duplicate" && value.duplicate_of_claim_id) {
+    context.addIssue({ code: "custom", message: "Only duplicate claims may reference another claim" });
+  }
+  if (value.disposition !== "represented" && value.disposition !== "duplicate" && !value.reason) {
+    context.addIssue({ code: "custom", message: `${value.disposition} requires a reason` });
+  }
+});
+
+export const AtomicClaimFindingSchema = z.object({
+  finding_id: Id,
+  claim_id: Id,
+  source_unit_id: Id,
+  disposition: z.enum([
+    "ambiguous", "conflicting", "unsupported", "uncovered", "human_review_required",
+  ]),
+  severity: z.enum(["blocking", "review_required"]),
+  statement: Text,
+}).strict();
+
+export const AtomicClaimCoverageReportSchema = z.object({
+  schema_version: z.literal(ATLAS_ATOMIC_CLAIMS_VERSION),
+  source_revision_id: Id,
+  atomic_claims_hash: Hash,
+  entries: z.array(AtomicClaimCoverageEntrySchema),
+  findings: z.array(AtomicClaimFindingSchema),
+  counts: z.object({
+    total: z.number().int().nonnegative(),
+    represented: z.number().int().nonnegative(),
+    unresolved: z.number().int().nonnegative(),
+    blocking: z.number().int().nonnegative(),
+  }).strict(),
+  qualification_blocked: z.boolean(),
+  content_hash: Hash,
+}).strict();
+
+export const AtomicClaimRetryScopeSchema = z.object({
+  source_revision_id: Id,
+  claim_coverage_hash: Hash,
+  attempt: z.number().int().positive(),
+  claim_ids: z.array(Id).min(1),
+  source_unit_ids: z.array(Id).min(1),
+  prior_candidate_ids: z.array(Id),
+}).strict();
+
+export interface AtomicClaimInput {
+  readonly source_unit_id: string;
+  readonly statement: string;
+  readonly exact_text: string;
+  readonly start_offset: number;
+  readonly end_offset: number;
+  readonly boundary_confidence: number;
+  readonly decomposition_method: "deterministic" | "provider" | "human";
+}
+
+export function decomposeAtomicClaims(input: {
+  readonly source_units: readonly {
+    readonly id: string;
+    readonly exact_text: string;
+    readonly text?: string;
+  }[];
+  readonly normative_source_unit_ids: readonly string[];
+}): AtomicClaimInput[] {
+  const normative = new Set(input.normative_source_unit_ids.map((id) => Id.parse(id)));
+  const parsedUnits = input.source_units.map((unit) => [Id.parse(unit.id), unit] as const);
+  assertUnique(parsedUnits.map(([id]) => id), "atomic-claim source unit");
+  const units = new Map(parsedUnits);
+  assertMembers([...normative], new Set(units.keys()), "normative source unit");
+  return [...normative].sort(compare).flatMap((sourceUnitId) => {
+    const unit = units.get(sourceUnitId)!;
+    const ranges = splitClaimRanges(unit.exact_text);
+    return ranges.map(({ start, end }) => {
+      const exactText = unit.exact_text.slice(start, end);
+      const statement = exactText
+        .replace(/^\s*(?:[-*+•]|\d+[.)])\s+/u, "")
+        .trim();
+      const uncertainBoundary = /\b(?:and|or|dan|atau)\b/iu.test(statement);
+      return {
+        source_unit_id: sourceUnitId,
+        statement,
+        exact_text: exactText,
+        start_offset: start,
+        end_offset: end,
+        boundary_confidence: uncertainBoundary ? 0.75 : 1,
+        decomposition_method: "deterministic" as const,
+      };
+    });
+  });
+}
+
+export function createAtomicClaims(input: {
+  readonly source_revision_id: string;
+  readonly source_units: readonly { readonly id: string; readonly exact_text: string }[];
+  readonly claims: readonly AtomicClaimInput[];
+}): z.infer<typeof AtomicClaimsArtifactSchema> {
+  const sourceRevisionId = Id.parse(input.source_revision_id);
+  const parsedUnits = input.source_units.map((unit) => [
+    Id.parse(unit.id),
+    unit.exact_text,
+  ] as const);
+  assertUnique(parsedUnits.map(([id]) => id), "atomic-claim source unit");
+  const sourceUnits = new Map(parsedUnits);
+  const claims = input.claims.map((value) => {
+    const sourceUnitId = Id.parse(value.source_unit_id);
+    const sourceText = sourceUnits.get(sourceUnitId);
+    if (sourceText === undefined) throw new Error(`Unknown atomic-claim source unit: ${sourceUnitId}`);
+    const span = {
+      start_offset: z.number().int().nonnegative().parse(value.start_offset),
+      end_offset: z.number().int().positive().parse(value.end_offset),
+    };
+    if (span.end_offset > sourceText.length
+      || sourceText.slice(span.start_offset, span.end_offset) !== value.exact_text) {
+      throw new Error(`Atomic claim exact span mismatch: ${sourceUnitId}`);
+    }
+    const identity = {
+      source_revision_id: sourceRevisionId,
+      source_unit_id: sourceUnitId,
+      span,
+      exact_text: value.exact_text,
+    };
+    return AtomicClaimSchema.parse({
+      claim_id: `atlas.claim.${digest(JSON.stringify(canonical(identity))).slice(0, 20)}`,
+      source_revision_id: sourceRevisionId,
+      source_unit_id: sourceUnitId,
+      statement: value.statement,
+      exact_text: value.exact_text,
+      span,
+      boundary_confidence: value.boundary_confidence,
+      decomposition_method: value.decomposition_method,
+      review_required: value.boundary_confidence < 1,
+    });
+  }).sort((left, right) => compare(left.claim_id, right.claim_id));
+  assertUnique(claims.map(({ claim_id }) => claim_id), "atomic claim");
+  const core = {
+    schema_version: ATLAS_ATOMIC_CLAIMS_VERSION,
+    source_revision_id: sourceRevisionId,
+    claims,
+  };
+  return deepFreeze(AtomicClaimsArtifactSchema.parse({
+    ...core,
+    content_hash: hashJson(core),
+  }));
+}
+
+export function calculateAtomicClaimCoverage(input: {
+  readonly atomic_claims: z.input<typeof AtomicClaimsArtifactSchema>;
+  readonly candidate_ids: readonly string[];
+  readonly record_ids: readonly string[];
+  readonly entries: readonly z.input<typeof AtomicClaimCoverageEntrySchema>[];
+}): z.infer<typeof AtomicClaimCoverageReportSchema> {
+  const artifact = AtomicClaimsArtifactSchema.parse(input.atomic_claims);
+  const claimIds = new Set(artifact.claims.map(({ claim_id }) => claim_id));
+  const candidates = new Set(input.candidate_ids.map((id) => Id.parse(id)));
+  const records = new Set(input.record_ids.map((id) => Id.parse(id)));
+  const entries = input.entries.map((entry) => AtomicClaimCoverageEntrySchema.parse(entry))
+    .sort((left, right) => compare(left.claim_id, right.claim_id));
+  assertUnique(entries.map(({ claim_id }) => claim_id), "atomic claim coverage");
+  if (entries.length !== claimIds.size || entries.some(({ claim_id }) => !claimIds.has(claim_id))) {
+    throw new Error("Claim coverage must disposition every atomic claim exactly once");
+  }
+  for (const entry of entries) {
+    assertMembers(entry.candidate_ids, candidates, "claim candidate");
+    assertMembers(entry.record_ids, records, "claim record");
+    if (entry.duplicate_of_claim_id) {
+      if (!claimIds.has(entry.duplicate_of_claim_id)
+        || entry.duplicate_of_claim_id === entry.claim_id) {
+        throw new Error("Duplicate claim must reference another atomic claim");
+      }
+    }
+    const claim = artifact.claims.find(({ claim_id }) => claim_id === entry.claim_id)!;
+    if (claim.review_required && entry.disposition === "represented") {
+      throw new Error("Uncertain atomic claim decomposition requires human review");
+    }
+  }
+  const unresolved = new Set([
+    "ambiguous", "conflicting", "unsupported", "uncovered", "human_review_required",
+  ]);
+  const findings = entries.filter(({ disposition }) => unresolved.has(disposition))
+    .map((entry) => {
+      const claim = artifact.claims.find(({ claim_id }) => claim_id === entry.claim_id)!;
+      return AtomicClaimFindingSchema.parse({
+        finding_id: `atlas.claim-finding.${digest(`${entry.claim_id}:${entry.disposition}`).slice(0, 16)}`,
+        claim_id: entry.claim_id,
+        source_unit_id: claim.source_unit_id,
+        disposition: entry.disposition,
+        severity: ["conflicting", "unsupported", "uncovered"].includes(entry.disposition)
+          ? "blocking" : "review_required",
+        statement: entry.reason ?? `Atomic claim is ${entry.disposition}`,
+      });
+    }).sort((left, right) => compare(left.finding_id, right.finding_id));
+  const blocking = findings.filter(({ severity }) => severity === "blocking").length;
+  const core = {
+    schema_version: ATLAS_ATOMIC_CLAIMS_VERSION,
+    source_revision_id: artifact.source_revision_id,
+    atomic_claims_hash: artifact.content_hash,
+    entries,
+    findings,
+    counts: {
+      total: entries.length,
+      represented: entries.filter(({ disposition }) => disposition === "represented").length,
+      unresolved: findings.length,
+      blocking,
+    },
+    qualification_blocked: findings.length > 0,
+  };
+  return deepFreeze(AtomicClaimCoverageReportSchema.parse({
+    ...core,
+    content_hash: hashJson(core),
+  }));
+}
+
+export function createAtomicClaimRetryScope(input: {
+  readonly report: z.input<typeof AtomicClaimCoverageReportSchema>;
+  readonly attempt: number;
+  readonly prior_candidate_ids?: readonly string[];
+}): z.infer<typeof AtomicClaimRetryScopeSchema> | undefined {
+  const report = AtomicClaimCoverageReportSchema.parse(input.report);
+  const retryable = report.findings.filter(({ disposition }) =>
+    ["ambiguous", "unsupported", "uncovered", "human_review_required"].includes(disposition));
+  if (retryable.length === 0) return undefined;
+  return deepFreeze(AtomicClaimRetryScopeSchema.parse({
+    source_revision_id: report.source_revision_id,
+    claim_coverage_hash: report.content_hash,
+    attempt: input.attempt,
+    claim_ids: [...new Set(retryable.map(({ claim_id }) => claim_id))].sort(compare),
+    source_unit_ids: [...new Set(retryable.map(({ source_unit_id }) => source_unit_id))].sort(compare),
+    prior_candidate_ids: [...new Set(input.prior_candidate_ids ?? [])].sort(compare),
+  }));
+}
+
+export function assertAtomicClaimCoverageComplete(
+  reportValue: z.input<typeof AtomicClaimCoverageReportSchema>,
+): void {
+  const report = AtomicClaimCoverageReportSchema.parse(reportValue);
+  if (report.qualification_blocked) {
+    throw new Error("Atlas qualification blocked: unresolved atomic claims");
+  }
+}
+
+function splitClaimRanges(value: string): { start: number; end: number }[] {
+  const boundaries = /[.;](?=\s+|$)|\r?\n/gu;
+  const ranges: { start: number; end: number }[] = [];
+  let start = 0;
+  for (const match of value.matchAll(boundaries)) {
+    const boundaryEnd = match.index + match[0].length;
+    appendTrimmedRange(value, start, boundaryEnd, ranges);
+    start = boundaryEnd;
+  }
+  appendTrimmedRange(value, start, value.length, ranges);
+  return ranges.length > 0 ? ranges : [{ start: 0, end: value.length }];
+}
+
+function appendTrimmedRange(
+  value: string,
+  rawStart: number,
+  rawEnd: number,
+  ranges: { start: number; end: number }[],
+): void {
+  let start = rawStart;
+  let end = rawEnd;
+  while (start < end && /\s/u.test(value[start]!)) start += 1;
+  while (end > start && /\s/u.test(value[end - 1]!)) end -= 1;
+  if (end > start) ranges.push({ start, end });
+}
 
 export const PipelineStageSchema = z.enum([
   "evaluated", "non_normative", "candidate", "classified", "normalized",

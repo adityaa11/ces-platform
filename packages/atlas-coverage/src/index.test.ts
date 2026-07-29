@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   assertPipelineCoverageComplete,
+  assertAtomicClaimCoverageComplete,
   assertPublishableCoverage,
+  calculateAtomicClaimCoverage,
   calculateCoverage,
   calculatePipelineCoverage,
+  createAtomicClaimRetryScope,
+  createAtomicClaims,
+  decomposeAtomicClaims,
   createCompletenessCriticReport,
   createHardenedRetryPlan,
   createTargetedRetry,
@@ -26,6 +31,139 @@ const base = {
 };
 
 describe("DAPE-005 Atlas coverage gate", () => {
+  it("dispositions every source-grounded atomic claim independently", () => {
+    const source = {
+      id: units[0]!,
+      exact_text: "Administrators approve requests and auditors review logs.",
+    };
+    const claims = createAtomicClaims({
+      source_revision_id: base.source_revision_id,
+      source_units: [source],
+      claims: [
+        {
+          source_unit_id: source.id,
+          statement: "Administrators approve requests.",
+          exact_text: "Administrators approve requests",
+          start_offset: 0,
+          end_offset: 31,
+          boundary_confidence: 1,
+          decomposition_method: "deterministic",
+        },
+        {
+          source_unit_id: source.id,
+          statement: "Auditors review logs.",
+          exact_text: "auditors review logs",
+          start_offset: 36,
+          end_offset: 56,
+          boundary_confidence: 1,
+          decomposition_method: "deterministic",
+        },
+      ],
+    });
+    const [firstClaim, secondClaim] = claims.claims;
+    const report = calculateAtomicClaimCoverage({
+      atomic_claims: claims,
+      candidate_ids: ["project.candidate.approval"],
+      record_ids: ["project.record.approval"],
+      entries: [
+        {
+          claim_id: firstClaim!.claim_id,
+          disposition: "represented",
+          candidate_ids: ["project.candidate.approval"],
+          record_ids: ["project.record.approval"],
+        },
+        {
+          claim_id: secondClaim!.claim_id,
+          disposition: "uncovered",
+          candidate_ids: [],
+          record_ids: [],
+          reason: "No candidate represents the audit obligation.",
+        },
+      ],
+    });
+    expect(report.counts).toMatchObject({ total: 2, represented: 1, unresolved: 1 });
+    expect(report.qualification_blocked).toBe(true);
+    expect(() => assertAtomicClaimCoverageComplete(report)).toThrow("unresolved atomic claims");
+    expect(createAtomicClaimRetryScope({ report, attempt: 1 })).toMatchObject({
+      claim_ids: [secondClaim!.claim_id],
+      source_unit_ids: [source.id],
+    });
+  });
+
+  it("validates exact spans and deterministically replays claim identity", () => {
+    const source = { id: units[0]!, exact_text: "A request must be approved." };
+    const claim = {
+      source_unit_id: source.id,
+      statement: source.exact_text,
+      exact_text: source.exact_text,
+      start_offset: 0,
+      end_offset: source.exact_text.length,
+      boundary_confidence: 1,
+      decomposition_method: "provider" as const,
+    };
+    expect(createAtomicClaims({
+      source_revision_id: base.source_revision_id,
+      source_units: [source],
+      claims: [claim],
+    })).toEqual(createAtomicClaims({
+      source_revision_id: base.source_revision_id,
+      source_units: [source],
+      claims: [claim],
+    }));
+    expect(() => createAtomicClaims({
+      source_revision_id: base.source_revision_id,
+      source_units: [source],
+      claims: [{ ...claim, exact_text: "wrong" }],
+    })).toThrow("exact span mismatch");
+  });
+
+  it("keeps uncertain claim boundaries review-required", () => {
+    const source = { id: units[0]!, exact_text: "Approve and archive where applicable." };
+    const claims = createAtomicClaims({
+      source_revision_id: base.source_revision_id,
+      source_units: [source],
+      claims: [{
+        source_unit_id: source.id,
+        statement: source.exact_text,
+        exact_text: source.exact_text,
+        start_offset: 0,
+        end_offset: source.exact_text.length,
+        boundary_confidence: 0.6,
+        decomposition_method: "provider",
+      }],
+    });
+    expect(() => calculateAtomicClaimCoverage({
+      atomic_claims: claims,
+      candidate_ids: ["project.candidate.approval"],
+      record_ids: ["project.record.approval"],
+      entries: [{
+        claim_id: claims.claims[0]!.claim_id,
+        disposition: "represented",
+        candidate_ids: ["project.candidate.approval"],
+        record_ids: ["project.record.approval"],
+      }],
+    })).toThrow("requires human review");
+  });
+
+  it("decomposes sentence and list boundaries without losing exact spans", () => {
+    const source = {
+      id: units[0]!,
+      exact_text: "- Approve requests. Archive decisions; notify auditors.",
+    };
+    const decomposed = decomposeAtomicClaims({
+      source_units: [source],
+      normative_source_unit_ids: [source.id],
+    });
+    expect(decomposed.map(({ exact_text }) => exact_text)).toEqual([
+      "- Approve requests.",
+      "Archive decisions;",
+      "notify auditors.",
+    ]);
+    expect(decomposed.every((claim) =>
+      source.exact_text.slice(claim.start_offset, claim.end_offset) === claim.exact_text))
+      .toBe(true);
+  });
+
   it("routes bounded retries through registered capabilities and preserves history", () => {
     const coverage = calculatePipelineCoverage({
       source_revision_id: base.source_revision_id,

@@ -16,9 +16,13 @@ import {
 } from "@company/ces-approved-project-model";
 import { analyzeAtlasCandidates } from "@company/ces-atlas-extraction";
 import {
+  calculateAtomicClaimCoverage,
   calculatePipelineCoverage,
   CoverageReportSchema,
+  createAtomicClaimRetryScope,
+  createAtomicClaims,
   createCompletenessCriticReport,
+  decomposeAtomicClaims,
 } from "@company/ces-atlas-coverage";
 import {
   createAtlasCandidateInventory,
@@ -1615,6 +1619,68 @@ function buildCanonicalProposedAtlasArtifacts(input: {
       byUnit.set(sourceUnitId, linked);
     }
   }
+  const normativeSourceUnitIds = units
+    .filter((unit) => classificationByUnit.get(unit.id)?.disposition === "normative")
+    .map(({ id }) => id);
+  const atomicClaims = createAtomicClaims({
+    source_revision_id: inventory.source_revision_id,
+    source_units: units,
+    claims: decomposeAtomicClaims({
+      source_units: units,
+      normative_source_unit_ids: normativeSourceUnitIds,
+    }),
+  });
+  const claimsPerUnit = new Map<string, number>();
+  for (const claim of atomicClaims.claims) {
+    claimsPerUnit.set(claim.source_unit_id, (claimsPerUnit.get(claim.source_unit_id) ?? 0) + 1);
+  }
+  const atomicClaimCoverage = calculateAtomicClaimCoverage({
+    atomic_claims: atomicClaims,
+    candidate_ids: inventory.candidates.map(({ candidate_id }) => candidate_id),
+    record_ids: records.map(({ id }) => id),
+    entries: atomicClaims.claims.map((claim) => {
+      const sourceCandidates = inventory.candidates.filter(({ source_unit_ids }) =>
+        source_unit_ids.includes(claim.source_unit_id));
+      const normalizedClaim = normalizeClaimMatchText(claim.statement);
+      const matchingCandidates = (claimsPerUnit.get(claim.source_unit_id) === 1
+        ? sourceCandidates
+        : sourceCandidates.filter(({ statement }) => {
+          const normalizedCandidate = normalizeClaimMatchText(statement);
+          return normalizedCandidate.includes(normalizedClaim)
+            || normalizedClaim.includes(normalizedCandidate);
+        }));
+      const candidateIds = matchingCandidates.map(({ candidate_id }) => candidate_id)
+        .sort(compareText);
+      const canonicalRecordIds = [...new Set(candidateIds
+        .map((candidateId) => recordIds.get(candidateId)!))].sort(compareText);
+      if (claim.review_required) {
+        return {
+          claim_id: claim.claim_id,
+          disposition: "human_review_required" as const,
+          candidate_ids: candidateIds,
+          record_ids: canonicalRecordIds,
+          reason: "Deterministic decomposition found a potentially compound claim boundary.",
+        };
+      }
+      return candidateIds.length > 0 ? {
+        claim_id: claim.claim_id,
+        disposition: "represented" as const,
+        candidate_ids: candidateIds,
+        record_ids: canonicalRecordIds,
+      } : {
+        claim_id: claim.claim_id,
+        disposition: "uncovered" as const,
+        candidate_ids: [],
+        record_ids: [],
+        reason: "No candidate is textually attributable to this atomic claim.",
+      };
+    }),
+  });
+  const atomicClaimRetryScope = createAtomicClaimRetryScope({
+    report: atomicClaimCoverage,
+    attempt: 1,
+    prior_candidate_ids: inventory.candidates.map(({ candidate_id }) => candidate_id),
+  });
   const coverage = calculatePipelineCoverage({
     source_revision_id: inventory.source_revision_id,
     semantic_kind_registry_id: registry.id,
@@ -1703,6 +1769,11 @@ function buildCanonicalProposedAtlasArtifacts(input: {
   const graph = projectProposedWorkflowGraph(model);
   return {
     "source-units.json": collectionCanonicalJson(units),
+    "atomic-claims.json": collectionCanonicalJson(atomicClaims),
+    "claim-coverage.json": collectionCanonicalJson(atomicClaimCoverage),
+    ...(atomicClaimRetryScope ? {
+      "claim-retry-scope.json": collectionCanonicalJson(atomicClaimRetryScope),
+    } : {}),
     "source-coverage.json": collectionCanonicalJson(coverage),
     "extraction-findings.json": collectionCanonicalJson(findings),
     "proposed-project-model.json": collectionCanonicalJson(model),
@@ -2121,6 +2192,9 @@ async function retainedPendingArtifacts(
     "proposed-system-intent-graph.md",
     "proposed-system-intent-graph.mmd",
     "source-units.json",
+    "atomic-claims.json",
+    "claim-coverage.json",
+    "claim-retry-scope.json",
     "source-coverage.json",
     "extraction-findings.json",
     "pdf-ingestion.json",
@@ -2211,6 +2285,12 @@ function hashCanonical(value: unknown): string {
 
 function compareText(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0;
+}
+
+function normalizeClaimMatchText(value: string): string {
+  return value.toLocaleLowerCase("en-US")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
 }
 
 function stableId(value: string): string {

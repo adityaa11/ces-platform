@@ -133,14 +133,20 @@ describe("Atlas CLI pipeline", () => {
           source_unit_ids: expect.arrayContaining([expect.any(String)]),
         }),
       ]));
+      expect(await json(join(output, "claim-coverage.json"))).toMatchObject({
+        counts: { total: 1, represented: 1, unresolved: 0, blocking: 0 },
+        qualification_blocked: false,
+      });
       const projection = JSON.parse(
         await readFile(join(output, "legacy-projection-losses.json"), "utf8"),
       );
       expect(projection.direction).toBe("canonical-to-legacy");
       expect(await fileNames(output)).toEqual([
+        "atomic-claims.json",
         "candidate-analysis.json",
         "candidate-inventory.json",
         "candidate-merge-report.json",
+        "claim-coverage.json",
         "clarification-questions.json",
         "document-structure.json",
         "extraction-findings.json",
@@ -204,9 +210,11 @@ describe("Atlas CLI pipeline", () => {
       ];
       expect(await runCli(resumeArgs, capture().io)).toBe(0);
       expect(await fileNames(output)).toEqual([
+        "atomic-claims.json",
         "candidate-analysis.json",
         "candidate-inventory.json",
         "candidate-merge-report.json",
+        "claim-coverage.json",
         "clarification-questions.json",
         "core-handoff/REQ-PROJECT-001.policy-manifest.json",
         "core-handoff/summary.json",
