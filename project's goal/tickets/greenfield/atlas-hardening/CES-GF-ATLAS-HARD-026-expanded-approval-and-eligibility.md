@@ -105,6 +105,10 @@ relationships are replayed into connected approved workflow projections.
       representation.
 - [ ] Rejected equivalence decisions keep concepts separate and preserve their
       independent identities and evidence.
+- [ ] Pending equivalence decisions never materialize a shared
+      `approved_logical_id` or merged authoritative projection.
+- [ ] Equivalence decisions are revision-pinned, idempotent, authorized
+      server-side, and return a conflict for stale revisions.
 
 ### Safara qualification thresholds
 

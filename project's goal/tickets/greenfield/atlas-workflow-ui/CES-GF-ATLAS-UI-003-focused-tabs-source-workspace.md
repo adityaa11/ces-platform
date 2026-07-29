@@ -22,6 +22,8 @@ views while keeping exact source evidence visible beside it.
   - States;
   - Evidence;
   - Approval.
+- Keep these workflow-detail tabs distinct from top-level supported-model
+  projections. The frontend must not reinterpret one model kind as another.
 - Hide a tab only when the backend projection explicitly reports it empty.
 - Load workflow-specific slices instead of downloading the complete semantic
   inventory.
@@ -42,17 +44,26 @@ views while keeping exact source evidence visible beside it.
 ## Acceptance criteria
 
 - [ ] Every non-empty focused projection has a corresponding tab.
+- [ ] Top-level supported-model tabs come only from the backend model-support
+      assessment and share canonical selection with focused detail tabs.
 - [ ] Selecting a node, edge, rule, validation, permission, or state opens its
       exact evidence.
 - [ ] Original wording is visually distinct from translations and canonical
       wording.
 - [ ] Same-meaning multilingual content appears once in workflow views, with
       all exact original representations available in Evidence.
+- [ ] Pending possible-equivalence members remain visibly separate and are
+      labeled as pending human review; only accepted equivalence is displayed
+      as one authoritative concept.
+- [ ] The primary label exposes its source representation and deterministic
+      selection reason; changing candidate order does not change it.
 - [ ] Page, section, source-unit identity, and text span are displayed.
 - [ ] Bounding boxes are shown when projection data provides them.
 - [ ] One workflow can load without downloading every project record.
 - [ ] Missing evidence is shown as an approval exception, not silently hidden.
 - [ ] Cross-tab and source synchronization is tested.
+- [ ] Source documents are delivered only after authenticated, project-scoped
+      authorization and document-access events are audited.
 
 ## Out of scope
 

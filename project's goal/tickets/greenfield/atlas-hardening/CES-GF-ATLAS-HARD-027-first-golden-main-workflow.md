@@ -2,7 +2,8 @@
 
 ## Status
 
-Proposed
+Ready for qualification implementation; production remediation remains owned
+by ATLAS-HARD-019 through ATLAS-HARD-026
 
 ## Priority
 
@@ -50,6 +51,52 @@ this ticket:
 7. Reporting dependencies use `provides_data_to` from a source workflow to the
    reporting workflow. Projection arrow direction must match canonical
    relationship direction.
+8. HARD-027 is an integrated qualification ticket, not a second implementation
+   path. Failures must be remediated in HARD-019 through HARD-026 according to
+   the production contract owner.
+9. Pending multilingual equivalence keeps separate proposed identities and
+   separate authoritative nodes. Only an accepted human decision creates one
+   approved logical identity and one buyer-facing node.
+10. Safara semantic IDs and expected labels belong only to fixture data,
+    tests, qualification oracles, and reports. They are forbidden as Atlas
+    core enums, switches, forced workflow kinds, or topology shortcuts.
+11. English canonical examples in this ticket are Safara fixture
+    configuration, not Atlas production defaults.
+12. Before qualifying a workflow, Atlas must determine which model kinds the
+    document evidence supports. Safara's workflow golden is one supported
+    projection of one shared canonical semantic graph, not the universal Atlas
+    output.
+
+## Qualification Ownership
+
+HARD-027 owns:
+
+```text
+Safara golden semantic and topology oracles
+multilingual golden expectations
+non-travel regression fixtures
+anti-overfitting checks
+integrated qualification reports
+```
+
+The Safara oracle expects independent evidence-backed support assessments for:
+
+```text
+business workflow
+module dependency
+state diagram
+decision model
+actor interaction
+```
+
+The checks are non-exclusive. A positive workflow result must not prevent
+classification of the other supported model kinds. Every projection reuses
+the same canonical identities, and the integrated graph relates their typed
+nodes and governed edges.
+
+HARD-027 must not implement a workflow normalizer, language engine, topology
+generator, relationship engine, projection builder, or approval materializer.
+Those production contracts remain owned by HARD-019 through HARD-026.
 
 ---
 
@@ -536,10 +583,16 @@ expect(workflow.title).toBe("Pemeriksaan Pembayaran");
 Preferred:
 
 ```ts
-expect(workflow.semantic_concept).toBe("payment_review");
-expect(workflow.display_language).toBe("id");
-expect(workflow.source_unit_ids.length).toBeGreaterThan(0);
+expectSemanticEquivalent(
+  workflow,
+  safaraOracle.concepts.paymentReview
+);
 ```
+
+The fixture-owned oracle checks semantic kind, source-grounded evidence,
+configured display language, required relationships, and semantic equivalence
+to accepted source labels. Its fixture concept ID must never become a
+production Atlas enum or forced workflow type.
 
 The display label may vary when it remains:
 
@@ -553,7 +606,9 @@ in the source language
 
 ## 6.5 Repository Scan
 
-Add a repository-level test that scans production source files for fixture-only constants.
+Add a scoped or AST-based test that scans executable Atlas core compiler logic
+for fixture-only constants used in conditional routing, forced record or edge
+creation, default topology, or provider/project-specific overrides.
 
 Terms such as:
 
@@ -574,9 +629,14 @@ fixtures
 examples
 qualification reports
 documentation
+localization resources
+runtime user data
+governed terminology packs
 ```
 
-They must not appear in generic compiler logic unless they are part of user-provided runtime data.
+They must not control generic compiler topology. A terminology pack may assist
+interpretation, but it cannot force a workflow or edge without semantic
+evidence. Do not use an uncontrolled repository-wide raw-text scan.
 
 ---
 
@@ -601,14 +661,15 @@ It must prove:
 
 ```text
 Atlas does not emit Safara workflow names.
-Atlas derives different domain-appropriate workflows.
+Atlas classifies supported model kinds from that fixture's evidence.
+Atlas generates only the supported domain-appropriate projections.
 Atlas uses the same canonical schemas.
 Atlas uses the same relationship kinds.
 Atlas preserves that PRD's original language.
 Atlas does not require changes to Atlas core.
 ```
 
-Example non-travel output:
+If workflow is supported, an example non-travel output may be:
 
 ```text
 Candidate Application
@@ -644,7 +705,10 @@ Payment Approval
 Financial Reporting
 ```
 
-The non-travel fixture must be processed by the same production compiler code path as Safara.
+The regression suite must also include or permit a fixture with insufficient
+workflow evidence but sufficient evidence for another model kind. That fixture
+must not receive a fabricated workflow. Every fixture uses the same production
+compiler path as Safara.
 
 ---
 
@@ -653,6 +717,20 @@ The non-travel fixture must be processed by the same production compiler code pa
 The Mermaid file is only a projection.
 
 The authoritative proposed bundle must contain governed records.
+
+For this fixture only:
+
+```json
+{
+  "project_language_config": {
+    "primary_source_language": "id",
+    "display_language": "id",
+    "canonical_language": "en"
+  }
+}
+```
+
+Production Atlas has no universal English canonical-language default.
 
 ## 8.1 Workflow Example
 
@@ -672,12 +750,14 @@ The authoritative proposed bundle must contain governed records.
 }
 ```
 
-## 8.2 Branch Relationship Example
+## 8.2 Parallel Enablement Relationship Example
 
 ```json
 {
   "relationship_id": "REL-REGISTRATION-PAYMENT",
   "relationship_kind": "ces.relationship.enables",
+  "fanout_group_id": "FANOUT-REGISTRATION-001",
+  "path_semantics": "independent_non_exclusive",
   "from_id": "WF-PILGRIM-REGISTRATION",
   "to_id": "WF-PAYMENT-REVIEW",
   "display_label": "enables",
@@ -696,20 +776,24 @@ The authoritative proposed bundle must contain governed records.
 }
 ```
 
-## 8.3 Readiness State Example
+The registration-to-document relationship uses the same `fanout_group_id` and
+path semantics. These edges are not mutually exclusive decision branches.
+
+## 8.3 Readiness Decision Outcome Example
 
 ```json
 {
   "relationship_id": "REL-READINESS-READY",
-  "relationship_kind": "ces.relationship.produces_state",
-  "from_id": "WF-TRAVEL-READINESS",
+  "relationship_kind": "ces.relationship.branches_to",
+  "from_id": "DECISION-TRAVEL-READINESS",
   "to_id": "STATE-READY",
-  "display_label": "produces state",
+  "display_label": "Ready",
+  "condition": "All governed readiness requirements are satisfied",
   "origin": "explicit",
   "evidence_source_unit_ids": [
     "SRC-SAFARA-READINESS-READY"
   ],
-  "rationale": "The PRD explicitly defines the conditions that produce the Siap state.",
+  "rationale": "The governed readiness decision selects the Ready outcome when its source-grounded conditions are satisfied.",
   "confidence": 1.0,
   "review_status": "pending",
   "bulk_approval_eligible": true,
@@ -993,6 +1077,9 @@ Pending
 ## 13.1 Proposed Golden Overview
 
 ```text
+proposed-model-support-assessment.json
+proposed-integrated-semantic-graph.json
+proposed-model-projection-index.json
 proposed-project-overview-graph.json
 proposed-project-overview-graph.mmd
 ```
@@ -1028,9 +1115,33 @@ tests/fixtures/non-travel/expected-semantic-areas.json
 
 The fixtures validate semantic meaning, not exact provider wording or volatile IDs.
 
+## 13.6 Domain-Neutrality Evidence
+
+```text
+domain-neutral-regression-report.json
+production-overfitting-scan-report.json
+```
+
 ---
 
 # 14. Qualification Contract
+
+## 14.0 Supported Model Kinds
+
+Before testing the Safara workflow topology, qualification must prove that
+Atlas classified the document from source evidence:
+
+```text
+business_workflow: supported
+module_dependency: supported
+state_diagram: supported
+decision_model: supported
+actor_interaction: supported
+```
+
+Each result contains source evidence, rationale, confidence, and review state.
+The workflow golden below is evaluated only because `business_workflow` is
+supported.
 
 ## 14.1 Required Safara Semantic Areas
 
@@ -1078,7 +1189,8 @@ The qualification must also verify:
 ```text
 The non-travel fixture does not emit Safara workflow names.
 
-The non-travel fixture produces domain-appropriate workflows.
+The non-travel fixture produces only its evidence-supported,
+domain-appropriate model projections.
 
 Both fixtures use the same production compiler.
 
@@ -1126,6 +1238,17 @@ the non-travel fixture emits Safara-specific workflows
 
 # 15. Acceptance Criteria
 
+## 15.0 Model-Kind Classification
+
+```md
+- [ ] Model-kind classification runs before diagram generation.
+- [ ] Model kinds are assessed independently rather than through a
+      first-match-wins decision.
+- [ ] Safara's workflow, module, state, decision, and actor projections reuse
+      canonical identities from one semantic graph.
+- [ ] Unsupported projections are not fabricated.
+```
+
 ## 15.1 Workflow Normalization
 
 ```md
@@ -1141,6 +1264,8 @@ the non-travel fixture emits Safara-specific workflows
 ```md
 - [ ] The main overview contains connected governed edges.
 - [ ] Registration enables independent payment and document review paths.
+- [ ] Registration's enabled paths share fanout metadata marking them
+      independent and non-exclusive.
 - [ ] Payment and document review converge on readiness.
 - [ ] A governed readiness decision has labeled `Siap` and `Terhambat`
       outcomes.
@@ -1165,6 +1290,14 @@ the non-travel fixture emits Safara-specific workflows
 - [ ] Every exact original representation remains available as evidence.
 - [ ] Uncertain equivalence remains reviewable before authoritative
       consolidation.
+- [ ] Pending equivalence preserves separate record identities and separate
+      authoritative nodes under a review-only equivalence cluster.
+- [ ] Accepted equivalence produces one approved logical identity; rejected
+      equivalence preserves separate approved logical identities.
+- [ ] Primary display-label selection follows the deterministic HARD-020
+      priority and is unchanged by candidate or provider ordering.
+- [ ] English canonical labels are only Safara fixture configuration, never a
+      production default.
 ```
 
 ## 15.4 Governance
@@ -1209,9 +1342,22 @@ the non-travel fixture emits Safara-specific workflows
 
 - [ ] Golden matching uses semantic concepts and source-grounded
       relationships rather than exact display labels.
+- [ ] Golden matching uses fixture-owned oracle records; Safara fixture concept
+      IDs do not exist as production enums, switches, or topology shortcuts.
+- [ ] The anti-overfitting scan targets executable Atlas core behavior and
+      permits fixture values in tests, fixtures, documentation, localization,
+      runtime data, and governed terminology packs.
+- [ ] Governed terminology packs may assist interpretation but cannot force
+      topology without semantic evidence.
+- [ ] HARD-027 contains fixtures, assertions, scans, and reports only; every
+      production failure is assigned to its owning HARD-019 through HARD-026
+      contract.
 
 - [ ] A structurally different non-travel PRD passes through the same
-      compiler and produces domain-appropriate workflows.
+      compiler and produces only evidence-supported, domain-appropriate model
+      projections.
+- [ ] A fixture without sufficient workflow evidence produces no fabricated
+      workflow and can still qualify through other supported model kinds.
 
 - [ ] The non-travel fixture does not produce Safara-specific workflow
       labels or travel-domain concepts.
@@ -1293,7 +1439,8 @@ A structurally different non-travel PRD.
 Expected:
 
 ```text
-Atlas derives different workflow areas from the source semantics.
+Atlas classifies model support from source semantics and generates only
+supported model projections.
 
 Atlas does not emit:
 Pendaftaran Jemaah
@@ -1301,7 +1448,8 @@ Kesiapan Keberangkatan
 Finalisasi Manifest
 or other Safara-specific workflow labels.
 
-Atlas uses the same schemas, relationship types, and compiler path.
+Atlas uses the same schemas, relationship types, and compiler path. If
+workflow evidence is insufficient, Atlas emits no workflow projection.
 ```
 
 ## 16.7 Production Constant Scan
@@ -1322,23 +1470,19 @@ No Safara-specific fixture constants exist in generic compiler logic.
 
 # 17. Implementation Guidance
 
-Recommended implementation sequence:
+Recommended qualification sequence:
 
 ```text
-1. Normalize candidate workflow areas.
-2. Consolidate duplicate workflow meanings.
-3. Identify project-overview eligible workflows.
-4. Separate cross-cutting areas.
-5. Generate project-level relationship candidates.
-6. Validate relationship endpoints.
-7. Preserve explicit versus derived origin.
-8. Build buyer-language display labels.
-9. Generate JSON overview projection.
-10. Generate Mermaid overview projection.
-11. Produce qualification and traceability reports.
-12. Run the Safara golden fixture.
-13. Run the non-travel regression fixture.
-14. Run the production constant scan.
+1. Freeze the fixture-owned Safara semantic and topology oracle.
+2. Freeze pending, accepted, and rejected multilingual expectations.
+3. Freeze deterministic display-label expectations.
+4. Freeze the structurally different non-travel fixture.
+5. Add semantic, topology, traceability, and projection assertions.
+6. Add the scoped production overfitting scan.
+7. Run both fixtures through the existing production compiler.
+8. Attribute each failure to HARD-019 through HARD-026.
+9. Remediate failures only in the owning production contract.
+10. Produce integrated qualification and domain-neutral regression reports.
 ```
 
 Do not increase extraction breadth until the golden overview is semantically correct.
@@ -1428,4 +1572,6 @@ The result must be derived dynamically from canonical source-grounded semantics.
 
 Safara-specific labels and expected topology may exist only in qualification fixtures and tests.
 
-The Atlas production compiler must remain domain-neutral and must derive different workflows for a structurally different non-travel PRD without changes to Atlas core.
+The Atlas production compiler must remain domain-neutral and must derive only
+the model kinds supported by a structurally different non-travel PRD without
+changes to Atlas core.

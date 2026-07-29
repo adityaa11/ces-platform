@@ -24,7 +24,8 @@ equivalence.
   guess.
 - Treat translations as interpretations, never source evidence.
 - Produce reviewable `translation_equivalent` proposals with confidence,
-  rationale, provenance, and review status.
+  rationale, provenance, review status, a stable `equivalence_cluster_id`, and
+  separate member `record_id` values.
 - Add a governed project terminology lifecycle:
   terminology proposal, human review, then an approved versioned terminology
   registry.
@@ -73,10 +74,22 @@ registry.
       traceable by document, source unit, language, and text span.
 - [ ] Uncertain equivalence is grouped for review without silently creating
       authoritative consolidation.
+- [ ] A pending equivalence group is labeled as possible and pending human
+      review; projections do not visually merge its members.
 - [ ] Rejected equivalence separates concepts without losing either original
       representation.
 - [ ] No production rule assumes the original document language or canonical
       language.
+- [ ] Primary display-label selection is deterministic in this order:
+      exact representation matching configured display language,
+      reviewer-selected primary representation, primary-source-language
+      representation, approved terminology label, configured
+      canonical-language interpretation, then a review placeholder.
+- [ ] Candidate, provider, or document order; shortest text; first discovery;
+      and English preference never select the primary display label.
+- [ ] Atlas core remains domain-neutral while versioned governed terminology
+      packs may assist interpretation; no pack may force identity or topology
+      without source-grounded semantic evidence.
 
 ## Tests and evidence
 

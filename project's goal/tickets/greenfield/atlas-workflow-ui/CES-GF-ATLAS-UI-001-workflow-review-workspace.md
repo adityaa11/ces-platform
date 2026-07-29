@@ -6,7 +6,7 @@
 ## Objective
 
 Create the production Atlas review workspace as a domain-neutral renderer of
-backend-owned workflow projections.
+the backend-owned integrated semantic graph and supported model projections.
 
 ## Dependencies
 
@@ -16,8 +16,9 @@ backend-owned workflow projections.
 
 - Add a production web application within the existing workspace.
 - Implement the required three-pane structure:
-  - workflow navigation on the left;
-  - persistent project overview and workflow detail in the center;
+  - supported-model and semantic navigation on the left;
+  - persistent integrated project graph and selected model/detail below it in
+    the center;
   - source-document evidence on the right.
 - Display lifecycle, authority, approval, downstream-blocking, eligibility,
   and exception summaries from backend data.
@@ -26,6 +27,8 @@ backend-owned workflow projections.
 - Preserve keyboard navigation, responsive behavior, focus visibility, and
   accessible graph alternatives.
 - Consume versioned backend projections through typed adapters.
+- Render model tabs only when the backend model-support assessment marks them
+  supported; never assume a workflow projection exists.
 - Use neutral CES Atlas product language and project-provided display data.
 - Render one buyer-facing item per governed semantic concept while allowing
   all exact original document representations to be inspected.
@@ -51,6 +54,10 @@ states.
 - [ ] The three panes are visible together at supported desktop widths.
 - [ ] Lifecycle and authority state cannot be hidden by workflow navigation.
 - [ ] The UI renders only backend-provided semantic membership and topology.
+- [ ] The UI can render workflow, module dependency, state, decision, and actor
+      interaction projections when supported.
+- [ ] A document with no supported workflow renders its other supported models
+      without a workflow error or fabricated fallback graph.
 - [ ] Fixture-specific headings or theme assumptions in production code equal
       zero.
 - [ ] Loading, empty, error, missing-projection, and stale states are tested.

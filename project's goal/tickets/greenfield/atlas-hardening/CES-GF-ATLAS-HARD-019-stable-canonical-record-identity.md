@@ -75,6 +75,11 @@ report, and deterministic fixtures.
 - [ ] Semantically equivalent multilingual representations share one governed
       semantic concept after accepted equivalence review and do not create
       language-specific logical identities.
+- [ ] Pending multilingual equivalence retains separate proposed `record_id`
+      values under one review-only `equivalence_cluster_id`; it does not create
+      an authoritative shared identity.
+- [ ] Accepted equivalence materializes one `approved_logical_id`; rejected
+      equivalence materializes separate approved logical identities.
 - [ ] Display-language changes alter labels only and never duplicate or replace
       workflow, operation, state, rule, or relationship identity.
 

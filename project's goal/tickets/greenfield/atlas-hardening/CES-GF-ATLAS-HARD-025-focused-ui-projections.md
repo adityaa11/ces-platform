@@ -5,8 +5,9 @@
 
 ## Objective
 
-Generate focused UI projections from one complete canonical model instead of
-presenting every normalized record in one buyer-facing graph.
+Generate one readable integrated semantic graph plus supported model-specific
+UI projections from one complete canonical model. Do not assume every document
+supports a workflow.
 
 ## Dependencies
 
@@ -14,6 +15,13 @@ presenting every normalized record in one buyer-facing graph.
 
 ## Work
 
+- Consume the HARD-021 model-support assessment and generate only supported
+  model projections.
+- Generate an integrated graph that relates shared actors, modules, workflows,
+  operations, decisions, rules, states, reports, and evidence through canonical
+  identities and governed typed relationships.
+- Generate supported model views for workflow, module dependency, state,
+  decision, and actor interaction without cloning canonical concepts.
 - Generate project overview, workflow detail, rules and controls, source
   traceability, and approval-exception projections.
 - Restrict overview membership to major process semantics and summaries.
@@ -35,9 +43,17 @@ presenting every normalized record in one buyer-facing graph.
 - Reclassify the all-record graph as experimental semantic or
   rules-and-controls output.
 - Keep membership and summaries backend-owned.
+- Expose backend-owned semantic-layer filters for the integrated graph so the
+  UI can progressively reveal actors, workflows/modules, decisions, states,
+  rules, and evidence without downloading or rendering the entire inventory.
 
 ## Outputs
 
+`proposed-model-support-assessment.json`,
+`proposed-integrated-semantic-graph.json`,
+`proposed-model-projection-index.json`,
+supported workflow, module-dependency, state, decision, and actor-interaction
+projection artifacts,
 `proposed-project-overview-graph.json`,
 `proposed-workflow-detail-graphs.json`,
 `proposed-rules-controls-index.json`, revision-pinned per-workflow and
@@ -64,6 +80,15 @@ slices remain non-authoritative projections of canonical bundle components.
 - [x] Heuristic hints are not established projection edges.
 - [x] Frontend does not reconstruct semantic membership.
 - [x] Proposed and approved projections share neutral contracts.
+- [ ] The integrated graph and every focused model projection resolve shared
+      concepts to the same canonical IDs.
+- [ ] Only model kinds marked supported are offered as authoritative
+      projections.
+- [ ] Selecting an item in any projection resolves the same item in the
+      integrated graph and other applicable projections.
+- [ ] Integrated-graph layer filters are backend-owned and do not infer new
+      semantics in the frontend.
+- [ ] A non-workflow PRD can qualify without producing a workflow projection.
 
 ## Tests and evidence
 
@@ -92,8 +117,15 @@ edge collection and no readable per-workflow Mermaid projection is emitted.
       has equivalent source representations in several languages.
 - [ ] Evidence projections retain every exact original document
       representation.
+- [ ] Pending equivalence members remain separate authoritative nodes and may
+      appear only as a review cluster; accepted equivalence projects one node,
+      and rejected equivalence projects separate nodes.
 - [ ] Project overview distinguishes parallel enablement, conditional branches,
       states, and non-sequential reporting data dependencies.
+- [ ] Projections preserve fanout-group and independent/non-exclusive path
+      metadata.
+- [ ] Every displayed multilingual label identifies its selected
+      representation, selection reason, and whether fallback was used.
 
 ### Safara qualification thresholds
 

@@ -5,9 +5,10 @@
 
 ## Objective
 
-Extend `ProposedProjectModel` with explicit source-grounded workflows and
-operations instead of requiring the frontend to infer structure from generic
-semantic record nodes.
+Determine which model kinds the document evidence supports, then extend
+`ProposedProjectModel` with the corresponding source-grounded typed nodes and
+relationships. Workflow is one possible model kind, not the assumed universal
+shape.
 
 ## Dependencies
 
@@ -15,8 +16,24 @@ semantic record nodes.
 
 ## Work
 
+- Ask first: `What kinds of models does this document support?`
+- Evaluate these evidence contracts independently, without stopping after the
+  first match:
+  - explicit activity sequence -> `business_workflow`;
+  - modules and their relationships -> `module_dependency`;
+  - lifecycle states and transitions -> `state_diagram`;
+  - business rules, conditions, and outcomes -> `decision_model`;
+  - actors and system interactions -> `actor_interaction`.
+- Emit a reviewable model-support assessment containing support status,
+  rationale, confidence, source evidence, blockers, and proposal revision for
+  every considered model kind.
+- Allow one document to support zero, one, or several model kinds. Unsupported
+  or insufficiently evidenced kinds must not be fabricated.
 - Add workflows, operations, actors, summaries, decisions, states,
   transitions, branches, loops, and dependencies.
+- Represent all supported model kinds through shared canonical node identities
+  and governed typed relationships so separate diagrams do not create
+  duplicate semantic concepts.
 - Establish a shared governed-edge contract for every derived transition,
   dependency, ordering edge, branch, join, and loop; ATLAS-HARD-023 must reuse
   this contract for other semantic relationships.
@@ -35,10 +52,10 @@ semantic record nodes.
 
 ## Outputs
 
-Canonical workflow and operation bundle components referenced by the
-proposed-model manifest, plus findings and revision metadata. Any embedded or
-standalone compatibility representation is a deterministic non-authoritative
-export.
+`proposed-model-support-assessment.json`; canonical actor, module, workflow,
+operation, decision, rule, state, and interaction bundle components referenced
+by the proposed-model manifest; governed relationships; findings; and revision
+metadata. Any diagram is a deterministic non-authoritative projection.
 
 ## Acceptance criteria
 
@@ -52,6 +69,14 @@ export.
 - [x] Detailed semantic records remain preserved.
 - [x] Production logic contains no Safara-specific routing.
 - [x] The frontend need not invent workflows or operations.
+- [ ] Model-kind support is decided from explicit source evidence before any
+      diagram projection is generated.
+- [ ] Each model kind is assessed independently and one document may support
+      several model kinds.
+- [ ] Unsupported or insufficiently evidenced diagram kinds are omitted or
+      marked review-required rather than fabricated.
+- [ ] A concept shared across workflow, dependency, state, decision, and actor
+      views retains one canonical identity.
 
 ## Tests and evidence
 
@@ -78,17 +103,24 @@ acceptance evidence.
 - [ ] Reject an empty Safara workflow topology during qualification.
 - [ ] Equivalent multilingual workflow or operation representations do not
       create duplicate topology nodes.
+- [ ] Pending multilingual equivalence retains separate authoritative nodes
+      and may only group them through review-only cluster metadata.
 - [ ] Readiness-like outcomes are modeled through governed decisions and
       labeled conditional branches rather than unconditional dual states.
 - [ ] Independent or parallel paths are not misclassified as mutually
       exclusive branches.
+- [ ] Independent enabled paths share a `fanout_group_id` and
+      `path_semantics: independent_non_exclusive`.
 
 ### Governed edge families and endpoint rules
 
 - `contains`: workflow to operation, decision, or state.
 - `precedes`, `follows`, `triggers`, `depends_on`: operation/state/decision to
   a valid executable or dependent node.
-- `branches_to`: decision to operation or state.
+- `enables`: independent, non-exclusive paths; sibling paths use shared fanout
+  metadata when they may proceed in parallel.
+- `branches_to`: conditional, exclusive, or business-selected decision outcome
+  to operation or state, with its governed condition or outcome label.
 - `joins_at`: decision, state, or operation to a join point.
 - `repeats_to`: operation or state to an earlier correction/retry operation.
 - `produces_state`, `requires_state`, `recalculates`: operation to state.

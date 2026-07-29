@@ -1,13 +1,14 @@
 # CES-GF-ATLAS-HARD-015 — Final Safara Qualification Gate
 
 **Stage:** Atlas hardening production gate
-**Status:** Blocked pending ATLAS-HARD-021 through ATLAS-HARD-027 remediation, ATLAS-UI-001 through ATLAS-UI-005 qualification, and final rerun
-**Execution order:** Final delivery gate — execute last
+**Status:** Blocked pending ATLAS-HARD-021 through ATLAS-HARD-027 remediation and final backend rerun
+**Execution order:** Final Atlas backend qualification gate
 
 ## Objective
 
-Prove the complete hardening lifecycle against the reviewed Safara oracle and
-block production approval UI integration until every mandatory gate passes.
+Prove the Atlas backend semantic, topology, projection, and publication
+lifecycle against the reviewed Safara oracle. UI qualification is owned by
+ATLAS-UI-005, and integrated release qualification is owned by ATLAS-REL-001.
 
 ## Dependencies
 
@@ -16,8 +17,6 @@ block production approval UI integration until every mandatory gate passes.
 - ATLAS-HARD-018 through ATLAS-HARD-026 canonical-model and projection
   refinement.
 - ATLAS-HARD-027 golden main-workflow projection and domain-neutral regression.
-- ATLAS-UI-001 through ATLAS-UI-005 workflow review UI implementation and
-  production qualification.
 - Completed and reconciled DAPE-008R real-provider evidence.
 
 ## Work
@@ -75,10 +74,9 @@ block production approval UI integration until every mandatory gate passes.
       gated on human review.
 - [ ] Human review is recorded; Atlas does not self-certify.
 - [ ] Existing DAPE, Atlas, CLI, and greenfield regressions remain green.
-- [ ] All ATLAS-HARD-018 through ATLAS-HARD-026 and ATLAS-UI-001 through
-      ATLAS-UI-005 acceptance criteria pass.
+- [ ] All ATLAS-HARD-018 through ATLAS-HARD-026 acceptance criteria pass.
 - [ ] ATLAS-HARD-027 golden overview and domain-neutral regression pass.
-- [x] Production approval UI integration remains blocked until acceptance.
+- [x] Backend publication remains blocked until backend acceptance.
 - [x] Qualification reports contain no claim that Safara alone proves
       domain-agnostic extraction.
 - [x] A separately tracked multi-domain gate and minimum cross-domain acceptance
@@ -86,8 +84,9 @@ block production approval UI integration until every mandatory gate passes.
 
 ## Outputs and evidence
 
-Qualification report, oracle mapping, artifact hashes, redacted provider report,
-failure variants for every gate, reviewer acceptance, and roadmap gate update.
+Backend qualification report, oracle mapping, artifact hashes, redacted
+provider report, failure variants for every backend gate, reviewer acceptance,
+and roadmap gate update.
 The report must distinguish “Safara/lifecycle qualified” from
 “multi-domain qualified.”
 

@@ -43,8 +43,9 @@ parallel semantic model, source identity system, or approval path.
 | 26 | [ATLAS-HARD-027](CES-GF-ATLAS-HARD-027-first-golden-main-workflow.md) | First qualified domain-neutral main-workflow compiler output | 018–026 |
 | 27 | [ATLAS-HARD-015](CES-GF-ATLAS-HARD-015-safara-qualification-gate.md) | Final qualification gate — executed last | 001–014, 016–027, ATLAS-UI-001–005 |
 
-ATLAS-HARD-015 is reopened, blocked, and must execute last. Workflow UI
-implementation and production qualification are owned by the separate
+ATLAS-HARD-015 is reopened and blocked until backend HARD-021 through HARD-027
+qualification completes. Workflow UI implementation and qualification are
+owned independently by the separate
 [ATLAS Workflow UI plan](../atlas-workflow-ui/README.md). The post-HARD-026
 Safara run reopened ATLAS-HARD-021 through ATLAS-HARD-026 because the generated
 workflow inventory had no connected topology or approved topology replay.
@@ -53,7 +54,10 @@ graph output is not production integration evidence.
 
 ATLAS-HARD-027 defines the first golden project overview and a mandatory
 structurally different regression fixture. Fixture-specific labels and
-topology remain outside generic production compiler logic.
+topology remain outside generic production compiler logic. HARD-027 owns only
+fixtures, assertions, regression scans, and integrated backend qualification
+evidence; failures are fixed in the production ticket that owns the contract.
+ATLAS-REL-001 combines successful HARD-015 and UI-005 results for release.
 
 ## Program rules
 
@@ -69,6 +73,11 @@ topology remain outside generic production compiler logic.
   not limit discovery to requirement and business-rule arrays.
 - Workflow relationships support arbitrary directed graphs, including branches,
   joins, loops, parallel paths, optional steps, actor lanes, and unknown nodes.
+- Atlas first classifies which model kinds the document supports. Workflow,
+  module dependency, state, decision, and actor-interaction projections are
+  independent evidence-backed views of one canonical semantic graph.
+- A document is never forced into a workflow projection when workflow evidence
+  is insufficient.
 - A proposal is immutable, non-authoritative, and never enables downstream
   execution.
 - Agents may propose, classify, criticize, and retry; they may not approve,
