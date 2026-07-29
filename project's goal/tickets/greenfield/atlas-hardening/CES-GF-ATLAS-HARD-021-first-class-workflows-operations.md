@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-021 — First-Class Workflows and Operations
 
 **Stage:** Canonical model and workflow projection refinement
-**Status:** Proposed
+**Status:** Implemented
 
 ## Objective
 
@@ -42,16 +42,16 @@ export.
 
 ## Acceptance criteria
 
-- [ ] Workflows and operations have stable IDs and source lineage.
-- [ ] Arbitrary directed workflow shapes are supported.
-- [ ] Derived workflow topology uses the shared governed relationship contract
+- [x] Workflows and operations have stable IDs and source lineage.
+- [x] Arbitrary directed workflow shapes are supported.
+- [x] Derived workflow topology uses the shared governed relationship contract
       and cannot bypass relationship review or publication rules.
-- [ ] Workflow edges expose the shared governance envelope and stable review
+- [x] Workflow edges expose the shared governance envelope and stable review
       identity without implementing a separate approval or replay path.
-- [ ] Unknown or competing structures remain review-required.
-- [ ] Detailed semantic records remain preserved.
-- [ ] Production logic contains no Safara-specific routing.
-- [ ] The frontend need not invent workflows or operations.
+- [x] Unknown or competing structures remain review-required.
+- [x] Detailed semantic records remain preserved.
+- [x] Production logic contains no Safara-specific routing.
+- [x] The frontend need not invent workflows or operations.
 
 ## Tests and evidence
 
@@ -61,3 +61,19 @@ multi-actor, heading-free, multilingual, and novel-domain workflows.
 ## Out of scope
 
 Record-to-workflow assignment is handled by ATLAS-HARD-022.
+
+## Implementation evidence
+
+`ProposedProjectModel` now contains explicit workflow, operation, and governed
+workflow-edge collections. A shared governance envelope pins origin, evidence,
+rationale, confidence, review status, eligibility, blockers, and proposal
+revision. Canonical Atlas derives domain-neutral workflow/operation records and
+emits `workflows.json`, `operations.json`, and `workflow-edges.json`; the older
+workflow-node graph remains a compatibility projection.
+
+Verification:
+
+- `corepack pnpm --filter @company/ces-proposed-project-model build`
+- `corepack pnpm --filter @company/ces-cli typecheck`
+- `corepack pnpm vitest run packages/proposed-project-model/src/index.test.ts packages/approved-project-model/src/hardened.test.ts packages/atlas-intent-graph/src/index.test.ts apps/cli/src/atlas.test.ts`
+- 20 focused tests passed.

@@ -152,6 +152,7 @@ describe("Atlas CLI pipeline", () => {
         "extraction-findings.json",
         "extractor-ledger.json",
         "legacy-projection-losses.json",
+        "operations.json",
         "proposed-project-model.json",
         "proposed-system-intent-graph.json",
         "proposed-system-intent-graph.md",
@@ -166,6 +167,8 @@ describe("Atlas CLI pipeline", () => {
         "source-units.json",
         "terminology-proposals.json",
         "translation-equivalence-proposals.json",
+        "workflow-edges.json",
+        "workflows.json",
       ]);
       expect(await json(join(output, "run-manifest.json"))).toMatchObject({
         status: "awaiting_human_review",
@@ -225,6 +228,7 @@ describe("Atlas CLI pipeline", () => {
         "extraction-findings.json",
         "extractor-ledger.json",
         "legacy-projection-losses.json",
+        "operations.json",
         "proposed-project-model.json",
         "proposed-system-intent-graph.json",
         "proposed-system-intent-graph.md",
@@ -245,6 +249,8 @@ describe("Atlas CLI pipeline", () => {
         "system-intent-graph.mmd",
         "terminology-proposals.json",
         "translation-equivalence-proposals.json",
+        "workflow-edges.json",
+        "workflows.json",
       ]);
       expect(await json(join(output, "run-manifest.json"))).toMatchObject({
         status: "completed",

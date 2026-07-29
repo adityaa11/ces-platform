@@ -1618,6 +1618,50 @@ function buildCanonicalProposedAtlasArtifacts(input: {
       }] : []),
     ],
   }});
+  const operationKinds = new Set([
+    "ces.kind.workflow",
+    "ces.kind.operational-procedure",
+    "ces.kind.state-transition",
+    "ces.kind.state-definition",
+  ]);
+  const operationRecords = records.filter(({ semantic_kind_id }) =>
+    operationKinds.has(semantic_kind_id));
+  const workflowIdByRecord = new Map(records
+    .filter(({ semantic_kind_id }) => semantic_kind_id === "ces.kind.workflow")
+    .map((record) => [record.id, `${projectId}.workflow.${record.id.split(".").at(-1)!}`] as const));
+  const operationIdByRecord = new Map(operationRecords.map((record) =>
+    [record.id, `${projectId}.operation.${record.id.split(".").at(-1)!}`] as const));
+  const workflows = records
+    .filter(({ semantic_kind_id }) => semantic_kind_id === "ces.kind.workflow")
+    .map((record) => ({
+      workflow_id: workflowIdByRecord.get(record.id)!,
+      label: record.statement,
+      summary: record.statement,
+      operation_ids: [operationIdByRecord.get(record.id)!],
+      source_unit_ids: record.source_unit_ids,
+      governance: governanceEnvelope({
+        id: `${projectId}.governance.workflow.${record.id.split(".").at(-1)!}`,
+        record,
+        proposalRevision: 1,
+      }),
+    }));
+  const operations = operationRecords.map((record) => ({
+    operation_id: operationIdByRecord.get(record.id)!,
+    ...(workflowIdByRecord.has(record.id)
+      ? { workflow_id: workflowIdByRecord.get(record.id)! }
+      : {}),
+    label: record.statement,
+    operation_kind: record.semantic_kind_id === "ces.kind.state-definition"
+      ? "state" as const : "action" as const,
+    semantic_record_ids: [record.id],
+    source_unit_ids: record.source_unit_ids,
+    governance: governanceEnvelope({
+      id: `${projectId}.governance.operation.${record.id.split(".").at(-1)!}`,
+      record,
+      proposalRevision: 1,
+    }),
+  }));
+  const workflowEdges: never[] = [];
   const workflowNodes = groups.map((group) => {
     const representative = group.candidates[0]!;
     return {
@@ -1765,6 +1809,9 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     kind_registry: registry,
     candidate_inventory: inventory,
     records,
+    workflows,
+    operations,
+    workflow_edges: workflowEdges,
     workflow_nodes: workflowNodes,
     relationships,
     source_documents: input.canonicalExtraction.sourceArtifacts.map(
@@ -1808,6 +1855,9 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     "atomic-claims.json": collectionCanonicalJson(atomicClaims),
     "claim-coverage.json": collectionCanonicalJson(atomicClaimCoverage),
     "record-identity-report.json": collectionCanonicalJson(identityReport),
+    "workflows.json": collectionCanonicalJson(workflows),
+    "operations.json": collectionCanonicalJson(operations),
+    "workflow-edges.json": collectionCanonicalJson(workflowEdges),
     "terminology-proposals.json": collectionCanonicalJson(terminologyProposals),
     "translation-equivalence-proposals.json": collectionCanonicalJson([]),
     ...(atomicClaimRetryScope ? {
@@ -1961,6 +2011,45 @@ export function buildProposedAtlasArtifacts(input: {
       })),
     };
   });
+  const operationRecords = records.filter(({ semantic_kind_id }) =>
+    ["ces.kind.workflow", "ces.kind.operational-procedure", "ces.kind.state-transition",
+      "ces.kind.state-definition"].includes(semantic_kind_id));
+  const workflowIdByRecord = new Map(records
+    .filter(({ semantic_kind_id }) => semantic_kind_id === "ces.kind.workflow")
+    .map((record) => [record.id, `${projectId}.workflow.${record.id.split(".").at(-1)!}`] as const));
+  const operationIdByRecord = new Map(operationRecords.map((record) =>
+    [record.id, `${projectId}.operation.${record.id.split(".").at(-1)!}`] as const));
+  const workflows = records
+    .filter(({ semantic_kind_id }) => semantic_kind_id === "ces.kind.workflow")
+    .map((record) => ({
+      workflow_id: workflowIdByRecord.get(record.id)!,
+      label: record.statement,
+      summary: record.statement,
+      operation_ids: [operationIdByRecord.get(record.id)!],
+      source_unit_ids: record.source_unit_ids,
+      governance: governanceEnvelope({
+        id: `${projectId}.governance.workflow.${record.id.split(".").at(-1)!}`,
+        record,
+        proposalRevision: 1,
+      }),
+    }));
+  const operations = operationRecords.map((record) => ({
+    operation_id: operationIdByRecord.get(record.id)!,
+    ...(workflowIdByRecord.has(record.id)
+      ? { workflow_id: workflowIdByRecord.get(record.id)! }
+      : {}),
+    label: record.statement,
+    operation_kind: record.semantic_kind_id === "ces.kind.state-definition"
+      ? "state" as const : "action" as const,
+    semantic_record_ids: [record.id],
+    source_unit_ids: record.source_unit_ids,
+    governance: governanceEnvelope({
+      id: `${projectId}.governance.operation.${record.id.split(".").at(-1)!}`,
+      record,
+      proposalRevision: 1,
+    }),
+  }));
+  const workflowEdges: never[] = [];
   const workflowNodes = legacyCandidates.map((candidate) => ({
     id: nodeIds.get(candidate.candidate_id)!,
     label: statementFor(candidate),
@@ -2053,6 +2142,9 @@ export function buildProposedAtlasArtifacts(input: {
     kind_registry: registry,
     candidate_inventory: inventory,
     records,
+    workflows,
+    operations,
+    workflow_edges: workflowEdges,
     workflow_nodes: workflowNodes,
     relationships,
     source_documents: sourceArtifacts.map(({ document_revision }) => ({
@@ -2087,6 +2179,9 @@ export function buildProposedAtlasArtifacts(input: {
   return {
     "source-units.json": collectionCanonicalJson(units),
     "record-identity-report.json": collectionCanonicalJson(identityReport),
+    "workflows.json": collectionCanonicalJson(workflows),
+    "operations.json": collectionCanonicalJson(operations),
+    "workflow-edges.json": collectionCanonicalJson(workflowEdges),
     "terminology-proposals.json": collectionCanonicalJson(terminologyProposals),
     "translation-equivalence-proposals.json": collectionCanonicalJson([]),
     "source-coverage.json": collectionCanonicalJson(coverage),
@@ -2269,6 +2364,9 @@ async function retainedPendingArtifacts(
     "record-identity-report.json",
     "terminology-proposals.json",
     "translation-equivalence-proposals.json",
+    "workflows.json",
+    "operations.json",
+    "workflow-edges.json",
     "source-coverage.json",
     "extraction-findings.json",
     "pdf-ingestion.json",
@@ -2365,6 +2463,34 @@ function normalizeClaimMatchText(value: string): string {
   return value.toLocaleLowerCase("en-US")
     .replace(/[^\p{L}\p{N}]+/gu, " ")
     .trim();
+}
+
+function governanceEnvelope(input: {
+  readonly id: string;
+  readonly record: {
+    readonly origin: "explicit" | "derived" | "human_added";
+    readonly source_unit_ids: readonly string[];
+    readonly issues: readonly { readonly code: string; readonly severity: string }[];
+  };
+  readonly proposalRevision: number;
+}) {
+  const blockers = input.record.issues
+    .filter(({ severity }) => severity !== "warning")
+    .map(({ code }) => code)
+    .sort(compareText);
+  return {
+    id: input.id,
+    origin: input.record.origin,
+    evidence_source_unit_ids: [...input.record.source_unit_ids],
+    rationale: input.record.origin === "explicit"
+      ? "Workflow structure is directly grounded in the canonical semantic record."
+      : "Workflow structure is a derived interpretation requiring review.",
+    confidence: input.record.origin === "explicit" ? 1 : 0.75,
+    review_status: "pending" as const,
+    bulk_approval_eligible: input.record.origin === "explicit" && blockers.length === 0,
+    blockers,
+    proposal_revision: input.proposalRevision,
+  };
 }
 
 function stableId(value: string): string {

@@ -124,7 +124,35 @@ function fixture() {
       origin: "explicit" as const, review_status: "pending" as const, details: [],
       issues: [] },
   ];
-  return { registry, inventory, coverage, findings, records };
+  const governance = {
+    id: "project.governance.workflow-release",
+    origin: "explicit" as const,
+    evidence_source_unit_ids: [source],
+    rationale: "The source explicitly defines the release workflow.",
+    confidence: 0.9,
+    review_status: "pending" as const,
+    bulk_approval_eligible: true,
+    blockers: [],
+    proposal_revision: 1,
+  };
+  const operations = records.map((record, index) => ({
+    operation_id: `project.operation.release-${index + 1}`,
+    workflow_id: "project.workflow.release",
+    label: record.statement,
+    operation_kind: "action" as const,
+    semantic_record_ids: [record.id],
+    source_unit_ids: [source],
+    governance: { ...governance, id: `project.governance.operation-${index + 1}` },
+  }));
+  const workflows = [{
+    workflow_id: "project.workflow.release",
+    label: "Release",
+    summary: "Review and complete release.",
+    operation_ids: operations.map(({ operation_id }) => operation_id),
+    source_unit_ids: [source],
+    governance,
+  }];
+  return { registry, inventory, coverage, findings, records, workflows, operations };
 }
 
 describe("ATLAS-HARD-009 ProposedProjectModel", () => {
@@ -135,6 +163,22 @@ describe("ATLAS-HARD-009 ProposedProjectModel", () => {
       source_revision_id: data.inventory.source_revision_id,
       kind_registry: data.registry, candidate_inventory: data.inventory,
       records: data.records,
+      workflows: data.workflows,
+      operations: data.operations,
+      workflow_edges: [{
+        edge_id: "project.edge.release-order",
+        workflow_id: "project.workflow.release",
+        from_operation_id: data.operations[0]!.operation_id,
+        to_operation_id: data.operations[1]!.operation_id,
+        edge_kind: "transition",
+        governance: {
+          ...data.workflows[0]!.governance,
+          id: "project.governance.edge-release-order",
+          origin: "derived",
+          bulk_approval_eligible: false,
+          blockers: ["derived-requires-review"],
+        },
+      }],
       workflow_nodes: [{ id: "project.workflow.release", label: "Release",
         semantic_record_ids: data.records.map(({ id }) => id), source_unit_ids: [source] }],
       source_documents: [{ document_id: "project-prd", document_version: "1.0",
@@ -150,6 +194,11 @@ describe("ATLAS-HARD-009 ProposedProjectModel", () => {
       summary: { requirements: 2, unknown_items: 1, derived_items: 1 },
     });
     expect(Object.isFrozen(model.records[0])).toBe(true);
+    expect(model).toMatchObject({
+      workflows: [{ workflow_id: "project.workflow.release" }],
+      operations: [{ operation_kind: "action" }, { operation_kind: "action" }],
+      workflow_edges: [{ edge_kind: "transition" }],
+    });
     const eligibility = calculateBulkApprovalEligibility({
       model, candidate_inventory: data.inventory,
       policy: createBulkApprovalPolicy("1.0.0", 0.75),
@@ -226,6 +275,7 @@ describe("ATLAS-HARD-009 ProposedProjectModel", () => {
       project_id: "project", proposal_revision: 1,
       source_revision_id: data.inventory.source_revision_id,
       kind_registry: data.registry, candidate_inventory: data.inventory,
+      workflows: data.workflows, operations: data.operations, workflow_edges: [],
       workflow_nodes: [], source_documents: [{ document_id: "project-prd",
         document_version: "1.0", content_hash: hash("3") }],
       source_coverage: data.coverage, extraction_findings: data.findings,

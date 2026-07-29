@@ -11,7 +11,7 @@ import {
 const hash = (character: string) => `sha256:${character.repeat(64)}`;
 const source = "project.unit.00001.aaaaaaaa";
 const proposal = {
-  schema_version: "1.1.0" as const,
+  schema_version: "1.2.0" as const,
   project_id: "project", proposal_revision: 1,
   lifecycle: "review_in_progress" as const, authoritative: false as const,
   approval_required: true as const, downstream_execution_allowed: false as const,
@@ -50,6 +50,44 @@ const proposal = {
     origin: "explicit" as const, review_status: "pending" as const,
     details: [], issues: [],
   }],
+  workflows: [{
+    workflow_id: "project.workflow.release",
+    label: "Release",
+    summary: "Release workflow.",
+    operation_ids: ["project.operation.release"],
+    source_unit_ids: [source],
+    governance: {
+      id: "project.governance.workflow-release",
+      origin: "explicit" as const,
+      evidence_source_unit_ids: [source],
+      rationale: "Source-defined workflow.",
+      confidence: 1,
+      review_status: "pending" as const,
+      bulk_approval_eligible: true,
+      blockers: [],
+      proposal_revision: 1,
+    },
+  }],
+  operations: [{
+    operation_id: "project.operation.release",
+    workflow_id: "project.workflow.release",
+    label: "Release",
+    operation_kind: "action" as const,
+    semantic_record_ids: ["project.record.temperature"],
+    source_unit_ids: [source],
+    governance: {
+      id: "project.governance.operation-release",
+      origin: "explicit" as const,
+      evidence_source_unit_ids: [source],
+      rationale: "Source-defined operation.",
+      confidence: 1,
+      review_status: "pending" as const,
+      bulk_approval_eligible: true,
+      blockers: [],
+      proposal_revision: 1,
+    },
+  }],
+  workflow_edges: [],
   workflow_nodes: [{
     id: "project.workflow.release", label: "Release",
     semantic_record_ids: ["project.record.temperature"], source_unit_ids: [source],

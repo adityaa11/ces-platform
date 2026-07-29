@@ -12,7 +12,7 @@ import {
 } from "@company/ces-semantic-record-schema";
 import { z } from "zod";
 
-export const PROPOSED_PROJECT_MODEL_VERSION = "1.1.0" as const;
+export const PROPOSED_PROJECT_MODEL_VERSION = "1.2.0" as const;
 export const CANONICAL_RECORD_IDENTITY_VERSION = "1.0.0" as const;
 const Id = z.string().regex(/^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u);
 const Hash = z.string().regex(/^sha256:[0-9a-f]{64}$/u);
@@ -170,6 +170,47 @@ export const ProposedWorkflowNodeSchema = z.object({
   source_unit_ids: z.array(Id).min(1),
 }).strict();
 
+export const GovernedAssociationSchema = z.object({
+  id: Id,
+  origin: z.enum(["explicit", "derived", "human_added"]),
+  evidence_source_unit_ids: z.array(Id),
+  rationale: Text,
+  confidence: z.number().min(0).max(1),
+  review_status: z.literal("pending"),
+  bulk_approval_eligible: z.boolean(),
+  blockers: z.array(Id),
+  proposal_revision: z.number().int().positive(),
+}).strict();
+
+export const ProposedWorkflowSchema = z.object({
+  workflow_id: Id,
+  label: Text,
+  summary: Text,
+  operation_ids: z.array(Id),
+  source_unit_ids: z.array(Id).min(1),
+  governance: GovernedAssociationSchema,
+}).strict();
+
+export const ProposedOperationSchema = z.object({
+  operation_id: Id,
+  workflow_id: Id.optional(),
+  label: Text,
+  operation_kind: z.enum(["action", "decision", "state", "start", "end", "unknown"]),
+  actor: Text.optional(),
+  semantic_record_ids: z.array(Id).min(1),
+  source_unit_ids: z.array(Id).min(1),
+  governance: GovernedAssociationSchema,
+}).strict();
+
+export const GovernedWorkflowEdgeSchema = z.object({
+  edge_id: Id,
+  workflow_id: Id,
+  from_operation_id: Id,
+  to_operation_id: Id,
+  edge_kind: z.enum(["transition", "dependency", "ordering", "branch", "join", "loop"]),
+  governance: GovernedAssociationSchema,
+}).strict();
+
 export const ProposedRelationshipSchema = z.object({
   id: Id,
   from_id: Id,
@@ -190,6 +231,9 @@ export const ProposedProjectModelSchema = z.object({
   semantic_kind_registry_id: Id,
   candidate_inventory_hash: Hash,
   records: z.array(ProposedSemanticRecordSchema),
+  workflows: z.array(ProposedWorkflowSchema),
+  operations: z.array(ProposedOperationSchema),
+  workflow_edges: z.array(GovernedWorkflowEdgeSchema),
   workflow_nodes: z.array(ProposedWorkflowNodeSchema),
   relationships: z.array(ProposedRelationshipSchema),
   source_documents: z.array(z.object({
@@ -250,6 +294,9 @@ export function createProposedProjectModel(input: {
   readonly kind_registry: z.input<typeof SemanticKindRegistrySchema>;
   readonly candidate_inventory: z.input<typeof AtlasCandidateInventorySchema>;
   readonly records: readonly z.input<typeof ProposedSemanticRecordSchema>[];
+  readonly workflows: readonly z.input<typeof ProposedWorkflowSchema>[];
+  readonly operations: readonly z.input<typeof ProposedOperationSchema>[];
+  readonly workflow_edges?: readonly z.input<typeof GovernedWorkflowEdgeSchema>[];
   readonly workflow_nodes: readonly z.input<typeof ProposedWorkflowNodeSchema>[];
   readonly relationships?: readonly z.input<typeof ProposedRelationshipSchema>[];
   readonly source_documents: readonly { document_id: string; document_version: string; content_hash: string }[];
@@ -296,14 +343,44 @@ export function createProposedProjectModel(input: {
     }
   }
   const recordIds = new Set(records.map(({ id }) => id));
-  const workflows = input.workflow_nodes.map((node) => ProposedWorkflowNodeSchema.parse(node))
+  const workflows = input.workflows.map((workflow) => ProposedWorkflowSchema.parse(workflow))
+    .sort((left, right) => compare(left.workflow_id, right.workflow_id));
+  unique(workflows.map(({ workflow_id }) => workflow_id), "workflow");
+  const workflowIds = new Set(workflows.map(({ workflow_id }) => workflow_id));
+  const operations = input.operations.map((operation) => ProposedOperationSchema.parse(operation))
+    .sort((left, right) => compare(left.operation_id, right.operation_id));
+  unique(operations.map(({ operation_id }) => operation_id), "operation");
+  const operationIds = new Set(operations.map(({ operation_id }) => operation_id));
+  for (const workflow of workflows) {
+    members(workflow.operation_ids, operationIds, "operation", workflow.workflow_id);
+    members(workflow.source_unit_ids, sourceIds, "source unit", workflow.workflow_id);
+    validateGovernance(workflow.governance, input.proposal_revision, sourceIds);
+  }
+  for (const operation of operations) {
+    if (operation.workflow_id && !workflowIds.has(operation.workflow_id)) {
+      throw new Error(`Unknown workflow on operation: ${operation.operation_id}`);
+    }
+    members(operation.semantic_record_ids, recordIds, "record", operation.operation_id);
+    members(operation.source_unit_ids, sourceIds, "source unit", operation.operation_id);
+    validateGovernance(operation.governance, input.proposal_revision, sourceIds);
+  }
+  const workflowEdges = (input.workflow_edges ?? [])
+    .map((edge) => GovernedWorkflowEdgeSchema.parse(edge))
+    .sort((left, right) => compare(left.edge_id, right.edge_id));
+  unique(workflowEdges.map(({ edge_id }) => edge_id), "workflow edge");
+  for (const edge of workflowEdges) {
+    if (!workflowIds.has(edge.workflow_id)) throw new Error(`Unknown workflow edge owner: ${edge.edge_id}`);
+    members([edge.from_operation_id, edge.to_operation_id], operationIds, "operation", edge.edge_id);
+    validateGovernance(edge.governance, input.proposal_revision, sourceIds);
+  }
+  const workflowNodes = input.workflow_nodes.map((node) => ProposedWorkflowNodeSchema.parse(node))
     .sort((a, b) => compare(a.id, b.id));
-  unique(workflows.map(({ id }) => id), "workflow node");
-  for (const node of workflows) {
+  unique(workflowNodes.map(({ id }) => id), "workflow node");
+  for (const node of workflowNodes) {
     members(node.semantic_record_ids, recordIds, "record", node.id);
     members(node.source_unit_ids, sourceIds, "source unit", node.id);
   }
-  const nodeIds = new Set(workflows.map(({ id }) => id));
+  const nodeIds = new Set(workflowNodes.map(({ id }) => id));
   const relationships = (input.relationships ?? []).map((item) =>
     ProposedRelationshipSchema.parse(item)).sort((a, b) => compare(a.id, b.id));
   for (const edge of relationships) {
@@ -329,14 +406,15 @@ export function createProposedProjectModel(input: {
     source_revision_id: Id.parse(input.source_revision_id),
     semantic_kind_registry_id: registry.id,
     candidate_inventory_hash: inventory.content_hash,
-    records, workflow_nodes: workflows, relationships,
+    records, workflows, operations, workflow_edges: workflowEdges,
+    workflow_nodes: workflowNodes, relationships,
     source_documents: [...input.source_documents].sort((a, b) => compare(a.document_id, b.document_id)),
     source_coverage: coverage,
     extraction_findings: findings,
     compatibility_projections: projections,
     approval_blockers: blockers,
     summary: {
-      workflow_steps: workflows.length,
+      workflow_steps: operations.length,
       requirements: records.length,
       unknown_items: records.filter(({ semantic_kind_id }) => semantic_kind_id === "ces.kind.unknown").length,
       derived_items: records.filter(({ origin }) => origin === "derived").length,
@@ -450,6 +528,23 @@ export function assertBulkApprovalSelection(
     if (!item.eligible) {
       throw new Error(`Bulk approval blocked for ${id}: ${item.blockers.join(",")}`);
     }
+  }
+}
+
+function validateGovernance(
+  governance: z.infer<typeof GovernedAssociationSchema>,
+  proposalRevision: number,
+  sourceIds: ReadonlySet<string>,
+): void {
+  if (governance.proposal_revision !== proposalRevision) {
+    throw new Error(`Governance proposal revision mismatch: ${governance.id}`);
+  }
+  members(governance.evidence_source_unit_ids, sourceIds, "source evidence", governance.id);
+  if (governance.origin === "explicit" && governance.evidence_source_unit_ids.length === 0) {
+    throw new Error(`Explicit governance requires source evidence: ${governance.id}`);
+  }
+  if (governance.origin !== "explicit" && governance.bulk_approval_eligible) {
+    throw new Error(`Derived governance cannot be bulk eligible: ${governance.id}`);
   }
 }
 
