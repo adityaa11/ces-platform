@@ -14,6 +14,7 @@ import { join } from "node:path";
 import {
   assertBulkApprovalSelection,
   calculateBulkApprovalEligibility,
+  createApprovedRelationshipIdentity,
   createCanonicalRecordIdentity,
   createBulkApprovalPolicy,
   createProposedProjectModel,
@@ -211,9 +212,8 @@ describe("ATLAS-HARD-009 ProposedProjectModel", () => {
         publishable: false,
       }],
       relationship_candidates: [{
-        relationship_id: "project.relationship.temperature-governs-release",
+        relationship_intent_id: "project.relationship.temperature-governs-release",
         from_id: data.records[1]!.id,
-        to_id: data.records[0]!.id,
         relationship_kind: "ces.relationship.governs",
         governance: {
           ...data.workflows[0]!.governance,
@@ -222,6 +222,24 @@ describe("ATLAS-HARD-009 ProposedProjectModel", () => {
           bulk_approval_eligible: false,
           blockers: ["derived-relationship"],
         },
+        targets: [{
+          target_candidate_id: "project.relationship-target.release",
+          target_id: data.records[0]!.id,
+          target_status: "valid",
+          evidence_source_unit_ids: [source],
+          rationale: "The control governs the release meaning.",
+          confidence: 0.8,
+          review_status: "pending",
+          blockers: [],
+        }, {
+          target_candidate_id: "project.relationship-target.unresolved",
+          target_status: "unresolved",
+          evidence_source_unit_ids: [source],
+          rationale: "A second possible target remains unresolved.",
+          confidence: 0.4,
+          review_status: "pending",
+          blockers: ["target-unresolved"],
+        }],
       }],
       workflow_nodes: [{ id: "project.workflow.release", label: "Release",
         semantic_record_ids: data.records.map(({ id }) => id), source_unit_ids: [source] }],
@@ -237,6 +255,15 @@ describe("ATLAS-HARD-009 ProposedProjectModel", () => {
       authoritative: false, approval_required: true, downstream_execution_allowed: false,
       summary: { requirements: 2, unknown_items: 1, derived_items: 1 },
     });
+    const target = model.relationship_candidates[0]!.targets[0]!;
+    expect(createApprovedRelationshipIdentity({
+      relationship_intent_id: model.relationship_candidates[0]!.relationship_intent_id,
+      target_candidate_id: target.target_candidate_id,
+      target_id: target.target_id!,
+    })).toMatchObject({
+      relationship_intent_id: model.relationship_candidates[0]!.relationship_intent_id,
+      target_candidate_id: target.target_candidate_id,
+    });
     expect(Object.isFrozen(model.records[0])).toBe(true);
     expect(model).toMatchObject({
       workflows: [{ workflow_id: "project.workflow.release" }],
@@ -248,6 +275,10 @@ describe("ATLAS-HARD-009 ProposedProjectModel", () => {
       relationship_candidates: [{
         relationship_kind: "ces.relationship.governs",
         governance: { review_status: "pending" },
+        targets: [
+          { target_status: "valid" },
+          { target_status: "unresolved" },
+        ],
       }],
     });
     const eligibility = calculateBulkApprovalEligibility({

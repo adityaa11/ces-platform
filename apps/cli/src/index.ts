@@ -1688,9 +1688,8 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     publishable: false as const,
   }));
   const relationshipCandidates = groundedRelationships.map((edge) => ({
-    relationship_id: edge.id,
+    relationship_intent_id: edge.id,
     from_id: edge.from_id,
-    to_id: edge.to_id,
     relationship_kind: edge.kind,
     governance: {
       id: `${edge.id}.governance`,
@@ -1703,6 +1702,16 @@ function buildCanonicalProposedAtlasArtifacts(input: {
       blockers: ["derived-relationship"],
       proposal_revision: 1,
     },
+    targets: [{
+      target_candidate_id: `${edge.id}.target.${edge.to_id.split(".").at(-1)!}`,
+      target_id: edge.to_id,
+      target_status: "valid" as const,
+      evidence_source_unit_ids: edge.source_unit_ids,
+      rationale: "The target shares source evidence with the relationship intent.",
+      confidence: 0.6,
+      review_status: "pending" as const,
+      blockers: [],
+    }],
   }));
   const byUnit = new Map<string, string[]>();
   const classificationByUnit = new Map(input.canonicalExtraction.sectionClassifications
@@ -2201,9 +2210,8 @@ export function buildProposedAtlasArtifacts(input: {
       publishable: false as const,
     })),
     relationship_candidates: groundedRelationships.map((edge) => ({
-      relationship_id: edge.id,
+      relationship_intent_id: edge.id,
       from_id: edge.from_id,
-      to_id: edge.to_id,
       relationship_kind: edge.kind,
       governance: {
         id: `${edge.id}.governance`,
@@ -2216,6 +2224,16 @@ export function buildProposedAtlasArtifacts(input: {
         blockers: [],
         proposal_revision: 1,
       },
+      targets: [{
+        target_candidate_id: `${edge.id}.target.${edge.to_id.split(".").at(-1)!}`,
+        target_id: edge.to_id,
+        target_status: "valid" as const,
+        evidence_source_unit_ids: edge.source_unit_ids,
+        rationale: "The legacy source explicitly names this target.",
+        confidence: 1,
+        review_status: "pending" as const,
+        blockers: [],
+      }],
     })),
     relationships: [],
     source_documents: sourceArtifacts.map(({ document_revision }) => ({

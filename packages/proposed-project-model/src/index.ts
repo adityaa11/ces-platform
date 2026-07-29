@@ -12,7 +12,7 @@ import {
 } from "@company/ces-semantic-record-schema";
 import { z } from "zod";
 
-export const PROPOSED_PROJECT_MODEL_VERSION = "1.4.0" as const;
+export const PROPOSED_PROJECT_MODEL_VERSION = "1.5.0" as const;
 export const CANONICAL_RECORD_IDENTITY_VERSION = "1.0.0" as const;
 const Id = z.string().regex(/^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u);
 const Hash = z.string().regex(/^sha256:[0-9a-f]{64}$/u);
@@ -239,12 +239,44 @@ export const RelationshipHintSchema = z.object({
 }).strict();
 
 export const RelationshipCandidateSchema = z.object({
-  relationship_id: Id,
+  relationship_intent_id: Id,
   from_id: Id,
-  to_id: Id.optional(),
   relationship_kind: Id,
   governance: GovernedAssociationSchema,
+  targets: z.array(z.object({
+    target_candidate_id: Id,
+    target_id: Id.optional(),
+    target_status: z.enum(["valid", "competing", "unresolved"]),
+    evidence_source_unit_ids: z.array(Id),
+    rationale: Text,
+    confidence: z.number().min(0).max(1),
+    review_status: z.literal("pending"),
+    blockers: z.array(Id),
+  }).strict()),
 }).strict();
+
+export const ApprovedRelationshipIdentitySchema = z.object({
+  approved_relationship_id: Id,
+  relationship_intent_id: Id,
+  target_candidate_id: Id,
+  target_id: Id,
+}).strict();
+
+export function createApprovedRelationshipIdentity(input: {
+  readonly relationship_intent_id: string;
+  readonly target_candidate_id: string;
+  readonly target_id: string;
+}): z.infer<typeof ApprovedRelationshipIdentitySchema> {
+  const core = {
+    relationship_intent_id: Id.parse(input.relationship_intent_id),
+    target_candidate_id: Id.parse(input.target_candidate_id),
+    target_id: Id.parse(input.target_id),
+  };
+  return ApprovedRelationshipIdentitySchema.parse({
+    approved_relationship_id: `approved.relationship.${hash(core).slice(7, 23)}`,
+    ...core,
+  });
+}
 
 export const ReviewerRelationshipAugmentationSchema = z.object({
   augmentation_id: Id,
@@ -499,16 +531,31 @@ export function createProposedProjectModel(input: {
   }
   const relationshipCandidates = (input.relationship_candidates ?? [])
     .map((candidate) => RelationshipCandidateSchema.parse(candidate))
-    .sort((left, right) => compare(left.relationship_id, right.relationship_id));
-  unique(relationshipCandidates.map(({ relationship_id }) => relationship_id),
-    "relationship candidate");
+    .sort((left, right) => compare(left.relationship_intent_id, right.relationship_intent_id));
+  unique(relationshipCandidates.map(({ relationship_intent_id }) => relationship_intent_id),
+    "relationship intent");
+  unique(relationshipCandidates.flatMap(({ targets }) =>
+    targets.map(({ target_candidate_id }) => target_candidate_id)), "relationship target");
   for (const candidate of relationshipCandidates) {
-    members([candidate.from_id, ...(candidate.to_id ? [candidate.to_id] : [])],
-      governedEndpointIds, "relationship endpoint", candidate.relationship_id);
+    members([candidate.from_id], governedEndpointIds,
+      "relationship endpoint", candidate.relationship_intent_id);
+    for (const target of candidate.targets) {
+      if (target.target_id) {
+        members([target.target_id], governedEndpointIds,
+          "relationship target", target.target_candidate_id);
+      }
+      members(target.evidence_source_unit_ids, sourceIds,
+        "target evidence", target.target_candidate_id);
+      if (target.target_status === "unresolved" && target.target_id) {
+        throw new Error(`Unresolved target cannot identify an endpoint: ${target.target_candidate_id}`);
+      }
+    }
     validateGovernance(candidate.governance, input.proposal_revision, sourceIds);
     if (candidate.governance.origin !== "explicit"
       && candidate.governance.bulk_approval_eligible) {
-      throw new Error(`Derived relationship cannot be bulk eligible: ${candidate.relationship_id}`);
+      throw new Error(
+        `Derived relationship cannot be bulk eligible: ${candidate.relationship_intent_id}`,
+      );
     }
   }
   const workflowNodes = input.workflow_nodes.map((node) => ProposedWorkflowNodeSchema.parse(node))
