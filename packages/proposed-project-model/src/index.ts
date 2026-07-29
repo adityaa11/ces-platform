@@ -12,7 +12,7 @@ import {
 } from "@company/ces-semantic-record-schema";
 import { z } from "zod";
 
-export const PROPOSED_PROJECT_MODEL_VERSION = "1.3.0" as const;
+export const PROPOSED_PROJECT_MODEL_VERSION = "1.4.0" as const;
 export const CANONICAL_RECORD_IDENTITY_VERSION = "1.0.0" as const;
 const Id = z.string().regex(/^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u);
 const Hash = z.string().regex(/^sha256:[0-9a-f]{64}$/u);
@@ -227,6 +227,67 @@ export const CrossCuttingAssignmentSchema = z.object({
   governance: GovernedAssociationSchema,
 }).strict();
 
+export const RelationshipHintSchema = z.object({
+  hint_id: Id,
+  from_id: Id,
+  to_id: Id.optional(),
+  relationship_kind: Id,
+  source_unit_ids: z.array(Id),
+  rationale: Text,
+  confidence: z.number().min(0).max(1),
+  publishable: z.literal(false),
+}).strict();
+
+export const RelationshipCandidateSchema = z.object({
+  relationship_id: Id,
+  from_id: Id,
+  to_id: Id.optional(),
+  relationship_kind: Id,
+  governance: GovernedAssociationSchema,
+}).strict();
+
+export const ReviewerRelationshipAugmentationSchema = z.object({
+  augmentation_id: Id,
+  augmentation_type: z.literal("add_relationship"),
+  from_id: Id,
+  to_id: Id,
+  relationship_kind: Id,
+  source_unit_ids: z.array(Id),
+  rationale: Text,
+  authored_by: Id,
+  authored_at: z.string().datetime({ offset: true }),
+  authored_revision: Id,
+  approval_status: z.literal("pending"),
+}).strict();
+
+export function createReviewerRelationshipAugmentation(input: {
+  readonly from_id: string;
+  readonly to_id: string;
+  readonly relationship_kind: string;
+  readonly source_unit_ids?: readonly string[];
+  readonly rationale: string;
+  readonly authored_by: string;
+  readonly authored_at: string;
+  readonly authored_revision: string;
+}): z.infer<typeof ReviewerRelationshipAugmentationSchema> {
+  const core = {
+    augmentation_type: "add_relationship" as const,
+    from_id: Id.parse(input.from_id),
+    to_id: Id.parse(input.to_id),
+    relationship_kind: Id.parse(input.relationship_kind),
+    source_unit_ids: [...new Set(input.source_unit_ids ?? [])].map((id) => Id.parse(id)).sort(compare),
+    rationale: Text.parse(input.rationale),
+    authored_by: Id.parse(input.authored_by),
+    authored_at: input.authored_at,
+    authored_revision: Id.parse(input.authored_revision),
+    approval_status: "pending" as const,
+  };
+  return freeze(ReviewerRelationshipAugmentationSchema.parse({
+    augmentation_id: `reviewer.augmentation.${hash(core).slice(7, 23)}`,
+    ...core,
+  }));
+}
+
 export const ProposedRelationshipSchema = z.object({
   id: Id,
   from_id: Id,
@@ -252,6 +313,8 @@ export const ProposedProjectModelSchema = z.object({
   workflow_edges: z.array(GovernedWorkflowEdgeSchema),
   workflow_assignments: z.array(WorkflowAssignmentSchema),
   cross_cutting_assignments: z.array(CrossCuttingAssignmentSchema),
+  relationship_hints: z.array(RelationshipHintSchema),
+  relationship_candidates: z.array(RelationshipCandidateSchema),
   workflow_nodes: z.array(ProposedWorkflowNodeSchema),
   relationships: z.array(ProposedRelationshipSchema),
   source_documents: z.array(z.object({
@@ -317,6 +380,8 @@ export function createProposedProjectModel(input: {
   readonly workflow_edges?: readonly z.input<typeof GovernedWorkflowEdgeSchema>[];
   readonly workflow_assignments?: readonly z.input<typeof WorkflowAssignmentSchema>[];
   readonly cross_cutting_assignments?: readonly z.input<typeof CrossCuttingAssignmentSchema>[];
+  readonly relationship_hints?: readonly z.input<typeof RelationshipHintSchema>[];
+  readonly relationship_candidates?: readonly z.input<typeof RelationshipCandidateSchema>[];
   readonly workflow_nodes: readonly z.input<typeof ProposedWorkflowNodeSchema>[];
   readonly relationships?: readonly z.input<typeof ProposedRelationshipSchema>[];
   readonly source_documents: readonly { document_id: string; document_version: string; content_hash: string }[];
@@ -419,6 +484,33 @@ export function createProposedProjectModel(input: {
     members([assignment.record_id], recordIds, "record", assignment.assignment_id);
     validateGovernance(assignment.governance, input.proposal_revision, sourceIds);
   }
+  const governedEndpointIds = new Set([
+    ...recordIds, ...workflowIds, ...operationIds,
+    ...input.workflow_nodes.map(({ id }) => Id.parse(id)),
+  ]);
+  const relationshipHints = (input.relationship_hints ?? [])
+    .map((hint) => RelationshipHintSchema.parse(hint))
+    .sort((left, right) => compare(left.hint_id, right.hint_id));
+  unique(relationshipHints.map(({ hint_id }) => hint_id), "relationship hint");
+  for (const hint of relationshipHints) {
+    members([hint.from_id, ...(hint.to_id ? [hint.to_id] : [])],
+      governedEndpointIds, "relationship endpoint", hint.hint_id);
+    members(hint.source_unit_ids, sourceIds, "source unit", hint.hint_id);
+  }
+  const relationshipCandidates = (input.relationship_candidates ?? [])
+    .map((candidate) => RelationshipCandidateSchema.parse(candidate))
+    .sort((left, right) => compare(left.relationship_id, right.relationship_id));
+  unique(relationshipCandidates.map(({ relationship_id }) => relationship_id),
+    "relationship candidate");
+  for (const candidate of relationshipCandidates) {
+    members([candidate.from_id, ...(candidate.to_id ? [candidate.to_id] : [])],
+      governedEndpointIds, "relationship endpoint", candidate.relationship_id);
+    validateGovernance(candidate.governance, input.proposal_revision, sourceIds);
+    if (candidate.governance.origin !== "explicit"
+      && candidate.governance.bulk_approval_eligible) {
+      throw new Error(`Derived relationship cannot be bulk eligible: ${candidate.relationship_id}`);
+    }
+  }
   const workflowNodes = input.workflow_nodes.map((node) => ProposedWorkflowNodeSchema.parse(node))
     .sort((a, b) => compare(a.id, b.id));
   unique(workflowNodes.map(({ id }) => id), "workflow node");
@@ -455,6 +547,8 @@ export function createProposedProjectModel(input: {
     records, workflows, operations, workflow_edges: workflowEdges,
     workflow_assignments: workflowAssignments,
     cross_cutting_assignments: crossCuttingAssignments,
+    relationship_hints: relationshipHints,
+    relationship_candidates: relationshipCandidates,
     workflow_nodes: workflowNodes, relationships,
     source_documents: [...input.source_documents].sort((a, b) => compare(a.document_id, b.document_id)),
     source_coverage: coverage,

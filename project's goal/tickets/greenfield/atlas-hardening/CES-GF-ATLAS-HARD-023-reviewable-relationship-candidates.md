@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-023 — Reviewable Relationship Candidates
 
 **Stage:** Canonical model and workflow projection refinement
-**Status:** Proposed
+**Status:** Implemented
 
 ## Objective
 
@@ -49,23 +49,23 @@ relationships.
 
 ## Acceptance criteria
 
-- [ ] Lexical hints are absent from established publishable relationships.
-- [ ] Every source-derived candidate carries rationale and source evidence.
-- [ ] A human-added candidate without source evidence is an immutable
+- [x] Lexical hints are absent from established publishable relationships.
+- [x] Every source-derived candidate carries rationale and source evidence.
+- [x] A human-added candidate without source evidence is an immutable
       augmentation with reviewer-authored rationale, trusted author identity,
       authored timestamp, and authored revision.
-- [ ] Human augmentation authorship and approval attribution are distinct.
-- [ ] Human-added relationships never mutate the original proposal and enter
+- [x] Human augmentation authorship and approval attribution are distinct.
+- [x] Human-added relationships never mutate the original proposal and enter
       approved artifacts only through HARD-026 materialization.
-- [ ] Human-added relationships are visibly attributed and never represented
+- [x] Human-added relationships are visibly attributed and never represented
       as source-extracted evidence.
-- [ ] Explicit and derived origins remain distinguishable.
-- [ ] Derived relationships require review by default.
-- [ ] Workflow topology and other semantic relationships share the governance
+- [x] Explicit and derived origins remain distinguishable.
+- [x] Derived relationships require review by default.
+- [x] Workflow topology and other semantic relationships share the governance
       envelope and stable review-subject identity; HARD-026 exclusively owns
       replay and stale-decision handling.
-- [ ] Relationship approval is independent of record approval.
-- [ ] Missing targets remain findings rather than silent omissions.
+- [x] Relationship approval is independent of record approval.
+- [x] Missing targets remain findings rather than silent omissions.
 
 ## Tests and evidence
 
@@ -76,3 +76,23 @@ misattributed human-added, workflow-edge, stale-target, and replay fixtures.
 ## Out of scope
 
 Multi-target resolution is completed by ATLAS-HARD-024.
+
+## Implementation evidence
+
+The proposed model now separates non-publishable relationship hints from
+governed relationship candidates and established relationships. Canonical
+lexical/shared-evidence discovery emits hints and derived review subjects but
+no publishable edge. Explicit and derived candidates reuse the shared
+governance envelope. Human-added relationships are immutable reviewer
+augmentations with distinct authorship metadata and remain outside the
+proposal and approval state.
+
+Atlas emits `candidate-relationship-hints.json`,
+`relationship-candidates.json`, and `reviewer-augmentations.json`.
+
+Verification:
+
+- `corepack pnpm --filter @company/ces-proposed-project-model build`
+- `corepack pnpm --filter @company/ces-cli typecheck`
+- `corepack pnpm vitest run packages/proposed-project-model/src/index.test.ts packages/approved-project-model/src/hardened.test.ts packages/atlas-intent-graph/src/index.test.ts apps/cli/src/atlas.test.ts`
+- 21 focused tests passed.

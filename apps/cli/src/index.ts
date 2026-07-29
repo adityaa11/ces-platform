@@ -1674,9 +1674,36 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     source_unit_ids: [...new Set(group.candidates.flatMap(({ source_unit_ids }) =>
       source_unit_ids))].sort(compareText),
   }});
-  const relationships = buildGroundedAtlasRelationships({
+  const groundedRelationships = buildGroundedAtlasRelationships({
     projectId, records, workflowNodes,
   });
+  const relationshipHints = groundedRelationships.map((edge) => ({
+    hint_id: `${edge.id}.hint`,
+    from_id: edge.from_id,
+    to_id: edge.to_id,
+    relationship_kind: edge.kind,
+    source_unit_ids: edge.source_unit_ids,
+    rationale: "Lexical and shared-evidence signals suggest this relationship.",
+    confidence: 0.6,
+    publishable: false as const,
+  }));
+  const relationshipCandidates = groundedRelationships.map((edge) => ({
+    relationship_id: edge.id,
+    from_id: edge.from_id,
+    to_id: edge.to_id,
+    relationship_kind: edge.kind,
+    governance: {
+      id: `${edge.id}.governance`,
+      origin: "derived" as const,
+      evidence_source_unit_ids: edge.source_unit_ids,
+      rationale: "Shared source evidence and lexical support produced a reviewable candidate.",
+      confidence: 0.6,
+      review_status: "pending" as const,
+      bulk_approval_eligible: false,
+      blockers: ["derived-relationship"],
+      proposal_revision: 1,
+    },
+  }));
   const byUnit = new Map<string, string[]>();
   const classificationByUnit = new Map(input.canonicalExtraction.sectionClassifications
     .map((classification) => [classification.source_unit_id, classification] as const));
@@ -1818,7 +1845,9 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     workflow_assignments: workflowAssignments,
     cross_cutting_assignments: crossCuttingAssignments,
     workflow_nodes: workflowNodes,
-    relationships,
+    relationship_hints: relationshipHints,
+    relationship_candidates: relationshipCandidates,
+    relationships: [],
     source_documents: input.canonicalExtraction.sourceArtifacts.map(
       ({ document_revision }) => ({
         document_id: document_revision.document_id,
@@ -1865,6 +1894,9 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     "workflow-edges.json": collectionCanonicalJson(workflowEdges),
     "workflow-assignments.json": collectionCanonicalJson(workflowAssignments),
     "cross-cutting-assignments.json": collectionCanonicalJson(crossCuttingAssignments),
+    "candidate-relationship-hints.json": collectionCanonicalJson(relationshipHints),
+    "relationship-candidates.json": collectionCanonicalJson(relationshipCandidates),
+    "reviewer-augmentations.json": collectionCanonicalJson([]),
     "terminology-proposals.json": collectionCanonicalJson(terminologyProposals),
     "translation-equivalence-proposals.json": collectionCanonicalJson([]),
     ...(atomicClaimRetryScope ? {
@@ -2070,7 +2102,7 @@ export function buildProposedAtlasArtifacts(input: {
     [candidate.proposed_logical_id, candidate] as const,
     [candidate.candidate_id, candidate] as const,
   ]));
-  const relationships = rules.flatMap((rule) =>
+  const groundedRelationships = rules.flatMap((rule) =>
     rule.source_requirement_ids.flatMap((logicalId) => {
       const requirement = requirementByReference.get(logicalId);
       if (!requirement) return [];
@@ -2158,7 +2190,34 @@ export function buildProposedAtlasArtifacts(input: {
     workflow_assignments: workflowAssignments,
     cross_cutting_assignments: crossCuttingAssignments,
     workflow_nodes: workflowNodes,
-    relationships,
+    relationship_hints: groundedRelationships.map((edge) => ({
+      hint_id: `${edge.id}.hint`,
+      from_id: edge.from_id,
+      to_id: edge.to_id,
+      relationship_kind: edge.kind,
+      source_unit_ids: edge.source_unit_ids,
+      rationale: "Legacy source references suggest this relationship.",
+      confidence: 0.7,
+      publishable: false as const,
+    })),
+    relationship_candidates: groundedRelationships.map((edge) => ({
+      relationship_id: edge.id,
+      from_id: edge.from_id,
+      to_id: edge.to_id,
+      relationship_kind: edge.kind,
+      governance: {
+        id: `${edge.id}.governance`,
+        origin: "explicit" as const,
+        evidence_source_unit_ids: edge.source_unit_ids,
+        rationale: "The legacy rule explicitly references the target requirement.",
+        confidence: 1,
+        review_status: "pending" as const,
+        bulk_approval_eligible: true,
+        blockers: [],
+        proposal_revision: 1,
+      },
+    })),
+    relationships: [],
     source_documents: sourceArtifacts.map(({ document_revision }) => ({
       document_id: document_revision.document_id,
       document_version: document_revision.revision_hash,
@@ -2196,6 +2255,13 @@ export function buildProposedAtlasArtifacts(input: {
     "workflow-edges.json": collectionCanonicalJson(workflowEdges),
     "workflow-assignments.json": collectionCanonicalJson(workflowAssignments),
     "cross-cutting-assignments.json": collectionCanonicalJson(crossCuttingAssignments),
+    "candidate-relationship-hints.json": collectionCanonicalJson(
+      model.relationship_hints,
+    ),
+    "relationship-candidates.json": collectionCanonicalJson(
+      model.relationship_candidates,
+    ),
+    "reviewer-augmentations.json": collectionCanonicalJson([]),
     "terminology-proposals.json": collectionCanonicalJson(terminologyProposals),
     "translation-equivalence-proposals.json": collectionCanonicalJson([]),
     "source-coverage.json": collectionCanonicalJson(coverage),
@@ -2365,6 +2431,7 @@ async function retainedPendingArtifacts(
   for (const path of [
     "source-index.json",
     "candidate-analysis.json",
+    "candidate-relationship-hints.json",
     "clarification-questions.json",
     "review-input.json",
     "proposed-project-model.json",
@@ -2376,6 +2443,8 @@ async function retainedPendingArtifacts(
     "claim-coverage.json",
     "claim-retry-scope.json",
     "record-identity-report.json",
+    "relationship-candidates.json",
+    "reviewer-augmentations.json",
     "terminology-proposals.json",
     "translation-equivalence-proposals.json",
     "workflows.json",

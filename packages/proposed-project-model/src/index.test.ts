@@ -18,6 +18,7 @@ import {
   createBulkApprovalPolicy,
   createProposedProjectModel,
   createRecordIdentityReport,
+  createReviewerRelationshipAugmentation,
   publishProposedProjectModel,
 } from "./index.js";
 
@@ -199,6 +200,29 @@ describe("ATLAS-HARD-009 ProposedProjectModel", () => {
           id: "project.governance.cross-cutting-temperature",
         },
       }],
+      relationship_hints: [{
+        hint_id: "project.hint.temperature-governs-release",
+        from_id: data.records[1]!.id,
+        to_id: data.records[0]!.id,
+        relationship_kind: "ces.relationship.governs",
+        source_unit_ids: [source],
+        rationale: "Lexical overlap suggests governance.",
+        confidence: 0.6,
+        publishable: false,
+      }],
+      relationship_candidates: [{
+        relationship_id: "project.relationship.temperature-governs-release",
+        from_id: data.records[1]!.id,
+        to_id: data.records[0]!.id,
+        relationship_kind: "ces.relationship.governs",
+        governance: {
+          ...data.workflows[0]!.governance,
+          id: "project.governance.relationship-temperature-release",
+          origin: "derived",
+          bulk_approval_eligible: false,
+          blockers: ["derived-relationship"],
+        },
+      }],
       workflow_nodes: [{ id: "project.workflow.release", label: "Release",
         semantic_record_ids: data.records.map(({ id }) => id), source_unit_ids: [source] }],
       source_documents: [{ document_id: "project-prd", document_version: "1.0",
@@ -220,6 +244,11 @@ describe("ATLAS-HARD-009 ProposedProjectModel", () => {
       workflow_edges: [{ edge_kind: "transition" }],
       workflow_assignments: [{ applicability: "primary" }, { applicability: "supporting" }],
       cross_cutting_assignments: [{ control_area: "operational-control" }],
+      relationship_hints: [{ publishable: false }],
+      relationship_candidates: [{
+        relationship_kind: "ces.relationship.governs",
+        governance: { review_status: "pending" },
+      }],
     });
     const eligibility = calculateBulkApprovalEligibility({
       model, candidate_inventory: data.inventory,
@@ -242,6 +271,25 @@ describe("ATLAS-HARD-009 ProposedProjectModel", () => {
     await publishProposedProjectModel(path, model);
     expect(JSON.parse(await readFile(path, "utf8"))).toEqual(model);
     await expect(publishProposedProjectModel(path, model)).rejects.toThrow();
+  });
+
+  it("keeps reviewer-authored relationships outside the immutable proposal", () => {
+    const augmentation = createReviewerRelationshipAugmentation({
+      from_id: "project.record.finance-review",
+      to_id: "project.record.readiness",
+      relationship_kind: "ces.relationship.precedes",
+      rationale: "The buyer clarified the required ordering.",
+      authored_by: "reviewer-123",
+      authored_at: "2026-07-29T10:00:00+07:00",
+      authored_revision: "decision.rev.001",
+    });
+    expect(augmentation).toMatchObject({
+      augmentation_type: "add_relationship",
+      source_unit_ids: [],
+      authored_by: "reviewer-123",
+      approval_status: "pending",
+    });
+    expect(augmentation).not.toHaveProperty("approved_by");
   });
 
   it("creates revision-scoped IDs and longitudinal migration reports", () => {
@@ -299,6 +347,7 @@ describe("ATLAS-HARD-009 ProposedProjectModel", () => {
       kind_registry: data.registry, candidate_inventory: data.inventory,
       workflows: data.workflows, operations: data.operations, workflow_edges: [],
       workflow_assignments: [], cross_cutting_assignments: [],
+      relationship_hints: [], relationship_candidates: [],
       workflow_nodes: [], source_documents: [{ document_id: "project-prd",
         document_version: "1.0", content_hash: hash("3") }],
       source_coverage: data.coverage, extraction_findings: data.findings,
