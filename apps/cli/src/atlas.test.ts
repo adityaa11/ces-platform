@@ -410,7 +410,13 @@ describe("Atlas CLI pipeline", () => {
         }],
       });
       expect(await json(join(output, "proposed-project-overview-graph.json")))
-        .toEqual({ workflows: [], relationships: [], nodes: [], edges: [] });
+        .toEqual({
+          workflows: [],
+          relationships: [],
+          nodes: [],
+          edges: [],
+          duplicate_decision_state_labels: [],
+        });
       expect(await json(join(output, "workflow-assignment-diagnostics.json")))
         .toMatchObject({
           duplicate_tuple_count: 0,

@@ -283,6 +283,7 @@ export const FocusedProjectionBundleSchema = z.object({
         "business_workflow", "shared_data", "context_provider",
         "state_workflow", "reporting_audit", "decision", "state",
       ]),
+      state_value_id: StableId.optional(),
       label: NonEmptyString,
       review_status: z.literal("pending"),
     }).strict()),
@@ -294,6 +295,10 @@ export const FocusedProjectionBundleSchema = z.object({
       outcome_label: NonEmptyString.optional(),
       review_status: z.literal("pending"),
     }).strict()),
+    duplicate_decision_state_labels: z.array(z.object({
+      normalized_label: NonEmptyString,
+      node_ids: z.array(StableId).min(2),
+    }).strict()),
   }).strict(),
   workflow_details: z.array(z.object({
     workflow_id: StableId,
@@ -301,6 +306,7 @@ export const FocusedProjectionBundleSchema = z.object({
       operation_id: StableId,
       label: NonEmptyString,
       operation_kind: NonEmptyString,
+      state_value_id: StableId.optional(),
       semantic_record_ids: z.array(StableId),
     }).strict()),
     edges: z.array(z.object({
@@ -385,6 +391,7 @@ export function createFocusedAtlasProjections(input: {
     .map((operation) => ({
       node_id: operation.operation_id,
       node_kind: operation.operation_kind as "decision" | "state",
+      ...(operation.state_value_id ? { state_value_id: operation.state_value_id } : {}),
       label: operation.label,
       review_status: "pending" as const,
     }));
@@ -464,6 +471,18 @@ export function createFocusedAtlasProjections(input: {
     ].sort((left, right) => compareText(left.node_id, right.node_id)),
     edges: [...overviewEdges, ...branchEntryEdges, ...branchEdges]
       .sort((left, right) => compareText(left.edge_id, right.edge_id)),
+    duplicate_decision_state_labels: [...Map.groupBy(
+      overviewOperationNodes,
+      ({ label }) => label.normalize("NFKC").toLocaleLowerCase("en-US")
+        .replace(/[^\p{L}\p{N}]+/gu, " ").trim(),
+    )].flatMap(([normalizedLabel, nodes]) => {
+      const kinds = new Set(nodes.map(({ node_kind }) => node_kind));
+      return kinds.has("decision") && kinds.has("state")
+        ? [{
+          normalized_label: normalizedLabel,
+          node_ids: nodes.map(({ node_id }) => node_id).sort(compareText),
+        }] : [];
+    }).sort((left, right) => compareText(left.normalized_label, right.normalized_label)),
   };
   const workflowDetails = model.workflows.map((workflow) => ({
     workflow_id: workflow.workflow_id,
@@ -472,6 +491,7 @@ export function createFocusedAtlasProjections(input: {
       operation_id: operation.operation_id,
       label: operation.label,
       operation_kind: operation.operation_kind,
+      ...(operation.state_value_id ? { state_value_id: operation.state_value_id } : {}),
       semantic_record_ids: [...operation.semantic_record_ids].sort(compareText),
     })).sort((left, right) => compareText(left.operation_id, right.operation_id)),
     edges: model.workflow_edges.filter(({ workflow_id }) =>
