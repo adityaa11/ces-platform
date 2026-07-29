@@ -1007,7 +1007,10 @@ async function extractCanonicalAtlasCandidates(input: {
       if (selectedKinds.length === 0) continue;
       const matchingPurposeIds = new Set(matchingPurposes.map(([purpose]) => purpose));
       const candidateUnits = new Set(input.sectionClassification.output.classifications
-        .filter(({ purpose_ids, disposition }) => disposition === "normative"
+        .filter(({ purpose_ids, disposition }) =>
+          (disposition === "normative"
+            || (disposition === "contextual"
+              && purpose_ids.includes("ces.section.workflows")))
           && purpose_ids.some((purpose) => matchingPurposeIds.has(purpose)))
         .map(({ source_unit_id }) => source_unit_id));
       const scopedUnits = units.filter(({ id }) => candidateUnits.has(id));
