@@ -68,6 +68,7 @@ import {
 } from "@company/ces-greenfield-contracts";
 import { ingestPdfDocument } from "@company/ces-pdf-ingestion";
 import {
+  assessSupportedModelKinds,
   calculateExpandedApprovalEligibility,
   createCanonicalRecordIdentity,
   createProposedProjectModel,
@@ -1731,6 +1732,60 @@ function assembleAtlasWorkflowTopology(input: {
   };
 }
 
+function assessAtlasModelSupport(input: {
+  readonly proposalRevision: number;
+  readonly records: readonly {
+    readonly semantic_kind_id: string;
+    readonly source_unit_ids: readonly string[];
+  }[];
+  readonly workflowEdges: readonly unknown[];
+}) {
+  const count = (kind: string) => input.records
+    .filter(({ semantic_kind_id }) => semantic_kind_id === kind).length;
+  const workflowRecords = count("ces.kind.workflow")
+    + count("ces.kind.operational-procedure");
+  const stateDefinitions = count("ces.kind.state-definition");
+  const stateTransitions = count("ces.kind.state-transition");
+  const businessRules = count("ces.kind.business-rule")
+    + count("ces.kind.lifecycle-rule");
+  const permissions = count("ces.kind.role-permission");
+  const capabilities = count("ces.kind.capability");
+  const terminology = count("ces.kind.terminology");
+  const sourceIds = [...new Set(input.records.flatMap(({ source_unit_ids }) =>
+    source_unit_ids))].sort(compareText);
+  return assessSupportedModelKinds({
+    proposal_revision: input.proposalRevision,
+    evidence_counts: {
+      activities: workflowRecords,
+      activity_relationships: input.workflowEdges.length,
+      process_structures: input.workflowEdges.length + stateTransitions + businessRules,
+      process_boundaries: workflowRecords > 0 ? 1 : 0,
+      bpmn_semantics: stateTransitions,
+      functional_areas: capabilities + workflowRecords,
+      modules: capabilities,
+      module_relationships: 0,
+      states: stateDefinitions,
+      state_transitions: stateTransitions,
+      decision_rules: businessRules,
+      actors: permissions,
+      actor_goals: permissions,
+      participants: permissions,
+      ordered_messages: 0,
+      entities: terminology,
+      entity_attributes: 0,
+      entity_relationships: 0,
+    },
+    evidence_source_unit_ids: Object.fromEntries(
+      [
+        "activity_flow", "business_workflow", "bpmn_candidate",
+        "functional_decomposition", "state_diagram", "decision_model",
+        "actor_goal_model", "conceptual_data_model",
+      ].map((kind) => [kind, sourceIds]),
+    ),
+    review_required_model_kinds: ["bpmn_candidate"],
+  });
+}
+
 function buildCanonicalProposedAtlasArtifacts(input: {
   readonly canonicalExtraction: Awaited<ReturnType<typeof extractCanonicalAtlasCandidates>>;
   readonly documents: readonly { document_id: string; path: string; content: string }[];
@@ -1860,6 +1915,11 @@ function buildCanonicalProposedAtlasArtifacts(input: {
   });
   const { workflowAssignments, crossCuttingAssignments, assignmentDiagnostics } = buildAtlasAssignments({
     projectId, proposalRevision: 1, records, workflows, operations,
+  });
+  const modelSupport = assessAtlasModelSupport({
+    proposalRevision: 1,
+    records,
+    workflowEdges,
   });
   const workflowNodes = groups.map((group) => {
     const representative = group.candidates[0]!;
@@ -2026,6 +2086,7 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     kind_registry: registry,
     candidate_inventory: inventory,
     records,
+    model_support: modelSupport,
     workflows,
     operations,
     workflow_edges: workflowEdges,
@@ -2083,6 +2144,7 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     "atomic-claims.json": collectionCanonicalJson(atomicClaims),
     "claim-coverage.json": collectionCanonicalJson(atomicClaimCoverage),
     "record-identity-report.json": collectionCanonicalJson(identityReport),
+    "proposed-model-support-assessment.json": collectionCanonicalJson(modelSupport),
     "workflows.json": collectionCanonicalJson(workflows),
     "operations.json": collectionCanonicalJson(operations),
     "workflow-edges.json": collectionCanonicalJson(workflowEdges),
@@ -2318,6 +2380,11 @@ export function buildProposedAtlasArtifacts(input: {
   const { workflowAssignments, crossCuttingAssignments, assignmentDiagnostics } = buildAtlasAssignments({
     projectId, proposalRevision: 1, records, workflows, operations,
   });
+  const modelSupport = assessAtlasModelSupport({
+    proposalRevision: 1,
+    records,
+    workflowEdges,
+  });
   const workflowNodes = legacyCandidates.map((candidate) => ({
     id: nodeIds.get(candidate.candidate_id)!,
     label: statementFor(candidate),
@@ -2419,6 +2486,7 @@ export function buildProposedAtlasArtifacts(input: {
     kind_registry: registry,
     candidate_inventory: inventory,
     records,
+    model_support: modelSupport,
     workflows,
     operations,
     workflow_edges: workflowEdges,
@@ -2475,6 +2543,7 @@ export function buildProposedAtlasArtifacts(input: {
   return {
     "source-units.json": collectionCanonicalJson(units),
     "record-identity-report.json": collectionCanonicalJson(identityReport),
+    "proposed-model-support-assessment.json": collectionCanonicalJson(modelSupport),
     "workflows.json": collectionCanonicalJson(workflows),
     "operations.json": collectionCanonicalJson(operations),
     "workflow-edges.json": collectionCanonicalJson(workflowEdges),

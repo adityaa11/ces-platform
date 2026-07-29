@@ -12,6 +12,7 @@ import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
+  assessSupportedModelKinds,
   assertBulkApprovalSelection,
   calculateBulkApprovalEligibility,
   calculateExpandedApprovalEligibility,
@@ -415,6 +416,78 @@ describe("ATLAS-HARD-009 ProposedProjectModel", () => {
     });
     expect(report.equivalence_clusters).toEqual([cluster]);
     expect(report.identities.every((identity) => !identity.approved_logical_id)).toBe(true);
+  });
+
+  it("classifies supported model kinds independently from semantic evidence", () => {
+    const assessments = assessSupportedModelKinds({
+      proposal_revision: 1,
+      evidence_counts: {
+        activities: 4,
+        activity_relationships: 3,
+        process_structures: 2,
+        process_boundaries: 1,
+        bpmn_semantics: 1,
+        functional_areas: 5,
+        modules: 5,
+        module_relationships: 4,
+        states: 3,
+        state_transitions: 2,
+        decision_conditions: 2,
+        decision_outcomes: 2,
+        actors: 3,
+        actor_goals: 6,
+        participants: 3,
+        ordered_messages: 0,
+        entities: 4,
+      },
+      evidence_source_unit_ids: {
+        business_workflow: [source],
+        actor_goal_model: [source],
+      },
+      review_required_model_kinds: ["bpmn_candidate"],
+    });
+    const byKind = new Map(assessments.map((assessment) =>
+      [assessment.model_kind, assessment]));
+    expect(byKind.get("business_workflow")).toMatchObject({
+      support_status: "supported",
+      projection_eligibility: "normal_proposed",
+    });
+    expect(byKind.get("bpmn_candidate")).toMatchObject({
+      support_status: "human_review_required",
+      projection_eligibility: "review_preview",
+    });
+    expect(byKind.get("actor_goal_model")?.support_status).toBe("supported");
+    expect(byKind.get("sequence_interaction")).toMatchObject({
+      support_status: "insufficient_evidence",
+      projection_eligibility: "none",
+      missing_evidence: ["ordered_message_exchange"],
+    });
+    expect(byKind.get("conceptual_data_model")?.support_status).toBe("supported");
+  });
+
+  it("does not force workflows, dependencies, or sequences from weaker evidence", () => {
+    const assessments = assessSupportedModelKinds({
+      proposal_revision: 1,
+      evidence_counts: {
+        activities: 0,
+        functional_areas: 3,
+        modules: 3,
+        module_relationships: 0,
+        decision_rules: 1,
+        actors: 2,
+        actor_goals: 3,
+        participants: 2,
+        ordered_messages: 0,
+      },
+    });
+    const byKind = new Map(assessments.map((assessment) =>
+      [assessment.model_kind, assessment]));
+    expect(byKind.get("functional_decomposition")?.support_status).toBe("supported");
+    expect(byKind.get("decision_model")?.support_status).toBe("supported");
+    expect(byKind.get("business_workflow")?.support_status).toBe("insufficient_evidence");
+    expect(byKind.get("module_dependency")?.support_status).toBe("insufficient_evidence");
+    expect(byKind.get("actor_goal_model")?.support_status).toBe("supported");
+    expect(byKind.get("sequence_interaction")?.support_status).toBe("insufficient_evidence");
   });
 
   it("rejects missing projections and invalid derived records", () => {

@@ -14,7 +14,7 @@ import {
 } from "@company/ces-semantic-record-schema";
 import { z } from "zod";
 
-export const PROPOSED_PROJECT_MODEL_VERSION = "1.6.0" as const;
+export const PROPOSED_PROJECT_MODEL_VERSION = "2.0.0" as const;
 export const CANONICAL_RECORD_IDENTITY_VERSION = "1.1.0" as const;
 const Id = z.string().regex(/^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u);
 const Hash = z.string().regex(/^sha256:[0-9a-f]{64}$/u);
@@ -234,6 +234,173 @@ export const ProposedWorkflowNodeSchema = z.object({
   source_unit_ids: z.array(Id).min(1),
 }).strict();
 
+export const ModelKindSchema = z.enum([
+  "activity_flow",
+  "business_workflow",
+  "bpmn_candidate",
+  "functional_decomposition",
+  "module_dependency",
+  "state_diagram",
+  "decision_model",
+  "actor_goal_model",
+  "sequence_interaction",
+  "conceptual_data_model",
+]);
+
+export const ModelSupportStatusSchema = z.enum([
+  "supported",
+  "partially_supported",
+  "insufficient_evidence",
+  "conflicting_evidence",
+  "not_applicable",
+  "human_review_required",
+]);
+
+export const ModelSupportAssessmentSchema = z.object({
+  model_kind: ModelKindSchema,
+  support_status: ModelSupportStatusSchema,
+  confidence: z.number().min(0).max(1),
+  evidence_source_unit_ids: z.array(Id),
+  satisfied_evidence: z.array(Id),
+  missing_evidence: z.array(Id),
+  rationale: Text,
+  projection_eligibility: z.enum([
+    "normal_proposed",
+    "review_only_partial",
+    "review_preview",
+    "exception_only",
+    "none",
+  ]),
+  review_status: z.literal("pending"),
+  proposal_revision: z.number().int().positive(),
+}).strict();
+
+const MODEL_KINDS = ModelKindSchema.options;
+
+export function assessSupportedModelKinds(input: {
+  readonly proposal_revision: number;
+  readonly evidence_counts: Readonly<Record<string, number>>;
+  readonly evidence_source_unit_ids?: Readonly<Partial<Record<
+    z.infer<typeof ModelKindSchema>,
+    readonly string[]
+  >>>;
+  readonly conflicting_model_kinds?: readonly z.infer<typeof ModelKindSchema>[];
+  readonly review_required_model_kinds?: readonly z.infer<typeof ModelKindSchema>[];
+  readonly not_applicable_model_kinds?: readonly z.infer<typeof ModelKindSchema>[];
+}): readonly z.infer<typeof ModelSupportAssessmentSchema>[] {
+  const revision = z.number().int().positive().parse(input.proposal_revision);
+  const count = (key: string) => Math.max(0, Math.trunc(input.evidence_counts[key] ?? 0));
+  const conflicting = new Set(input.conflicting_model_kinds ?? []);
+  const reviewRequired = new Set(input.review_required_model_kinds ?? []);
+  const notApplicable = new Set(input.not_applicable_model_kinds ?? []);
+  const requirements: Record<z.infer<typeof ModelKindSchema>, {
+    readonly supported: boolean;
+    readonly partial: boolean;
+    readonly satisfied: readonly string[];
+    readonly missing: readonly string[];
+  }> = {
+    activity_flow: evidence(
+      [["two_activities", count("activities") >= 2],
+        ["ordered_or_dependent_pair", count("activity_relationships") >= 1]],
+    ),
+    business_workflow: evidence(
+      [["two_activities", count("activities") >= 2],
+        ["meaningful_process_structure", count("process_structures") >= 1]],
+      count("activities") >= 2 && count("activity_relationships") >= 1,
+    ),
+    bpmn_candidate: evidence(
+      [["process_boundary", count("process_boundaries") >= 1],
+        ["bpmn_semantics", count("bpmn_semantics") >= 1]],
+      count("activities") >= 2 && count("process_structures") >= 1,
+    ),
+    functional_decomposition: evidence(
+      [["functional_areas_or_subcapabilities",
+        count("functional_areas") >= 2 || count("subcapabilities") >= 1]],
+    ),
+    module_dependency: evidence(
+      [["two_modules", count("modules") >= 2],
+        ["evidence_backed_module_relationship", count("module_relationships") >= 1]],
+    ),
+    state_diagram: evidence(
+      [["two_states", count("states") >= 2],
+        ["state_transition", count("state_transitions") >= 1]],
+      count("states") >= 2,
+    ),
+    decision_model: evidence(
+      [["condition_outcome_rule", (count("decision_conditions") >= 1
+        && count("decision_outcomes") >= 2) || count("decision_rules") >= 1]],
+    ),
+    actor_goal_model: evidence(
+      [["actor", count("actors") >= 1],
+        ["actor_goal_capability_or_permission", count("actor_goals") >= 1]],
+    ),
+    sequence_interaction: evidence(
+      [["two_participants", count("participants") >= 2],
+        ["ordered_message_exchange", count("ordered_messages") >= 1]],
+    ),
+    conceptual_data_model: evidence(
+      [["entities_or_attributed_entity", count("entities") >= 2
+        || (count("entities") >= 1 && count("entity_attributes") >= 1
+          && count("entity_relationships") >= 1)]],
+    ),
+  };
+  return MODEL_KINDS.map((modelKind) => {
+    const requirement = requirements[modelKind];
+    let status: z.infer<typeof ModelSupportStatusSchema>;
+    if (notApplicable.has(modelKind)) status = "not_applicable";
+    else if (conflicting.has(modelKind)) status = "conflicting_evidence";
+    else if (requirement.supported && reviewRequired.has(modelKind)) {
+      status = "human_review_required";
+    } else if (requirement.supported) status = "supported";
+    else if (requirement.partial) status = "partially_supported";
+    else status = "insufficient_evidence";
+    const projectionEligibility = status === "supported"
+      ? "normal_proposed"
+      : status === "partially_supported"
+        ? "review_only_partial"
+        : status === "human_review_required"
+          ? "review_preview"
+          : status === "conflicting_evidence"
+            ? "exception_only"
+            : "none";
+    const sourceIds = [...new Set(input.evidence_source_unit_ids?.[modelKind] ?? [])]
+      .map((id) => Id.parse(id)).sort(compare);
+    const confidence = status === "supported" ? 1
+      : status === "human_review_required" ? 0.75
+        : status === "partially_supported" ? 0.5
+          : sourceIds.length > 0 ? 0.25 : 0;
+    return ModelSupportAssessmentSchema.parse({
+      model_kind: modelKind,
+      support_status: status,
+      confidence,
+      evidence_source_unit_ids: sourceIds,
+      satisfied_evidence: requirement.satisfied,
+      missing_evidence: requirement.missing,
+      rationale: `${modelKind} is ${status.replaceAll("_", " ")} from semantic evidence.`,
+      projection_eligibility: projectionEligibility,
+      review_status: "pending",
+      proposal_revision: revision,
+    });
+  });
+}
+
+function evidence(
+  checks: readonly (readonly [string, boolean])[],
+  partial = false,
+): {
+  readonly supported: boolean;
+  readonly partial: boolean;
+  readonly satisfied: readonly string[];
+  readonly missing: readonly string[];
+} {
+  return {
+    supported: checks.every(([, passed]) => passed),
+    partial,
+    satisfied: checks.filter(([, passed]) => passed).map(([name]) => name),
+    missing: checks.filter(([, passed]) => !passed).map(([name]) => name),
+  };
+}
+
 export const GovernedAssociationSchema = z.object({
   id: Id,
   origin: z.enum(["explicit", "derived", "human_added"]),
@@ -404,6 +571,7 @@ export const ProposedProjectModelSchema = z.object({
   semantic_kind_registry_id: Id,
   candidate_inventory_hash: Hash,
   records: z.array(ProposedSemanticRecordSchema),
+  model_support: z.array(ModelSupportAssessmentSchema),
   workflows: z.array(ProposedWorkflowSchema),
   operations: z.array(ProposedOperationSchema),
   workflow_edges: z.array(GovernedWorkflowEdgeSchema),
@@ -591,6 +759,7 @@ export function createProposedProjectModel(input: {
   readonly kind_registry: z.input<typeof SemanticKindRegistrySchema>;
   readonly candidate_inventory: z.input<typeof AtlasCandidateInventorySchema>;
   readonly records: readonly z.input<typeof ProposedSemanticRecordSchema>[];
+  readonly model_support?: readonly z.input<typeof ModelSupportAssessmentSchema>[];
   readonly workflows: readonly z.input<typeof ProposedWorkflowSchema>[];
   readonly operations: readonly z.input<typeof ProposedOperationSchema>[];
   readonly workflow_edges?: readonly z.input<typeof GovernedWorkflowEdgeSchema>[];
@@ -624,6 +793,13 @@ export function createProposedProjectModel(input: {
   const sourceIds = new Set(coverage.source_coverage.map(({ source_unit_id }) => source_unit_id));
   const records = input.records.map((record) => ProposedSemanticRecordSchema.parse(record))
     .sort((a, b) => compare(a.id, b.id));
+  const modelSupport = (input.model_support ?? [])
+    .map((assessment) => ModelSupportAssessmentSchema.parse(assessment))
+    .sort((left, right) => compare(left.model_kind, right.model_kind));
+  unique(modelSupport.map(({ model_kind }) => model_kind), "model support assessment");
+  if (modelSupport.some(({ proposal_revision }) => proposal_revision !== input.proposal_revision)) {
+    throw new Error("Model support assessment revision mismatch");
+  }
   unique(records.map(({ id }) => id), "record");
   for (const record of records) {
     if (record.id !== record.identity.record_id
@@ -775,7 +951,7 @@ export function createProposedProjectModel(input: {
     source_revision_id: Id.parse(input.source_revision_id),
     semantic_kind_registry_id: registry.id,
     candidate_inventory_hash: inventory.content_hash,
-    records, workflows, operations, workflow_edges: workflowEdges,
+    records, model_support: modelSupport, workflows, operations, workflow_edges: workflowEdges,
     workflow_assignments: workflowAssignments,
     cross_cutting_assignments: crossCuttingAssignments,
     relationship_hints: relationshipHints,

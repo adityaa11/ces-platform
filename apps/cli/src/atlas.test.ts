@@ -166,6 +166,19 @@ describe("Atlas CLI pipeline", () => {
           entity_id: expect.any(String),
         })],
       });
+      expect(await json(join(output, "proposed-model-support-assessment.json")))
+        .toEqual(expect.arrayContaining([
+          expect.objectContaining({
+            model_kind: "business_workflow",
+            support_status: "insufficient_evidence",
+            projection_eligibility: "none",
+          }),
+          expect.objectContaining({
+            model_kind: "sequence_interaction",
+            support_status: "insufficient_evidence",
+            projection_eligibility: "none",
+          }),
+        ]));
       const projection = JSON.parse(
         await readFile(join(output, "legacy-projection-losses.json"), "utf8"),
       );
@@ -186,6 +199,7 @@ describe("Atlas CLI pipeline", () => {
         "legacy-projection-losses.json",
         "operations.json",
         "proposed-approval-exceptions.json",
+        "proposed-model-support-assessment.json",
         "proposed-project-model.json",
         "proposed-project-overview-graph.json",
         "proposed-relationship-review.json",
