@@ -1543,6 +1543,127 @@ function buildGroundedAtlasRelationships(input: {
   return edges.sort((left, right) => compareText(left.id, right.id));
 }
 
+function assembleAtlasWorkflowTopology(input: {
+  readonly projectId: string;
+  readonly proposalRevision: number;
+  readonly records: readonly {
+    readonly id: string;
+    readonly statement: string;
+    readonly source_unit_ids: readonly string[];
+  }[];
+  readonly workflows: readonly {
+    readonly workflow_id: string;
+    readonly label: string;
+    readonly summary: string;
+    readonly operation_ids: readonly string[];
+    readonly source_unit_ids: readonly string[];
+    readonly governance: ReturnType<typeof governanceEnvelope>;
+  }[];
+  readonly operations: readonly {
+    readonly operation_id: string;
+    readonly workflow_id?: string;
+    readonly label: string;
+    readonly operation_kind: "action" | "decision" | "state" | "start" | "end" | "unknown";
+    readonly semantic_record_ids: readonly string[];
+    readonly source_unit_ids: readonly string[];
+    readonly governance: ReturnType<typeof governanceEnvelope>;
+  }[];
+}) {
+  const recordOrder = new Map(input.records.map((record, index) => [record.id, index]));
+  const workflowTokens = new Map(input.workflows.map((workflow) =>
+    [workflow.workflow_id, semanticTokens(workflow.label)] as const));
+  const workflowSources = new Map(input.workflows.map((workflow) =>
+    [workflow.workflow_id, new Set(workflow.source_unit_ids)] as const));
+  const operationWorkflow = new Map<string, string>();
+  for (const operation of input.operations) {
+    const declared = operation.workflow_id;
+    if (declared) {
+      operationWorkflow.set(operation.operation_id, declared);
+      continue;
+    }
+    const operationTokens = semanticTokens(operation.label);
+    const ranked = input.workflows.map((workflow) => {
+      const sharedEvidence = operation.source_unit_ids.filter((id) =>
+        workflowSources.get(workflow.workflow_id)!.has(id));
+      return {
+        workflow_id: workflow.workflow_id,
+        sharedEvidence,
+        score: sharedEvidence.length * 10
+          + jaccard(operationTokens, workflowTokens.get(workflow.workflow_id)!),
+      };
+    }).filter(({ score }) => score > 0)
+      .sort((left, right) => right.score - left.score
+        || compareText(left.workflow_id, right.workflow_id));
+    if (ranked[0]) operationWorkflow.set(operation.operation_id, ranked[0].workflow_id);
+  }
+  const operations = input.operations.map((operation) => ({
+    ...operation,
+    ...(operationWorkflow.has(operation.operation_id)
+      ? { workflow_id: operationWorkflow.get(operation.operation_id)! }
+      : {}),
+  }));
+  const workflows = input.workflows.map((workflow) => {
+    const operationIds = operations.filter(({ workflow_id }) =>
+      workflow_id === workflow.workflow_id).map(({ operation_id }) => operation_id);
+    return {
+      ...workflow,
+      operation_ids: [...new Set([...workflow.operation_ids, ...operationIds])].sort(compareText),
+      source_unit_ids: [...workflow.source_unit_ids],
+    };
+  });
+  const workflowEdges = workflows.flatMap((workflow) => {
+    const members = operations.filter(({ operation_id }) =>
+      workflow.operation_ids.includes(operation_id)).sort((left, right) => {
+        const leftOrder = Math.min(...left.semantic_record_ids.map((id) =>
+          recordOrder.get(id) ?? Number.MAX_SAFE_INTEGER));
+        const rightOrder = Math.min(...right.semantic_record_ids.map((id) =>
+          recordOrder.get(id) ?? Number.MAX_SAFE_INTEGER));
+        return leftOrder - rightOrder || compareText(left.operation_id, right.operation_id);
+      });
+    return members.slice(1).map((operation, index) => {
+      const previous = members[index]!;
+      const evidence = [...new Set([
+        ...previous.source_unit_ids,
+        ...operation.source_unit_ids,
+      ])].sort(compareText);
+      const core = {
+        workflow_id: workflow.workflow_id,
+        from_operation_id: previous.operation_id,
+        to_operation_id: operation.operation_id,
+        edge_kind: previous.operation_kind === "decision"
+          ? "branch" as const
+          : previous.operation_kind === "state" || operation.operation_kind === "state"
+            ? "transition" as const
+            : "ordering" as const,
+      };
+      return {
+        edge_id: `${input.projectId}.workflow-edge.${hashCanonical(core).slice(7, 19)}`,
+        ...core,
+        governance: {
+          id: `${input.projectId}.governance.workflow-edge.${hashCanonical(core).slice(7, 19)}`,
+          origin: "derived" as const,
+          evidence_source_unit_ids: evidence,
+          rationale: "Canonical source order and workflow membership suggest this operation order.",
+          confidence: 0.6,
+          review_status: "pending" as const,
+          bulk_approval_eligible: false,
+          blockers: ["derived-topology-requires-review"],
+          proposal_revision: input.proposalRevision,
+        },
+      };
+    });
+  }).sort((left, right) => compareText(left.edge_id, right.edge_id));
+  return {
+    workflows,
+    operations: operations.map((operation) => ({
+      ...operation,
+      semantic_record_ids: [...operation.semantic_record_ids],
+      source_unit_ids: [...operation.source_unit_ids],
+    })),
+    workflowEdges,
+  };
+}
+
 function buildCanonicalProposedAtlasArtifacts(input: {
   readonly canonicalExtraction: Awaited<ReturnType<typeof extractCanonicalAtlasCandidates>>;
   readonly documents: readonly { document_id: string; path: string; content: string }[];
@@ -1633,7 +1754,7 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     .map((record) => [record.id, `${projectId}.workflow.${record.id.split(".").at(-1)!}`] as const));
   const operationIdByRecord = new Map(operationRecords.map((record) =>
     [record.id, `${projectId}.operation.${record.id.split(".").at(-1)!}`] as const));
-  const workflows = records
+  const initialWorkflows = records
     .filter(({ semantic_kind_id }) => semantic_kind_id === "ces.kind.workflow")
     .map((record) => ({
       workflow_id: workflowIdByRecord.get(record.id)!,
@@ -1647,7 +1768,7 @@ function buildCanonicalProposedAtlasArtifacts(input: {
         proposalRevision: 1,
       }),
     }));
-  const operations = operationRecords.map((record) => ({
+  const initialOperations = operationRecords.map((record) => ({
     operation_id: operationIdByRecord.get(record.id)!,
     ...(workflowIdByRecord.has(record.id)
       ? { workflow_id: workflowIdByRecord.get(record.id)! }
@@ -1663,7 +1784,13 @@ function buildCanonicalProposedAtlasArtifacts(input: {
       proposalRevision: 1,
     }),
   }));
-  const workflowEdges: never[] = [];
+  const { workflows, operations, workflowEdges } = assembleAtlasWorkflowTopology({
+    projectId,
+    proposalRevision: 1,
+    records,
+    workflows: initialWorkflows,
+    operations: initialOperations,
+  });
   const { workflowAssignments, crossCuttingAssignments } = buildAtlasAssignments({
     projectId, proposalRevision: 1, records, workflows, operations,
   });
@@ -2095,7 +2222,7 @@ export function buildProposedAtlasArtifacts(input: {
     .map((record) => [record.id, `${projectId}.workflow.${record.id.split(".").at(-1)!}`] as const));
   const operationIdByRecord = new Map(operationRecords.map((record) =>
     [record.id, `${projectId}.operation.${record.id.split(".").at(-1)!}`] as const));
-  const workflows = records
+  const initialWorkflows = records
     .filter(({ semantic_kind_id }) => semantic_kind_id === "ces.kind.workflow")
     .map((record) => ({
       workflow_id: workflowIdByRecord.get(record.id)!,
@@ -2109,7 +2236,7 @@ export function buildProposedAtlasArtifacts(input: {
         proposalRevision: 1,
       }),
     }));
-  const operations = operationRecords.map((record) => ({
+  const initialOperations = operationRecords.map((record) => ({
     operation_id: operationIdByRecord.get(record.id)!,
     ...(workflowIdByRecord.has(record.id)
       ? { workflow_id: workflowIdByRecord.get(record.id)! }
@@ -2125,7 +2252,13 @@ export function buildProposedAtlasArtifacts(input: {
       proposalRevision: 1,
     }),
   }));
-  const workflowEdges: never[] = [];
+  const { workflows, operations, workflowEdges } = assembleAtlasWorkflowTopology({
+    projectId,
+    proposalRevision: 1,
+    records,
+    workflows: initialWorkflows,
+    operations: initialOperations,
+  });
   const { workflowAssignments, crossCuttingAssignments } = buildAtlasAssignments({
     projectId, proposalRevision: 1, records, workflows, operations,
   });
