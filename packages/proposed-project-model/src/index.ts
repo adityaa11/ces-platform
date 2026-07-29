@@ -14,8 +14,8 @@ import {
 } from "@company/ces-semantic-record-schema";
 import { z } from "zod";
 
-export const PROPOSED_PROJECT_MODEL_VERSION = "2.0.0" as const;
-export const CANONICAL_RECORD_IDENTITY_VERSION = "1.1.0" as const;
+export const PROPOSED_PROJECT_MODEL_VERSION = "1.5.0" as const;
+export const CANONICAL_RECORD_IDENTITY_VERSION = "1.0.0" as const;
 const Id = z.string().regex(/^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u);
 const Hash = z.string().regex(/^sha256:[0-9a-f]{64}$/u);
 const Text = z.string().trim().min(1);
@@ -571,7 +571,7 @@ export const ProposedProjectModelSchema = z.object({
   semantic_kind_registry_id: Id,
   candidate_inventory_hash: Hash,
   records: z.array(ProposedSemanticRecordSchema),
-  model_support: z.array(ModelSupportAssessmentSchema),
+  model_support: z.array(ModelSupportAssessmentSchema).default([]),
   workflows: z.array(ProposedWorkflowSchema),
   operations: z.array(ProposedOperationSchema),
   workflow_edges: z.array(GovernedWorkflowEdgeSchema),

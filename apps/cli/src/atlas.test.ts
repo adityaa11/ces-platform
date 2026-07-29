@@ -82,6 +82,37 @@ describe("DAPE-008 staged Atlas commands", () => {
     });
   });
 
+  it("represents unresolved zero-target intents without inventing endpoints", () => {
+    const result = buildAtlasRelationshipCandidates({
+      projectId: "test-project",
+      proposalRevision: 1,
+      edges: [],
+      unresolved_intents: [{
+        from_id: "node.rule",
+        relationship_kind: "ces.relationship.constrains",
+        evidence_source_unit_ids: ["source.rule"],
+        rationale: "The source defines a constraint but does not identify its target.",
+      }],
+    });
+    expect(result.candidates).toEqual([
+      expect.objectContaining({
+        from_id: "node.rule",
+        relationship_kind: "ces.relationship.constrains",
+        targets: [],
+        governance: expect.objectContaining({
+          origin: "derived",
+          evidence_source_unit_ids: ["source.rule"],
+          blockers: ["relationship-target-unresolved"],
+        }),
+      }),
+    ]);
+    expect(result.diagnostics).toMatchObject({
+      zero_target_count: 1,
+      one_target_count: 0,
+      multi_target_count: 0,
+    });
+  });
+
   it("supports analyze, coverage, questions, and graph without changing legacy commands", async () => {
     const directory = await mkdtemp(join(tmpdir(), "ces-atlas-staged-"));
     try {

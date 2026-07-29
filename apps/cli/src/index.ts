@@ -1556,9 +1556,15 @@ export function buildAtlasRelationshipCandidates(input: {
     readonly kind: string;
     readonly source_unit_ids: readonly string[];
   }[];
+  readonly unresolved_intents?: readonly {
+    readonly from_id: string;
+    readonly relationship_kind: string;
+    readonly evidence_source_unit_ids: readonly string[];
+    readonly rationale: string;
+  }[];
 }) {
   const grouped = Map.groupBy(input.edges, (edge) => `${edge.from_id}:${edge.kind}`);
-  const candidates = [...grouped.values()].map((edges) => {
+  const resolvedCandidates = [...grouped.values()].map((edges) => {
     const representative = edges[0]!;
     const intentCore = {
       from_id: representative.from_id,
@@ -1599,8 +1605,36 @@ export function buildAtlasRelationshipCandidates(input: {
         blockers: input.origin === "explicit" ? [] : ["derived-target-requires-review"],
       })).sort((left, right) => compareText(left.target_candidate_id, right.target_candidate_id)),
     };
-  }).sort((left, right) =>
-    compareText(left.relationship_intent_id, right.relationship_intent_id));
+  });
+  const unresolvedCandidates = (input.unresolved_intents ?? []).map((intent) => {
+    const core = {
+      from_id: intent.from_id,
+      relationship_kind: intent.relationship_kind,
+    };
+    const relationshipIntentId =
+      `${input.projectId}.relationship.${hashCanonical(core).slice(7, 19)}`;
+    return {
+      relationship_intent_id: relationshipIntentId,
+      from_id: intent.from_id,
+      relationship_kind: intent.relationship_kind,
+      governance: {
+        id: `${relationshipIntentId}.governance`,
+        origin: "derived" as const,
+        evidence_source_unit_ids: [...new Set(intent.evidence_source_unit_ids)]
+          .sort(compareText),
+        rationale: intent.rationale,
+        confidence: 0,
+        review_status: "pending" as const,
+        bulk_approval_eligible: false,
+        blockers: ["relationship-target-unresolved"],
+        proposal_revision: input.proposalRevision,
+      },
+      targets: [],
+    };
+  });
+  const candidates = [...resolvedCandidates, ...unresolvedCandidates]
+    .sort((left, right) =>
+      compareText(left.relationship_intent_id, right.relationship_intent_id));
   const diagnostics = {
     schema_version: "1.1.0",
     intent_count: candidates.length,
