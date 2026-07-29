@@ -1589,24 +1589,33 @@ export function buildAtlasRelationshipCandidates(input: {
         target_candidate_id:
           `${relationshipIntentId}.target.${hashCanonical(edge.to_id).slice(7, 19)}`,
         target_id: edge.to_id,
-        target_status: "valid" as const,
+        target_status: input.origin === "explicit" ? "valid" as const : "competing" as const,
         evidence_source_unit_ids: [...edge.source_unit_ids].sort(compareText),
-        rationale: "This target independently shares source evidence with the relationship intent.",
+        rationale: input.origin === "explicit"
+          ? "The source explicitly identifies this independently reviewable target."
+          : "Shared evidence and semantic similarity propose this target for independent review.",
         confidence: input.origin === "explicit" ? 1 : 0.6,
         review_status: "pending" as const,
-        blockers: [],
+        blockers: input.origin === "explicit" ? [] : ["derived-target-requires-review"],
       })).sort((left, right) => compareText(left.target_candidate_id, right.target_candidate_id)),
     };
   }).sort((left, right) =>
     compareText(left.relationship_intent_id, right.relationship_intent_id));
   const diagnostics = {
-    schema_version: "1.0.0",
+    schema_version: "1.1.0",
     intent_count: candidates.length,
     zero_target_count: candidates.filter(({ targets }) => targets.length === 0).length,
     one_target_count: candidates.filter(({ targets }) => targets.length === 1).length,
     multi_target_count: candidates.filter(({ targets }) => targets.length > 1).length,
     independently_reviewable_target_count: candidates
       .flatMap(({ targets }) => targets).length,
+    source_derived_with_evidence_count: candidates
+      .filter(({ governance }) => governance.evidence_source_unit_ids.length > 0).length,
+    missing_evidence_count: candidates
+      .filter(({ governance }) => governance.evidence_source_unit_ids.length === 0).length,
+    derived_without_review_blocker_count: candidates
+      .filter(({ governance }) => governance.origin === "derived"
+        && !governance.blockers.includes("derived-relationship")).length,
   };
   return { candidates, diagnostics };
 }
@@ -2476,7 +2485,6 @@ export function buildProposedAtlasArtifacts(input: {
   } = buildAtlasRelationshipCandidates({
     projectId,
     proposalRevision: 1,
-    origin: "explicit",
     edges: groundedRelationships,
   });
   const model = createProposedProjectModel({

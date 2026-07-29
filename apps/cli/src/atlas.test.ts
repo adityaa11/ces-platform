@@ -35,6 +35,51 @@ describe("DAPE-008 staged Atlas commands", () => {
     expect(new Set(result.candidates[0]?.targets.map(({ target_candidate_id }) =>
       target_candidate_id)).size).toBe(2);
     expect(result.diagnostics.multi_target_count).toBe(1);
+    expect(result.candidates[0]?.governance).toMatchObject({
+      origin: "derived",
+      bulk_approval_eligible: false,
+      blockers: ["derived-relationship"],
+    });
+    expect(result.candidates[0]?.targets).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        target_status: "competing",
+        blockers: ["derived-target-requires-review"],
+      }),
+    ]));
+    expect(result.diagnostics).toMatchObject({
+      schema_version: "1.1.0",
+      source_derived_with_evidence_count: 1,
+      missing_evidence_count: 0,
+      derived_without_review_blocker_count: 0,
+    });
+  });
+
+  it("keeps explicitly sourced relationship targets distinct from derived hints", () => {
+    const result = buildAtlasRelationshipCandidates({
+      projectId: "test-project",
+      proposalRevision: 1,
+      origin: "explicit",
+      edges: [{
+        id: "edge.explicit",
+        from_id: "node.readiness",
+        to_id: "node.manifest",
+        kind: "ces.relationship.enables",
+        source_unit_ids: ["source.explicit"],
+      }],
+    });
+    expect(result.candidates[0]).toMatchObject({
+      governance: {
+        origin: "explicit",
+        evidence_source_unit_ids: ["source.explicit"],
+        bulk_approval_eligible: false,
+        blockers: [],
+      },
+      targets: [{
+        target_status: "valid",
+        blockers: [],
+        review_status: "pending",
+      }],
+    });
   });
 
   it("supports analyze, coverage, questions, and graph without changing legacy commands", async () => {
