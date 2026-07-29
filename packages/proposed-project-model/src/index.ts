@@ -12,7 +12,7 @@ import {
 } from "@company/ces-semantic-record-schema";
 import { z } from "zod";
 
-export const PROPOSED_PROJECT_MODEL_VERSION = "1.2.0" as const;
+export const PROPOSED_PROJECT_MODEL_VERSION = "1.3.0" as const;
 export const CANONICAL_RECORD_IDENTITY_VERSION = "1.0.0" as const;
 const Id = z.string().regex(/^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u);
 const Hash = z.string().regex(/^sha256:[0-9a-f]{64}$/u);
@@ -211,6 +211,22 @@ export const GovernedWorkflowEdgeSchema = z.object({
   governance: GovernedAssociationSchema,
 }).strict();
 
+export const WorkflowAssignmentSchema = z.object({
+  assignment_id: Id,
+  record_id: Id,
+  workflow_id: Id,
+  operation_id: Id.optional(),
+  applicability: z.enum(["primary", "supporting"]),
+  governance: GovernedAssociationSchema,
+}).strict();
+
+export const CrossCuttingAssignmentSchema = z.object({
+  assignment_id: Id,
+  record_id: Id,
+  control_area: Id,
+  governance: GovernedAssociationSchema,
+}).strict();
+
 export const ProposedRelationshipSchema = z.object({
   id: Id,
   from_id: Id,
@@ -234,6 +250,8 @@ export const ProposedProjectModelSchema = z.object({
   workflows: z.array(ProposedWorkflowSchema),
   operations: z.array(ProposedOperationSchema),
   workflow_edges: z.array(GovernedWorkflowEdgeSchema),
+  workflow_assignments: z.array(WorkflowAssignmentSchema),
+  cross_cutting_assignments: z.array(CrossCuttingAssignmentSchema),
   workflow_nodes: z.array(ProposedWorkflowNodeSchema),
   relationships: z.array(ProposedRelationshipSchema),
   source_documents: z.array(z.object({
@@ -297,6 +315,8 @@ export function createProposedProjectModel(input: {
   readonly workflows: readonly z.input<typeof ProposedWorkflowSchema>[];
   readonly operations: readonly z.input<typeof ProposedOperationSchema>[];
   readonly workflow_edges?: readonly z.input<typeof GovernedWorkflowEdgeSchema>[];
+  readonly workflow_assignments?: readonly z.input<typeof WorkflowAssignmentSchema>[];
+  readonly cross_cutting_assignments?: readonly z.input<typeof CrossCuttingAssignmentSchema>[];
   readonly workflow_nodes: readonly z.input<typeof ProposedWorkflowNodeSchema>[];
   readonly relationships?: readonly z.input<typeof ProposedRelationshipSchema>[];
   readonly source_documents: readonly { document_id: string; document_version: string; content_hash: string }[];
@@ -373,6 +393,32 @@ export function createProposedProjectModel(input: {
     members([edge.from_operation_id, edge.to_operation_id], operationIds, "operation", edge.edge_id);
     validateGovernance(edge.governance, input.proposal_revision, sourceIds);
   }
+  const workflowAssignments = (input.workflow_assignments ?? [])
+    .map((assignment) => WorkflowAssignmentSchema.parse(assignment))
+    .sort((left, right) => compare(left.assignment_id, right.assignment_id));
+  unique(workflowAssignments.map(({ assignment_id }) => assignment_id), "workflow assignment");
+  for (const assignment of workflowAssignments) {
+    members([assignment.record_id], recordIds, "record", assignment.assignment_id);
+    members([assignment.workflow_id], workflowIds, "workflow", assignment.assignment_id);
+    if (assignment.operation_id) {
+      members([assignment.operation_id], operationIds, "operation", assignment.assignment_id);
+      const operation = operations.find(({ operation_id }) =>
+        operation_id === assignment.operation_id)!;
+      if (operation.workflow_id && operation.workflow_id !== assignment.workflow_id) {
+        throw new Error(`Assignment workflow/operation mismatch: ${assignment.assignment_id}`);
+      }
+    }
+    validateGovernance(assignment.governance, input.proposal_revision, sourceIds);
+  }
+  const crossCuttingAssignments = (input.cross_cutting_assignments ?? [])
+    .map((assignment) => CrossCuttingAssignmentSchema.parse(assignment))
+    .sort((left, right) => compare(left.assignment_id, right.assignment_id));
+  unique(crossCuttingAssignments.map(({ assignment_id }) => assignment_id),
+    "cross-cutting assignment");
+  for (const assignment of crossCuttingAssignments) {
+    members([assignment.record_id], recordIds, "record", assignment.assignment_id);
+    validateGovernance(assignment.governance, input.proposal_revision, sourceIds);
+  }
   const workflowNodes = input.workflow_nodes.map((node) => ProposedWorkflowNodeSchema.parse(node))
     .sort((a, b) => compare(a.id, b.id));
   unique(workflowNodes.map(({ id }) => id), "workflow node");
@@ -407,6 +453,8 @@ export function createProposedProjectModel(input: {
     semantic_kind_registry_id: registry.id,
     candidate_inventory_hash: inventory.content_hash,
     records, workflows, operations, workflow_edges: workflowEdges,
+    workflow_assignments: workflowAssignments,
+    cross_cutting_assignments: crossCuttingAssignments,
     workflow_nodes: workflowNodes, relationships,
     source_documents: [...input.source_documents].sort((a, b) => compare(a.document_id, b.document_id)),
     source_coverage: coverage,

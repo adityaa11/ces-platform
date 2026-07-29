@@ -148,6 +148,7 @@ describe("Atlas CLI pipeline", () => {
         "candidate-merge-report.json",
         "claim-coverage.json",
         "clarification-questions.json",
+        "cross-cutting-assignments.json",
         "document-structure.json",
         "extraction-findings.json",
         "extractor-ledger.json",
@@ -167,6 +168,7 @@ describe("Atlas CLI pipeline", () => {
         "source-units.json",
         "terminology-proposals.json",
         "translation-equivalence-proposals.json",
+        "workflow-assignments.json",
         "workflow-edges.json",
         "workflows.json",
       ]);
@@ -224,6 +226,7 @@ describe("Atlas CLI pipeline", () => {
         "clarification-questions.json",
         "core-handoff/REQ-PROJECT-001.policy-manifest.json",
         "core-handoff/summary.json",
+        "cross-cutting-assignments.json",
         "document-structure.json",
         "extraction-findings.json",
         "extractor-ledger.json",
@@ -249,6 +252,7 @@ describe("Atlas CLI pipeline", () => {
         "system-intent-graph.mmd",
         "terminology-proposals.json",
         "translation-equivalence-proposals.json",
+        "workflow-assignments.json",
         "workflow-edges.json",
         "workflows.json",
       ]);

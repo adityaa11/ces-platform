@@ -179,6 +179,26 @@ describe("ATLAS-HARD-009 ProposedProjectModel", () => {
           blockers: ["derived-requires-review"],
         },
       }],
+      workflow_assignments: data.records.map((record, index) => ({
+        assignment_id: `project.assignment.release-${index + 1}`,
+        record_id: record.id,
+        workflow_id: "project.workflow.release",
+        operation_id: data.operations[index]!.operation_id,
+        applicability: index === 0 ? "primary" as const : "supporting" as const,
+        governance: {
+          ...data.workflows[0]!.governance,
+          id: `project.governance.assignment-${index + 1}`,
+        },
+      })),
+      cross_cutting_assignments: [{
+        assignment_id: "project.cross-cutting.temperature",
+        record_id: data.records[1]!.id,
+        control_area: "operational-control",
+        governance: {
+          ...data.workflows[0]!.governance,
+          id: "project.governance.cross-cutting-temperature",
+        },
+      }],
       workflow_nodes: [{ id: "project.workflow.release", label: "Release",
         semantic_record_ids: data.records.map(({ id }) => id), source_unit_ids: [source] }],
       source_documents: [{ document_id: "project-prd", document_version: "1.0",
@@ -198,6 +218,8 @@ describe("ATLAS-HARD-009 ProposedProjectModel", () => {
       workflows: [{ workflow_id: "project.workflow.release" }],
       operations: [{ operation_kind: "action" }, { operation_kind: "action" }],
       workflow_edges: [{ edge_kind: "transition" }],
+      workflow_assignments: [{ applicability: "primary" }, { applicability: "supporting" }],
+      cross_cutting_assignments: [{ control_area: "operational-control" }],
     });
     const eligibility = calculateBulkApprovalEligibility({
       model, candidate_inventory: data.inventory,
@@ -276,6 +298,7 @@ describe("ATLAS-HARD-009 ProposedProjectModel", () => {
       source_revision_id: data.inventory.source_revision_id,
       kind_registry: data.registry, candidate_inventory: data.inventory,
       workflows: data.workflows, operations: data.operations, workflow_edges: [],
+      workflow_assignments: [], cross_cutting_assignments: [],
       workflow_nodes: [], source_documents: [{ document_id: "project-prd",
         document_version: "1.0", content_hash: hash("3") }],
       source_coverage: data.coverage, extraction_findings: data.findings,

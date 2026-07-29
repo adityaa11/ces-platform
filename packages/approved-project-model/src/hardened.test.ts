@@ -11,7 +11,7 @@ import {
 const hash = (character: string) => `sha256:${character.repeat(64)}`;
 const source = "project.unit.00001.aaaaaaaa";
 const proposal = {
-  schema_version: "1.2.0" as const,
+  schema_version: "1.3.0" as const,
   project_id: "project", proposal_revision: 1,
   lifecycle: "review_in_progress" as const, authoritative: false as const,
   approval_required: true as const, downstream_execution_allowed: false as const,
@@ -88,6 +88,8 @@ const proposal = {
     },
   }],
   workflow_edges: [],
+  workflow_assignments: [],
+  cross_cutting_assignments: [],
   workflow_nodes: [{
     id: "project.workflow.release", label: "Release",
     semantic_record_ids: ["project.record.temperature"], source_unit_ids: [source],

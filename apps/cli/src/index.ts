@@ -1662,6 +1662,9 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     }),
   }));
   const workflowEdges: never[] = [];
+  const { workflowAssignments, crossCuttingAssignments } = buildAtlasAssignments({
+    projectId, proposalRevision: 1, records, workflows, operations,
+  });
   const workflowNodes = groups.map((group) => {
     const representative = group.candidates[0]!;
     return {
@@ -1812,6 +1815,8 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     workflows,
     operations,
     workflow_edges: workflowEdges,
+    workflow_assignments: workflowAssignments,
+    cross_cutting_assignments: crossCuttingAssignments,
     workflow_nodes: workflowNodes,
     relationships,
     source_documents: input.canonicalExtraction.sourceArtifacts.map(
@@ -1858,6 +1863,8 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     "workflows.json": collectionCanonicalJson(workflows),
     "operations.json": collectionCanonicalJson(operations),
     "workflow-edges.json": collectionCanonicalJson(workflowEdges),
+    "workflow-assignments.json": collectionCanonicalJson(workflowAssignments),
+    "cross-cutting-assignments.json": collectionCanonicalJson(crossCuttingAssignments),
     "terminology-proposals.json": collectionCanonicalJson(terminologyProposals),
     "translation-equivalence-proposals.json": collectionCanonicalJson([]),
     ...(atomicClaimRetryScope ? {
@@ -2050,6 +2057,9 @@ export function buildProposedAtlasArtifacts(input: {
     }),
   }));
   const workflowEdges: never[] = [];
+  const { workflowAssignments, crossCuttingAssignments } = buildAtlasAssignments({
+    projectId, proposalRevision: 1, records, workflows, operations,
+  });
   const workflowNodes = legacyCandidates.map((candidate) => ({
     id: nodeIds.get(candidate.candidate_id)!,
     label: statementFor(candidate),
@@ -2145,6 +2155,8 @@ export function buildProposedAtlasArtifacts(input: {
     workflows,
     operations,
     workflow_edges: workflowEdges,
+    workflow_assignments: workflowAssignments,
+    cross_cutting_assignments: crossCuttingAssignments,
     workflow_nodes: workflowNodes,
     relationships,
     source_documents: sourceArtifacts.map(({ document_revision }) => ({
@@ -2182,6 +2194,8 @@ export function buildProposedAtlasArtifacts(input: {
     "workflows.json": collectionCanonicalJson(workflows),
     "operations.json": collectionCanonicalJson(operations),
     "workflow-edges.json": collectionCanonicalJson(workflowEdges),
+    "workflow-assignments.json": collectionCanonicalJson(workflowAssignments),
+    "cross-cutting-assignments.json": collectionCanonicalJson(crossCuttingAssignments),
     "terminology-proposals.json": collectionCanonicalJson(terminologyProposals),
     "translation-equivalence-proposals.json": collectionCanonicalJson([]),
     "source-coverage.json": collectionCanonicalJson(coverage),
@@ -2367,6 +2381,8 @@ async function retainedPendingArtifacts(
     "workflows.json",
     "operations.json",
     "workflow-edges.json",
+    "workflow-assignments.json",
+    "cross-cutting-assignments.json",
     "source-coverage.json",
     "extraction-findings.json",
     "pdf-ingestion.json",
@@ -2491,6 +2507,87 @@ function governanceEnvelope(input: {
     blockers,
     proposal_revision: input.proposalRevision,
   };
+}
+
+function buildAtlasAssignments(input: {
+  readonly projectId: string;
+  readonly proposalRevision: number;
+  readonly records: readonly {
+    readonly id: string;
+    readonly semantic_kind_id: string;
+    readonly source_unit_ids: readonly string[];
+    readonly origin: "explicit" | "derived" | "human_added";
+    readonly issues: readonly { readonly code: string; readonly severity: string }[];
+  }[];
+  readonly workflows: readonly {
+    readonly workflow_id: string;
+    readonly source_unit_ids: readonly string[];
+  }[];
+  readonly operations: readonly {
+    readonly operation_id: string;
+    readonly workflow_id?: string;
+    readonly semantic_record_ids: readonly string[];
+  }[];
+}) {
+  const workflowAssignments = input.records.flatMap((record) =>
+    input.workflows.filter((workflow) =>
+      workflow.source_unit_ids.some((id) => record.source_unit_ids.includes(id)))
+      .map((workflow) => {
+        const operation = input.operations.find((item) =>
+          item.workflow_id === workflow.workflow_id
+          && item.semantic_record_ids.includes(record.id));
+        const direct = operation !== undefined;
+        const suffix = hashCanonical({
+          record_id: record.id,
+          workflow_id: workflow.workflow_id,
+          operation_id: operation?.operation_id ?? null,
+        }).slice(7, 19);
+        const governance = governanceEnvelope({
+          id: `${input.projectId}.governance.assignment.${suffix}`,
+          record: {
+            ...record,
+            origin: direct ? record.origin : "derived",
+          },
+          proposalRevision: input.proposalRevision,
+        });
+        return {
+          assignment_id: `${input.projectId}.assignment.${suffix}`,
+          record_id: record.id,
+          workflow_id: workflow.workflow_id,
+          ...(operation ? { operation_id: operation.operation_id } : {}),
+          applicability: direct ? "primary" as const : "supporting" as const,
+          governance: direct ? governance : {
+            ...governance,
+            bulk_approval_eligible: false,
+            blockers: [...new Set([...governance.blockers, "derived-assignment"])].sort(compareText),
+          },
+        };
+      })).sort((left, right) => compareText(left.assignment_id, right.assignment_id));
+  const crossCuttingKindArea: Record<string, string> = {
+    "ces.kind.role-permission": "authorization",
+    "ces.kind.security-sensitive-restriction": "security",
+    "ces.kind.lifecycle-rule": "retention",
+    "ces.kind.uniqueness-constraint": "data-integrity",
+  };
+  const crossCuttingAssignments = input.records.flatMap((record) => {
+    const controlArea = crossCuttingKindArea[record.semantic_kind_id];
+    if (!controlArea) return [];
+    const suffix = hashCanonical({
+      record_id: record.id,
+      control_area: controlArea,
+    }).slice(7, 19);
+    return [{
+      assignment_id: `${input.projectId}.cross-cutting.${suffix}`,
+      record_id: record.id,
+      control_area: controlArea,
+      governance: governanceEnvelope({
+        id: `${input.projectId}.governance.cross-cutting.${suffix}`,
+        record,
+        proposalRevision: input.proposalRevision,
+      }),
+    }];
+  }).sort((left, right) => compareText(left.assignment_id, right.assignment_id));
+  return { workflowAssignments, crossCuttingAssignments };
 }
 
 function stableId(value: string): string {
