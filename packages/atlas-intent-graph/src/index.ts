@@ -24,6 +24,7 @@ import { z } from "zod";
 export const ATLAS_INTENT_GRAPH_VERSION = "1.0.0" as const;
 export const ATLAS_WORKFLOW_GRAPH_VERSION = "1.0.0" as const;
 export const ATLAS_FOCUSED_PROJECTION_VERSION = "1.0.0" as const;
+export const ATLAS_INTEGRATED_GRAPH_VERSION = "1.0.0" as const;
 
 const NonEmptyString = z.string().trim().min(1);
 const Sha256Schema = z.string().regex(/^sha256:[0-9a-f]{64}$/u);
@@ -33,6 +34,219 @@ const ReviewStateSchema = z.enum([
   "pending", "approved", "rejected", "correction_requested", "ambiguous",
   "unsupported", "conflict", "source_missing",
 ]);
+
+const IntegratedLayerSchema = z.enum([
+  "actors", "modules", "workflows", "decisions", "states",
+  "conceptual_entities", "rules", "evidence",
+]);
+
+const IntegratedNodeSchema = z.object({
+  node_id: StableId,
+  canonical_id: StableId,
+  node_kind: NonEmptyString,
+  label: NonEmptyString,
+  source_unit_ids: z.array(StableId),
+}).strict();
+
+const IntegratedEdgeSchema = z.object({
+  edge_id: StableId,
+  from_id: StableId,
+  to_id: StableId,
+  relationship_kind: NonEmptyString,
+  source_unit_ids: z.array(StableId),
+  review_status: z.literal("pending"),
+}).strict();
+
+export const IntegratedSemanticGraphProjectionSchema = z.object({
+  schema_version: z.literal(ATLAS_INTEGRATED_GRAPH_VERSION),
+  model_hash: Sha256Schema,
+  index: z.object({
+    summary_artifact: NonEmptyString,
+    layers: z.array(z.object({
+      layer: IntegratedLayerSchema,
+      artifact: NonEmptyString,
+      node_count: z.number().int().nonnegative(),
+      edge_count: z.number().int().nonnegative(),
+    }).strict()),
+  }).strict(),
+  summary: z.object({
+    node_count: z.number().int().nonnegative(),
+    edge_count: z.number().int().nonnegative(),
+    layer_counts: z.record(IntegratedLayerSchema, z.number().int().nonnegative()),
+  }).strict(),
+  layers: z.array(z.object({
+    layer: IntegratedLayerSchema,
+    nodes: z.array(IntegratedNodeSchema),
+    edges: z.array(IntegratedEdgeSchema),
+  }).strict()),
+  model_projection_index: z.object({
+    projections: z.array(z.object({
+      model_kind: NonEmptyString,
+      support_status: NonEmptyString,
+      projection_eligibility: z.enum([
+        "normal_proposed", "review_only_partial", "review_preview",
+      ]),
+      artifact: NonEmptyString,
+      review_status: z.literal("pending"),
+    }).strict()),
+    excluded: z.array(z.object({
+      model_kind: NonEmptyString,
+      support_status: NonEmptyString,
+      reason: NonEmptyString,
+    }).strict()),
+  }).strict(),
+  model_projections: z.array(z.object({
+    artifact: NonEmptyString,
+    model_kind: NonEmptyString,
+    support_status: NonEmptyString,
+    projection_eligibility: NonEmptyString,
+    layers: z.array(IntegratedLayerSchema),
+    nodes: z.array(IntegratedNodeSchema),
+    edges: z.array(IntegratedEdgeSchema),
+  }).strict()),
+}).strict();
+
+export function createIntegratedSemanticGraphProjection(input: {
+  readonly model: z.input<typeof ProposedProjectModelSchema>;
+}): z.infer<typeof IntegratedSemanticGraphProjectionSchema> {
+  const model = ProposedProjectModelSchema.parse(input.model);
+  type Layer = z.infer<typeof IntegratedLayerSchema>;
+  const layerNames = IntegratedLayerSchema.options;
+  const nodes = new Map<Layer, z.infer<typeof IntegratedNodeSchema>[]>(
+    layerNames.map((layer) => [layer, []]),
+  );
+  const edges = new Map<Layer, z.infer<typeof IntegratedEdgeSchema>[]>(
+    layerNames.map((layer) => [layer, []]),
+  );
+  const recordLayer = (kind: string): Layer => {
+    if (/rule|control|constraint|permission/u.test(kind)) return "rules";
+    if (/decision/u.test(kind)) return "decisions";
+    if (/state/u.test(kind)) return "states";
+    if (/entity|data|terminology/u.test(kind)) return "conceptual_entities";
+    if (/module|capability/u.test(kind)) return "modules";
+    return "evidence";
+  };
+  for (const record of model.records) {
+    nodes.get(recordLayer(record.semantic_kind_id))!.push({
+      node_id: record.id, canonical_id: record.id,
+      node_kind: record.semantic_kind_id, label: record.statement,
+      source_unit_ids: [...record.source_unit_ids].sort(compareText),
+    });
+  }
+  const actorIds = new Set<string>();
+  for (const operation of model.operations) {
+    nodes.get(operation.operation_kind === "decision" ? "decisions" : "workflows")!.push({
+      node_id: operation.operation_id, canonical_id: operation.operation_id,
+      node_kind: operation.operation_kind, label: operation.label,
+      source_unit_ids: operation.semantic_record_ids.flatMap((id) =>
+        model.records.find((record) => record.id === id)?.source_unit_ids ?? []),
+    });
+    if (operation.actor) actorIds.add(operation.actor);
+  }
+  for (const actor of [...actorIds].sort(compareText)) {
+    const id = `${model.project_id}.actor.${safeId(actor)}`;
+    nodes.get("actors")!.push({
+      node_id: id, canonical_id: id, node_kind: "actor", label: actor,
+      source_unit_ids: [],
+    });
+  }
+  for (const workflow of model.workflows) {
+    nodes.get("workflows")!.push({
+      node_id: workflow.workflow_id, canonical_id: workflow.workflow_id,
+      node_kind: "workflow", label: workflow.label, source_unit_ids: [],
+    });
+  }
+  for (const edge of model.workflow_edges) {
+    edges.get("workflows")!.push({
+      edge_id: edge.edge_id, from_id: edge.from_operation_id,
+      to_id: edge.to_operation_id, relationship_kind: edge.edge_kind,
+      source_unit_ids: [...edge.governance.evidence_source_unit_ids].sort(compareText),
+      review_status: "pending",
+    });
+  }
+  for (const relationship of model.relationship_candidates) {
+    for (const target of relationship.targets) {
+      if (!target.target_id) continue;
+      const layer = recordLayer(
+        model.records.find(({ id }) => id === relationship.from_id)?.semantic_kind_id ?? "",
+      );
+      edges.get(layer)!.push({
+        edge_id: target.target_candidate_id, from_id: relationship.from_id,
+        to_id: target.target_id, relationship_kind: relationship.relationship_kind,
+        source_unit_ids: [...new Set([
+          ...relationship.governance.evidence_source_unit_ids,
+          ...target.evidence_source_unit_ids,
+        ])].sort(compareText),
+        review_status: "pending",
+      });
+    }
+  }
+  const layers = layerNames.map((layer) => ({
+    layer,
+    nodes: nodes.get(layer)!.sort((a, b) => compareText(a.node_id, b.node_id)),
+    edges: edges.get(layer)!.sort((a, b) => compareText(a.edge_id, b.edge_id)),
+  }));
+  const artifact = (layer: Layer) =>
+    `proposed-integrated-semantic-graph/${layer.replaceAll("_", "-")}.json`;
+  const eligible = new Set(["normal_proposed", "review_only_partial", "review_preview"]);
+  const projectionLayers: Record<string, Layer[]> = {
+    activity_flow: ["workflows"], business_workflow: ["actors", "workflows", "decisions"],
+    bpmn_candidate: ["actors", "workflows", "decisions"],
+    functional_decomposition: ["modules"], module_dependency: ["modules"],
+    state_diagram: ["states"], decision_model: ["decisions", "rules"],
+    actor_goal_model: ["actors", "modules"], sequence_interaction: ["actors", "workflows"],
+    conceptual_data_model: ["conceptual_entities"],
+  };
+  const eligibleAssessments = model.model_support.filter((item) =>
+    eligible.has(item.projection_eligibility));
+  const modelProjections = eligibleAssessments.map((item) => {
+    const selected = projectionLayers[item.model_kind] ?? ["evidence"];
+    const slices = layers.filter(({ layer }) => selected.includes(layer));
+    return {
+      artifact: `proposed-model-projections/${item.model_kind}.json`,
+      model_kind: item.model_kind, support_status: item.support_status,
+      projection_eligibility: item.projection_eligibility,
+      layers: selected,
+      nodes: slices.flatMap((slice) => slice.nodes),
+      edges: slices.flatMap((slice) => slice.edges),
+    };
+  });
+  return IntegratedSemanticGraphProjectionSchema.parse({
+    schema_version: ATLAS_INTEGRATED_GRAPH_VERSION,
+    model_hash: model.content_hash,
+    index: {
+      summary_artifact: "proposed-integrated-semantic-graph/summary.json",
+      layers: layers.map((slice) => ({
+        layer: slice.layer, artifact: artifact(slice.layer),
+        node_count: slice.nodes.length, edge_count: slice.edges.length,
+      })),
+    },
+    summary: {
+      node_count: layers.reduce((sum, layer) => sum + layer.nodes.length, 0),
+      edge_count: layers.reduce((sum, layer) => sum + layer.edges.length, 0),
+      layer_counts: Object.fromEntries(layers.map((layer) =>
+        [layer.layer, layer.nodes.length])),
+    },
+    layers,
+    model_projection_index: {
+      projections: eligibleAssessments.map((item) => ({
+        model_kind: item.model_kind,
+        support_status: item.support_status,
+        projection_eligibility: item.projection_eligibility as
+          "normal_proposed" | "review_only_partial" | "review_preview",
+        artifact: `proposed-model-projections/${item.model_kind}.json`,
+        review_status: "pending" as const,
+      })),
+      excluded: model.model_support.filter((item) =>
+        !eligible.has(item.projection_eligibility)).map((item) => ({
+        model_kind: item.model_kind,
+        support_status: item.support_status,
+        reason: item.rationale,
+      })),
+    },
+    model_projections: modelProjections,
+  });
+}
 
 export const FocusedProjectionBundleSchema = z.object({
   schema_version: z.literal(ATLAS_FOCUSED_PROJECTION_VERSION),

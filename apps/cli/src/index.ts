@@ -42,6 +42,7 @@ import {
   buildIntentGraph,
   compileAtlasCoreHandoff,
   createFocusedAtlasProjections,
+  createIntegratedSemanticGraphProjection,
   renderIntentGraphJson,
   renderIntentGraphMarkdown,
   renderIntentGraphMermaid,
@@ -2161,6 +2162,7 @@ function buildCanonicalProposedAtlasArtifacts(input: {
   });
   const graph = projectProposedWorkflowGraph(model);
   const focusedProjections = createFocusedAtlasProjections({ model, page_size: 25 });
+  const integratedProjection = createIntegratedSemanticGraphProjection({ model });
   const proposedWorkflowArtifacts = createProposedWorkflowArtifacts(focusedProjections.workflow_details);
   const identityReport = createRecordIdentityReport({
     project_id: projectId,
@@ -2210,6 +2212,22 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     "proposed-project-overview-graph.json": collectionCanonicalJson(
       focusedProjections.project_overview,
     ),
+    "proposed-integrated-semantic-graph-index.json": collectionCanonicalJson(
+      integratedProjection.index,
+    ),
+    "proposed-integrated-semantic-graph/summary.json": collectionCanonicalJson(
+      integratedProjection.summary,
+    ),
+    ...Object.fromEntries(integratedProjection.layers.map((layer) => [
+      integratedProjection.index.layers.find(({ layer: name }) => name === layer.layer)!.artifact,
+      collectionCanonicalJson(layer),
+    ])),
+    "proposed-model-projection-index.json": collectionCanonicalJson(
+      integratedProjection.model_projection_index,
+    ),
+    ...Object.fromEntries(integratedProjection.model_projections.map((projection) => [
+      projection.artifact, collectionCanonicalJson(projection),
+    ])),
     "proposed-workflow-detail-graphs.json": collectionCanonicalJson(
       focusedProjections.workflow_details,
     ),
@@ -2562,6 +2580,7 @@ export function buildProposedAtlasArtifacts(input: {
   });
   const graph = projectProposedWorkflowGraph(model);
   const focusedProjections = createFocusedAtlasProjections({ model, page_size: 25 });
+  const integratedProjection = createIntegratedSemanticGraphProjection({ model });
   const proposedWorkflowArtifacts = createProposedWorkflowArtifacts(focusedProjections.workflow_details);
   const identityReport = createRecordIdentityReport({
     project_id: projectId,
@@ -2609,6 +2628,22 @@ export function buildProposedAtlasArtifacts(input: {
     "proposed-project-overview-graph.json": collectionCanonicalJson(
       focusedProjections.project_overview,
     ),
+    "proposed-integrated-semantic-graph-index.json": collectionCanonicalJson(
+      integratedProjection.index,
+    ),
+    "proposed-integrated-semantic-graph/summary.json": collectionCanonicalJson(
+      integratedProjection.summary,
+    ),
+    ...Object.fromEntries(integratedProjection.layers.map((layer) => [
+      integratedProjection.index.layers.find(({ layer: name }) => name === layer.layer)!.artifact,
+      collectionCanonicalJson(layer),
+    ])),
+    "proposed-model-projection-index.json": collectionCanonicalJson(
+      integratedProjection.model_projection_index,
+    ),
+    ...Object.fromEntries(integratedProjection.model_projections.map((projection) => [
+      projection.artifact, collectionCanonicalJson(projection),
+    ])),
     "proposed-workflow-detail-graphs.json": collectionCanonicalJson(
       focusedProjections.workflow_details,
     ),

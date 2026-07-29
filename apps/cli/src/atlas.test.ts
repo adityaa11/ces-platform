@@ -255,6 +255,16 @@ describe("Atlas CLI pipeline", () => {
             projection_eligibility: "none",
           }),
         ]));
+      expect(await json(join(output, "proposed-integrated-semantic-graph-index.json")))
+        .toMatchObject({
+          summary_artifact: "proposed-integrated-semantic-graph/summary.json",
+          layers: expect.arrayContaining([
+            expect.objectContaining({ layer: "workflows" }),
+            expect.objectContaining({ layer: "evidence" }),
+          ]),
+        });
+      expect(await json(join(output, "proposed-model-projection-index.json")))
+        .toMatchObject({ projections: [], excluded: expect.any(Array) });
       expect(await json(join(output, "workflow-assignment-diagnostics.json")))
         .toMatchObject({
           schema_version: "1.1.0",
@@ -283,6 +293,17 @@ describe("Atlas CLI pipeline", () => {
         "legacy-projection-losses.json",
         "operations.json",
         "proposed-approval-exceptions.json",
+        "proposed-integrated-semantic-graph-index.json",
+        "proposed-integrated-semantic-graph/actors.json",
+        "proposed-integrated-semantic-graph/conceptual-entities.json",
+        "proposed-integrated-semantic-graph/decisions.json",
+        "proposed-integrated-semantic-graph/evidence.json",
+        "proposed-integrated-semantic-graph/modules.json",
+        "proposed-integrated-semantic-graph/rules.json",
+        "proposed-integrated-semantic-graph/states.json",
+        "proposed-integrated-semantic-graph/summary.json",
+        "proposed-integrated-semantic-graph/workflows.json",
+        "proposed-model-projection-index.json",
         "proposed-model-support-assessment.json",
         "proposed-project-model.json",
         "proposed-project-overview-graph.json",
