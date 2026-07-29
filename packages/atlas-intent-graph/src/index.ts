@@ -101,6 +101,21 @@ export const FocusedProjectionBundleSchema = z.object({
     entity_id: StableId,
     blockers: z.array(StableId).min(1),
   }).strict()),
+  relationship_review: z.array(z.object({
+    review_subject_id: StableId,
+    subject_type: z.enum(["relationship_target", "workflow_edge"]),
+    from_id: StableId,
+    to_id: StableId,
+    relationship_kind: NonEmptyString,
+    origin: z.enum(["explicit", "derived", "human_added"]),
+    evidence_source_unit_ids: z.array(StableId),
+    rationale: NonEmptyString,
+    confidence: z.number().min(0).max(1),
+    review_status: z.literal("pending"),
+    bulk_approval_eligible: z.boolean(),
+    blockers: z.array(StableId),
+    authoritative: z.literal(false),
+  }).strict()),
   content_hash: Sha256Schema,
 }).strict().superRefine((value, context) => {
   const approved = value.model_lifecycle === "approved";
@@ -232,6 +247,47 @@ export function createFocusedAtlasProjections(input: {
         blockers: edge.governance.blockers,
       }]),
   ].sort((left, right) => compareText(left.entity_id, right.entity_id));
+  const relationshipReview = [
+    ...model.relationship_candidates.flatMap((relationship) =>
+      relationship.targets.flatMap((target) => target.target_id ? [{
+        review_subject_id: target.target_candidate_id,
+        subject_type: "relationship_target" as const,
+        from_id: relationship.from_id,
+        to_id: target.target_id,
+        relationship_kind: relationship.relationship_kind,
+        origin: relationship.governance.origin,
+        evidence_source_unit_ids: [...new Set([
+          ...relationship.governance.evidence_source_unit_ids,
+          ...target.evidence_source_unit_ids,
+        ])].sort(compareText),
+        rationale: target.rationale,
+        confidence: target.confidence,
+        review_status: "pending" as const,
+        bulk_approval_eligible: relationship.governance.bulk_approval_eligible
+          && target.blockers.length === 0,
+        blockers: [...new Set([
+          ...relationship.governance.blockers,
+          ...target.blockers,
+        ])].sort(compareText),
+        authoritative: false as const,
+      }] : [])),
+    ...model.workflow_edges.map((edge) => ({
+      review_subject_id: edge.edge_id,
+      subject_type: "workflow_edge" as const,
+      from_id: edge.from_operation_id,
+      to_id: edge.to_operation_id,
+      relationship_kind: edge.edge_kind,
+      origin: edge.governance.origin,
+      evidence_source_unit_ids: [...edge.governance.evidence_source_unit_ids]
+        .sort(compareText),
+      rationale: edge.governance.rationale,
+      confidence: edge.governance.confidence,
+      review_status: "pending" as const,
+      bulk_approval_eligible: edge.governance.bulk_approval_eligible,
+      blockers: [...edge.governance.blockers].sort(compareText),
+      authoritative: false as const,
+    })),
+  ].sort((left, right) => compareText(left.review_subject_id, right.review_subject_id));
   const core = {
     schema_version: ATLAS_FOCUSED_PROJECTION_VERSION,
     model_revision: model.proposal_revision,
@@ -260,6 +316,7 @@ export function createFocusedAtlasProjections(input: {
       semantic_fingerprint: record.identity.semantic_fingerprint,
     })).sort((left, right) => compareText(left.record_id, right.record_id)),
     approval_exceptions: approvalExceptions,
+    relationship_review: relationshipReview,
   };
   return deepFreezeProjection(FocusedProjectionBundleSchema.parse({
     ...core,
@@ -298,6 +355,7 @@ export function materializeApprovedFocusedProjections(input: {
       ...slice,
       artifact: approvedArtifacts.get(slice.slice_id)!,
     })),
+    relationship_review: [],
   };
   return deepFreezeProjection(FocusedProjectionBundleSchema.parse({
     ...core,

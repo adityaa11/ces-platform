@@ -2070,6 +2070,9 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     "proposed-approval-exceptions.json": collectionCanonicalJson(
       focusedProjections.approval_exceptions,
     ),
+    "proposed-relationship-review.json": collectionCanonicalJson(
+      focusedProjections.relationship_review,
+    ),
     "proposed-system-intent-graph.json": renderWorkflowGraphJson(graph),
     "proposed-system-intent-graph.md": renderWorkflowGraphMarkdown(graph),
     "proposed-system-intent-graph.mmd": renderWorkflowGraphMermaid(graph),
@@ -2473,6 +2476,9 @@ export function buildProposedAtlasArtifacts(input: {
     "proposed-approval-exceptions.json": collectionCanonicalJson(
       focusedProjections.approval_exceptions,
     ),
+    "proposed-relationship-review.json": collectionCanonicalJson(
+      focusedProjections.relationship_review,
+    ),
     "proposed-system-intent-graph.json": renderWorkflowGraphJson(graph),
     "proposed-system-intent-graph.md": renderWorkflowGraphMarkdown(graph),
     "proposed-system-intent-graph.mmd": renderWorkflowGraphMermaid(graph),
@@ -2647,6 +2653,7 @@ async function retainedPendingArtifacts(
     "proposed-rules-controls-index.json",
     "proposed-traceability-graph.json",
     "proposed-approval-exceptions.json",
+    "proposed-relationship-review.json",
     "proposed-system-intent-graph.json",
     "proposed-system-intent-graph.md",
     "proposed-system-intent-graph.mmd",
