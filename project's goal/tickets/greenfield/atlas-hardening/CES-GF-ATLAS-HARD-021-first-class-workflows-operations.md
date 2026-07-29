@@ -17,6 +17,12 @@ semantic record nodes.
 
 - Add workflows, operations, actors, summaries, decisions, states,
   transitions, branches, loops, and dependencies.
+- Establish a shared governed-edge contract for every derived transition,
+  dependency, ordering edge, branch, join, and loop; ATLAS-HARD-023 must reuse
+  this contract for other semantic relationships.
+- Require workflow edges and other semantic relationships to share stable
+  identity, provenance, evidence, rationale, origin, confidence, review
+  status, eligibility, decision replay, and stale-decision handling.
 - Preserve incomplete and competing interpretations.
 - Derive structure from canonical claims and records without
   workflow-specific extractors.
@@ -32,6 +38,10 @@ and revision metadata.
 
 - [ ] Workflows and operations have stable IDs and source lineage.
 - [ ] Arbitrary directed workflow shapes are supported.
+- [ ] Derived workflow topology uses the shared governed relationship contract
+      and cannot bypass relationship review or publication rules.
+- [ ] Workflow edges have the same provenance, review, replay, and stale
+      decision guarantees as other governed semantic relationships.
 - [ ] Unknown or competing structures remain review-required.
 - [ ] Detailed semantic records remain preserved.
 - [ ] Production logic contains no Safara-specific routing.

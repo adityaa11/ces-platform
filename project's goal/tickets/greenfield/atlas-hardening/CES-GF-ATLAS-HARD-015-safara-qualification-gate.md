@@ -1,7 +1,8 @@
-# CES-GF-ATLAS-HARD-015 — Safara Qualification Gate
+# CES-GF-ATLAS-HARD-015 — Final Safara Qualification Gate
 
 **Stage:** Atlas hardening production gate
-**Status:** Awaiting human review of live qualification artifacts
+**Status:** Blocked pending ATLAS-HARD-018 through ATLAS-HARD-026 implementation and qualification rerun
+**Execution order:** Final delivery gate — execute last
 
 ## Objective
 
@@ -88,7 +89,10 @@ Production approval UI implementation. Execution of the multi-domain suite
 follows Safara acceptance, but defining its gate and preventing premature
 generality claims are included here.
 
-## Implementation evidence
+## Pre-refinement baseline evidence
+
+This evidence documents the previous pipeline and is retained for comparison
+only. It does not satisfy the reopened qualification gate.
 
 - `packages/atlas-quality-evidence` contains a strict, deterministic Safara
   qualification report contract and mandatory-gate calculator.
@@ -102,21 +106,25 @@ generality claims are included here.
 - The full workspace test run passes 326 tests; two unrelated
   `bootstrap-runner` process-timeout tests exceed 15 seconds on Windows.
 
-## Acceptance blocker
+## Reopened qualification blocker
 
-The corrected live pipeline ran with `gemini-3.1-flash-lite` and paused for
-review. The latest user-check suite contains 113 generic candidates,
+The pre-refinement live pipeline ran with `gemini-3.1-flash-lite` and paused
+for review. That user-check suite contains 113 generic candidates,
 106 normalized records, zero duplicate normalized statements, 106 typed graph
 nodes, and 18 evidence-grounded relationships (`governs`, `constrains`, and
 `produces`). Candidate consolidation retains every contributing candidate ID
 and source-unit ID. Relationship projection requires shared source evidence
 and lexical support; it does not invent workflow order.
 
-The live artifacts are stored locally under
+Those baseline artifacts are stored locally under
 `.ces/generated/atlas-user-check`. They remain non-authoritative and downstream
-execution remains blocked. A human has not yet reviewed and accepted this
-specific live artifact revision, so the overall HARD-015 decision must remain
-open and no approved-suite or release-pass claim is recorded.
+execution remains blocked. They predate ATLAS-HARD-018 through ATLAS-HARD-026
+and cannot be accepted as evidence for the reopened gate, even if reviewed.
+
+HARD-015 remains open until tickets 018 through 026 are implemented, the
+Safara qualification suite is rerun, every mandatory semantic and projection
+gate passes, and new approval and downstream-blocking evidence is generated
+and accepted by a human reviewer.
 
 Verification:
 
