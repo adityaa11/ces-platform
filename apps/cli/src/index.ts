@@ -3452,11 +3452,15 @@ function buildAtlasAssignments(input: {
   readonly workflows: readonly {
     readonly workflow_id: string;
     readonly label: string;
+    readonly semantic_role?: "business_workflow" | "shared_data" | "context_provider"
+      | "state_workflow" | "reporting_audit";
     readonly source_unit_ids: readonly string[];
   }[];
   readonly operations: readonly {
     readonly operation_id: string;
     readonly workflow_id?: string;
+    readonly label?: string;
+    readonly source_unit_ids?: readonly string[];
     readonly semantic_record_ids: readonly string[];
   }[];
 }) {
@@ -3466,7 +3470,7 @@ function buildAtlasAssignments(input: {
     "ces.kind.lifecycle-rule": "retention",
     "ces.kind.uniqueness-constraint": "data-integrity",
   };
-  const workflowAssignments = input.records.flatMap((record) => {
+  const directWorkflowAssignments = input.records.flatMap((record) => {
     if (crossCuttingKindArea[record.semantic_kind_id]) return [];
     const directOperations = input.operations.filter(({ semantic_record_ids }) =>
       semantic_record_ids.includes(record.id));
@@ -3524,6 +3528,7 @@ function buildAtlasAssignments(input: {
           workflow_id: workflow.workflow_id,
           ...(operation ? { operation_id: operation.operation_id } : {}),
           applicability: direct ? "primary" as const : "supporting" as const,
+          assignment_role: "membership" as const,
           governance: direct ? {
             ...governance,
             rationale: "The canonical operation directly references this semantic record.",
@@ -3538,7 +3543,71 @@ function buildAtlasAssignments(input: {
           },
         };
       });
-  }).sort((left, right) => compareText(left.assignment_id, right.assignment_id));
+  });
+  const sharedConsumerAssignments = input.workflows
+    .filter(({ semantic_role }) => semantic_role === "shared_data")
+    .flatMap((provider) => {
+      const providerTokens = semanticTokens(provider.label);
+      const providerOperations = input.operations.filter(({ workflow_id }) =>
+        workflow_id === provider.workflow_id);
+      const representative = providerOperations
+        .map((operation) => ({
+          operation,
+          score: jaccard(
+            providerTokens,
+            semanticTokens(input.records.find(({ id }) =>
+              operation.semantic_record_ids.includes(id))?.statement ?? ""),
+          ),
+        }))
+        .sort((left, right) => right.score - left.score
+          || compareText(left.operation.operation_id, right.operation.operation_id))[0]?.operation;
+      const recordId = representative?.semantic_record_ids[0];
+      const record = input.records.find(({ id }) => id === recordId);
+      if (!record) return [];
+      return input.workflows.flatMap((consumer) => {
+        if (consumer.workflow_id === provider.workflow_id
+          || ["shared_data", "context_provider"].includes(consumer.semantic_role ?? "")) return [];
+        const consumerOperations = input.operations.filter(({ workflow_id }) =>
+          workflow_id === consumer.workflow_id);
+        const consumerTokens = semanticTokens(consumerOperations
+          .map(({ label }) => label ?? "").join(" "));
+        const matched = [...providerTokens].filter((token) =>
+          consumerTokens.has(token));
+        if (providerTokens.size === 0 || matched.length / providerTokens.size < 0.5) return [];
+        const assignmentRole = "shared_input" as const;
+        const core = {
+          record_id: record.id,
+          workflow_id: consumer.workflow_id,
+          assignment_role: assignmentRole,
+        };
+        const suffix = hashCanonical(core).slice(7, 19);
+        const evidence = [...new Set([
+          ...record.source_unit_ids,
+          ...consumerOperations.flatMap(({ source_unit_ids }) => source_unit_ids ?? []),
+        ])].sort(compareText);
+        return [{
+          assignment_id: `${input.projectId}.assignment.${suffix}`,
+          ...core,
+          applicability: "supporting" as const,
+          governance: {
+            id: `${input.projectId}.governance.assignment.${suffix}`,
+            origin: "derived" as const,
+            evidence_source_unit_ids: evidence,
+            rationale: "Source-grounded consumer operations reference the shared semantic concept.",
+            confidence: Math.min(0.95, 0.65 + matched.length / providerTokens.size * 0.25),
+            review_status: "pending" as const,
+            bulk_approval_eligible: false,
+            blockers: ["derived-assignment"],
+            proposal_revision: input.proposalRevision,
+          },
+        }];
+      });
+    });
+  const workflowAssignments = [...new Map([
+    ...directWorkflowAssignments,
+    ...sharedConsumerAssignments,
+  ].map((assignment) => [assignment.assignment_id, assignment] as const)).values()]
+    .sort((left, right) => compareText(left.assignment_id, right.assignment_id));
   const crossCuttingAssignments = input.records.flatMap((record) => {
     const controlArea = crossCuttingKindArea[record.semantic_kind_id];
     if (!controlArea) return [];
@@ -3558,7 +3627,8 @@ function buildAtlasAssignments(input: {
     }];
   }).sort((left, right) => compareText(left.assignment_id, right.assignment_id));
   const tupleCounts = Map.groupBy(workflowAssignments, (assignment) =>
-    `${assignment.workflow_id}:${assignment.record_id}:${assignment.operation_id ?? ""}`);
+    `${assignment.workflow_id}:${assignment.record_id}:${"operation_id" in assignment
+      ? assignment.operation_id ?? "" : ""}`);
   const recordAssignmentCounts = Map.groupBy(workflowAssignments, ({ record_id }) => record_id);
   const assignmentDiagnostics = {
     schema_version: "1.1.0",
@@ -3571,7 +3641,11 @@ function buildAtlasAssignments(input: {
       !crossCuttingKindArea[record.semantic_kind_id]
       && !workflowAssignments.some(({ record_id }) => record_id === record.id)).length,
     overly_broad_count: [...recordAssignmentCounts.values()]
-      .filter((assignments) => assignments.length > 3).length,
+      .filter((assignments) => assignments
+        .filter(({ assignment_role }) => assignment_role === "membership").length > 3).length,
+    shared_input_count: workflowAssignments.filter(({ assignment_role }) =>
+      assignment_role === "shared_input").length,
+    context_input_count: 0,
     assignments_per_workflow: Object.fromEntries(input.workflows.map((workflow) => [
       workflow.workflow_id,
       workflowAssignments.filter(({ workflow_id }) =>
@@ -3579,8 +3653,9 @@ function buildAtlasAssignments(input: {
     ])),
     assignments_per_operation: Object.fromEntries(input.operations.map((operation) => [
       operation.operation_id,
-      workflowAssignments.filter(({ operation_id }) =>
-        operation_id === operation.operation_id).length,
+      workflowAssignments.filter((assignment) =>
+        "operation_id" in assignment
+        && assignment.operation_id === operation.operation_id).length,
     ])),
   };
   return { workflowAssignments, crossCuttingAssignments, assignmentDiagnostics };

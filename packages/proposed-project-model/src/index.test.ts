@@ -191,6 +191,7 @@ describe("ATLAS-HARD-009 ProposedProjectModel", () => {
         workflow_id: "project.workflow.release",
         operation_id: data.operations[index]!.operation_id,
         applicability: index === 0 ? "primary" as const : "supporting" as const,
+        assignment_role: index === 0 ? "shared_input" as const : "membership" as const,
         governance: {
           ...data.workflows[0]!.governance,
           id: `project.governance.assignment-${index + 1}`,
@@ -260,6 +261,7 @@ describe("ATLAS-HARD-009 ProposedProjectModel", () => {
       summary: { requirements: 2, unknown_items: 1, derived_items: 1 },
     });
     expect(model.workflows[0]?.semantic_role).toBe("shared_data");
+    expect(model.workflow_assignments[0]?.assignment_role).toBe("shared_input");
     const target = model.relationship_candidates[0]!.targets[0]!;
     expect(createApprovedRelationshipIdentity({
       relationship_intent_id: model.relationship_candidates[0]!.relationship_intent_id,

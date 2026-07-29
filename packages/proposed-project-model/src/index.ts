@@ -456,6 +456,8 @@ export const WorkflowAssignmentSchema = z.object({
   workflow_id: Id,
   operation_id: Id.optional(),
   applicability: z.enum(["primary", "supporting"]),
+  assignment_role: z.enum(["membership", "shared_input", "context_input"])
+    .default("membership"),
   governance: GovernedAssociationSchema,
 }).strict();
 
