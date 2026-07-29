@@ -27,6 +27,7 @@ import {
 import {
   createAtlasCandidateInventory,
   AtlasCandidateSchema,
+  AtlasCandidateInventorySchema,
   createCategoryExtractorRegistry,
   CategoryExtractorRegistrySchema,
   createSectionPurposeRegistry,
@@ -799,6 +800,15 @@ async function classifyAtlasSections(input: {
     purpose_registry: registry,
     source_units: units,
   };
+  if (input.options["section-classifications"]) {
+    return {
+      registry,
+      documentStructures: sourceArtifacts.map(({ document_structure }) => document_structure),
+      output: SectionClassifierOutputSchema.parse(
+        await readJsonValue(input.options["section-classifications"]),
+      ),
+    };
+  }
   if (input.options["provider-result"]) {
     return {
       registry,
@@ -869,6 +879,37 @@ async function extractCanonicalAtlasCandidates(input: {
     kind: unit.kind, text: unit.text, content_hash: unit.content_hash,
   }));
   const revisions = input.sectionClassification.output.revisions;
+  if (input.options["candidate-inventory"]) {
+    const inventory = AtlasCandidateInventorySchema.parse(
+      await readJsonValue(input.options["candidate-inventory"]),
+    );
+    return {
+      inventory,
+      ledger: {
+        schema_version: "1.0.0",
+        registry_id: extractorRegistry.id,
+        status: "success",
+        runs: [{
+          extractor_id: "atlas.extractor.canonical-replay",
+          status: "success",
+          candidate_inventory_hash: inventory.content_hash,
+          candidate_ids: inventory.candidates.map(({ candidate_id }) => candidate_id),
+        }],
+      },
+      mergeReport: {
+        schema_version: "1.0.0",
+        status: "success",
+        inventory_hash: inventory.content_hash,
+        candidate_count: inventory.candidates.length,
+        duplicate_payload_groups: [],
+        uncertainties: [],
+        conflicts: [],
+      },
+      runs: [],
+      sourceArtifacts,
+      sectionClassifications: input.sectionClassification.output.classifications,
+    };
+  }
   const broadInput = {
     contract_version: "1.0.0" as const,
     revisions,
@@ -1658,11 +1699,7 @@ export function buildAtlasRelationshipCandidates(input: {
 function assembleAtlasWorkflowTopology(input: {
   readonly projectId: string;
   readonly proposalRevision: number;
-  readonly records: readonly {
-    readonly id: string;
-    readonly statement: string;
-    readonly source_unit_ids: readonly string[];
-  }[];
+  readonly records: readonly { readonly id: string }[];
   readonly workflows: readonly {
     readonly workflow_id: string;
     readonly label: string;
@@ -1681,7 +1718,6 @@ function assembleAtlasWorkflowTopology(input: {
     readonly governance: ReturnType<typeof governanceEnvelope>;
   }[];
 }) {
-  const recordOrder = new Map(input.records.map((record, index) => [record.id, index]));
   const workflowTokens = new Map(input.workflows.map((workflow) =>
     [workflow.workflow_id, semanticTokens(workflow.label)] as const));
   const workflowSources = new Map(input.workflows.map((workflow) =>
@@ -1723,48 +1759,6 @@ function assembleAtlasWorkflowTopology(input: {
       source_unit_ids: [...workflow.source_unit_ids],
     };
   });
-  const workflowEdges = workflows.flatMap((workflow) => {
-    const members = operations.filter(({ operation_id }) =>
-      workflow.operation_ids.includes(operation_id)).sort((left, right) => {
-        const leftOrder = Math.min(...left.semantic_record_ids.map((id) =>
-          recordOrder.get(id) ?? Number.MAX_SAFE_INTEGER));
-        const rightOrder = Math.min(...right.semantic_record_ids.map((id) =>
-          recordOrder.get(id) ?? Number.MAX_SAFE_INTEGER));
-        return leftOrder - rightOrder || compareText(left.operation_id, right.operation_id);
-      });
-    return members.slice(1).map((operation, index) => {
-      const previous = members[index]!;
-      const evidence = [...new Set([
-        ...previous.source_unit_ids,
-        ...operation.source_unit_ids,
-      ])].sort(compareText);
-      const core = {
-        workflow_id: workflow.workflow_id,
-        from_operation_id: previous.operation_id,
-        to_operation_id: operation.operation_id,
-        edge_kind: previous.operation_kind === "decision"
-          ? "branch" as const
-          : previous.operation_kind === "state" || operation.operation_kind === "state"
-            ? "transition" as const
-            : "ordering" as const,
-      };
-      return {
-        edge_id: `${input.projectId}.workflow-edge.${hashCanonical(core).slice(7, 19)}`,
-        ...core,
-        governance: {
-          id: `${input.projectId}.governance.workflow-edge.${hashCanonical(core).slice(7, 19)}`,
-          origin: "derived" as const,
-          evidence_source_unit_ids: evidence,
-          rationale: "Canonical source order and workflow membership suggest this operation order.",
-          confidence: 0.6,
-          review_status: "pending" as const,
-          bulk_approval_eligible: false,
-          blockers: ["derived-topology-requires-review"],
-          proposal_revision: input.proposalRevision,
-        },
-      };
-    });
-  }).sort((left, right) => compareText(left.edge_id, right.edge_id));
   return {
     workflows,
     operations: operations.map((operation) => ({
@@ -1772,7 +1766,7 @@ function assembleAtlasWorkflowTopology(input: {
       semantic_record_ids: [...operation.semantic_record_ids],
       source_unit_ids: [...operation.source_unit_ids],
     })),
-    workflowEdges,
+    workflowEdges: [],
   };
 }
 
@@ -1783,6 +1777,7 @@ function assessAtlasModelSupport(input: {
     readonly source_unit_ids: readonly string[];
   }[];
   readonly workflowEdges: readonly unknown[];
+  readonly overviewRelationshipCount?: number;
 }) {
   const count = (kind: string) => input.records
     .filter(({ semantic_kind_id }) => semantic_kind_id === kind).length;
@@ -1801,8 +1796,9 @@ function assessAtlasModelSupport(input: {
     proposal_revision: input.proposalRevision,
     evidence_counts: {
       activities: workflowRecords,
-      activity_relationships: input.workflowEdges.length,
-      process_structures: input.workflowEdges.length + stateTransitions + businessRules,
+      activity_relationships: input.workflowEdges.length + (input.overviewRelationshipCount ?? 0),
+      process_structures: input.workflowEdges.length + (input.overviewRelationshipCount ?? 0)
+        + stateTransitions + businessRules,
       process_boundaries: workflowRecords > 0 ? 1 : 0,
       bpmn_semantics: stateTransitions,
       functional_areas: capabilities + workflowRecords,
@@ -2017,6 +2013,123 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     workflows: initialWorkflows,
     operations: initialOperations,
   });
+  const unitText = new Map(units.map((unit) => [unit.id, unit.text] as const));
+  const recordById = new Map(records.map((record) => [record.id, record] as const));
+  const overviewRelationshipMap = new Map<string, {
+    id: string; from_id: string; to_id: string; kind: string; source_unit_ids: string[];
+  }>();
+  const addOverviewRelationship = (
+    fromId: string,
+    toId: string,
+    kind: string,
+    evidence: readonly string[],
+  ) => {
+    if (fromId === toId) return;
+    const core = { from_id: fromId, to_id: toId, kind };
+    overviewRelationshipMap.set(`${fromId}:${toId}:${kind}`, {
+      id: `${projectId}.relationship.${hashCanonical(core).slice(7, 19)}`,
+      ...core,
+      source_unit_ids: [...new Set(evidence)].sort(compareText),
+    });
+  };
+  const workflowEvidence = new Map(workflows.map((workflow) => [
+    workflow.workflow_id,
+    (() => {
+      const headingIndex = structuralUnits.findIndex(({ id }) =>
+        id === workflow.source_unit_ids[0]);
+      const start = structuralUnits[headingIndex]?.order ?? -1;
+      const end = structuralUnits[headingIndex + 1]?.order ?? Number.MAX_SAFE_INTEGER;
+      return [...new Set(operations.filter(({ workflow_id }) =>
+        workflow_id === workflow.workflow_id)
+        .flatMap(({ source_unit_ids }) => source_unit_ids)
+        .filter((id) => {
+          const order = unitOrder.get(id) ?? Number.MAX_SAFE_INTEGER;
+          return order > start && order < end;
+        }))];
+    })(),
+  ] as const));
+  const workflowText = new Map(workflows.map((workflow) => [
+    workflow.workflow_id,
+    workflowEvidence.get(workflow.workflow_id)!
+      .map((id) => unitText.get(id) ?? "").join(" "),
+  ] as const));
+  const workflowPurpose = new Map(workflows.map((workflow) => [
+    workflow.workflow_id,
+    (() => {
+      const purposes = classifications.get(workflow.source_unit_ids[0]!)?.purpose_ids ?? [];
+      if (purposes.includes("ces.section.reporting-audit")) return "ces.section.reporting-audit";
+      if (purposes.includes("ces.section.workflows")) return "ces.section.workflows";
+      if (purposes.includes("ces.section.states-lifecycle")) return "ces.section.states-lifecycle";
+      if (purposes.includes("ces.section.data")) return "ces.section.data";
+      return "ces.section.unknown";
+    })(),
+  ] as const));
+  const workflowStateTokens = new Map(workflows.map((workflow) => {
+    const frequency = new Map<string, number>();
+    for (const stateOperation of operations.filter((candidate) =>
+      candidate.workflow_id === workflow.workflow_id
+      && candidate.operation_kind === "state")) {
+      const record = recordById.get(stateOperation.semantic_record_ids[0]!);
+      if (!record) continue;
+      for (const token of semanticTokens(record.statement)) {
+        frequency.set(token, (frequency.get(token) ?? 0) + 1);
+      }
+    }
+    return [workflow.workflow_id, new Set([...frequency]
+      .filter(([, count]) => count >= 2).map(([token]) => token))] as const;
+  }));
+  const workflowTextTokens = new Map(workflows.map((workflow) => [
+    workflow.workflow_id,
+    semanticTokens(workflowText.get(workflow.workflow_id) ?? ""),
+  ] as const));
+  const allWorkflowLabelTokens = new Set(workflows.flatMap((workflow) =>
+    [...semanticTokens(workflow.label)]));
+  const tokenFrequency = new Map<string, number>();
+  for (const [workflowId, tokens] of workflowTextTokens) {
+    if (workflowPurpose.get(workflowId) === "ces.section.reporting-audit") continue;
+    for (const token of tokens) {
+      tokenFrequency.set(token, (tokenFrequency.get(token) ?? 0) + 1);
+    }
+  }
+  for (const target of workflows) {
+    const targetTokens = workflowTextTokens.get(target.workflow_id)!;
+    for (const source of workflows) {
+      if (source.workflow_id === target.workflow_id) continue;
+      const labelTokens = semanticTokens(source.label);
+      const matchedLabels = [...labelTokens].filter((token) => targetTokens.has(token));
+      const distinctiveLabel = matchedLabels.some((token) =>
+        (tokenFrequency.get(token) ?? Number.MAX_SAFE_INTEGER) <= 4);
+      const matchedStateTokens = workflowPurpose.get(source.workflow_id)
+        === "ces.section.states-lifecycle"
+        ? [...workflowStateTokens.get(source.workflow_id)!].filter((token) =>
+          !allWorkflowLabelTokens.has(token) && targetTokens.has(token)
+          && (tokenFrequency.get(token) ?? Number.MAX_SAFE_INTEGER) <= 2)
+        : [];
+      const purpose = workflowPurpose.get(target.workflow_id);
+      const targetPurposes =
+        classifications.get(target.source_unit_ids[0]!)?.purpose_ids ?? [];
+      let kind: string;
+      if (purpose === "ces.section.reporting-audit"
+        && matchedLabels.length >= 1 && distinctiveLabel) {
+        kind = "ces.relationship.provides-data-to";
+      } else if (purpose === "ces.section.states-lifecycle"
+        && matchedLabels.length >= 1 && distinctiveLabel) {
+        kind = "ces.relationship.contributes-to";
+      } else if (purpose === "ces.section.workflows"
+        && !targetPurposes.includes("ces.section.data")
+        && matchedStateTokens.length > 0) {
+        kind = "ces.relationship.enables";
+      } else {
+        continue;
+      }
+      addOverviewRelationship(
+        source.workflow_id, target.workflow_id, kind,
+        workflowEvidence.get(target.workflow_id)!,
+      );
+    }
+  }
+  const overviewRelationships = [...overviewRelationshipMap.values()]
+    .sort((left, right) => compareText(left.id, right.id));
   const { workflowAssignments, crossCuttingAssignments, assignmentDiagnostics } = buildAtlasAssignments({
     projectId, proposalRevision: 1, records, workflows, operations,
   });
@@ -2024,6 +2137,7 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     proposalRevision: 1,
     records,
     workflowEdges,
+    overviewRelationshipCount: overviewRelationships.length,
   });
   const workflowNodes = groups.map((group) => {
     const representative = group.candidates[0]!;
@@ -2034,9 +2148,10 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     source_unit_ids: [...new Set(group.candidates.flatMap(({ source_unit_ids }) =>
       source_unit_ids))].sort(compareText),
   }});
-  const groundedRelationships = buildGroundedAtlasRelationships({
-    projectId, records, workflowNodes,
-  });
+  const groundedRelationships = [
+    ...buildGroundedAtlasRelationships({ projectId, records, workflowNodes }),
+    ...overviewRelationships,
+  ];
   const relationshipHints = groundedRelationships.map((edge) => ({
     hint_id: `${edge.id}.hint`,
     from_id: edge.from_id,
