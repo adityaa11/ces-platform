@@ -16,6 +16,7 @@ import {
   renderIntentGraphJson,
   renderIntentGraphMarkdown,
   renderIntentGraphMermaid,
+  renderFocusedWorkflowMermaid,
 } from "./index.js";
 
 const workflowInput = {
@@ -133,6 +134,25 @@ function approvedReview() {
 }
 
 describe("Atlas system-intent graph", () => {
+  it("renders deterministic focused workflow Mermaid", () => {
+    const graph = {
+      workflow_id: "project.workflow.payment",
+      operations: [
+        { operation_id: "project.operation.review", label: "Review payment", operation_kind: "decision" },
+        { operation_id: "project.operation.record", label: "Record payment", operation_kind: "action" },
+      ],
+      edges: [{
+        from_operation_id: "project.operation.record",
+        to_operation_id: "project.operation.review",
+        edge_kind: "ordering",
+      }],
+    };
+    const rendered = renderFocusedWorkflowMermaid(graph);
+    expect(rendered).toContain("flowchart TD");
+    expect(rendered).toContain("Review payment");
+    expect(rendered).toContain("-->|\"ordering\"|");
+  });
+
   it("projects arbitrary pre-approval workflow shapes deterministically", () => {
     const first = projectWorkflowGraph(workflowInput);
     const second = projectWorkflowGraph({

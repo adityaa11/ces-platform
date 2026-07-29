@@ -49,6 +49,7 @@ import {
   renderWorkflowGraphJson,
   renderWorkflowGraphMarkdown,
   renderWorkflowGraphMermaid,
+  renderFocusedWorkflowMermaid,
 } from "@company/ces-atlas-intent-graph";
 import {
   candidateRevisionHash,
@@ -2056,6 +2057,7 @@ function buildCanonicalProposedAtlasArtifacts(input: {
   });
   const graph = projectProposedWorkflowGraph(model);
   const focusedProjections = createFocusedAtlasProjections({ model, page_size: 25 });
+  const proposedWorkflowArtifacts = createProposedWorkflowArtifacts(focusedProjections.workflow_details);
   const identityReport = createRecordIdentityReport({
     project_id: projectId,
     proposal_revision: 1,
@@ -2106,6 +2108,7 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     "proposed-workflow-detail-graphs.json": collectionCanonicalJson(
       focusedProjections.workflow_details,
     ),
+    ...proposedWorkflowArtifacts,
     "proposed-rules-controls-index.json": collectionCanonicalJson(
       focusedProjections.rules_controls_index,
     ),
@@ -2449,6 +2452,7 @@ export function buildProposedAtlasArtifacts(input: {
   });
   const graph = projectProposedWorkflowGraph(model);
   const focusedProjections = createFocusedAtlasProjections({ model, page_size: 25 });
+  const proposedWorkflowArtifacts = createProposedWorkflowArtifacts(focusedProjections.workflow_details);
   const identityReport = createRecordIdentityReport({
     project_id: projectId,
     proposal_revision: 1,
@@ -2497,6 +2501,7 @@ export function buildProposedAtlasArtifacts(input: {
     "proposed-workflow-detail-graphs.json": collectionCanonicalJson(
       focusedProjections.workflow_details,
     ),
+    ...proposedWorkflowArtifacts,
     "proposed-rules-controls-index.json": collectionCanonicalJson(
       focusedProjections.rules_controls_index,
     ),
@@ -2684,6 +2689,7 @@ async function retainedPendingArtifacts(
     "proposed-project-model.json",
     "proposed-project-overview-graph.json",
     "proposed-workflow-detail-graphs.json",
+    "proposed-workflow-index.json",
     "proposed-rules-controls-index.json",
     "proposed-traceability-graph.json",
     "proposed-approval-exceptions.json",
@@ -2966,6 +2972,47 @@ function buildAtlasAssignments(input: {
     ])),
   };
   return { workflowAssignments, crossCuttingAssignments, assignmentDiagnostics };
+}
+
+function createProposedWorkflowArtifacts(details: readonly {
+  readonly workflow_id: string;
+  readonly operations: readonly {
+    readonly operation_id: string;
+    readonly label: string;
+    readonly operation_kind: string;
+    readonly semantic_record_ids: readonly string[];
+  }[];
+  readonly edges: readonly {
+    readonly edge_id: string;
+    readonly from_operation_id: string;
+    readonly to_operation_id: string;
+    readonly edge_kind: string;
+  }[];
+}[]): Record<string, string> {
+  const entries = details.map((detail) => {
+    const directory = `proposed-workflows/${stableId(detail.workflow_id)}`;
+    return {
+      workflow_id: detail.workflow_id,
+      flow_json: `${directory}/flow.json`,
+      flow_mermaid: `${directory}/flow.mmd`,
+      detail,
+    };
+  });
+  return {
+    "proposed-workflow-index.json": canonicalJson({
+      schema_version: "1.0.0",
+      authoritative: false,
+      workflows: entries.map(({ workflow_id, flow_json, flow_mermaid }) => ({
+        workflow_id,
+        flow_json,
+        flow_mermaid,
+      })),
+    }),
+    ...Object.fromEntries(entries.flatMap(({ flow_json, flow_mermaid, detail }) => [
+      [flow_json, canonicalJson(detail)],
+      [flow_mermaid, renderFocusedWorkflowMermaid(detail)],
+    ])),
+  };
 }
 
 function stableId(value: string): string {

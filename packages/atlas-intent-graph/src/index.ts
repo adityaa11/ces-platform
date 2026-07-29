@@ -363,6 +363,42 @@ export function materializeApprovedFocusedProjections(input: {
   }));
 }
 
+export function renderFocusedWorkflowMermaid(input: {
+  readonly workflow_id: string;
+  readonly operations: readonly {
+    readonly operation_id: string;
+    readonly label: string;
+    readonly operation_kind: string;
+  }[];
+  readonly edges: readonly {
+    readonly from_operation_id: string;
+    readonly to_operation_id: string;
+    readonly edge_kind: string;
+  }[];
+}): string {
+  const operations = [...input.operations].sort((left, right) =>
+    compareText(left.operation_id, right.operation_id));
+  const aliases = new Map(operations.map((operation, index) =>
+    [operation.operation_id, `op${index + 1}`] as const));
+  const lines = [
+    `%% ${input.workflow_id} — PROPOSED, NOT AUTHORITATIVE`,
+    "flowchart TD",
+    ...operations.map((operation) => {
+      const alias = aliases.get(operation.operation_id)!;
+      const label = escapeMermaid(operation.label);
+      return operation.operation_kind === "decision"
+        ? `  ${alias}{"${label}"}` : `  ${alias}["${label}"]`;
+    }),
+    ...[...input.edges].sort((left, right) =>
+      compareText(
+        `${left.from_operation_id}:${left.to_operation_id}:${left.edge_kind}`,
+        `${right.from_operation_id}:${right.to_operation_id}:${right.edge_kind}`,
+      )).map((edge) =>
+      `  ${aliases.get(edge.from_operation_id)} -->|"${escapeMermaid(edge.edge_kind)}"| ${aliases.get(edge.to_operation_id)}`),
+  ];
+  return `${lines.join("\n")}\n`;
+}
+
 export const WorkflowGraphProjectionInputSchema = z.object({
   project_id: StableId,
   model_revision: z.number().int().positive(),
