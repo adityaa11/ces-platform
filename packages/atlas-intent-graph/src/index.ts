@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import {
   AtlasUncertaintySchema,
   type AtlasProviderResult,
@@ -24,6 +23,7 @@ import { z } from "zod";
 
 export const ATLAS_INTENT_GRAPH_VERSION = "1.0.0" as const;
 export const ATLAS_WORKFLOW_GRAPH_VERSION = "1.0.0" as const;
+export const ATLAS_FOCUSED_PROJECTION_VERSION = "1.0.0" as const;
 
 const NonEmptyString = z.string().trim().min(1);
 const Sha256Schema = z.string().regex(/^sha256:[0-9a-f]{64}$/u);
@@ -33,6 +33,239 @@ const ReviewStateSchema = z.enum([
   "pending", "approved", "rejected", "correction_requested", "ambiguous",
   "unsupported", "conflict", "source_missing",
 ]);
+
+export const FocusedProjectionBundleSchema = z.object({
+  schema_version: z.literal(ATLAS_FOCUSED_PROJECTION_VERSION),
+  model_revision: z.number().int().positive(),
+  model_hash: Sha256Schema,
+  model_lifecycle: z.enum(["review_in_progress", "approved"]),
+  authoritative: z.boolean(),
+  downstream_execution_allowed: z.boolean(),
+  project_overview: z.object({
+    workflows: z.array(z.object({
+      workflow_id: StableId,
+      label: NonEmptyString,
+      summary: NonEmptyString,
+      operation_count: z.number().int().nonnegative(),
+      review_status: z.literal("pending"),
+    }).strict()),
+  }).strict(),
+  workflow_details: z.array(z.object({
+    workflow_id: StableId,
+    operations: z.array(z.object({
+      operation_id: StableId,
+      label: NonEmptyString,
+      operation_kind: NonEmptyString,
+      semantic_record_ids: z.array(StableId),
+    }).strict()),
+    edges: z.array(z.object({
+      edge_id: StableId,
+      from_operation_id: StableId,
+      to_operation_id: StableId,
+      edge_kind: NonEmptyString,
+    }).strict()),
+  }).strict()),
+  rules_controls_index: z.object({
+    artifacts: z.array(z.object({
+      artifact: NonEmptyString,
+      slice_id: StableId,
+      partition_type: z.enum(["workflow", "cross_cutting", "unassigned"]),
+      partition_id: StableId,
+      item_count: z.number().int().nonnegative(),
+      cursor: NonEmptyString,
+      next_cursor: NonEmptyString.optional(),
+    }).strict()),
+  }).strict(),
+  rules_controls_slices: z.array(z.object({
+    artifact: NonEmptyString,
+    slice_id: StableId,
+    partition_type: z.enum(["workflow", "cross_cutting", "unassigned"]),
+    partition_id: StableId,
+    cursor: NonEmptyString,
+    next_cursor: NonEmptyString.optional(),
+    items: z.array(z.object({
+      record_id: StableId,
+      semantic_kind_id: StableId,
+      statement: NonEmptyString,
+      source_unit_ids: z.array(StableId).min(1),
+    }).strict()),
+  }).strict()),
+  traceability: z.array(z.object({
+    record_id: StableId,
+    candidate_ids: z.array(StableId),
+    source_unit_ids: z.array(StableId),
+    semantic_fingerprint: Sha256Schema,
+  }).strict()),
+  approval_exceptions: z.array(z.object({
+    entity_type: z.enum(["record", "assignment", "relationship", "workflow_edge"]),
+    entity_id: StableId,
+    blockers: z.array(StableId).min(1),
+  }).strict()),
+  content_hash: Sha256Schema,
+}).strict().superRefine((value, context) => {
+  const approved = value.model_lifecycle === "approved";
+  if (value.authoritative !== approved || value.downstream_execution_allowed !== approved) {
+    context.addIssue({ code: "custom", message: "Focused projection lifecycle authority mismatch" });
+  }
+});
+
+export function createFocusedAtlasProjections(input: {
+  readonly model: z.input<typeof ProposedProjectModelSchema>;
+  readonly page_size?: number;
+}): z.infer<typeof FocusedProjectionBundleSchema> {
+  const model = ProposedProjectModelSchema.parse(input.model);
+  const pageSize = z.number().int().min(1).max(100).parse(input.page_size ?? 25);
+  const records = new Map(model.records.map((record) => [record.id, record]));
+  const projectOverview = {
+    workflows: model.workflows.map((workflow) => ({
+      workflow_id: workflow.workflow_id,
+      label: workflow.label,
+      summary: workflow.summary,
+      operation_count: workflow.operation_ids.length,
+      review_status: "pending" as const,
+    })).sort((left, right) => compareText(left.workflow_id, right.workflow_id)),
+  };
+  const workflowDetails = model.workflows.map((workflow) => ({
+    workflow_id: workflow.workflow_id,
+    operations: model.operations.filter(({ operation_id }) =>
+      workflow.operation_ids.includes(operation_id)).map((operation) => ({
+      operation_id: operation.operation_id,
+      label: operation.label,
+      operation_kind: operation.operation_kind,
+      semantic_record_ids: [...operation.semantic_record_ids].sort(compareText),
+    })).sort((left, right) => compareText(left.operation_id, right.operation_id)),
+    edges: model.workflow_edges.filter(({ workflow_id }) =>
+      workflow_id === workflow.workflow_id).map((edge) => ({
+      edge_id: edge.edge_id,
+      from_operation_id: edge.from_operation_id,
+      to_operation_id: edge.to_operation_id,
+      edge_kind: edge.edge_kind,
+    })).sort((left, right) => compareText(left.edge_id, right.edge_id)),
+  })).sort((left, right) => compareText(left.workflow_id, right.workflow_id));
+  const workflowRecordIds = new Map(model.workflows.map((workflow) => [
+    workflow.workflow_id,
+    new Set(model.workflow_assignments.filter(({ workflow_id }) =>
+      workflow_id === workflow.workflow_id).map(({ record_id }) => record_id)),
+  ]));
+  const crossCuttingRecordIds = new Map<string, Set<string>>();
+  for (const assignment of model.cross_cutting_assignments) {
+    const ids = crossCuttingRecordIds.get(assignment.control_area) ?? new Set<string>();
+    ids.add(assignment.record_id);
+    crossCuttingRecordIds.set(assignment.control_area, ids);
+  }
+  const assigned = new Set([
+    ...model.workflow_assignments.map(({ record_id }) => record_id),
+    ...model.cross_cutting_assignments.map(({ record_id }) => record_id),
+  ]);
+  const partitions = [
+    ...[...workflowRecordIds].map(([partitionId, ids]) =>
+      ({ partitionType: "workflow" as const, partitionId, ids })),
+    ...[...crossCuttingRecordIds].map(([partitionId, ids]) =>
+      ({ partitionType: "cross_cutting" as const, partitionId, ids })),
+    {
+      partitionType: "unassigned" as const,
+      partitionId: "unassigned",
+      ids: new Set(model.records.filter(({ id }) => !assigned.has(id)).map(({ id }) => id)),
+    },
+  ].filter(({ ids }) => ids.size > 0)
+    .sort((left, right) => compareText(
+      `${left.partitionType}:${left.partitionId}`,
+      `${right.partitionType}:${right.partitionId}`,
+    ));
+  const slices = partitions.flatMap(({ partitionType, partitionId, ids }) => {
+    const items = [...ids].map((id) => records.get(id)!).sort((left, right) =>
+      compareText(left.id, right.id));
+    const pages = [];
+    for (let offset = 0; offset < items.length; offset += pageSize) {
+      const page = Math.floor(offset / pageSize) + 1;
+      const sliceId = `${model.project_id}.rules.${safeId(partitionId)}.${String(page).padStart(4, "0")}`;
+      const artifact = `proposed-rules-controls/${partitionType}/${safeId(partitionId)}/${sliceId}.json`;
+      const nextOffset = offset + pageSize;
+      pages.push({
+        artifact,
+        slice_id: sliceId,
+        partition_type: partitionType,
+        partition_id: partitionId,
+        cursor: `${model.content_hash}:${partitionType}:${partitionId}:${offset}`,
+        ...(nextOffset < items.length
+          ? { next_cursor: `${model.content_hash}:${partitionType}:${partitionId}:${nextOffset}` }
+          : {}),
+        items: items.slice(offset, nextOffset).map((record) => ({
+          record_id: record.id,
+          semantic_kind_id: record.semantic_kind_id,
+          statement: record.statement,
+          source_unit_ids: [...record.source_unit_ids].sort(compareText),
+        })),
+      });
+    }
+    return pages;
+  });
+  const approvalExceptions = [
+    ...model.records.flatMap((record) => {
+      const blockers = record.issues.filter(({ severity }) => severity !== "warning")
+        .map(({ code }) => code);
+      return blockers.length === 0 ? [] : [{
+        entity_type: "record" as const, entity_id: record.id, blockers,
+      }];
+    }),
+    ...model.workflow_assignments.flatMap((assignment) =>
+      assignment.governance.blockers.length === 0 ? [] : [{
+        entity_type: "assignment" as const,
+        entity_id: assignment.assignment_id,
+        blockers: assignment.governance.blockers,
+      }]),
+    ...model.relationship_candidates.flatMap((relationship) => {
+      const blockers = [
+        ...relationship.governance.blockers,
+        ...relationship.targets.flatMap(({ blockers }) => blockers),
+      ];
+      return blockers.length === 0 ? [] : [{
+        entity_type: "relationship" as const,
+        entity_id: relationship.relationship_intent_id,
+        blockers: [...new Set(blockers)].sort(compareText),
+      }];
+    }),
+    ...model.workflow_edges.flatMap((edge) =>
+      edge.governance.blockers.length === 0 ? [] : [{
+        entity_type: "workflow_edge" as const,
+        entity_id: edge.edge_id,
+        blockers: edge.governance.blockers,
+      }]),
+  ].sort((left, right) => compareText(left.entity_id, right.entity_id));
+  const core = {
+    schema_version: ATLAS_FOCUSED_PROJECTION_VERSION,
+    model_revision: model.proposal_revision,
+    model_hash: model.content_hash,
+    model_lifecycle: model.lifecycle,
+    authoritative: model.authoritative,
+    downstream_execution_allowed: model.downstream_execution_allowed,
+    project_overview: projectOverview,
+    workflow_details: workflowDetails,
+    rules_controls_index: {
+      artifacts: slices.map((slice) => ({
+        artifact: slice.artifact,
+        slice_id: slice.slice_id,
+        partition_type: slice.partition_type,
+        partition_id: slice.partition_id,
+        item_count: slice.items.length,
+        cursor: slice.cursor,
+        ...(slice.next_cursor ? { next_cursor: slice.next_cursor } : {}),
+      })),
+    },
+    rules_controls_slices: slices,
+    traceability: model.records.map((record) => ({
+      record_id: record.id,
+      candidate_ids: [...record.candidate_ids].sort(compareText),
+      source_unit_ids: [...record.source_unit_ids].sort(compareText),
+      semantic_fingerprint: record.identity.semantic_fingerprint,
+    })).sort((left, right) => compareText(left.record_id, right.record_id)),
+    approval_exceptions: approvalExceptions,
+  };
+  return deepFreezeProjection(FocusedProjectionBundleSchema.parse({
+    ...core,
+    content_hash: hashProjection(core),
+  }));
+}
 
 export const WorkflowGraphProjectionInputSchema = z.object({
   project_id: StableId,
@@ -677,6 +910,29 @@ function compareText(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0;
 }
 
+function safeId(value: string): string {
+  const normalized = value.toLocaleLowerCase("en-US")
+    .replace(/[^a-z0-9]+/gu, "-").replace(/^-|-$/gu, "");
+  return StableId.parse(normalized || "unknown");
+}
+
+function hashProjection(value: unknown): string {
+  return `sha256:${createHash("sha256")
+    .update(JSON.stringify(value, (_key, child) => {
+      if (child === null || typeof child !== "object" || Array.isArray(child)) return child;
+      return Object.fromEntries(Object.entries(child).sort(([left], [right]) =>
+        compareText(left, right)));
+    })).digest("hex")}`;
+}
+
+function deepFreezeProjection<T>(value: T): T {
+  if (value !== null && typeof value === "object") {
+    Object.freeze(value);
+    for (const child of Object.values(value)) deepFreezeProjection(child);
+  }
+  return value;
+}
+
 function workflowHash(value: unknown): string {
   const canonicalize = (item: unknown): unknown => {
     if (Array.isArray(item)) return item.map(canonicalize);
@@ -690,3 +946,4 @@ function workflowHash(value: unknown): string {
   return `sha256:${createHash("sha256")
     .update(JSON.stringify(canonicalize(value))).digest("hex")}`;
 }
+import { createHash } from "node:crypto";

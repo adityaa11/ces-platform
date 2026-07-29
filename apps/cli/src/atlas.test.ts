@@ -155,10 +155,16 @@ describe("Atlas CLI pipeline", () => {
         "extractor-ledger.json",
         "legacy-projection-losses.json",
         "operations.json",
+        "proposed-approval-exceptions.json",
         "proposed-project-model.json",
+        "proposed-project-overview-graph.json",
+        "proposed-rules-controls-index.json",
+        "proposed-rules-controls/unassigned/unassigned/project.rules.unassigned.0001.json",
         "proposed-system-intent-graph.json",
         "proposed-system-intent-graph.md",
         "proposed-system-intent-graph.mmd",
+        "proposed-traceability-graph.json",
+        "proposed-workflow-detail-graphs.json",
         "record-identity-report.json",
         "relationship-candidates.json",
         "review-input.json",
@@ -189,6 +195,15 @@ describe("Atlas CLI pipeline", () => {
         approval_required: true,
         downstream_execution_allowed: false,
       });
+      expect(await json(join(output, "proposed-rules-controls-index.json"))).toMatchObject({
+        artifacts: [{
+          partition_type: "unassigned",
+          item_count: 1,
+          cursor: expect.stringContaining("sha256:"),
+        }],
+      });
+      expect(await json(join(output, "proposed-project-overview-graph.json")))
+        .toEqual({ workflows: [] });
       const proposedGraph = await json(join(
         output,
         "proposed-system-intent-graph.json",
@@ -236,10 +251,16 @@ describe("Atlas CLI pipeline", () => {
         "extractor-ledger.json",
         "legacy-projection-losses.json",
         "operations.json",
+        "proposed-approval-exceptions.json",
         "proposed-project-model.json",
+        "proposed-project-overview-graph.json",
+        "proposed-rules-controls-index.json",
+        "proposed-rules-controls/unassigned/unassigned/project.rules.unassigned.0001.json",
         "proposed-system-intent-graph.json",
         "proposed-system-intent-graph.md",
         "proposed-system-intent-graph.mmd",
+        "proposed-traceability-graph.json",
+        "proposed-workflow-detail-graphs.json",
         "record-identity-report.json",
         "relationship-candidates.json",
         "requirement-collection.json",

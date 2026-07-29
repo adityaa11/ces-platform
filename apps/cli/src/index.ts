@@ -41,6 +41,7 @@ import {
 import {
   buildIntentGraph,
   compileAtlasCoreHandoff,
+  createFocusedAtlasProjections,
   renderIntentGraphJson,
   renderIntentGraphMarkdown,
   renderIntentGraphMermaid,
@@ -1878,6 +1879,7 @@ function buildCanonicalProposedAtlasArtifacts(input: {
       .map(({ id }) => id),
   });
   const graph = projectProposedWorkflowGraph(model);
+  const focusedProjections = createFocusedAtlasProjections({ model, page_size: 25 });
   const identityReport = createRecordIdentityReport({
     project_id: projectId,
     proposal_revision: 1,
@@ -1914,6 +1916,25 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     "source-coverage.json": collectionCanonicalJson(coverage),
     "extraction-findings.json": collectionCanonicalJson(findings),
     "proposed-project-model.json": collectionCanonicalJson(model),
+    "proposed-project-overview-graph.json": collectionCanonicalJson(
+      focusedProjections.project_overview,
+    ),
+    "proposed-workflow-detail-graphs.json": collectionCanonicalJson(
+      focusedProjections.workflow_details,
+    ),
+    "proposed-rules-controls-index.json": collectionCanonicalJson(
+      focusedProjections.rules_controls_index,
+    ),
+    ...Object.fromEntries(focusedProjections.rules_controls_slices.map((slice) => [
+      slice.artifact,
+      collectionCanonicalJson(slice),
+    ])),
+    "proposed-traceability-graph.json": collectionCanonicalJson(
+      focusedProjections.traceability,
+    ),
+    "proposed-approval-exceptions.json": collectionCanonicalJson(
+      focusedProjections.approval_exceptions,
+    ),
     "proposed-system-intent-graph.json": renderWorkflowGraphJson(graph),
     "proposed-system-intent-graph.md": renderWorkflowGraphMarkdown(graph),
     "proposed-system-intent-graph.mmd": renderWorkflowGraphMermaid(graph),
@@ -2250,6 +2271,7 @@ export function buildProposedAtlasArtifacts(input: {
     approval_blockers: blockers,
   });
   const graph = projectProposedWorkflowGraph(model);
+  const focusedProjections = createFocusedAtlasProjections({ model, page_size: 25 });
   const identityReport = createRecordIdentityReport({
     project_id: projectId,
     proposal_revision: 1,
@@ -2285,6 +2307,25 @@ export function buildProposedAtlasArtifacts(input: {
     "source-coverage.json": collectionCanonicalJson(coverage),
     "extraction-findings.json": collectionCanonicalJson(findings),
     "proposed-project-model.json": collectionCanonicalJson(model),
+    "proposed-project-overview-graph.json": collectionCanonicalJson(
+      focusedProjections.project_overview,
+    ),
+    "proposed-workflow-detail-graphs.json": collectionCanonicalJson(
+      focusedProjections.workflow_details,
+    ),
+    "proposed-rules-controls-index.json": collectionCanonicalJson(
+      focusedProjections.rules_controls_index,
+    ),
+    ...Object.fromEntries(focusedProjections.rules_controls_slices.map((slice) => [
+      slice.artifact,
+      collectionCanonicalJson(slice),
+    ])),
+    "proposed-traceability-graph.json": collectionCanonicalJson(
+      focusedProjections.traceability,
+    ),
+    "proposed-approval-exceptions.json": collectionCanonicalJson(
+      focusedProjections.approval_exceptions,
+    ),
     "proposed-system-intent-graph.json": renderWorkflowGraphJson(graph),
     "proposed-system-intent-graph.md": renderWorkflowGraphMarkdown(graph),
     "proposed-system-intent-graph.mmd": renderWorkflowGraphMermaid(graph),
@@ -2453,6 +2494,11 @@ async function retainedPendingArtifacts(
     "clarification-questions.json",
     "review-input.json",
     "proposed-project-model.json",
+    "proposed-project-overview-graph.json",
+    "proposed-workflow-detail-graphs.json",
+    "proposed-rules-controls-index.json",
+    "proposed-traceability-graph.json",
+    "proposed-approval-exceptions.json",
     "proposed-system-intent-graph.json",
     "proposed-system-intent-graph.md",
     "proposed-system-intent-graph.mmd",
@@ -2483,6 +2529,16 @@ async function retainedPendingArtifacts(
   ]) {
     const content = await readOptionalText(resolve(outputDirectory, path));
     if (content !== undefined) retained[path] = content;
+  }
+  const rulesIndex = retained["proposed-rules-controls-index.json"];
+  if (rulesIndex) {
+    const parsed = z.object({
+      artifacts: z.array(z.object({ artifact: z.string().min(1) }).passthrough()),
+    }).passthrough().parse(JSON.parse(rulesIndex));
+    for (const { artifact } of parsed.artifacts) {
+      const content = await readOptionalText(resolve(outputDirectory, artifact));
+      if (content !== undefined) retained[artifact] = content;
+    }
   }
   return retained;
 }

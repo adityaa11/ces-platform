@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-025 — Focused Backend-Owned UI Projections
 
 **Stage:** Canonical model and workflow projection refinement
-**Status:** Proposed
+**Status:** Implemented
 
 ## Objective
 
@@ -48,22 +48,22 @@ slices remain non-authoritative projections of canonical bundle components.
 
 ## Acceptance criteria
 
-- [ ] Overview excludes detailed controls and delivery/commercial clutter.
-- [ ] Workflow detail retains operations, decisions, states, and transitions.
-- [ ] Detailed requirements remain accessible in focused tabs.
-- [ ] Rules and controls support per-workflow and cross-cutting-control slices,
+- [x] Overview excludes detailed controls and delivery/commercial clutter.
+- [x] Workflow detail retains operations, decisions, states, and transitions.
+- [x] Detailed requirements remain accessible in focused tabs.
+- [x] Rules and controls support per-workflow and cross-cutting-control slices,
       semantic-kind filtering, pagination, lazy expansion, and search.
-- [ ] Filtering and pagination are backend-owned with revision-pinned cursors,
+- [x] Filtering and pagination are backend-owned with revision-pinned cursors,
       deterministic ordering, stable slice identifiers, and bounded pages.
-- [ ] No focused view requires downloading the complete project rule
+- [x] No focused view requires downloading the complete project rule
       inventory.
-- [ ] The default rules-and-controls view loads the selected workflow rather
+- [x] The default rules-and-controls view loads the selected workflow rather
       than every rule in the project.
-- [ ] No single default projection recreates the all-record giant graph.
-- [ ] Rendered items resolve to canonical identity and exact evidence.
-- [ ] Heuristic hints are not established projection edges.
-- [ ] Frontend does not reconstruct semantic membership.
-- [ ] Proposed and approved projections share neutral contracts.
+- [x] No single default projection recreates the all-record giant graph.
+- [x] Rendered items resolve to canonical identity and exact evidence.
+- [x] Heuristic hints are not established projection edges.
+- [x] Frontend does not reconstruct semantic membership.
+- [x] Proposed and approved projections share neutral contracts.
 
 ## Tests and evidence
 
@@ -74,3 +74,27 @@ exceptions, proposed/approved parity, and deterministic rendering.
 ## Out of scope
 
 Approval and eligibility are extended by ATLAS-HARD-026.
+
+## Implementation evidence
+
+Atlas now creates lifecycle-neutral focused projection contracts for project
+overview, workflow detail, rules and controls, traceability, and approval
+exceptions. Rules/control membership, sorting, pagination, revision-pinned
+cursors, stable slice IDs, and artifact paths are backend-owned. Each slice is
+published separately and the index contains only descriptors, so clients never
+need to download the complete semantic inventory.
+
+The canonical CLI emits:
+
+- `proposed-project-overview-graph.json`
+- `proposed-workflow-detail-graphs.json`
+- `proposed-rules-controls-index.json` plus partitioned slice artifacts
+- `proposed-traceability-graph.json`
+- `proposed-approval-exceptions.json`
+
+Verification:
+
+- `corepack pnpm --filter @company/ces-atlas-intent-graph build`
+- `corepack pnpm --filter @company/ces-cli typecheck`
+- `corepack pnpm vitest run packages/atlas-intent-graph/src/index.test.ts apps/cli/src/atlas.test.ts`
+- 14 focused tests passed.
