@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-026 — Expanded Approval and Bulk Eligibility
 
 **Stage:** Canonical model and workflow projection refinement
-**Status:** Implemented
+**Status:** Reopened — approval contracts exist, approved topology replay is incomplete
 
 ## Objective
 
@@ -86,6 +86,20 @@ unaffected decisions, and deterministic replay.
 ## Out of scope
 
 Final Safara and lifecycle qualification remains ATLAS-HARD-015.
+
+## Reopened acceptance gaps
+
+The Safara output did not demonstrate that accepted assignments and
+relationships are replayed into connected approved workflow projections.
+
+- [ ] Emit approved workflow assignments and approved relationships.
+- [ ] Materialize approved workflow-detail and project-overview projections.
+- [ ] Include approved edges and exclude pending or rejected edges.
+- [ ] Materialize human-added edges only from immutable reviewer decisions.
+- [ ] Preserve the original proposed model unchanged.
+- [ ] Prove deterministic replay from immutable proposal plus decisions.
+- [ ] Store Safara evidence for partial multi-target approval and stale
+      decision handling.
 
 ## Implementation evidence
 

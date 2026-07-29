@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-024 — Multi-Target Relationships
 
 **Stage:** Canonical model and workflow projection refinement
-**Status:** Implemented
+**Status:** Reopened — contract support exists, live multi-target behavior is not proven
 
 ## Objective
 
@@ -54,6 +54,20 @@ missing targets, partial approval, rejection, and deterministic ordering.
 ## Out of scope
 
 Projection rendering is handled by ATLAS-HARD-025.
+
+## Reopened acceptance gaps
+
+Schema and unit-test support do not yet prove multi-target behavior in the
+generated Safara artifacts.
+
+- [ ] Demonstrate one relationship intent with multiple independently
+      reviewable valid targets.
+- [ ] Demonstrate partial target approval and rejection without changing the
+      shared intent identity.
+- [ ] Demonstrate unresolved zero-target and competing-target cases.
+- [ ] Prove rejected targets never enter approved projections.
+- [ ] Store deterministic Safara evidence for intent, target-candidate, and
+      approved-edge identity separation.
 
 ## Implementation evidence
 

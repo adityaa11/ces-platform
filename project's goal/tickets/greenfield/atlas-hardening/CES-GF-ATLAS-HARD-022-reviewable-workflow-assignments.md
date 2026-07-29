@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-022 — Reviewable Workflow Assignments
 
 **Stage:** Canonical model and workflow projection refinement
-**Status:** Implemented
+**Status:** Reopened — structural support exists, assignment quality is unqualified
 
 ## Objective
 
@@ -53,6 +53,21 @@ controls, reassignment, low confidence, and deterministic ordering.
 ## Out of scope
 
 Entity relationships are handled by ATLAS-HARD-023 and ATLAS-HARD-024.
+
+## Reopened acceptance gaps
+
+The Safara run emitted 384 assignments for 25 operations. This volume is not
+accepted without evidence that assignments are narrow, meaningful, and not
+duplicated broadly.
+
+- [ ] Report assignments per workflow and per operation.
+- [ ] Report duplicate, low-confidence, unresolved, and overly broad
+      assignments.
+- [ ] Prove payment, document, readiness, and manifest records are assigned to
+      their correct workflows.
+- [ ] Prove cross-cutting controls are not duplicated as ordinary assignments
+      across every workflow.
+- [ ] Qualify assignment precision on the Safara oracle before closure.
 
 ## Implementation evidence
 

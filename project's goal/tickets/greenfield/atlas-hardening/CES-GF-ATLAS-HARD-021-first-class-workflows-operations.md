@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-021 — First-Class Workflows and Operations
 
 **Stage:** Canonical model and workflow projection refinement
-**Status:** Implemented
+**Status:** Reopened — workflow inventory exists, connected topology is incomplete
 
 ## Objective
 
@@ -61,6 +61,21 @@ multi-actor, heading-free, multilingual, and novel-domain workflows.
 ## Out of scope
 
 Record-to-workflow assignment is handled by ATLAS-HARD-022.
+
+## Reopened acceptance gaps
+
+The post-HARD-026 Safara run emitted workflows and operations but left
+`workflow-edges.json` empty. Contract-level graph support is not sufficient
+acceptance evidence.
+
+- [ ] Group related operations into coherent business workflows.
+- [ ] Emit source-grounded operation, decision, state, branch, join, loop, and
+      dependency nodes where supported by the PRD.
+- [ ] Emit governed `contains`, `precedes`, `triggers`, `depends_on`,
+      `branches_to`, `joins_at`, `repeats_to`, `produces_state`,
+      `requires_state`, and `recalculates` candidates as applicable.
+- [ ] Mark every topology edge as explicit, derived, or human-confirmed.
+- [ ] Reject an empty Safara workflow topology during qualification.
 
 ## Implementation evidence
 

@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-023 — Reviewable Relationship Candidates
 
 **Stage:** Canonical model and workflow projection refinement
-**Status:** Implemented
+**Status:** Reopened — candidate scaffolding exists, topology candidates and acceptance evidence are incomplete
 
 ## Objective
 
@@ -76,6 +76,21 @@ misattributed human-added, workflow-edge, stale-target, and replay fixtures.
 ## Out of scope
 
 Multi-target resolution is completed by ATLAS-HARD-024.
+
+## Reopened acceptance gaps
+
+The Safara run emitted 19 relationship candidates, but did not demonstrate
+complete operation-level workflow topology or a dedicated relationship-review
+projection.
+
+- [ ] Every candidate exposes source, target, kind, origin, evidence,
+      rationale, confidence, review status, bulk eligibility, and blockers.
+- [ ] Generate reviewable ordering, state, branch, join, retry, and loop
+      candidates where supported.
+- [ ] Keep pending candidates out of authoritative relationships.
+- [ ] Add a focused relationship-review projection that clearly renders
+      pending edges as non-authoritative.
+- [ ] Store Safara acceptance evidence for explicit and derived candidates.
 
 ## Implementation evidence
 

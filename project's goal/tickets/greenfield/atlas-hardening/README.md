@@ -1,8 +1,9 @@
 # CES Atlas Hardening Ticket Plan
 
-**Status:** Planned
+**Status:** In progress — ATLAS-HARD-021 through ATLAS-HARD-026 reopened after Safara workflow-output qualification
 **Authority:** [`CES_ATLAS_HARDENING_PLAN.md`](../../../CES_ATLAS_HARDENING_PLAN.md)
 **Refinement:** [`CES_ATLAS_CANONICAL_MODEL_WORKFLOW_PROJECTION_FEEDBACK.md`](../../../CES_ATLAS_CANONICAL_MODEL_WORKFLOW_PROJECTION_FEEDBACK.md)
+**Post-implementation feedback:** [`CES_ATLAS_POST_HARD_018_026_FEEDBACK.md`](../../../CES_ATLAS_POST_HARD_018_026_FEEDBACK.md)
 **Foundation:** DAPE-000 through DAPE-008R are completed prerequisites.
 
 This program closes the gap between the completed DAPE extraction foundation
@@ -41,10 +42,11 @@ parallel semantic model, source identity system, or approval path.
 | 25 | [ATLAS-HARD-026](CES-GF-ATLAS-HARD-026-expanded-approval-and-eligibility.md) | Approval and eligibility across governed entities | 011–013, 022–025 |
 | 26 | [ATLAS-HARD-015](CES-GF-ATLAS-HARD-015-safara-qualification-gate.md) | Final qualification gate — executed last | 001–014, 016–026 |
 
-ATLAS-HARD-015 is reopened, blocked, and must execute last, after
-ATLAS-HARD-018 through ATLAS-HARD-026 are implemented. Earlier library-level
-completion, the pre-refinement live artifacts, or cleaner graph output is not
-production integration evidence.
+ATLAS-HARD-015 is reopened, blocked, and must execute last. The post-HARD-026
+Safara run reopened ATLAS-HARD-021 through ATLAS-HARD-026 because the generated
+workflow inventory had no connected topology or approved topology replay.
+Earlier library-level completion, the pre-refinement live artifacts, or cleaner
+graph output is not production integration evidence.
 
 ## Program rules
 

@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-025 — Focused Backend-Owned UI Projections
 
 **Stage:** Canonical model and workflow projection refinement
-**Status:** Implemented
+**Status:** Reopened — focused artifacts exist, workflow projections are disconnected
 
 ## Objective
 
@@ -74,6 +74,20 @@ exceptions, proposed/approved parity, and deterministic rendering.
 ## Out of scope
 
 Approval and eligibility are extended by ATLAS-HARD-026.
+
+## Reopened acceptance gaps
+
+The Safara workflow-detail artifacts exist, but every detail graph has an empty
+edge collection and no readable per-workflow Mermaid projection is emitted.
+
+- [ ] Workflow detail renders connected operations, decisions, states,
+      branches, joins, loops, and dependencies.
+- [ ] Generate deterministic Mermaid output for every non-empty workflow.
+- [ ] Add a relationship-review projection for pending candidates.
+- [ ] Preserve pending-edge styling as visibly non-authoritative.
+- [ ] Prove project overview remains smaller than the full semantic model.
+- [ ] Prove traceability reaches workflow and operation nodes through source
+      unit, atomic claim, and canonical record lineage.
 
 ## Implementation evidence
 

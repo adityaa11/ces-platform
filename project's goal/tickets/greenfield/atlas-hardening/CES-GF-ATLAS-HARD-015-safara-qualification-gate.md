@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-015 — Final Safara Qualification Gate
 
 **Stage:** Atlas hardening production gate
-**Status:** Blocked pending ATLAS-HARD-018 through ATLAS-HARD-026 implementation and qualification rerun
+**Status:** Blocked pending reopened ATLAS-HARD-021 through ATLAS-HARD-026 remediation and qualification rerun
 **Execution order:** Final delivery gate — execute last
 
 ## Objective
@@ -125,6 +125,22 @@ HARD-015 remains open until tickets 018 through 026 are implemented, the
 Safara qualification suite is rerun, every mandatory semantic and projection
 gate passes, and new approval and downstream-blocking evidence is generated
 and accepted by a human reviewer.
+
+## Post-HARD-018-to-HARD-026 qualification update
+
+The live Safara rerun produced canonical workflow inventory artifacts, but it
+did not produce connected workflow topology:
+
+- 11 workflows, 25 operations, and 384 workflow assignments were emitted;
+- 19 relationship candidates remained correctly non-authoritative;
+- `workflow-edges.json` was empty;
+- every workflow-detail projection had an empty `edges` collection;
+- approved relationship replay into approved focused projections was not
+  demonstrated.
+
+ATLAS-HARD-021 through ATLAS-HARD-026 are therefore reopened. HARD-015 remains
+blocked until their new acceptance gaps are closed and the Safara gate is
+rerun.
 
 Verification:
 
