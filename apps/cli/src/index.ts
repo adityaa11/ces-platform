@@ -2955,19 +2955,32 @@ function buildAtlasAssignments(input: {
     const candidates = input.workflows.map((workflow) => {
       const evidence = workflow.source_unit_ids.filter((id) =>
         record.source_unit_ids.includes(id));
+      const lexicalScore = jaccard(
+        semanticTokens(record.statement),
+        semanticTokens(workflow.label),
+      );
       return {
         workflow,
         evidence,
-        score: evidence.length * 10
-          + jaccard(semanticTokens(record.statement), semanticTokens(workflow.label)),
+        lexicalScore,
+        score: evidence.length * 10 + lexicalScore,
       };
-    }).filter(({ score }) => score > 0)
+    }).filter(({ evidence, lexicalScore }) => evidence.length > 0 || lexicalScore >= 0.15)
       .sort((left, right) => right.score - left.score
         || compareText(left.workflow.workflow_id, right.workflow.workflow_id));
-    const selected = directWorkflowIds.size > 0
+    const strongest = candidates[0];
+    const selectedCandidates = directWorkflowIds.size > 0
       ? candidates.filter(({ workflow }) => directWorkflowIds.has(workflow.workflow_id))
-      : candidates.slice(0, 1);
-    return selected.map(({ workflow, score }) => {
+      : strongest
+        ? candidates.filter(({ score, lexicalScore, evidence }) =>
+          score === strongest.score
+          && (evidence.length > 0 || lexicalScore >= 0.25))
+        : [];
+    const selected = selectedCandidates.length === input.workflows.length
+      && input.workflows.length > 1
+      ? []
+      : selectedCandidates.slice(0, 3);
+    return selected.map(({ workflow, score, evidence }) => {
         const operation = input.operations.find((item) =>
           item.workflow_id === workflow.workflow_id
           && item.semantic_record_ids.includes(record.id));
@@ -2996,7 +3009,9 @@ function buildAtlasAssignments(input: {
             rationale: "The canonical operation directly references this semantic record.",
           } : {
             ...governance,
-            rationale: "This is the strongest source-overlap and semantic match among candidate workflows.",
+            rationale: evidence.length > 0
+              ? "Shared source evidence and the strongest semantic match support this workflow assignment."
+              : "A strong semantic-label match supports this workflow assignment without relying on document order.",
             confidence: Math.min(0.95, 0.5 + score / 20),
             bulk_approval_eligible: false,
             blockers: [...new Set([...governance.blockers, "derived-assignment"])].sort(compareText),
@@ -3024,8 +3039,9 @@ function buildAtlasAssignments(input: {
   }).sort((left, right) => compareText(left.assignment_id, right.assignment_id));
   const tupleCounts = Map.groupBy(workflowAssignments, (assignment) =>
     `${assignment.workflow_id}:${assignment.record_id}:${assignment.operation_id ?? ""}`);
+  const recordAssignmentCounts = Map.groupBy(workflowAssignments, ({ record_id }) => record_id);
   const assignmentDiagnostics = {
-    schema_version: "1.0.0",
+    schema_version: "1.1.0",
     assignment_count: workflowAssignments.length,
     cross_cutting_count: crossCuttingAssignments.length,
     duplicate_tuple_count: [...tupleCounts.values()].filter((items) => items.length > 1).length,
@@ -3034,10 +3050,17 @@ function buildAtlasAssignments(input: {
     unresolved_count: input.records.filter((record) =>
       !crossCuttingKindArea[record.semantic_kind_id]
       && !workflowAssignments.some(({ record_id }) => record_id === record.id)).length,
+    overly_broad_count: [...recordAssignmentCounts.values()]
+      .filter((assignments) => assignments.length > 3).length,
     assignments_per_workflow: Object.fromEntries(input.workflows.map((workflow) => [
       workflow.workflow_id,
       workflowAssignments.filter(({ workflow_id }) =>
         workflow_id === workflow.workflow_id).length,
+    ])),
+    assignments_per_operation: Object.fromEntries(input.operations.map((operation) => [
+      operation.operation_id,
+      workflowAssignments.filter(({ operation_id }) =>
+        operation_id === operation.operation_id).length,
     ])),
   };
   return { workflowAssignments, crossCuttingAssignments, assignmentDiagnostics };

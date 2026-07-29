@@ -179,6 +179,14 @@ describe("Atlas CLI pipeline", () => {
             projection_eligibility: "none",
           }),
         ]));
+      expect(await json(join(output, "workflow-assignment-diagnostics.json")))
+        .toMatchObject({
+          schema_version: "1.1.0",
+          duplicate_tuple_count: 0,
+          overly_broad_count: 0,
+          assignments_per_workflow: expect.any(Object),
+          assignments_per_operation: expect.any(Object),
+        });
       const projection = JSON.parse(
         await readFile(join(output, "legacy-projection-losses.json"), "utf8"),
       );
