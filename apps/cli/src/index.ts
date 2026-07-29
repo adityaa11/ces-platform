@@ -1609,10 +1609,19 @@ export function buildAtlasRelationshipCandidates(input: {
     readonly evidence_source_unit_ids: readonly string[];
     readonly rationale: string;
   }[];
+  readonly independent_target_intents?: readonly {
+    readonly from_id: string;
+    readonly relationship_kind: string;
+  }[];
 }) {
+  const independentIntents = new Set((input.independent_target_intents ?? [])
+    .map(({ from_id, relationship_kind }) => `${from_id}:${relationship_kind}`));
   const grouped = Map.groupBy(input.edges, (edge) => `${edge.from_id}:${edge.kind}`);
   const resolvedCandidates = [...grouped.values()].map((edges) => {
     const representative = edges[0]!;
+    const independentTargets = independentIntents.has(
+      `${representative.from_id}:${representative.kind}`,
+    );
     const intentCore = {
       from_id: representative.from_id,
       relationship_kind: representative.kind,
@@ -1642,10 +1651,15 @@ export function buildAtlasRelationshipCandidates(input: {
         target_candidate_id:
           `${relationshipIntentId}.target.${hashCanonical(edge.to_id).slice(7, 19)}`,
         target_id: edge.to_id,
-        target_status: input.origin === "explicit" ? "valid" as const : "competing" as const,
+        target_status: input.origin === "explicit" || independentTargets
+          ? "valid" as const : "competing" as const,
+        target_semantics: independentTargets
+          ? "independent" as const : "competing" as const,
         evidence_source_unit_ids: [...edge.source_unit_ids].sort(compareText),
         rationale: input.origin === "explicit"
           ? "The source explicitly identifies this independently reviewable target."
+          : independentTargets
+            ? "Evidence supports this independent consumer target; review remains required."
           : "Shared evidence and semantic similarity propose this target for independent review.",
         confidence: input.origin === "explicit" ? 1 : 0.6,
         review_status: "pending" as const,
@@ -2454,6 +2468,12 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     projectId,
     proposalRevision: 1,
     edges: groundedRelationships,
+    independent_target_intents: workflows
+      .filter(({ semantic_role }) => semantic_role === "shared_data")
+      .map(({ workflow_id }) => ({
+        from_id: workflow_id,
+        relationship_kind: "ces.relationship.provides-data-to",
+      })),
   });
   const byUnit = new Map<string, string[]>();
   const classificationByUnit = new Map(input.canonicalExtraction.sectionClassifications

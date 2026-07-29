@@ -488,6 +488,7 @@ export const RelationshipCandidateSchema = z.object({
     target_candidate_id: Id,
     target_id: Id.optional(),
     target_status: z.enum(["valid", "competing", "unresolved"]),
+    target_semantics: z.enum(["independent", "competing"]).default("competing"),
     evidence_source_unit_ids: z.array(Id),
     rationale: Text,
     confidence: z.number().min(0).max(1),

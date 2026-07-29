@@ -82,6 +82,35 @@ describe("DAPE-008 staged Atlas commands", () => {
     });
   });
 
+  it("marks shared-consumer fanout independent without auto-approval", () => {
+    const result = buildAtlasRelationshipCandidates({
+      projectId: "test-project",
+      proposalRevision: 1,
+      edges: [
+        {
+          id: "edge.report", from_id: "node.shared-data", to_id: "node.report",
+          kind: "ces.relationship.provides-data-to", source_unit_ids: ["source.report"],
+        },
+        {
+          id: "edge.audit", from_id: "node.shared-data", to_id: "node.audit",
+          kind: "ces.relationship.provides-data-to", source_unit_ids: ["source.audit"],
+        },
+      ],
+      independent_target_intents: [{
+        from_id: "node.shared-data",
+        relationship_kind: "ces.relationship.provides-data-to",
+      }],
+    });
+    expect(result.candidates[0]?.targets).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        target_status: "valid",
+        target_semantics: "independent",
+        review_status: "pending",
+        blockers: ["derived-target-requires-review"],
+      }),
+    ]));
+  });
+
   it("represents unresolved zero-target intents without inventing endpoints", () => {
     const result = buildAtlasRelationshipCandidates({
       projectId: "test-project",
