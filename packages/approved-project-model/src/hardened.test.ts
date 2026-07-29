@@ -94,7 +94,24 @@ const proposal = {
       proposal_revision: 1,
     },
   }],
-  workflow_edges: [],
+  workflow_edges: [{
+    edge_id: "project.workflow-edge.release",
+    workflow_id: "project.workflow.release",
+    from_operation_id: "project.operation.release",
+    to_operation_id: "project.operation.release",
+    edge_kind: "loop" as const,
+    governance: {
+      id: "project.governance.workflow-edge-release",
+      origin: "derived" as const,
+      evidence_source_unit_ids: [source],
+      rationale: "Proposed retry loop.",
+      confidence: 0.6,
+      review_status: "pending" as const,
+      bulk_approval_eligible: false,
+      blockers: ["derived-topology-requires-review"],
+      proposal_revision: 1,
+    },
+  }],
   workflow_assignments: [],
   cross_cutting_assignments: [],
   relationship_hints: [],
@@ -161,6 +178,14 @@ describe("ATLAS-HARD-013 approved model materialization", () => {
         reviewer: { kind: "human", identity: "reviewer-1" },
         decided_at: "2026-07-29T10:00:00+07:00",
         note: "Approved record.",
+      }, {
+        sequence: 2,
+        action: "approve",
+        entity_type: "workflow_edge",
+        entity_ids: ["project.workflow-edge.release"],
+        reviewer: { kind: "human", identity: "reviewer-1" },
+        decided_at: "2026-07-29T10:01:00+07:00",
+        note: "Approved reviewed retry loop.",
       }],
     });
     const publication = materializeExpandedApprovedProjectModel({
@@ -179,10 +204,18 @@ describe("ATLAS-HARD-013 approved model materialization", () => {
       authoritative: true,
       downstream_execution_allowed: true,
     });
+    expect(publication.model.workflow_edges).toHaveLength(1);
+    expect(publication.focused_projections.workflow_details[0]?.edges).toHaveLength(1);
     const directory = await mkdtemp(join(tmpdir(), "atlas-expanded-approved-"));
     const published = await publishExpandedApproval(directory, publication);
     expect(await readFile(join(published, "approval-report.md"), "utf8"))
       .toContain("Approved records: 1");
+    expect(JSON.parse(await readFile(
+      join(published, "approved-workflow-edges.json"), "utf8",
+    ))).toHaveLength(1);
+    expect(await readFile(join(
+      published, "approved-workflows", "project.workflow.release", "flow.mmd",
+    ), "utf8")).toContain("flowchart TD");
   });
 
   it("publishes only approved records with authority and graph parity", async () => {

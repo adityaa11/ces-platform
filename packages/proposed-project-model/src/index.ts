@@ -466,10 +466,14 @@ export function calculateExpandedApprovalEligibility(input: {
   ): void => {
     const blockers = new Set(governance.blockers);
     if (uncoveredBlocksAll) blockers.add("uncovered-claim");
+    const reviewOnly = new Set(entityType === "workflow_edge"
+      ? ["derived-topology-requires-review", "derived-requires-review"]
+      : entityType === "workflow_assignment" ? ["derived-assignment"] : []);
+    const approvalBlockers = [...blockers].filter((blocker) => !reviewOnly.has(blocker));
     entities.push({
       entity_type: entityType,
       entity_id: entityId,
-      eligible: blockers.size === 0,
+      eligible: approvalBlockers.length === 0,
       bulk_approval_eligible: blockers.size === 0 && governance.bulk_approval_eligible,
       blockers: [...blockers].sort(compare),
     });

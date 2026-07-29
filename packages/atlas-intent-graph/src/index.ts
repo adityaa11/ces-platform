@@ -328,6 +328,9 @@ export function materializeApprovedFocusedProjections(input: {
   readonly proposed: z.input<typeof FocusedProjectionBundleSchema>;
   readonly approved_model_hash: string;
   readonly approved_model_revision: number;
+  readonly approved_workflow_ids?: readonly string[];
+  readonly approved_operation_ids?: readonly string[];
+  readonly approved_workflow_edge_ids?: readonly string[];
 }): z.infer<typeof FocusedProjectionBundleSchema> {
   const proposed = FocusedProjectionBundleSchema.parse(input.proposed);
   if (proposed.model_lifecycle !== "review_in_progress") {
@@ -338,6 +341,20 @@ export function materializeApprovedFocusedProjections(input: {
     slice.slice_id,
     slice.artifact.replace(/^proposed-/u, "approved-"),
   ]));
+  const workflowIds = new Set(input.approved_workflow_ids
+    ?? proposed.workflow_details.map(({ workflow_id }) => workflow_id));
+  const operationIds = new Set(input.approved_operation_ids
+    ?? proposed.workflow_details.flatMap(({ operations }) =>
+      operations.map(({ operation_id }) => operation_id)));
+  const edgeIds = new Set(input.approved_workflow_edge_ids ?? []);
+  const approvedWorkflowDetails = proposed.workflow_details
+    .filter(({ workflow_id }) => workflowIds.has(workflow_id))
+    .map((detail) => ({
+      ...detail,
+      operations: detail.operations.filter(({ operation_id }) =>
+        operationIds.has(operation_id)),
+      edges: detail.edges.filter(({ edge_id }) => edgeIds.has(edge_id)),
+    }));
   const core = {
     ...rest,
     model_revision: z.number().int().positive().parse(input.approved_model_revision),
@@ -345,6 +362,16 @@ export function materializeApprovedFocusedProjections(input: {
     model_lifecycle: "approved" as const,
     authoritative: true,
     downstream_execution_allowed: true,
+    project_overview: {
+      workflows: proposed.project_overview.workflows
+        .filter(({ workflow_id }) => workflowIds.has(workflow_id))
+        .map((workflow) => ({
+          ...workflow,
+          operation_count: approvedWorkflowDetails.find(({ workflow_id }) =>
+            workflow_id === workflow.workflow_id)?.operations.length ?? 0,
+        })),
+    },
+    workflow_details: approvedWorkflowDetails,
     rules_controls_index: {
       artifacts: proposed.rules_controls_index.artifacts.map((artifact) => ({
         ...artifact,

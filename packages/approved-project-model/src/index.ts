@@ -16,6 +16,7 @@ import {
   FocusedProjectionBundleSchema,
   materializeApprovedFocusedProjections,
   projectWorkflowGraph,
+  renderFocusedWorkflowMermaid,
   WorkflowGraphSchema,
 } from "@company/ces-atlas-intent-graph";
 import {
@@ -33,6 +34,12 @@ import {
   WorkflowAssignmentSchema,
 } from "@company/ces-proposed-project-model";
 import { z } from "zod";
+
+function safePathId(value: string): string {
+  return value.toLowerCase()
+    .replaceAll(/[^a-z0-9._-]+/gu, "-")
+    .replaceAll(/^[^a-z]+|[^a-z0-9]+$/gu, "");
+}
 
 export const APPROVED_PROJECT_MODEL_VERSION = "1.0.0" as const;
 const Id = z.string().regex(/^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u);
@@ -471,6 +478,9 @@ export function materializeExpandedApprovedProjectModel(input: {
     proposed: input.focused_projections,
     approved_model_hash: model.content_hash,
     approved_model_revision: model.model_revision,
+    approved_workflow_ids: workflows.map(({ workflow_id }) => workflow_id),
+    approved_operation_ids: operations.map(({ operation_id }) => operation_id),
+    approved_workflow_edge_ids: workflowEdges.map(({ edge }) => edge.edge_id),
   });
   return deepFreeze(ExpandedApprovalPublicationSchema.parse({
     model,
@@ -521,6 +531,9 @@ export async function publishExpandedApproval(
         workflow_assignments: publication.model.workflow_assignments,
         cross_cutting_assignments: publication.model.cross_cutting_assignments,
       },
+      "approved-workflow-assignments.json": publication.model.workflow_assignments,
+      "approved-cross-cutting-assignments.json": publication.model.cross_cutting_assignments,
+      "approved-workflow-edges.json": publication.model.workflow_edges,
       "approved-relationships.json": publication.model.relationships,
     };
     for (const [path, value] of Object.entries(artifacts)) {
@@ -533,6 +546,14 @@ export async function publishExpandedApproval(
       const destination = join(stagingDirectory, approvedPath);
       await mkdir(dirname(destination), { recursive: true });
       await writeFile(destination, `${JSON.stringify(canonical(slice), null, 2)}\n`, "utf8");
+    }
+    for (const detail of publication.focused_projections.workflow_details) {
+      const directory = join(stagingDirectory, "approved-workflows", safePathId(detail.workflow_id));
+      await mkdir(directory, { recursive: true });
+      await writeFile(join(directory, "flow.json"),
+        `${JSON.stringify(canonical(detail), null, 2)}\n`, "utf8");
+      await writeFile(join(directory, "flow.mmd"),
+        renderFocusedWorkflowMermaid(detail), "utf8");
     }
     const report = [
       "# Atlas Approval Report",
