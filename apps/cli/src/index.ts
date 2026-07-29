@@ -1523,24 +1523,90 @@ function buildGroundedAtlasRelationships(input: {
       .filter(({ evidence }) => evidence.length > 0)
       .sort((left, right) => right.score - left.score
         || compareText(left.target.id, right.target.id));
-    const selected = targets[0];
-    if (!selected || selected.score < 0.15) continue;
-    const modifierNode = nodeByRecord.get(record.id)!;
-    const targetNode = nodeByRecord.get(selected.target.id)!;
-    const from = relationship.reverse ? targetNode.id : modifierNode.id;
-    const to = relationship.reverse ? modifierNode.id : targetNode.id;
-    const core = {
-      from_id: from,
-      to_id: to,
-      kind: relationship.kind,
-      source_unit_ids: [...selected.evidence].sort(compareText),
-    };
-    edges.push({
-      id: `${input.projectId}.relationship.${hashCanonical(core).slice(7, 19)}`,
-      ...core,
-    });
+    for (const selected of targets.filter(({ score }) => score >= 0.15).slice(0, 5)) {
+      const modifierNode = nodeByRecord.get(record.id)!;
+      const targetNode = nodeByRecord.get(selected.target.id)!;
+      const from = relationship.reverse ? targetNode.id : modifierNode.id;
+      const to = relationship.reverse ? modifierNode.id : targetNode.id;
+      const core = {
+        from_id: from,
+        to_id: to,
+        kind: relationship.kind,
+        source_unit_ids: [...selected.evidence].sort(compareText),
+      };
+      edges.push({
+        id: `${input.projectId}.relationship-target.${hashCanonical(core).slice(7, 19)}`,
+        ...core,
+      });
+    }
   }
   return edges.sort((left, right) => compareText(left.id, right.id));
+}
+
+export function buildAtlasRelationshipCandidates(input: {
+  readonly projectId: string;
+  readonly proposalRevision: number;
+  readonly origin?: "explicit" | "derived";
+  readonly edges: readonly {
+    readonly id: string;
+    readonly from_id: string;
+    readonly to_id: string;
+    readonly kind: string;
+    readonly source_unit_ids: readonly string[];
+  }[];
+}) {
+  const grouped = Map.groupBy(input.edges, (edge) => `${edge.from_id}:${edge.kind}`);
+  const candidates = [...grouped.values()].map((edges) => {
+    const representative = edges[0]!;
+    const intentCore = {
+      from_id: representative.from_id,
+      relationship_kind: representative.kind,
+    };
+    const relationshipIntentId =
+      `${input.projectId}.relationship.${hashCanonical(intentCore).slice(7, 19)}`;
+    const evidence = [...new Set(edges.flatMap(({ source_unit_ids }) =>
+      source_unit_ids))].sort(compareText);
+    return {
+      relationship_intent_id: relationshipIntentId,
+      from_id: representative.from_id,
+      relationship_kind: representative.kind,
+      governance: {
+        id: `${relationshipIntentId}.governance`,
+        origin: input.origin ?? "derived",
+        evidence_source_unit_ids: evidence,
+        rationale: input.origin === "explicit"
+          ? "The source explicitly references independently reviewable targets."
+          : "Shared source evidence and lexical support produced independently reviewable targets.",
+        confidence: input.origin === "explicit" ? 1 : 0.6,
+        review_status: "pending" as const,
+        bulk_approval_eligible: false,
+        blockers: input.origin === "explicit" ? [] : ["derived-relationship"],
+        proposal_revision: input.proposalRevision,
+      },
+      targets: edges.map((edge) => ({
+        target_candidate_id:
+          `${relationshipIntentId}.target.${hashCanonical(edge.to_id).slice(7, 19)}`,
+        target_id: edge.to_id,
+        target_status: "valid" as const,
+        evidence_source_unit_ids: [...edge.source_unit_ids].sort(compareText),
+        rationale: "This target independently shares source evidence with the relationship intent.",
+        confidence: input.origin === "explicit" ? 1 : 0.6,
+        review_status: "pending" as const,
+        blockers: [],
+      })).sort((left, right) => compareText(left.target_candidate_id, right.target_candidate_id)),
+    };
+  }).sort((left, right) =>
+    compareText(left.relationship_intent_id, right.relationship_intent_id));
+  const diagnostics = {
+    schema_version: "1.0.0",
+    intent_count: candidates.length,
+    zero_target_count: candidates.filter(({ targets }) => targets.length === 0).length,
+    one_target_count: candidates.filter(({ targets }) => targets.length === 1).length,
+    multi_target_count: candidates.filter(({ targets }) => targets.length > 1).length,
+    independently_reviewable_target_count: candidates
+      .flatMap(({ targets }) => targets).length,
+  };
+  return { candidates, diagnostics };
 }
 
 function assembleAtlasWorkflowTopology(input: {
@@ -1816,32 +1882,14 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     confidence: 0.6,
     publishable: false as const,
   }));
-  const relationshipCandidates = groundedRelationships.map((edge) => ({
-    relationship_intent_id: edge.id,
-    from_id: edge.from_id,
-    relationship_kind: edge.kind,
-    governance: {
-      id: `${edge.id}.governance`,
-      origin: "derived" as const,
-      evidence_source_unit_ids: edge.source_unit_ids,
-      rationale: "Shared source evidence and lexical support produced a reviewable candidate.",
-      confidence: 0.6,
-      review_status: "pending" as const,
-      bulk_approval_eligible: false,
-      blockers: ["derived-relationship"],
-      proposal_revision: 1,
-    },
-    targets: [{
-      target_candidate_id: `${edge.id}.target.${edge.to_id.split(".").at(-1)!}`,
-      target_id: edge.to_id,
-      target_status: "valid" as const,
-      evidence_source_unit_ids: edge.source_unit_ids,
-      rationale: "The target shares source evidence with the relationship intent.",
-      confidence: 0.6,
-      review_status: "pending" as const,
-      blockers: [],
-    }],
-  }));
+  const {
+    candidates: relationshipCandidates,
+    diagnostics: relationshipTargetDiagnostics,
+  } = buildAtlasRelationshipCandidates({
+    projectId,
+    proposalRevision: 1,
+    edges: groundedRelationships,
+  });
   const byUnit = new Map<string, string[]>();
   const classificationByUnit = new Map(input.canonicalExtraction.sectionClassifications
     .map((classification) => [classification.source_unit_id, classification] as const));
@@ -2041,6 +2089,7 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     "cross-cutting-assignments.json": collectionCanonicalJson(crossCuttingAssignments),
     "candidate-relationship-hints.json": collectionCanonicalJson(relationshipHints),
     "relationship-candidates.json": collectionCanonicalJson(relationshipCandidates),
+    "relationship-target-diagnostics.json": canonicalJson(relationshipTargetDiagnostics),
     "reviewer-augmentations.json": collectionCanonicalJson([]),
     "approval-eligibility.json": collectionCanonicalJson(expandedEligibility),
     "terminology-proposals.json": collectionCanonicalJson(terminologyProposals),
@@ -2351,6 +2400,15 @@ export function buildProposedAtlasArtifacts(input: {
     ...input.analysis.clarification_questions.filter(({ blocking }) => blocking)
       .map(({ id }) => `question-${stableId(id)}`),
   ];
+  const {
+    candidates: relationshipCandidates,
+    diagnostics: relationshipTargetDiagnostics,
+  } = buildAtlasRelationshipCandidates({
+    projectId,
+    proposalRevision: 1,
+    origin: "explicit",
+    edges: groundedRelationships,
+  });
   const model = createProposedProjectModel({
     project_id: projectId,
     proposal_revision: 1,
@@ -2374,32 +2432,7 @@ export function buildProposedAtlasArtifacts(input: {
       confidence: 0.7,
       publishable: false as const,
     })),
-    relationship_candidates: groundedRelationships.map((edge) => ({
-      relationship_intent_id: edge.id,
-      from_id: edge.from_id,
-      relationship_kind: edge.kind,
-      governance: {
-        id: `${edge.id}.governance`,
-        origin: "explicit" as const,
-        evidence_source_unit_ids: edge.source_unit_ids,
-        rationale: "The legacy rule explicitly references the target requirement.",
-        confidence: 1,
-        review_status: "pending" as const,
-        bulk_approval_eligible: true,
-        blockers: [],
-        proposal_revision: 1,
-      },
-      targets: [{
-        target_candidate_id: `${edge.id}.target.${edge.to_id.split(".").at(-1)!}`,
-        target_id: edge.to_id,
-        target_status: "valid" as const,
-        evidence_source_unit_ids: edge.source_unit_ids,
-        rationale: "The legacy source explicitly names this target.",
-        confidence: 1,
-        review_status: "pending" as const,
-        blockers: [],
-      }],
-    })),
+    relationship_candidates: relationshipCandidates,
     relationships: [],
     source_documents: sourceArtifacts.map(({ document_revision }) => ({
       document_id: document_revision.document_id,
@@ -2450,6 +2483,7 @@ export function buildProposedAtlasArtifacts(input: {
     "relationship-candidates.json": collectionCanonicalJson(
       model.relationship_candidates,
     ),
+    "relationship-target-diagnostics.json": canonicalJson(relationshipTargetDiagnostics),
     "reviewer-augmentations.json": collectionCanonicalJson([]),
     "approval-eligibility.json": collectionCanonicalJson(expandedEligibility),
     "terminology-proposals.json": collectionCanonicalJson(terminologyProposals),
@@ -2663,6 +2697,7 @@ async function retainedPendingArtifacts(
     "claim-retry-scope.json",
     "record-identity-report.json",
     "relationship-candidates.json",
+    "relationship-target-diagnostics.json",
     "reviewer-augmentations.json",
     "terminology-proposals.json",
     "translation-equivalence-proposals.json",

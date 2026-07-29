@@ -12,9 +12,31 @@ import { tmpdir } from "node:os";
 import { describe, expect, it } from "vitest";
 import { ingestPdfDocument } from "@company/ces-pdf-ingestion";
 import { calculateCoverage } from "@company/ces-atlas-coverage";
-import { runCli } from "./index.js";
+import { buildAtlasRelationshipCandidates, runCli } from "./index.js";
 
 describe("DAPE-008 staged Atlas commands", () => {
+  it("keeps several valid targets independently reviewable under one intent", () => {
+    const result = buildAtlasRelationshipCandidates({
+      projectId: "test-project",
+      proposalRevision: 1,
+      edges: [
+        {
+          id: "edge.one", from_id: "node.rule", to_id: "node.payment",
+          kind: "ces.relationship.constrains", source_unit_ids: ["source.one"],
+        },
+        {
+          id: "edge.two", from_id: "node.rule", to_id: "node.document",
+          kind: "ces.relationship.constrains", source_unit_ids: ["source.one"],
+        },
+      ],
+    });
+    expect(result.candidates).toHaveLength(1);
+    expect(result.candidates[0]?.targets).toHaveLength(2);
+    expect(new Set(result.candidates[0]?.targets.map(({ target_candidate_id }) =>
+      target_candidate_id)).size).toBe(2);
+    expect(result.diagnostics.multi_target_count).toBe(1);
+  });
+
   it("supports analyze, coverage, questions, and graph without changing legacy commands", async () => {
     const directory = await mkdtemp(join(tmpdir(), "ces-atlas-staged-"));
     try {
@@ -176,6 +198,7 @@ describe("Atlas CLI pipeline", () => {
         "proposed-workflow-detail-graphs.json",
         "record-identity-report.json",
         "relationship-candidates.json",
+        "relationship-target-diagnostics.json",
         "review-input.json",
         "reviewer-augmentations.json",
         "run-manifest.json",
@@ -280,6 +303,7 @@ describe("Atlas CLI pipeline", () => {
         "proposed-workflow-detail-graphs.json",
         "record-identity-report.json",
         "relationship-candidates.json",
+        "relationship-target-diagnostics.json",
         "requirement-collection.json",
         "requirement-packages/REQ-PROJECT-001.json",
         "review-input.json",
