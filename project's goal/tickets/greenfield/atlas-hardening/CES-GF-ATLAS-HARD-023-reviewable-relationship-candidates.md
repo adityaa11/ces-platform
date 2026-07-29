@@ -92,6 +92,15 @@ projection.
       pending edges as non-authoritative.
 - [ ] Store Safara acceptance evidence for explicit and derived candidates.
 
+### Safara qualification thresholds
+
+- [ ] Source-derived candidates with evidence equal 100%.
+- [ ] Derived candidates with rationale and confidence equal 100%.
+- [ ] Candidates with independent stable review identity equal 100%.
+- [ ] Approved edges without evidence or reviewer-authored rationale equal
+      zero.
+- [ ] Pending or rejected edges in approved projections equal zero.
+
 ## Implementation evidence
 
 The proposed model now separates non-publishable relationship hints from

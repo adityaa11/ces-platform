@@ -101,6 +101,18 @@ relationships are replayed into connected approved workflow projections.
 - [ ] Store Safara evidence for partial multi-target approval and stale
       decision handling.
 
+### Safara qualification thresholds
+
+- [ ] Approved assignments and relationships are materialized 100% according
+      to accepted decisions.
+- [ ] Pending and rejected edge leakage into approved projections equals zero.
+- [ ] Approved workflow-detail and overview projections contain every accepted
+      topology edge.
+- [ ] Human-added approved edges resolve only from immutable reviewer
+      decisions.
+- [ ] Replaying identical proposal and decision inputs produces identical
+      approved artifact hashes.
+
 ## Implementation evidence
 
 Atlas now calculates expanded eligibility for records, assignments,

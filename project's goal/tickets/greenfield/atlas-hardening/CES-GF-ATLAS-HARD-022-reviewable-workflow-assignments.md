@@ -69,6 +69,15 @@ duplicated broadly.
       across every workflow.
 - [ ] Qualify assignment precision on the Safara oracle before closure.
 
+### Safara qualification thresholds
+
+- [ ] Duplicate workflow/record/operation assignment tuples equal zero.
+- [ ] Records assigned to every workflow equal zero unless represented
+      separately as cross-cutting.
+- [ ] Low-confidence or unresolved assignments are surfaced 100%.
+- [ ] Cross-cutting controls are represented separately 100%.
+- [ ] Assignments without evidence-backed rationale equal zero.
+
 ## Implementation evidence
 
 The proposed model now carries independently governed workflow and

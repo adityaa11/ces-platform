@@ -77,6 +77,29 @@ acceptance evidence.
 - [ ] Mark every topology edge as explicit, derived, or human-confirmed.
 - [ ] Reject an empty Safara workflow topology during qualification.
 
+### Governed edge families and endpoint rules
+
+- `contains`: workflow to operation, decision, or state.
+- `precedes`, `follows`, `triggers`, `depends_on`: operation/state/decision to
+  a valid executable or dependent node.
+- `branches_to`: decision to operation or state.
+- `joins_at`: decision, state, or operation to a join point.
+- `repeats_to`: operation or state to an earlier correction/retry operation.
+- `produces_state`, `requires_state`, `recalculates`: operation to state.
+
+Every edge uses the shared governance envelope, but validation must reject
+endpoint combinations that are invalid for its edge family.
+
+### Safara qualification thresholds
+
+- [ ] `workflow-edges.json` contains at least one edge.
+- [ ] Every non-trivial workflow has at least two connected operations.
+- [ ] Orphan operations equal zero unless each orphan has an explicit
+      justification finding.
+- [ ] Every branch has at least two labeled outcomes.
+- [ ] Every represented state transition has a producing or requiring
+      operation.
+
 ## Implementation evidence
 
 `ProposedProjectModel` now contains explicit workflow, operation, and governed

@@ -89,6 +89,16 @@ edge collection and no readable per-workflow Mermaid projection is emitted.
 - [ ] Prove traceability reaches workflow and operation nodes through source
       unit, atomic claim, and canonical record lineage.
 
+### Safara qualification thresholds
+
+- [ ] Every workflow has a detail projection.
+- [ ] Every non-empty workflow has a deterministic Mermaid projection.
+- [ ] Every projected edge resolves to canonical nodes and governance data.
+- [ ] The project overview is smaller than the canonical semantic inventory.
+- [ ] Rules and controls remain accessible without loading every project
+      record.
+- [ ] The relationship-review projection displays all pending candidates.
+
 ## Implementation evidence
 
 Atlas now creates lifecycle-neutral focused projection contracts for project

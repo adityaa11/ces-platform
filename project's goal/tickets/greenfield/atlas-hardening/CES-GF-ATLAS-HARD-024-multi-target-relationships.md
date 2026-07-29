@@ -69,6 +69,14 @@ generated Safara artifacts.
 - [ ] Store deterministic Safara evidence for intent, target-candidate, and
       approved-edge identity separation.
 
+### Safara qualification thresholds
+
+- [ ] Zero-, one-, and multi-target fixtures all pass.
+- [ ] Relationship targets with independent review identity equal 100%.
+- [ ] Partial approval preserves unrelated target decisions 100%.
+- [ ] Competing targets remain unresolved until explicitly reviewed.
+- [ ] Rejected target leakage into approved relationships equals zero.
+
 ## Implementation evidence
 
 Relationship candidates now separate stable `relationship_intent_id` from

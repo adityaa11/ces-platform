@@ -142,6 +142,11 @@ ATLAS-HARD-021 through ATLAS-HARD-026 are therefore reopened. HARD-015 remains
 blocked until their new acceptance gaps are closed and the Safara gate is
 rerun.
 
+The rerun must enforce the measurable thresholds recorded in each reopened
+ticket, including non-empty governed topology, assignment precision, complete
+relationship governance, multi-target review evidence, deterministic Mermaid
+projections, and zero pending/rejected edge leakage into approved artifacts.
+
 Verification:
 
 - Workspace typecheck passes.
