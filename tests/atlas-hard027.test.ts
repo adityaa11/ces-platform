@@ -16,6 +16,14 @@ describe("ATLAS-HARD-027 qualification fixtures", () => {
     expect(concepts.size).toBe(oracle.nodes.length);
     expect(oracle.nodes.every(({ accepted_source_labels }) =>
       accepted_source_labels.length > 0)).toBe(true);
+    const normalizedLabels = oracle.nodes.flatMap(({ concept, accepted_source_labels }) =>
+      accepted_source_labels.map((label) => ({
+        concept,
+        label: label.normalize("NFKC").toLocaleLowerCase("en-US")
+          .replace(/[^\p{L}\p{N}]+/gu, " ").trim(),
+      })));
+    expect(new Set(normalizedLabels.map(({ label }) => label)).size)
+      .toBe(normalizedLabels.length);
     expect(oracle.relationships.every(({ from, to }) =>
       concepts.has(from) && concepts.has(to))).toBe(true);
     expect(oracle.relationships.filter(({ kind }) =>
@@ -93,6 +101,7 @@ describe("ATLAS-HARD-027 qualification fixtures", () => {
     const forbidden = [
       "Pendaftaran Jemaah", "Kesiapan Keberangkatan",
       "Finalisasi Manifest", "Safara_Buyer", "pilgrim_registration",
+      "Siap", "Terhambat",
     ];
     const violations: string[] = [];
     for (const root of roots) {

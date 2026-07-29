@@ -11,7 +11,7 @@
     { "concept": "travel_readiness", "kind": "workflow", "accepted_source_labels": ["Status Perjalanan dan Kesiapan"] },
     { "concept": "readiness_decision", "kind": "decision", "accepted_source_labels": ["Jemaah berstatus Siap hanya apabila: Sisa pembayaran sudah nol. Seluruh dokumen wajib berstatus Valid. Paspor tersedia dan masih memenuhi ketentuan perjalanan. Visa berstatus Disetujui."] },
     { "concept": "blocked", "kind": "state", "accepted_source_labels": ["Apabila salah satu syarat belum terpenuhi, status jemaah menjadi Terhambat."] },
-    { "concept": "ready", "kind": "state", "accepted_source_labels": ["Jemaah berstatus Siap hanya apabila: Sisa pembayaran sudah nol. Seluruh dokumen wajib berstatus Valid. Paspor tersedia dan masih memenuhi ketentuan perjalanan. Visa berstatus Disetujui."] },
+    { "concept": "ready", "kind": "state", "accepted_source_labels": ["Siap"] },
     { "concept": "manifest_finalization", "kind": "workflow", "accepted_source_labels": ["Manifest Keberangkatan"] },
     { "concept": "dashboard_reports", "kind": "reporting_audit", "accepted_source_labels": ["Dashboard dan Laporan"] },
     { "concept": "activity_history", "kind": "reporting_audit", "accepted_source_labels": ["Riwayat Aktivitas"] }
