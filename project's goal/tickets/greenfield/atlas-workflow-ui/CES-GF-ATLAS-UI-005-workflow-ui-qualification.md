@@ -13,7 +13,7 @@ different domains and lifecycle states.
 
 - ATLAS-UI-001 through ATLAS-UI-004.
 - Connected and qualified outputs from ATLAS-HARD-021 through ATLAS-HARD-026.
-- Golden main-workflow output from ATLAS-HARD-027.
+- Golden model profile and Safara workflow output from ATLAS-HARD-027.
 
 ## Work
 
@@ -22,8 +22,12 @@ different domains and lifecycle states.
   conflicting, multilingual, proposed, and approved workflows.
 - Test documents supporting several model kinds and at least one document that
   supports no workflow but does support another model kind.
-- Verify integrated, workflow, dependency, state, decision, and actor views
-  reuse canonical identities and synchronize selection.
+- Verify all eligible HARD-021 model views reuse canonical identities and
+  synchronize selection.
+- Verify partial, review-only, insufficient, conflicting, and not-applicable
+  support statuses produce the required UI behavior.
+- Verify the integrated summary and partitioned semantic layers remain bounded,
+  progressively loadable, and revision-consistent.
 - Verify the persistent overview and stacked detail interaction.
 - Verify exact source-document, page, source-unit, text-span, and bounding-box
   navigation.
@@ -58,6 +62,11 @@ different domains and lifecycle states.
       fabricated workflow.
 - [ ] The integrated graph relates all supported model kinds while layer
       controls keep it readable.
+- [ ] Actor-only evidence never produces a sequence diagram, module lists never
+      invent dependency edges, and activity flow never masquerades as complete
+      BPMN.
+- [ ] Conceptual-data views do not claim a physical database schema without
+      explicit physical-schema evidence.
 - [ ] Keyboard navigation and automated accessibility checks pass.
 - [ ] Supported desktop and responsive layouts pass visual regression review.
 - [ ] Cross-project access, forged reviewer identity, stale revision replay,

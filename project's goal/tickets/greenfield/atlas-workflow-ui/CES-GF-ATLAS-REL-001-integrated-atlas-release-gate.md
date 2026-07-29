@@ -5,8 +5,9 @@
 
 ## Objective
 
-Release the Atlas workflow-review experience only when the backend semantic
-model and the production UI independently pass their qualification gates.
+Release the Atlas integrated semantic-graph and model-review experience only
+when the backend semantic model and production UI independently pass their
+qualification gates.
 
 ## Dependencies
 

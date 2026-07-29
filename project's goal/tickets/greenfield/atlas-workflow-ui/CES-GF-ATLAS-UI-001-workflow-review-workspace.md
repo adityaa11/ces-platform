@@ -27,8 +27,16 @@ the backend-owned integrated semantic graph and supported model projections.
 - Preserve keyboard navigation, responsive behavior, focus visibility, and
   accessible graph alternatives.
 - Consume versioned backend projections through typed adapters.
-- Render model tabs only when the backend model-support assessment marks them
-  supported; never assume a workflow projection exists.
+- Render normal model tabs only for `supported` kinds. Render
+  `partially_supported` and `human_review_required` as visibly incomplete or
+  review-only previews. Do not render diagram tabs for
+  `insufficient_evidence`, `conflicting_evidence`, or `not_applicable`.
+- Support activity-flow, business-workflow, BPMN-candidate,
+  functional-decomposition, module-dependency, state, decision, actor-goal,
+  sequence-interaction, and conceptual-data projections.
+- Never treat actor responsibilities as sequence-message evidence, module
+  listings as dependencies, conceptual entities as a physical schema, or a
+  basic activity flow as complete BPMN.
 - Use neutral CES Atlas product language and project-provided display data.
 - Render one buyer-facing item per governed semantic concept while allowing
   all exact original document representations to be inspected.
@@ -54,8 +62,10 @@ states.
 - [ ] The three panes are visible together at supported desktop widths.
 - [ ] Lifecycle and authority state cannot be hidden by workflow navigation.
 - [ ] The UI renders only backend-provided semantic membership and topology.
-- [ ] The UI can render workflow, module dependency, state, decision, and actor
-      interaction projections when supported.
+- [ ] The UI can render every HARD-021 model kind according to its support
+      status and projection eligibility.
+- [ ] Partial and review-only previews display missing evidence and cannot look
+      approved or complete.
 - [ ] A document with no supported workflow renders its other supported models
       without a workflow error or fabricated fallback graph.
 - [ ] Fixture-specific headings or theme assumptions in production code equal

@@ -21,7 +21,12 @@ supports a workflow.
   operations, decisions, rules, states, reports, and evidence through canonical
   identities and governed typed relationships.
 - Generate supported model views for workflow, module dependency, state,
-  decision, and actor interaction without cloning canonical concepts.
+  decision, actor-goal, sequence-interaction, functional-decomposition,
+  activity-flow, BPMN-candidate, and conceptual-data models without cloning
+  canonical concepts.
+- Partition the integrated graph behind a small index and summary. Load actor,
+  module, workflow, decision, state, conceptual-entity, rule, and evidence
+  layers only when requested.
 - Generate project overview, workflow detail, rules and controls, source
   traceability, and approval-exception projections.
 - Restrict overview membership to major process semantics and summaries.
@@ -50,10 +55,14 @@ supports a workflow.
 ## Outputs
 
 `proposed-model-support-assessment.json`,
-`proposed-integrated-semantic-graph.json`,
+`proposed-integrated-semantic-graph-index.json`,
+`proposed-integrated-semantic-graph/summary.json`,
+partitioned actor, module, workflow, decision, state, conceptual-entity, rule,
+and evidence slices,
 `proposed-model-projection-index.json`,
-supported workflow, module-dependency, state, decision, and actor-interaction
-projection artifacts,
+supported activity-flow, business-workflow, BPMN-candidate,
+functional-decomposition, module-dependency, state, decision, actor-goal,
+sequence-interaction, and conceptual-data projection artifacts,
 `proposed-project-overview-graph.json`,
 `proposed-workflow-detail-graphs.json`,
 `proposed-rules-controls-index.json`, revision-pinned per-workflow and
@@ -82,12 +91,21 @@ slices remain non-authoritative projections of canonical bundle components.
 - [x] Proposed and approved projections share neutral contracts.
 - [ ] The integrated graph and every focused model projection resolve shared
       concepts to the same canonical IDs.
-- [ ] Only model kinds marked supported are offered as authoritative
+- [ ] Only model kinds marked `supported` are offered as normal proposed
       projections.
+- [ ] `partially_supported` produces only a visibly incomplete review
+      projection; `human_review_required` produces only a non-authoritative
+      preview.
+- [ ] `insufficient_evidence`, `conflicting_evidence`, and `not_applicable`
+      never produce a normal diagram projection.
 - [ ] Selecting an item in any projection resolves the same item in the
       integrated graph and other applicable projections.
 - [ ] Integrated-graph layer filters are backend-owned and do not infer new
       semantics in the frontend.
+- [ ] The default integrated view loads only the bounded summary and index;
+      detailed layers are paginated or progressively loaded.
+- [ ] The integrated index publishes available layers, record counts, artifact
+      hashes, schema versions, pagination metadata, and canonical-ID indexes.
 - [ ] A non-workflow PRD can qualify without producing a workflow projection.
 
 ## Tests and evidence
@@ -117,7 +135,8 @@ edge collection and no readable per-workflow Mermaid projection is emitted.
       has equivalent source representations in several languages.
 - [ ] Evidence projections retain every exact original document
       representation.
-- [ ] Pending equivalence members remain separate authoritative nodes and may
+- [ ] Pending equivalence members remain separate proposed non-authoritative
+      nodes and may
       appear only as a review cluster; accepted equivalence projects one node,
       and rejected equivalence projects separate nodes.
 - [ ] Project overview distinguishes parallel enablement, conditional branches,

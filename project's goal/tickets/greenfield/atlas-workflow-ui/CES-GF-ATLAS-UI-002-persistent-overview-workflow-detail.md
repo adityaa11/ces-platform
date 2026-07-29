@@ -16,8 +16,12 @@ and cross-model context.
 ## Work
 
 - Render the integrated semantic graph at the top of the center workspace.
-- Add supported model tabs: Integrated, Workflow, Dependencies, States,
-  Decisions, and Actors. Hide unsupported tabs according to backend data.
+- Add eligible model tabs: Integrated, Activity Flow, Workflow, BPMN Candidate,
+  Functions, Dependencies, States, Decisions, Actor Goals, Sequence, and
+  Conceptual Data. Their availability and review-only state come from backend
+  support status.
+- Load only the integrated summary initially. Fetch partitioned semantic layers
+  and model detail progressively from the backend-owned index.
 - Selecting a model, workflow, or concept in the left panel must:
   - keep the integrated graph mounted and visible;
   - highlight the selected canonical concept and relevant relationships;
@@ -53,6 +57,8 @@ Click supported model or concept in left navigation
 - [ ] The detail can be minimized, restored, and closed.
 - [ ] Shared canonical selection remains synchronized across the integrated
       graph and every applicable model projection.
+- [ ] Initial rendering does not download the complete integrated semantic
+      graph; layer expansion is progressive and revision-pinned.
 - [ ] Proposed, pending, approved, and rejected relationships cannot be
       visually confused.
 - [ ] The frontend does not infer overview or detail edges.

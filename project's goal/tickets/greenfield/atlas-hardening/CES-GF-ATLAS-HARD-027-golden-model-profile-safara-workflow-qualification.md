@@ -1,4 +1,4 @@
-# CES-GF-ATLAS-HARD-027 - First Golden Main Workflow Projection
+# CES-GF-ATLAS-HARD-027 - Golden Model Profile and Safara Workflow Qualification
 
 ## Status
 
@@ -35,9 +35,11 @@ The following rules are authoritative over any illustrative wording later in
 this ticket:
 
 1. Atlas preserves the original document text exactly, regardless of language.
-2. Semantically equivalent content in different languages produces one
-   governed semantic concept and one buyer-facing node, while every exact
-   original representation remains available as evidence.
+2. After accepted equivalence review, semantically equivalent content in
+   different languages produces one approved logical concept and one
+   buyer-facing node, while every exact original representation remains
+   available as evidence. Before acceptance, members remain separate proposed
+   non-authoritative records and nodes.
 3. Canonical and display languages are project-configurable. No production
    rule assumes Indonesian, English, or any other document language.
 4. The golden fixture may expect Indonesian display labels because that
@@ -55,8 +57,8 @@ this ticket:
    path. Failures must be remediated in HARD-019 through HARD-026 according to
    the production contract owner.
 9. Pending multilingual equivalence keeps separate proposed identities and
-   separate authoritative nodes. Only an accepted human decision creates one
-   approved logical identity and one buyer-facing node.
+   separate proposed non-authoritative nodes. Only an accepted human decision
+   creates one approved logical identity and one buyer-facing node.
 10. Safara semantic IDs and expected labels belong only to fixture data,
     tests, qualification oracles, and reports. They are forbidden as Atlas
     core enums, switches, forced workflow kinds, or topology shortcuts.
@@ -82,11 +84,16 @@ integrated qualification reports
 The Safara oracle expects independent evidence-backed support assessments for:
 
 ```text
+activity flow
 business workflow
+BPMN candidate
+functional decomposition
 module dependency
 state diagram
 decision model
-actor interaction
+actor-goal model
+sequence interaction
+conceptual data model
 ```
 
 The checks are non-exclusive. A positive workflow result must not prevent
@@ -1078,11 +1085,16 @@ Pending
 
 ```text
 proposed-model-support-assessment.json
-proposed-integrated-semantic-graph.json
+proposed-integrated-semantic-graph-index.json
+proposed-integrated-semantic-graph/summary.json
 proposed-model-projection-index.json
 proposed-project-overview-graph.json
 proposed-project-overview-graph.mmd
 ```
+
+The integrated index records available layers, record counts, artifact hashes,
+schema versions, pagination metadata, and canonical-ID indexes. Its bounded
+summary is the default buyer payload; detailed layers load only when requested.
 
 ## 13.2 Golden Qualification Report
 
@@ -1132,11 +1144,16 @@ Before testing the Safara workflow topology, qualification must prove that
 Atlas classified the document from source evidence:
 
 ```text
+activity_flow: supported
 business_workflow: supported
-module_dependency: supported
+bpmn_candidate: human_review_required
+functional_decomposition: supported
+module_dependency: supported only for source-grounded relationships
 state_diagram: supported
 decision_model: supported
-actor_interaction: supported
+actor_goal_model: supported
+sequence_interaction: insufficient_evidence
+conceptual_data_model: supported
 ```
 
 Each result contains source evidence, rationale, confidence, and review state.
@@ -1247,6 +1264,11 @@ the non-travel fixture emits Safara-specific workflows
 - [ ] Safara's workflow, module, state, decision, and actor projections reuse
       canonical identities from one semantic graph.
 - [ ] Unsupported projections are not fabricated.
+- [ ] Support statuses and projection eligibility follow HARD-021 exactly.
+- [ ] Actors and responsibilities do not qualify Safara for a sequence diagram;
+      `sequence_interaction` remains `insufficient_evidence`.
+- [ ] Safara's BPMN candidate remains review-only and is not presented as a
+      complete BPMN model.
 ```
 
 ## 15.1 Workflow Normalization
@@ -1291,7 +1313,7 @@ the non-travel fixture emits Safara-specific workflows
 - [ ] Uncertain equivalence remains reviewable before authoritative
       consolidation.
 - [ ] Pending equivalence preserves separate record identities and separate
-      authoritative nodes under a review-only equivalence cluster.
+      proposed non-authoritative nodes under a review-only equivalence cluster.
 - [ ] Accepted equivalence produces one approved logical identity; rejected
       equivalence preserves separate approved logical identities.
 - [ ] Primary display-label selection follows the deterministic HARD-020
@@ -1452,7 +1474,72 @@ Atlas uses the same schemas, relationship types, and compiler path. If
 workflow evidence is insufficient, Atlas emits no workflow projection.
 ```
 
-## 16.7 Production Constant Scan
+## 16.7 No-Workflow Classification Test
+
+Input:
+
+```text
+A PRD with functional areas and decision rules but no explicit activity
+sequence.
+```
+
+Expected:
+
+```text
+functional_decomposition: supported
+decision_model: supported
+business_workflow: insufficient_evidence
+No workflow diagram is generated.
+```
+
+## 16.8 Actor-Only Classification Test
+
+Input:
+
+```text
+A PRD listing roles, goals, and permissions without temporal message exchange.
+```
+
+Expected:
+
+```text
+actor_goal_model: supported
+sequence_interaction: insufficient_evidence
+```
+
+## 16.9 Module-Only Classification Test
+
+Input:
+
+```text
+A PRD listing modules without evidence-backed relationships.
+```
+
+Expected:
+
+```text
+functional_decomposition: supported
+module_dependency: insufficient_evidence
+No dependency edges are generated from co-occurrence.
+```
+
+## 16.10 State-Only Classification Test
+
+Input:
+
+```text
+A PRD defining lifecycle states and transitions without sufficient activity
+evidence.
+```
+
+Expected:
+
+```text
+state_diagram: supported
+business_workflow: insufficient_evidence
+```
+
+## 16.11 Production Constant Scan
 
 Input:
 

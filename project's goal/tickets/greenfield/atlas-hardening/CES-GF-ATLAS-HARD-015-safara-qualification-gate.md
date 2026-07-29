@@ -16,7 +16,8 @@ ATLAS-UI-005, and integrated release qualification is owned by ATLAS-REL-001.
 - ATLAS-HARD-016 and ATLAS-HARD-017 corrective production integration.
 - ATLAS-HARD-018 through ATLAS-HARD-026 canonical-model and projection
   refinement.
-- ATLAS-HARD-027 golden main-workflow projection and domain-neutral regression.
+- ATLAS-HARD-027 golden model profile, Safara workflow projection, negative
+  model-support fixtures, and domain-neutral regression.
 - Completed and reconciled DAPE-008R real-provider evidence.
 
 ## Work

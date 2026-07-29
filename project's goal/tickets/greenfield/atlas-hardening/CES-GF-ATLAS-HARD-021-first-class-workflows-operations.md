@@ -19,14 +19,37 @@ shape.
 - Ask first: `What kinds of models does this document support?`
 - Evaluate these evidence contracts independently, without stopping after the
   first match:
-  - explicit activity sequence -> `business_workflow`;
-  - modules and their relationships -> `module_dependency`;
+  - ordered activities or basic dependencies -> `activity_flow`;
+  - meaningful process structure -> `business_workflow`;
+  - process boundaries, events, lanes, gateways, or message-flow semantics ->
+    `bpmn_candidate`;
+  - functional areas or capabilities -> `functional_decomposition`;
+  - modules with evidence-backed relationships -> `module_dependency`;
   - lifecycle states and transitions -> `state_diagram`;
   - business rules, conditions, and outcomes -> `decision_model`;
-  - actors and system interactions -> `actor_interaction`.
+  - actors with goals, capabilities, permissions, or system use cases ->
+    `actor_goal_model`;
+  - participants with ordered messages, calls, or responses ->
+    `sequence_interaction`;
+  - business entities, attributes, associations, cardinality clues, identity,
+    or uniqueness rules -> `conceptual_data_model`.
+- Do not represent a conceptual model as a physical database schema unless the
+  source explicitly provides physical-schema evidence.
+- Do not infer module dependencies from co-occurrence or a module list.
+- Do not infer sequence interactions from actors and responsibilities alone.
+- Do not label an activity flow as BPMN without BPMN-level semantic evidence.
 - Emit a reviewable model-support assessment containing support status,
   rationale, confidence, source evidence, blockers, and proposal revision for
   every considered model kind.
+- Use exactly these support statuses:
+  - `supported`: eligible for a normal proposed projection;
+  - `partially_supported`: eligible for a visibly incomplete review-only
+    projection;
+  - `human_review_required`: eligible only for a non-authoritative review
+    preview;
+  - `insufficient_evidence`: no diagram projection;
+  - `conflicting_evidence`: exception view only until resolved;
+  - `not_applicable`: no projection, with rationale.
 - Allow one document to support zero, one, or several model kinds. Unsupported
   or insufficiently evidenced kinds must not be fabricated.
 - Add workflows, operations, actors, summaries, decisions, states,
@@ -77,6 +100,33 @@ metadata. Any diagram is a deterministic non-authoritative projection.
       marked review-required rather than fabricated.
 - [ ] A concept shared across workflow, dependency, state, decision, and actor
       views retains one canonical identity.
+- [ ] Support status, projection eligibility, missing evidence, and review
+      status remain separate explicit fields.
+
+### Minimum semantic evidence contracts
+
+- `activity_flow`: at least two activities and one evidence-backed ordering,
+  dependency, enablement, or transition.
+- `business_workflow`: at least two activities plus meaningful process
+  structure such as ordering, decisions, states, joins, or loops.
+- `bpmn_candidate`: evidence for process boundaries and BPMN-level semantics
+  such as events, lanes, gateways, or message flows.
+- `functional_decomposition`: at least two functional areas, or one area with
+  meaningful sub-capabilities.
+- `module_dependency`: at least two modules and one evidence-backed dependency,
+  data-flow, enablement, containment, consumption, or shared-state relation.
+- `state_diagram`: at least two states and one valid transition or conditioned
+  state change.
+- `decision_model`: at least one condition with two outcomes, or one
+  condition-outcome rule suitable for a decision table.
+- `actor_goal_model`: at least one actor and one source-grounded goal,
+  capability, permission, or system use case.
+- `sequence_interaction`: at least two participants and one ordered message,
+  call, or response exchange.
+- `conceptual_data_model`: at least two entities, or one entity with meaningful
+  attributes and an evidence-backed relationship.
+
+These contracts evaluate semantic evidence, not keyword counts.
 
 ## Tests and evidence
 
@@ -103,7 +153,8 @@ acceptance evidence.
 - [ ] Reject an empty Safara workflow topology during qualification.
 - [ ] Equivalent multilingual workflow or operation representations do not
       create duplicate topology nodes.
-- [ ] Pending multilingual equivalence retains separate authoritative nodes
+- [ ] Pending multilingual equivalence retains separate proposed
+      non-authoritative nodes
       and may only group them through review-only cluster metadata.
 - [ ] Readiness-like outcomes are modeled through governed decisions and
       labeled conditional branches rather than unconditional dual states.
