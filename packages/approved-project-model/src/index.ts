@@ -377,29 +377,42 @@ export function materializeExpandedApprovedProjectModel(input: {
   const approvedRecordIds = new Set(proposal.records
     .filter((record) => approved.has(`record:${record.id}`))
     .map(({ id }) => id));
+  const workflowAssignments = proposal.workflow_assignments.flatMap((assignment) => {
+    const decision = approved.get(`workflow_assignment:${assignment.assignment_id}`);
+    return decision && approvedRecordIds.has(assignment.record_id)
+      ? [{ assignment, decision_id: decision.decision_id }] : [];
+  });
+  const crossCuttingAssignments = proposal.cross_cutting_assignments.flatMap((assignment) => {
+    const decision = approved.get(`cross_cutting_assignment:${assignment.assignment_id}`);
+    return decision && approvedRecordIds.has(assignment.record_id)
+      ? [{ assignment, decision_id: decision.decision_id }] : [];
+  });
+  const approvedWorkflowIds = new Set(workflowAssignments
+    .map(({ assignment }) => assignment.workflow_id));
   const operations = proposal.operations.filter((operation) =>
-    operation.semantic_record_ids.some((id) => approvedRecordIds.has(id)));
+    approvedWorkflowIds.has(operation.workflow_id ?? "")
+    && workflowAssignments.some(({ assignment }) =>
+      assignment.workflow_id === operation.workflow_id
+      && operation.semantic_record_ids.includes(assignment.record_id)
+      && (assignment.operation_id === undefined
+        || assignment.operation_id === operation.operation_id)));
   const operationIds = new Set(operations.map(({ operation_id }) => operation_id));
   const workflows = proposal.workflows.map((workflow) => ({
     ...workflow,
     operation_ids: workflow.operation_ids.filter((id) => operationIds.has(id)),
   })).filter(({ operation_ids }) => operation_ids.length > 0);
-  const workflowAssignments = proposal.workflow_assignments.flatMap((assignment) => {
-    const decision = approved.get(`workflow_assignment:${assignment.assignment_id}`);
-    return decision ? [{ assignment, decision_id: decision.decision_id }] : [];
-  });
-  const crossCuttingAssignments = proposal.cross_cutting_assignments.flatMap((assignment) => {
-    const decision = approved.get(`cross_cutting_assignment:${assignment.assignment_id}`);
-    return decision ? [{ assignment, decision_id: decision.decision_id }] : [];
-  });
   const workflowEdges = proposal.workflow_edges.flatMap((edge) => {
     const decision = approved.get(`workflow_edge:${edge.edge_id}`);
-    return decision ? [{ edge, decision_id: decision.decision_id }] : [];
+    return decision && operationIds.has(edge.from_operation_id)
+      && operationIds.has(edge.to_operation_id)
+      ? [{ edge, decision_id: decision.decision_id }] : [];
   });
+  const approvedTopologyIds = new Set([...approvedRecordIds, ...operationIds]);
   const relationships = proposal.relationship_candidates.flatMap((intent) =>
     intent.targets.flatMap((target) => {
       const decision = approved.get(`relationship_target:${target.target_candidate_id}`);
-      if (!decision || !target.target_id) return [];
+      if (!decision || !target.target_id || !approvedTopologyIds.has(intent.from_id)
+        || !approvedTopologyIds.has(target.target_id)) return [];
       const identity = createApprovedRelationshipIdentity({
         relationship_intent_id: intent.relationship_intent_id,
         target_candidate_id: target.target_candidate_id,
