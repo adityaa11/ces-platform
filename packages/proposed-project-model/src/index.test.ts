@@ -18,6 +18,7 @@ import {
   createApprovedRelationshipIdentity,
   createCanonicalRecordIdentity,
   createBulkApprovalPolicy,
+  createProposedEquivalenceIdentityCluster,
   createProposedProjectModel,
   createRecordIdentityReport,
   createReviewerRelationshipAugmentation,
@@ -380,6 +381,40 @@ describe("ATLAS-HARD-009 ProposedProjectModel", () => {
       project_id: "project", proposal_revision: 2,
       identities: [next, duplicateMeaning],
     }).collisions[0]?.record_ids).toHaveLength(2);
+  });
+
+  it("keeps possible multilingual equivalents as separate proposed identities", () => {
+    const indonesian = createCanonicalRecordIdentity({
+      project_id: "project", proposal_revision: 1,
+      semantic_kind_id: "ces.kind.business-rule",
+      canonical_semantic_key: "payment readiness",
+      stable_source_lineage_keys: ["source.id.payment"],
+    });
+    const english = createCanonicalRecordIdentity({
+      project_id: "project", proposal_revision: 1,
+      semantic_kind_id: "ces.kind.business-rule",
+      canonical_semantic_key: "payment readiness",
+      stable_source_lineage_keys: ["source.en.payment"],
+    });
+    const cluster = createProposedEquivalenceIdentityCluster({
+      project_id: "project",
+      proposal_revision: 1,
+      member_record_ids: [english.record_id, indonesian.record_id],
+    });
+    expect(indonesian.record_id).not.toBe(english.record_id);
+    expect(cluster).toMatchObject({
+      status: "possible_equivalence",
+      authoritative_merge: false,
+      member_record_ids: [english.record_id, indonesian.record_id].sort(),
+    });
+    const report = createRecordIdentityReport({
+      project_id: "project",
+      proposal_revision: 1,
+      identities: [indonesian, english],
+      equivalence_clusters: [cluster],
+    });
+    expect(report.equivalence_clusters).toEqual([cluster]);
+    expect(report.identities.every((identity) => !identity.approved_logical_id)).toBe(true);
   });
 
   it("rejects missing projections and invalid derived records", () => {

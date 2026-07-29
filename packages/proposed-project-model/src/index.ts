@@ -14,8 +14,8 @@ import {
 } from "@company/ces-semantic-record-schema";
 import { z } from "zod";
 
-export const PROPOSED_PROJECT_MODEL_VERSION = "1.5.0" as const;
-export const CANONICAL_RECORD_IDENTITY_VERSION = "1.0.0" as const;
+export const PROPOSED_PROJECT_MODEL_VERSION = "1.6.0" as const;
+export const CANONICAL_RECORD_IDENTITY_VERSION = "1.1.0" as const;
 const Id = z.string().regex(/^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u);
 const Hash = z.string().regex(/^sha256:[0-9a-f]{64}$/u);
 const Text = z.string().trim().min(1);
@@ -33,11 +33,22 @@ export const CanonicalRecordIdentitySchema = z.object({
   identity_status: z.enum(["proposed", "mapped", "collision_review_required"]),
 }).strict();
 
+export const ProposedEquivalenceIdentityClusterSchema = z.object({
+  schema_version: z.literal(CANONICAL_RECORD_IDENTITY_VERSION),
+  equivalence_cluster_id: Id,
+  project_id: Id,
+  proposal_revision: z.number().int().positive(),
+  status: z.literal("possible_equivalence"),
+  member_record_ids: z.array(Id).min(2),
+  authoritative_merge: z.literal(false),
+}).strict();
+
 export const RecordIdentityReportSchema = z.object({
   schema_version: z.literal(CANONICAL_RECORD_IDENTITY_VERSION),
   project_id: Id,
   proposal_revision: z.number().int().positive(),
   identities: z.array(CanonicalRecordIdentitySchema),
+  equivalence_clusters: z.array(ProposedEquivalenceIdentityClusterSchema),
   collisions: z.array(z.object({
     semantic_fingerprint: Hash,
     record_ids: z.array(Id).min(2),
@@ -52,6 +63,34 @@ export const RecordIdentityReportSchema = z.object({
   }).strict()),
   content_hash: Hash,
 }).strict();
+
+export function createProposedEquivalenceIdentityCluster(input: {
+  readonly project_id: string;
+  readonly proposal_revision: number;
+  readonly member_record_ids: readonly string[];
+}): z.infer<typeof ProposedEquivalenceIdentityClusterSchema> {
+  const projectId = Id.parse(input.project_id);
+  const proposalRevision = z.number().int().positive().parse(input.proposal_revision);
+  const memberRecordIds = [...new Set(input.member_record_ids)]
+    .map((id) => Id.parse(id)).sort(compare);
+  if (memberRecordIds.length < 2) {
+    throw new Error("Possible equivalence requires at least two distinct proposed records");
+  }
+  const digest = hash({
+    project_id: projectId,
+    proposal_revision: proposalRevision,
+    member_record_ids: memberRecordIds,
+  }).slice(7, 23);
+  return freeze(ProposedEquivalenceIdentityClusterSchema.parse({
+    schema_version: CANONICAL_RECORD_IDENTITY_VERSION,
+    equivalence_cluster_id: `${projectId}.equivalence.r${proposalRevision}.${digest}`,
+    project_id: projectId,
+    proposal_revision: proposalRevision,
+    status: "possible_equivalence",
+    member_record_ids: memberRecordIds,
+    authoritative_merge: false,
+  }));
+}
 
 export const ProposedSemanticRecordSchema = z.object({
   id: Id,
@@ -114,6 +153,9 @@ export function createRecordIdentityReport(input: {
   readonly project_id: string;
   readonly proposal_revision: number;
   readonly identities: readonly z.input<typeof CanonicalRecordIdentitySchema>[];
+  readonly equivalence_clusters?: readonly z.input<
+    typeof ProposedEquivalenceIdentityClusterSchema
+  >[];
   readonly migrations?: readonly {
     readonly predecessor_record_ids: readonly string[];
     readonly successor_record_ids: readonly string[];
@@ -130,6 +172,25 @@ export function createRecordIdentityReport(input: {
   if (identities.some((identity) =>
     identity.project_id !== projectId || identity.proposal_revision !== proposalRevision)) {
     throw new Error("Record identity report revision mismatch");
+  }
+  const equivalenceClusters = (input.equivalence_clusters ?? [])
+    .map((cluster) => ProposedEquivalenceIdentityClusterSchema.parse(cluster))
+    .sort((left, right) => compare(left.equivalence_cluster_id, right.equivalence_cluster_id));
+  unique(equivalenceClusters.map(({ equivalence_cluster_id }) => equivalence_cluster_id),
+    "equivalence cluster");
+  const identityById = new Map(identities.map((identity) => [identity.record_id, identity]));
+  for (const cluster of equivalenceClusters) {
+    if (cluster.project_id !== projectId || cluster.proposal_revision !== proposalRevision) {
+      throw new Error("Equivalence cluster revision mismatch");
+    }
+    unique(cluster.member_record_ids, "equivalence cluster member");
+    for (const recordId of cluster.member_record_ids) {
+      const identity = identityById.get(recordId);
+      if (!identity) throw new Error(`Unknown equivalence cluster member: ${recordId}`);
+      if (identity.approved_logical_id) {
+        throw new Error("Pending equivalence members cannot carry an approved logical identity");
+      }
+    }
   }
   const byFingerprint = new Map<string, string[]>();
   for (const identity of identities) {
@@ -159,6 +220,7 @@ export function createRecordIdentityReport(input: {
     project_id: projectId,
     proposal_revision: proposalRevision,
     identities,
+    equivalence_clusters: equivalenceClusters,
     collisions,
     migrations,
   };
