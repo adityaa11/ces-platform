@@ -204,3 +204,41 @@ Verification:
 - `corepack pnpm --filter @company/ces-cli typecheck`
 - `corepack pnpm vitest run packages/proposed-project-model/src/index.test.ts packages/approved-project-model/src/hardened.test.ts packages/atlas-intent-graph/src/index.test.ts apps/cli/src/atlas.test.ts`
 - 20 focused tests passed.
+
+## Distinct decision and outcome-state amendment
+
+A governed decision and its outcome states are separate semantic roles. Atlas
+must not project the same canonical statement once as a decision and again as
+an outcome state merely because one source record contains both a condition
+and a named state.
+
+Required generic structure:
+
+```text
+state/workflow context
+  -> evaluated-by -> complete source condition
+
+complete source condition
+  -> labeled branch -> distinct source-defined outcome state
+  -> labeled branch -> distinct source-defined alternate state
+```
+
+Additional acceptance criteria:
+
+- [ ] One operation ID never represents both a decision and a state.
+- [ ] A decision and outcome state have distinct semantic identities and
+      provenance roles even when their evidence spans overlap.
+- [ ] A branch target is a state candidate, not a duplicate projection of the
+      decision statement.
+- [ ] Every outcome label and state is source-grounded or explicitly
+      reviewer-authored.
+- [ ] Conditional outcomes remain mutually exclusive; unrelated parallel
+      workflows remain independent and non-exclusive.
+- [ ] Only the qualifying outcome state enables a state-gated downstream
+      operation.
+- [ ] Duplicate normalized display meaning across a decision and branch target
+      produces a blocking projection diagnostic.
+- [ ] Generic tests cover approval decisions, lifecycle activation, invoice
+      disposition, and at least one non-workflow state model.
+- [ ] Production topology contains no Safara state names, travel vocabulary,
+      filename checks, fixed operation IDs, or fixture topology.

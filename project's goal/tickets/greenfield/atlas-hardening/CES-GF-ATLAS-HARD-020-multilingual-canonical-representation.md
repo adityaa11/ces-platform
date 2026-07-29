@@ -119,3 +119,34 @@ Verification:
   proposed-project-model, and CLI typecheck.
 - `corepack pnpm vitest run packages/source-unit-schema/src/index.test.ts packages/semantic-record-schema/src/index.test.ts packages/atlas-role-contracts/src/index.test.ts packages/proposed-project-model/src/index.test.ts packages/approved-project-model/src/hardened.test.ts apps/cli/src/atlas.test.ts`
 - 46 focused tests passed.
+
+## Source-defined decision outcome and state-value amendment
+
+Atlas must preserve a complete source condition as decision evidence while
+also recognizing explicitly named outcome or lifecycle values inside that
+evidence. A source-defined state value receives its own exact text-span
+provenance and semantic identity; it is not obtained by translating,
+summarizing, or inventing a shorter label.
+
+This contract is domain- and language-neutral. Examples include source-defined
+values such as `Approved`/`Rejected`, `Active`/`Suspended`, or equivalent terms
+in any document language. Safara-specific terms belong only to its fixture.
+
+Additional acceptance criteria:
+
+- [ ] A complete condition and an explicitly named outcome state can be
+      extracted as distinct canonical candidates with overlapping source
+      evidence and different exact spans.
+- [ ] The full condition remains unchanged as decision evidence.
+- [ ] The outcome label is exactly the source-defined state value or an
+      approved display representation.
+- [ ] Atlas does not manufacture a short state label merely because the full
+      condition is inconvenient to display.
+- [ ] Equivalent state values across languages consolidate only after accepted
+      equivalence review and retain every original representation.
+- [ ] Decision and state candidates with different semantic roles do not
+      collapse solely because they occur in the same sentence or source unit.
+- [ ] Generic fixtures cover approval, account lifecycle, invoice status, and
+      another non-travel state vocabulary.
+- [ ] Production extraction contains no Safara term, language-specific state
+      list, filename check, fixed span, or fixture-specific candidate rule.

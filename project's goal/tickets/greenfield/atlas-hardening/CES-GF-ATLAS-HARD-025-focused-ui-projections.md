@@ -204,3 +204,29 @@ Additional acceptance criteria:
       node/edge injection.
 - [ ] A non-travel fixture produces the same projection shape rules with its
       own source-grounded labels and topology.
+
+## Decision/outcome deduplication projection amendment
+
+Focused projections must show a complete source condition once as a decision
+and show each source-defined result as a distinct state node. Projection code
+must not create a second normal node containing the same statement as the
+decision.
+
+Additional acceptance criteria:
+
+- [ ] A decision statement appears once per semantic identity in an overview.
+- [ ] Branch targets render their own source-defined state labels and semantic
+      identities.
+- [ ] Decision diamonds and state nodes never share the same canonical record
+      solely to simplify projection.
+- [ ] Exact decision wording remains available without forcing the state node
+      to repeat the condition.
+- [ ] The qualifying state, rather than the decision statement, owns a
+      state-gated downstream edge.
+- [ ] Duplicate decision/state display meaning emits a projection exception
+      instead of silently rendering both.
+- [ ] JSON and Mermaid contain matching decision, outcome, and edge identities.
+- [ ] Generic fixtures prove the behavior for non-travel approval and
+      lifecycle decisions.
+- [ ] UI and projection code contain no Safara labels, special-case state
+      shortening, or fixture-specific node replacement.

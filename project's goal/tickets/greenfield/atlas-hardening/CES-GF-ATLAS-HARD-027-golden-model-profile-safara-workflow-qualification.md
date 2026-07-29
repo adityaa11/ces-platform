@@ -1707,3 +1707,31 @@ Additional qualification requirements:
       no `provides-data-to` or `provides-context-to` relationship.
 - [ ] Safara qualification proves only this fixture and lifecycle; broader
       domain-generality claims remain blocked on the multi-domain gate.
+
+## Decision/outcome deduplication qualification amendment
+
+The Safara fixture must retain its complete readiness condition once as the
+decision and must use the exact source-defined `Siap` value as the qualifying
+state. The original source statement defining the blocked outcome remains the
+alternate state evidence. These are fixture expectations, not production
+vocabulary.
+
+Additional qualification requirements:
+
+- [ ] The complete readiness condition occurs exactly once in the buyer-facing
+      overview.
+- [ ] The qualifying branch target has fixture concept `ready`, source label
+      `Siap`, and semantic kind `state`.
+- [ ] The alternate branch target preserves the source-defined blocked-state
+      statement.
+- [ ] The `ready` state, not a duplicate condition node, enables manifest.
+- [ ] No decision and state node share the same normalized display statement.
+- [ ] Exact source spans prove the condition and state value independently.
+- [ ] The non-travel invoice fixture represents a complete matching decision
+      separately from its `Payable` and `Disputed` outcome states.
+- [ ] Approval and account-lifecycle fixtures demonstrate the same behavior
+      using different vocabulary and topology.
+- [ ] A negative fixture without an explicit state value does not invent a
+      short outcome label and instead remains review-required.
+- [ ] Production-source scans reject `Siap`, `Terhambat`, Safara identifiers,
+      document-language switches, and fixture-specific decision/state rules.
