@@ -1791,7 +1791,7 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     workflows: initialWorkflows,
     operations: initialOperations,
   });
-  const { workflowAssignments, crossCuttingAssignments } = buildAtlasAssignments({
+  const { workflowAssignments, crossCuttingAssignments, assignmentDiagnostics } = buildAtlasAssignments({
     projectId, proposalRevision: 1, records, workflows, operations,
   });
   const workflowNodes = groups.map((group) => {
@@ -2037,6 +2037,7 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     "operations.json": collectionCanonicalJson(operations),
     "workflow-edges.json": collectionCanonicalJson(workflowEdges),
     "workflow-assignments.json": collectionCanonicalJson(workflowAssignments),
+    "workflow-assignment-diagnostics.json": canonicalJson(assignmentDiagnostics),
     "cross-cutting-assignments.json": collectionCanonicalJson(crossCuttingAssignments),
     "candidate-relationship-hints.json": collectionCanonicalJson(relationshipHints),
     "relationship-candidates.json": collectionCanonicalJson(relationshipCandidates),
@@ -2259,7 +2260,7 @@ export function buildProposedAtlasArtifacts(input: {
     workflows: initialWorkflows,
     operations: initialOperations,
   });
-  const { workflowAssignments, crossCuttingAssignments } = buildAtlasAssignments({
+  const { workflowAssignments, crossCuttingAssignments, assignmentDiagnostics } = buildAtlasAssignments({
     projectId, proposalRevision: 1, records, workflows, operations,
   });
   const workflowNodes = legacyCandidates.map((candidate) => ({
@@ -2438,6 +2439,7 @@ export function buildProposedAtlasArtifacts(input: {
     "operations.json": collectionCanonicalJson(operations),
     "workflow-edges.json": collectionCanonicalJson(workflowEdges),
     "workflow-assignments.json": collectionCanonicalJson(workflowAssignments),
+    "workflow-assignment-diagnostics.json": canonicalJson(assignmentDiagnostics),
     "cross-cutting-assignments.json": collectionCanonicalJson(crossCuttingAssignments),
     "candidate-relationship-hints.json": collectionCanonicalJson(
       model.relationship_hints,
@@ -2660,6 +2662,7 @@ async function retainedPendingArtifacts(
     "workflows.json",
     "operations.json",
     "workflow-edges.json",
+    "workflow-assignment-diagnostics.json",
     "workflow-assignments.json",
     "cross-cutting-assignments.json",
     "source-coverage.json",
@@ -2804,12 +2807,14 @@ function buildAtlasAssignments(input: {
   readonly records: readonly {
     readonly id: string;
     readonly semantic_kind_id: string;
+    readonly statement: string;
     readonly source_unit_ids: readonly string[];
     readonly origin: "explicit" | "derived" | "human_added";
     readonly issues: readonly { readonly code: string; readonly severity: string }[];
   }[];
   readonly workflows: readonly {
     readonly workflow_id: string;
+    readonly label: string;
     readonly source_unit_ids: readonly string[];
   }[];
   readonly operations: readonly {
@@ -2818,10 +2823,34 @@ function buildAtlasAssignments(input: {
     readonly semantic_record_ids: readonly string[];
   }[];
 }) {
-  const workflowAssignments = input.records.flatMap((record) =>
-    input.workflows.filter((workflow) =>
-      workflow.source_unit_ids.some((id) => record.source_unit_ids.includes(id)))
-      .map((workflow) => {
+  const crossCuttingKindArea: Record<string, string> = {
+    "ces.kind.role-permission": "authorization",
+    "ces.kind.security-sensitive-restriction": "security",
+    "ces.kind.lifecycle-rule": "retention",
+    "ces.kind.uniqueness-constraint": "data-integrity",
+  };
+  const workflowAssignments = input.records.flatMap((record) => {
+    if (crossCuttingKindArea[record.semantic_kind_id]) return [];
+    const directOperations = input.operations.filter(({ semantic_record_ids }) =>
+      semantic_record_ids.includes(record.id));
+    const directWorkflowIds = new Set(directOperations.flatMap(({ workflow_id }) =>
+      workflow_id ? [workflow_id] : []));
+    const candidates = input.workflows.map((workflow) => {
+      const evidence = workflow.source_unit_ids.filter((id) =>
+        record.source_unit_ids.includes(id));
+      return {
+        workflow,
+        evidence,
+        score: evidence.length * 10
+          + jaccard(semanticTokens(record.statement), semanticTokens(workflow.label)),
+      };
+    }).filter(({ score }) => score > 0)
+      .sort((left, right) => right.score - left.score
+        || compareText(left.workflow.workflow_id, right.workflow.workflow_id));
+    const selected = directWorkflowIds.size > 0
+      ? candidates.filter(({ workflow }) => directWorkflowIds.has(workflow.workflow_id))
+      : candidates.slice(0, 1);
+    return selected.map(({ workflow, score }) => {
         const operation = input.operations.find((item) =>
           item.workflow_id === workflow.workflow_id
           && item.semantic_record_ids.includes(record.id));
@@ -2845,19 +2874,19 @@ function buildAtlasAssignments(input: {
           workflow_id: workflow.workflow_id,
           ...(operation ? { operation_id: operation.operation_id } : {}),
           applicability: direct ? "primary" as const : "supporting" as const,
-          governance: direct ? governance : {
+          governance: direct ? {
             ...governance,
+            rationale: "The canonical operation directly references this semantic record.",
+          } : {
+            ...governance,
+            rationale: "This is the strongest source-overlap and semantic match among candidate workflows.",
+            confidence: Math.min(0.95, 0.5 + score / 20),
             bulk_approval_eligible: false,
             blockers: [...new Set([...governance.blockers, "derived-assignment"])].sort(compareText),
           },
         };
-      })).sort((left, right) => compareText(left.assignment_id, right.assignment_id));
-  const crossCuttingKindArea: Record<string, string> = {
-    "ces.kind.role-permission": "authorization",
-    "ces.kind.security-sensitive-restriction": "security",
-    "ces.kind.lifecycle-rule": "retention",
-    "ces.kind.uniqueness-constraint": "data-integrity",
-  };
+      });
+  }).sort((left, right) => compareText(left.assignment_id, right.assignment_id));
   const crossCuttingAssignments = input.records.flatMap((record) => {
     const controlArea = crossCuttingKindArea[record.semantic_kind_id];
     if (!controlArea) return [];
@@ -2876,7 +2905,25 @@ function buildAtlasAssignments(input: {
       }),
     }];
   }).sort((left, right) => compareText(left.assignment_id, right.assignment_id));
-  return { workflowAssignments, crossCuttingAssignments };
+  const tupleCounts = Map.groupBy(workflowAssignments, (assignment) =>
+    `${assignment.workflow_id}:${assignment.record_id}:${assignment.operation_id ?? ""}`);
+  const assignmentDiagnostics = {
+    schema_version: "1.0.0",
+    assignment_count: workflowAssignments.length,
+    cross_cutting_count: crossCuttingAssignments.length,
+    duplicate_tuple_count: [...tupleCounts.values()].filter((items) => items.length > 1).length,
+    low_confidence_count: workflowAssignments.filter(({ governance }) =>
+      governance.confidence < 0.75).length,
+    unresolved_count: input.records.filter((record) =>
+      !crossCuttingKindArea[record.semantic_kind_id]
+      && !workflowAssignments.some(({ record_id }) => record_id === record.id)).length,
+    assignments_per_workflow: Object.fromEntries(input.workflows.map((workflow) => [
+      workflow.workflow_id,
+      workflowAssignments.filter(({ workflow_id }) =>
+        workflow_id === workflow.workflow_id).length,
+    ])),
+  };
+  return { workflowAssignments, crossCuttingAssignments, assignmentDiagnostics };
 }
 
 function stableId(value: string): string {

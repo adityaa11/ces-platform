@@ -185,6 +185,7 @@ describe("Atlas CLI pipeline", () => {
         "source-units.json",
         "terminology-proposals.json",
         "translation-equivalence-proposals.json",
+        "workflow-assignment-diagnostics.json",
         "workflow-assignments.json",
         "workflow-edges.json",
         "workflows.json",
@@ -212,6 +213,11 @@ describe("Atlas CLI pipeline", () => {
       });
       expect(await json(join(output, "proposed-project-overview-graph.json")))
         .toEqual({ workflows: [] });
+      expect(await json(join(output, "workflow-assignment-diagnostics.json")))
+        .toMatchObject({
+          duplicate_tuple_count: 0,
+          unresolved_count: 1,
+        });
       const proposedGraph = await json(join(
         output,
         "proposed-system-intent-graph.json",
@@ -288,6 +294,7 @@ describe("Atlas CLI pipeline", () => {
         "system-intent-graph.mmd",
         "terminology-proposals.json",
         "translation-equivalence-proposals.json",
+        "workflow-assignment-diagnostics.json",
         "workflow-assignments.json",
         "workflow-edges.json",
         "workflows.json",
