@@ -9,6 +9,7 @@ import {
   createTranslationEquivalenceProposal,
   detectLanguage,
   resolveSemanticKind,
+  selectDisplayLabel,
   SemanticRecordSchema,
 } from "./index.js";
 
@@ -48,17 +49,88 @@ describe("DAPE-003 semantic records", () => {
       translation_status: "review_required",
       translation_source_unit_ids: [],
     });
-    expect(createTranslationEquivalenceProposal({
+    const proposal = createTranslationEquivalenceProposal({
       from_record_id: "project.record.id",
       to_record_id: "project.record.en",
       confidence: 0.9,
       rationale: "Statements express the same governed obligation.",
-    })).toMatchObject({ review_status: "pending", source_unit_ids: [] });
+    });
+    expect(proposal).toMatchObject({
+      status: "possible_equivalence",
+      review_status: "pending",
+      source_unit_ids: [],
+    });
+    expect(proposal.equivalence_cluster_id).toMatch(/^translation\.cluster\./u);
     expect(createTerminologyProposal({
       source_terms: [{ language: "id", value: "Terhambat" }],
       canonical_concept: "project.concept.readiness-blocked",
       source_unit_ids: ["project.unit.00001.aaaaaaaa"],
     })).toMatchObject({ status: "pending" });
+  });
+
+  it("selects buyer labels deterministically from exact originals", () => {
+    const representations = [
+      {
+        representation_id: "representation.en",
+        exact_original_text: "Pilgrim Registration",
+        language: "en",
+        source_unit_ids: ["source.en"],
+        reviewer_selected_primary: false,
+        primary_source_language: false,
+      },
+      {
+        representation_id: "representation.id",
+        exact_original_text: "Pendaftaran Jemaah",
+        language: "id",
+        source_unit_ids: ["source.id"],
+        reviewer_selected_primary: false,
+        primary_source_language: true,
+      },
+    ];
+    const selected = selectDisplayLabel({
+      display_language: "id",
+      canonical_language: "en",
+      representations,
+      canonical_interpretation: "Pilgrim Registration",
+    });
+    expect(selected).toEqual({
+      display_label: "Pendaftaran Jemaah",
+      display_language: "id",
+      display_label_source: "original_representation",
+      display_representation_id: "representation.id",
+      fallback_used: false,
+      selection_reason: "configured_display_language",
+    });
+    expect(selectDisplayLabel({
+      display_language: "id",
+      canonical_language: "en",
+      representations: [...representations].reverse(),
+    })).toEqual(selected);
+  });
+
+  it("uses governed label fallbacks without assuming English", () => {
+    expect(selectDisplayLabel({
+      display_language: "fr",
+      canonical_language: "de",
+      representations: [],
+      approved_terminology_label: "Inscription",
+      approved_terminology_language: "fr",
+    })).toMatchObject({
+      display_label: "Inscription",
+      display_language: "fr",
+      display_label_source: "approved_terminology",
+      fallback_used: true,
+    });
+    expect(selectDisplayLabel({
+      display_language: "id",
+      canonical_language: "id",
+      representations: [],
+      review_placeholder: "Perlu ditinjau",
+    })).toMatchObject({
+      display_label: "Perlu ditinjau",
+      display_language: "id",
+      display_label_source: "review_placeholder",
+    });
   });
 
   it("registers all hardening categories with deterministic unknown fallback", () => {

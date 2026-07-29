@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 
 export const SEMANTIC_RECORD_SCHEMA_VERSION = "1.0.0" as const;
+export const MULTILINGUAL_CONTRACT_SCHEMA_VERSION = "1.1.0" as const;
 export const SEMANTIC_KIND_REGISTRY_SCHEMA_VERSION = "1.0.0" as const;
 const Id = z.string().regex(/^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u);
 const Hash = z.string().regex(/^sha256:[0-9a-f]{64}$/u);
@@ -26,12 +27,44 @@ export const MultilingualStatementSchema = z.object({
 
 export const TranslationEquivalenceProposalSchema = z.object({
   proposal_id: Id,
+  equivalence_cluster_id: Id,
   from_record_id: Id,
   to_record_id: Id,
+  status: z.literal("possible_equivalence"),
   confidence: z.number().min(0).max(1),
   rationale: Text,
   source_unit_ids: z.array(Id),
   review_status: z.literal("pending"),
+}).strict();
+
+export const SourceRepresentationSchema = z.object({
+  representation_id: Id,
+  exact_original_text: Text,
+  language: z.string().regex(/^[a-z]{2,3}(?:-[A-Z]{2})?$|^und$/u),
+  source_unit_ids: z.array(Id).min(1),
+  reviewer_selected_primary: z.boolean(),
+  primary_source_language: z.boolean(),
+}).strict();
+
+export const DisplayLabelSelectionSchema = z.object({
+  display_label: Text,
+  display_language: z.string().regex(/^[a-z]{2,3}(?:-[A-Z]{2})?$|^und$/u),
+  display_label_source: z.enum([
+    "original_representation",
+    "approved_terminology",
+    "canonical_interpretation",
+    "review_placeholder",
+  ]),
+  display_representation_id: Id.optional(),
+  fallback_used: z.boolean(),
+  selection_reason: z.enum([
+    "configured_display_language",
+    "reviewer_selected_primary",
+    "primary_source_language",
+    "approved_terminology",
+    "configured_canonical_language",
+    "insufficient_safe_label",
+  ]),
 }).strict();
 
 export const TerminologyProposalSchema = z.object({
@@ -115,6 +148,7 @@ export function createMultilingualStatement(input: {
 }
 
 export function createTranslationEquivalenceProposal(input: {
+  readonly equivalence_cluster_id?: string;
   readonly from_record_id: string;
   readonly to_record_id: string;
   readonly confidence: number;
@@ -133,8 +167,96 @@ export function createTranslationEquivalenceProposal(input: {
   }
   return TranslationEquivalenceProposalSchema.parse({
     proposal_id: `translation.proposal.${hashJson(core).slice(7, 23)}`,
+    equivalence_cluster_id: input.equivalence_cluster_id
+      ? Id.parse(input.equivalence_cluster_id)
+      : `translation.cluster.${hashJson([
+        core.from_record_id,
+        core.to_record_id,
+      ].sort(compare)).slice(7, 23)}`,
     ...core,
+    status: "possible_equivalence",
     review_status: "pending",
+  });
+}
+
+export function selectDisplayLabel(input: {
+  readonly display_language: string;
+  readonly canonical_language: string;
+  readonly representations: readonly z.input<typeof SourceRepresentationSchema>[];
+  readonly approved_terminology_label?: string;
+  readonly approved_terminology_language?: string;
+  readonly canonical_interpretation?: string;
+  readonly review_placeholder?: string;
+}): z.infer<typeof DisplayLabelSelectionSchema> {
+  const displayLanguage = LanguageDetectionSchema.shape.detected_language.parse(
+    input.display_language,
+  );
+  const canonicalLanguage = LanguageDetectionSchema.shape.detected_language.parse(
+    input.canonical_language,
+  );
+  const representations = input.representations
+    .map((representation) => SourceRepresentationSchema.parse(representation))
+    .sort((left, right) => compare(left.representation_id, right.representation_id));
+  const representationIds = representations.map(({ representation_id }) => representation_id);
+  if (new Set(representationIds).size !== representationIds.length) {
+    throw new Error("Duplicate source representation identity");
+  }
+  const chooseRepresentation = (
+    predicate: (representation: z.infer<typeof SourceRepresentationSchema>) => boolean,
+    selection_reason: "configured_display_language" | "reviewer_selected_primary"
+      | "primary_source_language",
+  ) => {
+    const representation = representations.find(predicate);
+    return representation
+      ? DisplayLabelSelectionSchema.parse({
+        display_label: representation.exact_original_text,
+        display_language: representation.language,
+        display_label_source: "original_representation",
+        display_representation_id: representation.representation_id,
+        fallback_used: selection_reason !== "configured_display_language",
+        selection_reason,
+      })
+      : undefined;
+  };
+  const displayMatch = chooseRepresentation(
+    (representation) => representation.language === displayLanguage,
+    "configured_display_language",
+  );
+  if (displayMatch) return displayMatch;
+  const reviewerSelected = chooseRepresentation(
+    (representation) => representation.reviewer_selected_primary,
+    "reviewer_selected_primary",
+  );
+  if (reviewerSelected) return reviewerSelected;
+  const primarySource = chooseRepresentation(
+    (representation) => representation.primary_source_language,
+    "primary_source_language",
+  );
+  if (primarySource) return primarySource;
+  if (input.approved_terminology_label && input.approved_terminology_language) {
+    return DisplayLabelSelectionSchema.parse({
+      display_label: input.approved_terminology_label,
+      display_language: input.approved_terminology_language,
+      display_label_source: "approved_terminology",
+      fallback_used: true,
+      selection_reason: "approved_terminology",
+    });
+  }
+  if (input.canonical_interpretation) {
+    return DisplayLabelSelectionSchema.parse({
+      display_label: input.canonical_interpretation,
+      display_language: canonicalLanguage,
+      display_label_source: "canonical_interpretation",
+      fallback_used: true,
+      selection_reason: "configured_canonical_language",
+    });
+  }
+  return DisplayLabelSelectionSchema.parse({
+    display_label: input.review_placeholder ?? "Review required",
+    display_language: displayLanguage,
+    display_label_source: "review_placeholder",
+    fallback_used: true,
+    selection_reason: "insufficient_safe_label",
   });
 }
 
