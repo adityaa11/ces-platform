@@ -52,6 +52,7 @@ import {
   renderWorkflowGraphMarkdown,
   renderWorkflowGraphMermaid,
   renderFocusedWorkflowMermaid,
+  renderProjectOverviewMermaid,
 } from "@company/ces-atlas-intent-graph";
 import {
   candidateRevisionHash,
@@ -2600,6 +2601,9 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     "proposed-project-overview-graph.json": collectionCanonicalJson(
       focusedProjections.project_overview,
     ),
+    "proposed-project-overview-graph.mmd": renderProjectOverviewMermaid(
+      focusedProjections.project_overview,
+    ),
     "proposed-integrated-semantic-graph-index.json": collectionCanonicalJson(
       integratedProjection.index,
     ),
@@ -3016,6 +3020,9 @@ export function buildProposedAtlasArtifacts(input: {
     "proposed-project-overview-graph.json": collectionCanonicalJson(
       focusedProjections.project_overview,
     ),
+    "proposed-project-overview-graph.mmd": renderProjectOverviewMermaid(
+      focusedProjections.project_overview,
+    ),
     "proposed-integrated-semantic-graph-index.json": collectionCanonicalJson(
       integratedProjection.index,
     ),
@@ -3222,6 +3229,7 @@ async function retainedPendingArtifacts(
     "review-input.json",
     "proposed-project-model.json",
     "proposed-project-overview-graph.json",
+    "proposed-project-overview-graph.mmd",
     "proposed-workflow-detail-graphs.json",
     "proposed-workflow-index.json",
     "proposed-rules-controls-index.json",

@@ -307,6 +307,7 @@ describe("Atlas CLI pipeline", () => {
         "proposed-model-support-assessment.json",
         "proposed-project-model.json",
         "proposed-project-overview-graph.json",
+        "proposed-project-overview-graph.mmd",
         "proposed-relationship-review.json",
         "proposed-rules-controls-index.json",
         "proposed-rules-controls/unassigned/unassigned/project.rules.unassigned.0001.json",
@@ -357,7 +358,7 @@ describe("Atlas CLI pipeline", () => {
         }],
       });
       expect(await json(join(output, "proposed-project-overview-graph.json")))
-        .toEqual({ workflows: [] });
+        .toEqual({ workflows: [], relationships: [] });
       expect(await json(join(output, "workflow-assignment-diagnostics.json")))
         .toMatchObject({
           duplicate_tuple_count: 0,
@@ -414,6 +415,7 @@ describe("Atlas CLI pipeline", () => {
         "proposed-approval-exceptions.json",
         "proposed-project-model.json",
         "proposed-project-overview-graph.json",
+        "proposed-project-overview-graph.mmd",
         "proposed-relationship-review.json",
         "proposed-rules-controls-index.json",
         "proposed-rules-controls/unassigned/unassigned/project.rules.unassigned.0001.json",

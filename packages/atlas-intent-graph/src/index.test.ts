@@ -17,6 +17,7 @@ import {
   renderIntentGraphMarkdown,
   renderIntentGraphMermaid,
   renderFocusedWorkflowMermaid,
+  renderProjectOverviewMermaid,
 } from "./index.js";
 
 const workflowInput = {
@@ -151,6 +152,25 @@ describe("Atlas system-intent graph", () => {
     expect(rendered).toContain("flowchart TD");
     expect(rendered).toContain("Review payment");
     expect(rendered).toContain("-->|\"ordering\"|");
+  });
+
+  it("renders connected project overview Mermaid", () => {
+    const rendered = renderProjectOverviewMermaid({
+      workflows: [
+        { workflow_id: "project.workflow.report", label: "Dashboard" },
+        { workflow_id: "project.workflow.register", label: "Registration" },
+      ],
+      relationships: [{
+        relationship_id: "project.relationship.reporting",
+        from_workflow_id: "project.workflow.register",
+        to_workflow_id: "project.workflow.report",
+        relationship_kind: "ces.relationship.provides-data-to",
+      }],
+    });
+    expect(rendered).toContain("flowchart LR");
+    expect(rendered).toContain("Registration");
+    expect(rendered).toContain("Dashboard");
+    expect(rendered).toContain('-.->|"provides-data-to"|');
   });
 
   it("projects arbitrary pre-approval workflow shapes deterministically", () => {

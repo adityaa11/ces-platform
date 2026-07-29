@@ -167,9 +167,12 @@ export function createIntegratedSemanticGraphProjection(input: {
   for (const relationship of model.relationship_candidates) {
     for (const target of relationship.targets) {
       if (!target.target_id) continue;
-      const layer = recordLayer(
-        model.records.find(({ id }) => id === relationship.from_id)?.semantic_kind_id ?? "",
-      );
+      const layer = model.workflows.some(({ workflow_id }) =>
+        workflow_id === relationship.from_id)
+        ? "workflows"
+        : recordLayer(
+          model.records.find(({ id }) => id === relationship.from_id)?.semantic_kind_id ?? "",
+        );
       edges.get(layer)!.push({
         edge_id: target.target_candidate_id, from_id: relationship.from_id,
         to_id: target.target_id, relationship_kind: relationship.relationship_kind,
@@ -263,6 +266,13 @@ export const FocusedProjectionBundleSchema = z.object({
       operation_count: z.number().int().nonnegative(),
       review_status: z.literal("pending"),
     }).strict()),
+    relationships: z.array(z.object({
+      relationship_id: StableId,
+      from_workflow_id: StableId,
+      to_workflow_id: StableId,
+      relationship_kind: NonEmptyString,
+      review_status: z.literal("pending"),
+    }).strict()),
   }).strict(),
   workflow_details: z.array(z.object({
     workflow_id: StableId,
@@ -353,6 +363,19 @@ export function createFocusedAtlasProjections(input: {
       operation_count: workflow.operation_ids.length,
       review_status: "pending" as const,
     })).sort((left, right) => compareText(left.workflow_id, right.workflow_id)),
+    relationships: model.relationship_candidates.flatMap((relationship) =>
+      relationship.targets.flatMap((target) =>
+        model.workflows.some(({ workflow_id }) => workflow_id === relationship.from_id)
+          && target.target_id
+          && model.workflows.some(({ workflow_id }) => workflow_id === target.target_id)
+          ? [{
+            relationship_id: target.target_candidate_id,
+            from_workflow_id: relationship.from_id,
+            to_workflow_id: target.target_id,
+            relationship_kind: relationship.relationship_kind,
+            review_status: "pending" as const,
+          }] : []))
+      .sort((left, right) => compareText(left.relationship_id, right.relationship_id)),
   };
   const workflowDetails = model.workflows.map((workflow) => ({
     workflow_id: workflow.workflow_id,
@@ -636,6 +659,41 @@ export function renderFocusedWorkflowMermaid(input: {
         `${right.from_operation_id}:${right.to_operation_id}:${right.edge_kind}`,
       )).map((edge) =>
       `  ${aliases.get(edge.from_operation_id)} -->|"${escapeMermaid(edge.edge_kind)}"| ${aliases.get(edge.to_operation_id)}`),
+  ];
+  return `${lines.join("\n")}\n`;
+}
+
+export function renderProjectOverviewMermaid(input: {
+  readonly workflows: readonly {
+    readonly workflow_id: string;
+    readonly label: string;
+  }[];
+  readonly relationships: readonly {
+    readonly relationship_id: string;
+    readonly from_workflow_id: string;
+    readonly to_workflow_id: string;
+    readonly relationship_kind: string;
+  }[];
+}): string {
+  const workflows = [...input.workflows].sort((left, right) =>
+    compareText(left.workflow_id, right.workflow_id));
+  const aliases = new Map(workflows.map((workflow, index) =>
+    [workflow.workflow_id, `wf${index + 1}`] as const));
+  const lines = [
+    "%% PROJECT OVERVIEW -- PROPOSED, NOT AUTHORITATIVE",
+    "flowchart LR",
+    ...workflows.map((workflow) =>
+      `  ${aliases.get(workflow.workflow_id)}["${escapeMermaid(workflow.label)}"]`),
+    ...[...input.relationships]
+      .filter(({ from_workflow_id, to_workflow_id }) =>
+        aliases.has(from_workflow_id) && aliases.has(to_workflow_id))
+      .sort((left, right) => compareText(left.relationship_id, right.relationship_id))
+      .map((relationship) => {
+        const arrow = relationship.relationship_kind.endsWith("provides-data-to")
+          ? "-.->" : "-->";
+        const label = relationship.relationship_kind.split(".").at(-1)!;
+        return `  ${aliases.get(relationship.from_workflow_id)} ${arrow}|"${escapeMermaid(label)}"| ${aliases.get(relationship.to_workflow_id)}`;
+      }),
   ];
   return `${lines.join("\n")}\n`;
 }
