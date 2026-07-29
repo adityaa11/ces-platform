@@ -1963,11 +1963,14 @@ function buildCanonicalProposedAtlasArtifacts(input: {
   const operationIdByRecord = new Map(operationRecords.map((record) =>
     [record.id, `${projectId}.operation.${record.id.split(".").at(-1)!}`] as const));
   const areaForRecord = (record: typeof records[number]) => {
-    const order = Math.min(...record.source_unit_ids.map((id) =>
-      unitOrder.get(id) ?? Number.MAX_SAFE_INTEGER));
-    return structuralUnits.find((unit, index) =>
-      order > unit.order
-      && order < (structuralUnits[index + 1]?.order ?? Number.MAX_SAFE_INTEGER));
+    const matches = record.source_unit_ids.flatMap((id) => {
+      const order = unitOrder.get(id) ?? Number.MAX_SAFE_INTEGER;
+      const area = structuralUnits.find((unit, index) =>
+        order > unit.order
+        && order < (structuralUnits[index + 1]?.order ?? Number.MAX_SAFE_INTEGER));
+      return area ? [area] : [];
+    }).sort((left, right) => left.order - right.order);
+    return matches[0];
   };
   const areaRecordByUnit = new Map(structuralUnits.map((unit, index) =>
     [unit.id, areaRecords[index]!] as const));
@@ -2129,6 +2132,82 @@ function buildCanonicalProposedAtlasArtifacts(input: {
         source.workflow_id, target.workflow_id, kind,
         workflowEvidence.get(target.workflow_id)!,
       );
+    }
+  }
+  const contextualWorkflowUnits = new Set(input.canonicalExtraction.sectionClassifications
+    .filter(({ disposition, purpose_ids }) =>
+      disposition !== "structural" && purpose_ids.includes("ces.section.workflows"))
+    .map(({ source_unit_id }) => source_unit_id));
+  const workflowCandidateIds = new Set(inventory.candidates
+    .filter(({ provisional_kind }) => provisional_kind === "ces.kind.workflow")
+    .map(({ candidate_id }) => candidate_id));
+  const contextualFlowSequences: { source_unit_id: string; workflow_ids: string[] }[] = [];
+  for (const sourceUnitId of contextualWorkflowUnits) {
+    const sourceText = unitText.get(sourceUnitId) ?? "";
+    const orderedAreas = operations.filter(({ source_unit_ids, label }) =>
+      source_unit_ids.includes(sourceUnitId) && sourceText.includes(label))
+      .filter((operation) => operation.semantic_record_ids.some((id) =>
+        recordById.get(id)?.candidate_ids.some((candidateId) =>
+          workflowCandidateIds.has(candidateId))))
+      .map((operation) => {
+        const operationTokens = semanticTokens(operation.label);
+        const ranked = workflows.map((workflow) => {
+          const vocabulary = workflowTextTokens.get(workflow.workflow_id)!;
+          const overlap = [...operationTokens].filter((token) =>
+            vocabulary.has(token)).length;
+          const headingOverlap = [...operationTokens].filter((token) =>
+            semanticTokens(workflow.label).has(token)).length;
+          return { workflow_id: workflow.workflow_id, overlap, headingOverlap,
+            reporting: workflowPurpose.get(workflow.workflow_id)
+              === "ces.section.reporting-audit",
+            similarity: jaccard(operationTokens, vocabulary) };
+        }).filter(({ overlap, headingOverlap, reporting }) =>
+          overlap > 0 && (!reporting || headingOverlap > 0))
+          .sort((left, right) => right.overlap - left.overlap
+            || right.similarity - left.similarity
+            || compareText(left.workflow_id, right.workflow_id));
+        return {
+          workflow_id: ranked[0]?.workflow_id,
+          position: sourceText.indexOf(operation.label),
+        };
+      }).filter((item): item is { workflow_id: string; position: number } =>
+        item.workflow_id !== undefined && item.position >= 0)
+      .sort((left, right) => left.position - right.position);
+    const sequence = orderedAreas.filter((item, index) =>
+      index === 0 || item.workflow_id !== orderedAreas[index - 1]!.workflow_id);
+    contextualFlowSequences.push({
+      source_unit_id: sourceUnitId,
+      workflow_ids: sequence.map(({ workflow_id }) => workflow_id),
+    });
+    const incoming = new Map<string, string[]>();
+    for (const relationship of overviewRelationshipMap.values()) {
+      if (relationship.kind !== "ces.relationship.contributes-to") continue;
+      const values = incoming.get(relationship.to_id) ?? [];
+      values.push(relationship.from_id);
+      incoming.set(relationship.to_id, values);
+    }
+    for (const sources of incoming.values()) {
+      if (sources.length < 2) continue;
+      const indexes = sources.map((id) =>
+        sequence.findIndex(({ workflow_id }) => workflow_id === id))
+        .filter((index) => index >= 0).sort((left, right) => left - right);
+      if (indexes.length < 2 || indexes.at(-1)! - indexes[0]! !== indexes.length - 1) {
+        continue;
+      }
+      const parent = sequence[indexes[0]! - 1];
+      if (!parent) continue;
+      for (const sourceId of sources) {
+        addOverviewRelationship(
+          parent.workflow_id, sourceId, "ces.relationship.enables", [sourceUnitId],
+        );
+      }
+      const predecessor = sequence[indexes[0]! - 2];
+      if (predecessor) {
+        addOverviewRelationship(
+          predecessor.workflow_id, parent.workflow_id,
+          "ces.relationship.precedes", [sourceUnitId],
+        );
+      }
     }
   }
   const overviewRelationships = [...overviewRelationshipMap.values()]
@@ -2373,6 +2452,12 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     "workflow-edges.json": collectionCanonicalJson(workflowEdges),
     "workflow-assignments.json": collectionCanonicalJson(workflowAssignments),
     "workflow-assignment-diagnostics.json": canonicalJson(assignmentDiagnostics),
+    "workflow-topology-diagnostics.json": canonicalJson({
+      schema_version: "1.0.0",
+      source_order_edge_count: 0,
+      contextual_flow_sequences: contextualFlowSequences,
+      overview_relationship_count: overviewRelationships.length,
+    }),
     "cross-cutting-assignments.json": collectionCanonicalJson(crossCuttingAssignments),
     "candidate-relationship-hints.json": collectionCanonicalJson(relationshipHints),
     "relationship-candidates.json": collectionCanonicalJson(relationshipCandidates),

@@ -332,6 +332,7 @@ describe("Atlas CLI pipeline", () => {
         "workflow-assignment-diagnostics.json",
         "workflow-assignments.json",
         "workflow-edges.json",
+        "workflow-topology-diagnostics.json",
         "workflows.json",
       ]);
       expect(await json(join(output, "run-manifest.json"))).toMatchObject({
