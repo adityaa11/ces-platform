@@ -88,6 +88,8 @@ describe("Atlas canonical candidate extractor", () => {
       input, "atlas-default", agent.execution_policy,
     );
     expect(request.system_instructions).toContain("generic candidates");
+    expect(request.system_instructions).toContain("exact original document wording");
+    expect(request.system_instructions).toContain("never translate");
     expect(request.system_instructions).not.toContain("candidate_requirements");
     expect(request.messages[0]!.content).toContain(createSectionPurposeRegistry()
       .purposes.find(({ purpose_id }) => purpose_id === "ces.section.roles-permissions")!
