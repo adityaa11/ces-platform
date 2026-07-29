@@ -12,9 +12,22 @@ import { tmpdir } from "node:os";
 import { describe, expect, it } from "vitest";
 import { ingestPdfDocument } from "@company/ces-pdf-ingestion";
 import { calculateCoverage } from "@company/ces-atlas-coverage";
-import { buildAtlasRelationshipCandidates, runCli } from "./index.js";
+import {
+  buildAtlasRelationshipCandidates,
+  runCli,
+  sourceDefinedStateValueTokens,
+} from "./index.js";
 
 describe("DAPE-008 staged Atlas commands", () => {
+  it("finds source-cased state-value evidence without domain constants", () => {
+    expect(sourceDefinedStateValueTokens(
+      "An invoice becomes Payable only when its approved balance is positive.",
+    )).toContain("Payable");
+    expect(sourceDefinedStateValueTokens(
+      "The account remains Suspended until review completes.",
+    )).toContain("Suspended");
+  });
+
   it("keeps several valid targets independently reviewable under one intent", () => {
     const result = buildAtlasRelationshipCandidates({
       projectId: "test-project",
@@ -355,6 +368,7 @@ describe("Atlas CLI pipeline", () => {
         "section-classifications.json",
         "section-purpose-registry.json",
         "source-coverage.json",
+        "source-defined-state-values.json",
         "source-index.json",
         "source-units.json",
         "terminology-proposals.json",
@@ -466,6 +480,7 @@ describe("Atlas CLI pipeline", () => {
         "section-classifications.json",
         "section-purpose-registry.json",
         "source-coverage.json",
+        "source-defined-state-values.json",
         "source-index.json",
         "source-units.json",
         "system-intent-graph.json",

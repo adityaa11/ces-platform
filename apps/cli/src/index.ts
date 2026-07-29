@@ -1510,6 +1510,18 @@ function semanticTokens(statement: string): Set<string> {
     .filter((token) => token.length > 1 && !ignored.has(token)));
 }
 
+export function sourceDefinedStateValueTokens(statement: string): string[] {
+  const values: string[] = [];
+  const pattern = /\p{Lu}[\p{L}\p{N}-]*/gu;
+  for (const match of statement.matchAll(pattern)) {
+    const index = match.index ?? 0;
+    const prefix = statement.slice(0, index);
+    if (index === 0 || /[.!?]\s*$/u.test(prefix)) continue;
+    values.push(match[0]!);
+  }
+  return [...new Set(values)].sort(compareText);
+}
+
 function jaccard(left: ReadonlySet<string>, right: ReadonlySet<string>): number {
   if (left.size === 0 || right.size === 0) return 0;
   const intersection = [...left].filter((token) => right.has(token)).length;
@@ -1988,6 +2000,35 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     ...record.candidate_ids.map((id) => candidateKindById.get(id))
       .filter((kind): kind is string => kind !== undefined),
   ]);
+  const stateValueSupportKinds = new Set([
+    "ces.kind.business-rule", "ces.kind.workflow",
+    "ces.kind.acceptance-criterion", "ces.kind.reporting-requirement",
+    "ces.kind.state-transition",
+  ]);
+  const sourceDefinedStateValues = records.flatMap((record) => {
+    if (!kindsForRecord(record).has("ces.kind.state-definition")) return [];
+    return sourceDefinedStateValueTokens(record.statement).flatMap((value) => {
+      const supportingCandidates = inventory.candidates.filter((candidate) =>
+        !record.candidate_ids.includes(candidate.candidate_id)
+        && stateValueSupportKinds.has(candidate.provisional_kind)
+        && new RegExp(`(^|[^\\p{L}\\p{N}])${value}([^\\p{L}\\p{N}]|$)`, "u")
+          .test(candidate.statement));
+      if (supportingCandidates.length === 0) return [];
+      const start = record.statement.indexOf(value);
+      const core = { record_id: record.id, value, span_start: start, span_end: start + value.length };
+      return [{
+        state_value_id: `${projectId}.state-value.${hashCanonical(core).slice(7, 19)}`,
+        ...core,
+        source_unit_ids: [...new Set([
+          ...record.source_unit_ids,
+          ...supportingCandidates.flatMap(({ source_unit_ids }) => source_unit_ids),
+        ])].sort(compareText),
+        supporting_candidate_ids: supportingCandidates
+          .map(({ candidate_id }) => candidate_id).sort(compareText),
+        review_status: "pending" as const,
+      }];
+    });
+  }).sort((left, right) => compareText(left.state_value_id, right.state_value_id));
   const operationRecords = records.filter((record) =>
     [...kindsForRecord(record)].some((kind) => operationKinds.has(kind)))
     .filter(({ details }) => !details.some(({ key }) => key === "structural-area"));
@@ -2669,6 +2710,7 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     "atomic-claims.json": collectionCanonicalJson(atomicClaims),
     "claim-coverage.json": collectionCanonicalJson(atomicClaimCoverage),
     "record-identity-report.json": collectionCanonicalJson(identityReport),
+    "source-defined-state-values.json": collectionCanonicalJson(sourceDefinedStateValues),
     "proposed-model-support-assessment.json": collectionCanonicalJson(modelSupport),
     "workflows.json": collectionCanonicalJson(workflows),
     "operations.json": collectionCanonicalJson(operations),
@@ -3353,6 +3395,7 @@ async function retainedPendingArtifacts(
     "workflow-assignments.json",
     "cross-cutting-assignments.json",
     "source-coverage.json",
+    "source-defined-state-values.json",
     "extraction-findings.json",
     "pdf-ingestion.json",
     "section-purpose-registry.json",
