@@ -273,6 +273,20 @@ export const FocusedProjectionBundleSchema = z.object({
       relationship_kind: NonEmptyString,
       review_status: z.literal("pending"),
     }).strict()),
+    nodes: z.array(z.object({
+      node_id: StableId,
+      node_kind: z.enum(["workflow", "decision", "state"]),
+      label: NonEmptyString,
+      review_status: z.literal("pending"),
+    }).strict()),
+    edges: z.array(z.object({
+      edge_id: StableId,
+      from_node_id: StableId,
+      to_node_id: StableId,
+      relationship_kind: NonEmptyString,
+      outcome_label: NonEmptyString.optional(),
+      review_status: z.literal("pending"),
+    }).strict()),
   }).strict(),
   workflow_details: z.array(z.object({
     workflow_id: StableId,
@@ -355,6 +369,71 @@ export function createFocusedAtlasProjections(input: {
   const model = ProposedProjectModelSchema.parse(input.model);
   const pageSize = z.number().int().min(1).max(100).parse(input.page_size ?? 25);
   const records = new Map(model.records.map((record) => [record.id, record]));
+  const branchedOperationIds = new Set(model.workflow_edges
+    .filter(({ edge_kind }) => edge_kind === "branch")
+    .flatMap(({ from_operation_id, to_operation_id }) =>
+      [from_operation_id, to_operation_id]));
+  const overviewOperationNodes = model.operations
+    .filter(({ operation_id }) => branchedOperationIds.has(operation_id))
+    .map((operation) => ({
+      node_id: operation.operation_id,
+      node_kind: operation.operation_kind as "decision" | "state",
+      label: operation.label,
+      review_status: "pending" as const,
+    }));
+  const workflowRelationships = model.relationship_candidates.flatMap((relationship) =>
+    relationship.targets.flatMap((target) =>
+      model.workflows.some(({ workflow_id }) => workflow_id === relationship.from_id)
+        && target.target_id
+        && model.workflows.some(({ workflow_id }) => workflow_id === target.target_id)
+        ? [{
+          relationship_id: target.target_candidate_id,
+          from_workflow_id: relationship.from_id,
+          to_workflow_id: target.target_id,
+          relationship_kind: relationship.relationship_kind,
+          review_status: "pending" as const,
+        }] : []))
+    .sort((left, right) => compareText(left.relationship_id, right.relationship_id));
+  const branchEntryEdges = model.operations
+    .filter(({ operation_id, operation_kind }) =>
+      branchedOperationIds.has(operation_id) && operation_kind === "decision")
+    .flatMap((operation) => operation.workflow_id ? [{
+      edge_id: `${operation.operation_id}.evaluated-by`,
+      from_node_id: operation.workflow_id,
+      to_node_id: operation.operation_id,
+      relationship_kind: "evaluated-by",
+      review_status: "pending" as const,
+    }] : []);
+  const branchEdges = model.workflow_edges
+    .filter(({ edge_kind, from_operation_id, to_operation_id }) =>
+      edge_kind === "branch"
+      && branchedOperationIds.has(from_operation_id)
+      && branchedOperationIds.has(to_operation_id))
+    .map((edge) => ({
+      edge_id: edge.edge_id,
+      from_node_id: edge.from_operation_id,
+      to_node_id: edge.to_operation_id,
+      relationship_kind: "branches-to",
+      ...(edge.outcome_label ? { outcome_label: edge.outcome_label } : {}),
+      review_status: "pending" as const,
+    }));
+  const satisfiedStatesByWorkflow = new Map<string, string>();
+  for (const edge of model.workflow_edges.filter(({ outcome_label }) =>
+    outcome_label === "condition satisfied")) {
+    const operation = model.operations.find(({ operation_id }) =>
+      operation_id === edge.to_operation_id);
+    if (operation?.workflow_id) {
+      satisfiedStatesByWorkflow.set(operation.workflow_id, operation.operation_id);
+    }
+  }
+  const overviewEdges = workflowRelationships.map((relationship) => ({
+    edge_id: relationship.relationship_id,
+    from_node_id: satisfiedStatesByWorkflow.get(relationship.from_workflow_id)
+      ?? relationship.from_workflow_id,
+    to_node_id: relationship.to_workflow_id,
+    relationship_kind: relationship.relationship_kind.split(".").at(-1)!,
+    review_status: "pending" as const,
+  }));
   const projectOverview = {
     workflows: model.workflows.map((workflow) => ({
       workflow_id: workflow.workflow_id,
@@ -363,19 +442,18 @@ export function createFocusedAtlasProjections(input: {
       operation_count: workflow.operation_ids.length,
       review_status: "pending" as const,
     })).sort((left, right) => compareText(left.workflow_id, right.workflow_id)),
-    relationships: model.relationship_candidates.flatMap((relationship) =>
-      relationship.targets.flatMap((target) =>
-        model.workflows.some(({ workflow_id }) => workflow_id === relationship.from_id)
-          && target.target_id
-          && model.workflows.some(({ workflow_id }) => workflow_id === target.target_id)
-          ? [{
-            relationship_id: target.target_candidate_id,
-            from_workflow_id: relationship.from_id,
-            to_workflow_id: target.target_id,
-            relationship_kind: relationship.relationship_kind,
-            review_status: "pending" as const,
-          }] : []))
-      .sort((left, right) => compareText(left.relationship_id, right.relationship_id)),
+    relationships: workflowRelationships,
+    nodes: [
+      ...model.workflows.map((workflow) => ({
+        node_id: workflow.workflow_id,
+        node_kind: "workflow" as const,
+        label: workflow.label,
+        review_status: "pending" as const,
+      })),
+      ...overviewOperationNodes,
+    ].sort((left, right) => compareText(left.node_id, right.node_id)),
+    edges: [...overviewEdges, ...branchEntryEdges, ...branchEdges]
+      .sort((left, right) => compareText(left.edge_id, right.edge_id)),
   };
   const workflowDetails = model.workflows.map((workflow) => ({
     workflow_id: workflow.workflow_id,
@@ -674,25 +752,51 @@ export function renderProjectOverviewMermaid(input: {
     readonly to_workflow_id: string;
     readonly relationship_kind: string;
   }[];
+  readonly nodes?: readonly {
+    readonly node_id: string;
+    readonly node_kind: "workflow" | "decision" | "state";
+    readonly label: string;
+  }[];
+  readonly edges?: readonly {
+    readonly edge_id: string;
+    readonly from_node_id: string;
+    readonly to_node_id: string;
+    readonly relationship_kind: string;
+    readonly outcome_label?: string | undefined;
+  }[];
 }): string {
-  const workflows = [...input.workflows].sort((left, right) =>
-    compareText(left.workflow_id, right.workflow_id));
-  const aliases = new Map(workflows.map((workflow, index) =>
-    [workflow.workflow_id, `wf${index + 1}`] as const));
+  const nodes = input.nodes?.length ? [...input.nodes] : input.workflows.map((workflow) => ({
+    node_id: workflow.workflow_id, node_kind: "workflow" as const, label: workflow.label,
+  }));
+  nodes.sort((left, right) => compareText(left.node_id, right.node_id));
+  const aliases = new Map(nodes.map((node, index) =>
+    [node.node_id, `node${index + 1}`] as const));
+  const edges = input.edges?.length ? [...input.edges] : input.relationships.map(
+    (relationship) => ({
+      edge_id: relationship.relationship_id,
+      from_node_id: relationship.from_workflow_id,
+      to_node_id: relationship.to_workflow_id,
+      relationship_kind: relationship.relationship_kind.split(".").at(-1)!,
+    }));
   const lines = [
     "%% PROJECT OVERVIEW -- PROPOSED, NOT AUTHORITATIVE",
     "flowchart LR",
-    ...workflows.map((workflow) =>
-      `  ${aliases.get(workflow.workflow_id)}["${escapeMermaid(workflow.label)}"]`),
-    ...[...input.relationships]
-      .filter(({ from_workflow_id, to_workflow_id }) =>
-        aliases.has(from_workflow_id) && aliases.has(to_workflow_id))
-      .sort((left, right) => compareText(left.relationship_id, right.relationship_id))
+    ...nodes.map((node) => {
+      const alias = aliases.get(node.node_id)!;
+      const label = escapeMermaid(node.label);
+      return node.node_kind === "decision"
+        ? `  ${alias}{"${label}"}` : `  ${alias}["${label}"]`;
+    }),
+    ...edges
+      .filter(({ from_node_id, to_node_id }) =>
+        aliases.has(from_node_id) && aliases.has(to_node_id))
+      .sort((left, right) => compareText(left.edge_id, right.edge_id))
       .map((relationship) => {
         const arrow = relationship.relationship_kind.endsWith("provides-data-to")
           ? "-.->" : "-->";
-        const label = relationship.relationship_kind.split(".").at(-1)!;
-        return `  ${aliases.get(relationship.from_workflow_id)} ${arrow}|"${escapeMermaid(label)}"| ${aliases.get(relationship.to_workflow_id)}`;
+        const label = ("outcome_label" in relationship
+          ? relationship.outcome_label : undefined) ?? relationship.relationship_kind;
+        return `  ${aliases.get(relationship.from_node_id)} ${arrow}|"${escapeMermaid(label)}"| ${aliases.get(relationship.to_node_id)}`;
       }),
   ];
   return `${lines.join("\n")}\n`;
