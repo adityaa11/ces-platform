@@ -94,3 +94,31 @@ Verification:
 - `corepack pnpm --filter @company/ces-cli typecheck`
 - `corepack pnpm vitest run packages/proposed-project-model/src/index.test.ts packages/approved-project-model/src/hardened.test.ts apps/cli/src/atlas.test.ts`
 - 13 focused tests passed.
+
+## Shared data and context assignment amendment
+
+Shared data and workflow context are assigned by evidence-backed consumption,
+not by duplicating a canonical record into ordinary workflow membership.
+
+Required behavior:
+
+```text
+one canonical shared concept
+-> zero or more governed consumer assignments
+-> independently reviewable consumer relationships
+```
+
+Additional acceptance criteria:
+
+- [ ] Shared data can be assigned to registration, review, reporting, and audit
+      consumers when each assignment has source evidence.
+- [ ] A shared record is not converted into multiple language-specific or
+      workflow-specific records.
+- [ ] Consumer assignments distinguish ordinary workflow membership from
+      shared-input or context-provider use.
+- [ ] Uncertain consumers remain pending and do not become authoritative
+      merely because they share a section or nearby text.
+- [ ] Assignment diagnostics report isolated shared-data/context records and
+      distinguish “no evidenced consumer” from missed wiring.
+- [ ] Cross-domain fixtures prove identical assignment behavior without
+      Safara-specific production constants.

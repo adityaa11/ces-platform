@@ -120,3 +120,38 @@ Verification:
 - `corepack pnpm --filter @company/ces-cli typecheck`
 - `corepack pnpm vitest run packages/proposed-project-model/src/index.test.ts packages/approved-project-model/src/hardened.test.ts packages/atlas-intent-graph/src/index.test.ts apps/cli/src/atlas.test.ts`
 - 21 focused tests passed.
+
+## Shared data, context, reporting, and audit relationship amendment
+
+Relationship derivation must support domain-neutral, evidence-backed fanout
+from shared semantic concepts. The governed vocabulary includes:
+
+- `provides-data-to`;
+- `provides-context-to`;
+- `enables`;
+- `contributes-to`;
+- `evaluated-by`.
+
+`provides-data-to` and `provides-context-to` are dependency semantics, not
+execution ordering. They must not be converted into `precedes` solely from
+document order.
+
+Additional acceptance criteria:
+
+- [ ] A shared data node may provide data to multiple operational, reporting,
+      and audit consumers.
+- [ ] A context provider may connect to an activity without being represented
+      as a preceding activity.
+- [ ] Operational flow, data dependency, context dependency, reporting, and
+      audit relationships remain visibly distinct.
+- [ ] A canonical node is not left isolated when supported consumer evidence
+      exists.
+- [ ] Every fanout target has independent evidence, rationale, confidence, and
+      review status.
+- [ ] No relationship is inferred from heading proximity, co-occurrence, or
+      source order alone.
+- [ ] Generic fixtures cover customer data to order processing, employee data
+      to payroll, invoice data to approval, and patient data to appointments.
+- [ ] Production derivation contains no Safara names, Indonesian travel
+      keywords, PDF filename checks, fixed Safara IDs, or embedded Safara
+      topology.

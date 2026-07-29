@@ -1662,3 +1662,48 @@ Safara-specific labels and expected topology may exist only in qualification fix
 The Atlas production compiler must remain domain-neutral and must derive only
 the model kinds supported by a structurally different non-travel PRD without
 changes to Atlas core.
+
+---
+
+# Shared Data and Context Qualification Amendment
+
+The Safara oracle must also qualify `Data Jemaah` as one shared semantic
+concept connected through evidence-backed data relationships rather than an
+unexplained isolated workflow box. It must qualify package/departure context
+separately from temporal ordering when the source supports context but not a
+strict preceding activity.
+
+The expected Safara qualification subgraph includes reviewable semantic
+equivalents of:
+
+```text
+Data Jemaah -> Pendaftaran Jemaah       provides-data-to
+Data Jemaah -> Dokumen Jemaah           provides-data-to
+Data Jemaah -> Dashboard dan Laporan    provides-data-to
+Data Jemaah -> Riwayat Aktivitas        provides-data-to
+
+Paket dan Jadwal Keberangkatan
+  -> Pendaftaran Jemaah                 provides-context-to
+```
+
+These fixture expectations do not authorize production constants.
+
+Additional qualification requirements:
+
+- [ ] The shared-data node has one canonical identity and several governed
+      consumer edges.
+- [ ] Reporting and activity-history fanout are non-sequential dependencies.
+- [ ] Exact original document representations remain available as evidence.
+- [ ] No invented short display label replaces exact source wording unless a
+      source-grounded label or approved display representation exists.
+- [ ] Production-source scans reject Safara names, Indonesian travel terms,
+      project/filename checks, fixed fixture IDs, and embedded fixture
+      topology.
+- [ ] Customer/order, employee/payroll, invoice/approval, and
+      patient/appointment fixtures exercise the same contracts.
+- [ ] A negative fixture with shared data but no evidenced consumer emits an
+      isolated review finding rather than fabricated relationships.
+- [ ] A negative fixture with co-occurrence but no consumption evidence emits
+      no `provides-data-to` or `provides-context-to` relationship.
+- [ ] Safara qualification proves only this fixture and lifecycle; broader
+      domain-generality claims remain blocked on the multi-domain gate.

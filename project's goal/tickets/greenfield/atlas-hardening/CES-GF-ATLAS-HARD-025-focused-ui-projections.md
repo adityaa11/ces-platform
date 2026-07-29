@@ -179,3 +179,28 @@ Verification:
 - `corepack pnpm --filter @company/ces-cli typecheck`
 - `corepack pnpm vitest run packages/atlas-intent-graph/src/index.test.ts apps/cli/src/atlas.test.ts`
 - 14 focused tests passed.
+
+## Connected shared-data and context projection amendment
+
+The project overview and integrated semantic graph must render shared data and
+context nodes when they materially explain the main workflow. They must use
+canonical governed relationships and must not infer missing edges in the UI.
+
+Additional acceptance criteria:
+
+- [ ] Overview JSON and Mermaid display connected shared-data/context nodes
+      rather than unexplained isolated boxes.
+- [ ] Execution edges, data dependencies, context dependencies, reporting
+      dependencies, and audit dependencies use distinguishable projection
+      semantics.
+- [ ] Shared input fanout remains one node with multiple edges.
+- [ ] Reporting and audit consumers may both receive data without being
+      represented as final sequential workflow steps.
+- [ ] Selected workflow detail does not remove or replace the persistent main
+      overview.
+- [ ] Every projected shared-data/context edge resolves to canonical identity,
+      governance, evidence, and review state.
+- [ ] The projection contains no UI-side Safara inference or fixture-specific
+      node/edge injection.
+- [ ] A non-travel fixture produces the same projection shape rules with its
+      own source-grounded labels and topology.

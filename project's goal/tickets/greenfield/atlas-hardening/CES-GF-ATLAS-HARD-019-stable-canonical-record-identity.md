@@ -106,3 +106,32 @@ Verification:
 - `corepack pnpm --filter @company/ces-proposed-project-model build`
 - `corepack pnpm --filter @company/ces-cli typecheck`
 - `corepack pnpm vitest run packages/proposed-project-model/src/index.test.ts packages/approved-project-model/src/hardened.test.ts apps/cli/src/atlas.test.ts`
+
+## Shared data and context semantic-role amendment
+
+Canonical identity must not force every structural heading into a workflow
+identity. The same domain-neutral compiler must distinguish evidence-backed
+semantic roles including:
+
+- executable business workflow;
+- shared data or conceptual entity;
+- workflow context provider;
+- reporting consumer;
+- audit/history consumer.
+
+A shared data concept has one canonical identity even when several workflows
+consume it. Consumer-specific assignments and relationships must not clone the
+record or change its semantic identity.
+
+Additional acceptance criteria:
+
+- [ ] A data-oriented heading is not classified as an executable workflow
+      without activity-sequence evidence.
+- [ ] One canonical data/context record may project into several governed
+      relationships without creating duplicate concepts.
+- [ ] Semantic-role correction is reviewable and does not silently replace an
+      approved logical identity.
+- [ ] Production classification contains no Safara filename, project-name,
+      Indonesian travel vocabulary, fixed node ID, or fixed topology branch.
+- [ ] Structurally different customer, employee, invoice, and patient-data
+      fixtures use the same semantic-role contract.

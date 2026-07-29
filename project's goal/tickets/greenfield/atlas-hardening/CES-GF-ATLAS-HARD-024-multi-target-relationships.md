@@ -92,3 +92,23 @@ Verification:
 - `corepack pnpm --filter @company/ces-cli typecheck`
 - `corepack pnpm vitest run packages/proposed-project-model/src/index.test.ts packages/approved-project-model/src/hardened.test.ts apps/cli/src/atlas.test.ts`
 - 14 focused tests passed.
+
+## Shared-concept multi-consumer governance amendment
+
+A shared data or context concept commonly has several legitimate consumers.
+This is a governed multi-target relationship case, not permission to publish
+all plausible targets together.
+
+Additional acceptance criteria:
+
+- [ ] Each operational, reporting, or audit consumer has its own
+      `target_candidate_id`, evidence, confidence, blockers, and review
+      decision.
+- [ ] Accepting one consumer does not accept, reject, or rewrite another.
+- [ ] Missing and competing consumers remain visible without creating an
+      authoritative edge.
+- [ ] Rejected consumer targets never appear in project overview, workflow
+      detail, integrated graph, reporting, or audit projections.
+- [ ] Multi-consumer tests use at least one non-travel domain and the generic
+      relationship contract.
+- [ ] No production target list is seeded from the Safara golden fixture.
