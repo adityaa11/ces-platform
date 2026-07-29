@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-015 — Final Safara Qualification Gate
 
 **Stage:** Atlas hardening production gate
-**Status:** Blocked pending reopened ATLAS-HARD-021 through ATLAS-HARD-026 remediation and qualification rerun
+**Status:** Blocked pending ATLAS-HARD-021 through ATLAS-HARD-026 remediation, ATLAS-UI-001 through ATLAS-UI-005 qualification, and final rerun
 **Execution order:** Final delivery gate — execute last
 
 ## Objective
@@ -15,6 +15,8 @@ block production approval UI integration until every mandatory gate passes.
 - ATLAS-HARD-016 and ATLAS-HARD-017 corrective production integration.
 - ATLAS-HARD-018 through ATLAS-HARD-026 canonical-model and projection
   refinement.
+- ATLAS-UI-001 through ATLAS-UI-005 workflow review UI implementation and
+  production qualification.
 - Completed and reconciled DAPE-008R real-provider evidence.
 
 ## Work
@@ -69,7 +71,8 @@ block production approval UI integration until every mandatory gate passes.
       gated on human review.
 - [ ] Human review is recorded; Atlas does not self-certify.
 - [ ] Existing DAPE, Atlas, CLI, and greenfield regressions remain green.
-- [ ] All ATLAS-HARD-018 through ATLAS-HARD-026 acceptance criteria pass.
+- [ ] All ATLAS-HARD-018 through ATLAS-HARD-026 and ATLAS-UI-001 through
+      ATLAS-UI-005 acceptance criteria pass.
 - [x] Production approval UI integration remains blocked until acceptance.
 - [x] Qualification reports contain no claim that Safara alone proves
       domain-agnostic extraction.

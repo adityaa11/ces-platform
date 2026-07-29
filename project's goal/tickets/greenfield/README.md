@@ -63,6 +63,11 @@ contracts and do not create a parallel extraction or identity system.
 Production approval UI integration is blocked until
 `CES-GF-ATLAS-HARD-015` is accepted.
 
+The production workflow review interface is tracked separately in the
+[Atlas Workflow UI ticket plan](atlas-workflow-ui/README.md). It consumes
+backend-owned hardening projections and cannot close before the workflow
+topology contracts are qualified.
+
 ## CES Architect
 
 | Order | Ticket | Outcome | Depends on |
