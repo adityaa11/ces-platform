@@ -15,9 +15,10 @@ cross-cutting applicability.
 
 ## Work
 
-- Add workflow and cross-cutting assignment contracts.
-- Include origin, evidence, rationale, confidence, review status, eligibility,
-  and blockers.
+- Add workflow and cross-cutting assignment contracts that reuse the shared
+  governance envelope established by ATLAS-HARD-021: stable association ID,
+  origin, evidence, rationale, confidence, review status, bulk-approval
+  eligibility, blockers, and proposal revision.
 - Support zero, one, or multiple workflow and operation targets without
   duplicating records.
 - Preserve authentication, authorization, audit, privacy, retention, and
@@ -26,14 +27,20 @@ cross-cutting applicability.
 
 ## Outputs
 
-`workflow-assignments.json`, `cross-cutting-assignments.json`, findings, and
-proposed-model references.
+Canonical `workflow-assignments.json` and
+`cross-cutting-assignments.json` bundle components, findings, and
+content-addressed proposed-model manifest references. Duplicated embedded
+collections are prohibited.
 
 ## Acceptance criteria
 
 - [ ] One record may appear in several workflows without duplication.
 - [ ] Cross-cutting controls are not forced into one workflow.
 - [ ] Assignments have independent review status and immutable IDs.
+- [ ] Assignment contracts reuse the shared governance envelope rather than
+      defining divergent evidence or eligibility behavior.
+- [ ] Each assignment collection has one canonical serialized location and
+      proposed-model references are revision-pinned and content-addressed.
 - [ ] Derived or ambiguous assignments block bulk approval.
 - [ ] Reassignment preserves canonical record identity.
 - [ ] Frontend projection requires no assignment heuristics.

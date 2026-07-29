@@ -22,8 +22,12 @@ presenting every normalized record in one buyer-facing graph.
 - Preserve detailed controls in focused views.
 - Partition rules-and-controls projections by workflow, cross-cutting control
   area, and semantic kind.
-- Support pagination, lazy expansion, filtering, and search so clients do not
-  load every project rule into one replacement giant graph.
+- Implement backend-owned deterministic artifact slices or an equivalent
+  backend query contract for filtering and pagination; client-side filtering
+  over one complete payload does not satisfy this ticket.
+- Require revision-pinned cursors, deterministic sorting, stable slice IDs,
+  bounded page sizes, lazy detail expansion, and search so clients never need
+  to download every project rule.
 - Open rules and controls on the selected workflow by default; cross-cutting
   and project-wide views require an explicit user selection.
 - Link traceability through document, source unit, atomic claim, candidate,
@@ -36,8 +40,11 @@ presenting every normalized record in one buyer-facing graph.
 
 `proposed-project-overview-graph.json`,
 `proposed-workflow-detail-graphs.json`,
-`proposed-rules-controls-graph.json`, `proposed-traceability-graph.json`, and
-`proposed-approval-exceptions.json`, plus rendered equivalents.
+`proposed-rules-controls-index.json`, revision-pinned per-workflow and
+cross-cutting rules-and-controls slices (or an equivalent backend query
+contract), `proposed-traceability-graph.json`, and
+`proposed-approval-exceptions.json`, plus rendered equivalents. Indexes and
+slices remain non-authoritative projections of canonical bundle components.
 
 ## Acceptance criteria
 
@@ -46,6 +53,10 @@ presenting every normalized record in one buyer-facing graph.
 - [ ] Detailed requirements remain accessible in focused tabs.
 - [ ] Rules and controls support per-workflow and cross-cutting-control slices,
       semantic-kind filtering, pagination, lazy expansion, and search.
+- [ ] Filtering and pagination are backend-owned with revision-pinned cursors,
+      deterministic ordering, stable slice identifiers, and bounded pages.
+- [ ] No focused view requires downloading the complete project rule
+      inventory.
 - [ ] The default rules-and-controls view loads the selected workflow rather
       than every rule in the project.
 - [ ] No single default projection recreates the all-record giant graph.

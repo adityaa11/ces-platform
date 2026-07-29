@@ -20,9 +20,13 @@ semantic record nodes.
 - Establish a shared governed-edge contract for every derived transition,
   dependency, ordering edge, branch, join, and loop; ATLAS-HARD-023 must reuse
   this contract for other semantic relationships.
-- Require workflow edges and other semantic relationships to share stable
-  identity, provenance, evidence, rationale, origin, confidence, review
-  status, eligibility, decision replay, and stale-decision handling.
+- Define the common governance envelope fields for identity, origin, evidence,
+  rationale, confidence, review status, bulk-approval eligibility, blockers,
+  and proposal revision.
+- Own workflow and operation identity, topology, edge provenance, structural
+  validation, and creation of stable review subjects. ATLAS-HARD-026 owns
+  approval decisions, replay, stale-decision handling, supersession, and
+  authoritative materialization.
 - Preserve incomplete and competing interpretations.
 - Derive structure from canonical claims and records without
   workflow-specific extractors.
@@ -31,8 +35,10 @@ semantic record nodes.
 
 ## Outputs
 
-Workflow and operation collections in `proposed-project-model.json`, findings,
-and revision metadata.
+Canonical workflow and operation bundle components referenced by the
+proposed-model manifest, plus findings and revision metadata. Any embedded or
+standalone compatibility representation is a deterministic non-authoritative
+export.
 
 ## Acceptance criteria
 
@@ -40,8 +46,8 @@ and revision metadata.
 - [ ] Arbitrary directed workflow shapes are supported.
 - [ ] Derived workflow topology uses the shared governed relationship contract
       and cannot bypass relationship review or publication rules.
-- [ ] Workflow edges have the same provenance, review, replay, and stale
-      decision guarantees as other governed semantic relationships.
+- [ ] Workflow edges expose the shared governance envelope and stable review
+      identity without implementing a separate approval or replay path.
 - [ ] Unknown or competing structures remain review-required.
 - [ ] Detailed semantic records remain preserved.
 - [ ] Production logic contains no Safara-specific routing.

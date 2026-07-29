@@ -17,8 +17,9 @@ and human-governed approved logical identity.
 - Define the identity boundary explicitly:
   - `candidate_id` identifies one Atlas extraction observation and remains
     provenance-only;
-  - `record_id` is the DAPE-compatible proposed canonical semantic identity,
-    not a parallel Atlas semantic namespace;
+  - `record_id` is the DAPE-compatible, revision-scoped canonical semantic
+    identity inside one immutable proposal revision, not a parallel Atlas
+    semantic namespace;
   - `approved_logical_id` is the governed longitudinal identity that preserves
     canonical DAPE semantic lineage across accepted revisions.
 - Derive record identity from project scope, semantic kind,
@@ -30,8 +31,8 @@ and human-governed approved logical identity.
 - Keep candidate IDs and retry observations only in provenance.
 - Make wording, language, candidate order, duplicate discovery, retry, and
   workflow assignment identity-neutral.
-- State whether proposed `record_id` values are revision-scoped or
-  longitudinal and define their mapping to DAPE revision tuples.
+- Make proposed `record_id` values revision-scoped and include their proposal
+  revision in the identity contract and DAPE revision-tuple mapping.
 - Preserve `approved_logical_id` across meaning-preserving document revisions
   and page or source-unit movement.
 - Create an explicit semantic revision or reviewed successor identity for
@@ -49,9 +50,13 @@ report, and deterministic fixtures.
 
 ## Acceptance criteria
 
-- [ ] Duplicate candidates, ordering, and retry do not change `record_id`.
-- [ ] Display-language changes do not change `record_id`.
-- [ ] Equivalent multilingual statements can share one proposed identity.
+- [ ] Duplicate candidates, ordering, and retry within the same immutable
+      proposal revision do not change `record_id`.
+- [ ] Display-language changes within the same proposal revision do not change
+      `record_id`.
+- [ ] Equivalent multilingual statements share `approved_logical_id` only
+      after accepted equivalence review; any corrected proposal remains a new
+      immutable revision.
 - [ ] Workflow reassignment does not change `record_id`.
 - [ ] `record_id` is the DAPE-compatible canonical semantic identity or has one
       explicit directional mapping to it; Atlas does not create a second equal
@@ -60,8 +65,9 @@ report, and deterministic fixtures.
       replace its `approved_logical_id`.
 - [ ] Source revision changes update provenance without silently changing
       semantic identity when meaning is preserved.
-- [ ] The contract explicitly declares whether proposed `record_id` values are
-      revision-scoped or longitudinal.
+- [ ] `record_id` is explicitly revision-scoped and `approved_logical_id`
+      preserves continuity across accepted meaning-preserving revisions.
+- [ ] Candidate rediscovery does not redefine approved logical identity.
 - [ ] Meaning-changing corrections produce reviewable identity changes.
 - [ ] Meaning-changing revisions create an explicit semantic revision or
       successor identity rather than silently reusing the old meaning.

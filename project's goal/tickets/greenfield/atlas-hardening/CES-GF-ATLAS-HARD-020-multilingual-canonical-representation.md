@@ -26,6 +26,9 @@ equivalence.
 - Add a governed project terminology lifecycle:
   terminology proposal, human review, then an approved versioned terminology
   registry.
+- Serialize that lifecycle separately as `terminology-proposals.json`,
+  `terminology-decisions.json`, and
+  `approved-terminology-registry.json`.
 - Allow agents to detect terms and propose aliases, translations, and canonical
   concepts, but never publish registry entries, approve their own proposals,
   silently replace approved terminology, or alter registry versions without
@@ -35,8 +38,11 @@ equivalence.
 
 ## Outputs
 
-Multilingual records, equivalence proposals, terminology registry, and
-language-policy metadata.
+Multilingual records, equivalence proposals, `terminology-proposals.json`, and
+contracts for `terminology-decisions.json` and
+`approved-terminology-registry.json`, plus language-policy metadata.
+ATLAS-HARD-026 exclusively materializes human decisions and the approved
+registry.
 
 ## Acceptance criteria
 
@@ -52,6 +58,10 @@ language-policy metadata.
 - [ ] Uncertain terminology remains review-required.
 - [ ] Agents can propose terminology but only human-reviewed decisions
       materialize an approved, versioned terminology registry.
+- [ ] Proposed terminology, human decisions, and the approved registry remain
+      separate artifacts with no pending proposal in an approved registry.
+- [ ] HARD-020 cannot publish an approved registry; HARD-026 materializes it
+      from immutable proposals plus human decisions.
 
 ## Tests and evidence
 

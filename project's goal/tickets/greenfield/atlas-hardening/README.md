@@ -66,6 +66,17 @@ production integration evidence.
   suppress findings, publish registries, or manufacture source evidence.
 - Approval is represented by immutable human decisions and materialization,
   never by mutation of the proposal.
+- Governed assignments, workflow edges, operation dependencies, and
+  relationship candidates reuse one governance envelope for origin, evidence,
+  rationale, confidence, review status, eligibility, blockers, and proposal
+  revision. ATLAS-HARD-026 exclusively owns approval decisions, replay,
+  stale-decision handling, supersession, and approved materialization.
+- Each canonical collection has exactly one serialized source of truth. The
+  proposed-model manifest references canonical bundle components by artifact
+  name, content hash, schema version, and proposal revision; indexes,
+  projections, and compatibility exports are non-authoritative derivatives.
+- Human-authored augmentations remain immutable decisions outside the original
+  proposal and enter authoritative artifacts only through materialization.
 - The production approval UI remains blocked until ATLAS-HARD-015 passes.
 - Safara acceptance qualifies one reviewed fixture and the lifecycle gate; a
   separate multi-domain suite is required before claiming general domain

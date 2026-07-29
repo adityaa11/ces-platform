@@ -15,17 +15,23 @@ record.
 
 ## Work
 
-- Add deterministic multi-target proposals.
+- Add deterministic multi-target proposals with three identity layers:
+  `relationship_intent_id` for shared meaning,
+  `target_candidate_id` for each proposed target association, and
+  `approved_relationship_id` for each edge later materialized by
+  ATLAS-HARD-026.
 - Distinguish independent valid targets from competing alternatives.
 - Carry target-level evidence, rationale, confidence, review status, and
   blockers.
 - Preserve unresolved zero-target candidates.
-- Materialize only human-accepted target decisions.
+- Produce target-level review subjects and blockers without materializing
+  authoritative relationships; materialization belongs exclusively to
+  ATLAS-HARD-026.
 
 ## Outputs
 
-Multi-target candidates, target decisions, conflict findings, and approved
-relationship materialization contracts.
+Relationship intents, target candidates, target-level evidence and blockers,
+conflict findings, and review-subject contracts consumed by ATLAS-HARD-026.
 
 ## Acceptance criteria
 
@@ -33,6 +39,10 @@ relationship materialization contracts.
 - [ ] Several valid targets are not collapsed to one winner.
 - [ ] Competing alternatives remain visibly unresolved.
 - [ ] Each target is independently traceable and reviewable.
+- [ ] Accepting or rejecting one target does not change the intent identity or
+      invalidate unrelated target decisions.
+- [ ] Intent, target candidate, and approved edge identities are distinct.
+- [ ] HARD-024 produces no authoritative approved relationship.
 - [ ] Canonical records are not duplicated per target.
 - [ ] Rejected targets cannot appear in approved projections.
 
