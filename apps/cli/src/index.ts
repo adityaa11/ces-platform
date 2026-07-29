@@ -2156,11 +2156,15 @@ function buildCanonicalProposedAtlasArtifacts(input: {
       }
     }
     return [workflow.workflow_id, new Set([...frequency]
-      .filter(([, count]) => count >= 2).map(([token]) => token))] as const;
+      .filter(([, count]) => count >= 1).map(([token]) => token))] as const;
   }));
   const workflowTextTokens = new Map(workflows.map((workflow) => [
     workflow.workflow_id,
     semanticTokens(workflowText.get(workflow.workflow_id) ?? ""),
+  ] as const));
+  const workflowOrder = new Map(workflows.map((workflow) => [
+    workflow.workflow_id,
+    unitOrder.get(workflow.source_unit_ids[0]!) ?? Number.MAX_SAFE_INTEGER,
   ] as const));
   const allWorkflowLabelTokens = new Set(workflows.flatMap((workflow) =>
     [...semanticTokens(workflow.label)]));
@@ -2197,7 +2201,8 @@ function buildCanonicalProposedAtlasArtifacts(input: {
         kind = "ces.relationship.contributes-to";
       } else if (purpose === "ces.section.workflows"
         && !targetPurposes.includes("ces.section.data")
-        && matchedStateTokens.length > 0) {
+        && matchedStateTokens.length > 0
+        && workflowOrder.get(target.workflow_id)! > workflowOrder.get(source.workflow_id)!) {
         kind = "ces.relationship.enables";
       } else {
         continue;
@@ -2253,6 +2258,22 @@ function buildCanonicalProposedAtlasArtifacts(input: {
       source_unit_id: sourceUnitId,
       workflow_ids: sequence.map(({ workflow_id }) => workflow_id),
     });
+    const reportingIds = sequence
+      .map(({ workflow_id }) => workflow_id)
+      .filter((workflowId) =>
+        workflowPurpose.get(workflowId) === "ces.section.reporting-audit"
+        && [...semanticTokens(workflows.find(({ workflow_id }) =>
+          workflow_id === workflowId)!.label)].some((token) =>
+          ["dashboard", "laporan", "report", "ringkasan", "summary"].includes(token)));
+    for (const reportingId of reportingIds) {
+      for (const { workflow_id: sourceId } of sequence) {
+        if (sourceId === reportingId
+          || workflowPurpose.get(sourceId) === "ces.section.reporting-audit") continue;
+        addOverviewRelationship(
+          sourceId, reportingId, "ces.relationship.provides-data-to", [sourceUnitId],
+        );
+      }
+    }
     const incoming = new Map<string, string[]>();
     for (const relationship of overviewRelationshipMap.values()) {
       if (relationship.kind !== "ces.relationship.contributes-to") continue;
@@ -2282,6 +2303,36 @@ function buildCanonicalProposedAtlasArtifacts(input: {
           "ces.relationship.precedes", [sourceUnitId],
         );
       }
+    }
+  }
+  const overviewReportingIds = workflows
+    .filter((workflow) =>
+      workflowPurpose.get(workflow.workflow_id) === "ces.section.reporting-audit"
+      && [...semanticTokens(workflow.label)].some((token) =>
+        ["dashboard", "laporan", "report", "ringkasan", "summary"].includes(token)))
+    .map(({ workflow_id }) => workflow_id);
+  for (const reportingId of overviewReportingIds) {
+    const providers = new Set([...overviewRelationshipMap.values()]
+      .filter(({ to_id, kind }) =>
+        to_id === reportingId && kind === "ces.relationship.provides-data-to")
+      .map(({ from_id }) => from_id));
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const relationship of overviewRelationshipMap.values()) {
+        if (!["ces.relationship.precedes", "ces.relationship.enables",
+          "ces.relationship.contributes-to"].includes(relationship.kind)) continue;
+        if (providers.has(relationship.to_id) && !providers.has(relationship.from_id)) {
+          providers.add(relationship.from_id);
+          changed = true;
+        }
+      }
+    }
+    for (const providerId of providers) {
+      addOverviewRelationship(
+        providerId, reportingId, "ces.relationship.provides-data-to",
+        workflowEvidence.get(reportingId) ?? [],
+      );
     }
   }
   const overviewRelationships = [...overviewRelationshipMap.values()]
