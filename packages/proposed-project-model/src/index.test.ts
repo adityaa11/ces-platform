@@ -11,8 +11,10 @@ import { join } from "node:path";
 import {
   assertBulkApprovalSelection,
   calculateBulkApprovalEligibility,
+  createCanonicalRecordIdentity,
   createBulkApprovalPolicy,
   createProposedProjectModel,
+  createRecordIdentityReport,
   publishProposedProjectModel,
 } from "./index.js";
 
@@ -56,33 +58,49 @@ function fixture() {
       candidate("project.candidate.temperature", "example.kind.temperature-release"),
     ],
   });
+  const unknownIdentity = createCanonicalRecordIdentity({
+    project_id: "project",
+    proposal_revision: 1,
+    semantic_kind_id: "ces.kind.unknown",
+    canonical_semantic_key: "Unknown normative meaning.",
+    stable_source_lineage_keys: [hash("1")],
+  });
+  const temperatureIdentity = createCanonicalRecordIdentity({
+    project_id: "project",
+    proposal_revision: 1,
+    semantic_kind_id: "example.kind.temperature-release",
+    canonical_semantic_key: "Temperature release.",
+    stable_source_lineage_keys: [hash("1")],
+  });
+  const recordIds = [unknownIdentity.record_id, temperatureIdentity.record_id];
   const coverage = calculatePipelineCoverage({
     source_revision_id: inventory.source_revision_id,
     semantic_kind_registry_id: registry.id,
     source_unit_ids: [source],
     candidate_sources: Object.fromEntries(inventory.candidates.map((item) =>
       [item.candidate_id, item.source_unit_ids])),
-    normalized_record_ids: ["project.record.unknown", "project.record.temperature"],
+    normalized_record_ids: recordIds,
     workflow_node_ids: ["project.workflow.release"],
     graph_node_ids: [],
     source_coverage: [{
       source_unit_id: source, normative: true, current_stage: "assigned",
       candidate_ids: inventory.candidates.map(({ candidate_id }) => candidate_id),
-      normalized_record_ids: ["project.record.unknown", "project.record.temperature"],
+      normalized_record_ids: recordIds,
       workflow_node_ids: ["project.workflow.release"], graph_node_ids: [],
       stage_history: [{ stage: "assigned", status: "included" }],
     }],
     record_coverage: [
-      { record_id: "project.record.unknown", semantic_kind_id: "ces.kind.unknown",
+      { record_id: unknownIdentity.record_id, semantic_kind_id: "ces.kind.unknown",
         candidate_ids: ["project.candidate.unknown"], source_unit_ids: [source] },
-      { record_id: "project.record.temperature",
+      { record_id: temperatureIdentity.record_id,
         semantic_kind_id: "example.kind.temperature-release",
         candidate_ids: ["project.candidate.temperature"], source_unit_ids: [source] },
     ],
   });
   const findings = createCompletenessCriticReport({ coverage, findings: [] });
   const records = [
-    { id: "project.record.unknown", candidate_ids: ["project.candidate.unknown"],
+    { id: unknownIdentity.record_id, identity: unknownIdentity,
+      candidate_ids: ["project.candidate.unknown"],
       semantic_kind_id: "ces.kind.unknown", statement: "Unknown normative meaning.",
       source_unit_ids: [source], classification_status: "classification_required" as const,
       origin: "derived" as const, review_status: "pending" as const, details: [],
@@ -90,7 +108,8 @@ function fixture() {
         { code: "classification-required", severity: "review_required" as const },
         { code: "derived-interpretation-requires-review", severity: "review_required" as const },
       ] },
-    { id: "project.record.temperature", candidate_ids: ["project.candidate.temperature"],
+    { id: temperatureIdentity.record_id, identity: temperatureIdentity,
+      candidate_ids: ["project.candidate.temperature"],
       semantic_kind_id: "example.kind.temperature-release", statement: "Temperature release.",
       source_unit_ids: [source], classification_status: "classified" as const,
       origin: "explicit" as const, review_status: "pending" as const, details: [],
@@ -130,19 +149,66 @@ describe("ATLAS-HARD-009 ProposedProjectModel", () => {
       total_items: 2, eligible_items: 1, blocked_items: 1,
     });
     expect(eligibility.items.find(({ record_id }) =>
-      record_id === "project.record.unknown")?.blockers)
+      record_id === data.records[0]!.id)?.blockers)
       .toContain("unknown-semantic-kind");
     expect(() => assertBulkApprovalSelection(
-      eligibility, ["project.record.temperature"],
+      eligibility, [data.records[1]!.id],
     )).not.toThrow();
     expect(() => assertBulkApprovalSelection(
-      eligibility, ["project.record.unknown"],
+      eligibility, [data.records[0]!.id],
     )).toThrow("Bulk approval blocked");
     const directory = await mkdtemp(join(tmpdir(), "atlas-proposal-"));
     const path = join(directory, "proposed-project-model.json");
     await publishProposedProjectModel(path, model);
     expect(JSON.parse(await readFile(path, "utf8"))).toEqual(model);
     await expect(publishProposedProjectModel(path, model)).rejects.toThrow();
+  });
+
+  it("creates revision-scoped IDs and longitudinal migration reports", () => {
+    const first = createCanonicalRecordIdentity({
+      project_id: "project", proposal_revision: 1,
+      semantic_kind_id: "ces.kind.business-rule",
+      canonical_semantic_key: "Payment must be accepted.",
+      stable_source_lineage_keys: ["source-lineage-payment"],
+    });
+    const retry = createCanonicalRecordIdentity({
+      project_id: "project", proposal_revision: 1,
+      semantic_kind_id: "ces.kind.business-rule",
+      canonical_semantic_key: "Payment must be accepted.",
+      stable_source_lineage_keys: ["source-lineage-payment"],
+    });
+    const next = createCanonicalRecordIdentity({
+      project_id: "project", proposal_revision: 2,
+      semantic_kind_id: "ces.kind.business-rule",
+      canonical_semantic_key: "Payment must be accepted.",
+      stable_source_lineage_keys: ["source-lineage-payment"],
+      approved_logical_id: "project.logical.accepted-payment",
+      predecessor_record_ids: [first.record_id],
+    });
+    expect(retry).toEqual(first);
+    expect(next.record_id).not.toBe(first.record_id);
+    expect(next.approved_logical_id).toBe("project.logical.accepted-payment");
+    const report = createRecordIdentityReport({
+      project_id: "project", proposal_revision: 2, identities: [next],
+      migrations: [{
+        predecessor_record_ids: [first.record_id],
+        successor_record_ids: [next.record_id],
+        change_kind: "meaning_preserving",
+        approved_logical_id: "project.logical.accepted-payment",
+        review_status: "pending",
+      }],
+    });
+    expect(report.migrations).toHaveLength(1);
+    const duplicateMeaning = createCanonicalRecordIdentity({
+      project_id: "project", proposal_revision: 2,
+      semantic_kind_id: "ces.kind.business-rule",
+      canonical_semantic_key: "Payment must be accepted.",
+      stable_source_lineage_keys: ["different-source-lineage"],
+    });
+    expect(createRecordIdentityReport({
+      project_id: "project", proposal_revision: 2,
+      identities: [next, duplicateMeaning],
+    }).collisions[0]?.record_ids).toHaveLength(2);
   });
 
   it("rejects missing projections and invalid derived records", () => {

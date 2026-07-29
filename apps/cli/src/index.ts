@@ -65,7 +65,11 @@ import {
   ReviewDecisionSchema,
 } from "@company/ces-greenfield-contracts";
 import { ingestPdfDocument } from "@company/ces-pdf-ingestion";
-import { createProposedProjectModel } from "@company/ces-proposed-project-model";
+import {
+  createCanonicalRecordIdentity,
+  createProposedProjectModel,
+  createRecordIdentityReport,
+} from "@company/ces-proposed-project-model";
 import { canonicalJson, compilePolicyManifest } from "@company/ces-policy-engine";
 import { PolicyManifestSchema } from "@company/ces-policy-manifest";
 import {
@@ -1550,13 +1554,23 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     .flatMap(({ source_units }) => source_units);
   const groups = consolidateAtlasCandidates(inventory.candidates);
   const recordIds = new Map<string, string>();
+  const recordIdentities = new Map<string, ReturnType<typeof createCanonicalRecordIdentity>>();
   const nodeIds = new Map<string, string>();
+  const sourceLineage = new Map(units.map((unit) => [unit.id, unit.content_hash] as const));
   for (const group of groups) {
-    const identity = hashCanonical(group.candidates.map(({ candidate_id }) => candidate_id)
-      .sort(compareText)).slice(7, 19);
+    const representative = group.candidates[0]!;
+    const identity = createCanonicalRecordIdentity({
+      project_id: projectId,
+      proposal_revision: 1,
+      semantic_kind_id: representative.provisional_kind,
+      canonical_semantic_key: representative.statement,
+      stable_source_lineage_keys: [...new Set(group.candidates.flatMap(({ source_unit_ids }) =>
+        source_unit_ids.map((id) => sourceLineage.get(id)!)))],
+    });
     for (const candidate of group.candidates) {
-      recordIds.set(candidate.candidate_id, `${projectId}.record.${identity}`);
-      nodeIds.set(candidate.candidate_id, `${projectId}.node.${identity}`);
+      recordIds.set(candidate.candidate_id, identity.record_id);
+      recordIdentities.set(candidate.candidate_id, identity);
+      nodeIds.set(candidate.candidate_id, `${projectId}.node.${identity.record_id.split(".").at(-1)!}`);
     }
   }
   const records = groups.map((group) => {
@@ -1566,6 +1580,7 @@ function buildCanonicalProposedAtlasArtifacts(input: {
       .sort(compareText);
     return {
     id: recordIds.get(representative.candidate_id)!,
+    identity: recordIdentities.get(representative.candidate_id)!,
     candidate_ids: group.candidates.map(({ candidate_id }) => candidate_id).sort(compareText),
     semantic_kind_id: representative.provisional_kind,
     statement: representative.statement,
@@ -1767,10 +1782,16 @@ function buildCanonicalProposedAtlasArtifacts(input: {
       .map(({ id }) => id),
   });
   const graph = projectProposedWorkflowGraph(model);
+  const identityReport = createRecordIdentityReport({
+    project_id: projectId,
+    proposal_revision: 1,
+    identities: records.map(({ identity }) => identity),
+  });
   return {
     "source-units.json": collectionCanonicalJson(units),
     "atomic-claims.json": collectionCanonicalJson(atomicClaims),
     "claim-coverage.json": collectionCanonicalJson(atomicClaimCoverage),
+    "record-identity-report.json": collectionCanonicalJson(identityReport),
     ...(atomicClaimRetryScope ? {
       "claim-retry-scope.json": collectionCanonicalJson(atomicClaimRetryScope),
     } : {}),
@@ -1812,10 +1833,6 @@ export function buildProposedAtlasArtifacts(input: {
     candidate.candidate_id,
     `${projectId}.candidate.${stableId(candidate.candidate_id)}`,
   ]));
-  const recordIds = new Map(legacyCandidates.map((candidate) => [
-    candidate.candidate_id,
-    `${projectId}.record.${stableId(candidate.candidate_id)}`,
-  ]));
   const nodeIds = new Map(legacyCandidates.map((candidate) => [
     candidate.candidate_id,
     `${projectId}.${"title" in candidate ? "workflow" : "rule"}.${stableId(candidate.candidate_id)}`,
@@ -1850,6 +1867,20 @@ export function buildProposedAtlasArtifacts(input: {
   };
   const statementFor = (candidate: typeof legacyCandidates[number]): string =>
     "title" in candidate ? candidate.title : candidate.statement;
+  const sourceLineage = new Map(units.map((unit) => [unit.id, unit.content_hash] as const));
+  const recordIdentities = new Map(legacyCandidates.map((candidate) => {
+    const identity = createCanonicalRecordIdentity({
+      project_id: projectId,
+      proposal_revision: 1,
+      semantic_kind_id: kindFor(candidate),
+      canonical_semantic_key: statementFor(candidate),
+      stable_source_lineage_keys: sourceUnitIds.get(candidate.candidate_id)!
+        .map((id) => sourceLineage.get(id)!),
+    });
+    return [candidate.candidate_id, identity] as const;
+  }));
+  const recordIds = new Map([...recordIdentities].map(([candidateId, identity]) =>
+    [candidateId, identity.record_id] as const));
   const inventoryCandidates = legacyCandidates.map((candidate) => ({
     contract_version: "1.0.0" as const,
     candidate_id: candidateIds.get(candidate.candidate_id)!,
@@ -1891,6 +1922,7 @@ export function buildProposedAtlasArtifacts(input: {
     if (derived) issues.add("derived-interpretation-requires-review");
     return {
       id: recordIds.get(candidate.candidate_id)!,
+      identity: recordIdentities.get(candidate.candidate_id)!,
       candidate_ids: [candidateIds.get(candidate.candidate_id)!],
       semantic_kind_id: kindFor(candidate),
       statement: statementFor(candidate),
@@ -2016,8 +2048,14 @@ export function buildProposedAtlasArtifacts(input: {
     approval_blockers: blockers,
   });
   const graph = projectProposedWorkflowGraph(model);
+  const identityReport = createRecordIdentityReport({
+    project_id: projectId,
+    proposal_revision: 1,
+    identities: records.map(({ identity }) => identity),
+  });
   return {
     "source-units.json": collectionCanonicalJson(units),
+    "record-identity-report.json": collectionCanonicalJson(identityReport),
     "source-coverage.json": collectionCanonicalJson(coverage),
     "extraction-findings.json": collectionCanonicalJson(findings),
     "proposed-project-model.json": collectionCanonicalJson(model),
@@ -2195,6 +2233,7 @@ async function retainedPendingArtifacts(
     "atomic-claims.json",
     "claim-coverage.json",
     "claim-retry-scope.json",
+    "record-identity-report.json",
     "source-coverage.json",
     "extraction-findings.json",
     "pdf-ingestion.json",

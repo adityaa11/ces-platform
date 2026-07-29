@@ -9,13 +9,48 @@ import { AtlasCandidateInventorySchema } from "@company/ces-atlas-role-contracts
 import { SemanticKindRegistrySchema } from "@company/ces-semantic-record-schema";
 import { z } from "zod";
 
-export const PROPOSED_PROJECT_MODEL_VERSION = "1.0.0" as const;
+export const PROPOSED_PROJECT_MODEL_VERSION = "1.1.0" as const;
+export const CANONICAL_RECORD_IDENTITY_VERSION = "1.0.0" as const;
 const Id = z.string().regex(/^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u);
 const Hash = z.string().regex(/^sha256:[0-9a-f]{64}$/u);
 const Text = z.string().trim().min(1);
 
+export const CanonicalRecordIdentitySchema = z.object({
+  schema_version: z.literal(CANONICAL_RECORD_IDENTITY_VERSION),
+  record_id: Id,
+  project_id: Id,
+  proposal_revision: z.number().int().positive(),
+  semantic_kind_id: Id,
+  semantic_fingerprint: Hash,
+  source_lineage_hash: Hash,
+  approved_logical_id: Id.optional(),
+  predecessor_record_ids: z.array(Id),
+  identity_status: z.enum(["proposed", "mapped", "collision_review_required"]),
+}).strict();
+
+export const RecordIdentityReportSchema = z.object({
+  schema_version: z.literal(CANONICAL_RECORD_IDENTITY_VERSION),
+  project_id: Id,
+  proposal_revision: z.number().int().positive(),
+  identities: z.array(CanonicalRecordIdentitySchema),
+  collisions: z.array(z.object({
+    semantic_fingerprint: Hash,
+    record_ids: z.array(Id).min(2),
+    review_required: z.literal(true),
+  }).strict()),
+  migrations: z.array(z.object({
+    predecessor_record_ids: z.array(Id).min(1),
+    successor_record_ids: z.array(Id).min(1),
+    change_kind: z.enum(["meaning_preserving", "meaning_changed"]),
+    approved_logical_id: Id.optional(),
+    review_status: z.literal("pending"),
+  }).strict()),
+  content_hash: Hash,
+}).strict();
+
 export const ProposedSemanticRecordSchema = z.object({
   id: Id,
+  identity: CanonicalRecordIdentitySchema,
   candidate_ids: z.array(Id).min(1),
   semantic_kind_id: Id,
   statement: Text,
@@ -28,6 +63,101 @@ export const ProposedSemanticRecordSchema = z.object({
   ]) }).strict()),
   issues: z.array(z.object({ code: Id, severity: z.enum(["warning", "review_required", "blocking"]) }).strict()),
 }).strict();
+
+export function createCanonicalRecordIdentity(input: {
+  readonly project_id: string;
+  readonly proposal_revision: number;
+  readonly semantic_kind_id: string;
+  readonly canonical_semantic_key: string;
+  readonly stable_source_lineage_keys: readonly string[];
+  readonly approved_logical_id?: string;
+  readonly predecessor_record_ids?: readonly string[];
+}): z.infer<typeof CanonicalRecordIdentitySchema> {
+  const projectId = Id.parse(input.project_id);
+  const proposalRevision = z.number().int().positive().parse(input.proposal_revision);
+  const semanticKindId = Id.parse(input.semantic_kind_id);
+  const semanticFingerprint = hash({
+    semantic_kind_id: semanticKindId,
+    canonical_semantic_key: normalizeSemanticKey(input.canonical_semantic_key),
+  });
+  const sourceLineageHash = hash([...new Set(input.stable_source_lineage_keys)].sort(compare));
+  const identityDigest = hash({
+    project_id: projectId,
+    proposal_revision: proposalRevision,
+    semantic_fingerprint: semanticFingerprint,
+    source_lineage_hash: sourceLineageHash,
+  }).slice(7, 23);
+  return freeze(CanonicalRecordIdentitySchema.parse({
+    schema_version: CANONICAL_RECORD_IDENTITY_VERSION,
+    record_id: `${projectId}.record.r${proposalRevision}.${identityDigest}`,
+    project_id: projectId,
+    proposal_revision: proposalRevision,
+    semantic_kind_id: semanticKindId,
+    semantic_fingerprint: semanticFingerprint,
+    source_lineage_hash: sourceLineageHash,
+    ...(input.approved_logical_id
+      ? { approved_logical_id: Id.parse(input.approved_logical_id) }
+      : {}),
+    predecessor_record_ids: [...new Set(input.predecessor_record_ids ?? [])]
+      .map((id) => Id.parse(id)).sort(compare),
+    identity_status: input.approved_logical_id ? "mapped" : "proposed",
+  }));
+}
+
+export function createRecordIdentityReport(input: {
+  readonly project_id: string;
+  readonly proposal_revision: number;
+  readonly identities: readonly z.input<typeof CanonicalRecordIdentitySchema>[];
+  readonly migrations?: readonly {
+    readonly predecessor_record_ids: readonly string[];
+    readonly successor_record_ids: readonly string[];
+    readonly change_kind: "meaning_preserving" | "meaning_changed";
+    readonly approved_logical_id?: string;
+    readonly review_status: "pending";
+  }[];
+}): z.infer<typeof RecordIdentityReportSchema> {
+  const projectId = Id.parse(input.project_id);
+  const proposalRevision = z.number().int().positive().parse(input.proposal_revision);
+  const identities = input.identities.map((identity) => CanonicalRecordIdentitySchema.parse(identity))
+    .sort((left, right) => compare(left.record_id, right.record_id));
+  unique(identities.map(({ record_id }) => record_id), "record identity");
+  if (identities.some((identity) =>
+    identity.project_id !== projectId || identity.proposal_revision !== proposalRevision)) {
+    throw new Error("Record identity report revision mismatch");
+  }
+  const byFingerprint = new Map<string, string[]>();
+  for (const identity of identities) {
+    const ids = byFingerprint.get(identity.semantic_fingerprint) ?? [];
+    ids.push(identity.record_id);
+    byFingerprint.set(identity.semantic_fingerprint, ids);
+  }
+  const collisions = [...byFingerprint.entries()]
+    .filter(([, recordIds]) => recordIds.length > 1)
+    .map(([semanticFingerprint, recordIds]) => ({
+      semantic_fingerprint: semanticFingerprint,
+      record_ids: recordIds.sort(compare),
+      review_required: true as const,
+    })).sort((left, right) => compare(left.semantic_fingerprint, right.semantic_fingerprint));
+  const migrations = (input.migrations ?? []).map((migration) => {
+    const parsed = RecordIdentityReportSchema.shape.migrations.element.parse(migration);
+    if (parsed.change_kind === "meaning_preserving" && !parsed.approved_logical_id) {
+      throw new Error("Meaning-preserving migration requires approved logical identity");
+    }
+    return parsed;
+  }).sort((left, right) => compare(
+    left.predecessor_record_ids.join("\u0000"),
+    right.predecessor_record_ids.join("\u0000"),
+  ));
+  const core = {
+    schema_version: CANONICAL_RECORD_IDENTITY_VERSION,
+    project_id: projectId,
+    proposal_revision: proposalRevision,
+    identities,
+    collisions,
+    migrations,
+  };
+  return freeze(RecordIdentityReportSchema.parse({ ...core, content_hash: hash(core) }));
+}
 
 export const ProposedWorkflowNodeSchema = z.object({
   id: Id,
@@ -144,6 +274,12 @@ export function createProposedProjectModel(input: {
     .sort((a, b) => compare(a.id, b.id));
   unique(records.map(({ id }) => id), "record");
   for (const record of records) {
+    if (record.id !== record.identity.record_id
+      || record.semantic_kind_id !== record.identity.semantic_kind_id
+      || record.identity.project_id !== input.project_id
+      || record.identity.proposal_revision !== input.proposal_revision) {
+      throw new Error(`Canonical record identity mismatch: ${record.id}`);
+    }
     members(record.candidate_ids, new Set(candidates.keys()), "candidate", record.id);
     members(record.source_unit_ids, sourceIds, "source unit", record.id);
     if (!kinds.has(record.semantic_kind_id)) throw new Error(`Unknown semantic kind: ${record.semantic_kind_id}`);
@@ -318,6 +454,10 @@ function unique(values: readonly string[], label: string): void {
   if (new Set(values).size !== values.length) throw new Error(`Duplicate ${label}`);
 }
 function compare(a: string, b: string): number { return a < b ? -1 : a > b ? 1 : 0; }
+function normalizeSemanticKey(value: string): string {
+  return Text.parse(value).normalize("NFKC").toLocaleLowerCase("en-US")
+    .replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+}
 function hash(value: unknown): string {
   return `sha256:${createHash("sha256").update(JSON.stringify(canonical(value))).digest("hex")}`;
 }

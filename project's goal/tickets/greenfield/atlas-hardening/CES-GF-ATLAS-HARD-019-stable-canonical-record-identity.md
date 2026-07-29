@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-019 — Stable Canonical Record Identity
 
 **Stage:** Canonical model and workflow projection refinement
-**Status:** Proposed
+**Status:** Implemented
 
 ## Objective
 
@@ -50,28 +50,28 @@ report, and deterministic fixtures.
 
 ## Acceptance criteria
 
-- [ ] Duplicate candidates, ordering, and retry within the same immutable
+- [x] Duplicate candidates, ordering, and retry within the same immutable
       proposal revision do not change `record_id`.
-- [ ] Display-language changes within the same proposal revision do not change
+- [x] Display-language changes within the same proposal revision do not change
       `record_id`.
-- [ ] Equivalent multilingual statements share `approved_logical_id` only
+- [x] Equivalent multilingual statements share `approved_logical_id` only
       after accepted equivalence review; any corrected proposal remains a new
       immutable revision.
-- [ ] Workflow reassignment does not change `record_id`.
-- [ ] `record_id` is the DAPE-compatible canonical semantic identity or has one
+- [x] Workflow reassignment does not change `record_id`.
+- [x] `record_id` is the DAPE-compatible canonical semantic identity or has one
       explicit directional mapping to it; Atlas does not create a second equal
       canonical identity namespace.
-- [ ] Moving an equivalent requirement to another page or source unit does not
+- [x] Moving an equivalent requirement to another page or source unit does not
       replace its `approved_logical_id`.
-- [ ] Source revision changes update provenance without silently changing
+- [x] Source revision changes update provenance without silently changing
       semantic identity when meaning is preserved.
-- [ ] `record_id` is explicitly revision-scoped and `approved_logical_id`
+- [x] `record_id` is explicitly revision-scoped and `approved_logical_id`
       preserves continuity across accepted meaning-preserving revisions.
-- [ ] Candidate rediscovery does not redefine approved logical identity.
-- [ ] Meaning-changing corrections produce reviewable identity changes.
-- [ ] Meaning-changing revisions create an explicit semantic revision or
+- [x] Candidate rediscovery does not redefine approved logical identity.
+- [x] Meaning-changing corrections produce reviewable identity changes.
+- [x] Meaning-changing revisions create an explicit semantic revision or
       successor identity rather than silently reusing the old meaning.
-- [ ] Approval never targets unstable projection IDs.
+- [x] Approval never targets unstable projection IDs.
 
 ## Tests and evidence
 
@@ -82,3 +82,17 @@ meaning-change fixtures.
 ## Out of scope
 
 Multilingual equivalence governance is handled by ATLAS-HARD-020.
+
+## Implementation evidence
+
+`@company/ces-proposed-project-model` now owns the canonical identity contract,
+revision-scoped deterministic record IDs, semantic and source-lineage
+fingerprints, governed `approved_logical_id` mappings, predecessor lineage,
+collision findings, and migration reports. Canonical and legacy-adapter Atlas
+paths use the same identity builder and emit `record-identity-report.json`.
+
+Verification:
+
+- `corepack pnpm --filter @company/ces-proposed-project-model build`
+- `corepack pnpm --filter @company/ces-cli typecheck`
+- `corepack pnpm vitest run packages/proposed-project-model/src/index.test.ts packages/approved-project-model/src/hardened.test.ts apps/cli/src/atlas.test.ts`

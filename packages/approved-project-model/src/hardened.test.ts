@@ -11,7 +11,7 @@ import {
 const hash = (character: string) => `sha256:${character.repeat(64)}`;
 const source = "project.unit.00001.aaaaaaaa";
 const proposal = {
-  schema_version: "1.0.0" as const,
+  schema_version: "1.1.0" as const,
   project_id: "project", proposal_revision: 1,
   lifecycle: "review_in_progress" as const, authoritative: false as const,
   approval_required: true as const, downstream_execution_allowed: false as const,
@@ -19,7 +19,19 @@ const proposal = {
   semantic_kind_registry_id: "example.semantic-kinds.0123456789ab",
   candidate_inventory_hash: hash("a"),
   records: [{
-    id: "project.record.temperature", candidate_ids: ["project.candidate.temperature"],
+    id: "project.record.temperature",
+    identity: {
+      schema_version: "1.0.0" as const,
+      record_id: "project.record.temperature",
+      project_id: "project",
+      proposal_revision: 1,
+      semantic_kind_id: "example.kind.temperature-release",
+      semantic_fingerprint: hash("2"),
+      source_lineage_hash: hash("3"),
+      predecessor_record_ids: [],
+      identity_status: "proposed" as const,
+    },
+    candidate_ids: ["project.candidate.temperature"],
     semantic_kind_id: "example.kind.temperature-release", statement: "Original statement.",
     source_unit_ids: [source], classification_status: "classified" as const,
     origin: "explicit" as const, review_status: "pending" as const,
