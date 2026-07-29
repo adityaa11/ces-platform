@@ -8,6 +8,156 @@ const Hash = z.string().regex(/^sha256:[0-9a-f]{64}$/u);
 const Text = z.string().trim().min(1);
 const Semver = z.string().regex(/^\d+\.\d+\.\d+$/u);
 
+export const LanguageDetectionSchema = z.object({
+  detected_language: z.string().regex(/^[a-z]{2,3}(?:-[A-Z]{2})?$|^und$/u),
+  language_detection_method: z.enum(["deterministic", "provider", "human"]),
+  language_confidence: z.number().min(0).max(1),
+}).strict();
+
+export const MultilingualStatementSchema = z.object({
+  original_statement: Text,
+  original_language: LanguageDetectionSchema,
+  canonical_statement: Text,
+  canonical_language: z.string().regex(/^[a-z]{2,3}(?:-[A-Z]{2})?$|^und$/u),
+  display_language: z.string().regex(/^[a-z]{2,3}(?:-[A-Z]{2})?$|^und$/u),
+  translation_status: z.enum(["original", "proposed", "review_required", "approved"]),
+  translation_source_unit_ids: z.array(Id).max(0),
+}).strict();
+
+export const TranslationEquivalenceProposalSchema = z.object({
+  proposal_id: Id,
+  from_record_id: Id,
+  to_record_id: Id,
+  confidence: z.number().min(0).max(1),
+  rationale: Text,
+  source_unit_ids: z.array(Id),
+  review_status: z.literal("pending"),
+}).strict();
+
+export const TerminologyProposalSchema = z.object({
+  proposal_id: Id,
+  source_terms: z.array(z.object({
+    language: z.string().regex(/^[a-z]{2,3}(?:-[A-Z]{2})?$|^und$/u),
+    value: Text,
+  }).strict()).min(1),
+  canonical_concept: Id,
+  source_unit_ids: z.array(Id).min(1),
+  status: z.literal("pending"),
+}).strict();
+
+export const TerminologyDecisionSchema = z.object({
+  decision_id: Id,
+  proposal_id: Id,
+  decision: z.enum(["approve", "reject", "correct"]),
+  decided_by: Id,
+  decided_at: z.string().datetime({ offset: true }),
+  decision_revision: Id,
+}).strict();
+
+export const ApprovedTerminologyRegistrySchema = z.object({
+  schema_version: Semver,
+  registry_id: Id,
+  registry_version: Semver,
+  entries: z.array(z.object({
+    term_id: Id,
+    canonical_concept: Id,
+    approved_terms: z.array(z.object({
+      language: z.string().regex(/^[a-z]{2,3}(?:-[A-Z]{2})?$|^und$/u),
+      value: Text,
+    }).strict()).min(1),
+    approved_by: Id,
+    decision_id: Id,
+  }).strict()),
+  content_hash: Hash,
+}).strict();
+
+export function detectLanguage(value: string): z.infer<typeof LanguageDetectionSchema> {
+  const text = Text.parse(value).toLocaleLowerCase("en-US");
+  const indonesian = (text.match(/\b(?:yang|dan|atau|harus|dapat|dengan|untuk|dari|pada)\b/gu)
+    ?? []).length;
+  const english = (text.match(/\b(?:the|and|or|must|may|with|for|from|on)\b/gu) ?? []).length;
+  const detected = indonesian === english ? "und" : indonesian > english ? "id" : "en";
+  const signals = indonesian + english;
+  return LanguageDetectionSchema.parse({
+    detected_language: detected,
+    language_detection_method: "deterministic",
+    language_confidence: signals === 0 ? 0.25 : Math.min(0.99, 0.5 + Math.abs(indonesian - english)
+      / Math.max(2, signals * 2)),
+  });
+}
+
+export function createMultilingualStatement(input: {
+  readonly original_statement: string;
+  readonly original_language?: z.input<typeof LanguageDetectionSchema>;
+  readonly canonical_statement?: string;
+  readonly canonical_language?: string;
+  readonly display_language?: string;
+  readonly translation_status?: "original" | "proposed" | "review_required" | "approved";
+}): z.infer<typeof MultilingualStatementSchema> {
+  const originalLanguage = input.original_language
+    ? LanguageDetectionSchema.parse(input.original_language)
+    : detectLanguage(input.original_statement);
+  const canonicalStatement = input.canonical_statement ?? input.original_statement;
+  const canonicalLanguage = input.canonical_language ?? originalLanguage.detected_language;
+  const translated = canonicalStatement !== input.original_statement
+    || canonicalLanguage !== originalLanguage.detected_language;
+  return MultilingualStatementSchema.parse({
+    original_statement: input.original_statement,
+    original_language: originalLanguage,
+    canonical_statement: canonicalStatement,
+    canonical_language: canonicalLanguage,
+    display_language: input.display_language ?? canonicalLanguage,
+    translation_status: input.translation_status
+      ?? (translated || originalLanguage.language_confidence < 0.5
+        ? "review_required" : "original"),
+    translation_source_unit_ids: [],
+  });
+}
+
+export function createTranslationEquivalenceProposal(input: {
+  readonly from_record_id: string;
+  readonly to_record_id: string;
+  readonly confidence: number;
+  readonly rationale: string;
+  readonly source_unit_ids?: readonly string[];
+}): z.infer<typeof TranslationEquivalenceProposalSchema> {
+  const core = {
+    from_record_id: Id.parse(input.from_record_id),
+    to_record_id: Id.parse(input.to_record_id),
+    confidence: z.number().min(0).max(1).parse(input.confidence),
+    rationale: Text.parse(input.rationale),
+    source_unit_ids: [...new Set(input.source_unit_ids ?? [])].map((id) => Id.parse(id)).sort(compare),
+  };
+  if (core.from_record_id === core.to_record_id) {
+    throw new Error("Translation equivalence requires distinct proposal records");
+  }
+  return TranslationEquivalenceProposalSchema.parse({
+    proposal_id: `translation.proposal.${hashJson(core).slice(7, 23)}`,
+    ...core,
+    review_status: "pending",
+  });
+}
+
+export function createTerminologyProposal(input: {
+  readonly source_terms: readonly { readonly language: string; readonly value: string }[];
+  readonly canonical_concept: string;
+  readonly source_unit_ids: readonly string[];
+}): z.infer<typeof TerminologyProposalSchema> {
+  const core = {
+    source_terms: input.source_terms.map((term) => ({
+      language: term.language,
+      value: Text.parse(term.value),
+    })).sort((left, right) => compare(`${left.language}:${left.value}`, `${right.language}:${right.value}`)),
+    canonical_concept: Id.parse(input.canonical_concept),
+    source_unit_ids: [...new Set(input.source_unit_ids)].map((id) => Id.parse(id)).sort(compare),
+  };
+  return TerminologyProposalSchema.parse({
+    proposal_id: `term.proposal.${hashJson(core).slice(7, 23)}`,
+    ...core,
+    status: "pending",
+  });
+}
+
 export const SemanticKindDefinitionSchema = z.object({
   id: Id,
   schema_version: Semver,

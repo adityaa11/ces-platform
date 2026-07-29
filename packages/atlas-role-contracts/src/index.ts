@@ -12,6 +12,12 @@ export const ATLAS_ROLE_IDS = [
 
 const Id = z.string().regex(/^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u);
 const Hash = z.string().regex(/^sha256:[0-9a-f]{64}$/u);
+
+export const CandidateLanguageDetectionSchema = z.object({
+  detected_language: z.string().regex(/^[a-z]{2,3}(?:-[A-Z]{2})?$|^und$/u),
+  language_detection_method: z.enum(["deterministic", "provider", "human"]),
+  language_confidence: z.number().min(0).max(1),
+}).strict();
 const Text = z.string().trim().min(1);
 
 export const AtlasCandidateSchema = z.object({
@@ -32,6 +38,11 @@ export const AtlasCandidateSchema = z.object({
     model_id: Text,
     contract_version: Text,
   }).strict(),
+  language_detection: CandidateLanguageDetectionSchema.default({
+    detected_language: "und",
+    language_detection_method: "deterministic",
+    language_confidence: 0,
+  }),
 }).strict();
 
 export const AtlasCandidateInventorySchema = z.object({
@@ -572,7 +583,10 @@ export function createAtlasCandidateInventory(input: {
   readonly candidates: readonly AtlasCandidate[];
 }): z.infer<typeof AtlasCandidateInventorySchema> {
   const allowed = new Set(input.allowed_source_unit_ids.map((id) => Id.parse(id)));
-  const candidates = input.candidates.map((candidate) => AtlasCandidateSchema.parse(candidate))
+  const candidates = input.candidates.map((candidate) => AtlasCandidateSchema.parse({
+    ...candidate,
+    language_detection: candidate.language_detection ?? detectCandidateLanguage(candidate.statement),
+  }))
     .sort((left, right) => compare(left.candidate_id, right.candidate_id));
   assertUnique(candidates.map(({ candidate_id }) => candidate_id), "candidate");
   for (const candidate of candidates) {
@@ -593,6 +607,19 @@ export function createAtlasCandidateInventory(input: {
     ...core,
     content_hash: hash(canonicalJson(core)),
   }));
+}
+
+function detectCandidateLanguage(value: string): z.infer<typeof CandidateLanguageDetectionSchema> {
+  const text = value.toLocaleLowerCase("en-US");
+  const id = (text.match(/\b(?:yang|dan|atau|harus|dapat|dengan|untuk|dari|pada)\b/gu) ?? []).length;
+  const en = (text.match(/\b(?:the|and|or|must|may|with|for|from|on)\b/gu) ?? []).length;
+  const signals = id + en;
+  return CandidateLanguageDetectionSchema.parse({
+    detected_language: id === en ? "und" : id > en ? "id" : "en",
+    language_detection_method: "deterministic",
+    language_confidence: signals === 0 ? 0.25
+      : Math.min(0.99, 0.5 + Math.abs(id - en) / Math.max(2, signals * 2)),
+  });
 }
 
 export function inspectLegacyCandidateMigration(

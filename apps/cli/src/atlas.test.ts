@@ -164,6 +164,8 @@ describe("Atlas CLI pipeline", () => {
         "source-coverage.json",
         "source-index.json",
         "source-units.json",
+        "terminology-proposals.json",
+        "translation-equivalence-proposals.json",
       ]);
       expect(await json(join(output, "run-manifest.json"))).toMatchObject({
         status: "awaiting_human_review",
@@ -241,6 +243,8 @@ describe("Atlas CLI pipeline", () => {
         "system-intent-graph.json",
         "system-intent-graph.md",
         "system-intent-graph.mmd",
+        "terminology-proposals.json",
+        "translation-equivalence-proposals.json",
       ]);
       expect(await json(join(output, "run-manifest.json"))).toMatchObject({
         status: "completed",

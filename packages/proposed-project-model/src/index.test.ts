@@ -3,7 +3,10 @@ import {
   createCompletenessCriticReport,
 } from "@company/ces-atlas-coverage";
 import { createAtlasCandidateInventory } from "@company/ces-atlas-role-contracts";
-import { createSemanticKindRegistry } from "@company/ces-semantic-record-schema";
+import {
+  createMultilingualStatement,
+  createSemanticKindRegistry,
+} from "@company/ces-semantic-record-schema";
 import { describe, expect, it } from "vitest";
 import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -102,6 +105,9 @@ function fixture() {
     { id: unknownIdentity.record_id, identity: unknownIdentity,
       candidate_ids: ["project.candidate.unknown"],
       semantic_kind_id: "ces.kind.unknown", statement: "Unknown normative meaning.",
+      multilingual: createMultilingualStatement({
+        original_statement: "Unknown normative meaning.",
+      }),
       source_unit_ids: [source], classification_status: "classification_required" as const,
       origin: "derived" as const, review_status: "pending" as const, details: [],
       issues: [
@@ -111,6 +117,9 @@ function fixture() {
     { id: temperatureIdentity.record_id, identity: temperatureIdentity,
       candidate_ids: ["project.candidate.temperature"],
       semantic_kind_id: "example.kind.temperature-release", statement: "Temperature release.",
+      multilingual: createMultilingualStatement({
+        original_statement: "Temperature release.",
+      }),
       source_unit_ids: [source], classification_status: "classified" as const,
       origin: "explicit" as const, review_status: "pending" as const, details: [],
       issues: [] },

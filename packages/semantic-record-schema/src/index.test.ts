@@ -2,8 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   BUILT_IN_SEMANTIC_KIND_DEFINITIONS,
   classifyLegacyProjection,
+  createMultilingualStatement,
   createSemanticKindRegistry,
   createSemanticCollection,
+  createTerminologyProposal,
+  createTranslationEquivalenceProposal,
+  detectLanguage,
   resolveSemanticKind,
   SemanticRecordSchema,
 } from "./index.js";
@@ -29,6 +33,34 @@ const rule = {
 };
 
 describe("DAPE-003 semantic records", () => {
+  it("preserves multilingual source wording and governs equivalence proposals", () => {
+    expect(detectLanguage("Pengguna harus menyetujui pembayaran.")).toMatchObject({
+      detected_language: "id",
+      language_detection_method: "deterministic",
+    });
+    const representation = createMultilingualStatement({
+      original_statement: "Pengguna harus menyetujui pembayaran.",
+      canonical_statement: "The user must approve the payment.",
+      canonical_language: "en",
+    });
+    expect(representation).toMatchObject({
+      original_language: { detected_language: "id" },
+      translation_status: "review_required",
+      translation_source_unit_ids: [],
+    });
+    expect(createTranslationEquivalenceProposal({
+      from_record_id: "project.record.id",
+      to_record_id: "project.record.en",
+      confidence: 0.9,
+      rationale: "Statements express the same governed obligation.",
+    })).toMatchObject({ review_status: "pending", source_unit_ids: [] });
+    expect(createTerminologyProposal({
+      source_terms: [{ language: "id", value: "Terhambat" }],
+      canonical_concept: "project.concept.readiness-blocked",
+      source_unit_ids: ["project.unit.00001.aaaaaaaa"],
+    })).toMatchObject({ status: "pending" });
+  });
+
   it("registers all hardening categories with deterministic unknown fallback", () => {
     const registry = createSemanticKindRegistry();
     expect(BUILT_IN_SEMANTIC_KIND_DEFINITIONS).toHaveLength(17);

@@ -7,6 +7,12 @@ const Hash = z.string().regex(/^sha256:[0-9a-f]{64}$/u);
 const Id = z.string().regex(/^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u);
 const SourceKind = z.enum(["markdown_text", "pdf_text", "pdf_ocr"]);
 
+export const SourceLanguageDetectionSchema = z.object({
+  detected_language: z.string().regex(/^[a-z]{2,3}(?:-[A-Z]{2})?$|^und$/u),
+  language_detection_method: z.enum(["deterministic", "provider", "human"]),
+  language_confidence: z.number().min(0).max(1),
+}).strict();
+
 export const NormalizedBoundingBoxSchema = z.object({
   x: z.number().min(0).max(1),
   y: z.number().min(0).max(1),
@@ -41,6 +47,7 @@ export const SourceUnitSchema = z.object({
   source_kind: SourceKind,
   ocr_confidence: z.number().min(0).max(1).optional(),
   bounding_box: NormalizedBoundingBoxSchema.optional(),
+  language_detection: SourceLanguageDetectionSchema,
 }).strict();
 
 export const DocumentRevisionSchema = z.object({
@@ -197,6 +204,7 @@ export function buildSourceArtifacts(input: SourceDocumentInput): SourceArtifact
       content_hash: sha256(block.text),
       exact_content_hash: sha256(block.exactText),
       revision_hash: unitRevisionHash,
+      language_detection: detectSourceLanguage(block.text),
       ...provenance,
     });
     if (block.kind === "heading") {
@@ -253,6 +261,19 @@ export function buildSourceArtifacts(input: SourceDocumentInput): SourceArtifact
       sections,
     }),
     source_units: units,
+  });
+}
+
+function detectSourceLanguage(value: string): z.infer<typeof SourceLanguageDetectionSchema> {
+  const text = value.toLocaleLowerCase("en-US");
+  const id = (text.match(/\b(?:yang|dan|atau|harus|dapat|dengan|untuk|dari|pada)\b/gu) ?? []).length;
+  const en = (text.match(/\b(?:the|and|or|must|may|with|for|from|on)\b/gu) ?? []).length;
+  const signals = id + en;
+  return SourceLanguageDetectionSchema.parse({
+    detected_language: id === en ? "und" : id > en ? "id" : "en",
+    language_detection_method: "deterministic",
+    language_confidence: signals === 0 ? 0.25
+      : Math.min(0.99, 0.5 + Math.abs(id - en) / Math.max(2, signals * 2)),
   });
 }
 

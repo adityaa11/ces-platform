@@ -6,7 +6,10 @@ import {
   PipelineCoverageReportSchema,
 } from "@company/ces-atlas-coverage";
 import { AtlasCandidateInventorySchema } from "@company/ces-atlas-role-contracts";
-import { SemanticKindRegistrySchema } from "@company/ces-semantic-record-schema";
+import {
+  MultilingualStatementSchema,
+  SemanticKindRegistrySchema,
+} from "@company/ces-semantic-record-schema";
 import { z } from "zod";
 
 export const PROPOSED_PROJECT_MODEL_VERSION = "1.1.0" as const;
@@ -54,6 +57,7 @@ export const ProposedSemanticRecordSchema = z.object({
   candidate_ids: z.array(Id).min(1),
   semantic_kind_id: Id,
   statement: Text,
+  multilingual: MultilingualStatementSchema,
   source_unit_ids: z.array(Id).min(1),
   classification_status: z.enum(["classified", "classification_required"]),
   origin: z.enum(["explicit", "derived", "human_added"]),
@@ -279,6 +283,9 @@ export function createProposedProjectModel(input: {
       || record.identity.project_id !== input.project_id
       || record.identity.proposal_revision !== input.proposal_revision) {
       throw new Error(`Canonical record identity mismatch: ${record.id}`);
+    }
+    if (record.statement !== record.multilingual.canonical_statement) {
+      throw new Error(`Canonical statement mismatch: ${record.id}`);
     }
     members(record.candidate_ids, new Set(candidates.keys()), "candidate", record.id);
     members(record.source_unit_ids, sourceIds, "source unit", record.id);

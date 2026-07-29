@@ -93,7 +93,9 @@ import {
 import { parseRequirementText } from "@company/ces-requirement-schema";
 import { canonicalJson as collectionCanonicalJson } from "@company/ces-requirement-collection-schema";
 import {
+  createMultilingualStatement,
   createSemanticKindRegistry,
+  createTerminologyProposal,
   SemanticKindRegistrySchema,
   SemanticCollectionSchema,
 } from "@company/ces-semantic-record-schema";
@@ -1584,6 +1586,10 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     candidate_ids: group.candidates.map(({ candidate_id }) => candidate_id).sort(compareText),
     semantic_kind_id: representative.provisional_kind,
     statement: representative.statement,
+    multilingual: createMultilingualStatement({
+      original_statement: representative.statement,
+      original_language: representative.language_detection,
+    }),
     source_unit_ids: [...new Set(group.candidates.flatMap(({ source_unit_ids }) =>
       source_unit_ids))].sort(compareText),
     classification_status: group.candidates.every(({ classification_status }) =>
@@ -1787,11 +1793,23 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     proposal_revision: 1,
     identities: records.map(({ identity }) => identity),
   });
+  const terminologyProposals = records
+    .filter(({ semantic_kind_id }) => semantic_kind_id === "ces.kind.terminology")
+    .map((record) => createTerminologyProposal({
+      source_terms: [{
+        language: record.multilingual.original_language.detected_language,
+        value: record.multilingual.original_statement,
+      }],
+      canonical_concept: `${projectId}.concept.term.${record.identity.semantic_fingerprint.slice(7, 19)}`,
+      source_unit_ids: record.source_unit_ids,
+    }));
   return {
     "source-units.json": collectionCanonicalJson(units),
     "atomic-claims.json": collectionCanonicalJson(atomicClaims),
     "claim-coverage.json": collectionCanonicalJson(atomicClaimCoverage),
     "record-identity-report.json": collectionCanonicalJson(identityReport),
+    "terminology-proposals.json": collectionCanonicalJson(terminologyProposals),
+    "translation-equivalence-proposals.json": collectionCanonicalJson([]),
     ...(atomicClaimRetryScope ? {
       "claim-retry-scope.json": collectionCanonicalJson(atomicClaimRetryScope),
     } : {}),
@@ -1926,6 +1944,9 @@ export function buildProposedAtlasArtifacts(input: {
       candidate_ids: [candidateIds.get(candidate.candidate_id)!],
       semantic_kind_id: kindFor(candidate),
       statement: statementFor(candidate),
+      multilingual: createMultilingualStatement({
+        original_statement: statementFor(candidate),
+      }),
       source_unit_ids: sourceUnitIds.get(candidate.candidate_id)!,
       classification_status: "classified" as const,
       origin: derived ? "derived" as const : "explicit" as const,
@@ -2053,9 +2074,21 @@ export function buildProposedAtlasArtifacts(input: {
     proposal_revision: 1,
     identities: records.map(({ identity }) => identity),
   });
+  const terminologyProposals = records
+    .filter(({ semantic_kind_id }) => semantic_kind_id === "ces.kind.terminology")
+    .map((record) => createTerminologyProposal({
+      source_terms: [{
+        language: record.multilingual.original_language.detected_language,
+        value: record.multilingual.original_statement,
+      }],
+      canonical_concept: `${projectId}.concept.term.${record.identity.semantic_fingerprint.slice(7, 19)}`,
+      source_unit_ids: record.source_unit_ids,
+    }));
   return {
     "source-units.json": collectionCanonicalJson(units),
     "record-identity-report.json": collectionCanonicalJson(identityReport),
+    "terminology-proposals.json": collectionCanonicalJson(terminologyProposals),
+    "translation-equivalence-proposals.json": collectionCanonicalJson([]),
     "source-coverage.json": collectionCanonicalJson(coverage),
     "extraction-findings.json": collectionCanonicalJson(findings),
     "proposed-project-model.json": collectionCanonicalJson(model),
@@ -2234,6 +2267,8 @@ async function retainedPendingArtifacts(
     "claim-coverage.json",
     "claim-retry-scope.json",
     "record-identity-report.json",
+    "terminology-proposals.json",
+    "translation-equivalence-proposals.json",
     "source-coverage.json",
     "extraction-findings.json",
     "pdf-ingestion.json",
