@@ -439,6 +439,10 @@ export const GovernedWorkflowEdgeSchema = z.object({
   from_operation_id: Id,
   to_operation_id: Id,
   edge_kind: z.enum(["transition", "dependency", "ordering", "branch", "join", "loop"]),
+  condition: Text.optional(),
+  outcome_label: Text.optional(),
+  fanout_group_id: Id.optional(),
+  path_semantics: z.enum(["independent_non_exclusive", "conditional_exclusive"]).optional(),
   governance: GovernedAssociationSchema,
 }).strict();
 

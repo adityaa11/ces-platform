@@ -75,6 +75,7 @@ import {
   createCanonicalRecordIdentity,
   createProposedProjectModel,
   createRecordIdentityReport,
+  GovernedWorkflowEdgeSchema,
 } from "@company/ces-proposed-project-model";
 import { canonicalJson, compilePolicyManifest } from "@company/ces-policy-engine";
 import { PolicyManifestSchema } from "@company/ces-policy-manifest";
@@ -1955,13 +1956,37 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     "ces.kind.reporting-requirement",
     "ces.kind.lifecycle-rule",
   ]);
-  const operationRecords = records.filter(({ semantic_kind_id }) =>
-    operationKinds.has(semantic_kind_id))
+  const candidateKindById = new Map(inventory.candidates.map((candidate) =>
+    [candidate.candidate_id, candidate.provisional_kind] as const));
+  const kindsForRecord = (record: typeof records[number]) => new Set([
+    record.semantic_kind_id,
+    ...record.candidate_ids.map((id) => candidateKindById.get(id))
+      .filter((kind): kind is string => kind !== undefined),
+  ]);
+  const operationRecords = records.filter((record) =>
+    [...kindsForRecord(record)].some((kind) => operationKinds.has(kind)))
     .filter(({ details }) => !details.some(({ key }) => key === "structural-area"));
   const workflowIdByRecord = new Map(areaRecords
     .map((record) => [record.id, `${projectId}.workflow.${record.id.split(".").at(-1)!}`] as const));
-  const operationIdByRecord = new Map(operationRecords.map((record) =>
-    [record.id, `${projectId}.operation.${record.id.split(".").at(-1)!}`] as const));
+  const operationDescriptors = operationRecords.flatMap((record) => {
+    const kinds = kindsForRecord(record);
+    const baseKind = kinds.has("ces.kind.state-definition")
+      ? "state" as const
+      : kinds.has("ces.kind.lifecycle-rule")
+        ? "decision" as const : "action" as const;
+    const conditionedState = kinds.has("ces.kind.state-definition")
+      && (kinds.has("ces.kind.business-rule")
+        || kinds.has("ces.kind.validation-constraint"));
+    const projectedKinds = conditionedState
+      ? ["decision" as const, "state" as const] : [baseKind];
+    return projectedKinds.map((operationKind) => ({
+      record,
+      operationKind,
+      conditionedState,
+      operationId: `${projectId}.operation.${record.id.split(".").at(-1)!}`
+        + (projectedKinds.length > 1 ? `.${operationKind}` : ""),
+    }));
+  });
   const areaForRecord = (record: typeof records[number]) => {
     const matches = record.source_unit_ids.flatMap((id) => {
       const order = unitOrder.get(id) ?? Number.MAX_SAFE_INTEGER;
@@ -1976,9 +2001,9 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     [unit.id, areaRecords[index]!] as const));
   const initialWorkflows = structuralUnits.map((unit) => {
     const record = areaRecordByUnit.get(unit.id)!;
-    const operationIds = operationRecords.filter((operation) =>
+    const operationIds = operationDescriptors.filter(({ record: operation }) =>
       areaForRecord(operation)?.id === unit.id)
-      .map((operation) => operationIdByRecord.get(operation.id)!);
+      .map(({ operationId }) => operationId);
     return {
       workflow_id: workflowIdByRecord.get(record.id)!,
       label: record.statement,
@@ -1992,18 +2017,15 @@ function buildCanonicalProposedAtlasArtifacts(input: {
       }),
     };
   }).filter(({ operation_ids }) => operation_ids.length > 0);
-  const initialOperations = operationRecords.map((record) => ({
-    operation_id: operationIdByRecord.get(record.id)!,
+  const initialOperations = operationDescriptors.map(({ record, operationKind, operationId }) => ({
+    operation_id: operationId,
     ...(areaForRecord(record)
       ? { workflow_id: workflowIdByRecord.get(
         areaRecordByUnit.get(areaForRecord(record)!.id)!.id,
       )! }
       : {}),
     label: record.statement,
-    operation_kind: record.semantic_kind_id === "ces.kind.state-definition"
-      ? "state" as const
-      : record.semantic_kind_id === "ces.kind.lifecycle-rule"
-        ? "decision" as const : "action" as const,
+    operation_kind: operationKind,
     semantic_record_ids: [record.id],
     source_unit_ids: record.source_unit_ids,
     governance: governanceEnvelope({
@@ -2012,15 +2034,67 @@ function buildCanonicalProposedAtlasArtifacts(input: {
       proposalRevision: 1,
     }),
   }));
-  const { workflows, operations, workflowEdges } = assembleAtlasWorkflowTopology({
+  const assembled = assembleAtlasWorkflowTopology({
     projectId,
     proposalRevision: 1,
     records,
     workflows: initialWorkflows,
     operations: initialOperations,
   });
-  const unitText = new Map(units.map((unit) => [unit.id, unit.text] as const));
+  const workflows = assembled.workflows;
+  const operations = assembled.operations;
+  const workflowEdges: Array<z.input<typeof GovernedWorkflowEdgeSchema>> = [
+    ...assembled.workflowEdges,
+  ];
   const recordById = new Map(records.map((record) => [record.id, record] as const));
+  for (const descriptor of operationDescriptors.filter(({ operationKind, conditionedState }) =>
+    operationKind === "decision" && conditionedState)) {
+    const decision = operations.find(({ operation_id }) =>
+      operation_id === descriptor.operationId);
+    if (!decision?.workflow_id) continue;
+    const readyState = operations.find(({ operation_kind, semantic_record_ids }) =>
+      operation_kind === "state"
+      && semantic_record_ids.includes(descriptor.record.id));
+    const alternateState = operations.find(({ workflow_id, operation_kind, semantic_record_ids }) =>
+      workflow_id === decision.workflow_id && operation_kind === "state"
+      && !semantic_record_ids.includes(descriptor.record.id)
+      && semantic_record_ids.some((id) =>
+        recordById.has(id)
+        && kindsForRecord(recordById.get(id)!).has("ces.kind.state-transition")));
+    for (const [state, outcome, condition] of [
+      [readyState, "condition satisfied", descriptor.record.statement],
+      [alternateState, "condition not satisfied", `Not: ${descriptor.record.statement}`],
+    ] as const) {
+      if (!state) continue;
+      const core = {
+        workflow_id: decision.workflow_id,
+        from_operation_id: decision.operation_id,
+        to_operation_id: state.operation_id,
+        edge_kind: "branch" as const,
+      };
+      workflowEdges.push({
+        edge_id: `${projectId}.workflow-edge.${hashCanonical(core).slice(7, 19)}`,
+        ...core,
+        condition,
+        outcome_label: outcome,
+        path_semantics: "conditional_exclusive" as const,
+        governance: {
+          id: `${projectId}.governance.workflow-edge.${hashCanonical(core).slice(7, 19)}`,
+          origin: "explicit" as const,
+          evidence_source_unit_ids: [...new Set([
+            ...decision.source_unit_ids, ...state.source_unit_ids,
+          ])].sort(compareText),
+          rationale: "Source-defined condition and state outcome.",
+          confidence: 1,
+          review_status: "pending" as const,
+          bulk_approval_eligible: true,
+          blockers: [],
+          proposal_revision: 1,
+        },
+      });
+    }
+  }
+  const unitText = new Map(units.map((unit) => [unit.id, unit.text] as const));
   const overviewRelationshipMap = new Map<string, {
     id: string; from_id: string; to_id: string; kind: string; source_unit_ids: string[];
   }>();
