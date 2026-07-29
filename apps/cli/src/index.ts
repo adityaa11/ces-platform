@@ -1864,7 +1864,7 @@ function buildCanonicalProposedAtlasArtifacts(input: {
       nodeIds.set(candidate.candidate_id, `${projectId}.node.${identity.record_id.split(".").at(-1)!}`);
     }
   }
-  const records = groups.map((group) => {
+  let records = groups.map((group) => {
     const representative = group.candidates[0]!;
     const kinds = [...new Set(group.candidates.map(({ provisional_kind }) => provisional_kind))];
     const roles = [...new Set(group.candidates.map(({ extraction_role }) => extraction_role))]
@@ -1907,41 +1907,101 @@ function buildCanonicalProposedAtlasArtifacts(input: {
       }] : []),
     ],
   }});
+  const unitOrder = new Map(units.map((unit) => [unit.id, unit.order]));
+  const structuralPurposes = new Set([
+    "ces.section.workflows", "ces.section.data", "ces.section.states-lifecycle",
+    "ces.section.reporting-audit",
+  ]);
+  const classifications = new Map(input.canonicalExtraction.sectionClassifications
+    .map((classification) => [classification.source_unit_id, classification] as const));
+  const structuralUnits = units.filter((unit) => {
+    const classification = classifications.get(unit.id);
+    return classification?.disposition === "structural"
+      && classification.purpose_ids.some((purpose) => structuralPurposes.has(purpose))
+      && unit.text.length <= 100
+      && !/[.!?]\s/u.test(unit.text);
+  }).sort((left, right) => left.order - right.order);
+  const areaRecords = structuralUnits.map((unit) => {
+    const identity = createCanonicalRecordIdentity({
+      project_id: projectId,
+      proposal_revision: 1,
+      semantic_kind_id: "ces.kind.workflow",
+      canonical_semantic_key: unit.text,
+      stable_source_lineage_keys: [unit.content_hash],
+    });
+    return {
+      id: identity.record_id,
+      identity,
+      candidate_ids: [
+        `${projectId}.candidate.structural-area.${identity.semantic_fingerprint.slice(7, 19)}`,
+      ],
+      semantic_kind_id: "ces.kind.workflow",
+      statement: unit.text,
+      multilingual: createMultilingualStatement({ original_statement: unit.text }),
+      source_unit_ids: [unit.id],
+      classification_status: "classified" as const,
+      origin: "explicit" as const,
+      review_status: "pending" as const,
+      details: [{ key: "structural-area", value: ["workflow-area"] }],
+      issues: [],
+    };
+  });
   const operationKinds = new Set([
     "ces.kind.workflow",
     "ces.kind.operational-procedure",
     "ces.kind.state-transition",
     "ces.kind.state-definition",
+    "ces.kind.capability",
+    "ces.kind.role-permission",
+    "ces.kind.reporting-requirement",
+    "ces.kind.lifecycle-rule",
   ]);
   const operationRecords = records.filter(({ semantic_kind_id }) =>
-    operationKinds.has(semantic_kind_id));
-  const workflowIdByRecord = new Map(records
-    .filter(({ semantic_kind_id }) => semantic_kind_id === "ces.kind.workflow")
+    operationKinds.has(semantic_kind_id))
+    .filter(({ details }) => !details.some(({ key }) => key === "structural-area"));
+  const workflowIdByRecord = new Map(areaRecords
     .map((record) => [record.id, `${projectId}.workflow.${record.id.split(".").at(-1)!}`] as const));
   const operationIdByRecord = new Map(operationRecords.map((record) =>
     [record.id, `${projectId}.operation.${record.id.split(".").at(-1)!}`] as const));
-  const initialWorkflows = records
-    .filter(({ semantic_kind_id }) => semantic_kind_id === "ces.kind.workflow")
-    .map((record) => ({
+  const areaForRecord = (record: typeof records[number]) => {
+    const order = Math.min(...record.source_unit_ids.map((id) =>
+      unitOrder.get(id) ?? Number.MAX_SAFE_INTEGER));
+    return structuralUnits.find((unit, index) =>
+      order > unit.order
+      && order < (structuralUnits[index + 1]?.order ?? Number.MAX_SAFE_INTEGER));
+  };
+  const areaRecordByUnit = new Map(structuralUnits.map((unit, index) =>
+    [unit.id, areaRecords[index]!] as const));
+  const initialWorkflows = structuralUnits.map((unit) => {
+    const record = areaRecordByUnit.get(unit.id)!;
+    const operationIds = operationRecords.filter((operation) =>
+      areaForRecord(operation)?.id === unit.id)
+      .map((operation) => operationIdByRecord.get(operation.id)!);
+    return {
       workflow_id: workflowIdByRecord.get(record.id)!,
       label: record.statement,
       summary: record.statement,
-      operation_ids: [operationIdByRecord.get(record.id)!],
+      operation_ids: operationIds,
       source_unit_ids: record.source_unit_ids,
       governance: governanceEnvelope({
         id: `${projectId}.governance.workflow.${record.id.split(".").at(-1)!}`,
         record,
         proposalRevision: 1,
       }),
-    }));
+    };
+  }).filter(({ operation_ids }) => operation_ids.length > 0);
   const initialOperations = operationRecords.map((record) => ({
     operation_id: operationIdByRecord.get(record.id)!,
-    ...(workflowIdByRecord.has(record.id)
-      ? { workflow_id: workflowIdByRecord.get(record.id)! }
+    ...(areaForRecord(record)
+      ? { workflow_id: workflowIdByRecord.get(
+        areaRecordByUnit.get(areaForRecord(record)!.id)!.id,
+      )! }
       : {}),
     label: record.statement,
     operation_kind: record.semantic_kind_id === "ces.kind.state-definition"
-      ? "state" as const : "action" as const,
+      ? "state" as const
+      : record.semantic_kind_id === "ces.kind.lifecycle-rule"
+        ? "decision" as const : "action" as const,
     semantic_record_ids: [record.id],
     source_unit_ids: record.source_unit_ids,
     governance: governanceEnvelope({
