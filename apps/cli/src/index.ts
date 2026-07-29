@@ -2143,6 +2143,12 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     }
   }
   const unitText = new Map(units.map((unit) => [unit.id, unit.text] as const));
+  const { workflowAssignments, crossCuttingAssignments, assignmentDiagnostics } =
+    buildAtlasAssignments({
+      projectId, proposalRevision: 1, records, workflows, operations,
+    });
+  const workflowRole = new Map(workflows.map((workflow) =>
+    [workflow.workflow_id, workflow.semantic_role] as const));
   const overviewRelationshipMap = new Map<string, {
     id: string; from_id: string; to_id: string; kind: string; source_unit_ids: string[];
   }>();
@@ -2210,6 +2216,30 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     workflow.workflow_id,
     semanticTokens(workflowText.get(workflow.workflow_id) ?? ""),
   ] as const));
+  for (const assignment of workflowAssignments.filter(({ assignment_role }) =>
+    assignment_role === "shared_input")) {
+    const provider = workflows.find((workflow) =>
+      workflow.semantic_role === "shared_data"
+      && operations.some(({ workflow_id, semantic_record_ids }) =>
+        workflow_id === workflow.workflow_id
+        && semantic_record_ids.includes(assignment.record_id)));
+    const consumer = workflows.find(({ workflow_id }) =>
+      workflow_id === assignment.workflow_id);
+    if (!provider || !consumer) continue;
+    const consumerHasCapability = operations
+      .filter(({ workflow_id }) => workflow_id === consumer.workflow_id)
+      .flatMap(({ semantic_record_ids }) => semantic_record_ids)
+      .some((id) => recordById.get(id)?.semantic_kind_id === "ces.kind.capability");
+    const eligible = consumer.semantic_role === "reporting_audit"
+      || (consumer.semantic_role === "business_workflow" && consumerHasCapability);
+    if (!eligible) continue;
+    addOverviewRelationship(
+      provider.workflow_id,
+      consumer.workflow_id,
+      "ces.relationship.provides-data-to",
+      assignment.governance.evidence_source_unit_ids,
+    );
+  }
   const workflowOrder = new Map(workflows.map((workflow) => [
     workflow.workflow_id,
     unitOrder.get(workflow.source_unit_ids[0]!) ?? Number.MAX_SAFE_INTEGER,
@@ -2348,7 +2378,10 @@ function buildCanonicalProposedAtlasArtifacts(input: {
       if (predecessor) {
         addOverviewRelationship(
           predecessor.workflow_id, parent.workflow_id,
-          "ces.relationship.precedes", [sourceUnitId],
+          workflowRole.get(predecessor.workflow_id) === "context_provider"
+            ? "ces.relationship.provides-context-to"
+            : "ces.relationship.precedes",
+          [sourceUnitId],
         );
       }
     }
@@ -2385,9 +2418,6 @@ function buildCanonicalProposedAtlasArtifacts(input: {
   }
   const overviewRelationships = [...overviewRelationshipMap.values()]
     .sort((left, right) => compareText(left.id, right.id));
-  const { workflowAssignments, crossCuttingAssignments, assignmentDiagnostics } = buildAtlasAssignments({
-    projectId, proposalRevision: 1, records, workflows, operations,
-  });
   const modelSupport = assessAtlasModelSupport({
     proposalRevision: 1,
     records,
