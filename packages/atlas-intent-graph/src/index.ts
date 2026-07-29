@@ -261,6 +261,10 @@ export const FocusedProjectionBundleSchema = z.object({
   project_overview: z.object({
     workflows: z.array(z.object({
       workflow_id: StableId,
+      semantic_role: z.enum([
+        "business_workflow", "shared_data", "context_provider",
+        "state_workflow", "reporting_audit",
+      ]),
       label: NonEmptyString,
       summary: NonEmptyString,
       operation_count: z.number().int().nonnegative(),
@@ -275,7 +279,10 @@ export const FocusedProjectionBundleSchema = z.object({
     }).strict()),
     nodes: z.array(z.object({
       node_id: StableId,
-      node_kind: z.enum(["workflow", "decision", "state"]),
+      node_kind: z.enum([
+        "business_workflow", "shared_data", "context_provider",
+        "state_workflow", "reporting_audit", "decision", "state",
+      ]),
       label: NonEmptyString,
       review_status: z.literal("pending"),
     }).strict()),
@@ -428,8 +435,10 @@ export function createFocusedAtlasProjections(input: {
   }
   const overviewEdges = workflowRelationships.map((relationship) => ({
     edge_id: relationship.relationship_id,
-    from_node_id: satisfiedStatesByWorkflow.get(relationship.from_workflow_id)
-      ?? relationship.from_workflow_id,
+    from_node_id: relationship.relationship_kind.endsWith(".enables")
+      ? satisfiedStatesByWorkflow.get(relationship.from_workflow_id)
+        ?? relationship.from_workflow_id
+      : relationship.from_workflow_id,
     to_node_id: relationship.to_workflow_id,
     relationship_kind: relationship.relationship_kind.split(".").at(-1)!,
     review_status: "pending" as const,
@@ -437,6 +446,7 @@ export function createFocusedAtlasProjections(input: {
   const projectOverview = {
     workflows: model.workflows.map((workflow) => ({
       workflow_id: workflow.workflow_id,
+      semantic_role: workflow.semantic_role,
       label: workflow.label,
       summary: workflow.summary,
       operation_count: workflow.operation_ids.length,
@@ -446,7 +456,7 @@ export function createFocusedAtlasProjections(input: {
     nodes: [
       ...model.workflows.map((workflow) => ({
         node_id: workflow.workflow_id,
-        node_kind: "workflow" as const,
+        node_kind: workflow.semantic_role,
         label: workflow.label,
         review_status: "pending" as const,
       })),
@@ -754,7 +764,8 @@ export function renderProjectOverviewMermaid(input: {
   }[];
   readonly nodes?: readonly {
     readonly node_id: string;
-    readonly node_kind: "workflow" | "decision" | "state";
+    readonly node_kind: "business_workflow" | "shared_data" | "context_provider"
+      | "state_workflow" | "reporting_audit" | "decision" | "state";
     readonly label: string;
   }[];
   readonly edges?: readonly {
@@ -766,7 +777,8 @@ export function renderProjectOverviewMermaid(input: {
   }[];
 }): string {
   const nodes = input.nodes?.length ? [...input.nodes] : input.workflows.map((workflow) => ({
-    node_id: workflow.workflow_id, node_kind: "workflow" as const, label: workflow.label,
+    node_id: workflow.workflow_id, node_kind: "business_workflow" as const,
+    label: workflow.label,
   }));
   nodes.sort((left, right) => compareText(left.node_id, right.node_id));
   const aliases = new Map(nodes.map((node, index) =>
@@ -784,8 +796,10 @@ export function renderProjectOverviewMermaid(input: {
     ...nodes.map((node) => {
       const alias = aliases.get(node.node_id)!;
       const label = escapeMermaid(node.label);
-      return node.node_kind === "decision"
-        ? `  ${alias}{"${label}"}` : `  ${alias}["${label}"]`;
+      if (node.node_kind === "decision") return `  ${alias}{"${label}"}`;
+      if (node.node_kind === "shared_data") return `  ${alias}[("${label}")]`;
+      if (node.node_kind === "context_provider") return `  ${alias}(["${label}"])`;
+      return `  ${alias}["${label}"]`;
     }),
     ...edges
       .filter(({ from_node_id, to_node_id }) =>
