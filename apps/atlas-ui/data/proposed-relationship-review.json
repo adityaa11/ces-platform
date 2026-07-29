@@ -1,0 +1,830 @@
+[
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00020.152b265a"
+    ],
+    "from_id": "safara-buyer.node.b5c3d5121915a71c",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.constrains",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.0af506d3fdc8.target.c6f43e9fc505",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.73ab0dd6f0cf4b0f"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00020.152b265a"
+    ],
+    "from_id": "safara-buyer.node.b5c3d5121915a71c",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.constrains",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.0af506d3fdc8.target.cbdfc13362da",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.20e630bdc75b3341"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00016.d01c05f2"
+    ],
+    "from_id": "safara-buyer.node.2ef4854c12cfc276",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.constrains",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.24d42c1d08e4.target.6cec8b8fa0ff",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.5bb688f54728a86e"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00020.152b265a"
+    ],
+    "from_id": "safara-buyer.node.a68804d758507e78",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.constrains",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.2a2318fb7b0a.target.1ae96079c11a",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.a9562bc7a8eec76f"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00024.ca1b2c5b"
+    ],
+    "from_id": "safara-buyer.node.9f31f738d9cb30c0",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.governs",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.3210b5544702.target.49f166fa6d5e",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.94eca326d6150403"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00024.ca1b2c5b"
+    ],
+    "from_id": "safara-buyer.node.9f31f738d9cb30c0",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.governs",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.3210b5544702.target.deab4abaa8ee",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.7f37536e283e4928"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00022.51c0c7d7"
+    ],
+    "from_id": "safara-buyer.node.c84178e04c34b4db",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.constrains",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.32679372314a.target.3e233c2819ec",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.c0b9ac3f32ce9d91"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00022.51c0c7d7"
+    ],
+    "from_id": "safara-buyer.node.c84178e04c34b4db",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.constrains",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.32679372314a.target.5f40555eac95",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.f77b32e036eccec6"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00022.51c0c7d7"
+    ],
+    "from_id": "safara-buyer.node.c84178e04c34b4db",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.constrains",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.32679372314a.target.b4545fa254c0",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.3640d9b2d67ea3be"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00012.c56636c3"
+    ],
+    "from_id": "safara-buyer.node.5a8d5883b07d190e",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.governs",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.359962cf4a50.target.602fdbc36caf",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.6897ca5df49086da"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00012.c56636c3"
+    ],
+    "from_id": "safara-buyer.node.5a8d5883b07d190e",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.governs",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.359962cf4a50.target.87dad74498bf",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.060a3f3e6af435fd"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00024.ca1b2c5b"
+    ],
+    "from_id": "safara-buyer.node.95a6721950a54688",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.constrains",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.453c30cdbced.target.deab4abaa8ee",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.7f37536e283e4928"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00016.d01c05f2"
+    ],
+    "from_id": "safara-buyer.node.5bb688f54728a86e",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.produces",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.4dda5316a6c9.target.2c64ae269c9a",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.b5c79bb3d464f32d"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00016.d01c05f2"
+    ],
+    "from_id": "safara-buyer.node.5bb688f54728a86e",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.produces",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.4dda5316a6c9.target.45e618942a1a",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.80c23a1af7b47972"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00022.51c0c7d7"
+    ],
+    "from_id": "safara-buyer.node.66c89edcaf54a80c",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.constrains",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.7bc89f078957.target.5f40555eac95",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.f77b32e036eccec6"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00012.c56636c3"
+    ],
+    "from_id": "safara-buyer.node.95b36dd4df77fad6",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.constrains",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.8cb19743f668.target.8267517a53e8",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.4a6f8ff053e2a363"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00010.e2331dee"
+    ],
+    "from_id": "safara-buyer.node.80c800a20f8b8ce5",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.governs",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.9d8741ad3d84.target.9f16b0d55aca",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.fdef37e8a173b419"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00018.720e6868"
+    ],
+    "from_id": "safara-buyer.node.31f1d7608f947cd8",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.governs",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.9f9eb0d31469.target.93ffc610c724",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.134530dda428cebd"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00006.5f9af030"
+    ],
+    "from_id": "safara-buyer.node.d1e8f59eb79cf0b5",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.constrains",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.b8884a86d9c3.target.b99e2a50f7ac",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.23b5d17ff4b75da8"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00006.5f9af030"
+    ],
+    "from_id": "safara-buyer.node.4fbbe7a0c35ad1ae",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.governs",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.c26de7126cac.target.b99e2a50f7ac",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.23b5d17ff4b75da8"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00020.152b265a"
+    ],
+    "from_id": "safara-buyer.node.608a66859f1e10fb",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.constrains",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.d209900f3340.target.c6f43e9fc505",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.73ab0dd6f0cf4b0f"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00020.152b265a"
+    ],
+    "from_id": "safara-buyer.node.608a66859f1e10fb",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.constrains",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.d209900f3340.target.cbdfc13362da",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.20e630bdc75b3341"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00030.a497ca94"
+    ],
+    "from_id": "safara-buyer.node.6af6d2aa62cc1f38",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.produces",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.d227059e3de8.target.73fa3e3576b7",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.8b34b78b8534b6dc"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00022.51c0c7d7"
+    ],
+    "from_id": "safara-buyer.node.05ebc4816f0cbb8c",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.constrains",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.f06c9e50f2c0.target.c6f43e9fc505",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.73ab0dd6f0cf4b0f"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00022.51c0c7d7"
+    ],
+    "from_id": "safara-buyer.node.05ebc4816f0cbb8c",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.constrains",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.f06c9e50f2c0.target.cbdfc13362da",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.20e630bdc75b3341"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00022.51c0c7d7"
+    ],
+    "from_id": "safara-buyer.node.05ebc4816f0cbb8c",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.constrains",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.f06c9e50f2c0.target.ebd900f69d65",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.f4fb3a82941c6c4a"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00022.51c0c7d7"
+    ],
+    "from_id": "safara-buyer.node.05ebc4816f0cbb8c",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.constrains",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.f06c9e50f2c0.target.f8d17a0c725f",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.d031eb5aa6370cc7"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00024.ca1b2c5b"
+    ],
+    "from_id": "safara-buyer.node.3bd1c5700d0a0477",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.governs",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.f2077b3dbd1b.target.49f166fa6d5e",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.94eca326d6150403"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-relationship"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00024.ca1b2c5b"
+    ],
+    "from_id": "safara-buyer.node.3bd1c5700d0a0477",
+    "origin": "derived",
+    "rationale": "This target independently shares source evidence with the relationship intent.",
+    "relationship_kind": "ces.relationship.governs",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.relationship.f2077b3dbd1b.target.deab4abaa8ee",
+    "subject_type": "relationship_target",
+    "to_id": "safara-buyer.node.7f37536e283e4928"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-topology-requires-review"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00020.152b265a",
+      "prd-main.unit.00022.51c0c7d7"
+    ],
+    "from_id": "safara-buyer.operation.a9562bc7a8eec76f",
+    "origin": "derived",
+    "rationale": "Canonical source order and workflow membership suggest this operation order.",
+    "relationship_kind": "transition",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.workflow-edge.1c71ea480aad",
+    "subject_type": "workflow_edge",
+    "to_id": "safara-buyer.operation.73ab0dd6f0cf4b0f"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-topology-requires-review"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00016.d01c05f2",
+      "prd-main.unit.00022.51c0c7d7"
+    ],
+    "from_id": "safara-buyer.operation.3c07a50adb7bf4c1",
+    "origin": "derived",
+    "rationale": "Canonical source order and workflow membership suggest this operation order.",
+    "relationship_kind": "transition",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.workflow-edge.2d4a2386b046",
+    "subject_type": "workflow_edge",
+    "to_id": "safara-buyer.operation.3640d9b2d67ea3be"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-topology-requires-review"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00014.174c88d6",
+      "prd-main.unit.00024.ca1b2c5b"
+    ],
+    "from_id": "safara-buyer.operation.fd7270b27ea090aa",
+    "origin": "derived",
+    "rationale": "Canonical source order and workflow membership suggest this operation order.",
+    "relationship_kind": "ordering",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.workflow-edge.3494b86f16c0",
+    "subject_type": "workflow_edge",
+    "to_id": "safara-buyer.operation.7f37536e283e4928"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-topology-requires-review"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00018.720e6868",
+      "prd-main.unit.00022.51c0c7d7"
+    ],
+    "from_id": "safara-buyer.operation.969c96290d717135",
+    "origin": "derived",
+    "rationale": "Canonical source order and workflow membership suggest this operation order.",
+    "relationship_kind": "transition",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.workflow-edge.38ac055799fe",
+    "subject_type": "workflow_edge",
+    "to_id": "safara-buyer.operation.d1ac7dc16d26c552"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-topology-requires-review"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00022.51c0c7d7"
+    ],
+    "from_id": "safara-buyer.operation.f4fb3a82941c6c4a",
+    "origin": "derived",
+    "rationale": "Canonical source order and workflow membership suggest this operation order.",
+    "relationship_kind": "transition",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.workflow-edge.3a78891c3c97",
+    "subject_type": "workflow_edge",
+    "to_id": "safara-buyer.operation.969c96290d717135"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-topology-requires-review"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00022.51c0c7d7",
+      "prd-main.unit.00030.a497ca94"
+    ],
+    "from_id": "safara-buyer.operation.d031eb5aa6370cc7",
+    "origin": "derived",
+    "rationale": "Canonical source order and workflow membership suggest this operation order.",
+    "relationship_kind": "ordering",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.workflow-edge.46138fafe5ae",
+    "subject_type": "workflow_edge",
+    "to_id": "safara-buyer.operation.6b9395fc4cdb4d67"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-topology-requires-review"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00014.174c88d6",
+      "prd-main.unit.00022.51c0c7d7"
+    ],
+    "from_id": "safara-buyer.operation.07999801f1666c2c",
+    "origin": "derived",
+    "rationale": "Canonical source order and workflow membership suggest this operation order.",
+    "relationship_kind": "transition",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.workflow-edge.6ae26981306d",
+    "subject_type": "workflow_edge",
+    "to_id": "safara-buyer.operation.1ac111b802488ed0"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-topology-requires-review"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00020.152b265a",
+      "prd-main.unit.00022.51c0c7d7"
+    ],
+    "from_id": "safara-buyer.operation.20e630bdc75b3341",
+    "origin": "derived",
+    "rationale": "Canonical source order and workflow membership suggest this operation order.",
+    "relationship_kind": "transition",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.workflow-edge.79966e073c47",
+    "subject_type": "workflow_edge",
+    "to_id": "safara-buyer.operation.07999801f1666c2c"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-topology-requires-review"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00022.51c0c7d7"
+    ],
+    "from_id": "safara-buyer.operation.c0b9ac3f32ce9d91",
+    "origin": "derived",
+    "rationale": "Canonical source order and workflow membership suggest this operation order.",
+    "relationship_kind": "ordering",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.workflow-edge.8a7235349be0",
+    "subject_type": "workflow_edge",
+    "to_id": "safara-buyer.operation.d031eb5aa6370cc7"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-topology-requires-review"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00016.d01c05f2",
+      "prd-main.unit.00020.152b265a",
+      "prd-main.unit.00022.51c0c7d7"
+    ],
+    "from_id": "safara-buyer.operation.5bb688f54728a86e",
+    "origin": "derived",
+    "rationale": "Canonical source order and workflow membership suggest this operation order.",
+    "relationship_kind": "transition",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.workflow-edge.90a6dec1db56",
+    "subject_type": "workflow_edge",
+    "to_id": "safara-buyer.operation.a9562bc7a8eec76f"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-topology-requires-review"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00020.152b265a",
+      "prd-main.unit.00022.51c0c7d7"
+    ],
+    "from_id": "safara-buyer.operation.73ab0dd6f0cf4b0f",
+    "origin": "derived",
+    "rationale": "Canonical source order and workflow membership suggest this operation order.",
+    "relationship_kind": "transition",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.workflow-edge.9bbac4ad408b",
+    "subject_type": "workflow_edge",
+    "to_id": "safara-buyer.operation.20e630bdc75b3341"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-topology-requires-review"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00022.51c0c7d7"
+    ],
+    "from_id": "safara-buyer.operation.3640d9b2d67ea3be",
+    "origin": "derived",
+    "rationale": "Canonical source order and workflow membership suggest this operation order.",
+    "relationship_kind": "ordering",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.workflow-edge.c0a856eabbb2",
+    "subject_type": "workflow_edge",
+    "to_id": "safara-buyer.operation.c0b9ac3f32ce9d91"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-topology-requires-review"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00012.c56636c3"
+    ],
+    "from_id": "safara-buyer.operation.2d5b1a87b68118f7",
+    "origin": "derived",
+    "rationale": "Canonical source order and workflow membership suggest this operation order.",
+    "relationship_kind": "ordering",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.workflow-edge.e6c9ebb4757c",
+    "subject_type": "workflow_edge",
+    "to_id": "safara-buyer.operation.060a3f3e6af435fd"
+  },
+  {
+    "authoritative": false,
+    "blockers": [
+      "derived-topology-requires-review"
+    ],
+    "bulk_approval_eligible": false,
+    "confidence": 0.6,
+    "evidence_source_unit_ids": [
+      "prd-main.unit.00016.d01c05f2",
+      "prd-main.unit.00018.720e6868"
+    ],
+    "from_id": "safara-buyer.operation.d1ac7dc16d26c552",
+    "origin": "derived",
+    "rationale": "Canonical source order and workflow membership suggest this operation order.",
+    "relationship_kind": "transition",
+    "review_status": "pending",
+    "review_subject_id": "safara-buyer.workflow-edge.e734c5847478",
+    "subject_type": "workflow_edge",
+    "to_id": "safara-buyer.operation.5bb688f54728a86e"
+  }
+]
