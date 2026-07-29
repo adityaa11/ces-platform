@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0.0",
+  "fixture_id": "safara.golden.main-workflow",
+  "display_language": "id",
+  "nodes": [
+    { "concept": "package_departure", "kind": "workflow", "accepted_source_labels": ["Paket dan Jadwal Keberangkatan"] },
+    { "concept": "pilgrim_registration", "kind": "workflow", "accepted_source_labels": ["Pendaftaran Jemaah"] },
+    { "concept": "payment_review", "kind": "workflow", "accepted_source_labels": ["Tagihan dan Pembayaran"] },
+    { "concept": "document_review", "kind": "workflow", "accepted_source_labels": ["Dokumen Jemaah"] },
+    { "concept": "travel_readiness", "kind": "workflow", "accepted_source_labels": ["Status Perjalanan dan Kesiapan"] },
+    { "concept": "readiness_decision", "kind": "decision", "accepted_source_labels": ["Jemaah berstatus Siap hanya apabila: Sisa pembayaran sudah nol. Seluruh dokumen wajib berstatus Valid. Paspor tersedia dan masih memenuhi ketentuan perjalanan. Visa berstatus Disetujui."] },
+    { "concept": "blocked", "kind": "state", "accepted_source_labels": ["Apabila salah satu syarat belum terpenuhi, status jemaah menjadi Terhambat."] },
+    { "concept": "ready", "kind": "state", "accepted_source_labels": ["Jemaah berstatus Siap hanya apabila: Sisa pembayaran sudah nol. Seluruh dokumen wajib berstatus Valid. Paspor tersedia dan masih memenuhi ketentuan perjalanan. Visa berstatus Disetujui."] },
+    { "concept": "manifest_finalization", "kind": "workflow", "accepted_source_labels": ["Manifest Keberangkatan"] },
+    { "concept": "dashboard_reports", "kind": "workflow", "accepted_source_labels": ["Dashboard dan Laporan"] }
+  ],
+  "relationships": [
+    { "from": "package_departure", "to": "pilgrim_registration", "kind": "precedes" },
+    { "from": "pilgrim_registration", "to": "payment_review", "kind": "enables", "path_semantics": "independent_non_exclusive" },
+    { "from": "pilgrim_registration", "to": "document_review", "kind": "enables", "path_semantics": "independent_non_exclusive" },
+    { "from": "payment_review", "to": "travel_readiness", "kind": "contributes_to" },
+    { "from": "document_review", "to": "travel_readiness", "kind": "contributes_to" },
+    { "from": "travel_readiness", "to": "readiness_decision", "kind": "evaluated_by" },
+    { "from": "readiness_decision", "to": "blocked", "kind": "branches_to", "condition": "No" },
+    { "from": "readiness_decision", "to": "ready", "kind": "branches_to", "condition": "Yes" },
+    { "from": "ready", "to": "manifest_finalization", "kind": "enables" },
+    { "from": "package_departure", "to": "dashboard_reports", "kind": "provides_data_to" },
+    { "from": "pilgrim_registration", "to": "dashboard_reports", "kind": "provides_data_to" },
+    { "from": "payment_review", "to": "dashboard_reports", "kind": "provides_data_to" },
+    { "from": "document_review", "to": "dashboard_reports", "kind": "provides_data_to" },
+    { "from": "travel_readiness", "to": "dashboard_reports", "kind": "provides_data_to" },
+    { "from": "manifest_finalization", "to": "dashboard_reports", "kind": "provides_data_to" }
+  ]
+}

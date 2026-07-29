@@ -1,0 +1,26 @@
+flowchart TD
+  package["Paket dan Jadwal Keberangkatan"]
+  registration["Pendaftaran Jemaah"]
+  payment["Tagihan dan Pembayaran"]
+  documents["Dokumen Jemaah"]
+  readiness["Status Perjalanan dan Kesiapan"]
+  decision{"Jemaah berstatus Siap hanya apabila: Sisa pembayaran sudah nol. Seluruh dokumen wajib berstatus Valid. Paspor tersedia dan masih memenuhi ketentuan perjalanan. Visa berstatus Disetujui."}
+  blocked["Apabila salah satu syarat belum terpenuhi, status jemaah menjadi Terhambat."]
+  ready["Jemaah berstatus Siap hanya apabila: Sisa pembayaran sudah nol. Seluruh dokumen wajib berstatus Valid. Paspor tersedia dan masih memenuhi ketentuan perjalanan. Visa berstatus Disetujui."]
+  manifest["Manifest Keberangkatan"]
+  reports["Dashboard dan Laporan"]
+  package --> registration
+  registration --> payment
+  registration --> documents
+  payment --> readiness
+  documents --> readiness
+  readiness --> decision
+  decision -->|No| blocked
+  decision -->|Yes| ready
+  ready --> manifest
+  package -.-> reports
+  registration -.-> reports
+  payment -.-> reports
+  documents -.-> reports
+  readiness -.-> reports
+  manifest -.-> reports
