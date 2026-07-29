@@ -13,5 +13,3 @@ failIfNoMatch: true
 shamefullyHoist: false
 publicHoistPattern: []
 confirmModulesPurge: false
-allowBuilds:
-  sharp: true
