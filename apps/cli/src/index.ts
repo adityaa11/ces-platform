@@ -1707,6 +1707,8 @@ function assembleAtlasWorkflowTopology(input: {
   readonly records: readonly { readonly id: string }[];
   readonly workflows: readonly {
     readonly workflow_id: string;
+    readonly semantic_role?: "business_workflow" | "shared_data" | "context_provider"
+      | "state_workflow" | "reporting_audit";
     readonly label: string;
     readonly summary: string;
     readonly operation_ids: readonly string[];
@@ -1923,6 +1925,14 @@ function buildCanonicalProposedAtlasArtifacts(input: {
       && !/[.!?]\s/u.test(unit.text);
   }).sort((left, right) => left.order - right.order);
   const areaRecords = structuralUnits.map((unit) => {
+    const purposes = classifications.get(unit.id)?.purpose_ids ?? [];
+    const semanticRole = purposes.includes("ces.section.data")
+      ? "shared-data-area"
+      : purposes.includes("ces.section.reporting-audit")
+        ? "reporting-audit-consumer"
+        : purposes.includes("ces.section.states-lifecycle")
+          ? "state-workflow-area"
+          : "workflow-area";
     const identity = createCanonicalRecordIdentity({
       project_id: projectId,
       proposal_revision: 1,
@@ -1943,7 +1953,7 @@ function buildCanonicalProposedAtlasArtifacts(input: {
       classification_status: "classified" as const,
       origin: "explicit" as const,
       review_status: "pending" as const,
-      details: [{ key: "structural-area", value: ["workflow-area"] }],
+      details: [{ key: "structural-area", value: [semanticRole] }],
       issues: [],
     };
   });
@@ -2002,11 +2012,28 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     [unit.id, areaRecords[index]!] as const));
   const initialWorkflows = structuralUnits.map((unit) => {
     const record = areaRecordByUnit.get(unit.id)!;
-    const operationIds = operationDescriptors.filter(({ record: operation }) =>
-      areaForRecord(operation)?.id === unit.id)
+    const role = record.details.find(({ key }) => key === "structural-area")?.value[0];
+    const areaOperations = operationDescriptors.filter(({ record: operation }) =>
+      areaForRecord(operation)?.id === unit.id);
+    const areaKinds = new Set(areaOperations.flatMap(({ record: operation }) =>
+      [...kindsForRecord(operation)]));
+    const operationIds = areaOperations
       .map(({ operationId }) => operationId);
     return {
       workflow_id: workflowIdByRecord.get(record.id)!,
+      semantic_role: role === "reporting-audit-consumer"
+        ? "reporting_audit" as const
+        : role === "state-workflow-area"
+          ? "state_workflow" as const
+          : areaKinds.has("ces.kind.operational-procedure")
+            ? "business_workflow" as const
+            : areaKinds.has("ces.kind.capability")
+              ? "shared_data" as const
+              : areaKinds.has("ces.kind.role-permission")
+                ? "context_provider" as const
+                : role === "shared-data-area"
+                  ? "shared_data" as const
+                  : "business_workflow" as const,
       label: record.statement,
       summary: record.statement,
       operation_ids: operationIds,
@@ -2042,12 +2069,32 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     workflows: initialWorkflows,
     operations: initialOperations,
   });
-  const workflows = assembled.workflows;
   const operations = assembled.operations;
+  const recordById = new Map(records.map((record) => [record.id, record] as const));
+  const workflows = assembled.workflows.map((workflow) => {
+    const semanticRole = workflow.semantic_role ?? "business_workflow";
+    if (["reporting_audit", "state_workflow"].includes(semanticRole)) {
+      return { ...workflow, semantic_role: semanticRole };
+    }
+    const finalizedKinds = new Set(operations
+      .filter(({ workflow_id }) => workflow_id === workflow.workflow_id)
+      .flatMap(({ semantic_record_ids }) => semantic_record_ids)
+      .map((id) => recordById.get(id)?.semantic_kind_id)
+      .filter((kind): kind is string => kind !== undefined));
+    return {
+      ...workflow,
+      semantic_role: finalizedKinds.has("ces.kind.operational-procedure")
+        ? "business_workflow" as const
+        : finalizedKinds.has("ces.kind.capability")
+          ? "shared_data" as const
+          : finalizedKinds.has("ces.kind.role-permission")
+            ? "context_provider" as const
+            : semanticRole,
+    };
+  });
   const workflowEdges: Array<z.input<typeof GovernedWorkflowEdgeSchema>> = [
     ...assembled.workflowEdges,
   ];
-  const recordById = new Map(records.map((record) => [record.id, record] as const));
   for (const descriptor of operationDescriptors.filter(({ operationKind, conditionedState }) =>
     operationKind === "decision" && conditionedState)) {
     const decision = operations.find(({ operation_id }) =>

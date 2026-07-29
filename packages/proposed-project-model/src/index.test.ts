@@ -151,6 +151,7 @@ function fixture() {
   }));
   const workflows = [{
     workflow_id: "project.workflow.release",
+    semantic_role: "shared_data" as const,
     label: "Release",
     summary: "Review and complete release.",
     operation_ids: operations.map(({ operation_id }) => operation_id),
@@ -258,6 +259,7 @@ describe("ATLAS-HARD-009 ProposedProjectModel", () => {
       authoritative: false, approval_required: true, downstream_execution_allowed: false,
       summary: { requirements: 2, unknown_items: 1, derived_items: 1 },
     });
+    expect(model.workflows[0]?.semantic_role).toBe("shared_data");
     const target = model.relationship_candidates[0]!.targets[0]!;
     expect(createApprovedRelationshipIdentity({
       relationship_intent_id: model.relationship_candidates[0]!.relationship_intent_id,

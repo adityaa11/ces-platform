@@ -415,6 +415,10 @@ export const GovernedAssociationSchema = z.object({
 
 export const ProposedWorkflowSchema = z.object({
   workflow_id: Id,
+  semantic_role: z.enum([
+    "business_workflow", "shared_data", "context_provider",
+    "state_workflow", "reporting_audit",
+  ]).default("business_workflow"),
   label: Text,
   summary: Text,
   operation_ids: z.array(Id),
