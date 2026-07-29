@@ -431,6 +431,7 @@ export const ProposedOperationSchema = z.object({
   workflow_id: Id.optional(),
   label: Text,
   operation_kind: z.enum(["action", "decision", "state", "start", "end", "unknown"]),
+  state_value_id: Id.optional(),
   actor: Text.optional(),
   semantic_record_ids: z.array(Id).min(1),
   source_unit_ids: z.array(Id).min(1),

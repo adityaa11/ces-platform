@@ -1522,6 +1522,20 @@ export function sourceDefinedStateValueTokens(statement: string): string[] {
   return [...new Set(values)].sort(compareText);
 }
 
+export function selectStrongestStateValue<T extends {
+  readonly state_value_id: string;
+  readonly supporting_candidate_ids: readonly string[];
+}>(values: readonly T[]): T | undefined {
+  const ranked = [...values].sort((left, right) =>
+    right.supporting_candidate_ids.length - left.supporting_candidate_ids.length
+    || compareText(left.state_value_id, right.state_value_id));
+  return ranked[0]
+    && ranked[0].supporting_candidate_ids.length >= 2
+    && ranked[0].supporting_candidate_ids.length
+      > (ranked[1]?.supporting_candidate_ids.length ?? 0)
+    ? ranked[0] : undefined;
+}
+
 function jaccard(left: ReadonlySet<string>, right: ReadonlySet<string>): number {
   if (left.size === 0 || right.size === 0) return 0;
   const intersection = [...left].filter((token) => right.has(token)).length;
@@ -2032,6 +2046,14 @@ function buildCanonicalProposedAtlasArtifacts(input: {
   const operationRecords = records.filter((record) =>
     [...kindsForRecord(record)].some((kind) => operationKinds.has(kind)))
     .filter(({ details }) => !details.some(({ key }) => key === "structural-area"));
+  const selectedStateValueByRecord = new Map<string, typeof sourceDefinedStateValues[number]>();
+  for (const [recordId, values] of Map.groupBy(
+    sourceDefinedStateValues,
+    ({ record_id }) => record_id,
+  )) {
+    const selected = selectStrongestStateValue(values);
+    if (selected) selectedStateValueByRecord.set(recordId, selected);
+  }
   const workflowIdByRecord = new Map(areaRecords
     .map((record) => [record.id, `${projectId}.workflow.${record.id.split(".").at(-1)!}`] as const));
   const operationDescriptors = operationRecords.flatMap((record) => {
@@ -2043,14 +2065,25 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     const conditionedState = kinds.has("ces.kind.state-definition")
       && (kinds.has("ces.kind.business-rule")
         || kinds.has("ces.kind.validation-constraint"));
-    const projectedKinds = conditionedState
-      ? ["decision" as const, "state" as const] : [baseKind];
-    return projectedKinds.map((operationKind) => ({
+    const selectedStateValue = selectedStateValueByRecord.get(record.id);
+    const projections = conditionedState
+      ? [
+        { operationKind: "decision" as const, label: record.statement },
+        ...(selectedStateValue ? [{
+          operationKind: "state" as const,
+          label: selectedStateValue.value,
+          stateValueId: selectedStateValue.state_value_id,
+        }] : []),
+      ]
+      : [{ operationKind: baseKind, label: record.statement }];
+    return projections.map(({ operationKind, label, ...projection }) => ({
       record,
       operationKind,
+      label,
+      ...projection,
       conditionedState,
       operationId: `${projectId}.operation.${record.id.split(".").at(-1)!}`
-        + (projectedKinds.length > 1 ? `.${operationKind}` : ""),
+        + (projections.length > 1 ? `.${operationKind}` : ""),
     }));
   });
   const areaForRecord = (record: typeof records[number]) => {
@@ -2100,23 +2133,28 @@ function buildCanonicalProposedAtlasArtifacts(input: {
       }),
     };
   }).filter(({ operation_ids }) => operation_ids.length > 0);
-  const initialOperations = operationDescriptors.map(({ record, operationKind, operationId }) => ({
-    operation_id: operationId,
-    ...(areaForRecord(record)
-      ? { workflow_id: workflowIdByRecord.get(
-        areaRecordByUnit.get(areaForRecord(record)!.id)!.id,
-      )! }
-      : {}),
-    label: record.statement,
-    operation_kind: operationKind,
-    semantic_record_ids: [record.id],
-    source_unit_ids: record.source_unit_ids,
-    governance: governanceEnvelope({
-      id: `${projectId}.governance.operation.${record.id.split(".").at(-1)!}`,
-      record,
-      proposalRevision: 1,
-    }),
-  }));
+  const initialOperations = operationDescriptors.map((descriptor) => {
+    const { record, operationKind, operationId, label } = descriptor;
+    return {
+      operation_id: operationId,
+      ...(areaForRecord(record)
+        ? { workflow_id: workflowIdByRecord.get(
+          areaRecordByUnit.get(areaForRecord(record)!.id)!.id,
+        )! }
+        : {}),
+      label,
+      operation_kind: operationKind,
+      ...("stateValueId" in descriptor && descriptor.stateValueId
+        ? { state_value_id: descriptor.stateValueId } : {}),
+      semantic_record_ids: [record.id],
+      source_unit_ids: record.source_unit_ids,
+      governance: governanceEnvelope({
+        id: `${projectId}.governance.operation.${record.id.split(".").at(-1)!}`,
+        record,
+        proposalRevision: 1,
+      }),
+    };
+  });
   const assembled = assembleAtlasWorkflowTopology({
     projectId,
     proposalRevision: 1,

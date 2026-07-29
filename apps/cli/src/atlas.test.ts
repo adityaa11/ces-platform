@@ -15,6 +15,7 @@ import { calculateCoverage } from "@company/ces-atlas-coverage";
 import {
   buildAtlasRelationshipCandidates,
   runCli,
+  selectStrongestStateValue,
   sourceDefinedStateValueTokens,
 } from "./index.js";
 
@@ -26,6 +27,14 @@ describe("DAPE-008 staged Atlas commands", () => {
     expect(sourceDefinedStateValueTokens(
       "The account remains Suspended until review completes.",
     )).toContain("Suspended");
+    expect(selectStrongestStateValue([
+      { state_value_id: "invoice.state.payable", supporting_candidate_ids: ["a", "b", "c"] },
+      { state_value_id: "invoice.state.disputed", supporting_candidate_ids: ["d"] },
+    ])?.state_value_id).toBe("invoice.state.payable");
+    expect(selectStrongestStateValue([
+      { state_value_id: "account.state.active", supporting_candidate_ids: ["a", "b"] },
+      { state_value_id: "account.state.suspended", supporting_candidate_ids: ["c", "d"] },
+    ])).toBeUndefined();
   });
 
   it("keeps several valid targets independently reviewable under one intent", () => {
