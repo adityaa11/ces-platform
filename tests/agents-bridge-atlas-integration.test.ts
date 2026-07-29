@@ -89,8 +89,12 @@ describe("Atlas CLI to Agents Bridge integration", () => {
         join(output, "proposed-project-model.json"), "utf8",
       ));
       expect(proposed.records.length).toBeLessThan(inventory.candidates.length);
-      expect(proposed.relationships).toEqual(expect.arrayContaining([
-        expect.objectContaining({ kind: expect.stringMatching(/^ces\.relationship\./u) }),
+      expect(proposed.relationships).toEqual([]);
+      expect(proposed.relationship_candidates).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          relationship_kind: expect.stringMatching(/^ces\.relationship\./u),
+          governance: expect.objectContaining({ review_status: "pending" }),
+        }),
       ]));
     } finally {
       await rm(directory, { recursive: true, force: true });
