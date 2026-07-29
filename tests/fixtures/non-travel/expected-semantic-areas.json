@@ -1,12 +1,25 @@
 {
   "schema_version": "1.0.0",
   "required_concepts": [
+    "invoice_data",
     "invoice_recording",
     "invoice_verification",
     "payment_approval",
     "disputed",
     "payable",
     "financial_reporting"
+  ],
+  "required_semantic_roles": [
+    "shared_data",
+    "business_workflow",
+    "state_workflow",
+    "reporting_audit"
+  ],
+  "required_relationship_kinds": [
+    "provides_data_to",
+    "enables",
+    "evaluated_by",
+    "branches_to"
   ],
   "forbidden_fixture_concepts": [
     "package_departure",

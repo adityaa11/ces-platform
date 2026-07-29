@@ -1,4 +1,5 @@
 flowchart TD
+  pilgrim[("Data Jemaah")]
   package["Paket dan Jadwal Keberangkatan"]
   registration["Pendaftaran Jemaah"]
   payment["Tagihan dan Pembayaran"]
@@ -9,7 +10,10 @@ flowchart TD
   ready["Jemaah berstatus Siap hanya apabila: Sisa pembayaran sudah nol. Seluruh dokumen wajib berstatus Valid. Paspor tersedia dan masih memenuhi ketentuan perjalanan. Visa berstatus Disetujui."]
   manifest["Manifest Keberangkatan"]
   reports["Dashboard dan Laporan"]
-  package --> registration
+  history["Riwayat Aktivitas"]
+  pilgrim -.-> registration
+  pilgrim -.-> documents
+  package -->|provides-context-to| registration
   registration --> payment
   registration --> documents
   payment --> readiness
@@ -18,9 +22,17 @@ flowchart TD
   decision -->|No| blocked
   decision -->|Yes| ready
   ready --> manifest
+  pilgrim -.-> reports
   package -.-> reports
   registration -.-> reports
   payment -.-> reports
   documents -.-> reports
   readiness -.-> reports
   manifest -.-> reports
+  pilgrim -.-> history
+  package -.-> history
+  registration -.-> history
+  payment -.-> history
+  documents -.-> history
+  readiness -.-> history
+  manifest -.-> history

@@ -3,7 +3,8 @@
   "fixture_id": "safara.golden.main-workflow",
   "display_language": "id",
   "nodes": [
-    { "concept": "package_departure", "kind": "workflow", "accepted_source_labels": ["Paket dan Jadwal Keberangkatan"] },
+    { "concept": "pilgrim_data", "kind": "shared_data", "accepted_source_labels": ["Data Jemaah"] },
+    { "concept": "package_departure", "kind": "context_provider", "accepted_source_labels": ["Paket dan Jadwal Keberangkatan"] },
     { "concept": "pilgrim_registration", "kind": "workflow", "accepted_source_labels": ["Pendaftaran Jemaah"] },
     { "concept": "payment_review", "kind": "workflow", "accepted_source_labels": ["Tagihan dan Pembayaran"] },
     { "concept": "document_review", "kind": "workflow", "accepted_source_labels": ["Dokumen Jemaah"] },
@@ -12,10 +13,13 @@
     { "concept": "blocked", "kind": "state", "accepted_source_labels": ["Apabila salah satu syarat belum terpenuhi, status jemaah menjadi Terhambat."] },
     { "concept": "ready", "kind": "state", "accepted_source_labels": ["Jemaah berstatus Siap hanya apabila: Sisa pembayaran sudah nol. Seluruh dokumen wajib berstatus Valid. Paspor tersedia dan masih memenuhi ketentuan perjalanan. Visa berstatus Disetujui."] },
     { "concept": "manifest_finalization", "kind": "workflow", "accepted_source_labels": ["Manifest Keberangkatan"] },
-    { "concept": "dashboard_reports", "kind": "workflow", "accepted_source_labels": ["Dashboard dan Laporan"] }
+    { "concept": "dashboard_reports", "kind": "reporting_audit", "accepted_source_labels": ["Dashboard dan Laporan"] },
+    { "concept": "activity_history", "kind": "reporting_audit", "accepted_source_labels": ["Riwayat Aktivitas"] }
   ],
   "relationships": [
-    { "from": "package_departure", "to": "pilgrim_registration", "kind": "precedes" },
+    { "from": "pilgrim_data", "to": "pilgrim_registration", "kind": "provides_data_to" },
+    { "from": "pilgrim_data", "to": "document_review", "kind": "provides_data_to" },
+    { "from": "package_departure", "to": "pilgrim_registration", "kind": "provides_context_to" },
     { "from": "pilgrim_registration", "to": "payment_review", "kind": "enables", "path_semantics": "independent_non_exclusive" },
     { "from": "pilgrim_registration", "to": "document_review", "kind": "enables", "path_semantics": "independent_non_exclusive" },
     { "from": "payment_review", "to": "travel_readiness", "kind": "contributes_to" },
@@ -24,11 +28,19 @@
     { "from": "readiness_decision", "to": "blocked", "kind": "branches_to", "condition": "No" },
     { "from": "readiness_decision", "to": "ready", "kind": "branches_to", "condition": "Yes" },
     { "from": "ready", "to": "manifest_finalization", "kind": "enables" },
+    { "from": "pilgrim_data", "to": "dashboard_reports", "kind": "provides_data_to" },
     { "from": "package_departure", "to": "dashboard_reports", "kind": "provides_data_to" },
     { "from": "pilgrim_registration", "to": "dashboard_reports", "kind": "provides_data_to" },
     { "from": "payment_review", "to": "dashboard_reports", "kind": "provides_data_to" },
     { "from": "document_review", "to": "dashboard_reports", "kind": "provides_data_to" },
     { "from": "travel_readiness", "to": "dashboard_reports", "kind": "provides_data_to" },
-    { "from": "manifest_finalization", "to": "dashboard_reports", "kind": "provides_data_to" }
+    { "from": "manifest_finalization", "to": "dashboard_reports", "kind": "provides_data_to" },
+    { "from": "pilgrim_data", "to": "activity_history", "kind": "provides_data_to" },
+    { "from": "package_departure", "to": "activity_history", "kind": "provides_data_to" },
+    { "from": "pilgrim_registration", "to": "activity_history", "kind": "provides_data_to" },
+    { "from": "payment_review", "to": "activity_history", "kind": "provides_data_to" },
+    { "from": "document_review", "to": "activity_history", "kind": "provides_data_to" },
+    { "from": "travel_readiness", "to": "activity_history", "kind": "provides_data_to" },
+    { "from": "manifest_finalization", "to": "activity_history", "kind": "provides_data_to" }
   ]
 }

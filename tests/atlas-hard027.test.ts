@@ -19,7 +19,7 @@ describe("ATLAS-HARD-027 qualification fixtures", () => {
     expect(oracle.relationships.every(({ from, to }) =>
       concepts.has(from) && concepts.has(to))).toBe(true);
     expect(oracle.relationships.filter(({ kind }) =>
-      kind === "provides_data_to")).toHaveLength(6);
+      kind === "provides_data_to")).toHaveLength(16);
     expect(oracle.relationships).toEqual(expect.arrayContaining([
       expect.objectContaining({
         from: "pilgrim_registration", to: "payment_review",
@@ -45,6 +45,18 @@ describe("ATLAS-HARD-027 qualification fixtures", () => {
         from: "ready", to: "manifest_finalization",
         kind: "enables",
       }),
+      expect.objectContaining({
+        from: "pilgrim_data", to: "pilgrim_registration",
+        kind: "provides_data_to",
+      }),
+      expect.objectContaining({
+        from: "pilgrim_data", to: "document_review",
+        kind: "provides_data_to",
+      }),
+      expect.objectContaining({
+        from: "package_departure", to: "pilgrim_registration",
+        kind: "provides_context_to",
+      }),
     ]));
     expect(oracle.nodes.flatMap(({ accepted_source_labels }) =>
       accepted_source_labels)).not.toEqual(expect.arrayContaining([
@@ -61,11 +73,15 @@ describe("ATLAS-HARD-027 qualification fixtures", () => {
       forbidden_fixture_concepts: string[];
       expected_supported_model_kinds: string[];
       expected_unsupported_model_kinds: string[];
+      required_semantic_roles: string[];
+      required_relationship_kinds: string[];
     };
     expect(expected.required_concepts).toContain("invoice_verification");
     expect(expected.forbidden_fixture_concepts).toContain("pilgrim_registration");
     expect(expected.expected_supported_model_kinds).toContain("decision_model");
     expect(expected.expected_unsupported_model_kinds).toContain("sequence_interaction");
+    expect(expected.required_semantic_roles).toContain("shared_data");
+    expect(expected.required_relationship_kinds).toContain("provides_data_to");
   });
 
   it("keeps Safara fixture constants out of executable Atlas core", async () => {
