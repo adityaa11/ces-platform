@@ -21,6 +21,8 @@ import {
 import {
   assertBulkApprovalSelection,
   BulkApprovalEligibilitySchema,
+  ExpandedApprovalEligibilitySchema,
+  ProposedSemanticRecordSchema,
 } from "@company/ces-proposed-project-model";
 import {
   RequirementPackageSchema,
@@ -687,4 +689,161 @@ export function createProposalApprovalLedger(input: {
   return deepFreezeReview(ProposalApprovalLedgerSchema.parse({
     ...core, content_hash: sha256(core),
   }));
+}
+
+export const ExpandedApprovalDecisionInputSchema = z.object({
+  sequence: z.number().int().positive(),
+  action: z.enum([
+    "approve", "reject", "reclassify", "reassign", "change_relationship",
+    "change_order", "register_terminology", "migrate_logical_identity", "split", "merge",
+  ]),
+  entity_type: z.enum([
+    "record", "workflow_assignment", "cross_cutting_assignment",
+    "relationship_intent", "relationship_target", "workflow_edge",
+    "terminology_proposal",
+  ]),
+  entity_ids: z.array(ReviewIdSchema).min(1),
+  bulk: z.boolean().default(false),
+  reviewer: z.object({
+    kind: z.literal("human"),
+    identity: NonEmptyString,
+  }).strict(),
+  decided_at: z.string().datetime({ offset: true }),
+  note: NonEmptyString,
+  successor_proposal_revision: z.number().int().positive().optional(),
+  successor_proposal_hash: Sha256Schema.optional(),
+  successor_records: z.array(ProposedSemanticRecordSchema).default([]),
+  approved_logical_id: ReviewIdSchema.optional(),
+}).strict().superRefine((value, context) => {
+  const structural = value.action === "split" || value.action === "merge";
+  if (structural && value.entity_type !== "record") {
+    context.addIssue({ code: "custom", message: "Split and merge apply only to records" });
+  }
+  if (value.action === "split"
+    && (value.entity_ids.length !== 1 || value.successor_records.length < 2)) {
+    context.addIssue({ code: "custom", message: "Split requires one predecessor and complete successors" });
+  }
+  if (value.action === "merge"
+    && (value.entity_ids.length < 2 || value.successor_records.length !== 1)) {
+    context.addIssue({ code: "custom", message: "Merge requires predecessors and one complete successor" });
+  }
+  if (structural !== (value.successor_proposal_revision !== undefined
+    && value.successor_proposal_hash !== undefined)) {
+    context.addIssue({
+      code: "custom",
+      message: "Structural decisions require a complete corrected proposal revision reference",
+    });
+  }
+  if (value.bulk && value.action !== "approve") {
+    context.addIssue({ code: "custom", message: "Only approval can be bulk" });
+  }
+  if ((value.action === "migrate_logical_identity")
+    !== (value.approved_logical_id !== undefined)) {
+    context.addIssue({
+      code: "custom",
+      message: "Logical identity migration requires approved_logical_id",
+    });
+  }
+});
+
+export const ExpandedApprovalDecisionSchema = ExpandedApprovalDecisionInputSchema.extend({
+  decision_id: ReviewIdSchema,
+  proposal_hash: Sha256Schema,
+  proposal_revision: z.number().int().positive(),
+}).strict();
+
+export const ExpandedApprovalLedgerSchema = z.object({
+  schema_version: z.literal(ATLAS_REVIEW_VERSION),
+  proposal_hash: Sha256Schema,
+  proposal_revision: z.number().int().positive(),
+  eligibility_hash: Sha256Schema,
+  decisions: z.array(ExpandedApprovalDecisionSchema),
+  content_hash: Sha256Schema,
+}).strict();
+
+export function createExpandedApprovalLedger(input: {
+  readonly eligibility: z.input<typeof ExpandedApprovalEligibilitySchema>;
+  readonly decisions: readonly z.input<typeof ExpandedApprovalDecisionInputSchema>[];
+}): z.infer<typeof ExpandedApprovalLedgerSchema> {
+  const eligibility = ExpandedApprovalEligibilitySchema.parse(input.eligibility);
+  const eligible = new Map<string, typeof eligibility.entities[number]>(
+    eligibility.entities.map((entity) =>
+    [`${entity.entity_type}:${entity.entity_id}`, entity] as const));
+  const parsed = input.decisions.map((decision) =>
+    ExpandedApprovalDecisionInputSchema.parse(decision))
+    .sort((left, right) => left.sequence - right.sequence);
+  const terminal = new Set<string>();
+  parsed.forEach((decision, index) => {
+    if (decision.sequence !== index + 1) throw new Error("Expanded decision sequence must be contiguous");
+    if (decision.successor_proposal_revision !== undefined
+      && decision.successor_proposal_revision <= eligibility.proposal_revision) {
+      throw new Error("Successor proposal revision must advance");
+    }
+    for (const entityId of decision.entity_ids) {
+      const key = `${decision.entity_type}:${entityId}`;
+      const entity = eligible.get(key);
+      if (!entity) throw new Error(`Expanded approval references unknown entity: ${key}`);
+      if (terminal.has(key)) throw new Error(`Conflicting terminal decision for ${key}`);
+      if (decision.action === "approve" && !entity.eligible) {
+        throw new Error(`Approval blocked for ${key}: ${entity.blockers.join(",")}`);
+      }
+      if (decision.bulk && !entity.bulk_approval_eligible) {
+        throw new Error(`Bulk approval blocked for ${key}`);
+      }
+      terminal.add(key);
+    }
+    for (const successor of decision.successor_records) {
+      if (successor.identity.proposal_revision !== decision.successor_proposal_revision) {
+        throw new Error(`Successor record revision mismatch: ${successor.id}`);
+      }
+    }
+  });
+  const decisions = parsed.map((decision) => {
+    const core = {
+      proposal_hash: eligibility.proposal_hash,
+      proposal_revision: eligibility.proposal_revision,
+      ...decision,
+    };
+    return ExpandedApprovalDecisionSchema.parse({
+      ...core,
+      decision_id: `atlas.expanded-decision.${String(decision.sequence).padStart(5, "0")}.${digestForReview(core).slice(0, 12)}`,
+    });
+  });
+  const core = {
+    schema_version: ATLAS_REVIEW_VERSION,
+    proposal_hash: eligibility.proposal_hash,
+    proposal_revision: eligibility.proposal_revision,
+    eligibility_hash: eligibility.content_hash,
+    decisions,
+  };
+  return deepFreezeReview(ExpandedApprovalLedgerSchema.parse({
+    ...core, content_hash: sha256(core),
+  }));
+}
+
+export function replayExpandedApprovalLedger(input: {
+  readonly ledger: z.input<typeof ExpandedApprovalLedgerSchema>;
+  readonly current_proposal_hash: string;
+  readonly current_entity_ids: readonly string[];
+  readonly meaning_changed_entity_ids?: readonly string[];
+}): {
+  readonly reusable_decision_ids: readonly string[];
+  readonly stale_decision_ids: readonly string[];
+} {
+  const ledger = ExpandedApprovalLedgerSchema.parse(input.ledger);
+  Sha256Schema.parse(input.current_proposal_hash);
+  const currentIds = new Set(input.current_entity_ids.map((id) => ReviewIdSchema.parse(id)));
+  const meaningChanged = new Set((input.meaning_changed_entity_ids ?? [])
+    .map((id) => ReviewIdSchema.parse(id)));
+  const reusable: string[] = [];
+  const stale: string[] = [];
+  for (const decision of ledger.decisions) {
+    const unchanged = decision.entity_ids.every((id) =>
+      currentIds.has(id) && !meaningChanged.has(id));
+    (unchanged ? reusable : stale).push(decision.decision_id);
+  }
+  return deepFreezeReview({
+    reusable_decision_ids: reusable.sort(),
+    stale_decision_ids: stale.sort(),
+  });
 }

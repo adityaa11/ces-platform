@@ -1,18 +1,37 @@
 import { createHash } from "node:crypto";
 import { mkdir, rename, rm, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import {
   assertPublishableCoverage,
   CoverageReportSchema,
 } from "@company/ces-atlas-coverage";
 import {
+  ApprovedTerminologyRegistrySchema,
   classifyLegacyProjection,
   SemanticCollectionSchema,
   SemanticRecordSchema,
+  TerminologyProposalSchema,
 } from "@company/ces-semantic-record-schema";
-import { projectWorkflowGraph, WorkflowGraphSchema } from "@company/ces-atlas-intent-graph";
-import { ProposalApprovalLedgerSchema } from "@company/ces-atlas-review";
-import { ProposedProjectModelSchema } from "@company/ces-proposed-project-model";
+import {
+  FocusedProjectionBundleSchema,
+  materializeApprovedFocusedProjections,
+  projectWorkflowGraph,
+  WorkflowGraphSchema,
+} from "@company/ces-atlas-intent-graph";
+import {
+  ExpandedApprovalLedgerSchema,
+  ProposalApprovalLedgerSchema,
+} from "@company/ces-atlas-review";
+import {
+  createApprovedRelationshipIdentity,
+  CrossCuttingAssignmentSchema,
+  ExpandedApprovalEligibilitySchema,
+  GovernedWorkflowEdgeSchema,
+  ProposedOperationSchema,
+  ProposedProjectModelSchema,
+  ProposedWorkflowSchema,
+  WorkflowAssignmentSchema,
+} from "@company/ces-proposed-project-model";
 import { z } from "zod";
 
 export const APPROVED_PROJECT_MODEL_VERSION = "1.0.0" as const;
@@ -117,6 +136,54 @@ export const HardenedApprovedProjectModelSchema = z.object({
 export const HardenedApprovalPublicationSchema = z.object({
   model: HardenedApprovedProjectModelSchema,
   graph: WorkflowGraphSchema,
+}).strict();
+
+export const ExpandedApprovedProjectModelSchema = z.object({
+  schema_version: z.literal(APPROVED_PROJECT_MODEL_VERSION),
+  id: Id,
+  project_id: Id,
+  model_revision: z.number().int().positive(),
+  lifecycle: z.literal("approved"),
+  authoritative: z.literal(true),
+  approval_required: z.literal(false),
+  downstream_execution_allowed: z.literal(true),
+  source_revision_id: Id,
+  proposal_hash: Hash,
+  approval_ledger_hash: Hash,
+  records: z.array(HardenedApprovedRecordSchema),
+  workflows: z.array(ProposedWorkflowSchema),
+  operations: z.array(ProposedOperationSchema),
+  workflow_assignments: z.array(z.object({
+    assignment: WorkflowAssignmentSchema,
+    decision_id: Id,
+  }).strict()),
+  cross_cutting_assignments: z.array(z.object({
+    assignment: CrossCuttingAssignmentSchema,
+    decision_id: Id,
+  }).strict()),
+  workflow_edges: z.array(z.object({
+    edge: GovernedWorkflowEdgeSchema,
+    decision_id: Id,
+  }).strict()),
+  relationships: z.array(z.object({
+    approved_relationship_id: Id,
+    relationship_intent_id: Id,
+    target_candidate_id: Id,
+    from_id: Id,
+    to_id: Id,
+    relationship_kind: Id,
+    decision_id: Id,
+  }).strict()),
+  decision_ids: z.array(Id),
+  approved_by: z.array(Text).min(1),
+  approved_at: z.string().datetime({ offset: true }),
+  content_hash: Hash,
+}).strict();
+
+export const ExpandedApprovalPublicationSchema = z.object({
+  model: ExpandedApprovedProjectModelSchema,
+  terminology_registry: ApprovedTerminologyRegistrySchema,
+  focused_projections: FocusedProjectionBundleSchema,
 }).strict();
 
 export function materializeHardenedApprovedProjectModel(input: {
@@ -259,6 +326,159 @@ export function materializeHardenedApprovedProjectModel(input: {
   return deepFreeze(HardenedApprovalPublicationSchema.parse({ model, graph }));
 }
 
+export function materializeExpandedApprovedProjectModel(input: {
+  readonly proposal: z.input<typeof ProposedProjectModelSchema>;
+  readonly eligibility: z.input<typeof ExpandedApprovalEligibilitySchema>;
+  readonly ledger: z.input<typeof ExpandedApprovalLedgerSchema>;
+  readonly terminology_proposals?: readonly z.input<typeof TerminologyProposalSchema>[];
+  readonly focused_projections: z.input<typeof FocusedProjectionBundleSchema>;
+}): z.infer<typeof ExpandedApprovalPublicationSchema> {
+  const proposal = ProposedProjectModelSchema.parse(input.proposal);
+  const eligibility = ExpandedApprovalEligibilitySchema.parse(input.eligibility);
+  const ledger = ExpandedApprovalLedgerSchema.parse(input.ledger);
+  if (eligibility.proposal_hash !== proposal.content_hash
+    || ledger.proposal_hash !== proposal.content_hash
+    || ledger.eligibility_hash !== eligibility.content_hash) {
+    throw new Error("Expanded approval inputs are stale");
+  }
+  if (ledger.decisions.some(({ action }) => action === "split" || action === "merge")) {
+    throw new Error("Split or merge requires approval of the corrected successor proposal revision");
+  }
+  const approved = new Map<string, typeof ledger.decisions[number]>();
+  for (const decision of ledger.decisions) {
+    if (decision.action === "approve" || decision.action === "register_terminology") {
+      for (const id of decision.entity_ids) approved.set(`${decision.entity_type}:${id}`, decision);
+    }
+  }
+  const records = proposal.records.flatMap((record) => {
+    const decision = approved.get(`record:${record.id}`);
+    if (!decision) return [];
+    return [HardenedApprovedRecordSchema.parse({
+      id: record.identity.approved_logical_id ?? record.id,
+      revision: 1,
+      origin_revision: proposal.proposal_revision,
+      semantic_kind_id: record.semantic_kind_id,
+      statement: record.statement,
+      source_unit_ids: record.source_unit_ids,
+      candidate_ids: record.candidate_ids,
+      decision_ids: [decision.decision_id],
+      parent_record_ids: record.identity.predecessor_record_ids,
+      origin: record.origin,
+      status: "approved",
+    })];
+  });
+  const approvedRecordIds = new Set(proposal.records
+    .filter((record) => approved.has(`record:${record.id}`))
+    .map(({ id }) => id));
+  const operations = proposal.operations.filter((operation) =>
+    operation.semantic_record_ids.some((id) => approvedRecordIds.has(id)));
+  const operationIds = new Set(operations.map(({ operation_id }) => operation_id));
+  const workflows = proposal.workflows.map((workflow) => ({
+    ...workflow,
+    operation_ids: workflow.operation_ids.filter((id) => operationIds.has(id)),
+  })).filter(({ operation_ids }) => operation_ids.length > 0);
+  const workflowAssignments = proposal.workflow_assignments.flatMap((assignment) => {
+    const decision = approved.get(`workflow_assignment:${assignment.assignment_id}`);
+    return decision ? [{ assignment, decision_id: decision.decision_id }] : [];
+  });
+  const crossCuttingAssignments = proposal.cross_cutting_assignments.flatMap((assignment) => {
+    const decision = approved.get(`cross_cutting_assignment:${assignment.assignment_id}`);
+    return decision ? [{ assignment, decision_id: decision.decision_id }] : [];
+  });
+  const workflowEdges = proposal.workflow_edges.flatMap((edge) => {
+    const decision = approved.get(`workflow_edge:${edge.edge_id}`);
+    return decision ? [{ edge, decision_id: decision.decision_id }] : [];
+  });
+  const relationships = proposal.relationship_candidates.flatMap((intent) =>
+    intent.targets.flatMap((target) => {
+      const decision = approved.get(`relationship_target:${target.target_candidate_id}`);
+      if (!decision || !target.target_id) return [];
+      const identity = createApprovedRelationshipIdentity({
+        relationship_intent_id: intent.relationship_intent_id,
+        target_candidate_id: target.target_candidate_id,
+        target_id: target.target_id,
+      });
+      return [{
+        ...identity,
+        from_id: intent.from_id,
+        to_id: target.target_id,
+        relationship_kind: intent.relationship_kind,
+        decision_id: decision.decision_id,
+      }];
+    }));
+  const reviewers = [...new Set(ledger.decisions.map(({ reviewer }) => reviewer.identity))]
+    .sort(compare);
+  const approvedAt = ledger.decisions.map(({ decided_at }) => decided_at).sort().at(-1);
+  if (!approvedAt || reviewers.length === 0) throw new Error("Expanded approval requires human decisions");
+  const core = {
+    schema_version: APPROVED_PROJECT_MODEL_VERSION,
+    project_id: proposal.project_id,
+    model_revision: proposal.proposal_revision,
+    lifecycle: "approved" as const,
+    authoritative: true as const,
+    approval_required: false as const,
+    downstream_execution_allowed: true as const,
+    source_revision_id: proposal.source_revision_id,
+    proposal_hash: proposal.content_hash,
+    approval_ledger_hash: ledger.content_hash,
+    records,
+    workflows,
+    operations,
+    workflow_assignments: workflowAssignments,
+    cross_cutting_assignments: crossCuttingAssignments,
+    workflow_edges: workflowEdges,
+    relationships,
+    decision_ids: ledger.decisions.map(({ decision_id }) => decision_id).sort(compare),
+    approved_by: reviewers,
+    approved_at: approvedAt,
+  };
+  const model = deepFreeze(ExpandedApprovedProjectModelSchema.parse({
+    ...core,
+    id: `${proposal.project_id}.approved-model.${hashJson(core).slice(7, 19)}`,
+    content_hash: hashJson(core),
+  }));
+  const terminologyProposals = new Map((input.terminology_proposals ?? [])
+    .map((proposalValue) => {
+      const parsed = TerminologyProposalSchema.parse(proposalValue);
+      return [parsed.proposal_id, parsed] as const;
+    }));
+  const registryEntries = ledger.decisions.flatMap((decision) => {
+    if (decision.action !== "register_terminology"
+      || decision.entity_type !== "terminology_proposal") return [];
+    return decision.entity_ids.map((id) => {
+      const proposalValue = terminologyProposals.get(id);
+      if (!proposalValue) throw new Error(`Missing terminology proposal: ${id}`);
+      return {
+        term_id: `term.approved.${hashJson(proposalValue).slice(7, 19)}`,
+        canonical_concept: proposalValue.canonical_concept,
+        approved_terms: proposalValue.source_terms,
+        approved_by: decision.reviewer.identity,
+        decision_id: decision.decision_id,
+      };
+    });
+  });
+  const registryCore = {
+    schema_version: "1.0.0",
+    registry_id: `${proposal.project_id}.terminology`,
+    registry_version: "1.0.0",
+    entries: registryEntries.sort((left, right) => compare(left.term_id, right.term_id)),
+  };
+  const terminologyRegistry = deepFreeze(ApprovedTerminologyRegistrySchema.parse({
+    ...registryCore,
+    content_hash: hashJson(registryCore),
+  }));
+  const focusedProjections = materializeApprovedFocusedProjections({
+    proposed: input.focused_projections,
+    approved_model_hash: model.content_hash,
+    approved_model_revision: model.model_revision,
+  });
+  return deepFreeze(ExpandedApprovalPublicationSchema.parse({
+    model,
+    terminology_registry: terminologyRegistry,
+    focused_projections: focusedProjections,
+  }));
+}
+
 export async function publishHardenedApproval(
   outputDirectory: string,
   publicationValue: z.input<typeof HardenedApprovalPublicationSchema>,
@@ -272,6 +492,60 @@ export async function publishHardenedApproval(
       `${JSON.stringify(canonical(publication.model), null, 2)}\n`, "utf8");
     await writeFile(join(stagingDirectory, "approved-workflow-graph.json"),
       `${JSON.stringify(canonical(publication.graph), null, 2)}\n`, "utf8");
+    await rename(stagingDirectory, finalDirectory);
+  } catch (error) {
+    await rm(stagingDirectory, { recursive: true, force: true });
+    throw error;
+  }
+  return finalDirectory;
+}
+
+export async function publishExpandedApproval(
+  outputDirectory: string,
+  publicationValue: z.input<typeof ExpandedApprovalPublicationSchema>,
+): Promise<string> {
+  const publication = ExpandedApprovalPublicationSchema.parse(publicationValue);
+  const finalDirectory = join(outputDirectory, publication.model.id);
+  const stagingDirectory = `${finalDirectory}.staging`;
+  await mkdir(stagingDirectory, { recursive: false });
+  try {
+    const artifacts: Record<string, unknown> = {
+      "approved-project-model.json": publication.model,
+      "approved-terminology-registry.json": publication.terminology_registry,
+      "approved-project-overview-graph.json": publication.focused_projections.project_overview,
+      "approved-workflow-detail-graphs.json": publication.focused_projections.workflow_details,
+      "approved-rules-controls-index.json": publication.focused_projections.rules_controls_index,
+      "approved-traceability-graph.json": publication.focused_projections.traceability,
+      "approved-approval-exceptions.json": publication.focused_projections.approval_exceptions,
+      "approved-assignments.json": {
+        workflow_assignments: publication.model.workflow_assignments,
+        cross_cutting_assignments: publication.model.cross_cutting_assignments,
+      },
+      "approved-relationships.json": publication.model.relationships,
+    };
+    for (const [path, value] of Object.entries(artifacts)) {
+      const destination = join(stagingDirectory, path);
+      await mkdir(dirname(destination), { recursive: true });
+      await writeFile(destination, `${JSON.stringify(canonical(value), null, 2)}\n`, "utf8");
+    }
+    for (const slice of publication.focused_projections.rules_controls_slices) {
+      const approvedPath = slice.artifact.replace(/^proposed-/u, "approved-");
+      const destination = join(stagingDirectory, approvedPath);
+      await mkdir(dirname(destination), { recursive: true });
+      await writeFile(destination, `${JSON.stringify(canonical(slice), null, 2)}\n`, "utf8");
+    }
+    const report = [
+      "# Atlas Approval Report",
+      "",
+      `- Approved model: ${publication.model.id}`,
+      `- Proposal hash: ${publication.model.proposal_hash}`,
+      `- Approval ledger hash: ${publication.model.approval_ledger_hash}`,
+      `- Decisions: ${publication.model.decision_ids.length}`,
+      `- Approved records: ${publication.model.records.length}`,
+      `- Approved relationships: ${publication.model.relationships.length}`,
+      "",
+    ].join("\n");
+    await writeFile(join(stagingDirectory, "approval-report.md"), report, "utf8");
     await rename(stagingDirectory, finalDirectory);
   } catch (error) {
     await rm(stagingDirectory, { recursive: true, force: true });

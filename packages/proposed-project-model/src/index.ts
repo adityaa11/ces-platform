@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { link, mkdir, unlink, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import {
+  AtomicClaimCoverageReportSchema,
   CompletenessCriticReportSchema,
   PipelineCoverageReportSchema,
 } from "@company/ces-atlas-coverage";
@@ -9,6 +10,7 @@ import { AtlasCandidateInventorySchema } from "@company/ces-atlas-role-contracts
 import {
   MultilingualStatementSchema,
   SemanticKindRegistrySchema,
+  TerminologyProposalSchema,
 } from "@company/ces-semantic-record-schema";
 import { z } from "zod";
 
@@ -399,6 +401,122 @@ export const BulkApprovalEligibilitySchema = z.object({
   }).strict(),
   content_hash: Hash,
 }).strict();
+
+export const ExpandedApprovalEligibilitySchema = z.object({
+  proposal_hash: Hash,
+  proposal_revision: z.number().int().positive(),
+  entities: z.array(z.object({
+    entity_type: z.enum([
+      "record", "workflow_assignment", "cross_cutting_assignment",
+      "relationship_intent", "relationship_target", "workflow_edge",
+      "terminology_proposal",
+    ]),
+    entity_id: Id,
+    eligible: z.boolean(),
+    bulk_approval_eligible: z.boolean(),
+    blockers: z.array(Id),
+  }).strict()),
+  content_hash: Hash,
+}).strict();
+
+export function calculateExpandedApprovalEligibility(input: {
+  readonly model: z.input<typeof ProposedProjectModelSchema>;
+  readonly atomic_claim_coverage?: z.input<typeof AtomicClaimCoverageReportSchema>;
+  readonly terminology_proposals?: readonly z.input<typeof TerminologyProposalSchema>[];
+}): z.infer<typeof ExpandedApprovalEligibilitySchema> {
+  const model = ProposedProjectModelSchema.parse(input.model);
+  const claimCoverage = input.atomic_claim_coverage
+    ? AtomicClaimCoverageReportSchema.parse(input.atomic_claim_coverage)
+    : undefined;
+  if (claimCoverage && claimCoverage.source_revision_id !== model.source_revision_id) {
+    throw new Error("Atomic claim eligibility revision mismatch");
+  }
+  const uncoveredBlocksAll = claimCoverage?.entries.some(({ disposition }) =>
+    disposition === "uncovered") ?? false;
+  const claimBlockers = new Map<string, Set<string>>();
+  for (const entry of claimCoverage?.entries ?? []) {
+    if (["represented", "duplicate", "not_applicable"].includes(entry.disposition)) continue;
+    for (const recordId of entry.record_ids) {
+      const blockers = claimBlockers.get(recordId) ?? new Set<string>();
+      blockers.add(`claim-${entry.disposition}`);
+      claimBlockers.set(recordId, blockers);
+    }
+  }
+  const entities: z.input<typeof ExpandedApprovalEligibilitySchema>["entities"] = [];
+  for (const record of model.records) {
+    const blockers = new Set<string>(claimBlockers.get(record.id) ?? []);
+    if (uncoveredBlocksAll) blockers.add("uncovered-claim");
+    if (record.semantic_kind_id === "ces.kind.unknown") blockers.add("unknown-semantic-kind");
+    if (record.classification_status === "classification_required") blockers.add("classification-required");
+    if (record.multilingual.translation_status === "review_required") blockers.add("language-review-required");
+    record.issues.filter(({ severity }) => severity !== "warning")
+      .forEach(({ code }) => blockers.add(code));
+    entities.push({
+      entity_type: "record", entity_id: record.id,
+      eligible: blockers.size === 0,
+      bulk_approval_eligible: blockers.size === 0 && record.origin === "explicit",
+      blockers: [...blockers].sort(compare),
+    });
+  }
+  const addGoverned = (
+    entityType: "workflow_assignment" | "cross_cutting_assignment"
+      | "relationship_intent" | "workflow_edge",
+    entityId: string,
+    governance: z.infer<typeof GovernedAssociationSchema>,
+  ): void => {
+    const blockers = new Set(governance.blockers);
+    if (uncoveredBlocksAll) blockers.add("uncovered-claim");
+    entities.push({
+      entity_type: entityType,
+      entity_id: entityId,
+      eligible: blockers.size === 0,
+      bulk_approval_eligible: blockers.size === 0 && governance.bulk_approval_eligible,
+      blockers: [...blockers].sort(compare),
+    });
+  };
+  model.workflow_assignments.forEach((assignment) =>
+    addGoverned("workflow_assignment", assignment.assignment_id, assignment.governance));
+  model.cross_cutting_assignments.forEach((assignment) =>
+    addGoverned("cross_cutting_assignment", assignment.assignment_id, assignment.governance));
+  model.workflow_edges.forEach((edge) =>
+    addGoverned("workflow_edge", edge.edge_id, edge.governance));
+  for (const relationship of model.relationship_candidates) {
+    addGoverned("relationship_intent", relationship.relationship_intent_id,
+      relationship.governance);
+    for (const target of relationship.targets) {
+      const blockers = new Set(target.blockers);
+      if (!target.target_id || target.target_status !== "valid") blockers.add("target-unresolved");
+      if (uncoveredBlocksAll) blockers.add("uncovered-claim");
+      entities.push({
+        entity_type: "relationship_target",
+        entity_id: target.target_candidate_id,
+        eligible: blockers.size === 0,
+        bulk_approval_eligible: false,
+        blockers: [...blockers].sort(compare),
+      });
+    }
+  }
+  for (const proposalValue of input.terminology_proposals ?? []) {
+    const proposal = TerminologyProposalSchema.parse(proposalValue);
+    entities.push({
+      entity_type: "terminology_proposal",
+      entity_id: proposal.proposal_id,
+      eligible: true,
+      bulk_approval_eligible: false,
+      blockers: [],
+    });
+  }
+  entities.sort((left, right) =>
+    compare(`${left.entity_type}:${left.entity_id}`, `${right.entity_type}:${right.entity_id}`));
+  const core = {
+    proposal_hash: model.content_hash,
+    proposal_revision: model.proposal_revision,
+    entities,
+  };
+  return freeze(ExpandedApprovalEligibilitySchema.parse({
+    ...core, content_hash: hash(core),
+  }));
+}
 
 export function createProposedProjectModel(input: {
   readonly project_id: string;

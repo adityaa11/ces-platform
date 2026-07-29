@@ -137,11 +137,19 @@ describe("Atlas CLI pipeline", () => {
         counts: { total: 1, represented: 1, unresolved: 0, blocking: 0 },
         qualification_blocked: false,
       });
+      expect(await json(join(output, "approval-eligibility.json"))).toMatchObject({
+        proposal_revision: 1,
+        entities: [expect.objectContaining({
+          entity_type: "record",
+          entity_id: expect.any(String),
+        })],
+      });
       const projection = JSON.parse(
         await readFile(join(output, "legacy-projection-losses.json"), "utf8"),
       );
       expect(projection.direction).toBe("canonical-to-legacy");
       expect(await fileNames(output)).toEqual([
+        "approval-eligibility.json",
         "atomic-claims.json",
         "candidate-analysis.json",
         "candidate-inventory.json",
@@ -236,6 +244,7 @@ describe("Atlas CLI pipeline", () => {
       ];
       expect(await runCli(resumeArgs, capture().io)).toBe(0);
       expect(await fileNames(output)).toEqual([
+        "approval-eligibility.json",
         "atomic-claims.json",
         "candidate-analysis.json",
         "candidate-inventory.json",

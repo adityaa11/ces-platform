@@ -1,10 +1,17 @@
 import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createProposalApprovalLedger } from "@company/ces-atlas-review";
+import {
+  createExpandedApprovalLedger,
+  createProposalApprovalLedger,
+} from "@company/ces-atlas-review";
+import { createFocusedAtlasProjections } from "@company/ces-atlas-intent-graph";
+import { calculateExpandedApprovalEligibility } from "@company/ces-proposed-project-model";
 import { describe, expect, it } from "vitest";
 import {
   materializeHardenedApprovedProjectModel,
+  materializeExpandedApprovedProjectModel,
+  publishExpandedApproval,
   publishHardenedApproval,
 } from "./index.js";
 
@@ -142,6 +149,42 @@ const eligibility = {
 };
 
 describe("ATLAS-HARD-013 approved model materialization", () => {
+  it("materializes expanded human decisions and approved focused projections", async () => {
+    const expandedEligibility = calculateExpandedApprovalEligibility({ model: proposal });
+    const ledger = createExpandedApprovalLedger({
+      eligibility: expandedEligibility,
+      decisions: [{
+        sequence: 1,
+        action: "approve",
+        entity_type: "record",
+        entity_ids: ["project.record.temperature"],
+        reviewer: { kind: "human", identity: "reviewer-1" },
+        decided_at: "2026-07-29T10:00:00+07:00",
+        note: "Approved record.",
+      }],
+    });
+    const publication = materializeExpandedApprovedProjectModel({
+      proposal,
+      eligibility: expandedEligibility,
+      ledger,
+      focused_projections: createFocusedAtlasProjections({ model: proposal }),
+    });
+    expect(publication.model).toMatchObject({
+      authoritative: true,
+      downstream_execution_allowed: true,
+      records: [{ id: "project.record.temperature" }],
+    });
+    expect(publication.focused_projections).toMatchObject({
+      model_lifecycle: "approved",
+      authoritative: true,
+      downstream_execution_allowed: true,
+    });
+    const directory = await mkdtemp(join(tmpdir(), "atlas-expanded-approved-"));
+    const published = await publishExpandedApproval(directory, publication);
+    expect(await readFile(join(published, "approval-report.md"), "utf8"))
+      .toContain("Approved records: 1");
+  });
+
   it("publishes only approved records with authority and graph parity", async () => {
     const ledger = createProposalApprovalLedger({
       proposal_hash: proposal.content_hash, proposal_revision: 1,

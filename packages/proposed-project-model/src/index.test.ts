@@ -14,6 +14,7 @@ import { join } from "node:path";
 import {
   assertBulkApprovalSelection,
   calculateBulkApprovalEligibility,
+  calculateExpandedApprovalEligibility,
   createApprovedRelationshipIdentity,
   createCanonicalRecordIdentity,
   createBulkApprovalPolicy,
@@ -263,6 +264,17 @@ describe("ATLAS-HARD-009 ProposedProjectModel", () => {
     })).toMatchObject({
       relationship_intent_id: model.relationship_candidates[0]!.relationship_intent_id,
       target_candidate_id: target.target_candidate_id,
+    });
+    const expanded = calculateExpandedApprovalEligibility({ model });
+    expect(expanded.entities.find(({ entity_type }) =>
+      entity_type === "relationship_target")).toMatchObject({
+      eligible: true,
+      bulk_approval_eligible: false,
+    });
+    expect(expanded.entities.find(({ entity_type }) =>
+      entity_type === "relationship_intent")).toMatchObject({
+      eligible: false,
+      blockers: ["derived-relationship"],
     });
     expect(Object.isFrozen(model.records[0])).toBe(true);
     expect(model).toMatchObject({

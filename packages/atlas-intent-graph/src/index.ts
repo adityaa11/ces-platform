@@ -267,6 +267,44 @@ export function createFocusedAtlasProjections(input: {
   }));
 }
 
+export function materializeApprovedFocusedProjections(input: {
+  readonly proposed: z.input<typeof FocusedProjectionBundleSchema>;
+  readonly approved_model_hash: string;
+  readonly approved_model_revision: number;
+}): z.infer<typeof FocusedProjectionBundleSchema> {
+  const proposed = FocusedProjectionBundleSchema.parse(input.proposed);
+  if (proposed.model_lifecycle !== "review_in_progress") {
+    throw new Error("Approved projection materialization requires a proposed projection");
+  }
+  const { content_hash: _ignored, ...rest } = proposed;
+  const approvedArtifacts = new Map(proposed.rules_controls_slices.map((slice) => [
+    slice.slice_id,
+    slice.artifact.replace(/^proposed-/u, "approved-"),
+  ]));
+  const core = {
+    ...rest,
+    model_revision: z.number().int().positive().parse(input.approved_model_revision),
+    model_hash: Sha256Schema.parse(input.approved_model_hash),
+    model_lifecycle: "approved" as const,
+    authoritative: true,
+    downstream_execution_allowed: true,
+    rules_controls_index: {
+      artifacts: proposed.rules_controls_index.artifacts.map((artifact) => ({
+        ...artifact,
+        artifact: approvedArtifacts.get(artifact.slice_id)!,
+      })),
+    },
+    rules_controls_slices: proposed.rules_controls_slices.map((slice) => ({
+      ...slice,
+      artifact: approvedArtifacts.get(slice.slice_id)!,
+    })),
+  };
+  return deepFreezeProjection(FocusedProjectionBundleSchema.parse({
+    ...core,
+    content_hash: hashProjection(core),
+  }));
+}
+
 export const WorkflowGraphProjectionInputSchema = z.object({
   project_id: StableId,
   model_revision: z.number().int().positive(),

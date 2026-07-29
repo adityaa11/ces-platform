@@ -67,6 +67,7 @@ import {
 } from "@company/ces-greenfield-contracts";
 import { ingestPdfDocument } from "@company/ces-pdf-ingestion";
 import {
+  calculateExpandedApprovalEligibility,
   createCanonicalRecordIdentity,
   createProposedProjectModel,
   createRecordIdentityReport,
@@ -1895,6 +1896,11 @@ function buildCanonicalProposedAtlasArtifacts(input: {
       canonical_concept: `${projectId}.concept.term.${record.identity.semantic_fingerprint.slice(7, 19)}`,
       source_unit_ids: record.source_unit_ids,
     }));
+  const expandedEligibility = calculateExpandedApprovalEligibility({
+    model,
+    atomic_claim_coverage: atomicClaimCoverage,
+    terminology_proposals: terminologyProposals,
+  });
   return {
     "source-units.json": collectionCanonicalJson(units),
     "atomic-claims.json": collectionCanonicalJson(atomicClaims),
@@ -1908,6 +1914,7 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     "candidate-relationship-hints.json": collectionCanonicalJson(relationshipHints),
     "relationship-candidates.json": collectionCanonicalJson(relationshipCandidates),
     "reviewer-augmentations.json": collectionCanonicalJson([]),
+    "approval-eligibility.json": collectionCanonicalJson(expandedEligibility),
     "terminology-proposals.json": collectionCanonicalJson(terminologyProposals),
     "translation-equivalence-proposals.json": collectionCanonicalJson([]),
     ...(atomicClaimRetryScope ? {
@@ -2287,6 +2294,10 @@ export function buildProposedAtlasArtifacts(input: {
       canonical_concept: `${projectId}.concept.term.${record.identity.semantic_fingerprint.slice(7, 19)}`,
       source_unit_ids: record.source_unit_ids,
     }));
+  const expandedEligibility = calculateExpandedApprovalEligibility({
+    model,
+    terminology_proposals: terminologyProposals,
+  });
   return {
     "source-units.json": collectionCanonicalJson(units),
     "record-identity-report.json": collectionCanonicalJson(identityReport),
@@ -2302,6 +2313,7 @@ export function buildProposedAtlasArtifacts(input: {
       model.relationship_candidates,
     ),
     "reviewer-augmentations.json": collectionCanonicalJson([]),
+    "approval-eligibility.json": collectionCanonicalJson(expandedEligibility),
     "terminology-proposals.json": collectionCanonicalJson(terminologyProposals),
     "translation-equivalence-proposals.json": collectionCanonicalJson([]),
     "source-coverage.json": collectionCanonicalJson(coverage),
@@ -2488,6 +2500,7 @@ async function retainedPendingArtifacts(
 ): Promise<Record<string, string>> {
   const retained: Record<string, string> = {};
   for (const path of [
+    "approval-eligibility.json",
     "source-index.json",
     "candidate-analysis.json",
     "candidate-relationship-hints.json",

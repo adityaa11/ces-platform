@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-026 — Expanded Approval and Bulk Eligibility
 
 **Stage:** Canonical model and workflow projection refinement
-**Status:** Proposed
+**Status:** Implemented
 
 ## Objective
 
@@ -52,29 +52,29 @@ Expanded `approval-eligibility.json`, `approval-decisions.json`,
 
 ## Acceptance criteria
 
-- [ ] Every approvable entity has backend-calculated eligibility and blockers.
-- [ ] Assignment and relationship decisions have immutable IDs.
-- [ ] Split and merge decisions explicitly record predecessor and successor
+- [x] Every approvable entity has backend-calculated eligibility and blockers.
+- [x] Assignment and relationship decisions have immutable IDs.
+- [x] Split and merge decisions explicitly record predecessor and successor
       record IDs and preserve source lineage.
-- [ ] Every successor resolves within a new immutable corrected proposal
+- [x] Every successor resolves within a new immutable corrected proposal
       revision to a complete schema-valid record.
-- [ ] Split and merge decisions reference both source and successor proposal
+- [x] Split and merge decisions reference both source and successor proposal
       revisions plus migration rationale.
-- [ ] Approved logical identity migration is explicit and reviewable.
-- [ ] Affected predecessor decisions become stale and never silently transfer
+- [x] Approved logical identity migration is explicit and reviewable.
+- [x] Affected predecessor decisions become stale and never silently transfer
       to successors.
-- [ ] Unaffected decisions remain reusable when their governed target and
+- [x] Unaffected decisions remain reusable when their governed target and
       meaning are unchanged.
-- [ ] Rejected predecessor records cannot silently reappear after split or
+- [x] Rejected predecessor records cannot silently reappear after split or
       merge.
-- [ ] Split/merge decision replay is deterministic.
-- [ ] Materialization fails closed when any successor payload is missing,
+- [x] Split/merge decision replay is deterministic.
+- [x] Materialization fails closed when any successor payload is missing,
       incomplete, schema-invalid, or revision-mismatched.
-- [ ] Derived ordering is not silently bulk-approved.
-- [ ] Uncovered claims block affected approval and qualification.
-- [ ] Atlas cannot author human approval decisions.
-- [ ] Rejected or unresolved proposals cannot enter approved artifacts.
-- [ ] Downstream execution remains blocked before materialization.
+- [x] Derived ordering is not silently bulk-approved.
+- [x] Uncovered claims block affected approval and qualification.
+- [x] Atlas cannot author human approval decisions.
+- [x] Rejected or unresolved proposals cannot enter approved artifacts.
+- [x] Downstream execution remains blocked before materialization.
 
 ## Tests and evidence
 
@@ -86,3 +86,26 @@ unaffected decisions, and deterministic replay.
 ## Out of scope
 
 Final Safara and lifecycle qualification remains ATLAS-HARD-015.
+
+## Implementation evidence
+
+Atlas now calculates expanded eligibility for records, assignments,
+cross-cutting controls, relationship intents and targets, workflow edges, and
+terminology proposals. Immutable human-only decisions cover approval,
+reclassification, reassignment, relationship/order changes, terminology,
+logical-identity migration, split, and merge. Replay distinguishes stale
+meaning-changing targets from reusable unaffected decisions.
+
+Split/merge decisions require a later immutable proposal revision and complete
+schema-valid successor records; the materializer refuses to publish structural
+changes directly from identifiers. Expanded materialization publishes approved
+records, assignments, relationships, terminology, lifecycle-neutral focused
+projections, and `approval-report.md` from proposal plus human ledger only.
+The CLI emits backend-owned `approval-eligibility.json` before review.
+
+Verification:
+
+- Builds: proposed-project-model, Atlas review, Atlas intent graph,
+  approved-project-model, and CLI typecheck.
+- `corepack pnpm vitest run packages/proposed-project-model/src/index.test.ts packages/atlas-review/src/proposal-decisions.test.ts packages/approved-project-model/src/hardened.test.ts packages/atlas-intent-graph/src/index.test.ts apps/cli/src/atlas.test.ts`
+- 25 focused tests passed.
