@@ -40,7 +40,8 @@ parallel semantic model, source identity system, or approval path.
 | 23 | [ATLAS-HARD-024](CES-GF-ATLAS-HARD-024-multi-target-relationships.md) | Zero-, one-, and multi-target relationships | 022–023 |
 | 24 | [ATLAS-HARD-025](CES-GF-ATLAS-HARD-025-focused-ui-projections.md) | Focused backend-owned UI projections | 010, 018–024 |
 | 25 | [ATLAS-HARD-026](CES-GF-ATLAS-HARD-026-expanded-approval-and-eligibility.md) | Approval and eligibility across governed entities | 011–013, 022–025 |
-| 26 | [ATLAS-HARD-015](CES-GF-ATLAS-HARD-015-safara-qualification-gate.md) | Final qualification gate — executed last | 001–014, 016–026, ATLAS-UI-001–005 |
+| 26 | [ATLAS-HARD-027](CES-GF-ATLAS-HARD-027-first-golden-main-workflow.md) | First qualified domain-neutral main-workflow compiler output | 018–026 |
+| 27 | [ATLAS-HARD-015](CES-GF-ATLAS-HARD-015-safara-qualification-gate.md) | Final qualification gate — executed last | 001–014, 016–027, ATLAS-UI-001–005 |
 
 ATLAS-HARD-015 is reopened, blocked, and must execute last. Workflow UI
 implementation and production qualification are owned by the separate
@@ -49,6 +50,10 @@ Safara run reopened ATLAS-HARD-021 through ATLAS-HARD-026 because the generated
 workflow inventory had no connected topology or approved topology replay.
 Earlier library-level completion, the pre-refinement live artifacts, or cleaner
 graph output is not production integration evidence.
+
+ATLAS-HARD-027 defines the first golden project overview and a mandatory
+structurally different regression fixture. Fixture-specific labels and
+topology remain outside generic production compiler logic.
 
 ## Program rules
 

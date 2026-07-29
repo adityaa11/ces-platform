@@ -88,6 +88,12 @@ edge collection and no readable per-workflow Mermaid projection is emitted.
 - [ ] Prove project overview remains smaller than the full semantic model.
 - [ ] Prove traceability reaches workflow and operation nodes through source
       unit, atomic claim, and canonical record lineage.
+- [ ] Each governed semantic concept appears once per projection even when it
+      has equivalent source representations in several languages.
+- [ ] Evidence projections retain every exact original document
+      representation.
+- [ ] Project overview distinguishes parallel enablement, conditional branches,
+      states, and non-sequential reporting data dependencies.
 
 ### Safara qualification thresholds
 

@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-019 — Stable Canonical Record Identity
 
 **Stage:** Canonical model and workflow projection refinement
-**Status:** Implemented
+**Status:** Reopened — multilingual semantic-concept identity requires qualification
 
 ## Objective
 
@@ -72,6 +72,11 @@ report, and deterministic fixtures.
 - [x] Meaning-changing revisions create an explicit semantic revision or
       successor identity rather than silently reusing the old meaning.
 - [x] Approval never targets unstable projection IDs.
+- [ ] Semantically equivalent multilingual representations share one governed
+      semantic concept after accepted equivalence review and do not create
+      language-specific logical identities.
+- [ ] Display-language changes alter labels only and never duplicate or replace
+      workflow, operation, state, rule, or relationship identity.
 
 ## Tests and evidence
 

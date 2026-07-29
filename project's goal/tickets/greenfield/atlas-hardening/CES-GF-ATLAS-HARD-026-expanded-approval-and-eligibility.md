@@ -100,6 +100,11 @@ relationships are replayed into connected approved workflow projections.
 - [ ] Prove deterministic replay from immutable proposal plus decisions.
 - [ ] Store Safara evidence for partial multi-target approval and stale
       decision handling.
+- [ ] Accepted multilingual equivalence decisions materialize one governed
+      semantic concept without losing any exact original document
+      representation.
+- [ ] Rejected equivalence decisions keep concepts separate and preserve their
+      independent identities and evidence.
 
 ### Safara qualification thresholds
 

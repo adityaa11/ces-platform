@@ -2,7 +2,7 @@
 
 **Status:** Planned
 **Authority:** [`CES_ATLAS_WORKFLOW_UI_CONTEXT.md`](../../../CES_ATLAS_WORKFLOW_UI_CONTEXT.md)
-**Backend foundation:** ATLAS-HARD-021 through ATLAS-HARD-026.
+**Backend foundation:** ATLAS-HARD-021 through ATLAS-HARD-027.
 
 This program owns the production human-review interface for backend-generated
 Atlas workflow projections. It does not own workflow extraction, semantic
@@ -17,7 +17,7 @@ materialization.
 | 2 | [ATLAS-UI-002](CES-GF-ATLAS-UI-002-persistent-overview-workflow-detail.md) | Persistent main workflow with stacked selected detail | UI-001 |
 | 3 | [ATLAS-UI-003](CES-GF-ATLAS-UI-003-focused-tabs-source-workspace.md) | Focused tabs and exact source evidence | HARD-025, UI-001–002 |
 | 4 | [ATLAS-UI-004](CES-GF-ATLAS-UI-004-governed-workflow-approval-ui.md) | Governed review and immutable human decisions | HARD-026, UI-001–003 |
-| 5 | [ATLAS-UI-005](CES-GF-ATLAS-UI-005-workflow-ui-qualification.md) | Production, accessibility, and cross-domain qualification | HARD-021–026, UI-001–004 |
+| 5 | [ATLAS-UI-005](CES-GF-ATLAS-UI-005-workflow-ui-qualification.md) | Production, accessibility, and cross-domain qualification | HARD-021–027, UI-001–004 |
 
 ## Program rules
 
@@ -27,6 +27,9 @@ materialization.
 - The right source workspace remains synchronized with the selected UI item.
 - The frontend renders backend-owned projections and never invents semantic
   membership, order, branches, states, or approval eligibility.
+- Same-meaning multilingual representations render as one governed semantic
+  concept while all exact original document text remains available as
+  evidence.
 - Production headings, theme, navigation, and default content remain
   domain-neutral.
 - Fixture-specific terminology may exist only in test data or user-selected
@@ -39,4 +42,3 @@ materialization.
 
 ATLAS-UI-005 must pass before ATLAS-HARD-015 can close or the production
 workflow approval UI can be accepted.
-

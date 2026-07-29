@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-020 — Multilingual Canonical Representation
 
 **Stage:** Canonical model and workflow projection refinement
-**Status:** Implemented
+**Status:** Reopened — multilingual deduplication and original-representation retention require qualification
 
 ## Objective
 
@@ -16,6 +16,8 @@ equivalence.
 ## Work
 
 - Add original and canonical statement/language contracts.
+- Preserve the exact original document text for every source representation,
+  regardless of language.
 - Add `detected_language`, `language_detection_method`, and
   `language_confidence` at source-unit, candidate, and canonical-statement
   granularity so mixed-language documents do not inherit one document-level
@@ -34,6 +36,9 @@ equivalence.
   silently replace approved terminology, or alter registry versions without
   governance.
 - Prevent silent cross-language merge and language-dependent identity.
+- Present accepted same-meaning multilingual representations as one governed
+  semantic concept while retaining every exact original representation as
+  evidence.
 - Surface low-confidence language detection as a reviewable finding.
 
 ## Outputs
@@ -62,6 +67,16 @@ registry.
       separate artifacts with no pending proposal in an approved registry.
 - [x] HARD-020 cannot publish an approved registry; HARD-026 materializes it
       from immutable proposals plus human decisions.
+- [ ] Same-meaning multilingual content produces one governed semantic concept
+      and one buyer-facing node after accepted equivalence review.
+- [ ] Every exact original document representation remains independently
+      traceable by document, source unit, language, and text span.
+- [ ] Uncertain equivalence is grouped for review without silently creating
+      authoritative consolidation.
+- [ ] Rejected equivalence separates concepts without losing either original
+      representation.
+- [ ] No production rule assumes the original document language or canonical
+      language.
 
 ## Tests and evidence
 

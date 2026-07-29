@@ -12,6 +12,7 @@ approved workflow projections across different domains and lifecycle states.
 
 - ATLAS-UI-001 through ATLAS-UI-004.
 - Connected and qualified outputs from ATLAS-HARD-021 through ATLAS-HARD-026.
+- Golden main-workflow output from ATLAS-HARD-027.
 
 ## Work
 
@@ -37,6 +38,10 @@ approved workflow projections across different domains and lifecycle states.
 - [ ] Pending/rejected authority leakage equals zero.
 - [ ] Fixture-specific production headings, theme, or hardcoded semantics equal
       zero.
+- [ ] Language-only duplicate workflow nodes, operations, rules, states, and
+      relationships equal zero.
+- [ ] Every sampled multilingual concept exposes all exact original document
+      representations.
 - [ ] At least two structurally different domains render without UI code
       changes.
 - [ ] Keyboard navigation and automated accessibility checks pass.

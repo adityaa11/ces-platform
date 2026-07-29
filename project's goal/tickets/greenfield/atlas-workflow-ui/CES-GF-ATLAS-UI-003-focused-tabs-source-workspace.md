@@ -29,6 +29,8 @@ views while keeping exact source evidence visible beside it.
   - show the source-document list;
   - open the selected document and page;
   - show the exact original-language statement;
+  - show every exact original document representation attached to the selected
+    semantic concept;
   - highlight the exact source unit and text span;
   - show bounding boxes when available;
   - label translations and canonical wording as interpretation aids.
@@ -44,6 +46,8 @@ views while keeping exact source evidence visible beside it.
       exact evidence.
 - [ ] Original wording is visually distinct from translations and canonical
       wording.
+- [ ] Same-meaning multilingual content appears once in workflow views, with
+      all exact original representations available in Evidence.
 - [ ] Page, section, source-unit identity, and text span are displayed.
 - [ ] Bounding boxes are shown when projection data provides them.
 - [ ] One workflow can load without downloading every project record.

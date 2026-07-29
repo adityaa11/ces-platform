@@ -27,6 +27,8 @@ backend-owned workflow projections.
   accessible graph alternatives.
 - Consume versioned backend projections through typed adapters.
 - Use neutral CES Atlas product language and project-provided display data.
+- Render one buyer-facing item per governed semantic concept while allowing
+  all exact original document representations to be inspected.
 
 ## Domain-neutral UI boundary
 

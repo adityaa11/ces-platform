@@ -76,6 +76,12 @@ acceptance evidence.
       `requires_state`, and `recalculates` candidates as applicable.
 - [ ] Mark every topology edge as explicit, derived, or human-confirmed.
 - [ ] Reject an empty Safara workflow topology during qualification.
+- [ ] Equivalent multilingual workflow or operation representations do not
+      create duplicate topology nodes.
+- [ ] Readiness-like outcomes are modeled through governed decisions and
+      labeled conditional branches rather than unconditional dual states.
+- [ ] Independent or parallel paths are not misclassified as mutually
+      exclusive branches.
 
 ### Governed edge families and endpoint rules
 
