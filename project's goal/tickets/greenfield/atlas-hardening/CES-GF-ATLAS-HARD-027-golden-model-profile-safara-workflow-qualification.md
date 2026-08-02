@@ -2,8 +2,8 @@
 
 ## Status
 
-Ready for qualification implementation; production remediation remains owned
-by ATLAS-HARD-019 through ATLAS-HARD-026
+Qualification runner implemented; replaying the saved canonical Safara model
+through the hardened workspace projector passes the golden overview gate
 
 ## Priority
 
@@ -1573,6 +1573,30 @@ Recommended qualification sequence:
 ```
 
 Do not increase extraction breadth until the golden overview is semantically correct.
+
+## Implementation evidence
+
+`tests/qualification/atlas-hard027.mjs` now evaluates a real generated overview
+or UI-000 workspace against the frozen Safara oracle. It reports missing
+concepts, governed relationships, normalized-label duplicates, and projected
+nodes without evidence, exits non-zero on any gap, and can write a JSON report.
+The runner contains no production compiler behavior.
+
+Verification:
+
+```text
+corepack pnpm exec vitest run tests/atlas-hard027.test.ts tests/atlas-hard027-qualification.test.ts
+node tests/qualification/atlas-hard027.mjs --oracle tests/fixtures/safara/golden-main-workflow.json --output <generated-workspace-or-overview.json> --report <report.json>
+```
+
+Four qualification tests pass. The legacy overview has the correct semantics
+but lacks UI-000 evidence fields. Replaying its saved canonical model through
+the production hardened projector produces
+`proposed-model-review-workspace.json`, which passes with all 12 golden
+concepts, all 25 golden relationships, no duplicate display labels, and no
+overview nodes without evidence. The runner normalizes only contract-level
+relationship vocabulary (`branch` to buyer-facing `branches_to`); it does not
+rewrite topology or fixture labels.
 
 ---
 
