@@ -8,6 +8,7 @@
   "dependencies": {
     "@company/ces-atlas-coverage": "workspace:*",
     "@company/ces-atlas-intent-graph": "workspace:*",
+    "@company/ces-atlas-model-review-contracts": "workspace:*",
     "@company/ces-atlas-review": "workspace:*",
     "@company/ces-proposed-project-model": "workspace:*",
     "@company/ces-semantic-record-schema": "workspace:*",

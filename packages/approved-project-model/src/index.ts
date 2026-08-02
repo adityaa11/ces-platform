@@ -14,6 +14,7 @@ import {
 } from "@company/ces-semantic-record-schema";
 import {
   FocusedProjectionBundleSchema,
+  createProposedModelReviewWorkspace,
   materializeApprovedFocusedProjections,
   projectWorkflowGraph,
   renderFocusedWorkflowMermaid,
@@ -34,6 +35,7 @@ import {
   WorkflowAssignmentSchema,
 } from "@company/ces-proposed-project-model";
 import { z } from "zod";
+import { ModelReviewWorkspaceSchema } from "@company/ces-atlas-model-review-contracts";
 
 function safePathId(value: string): string {
   return value.toLowerCase()
@@ -191,6 +193,7 @@ export const ExpandedApprovalPublicationSchema = z.object({
   model: ExpandedApprovedProjectModelSchema,
   terminology_registry: ApprovedTerminologyRegistrySchema,
   focused_projections: FocusedProjectionBundleSchema,
+  model_review_workspace: ModelReviewWorkspaceSchema,
 }).strict();
 
 export function materializeHardenedApprovedProjectModel(input: {
@@ -501,10 +504,20 @@ export function materializeExpandedApprovedProjectModel(input: {
     approved_relationship_ids: relationships.map(({ target_candidate_id }) =>
       target_candidate_id),
   });
+  const modelReviewWorkspace = createProposedModelReviewWorkspace({
+    model: proposal,
+    focused_projections: focusedProjections,
+    approval: {
+      decision_ids: model.decision_ids,
+      canonical_relationship_ids: Object.fromEntries(model.relationships.map((relationship) =>
+        [relationship.target_candidate_id, relationship.approved_relationship_id])),
+    },
+  });
   return deepFreeze(ExpandedApprovalPublicationSchema.parse({
     model,
     terminology_registry: terminologyRegistry,
     focused_projections: focusedProjections,
+    model_review_workspace: modelReviewWorkspace,
   }));
 }
 
@@ -540,6 +553,7 @@ export async function publishExpandedApproval(
   try {
     const artifacts: Record<string, unknown> = {
       "approved-project-model.json": publication.model,
+      "approved-model-review-workspace.json": publication.model_review_workspace,
       "approved-terminology-registry.json": publication.terminology_registry,
       "approved-project-overview-graph.json": publication.focused_projections.project_overview,
       "approved-workflow-detail-graphs.json": publication.focused_projections.workflow_details,

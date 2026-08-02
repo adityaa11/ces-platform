@@ -294,6 +294,21 @@ describe("ATLAS-HARD-013 approved model materialization", () => {
       .toContainEqual(expect.objectContaining({
         edge_id: "project.relationship-target.release-context",
       }));
+    expect(publication.model_review_workspace).toMatchObject({
+      contract_name: "atlas.model-review.workspace",
+      authority: {
+        lifecycle: "approved",
+        authority: "authoritative",
+        downstream_execution: { status: "allowed" },
+      },
+    });
+    expect(publication.model_review_workspace.overview.edges)
+      .toContainEqual(expect.objectContaining({
+        governed_relationship_id: "project.relationship-target.release-context",
+        canonical_relationship_id: expect.stringMatching(/^approved\.relationship\./u),
+        relationship_status: "approved",
+        authoritative: true,
+      }));
     expect(proposedProjections.project_overview.relationships).toHaveLength(2);
     expect(proposal.relationship_candidates[0]?.targets).toHaveLength(2);
     const directory = await mkdtemp(join(tmpdir(), "atlas-expanded-approved-"));
@@ -306,6 +321,9 @@ describe("ATLAS-HARD-013 approved model materialization", () => {
     expect(JSON.parse(await readFile(
       join(published, "approved-relationships.json"), "utf8",
     ))).toHaveLength(1);
+    expect(JSON.parse(await readFile(
+      join(published, "approved-model-review-workspace.json"), "utf8",
+    )).authority.lifecycle).toBe("approved");
     expect(await readFile(join(
       published, "approved-workflows", "project.workflow.release", "flow.mmd",
     ), "utf8")).toContain("flowchart TD");

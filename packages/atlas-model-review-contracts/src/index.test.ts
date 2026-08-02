@@ -53,7 +53,8 @@ describe("ATLAS-UI-000 shared model-review contracts", () => {
       authority: "authoritative", downstream_execution: { status: "blocked", blockers: [] } }))
       .toThrow();
     expect(WorkspaceAuthoritySchema.parse({ lifecycle: "approved",
-      authority: "authoritative", downstream_execution: { status: "blocked",
+      authority: "authoritative", approval_decision_ids: [id("decision.release")],
+      downstream_execution: { status: "blocked",
         blockers: [id("blocker.release-policy")] } }).lifecycle).toBe("approved");
   });
 

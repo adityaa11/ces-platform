@@ -213,6 +213,7 @@ export const WorkspaceAuthoritySchema = z.discriminatedUnion("lifecycle", [
     downstream_execution: BlockedExecutionSchema }).strict(),
   z.object({ lifecycle: z.literal("approved"),
     authority: z.literal("authoritative"),
+    approval_decision_ids: z.array(Id).min(1),
     downstream_execution: z.discriminatedUnion("status", [
       AllowedExecutionSchema, BlockedExecutionSchema,
     ]) }).strict(),

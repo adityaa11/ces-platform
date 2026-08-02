@@ -682,9 +682,15 @@ export function createProposedModelReviewWorkspace(input: {
   readonly max_initial_edges?: number;
   readonly max_initial_payload_bytes?: number;
   readonly max_initial_layout_ms?: number;
+  readonly approval?: {
+    readonly decision_ids: readonly string[];
+    readonly canonical_relationship_ids: Readonly<Record<string, string>>;
+    readonly downstream_blockers?: readonly string[];
+  };
 }): z.infer<typeof ModelReviewWorkspaceSchema> {
   const model = ProposedProjectModelSchema.parse(input.model);
   const focused = FocusedProjectionBundleSchema.parse(input.focused_projections);
+  const approved = input.approval !== undefined;
   const maxNodes = z.number().int().positive().parse(input.max_initial_nodes ?? 50);
   const maxEdges = z.number().int().positive().parse(input.max_initial_edges ?? 100);
   const workflowById = new Map(model.workflows.map((workflow) =>
@@ -710,8 +716,8 @@ export function createProposedModelReviewWorkspace(input: {
         projection_kind: "atlas.projection.integrated",
         node_kind: `atlas.node.${node.node_kind.replaceAll("_", "-")}`,
         label: node.label,
-        review_status: "pending" as const,
-        authoritative: false,
+        review_status: approved ? "approved" as const : "pending" as const,
+        authoritative: approved,
         identity_kind: "canonical_concept" as const,
         canonical_concept_id: node.node_id,
         evidence_ids: [...semantic.source_unit_ids].sort(compareText),
@@ -745,10 +751,15 @@ export function createProposedModelReviewWorkspace(input: {
         from_projection_node_id: projectionNodeId(edge.from_node_id),
         to_projection_node_id: projectionNodeId(edge.to_node_id),
         relationship_kind: relationship.intent.relationship_kind,
-        relationship_status: "pending" as const,
-        authoritative: false,
+        relationship_status: approved ? "approved" as const : "pending" as const,
+        authoritative: approved,
         identity_kind: "governed_relationship" as const,
         governed_relationship_id: relationship.target.target_candidate_id,
+        ...(input.approval?.canonical_relationship_ids[
+          relationship.target.target_candidate_id
+        ] ? { canonical_relationship_id: input.approval.canonical_relationship_ids[
+          relationship.target.target_candidate_id
+        ] } : {}),
         origin: relationship.intent.governance.origin,
         evidence_ids: [...new Set([
           ...relationship.intent.governance.evidence_source_unit_ids,
@@ -764,8 +775,8 @@ export function createProposedModelReviewWorkspace(input: {
         from_projection_node_id: projectionNodeId(edge.from_node_id),
         to_projection_node_id: projectionNodeId(edge.to_node_id),
         relationship_kind: `atlas.relationship.${workflowEdge.edge_kind}`,
-        relationship_status: "pending" as const,
-        authoritative: false,
+        relationship_status: approved ? "approved" as const : "pending" as const,
+        authoritative: approved,
         identity_kind: "governed_relationship" as const,
         governed_relationship_id: workflowEdge.edge_id,
         origin: workflowEdge.governance.origin,
@@ -812,9 +823,15 @@ export function createProposedModelReviewWorkspace(input: {
     command_schema_version: ATLAS_MODEL_REVIEW_CONTRACT_VERSION,
     project_id: model.project_id,
     revision: model.proposal_revision,
-    authority: { lifecycle: "review_in_progress", authority: "non_authoritative",
-      downstream_execution: { status: "blocked",
-        blockers: ["atlas.blocker.human-review-required"] } },
+    authority: approved
+      ? { lifecycle: "approved", authority: "authoritative",
+        approval_decision_ids: [...input.approval.decision_ids].sort(compareText),
+        downstream_execution: input.approval.downstream_blockers?.length
+          ? { status: "blocked", blockers: [...input.approval.downstream_blockers].sort(compareText) }
+          : { status: "allowed" } }
+      : { lifecycle: "review_in_progress", authority: "non_authoritative",
+        downstream_execution: { status: "blocked",
+          blockers: ["atlas.blocker.human-review-required"] } },
     overview: {
       nodes,
       edges,
