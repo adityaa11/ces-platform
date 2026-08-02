@@ -12,11 +12,21 @@ dd { margin: .25rem 0 0; font-weight: 650; }
 .workspace { display: grid; grid-template-columns: minmax(14rem, 20rem) minmax(30rem, 1fr) minmax(16rem, 22rem);
   gap: 1px; min-height: calc(100vh - 7rem); background: #dce2ea; }
 .workspace > * { padding: 1.5rem; background: #fff; min-width: 0; }
-nav ul { list-style: none; margin: 0; padding: 0; } nav a { display: grid; gap: .2rem; padding: .75rem;
-  color: inherit; text-decoration: none; border-radius: .5rem; } nav a:hover, nav a:focus-visible { background: #eef3fa; outline: 2px solid #315e9e; }
+nav ul { list-style: none; margin: 0; padding: 0; } nav button { display: grid; width: 100%; gap: .2rem; padding: .75rem;
+  color: inherit; text-align: left; border: 0; background: transparent; border-radius: .5rem; cursor: pointer; }
+nav button:hover, nav button:focus-visible { background: #eef3fa; outline: 2px solid #315e9e; }
 nav span { color: #667286; font-size: .75rem; text-transform: capitalize; }
-.graph { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 1rem; }
-.graph article { border: 1px solid #cfd7e3; border-radius: .65rem; padding: 1rem; scroll-margin: 2rem; }
+.flow-canvas { height: 32rem; border: 1px solid #cfd7e3; border-radius: .65rem; overflow: hidden; }
+.atlas-node { width: 13.75rem !important; min-height: 5.5rem; padding: .8rem; border-radius: .6rem !important;
+  border: 1px solid #8fa1ba !important; background: #fff !important; }
+.atlas-node.proposed { border-style: dashed !important; } .atlas-node.selected { box-shadow: 0 0 0 3px #315e9e !important; }
+.atlas-edge.pending path { stroke-dasharray: 6 4; } .atlas-edge.approved path { stroke-width: 2.5; }
+.panel-heading { display: flex; justify-content: space-between; gap: 1rem; align-items: start; }
+.panel-heading button { padding: .45rem .7rem; border: 1px solid #aab6c7; border-radius: .4rem; background: #fff; cursor: pointer; }
+.panel-actions { display: flex; gap: .5rem; }.selected-detail { margin-top: 1.5rem; padding: 1rem;
+  border: 1px solid #cfd7e3; border-radius: .65rem; background: #f8fafc; }
+.selected-detail dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+.graph-summary { margin-top: 1rem; }.graph-summary li { overflow-wrap: anywhere; }
 .relationships { padding-left: 1.25rem; } .relationships li { margin: .6rem 0; overflow-wrap: anywhere; }
 .notice { padding: 1rem; background: #eef3fa; border-radius: .5rem; }
 .state { max-width: 46rem; margin: 12vh auto; padding: 2rem; background: #fff; border-radius: .75rem; }

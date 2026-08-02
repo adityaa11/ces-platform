@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-UI-002 — Persistent Project Overview and Model Detail
 
 **Stage:** Atlas model review UI
-**Status:** Blocked by UI-000 and UI-001 — prototype interaction is validated only
+**Status:** In progress — production React Flow overview and persistent detail interaction implemented
 
 ## Objective
 
@@ -90,7 +90,7 @@ Click supported model or concept in left navigation
       wherever that ID is genuinely present.
 - [ ] A high-detail multi-model fixture proves the overview stays readable and
       does not collapse into an all-nodes mega-graph.
-- [ ] Projection constructs are selectable but never highlighted as canonical
+- [x] Projection constructs are selectable but never highlighted as canonical
       concepts unless the backend supplies a separate canonical identity.
 - [ ] Selecting any governed node or edge opens its exact evidence and
       governance details.
@@ -101,6 +101,20 @@ Rules, controls, source evidence, and approval tabs are completed by
 ATLAS-UI-003 and ATLAS-UI-004.
 
 ## Implementation evidence
+
+- The production center pane now renders UI-000 projection-local node/edge
+  identities with React Flow and uses the pinned backend direction and input
+  ordering as deterministic ELK layout inputs; no topology is inferred.
+- The integrated overview remains mounted when a navigation item is selected.
+  Selection opens a separate detail panel below it, synchronizes by canonical
+  identity, and updates evidence references on the right.
+- Overview and detail minimize/restore controls preserve selection; detail can
+  also be closed. Projection-only constructs remain selectable without gaining
+  a canonical highlight.
+- Pending edges are animated/dashed and approved edges are visually solid;
+  an ordered non-visual graph summary remains available.
+- Production typecheck/build passes and nine focused boundary/interaction
+  tests pass.
 
 - The integrated `#project-overview` remains mounted while indexed model or
   workflow detail loads into `#selected-detail` beneath it.
