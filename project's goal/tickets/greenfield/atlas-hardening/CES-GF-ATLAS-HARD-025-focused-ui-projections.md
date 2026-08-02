@@ -61,6 +61,9 @@ supports a workflow.
   default visibility explicit backend fields.
 - Publish bounded-summary limits and truncation/layer metadata so overview
   readability is measurable rather than frontend-inferred.
+- Emit every model-review artifact through the shared
+  `packages/atlas-model-review-contracts` schemas, including contract name,
+  contract version, producer version, and projection/evidence schema versions.
 
 ## Outputs
 
@@ -124,6 +127,8 @@ slices remain non-authoritative projections of canonical bundle components.
 - [ ] Overview inclusion and ordering are machine-readable backend decisions.
 - [ ] Initial node, edge, byte, and layout budgets are configurable and
       reported in projection metadata.
+- [ ] Every emitted model-review payload validates against the shared UI-000
+      package; missing or unsupported contract versions fail closed.
 
 ## Tests and evidence
 

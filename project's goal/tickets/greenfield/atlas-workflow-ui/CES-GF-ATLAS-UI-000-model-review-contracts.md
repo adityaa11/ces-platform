@@ -11,11 +11,19 @@ Model Review UI.
 
 ## Dependencies
 
-- ATLAS-HARD-019, ATLAS-HARD-020, ATLAS-HARD-023, ATLAS-HARD-025, and
-  ATLAS-HARD-026.
+- ATLAS-HARD-019 through ATLAS-HARD-026.
 
 ## Work
 
+- Create `packages/atlas-model-review-contracts` as the single owner of every
+  model-review wire-format Zod schema and TypeScript type.
+- Require HARD-025 producers, Next.js BFF DTOs, React Flow adapters, approved
+  workspace refresh, and qualification fixtures to consume that package
+  rather than redefining local wire contracts.
+- Version contract name, contract version, producer version, projection
+  schema, evidence schema, and command schema independently where required.
+- Reject missing versions and unsupported newer versions. Older versions may
+  load only through an explicit, version-pinned, automatically tested adapter.
 - Give every rendered node and edge projection-local IDs. Use canonical IDs
   only for real shared semantic concepts and governed relationships; React
   Flow IDs must not double as canonical identities.
@@ -37,8 +45,11 @@ Model Review UI.
 - Map shapes and badges only from backend semantic kinds, never label words.
 - Pin ELK.js version, schema, input ordering, algorithm, direction, spacing,
   layout profile, input hash, and options hash. ELK produces coordinates only.
-- Use a discriminated authority contract permitting only review-in-progress /
-  non-authoritative / blocked and approved / authoritative / allowed states.
+- Use a discriminated authority contract: review-in-progress is
+  non-authoritative and blocked; approved is authoritative and may be allowed
+  or explicitly blocked by qualification, release policy, implementation
+  capability, or another governed non-semantic blocker. Every blocked state
+  carries blocker codes.
 - Define Next.js Route Handlers as authenticated BFF adapters. They may validate,
   authorize, enforce CSRF/revision/idempotency, and call authoritative Atlas
   services, but may not infer semantics, calculate eligibility, mutate the
@@ -53,7 +64,8 @@ Model Review UI.
 
 Versioned Zod schemas and TypeScript types for projection nodes/edges,
 overview index/summary, representation traces, PDF locations, authority,
-model-detail/evidence DTOs, and decision commands/receipts.
+model-detail/evidence DTOs, decision commands/receipts, compatibility metadata,
+and explicitly supported migration adapters.
 
 ## Acceptance criteria
 
@@ -67,6 +79,13 @@ model-detail/evidence DTOs, and decision commands/receipts.
 - [ ] Label keywords cannot determine shape or semantic type.
 - [ ] Identical ordered input plus pinned ELK metadata yields identical layout.
 - [ ] Invalid authority combinations fail schema validation.
+- [ ] One shared package owns every model-review wire schema and is consumed by
+      HARD-025, the Next.js BFF, React Flow adapters, approved refresh, and
+      qualification fixtures.
+- [ ] Every payload declares contract name/version and producer version;
+      missing or unsupported versions fail closed.
+- [ ] Older contract versions load only through explicit tested adapters.
+- [ ] Approved-but-blocked workspaces carry explicit downstream blocker codes.
 - [ ] BFF tests reject CSRF, cross-project, stale, duplicate, forged-reviewer,
       unsafe-URL, and active-document cases.
 - [ ] UI-001 implementation cannot resume until these contracts are frozen and

@@ -1,7 +1,7 @@
-# CES-GF-ATLAS-UI-004 — Governed Workflow Review and Approval UI
+# CES-GF-ATLAS-UI-004 — Governed Model Review and Approval UI
 
-**Stage:** Atlas workflow review UI
-**Status:** Reopened — governed client contract exists; authenticated Next.js command integration is required
+**Stage:** Atlas model review UI
+**Status:** Blocked by UI-000 through UI-003 — prototype command behavior is validated only
 
 ## Objective
 
@@ -44,7 +44,7 @@ letting the frontend calculate eligibility.
 - Restrict evidence, command, and post-materialization navigation URLs to
   relative or explicitly allowlisted destinations.
 
-## Acceptance criteria
+## Prototype-validated behavior
 
 - [x] Bulk eligibility and blockers are displayed exactly as supplied by the
       backend.
@@ -64,6 +64,9 @@ letting the frontend calculate eligibility.
 - [x] Stale, conflicting, and failed decisions produce clear non-success
       states.
 - [x] Relationship targets remain independently reviewable.
+
+## Production acceptance
+
 - [ ] Decision controls run through authenticated, project-scoped Next.js Route
       Handlers connected to the immutable Atlas review and approved-model
       materialization packages.

@@ -1,7 +1,7 @@
-# CES-GF-ATLAS-UI-001 — Workflow Review Workspace Foundation
+# CES-GF-ATLAS-UI-001 — Model Review Workspace Foundation
 
-**Stage:** Atlas workflow review UI
-**Status:** Reopened — interaction prototype exists; Next.js production host and real projection wiring are required
+**Stage:** Atlas model review UI
+**Status:** Blocked by UI-000 contract freeze — prototype behavior exists; production implementation has not resumed
 
 ## Objective
 
@@ -71,7 +71,7 @@ Production application shell, typed projection adapters, lifecycle banner,
 three-pane responsive layout, accessibility baseline, and neutral empty/error
 states.
 
-## Acceptance criteria
+## Prototype-validated behavior
 
 - [x] The three panes are visible together at supported desktop widths.
 - [x] Lifecycle and authority state cannot be hidden by workflow navigation.
@@ -87,6 +87,9 @@ states.
 - [x] Loading, empty, error, missing-projection, and stale states are tested.
 - [x] Keyboard and screen-reader users can navigate workflows and graph items.
 - [x] Existing backend builds and tests remain green.
+
+## Production acceptance
+
 - [ ] The production application builds and runs through Next.js App Router;
       no dependency-free prototype shell remains as the release entry point.
 - [ ] Real versioned Atlas artifacts are adapted server-side into the workspace

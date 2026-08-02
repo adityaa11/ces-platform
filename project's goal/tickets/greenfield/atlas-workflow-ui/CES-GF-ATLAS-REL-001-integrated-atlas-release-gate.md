@@ -12,15 +12,15 @@ qualification gates.
 ## Dependencies
 
 - ATLAS-HARD-015 backend Safara qualification.
-- ATLAS-UI-005 production workflow UI qualification.
+- ATLAS-UI-005 production model-review UI qualification.
 
 ## Work
 
 - Verify both dependency reports refer to compatible immutable artifact,
   schema, API, UI, and deployment versions.
-- Run the authenticated end-to-end review path from proposed workflow through
-  evidence inspection, governed decision, approved materialization, and
-  approved projection refresh.
+- Run the authenticated end-to-end path from proposed semantic model and
+  eligible projections through evidence inspection, governed decision,
+  approved materialization, and approved projection refresh.
 - Confirm project authorization, revision pinning, idempotency, stale-command
   conflicts, secure document delivery, safe bulk approval, and audit records.
 - Store the integrated release decision without redefining backend semantics or

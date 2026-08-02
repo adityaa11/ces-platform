@@ -1,7 +1,7 @@
-# CES-GF-ATLAS-UI-002 — Persistent Project Overview and Workflow Detail
+# CES-GF-ATLAS-UI-002 — Persistent Project Overview and Model Detail
 
-**Stage:** Atlas workflow review UI
-**Status:** Reopened — interaction contract exists; React Flow/Next.js migration and integrated-model qualification are required
+**Stage:** Atlas model review UI
+**Status:** Blocked by UI-000 and UI-001 — prototype interaction is validated only
 
 ## Objective
 
@@ -63,7 +63,7 @@ Click supported model or concept in left navigation
 -> selecting a node or edge updates the source workspace
 ```
 
-## Acceptance criteria
+## Prototype-validated behavior
 
 - [x] Selecting any supported model never replaces or unmounts the integrated
       project graph.
@@ -80,6 +80,9 @@ Click supported model or concept in left navigation
 - [x] The frontend does not infer overview or detail edges.
 - [x] Interaction tests cover selection, minimize, restore, close, and source
       synchronization.
+
+## Production acceptance
+
 - [ ] The integrated overview and every focused model projection are rendered
       with React Flow from backend nodes/edges and positioned with ELK.js only.
 - [ ] A shared canonical ID highlights across overview, workflow, decision,

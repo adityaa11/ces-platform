@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-UI-003 — Focused Workflow Tabs and Source Workspace
 
-**Stage:** Atlas workflow review UI
-**Status:** Reopened — contracts exist; Next.js component migration and real evidence-route integration are required
+**Stage:** Atlas model review UI
+**Status:** Blocked by UI-000 through UI-002 — prototype evidence behavior is validated only
 
 ## Objective
 
@@ -41,7 +41,7 @@ views while keeping exact source evidence visible beside it.
 - Synchronize graph, tab item, and source selections without frontend semantic
   inference.
 
-## Acceptance criteria
+## Prototype-validated behavior
 
 - [x] Every non-empty focused projection has a corresponding tab.
 - [x] Top-level supported-model tabs come only from the backend model-support
@@ -64,6 +64,9 @@ views while keeping exact source evidence visible beside it.
 - [x] Cross-tab and source synchronization is tested.
 - [x] Source documents are delivered only after authenticated, project-scoped
       authorization and document-access events are audited.
+
+## Production acceptance
+
 - [ ] Focused tabs and source navigation run as React components against real
       authenticated Next.js Route Handlers, not assumed endpoint contracts.
 - [ ] Cross-model selection uses the same canonical concept ID while every

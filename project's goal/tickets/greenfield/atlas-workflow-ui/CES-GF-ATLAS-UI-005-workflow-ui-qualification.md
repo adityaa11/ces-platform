@@ -1,6 +1,6 @@
-# CES-GF-ATLAS-UI-005 — Workflow UI Production Qualification
+# CES-GF-ATLAS-UI-005 — Model Review UI Production Qualification
 
-**Stage:** Atlas workflow review UI production gate
+**Stage:** Atlas model review UI production gate
 **Status:** Planned
 
 ## Objective
@@ -70,8 +70,11 @@ different domains and lifecycle states.
       changes.
 - [ ] A non-workflow document renders supported model projections without a
       fabricated workflow.
-- [ ] The integrated graph relates all supported model kinds while layer
-      controls keep it readable.
+- [ ] The workspace exposes every supported model kind.
+- [ ] The integrated overview relates only elements joined by shared canonical
+      identities or governed bridge relationships.
+- [ ] Supported projections without governed bridges remain accessible as
+      separate focused views and are not falsely connected.
 - [ ] Every cross-model highlight resolves through the same canonical concept
       ID; language-only and projection-only duplicate identities equal zero.
 - [ ] Model projections without an evidence-backed bridge remain available but
@@ -91,7 +94,7 @@ different domains and lifecycle states.
 - [ ] Cross-project access, forged reviewer identity, stale revision replay,
       duplicate command submission, unauthorized document access, and
       ineligible bulk approval tests fail safely.
-- [ ] A human reviewer accepts the production workflow-review experience.
+- [ ] A human reviewer accepts the production model-review experience.
 
 ## Outputs and evidence
 

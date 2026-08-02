@@ -46,17 +46,19 @@ node into one permanent mega-graph:
 
 | Order | Ticket | Outcome | Depends on |
 |---:|---|---|---|
-| 0 | [ATLAS-UI-000](CES-GF-ATLAS-UI-000-model-review-contracts.md) | Freeze projection identity, evidence, overview, authority, layout, and BFF contracts | HARD-019–020, HARD-023, HARD-025–026 |
-| 1 | [ATLAS-UI-001](CES-GF-ATLAS-UI-001-workflow-review-workspace.md) | Domain-neutral three-pane review workspace | HARD-025–026 |
-| 2 | [ATLAS-UI-002](CES-GF-ATLAS-UI-002-persistent-overview-workflow-detail.md) | Persistent main workflow with stacked selected detail | UI-001 |
-| 3 | [ATLAS-UI-003](CES-GF-ATLAS-UI-003-focused-tabs-source-workspace.md) | Focused tabs and exact source evidence | HARD-025, UI-001–002 |
-| 4 | [ATLAS-UI-004](CES-GF-ATLAS-UI-004-governed-workflow-approval-ui.md) | Governed review and immutable human decisions | HARD-026, UI-001–003 |
-| 5 | [ATLAS-UI-005](CES-GF-ATLAS-UI-005-workflow-ui-qualification.md) | Integrated multi-model UI, accessibility, and cross-domain qualification | HARD-021–027, UI-001–004 |
+| 0 | [ATLAS-UI-000](CES-GF-ATLAS-UI-000-model-review-contracts.md) | Freeze shared wire contracts and version behavior | HARD-019–026 |
+| 1 | [ATLAS-UI-001](CES-GF-ATLAS-UI-001-workflow-review-workspace.md) | Domain-neutral three-pane model-review workspace | UI-000, HARD-025–026 |
+| 2 | [ATLAS-UI-002](CES-GF-ATLAS-UI-002-persistent-overview-workflow-detail.md) | Persistent overview with stacked model detail | UI-000–001 |
+| 3 | [ATLAS-UI-003](CES-GF-ATLAS-UI-003-focused-tabs-source-workspace.md) | Focused tabs and exact source evidence | UI-000–002, HARD-025 |
+| 4 | [ATLAS-UI-004](CES-GF-ATLAS-UI-004-governed-workflow-approval-ui.md) | Governed review and immutable human decisions | UI-000–003, HARD-026 |
+| 5 | [ATLAS-UI-005](CES-GF-ATLAS-UI-005-workflow-ui-qualification.md) | Integrated multi-model UI, accessibility, and cross-domain qualification | UI-000–004, HARD-021–027 |
 | 6 | [ATLAS-REL-001](CES-GF-ATLAS-REL-001-integrated-atlas-release-gate.md) | Integrated backend and UI release qualification | HARD-015, UI-005 |
 
 ## Program rules
 
 - UI-000 contracts must be frozen before production component implementation.
+- One shared contract package owns the wire format across projection producer,
+  BFF, UI adapters, approved refresh, and qualification fixtures.
 - Projection-local IDs drive rendering; canonical IDs drive semantic
   synchronization across projections.
 - Projection-only constructs remain explicitly non-authoritative and never
