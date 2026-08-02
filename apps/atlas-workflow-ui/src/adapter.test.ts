@@ -10,6 +10,7 @@ const payload = {
   authoritative: false,
   downstream_execution_allowed: false,
   stale: false,
+  revision: 1,
   summaries: { records: 3, eligible: 2, exceptions: 1 },
   model_support: MODEL_KINDS.map((model_kind, index) => ({
     model_kind,
@@ -30,6 +31,12 @@ const payload = {
   },
   source_documents: [{ document_id: "project.document.one", label: "Requirements",
     media_type: "application/pdf" }],
+  detail_index: [{ subject_id: "project.workflow.one", revision: 1,
+    href: "/api/atlas/workflows/project.workflow.one" }, {
+    subject_id: "model.activity_flow", revision: 1,
+    href: "/api/atlas/models/activity-flow" }, {
+    subject_id: "model.business_workflow", revision: 1,
+    href: "/api/atlas/models/business-workflow" }],
 } satisfies AtlasWorkspacePayload;
 
 describe("ATLAS-UI-001 workspace foundation", () => {

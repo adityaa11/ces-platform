@@ -1,5 +1,6 @@
 import { adaptWorkspacePayload } from "./adapter.js";
 import { renderWorkspaceState } from "./render.js";
+import { bindWorkspaceInteractions } from "./interaction.js";
 
 export async function loadWorkspace(url: string, fetcher: typeof fetch = fetch): Promise<void> {
   const root = document.querySelector<HTMLElement>("#app");
@@ -8,7 +9,11 @@ export async function loadWorkspace(url: string, fetcher: typeof fetch = fetch):
   try {
     const response = await fetcher(url, { headers: { Accept: "application/json" } });
     if (!response.ok) throw new Error(`Projection request failed (${response.status})`);
-    root.innerHTML = renderWorkspaceState(adaptWorkspacePayload(await response.json()));
+    const state = adaptWorkspacePayload(await response.json());
+    root.innerHTML = renderWorkspaceState(state);
+    if (state.kind === "ready" || state.kind === "stale") {
+      bindWorkspaceInteractions({ root, payload: state.payload, fetcher });
+    }
   } catch (error) {
     root.innerHTML = renderWorkspaceState({ kind: "error", message: error instanceof Error
       ? error.message : "Projection request failed" });

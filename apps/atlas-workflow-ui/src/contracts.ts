@@ -40,6 +40,22 @@ export interface OverviewEdge {
   readonly to_node_id: string;
   readonly relationship_kind: string;
   readonly outcome_label?: string;
+  readonly relationship_status: "proposed" | "pending" | "approved" | "rejected";
+}
+
+export interface DetailIndexEntry {
+  readonly subject_id: string;
+  readonly revision: number;
+  readonly href: string;
+}
+
+export interface DetailProjection {
+  readonly schema_version: "1.0.0";
+  readonly subject_id: string;
+  readonly revision: number;
+  readonly label: string;
+  readonly nodes: readonly OverviewNode[];
+  readonly edges: readonly OverviewEdge[];
 }
 
 export interface SourceDocument {
@@ -55,6 +71,7 @@ export interface AtlasWorkspacePayload {
   readonly authoritative: boolean;
   readonly downstream_execution_allowed: boolean;
   readonly stale: boolean;
+  readonly revision: number;
   readonly summaries: {
     readonly records: number;
     readonly eligible: number;
@@ -67,6 +84,7 @@ export interface AtlasWorkspacePayload {
     readonly edges: readonly OverviewEdge[];
   };
   readonly source_documents: readonly SourceDocument[];
+  readonly detail_index: readonly DetailIndexEntry[];
 }
 
 export type WorkspaceState =

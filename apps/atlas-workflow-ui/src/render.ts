@@ -16,17 +16,17 @@ function renderWorkspace(payload: AtlasWorkspacePayload, stale: boolean): string
     ? "Downstream allowed" : "Downstream blocked";
   const models = visibleModels(payload.model_support);
   const workflows = payload.project_overview.workflows.map((workflow) =>
-    `<li><button type="button" class="nav-item" data-workflow-id="${escapeHtml(workflow.workflow_id)}"><span>${escapeHtml(workflow.label)}</span><small>${workflow.operation_count} operations</small></button></li>`).join("");
+    `<li><button type="button" class="nav-item" data-subject-id="${escapeHtml(workflow.workflow_id)}"><span>${escapeHtml(workflow.label)}</span><small>${workflow.operation_count} operations</small></button></li>`).join("");
   const modelItems = models.map((model) => {
     const incomplete = model.support_status !== "supported";
     const missing = model.missing_evidence.length > 0
       ? `<small>Missing: ${escapeHtml(model.missing_evidence.join(", "))}</small>` : "";
-    return `<li><button type="button" class="nav-item${incomplete ? " incomplete" : ""}" data-model-kind="${model.model_kind}" aria-description="${escapeHtml(model.rationale)}"><span>${escapeHtml(modelLabel(model.model_kind))}</span>${incomplete ? "<strong>Review-only</strong>" : ""}${missing}</button></li>`;
+    return `<li><button type="button" class="nav-item${incomplete ? " incomplete" : ""}" data-subject-id="model.${model.model_kind}" aria-description="${escapeHtml(model.rationale)}"><span>${escapeHtml(modelLabel(model.model_kind))}</span>${incomplete ? "<strong>Review-only</strong>" : ""}${missing}</button></li>`;
   }).join("");
   const nodes = payload.project_overview.nodes.map((node) =>
-    `<li><strong>${escapeHtml(node.label)}</strong><span>${escapeHtml(node.node_kind)}</span></li>`).join("");
+    `<li><button type="button" data-concept-id="${escapeHtml(node.node_id)}"><strong>${escapeHtml(node.label)}</strong><span>${escapeHtml(node.node_kind)}</span></button></li>`).join("");
   const edges = payload.project_overview.edges.map((edge) =>
-    `<tr><td>${escapeHtml(edge.from_node_id)}</td><td>${escapeHtml(edge.relationship_kind)}</td><td>${escapeHtml(edge.to_node_id)}</td></tr>`).join("");
+    `<tr class="relationship ${edge.relationship_status}"><td>${escapeHtml(edge.from_node_id)}</td><td>${escapeHtml(edge.relationship_kind)}</td><td>${escapeHtml(edge.to_node_id)}</td><td>${escapeHtml(edge.relationship_status)}</td></tr>`).join("");
   const documents = payload.source_documents.map((document) =>
     `<li><button type="button" class="document-item" data-document-id="${escapeHtml(document.document_id)}"><span>${escapeHtml(document.label)}</span><small>${escapeHtml(document.media_type)}</small></button></li>`).join("");
   return `<div class="app-shell">
@@ -37,7 +37,7 @@ function renderWorkspace(payload: AtlasWorkspacePayload, stale: boolean): string
     </header>
     <main class="workspace-grid">
       <nav class="pane navigation-pane" aria-label="Semantic navigation"><h2>Models</h2><ul>${modelItems || "<li class=\"empty-note\">No supported models</li>"}</ul><h2>Workflows</h2><ul>${workflows || "<li class=\"empty-note\">No workflow projection</li>"}</ul></nav>
-      <section class="pane graph-pane" aria-labelledby="overview-title"><div class="pane-heading"><div><p class="eyebrow">Integrated graph</p><h2 id="overview-title">Project overview</h2></div><button type="button" class="secondary" aria-expanded="true" data-action="minimize-overview">Minimize</button></div><div class="graph-canvas" role="img" aria-label="Integrated project graph"><ul>${nodes || "<li class=\"empty-note\">No graph nodes</li>"}</ul></div><details class="accessible-graph"><summary>Graph connections as a table</summary><table><thead><tr><th>From</th><th>Relationship</th><th>To</th></tr></thead><tbody>${edges}</tbody></table></details><section id="selected-detail" aria-live="polite"><p>Select a model or workflow to inspect its backend projection below the overview.</p></section></section>
+      <section class="pane graph-pane" aria-labelledby="overview-title"><section id="project-overview"><div class="pane-heading"><div><p class="eyebrow">Integrated graph</p><h2 id="overview-title">Project overview</h2></div><button type="button" class="secondary" aria-expanded="true" data-action="minimize-overview">Minimize</button></div><div class="graph-canvas" role="img" aria-label="Integrated project graph"><ul>${nodes || "<li class=\"empty-note\">No graph nodes</li>"}</ul></div><details class="accessible-graph"><summary>Graph connections as a table</summary><table><thead><tr><th>From</th><th>Relationship</th><th>To</th><th>Status</th></tr></thead><tbody>${edges}</tbody></table></details></section><section id="selected-detail" aria-live="polite" hidden></section></section>
       <aside class="pane source-pane" aria-labelledby="source-title"><p class="eyebrow">Evidence</p><h2 id="source-title">Source documents</h2><ul>${documents || "<li class=\"empty-note\">No source document available</li>"}</ul><div class="source-preview"><p>Select evidence to inspect its exact original representation.</p></div></aside>
     </main>
   </div>`;

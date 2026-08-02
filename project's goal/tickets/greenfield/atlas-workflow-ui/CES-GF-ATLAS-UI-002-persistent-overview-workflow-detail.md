@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-UI-002 — Persistent Project Overview and Workflow Detail
 
 **Stage:** Atlas workflow review UI
-**Status:** Planned
+**Status:** Complete
 
 ## Objective
 
@@ -49,23 +49,36 @@ Click supported model or concept in left navigation
 
 ## Acceptance criteria
 
-- [ ] Selecting any supported model never replaces or unmounts the integrated
+- [x] Selecting any supported model never replaces or unmounts the integrated
       project graph.
-- [ ] Selected model projection or concept detail appears below the integrated
+- [x] Selected model projection or concept detail appears below the integrated
       graph.
-- [ ] The overview can be minimized and restored without losing selection.
-- [ ] The detail can be minimized, restored, and closed.
-- [ ] Shared canonical selection remains synchronized across the integrated
+- [x] The overview can be minimized and restored without losing selection.
+- [x] The detail can be minimized, restored, and closed.
+- [x] Shared canonical selection remains synchronized across the integrated
       graph and every applicable model projection.
-- [ ] Initial rendering does not download the complete integrated semantic
+- [x] Initial rendering does not download the complete integrated semantic
       graph; layer expansion is progressive and revision-pinned.
-- [ ] Proposed, pending, approved, and rejected relationships cannot be
+- [x] Proposed, pending, approved, and rejected relationships cannot be
       visually confused.
-- [ ] The frontend does not infer overview or detail edges.
-- [ ] Interaction tests cover selection, minimize, restore, close, and source
+- [x] The frontend does not infer overview or detail edges.
+- [x] Interaction tests cover selection, minimize, restore, close, and source
       synchronization.
 
 ## Out of scope
 
 Rules, controls, source evidence, and approval tabs are completed by
 ATLAS-UI-003 and ATLAS-UI-004.
+
+## Implementation evidence
+
+- The integrated `#project-overview` remains mounted while indexed model or
+  workflow detail loads into `#selected-detail` beneath it.
+- Detail index requests are revision-pinned with `If-Match` and fail closed on
+  missing, stale, or mismatched responses.
+- A state-preserving controller owns selection plus overview/detail minimize,
+  restore, and close behavior.
+- Relationship status is supplied by the backend contract and has distinct
+  proposed, pending, approved, and rejected presentation; rejected detail
+  edges are not rendered as graph truth.
+- Seven UI foundation/interaction tests pass and application typecheck passes.

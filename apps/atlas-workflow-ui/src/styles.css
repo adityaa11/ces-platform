@@ -23,6 +23,7 @@ h2 { font-size: 1rem; }
 .pane ul { list-style: none; margin: 0 0 22px; padding: 0; }
 .nav-item, .document-item { width: 100%; border: 0; border-radius: 9px; background: transparent; padding: 10px; text-align: left; cursor: pointer; }
 .nav-item:hover, .document-item:hover { background: #f0f6f2; }
+.nav-item.selected { background: #dceee5; box-shadow: inset 0 0 0 1px #72a68c; }
 .nav-item span, .document-item span { display: block; font-weight: 700; }
 .nav-item small, .document-item small { display: block; margin-top: 3px; color: #68756e; }
 .nav-item.incomplete { border-left: 3px solid #c68518; }
@@ -32,11 +33,25 @@ h2 { font-size: 1rem; }
 .graph-canvas { min-height: 290px; border-radius: 12px; background: linear-gradient(#f8faf8, #eef4f0); padding: 24px; }
 .graph-canvas ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 16px; }
 .graph-canvas li { border: 1px solid #abc0b4; border-radius: 10px; background: #fff; padding: 13px; }
+.graph-canvas button { width: 100%; border: 0; background: transparent; text-align: left; }
+.graph-canvas button.selected, .detail-nodes li.selected { background: #dceee5; }
 .graph-canvas span { display: block; color: #68756e; font-size: .72rem; }
 .accessible-graph { margin: 16px 0; }
 table { width: 100%; border-collapse: collapse; font-size: .8rem; }
 th, td { border-bottom: 1px solid #e2e7e3; padding: 7px; text-align: left; }
 #selected-detail, .source-preview { border-top: 1px solid #e2e7e3; margin-top: 16px; padding-top: 16px; color: #59665f; }
+#project-overview.minimized .graph-canvas, #project-overview.minimized .accessible-graph { display: none; }
+#selected-detail.minimized .detail-content { display: none; }
+.detail-heading { display: flex; justify-content: space-between; gap: 12px; }
+.detail-heading > div:last-child { display: flex; gap: 7px; }
+.detail-nodes { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+.detail-nodes li { border: 1px solid #ccd7d0; border-radius: 9px; padding: 10px; }
+.detail-nodes span { display: block; color: #68756e; font-size: .72rem; }
+.relationship { border-left: 4px solid #77847c; }
+.relationship.pending { border-left-style: dashed; border-left-color: #c68518; }
+.relationship.proposed { border-left-style: dotted; border-left-color: #6b7890; }
+.relationship.approved { border-left-style: solid; border-left-color: #177b63; }
+.relationship.rejected { opacity: .55; text-decoration: line-through; }
 .workspace-state { display: grid; min-height: 100vh; place-content: center; padding: 24px; text-align: center; }
 .empty-note { color: #68756e; font-size: .85rem; }
 @media (max-width: 900px) { .project-header { grid-template-columns: 1fr; } .summary div { text-align: left; } .workspace-grid { grid-template-columns: 1fr; } .navigation-pane, .source-pane { max-height: none; } }
