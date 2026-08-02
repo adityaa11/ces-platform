@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-REL-001 — Integrated Atlas Release Gate
 
 **Stage:** Atlas integrated production release
-**Status:** Planned
+**Status:** Integrated gate implemented; release correctly blocked on independent backend/UI and human gates
 
 ## Objective
 
@@ -51,6 +51,19 @@ qualification gates.
 Integrated release report, dependency report hashes, version compatibility
 record, authenticated browser trace, authorization and concurrency test
 results, audit references, and human release decision.
+
+## Implementation evidence
+
+`assessIntegratedAtlasRelease` now composes—without redefining—the independent
+HARD-015 and UI-005 decisions. It requires the Node-hosted Next.js App Router,
+the frozen UI-000 version across artifact/BFF/React Flow/approved refresh,
+authenticated end-to-end success, security negative-test success, and a human
+release review. A mismatch or missing prerequisite returns explicit blockers.
+
+The current decision is intentionally `blocked`: HARD-015 and UI-005 have open
+human/runtime evidence, and no authenticated browser release trace has been
+accepted. Unit coverage proves that only the complete compatible input can
+return `release`, while a single version mismatch fails closed.
 
 ## Out of scope
 

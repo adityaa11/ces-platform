@@ -3,6 +3,7 @@ import {
   calculateAtlasQualityEvidence,
   calculateSafaraHardeningGate,
   assessAtlasBackendReleaseReadiness,
+  assessIntegratedAtlasRelease,
   type AtlasQualityEvidenceInput,
 } from "./index.js";
 
@@ -57,6 +58,23 @@ function input(
 }
 
 describe("DAPE-008R real-provider quality evidence", () => {
+  it("keeps REL-001 blocked unless independent gates, versions, E2E, and human review pass", () => {
+    const version = { artifact: "1.0.0", bff: "1.0.0", react_flow: "1.0.0",
+      approved_refresh: "1.0.0" };
+    expect(assessIntegratedAtlasRelease({ backend_decision: "blocked", ui_decision: "blocked",
+      contract_versions: version, runtime: "nextjs-app-router", authenticated_e2e_passed: false,
+      security_negative_tests_passed: false, human_release_review_recorded: false }).decision)
+      .toBe("blocked");
+    expect(assessIntegratedAtlasRelease({ backend_decision: "pass", ui_decision: "pass",
+      contract_versions: version, runtime: "nextjs-app-router", authenticated_e2e_passed: true,
+      security_negative_tests_passed: true, human_release_review_recorded: true }).decision)
+      .toBe("release");
+    expect(assessIntegratedAtlasRelease({ backend_decision: "pass", ui_decision: "pass",
+      contract_versions: { ...version, bff: "2.0.0" }, runtime: "nextjs-app-router",
+      authenticated_e2e_passed: true, security_negative_tests_passed: true,
+      human_release_review_recorded: true }).blockers)
+      .toContain("atlas.release.contract-version-mismatch");
+  });
   it("keeps HARD-015 blocked until golden, provider, backend, and human gates all pass", () => {
     const current = assessAtlasBackendReleaseReadiness({ hard027_golden_passed: true,
       hardening_acceptance_complete: false, backend_gate_decision: "missing",

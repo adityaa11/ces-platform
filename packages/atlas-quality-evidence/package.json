@@ -6,6 +6,7 @@
   "exports": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "dependencies": {
+    "@company/ces-atlas-model-review-contracts": "workspace:*",
     "zod": "4.4.3"
   },
   "devDependencies": {

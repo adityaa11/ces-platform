@@ -320,6 +320,9 @@ importers:
 
   packages/atlas-quality-evidence:
     dependencies:
+      '@company/ces-atlas-model-review-contracts':
+        specifier: workspace:*
+        version: link:../atlas-model-review-contracts
       zod:
         specifier: 4.4.3
         version: 4.4.3

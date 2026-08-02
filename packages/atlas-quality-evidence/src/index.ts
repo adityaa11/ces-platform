@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { ATLAS_MODEL_REVIEW_CONTRACT_VERSION } from "@company/ces-atlas-model-review-contracts";
 import { z } from "zod";
 
 export const ATLAS_QUALITY_EVIDENCE_VERSION = "1.0.0" as const;
@@ -26,6 +27,34 @@ export function assessAtlasBackendReleaseReadiness(
     ...(!input.human_review_recorded ? ["atlas.release.human-review"] : []),
   ];
   return { decision: blockers.length === 0 ? "pass" : "blocked", blockers };
+}
+
+export const IntegratedAtlasReleaseInputSchema = z.object({
+  backend_decision: z.enum(["pass", "blocked"]),
+  ui_decision: z.enum(["pass", "blocked"]),
+  contract_versions: z.object({ artifact: Text, bff: Text, react_flow: Text,
+    approved_refresh: Text }).strict(),
+  runtime: z.literal("nextjs-app-router"),
+  authenticated_e2e_passed: z.boolean(),
+  security_negative_tests_passed: z.boolean(),
+  human_release_review_recorded: z.boolean(),
+}).strict();
+
+export function assessIntegratedAtlasRelease(
+  value: z.input<typeof IntegratedAtlasReleaseInputSchema>,
+): { decision: "release" | "blocked"; blockers: readonly string[] } {
+  const input = IntegratedAtlasReleaseInputSchema.parse(value);
+  const versions = Object.values(input.contract_versions);
+  const blockers = [
+    ...(input.backend_decision !== "pass" ? ["atlas.release.backend"] : []),
+    ...(input.ui_decision !== "pass" ? ["atlas.release.ui"] : []),
+    ...(!versions.every((version) => version === ATLAS_MODEL_REVIEW_CONTRACT_VERSION)
+      ? ["atlas.release.contract-version-mismatch"] : []),
+    ...(!input.authenticated_e2e_passed ? ["atlas.release.authenticated-e2e"] : []),
+    ...(!input.security_negative_tests_passed ? ["atlas.release.security-negative-tests"] : []),
+    ...(!input.human_release_review_recorded ? ["atlas.release.human-review"] : []),
+  ];
+  return { decision: blockers.length === 0 ? "release" : "blocked", blockers };
 }
 
 export const QualityVersionTupleSchema = z.object({
