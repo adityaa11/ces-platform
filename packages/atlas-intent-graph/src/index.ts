@@ -4,6 +4,12 @@ import {
 } from "@company/ces-agent-provider-sdk";
 import type { AtlasReviewOutput } from "@company/ces-atlas-review";
 import {
+  ATLAS_MODEL_REVIEW_CONTRACT_VERSION,
+  ATLAS_WORKSPACE_CONTRACT,
+  ModelReviewWorkspaceSchema,
+  ProjectionEdgeSchema,
+} from "@company/ces-atlas-model-review-contracts";
+import {
   RequirementLinkSchema,
   type RequirementLink,
 } from "@company/ces-greenfield-contracts";
@@ -667,6 +673,178 @@ export function createFocusedAtlasProjections(input: {
     ...core,
     content_hash: hashProjection(core),
   }));
+}
+
+export function createProposedModelReviewWorkspace(input: {
+  readonly model: z.input<typeof ProposedProjectModelSchema>;
+  readonly focused_projections: z.input<typeof FocusedProjectionBundleSchema>;
+  readonly max_initial_nodes?: number;
+  readonly max_initial_edges?: number;
+  readonly max_initial_payload_bytes?: number;
+  readonly max_initial_layout_ms?: number;
+}): z.infer<typeof ModelReviewWorkspaceSchema> {
+  const model = ProposedProjectModelSchema.parse(input.model);
+  const focused = FocusedProjectionBundleSchema.parse(input.focused_projections);
+  const maxNodes = z.number().int().positive().parse(input.max_initial_nodes ?? 50);
+  const maxEdges = z.number().int().positive().parse(input.max_initial_edges ?? 100);
+  const workflowById = new Map(model.workflows.map((workflow) =>
+    [workflow.workflow_id, workflow] as const));
+  const operationById = new Map(model.operations.map((operation) =>
+    [operation.operation_id, operation] as const));
+  const projectionNodeId = (canonicalId: string) =>
+    `${canonicalId}.projection.overview`;
+  const overviewRole = (node: typeof focused.project_overview.nodes[number]) => {
+    if (node.node_kind === "shared_data") return "shared_data" as const;
+    if (node.node_kind === "context_provider") return "context_provider" as const;
+    if (node.node_kind === "decision") return "significant_decision" as const;
+    if (node.node_kind === "state") return "significant_state" as const;
+    return "major_business_area" as const;
+  };
+  const allNodes = focused.project_overview.nodes.map((node) => {
+    const semantic = workflowById.get(node.node_id) ?? operationById.get(node.node_id);
+    if (!semantic) throw new Error(`Overview node lacks canonical source: ${node.node_id}`);
+    const role = overviewRole(node);
+    return {
+      node: {
+        projection_node_id: projectionNodeId(node.node_id),
+        projection_kind: "atlas.projection.integrated",
+        node_kind: `atlas.node.${node.node_kind.replaceAll("_", "-")}`,
+        label: node.label,
+        review_status: "pending" as const,
+        authoritative: false,
+        identity_kind: "canonical_concept" as const,
+        canonical_concept_id: node.node_id,
+        evidence_ids: [...semantic.source_unit_ids].sort(compareText),
+      },
+      overview_eligible: true,
+      overview_priority: role === "significant_decision" || role === "significant_state"
+        ? 90 : role === "major_business_area" ? 80 : 70,
+      overview_role: role,
+      overview_inclusion_reason: role === "major_business_area"
+        ? "Backend-classified major project area"
+        : `Backend-classified ${role.replaceAll("_", " ")}`,
+      default_visible: true,
+    };
+  }).sort((left, right) => right.overview_priority - left.overview_priority
+    || compareText(left.node.projection_node_id, right.node.projection_node_id));
+  const nodes = allNodes.slice(0, maxNodes);
+  const selectedCanonicalIds = new Set(nodes.map(({ node }) =>
+    node.canonical_concept_id));
+  const relationshipTargets = new Map(model.relationship_candidates.flatMap((intent) =>
+    intent.targets.map((target) => [target.target_candidate_id, { intent, target }] as const)));
+  const workflowEdges = new Map(model.workflow_edges.map((edge) => [edge.edge_id, edge] as const));
+  const allEdges = focused.project_overview.edges.flatMap<z.infer<typeof ProjectionEdgeSchema>>((edge) => {
+    if (!selectedCanonicalIds.has(edge.from_node_id)
+      || !selectedCanonicalIds.has(edge.to_node_id)) return [];
+    const relationship = relationshipTargets.get(edge.edge_id);
+    const workflowEdge = workflowEdges.get(edge.edge_id);
+    if (relationship) {
+      return [{
+        projection_edge_id: `${edge.edge_id}.projection.overview`,
+        projection_kind: "atlas.projection.integrated",
+        from_projection_node_id: projectionNodeId(edge.from_node_id),
+        to_projection_node_id: projectionNodeId(edge.to_node_id),
+        relationship_kind: relationship.intent.relationship_kind,
+        relationship_status: "pending" as const,
+        authoritative: false,
+        identity_kind: "governed_relationship" as const,
+        governed_relationship_id: relationship.target.target_candidate_id,
+        origin: relationship.intent.governance.origin,
+        evidence_ids: [...new Set([
+          ...relationship.intent.governance.evidence_source_unit_ids,
+          ...relationship.target.evidence_source_unit_ids,
+        ])].sort(compareText),
+        rationale: relationship.target.rationale,
+      }];
+    }
+    if (workflowEdge) {
+      return [{
+        projection_edge_id: `${edge.edge_id}.projection.overview`,
+        projection_kind: "atlas.projection.integrated",
+        from_projection_node_id: projectionNodeId(edge.from_node_id),
+        to_projection_node_id: projectionNodeId(edge.to_node_id),
+        relationship_kind: `atlas.relationship.${workflowEdge.edge_kind}`,
+        relationship_status: "pending" as const,
+        authoritative: false,
+        identity_kind: "governed_relationship" as const,
+        governed_relationship_id: workflowEdge.edge_id,
+        origin: workflowEdge.governance.origin,
+        evidence_ids: [...workflowEdge.governance.evidence_source_unit_ids].sort(compareText),
+        rationale: workflowEdge.governance.rationale,
+      }];
+    }
+    const decisionId = edge.to_node_id.endsWith(".decision")
+      ? edge.to_node_id : edge.from_node_id;
+    const derivations = model.workflow_edges.filter(({ from_operation_id }) =>
+      from_operation_id === decisionId).map(({ edge_id }) => edge_id).sort(compareText);
+    if (derivations.length === 0) return [];
+    return [{
+      projection_edge_id: `${edge.edge_id}.projection.overview`,
+      projection_kind: "atlas.projection.integrated",
+      from_projection_node_id: projectionNodeId(edge.from_node_id),
+      to_projection_node_id: projectionNodeId(edge.to_node_id),
+      relationship_kind: "atlas.relationship.evaluated-by",
+      relationship_status: "pending" as const,
+      authoritative: false as const,
+      identity_kind: "projection_construct" as const,
+      projection_construct_id: edge.edge_id,
+      derived_from_relationship_ids: derivations,
+      evidence_ids: [],
+    }];
+  }).sort((left, right) => compareText(left.projection_edge_id, right.projection_edge_id));
+  const edges = allEdges.slice(0, maxEdges);
+  const budget = {
+    max_initial_nodes: maxNodes,
+    max_initial_edges: maxEdges,
+    max_initial_payload_bytes: z.number().int().positive()
+      .parse(input.max_initial_payload_bytes ?? 262_144),
+    max_initial_layout_ms: z.number().int().positive()
+      .parse(input.max_initial_layout_ms ?? 1_000),
+  };
+  const nodeOrder = nodes.map(({ node }) => node.projection_node_id).sort(compareText);
+  const edgeOrder = edges.map(({ projection_edge_id }) => projection_edge_id).sort(compareText);
+  return ModelReviewWorkspaceSchema.parse({
+    contract_name: ATLAS_WORKSPACE_CONTRACT,
+    contract_version: ATLAS_MODEL_REVIEW_CONTRACT_VERSION,
+    producer_version: `atlas-intent-graph@${ATLAS_INTENT_GRAPH_VERSION}`,
+    projection_schema_version: ATLAS_MODEL_REVIEW_CONTRACT_VERSION,
+    evidence_schema_version: ATLAS_MODEL_REVIEW_CONTRACT_VERSION,
+    command_schema_version: ATLAS_MODEL_REVIEW_CONTRACT_VERSION,
+    project_id: model.project_id,
+    revision: model.proposal_revision,
+    authority: { lifecycle: "review_in_progress", authority: "non_authoritative",
+      downstream_execution: { status: "blocked",
+        blockers: ["atlas.blocker.human-review-required"] } },
+    overview: {
+      nodes,
+      edges,
+      summary: {
+        node_count: allNodes.length,
+        edge_count: allEdges.length,
+        is_truncated: allNodes.length > nodes.length || allEdges.length > edges.length,
+        available_layer_ids: ["atlas.layer.workflow", "atlas.layer.decision",
+          "atlas.layer.state", "atlas.layer.data", "atlas.layer.evidence"],
+        artifact_hashes: [model.content_hash],
+        schema_versions: [ATLAS_MODEL_REVIEW_CONTRACT_VERSION],
+        revision: model.proposal_revision,
+        ...(allNodes.length > nodes.length || allEdges.length > edges.length
+          ? { next_cursor: `revision-${model.proposal_revision}-page-2` } : {}),
+        budget,
+      },
+      layout: {
+        layout_engine: "elkjs",
+        layout_engine_version: "1.0.0",
+        layout_profile: "atlas.layout.overview-v1",
+        layout_algorithm: "atlas.layout.layered",
+        direction: "RIGHT",
+        node_order: nodeOrder,
+        edge_order: edgeOrder,
+        layout_input_hash: hashProjection({ nodeOrder, edgeOrder }),
+        layout_options_hash: hashProjection({ algorithm: "layered", direction: "RIGHT",
+          spacing: 40, profile: "atlas.layout.overview-v1" }),
+      },
+    },
+  });
 }
 
 export function materializeApprovedFocusedProjections(input: {

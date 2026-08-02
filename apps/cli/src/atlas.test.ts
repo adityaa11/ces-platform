@@ -355,6 +355,7 @@ describe("Atlas CLI pipeline", () => {
         "proposed-integrated-semantic-graph/summary.json",
         "proposed-integrated-semantic-graph/workflows.json",
         "proposed-model-projection-index.json",
+        "proposed-model-review-workspace.json",
         "proposed-model-support-assessment.json",
         "proposed-project-model.json",
         "proposed-project-overview-graph.json",
@@ -417,6 +418,20 @@ describe("Atlas CLI pipeline", () => {
           edges: [],
           duplicate_decision_state_labels: [],
         });
+      expect(await json(join(output, "proposed-model-review-workspace.json")))
+        .toMatchObject({
+          contract_name: "atlas.model-review.workspace",
+          contract_version: "1.0.0",
+          authority: {
+            lifecycle: "review_in_progress",
+            authority: "non_authoritative",
+            downstream_execution: { status: "blocked" },
+          },
+          overview: {
+            nodes: [], edges: [],
+            summary: { node_count: 0, edge_count: 0, is_truncated: false },
+          },
+        });
       expect(await json(join(output, "workflow-assignment-diagnostics.json")))
         .toMatchObject({
           duplicate_tuple_count: 0,
@@ -471,6 +486,7 @@ describe("Atlas CLI pipeline", () => {
         "legacy-projection-losses.json",
         "operations.json",
         "proposed-approval-exceptions.json",
+        "proposed-model-review-workspace.json",
         "proposed-project-model.json",
         "proposed-project-overview-graph.json",
         "proposed-project-overview-graph.mmd",

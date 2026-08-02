@@ -64,7 +64,8 @@ const ProjectionEdgeBase = z.object({
 
 export const GovernedProjectionEdgeSchema = ProjectionEdgeBase.extend({
   identity_kind: z.literal("governed_relationship"),
-  canonical_relationship_id: Id,
+  governed_relationship_id: Id,
+  canonical_relationship_id: Id.optional(),
   origin: OriginSchema,
   evidence_ids: z.array(Id).min(1),
   rationale: Text,

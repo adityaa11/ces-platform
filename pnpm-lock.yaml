@@ -245,6 +245,9 @@ importers:
       '@company/ces-atlas-review':
         specifier: workspace:*
         version: link:../atlas-review
+      '@company/ces-atlas-model-review-contracts':
+        specifier: workspace:*
+        version: link:../atlas-model-review-contracts
       '@company/ces-greenfield-contracts':
         specifier: workspace:*
         version: link:../greenfield-contracts

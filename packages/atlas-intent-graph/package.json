@@ -8,6 +8,7 @@
   "dependencies": {
     "@company/ces-agent-provider-sdk": "workspace:*",
     "@company/ces-atlas-review": "workspace:*",
+    "@company/ces-atlas-model-review-contracts": "workspace:*",
     "@company/ces-greenfield-contracts": "workspace:*",
     "@company/ces-policy-engine": "workspace:*",
     "@company/ces-policy-manifest": "workspace:*",

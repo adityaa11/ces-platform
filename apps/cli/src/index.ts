@@ -43,6 +43,7 @@ import {
   buildIntentGraph,
   compileAtlasCoreHandoff,
   createFocusedAtlasProjections,
+  createProposedModelReviewWorkspace,
   createIntegratedSemanticGraphProjection,
   renderIntentGraphJson,
   renderIntentGraphMarkdown,
@@ -2721,6 +2722,9 @@ function buildCanonicalProposedAtlasArtifacts(input: {
   });
   const graph = projectProposedWorkflowGraph(model);
   const focusedProjections = createFocusedAtlasProjections({ model, page_size: 25 });
+  const modelReviewWorkspace = createProposedModelReviewWorkspace({
+    model, focused_projections: focusedProjections,
+  });
   const integratedProjection = createIntegratedSemanticGraphProjection({ model });
   const proposedWorkflowArtifacts = createProposedWorkflowArtifacts(focusedProjections.workflow_details);
   const identityReport = createRecordIdentityReport({
@@ -2775,6 +2779,7 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     "source-coverage.json": collectionCanonicalJson(coverage),
     "extraction-findings.json": collectionCanonicalJson(findings),
     "proposed-project-model.json": collectionCanonicalJson(model),
+    "proposed-model-review-workspace.json": collectionCanonicalJson(modelReviewWorkspace),
     "proposed-project-overview-graph.json": collectionCanonicalJson(
       focusedProjections.project_overview,
     ),
@@ -3149,6 +3154,9 @@ export function buildProposedAtlasArtifacts(input: {
   });
   const graph = projectProposedWorkflowGraph(model);
   const focusedProjections = createFocusedAtlasProjections({ model, page_size: 25 });
+  const modelReviewWorkspace = createProposedModelReviewWorkspace({
+    model, focused_projections: focusedProjections,
+  });
   const integratedProjection = createIntegratedSemanticGraphProjection({ model });
   const proposedWorkflowArtifacts = createProposedWorkflowArtifacts(focusedProjections.workflow_details);
   const identityReport = createRecordIdentityReport({
@@ -3194,6 +3202,7 @@ export function buildProposedAtlasArtifacts(input: {
     "source-coverage.json": collectionCanonicalJson(coverage),
     "extraction-findings.json": collectionCanonicalJson(findings),
     "proposed-project-model.json": collectionCanonicalJson(model),
+    "proposed-model-review-workspace.json": collectionCanonicalJson(modelReviewWorkspace),
     "proposed-project-overview-graph.json": collectionCanonicalJson(
       focusedProjections.project_overview,
     ),
@@ -3405,6 +3414,7 @@ async function retainedPendingArtifacts(
     "clarification-questions.json",
     "review-input.json",
     "proposed-project-model.json",
+    "proposed-model-review-workspace.json",
     "proposed-project-overview-graph.json",
     "proposed-project-overview-graph.mmd",
     "proposed-workflow-detail-graphs.json",

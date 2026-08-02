@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-025 — Focused Backend-Owned UI Projections
 
 **Stage:** Canonical model and workflow projection refinement
-**Status:** Reopened — focused artifacts exist, workflow projections are disconnected
+**Status:** In progress — shared proposed-workspace contract adopted; focused-detail migration remains
 
 ## Objective
 
@@ -68,6 +68,7 @@ supports a workflow.
 ## Outputs
 
 `proposed-model-support-assessment.json`,
+`proposed-model-review-workspace.json`,
 `proposed-integrated-semantic-graph-index.json`,
 `proposed-integrated-semantic-graph/summary.json`,
 partitioned actor, module, workflow, decision, state, conceptual-entity, rule,
@@ -120,12 +121,12 @@ slices remain non-authoritative projections of canonical bundle components.
 - [ ] The integrated index publishes available layers, record counts, artifact
       hashes, schema versions, pagination metadata, and canonical-ID indexes.
 - [ ] A non-workflow PRD can qualify without producing a workflow projection.
-- [ ] Projection-local IDs are never reused as canonical semantic IDs.
+- [x] Projection-local IDs are never reused as canonical semantic IDs.
 - [ ] Every governed node and edge exposes exact evidence and governance data.
-- [ ] Projection-only constructs remain explicitly non-authoritative and do
+- [x] Projection-only constructs remain explicitly non-authoritative and do
       not create canonical concepts.
-- [ ] Overview inclusion and ordering are machine-readable backend decisions.
-- [ ] Initial node, edge, byte, and layout budgets are configurable and
+- [x] Overview inclusion and ordering are machine-readable backend decisions.
+- [x] Initial node, edge, byte, and layout budgets are configurable and
       reported in projection metadata.
 - [ ] Every emitted model-review payload validates against the shared UI-000
       package; missing or unsupported contract versions fail closed.
@@ -179,6 +180,15 @@ edge collection and no readable per-workflow Mermaid projection is emitted.
 - [ ] The relationship-review projection displays all pending candidates.
 
 ## Implementation evidence
+
+The proposed producer now emits `proposed-model-review-workspace.json` through
+the shared UI-000 schema. Its overview carries distinct projection and
+canonical identities, governed relationship provenance, explicit
+projection-only constructs, backend-owned membership/order, bounded payload
+budgets, truncation and available-layer metadata, deterministic layout input,
+and fail-closed contract versions. The artifact survives the review/resume
+publication boundary. Existing focused-detail compatibility artifacts remain
+until their UI-001 consumer migration is complete.
 
 Atlas now creates lifecycle-neutral focused projection contracts for project
 overview, workflow detail, rules and controls, traceability, and approval
