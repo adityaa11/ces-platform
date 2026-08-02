@@ -1,0 +1,10 @@
+{
+  "name": "@company/ces-atlas-workflow-ui",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc --build",
+    "typecheck": "tsc --build --pretty false"
+  }
+}

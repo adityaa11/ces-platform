@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-UI-001 — Workflow Review Workspace Foundation
 
 **Stage:** Atlas workflow review UI
-**Status:** Planned
+**Status:** Complete
 
 ## Objective
 
@@ -59,21 +59,32 @@ states.
 
 ## Acceptance criteria
 
-- [ ] The three panes are visible together at supported desktop widths.
-- [ ] Lifecycle and authority state cannot be hidden by workflow navigation.
-- [ ] The UI renders only backend-provided semantic membership and topology.
-- [ ] The UI can render every HARD-021 model kind according to its support
+- [x] The three panes are visible together at supported desktop widths.
+- [x] Lifecycle and authority state cannot be hidden by workflow navigation.
+- [x] The UI renders only backend-provided semantic membership and topology.
+- [x] The UI can render every HARD-021 model kind according to its support
       status and projection eligibility.
-- [ ] Partial and review-only previews display missing evidence and cannot look
+- [x] Partial and review-only previews display missing evidence and cannot look
       approved or complete.
-- [ ] A document with no supported workflow renders its other supported models
+- [x] A document with no supported workflow renders its other supported models
       without a workflow error or fabricated fallback graph.
-- [ ] Fixture-specific headings or theme assumptions in production code equal
+- [x] Fixture-specific headings or theme assumptions in production code equal
       zero.
-- [ ] Loading, empty, error, missing-projection, and stale states are tested.
-- [ ] Keyboard and screen-reader users can navigate workflows and graph items.
-- [ ] Existing backend builds and tests remain green.
+- [x] Loading, empty, error, missing-projection, and stale states are tested.
+- [x] Keyboard and screen-reader users can navigate workflows and graph items.
+- [x] Existing backend builds and tests remain green.
 
 ## Out of scope
 
 Persistent overview/detail interaction is completed by ATLAS-UI-002.
+
+## Implementation evidence
+
+- Added `apps/atlas-workflow-ui` as a dependency-free TypeScript web app.
+- The versioned adapter fails closed on malformed projections and applies all
+  ten backend model-support states without inventing a fallback diagram.
+- The responsive shell keeps lifecycle and authority in a persistent header,
+  with semantic navigation, an accessible graph/table workspace, and source
+  documents visible as three desktop panes.
+- `apps/atlas-workflow-ui/src/adapter.test.ts`: four foundation tests pass.
+- Application typecheck and build pass with TypeScript project references.
