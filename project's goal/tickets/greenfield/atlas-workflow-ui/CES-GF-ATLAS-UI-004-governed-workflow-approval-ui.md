@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-UI-004 — Governed Model Review and Approval UI
 
 **Stage:** Atlas model review UI
-**Status:** Blocked by UI-000 through UI-003 — prototype command behavior is validated only
+**Status:** In progress — governed production decision route implemented; React subject controls remain
 
 ## Objective
 
@@ -80,6 +80,19 @@ letting the frontend calculate eligibility.
 Final production and cross-domain UI qualification is ATLAS-UI-005.
 
 ## Implementation evidence
+
+- `/api/atlas/decisions` now authenticates a server session, applies
+  constant-time CSRF validation, enforces a server-configured project
+  allowlist, and derives reviewer identity/display name only from server
+  configuration. The shared command schema rejects forged or extra fields.
+- The route revision-checks the immutable proposal and backend eligibility,
+  resolves subject entity types on the server, and uses the real Atlas review,
+  focused-projection, approved-model, and publication packages. Approve/reject
+  commands produce an immutable ledger, an approved shared workspace, an audit
+  receipt, and a relative materialized-workspace path.
+- Idempotency receipts are server-owned. Stale revisions return 409; unsupported
+  correction shapes fail closed until a complete corrected proposal payload is
+  available instead of being synthesized by the UI.
 
 - Review subjects carry backend eligibility, bulk eligibility, blockers,
   allowed actions, confirmation requirements, and command URLs unchanged.

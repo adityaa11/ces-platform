@@ -63,9 +63,21 @@ importers:
 
   apps/atlas-workflow-ui:
     dependencies:
+      '@company/ces-approved-project-model':
+        specifier: workspace:*
+        version: link:../../packages/approved-project-model
+      '@company/ces-atlas-intent-graph':
+        specifier: workspace:*
+        version: link:../../packages/atlas-intent-graph
       '@company/ces-atlas-model-review-contracts':
         specifier: workspace:*
         version: link:../../packages/atlas-model-review-contracts
+      '@company/ces-atlas-review':
+        specifier: workspace:*
+        version: link:../../packages/atlas-review
+      '@company/ces-proposed-project-model':
+        specifier: workspace:*
+        version: link:../../packages/proposed-project-model
       '@xyflow/react':
         specifier: ^12.11.2
         version: 12.11.2(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
