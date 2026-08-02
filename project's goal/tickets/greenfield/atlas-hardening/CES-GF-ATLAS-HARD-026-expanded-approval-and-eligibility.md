@@ -92,12 +92,12 @@ Final Safara and lifecycle qualification remains ATLAS-HARD-015.
 The Safara output did not demonstrate that accepted assignments and
 relationships are replayed into connected approved workflow projections.
 
-- [ ] Emit approved workflow assignments and approved relationships.
-- [ ] Materialize approved workflow-detail and project-overview projections.
-- [ ] Include approved edges and exclude pending or rejected edges.
+- [x] Emit approved workflow assignments and approved relationships.
+- [x] Materialize approved workflow-detail and project-overview projections.
+- [x] Include approved edges and exclude pending or rejected edges.
 - [ ] Materialize human-added edges only from immutable reviewer decisions.
-- [ ] Preserve the original proposed model unchanged.
-- [ ] Prove deterministic replay from immutable proposal plus decisions.
+- [x] Preserve the original proposed model unchanged.
+- [x] Prove deterministic replay from immutable proposal plus decisions.
 - [ ] Store Safara evidence for partial multi-target approval and stale
       decision handling.
 - [ ] Accepted multilingual equivalence decisions materialize one governed
@@ -138,9 +138,18 @@ records, assignments, relationships, terminology, lifecycle-neutral focused
 projections, and `approval-report.md` from proposal plus human ledger only.
 The CLI emits backend-owned `approval-eligibility.json` before review.
 
+The reopened topology replay now treats approved workflows as valid relationship
+endpoints. Approved overview projections retain only accepted relationship and
+workflow-edge IDs, retain accepted decision/state identity, and exclude pending
+targets without mutating the proposal.
+
 Verification:
 
 - Builds: proposed-project-model, Atlas review, Atlas intent graph,
   approved-project-model, and CLI typecheck.
 - `corepack pnpm vitest run packages/proposed-project-model/src/index.test.ts packages/atlas-review/src/proposal-decisions.test.ts packages/approved-project-model/src/hardened.test.ts packages/atlas-intent-graph/src/index.test.ts apps/cli/src/atlas.test.ts`
 - 25 focused tests passed.
+- HARD-026 topology regression: `packages/approved-project-model/src/hardened.test.ts`
+  proves deterministic replay, exact `state_value_id` preservation, accepted
+  relationship publication, pending-target exclusion, and immutable proposed
+  projection input.

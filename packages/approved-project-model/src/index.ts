@@ -407,13 +407,17 @@ export function materializeExpandedApprovedProjectModel(input: {
       && operationIds.has(edge.to_operation_id)
       ? [{ edge, decision_id: decision.decision_id }] : [];
   });
-  const approvedTopologyIds = new Set([...approvedRecordIds, ...operationIds]);
+  const approvedTopologyIds = new Set([
+    ...approvedRecordIds,
+    ...operationIds,
+    ...workflows.map(({ workflow_id }) => workflow_id),
+  ]);
   const relationships = proposal.relationship_candidates.flatMap((intent) =>
     intent.targets.flatMap((target) => {
       const decision = approved.get(`relationship_target:${target.target_candidate_id}`);
       if (!decision || !target.target_id || !approvedTopologyIds.has(intent.from_id)
         || !approvedTopologyIds.has(target.target_id)) return [];
-      const identity = createApprovedRelationshipIdentity({
+      const { target_id: _targetId, ...identity } = createApprovedRelationshipIdentity({
         relationship_intent_id: intent.relationship_intent_id,
         target_candidate_id: target.target_candidate_id,
         target_id: target.target_id,
@@ -494,6 +498,8 @@ export function materializeExpandedApprovedProjectModel(input: {
     approved_workflow_ids: workflows.map(({ workflow_id }) => workflow_id),
     approved_operation_ids: operations.map(({ operation_id }) => operation_id),
     approved_workflow_edge_ids: workflowEdges.map(({ edge }) => edge.edge_id),
+    approved_relationship_ids: relationships.map(({ target_candidate_id }) =>
+      target_candidate_id),
   });
   return deepFreeze(ExpandedApprovalPublicationSchema.parse({
     model,

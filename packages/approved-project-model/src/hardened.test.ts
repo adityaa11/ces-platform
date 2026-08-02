@@ -79,7 +79,8 @@ const proposal = {
     operation_id: "project.operation.release",
     workflow_id: "project.workflow.release",
     label: "Release",
-    operation_kind: "action" as const,
+    operation_kind: "state" as const,
+    state_value_id: "project.state-value.released",
     semantic_record_ids: ["project.record.temperature"],
     source_unit_ids: [source],
     governance: {
@@ -132,7 +133,43 @@ const proposal = {
   }],
   cross_cutting_assignments: [],
   relationship_hints: [],
-  relationship_candidates: [],
+  relationship_candidates: [{
+    relationship_intent_id: "project.relationship.release-context",
+    from_id: "project.workflow.release",
+    relationship_kind: "project.relationship-kind.provides-context-to",
+    governance: {
+      id: "project.governance.relationship-release-context",
+      origin: "explicit" as const,
+      evidence_source_unit_ids: [source],
+      rationale: "Source-defined workflow relationship.",
+      confidence: 1,
+      review_status: "pending" as const,
+      bulk_approval_eligible: false,
+      blockers: [],
+      proposal_revision: 1,
+    },
+    targets: [{
+      target_candidate_id: "project.relationship-target.release-context",
+      target_id: "project.workflow.release",
+      target_status: "valid" as const,
+      target_semantics: "independent" as const,
+      evidence_source_unit_ids: [source],
+      rationale: "Source-defined target.",
+      confidence: 1,
+      review_status: "pending" as const,
+      blockers: [],
+    }, {
+      target_candidate_id: "project.relationship-target.release-context-pending",
+      target_id: "project.workflow.release",
+      target_status: "valid" as const,
+      target_semantics: "independent" as const,
+      evidence_source_unit_ids: [source],
+      rationale: "Pending source-defined target.",
+      confidence: 1,
+      review_status: "pending" as const,
+      blockers: [],
+    }],
+  }],
   workflow_nodes: [{
     id: "project.workflow.release", label: "Release",
     semantic_record_ids: ["project.record.temperature"], source_unit_ids: [source],
@@ -185,6 +222,7 @@ const eligibility = {
 describe("ATLAS-HARD-013 approved model materialization", () => {
   it("materializes expanded human decisions and approved focused projections", async () => {
     const expandedEligibility = calculateExpandedApprovalEligibility({ model: proposal });
+    const proposedProjections = createFocusedAtlasProjections({ model: proposal });
     const ledger = createExpandedApprovalLedger({
       eligibility: expandedEligibility,
       decisions: [{
@@ -211,19 +249,27 @@ describe("ATLAS-HARD-013 approved model materialization", () => {
         reviewer: { kind: "human", identity: "reviewer-1" },
         decided_at: "2026-07-29T10:02:00+07:00",
         note: "Approved reviewed retry loop.",
+      }, {
+        sequence: 4,
+        action: "approve",
+        entity_type: "relationship_target",
+        entity_ids: ["project.relationship-target.release-context"],
+        reviewer: { kind: "human", identity: "reviewer-1" },
+        decided_at: "2026-07-29T10:03:00+07:00",
+        note: "Approved workflow relationship.",
       }],
     });
     const publication = materializeExpandedApprovedProjectModel({
       proposal,
       eligibility: expandedEligibility,
       ledger,
-      focused_projections: createFocusedAtlasProjections({ model: proposal }),
+      focused_projections: proposedProjections,
     });
     expect(materializeExpandedApprovedProjectModel({
       proposal,
       eligibility: expandedEligibility,
       ledger,
-      focused_projections: createFocusedAtlasProjections({ model: proposal }),
+      focused_projections: proposedProjections,
     })).toEqual(publication);
     expect(publication.model).toMatchObject({
       authoritative: true,
@@ -237,13 +283,28 @@ describe("ATLAS-HARD-013 approved model materialization", () => {
     });
     expect(publication.model.workflow_edges).toHaveLength(1);
     expect(publication.model.workflow_assignments).toHaveLength(1);
+    expect(publication.model.relationships).toHaveLength(1);
+    expect(publication.model.operations[0]?.state_value_id)
+      .toBe("project.state-value.released");
     expect(publication.focused_projections.workflow_details[0]?.edges).toHaveLength(1);
+    expect(publication.focused_projections.workflow_details[0]?.operations[0]?.state_value_id)
+      .toBe("project.state-value.released");
+    expect(publication.focused_projections.project_overview.relationships).toHaveLength(1);
+    expect(publication.focused_projections.project_overview.edges)
+      .toContainEqual(expect.objectContaining({
+        edge_id: "project.relationship-target.release-context",
+      }));
+    expect(proposedProjections.project_overview.relationships).toHaveLength(2);
+    expect(proposal.relationship_candidates[0]?.targets).toHaveLength(2);
     const directory = await mkdtemp(join(tmpdir(), "atlas-expanded-approved-"));
     const published = await publishExpandedApproval(directory, publication);
     expect(await readFile(join(published, "approval-report.md"), "utf8"))
       .toContain("Approved records: 1");
     expect(JSON.parse(await readFile(
       join(published, "approved-workflow-edges.json"), "utf8",
+    ))).toHaveLength(1);
+    expect(JSON.parse(await readFile(
+      join(published, "approved-relationships.json"), "utf8",
     ))).toHaveLength(1);
     expect(await readFile(join(
       published, "approved-workflows", "project.workflow.release", "flow.mmd",

@@ -676,6 +676,7 @@ export function materializeApprovedFocusedProjections(input: {
   readonly approved_workflow_ids?: readonly string[];
   readonly approved_operation_ids?: readonly string[];
   readonly approved_workflow_edge_ids?: readonly string[];
+  readonly approved_relationship_ids?: readonly string[];
 }): z.infer<typeof FocusedProjectionBundleSchema> {
   const proposed = FocusedProjectionBundleSchema.parse(input.proposed);
   if (proposed.model_lifecycle !== "review_in_progress") {
@@ -692,6 +693,7 @@ export function materializeApprovedFocusedProjections(input: {
     ?? proposed.workflow_details.flatMap(({ operations }) =>
       operations.map(({ operation_id }) => operation_id)));
   const edgeIds = new Set(input.approved_workflow_edge_ids ?? []);
+  const relationshipIds = new Set(input.approved_relationship_ids ?? []);
   const approvedWorkflowDetails = proposed.workflow_details
     .filter(({ workflow_id }) => workflowIds.has(workflow_id))
     .map((detail) => ({
@@ -700,6 +702,13 @@ export function materializeApprovedFocusedProjections(input: {
         operationIds.has(operation_id)),
       edges: detail.edges.filter(({ edge_id }) => edgeIds.has(edge_id)),
     }));
+  const approvedOverviewNodes = proposed.project_overview.nodes.filter(({ node_id }) =>
+    workflowIds.has(node_id) || operationIds.has(node_id));
+  const approvedOverviewEdges = proposed.project_overview.edges.filter((edge) =>
+    (relationshipIds.has(edge.edge_id) || edgeIds.has(edge.edge_id)
+      || edge.edge_id.endsWith(".evaluated-by"))
+    && (workflowIds.has(edge.from_node_id) || operationIds.has(edge.from_node_id))
+    && (workflowIds.has(edge.to_node_id) || operationIds.has(edge.to_node_id)));
   const core = {
     ...rest,
     model_revision: z.number().int().positive().parse(input.approved_model_revision),
@@ -715,6 +724,16 @@ export function materializeApprovedFocusedProjections(input: {
           operation_count: approvedWorkflowDetails.find(({ workflow_id }) =>
             workflow_id === workflow.workflow_id)?.operations.length ?? 0,
         })),
+      relationships: proposed.project_overview.relationships
+        .filter(({ relationship_id, from_workflow_id, to_workflow_id }) =>
+          relationshipIds.has(relationship_id)
+          && workflowIds.has(from_workflow_id)
+          && workflowIds.has(to_workflow_id)),
+      nodes: approvedOverviewNodes,
+      edges: approvedOverviewEdges,
+      duplicate_decision_state_labels: proposed.project_overview.duplicate_decision_state_labels
+        .filter(({ node_ids }) => node_ids.every((id) =>
+          approvedOverviewNodes.some(({ node_id }) => node_id === id))),
     },
     workflow_details: approvedWorkflowDetails,
     rules_controls_index: {
