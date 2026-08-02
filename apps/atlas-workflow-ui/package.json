@@ -4,7 +4,19 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc --build",
-    "typecheck": "tsc --build --pretty false"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "next typegen && tsc --noEmit --pretty false"
+  },
+  "dependencies": {
+    "@company/ces-atlas-model-review-contracts": "workspace:*",
+    "next": "^16.2.12",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4"
   }
 }

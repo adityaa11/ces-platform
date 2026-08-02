@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-UI-001 — Model Review Workspace Foundation
 
 **Stage:** Atlas model review UI
-**Status:** Blocked by UI-000 contract freeze — prototype behavior exists; production implementation has not resumed
+**Status:** In progress — production Next.js boundary and shared workspace shell implemented
 
 ## Objective
 
@@ -90,12 +90,12 @@ states.
 
 ## Production acceptance
 
-- [ ] The production application builds and runs through Next.js App Router;
+- [x] The production application builds and runs through Next.js App Router;
       no dependency-free prototype shell remains as the release entry point.
-- [ ] Real versioned Atlas artifacts are adapted server-side into the workspace
+- [x] Real versioned Atlas artifacts are adapted server-side into the workspace
       contract; `/api/atlas/workspace` is implemented and tested rather than
       assumed.
-- [ ] Every rendered node and edge satisfies the frozen UI-000 identity,
+- [x] Every rendered node and edge satisfies the frozen UI-000 identity,
       evidence, authority, and visual-semantic contracts.
 
 ## Out of scope
@@ -104,7 +104,18 @@ Persistent overview/detail interaction is completed by ATLAS-UI-002.
 
 ## Implementation evidence
 
-- Added `apps/atlas-workflow-ui` as a dependency-free TypeScript web app.
+- The release entry is now a Node-hosted Next.js App Router application with
+  production `dev`, `build`, and `start` commands.
+- The server-only workspace reader and `/api/atlas/workspace` validate the
+  producer artifact with `ModelReviewWorkspaceSchema`, reject unsafe project
+  identifiers, and fail closed on invalid contract data.
+- The neutral responsive shell renders persistent lifecycle/authority state,
+  semantic navigation, the backend-owned overview, relationship alternatives,
+  and a source-evidence pane from shared-contract fields.
+- Next.js production build passes; 13 focused UI/server tests pass.
+
+- The earlier dependency-free TypeScript shell remains covered as compatibility
+  behavior while the Next.js application is the production entry point.
 - The versioned adapter fails closed on malformed projections and applies all
   ten backend model-support states without inventing a fallback diagram.
 - The responsive shell keeps lifecycle and authority in a persistent header,
