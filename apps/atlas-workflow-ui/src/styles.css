@@ -52,6 +52,20 @@ th, td { border-bottom: 1px solid #e2e7e3; padding: 7px; text-align: left; }
 .relationship.proposed { border-left-style: dotted; border-left-color: #6b7890; }
 .relationship.approved { border-left-style: solid; border-left-color: #177b63; }
 .relationship.rejected { opacity: .55; text-decoration: line-through; }
+.focused-tab { border-top: 1px solid #e2e7e3; margin-top: 16px; padding-top: 12px; }
+.focused-tab button { width: 100%; border: 1px solid #d7ddd8; border-radius: 8px; background: #fff; padding: 10px; text-align: left; }
+.focused-tab button span, .focused-tab button small, .focused-tab button strong { display: block; }
+.focused-tab button strong { color: #82550d; font-size: .72rem; }
+.source-representation { border: 1px solid #d7ddd8; border-radius: 9px; margin-bottom: 12px; padding: 12px; }
+.source-representation.primary { border-color: #177b63; background: #f3faf6; }
+.source-representation blockquote { border-left: 3px solid #177b63; margin: 8px 0; padding-left: 10px; }
+.source-representation dl { font-size: .75rem; }
+.source-representation dl div { display: grid; grid-template-columns: 80px 1fr; }
+.source-representation dd { margin: 0; overflow-wrap: anywhere; }
+.interpretation-aid { border: 1px dashed #89958e; border-radius: 9px; padding: 12px; }
+.trace-chain { padding-left: 18px; }
+.trace-chain span, .trace-chain strong { display: block; overflow-wrap: anywhere; }
+.trace-chain span { color: #68756e; font-size: .7rem; text-transform: uppercase; }
 .workspace-state { display: grid; min-height: 100vh; place-content: center; padding: 24px; text-align: center; }
 .empty-note { color: #68756e; font-size: .85rem; }
 @media (max-width: 900px) { .project-header { grid-template-columns: 1fr; } .summary div { text-align: left; } .workspace-grid { grid-template-columns: 1fr; } .navigation-pane, .source-pane { max-height: none; } }

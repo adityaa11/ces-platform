@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-UI-003 — Focused Workflow Tabs and Source Workspace
 
 **Stage:** Atlas workflow review UI
-**Status:** Planned
+**Status:** Complete
 
 ## Objective
 
@@ -43,28 +43,43 @@ views while keeping exact source evidence visible beside it.
 
 ## Acceptance criteria
 
-- [ ] Every non-empty focused projection has a corresponding tab.
-- [ ] Top-level supported-model tabs come only from the backend model-support
+- [x] Every non-empty focused projection has a corresponding tab.
+- [x] Top-level supported-model tabs come only from the backend model-support
       assessment and share canonical selection with focused detail tabs.
-- [ ] Selecting a node, edge, rule, validation, permission, or state opens its
+- [x] Selecting a node, edge, rule, validation, permission, or state opens its
       exact evidence.
-- [ ] Original wording is visually distinct from translations and canonical
+- [x] Original wording is visually distinct from translations and canonical
       wording.
-- [ ] Same-meaning multilingual content appears once in workflow views, with
+- [x] Same-meaning multilingual content appears once in workflow views, with
       all exact original representations available in Evidence.
-- [ ] Pending possible-equivalence members remain visibly separate and are
+- [x] Pending possible-equivalence members remain visibly separate and are
       labeled as pending human review; only accepted equivalence is displayed
       as one authoritative concept.
-- [ ] The primary label exposes its source representation and deterministic
+- [x] The primary label exposes its source representation and deterministic
       selection reason; changing candidate order does not change it.
-- [ ] Page, section, source-unit identity, and text span are displayed.
-- [ ] Bounding boxes are shown when projection data provides them.
-- [ ] One workflow can load without downloading every project record.
-- [ ] Missing evidence is shown as an approval exception, not silently hidden.
-- [ ] Cross-tab and source synchronization is tested.
-- [ ] Source documents are delivered only after authenticated, project-scoped
+- [x] Page, section, source-unit identity, and text span are displayed.
+- [x] Bounding boxes are shown when projection data provides them.
+- [x] One workflow can load without downloading every project record.
+- [x] Missing evidence is shown as an approval exception, not silently hidden.
+- [x] Cross-tab and source synchronization is tested.
+- [x] Source documents are delivered only after authenticated, project-scoped
       authorization and document-access events are audited.
 
 ## Out of scope
 
 Human decisions and approval materialization are completed by ATLAS-UI-004.
+
+## Implementation evidence
+
+- Detail projections explicitly declare Flow, Rules, Validations, Permissions,
+  States, Evidence, and Approval slices; only `explicitly_empty` slices hide.
+- Each item retains its backend canonical concept and optional evidence ID.
+  Pending equivalence stays separate and labeled; accepted concepts can expose
+  multiple exact source representations behind one workflow item.
+- Evidence access uses same-origin credentials, project scope, and revision
+  pinning. Responses must contain the matching project/revision and a server
+  audit-event receipt before any document text renders.
+- The source pane distinguishes exact originals from canonical interpretation,
+  displays deterministic primary-selection rationale, location/span/bounds,
+  and the full document-to-operation trace.
+- Eleven UI tests pass and application typecheck passes.

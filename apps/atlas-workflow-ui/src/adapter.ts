@@ -20,6 +20,7 @@ function requirePayload(value: unknown): AtlasWorkspacePayload {
     || !Array.isArray(value.model_support)
     || !Array.isArray(value.source_documents)
     || !Array.isArray(value.detail_index)
+    || !Array.isArray(value.evidence_index)
     || typeof value.revision !== "number") {
     throw new Error("Atlas workspace projection is missing required versioned fields");
   }

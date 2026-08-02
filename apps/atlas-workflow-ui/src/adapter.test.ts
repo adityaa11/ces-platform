@@ -37,6 +37,7 @@ const payload = {
     href: "/api/atlas/models/activity-flow" }, {
     subject_id: "model.business_workflow", revision: 1,
     href: "/api/atlas/models/business-workflow" }],
+  evidence_index: [],
 } satisfies AtlasWorkspacePayload;
 
 describe("ATLAS-UI-001 workspace foundation", () => {

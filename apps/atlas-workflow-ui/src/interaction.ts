@@ -1,4 +1,5 @@
 import type { AtlasWorkspacePayload, DetailProjection } from "./contracts.js";
+import { fetchSourceEvidence, renderSourceEvidence } from "./source.js";
 
 export interface InteractionSnapshot {
   readonly selectedSubjectId?: string;
@@ -58,13 +59,20 @@ export async function fetchDetail(input: {
   return detail;
 }
 
-function renderDetail(detail: DetailProjection): string {
+export function renderDetail(detail: DetailProjection): string {
   const nodes = detail.nodes.map(({ node_id, label, node_kind }) =>
     `<li data-concept-id="${escapeHtml(node_id)}"><strong>${escapeHtml(label)}</strong><span>${escapeHtml(node_kind)}</span></li>`).join("");
   const edges = detail.edges.filter(({ relationship_status }) =>
     relationship_status !== "rejected").map((edge) =>
     `<li class="relationship ${edge.relationship_status}">${escapeHtml(edge.from_node_id)} <span>${escapeHtml(edge.relationship_kind)}</span> ${escapeHtml(edge.to_node_id)}</li>`).join("");
-  return `<div class="detail-heading"><div><p class="eyebrow">Selected projection</p><h2>${escapeHtml(detail.label)}</h2></div><div><button type="button" class="secondary" data-action="minimize-detail">Minimize</button><button type="button" class="secondary" data-action="close-detail">Close</button></div></div><div class="detail-content"><ul class="detail-nodes">${nodes}</ul><ol class="ordered-graph-summary" aria-label="Ordered relationship summary">${edges}</ol></div>`;
+  const flowVisible = detail.tabs.some(({ tab, explicitly_empty }) =>
+    tab === "flow" && !explicitly_empty);
+  const flow = flowVisible
+    ? `<section><h3>Flow</h3><ul class="detail-nodes">${nodes}</ul><ol class="ordered-graph-summary" aria-label="Ordered relationship summary">${edges}</ol></section>` : "";
+  const tabs = detail.tabs.filter(({ tab, explicitly_empty }) =>
+    tab !== "flow" && !explicitly_empty).map((tab) =>
+    `<section class="focused-tab" data-tab="${tab.tab}"><h3>${escapeHtml(tab.tab[0]!.toUpperCase() + tab.tab.slice(1))}</h3><ul>${tab.items.map((item) => `<li class="${item.equivalence_status === "pending_review" ? "pending-equivalence" : ""}"><button type="button" ${item.evidence_id ? `data-evidence-id="${escapeHtml(item.evidence_id)}"` : "disabled"}><span>${escapeHtml(item.label)}</span>${item.equivalence_status === "pending_review" ? "<strong>Possible equivalence — human review pending</strong>" : ""}${item.representation_count > 1 ? `<small>${item.representation_count} exact source representations</small>` : ""}</button></li>`).join("")}</ul></section>`).join("");
+  return `<div class="detail-heading"><div><p class="eyebrow">Selected projection</p><h2>${escapeHtml(detail.label)}</h2></div><div><button type="button" class="secondary" data-action="minimize-detail">Minimize</button><button type="button" class="secondary" data-action="close-detail">Close</button></div></div><div class="detail-content">${flow}${tabs}</div>`;
 }
 
 export function bindWorkspaceInteractions(input: {
@@ -79,8 +87,19 @@ export function bindWorkspaceInteractions(input: {
 
   input.root.addEventListener("click", (event) => {
     const target = event.target instanceof Element
-      ? event.target.closest<HTMLElement>("[data-action], [data-subject-id], [data-concept-id]") : null;
+      ? event.target.closest<HTMLElement>("[data-action], [data-subject-id], [data-concept-id], [data-evidence-id]") : null;
     if (!target) return;
+    const evidenceId = target.dataset.evidenceId;
+    if (evidenceId) {
+      const source = input.root.querySelector<HTMLElement>(".source-preview");
+      if (!source) return;
+      source.innerHTML = "<p>Loading exact source evidence…</p>";
+      void fetchSourceEvidence({ payload: input.payload, evidenceId,
+        ...(input.fetcher ? { fetcher: input.fetcher } : {}) })
+        .then((evidence) => { source.innerHTML = renderSourceEvidence(evidence); })
+        .catch((error: unknown) => { source.innerHTML = `<p role="alert">${escapeHtml(error instanceof Error ? error.message : "Source evidence unavailable")}</p>`; });
+      return;
+    }
     const conceptId = target.dataset.conceptId;
     if (conceptId) {
       input.root.querySelectorAll("[data-concept-id]").forEach((item) =>

@@ -56,6 +56,69 @@ export interface DetailProjection {
   readonly label: string;
   readonly nodes: readonly OverviewNode[];
   readonly edges: readonly OverviewEdge[];
+  readonly tabs: readonly FocusedTabProjection[];
+}
+
+export type FocusedTabKind = "flow" | "rules" | "validations" | "permissions"
+  | "states" | "evidence" | "approval";
+
+export interface FocusedTabItem {
+  readonly item_id: string;
+  readonly canonical_concept_id: string;
+  readonly label: string;
+  readonly evidence_id?: string;
+  readonly equivalence_status: "independent" | "pending_review" | "accepted";
+  readonly representation_count: number;
+}
+
+export interface FocusedTabProjection {
+  readonly tab: FocusedTabKind;
+  readonly explicitly_empty: boolean;
+  readonly items: readonly FocusedTabItem[];
+}
+
+export interface EvidenceIndexEntry {
+  readonly evidence_id: string;
+  readonly revision: number;
+  readonly access_href: string;
+}
+
+export interface SourceRepresentation {
+  readonly representation_id: string;
+  readonly exact_text: string;
+  readonly language: string;
+  readonly document_id: string;
+  readonly page: number;
+  readonly section: string;
+  readonly source_unit_id: string;
+  readonly span_start: number;
+  readonly span_end: number;
+  readonly bounding_box?: readonly [number, number, number, number];
+}
+
+export interface SourceEvidenceProjection {
+  readonly schema_version: "1.0.0";
+  readonly project_id: string;
+  readonly revision: number;
+  readonly evidence_id: string;
+  readonly canonical_concept_id: string;
+  readonly primary_representation_id: string;
+  readonly primary_selection_reason: string;
+  readonly representations: readonly SourceRepresentation[];
+  readonly canonical_wording?: string;
+  readonly canonical_language?: string;
+  readonly access_event: {
+    readonly audit_event_id: string;
+    readonly accessed_at: string;
+  };
+  readonly trace: {
+    readonly document_id: string;
+    readonly source_unit_id: string;
+    readonly atomic_claim_id: string;
+    readonly canonical_record_id: string;
+    readonly workflow_id?: string;
+    readonly operation_id?: string;
+  };
 }
 
 export interface SourceDocument {
@@ -85,6 +148,7 @@ export interface AtlasWorkspacePayload {
   };
   readonly source_documents: readonly SourceDocument[];
   readonly detail_index: readonly DetailIndexEntry[];
+  readonly evidence_index: readonly EvidenceIndexEntry[];
 }
 
 export type WorkspaceState =
