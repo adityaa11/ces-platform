@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-UI-003 — Focused Workflow Tabs and Source Workspace
 
 **Stage:** Atlas model review UI
-**Status:** Blocked by UI-000 through UI-002 — prototype evidence behavior is validated only
+**Status:** In progress — production exact-evidence route and source pane implemented
 
 ## Objective
 
@@ -71,7 +71,7 @@ views while keeping exact source evidence visible beside it.
       authenticated Next.js Route Handlers, not assumed endpoint contracts.
 - [ ] Cross-model selection uses the same canonical concept ID while every
       exact source representation remains inspectable in Evidence.
-- [ ] Every exact representation carries its own representation trace; one
+- [x] Every exact representation carries its own representation trace; one
       concept-level trace cannot substitute for plural source lineage.
 - [ ] PDF highlighting uses the frozen normalized-page, top-left-origin,
       one-based-page, rotation-aware coordinate contract.
@@ -83,6 +83,20 @@ views while keeping exact source evidence visible beside it.
 Human decisions and approval materialization are completed by ATLAS-UI-004.
 
 ## Implementation evidence
+
+- `/api/atlas/evidence` is a real Next.js Route Handler. It revision-pins the
+  request, verifies that the canonical concept and evidence IDs belong to the
+  selected workspace, and materializes the shared UI-000 evidence schema from
+  source units, atomic claims, canonical records, workflows, and operations.
+- The React source pane loads same-origin evidence for the selected canonical
+  concept and renders exact original document text, language, document,
+  source-unit identity, span, and any source-provided PDF location as text.
+  React escaping is retained and missing trace data fails closed rather than
+  inventing evidence.
+- Every returned exact representation has its own representation trace; a
+  focused regression test proves the invariant.
+- Security headers deny objects, framing, cross-origin connections, and MIME
+  sniffing. Production build passes with the evidence route present.
 
 - Detail projections explicitly declare Flow, Rules, Validations, Permissions,
   States, Evidence, and Approval slices; only `explicitly_empty` slices hide.

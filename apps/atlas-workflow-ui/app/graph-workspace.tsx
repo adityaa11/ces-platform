@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import ELK from "elkjs/lib/elk.bundled.js";
 import { ReactFlow, Background, Controls, MarkerType, type Edge, type Node } from "@xyflow/react";
-import type { ModelReviewWorkspace } from "@company/ces-atlas-model-review-contracts";
+import type { ModelReviewWorkspace, SourceEvidenceProjection } from "@company/ces-atlas-model-review-contracts";
 import "@xyflow/react/dist/style.css";
 
 const elk = new ELK();
@@ -18,6 +18,7 @@ export function GraphWorkspace({ workspace }: { workspace: ModelReviewWorkspace 
   const [overviewMinimized, setOverviewMinimized] = useState(false);
   const [detailMinimized, setDetailMinimized] = useState(false);
   const [selectedId, setSelectedId] = useState<string>();
+  const [evidence, setEvidence] = useState<SourceEvidenceProjection | "loading" | "unavailable">();
   const order = new Map(workspace.overview.layout.node_order.map((id, index) => [id, index]));
   const ordered = useMemo(() => [...workspace.overview.nodes].sort((left, right) =>
     (order.get(left.node.projection_node_id) ?? Number.MAX_SAFE_INTEGER)
@@ -59,6 +60,23 @@ export function GraphWorkspace({ workspace }: { workspace: ModelReviewWorkspace 
   const selected = workspace.overview.nodes.find(({ node }) =>
     node.projection_node_id === selectedId);
   const selectedCanonical = selected ? canonicalId(selected.node) : undefined;
+  useEffect(() => {
+    if (!selectedCanonical) { setEvidence(undefined); return; }
+    const controller = new AbortController();
+    setEvidence("loading");
+    const query = new URLSearchParams({ project: workspace.project_id,
+      concept: selectedCanonical, revision: String(workspace.revision),
+      lifecycle: workspace.authority.lifecycle === "approved" ? "approved" : "proposed" });
+    void fetch(`/api/atlas/evidence?${query}`, { signal: controller.signal,
+      credentials: "same-origin", headers: { Accept: "application/json",
+        "If-Match": String(workspace.revision) } }).then(async (response) => {
+      if (!response.ok) throw new Error("Evidence unavailable");
+      setEvidence(await response.json() as SourceEvidenceProjection);
+    }).catch((error: unknown) => {
+      if (!(error instanceof DOMException && error.name === "AbortError")) setEvidence("unavailable");
+    });
+    return () => controller.abort();
+  }, [selectedCanonical, workspace]);
   const highlighted = nodes.map((node) => ({ ...node, selected:
     selectedCanonical !== undefined && node.data.canonicalId === selectedCanonical }));
 
@@ -94,8 +112,20 @@ export function GraphWorkspace({ workspace }: { workspace: ModelReviewWorkspace 
       </section>}
     </section>
     <aside><h2>Source evidence</h2>{selected ? <><h3>{selected.node.label}</h3>
-      <ul>{selected.node.evidence_ids.map((id) => <li key={id}>{id}</li>)}</ul>
-      <p className="notice">Exact representations are loaded from the governed evidence endpoint.</p></>
+      {evidence === "loading" && <p>Loading exact source…</p>}
+      {evidence === "unavailable" && <p className="notice">Exact traced evidence is unavailable. Approval must remain blocked.</p>}
+      {evidence && typeof evidence === "object" && evidence.representations.map((representation) =>
+        <article className="source-representation" key={representation.representation_id}>
+          <p className="eyebrow">Exact original document text</p>
+          <blockquote>{representation.exact_text}</blockquote>
+          <dl><div><dt>Language</dt><dd>{representation.language}</dd></div>
+            <div><dt>Document</dt><dd>{representation.document_id}</dd></div>
+            <div><dt>Source unit</dt><dd>{representation.source_unit_id}</dd></div>
+            <div><dt>Text span</dt><dd>{representation.text_span.start}–{representation.text_span.end}</dd></div></dl>
+          {representation.pdf_location && <p>PDF page {representation.pdf_location.page_number}</p>}
+        </article>)}
+      {!evidence && <ul>{selected.node.evidence_ids.map((id) => <li key={id}>{id}</li>)}</ul>}
+      <p className="notice">Original text is rendered as untrusted text; the UI does not interpret or translate it.</p></>
       : <p>Select a concept to inspect its exact original document representations.</p>}</aside>
   </div>;
 }
