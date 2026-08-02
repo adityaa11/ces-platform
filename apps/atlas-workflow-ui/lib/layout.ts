@@ -3,6 +3,10 @@ import type { ModelReviewWorkspace } from "@company/ces-atlas-model-review-contr
 
 const elk = new ELK();
 
+export function overviewNodeDimensions(label: string): { width: number; height: number } {
+  return { width: 240, height: Math.min(190, 76 + Math.ceil(label.length / 30) * 18) };
+}
+
 export async function layoutOverview(workspace: ModelReviewWorkspace): Promise<Readonly<Record<string, {
   x: number; y: number;
 }>>> {
@@ -16,8 +20,11 @@ export async function layoutOverview(workspace: ModelReviewWorkspace): Promise<R
       - (edgeOrder.get(right.projection_edge_id) ?? Number.MAX_SAFE_INTEGER));
   const layout = await elk.layout({ id: "atlas-overview",
     layoutOptions: { "elk.algorithm": "layered", "elk.direction": workspace.overview.layout.direction,
-      "elk.layered.considerModelOrder.strategy": "NODES_AND_EDGES" },
-    children: nodes.map(({ node }) => ({ id: node.projection_node_id, width: 220, height: 88 })),
+      "elk.edgeRouting": "ORTHOGONAL", "elk.spacing.nodeNode": "72",
+      "elk.layered.spacing.nodeNodeBetweenLayers": "110",
+      "elk.spacing.edgeNode": "34", "elk.layered.considerModelOrder.strategy": "NODES_AND_EDGES" },
+    children: nodes.map(({ node }) => ({ id: node.projection_node_id,
+      ...overviewNodeDimensions(node.label) })),
     edges: edges.map((edge) => ({ id: edge.projection_edge_id,
       sources: [edge.from_projection_node_id], targets: [edge.to_projection_node_id] })),
   });

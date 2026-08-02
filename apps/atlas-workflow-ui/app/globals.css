@@ -16,11 +16,22 @@ nav ul { list-style: none; margin: 0; padding: 0; } nav button { display: grid; 
   color: inherit; text-align: left; border: 0; background: transparent; border-radius: .5rem; cursor: pointer; }
 nav button:hover, nav button:focus-visible { background: #eef3fa; outline: 2px solid #315e9e; }
 nav span { color: #667286; font-size: .75rem; text-transform: capitalize; }
-.flow-canvas { height: 32rem; border: 1px solid #cfd7e3; border-radius: .65rem; overflow: hidden; }
-.atlas-node { width: 13.75rem !important; min-height: 5.5rem; padding: .8rem; border-radius: .6rem !important;
-  border: 1px solid #8fa1ba !important; background: #fff !important; }
+.flow-canvas { height: clamp(38rem, 68vh, 52rem); border: 1px solid #cfd7e3; border-radius: .65rem; overflow: hidden; }
+.atlas-node { padding: 1rem; border-radius: .6rem !important; font-size: .88rem;
+  line-height: 1.35; border: 1px solid #8fa1ba !important; background: #fff !important;
+  display: flex; align-items: center; justify-content: center; text-align: center; }
 .atlas-node.proposed { border-style: dashed !important; } .atlas-node.selected { box-shadow: 0 0 0 3px #315e9e !important; }
 .atlas-edge.pending path { stroke-dasharray: 6 4; } .atlas-edge.approved path { stroke-width: 2.5; }
+.atlas-edge.core path { stroke: #52657d; stroke-width: 1.7; }
+.atlas-edge.dependency { opacity: .42; }.atlas-edge.dependency path { stroke: #8090a4; stroke-width: 1.1; }
+.atlas-edge.muted { opacity: .12; }.atlas-edge.highlighted { opacity: 1; }
+.react-flow__edge-text { font-size: 11px; fill: #34445a; }
+.react-flow__edge-textbg { fill: #fff; fill-opacity: .9; rx: 3px; ry: 3px; }
+.graph-legend { display: flex; align-items: center; flex-wrap: wrap; gap: .65rem 1.25rem;
+  margin: 0 0 .75rem; color: #516075; font-size: .78rem; }
+.graph-legend span { display: inline-flex; align-items: center; gap: .4rem; }
+.legend-line { display: inline-block; width: 2rem; height: 0; border-top: 2px solid #52657d; }
+.legend-line.dependency { border-top: 1px dashed #8090a4; opacity: .7; }
 .panel-heading { display: flex; justify-content: space-between; gap: 1rem; align-items: start; }
 .panel-heading button { padding: .45rem .7rem; border: 1px solid #aab6c7; border-radius: .4rem; background: #fff; cursor: pointer; }
 .panel-actions { display: flex; gap: .5rem; }.selected-detail { margin-top: 1.5rem; padding: 1rem;
