@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-UI-004 — Governed Workflow Review and Approval UI
 
 **Stage:** Atlas workflow review UI
-**Status:** Complete
+**Status:** Reopened — governed client contract exists; authenticated Next.js command integration is required
 
 ## Objective
 
@@ -61,6 +61,11 @@ letting the frontend calculate eligibility.
 - [x] Stale, conflicting, and failed decisions produce clear non-success
       states.
 - [x] Relationship targets remain independently reviewable.
+- [ ] Decision controls run through authenticated, project-scoped Next.js Route
+      Handlers connected to the immutable Atlas review and approved-model
+      materialization packages.
+- [ ] Successful materialization refreshes the synchronized integrated and
+      focused React Flow projections without client-authored semantic changes.
 
 ## Out of scope
 

@@ -36,6 +36,12 @@ qualification gates.
 - [ ] Cross-project access, forged reviewer identity, stale commands,
       duplicate commands, and unauthorized source access fail safely.
 - [ ] A human release reviewer records the integrated release decision.
+- [ ] The released UI is the Node.js-hosted Next.js application and its real
+      authenticated projection/decision routes, not the earlier static
+      TypeScript prototype.
+- [ ] Release evidence proves one canonical model, one bounded integrated
+      overview, and synchronized focused projections without fabricated
+      cross-model relationships.
 
 ## Outputs and evidence
 

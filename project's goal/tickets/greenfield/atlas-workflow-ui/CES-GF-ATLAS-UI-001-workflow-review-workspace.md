@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-UI-001 — Workflow Review Workspace Foundation
 
 **Stage:** Atlas workflow review UI
-**Status:** Complete
+**Status:** Reopened — interaction prototype exists; Next.js production host and real projection wiring are required
 
 ## Objective
 
@@ -15,6 +15,11 @@ the backend-owned integrated semantic graph and supported model projections.
 ## Work
 
 - Add a production web application within the existing workspace.
+- Implement it as `apps/atlas-workflow-ui`, a Node.js-hosted Next.js App Router
+  application using React and TypeScript. Static export and a custom HTTP
+  server are not acceptable production substitutes.
+- Use React Flow for graph interaction and ELK.js for deterministic visual
+  positioning only. Neither library may infer semantic topology.
 - Implement the required three-pane structure:
   - supported-model and semantic navigation on the left;
   - persistent integrated project graph and selected model/detail below it in
@@ -40,6 +45,9 @@ the backend-owned integrated semantic graph and supported model projections.
 - Use neutral CES Atlas product language and project-provided display data.
 - Render one buyer-facing item per governed semantic concept while allowing
   all exact original document representations to be inspected.
+- Treat every diagram as a projection of shared canonical concept IDs. Never
+  create language-specific or model-specific duplicate identities for the
+  same accepted concept.
 
 ## Domain-neutral UI boundary
 
@@ -73,6 +81,11 @@ states.
 - [x] Loading, empty, error, missing-projection, and stale states are tested.
 - [x] Keyboard and screen-reader users can navigate workflows and graph items.
 - [x] Existing backend builds and tests remain green.
+- [ ] The production application builds and runs through Next.js App Router;
+      no dependency-free prototype shell remains as the release entry point.
+- [ ] Real versioned Atlas artifacts are adapted server-side into the workspace
+      contract; `/api/atlas/workspace` is implemented and tested rather than
+      assumed.
 
 ## Out of scope
 

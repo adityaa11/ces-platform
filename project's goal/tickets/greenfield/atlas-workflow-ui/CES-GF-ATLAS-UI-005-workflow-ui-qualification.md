@@ -28,6 +28,10 @@ different domains and lifecycle states.
   support statuses produce the required UI behavior.
 - Verify the integrated summary and partitioned semantic layers remain bounded,
   progressively loadable, and revision-consistent.
+- Verify that combination occurs through shared canonical IDs and governed
+  bridge relationships, while focused models retain their own semantics.
+- Verify the integrated overview does not become an unbounded union of every
+  workflow step, rule, actor, state, message, and data entity.
 - Verify the persistent overview and stacked detail interaction.
 - Verify exact source-document, page, source-unit, text-span, and bounding-box
   navigation.
@@ -62,6 +66,12 @@ different domains and lifecycle states.
       fabricated workflow.
 - [ ] The integrated graph relates all supported model kinds while layer
       controls keep it readable.
+- [ ] Every cross-model highlight resolves through the same canonical concept
+      ID; language-only and projection-only duplicate identities equal zero.
+- [ ] Model projections without an evidence-backed bridge remain available but
+      are not falsely connected in the integrated overview.
+- [ ] React Flow renders only backend-supplied nodes and edges, and repeated
+      ELK.js layout of identical input produces identical positions.
 - [ ] Actor-only evidence never produces a sequence diagram, module lists never
       invent dependency edges, and activity flow never masquerades as complete
       BPMN.

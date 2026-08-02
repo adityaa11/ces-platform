@@ -1,6 +1,6 @@
 # CES Atlas Workflow UI Ticket Plan
 
-**Status:** Planned
+**Status:** In progress — Next.js production migration and integrated projection wiring required
 **Authority:** [`CES_ATLAS_WORKFLOW_UI_CONTEXT.md`](../../../CES_ATLAS_WORKFLOW_UI_CONTEXT.md)
 **Backend foundation:** ATLAS-HARD-021 through ATLAS-HARD-027.
 
@@ -9,6 +9,38 @@ integrated semantic graph and supported model projections. It does not own
 model classification, workflow extraction, semantic
 inference, canonical identity, approval eligibility, or approved-model
 materialization.
+
+## Required production stack
+
+- Next.js App Router, React, and TypeScript.
+- React Flow for the bounded integrated overview and focused model graphs.
+- ELK.js for deterministic visual layout only; layout must never create,
+  remove, or reinterpret semantic nodes or relationships.
+- Zod at every server/client projection boundary.
+- Next.js server-side data access and Route Handlers for authenticated,
+  project-scoped evidence and immutable review commands.
+- PostgreSQL for project/revision/decision/audit metadata and S3-compatible
+  storage for immutable documents and artifact bundles.
+- Vitest and React Testing Library for components; Playwright and axe-core for
+  browser, responsive, and accessibility qualification.
+
+The Atlas UI is a Node.js-hosted Next.js application, not a static export and
+not a custom standalone HTTP server.
+
+## One model, several synchronized graphs
+
+Atlas combines supported graph kinds semantically, not by flattening every
+node into one permanent mega-graph:
+
+1. One canonical model owns stable concept identities and governed relations.
+2. One bounded integrated overview shows major workflows, shared data,
+   context, important decisions/states, and evidence-backed cross-model links.
+3. Each supported model kind remains a focused projection of those same
+   canonical IDs.
+4. Selecting a canonical concept highlights it everywhere it appears and opens
+   the chosen projection below the overview.
+5. Unsupported or unrelated projections remain separate. The UI and layout
+   engine must never invent a connection merely to make the overview connected.
 
 ## Delivery order
 
@@ -38,6 +70,8 @@ materialization.
 - Fixture-specific terminology may exist only in test data or user-selected
   runtime project content.
 - Mermaid is an export projection, not the UI data source or canonical model.
+- A combined view means shared canonical identity plus evidence-backed links;
+  it does not mean placing all detailed model nodes in one graph.
 - Activity-flow, workflow, BPMN-candidate, functional-decomposition,
   dependency, state, decision, actor-goal, sequence-interaction, and
   conceptual-data views are projections of shared canonical identities.

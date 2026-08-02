@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-UI-002 — Persistent Project Overview and Workflow Detail
 
 **Stage:** Atlas workflow review UI
-**Status:** Complete
+**Status:** Reopened — interaction contract exists; React Flow/Next.js migration and integrated-model qualification are required
 
 ## Objective
 
@@ -16,6 +16,9 @@ and cross-model context.
 ## Work
 
 - Render the integrated semantic graph at the top of the center workspace.
+- Keep the overview deliberately bounded. It may contain major workflow,
+  shared-data, context-provider, significant decision/state, and cross-model
+  bridge nodes, but not every detailed node from every projection.
 - Add eligible model tabs: Integrated, Activity Flow, Workflow, BPMN Candidate,
   Functions, Dependencies, States, Decisions, Actor Goals, Sequence, and
   Conceptual Data. Their availability and review-only state come from backend
@@ -28,6 +31,12 @@ and cross-model context.
   - open the selected model projection or concept detail below the integrated
     graph;
   - preserve the right-side source workspace.
+- Synchronize projections through canonical concept IDs. A concept may appear
+  in several model views, but selection must treat those appearances as one
+  semantic identity rather than duplicate concepts.
+- Keep a supported model separate when no evidence-backed canonical bridge
+  exists. Do not fabricate edges to force every projection into one connected
+  component.
 - Add minimize and restore controls for the project overview.
 - In minimized form, show a compact project summary and selected workflow/path.
 - Add minimize, restore, and close controls for selected workflow detail.
@@ -64,6 +73,13 @@ Click supported model or concept in left navigation
 - [x] The frontend does not infer overview or detail edges.
 - [x] Interaction tests cover selection, minimize, restore, close, and source
       synchronization.
+- [ ] The integrated overview and every focused model projection are rendered
+      with React Flow from backend nodes/edges and positioned with ELK.js only.
+- [ ] A shared canonical ID highlights across overview, workflow, decision,
+      state, actor-goal, dependency, sequence, and conceptual-data projections
+      wherever that ID is genuinely present.
+- [ ] A high-detail multi-model fixture proves the overview stays readable and
+      does not collapse into an all-nodes mega-graph.
 
 ## Out of scope
 
