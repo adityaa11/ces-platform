@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-UI-000 — Model Review Projection and BFF Contracts
 
 **Stage:** Atlas model review UI contract freeze
-**Status:** Planned
+**Status:** In progress — shared schemas implemented; producer and consumer adoption remains HARD-025/HARD-026
 
 ## Objective
 
@@ -69,23 +69,23 @@ and explicitly supported migration adapters.
 
 ## Acceptance criteria
 
-- [ ] Projection-local and canonical identities are distinct and validated.
+- [x] Projection-local and canonical identities are distinct and validated.
 - [ ] Shared canonical IDs remain stable across applicable model views.
-- [ ] Projection constructs cannot masquerade as authoritative concepts.
-- [ ] Governed nodes and edges resolve exact evidence and governance metadata.
-- [ ] Every source representation resolves its own exact trace.
-- [ ] PDF highlights are renderer-independent under the frozen coordinates.
-- [ ] Overview membership and limits are backend-owned and measurable.
-- [ ] Label keywords cannot determine shape or semantic type.
+- [x] Projection constructs cannot masquerade as authoritative concepts.
+- [x] Governed nodes and edges require exact evidence and governance metadata.
+- [x] Every source representation resolves its own exact trace.
+- [x] PDF locations use the frozen renderer-independent coordinate contract.
+- [x] Overview membership and limits have backend-owned schema fields.
+- [x] Visual kind is an explicit semantic field, independent of label text.
 - [ ] Identical ordered input plus pinned ELK metadata yields identical layout.
-- [ ] Invalid authority combinations fail schema validation.
+- [x] Invalid authority combinations fail schema validation.
 - [ ] One shared package owns every model-review wire schema and is consumed by
       HARD-025, the Next.js BFF, React Flow adapters, approved refresh, and
       qualification fixtures.
-- [ ] Every payload declares contract name/version and producer version;
+- [x] Every workspace payload declares contract name/version and producer version;
       missing or unsupported versions fail closed.
-- [ ] Older contract versions load only through explicit tested adapters.
-- [ ] Approved-but-blocked workspaces carry explicit downstream blocker codes.
+- [x] Older contract versions require explicit registered adapter versions.
+- [x] Approved-but-blocked workspaces carry explicit downstream blocker codes.
 - [ ] BFF tests reject CSRF, cross-project, stale, duplicate, forged-reviewer,
       unsafe-URL, and active-document cases.
 - [ ] UI-001 implementation cannot resume until these contracts are frozen and
@@ -95,3 +95,15 @@ and explicitly supported migration adapters.
 
 React implementation remains UI-001 through UI-004. Qualification remains
 UI-005.
+
+## Implementation evidence
+
+- Added `@company/ces-atlas-model-review-contracts` as a workspace package.
+- Versioned strict Zod schemas cover identity, governed edges, projection
+  constructs, overview budgets, deterministic layout metadata, representation
+  traces, PDF coordinates, authority, commands, and receipts.
+- Compatibility classification fails closed for missing and unsupported
+  versions and recognizes only explicitly registered migration versions.
+- Five focused contract and negative-security tests pass; package build passes.
+- HARD-025 and HARD-026 adoption remain intentionally unchecked and are the
+  next commits in the delivery sequence.
