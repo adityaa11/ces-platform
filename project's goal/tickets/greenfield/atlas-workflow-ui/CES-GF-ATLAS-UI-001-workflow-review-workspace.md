@@ -10,7 +10,7 @@ the backend-owned integrated semantic graph and supported model projections.
 
 ## Dependencies
 
-- ATLAS-HARD-025 and ATLAS-HARD-026.
+- ATLAS-UI-000, ATLAS-HARD-025, and ATLAS-HARD-026.
 
 ## Work
 
@@ -48,6 +48,12 @@ the backend-owned integrated semantic graph and supported model projections.
 - Treat every diagram as a projection of shared canonical concept IDs. Never
   create language-specific or model-specific duplicate identities for the
   same accepted concept.
+- Use projection-local IDs as React Flow IDs and canonical IDs only for
+  cross-projection selection and semantic identity.
+- Select node shapes only from frozen backend semantic kinds; labels and
+  language must never determine visual type.
+- Consume the discriminated workspace-authority contract and reject invalid
+  lifecycle/authority/downstream combinations.
 
 ## Domain-neutral UI boundary
 
@@ -86,6 +92,8 @@ states.
 - [ ] Real versioned Atlas artifacts are adapted server-side into the workspace
       contract; `/api/atlas/workspace` is implemented and tested rather than
       assumed.
+- [ ] Every rendered node and edge satisfies the frozen UI-000 identity,
+      evidence, authority, and visual-semantic contracts.
 
 ## Out of scope
 

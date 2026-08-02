@@ -11,7 +11,7 @@ letting the frontend calculate eligibility.
 
 ## Dependencies
 
-- ATLAS-HARD-026 and ATLAS-UI-001 through ATLAS-UI-003.
+- ATLAS-HARD-026 and ATLAS-UI-000 through ATLAS-UI-003.
 
 ## Work
 
@@ -35,11 +35,14 @@ letting the frontend calculate eligibility.
 - Derive reviewer identity from the authenticated server session; never accept
   a client-supplied authoritative `reviewer_id`.
 - Scope every read and command to an authorized project and revision.
+- Apply CSRF protection to every cookie-authenticated mutation route.
 - Require idempotency keys for decision commands and return conflict responses
   for stale revisions.
 - Restrict bulk approval to backend-eligible subjects and audit approval,
   correction, relationship, and source-document access actions.
 - Never let client-side state masquerade as an approved model.
+- Restrict evidence, command, and post-materialization navigation URLs to
+  relative or explicitly allowlisted destinations.
 
 ## Acceptance criteria
 
@@ -66,6 +69,8 @@ letting the frontend calculate eligibility.
       materialization packages.
 - [ ] Successful materialization refreshes the synchronized integrated and
       focused React Flow projections without client-authored semantic changes.
+- [ ] CSRF, unsafe redirect/command URLs, active document content, and forged
+      reviewer fields fail closed and produce audited non-success responses.
 
 ## Out of scope
 

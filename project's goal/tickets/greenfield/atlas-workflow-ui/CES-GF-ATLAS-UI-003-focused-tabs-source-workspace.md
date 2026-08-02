@@ -10,7 +10,7 @@ views while keeping exact source evidence visible beside it.
 
 ## Dependencies
 
-- ATLAS-HARD-025, ATLAS-UI-001, and ATLAS-UI-002.
+- ATLAS-UI-000 through ATLAS-UI-002 and ATLAS-HARD-025.
 
 ## Work
 
@@ -68,6 +68,12 @@ views while keeping exact source evidence visible beside it.
       authenticated Next.js Route Handlers, not assumed endpoint contracts.
 - [ ] Cross-model selection uses the same canonical concept ID while every
       exact source representation remains inspectable in Evidence.
+- [ ] Every exact representation carries its own representation trace; one
+      concept-level trace cannot substitute for plural source lineage.
+- [ ] PDF highlighting uses the frozen normalized-page, top-left-origin,
+      one-based-page, rotation-aware coordinate contract.
+- [ ] Source documents and extracted markup render as untrusted content under
+      strict CSP, sandboxing, media allowlists, and sanitization.
 
 ## Out of scope
 

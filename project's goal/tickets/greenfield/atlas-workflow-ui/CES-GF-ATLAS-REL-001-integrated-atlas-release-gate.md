@@ -5,7 +5,7 @@
 
 ## Objective
 
-Release the Atlas integrated semantic-graph and model-review experience only
+Release the Atlas integrated semantic-model and model-review experience only
 when the backend semantic model and production UI independently pass their
 qualification gates.
 
@@ -42,6 +42,9 @@ qualification gates.
 - [ ] Release evidence proves one canonical model, one bounded integrated
       overview, and synchronized focused projections without fabricated
       cross-model relationships.
+- [ ] The frozen UI-000 contracts are version-pinned across backend artifacts,
+      Next.js BFF DTOs, React Flow inputs, approved refresh, and qualification
+      evidence.
 
 ## Outputs and evidence
 

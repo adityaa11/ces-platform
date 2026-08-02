@@ -1,4 +1,4 @@
-# CES Atlas Workflow UI Ticket Plan
+# CES Atlas Model Review UI Ticket Plan
 
 **Status:** In progress — Next.js production migration and integrated projection wiring required
 **Authority:** [`CES_ATLAS_WORKFLOW_UI_CONTEXT.md`](../../../CES_ATLAS_WORKFLOW_UI_CONTEXT.md)
@@ -46,6 +46,7 @@ node into one permanent mega-graph:
 
 | Order | Ticket | Outcome | Depends on |
 |---:|---|---|---|
+| 0 | [ATLAS-UI-000](CES-GF-ATLAS-UI-000-model-review-contracts.md) | Freeze projection identity, evidence, overview, authority, layout, and BFF contracts | HARD-019–020, HARD-023, HARD-025–026 |
 | 1 | [ATLAS-UI-001](CES-GF-ATLAS-UI-001-workflow-review-workspace.md) | Domain-neutral three-pane review workspace | HARD-025–026 |
 | 2 | [ATLAS-UI-002](CES-GF-ATLAS-UI-002-persistent-overview-workflow-detail.md) | Persistent main workflow with stacked selected detail | UI-001 |
 | 3 | [ATLAS-UI-003](CES-GF-ATLAS-UI-003-focused-tabs-source-workspace.md) | Focused tabs and exact source evidence | HARD-025, UI-001–002 |
@@ -55,6 +56,17 @@ node into one permanent mega-graph:
 
 ## Program rules
 
+- UI-000 contracts must be frozen before production component implementation.
+- Projection-local IDs drive rendering; canonical IDs drive semantic
+  synchronization across projections.
+- Projection-only constructs remain explicitly non-authoritative and never
+  create fake canonical concepts.
+- Overview inclusion, importance, limits, and layers are backend-owned.
+- Governed nodes and edges expose exact evidence; every source representation
+  retains its own trace.
+- Shape comes from backend semantic kind, never label wording.
+- Next.js Route Handlers are an authenticated BFF, not a second semantic or
+  materialization backend.
 - The integrated project graph remains visible when a supported model or
   concept is selected.
 - Selected model projection or concept detail opens below the integrated graph.

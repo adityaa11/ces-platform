@@ -11,7 +11,7 @@ different domains and lifecycle states.
 
 ## Dependencies
 
-- ATLAS-UI-001 through ATLAS-UI-004.
+- ATLAS-UI-000 through ATLAS-UI-004.
 - Connected and qualified outputs from ATLAS-HARD-021 through ATLAS-HARD-026.
 - Golden model profile and Safara workflow output from ATLAS-HARD-027.
 
@@ -42,6 +42,12 @@ different domains and lifecycle states.
 - Run at least one qualification fixture and one structurally different domain.
 - Verify that changing project data changes labels and content without
   production-code or theme changes.
+- Verify projection-local IDs remain distinct from canonical identities and
+  projection-only constructs never create fake canonical concepts.
+- Verify every sampled governed node/edge resolves evidence, and every sampled
+  source representation resolves its own trace and correct PDF highlight.
+- Record overview node/edge count, initial payload bytes, layout duration,
+  truncation state, ELK version/profile, and input/options hashes.
 - Store screenshots, interaction traces, accessibility results, artifact
   versions, and reviewer acceptance.
 
@@ -72,6 +78,9 @@ different domains and lifecycle states.
       are not falsely connected in the integrated overview.
 - [ ] React Flow renders only backend-supplied nodes and edges, and repeated
       ELK.js layout of identical input produces identical positions.
+- [ ] Label-keyword mutation cannot change node shape or semantic type.
+- [ ] Cookie-authenticated mutation CSRF, unsafe URLs, and active source
+      document payloads fail safely.
 - [ ] Actor-only evidence never produces a sequence diagram, module lists never
       invent dependency edges, and activity flow never masquerades as complete
       BPMN.

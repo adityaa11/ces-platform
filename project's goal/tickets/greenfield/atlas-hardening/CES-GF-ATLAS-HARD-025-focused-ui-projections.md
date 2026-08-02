@@ -51,6 +51,16 @@ supports a workflow.
 - Expose backend-owned semantic-layer filters for the integrated graph so the
   UI can progressively reveal actors, workflows/modules, decisions, states,
   rules, and evidence without downloading or rendering the entire inventory.
+- Publish distinct projection-local node/edge IDs and canonical
+  concept/relationship IDs according to ATLAS-UI-000.
+- Attach evidence IDs, origin, rationale, and governance state to every
+  governed projected node and edge.
+- Represent projection-only constructs separately from canonical concepts and
+  publish their derivation relationship IDs.
+- Make overview eligibility, priority, semantic role, inclusion reason, and
+  default visibility explicit backend fields.
+- Publish bounded-summary limits and truncation/layer metadata so overview
+  readability is measurable rather than frontend-inferred.
 
 ## Outputs
 
@@ -107,6 +117,13 @@ slices remain non-authoritative projections of canonical bundle components.
 - [ ] The integrated index publishes available layers, record counts, artifact
       hashes, schema versions, pagination metadata, and canonical-ID indexes.
 - [ ] A non-workflow PRD can qualify without producing a workflow projection.
+- [ ] Projection-local IDs are never reused as canonical semantic IDs.
+- [ ] Every governed node and edge exposes exact evidence and governance data.
+- [ ] Projection-only constructs remain explicitly non-authoritative and do
+      not create canonical concepts.
+- [ ] Overview inclusion and ordering are machine-readable backend decisions.
+- [ ] Initial node, edge, byte, and layout budgets are configurable and
+      reported in projection metadata.
 
 ## Tests and evidence
 

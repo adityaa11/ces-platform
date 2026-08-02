@@ -11,7 +11,7 @@ and cross-model context.
 
 ## Dependencies
 
-- ATLAS-UI-001.
+- ATLAS-UI-000 and ATLAS-UI-001.
 
 ## Work
 
@@ -37,6 +37,13 @@ and cross-model context.
 - Keep a supported model separate when no evidence-backed canonical bridge
   exists. Do not fabricate edges to force every projection into one connected
   component.
+- Use only backend overview eligibility, priority, role, inclusion reason, and
+  default visibility metadata to construct the initial overview.
+- Enforce backend-published initial node/edge/payload budgets and display
+  truncation plus progressively available layers without silently dropping
+  content.
+- Pin ELK engine/profile/options metadata and canonical input ordering for
+  reproducible layout.
 - Add minimize and restore controls for the project overview.
 - In minimized form, show a compact project summary and selected workflow/path.
 - Add minimize, restore, and close controls for selected workflow detail.
@@ -80,6 +87,10 @@ Click supported model or concept in left navigation
       wherever that ID is genuinely present.
 - [ ] A high-detail multi-model fixture proves the overview stays readable and
       does not collapse into an all-nodes mega-graph.
+- [ ] Projection constructs are selectable but never highlighted as canonical
+      concepts unless the backend supplies a separate canonical identity.
+- [ ] Selecting any governed node or edge opens its exact evidence and
+      governance details.
 
 ## Out of scope
 
