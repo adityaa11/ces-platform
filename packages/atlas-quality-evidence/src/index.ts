@@ -6,6 +6,28 @@ const Id = z.string().regex(/^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u);
 const Hash = z.string().regex(/^sha256:[0-9a-f]{64}$/u);
 const Text = z.string().trim().min(1);
 
+export const AtlasBackendReleaseReadinessSchema = z.object({
+  hard027_golden_passed: z.boolean(),
+  hardening_acceptance_complete: z.boolean(),
+  backend_gate_decision: z.enum(["pass", "failed", "missing"]),
+  current_real_provider_evidence: z.boolean(),
+  human_review_recorded: z.boolean(),
+}).strict();
+
+export function assessAtlasBackendReleaseReadiness(
+  value: z.input<typeof AtlasBackendReleaseReadinessSchema>,
+): { decision: "pass" | "blocked"; blockers: readonly string[] } {
+  const input = AtlasBackendReleaseReadinessSchema.parse(value);
+  const blockers = [
+    ...(!input.hard027_golden_passed ? ["atlas.release.hard027-golden"] : []),
+    ...(!input.hardening_acceptance_complete ? ["atlas.release.hardening-acceptance"] : []),
+    ...(input.backend_gate_decision !== "pass" ? ["atlas.release.backend-quality-gate"] : []),
+    ...(!input.current_real_provider_evidence ? ["atlas.release.current-provider-evidence"] : []),
+    ...(!input.human_review_recorded ? ["atlas.release.human-review"] : []),
+  ];
+  return { decision: blockers.length === 0 ? "pass" : "blocked", blockers };
+}
+
 export const QualityVersionTupleSchema = z.object({
   provider_id: Id,
   model_id: Text,

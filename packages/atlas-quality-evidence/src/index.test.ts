@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   calculateAtlasQualityEvidence,
   calculateSafaraHardeningGate,
+  assessAtlasBackendReleaseReadiness,
   type AtlasQualityEvidenceInput,
 } from "./index.js";
 
@@ -56,6 +57,19 @@ function input(
 }
 
 describe("DAPE-008R real-provider quality evidence", () => {
+  it("keeps HARD-015 blocked until golden, provider, backend, and human gates all pass", () => {
+    const current = assessAtlasBackendReleaseReadiness({ hard027_golden_passed: true,
+      hardening_acceptance_complete: false, backend_gate_decision: "missing",
+      current_real_provider_evidence: false, human_review_recorded: false });
+    expect(current.decision).toBe("blocked");
+    expect(current.blockers).toEqual([
+      "atlas.release.hardening-acceptance", "atlas.release.backend-quality-gate",
+      "atlas.release.current-provider-evidence", "atlas.release.human-review",
+    ]);
+    expect(assessAtlasBackendReleaseReadiness({ hard027_golden_passed: true,
+      hardening_acceptance_complete: true, backend_gate_decision: "pass",
+      current_real_provider_evidence: true, human_review_recorded: true }).decision).toBe("pass");
+  });
   it("evaluates the complete Safara lifecycle gate with stage attribution", () => {
     const gateInput = {
       schema_version: "1.0.0" as const,

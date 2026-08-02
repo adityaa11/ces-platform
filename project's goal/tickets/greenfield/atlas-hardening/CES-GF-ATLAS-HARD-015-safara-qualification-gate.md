@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-015 — Final Safara Qualification Gate
 
 **Stage:** Atlas hardening production gate
-**Status:** Blocked pending ATLAS-HARD-021 through ATLAS-HARD-027 remediation and final backend rerun
+**Status:** Release readiness implemented; correctly blocked pending current provider/backend evidence and human review
 **Execution order:** Final Atlas backend qualification gate
 
 ## Objective
@@ -90,6 +90,16 @@ provider report, failure variants for every backend gate, reviewer acceptance,
 and roadmap gate update.
 The report must distinguish “Safara/lifecycle qualified” from
 “multi-domain qualified.”
+
+## Current release-readiness evidence
+
+`assessAtlasBackendReleaseReadiness` now makes HARD-015 an explicit fail-closed
+gate over HARD-027, completion of all hardening acceptance, the strict backend
+quality report, current real-provider evidence, and recorded human review.
+HARD-027 currently passes, but the combined result remains `blocked` with
+machine-readable blockers for incomplete hardening acceptance, missing current
+backend/provider evidence, and missing human acceptance. No fixture or UI test
+can promote the backend by itself.
 
 ## Out of scope
 
