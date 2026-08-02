@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-UI-005 — Model Review UI Production Qualification
 
 **Stage:** Atlas model review UI production gate
-**Status:** Planned
+**Status:** In progress — automated renderer gates implemented; browser and human acceptance remain
 
 ## Objective
 
@@ -53,12 +53,12 @@ different domains and lifecycle states.
 
 ## Acceptance criteria
 
-- [ ] Project overview remains visible while workflow detail opens below it.
-- [ ] Overview and detail minimize/restore behavior passes interaction tests.
+- [x] Project overview remains visible while workflow detail opens below it.
+- [x] Overview and detail minimize/restore behavior passes interaction tests.
 - [ ] All focused tabs render only backend-owned membership.
 - [ ] Source traceability resolves correctly for every sampled UI item.
 - [ ] Pending/rejected authority leakage equals zero.
-- [ ] Fixture-specific production headings, theme, or hardcoded semantics equal
+- [x] Fixture-specific production headings, theme, or hardcoded semantics equal
       zero.
 - [ ] Language-only duplicate workflow nodes, operations, rules, states, and
       relationships equal zero.
@@ -79,9 +79,9 @@ different domains and lifecycle states.
       ID; language-only and projection-only duplicate identities equal zero.
 - [ ] Model projections without an evidence-backed bridge remain available but
       are not falsely connected in the integrated overview.
-- [ ] React Flow renders only backend-supplied nodes and edges, and repeated
+- [x] React Flow renders only backend-supplied nodes and edges, and repeated
       ELK.js layout of identical input produces identical positions.
-- [ ] Label-keyword mutation cannot change node shape or semantic type.
+- [x] Label-keyword mutation cannot change node shape or semantic type.
 - [ ] Cookie-authenticated mutation CSRF, unsafe URLs, and active source
       document payloads fail safely.
 - [ ] Actor-only evidence never produces a sequence diagram, module lists never
@@ -101,6 +101,21 @@ different domains and lifecycle states.
 Qualification report, screenshots, browser traces, accessibility report,
 cross-domain fixtures, artifact hashes, deployment version, and human
 acceptance.
+
+## Implementation evidence
+
+- ELK layout is now isolated in a testable production adapter that consumes
+  only backend node/edge order, direction, identities, and topology. Repeated
+  layout is byte-for-byte position stable.
+- A label mutation containing misleading actor/decision/state keywords cannot
+  change layout or the backend-supplied semantic kind.
+- A scoped production-source scan proves that Safara names, fixture IDs, and
+  travel-specific labels do not appear in the Next.js application boundary.
+- Persistent overview/detail and minimize/restore regressions remain green;
+  the focused UI qualification set passes 11/11 with production typecheck.
+- Browser screenshots, automated accessibility/visual regression, multi-domain
+  runtime artifacts, and explicit human acceptance remain open and are not
+  represented as complete by this automated gate.
 
 ## Out of scope
 

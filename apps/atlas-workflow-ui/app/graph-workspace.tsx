@@ -1,14 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import ELK from "elkjs/lib/elk.bundled.js";
 import { ReactFlow, Background, Controls, MarkerType, type Edge, type Node } from "@xyflow/react";
 import type { ModelReviewWorkspace, SourceEvidenceProjection } from "@company/ces-atlas-model-review-contracts";
+import { layoutOverview } from "../lib/layout";
 import "@xyflow/react/dist/style.css";
 
-const elk = new ELK();
 const width = 220;
-const height = 88;
 
 function canonicalId(node: ModelReviewWorkspace["overview"]["nodes"][number]["node"]): string | undefined {
   return node.identity_kind === "canonical_concept" ? node.canonical_concept_id : undefined;
@@ -39,17 +37,10 @@ export function GraphWorkspace({ workspace }: { workspace: ModelReviewWorkspace 
 
   useEffect(() => {
     let active = true;
-    void elk.layout({ id: "atlas-overview",
-      layoutOptions: { "elk.algorithm": "layered", "elk.direction": workspace.overview.layout.direction,
-        "elk.layered.considerModelOrder.strategy": "NODES_AND_EDGES" },
-      children: ordered.map(({ node }) => ({ id: node.projection_node_id, width, height })),
-      edges: edges.map((edge) => ({ id: edge.id, sources: [edge.source], targets: [edge.target] })),
-    }).then((layout) => {
+    void layoutOverview(workspace).then((positions) => {
       if (!active) return;
-      const positions = new Map(layout.children?.map((node) =>
-        [node.id, { x: node.x ?? 0, y: node.y ?? 0 }]));
       setNodes(ordered.map(({ node }) => ({ id: node.projection_node_id,
-        position: positions.get(node.projection_node_id) ?? { x: 0, y: 0 },
+        position: positions[node.projection_node_id] ?? { x: 0, y: 0 },
         data: { label: node.label, canonicalId: canonicalId(node), kind: node.node_kind },
         className: `atlas-node ${node.authoritative ? "authoritative" : "proposed"}`,
       })));
