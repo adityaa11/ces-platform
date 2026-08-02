@@ -1,5 +1,6 @@
 import type { AtlasWorkspacePayload, DetailProjection } from "./contracts.js";
 import { fetchSourceEvidence, renderSourceEvidence } from "./source.js";
+import { renderApprovalPanel, submitDecision } from "./approval.js";
 
 export interface InteractionSnapshot {
   readonly selectedSubjectId?: string;
@@ -70,9 +71,12 @@ export function renderDetail(detail: DetailProjection): string {
   const flow = flowVisible
     ? `<section><h3>Flow</h3><ul class="detail-nodes">${nodes}</ul><ol class="ordered-graph-summary" aria-label="Ordered relationship summary">${edges}</ol></section>` : "";
   const tabs = detail.tabs.filter(({ tab, explicitly_empty }) =>
-    tab !== "flow" && !explicitly_empty).map((tab) =>
+    tab !== "flow" && tab !== "approval" && !explicitly_empty).map((tab) =>
     `<section class="focused-tab" data-tab="${tab.tab}"><h3>${escapeHtml(tab.tab[0]!.toUpperCase() + tab.tab.slice(1))}</h3><ul>${tab.items.map((item) => `<li class="${item.equivalence_status === "pending_review" ? "pending-equivalence" : ""}"><button type="button" ${item.evidence_id ? `data-evidence-id="${escapeHtml(item.evidence_id)}"` : "disabled"}><span>${escapeHtml(item.label)}</span>${item.equivalence_status === "pending_review" ? "<strong>Possible equivalence — human review pending</strong>" : ""}${item.representation_count > 1 ? `<small>${item.representation_count} exact source representations</small>` : ""}</button></li>`).join("")}</ul></section>`).join("");
-  return `<div class="detail-heading"><div><p class="eyebrow">Selected projection</p><h2>${escapeHtml(detail.label)}</h2></div><div><button type="button" class="secondary" data-action="minimize-detail">Minimize</button><button type="button" class="secondary" data-action="close-detail">Close</button></div></div><div class="detail-content">${flow}${tabs}</div>`;
+  const approvalVisible = detail.tabs.some(({ tab, explicitly_empty }) =>
+    tab === "approval" && !explicitly_empty);
+  const approval = approvalVisible ? renderApprovalPanel(detail.review_subjects) : "";
+  return `<div class="detail-heading"><div><p class="eyebrow">Selected projection</p><h2>${escapeHtml(detail.label)}</h2></div><div><button type="button" class="secondary" data-action="minimize-detail">Minimize</button><button type="button" class="secondary" data-action="close-detail">Close</button></div></div><p id="decision-status" role="status"></p><div class="detail-content">${flow}${tabs}${approval}</div>`;
 }
 
 export function bindWorkspaceInteractions(input: {
@@ -81,14 +85,38 @@ export function bindWorkspaceInteractions(input: {
   readonly fetcher?: typeof fetch;
 }): WorkspaceInteractionController {
   const controller = new WorkspaceInteractionController();
+  let activeReviewSubjects: DetailProjection["review_subjects"] = [];
   const overview = input.root.querySelector<HTMLElement>("#project-overview");
   const detail = input.root.querySelector<HTMLElement>("#selected-detail");
   if (!overview || !detail) throw new Error("Workspace interaction regions are missing");
 
   input.root.addEventListener("click", (event) => {
     const target = event.target instanceof Element
-      ? event.target.closest<HTMLElement>("[data-action], [data-subject-id], [data-concept-id], [data-evidence-id]") : null;
+      ? event.target.closest<HTMLElement>("[data-action], [data-subject-id], [data-concept-id], [data-evidence-id], [data-review-subject]") : null;
     if (!target) return;
+    const reviewSubjectId = target.dataset.reviewSubject;
+    const decisionAction = target.dataset.decisionAction;
+    if (reviewSubjectId && decisionAction) {
+      const subject = activeReviewSubjects.find(({ subject_id }) =>
+        subject_id === reviewSubjectId);
+      if (!subject) return;
+      const confirmed = !subject.requires_explicit_confirmation
+        || window.confirm("Confirm this governed topology decision?");
+      const note = window.prompt("Review note")?.trim() ?? "";
+      if (!confirmed || !note) return;
+      target.setAttribute("disabled", "true");
+      void submitDecision({ payload: input.payload, subject,
+        action: decisionAction as import("./contracts.js").DecisionAction,
+        note, confirmed, idempotencyKey: crypto.randomUUID(),
+        ...(input.fetcher ? { fetcher: input.fetcher } : {}) })
+        .then((receipt) => { location.assign(receipt.materialized_workspace_href); })
+        .catch((error: unknown) => {
+          target.removeAttribute("disabled");
+          const status = input.root.querySelector<HTMLElement>("#decision-status");
+          if (status) status.textContent = error instanceof Error ? error.message : "Decision failed";
+        });
+      return;
+    }
     const evidenceId = target.dataset.evidenceId;
     if (evidenceId) {
       const source = input.root.querySelector<HTMLElement>(".source-preview");
@@ -139,7 +167,10 @@ export function bindWorkspaceInteractions(input: {
     detail.innerHTML = "<p>Loading selected projection…</p>";
     void fetchDetail({ payload: input.payload, subjectId,
       ...(input.fetcher ? { fetcher: input.fetcher } : {}) })
-      .then((projection) => { detail.innerHTML = renderDetail(projection); })
+      .then((projection) => {
+        activeReviewSubjects = projection.review_subjects;
+        detail.innerHTML = renderDetail(projection);
+      })
       .catch((error: unknown) => { detail.innerHTML = `<p role="alert">${escapeHtml(error instanceof Error ? error.message : "Projection unavailable")}</p>`; });
   });
   return controller;

@@ -29,7 +29,7 @@ describe("ATLAS-UI-002 persistent overview and detail", () => {
     const fetcher = vi.fn(async () => new Response(JSON.stringify({
       schema_version: "1.0.0", subject_id: "project.workflow.one", revision: 3,
       label: "Workflow one", nodes: [], edges: [],
-      tabs: [],
+      tabs: [], review_subjects: [],
     }), { status: 200 }));
     await expect(fetchDetail({ payload, subjectId: "project.workflow.one", fetcher }))
       .resolves.toMatchObject({ revision: 3 });
@@ -55,7 +55,7 @@ describe("ATLAS-UI-002 persistent overview and detail", () => {
         items: [{ item_id: "project.item.one", canonical_concept_id: "project.concept.one",
           label: "Exact rule", evidence_id: "project.evidence.one",
           equivalence_status: "pending_review", representation_count: 1 }] },
-      { tab: "permissions", explicitly_empty: true, items: [] }],
+      { tab: "permissions", explicitly_empty: true, items: [] }], review_subjects: [],
     });
     expect(html).toContain("Rules");
     expect(html).toContain("Possible equivalence — human review pending");

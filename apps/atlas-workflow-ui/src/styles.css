@@ -66,6 +66,13 @@ th, td { border-bottom: 1px solid #e2e7e3; padding: 7px; text-align: left; }
 .trace-chain { padding-left: 18px; }
 .trace-chain span, .trace-chain strong { display: block; overflow-wrap: anywhere; }
 .trace-chain span { color: #68756e; font-size: .7rem; text-transform: uppercase; }
+.review-subject { border: 1px solid #d7ddd8; border-radius: 10px; margin: 12px 0; padding: 12px; }
+.review-subject[data-eligible="false"] { border-color: #d5a296; background: #fff8f6; }
+.blockers { color: #8b2d1e; font-size: .78rem; }
+.decision-controls { display: flex; flex-wrap: wrap; gap: 7px; }
+.decision-controls button { border: 1px solid #9fb0a6; border-radius: 7px; background: #fff; padding: 7px 9px; }
+.relationship-review div { display: grid; grid-template-columns: 90px 1fr; font-size: .78rem; }
+.relationship-review dd { margin: 0; overflow-wrap: anywhere; }
 .workspace-state { display: grid; min-height: 100vh; place-content: center; padding: 24px; text-align: center; }
 .empty-note { color: #68756e; font-size: .85rem; }
 @media (max-width: 900px) { .project-header { grid-template-columns: 1fr; } .summary div { text-align: left; } .workspace-grid { grid-template-columns: 1fr; } .navigation-pane, .source-pane { max-height: none; } }

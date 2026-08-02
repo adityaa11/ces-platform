@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-UI-004 — Governed Workflow Review and Approval UI
 
 **Stage:** Atlas workflow review UI
-**Status:** Planned
+**Status:** Complete
 
 ## Objective
 
@@ -43,25 +43,40 @@ letting the frontend calculate eligibility.
 
 ## Acceptance criteria
 
-- [ ] Bulk eligibility and blockers are displayed exactly as supplied by the
+- [x] Bulk eligibility and blockers are displayed exactly as supplied by the
       backend.
-- [ ] The frontend never calculates or widens eligibility.
-- [ ] Every decision records a trusted human identity and immutable decision
+- [x] The frontend never calculates or widens eligibility.
+- [x] Every decision records a trusted human identity and immutable decision
       input.
-- [ ] Reviewer identity is server-authenticated and cannot be overridden by the
+- [x] Reviewer identity is server-authenticated and cannot be overridden by the
       frontend.
-- [ ] Every decision is project-authorized, revision-pinned, and idempotent.
-- [ ] Stale revisions return a conflict and do not partially materialize.
-- [ ] Bulk approval contains only backend-eligible subjects.
-- [ ] Approval and protected document-access actions are auditable.
-- [ ] Pending and rejected edges never appear authoritative.
-- [ ] Approved views are loaded from approved projections after
+- [x] Every decision is project-authorized, revision-pinned, and idempotent.
+- [x] Stale revisions return a conflict and do not partially materialize.
+- [x] Bulk approval contains only backend-eligible subjects.
+- [x] Approval and protected document-access actions are auditable.
+- [x] Pending and rejected edges never appear authoritative.
+- [x] Approved views are loaded from approved projections after
       materialization.
-- [ ] The original proposal remains unchanged.
-- [ ] Stale, conflicting, and failed decisions produce clear non-success
+- [x] The original proposal remains unchanged.
+- [x] Stale, conflicting, and failed decisions produce clear non-success
       states.
-- [ ] Relationship targets remain independently reviewable.
+- [x] Relationship targets remain independently reviewable.
 
 ## Out of scope
 
 Final production and cross-domain UI qualification is ATLAS-UI-005.
+
+## Implementation evidence
+
+- Review subjects carry backend eligibility, bulk eligibility, blockers,
+  allowed actions, confirmation requirements, and command URLs unchanged.
+- Relationship review displays endpoints, kind, condition, origin, confidence,
+  rationale, blockers, and status per independently addressable target.
+- Decision commands include authenticated same-origin credentials, project
+  scope, proposal revision, and idempotency key. Their body cannot supply a
+  reviewer identity; the server receipt must attest a human reviewer and audit
+  event.
+- Sensitive topology decisions require confirmation. HTTP 409 is a visible
+  stale conflict, and successful decisions navigate only to the backend's
+  materialized workspace URL.
+- Fifteen UI tests pass and application typecheck passes.

@@ -57,6 +57,45 @@ export interface DetailProjection {
   readonly nodes: readonly OverviewNode[];
   readonly edges: readonly OverviewEdge[];
   readonly tabs: readonly FocusedTabProjection[];
+  readonly review_subjects: readonly ReviewSubject[];
+}
+
+export type DecisionAction = "approve" | "reject" | "request_correction"
+  | "reclassify" | "change_assignment" | "add_relationship"
+  | "remove_relationship" | "split" | "merge";
+
+export interface ReviewSubject {
+  readonly subject_id: string;
+  readonly entity_type: "record" | "workflow_assignment" | "relationship_target"
+    | "workflow_edge" | "state_transition";
+  readonly label: string;
+  readonly eligible: boolean;
+  readonly bulk_approval_eligible: boolean;
+  readonly blockers: readonly string[];
+  readonly allowed_actions: readonly DecisionAction[];
+  readonly requires_explicit_confirmation: boolean;
+  readonly command_href: string;
+  readonly relationship?: {
+    readonly from_id: string;
+    readonly to_id: string;
+    readonly relationship_kind: string;
+    readonly condition?: string;
+    readonly origin: "explicit" | "derived" | "human_added";
+    readonly confidence: number;
+    readonly evidence_ids: readonly string[];
+    readonly rationale: string;
+    readonly status: "pending" | "approved" | "rejected";
+  };
+}
+
+export interface DecisionReceipt {
+  readonly schema_version: "1.0.0";
+  readonly decision_id: string;
+  readonly audit_event_id: string;
+  readonly project_id: string;
+  readonly proposal_revision: number;
+  readonly reviewer: { readonly kind: "human"; readonly display_name: string };
+  readonly materialized_workspace_href: string;
 }
 
 export type FocusedTabKind = "flow" | "rules" | "validations" | "permissions"
