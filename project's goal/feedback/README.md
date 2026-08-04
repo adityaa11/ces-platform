@@ -82,11 +82,6 @@ qualification or release gate can pass.
 The suggestion may be useful but is not required by the current objective or
 release gate. It must not reopen or block the active ticket.
 
-### REJECTED
-
-The finding duplicates an existing requirement, contradicts a frozen decision,
-has no cited evidence, is preference-only, or expands scope without authority.
-
 ## 5. Admissible finding format
 
 A finding is admissible only when it contains all of these fields:
@@ -254,7 +249,9 @@ This is Pass <1 or 2>. Review revision/commit: <revision>.
 For Pass 2, review only corrections made for Pass 1.
 
 If no BLOCKER remains, say exactly:
-“Tickets are ready for implementation.”
+Tickets are ready for implementation.
+Remaining IMPORTANT items: <count or none>
+BACKLOG suggestions: <count or none>
 ```
 
 ## 14. Default Atlas frozen decisions
@@ -273,4 +270,3 @@ Unless a newer explicit decision supersedes them:
 - Missing governed ordering is shown honestly, not filled from array/page order.
 - Human approval and release acceptance cannot be authored or self-certified
   by Atlas.
-
