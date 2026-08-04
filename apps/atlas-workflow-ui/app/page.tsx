@@ -19,7 +19,7 @@ export default async function Page({ searchParams }: {
           <div><dt>Authority</dt><dd>{workspace.authority.authority}</dd></div>
           <div><dt>Execution</dt><dd>{workspace.authority.downstream_execution.status}</dd></div>
           <div><dt>Revision</dt><dd>{workspace.revision}</dd></div></dl></header>
-      <GraphWorkspace workspace={workspace} />
+      <GraphWorkspace workspace={workspace} csrfToken={process.env.CES_ATLAS_CSRF_TOKEN} />
     </main>;
   } catch (error) {
     return <main className="state"><h1>Workspace unavailable</h1>

@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-UI-004 — Governed Model Review and Approval UI
 
 **Stage:** Atlas model review UI
-**Status:** In progress — governed production decision route implemented; React subject controls remain
+**Status:** In progress — governed production route and React relationship controls implemented; corrected-proposal flows remain
 
 ## Objective
 
@@ -67,10 +67,10 @@ letting the frontend calculate eligibility.
 
 ## Production acceptance
 
-- [ ] Decision controls run through authenticated, project-scoped Next.js Route
+- [x] Decision controls run through authenticated, project-scoped Next.js Route
       Handlers connected to the immutable Atlas review and approved-model
       materialization packages.
-- [ ] Successful materialization refreshes the synchronized integrated and
+- [x] Successful materialization refreshes the synchronized integrated and
       focused React Flow projections without client-authored semantic changes.
 - [ ] CSRF, unsafe redirect/command URLs, active document content, and forged
       reviewer fields fail closed and produce audited non-success responses.
@@ -93,6 +93,14 @@ Final production and cross-domain UI qualification is ATLAS-UI-005.
 - Idempotency receipts are server-owned. Stale revisions return 409; unsupported
   correction shapes fail closed until a complete corrected proposal payload is
   available instead of being synthesized by the UI.
+
+- The Approval tab requests exact backend eligibility and blockers for each
+  governed relationship. Approve remains disabled when the backend marks a
+  subject ineligible; the client never widens eligibility.
+- React approval/rejection requires explicit confirmation and a note, submits
+  the revision-pinned UI-000 command with same-origin credentials and CSRF,
+  distinguishes stale/failed outcomes, and accepts only a safe relative
+  materialized-workspace path from the server receipt.
 
 - Review subjects carry backend eligibility, bulk eligibility, blockers,
   allowed actions, confirmation requirements, and command URLs unchanged.

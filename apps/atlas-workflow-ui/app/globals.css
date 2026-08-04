@@ -44,6 +44,8 @@ nav span { color: #667286; font-size: .75rem; text-transform: capitalize; }
 .focused-items { list-style: none; padding: 0; }.focused-items button { width: 100%; padding: .75rem;
   text-align: left; border: 1px solid #d7dee9; background: #fff; }
 .focused-items span { display: block; color: #526175; font-size: .75rem; text-transform: capitalize; }
+.approval-subject { margin-top: .75rem; padding: .75rem; border: 1px solid #d7dee9;
+  border-radius: .45rem; background: #fff; overflow-wrap: anywhere; }
 .graph-summary { margin-top: 1rem; }.graph-summary li { overflow-wrap: anywhere; }
 .source-representation { margin: 1rem 0; padding-top: 1rem; border-top: 1px solid #dce2ea; }
 .source-representation blockquote { margin: .75rem 0; padding: .75rem; background: #f7f9fc;

@@ -9,12 +9,16 @@ import "@xyflow/react/dist/style.css";
 const technicalKind = (value: string) => value.split(".").at(-1)?.replaceAll("-", " ") ?? value;
 type FocusedItem = { record_id: string; semantic_kind_id: string;
   statement: string; source_unit_ids: readonly string[] };
+type EligibilityEntity = { entity_type: string; entity_id: string; eligible: boolean;
+  bulk_approval_eligible: boolean; blockers: readonly string[] };
 
 function canonicalId(node: ModelReviewWorkspace["overview"]["nodes"][number]["node"]): string | undefined {
   return node.identity_kind === "canonical_concept" ? node.canonical_concept_id : undefined;
 }
 
-export function GraphWorkspace({ workspace }: { workspace: ModelReviewWorkspace }) {
+export function GraphWorkspace({ workspace, csrfToken }: {
+  workspace: ModelReviewWorkspace; csrfToken?: string;
+}) {
   const [overviewMinimized, setOverviewMinimized] = useState(false);
   const [detailMinimized, setDetailMinimized] = useState(false);
   const [showAllLabels, setShowAllLabels] = useState(false);
@@ -25,6 +29,8 @@ export function GraphWorkspace({ workspace }: { workspace: ModelReviewWorkspace 
   const [activeTab, setActiveTab] = useState("flow");
   const [tabItems, setTabItems] = useState<readonly FocusedItem[] | "loading" | "unavailable">([]);
   const [evidenceConcept, setEvidenceConcept] = useState<string>();
+  const [eligibility, setEligibility] = useState<readonly EligibilityEntity[] | "loading" | "unavailable">([]);
+  const [decisionState, setDecisionState] = useState<"submitting" | "stale" | "failed">();
   const order = new Map(workspace.overview.layout.node_order.map((id, index) => [id, index]));
   const ordered = useMemo(() => [...workspace.overview.nodes].sort((left, right) =>
     (order.get(left.node.projection_node_id) ?? Number.MAX_SAFE_INTEGER)
@@ -129,6 +135,42 @@ export function GraphWorkspace({ workspace }: { workspace: ModelReviewWorkspace 
     });
     return () => controller.abort();
   }, [activeTab, selectedCanonical, workspace]);
+  useEffect(() => {
+    if (activeTab !== "approval" || !detail || typeof detail !== "object") {
+      setEligibility([]); return;
+    }
+    const subjects = detail.connected_project_relationships.flatMap((edge) =>
+      edge.identity_kind === "governed_relationship" ? [edge.governed_relationship_id] : []);
+    if (!subjects.length) { setEligibility([]); return; }
+    setEligibility("loading");
+    const query = new URLSearchParams({ project: workspace.project_id });
+    subjects.forEach((subject) => query.append("subject", subject));
+    void fetch(`/api/atlas/decisions?${query}`, { credentials: "same-origin",
+      headers: { Accept: "application/json" } }).then(async (response) => {
+      if (!response.ok) throw new Error("Eligibility unavailable");
+      const payload = await response.json() as { entities: EligibilityEntity[] };
+      setEligibility(payload.entities);
+    }).catch(() => setEligibility("unavailable"));
+  }, [activeTab, detail, workspace.project_id]);
+  const submitDecision = async (entity: EligibilityEntity, action: "approve" | "reject") => {
+    if (!csrfToken || !window.confirm(`${action === "approve" ? "Approve" : "Reject"} this governed relationship?`)) return;
+    const note = window.prompt("Review note (required)");
+    if (!note?.trim()) return;
+    setDecisionState("submitting");
+    const response = await fetch("/api/atlas/decisions", { method: "POST", credentials: "same-origin",
+      headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken }, body: JSON.stringify({
+        contract_name: "atlas.model-review.decision-command", contract_version: "1.0.0",
+        project_id: workspace.project_id, proposal_revision: workspace.revision,
+        subject_ids: [entity.entity_id], action, note: note.trim(),
+        idempotency_key: crypto.randomUUID(), csrf_token: csrfToken,
+      }) });
+    if (response.status === 409) { setDecisionState("stale"); return; }
+    if (!response.ok) { setDecisionState("failed"); return; }
+    const receipt = await response.json() as { materialized_workspace_path?: string };
+    if (!receipt.materialized_workspace_path?.startsWith("/")
+      || receipt.materialized_workspace_path.startsWith("//")) { setDecisionState("failed"); return; }
+    window.location.assign(receipt.materialized_workspace_path);
+  };
   const highlighted = nodes.map((node) => ({ ...node, selected:
     selectedCanonical !== undefined && node.data.canonicalId === selectedCanonical }));
   const readableEdges = edges.map((edge) => ({ ...edge,
@@ -213,7 +255,20 @@ export function GraphWorkspace({ workspace }: { workspace: ModelReviewWorkspace 
             {detail.connected_project_relationships.length
               ? <ul>{detail.connected_project_relationships.map((edge) => <li key={edge.projection_edge_id}>
                 {technicalKind(edge.relationship_kind)} · {edge.relationship_status}</li>)}</ul>
-              : <p>No connected project relationships were established.</p>}</>}
+              : <p>No connected project relationships were established.</p>}
+            {eligibility === "loading" && <p>Loading backend eligibility…</p>}
+            {eligibility === "unavailable" && <p className="notice">Eligibility is unavailable. Decisions remain disabled.</p>}
+            {Array.isArray(eligibility) && eligibility.map((entity) => <article className="approval-subject" key={entity.entity_id}>
+              <p>{entity.entity_type.replaceAll("_", " ")} · {entity.entity_id}</p>
+              {entity.blockers.length ? <p className="notice">Blocked: {entity.blockers.join(", ")}</p>
+                : <p>Backend eligible</p>}
+              <div className="panel-actions"><button type="button" disabled={!entity.eligible || !csrfToken || decisionState === "submitting"}
+                onClick={() => void submitDecision(entity, "approve")}>Approve</button>
+                <button type="button" disabled={!csrfToken || decisionState === "submitting"}
+                  onClick={() => void submitDecision(entity, "reject")}>Reject</button></div>
+            </article>)}
+            {decisionState === "stale" && <p className="notice">This workspace revision is stale. Reload before deciding.</p>}
+            {decisionState === "failed" && <p className="notice">The decision failed and no approved state was applied.</p>}</>}
           </>}
         </>}
       </section>}

@@ -1,7 +1,10 @@
 import { timingSafeEqual } from "node:crypto";
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import { NextResponse, type NextRequest } from "next/server";
 import { executeDecision } from "../../../../lib/decision";
 import { atlasArtifactRoot } from "../../../../lib/workspace";
+import { ExpandedApprovalEligibilitySchema } from "@company/ces-proposed-project-model";
 
 export const runtime = "nodejs";
 
@@ -11,9 +14,29 @@ const same = (left: string | undefined, right: string | undefined): boolean => {
   return a.length === b.length && timingSafeEqual(a, b);
 };
 
+const authenticated = (request: NextRequest) => same(request.cookies.get("ces_atlas_session")?.value,
+  process.env.CES_ATLAS_REVIEW_SESSION_TOKEN);
+const authorized = (projectId: string) => new Set((process.env.CES_ATLAS_REVIEW_PROJECTS ?? "")
+  .split(",").map((value) => value.trim()).filter(Boolean)).has(projectId);
+
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  if (!authenticated(request)) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  const projectId = request.nextUrl.searchParams.get("project");
+  const subjectIds = request.nextUrl.searchParams.getAll("subject");
+  if (!projectId || !authorized(projectId)) return NextResponse.json({ error: "Project access denied" }, { status: 403 });
+  try {
+    const eligibility = ExpandedApprovalEligibilitySchema.parse(JSON.parse(await readFile(resolve(
+      atlasArtifactRoot(), projectId, "approval-eligibility.json"), "utf8")));
+    return NextResponse.json({ project_id: projectId, proposal_revision: eligibility.proposal_revision,
+      entities: eligibility.entities.filter(({ entity_id }) => subjectIds.includes(entity_id)) });
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Eligibility unavailable" },
+      { status: 404 });
+  }
+}
+
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  if (!same(request.cookies.get("ces_atlas_session")?.value,
-    process.env.CES_ATLAS_REVIEW_SESSION_TOKEN)) {
+  if (!authenticated(request)) {
     return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   }
   if (!same(request.headers.get("x-csrf-token") ?? undefined,
@@ -27,9 +50,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
   try {
     const command = await request.json() as { project_id?: unknown };
-    const authorizedProjects = new Set((process.env.CES_ATLAS_REVIEW_PROJECTS ?? "")
-      .split(",").map((value) => value.trim()).filter(Boolean));
-    if (typeof command.project_id !== "string" || !authorizedProjects.has(command.project_id)) {
+    if (typeof command.project_id !== "string" || !authorized(command.project_id)) {
       return NextResponse.json({ error: "Project access denied" }, { status: 403 });
     }
     return NextResponse.json(await executeDecision({ root: atlasArtifactRoot(),
