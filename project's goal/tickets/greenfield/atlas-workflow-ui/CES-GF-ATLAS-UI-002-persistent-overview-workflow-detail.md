@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-UI-002 — Persistent Project Overview and Model Detail
 
 **Stage:** Atlas model review UI
-**Status:** In progress — production React Flow overview and persistent detail interaction implemented
+**Status:** In progress — persistent overview implemented; enriched artifact-backed detail remains
 
 ## Objective
 
@@ -53,6 +53,38 @@ and cross-model context.
   look authoritative.
 - Provide a non-visual, ordered graph summary for accessibility.
 
+## Enriched lower-detail amendment
+
+The existing metadata-only selected-detail card is not sufficient. Selecting
+an overview node must enrich the lower panel from Atlas artifacts that already
+exist; it must not replace, resize away, or semantically modify the persistent
+project overview.
+
+The production detail adapter and revision-pinned Next.js Route Handler must
+resolve the selected canonical ID through:
+
+- `proposed-workflow-index.json` and the indexed `flow.json` for workflow
+  operations and governed internal edges;
+- `proposed-workflow-detail-graphs.json` as the deterministic workflow-detail
+  compatibility source during migration;
+- `proposed-rules-controls-index.json` and its workflow-specific slices;
+- the project-overview workspace for incoming and outgoing project-level
+  relationships;
+- `proposed-model-projection-index.json` and eligible model artifacts for
+  supported top-level model selections;
+- the governed evidence endpoint for selected node, edge, operation, and tab
+  content.
+
+The detail heading must reflect the selected semantic role. A workflow opens
+workflow detail, a context provider opens context-provider detail, shared data
+opens consumer detail, and decisions or states open their corresponding
+detail. The UI must not label every selection as “Selected model detail.”
+
+When operations exist without a governed internal edge, render the operations
+as separate nodes and explicitly state that no source-grounded ordering is
+established. Never add an arrow based on array order, wording, page order, or
+visual convenience.
+
 ## Required interaction
 
 ```text
@@ -94,6 +126,21 @@ Click supported model or concept in left navigation
       concepts unless the backend supplies a separate canonical identity.
 - [ ] Selecting any governed node or edge opens its exact evidence and
       governance details.
+- [ ] Selecting an overview workflow/context/data/decision/state node loads a
+      revision-pinned enriched detail payload beneath the still-mounted
+      overview.
+- [ ] The lower panel shows backend operations, governed internal edges,
+      incoming/outgoing overview relationships, semantic role, review state,
+      and available focused slices.
+- [ ] A workflow with operations but zero internal edges renders honest
+      unconnected operations plus an explicit “ordering not established”
+      state; UI-invented edges equal zero.
+- [ ] Detail titles and controls reflect the backend semantic role rather than
+      calling every selected concept a model.
+- [ ] Detail loading, stale, unavailable, explicitly empty, and partial states
+      are distinct and tested.
+- [ ] Selecting, minimizing, restoring, or closing detail does not remount or
+      lose zoom/selection state in the main overview.
 
 ## Out of scope
 

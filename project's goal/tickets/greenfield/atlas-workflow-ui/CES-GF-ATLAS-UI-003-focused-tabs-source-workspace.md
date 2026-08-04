@@ -40,6 +40,13 @@ views while keeping exact source evidence visible beside it.
   canonical record, workflow, and operation.
 - Synchronize graph, tab item, and source selections without frontend semantic
   inference.
+- Populate the enriched lower-detail panel from the UI-002 detail payload.
+  Flow renders indexed workflow operations and governed edges; Rules,
+  Validations, Permissions, States, Evidence, and Approval render only their
+  backend-owned slices.
+- Keep project-level connected relationships visible separately from internal
+  workflow flow so context/data/reporting dependencies are not misrepresented
+  as sequential workflow steps.
 
 ## Prototype-validated behavior
 
@@ -77,6 +84,20 @@ views while keeping exact source evidence visible beside it.
       one-based-page, rotation-aware coordinate contract.
 - [ ] Source documents and extracted markup render as untrusted content under
       strict CSP, sandboxing, media allowlists, and sanitization.
+- [ ] The enriched lower panel provides Flow, Rules, Validations, Permissions,
+      States, Evidence, and Approval tabs from real revision-pinned Route
+      Handler responses.
+- [ ] Tabs are hidden only when the backend marks the corresponding slice
+      explicitly empty; unavailable or failed data is never presented as an
+      empty result.
+- [ ] Selecting a detail operation, governed relationship, or focused-tab item
+      updates the right evidence pane through its canonical/evidence identity.
+- [ ] For `Paket dan Jadwal Keberangkatan`, qualification displays the two
+      existing operations, three project-level connected relationships, one
+      workflow slice item, and exact source evidence without inventing an
+      internal operation edge.
+- [ ] The Safara assertion above remains fixture-only; an unrelated domain is
+      rendered through the same adapter, tabs, and empty-state rules.
 
 ## Out of scope
 

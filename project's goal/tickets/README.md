@@ -1,5 +1,10 @@
 # CES Ticket Roadmap
 
+All ticket cross-checks and feedback cycles are governed by the centralized
+[CES Feedback Review Protocol](../feedback/README.md). Feedback is advisory
+until accepted into an authoritative ticket, and readiness review is limited
+to the protocol's two-pass process.
+
 Ticket IDs remain stable even if scheduling changes. Phase membership is recorded in each ticket's title and metadata, while directories keep the growing plan navigable.
 
 ## Phases
