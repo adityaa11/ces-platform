@@ -2,12 +2,15 @@ import { z } from "zod";
 
 export const ATLAS_MODEL_REVIEW_CONTRACT_VERSION = "1.0.0" as const;
 export const ATLAS_WORKSPACE_CONTRACT = "atlas.model-review.workspace" as const;
+export const ATLAS_DETAIL_CONTRACT = "atlas.model-review.detail" as const;
+export const ATLAS_DETAIL_INDEX_CONTRACT = "atlas.model-review.detail-index" as const;
 
 const Id = z.string().regex(/^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u);
 const Text = z.string().trim().min(1);
 const Sha256 = z.string().regex(/^sha256:[0-9a-f]{64}$/u);
 const Version = z.string().regex(/^\d+\.\d+\.\d+$/u);
 const RelativePath = z.string().regex(/^\/(?!\/)[^\s]*$/u);
+const ArtifactPath = z.string().regex(/^(?!\/)(?!.*(?:^|\/)\.\.(?:\/|$))[^\s]+$/u);
 
 export const ContractMetadataSchema = z.object({
   contract_name: z.literal(ATLAS_WORKSPACE_CONTRACT),
@@ -231,6 +234,113 @@ export const ModelReviewWorkspaceSchema = ContractMetadataSchema.extend({
   }).strict(),
 }).strict();
 
+const DetailContractMetadataSchema = z.object({
+  contract_name: z.literal(ATLAS_DETAIL_CONTRACT),
+  contract_version: z.literal(ATLAS_MODEL_REVIEW_CONTRACT_VERSION),
+  producer_version: Text,
+  projection_schema_version: Version,
+  evidence_schema_version: Version,
+  command_schema_version: Version,
+}).strict();
+
+const DetailIndexContractMetadataSchema = z.object({
+  contract_name: z.literal(ATLAS_DETAIL_INDEX_CONTRACT),
+  contract_version: z.literal(ATLAS_MODEL_REVIEW_CONTRACT_VERSION),
+  producer_version: Text,
+  projection_schema_version: Version,
+}).strict();
+
+export const DetailSubjectRoleSchema = z.enum([
+  "workflow", "context_provider", "shared_data", "decision", "state",
+  "model_projection", "concept",
+]);
+
+export const FocusedTabKindSchema = z.enum([
+  "flow", "rules", "validations", "permissions", "states", "evidence", "approval",
+]);
+
+export const FocusedTabDescriptorSchema = z.object({
+  tab: FocusedTabKindSchema,
+  availability: z.enum(["available", "explicitly_empty", "unavailable"]),
+  item_count: z.number().int().nonnegative(),
+  artifact_path: ArtifactPath.optional(),
+  reason: Text.optional(),
+}).strict().superRefine((value, context) => {
+  if (value.availability === "available" && value.item_count === 0) {
+    context.addIssue({ code: "custom", message: "Available tab requires items" });
+  }
+  if (value.availability === "explicitly_empty" && value.item_count !== 0) {
+    context.addIssue({ code: "custom", message: "Explicitly empty tab cannot contain items" });
+  }
+  if (value.availability !== "available" && value.artifact_path !== undefined) {
+    context.addIssue({ code: "custom", message: "Only available tabs may expose artifacts" });
+  }
+});
+
+export const ModelReviewDetailIndexSchema = DetailIndexContractMetadataSchema.extend({
+  project_id: Id,
+  revision: z.number().int().positive(),
+  authority: WorkspaceAuthoritySchema,
+  entries: z.array(z.object({
+    subject_id: Id,
+    subject_role: DetailSubjectRoleSchema,
+    label: Text,
+    detail_path: ArtifactPath,
+    review_status: ReviewStatusSchema,
+  }).strict()),
+}).strict().superRefine((value, context) => {
+  if (new Set(value.entries.map(({ subject_id }) => subject_id)).size !== value.entries.length) {
+    context.addIssue({ code: "custom", message: "Detail subjects must be unique" });
+  }
+});
+
+export const ModelReviewDetailSchema = DetailContractMetadataSchema.extend({
+  project_id: Id,
+  revision: z.number().int().positive(),
+  authority: WorkspaceAuthoritySchema,
+  availability: z.enum(["full", "partial", "explicitly_empty"]),
+  subject: z.object({
+    subject_id: Id,
+    subject_role: DetailSubjectRoleSchema,
+    projection_node_id: Id.optional(),
+    canonical_concept_id: Id.optional(),
+    model_kind: Id.optional(),
+    node_kind: Id,
+    label: Text,
+    review_status: ReviewStatusSchema,
+    authoritative: z.boolean(),
+    evidence_ids: z.array(Id),
+  }).strict().refine((value) => value.canonical_concept_id !== undefined
+    || value.subject_role === "model_projection", "Canonical identity is required for concepts"),
+  graph: z.object({
+    nodes: z.array(ProjectionNodeSchema),
+    edges: z.array(ProjectionEdgeSchema),
+    ordering_status: z.enum(["established", "not_established", "not_applicable"]),
+    ordering_explanation: Text,
+    layout: LayoutMetadataSchema.optional(),
+  }).strict(),
+  connected_project_relationships: z.array(ProjectionEdgeSchema),
+  tabs: z.array(FocusedTabDescriptorSchema),
+}).strict().superRefine((value, context) => {
+  const nodeIds = new Set(value.graph.nodes.map(({ projection_node_id }) => projection_node_id));
+  for (const edge of value.graph.edges) {
+    if (!nodeIds.has(edge.from_projection_node_id) || !nodeIds.has(edge.to_projection_node_id)) {
+      context.addIssue({ code: "custom", message: "Detail edge references unknown detail node" });
+    }
+  }
+  if (value.graph.ordering_status === "not_established" && value.graph.edges.length > 0) {
+    context.addIssue({ code: "custom", message: "Unestablished ordering cannot expose flow edges" });
+  }
+  if (value.availability === "explicitly_empty"
+    && (value.graph.nodes.length > 0 || value.graph.edges.length > 0)) {
+    context.addIssue({ code: "custom", message: "Explicitly empty detail cannot contain graph items" });
+  }
+  const tabs = value.tabs.map(({ tab }) => tab);
+  if (new Set(tabs).size !== tabs.length) {
+    context.addIssue({ code: "custom", message: "Focused detail tabs must be unique" });
+  }
+});
+
 export const DecisionCommandSchema = z.object({
   contract_name: z.literal("atlas.model-review.decision-command"),
   contract_version: z.literal(ATLAS_MODEL_REVIEW_CONTRACT_VERSION),
@@ -274,3 +384,5 @@ export type ProjectionNode = z.infer<typeof ProjectionNodeSchema>;
 export type ProjectionEdge = z.infer<typeof ProjectionEdgeSchema>;
 export type ModelReviewWorkspace = z.infer<typeof ModelReviewWorkspaceSchema>;
 export type SourceEvidenceProjection = z.infer<typeof SourceEvidenceProjectionSchema>;
+export type ModelReviewDetailIndex = z.infer<typeof ModelReviewDetailIndexSchema>;
+export type ModelReviewDetail = z.infer<typeof ModelReviewDetailSchema>;

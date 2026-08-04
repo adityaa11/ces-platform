@@ -7,6 +7,8 @@ import {
   ProjectionNodeSchema,
   SourceEvidenceProjectionSchema,
   WorkspaceAuthoritySchema,
+  ModelReviewDetailSchema,
+  ModelReviewDetailIndexSchema,
 } from "./index.js";
 
 const id = (suffix: string) => `project.${suffix}`;
@@ -85,5 +87,53 @@ describe("ATLAS-UI-000 shared model-review contracts", () => {
     expect(DecisionReceiptSchema.parse({ ...receipt,
       materialized_workspace_path: "/projects/example/atlas" }).decision_id)
       .toBe(id("decision.one"));
+  });
+
+  it("validates indexed detail without inventing missing ordering", () => {
+    const authority = { lifecycle: "review_in_progress" as const,
+      authority: "non_authoritative" as const,
+      downstream_execution: { status: "blocked" as const,
+        blockers: [id("blocker.review")] } };
+    expect(ModelReviewDetailIndexSchema.parse({
+      contract_name: "atlas.model-review.detail-index", contract_version: "1.0.0",
+      producer_version: "atlas-intent-graph@1.0.0", projection_schema_version: "1.0.0",
+      project_id: id("example"), revision: 1, authority, entries: [{
+        subject_id: id("workflow.package"), subject_role: "context_provider",
+        label: "Package schedule", detail_path: "proposed-details/workflow.package.json",
+        review_status: "pending",
+      }],
+    }).entries).toHaveLength(1);
+    const operation = (suffix: string) => ({ projection_node_id: id(`operation.${suffix}.detail`),
+      projection_kind: id("projection.workflow-detail"), node_kind: id("node.operation"),
+      label: suffix, review_status: "pending" as const, authoritative: false,
+      identity_kind: "canonical_concept" as const,
+      canonical_concept_id: id(`operation.${suffix}`), evidence_ids: [id(`evidence.${suffix}`)] });
+    const detail = { contract_name: "atlas.model-review.detail", contract_version: "1.0.0",
+      producer_version: "atlas-intent-graph@1.0.0", projection_schema_version: "1.0.0",
+      evidence_schema_version: "1.0.0", command_schema_version: "1.0.0",
+      project_id: id("example"), revision: 1, authority, availability: "full",
+      subject: { subject_id: id("workflow.package"), subject_role: "context_provider",
+        canonical_concept_id: id("workflow.package"), node_kind: id("node.context-provider"),
+        label: "Package schedule", review_status: "pending", authoritative: false,
+        evidence_ids: [id("evidence.package")] },
+      graph: { nodes: [operation("create"), operation("maintain")], edges: [],
+        ordering_status: "not_established",
+        ordering_explanation: "No governed internal ordering is established." },
+      connected_project_relationships: [],
+      tabs: [{ tab: "flow", availability: "available", item_count: 2,
+        artifact_path: "proposed-workflows/workflow.package/flow.json" },
+        { tab: "states", availability: "explicitly_empty", item_count: 0 }],
+    } as const;
+    expect(ModelReviewDetailSchema.parse(detail).graph.nodes).toHaveLength(2);
+    expect(() => ModelReviewDetailSchema.parse({ ...detail, graph: { ...detail.graph,
+      edges: [{ projection_edge_id: id("edge.fake.detail"),
+        projection_kind: id("projection.workflow-detail"),
+        from_projection_node_id: id("operation.create.detail"),
+        to_projection_node_id: id("operation.maintain.detail"),
+        relationship_kind: id("relationship.precedes"), relationship_status: "pending",
+        authoritative: false, identity_kind: "projection_construct",
+        projection_construct_id: id("construct.fake"),
+        derived_from_relationship_ids: [id("relationship.missing")], evidence_ids: [] }] } }))
+      .toThrow("Unestablished ordering");
   });
 });

@@ -86,6 +86,11 @@ and explicitly supported migration adapters.
       missing or unsupported versions fail closed.
 - [x] Older contract versions require explicit registered adapter versions.
 - [x] Approved-but-blocked workspaces carry explicit downstream blocker codes.
+- [x] Detail indexes and payloads distinguish semantic role, internal graph,
+      connected project relationships, focused slices, lifecycle authority,
+      partial/empty availability, and established versus missing ordering.
+- [x] A detail payload cannot publish flow edges while declaring ordering
+      unestablished, and explicitly empty detail cannot contain graph items.
 - [ ] BFF tests reject CSRF, cross-project, stale, duplicate, forged-reviewer,
       unsafe-URL, and active-document cases.
 - [ ] UI-001 implementation cannot resume until these contracts are frozen and
@@ -105,5 +110,9 @@ UI-005.
 - Compatibility classification fails closed for missing and unsupported
   versions and recognizes only explicitly registered migration versions.
 - Five focused contract and negative-security tests pass; package build passes.
+- Additive `atlas.model-review.detail-index` and
+  `atlas.model-review.detail` contracts now cover enriched lower-panel data
+  without changing the frozen workspace overview wire format. Six focused
+  contract tests pass.
 - HARD-025 and HARD-026 adoption remain intentionally unchecked and are the
   next commits in the delivery sequence.
