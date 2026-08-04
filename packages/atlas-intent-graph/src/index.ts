@@ -876,6 +876,7 @@ export function createModelReviewDetails(input: {
   const model = ProposedProjectModelSchema.parse(input.model);
   const focused = FocusedProjectionBundleSchema.parse(input.focused_projections);
   const workspace = ModelReviewWorkspaceSchema.parse(input.workspace);
+  const artifactPrefix = workspace.authority.lifecycle === "approved" ? "approved" : "proposed";
   const operationById = new Map(model.operations.map((operation) =>
     [operation.operation_id, operation] as const));
   const workflowEdgeById = new Map(model.workflow_edges.map((edge) => [edge.edge_id, edge] as const));
@@ -950,6 +951,7 @@ export function createModelReviewDetails(input: {
       producer_version: `atlas-intent-graph@${ATLAS_INTENT_GRAPH_VERSION}`,
       projection_schema_version: ATLAS_MODEL_REVIEW_CONTRACT_VERSION,
       evidence_schema_version: ATLAS_MODEL_REVIEW_CONTRACT_VERSION,
+      command_schema_version: ATLAS_MODEL_REVIEW_CONTRACT_VERSION,
       project_id: workspace.project_id,
       revision: workspace.revision,
       authority: workspace.authority,
@@ -979,7 +981,9 @@ export function createModelReviewDetails(input: {
       tabs: [
         nodes.length
           ? { tab: "flow", availability: "available", item_count: nodes.length,
-            artifact_path: `proposed-workflows/${canonicalId}/flow.json` }
+            artifact_path: artifactPrefix === "approved"
+              ? "approved-workflow-detail-graphs.json"
+              : `proposed-workflows/${canonicalId}/flow.json` }
           : { tab: "flow", availability: "explicitly_empty", item_count: 0,
             reason: "Atlas found no flow operations for this subject" },
         tab("rules", items.length),
@@ -989,12 +993,13 @@ export function createModelReviewDetails(input: {
         { tab: "evidence", availability: "available", item_count: subject.evidence_ids.length },
         connected.length
           ? { tab: "approval", availability: "available", item_count: connected.length,
-            artifact_path: "proposed-relationship-review.json" }
+            artifact_path: artifactPrefix === "approved"
+              ? "approved-relationships.json" : "proposed-relationship-review.json" }
           : { tab: "approval", availability: "explicitly_empty", item_count: 0,
             reason: "Atlas found no connected relationships requiring approval" },
       ],
     });
-    return { path: `proposed-details/${canonicalId}.json`, detail };
+    return { path: `${artifactPrefix}-details/${canonicalId}.json`, detail };
   });
   const index = ModelReviewDetailIndexSchema.parse({
     contract_name: ATLAS_DETAIL_INDEX_CONTRACT,

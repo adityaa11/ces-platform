@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-026 — Expanded Approval and Bulk Eligibility
 
 **Stage:** Canonical model and workflow projection refinement
-**Status:** In progress — approved shared workspace adopted; remaining review gaps retained
+**Status:** In progress — approved workspace and selected-detail parity adopted; remaining review gaps retained
 
 ## Objective
 
@@ -48,7 +48,8 @@ workflow ordering.
 Expanded `approval-eligibility.json`, `approval-decisions.json`,
 `approved-project-model.json`, approved assignments and relationships,
 `approved-terminology-registry.json`, approved focused projections, and
-`approved-model-review-workspace.json`, and `approval-report.md`.
+`approved-model-review-workspace.json`, `approved-model-review-detail-index.json`,
+`approved-details/<canonical-subject-id>.json`, and `approval-report.md`.
 
 ## Acceptance criteria
 
@@ -131,6 +132,13 @@ explicitly blocked downstream execution, approved edge status, governed
 candidate identity, and the canonical approved relationship identity. The
 workspace is materialized only from the immutable proposal plus the human
 decision ledger; the proposed workspace remains unchanged.
+
+Approved publication now replays the same UI-000 selected-detail contract as
+the proposal. Detail nodes and edges are restricted to accepted canonical
+entities, carry authoritative approval state, link only to approved artifacts,
+and are indexed by canonical subject ID. Pending or rejected topology cannot
+enter the approved detail artifacts because they are projected only after
+approved focused-projection materialization.
 
 Atlas now calculates expanded eligibility for records, assignments,
 cross-cutting controls, relationship intents and targets, workflow edges, and

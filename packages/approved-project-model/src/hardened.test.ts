@@ -324,6 +324,24 @@ describe("ATLAS-HARD-013 approved model materialization", () => {
     expect(JSON.parse(await readFile(
       join(published, "approved-model-review-workspace.json"), "utf8",
     )).authority.lifecycle).toBe("approved");
+    const detailIndex = JSON.parse(await readFile(
+      join(published, "approved-model-review-detail-index.json"), "utf8",
+    ));
+    expect(detailIndex).toMatchObject({
+      contract_name: "atlas.model-review.detail-index",
+      authority: { lifecycle: "approved", authority: "authoritative" },
+    });
+    const releaseDetail = JSON.parse(await readFile(join(
+      published, "approved-details", "project.workflow.release.json",
+    ), "utf8"));
+    expect(releaseDetail).toMatchObject({
+      contract_name: "atlas.model-review.detail",
+      subject: { subject_id: "project.workflow.release", authoritative: true },
+    });
+    expect(releaseDetail.graph.edges).toHaveLength(1);
+    expect(releaseDetail.graph.edges[0]).toMatchObject({
+      relationship_status: "approved", authoritative: true,
+    });
     expect(await readFile(join(
       published, "approved-workflows", "project.workflow.release", "flow.mmd",
     ), "utf8")).toContain("flowchart TD");

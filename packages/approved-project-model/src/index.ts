@@ -14,12 +14,18 @@ import {
 } from "@company/ces-semantic-record-schema";
 import {
   FocusedProjectionBundleSchema,
+  createModelReviewDetails,
   createProposedModelReviewWorkspace,
   materializeApprovedFocusedProjections,
   projectWorkflowGraph,
   renderFocusedWorkflowMermaid,
   WorkflowGraphSchema,
 } from "@company/ces-atlas-intent-graph";
+import {
+  ModelReviewDetailIndexSchema,
+  ModelReviewDetailSchema,
+  ModelReviewWorkspaceSchema,
+} from "@company/ces-atlas-model-review-contracts";
 import {
   ExpandedApprovalLedgerSchema,
   ProposalApprovalLedgerSchema,
@@ -35,7 +41,6 @@ import {
   WorkflowAssignmentSchema,
 } from "@company/ces-proposed-project-model";
 import { z } from "zod";
-import { ModelReviewWorkspaceSchema } from "@company/ces-atlas-model-review-contracts";
 
 function safePathId(value: string): string {
   return value.toLowerCase()
@@ -194,6 +199,8 @@ export const ExpandedApprovalPublicationSchema = z.object({
   terminology_registry: ApprovedTerminologyRegistrySchema,
   focused_projections: FocusedProjectionBundleSchema,
   model_review_workspace: ModelReviewWorkspaceSchema,
+  model_review_detail_index: ModelReviewDetailIndexSchema,
+  model_review_details: z.array(ModelReviewDetailSchema),
 }).strict();
 
 export function materializeHardenedApprovedProjectModel(input: {
@@ -513,11 +520,18 @@ export function materializeExpandedApprovedProjectModel(input: {
         [relationship.target_candidate_id, relationship.approved_relationship_id])),
     },
   });
+  const modelReviewDetails = createModelReviewDetails({
+    model: proposal,
+    focused_projections: focusedProjections,
+    workspace: modelReviewWorkspace,
+  });
   return deepFreeze(ExpandedApprovalPublicationSchema.parse({
     model,
     terminology_registry: terminologyRegistry,
     focused_projections: focusedProjections,
     model_review_workspace: modelReviewWorkspace,
+    model_review_detail_index: modelReviewDetails.index,
+    model_review_details: modelReviewDetails.details.map(({ detail }) => detail),
   }));
 }
 
@@ -554,6 +568,7 @@ export async function publishExpandedApproval(
     const artifacts: Record<string, unknown> = {
       "approved-project-model.json": publication.model,
       "approved-model-review-workspace.json": publication.model_review_workspace,
+      "approved-model-review-detail-index.json": publication.model_review_detail_index,
       "approved-terminology-registry.json": publication.terminology_registry,
       "approved-project-overview-graph.json": publication.focused_projections.project_overview,
       "approved-workflow-detail-graphs.json": publication.focused_projections.workflow_details,
@@ -569,6 +584,9 @@ export async function publishExpandedApproval(
       "approved-workflow-edges.json": publication.model.workflow_edges,
       "approved-relationships.json": publication.model.relationships,
     };
+    for (const detail of publication.model_review_details) {
+      artifacts[`approved-details/${detail.subject.subject_id}.json`] = detail;
+    }
     for (const [path, value] of Object.entries(artifacts)) {
       const destination = join(stagingDirectory, path);
       await mkdir(dirname(destination), { recursive: true });
