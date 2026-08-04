@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ReactFlow, Background, Controls, MarkerType, type Edge, type Node } from "@xyflow/react";
-import type { ModelReviewWorkspace, SourceEvidenceProjection } from "@company/ces-atlas-model-review-contracts";
-import { layoutOverview, overviewNodeDimensions } from "../lib/layout";
+import type { ModelReviewDetail, ModelReviewWorkspace, SourceEvidenceProjection } from "@company/ces-atlas-model-review-contracts";
+import { layoutDetail, layoutOverview, overviewNodeDimensions } from "../lib/layout";
 import "@xyflow/react/dist/style.css";
 
 const technicalKind = (value: string) => value.split(".").at(-1)?.replaceAll("-", " ") ?? value;
@@ -18,6 +18,8 @@ export function GraphWorkspace({ workspace }: { workspace: ModelReviewWorkspace 
   const [showAllLabels, setShowAllLabels] = useState(false);
   const [selectedId, setSelectedId] = useState<string>();
   const [evidence, setEvidence] = useState<SourceEvidenceProjection | "loading" | "unavailable">();
+  const [detail, setDetail] = useState<ModelReviewDetail | "loading" | "stale" | "unavailable">();
+  const [detailNodes, setDetailNodes] = useState<Node[]>([]);
   const order = new Map(workspace.overview.layout.node_order.map((id, index) => [id, index]));
   const ordered = useMemo(() => [...workspace.overview.nodes].sort((left, right) =>
     (order.get(left.node.projection_node_id) ?? Number.MAX_SAFE_INTEGER)
@@ -76,6 +78,29 @@ export function GraphWorkspace({ workspace }: { workspace: ModelReviewWorkspace 
     });
     return () => controller.abort();
   }, [selectedCanonical, workspace]);
+  useEffect(() => {
+    if (!selectedCanonical) { setDetail(undefined); setDetailNodes([]); return; }
+    const controller = new AbortController();
+    setDetail("loading");
+    const query = new URLSearchParams({ project: workspace.project_id, subject: selectedCanonical,
+      lifecycle: workspace.authority.lifecycle === "approved" ? "approved" : "proposed" });
+    void fetch(`/api/atlas/details?${query}`, { signal: controller.signal,
+      credentials: "same-origin", headers: { Accept: "application/json",
+        "If-Match": String(workspace.revision) } }).then(async (response) => {
+      if (!response.ok) { setDetail(response.status === 409 ? "stale" : "unavailable"); return; }
+      const loaded = await response.json() as ModelReviewDetail;
+      setDetail(loaded);
+      const positions = await layoutDetail(loaded);
+      setDetailNodes(loaded.graph.nodes.map((node) => ({ id: node.projection_node_id,
+        position: positions[node.projection_node_id] ?? { x: 0, y: 0 },
+        style: overviewNodeDimensions(node.label), data: { label: node.label,
+          canonicalId: node.identity_kind === "canonical_concept" ? node.canonical_concept_id : undefined },
+        className: `atlas-node ${node.authoritative ? "authoritative" : "proposed"}` })));
+    }).catch((error: unknown) => {
+      if (!(error instanceof DOMException && error.name === "AbortError")) setDetail("unavailable");
+    });
+    return () => controller.abort();
+  }, [selectedCanonical, workspace]);
   const highlighted = nodes.map((node) => ({ ...node, selected:
     selectedCanonical !== undefined && node.data.canonicalId === selectedCanonical }));
   const readableEdges = edges.map((edge) => ({ ...edge,
@@ -111,14 +136,41 @@ export function GraphWorkspace({ workspace }: { workspace: ModelReviewWorkspace 
         <ul>{workspace.overview.edges.map((edge) => <li key={edge.projection_edge_id}>
           {edge.from_projection_node_id} — {edge.relationship_kind} → {edge.to_projection_node_id}</li>)}</ul></details>
       {selected && <section className="selected-detail" aria-labelledby="detail-title">
-        <div className="panel-heading"><div><p className="eyebrow">Selected model detail</p>
+        <div className="panel-heading"><div><p className="eyebrow">{detail && typeof detail === "object"
+          ? `${detail.subject.subject_role.replaceAll("_", " ")} detail` : "Selected detail"}</p>
           <h2 id="detail-title">{selected.node.label}</h2></div><div className="panel-actions">
           <button type="button" onClick={() => setDetailMinimized((value) => !value)}>
             {detailMinimized ? "Restore" : "Minimize"}</button>
           <button type="button" onClick={() => setSelectedId(undefined)}>Close</button></div></div>
-        {!detailMinimized && <dl><div><dt>Canonical identity</dt><dd>{selectedCanonical ?? "Projection construct"}</dd></div>
-          <div><dt>Semantic kind</dt><dd>{selected.node.node_kind}</dd></div>
-          <div><dt>Overview inclusion</dt><dd>{selected.overview_inclusion_reason}</dd></div></dl>}
+        {!detailMinimized && <>
+          {detail === "loading" && <p>Loading selected detailâ€¦</p>}
+          {detail === "stale" && <p className="notice">This detail belongs to another revision. Reload the workspace.</p>}
+          {detail === "unavailable" && <p className="notice">Atlas has no valid detail for this selection.</p>}
+          {detail && typeof detail === "object" && <>
+            {detail.availability === "partial" && <p className="notice">Atlas marks this detail as partial; review missing evidence before approval.</p>}
+            <dl><div><dt>Canonical identity</dt><dd>{detail.subject.canonical_concept_id}</dd></div>
+              <div><dt>Semantic role</dt><dd>{detail.subject.subject_role.replaceAll("_", " ")}</dd></div>
+              <div><dt>Review state</dt><dd>{detail.subject.review_status}</dd></div></dl>
+            {detail.availability === "explicitly_empty" ? <p className="notice">Atlas explicitly found no graph detail for this subject.</p>
+              : <div className="detail-flow-canvas" aria-label={`${detail.subject.label} detail graph`}>
+                <ReactFlow nodes={detailNodes} edges={detail.graph.edges.map((edge) => ({
+                  id: edge.projection_edge_id, source: edge.from_projection_node_id,
+                  target: edge.to_projection_node_id, label: technicalKind(edge.relationship_kind),
+                  animated: edge.relationship_status === "pending", type: "smoothstep",
+                  markerEnd: { type: MarkerType.ArrowClosed },
+                  className: `atlas-edge ${edge.relationship_status}` }))}
+                  fitView nodesDraggable={false} nodesConnectable={false}>
+                  <Background /><Controls showInteractive={false} />
+                </ReactFlow></div>}
+            {detail.graph.ordering_status === "not_established"
+              && <p className="notice">Ordering not established: {detail.graph.ordering_explanation}</p>}
+            <h3>Connected project relationships</h3>
+            {detail.connected_project_relationships.length
+              ? <ul>{detail.connected_project_relationships.map((edge) => <li key={edge.projection_edge_id}>
+                {technicalKind(edge.relationship_kind)} · {edge.relationship_status}</li>)}</ul>
+              : <p>No connected project relationships were established.</p>}
+          </>}
+        </>}
       </section>}
     </section>
     <aside><h2>Source evidence</h2>{selected ? <><h3>{selected.node.label}</h3>

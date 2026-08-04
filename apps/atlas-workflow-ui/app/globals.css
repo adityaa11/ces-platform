@@ -37,6 +37,8 @@ nav span { color: #667286; font-size: .75rem; text-transform: capitalize; }
 .panel-actions { display: flex; gap: .5rem; }.selected-detail { margin-top: 1.5rem; padding: 1rem;
   border: 1px solid #cfd7e3; border-radius: .65rem; background: #f8fafc; }
 .selected-detail dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+.detail-flow-canvas { width: 100%; height: clamp(20rem, 42vh, 34rem); margin: 1rem 0;
+  border: 1px solid #d7dee9; border-radius: .55rem; background: #fff; }
 .graph-summary { margin-top: 1rem; }.graph-summary li { overflow-wrap: anywhere; }
 .source-representation { margin: 1rem 0; padding-top: 1rem; border-top: 1px solid #dce2ea; }
 .source-representation blockquote { margin: .75rem 0; padding: .75rem; background: #f7f9fc;

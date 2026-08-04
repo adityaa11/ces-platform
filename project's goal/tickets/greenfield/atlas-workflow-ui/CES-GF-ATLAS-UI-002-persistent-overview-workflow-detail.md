@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-UI-002 — Persistent Project Overview and Model Detail
 
 **Stage:** Atlas model review UI
-**Status:** In progress — persistent overview implemented; enriched artifact-backed detail remains
+**Status:** Complete — persistent overview and enriched artifact-backed lower detail implemented
 
 ## Objective
 
@@ -126,18 +126,18 @@ Click supported model or concept in left navigation
       concepts unless the backend supplies a separate canonical identity.
 - [ ] Selecting any governed node or edge opens its exact evidence and
       governance details.
-- [ ] Selecting an overview workflow/context/data/decision/state node loads a
+- [x] Selecting an overview workflow/context/data/decision/state node loads a
       revision-pinned enriched detail payload beneath the still-mounted
       overview.
-- [ ] The lower panel shows backend operations, governed internal edges,
+- [x] The lower panel shows backend operations, governed internal edges,
       incoming/outgoing overview relationships, semantic role, review state,
       and available focused slices.
-- [ ] A workflow with operations but zero internal edges renders honest
+- [x] A workflow with operations but zero internal edges renders honest
       unconnected operations plus an explicit “ordering not established”
       state; UI-invented edges equal zero.
-- [ ] Detail titles and controls reflect the backend semantic role rather than
+- [x] Detail titles and controls reflect the backend semantic role rather than
       calling every selected concept a model.
-- [ ] Detail loading, stale, unavailable, explicitly empty, and partial states
+- [x] Detail loading, stale, unavailable, explicitly empty, and partial states
       are distinct and tested.
 - [ ] Selecting, minimizing, restoring, or closing detail does not remount or
       lose zoom/selection state in the main overview.
@@ -173,3 +173,11 @@ ATLAS-UI-003 and ATLAS-UI-004.
   proposed, pending, approved, and rejected presentation; rejected detail
   edges are not rendered as graph truth.
 - Seven UI foundation/interaction tests pass and application typecheck passes.
+
+- The production lower panel fetches `/api/atlas/details` without unmounting
+  the overview, lays out only backend-provided detail nodes and edges with
+  ELK/React Flow, and displays backend role, review state, connected project
+  relationships, and honest ordering status.
+- Loading, stale, unavailable, explicitly-empty, and populated states are
+  visually distinct. When ordering is not established, operations remain
+  disconnected and the backend explanation is displayed.
