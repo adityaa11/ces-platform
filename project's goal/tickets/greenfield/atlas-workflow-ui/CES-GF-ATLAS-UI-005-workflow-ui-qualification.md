@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-UI-005 — Model Review UI Production Qualification
 
 **Stage:** Atlas model review UI production gate
-**Status:** In progress — automated renderer gates implemented; browser and human acceptance remain
+**Status:** In progress — enriched-detail automated gates pass; browser and human acceptance remain
 
 ## Objective
 
@@ -55,7 +55,7 @@ different domains and lifecycle states.
 
 - [x] Project overview remains visible while workflow detail opens below it.
 - [x] Overview and detail minimize/restore behavior passes interaction tests.
-- [ ] All focused tabs render only backend-owned membership.
+- [x] All focused tabs render only backend-owned membership.
 - [ ] Source traceability resolves correctly for every sampled UI item.
 - [ ] Pending/rejected authority leakage equals zero.
 - [x] Fixture-specific production headings, theme, or hardcoded semantics equal
@@ -112,7 +112,14 @@ acceptance.
 - A scoped production-source scan proves that Safara names, fixture IDs, and
   travel-specific labels do not appear in the Next.js application boundary.
 - Persistent overview/detail and minimize/restore regressions remain green;
-  the focused UI qualification set passes 11/11 with production typecheck.
+  the full Atlas UI qualification set passes 20/20 across adapters,
+  interaction, approval, source, workspace/detail, evidence, and deterministic
+  layout tests.
+- The production Next.js build includes real workspace, detail, detail-tab,
+  evidence, and decision Route Handlers. Focused slices resolve only through
+  backend-declared artifact paths and revision-pinned detail indexes.
+- Verification: `corepack pnpm vitest run apps/atlas-workflow-ui` and
+  `corepack pnpm --filter @company/ces-atlas-workflow-ui build`.
 - Browser screenshots, automated accessibility/visual regression, multi-domain
   runtime artifacts, and explicit human acceptance remain open and are not
   represented as complete by this automated gate.
