@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-UI-001 — Model Review Workspace Foundation
 
 **Stage:** Atlas model review UI
-**Status:** In progress — production Next.js boundary and shared workspace shell implemented
+**Status:** Complete — production Next.js workspace and revision-pinned detail boundary implemented
 
 ## Objective
 
@@ -109,6 +109,10 @@ Persistent overview/detail interaction is completed by ATLAS-UI-002.
 - The server-only workspace reader and `/api/atlas/workspace` validate the
   producer artifact with `ModelReviewWorkspaceSchema`, reject unsafe project
   identifiers, and fail closed on invalid contract data.
+- `/api/atlas/details` resolves selected details only through the backend-owned
+  detail index, requires an `If-Match` revision, validates the shared UI-000
+  detail schema, rejects unsafe paths, and returns conflicts for stale or
+  mismatched index/detail revisions.
 - The neutral responsive shell renders persistent lifecycle/authority state,
   semantic navigation, the backend-owned overview, relationship alternatives,
   and a source-evidence pane from shared-contract fields.

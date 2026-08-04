@@ -2,7 +2,7 @@ import { mkdtemp, mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { readWorkspace } from "./workspace";
+import { readModelDetail, readWorkspace } from "./workspace";
 
 const hash = `sha256:${"a".repeat(64)}`;
 const workspace = {
@@ -37,5 +37,37 @@ describe("Atlas workspace server boundary", () => {
     expect((await readWorkspace({ root, projectId: "project.example" })).revision).toBe(1);
     await expect(readWorkspace({ root, projectId: "../outside" }))
       .rejects.toThrow("Invalid Atlas project identifier");
+  });
+
+  it("loads a revision-pinned selected detail through its backend index", async () => {
+    const root = await mkdtemp(join(tmpdir(), "atlas-detail-"));
+    const directory = join(root, "project.example");
+    await mkdir(join(directory, "proposed-details"), { recursive: true });
+    const authority = workspace.authority;
+    await writeFile(join(directory, "proposed-model-review-detail-index.json"), JSON.stringify({
+      contract_name: "atlas.model-review.detail-index", contract_version: "1.0.0",
+      producer_version: "atlas-intent-graph@1.0.0", projection_schema_version: "1.0.0",
+      project_id: "project.example", revision: 1, authority,
+      entries: [{ subject_id: "project.workflow.one", subject_role: "workflow",
+        label: "Workflow one", detail_path: "proposed-details/project.workflow.one.json",
+        review_status: "pending" }],
+    }), "utf8");
+    await writeFile(join(directory, "proposed-details", "project.workflow.one.json"), JSON.stringify({
+      contract_name: "atlas.model-review.detail", contract_version: "1.0.0",
+      producer_version: "atlas-intent-graph@1.0.0", projection_schema_version: "1.0.0",
+      evidence_schema_version: "1.0.0", command_schema_version: "1.0.0",
+      project_id: "project.example", revision: 1, authority, availability: "explicitly_empty",
+      subject: { subject_id: "project.workflow.one", subject_role: "workflow",
+        canonical_concept_id: "project.workflow.one", node_kind: "atlas.node.workflow",
+        label: "Workflow one", review_status: "pending", authoritative: false,
+        evidence_ids: ["source.unit.one"] },
+      graph: { nodes: [], edges: [], ordering_status: "not_applicable",
+        ordering_explanation: "No operations were established." },
+      connected_project_relationships: [], tabs: [],
+    }), "utf8");
+    expect((await readModelDetail({ root, projectId: "project.example",
+      subjectId: "project.workflow.one", revision: 1 })).availability).toBe("explicitly_empty");
+    await expect(readModelDetail({ root, projectId: "project.example",
+      subjectId: "project.workflow.one", revision: 2 })).rejects.toThrow("revision is stale");
   });
 });
