@@ -46,6 +46,49 @@ export async function readModelDetail(input: {
   return detail;
 }
 
+type FocusedSliceItem = { record_id: string; semantic_kind_id: string;
+  statement: string; source_unit_ids: string[] };
+function focusedSliceItems(value: unknown): FocusedSliceItem[] {
+  if (!value || typeof value !== "object" || !("items" in value) || !Array.isArray(value.items)) {
+    throw new Error("Invalid Atlas focused slice");
+  }
+  return value.items.map((item) => {
+    if (!item || typeof item !== "object" || !("record_id" in item)
+      || !("semantic_kind_id" in item) || !("statement" in item) || !("source_unit_ids" in item)
+      || typeof item.record_id !== "string" || typeof item.semantic_kind_id !== "string"
+      || typeof item.statement !== "string" || !Array.isArray(item.source_unit_ids)
+      || !item.source_unit_ids.every((id: unknown) => typeof id === "string")) {
+      throw new Error("Invalid Atlas focused slice item");
+    }
+    return item as FocusedSliceItem;
+  });
+}
+
+export async function readModelDetailTab(input: {
+  projectId: string;
+  subjectId: string;
+  revision: number;
+  lifecycle?: "proposed" | "approved";
+  root?: string;
+  tab: "rules" | "validations" | "permissions" | "states";
+}): Promise<{ tab: string; revision: number; items: Array<{
+  record_id: string; semantic_kind_id: string; statement: string; source_unit_ids: string[];
+}> }> {
+  const detail = await readModelDetail(input);
+  const descriptor = detail.tabs.find(({ tab }) => tab === input.tab);
+  if (!descriptor || descriptor.availability !== "available" || !descriptor.artifact_path) {
+    throw new Error(`Atlas ${input.tab} detail is not available`);
+  }
+  const root = resolve(input.root ?? atlasArtifactRoot());
+  const projectRoot = resolve(root, input.projectId);
+  const artifactPath = resolve(projectRoot, descriptor.artifact_path);
+  if (relative(projectRoot, artifactPath).startsWith("..")) throw new Error("Unsafe Atlas tab path");
+  const items = focusedSliceItems(JSON.parse(await readFile(artifactPath, "utf8")));
+  const needle = input.tab === "rules" ? undefined : input.tab.replace(/s$/u, "");
+  return { tab: input.tab, revision: detail.revision,
+    items: needle ? items.filter(({ semantic_kind_id }) => semantic_kind_id.includes(needle)) : items };
+}
+
 export async function readWorkspace(input: {
   projectId: string;
   lifecycle?: "proposed" | "approved";

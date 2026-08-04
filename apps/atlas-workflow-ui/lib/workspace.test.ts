@@ -2,7 +2,7 @@ import { mkdtemp, mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { readModelDetail, readWorkspace } from "./workspace";
+import { readModelDetail, readModelDetailTab, readWorkspace } from "./workspace";
 
 const hash = `sha256:${"a".repeat(64)}`;
 const workspace = {
@@ -63,11 +63,19 @@ describe("Atlas workspace server boundary", () => {
         evidence_ids: ["source.unit.one"] },
       graph: { nodes: [], edges: [], ordering_status: "not_applicable",
         ordering_explanation: "No operations were established." },
-      connected_project_relationships: [], tabs: [],
+      connected_project_relationships: [], tabs: [{ tab: "rules", availability: "available",
+        item_count: 1, artifact_path: "proposed-rules.json" }],
     }), "utf8");
+    await writeFile(join(directory, "proposed-rules.json"), JSON.stringify({ items: [{
+      record_id: "project.record.rule", semantic_kind_id: "atlas.kind.business-rule",
+      statement: "A governed rule.", source_unit_ids: ["source.unit.one"],
+    }] }), "utf8");
     expect((await readModelDetail({ root, projectId: "project.example",
       subjectId: "project.workflow.one", revision: 1 })).availability).toBe("explicitly_empty");
     await expect(readModelDetail({ root, projectId: "project.example",
       subjectId: "project.workflow.one", revision: 2 })).rejects.toThrow("revision is stale");
+    expect((await readModelDetailTab({ root, projectId: "project.example",
+      subjectId: "project.workflow.one", revision: 1, tab: "rules" })).items)
+      .toHaveLength(1);
   });
 });

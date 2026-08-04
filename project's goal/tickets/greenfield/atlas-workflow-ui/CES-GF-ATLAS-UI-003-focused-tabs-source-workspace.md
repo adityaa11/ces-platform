@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-UI-003 — Focused Workflow Tabs and Source Workspace
 
 **Stage:** Atlas model review UI
-**Status:** In progress — production exact-evidence route and source pane implemented
+**Status:** In progress — production focused tabs, lazy slices, and exact-evidence synchronization implemented
 
 ## Objective
 
@@ -84,13 +84,13 @@ views while keeping exact source evidence visible beside it.
       one-based-page, rotation-aware coordinate contract.
 - [ ] Source documents and extracted markup render as untrusted content under
       strict CSP, sandboxing, media allowlists, and sanitization.
-- [ ] The enriched lower panel provides Flow, Rules, Validations, Permissions,
+- [x] The enriched lower panel provides Flow, Rules, Validations, Permissions,
       States, Evidence, and Approval tabs from real revision-pinned Route
       Handler responses.
-- [ ] Tabs are hidden only when the backend marks the corresponding slice
+- [x] Tabs are hidden only when the backend marks the corresponding slice
       explicitly empty; unavailable or failed data is never presented as an
       empty result.
-- [ ] Selecting a detail operation, governed relationship, or focused-tab item
+- [x] Selecting a detail operation or focused-tab item
       updates the right evidence pane through its canonical/evidence identity.
 - [ ] For `Paket dan Jadwal Keberangkatan`, qualification displays the two
       existing operations, three project-level connected relationships, one
@@ -131,3 +131,11 @@ Human decisions and approval materialization are completed by ATLAS-UI-004.
   displays deterministic primary-selection rationale, location/span/bounds,
   and the full document-to-operation trace.
 - Eleven UI tests pass and application typecheck passes.
+
+- `/api/atlas/detail-tabs` resolves only artifact paths declared available by
+  the revision-pinned detail contract. Rules, validations, permissions, and
+  states load their selected workflow slice lazily; unavailable failures stay
+  distinct from explicit empty results.
+- The lower React workspace renders the seven backend-declared tab kinds.
+  Detail-node and focused-item selection updates the exact-evidence request by
+  canonical record/operation identity without creating semantic links.

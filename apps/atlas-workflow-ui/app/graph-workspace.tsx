@@ -7,6 +7,8 @@ import { layoutDetail, layoutOverview, overviewNodeDimensions } from "../lib/lay
 import "@xyflow/react/dist/style.css";
 
 const technicalKind = (value: string) => value.split(".").at(-1)?.replaceAll("-", " ") ?? value;
+type FocusedItem = { record_id: string; semantic_kind_id: string;
+  statement: string; source_unit_ids: readonly string[] };
 
 function canonicalId(node: ModelReviewWorkspace["overview"]["nodes"][number]["node"]): string | undefined {
   return node.identity_kind === "canonical_concept" ? node.canonical_concept_id : undefined;
@@ -20,6 +22,9 @@ export function GraphWorkspace({ workspace }: { workspace: ModelReviewWorkspace 
   const [evidence, setEvidence] = useState<SourceEvidenceProjection | "loading" | "unavailable">();
   const [detail, setDetail] = useState<ModelReviewDetail | "loading" | "stale" | "unavailable">();
   const [detailNodes, setDetailNodes] = useState<Node[]>([]);
+  const [activeTab, setActiveTab] = useState("flow");
+  const [tabItems, setTabItems] = useState<readonly FocusedItem[] | "loading" | "unavailable">([]);
+  const [evidenceConcept, setEvidenceConcept] = useState<string>();
   const order = new Map(workspace.overview.layout.node_order.map((id, index) => [id, index]));
   const ordered = useMemo(() => [...workspace.overview.nodes].sort((left, right) =>
     (order.get(left.node.projection_node_id) ?? Number.MAX_SAFE_INTEGER)
@@ -61,12 +66,13 @@ export function GraphWorkspace({ workspace }: { workspace: ModelReviewWorkspace 
   const selected = workspace.overview.nodes.find(({ node }) =>
     node.projection_node_id === selectedId);
   const selectedCanonical = selected ? canonicalId(selected.node) : undefined;
+  const evidenceCanonical = evidenceConcept ?? selectedCanonical;
   useEffect(() => {
-    if (!selectedCanonical) { setEvidence(undefined); return; }
+    if (!evidenceCanonical) { setEvidence(undefined); return; }
     const controller = new AbortController();
     setEvidence("loading");
     const query = new URLSearchParams({ project: workspace.project_id,
-      concept: selectedCanonical, revision: String(workspace.revision),
+      concept: evidenceCanonical, revision: String(workspace.revision),
       lifecycle: workspace.authority.lifecycle === "approved" ? "approved" : "proposed" });
     void fetch(`/api/atlas/evidence?${query}`, { signal: controller.signal,
       credentials: "same-origin", headers: { Accept: "application/json",
@@ -77,7 +83,7 @@ export function GraphWorkspace({ workspace }: { workspace: ModelReviewWorkspace 
       if (!(error instanceof DOMException && error.name === "AbortError")) setEvidence("unavailable");
     });
     return () => controller.abort();
-  }, [selectedCanonical, workspace]);
+  }, [evidenceCanonical, workspace]);
   useEffect(() => {
     if (!selectedCanonical) { setDetail(undefined); setDetailNodes([]); return; }
     const controller = new AbortController();
@@ -90,6 +96,9 @@ export function GraphWorkspace({ workspace }: { workspace: ModelReviewWorkspace 
       if (!response.ok) { setDetail(response.status === 409 ? "stale" : "unavailable"); return; }
       const loaded = await response.json() as ModelReviewDetail;
       setDetail(loaded);
+      setActiveTab(loaded.tabs.find(({ tab, availability }) => tab === "flow"
+        && availability !== "explicitly_empty")?.tab
+        ?? loaded.tabs.find(({ availability }) => availability !== "explicitly_empty")?.tab ?? "flow");
       const positions = await layoutDetail(loaded);
       setDetailNodes(loaded.graph.nodes.map((node) => ({ id: node.projection_node_id,
         position: positions[node.projection_node_id] ?? { x: 0, y: 0 },
@@ -101,6 +110,25 @@ export function GraphWorkspace({ workspace }: { workspace: ModelReviewWorkspace 
     });
     return () => controller.abort();
   }, [selectedCanonical, workspace]);
+  useEffect(() => {
+    if (!selectedCanonical || !["rules", "validations", "permissions", "states"].includes(activeTab)) {
+      setTabItems([]); return;
+    }
+    const controller = new AbortController();
+    setTabItems("loading");
+    const query = new URLSearchParams({ project: workspace.project_id, subject: selectedCanonical,
+      tab: activeTab, lifecycle: workspace.authority.lifecycle === "approved" ? "approved" : "proposed" });
+    void fetch(`/api/atlas/detail-tabs?${query}`, { signal: controller.signal,
+      credentials: "same-origin", headers: { Accept: "application/json",
+        "If-Match": String(workspace.revision) } }).then(async (response) => {
+      if (!response.ok) throw new Error("Tab unavailable");
+      const payload = await response.json() as { items: FocusedItem[] };
+      setTabItems(Array.isArray(payload.items) ? payload.items : []);
+    }).catch((error: unknown) => {
+      if (!(error instanceof DOMException && error.name === "AbortError")) setTabItems("unavailable");
+    });
+    return () => controller.abort();
+  }, [activeTab, selectedCanonical, workspace]);
   const highlighted = nodes.map((node) => ({ ...node, selected:
     selectedCanonical !== undefined && node.data.canonicalId === selectedCanonical }));
   const readableEdges = edges.map((edge) => ({ ...edge,
@@ -111,7 +139,7 @@ export function GraphWorkspace({ workspace }: { workspace: ModelReviewWorkspace 
   return <div className="workspace">
     <nav aria-label="Semantic navigation"><h2>Semantic areas</h2><ul>{ordered.map(({ node, overview_role }) =>
       <li key={node.projection_node_id}><button type="button" onClick={() => {
-        setSelectedId(node.projection_node_id); setDetailMinimized(false);
+        setSelectedId(node.projection_node_id); setEvidenceConcept(undefined); setDetailMinimized(false);
       }}><span>{overview_role.replaceAll("_", " ")}</span>{node.label}</button></li>)}</ul></nav>
     <section aria-labelledby="overview-title">
       <div className="panel-heading"><div><h2 id="overview-title">Project overview</h2>
@@ -128,7 +156,7 @@ export function GraphWorkspace({ workspace }: { workspace: ModelReviewWorkspace 
         <div className="flow-canvas" aria-label="Interactive integrated project graph">
         <ReactFlow nodes={highlighted} edges={readableEdges} fitView minZoom={0.25} maxZoom={1.5}
           fitViewOptions={{ padding: 0.14, minZoom: 0.25, maxZoom: 1 }}
-          onNodeClick={(_, node) => { setSelectedId(node.id); setDetailMinimized(false); }}
+          onNodeClick={(_, node) => { setSelectedId(node.id); setEvidenceConcept(undefined); setDetailMinimized(false); }}
           nodesDraggable={false} nodesConnectable={false} elementsSelectable>
           <Background /><Controls showInteractive={false} /></ReactFlow></div></>}
       <details className="graph-summary"><summary>Ordered non-visual graph summary</summary>
@@ -151,7 +179,13 @@ export function GraphWorkspace({ workspace }: { workspace: ModelReviewWorkspace 
             <dl><div><dt>Canonical identity</dt><dd>{detail.subject.canonical_concept_id}</dd></div>
               <div><dt>Semantic role</dt><dd>{detail.subject.subject_role.replaceAll("_", " ")}</dd></div>
               <div><dt>Review state</dt><dd>{detail.subject.review_status}</dd></div></dl>
-            {detail.availability === "explicitly_empty" ? <p className="notice">Atlas explicitly found no graph detail for this subject.</p>
+            <div className="detail-tabs" role="tablist" aria-label="Focused detail views">
+              {detail.tabs.filter(({ availability }) => availability !== "explicitly_empty").map((tab) =>
+                <button key={tab.tab} type="button" role="tab" aria-selected={activeTab === tab.tab}
+                  disabled={tab.availability === "unavailable"} onClick={() => setActiveTab(tab.tab)}>
+                  {tab.tab} <span>{tab.item_count}</span></button>)}
+            </div>
+            {activeTab === "flow" && (detail.availability === "explicitly_empty" ? <p className="notice">Atlas explicitly found no graph detail for this subject.</p>
               : <div className="detail-flow-canvas" aria-label={`${detail.subject.label} detail graph`}>
                 <ReactFlow nodes={detailNodes} edges={detail.graph.edges.map((edge) => ({
                   id: edge.projection_edge_id, source: edge.from_projection_node_id,
@@ -159,16 +193,27 @@ export function GraphWorkspace({ workspace }: { workspace: ModelReviewWorkspace 
                   animated: edge.relationship_status === "pending", type: "smoothstep",
                   markerEnd: { type: MarkerType.ArrowClosed },
                   className: `atlas-edge ${edge.relationship_status}` }))}
-                  fitView nodesDraggable={false} nodesConnectable={false}>
+                  fitView nodesDraggable={false} nodesConnectable={false}
+                  onNodeClick={(_, node) => setEvidenceConcept(
+                    typeof node.data.canonicalId === "string" ? node.data.canonicalId : undefined)}>
                   <Background /><Controls showInteractive={false} />
-                </ReactFlow></div>}
-            {detail.graph.ordering_status === "not_established"
+                </ReactFlow></div>)}
+            {activeTab === "flow" && detail.graph.ordering_status === "not_established"
               && <p className="notice">Ordering not established: {detail.graph.ordering_explanation}</p>}
-            <h3>Connected project relationships</h3>
+            {["rules", "validations", "permissions", "states"].includes(activeTab) && <>
+              {tabItems === "loading" && <p>Loading {activeTab}…</p>}
+              {tabItems === "unavailable" && <p className="notice">This focused slice is unavailable; it is not an empty result.</p>}
+              {Array.isArray(tabItems) && <ul className="focused-items">{tabItems.map((item) =>
+                <li key={item.record_id}><button type="button" onClick={() => setEvidenceConcept(item.record_id)}>
+                  <span>{technicalKind(item.semantic_kind_id)}</span>{item.statement}</button></li>)}</ul>}
+            </>}
+            {activeTab === "evidence" && <button type="button" onClick={() => setEvidenceConcept(selectedCanonical)}>
+              Show exact source representations</button>}
+            {activeTab === "approval" && <><h3>Connected project relationships</h3>
             {detail.connected_project_relationships.length
               ? <ul>{detail.connected_project_relationships.map((edge) => <li key={edge.projection_edge_id}>
                 {technicalKind(edge.relationship_kind)} · {edge.relationship_status}</li>)}</ul>
-              : <p>No connected project relationships were established.</p>}
+              : <p>No connected project relationships were established.</p>}</>}
           </>}
         </>}
       </section>}

@@ -21,7 +21,6 @@ export async function readEvidence(input: {
   const projected = workspace.overview.nodes.find(({ node }) =>
     node.identity_kind === "canonical_concept"
       && node.canonical_concept_id === input.canonicalConceptId)?.node;
-  if (!projected) throw new Error("Concept is not present in this workspace revision");
   const directory = resolve(input.root, input.projectId);
   const [sourceUnitsValue, claimsValue, modelValue] = await Promise.all([
     readFile(resolve(directory, "source-units.json"), "utf8"),
@@ -33,7 +32,13 @@ export async function readEvidence(input: {
   const model = modelValue as JsonObject;
   const records = objects(model.records);
   const operations = objects(model.operations);
-  const representations = projected.evidence_ids.flatMap((sourceUnitId) => {
+  const directRecord = records.find(({ id }) => id === input.canonicalConceptId);
+  const directOperation = operations.find(({ operation_id }) => operation_id === input.canonicalConceptId);
+  const evidenceIds = projected?.evidence_ids
+    ?? (directRecord ? strings(directRecord.source_unit_ids)
+      : strings(directOperation?.source_unit_ids));
+  if (evidenceIds.length === 0) throw new Error("Concept is not present in this workspace revision");
+  const representations = evidenceIds.flatMap((sourceUnitId) => {
     const unit = sourceUnits.find(({ id }) => id === sourceUnitId);
     const claim = claims.find(({ source_unit_id }) => source_unit_id === sourceUnitId);
     const record = records.find(({ source_unit_ids }) => strings(source_unit_ids).includes(sourceUnitId));

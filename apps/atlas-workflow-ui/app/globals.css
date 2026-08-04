@@ -39,6 +39,11 @@ nav span { color: #667286; font-size: .75rem; text-transform: capitalize; }
 .selected-detail dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
 .detail-flow-canvas { width: 100%; height: clamp(20rem, 42vh, 34rem); margin: 1rem 0;
   border: 1px solid #d7dee9; border-radius: .55rem; background: #fff; }
+.detail-tabs { display: flex; flex-wrap: wrap; gap: .4rem; margin: 1rem 0; }
+.detail-tabs button[aria-selected="true"] { color: #fff; background: #173f74; }
+.focused-items { list-style: none; padding: 0; }.focused-items button { width: 100%; padding: .75rem;
+  text-align: left; border: 1px solid #d7dee9; background: #fff; }
+.focused-items span { display: block; color: #526175; font-size: .75rem; text-transform: capitalize; }
 .graph-summary { margin-top: 1rem; }.graph-summary li { overflow-wrap: anywhere; }
 .source-representation { margin: 1rem 0; padding-top: 1rem; border-top: 1px solid #dce2ea; }
 .source-representation blockquote { margin: .75rem 0; padding: .75rem; background: #f7f9fc;
