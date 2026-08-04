@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-HARD-025 — Focused Backend-Owned UI Projections
 
 **Stage:** Canonical model and workflow projection refinement
-**Status:** In progress — shared proposed-workspace contract adopted; focused-detail migration remains
+**Status:** In progress — shared workspace and selected-detail contracts adopted; model-projection qualification remains
 
 ## Objective
 
@@ -69,6 +69,8 @@ supports a workflow.
 
 `proposed-model-support-assessment.json`,
 `proposed-model-review-workspace.json`,
+`proposed-model-review-detail-index.json`, revision-pinned
+`proposed-details/<canonical-subject-id>.json` selected-detail artifacts,
 `proposed-integrated-semantic-graph-index.json`,
 `proposed-integrated-semantic-graph/summary.json`,
 partitioned actor, module, workflow, decision, state, conceptual-entity, rule,
@@ -189,6 +191,14 @@ budgets, truncation and available-layer metadata, deterministic layout input,
 and fail-closed contract versions. The artifact survives the review/resume
 publication boundary. Existing focused-detail compatibility artifacts remain
 until their UI-001 consumer migration is complete.
+
+The producer also emits a validated selected-detail index and one detail
+artifact per backend-selected overview subject. Each detail carries canonical
+identity and evidence, governed internal edges when the source establishes
+them, connected overview relationships, explicit ordering status, and
+backend-owned tab availability/counts/artifact paths. Multiple operations with
+no governed sequence are reported as `not_established`; no UI or projector edge
+is invented. Detail artifacts survive the review/resume publication boundary.
 
 Atlas now creates lifecycle-neutral focused projection contracts for project
 overview, workflow detail, rules and controls, traceability, and approval

@@ -5,7 +5,11 @@ import {
 import type { AtlasReviewOutput } from "@company/ces-atlas-review";
 import {
   ATLAS_MODEL_REVIEW_CONTRACT_VERSION,
+  ATLAS_DETAIL_CONTRACT,
+  ATLAS_DETAIL_INDEX_CONTRACT,
   ATLAS_WORKSPACE_CONTRACT,
+  ModelReviewDetailIndexSchema,
+  ModelReviewDetailSchema,
   ModelReviewWorkspaceSchema,
   ProjectionEdgeSchema,
 } from "@company/ces-atlas-model-review-contracts";
@@ -862,6 +866,153 @@ export function createProposedModelReviewWorkspace(input: {
       },
     },
   });
+}
+
+export function createModelReviewDetails(input: {
+  readonly model: z.input<typeof ProposedProjectModelSchema>;
+  readonly focused_projections: z.input<typeof FocusedProjectionBundleSchema>;
+  readonly workspace: z.input<typeof ModelReviewWorkspaceSchema>;
+}) {
+  const model = ProposedProjectModelSchema.parse(input.model);
+  const focused = FocusedProjectionBundleSchema.parse(input.focused_projections);
+  const workspace = ModelReviewWorkspaceSchema.parse(input.workspace);
+  const operationById = new Map(model.operations.map((operation) =>
+    [operation.operation_id, operation] as const));
+  const workflowEdgeById = new Map(model.workflow_edges.map((edge) => [edge.edge_id, edge] as const));
+  const role = (overviewRole: typeof workspace.overview.nodes[number]["overview_role"]) => {
+    if (overviewRole === "shared_data") return "shared_data" as const;
+    if (overviewRole === "context_provider") return "context_provider" as const;
+    if (overviewRole === "significant_decision") return "decision" as const;
+    if (overviewRole === "significant_state") return "state" as const;
+    return "workflow" as const;
+  };
+  const details = workspace.overview.nodes.map((overviewNode) => {
+    const subject = overviewNode.node;
+    if (subject.identity_kind !== "canonical_concept") {
+      throw new Error(`Overview detail subject is not canonical: ${subject.projection_node_id}`);
+    }
+    const canonicalId = subject.canonical_concept_id;
+    const workflow = focused.workflow_details.find(({ workflow_id }) => workflow_id === canonicalId);
+    const operations = workflow?.operations ?? (operationById.has(canonicalId)
+      ? [{ ...operationById.get(canonicalId)!, semantic_record_ids: [] }] : []);
+    const nodes = operations.map((operation) => {
+      const canonical = operationById.get(operation.operation_id);
+      if (!canonical || canonical.source_unit_ids.length === 0) {
+        throw new Error(`Detail operation lacks canonical evidence: ${operation.operation_id}`);
+      }
+      return {
+        projection_node_id: `${operation.operation_id}.projection.detail`,
+        projection_kind: "atlas.projection.workflow-detail",
+        node_kind: `atlas.node.${operation.operation_kind.replaceAll("_", "-")}`,
+        label: operation.label,
+        review_status: subject.review_status,
+        authoritative: subject.authoritative,
+        identity_kind: "canonical_concept" as const,
+        canonical_concept_id: operation.operation_id,
+        evidence_ids: [...canonical.source_unit_ids].sort(compareText),
+      };
+    });
+    const nodeIds = new Set(nodes.map(({ canonical_concept_id }) => canonical_concept_id));
+    const edges = (workflow?.edges ?? []).flatMap((edge) => {
+      const canonical = workflowEdgeById.get(edge.edge_id);
+      if (!canonical || !nodeIds.has(edge.from_operation_id) || !nodeIds.has(edge.to_operation_id)) return [];
+      return [{
+        projection_edge_id: `${edge.edge_id}.projection.detail`,
+        projection_kind: "atlas.projection.workflow-detail",
+        from_projection_node_id: `${edge.from_operation_id}.projection.detail`,
+        to_projection_node_id: `${edge.to_operation_id}.projection.detail`,
+        relationship_kind: `atlas.relationship.${edge.edge_kind.replaceAll("_", "-")}`,
+        relationship_status: subject.review_status,
+        authoritative: subject.authoritative,
+        identity_kind: "governed_relationship" as const,
+        governed_relationship_id: edge.edge_id,
+        origin: canonical.governance.origin,
+        evidence_ids: [...canonical.governance.evidence_source_unit_ids].sort(compareText),
+        rationale: canonical.governance.rationale,
+      }];
+    });
+    const slices = focused.rules_controls_slices.filter((slice) =>
+      slice.partition_type === "workflow" && slice.partition_id === canonicalId);
+    const items = slices.flatMap(({ items }) => items);
+    const countKind = (kind: string) => items.filter(({ semantic_kind_id }) =>
+      semantic_kind_id.includes(kind)).length;
+    const tab = (name: "rules" | "validations" | "permissions" | "states", count: number) => count
+      ? { tab: name, availability: "available" as const, item_count: count,
+        artifact_path: slices[0]!.artifact }
+      : { tab: name, availability: "explicitly_empty" as const, item_count: 0,
+        reason: `Atlas found no ${name} for this subject` };
+    const connected = workspace.overview.edges.filter((edge) =>
+      edge.from_projection_node_id === subject.projection_node_id
+      || edge.to_projection_node_id === subject.projection_node_id);
+    const detail = ModelReviewDetailSchema.parse({
+      contract_name: ATLAS_DETAIL_CONTRACT,
+      contract_version: ATLAS_MODEL_REVIEW_CONTRACT_VERSION,
+      producer_version: `atlas-intent-graph@${ATLAS_INTENT_GRAPH_VERSION}`,
+      projection_schema_version: ATLAS_MODEL_REVIEW_CONTRACT_VERSION,
+      evidence_schema_version: ATLAS_MODEL_REVIEW_CONTRACT_VERSION,
+      project_id: workspace.project_id,
+      revision: workspace.revision,
+      authority: workspace.authority,
+      availability: nodes.length ? "full" : "explicitly_empty",
+      subject: {
+        subject_id: canonicalId,
+        subject_role: role(overviewNode.overview_role),
+        projection_node_id: subject.projection_node_id,
+        canonical_concept_id: canonicalId,
+        node_kind: subject.node_kind,
+        label: subject.label,
+        review_status: subject.review_status,
+        authoritative: subject.authoritative,
+        evidence_ids: subject.evidence_ids,
+      },
+      graph: {
+        nodes,
+        edges,
+        ordering_status: edges.length ? "established" : nodes.length > 1 ? "not_established" : "not_applicable",
+        ordering_explanation: edges.length
+          ? "Atlas found governed sequence relationships for this detail."
+          : nodes.length > 1
+            ? "The source does not establish ordering between these operations."
+            : "Ordering does not apply to this detail.",
+      },
+      connected_project_relationships: connected,
+      tabs: [
+        nodes.length
+          ? { tab: "flow", availability: "available", item_count: nodes.length,
+            artifact_path: `proposed-workflows/${canonicalId}/flow.json` }
+          : { tab: "flow", availability: "explicitly_empty", item_count: 0,
+            reason: "Atlas found no flow operations for this subject" },
+        tab("rules", items.length),
+        tab("validations", countKind("validation")),
+        tab("permissions", countKind("permission")),
+        tab("states", countKind("state")),
+        { tab: "evidence", availability: "available", item_count: subject.evidence_ids.length },
+        connected.length
+          ? { tab: "approval", availability: "available", item_count: connected.length,
+            artifact_path: "proposed-relationship-review.json" }
+          : { tab: "approval", availability: "explicitly_empty", item_count: 0,
+            reason: "Atlas found no connected relationships requiring approval" },
+      ],
+    });
+    return { path: `proposed-details/${canonicalId}.json`, detail };
+  });
+  const index = ModelReviewDetailIndexSchema.parse({
+    contract_name: ATLAS_DETAIL_INDEX_CONTRACT,
+    contract_version: ATLAS_MODEL_REVIEW_CONTRACT_VERSION,
+    producer_version: `atlas-intent-graph@${ATLAS_INTENT_GRAPH_VERSION}`,
+    projection_schema_version: ATLAS_MODEL_REVIEW_CONTRACT_VERSION,
+    project_id: workspace.project_id,
+    revision: workspace.revision,
+    authority: workspace.authority,
+    entries: details.map(({ path, detail }) => ({
+      subject_id: detail.subject.subject_id,
+      subject_role: detail.subject.subject_role,
+      label: detail.subject.label,
+      detail_path: path,
+      review_status: detail.subject.review_status,
+    })),
+  });
+  return { index, details };
 }
 
 export function materializeApprovedFocusedProjections(input: {

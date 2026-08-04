@@ -43,6 +43,7 @@ import {
   buildIntentGraph,
   compileAtlasCoreHandoff,
   createFocusedAtlasProjections,
+  createModelReviewDetails,
   createProposedModelReviewWorkspace,
   createIntegratedSemanticGraphProjection,
   renderIntentGraphJson,
@@ -2725,6 +2726,9 @@ function buildCanonicalProposedAtlasArtifacts(input: {
   const modelReviewWorkspace = createProposedModelReviewWorkspace({
     model, focused_projections: focusedProjections,
   });
+  const modelReviewDetails = createModelReviewDetails({
+    model, focused_projections: focusedProjections, workspace: modelReviewWorkspace,
+  });
   const integratedProjection = createIntegratedSemanticGraphProjection({ model });
   const proposedWorkflowArtifacts = createProposedWorkflowArtifacts(focusedProjections.workflow_details);
   const identityReport = createRecordIdentityReport({
@@ -2780,6 +2784,10 @@ function buildCanonicalProposedAtlasArtifacts(input: {
     "extraction-findings.json": collectionCanonicalJson(findings),
     "proposed-project-model.json": collectionCanonicalJson(model),
     "proposed-model-review-workspace.json": collectionCanonicalJson(modelReviewWorkspace),
+    "proposed-model-review-detail-index.json": collectionCanonicalJson(modelReviewDetails.index),
+    ...Object.fromEntries(modelReviewDetails.details.map(({ path, detail }) => [
+      path, collectionCanonicalJson(detail),
+    ])),
     "proposed-project-overview-graph.json": collectionCanonicalJson(
       focusedProjections.project_overview,
     ),
@@ -3157,6 +3165,9 @@ export function buildProposedAtlasArtifacts(input: {
   const modelReviewWorkspace = createProposedModelReviewWorkspace({
     model, focused_projections: focusedProjections,
   });
+  const modelReviewDetails = createModelReviewDetails({
+    model, focused_projections: focusedProjections, workspace: modelReviewWorkspace,
+  });
   const integratedProjection = createIntegratedSemanticGraphProjection({ model });
   const proposedWorkflowArtifacts = createProposedWorkflowArtifacts(focusedProjections.workflow_details);
   const identityReport = createRecordIdentityReport({
@@ -3203,6 +3214,10 @@ export function buildProposedAtlasArtifacts(input: {
     "extraction-findings.json": collectionCanonicalJson(findings),
     "proposed-project-model.json": collectionCanonicalJson(model),
     "proposed-model-review-workspace.json": collectionCanonicalJson(modelReviewWorkspace),
+    "proposed-model-review-detail-index.json": collectionCanonicalJson(modelReviewDetails.index),
+    ...Object.fromEntries(modelReviewDetails.details.map(({ path, detail }) => [
+      path, collectionCanonicalJson(detail),
+    ])),
     "proposed-project-overview-graph.json": collectionCanonicalJson(
       focusedProjections.project_overview,
     ),
@@ -3415,6 +3430,7 @@ async function retainedPendingArtifacts(
     "review-input.json",
     "proposed-project-model.json",
     "proposed-model-review-workspace.json",
+    "proposed-model-review-detail-index.json",
     "proposed-project-overview-graph.json",
     "proposed-project-overview-graph.mmd",
     "proposed-workflow-detail-graphs.json",
@@ -3465,6 +3481,16 @@ async function retainedPendingArtifacts(
     for (const { artifact } of parsed.artifacts) {
       const content = await readOptionalText(resolve(outputDirectory, artifact));
       if (content !== undefined) retained[artifact] = content;
+    }
+  }
+  const detailIndex = retained["proposed-model-review-detail-index.json"];
+  if (detailIndex) {
+    const parsed = z.object({
+      entries: z.array(z.object({ detail_path: z.string().min(1) }).passthrough()),
+    }).passthrough().parse(JSON.parse(detailIndex));
+    for (const { detail_path: detailPath } of parsed.entries) {
+      const content = await readOptionalText(resolve(outputDirectory, detailPath));
+      if (content !== undefined) retained[detailPath] = content;
     }
   }
   return retained;
