@@ -41,7 +41,7 @@ describe("Atlas workspace server boundary", () => {
 
   it("loads a revision-pinned selected detail through its backend index", async () => {
     const root = await mkdtemp(join(tmpdir(), "atlas-detail-"));
-    const directory = join(root, "project.example");
+    const directory = join(root, "artifact.snapshot");
     await mkdir(join(directory, "proposed-details"), { recursive: true });
     const authority = workspace.authority;
     await writeFile(join(directory, "proposed-model-review-detail-index.json"), JSON.stringify({
@@ -70,11 +70,11 @@ describe("Atlas workspace server boundary", () => {
       record_id: "project.record.rule", semantic_kind_id: "atlas.kind.business-rule",
       statement: "A governed rule.", source_unit_ids: ["source.unit.one"],
     }] }), "utf8");
-    expect((await readModelDetail({ root, projectId: "project.example",
+    expect((await readModelDetail({ root, projectId: "project.example", artifactProjectId: "artifact.snapshot",
       subjectId: "project.workflow.one", revision: 1 })).availability).toBe("explicitly_empty");
-    await expect(readModelDetail({ root, projectId: "project.example",
+    await expect(readModelDetail({ root, projectId: "project.example", artifactProjectId: "artifact.snapshot",
       subjectId: "project.workflow.one", revision: 2 })).rejects.toThrow("revision is stale");
-    expect((await readModelDetailTab({ root, projectId: "project.example",
+    expect((await readModelDetailTab({ root, projectId: "project.example", artifactProjectId: "artifact.snapshot",
       subjectId: "project.workflow.one", revision: 1, tab: "rules" })).items)
       .toHaveLength(1);
   });

@@ -7,13 +7,14 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const projectId = request.nextUrl.searchParams.get("project");
+  const artifactProjectId = request.nextUrl.searchParams.get("artifact") ?? projectId;
   const conceptId = request.nextUrl.searchParams.get("concept");
   const revision = Number(request.nextUrl.searchParams.get("revision"));
-  if (!projectId || !conceptId || !Number.isInteger(revision) || revision < 1) {
+  if (!projectId || !artifactProjectId || !conceptId || !Number.isInteger(revision) || revision < 1) {
     return NextResponse.json({ error: "Project, concept, and revision are required" }, { status: 400 });
   }
   try {
-    return NextResponse.json(await readEvidence({ root: atlasArtifactRoot(), projectId,
+    return NextResponse.json(await readEvidence({ root: atlasArtifactRoot(), projectId, artifactProjectId,
       canonicalConceptId: conceptId, revision,
       lifecycle: request.nextUrl.searchParams.get("lifecycle") === "approved"
         ? "approved" : "proposed" }));

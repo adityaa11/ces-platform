@@ -6,17 +6,18 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const projectId = request.nextUrl.searchParams.get("project");
+  const artifactProjectId = request.nextUrl.searchParams.get("artifact") ?? projectId;
   const subjectId = request.nextUrl.searchParams.get("subject");
   const revisionHeader = request.headers.get("if-match");
   const revision = Number(revisionHeader);
-  if (!projectId || !subjectId || !revisionHeader || !Number.isInteger(revision) || revision < 1) {
+  if (!projectId || !artifactProjectId || !subjectId || !revisionHeader || !Number.isInteger(revision) || revision < 1) {
     return NextResponse.json({ error: "Project, subject, and revision are required" }, { status: 400 });
   }
   const lifecycle = request.nextUrl.searchParams.get("lifecycle") === "approved"
     ? "approved" as const : "proposed" as const;
   try {
     return NextResponse.json(await readModelDetail({
-      projectId, subjectId, revision, lifecycle,
+      projectId, artifactProjectId, subjectId, revision, lifecycle,
     }));
   } catch (error) {
     const message = error instanceof Error ? error.message : "Detail unavailable";

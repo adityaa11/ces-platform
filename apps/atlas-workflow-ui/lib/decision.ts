@@ -12,6 +12,7 @@ const digest = (value: string) => createHash("sha256").update(value).digest("hex
 export async function executeDecision(input: {
   root: string;
   command: unknown;
+  artifactProjectId?: string;
   reviewerIdentity: string;
   reviewerDisplayName: string;
   decidedAt: string;
@@ -20,7 +21,7 @@ export async function executeDecision(input: {
   if (command.action !== "approve" && command.action !== "reject") {
     throw new Error("This decision action requires a corrected proposal payload");
   }
-  const projectDirectory = resolve(input.root, command.project_id);
+  const projectDirectory = resolve(input.root, input.artifactProjectId ?? command.project_id);
   const receiptDirectory = resolve(projectDirectory, "review-receipts");
   const receiptPath = resolve(receiptDirectory, `${digest(command.idempotency_key)}.json`);
   try {
@@ -33,6 +34,7 @@ export async function executeDecision(input: {
     readFile(resolve(projectDirectory, "approval-eligibility.json"), "utf8")
       .then((value) => ExpandedApprovalEligibilitySchema.parse(JSON.parse(value))),
   ]);
+  if (proposal.project_id !== command.project_id) throw new Error("Project identity mismatch");
   if (proposal.proposal_revision !== command.proposal_revision
     || eligibility.proposal_revision !== command.proposal_revision) {
     throw new Error("STALE_REVISION");

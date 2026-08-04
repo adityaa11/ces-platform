@@ -17,16 +17,19 @@ export function atlasArtifactRoot(): string {
 
 export async function readModelDetail(input: {
   projectId: string;
+  artifactProjectId?: string;
   subjectId: string;
   revision: number;
   lifecycle?: "proposed" | "approved";
   root?: string;
 }): Promise<ModelReviewDetail> {
-  if (!ProjectId.test(input.projectId) || !ProjectId.test(input.subjectId)) {
+  const artifactProjectId = input.artifactProjectId ?? input.projectId;
+  if (!ProjectId.test(input.projectId) || !ProjectId.test(artifactProjectId)
+    || !ProjectId.test(input.subjectId)) {
     throw new Error("Invalid Atlas detail identifier");
   }
   const root = resolve(input.root ?? atlasArtifactRoot());
-  const projectRoot = resolve(root, input.projectId);
+  const projectRoot = resolve(root, artifactProjectId);
   if (relative(root, projectRoot).startsWith("..")) throw new Error("Unsafe Atlas project path");
   const prefix = input.lifecycle === "approved" ? "approved" : "proposed";
   const indexPath = resolve(projectRoot, `${prefix}-model-review-detail-index.json`);
@@ -66,6 +69,7 @@ function focusedSliceItems(value: unknown): FocusedSliceItem[] {
 
 export async function readModelDetailTab(input: {
   projectId: string;
+  artifactProjectId?: string;
   subjectId: string;
   revision: number;
   lifecycle?: "proposed" | "approved";
@@ -80,7 +84,7 @@ export async function readModelDetailTab(input: {
     throw new Error(`Atlas ${input.tab} detail is not available`);
   }
   const root = resolve(input.root ?? atlasArtifactRoot());
-  const projectRoot = resolve(root, input.projectId);
+  const projectRoot = resolve(root, input.artifactProjectId ?? input.projectId);
   const artifactPath = resolve(projectRoot, descriptor.artifact_path);
   if (relative(projectRoot, artifactPath).startsWith("..")) throw new Error("Unsafe Atlas tab path");
   const items = focusedSliceItems(JSON.parse(await readFile(artifactPath, "utf8")));

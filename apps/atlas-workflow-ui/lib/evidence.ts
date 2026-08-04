@@ -12,16 +12,19 @@ const strings = (value: unknown): string[] => Array.isArray(value)
 export async function readEvidence(input: {
   root: string;
   projectId: string;
+  artifactProjectId?: string;
   canonicalConceptId: string;
   revision: number;
   lifecycle?: "proposed" | "approved";
 }): Promise<SourceEvidenceProjection> {
-  const workspace = await readWorkspace(input);
+  const artifactProjectId = input.artifactProjectId ?? input.projectId;
+  const workspace = await readWorkspace({ ...input, projectId: artifactProjectId });
+  if (workspace.project_id !== input.projectId) throw new Error("Evidence project identity mismatch");
   if (workspace.revision !== input.revision) throw new Error("Evidence revision is stale");
   const projected = workspace.overview.nodes.find(({ node }) =>
     node.identity_kind === "canonical_concept"
       && node.canonical_concept_id === input.canonicalConceptId)?.node;
-  const directory = resolve(input.root, input.projectId);
+  const directory = resolve(input.root, artifactProjectId);
   const [sourceUnitsValue, claimsValue, modelValue] = await Promise.all([
     readFile(resolve(directory, "source-units.json"), "utf8"),
     readFile(resolve(directory, "atomic-claims.json"), "utf8"),

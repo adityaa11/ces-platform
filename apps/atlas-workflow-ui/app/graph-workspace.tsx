@@ -16,8 +16,8 @@ function canonicalId(node: ModelReviewWorkspace["overview"]["nodes"][number]["no
   return node.identity_kind === "canonical_concept" ? node.canonical_concept_id : undefined;
 }
 
-export function GraphWorkspace({ workspace, csrfToken }: {
-  workspace: ModelReviewWorkspace; csrfToken?: string;
+export function GraphWorkspace({ workspace, artifactProjectId, csrfToken }: {
+  workspace: ModelReviewWorkspace; artifactProjectId: string; csrfToken?: string;
 }) {
   const [overviewMinimized, setOverviewMinimized] = useState(false);
   const [detailMinimized, setDetailMinimized] = useState(false);
@@ -77,7 +77,7 @@ export function GraphWorkspace({ workspace, csrfToken }: {
     if (!evidenceCanonical) { setEvidence(undefined); return; }
     const controller = new AbortController();
     setEvidence("loading");
-    const query = new URLSearchParams({ project: workspace.project_id,
+    const query = new URLSearchParams({ project: workspace.project_id, artifact: artifactProjectId,
       concept: evidenceCanonical, revision: String(workspace.revision),
       lifecycle: workspace.authority.lifecycle === "approved" ? "approved" : "proposed" });
     void fetch(`/api/atlas/evidence?${query}`, { signal: controller.signal,
@@ -89,12 +89,12 @@ export function GraphWorkspace({ workspace, csrfToken }: {
       if (!(error instanceof DOMException && error.name === "AbortError")) setEvidence("unavailable");
     });
     return () => controller.abort();
-  }, [evidenceCanonical, workspace]);
+  }, [artifactProjectId, evidenceCanonical, workspace]);
   useEffect(() => {
     if (!selectedCanonical) { setDetail(undefined); setDetailNodes([]); return; }
     const controller = new AbortController();
     setDetail("loading");
-    const query = new URLSearchParams({ project: workspace.project_id, subject: selectedCanonical,
+    const query = new URLSearchParams({ project: workspace.project_id, artifact: artifactProjectId, subject: selectedCanonical,
       lifecycle: workspace.authority.lifecycle === "approved" ? "approved" : "proposed" });
     void fetch(`/api/atlas/details?${query}`, { signal: controller.signal,
       credentials: "same-origin", headers: { Accept: "application/json",
@@ -115,14 +115,14 @@ export function GraphWorkspace({ workspace, csrfToken }: {
       if (!(error instanceof DOMException && error.name === "AbortError")) setDetail("unavailable");
     });
     return () => controller.abort();
-  }, [selectedCanonical, workspace]);
+  }, [artifactProjectId, selectedCanonical, workspace]);
   useEffect(() => {
     if (!selectedCanonical || !["rules", "validations", "permissions", "states"].includes(activeTab)) {
       setTabItems([]); return;
     }
     const controller = new AbortController();
     setTabItems("loading");
-    const query = new URLSearchParams({ project: workspace.project_id, subject: selectedCanonical,
+    const query = new URLSearchParams({ project: workspace.project_id, artifact: artifactProjectId, subject: selectedCanonical,
       tab: activeTab, lifecycle: workspace.authority.lifecycle === "approved" ? "approved" : "proposed" });
     void fetch(`/api/atlas/detail-tabs?${query}`, { signal: controller.signal,
       credentials: "same-origin", headers: { Accept: "application/json",
@@ -134,7 +134,7 @@ export function GraphWorkspace({ workspace, csrfToken }: {
       if (!(error instanceof DOMException && error.name === "AbortError")) setTabItems("unavailable");
     });
     return () => controller.abort();
-  }, [activeTab, selectedCanonical, workspace]);
+  }, [activeTab, artifactProjectId, selectedCanonical, workspace]);
   useEffect(() => {
     if (activeTab !== "approval" || !detail || typeof detail !== "object") {
       setEligibility([]); return;
@@ -143,7 +143,7 @@ export function GraphWorkspace({ workspace, csrfToken }: {
       edge.identity_kind === "governed_relationship" ? [edge.governed_relationship_id] : []);
     if (!subjects.length) { setEligibility([]); return; }
     setEligibility("loading");
-    const query = new URLSearchParams({ project: workspace.project_id });
+    const query = new URLSearchParams({ project: workspace.project_id, artifact: artifactProjectId });
     subjects.forEach((subject) => query.append("subject", subject));
     void fetch(`/api/atlas/decisions?${query}`, { credentials: "same-origin",
       headers: { Accept: "application/json" } }).then(async (response) => {
@@ -151,14 +151,15 @@ export function GraphWorkspace({ workspace, csrfToken }: {
       const payload = await response.json() as { entities: EligibilityEntity[] };
       setEligibility(payload.entities);
     }).catch(() => setEligibility("unavailable"));
-  }, [activeTab, detail, workspace.project_id]);
+  }, [activeTab, artifactProjectId, detail, workspace.project_id]);
   const submitDecision = async (entity: EligibilityEntity, action: "approve" | "reject") => {
     if (!csrfToken || !window.confirm(`${action === "approve" ? "Approve" : "Reject"} this governed relationship?`)) return;
     const note = window.prompt("Review note (required)");
     if (!note?.trim()) return;
     setDecisionState("submitting");
     const response = await fetch("/api/atlas/decisions", { method: "POST", credentials: "same-origin",
-      headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken }, body: JSON.stringify({
+      headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken,
+        "X-Atlas-Artifact": artifactProjectId }, body: JSON.stringify({
         contract_name: "atlas.model-review.decision-command", contract_version: "1.0.0",
         project_id: workspace.project_id, proposal_revision: workspace.revision,
         subject_ids: [entity.entity_id], action, note: note.trim(),

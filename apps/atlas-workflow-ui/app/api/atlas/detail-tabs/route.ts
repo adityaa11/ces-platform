@@ -7,15 +7,16 @@ const supportedTabs = new Set(["rules", "validations", "permissions", "states"])
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const projectId = request.nextUrl.searchParams.get("project");
+  const artifactProjectId = request.nextUrl.searchParams.get("artifact") ?? projectId;
   const subjectId = request.nextUrl.searchParams.get("subject");
   const tab = request.nextUrl.searchParams.get("tab");
   const revision = Number(request.headers.get("if-match"));
-  if (!projectId || !subjectId || !tab || !supportedTabs.has(tab)
+  if (!projectId || !artifactProjectId || !subjectId || !tab || !supportedTabs.has(tab)
     || !Number.isInteger(revision) || revision < 1) {
     return NextResponse.json({ error: "Project, subject, tab, and revision are required" }, { status: 400 });
   }
   try {
-    return NextResponse.json(await readModelDetailTab({ projectId, subjectId, revision,
+    return NextResponse.json(await readModelDetailTab({ projectId, artifactProjectId, subjectId, revision,
       tab: tab as "rules" | "validations" | "permissions" | "states",
       lifecycle: request.nextUrl.searchParams.get("lifecycle") === "approved"
         ? "approved" : "proposed" }));
