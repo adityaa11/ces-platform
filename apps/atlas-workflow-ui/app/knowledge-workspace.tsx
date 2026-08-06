@@ -2,6 +2,8 @@
 import { Background, Controls, MarkerType, ReactFlow, type Edge, type Node } from "@xyflow/react";
 import { useMemo, useState } from "react";
 import "@xyflow/react/dist/style.css";
+import type { BrowserEvidence as Evidence } from "../lib/evidence-browser";
+import { PdfEvidenceViewer } from "./pdf-evidence-viewer";
 
 type Summary = { knowledge_id: string; kind: string; display_name: string;
   support_status: string; child_count: number };
@@ -13,18 +15,13 @@ type Knowledge = { knowledge_id: string; kind: string; display_name: string; sup
   visualization?: { graph_type_id: string; nodes: GraphNode[]; edges: GraphEdge[] } };
 type Detail = { project_id: string; revision: number; authority: { lifecycle: string };
   node: Knowledge; parent: Summary | null; breadcrumb: Summary[]; children: Summary[] };
-type Evidence = { evidence_id: string; exact_text: string; language: string;
-  extraction_method: string; extraction_confidence: number; location: { document_id: string;
-    page_number: number; text_span: { start: number; end: number }; coordinates:
-    { coordinate_status: "available" | "unavailable"; bounding_boxes: Array<{
-      x: number; y: number; width: number; height: number }> } } };
 type Overview = { project_id: string; revision: number; authority: { lifecycle: string; authority: string };
   root: Knowledge; children: Summary[] };
 
 export function KnowledgeWorkspace({ overview }: { overview: Overview }) {
   const [mainMinimized, setMainMinimized] = useState(false);
   const [selected, setSelected] = useState<Detail>(); const [expanded, setExpanded] = useState<Summary[]>(overview.children);
-  const [evidence, setEvidence] = useState<Evidence[]>([]); const [activeEvidence, setActiveEvidence] = useState<string>();
+  const [evidence, setEvidence] = useState<Evidence[]>([]);
   const query = `project=${encodeURIComponent(overview.project_id)}&revision=${overview.revision}&lifecycle=${overview.authority.lifecycle}`;
   async function select(id: string) {
     const response = await fetch(`/api/atlas/v2/knowledge?${query}&knowledge=${encodeURIComponent(id)}`);
@@ -33,10 +30,9 @@ export function KnowledgeWorkspace({ overview }: { overview: Overview }) {
     setExpanded((items) => [...new Map([...items, ...detail.children].map((item) => [item.knowledge_id, item])).values()]);
     const evidenceResponse = await fetch(`/api/atlas/v2/evidence?${query}&knowledge=${encodeURIComponent(id)}`);
     if (evidenceResponse.ok) { const result = await evidenceResponse.json() as { evidence: Evidence[] };
-      setEvidence(result.evidence); setActiveEvidence(result.evidence[0]?.evidence_id); }
-    else { setEvidence([]); setActiveEvidence(undefined); }
+      setEvidence(result.evidence); }
+    else { setEvidence([]); }
   }
-  const active = evidence.find(({ evidence_id }) => evidence_id === activeEvidence);
   return <main><header><div><p className="eyebrow">Knowledge workspace</p><h1>{overview.project_id}</h1></div>
     <dl><div><dt>Lifecycle</dt><dd>{overview.authority.lifecycle}</dd></div>
       <div><dt>Authority</dt><dd>{overview.authority.authority}</dd></div>
@@ -58,17 +54,8 @@ export function KnowledgeWorkspace({ overview }: { overview: Overview }) {
               <span>{child.kind}</span></button>)}</div>}
         </section>}
       </section><aside className="evidence-panel"><h2>PDF evidence</h2>
-        {active ? <><div className="pdf-frame"><iframe title={`PDF page ${active.location.page_number}`}
-          src={`/api/atlas/v2/document?${query}&document=${encodeURIComponent(active.location.document_id)}#page=${active.location.page_number}`} />
-          {active.location.coordinates.coordinate_status === "available" && active.location.coordinates.bounding_boxes.map((box, index) =>
-            <span key={index} className="pdf-highlight" style={{ left: `${box.x * 100}%`, top: `${box.y * 100}%`,
-              width: `${box.width * 100}%`, height: `${box.height * 100}%` }} />)}</div>
-          {active.location.coordinates.coordinate_status === "unavailable" && <p className="notice">Page is available; precise highlighting is unavailable for this evidence.</p>}</>
-          : <p className="notice">Select knowledge to view its cited PDF evidence.</p>}
-        <div className="evidence-cards">{evidence.map((item) => <button key={item.evidence_id}
-          className={item.evidence_id === activeEvidence ? "active" : ""} onClick={() => setActiveEvidence(item.evidence_id)}>
-          <strong>Page {item.location.page_number}</strong><blockquote>{item.exact_text}</blockquote>
-          <small>{item.extraction_method} · confidence {item.extraction_confidence.toFixed(2)}</small></button>)}</div>
+        <PdfEvidenceViewer evidence={evidence} documentUrl={(item) =>
+          `/api/atlas/v2/document?${query}&document=${encodeURIComponent(item.location.document_id)}`} />
       </aside></div></main>;
 }
 function GraphView({ knowledge, onSelect }: { knowledge: Knowledge; onSelect: (id: string) => void }) {

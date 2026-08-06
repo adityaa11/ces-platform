@@ -12,6 +12,7 @@ export function atlasContentSecurityPolicy(environment = process.env.NODE_ENV): 
     "img-src 'self' data:",
     "style-src 'self' 'unsafe-inline'",
     scripts,
+    "worker-src 'self'",
     "connect-src 'self'",
   ].join("; ");
 }

@@ -13,6 +13,7 @@
     "@company/ces-atlas-knowledge-contracts": "workspace:*",
     "@xyflow/react": "^12.11.2",
     "next": "^16.2.12",
+    "pdfjs-dist": "5.7.284",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
