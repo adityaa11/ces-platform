@@ -72,6 +72,9 @@ importers:
       '@company/ces-atlas-intent-graph':
         specifier: workspace:*
         version: link:../../packages/atlas-intent-graph
+      '@company/ces-atlas-knowledge-contracts':
+        specifier: workspace:*
+        version: link:../../packages/atlas-knowledge-contracts
       '@company/ces-atlas-model-review-contracts':
         specifier: workspace:*
         version: link:../../packages/atlas-model-review-contracts

@@ -12,6 +12,7 @@
   "dependencies": {
     "@company/ces-approved-project-model": "workspace:*",
     "@company/ces-atlas-intent-graph": "workspace:*",
+    "@company/ces-atlas-knowledge-contracts": "workspace:*",
     "@company/ces-atlas-model-review-contracts": "workspace:*",
     "@company/ces-atlas-review": "workspace:*",
     "@company/ces-proposed-project-model": "workspace:*",
