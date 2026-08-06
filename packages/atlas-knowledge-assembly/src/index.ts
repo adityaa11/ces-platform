@@ -20,7 +20,11 @@ export function assembleAtlasKnowledge(inputValue: unknown) {
     throw new Error("Atlas assembly inputs must describe the same project");
   }
   const facts = new Map(input.extraction.facts.map((fact) => [fact.fact_id, fact]));
-  const modules = input.extraction.facts.filter(({ kind }) => kind === "module");
+  const evidence = new Map(input.extraction.evidence.map((item) =>
+    [item.evidence_id, item]));
+  const modules = input.extraction.facts.filter(({ kind }) => kind === "module")
+    .sort((left, right) => sourceOrder(left, evidence).localeCompare(sourceOrder(right, evidence))
+      || left.fact_id.localeCompare(right.fact_id));
   if (modules.length === 0) throw new Error("Main Workflow requires at least one evidenced module");
   const rootId = `${input.project_id}.knowledge.main-workflow`;
   const moduleItems = modules.map((fact) => ({ fact,
@@ -29,7 +33,8 @@ export function assembleAtlasKnowledge(inputValue: unknown) {
     [item.fact.exact_statement.toLocaleLowerCase(), item]));
   const assessmentsByModule = new Map(moduleItems.map((item) => [item.knowledgeId,
     input.selection.assessments.filter(({ scope_id, scope_kind }) =>
-      scope_kind === "module" && scope_id.endsWith(`.${short(item.fact.fact_id)}`))]));
+      scope_kind === "module" && scope_id.endsWith(`.${short(item.fact.fact_id)}`))
+      .filter(({ support_status }) => support_status === "supported")]));
   const visualizations = moduleItems.flatMap((item) =>
     (assessmentsByModule.get(item.knowledgeId) ?? []).map((assessment) => {
       const knowledgeId = `${item.knowledgeId}.visualization.${assessment.graph_type_id.split(".").at(-1)}`;
@@ -128,3 +133,10 @@ function graphName(id: string) { return id.split(".").at(-1)!.split("-")
 function short(id: string) { return id.split(".").at(-1)!; }
 function digest(value: string) { return createHash("sha256").update(value).digest("hex"); }
 function unique<T>(values: T[]): T[] { return [...new Set(values)].sort(); }
+function sourceOrder(fact: Fact, evidence: Map<string, { location: {
+  document_id: string; document_revision: number; page_number: number; source_unit_id: string } }>) {
+  return fact.evidence_ids.map((id) => evidence.get(id)).filter(Boolean)
+    .map((item) => `${item!.location.document_id}\u0000${String(item!.location.document_revision)
+      .padStart(10, "0")}\u0000${String(item!.location.page_number).padStart(10, "0")}\u0000${item!.location.source_unit_id}`)
+    .sort()[0] ?? fact.fact_id;
+}

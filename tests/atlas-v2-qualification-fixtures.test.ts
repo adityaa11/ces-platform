@@ -43,8 +43,10 @@ describe("Atlas V2 qualification fixtures", () => {
     const artifacts = buildSourceArtifacts({ document_id: documentId,
       path: `qualification/${basename(fixture.source)}`, content: source });
     const candidates = fixture.facts.map((fact, index) => {
-      const unit = artifacts.source_units.find(({ exact_text }) =>
-        exact_text.includes(fact.quote));
+      const unit = artifacts.source_units.find(({ kind, text }) =>
+        fact.kind === "module" && kind === "heading" && text === fact.quote)
+        ?? artifacts.source_units.find(({ exact_text }) => exact_text === fact.quote)
+        ?? artifacts.source_units.find(({ exact_text }) => exact_text.includes(fact.quote));
       if (!unit) throw new Error(`No source unit for ${fact.quote}`);
       return { candidate_id: `${projectId}.candidate.${index + 1}`, kind: fact.kind,
         exact_statement: fact.quote, source_unit_ids: [unit.id],
