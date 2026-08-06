@@ -4,6 +4,7 @@ packages:
   - adapters/*
 
 nodeLinker: isolated
+enableGlobalVirtualStore: false
 sharedWorkspaceLockfile: true
 linkWorkspacePackages: false
 saveWorkspaceProtocol: rolling
@@ -13,5 +14,6 @@ failIfNoMatch: true
 shamefullyHoist: false
 publicHoistPattern: []
 confirmModulesPurge: false
+verifyDepsBeforeRun: warn
 allowBuilds:
   sharp: false
