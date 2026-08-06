@@ -85,36 +85,18 @@ importers:
       '@company/ces-adapter-sdk':
         specifier: workspace:*
         version: link:../../packages/adapter-sdk
-      '@company/ces-agent-provider-sdk':
-        specifier: workspace:*
-        version: link:../../packages/agent-provider-sdk
-      '@company/ces-approved-project-model':
-        specifier: workspace:*
-        version: link:../../packages/approved-project-model
-      '@company/ces-atlas-coverage':
-        specifier: workspace:*
-        version: link:../../packages/atlas-coverage
-      '@company/ces-atlas-extraction':
-        specifier: workspace:*
-        version: link:../../packages/atlas-extraction
       '@company/ces-atlas-graph-selection':
         specifier: workspace:*
         version: link:../../packages/atlas-graph-selection
-      '@company/ces-atlas-intent-graph':
-        specifier: workspace:*
-        version: link:../../packages/atlas-intent-graph
       '@company/ces-atlas-knowledge-assembly':
         specifier: workspace:*
         version: link:../../packages/atlas-knowledge-assembly
-      '@company/ces-atlas-quality-evidence':
+      '@company/ces-atlas-knowledge-contracts':
         specifier: workspace:*
-        version: link:../../packages/atlas-quality-evidence
-      '@company/ces-atlas-review':
+        version: link:../../packages/atlas-knowledge-contracts
+      '@company/ces-atlas-knowledge-review':
         specifier: workspace:*
-        version: link:../../packages/atlas-review
-      '@company/ces-atlas-role-contracts':
-        specifier: workspace:*
-        version: link:../../packages/atlas-role-contracts
+        version: link:../../packages/atlas-knowledge-review
       '@company/ces-atlas-semantic-facts':
         specifier: workspace:*
         version: link:../../packages/atlas-semantic-facts
@@ -142,18 +124,12 @@ importers:
       '@company/ces-project-schema':
         specifier: workspace:*
         version: link:../../packages/project-schema
-      '@company/ces-proposed-project-model':
-        specifier: workspace:*
-        version: link:../../packages/proposed-project-model
       '@company/ces-requirement-collection-schema':
         specifier: workspace:*
         version: link:../../packages/requirement-collection-schema
       '@company/ces-requirement-schema':
         specifier: workspace:*
         version: link:../../packages/requirement-schema
-      '@company/ces-semantic-record-schema':
-        specifier: workspace:*
-        version: link:../../packages/semantic-record-schema
       '@company/ces-source-unit-schema':
         specifier: workspace:*
         version: link:../../packages/source-unit-schema
@@ -196,34 +172,6 @@ importers:
         specifier: 24.13.3
         version: 24.13.3
 
-  packages/approved-project-model:
-    dependencies:
-      '@company/ces-atlas-coverage':
-        specifier: workspace:*
-        version: link:../atlas-coverage
-      '@company/ces-atlas-intent-graph':
-        specifier: workspace:*
-        version: link:../atlas-intent-graph
-      '@company/ces-atlas-model-review-contracts':
-        specifier: workspace:*
-        version: link:../atlas-model-review-contracts
-      '@company/ces-atlas-review':
-        specifier: workspace:*
-        version: link:../atlas-review
-      '@company/ces-proposed-project-model':
-        specifier: workspace:*
-        version: link:../proposed-project-model
-      '@company/ces-semantic-record-schema':
-        specifier: workspace:*
-        version: link:../semantic-record-schema
-      zod:
-        specifier: 4.4.3
-        version: 4.4.3
-    devDependencies:
-      '@types/node':
-        specifier: 24.13.3
-        version: 24.13.3
-
   packages/atlas-artifacts:
     dependencies:
       zod:
@@ -234,73 +182,11 @@ importers:
         specifier: 24.13.3
         version: 24.13.3
 
-  packages/atlas-coverage:
-    dependencies:
-      zod:
-        specifier: 4.4.3
-        version: 4.4.3
-    devDependencies:
-      '@types/node':
-        specifier: 24.13.3
-        version: 24.13.3
-
-  packages/atlas-extraction:
-    dependencies:
-      '@company/ces-agent-provider-sdk':
-        specifier: workspace:*
-        version: link:../agent-provider-sdk
-      '@company/ces-document-ingestion':
-        specifier: workspace:*
-        version: link:../document-ingestion
-      '@company/ces-greenfield-contracts':
-        specifier: workspace:*
-        version: link:../greenfield-contracts
-
   packages/atlas-graph-selection:
     dependencies:
       '@company/ces-atlas-semantic-facts':
         specifier: workspace:*
         version: link:../atlas-semantic-facts
-      zod:
-        specifier: 4.4.3
-        version: 4.4.3
-    devDependencies:
-      '@types/node':
-        specifier: 24.13.3
-        version: 24.13.3
-
-  packages/atlas-intent-graph:
-    dependencies:
-      '@company/ces-agent-provider-sdk':
-        specifier: workspace:*
-        version: link:../agent-provider-sdk
-      '@company/ces-atlas-model-review-contracts':
-        specifier: workspace:*
-        version: link:../atlas-model-review-contracts
-      '@company/ces-atlas-review':
-        specifier: workspace:*
-        version: link:../atlas-review
-      '@company/ces-greenfield-contracts':
-        specifier: workspace:*
-        version: link:../greenfield-contracts
-      '@company/ces-policy-engine':
-        specifier: workspace:*
-        version: link:../policy-engine
-      '@company/ces-policy-manifest':
-        specifier: workspace:*
-        version: link:../policy-manifest
-      '@company/ces-project-schema':
-        specifier: workspace:*
-        version: link:../project-schema
-      '@company/ces-proposed-project-model':
-        specifier: workspace:*
-        version: link:../proposed-project-model
-      '@company/ces-requirement-collection-schema':
-        specifier: workspace:*
-        version: link:../requirement-collection-schema
-      '@company/ces-requirement-schema':
-        specifier: workspace:*
-        version: link:../requirement-schema
       zod:
         specifier: 4.4.3
         version: 4.4.3
@@ -343,67 +229,6 @@ importers:
       '@company/ces-atlas-knowledge-contracts':
         specifier: workspace:*
         version: link:../atlas-knowledge-contracts
-      zod:
-        specifier: 4.4.3
-        version: 4.4.3
-    devDependencies:
-      '@types/node':
-        specifier: 24.13.3
-        version: 24.13.3
-
-  packages/atlas-model-review-contracts:
-    dependencies:
-      zod:
-        specifier: 4.4.3
-        version: 4.4.3
-    devDependencies:
-      '@types/node':
-        specifier: 24.13.3
-        version: 24.13.3
-
-  packages/atlas-quality-evidence:
-    dependencies:
-      '@company/ces-atlas-model-review-contracts':
-        specifier: workspace:*
-        version: link:../atlas-model-review-contracts
-      zod:
-        specifier: 4.4.3
-        version: 4.4.3
-    devDependencies:
-      '@types/node':
-        specifier: 24.13.3
-        version: 24.13.3
-
-  packages/atlas-review:
-    dependencies:
-      '@company/ces-agent-provider-sdk':
-        specifier: workspace:*
-        version: link:../agent-provider-sdk
-      '@company/ces-atlas-coverage':
-        specifier: workspace:*
-        version: link:../atlas-coverage
-      '@company/ces-greenfield-contracts':
-        specifier: workspace:*
-        version: link:../greenfield-contracts
-      '@company/ces-proposed-project-model':
-        specifier: workspace:*
-        version: link:../proposed-project-model
-      '@company/ces-requirement-collection-schema':
-        specifier: workspace:*
-        version: link:../requirement-collection-schema
-      '@company/ces-requirement-schema':
-        specifier: workspace:*
-        version: link:../requirement-schema
-      zod:
-        specifier: 4.4.3
-        version: 4.4.3
-    devDependencies:
-      '@types/node':
-        specifier: 24.13.3
-        version: 24.13.3
-
-  packages/atlas-role-contracts:
-    dependencies:
       zod:
         specifier: 4.4.3
         version: 4.4.3
@@ -593,25 +418,6 @@ importers:
         specifier: 4.4.3
         version: 4.4.3
 
-  packages/proposed-project-model:
-    dependencies:
-      '@company/ces-atlas-coverage':
-        specifier: workspace:*
-        version: link:../atlas-coverage
-      '@company/ces-atlas-role-contracts':
-        specifier: workspace:*
-        version: link:../atlas-role-contracts
-      '@company/ces-semantic-record-schema':
-        specifier: workspace:*
-        version: link:../semantic-record-schema
-      zod:
-        specifier: 4.4.3
-        version: 4.4.3
-    devDependencies:
-      '@types/node':
-        specifier: 24.13.3
-        version: 24.13.3
-
   packages/requirement-collection-schema:
     dependencies:
       '@company/ces-requirement-schema':
@@ -636,16 +442,6 @@ importers:
       zod:
         specifier: 4.4.3
         version: 4.4.3
-
-  packages/semantic-record-schema:
-    dependencies:
-      zod:
-        specifier: 4.4.3
-        version: 4.4.3
-    devDependencies:
-      '@types/node':
-        specifier: 24.13.3
-        version: 24.13.3
 
   packages/source-unit-schema:
     dependencies:

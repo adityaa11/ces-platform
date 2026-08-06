@@ -1,6 +1,6 @@
 # CES-GF-ATLAS-V2-009B - CLI and Package Retirement
 
-**Status:** Planned
+**Status:** Implemented
 **Depends on:** ATLAS-V2-009A
 
 ## Outcome
@@ -22,3 +22,13 @@ produce workflow-only or fixed-detail output.
 - No V1 artifact name or compatibility fallback exists in CLI production source.
 - Workspace typechecks and architecture checks pass without retired packages.
 
+## Implementation Evidence
+
+- The CLI exposes only `atlas run`, `atlas approve`, and `atlas inspect`; run and
+  approval consume and publish Atlas V2 knowledge contracts.
+- Removed the V1 CLI helpers, tests, qualification fixtures, architecture entries,
+  and ten packages whose import graph contained no non-legacy consumers.
+- Updated the workspace lockfile after reducing the workspace from 42 to 32 projects.
+- `corepack pnpm typecheck` passes across the workspace.
+- `corepack pnpm exec vitest run apps/cli/src/atlas-v2.test.ts tests/architecture.test.ts`
+  passes, including deterministic V2 publication and approval coverage.

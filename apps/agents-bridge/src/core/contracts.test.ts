@@ -198,7 +198,7 @@ describe("Agents Bridge contracts and registries", () => {
     expect(providers.get("fixture-second")).toBeTruthy();
   });
 
-  it("fails invalid definitions and an Atlas policy without human review", () => {
+  it("fails invalid identifiers while leaving review policy to each registered agent", () => {
     const agents = new AgentRegistry();
     expect(() => agents.register({
       ...agent(),
@@ -207,7 +207,7 @@ describe("Agents Bridge contracts and registries", () => {
     expect(() => agents.register({
       ...agent(),
       execution_policy: { ...policy, requires_human_review: false },
-    })).toThrow("must require human review");
+    })).not.toThrow();
     const models = new ModelRegistry();
     expect(() => models.register({
       alias: "atlas-default",

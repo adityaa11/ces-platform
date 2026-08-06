@@ -1,6 +1,7 @@
 import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { atlasProposalHash, atlasReviewSubjects } from "@company/ces-atlas-knowledge-review";
 import { describe, expect, it } from "vitest";
 import { runCli } from "./index.js";
 
@@ -51,6 +52,24 @@ describe("Atlas V2 CLI", () => {
         "source-manifest.json"]);
       expect(await runCli(args, { stdout: () => undefined, stderr: () => undefined })).toBe(7);
       expect(await readFile(join(output, "run-manifest.json"), "utf8")).toBe(first);
+      const proposal = JSON.parse(await readFile(join(output, "atlas-knowledge.json"), "utf8"));
+      const proposalHash = atlasProposalHash(proposal);
+      const decisions = join(directory, "decisions.json");
+      await writeFile(decisions, JSON.stringify({ schema_version: "2.0.0",
+        proposal_hash: proposalHash,
+        decisions: atlasReviewSubjects(proposal).map((subjectId, index) => ({
+          decision_id: `sample.decision.${index + 1}`,
+          proposal_hash: proposalHash, proposal_revision: proposal.revision,
+          subject_id: subjectId, decision: "accepted", reviewer_id: "sample.reviewer",
+          decided_at: "2026-08-07T00:00:00.000Z",
+        })) }), "utf8");
+      expect(await runCli(["atlas", "approve", "--output", output, "--decisions", decisions],
+        { stdout: () => undefined, stderr: () => undefined })).toBe(0);
+      expect((await readdir(output)).sort()).toEqual(["atlas-approval-audit.json",
+        "atlas-approved-knowledge.json", "atlas-diagnostics.json", "atlas-evidence.json",
+        "atlas-knowledge.json", "run-manifest.json", "source-manifest.json"]);
+      expect(JSON.parse(await readFile(join(output, "atlas-approved-knowledge.json"), "utf8"))
+        .authority.lifecycle).toBe("approved");
     } finally { await rm(directory, { recursive: true, force: true }); }
   });
 });
