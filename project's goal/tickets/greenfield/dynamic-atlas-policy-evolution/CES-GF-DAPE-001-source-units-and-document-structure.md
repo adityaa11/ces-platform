@@ -16,7 +16,7 @@ stable, complete, and independent from model output.
 ## Dependencies
 
 - DAPE-000 Safara oracle.
-- `CES-GF-ATLAS-005` PDF/Markdown normalization baseline.
+- Existing PDF/Markdown normalization baseline, used only as foundation evidence.
 
 ## Inputs
 
@@ -88,4 +88,3 @@ failure artifacts, rerun equality, and legacy-ingestion results.
 ## Explicit non-goals
 
 Normative classification, domain concepts, semantic extraction, or agents.
-

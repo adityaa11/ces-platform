@@ -16,7 +16,7 @@ serialization. It answers what meaning must survive, not how packages encode it.
 
 ## Dependencies
 
-- Accepted `CES-GF-ATLAS-005` ingestion baseline.
+- Existing Atlas ingestion baseline, used only as foundation evidence.
 
 ## Inputs
 
@@ -97,4 +97,3 @@ contract-neutral inventory.
 
 Production source-unit IDs, domain/semantic schemas, ApprovedProjectModel
 serialization, extraction, provider calls, or downstream registries.
-

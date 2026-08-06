@@ -80,4 +80,4 @@ The repository workflow passed for FND-002 commit `b4bac82`:
 - Job: [`repository-check` (`89514514085`)](https://github.com/adityaa11/ces-platform/actions/runs/30103309530/job/89514514085)
 - Result: succeeded
 
-FND-002 is accepted. `CES-GF-ATLAS-001` may begin.
+FND-002 is accepted. Atlas product work may use this foundation.

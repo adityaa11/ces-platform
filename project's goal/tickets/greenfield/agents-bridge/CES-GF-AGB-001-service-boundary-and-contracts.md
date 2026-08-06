@@ -87,4 +87,4 @@ an unrestricted model proxy.
 
 ## Depends on
 
-- `CES-GF-ATLAS-005`
+- Existing Atlas ingestion/provider baseline, pending replacement by ATLAS-V2-002

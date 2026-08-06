@@ -1,6 +1,6 @@
 # CES Greenfield Product Suite Ticket Plan
 
-**Status:** In progress; ATLAS-005 hosted CI passing, real-provider validation pending
+**Status:** In progress; Atlas delivery is governed by the clean v2 sequence
 
 The authoritative product direction is
 [CES Greenfield Product Suite Context](../../CES_GREENFIELD_FOUR_END_PRODUCTS_CONTEXT.md).
@@ -32,13 +32,11 @@ proceed in declared dependency order.
 
 ## CES Atlas
 
-| Order | Ticket | Outcome | Depends on |
-|---:|---|---|---|
-| 1 | [CES-GF-ATLAS-001](atlas/CES-GF-ATLAS-001-candidate-extraction.md) | Provenance-preserving Markdown extraction behind an agent-provider boundary | FND-002 |
-| 2 | [CES-GF-ATLAS-002](atlas/CES-GF-ATLAS-002-review-and-approval.md) | Human-reviewed approved Requirement Collection | ATLAS-001 |
-| 3 | [CES-GF-ATLAS-003](atlas/CES-GF-ATLAS-003-intent-graph.md) | Stable system-intent graph and core handoff | ATLAS-002 |
-| 4 | [CES-GF-ATLAS-004](atlas/CES-GF-ATLAS-004-pdf-ingestion.md) | Agent-free PDF/OCR ingestion with page provenance | ATLAS-003 |
-| 5 | [CES-GF-ATLAS-005](atlas/CES-GF-ATLAS-005-cli-artifact-pipeline.md) | Resumable end-to-end Atlas CLI and artifact pipeline | ATLAS-004 |
+The sole active Atlas delivery order is the
+[Atlas V2 Recursive Knowledge Explorer plan](atlas-knowledge-explorer/README.md).
+It replaces the deleted workflow-only extraction, hardening, and fixed-detail
+UI ticket sequences. HARD-027 remains only as the recursive golden acceptance
+oracle.
 
 ## Dynamic Atlas completeness gate
 
@@ -52,21 +50,11 @@ Architect implementation is blocked until `CES-GF-DAPE-008` is accepted.
 Deterministic DAPE source modeling depends on the accepted Atlas ingestion
 baseline, while agent orchestration begins only at DAPE-004.
 
-## Atlas hardening gate
+## Atlas production gate
 
-The [Atlas hardening ticket plan](atlas-hardening/README.md) extends the
-completed DAPE-000 through DAPE-008R foundation with the production
-pre-approval proposal, graph-review, immutable decision, publication, and
-Safara qualification lifecycle. The hardening tickets reuse canonical DAPE
-contracts and do not create a parallel extraction or identity system.
-
-Production approval UI integration is blocked until
-`CES-GF-ATLAS-HARD-015` is accepted.
-
-The production workflow review interface is tracked separately in the
-[Atlas Workflow UI ticket plan](atlas-workflow-ui/README.md). It consumes
-backend-owned hardening projections and cannot close before the workflow
-topology contracts are qualified.
+Atlas production release is blocked until ATLAS-V2-009 proves the real
+provider, CLI, artifact, API, review, and interactive UI path and confirms that
+no legacy Atlas runtime remains active.
 
 ## CES Architect
 
