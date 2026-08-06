@@ -1,0 +1,68 @@
+{
+  "schema_version": "2.0.0",
+  "relationship_language": "en",
+  "cases": [
+    {
+      "case_id": "safara-golden",
+      "source": "safara-golden.md",
+      "expected_root_modules": ["Paket dan Jadwal Keberangkatan", "Data Jemaah", "Pendaftaran Jemaah", "Tagihan dan Pembayaran", "Dokumen Jemaah", "Status Perjalanan dan Kesiapan", "Manifest Keberangkatan", "Dashboard dan Laporan", "Riwayat Aktivitas"],
+      "expected_graph_types": ["atlas.graph.business-workflow", "atlas.graph.workflow", "atlas.graph.state-machine", "atlas.graph.decision-tree", "atlas.graph.entity-lifecycle", "atlas.graph.dependency-graph", "atlas.graph.audit-flow"],
+      "expected_recursive_path": ["Status Perjalanan dan Kesiapan", "Decision Tree"],
+      "facts": [
+        { "kind": "module", "quote": "Paket dan Jadwal Keberangkatan", "terms": [] },
+        { "kind": "activity_order", "quote": "Paket dan Jadwal Keberangkatan creates Pendaftaran Jemaah.", "relation": "creates", "terms": [["source", "Paket dan Jadwal Keberangkatan"], ["target", "Pendaftaran Jemaah"]] },
+        { "kind": "module", "quote": "Data Jemaah", "terms": [] },
+        { "kind": "activity_order", "quote": "Data Jemaah registers into Pendaftaran Jemaah.", "relation": "registers_into", "terms": [["source", "Data Jemaah"], ["target", "Pendaftaran Jemaah"]] },
+        { "kind": "entity", "quote": "Data Jemaah is created, updated, and deactivated.", "terms": [["entity", "Data Jemaah"]] },
+        { "kind": "event", "quote": "Data Jemaah is created, updated, and deactivated.", "relation": "changes", "terms": [["entity", "Data Jemaah"], ["event", "deactivated"]] },
+        { "kind": "module", "quote": "Pendaftaran Jemaah", "terms": [] },
+        { "kind": "activity_order", "quote": "Pendaftaran Jemaah generates Tagihan dan Pembayaran.", "relation": "generates", "terms": [["source", "Pendaftaran Jemaah"], ["target", "Tagihan dan Pembayaran"]] },
+        { "kind": "activity_order", "quote": "Pendaftaran Jemaah requires Dokumen Jemaah.", "relation": "requires", "terms": [["source", "Pendaftaran Jemaah"], ["target", "Dokumen Jemaah"]] },
+        { "kind": "module", "quote": "Tagihan dan Pembayaran", "terms": [] },
+        { "kind": "activity_order", "quote": "Petugas creates a bill, records a payment, and verifies the payment.", "relation": "then", "terms": [["source", "records a payment"], ["target", "verifies the payment"]] },
+        { "kind": "state_transition", "quote": "Payment status changes from Pending to Verified.", "relation": "transitions_to", "terms": [["source", "Pending"], ["target", "Verified"]] },
+        { "kind": "state_transition", "quote": "Billing status changes from Unpaid to Paid.", "relation": "transitions_to", "terms": [["source", "Unpaid"], ["target", "Paid"]] },
+        { "kind": "module", "quote": "Dokumen Jemaah", "terms": [] },
+        { "kind": "activity_order", "quote": "Petugas uploads Dokumen Jemaah and verifies the document.", "relation": "then", "terms": [["source", "uploads Dokumen Jemaah"], ["target", "verifies the document"]] },
+        { "kind": "state_transition", "quote": "Document status changes from Pending to Valid.", "relation": "transitions_to", "terms": [["source", "Pending"], ["target", "Valid"]] },
+        { "kind": "module", "quote": "Status Perjalanan dan Kesiapan", "terms": [] },
+        { "kind": "condition", "quote": "Status Perjalanan dan Kesiapan is Ready if payment is Paid and Dokumen Jemaah is Valid; otherwise it is Blocked.", "relation": "evaluates", "terms": [["condition", "payment is Paid"], ["condition_result", "Dokumen Jemaah is Valid"]] },
+        { "kind": "outcome", "quote": "Status Perjalanan dan Kesiapan is Ready if payment is Paid and Dokumen Jemaah is Valid; otherwise it is Blocked.", "relation": "branches_to", "terms": [["source", "Ready"], ["target", "Blocked"]] },
+        { "kind": "activity_order", "quote": "Ready qualifies Manifest Keberangkatan.", "relation": "qualifies", "terms": [["source", "Ready"], ["target", "Manifest Keberangkatan"]] },
+        { "kind": "module", "quote": "Manifest Keberangkatan", "terms": [] },
+        { "kind": "activity_order", "quote": "Petugas generates Manifest Keberangkatan after readiness is Ready.", "relation": "generates", "terms": [["source", "readiness is Ready"], ["target", "Manifest Keberangkatan"]] },
+        { "kind": "module", "quote": "Dashboard dan Laporan", "terms": [] },
+        { "kind": "dependency", "quote": "Dashboard dan Laporan depends on Paket dan Jadwal Keberangkatan, Data Jemaah, Pendaftaran Jemaah, Tagihan dan Pembayaran, Dokumen Jemaah, Status Perjalanan dan Kesiapan, and Manifest Keberangkatan.", "relation": "depends_on", "terms": [["source", "Dashboard dan Laporan"], ["target", "Pendaftaran Jemaah"]] },
+        { "kind": "module", "quote": "Riwayat Aktivitas", "terms": [] },
+        { "kind": "audit_action", "quote": "Riwayat Aktivitas records each user action with its actor and timestamp.", "relation": "records", "terms": [["source", "user action"], ["target", "Riwayat Aktivitas"]] }
+      ]
+    },
+    {
+      "case_id": "warehouse-workflow",
+      "source": "warehouse-workflow.md",
+      "expected_root_modules": ["Receiving", "Inspection", "Putaway"],
+      "expected_graph_types": ["atlas.graph.business-workflow", "atlas.graph.workflow", "atlas.graph.state-machine"],
+      "facts": [
+        { "kind": "module", "quote": "Receiving", "terms": [] },
+        { "kind": "activity_order", "quote": "Receiving accepts a Shipment and enables Inspection.", "relation": "enables", "terms": [["source", "Receiving"], ["target", "Inspection"]] },
+        { "kind": "module", "quote": "Inspection", "terms": [] },
+        { "kind": "activity_order", "quote": "Inspection checks the Shipment and enables Putaway.", "relation": "enables", "terms": [["source", "Inspection"], ["target", "Putaway"]] },
+        { "kind": "state_transition", "quote": "Inspection status changes from Pending to Accepted.", "relation": "transitions_to", "terms": [["source", "Pending"], ["target", "Accepted"]] },
+        { "kind": "module", "quote": "Putaway", "terms": [] }
+      ]
+    },
+    {
+      "case_id": "library-structure",
+      "source": "library-structure.md",
+      "expected_root_modules": ["Catalog", "Reporting"],
+      "expected_graph_types": ["atlas.graph.entity-relationship", "atlas.graph.dependency-graph"],
+      "forbidden_graph_types": ["atlas.graph.workflow", "atlas.graph.state-machine", "atlas.graph.decision-tree"],
+      "facts": [
+        { "kind": "module", "quote": "Catalog", "terms": [] },
+        { "kind": "entity_relationship", "quote": "A Book belongs to one Publisher and has many Author records.", "relation": "belongs_to", "terms": [["source", "Book"], ["target", "Publisher"]] },
+        { "kind": "module", "quote": "Reporting", "terms": [] },
+        { "kind": "dependency", "quote": "Reporting depends on Catalog.", "relation": "depends_on", "terms": [["source", "Reporting"], ["target", "Catalog"]] }
+      ]
+    }
+  ]
+}
