@@ -41,7 +41,7 @@ const policy: StructuredGenerationPolicy = {
 
 function agent(): StructuredGenerationAgentDefinition<string, string, string> {
   return {
-    id: "atlas.requirement-extractor",
+    id: "fixture.requirement-extractor",
     version: "1.0.0",
     description: "fixture",
     mode: "structured-generation",
@@ -107,14 +107,14 @@ describe("Agents Bridge contracts and registries", () => {
     const client = {
       client_id: "atlas-cli",
       audit_identity: "Atlas CLI",
-      allowed_agents: ["atlas.requirement-extractor"],
+      allowed_agents: ["fixture.requirement-extractor"],
       allowed_routes: [CANONICAL_AGENT_ROUTE],
       max_concurrency: 2,
       requests_per_minute: 10,
     };
     expect(authorizeAgent(
       client,
-      "atlas.requirement-extractor",
+      "fixture.requirement-extractor",
       CANONICAL_AGENT_ROUTE,
     )).toEqual(client);
     expect(() => authorizeAgent(client, "other.agent", CANONICAL_AGENT_ROUTE))
@@ -151,7 +151,7 @@ describe("Agents Bridge contracts and registries", () => {
       models: unresolvedModels,
       tools,
     })).toThrow("unavailable model alias");
-    expect(agents.get("atlas.requirement-extractor", "2.0.0")).toBeUndefined();
+    expect(agents.get("fixture.requirement-extractor", "2.0.0")).toBeUndefined();
 
     const unavailableAgents = new AgentRegistry();
     unavailableAgents.register({

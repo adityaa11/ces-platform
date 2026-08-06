@@ -14,18 +14,17 @@ The runtime provides:
 - injected registries and a server factory that does not listen during
   construction.
 
-Atlas compatibility routing and concrete provider adapters are delivered by
-later tickets. AGB-003 adds the first concrete adapter:
+The bridge includes the concrete Gemini provider adapter:
 
 - Gemini `generateContent` structured output;
 - server-controlled endpoint, API key, model aliases, and physical models;
 - bounded responses, completion validation, transient retries, and normalized
   provider failures.
 
-AGB-004 registers `atlas.requirement-extractor@1.0.0`, adds the existing
-`POST /v1/atlas/analyze` compatibility contract, and delegates both Atlas entry
-routes through the same executor. Atlas outputs remain candidates requiring
-human review.
+Atlas V2 registers `atlas.semantic-fact-extractor@2.0.0` on the generic agent
+route. It preserves exact evidence-grounded facts, while graph selection and
+human approval remain downstream responsibilities. No Atlas compatibility route
+or provider-specific Atlas envelope is supported.
 
 ## Configuration
 

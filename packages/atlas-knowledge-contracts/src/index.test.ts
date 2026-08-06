@@ -1,5 +1,3 @@
-import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { AtlasKnowledgeBundleSchema, knowledgeBreadcrumb } from "./index.js";
 
@@ -73,19 +71,5 @@ describe("Atlas recursive knowledge contract", () => {
         reason: "ocr_coordinates_unreliable" } } }] })).toThrow();
     expect(() => AtlasKnowledgeBundleSchema.parse({ ...bundle,
       knowledge_nodes: [root, { ...module, child_ids: [root.knowledge_id] }, content] })).toThrow();
-  });
-
-  it("keeps the Safara golden renderer-neutral and recursively connected", async () => {
-    const golden = JSON.parse(await readFile(resolve(import.meta.dirname,
-      "../../../tests/fixtures/safara/golden-main-workflow.json"), "utf8")) as {
-      renderer_policy: { locked_renderer: unknown; semantic_membership_owned_by_renderer: boolean };
-      knowledge_nodes: Array<{ knowledge_id: string; parent_id: string | null; children: string[] }>;
-    };
-    expect(golden.renderer_policy).toEqual({ interactive_required: true,
-      locked_renderer: null, semantic_membership_owned_by_renderer: false });
-    const nodes = new Map(golden.knowledge_nodes.map((node) => [node.knowledge_id, node]));
-    for (const node of golden.knowledge_nodes) {
-      for (const child of node.children) expect(nodes.get(child)?.parent_id).toBe(node.knowledge_id);
-    }
   });
 });

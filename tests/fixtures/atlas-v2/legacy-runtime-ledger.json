@@ -1,5 +1,18 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "2.0.0",
+  "closed_by": "ATLAS-V2-009F",
+  "open_entries": [],
+  "allowed_fallbacks": [],
+  "closure_evidence": {
+    "provider-candidate-contract": "V1 SDK and extraction packages deleted; semantic facts use Atlas V2 contracts.",
+    "bridge-atlas-compatibility-route": "Only /v1/agents/:agentId/execute remains.",
+    "workflow-focused-projection-compiler": "Deleted and replaced by graph selection plus recursive knowledge assembly.",
+    "v1-model-review-contracts": "Deleted and replaced by Atlas V2 knowledge contracts and review.",
+    "duplicated-cli-atlas-assembly": "CLI exposes only V2 run, approve, and inspect paths.",
+    "v1-approved-projection-publication": "Deleted and replaced by atlas-approved-knowledge.json.",
+    "fixed-detail-next-workspace": "Rewritten as recursive knowledge navigation with permanent Main Workflow.",
+    "unused-static-atlas-ui": "Deleted with no production route or renderer fallback."
+  },
   "active_runtime_roots": [
     "apps/agents-bridge/src",
     "apps/atlas-workflow-ui/app",

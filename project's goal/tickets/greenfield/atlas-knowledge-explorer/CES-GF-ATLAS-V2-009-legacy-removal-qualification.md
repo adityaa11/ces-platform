@@ -1,6 +1,6 @@
 # CES-GF-ATLAS-V2-009 - Legacy Removal and Qualification
 
-**Status:** In Progress
+**Status:** Implemented
 **Depends on:** ATLAS-V2-000 through ATLAS-V2-008
 
 ## Outcome
@@ -30,6 +30,12 @@ can execute in production.
   explicit no-coordinate fallback.
 - Completion is prohibited while a v1 fallback or parallel route remains.
 - Every entry in the ATLAS-V2-000 rewrite/delete ledger is closed.
+
+## Completion Evidence
+
+ATLAS-V2-009A through ATLAS-V2-009F are implemented and separately committed.
+The final clean-install, full-test, typecheck, production-build, architecture,
+security, determinism, browser, approval, and zero-legacy-ledger gates pass.
 
 ## Required execution tickets
 

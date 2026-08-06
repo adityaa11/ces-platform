@@ -74,7 +74,7 @@ depends on the ATLAS-V2 contract without a v1 compatibility branch.
 - [x] Denylist test fails on new v1 dependencies.
 - [x] Each rewrite/delete entry is assigned to ATLAS-V2-001 through V2-009.
 - [x] No ticket or product context authorizes v1 behavior.
-- [ ] The final repository scan reports zero active legacy paths.
+- [x] The final repository scan reports zero active legacy paths.
 
 The final zero-path criterion is intentionally closed by ATLAS-V2-009 after
 all replacements land. The executable ledger is

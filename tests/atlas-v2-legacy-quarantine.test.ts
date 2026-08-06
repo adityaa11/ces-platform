@@ -3,7 +3,11 @@ import { join, relative, resolve, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 
 type Ledger = {
-  schema_version: "1.0.0";
+  schema_version: "2.0.0";
+  closed_by: "ATLAS-V2-009F";
+  open_entries: string[];
+  allowed_fallbacks: string[];
+  closure_evidence: Record<string, string>;
   active_runtime_roots: string[];
   components: Array<{
     id: string;
@@ -48,7 +52,10 @@ async function filesBelow(directory: string): Promise<string[]> {
 describe("ATLAS-V2-000 legacy runtime quarantine", () => {
   it("assigns every inventoried legacy component to a v2 removal owner", async () => {
     const ledger = JSON.parse(await readFile(ledgerPath, "utf8")) as Ledger;
-    expect(ledger.schema_version).toBe("1.0.0");
+    expect(ledger.schema_version).toBe("2.0.0");
+    expect(ledger.closed_by).toBe("ATLAS-V2-009F");
+    expect(ledger.open_entries).toEqual([]);
+    expect(ledger.allowed_fallbacks).toEqual([]);
     expect(new Set(ledger.components.map(({ id }) => id)).size)
       .toBe(ledger.components.length);
     for (const component of ledger.components) {
@@ -56,6 +63,7 @@ describe("ATLAS-V2-000 legacy runtime quarantine", () => {
       expect(component.owner_tickets.every((ticket) =>
         /^ATLAS-V2-00[1-9]$/u.test(ticket))).toBe(true);
       expect(["retired", "rewritten", "deleted"]).toContain(component.status);
+      expect(ledger.closure_evidence[component.id]).toBeTruthy();
     }
   });
 

@@ -1,6 +1,6 @@
 # CES Atlas V2 Recursive Knowledge Explorer
 
-**Status:** Active implementation authority
+**Status:** Implemented
 
 This is the only active ticket sequence for the Atlas recursive Knowledge
 Explorer. Older Atlas, hardening, workflow-UI, and release tickets remain as
@@ -12,11 +12,10 @@ legacy workflow-only artifacts, fixed detail tabs, or compatibility fallbacks.
 - [`CES_ATLAS_AUTHORITY.md`](../../../CES_ATLAS_AUTHORITY.md)
 - [`graphs context.md`](../../../graphs%20context.md)
 - [`supporting graphs context.md`](../../../supporting%20graphs%20context.md)
-- [HARD-027 golden qualification](../atlas-hardening/CES-GF-ATLAS-HARD-027-golden-model-profile-safara-workflow-qualification.md)
-- [`golden-main-workflow.json`](../../../../tests/fixtures/safara/golden-main-workflow.json)
+- [`qualification-cases.json`](../../../../tests/fixtures/atlas-v2/qualification-cases.json)
 
 If these sources conflict, the two context documents define product behavior;
-the golden fixture provides concrete qualification evidence.
+the V2 qualification cases provide concrete, source-derived evidence.
 
 ## Delivery sequence
 
