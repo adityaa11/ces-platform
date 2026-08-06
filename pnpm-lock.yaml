@@ -121,9 +121,15 @@ importers:
       '@company/ces-atlas-extraction':
         specifier: workspace:*
         version: link:../../packages/atlas-extraction
+      '@company/ces-atlas-graph-selection':
+        specifier: workspace:*
+        version: link:../../packages/atlas-graph-selection
       '@company/ces-atlas-intent-graph':
         specifier: workspace:*
         version: link:../../packages/atlas-intent-graph
+      '@company/ces-atlas-knowledge-assembly':
+        specifier: workspace:*
+        version: link:../../packages/atlas-knowledge-assembly
       '@company/ces-atlas-quality-evidence':
         specifier: workspace:*
         version: link:../../packages/atlas-quality-evidence
@@ -133,6 +139,9 @@ importers:
       '@company/ces-atlas-role-contracts':
         specifier: workspace:*
         version: link:../../packages/atlas-role-contracts
+      '@company/ces-atlas-semantic-facts':
+        specifier: workspace:*
+        version: link:../../packages/atlas-semantic-facts
       '@company/ces-document-ingestion':
         specifier: workspace:*
         version: link:../../packages/document-ingestion

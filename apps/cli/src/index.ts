@@ -39,6 +39,13 @@ import {
   AtlasQualityEvidenceInputSchema,
   calculateAtlasQualityEvidence,
 } from "@company/ces-atlas-quality-evidence";
+import { assembleAtlasKnowledge } from "@company/ces-atlas-knowledge-assembly";
+import { selectAtlasGraphTypes } from "@company/ces-atlas-graph-selection";
+import {
+  SemanticFactExtractionOutputSchema,
+  SemanticFactIntermediateSchema,
+  finalizeSemanticFacts,
+} from "@company/ces-atlas-semantic-facts";
 import {
   buildIntentGraph,
   compileAtlasCoreHandoff,
@@ -109,7 +116,7 @@ import {
   SemanticKindRegistrySchema,
   SemanticCollectionSchema,
 } from "@company/ces-semantic-record-schema";
-import { buildSourceArtifacts } from "@company/ces-source-unit-schema";
+import { buildSourceArtifacts, sourceSpansFromPdfPages } from "@company/ces-source-unit-schema";
 import { z, ZodError } from "zod";
 
 export const CLI_PACKAGE_ID = "@company/ces-cli";
@@ -491,7 +498,10 @@ async function runAtlasCommand(
     return 0;
   }
   const options = parseOptions(args.slice(1));
-  if (subcommand === "run" || subcommand === "analyze") {
+  if (subcommand === "run") {
+    return runAtlasV2(options, io);
+  }
+  if (subcommand === "analyze") {
     return runAtlasExtraction(options, io);
   }
   if (subcommand === "approve" && options["publication-input"]) {
@@ -621,6 +631,98 @@ async function publishCanonicalAtlasModel(
   await publishAtlasArtifacts(outputDirectory, artifacts);
   io.stdout(`ApprovedProjectModel written to ${outputDirectory}\n`);
   return 0;
+}
+
+async function runAtlasV2(
+  options: Readonly<Record<string, string>>,
+  io: CliIo,
+): Promise<number> {
+  rejectAtlasSecretArguments(options);
+  const prdPath = requireOption(options, "prd");
+  const outputDirectory = requireOption(options, "output");
+  const intent = ProjectIntentSchema.parse(
+    await readJsonValue(requireOption(options, "project-intent")),
+  );
+  const projectId = stableId(intent.project.id);
+  const documentId = stableId(options["document-id"] ?? `${projectId}.document.prd`);
+  const inputPath = relative(".", resolve(prdPath)).replaceAll("\\", "/");
+  const workspacePath = inputPath.startsWith("../")
+    ? `external/${basename(prdPath)}` : inputPath;
+  let content: string;
+  let mediaType: string;
+  let originalHash: string;
+  let pageCount: number | undefined;
+  let sourceSpans: ReturnType<typeof sourceSpansFromPdfPages> | undefined;
+  if (extname(prdPath).toLowerCase() === ".pdf") {
+    const pdf = await ingestPdfDocument({ document_id: documentId, path: workspacePath,
+      bytes: await readFile(prdPath) });
+    content = pdf.normalized_document.content;
+    mediaType = "application/pdf";
+    originalHash = pdf.original.content_hash;
+    pageCount = pdf.pages.length;
+    sourceSpans = sourceSpansFromPdfPages(pdf.pages);
+  } else if (extname(prdPath).toLowerCase() === ".md") {
+    content = await readFile(prdPath, "utf8");
+    mediaType = "text/markdown";
+    originalHash = sourceContentHash(content);
+  } else {
+    throw new CliInputError("Atlas PRD input must use .md or .pdf");
+  }
+  const source = buildSourceArtifacts({ document_id: documentId, path: workspacePath,
+    content, paragraph_mode: mediaType === "application/pdf" ? "line" : "contiguous",
+    original_content_hash: originalHash, ...(sourceSpans ? { source_spans: sourceSpans } : {}) });
+  const extractionInput = {
+    schema_version: "2.0.0" as const, project_id: projectId,
+    documents: [{ document_id: documentId,
+      document_revision_id: source.document_revision.id, revision: 1,
+      content_hash: originalHash, media_type: mediaType, original_name: basename(prdPath) }],
+    source_units: source.source_units,
+  };
+  const extraction = await obtainAtlasV2Facts(options, extractionInput);
+  const selection = selectAtlasGraphTypes(extraction);
+  const bundle = assembleAtlasKnowledge({ project_id: projectId, revision: 1,
+    documents: [{ document_id: documentId, revision: 1, content_hash: originalHash,
+      media_type: mediaType, original_name: basename(prdPath),
+      ...(pageCount ? { page_count: pageCount } : {}) }], extraction, selection });
+  const semanticHash = hashCanonical(bundle);
+  const manifestBase = { schema_version: "2.0.0", pipeline: "atlas-v2",
+    status: "awaiting_human_review", project_id: projectId, revision: 1,
+    knowledge_bundle_hash: semanticHash, source_content_hash: originalHash };
+  await publishAtlasArtifacts(outputDirectory, {
+    "atlas-knowledge.json": collectionCanonicalJson(bundle),
+    "atlas-evidence.json": collectionCanonicalJson({ schema_version: "2.0.0",
+      project_id: projectId, revision: 1, evidence: extraction.evidence }),
+    "atlas-diagnostics.json": collectionCanonicalJson({ schema_version: "2.0.0",
+      project_id: projectId, graph_assessments: selection.assessments }),
+    "source-manifest.json": collectionCanonicalJson({ schema_version: "2.0.0",
+      project_id: projectId, documents: bundle.documents,
+      document_revision: source.document_revision }),
+    "run-manifest.json": collectionCanonicalJson({ ...manifestBase,
+      run_revision_hash: hashCanonical(manifestBase) }),
+  });
+  io.stdout(`Atlas V2 knowledge bundle written to ${outputDirectory}\n`);
+  return 7;
+}
+
+async function obtainAtlasV2Facts(options: Readonly<Record<string, string>>, input: unknown) {
+  if (options["provider-result"]) {
+    const value = await readJsonValue(options["provider-result"]);
+    const output = SemanticFactExtractionOutputSchema.safeParse(value);
+    return output.success ? output.data
+      : finalizeSemanticFacts(input, SemanticFactIntermediateSchema.parse(value));
+  }
+  const configured = new URL(requireOption(options, "provider-endpoint"));
+  configured.pathname = "/v1/agents/atlas.semantic-fact-extractor/execute";
+  configured.search = "";
+  const credential = process.env.CES_ATLAS_API_KEY ?? process.env.AGENTS_BRIDGE_API_KEY;
+  const response = await fetch(configured, { method: "POST", headers: {
+    "content-type": "application/json", ...(credential
+      ? { authorization: `Bearer ${credential}` } : {}) },
+    body: JSON.stringify({ agent_version: "2.0.0", input }) });
+  if (!response.ok) throw new CliInputError(
+    `Atlas V2 provider failed with HTTP ${response.status}: ${await response.text()}`,
+  );
+  return SemanticFactExtractionOutputSchema.parse(await response.json());
 }
 
 async function runAtlasExtraction(
