@@ -25,5 +25,8 @@ can execute in production.
 - Import and artifact scans find no active v1 path.
 - Production build, contract, browser, approval, determinism, and security gates
   pass.
+- Text-PDF and scanned-PDF browser qualification proves page navigation,
+  accurate highlights, evidence-card synchronization, range loading, and the
+  explicit no-coordinate fallback.
 - Completion is prohibited while a v1 fallback or parallel route remains.
 - Every entry in the ATLAS-V2-000 rewrite/delete ledger is closed.

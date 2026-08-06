@@ -18,7 +18,7 @@ The lower section changes dynamically according to the selected node from the Ma
 +========================================================================================================+
 | Project identity | Lifecycle | Authority | Execution | Revision                                        |
 +==============================+===================================================+=====================+
-| Semantic Areas               | PROJECT MAP                                       | Source Evidence     |
+| Semantic Areas               | PROJECT MAP                                       | PDF Evidence        |
 |                              |                                                   |                     |
 | • Package                    |  +---------------------------------------------+  | PDF                 |
 | • Registration               |  |                                             |  | Section             |
@@ -251,6 +251,45 @@ Main Workflow
 There is **no maximum nesting depth**.
 
 The breadcrumb always represents the current navigation path.
+
+---
+
+# PDF Evidence Workspace
+
+The right side of the workspace displays the original PDF, not only a copied
+paragraph.
+
+When a graph, node, edge, rule, or knowledge item is selected, Atlas should:
+
+1. open the cited PDF at the first supporting page;
+2. highlight the exact supporting wording using page-relative bounding boxes;
+3. allow movement between all supporting evidence locations;
+4. show evidence cards below the viewer.
+
+Each evidence card contains:
+
+- exact original document text;
+- document identity and revision;
+- page number;
+- section or source-unit identity when available;
+- text span and bounding boxes when available;
+- language;
+- evidence relationship to the selected Atlas item;
+- extraction/OCR confidence and review status when applicable.
+
+Selecting an evidence card moves the PDF viewer to its page and highlight.
+Selecting a highlighted region selects its corresponding evidence card.
+Several non-contiguous highlights may support one Atlas item.
+
+For scanned PDFs, the viewer displays the original page image with an OCR
+coordinate overlay. Atlas must never alter the displayed PDF text to match OCR.
+If precise coordinates are unavailable, Atlas still opens the correct page and
+shows the exact evidence card, but clearly states that visual highlighting is
+unavailable. It must not guess a highlight box.
+
+PDF access is project-scoped, revision-pinned, read-only, and served through an
+authorized endpoint. The browser must not receive an unrestricted local file
+path or infer evidence locations from text search.
 
 ---
 
