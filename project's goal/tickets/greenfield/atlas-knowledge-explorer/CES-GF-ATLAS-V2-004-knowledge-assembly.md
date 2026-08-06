@@ -1,6 +1,6 @@
 # CES-GF-ATLAS-V2-004 - Recursive Knowledge Assembly
 
-**Status:** Planned  
+**Status:** Implemented
 **Depends on:** ATLAS-V2-001 through ATLAS-V2-003
 
 ## Outcome
@@ -25,3 +25,12 @@ and recursively navigable supporting graphs.
 - A non-Safara PRD produces a structurally appropriate different hierarchy.
 - No frontend inference is required to create relationships or children.
 
+## Implementation evidence
+
+- `@company/ces-atlas-knowledge-assembly` creates the permanent Main Workflow,
+  module hierarchy, selected supporting graphs, canonical cross-graph identities,
+  evidence links, and renderer-neutral topology from V2 facts and selections.
+- Contract validation rejects cycles, orphans, duplicate identities, unknown evidence,
+  and edges with missing endpoints.
+- Package tests cover a workflow/decision hierarchy and a structurally different
+  entity-relationship document without fixture-specific assembly rules.

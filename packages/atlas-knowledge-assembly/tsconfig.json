@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": { "rootDir": "src", "outDir": "dist",
+    "tsBuildInfoFile": "dist/.tsbuildinfo", "types": ["node"] },
+  "include": ["src/**/*.ts"],
+  "references": [
+    { "path": "../atlas-knowledge-contracts" },
+    { "path": "../atlas-semantic-facts" },
+    { "path": "../atlas-graph-selection" }
+  ]
+}

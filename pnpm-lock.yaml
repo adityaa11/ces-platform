@@ -324,6 +324,25 @@ importers:
         specifier: 24.13.3
         version: 24.13.3
 
+  packages/atlas-knowledge-assembly:
+    dependencies:
+      '@company/ces-atlas-graph-selection':
+        specifier: workspace:*
+        version: link:../atlas-graph-selection
+      '@company/ces-atlas-knowledge-contracts':
+        specifier: workspace:*
+        version: link:../atlas-knowledge-contracts
+      '@company/ces-atlas-semantic-facts':
+        specifier: workspace:*
+        version: link:../atlas-semantic-facts
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
+
   packages/atlas-knowledge-contracts:
     dependencies:
       zod:
