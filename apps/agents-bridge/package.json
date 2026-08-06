@@ -8,6 +8,7 @@
   "dependencies": {
     "@company/ces-agent-provider-sdk": "workspace:*",
     "@company/ces-atlas-role-contracts": "workspace:*",
+    "@company/ces-atlas-semantic-facts": "workspace:*",
     "@company/ces-greenfield-contracts": "workspace:*",
     "zod": "4.4.3"
   },

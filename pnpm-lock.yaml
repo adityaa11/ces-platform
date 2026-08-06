@@ -50,6 +50,9 @@ importers:
       '@company/ces-atlas-role-contracts':
         specifier: workspace:*
         version: link:../../packages/atlas-role-contracts
+      '@company/ces-atlas-semantic-facts':
+        specifier: workspace:*
+        version: link:../../packages/atlas-semantic-facts
       '@company/ces-greenfield-contracts':
         specifier: workspace:*
         version: link:../../packages/greenfield-contracts
@@ -371,6 +374,22 @@ importers:
 
   packages/atlas-role-contracts:
     dependencies:
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
+
+  packages/atlas-semantic-facts:
+    dependencies:
+      '@company/ces-atlas-knowledge-contracts':
+        specifier: workspace:*
+        version: link:../atlas-knowledge-contracts
+      '@company/ces-source-unit-schema':
+        specifier: workspace:*
+        version: link:../source-unit-schema
       zod:
         specifier: 4.4.3
         version: 4.4.3

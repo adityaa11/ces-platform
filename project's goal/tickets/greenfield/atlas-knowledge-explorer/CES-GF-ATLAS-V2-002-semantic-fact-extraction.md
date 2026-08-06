@@ -1,6 +1,6 @@
 # CES-GF-ATLAS-V2-002 - Semantic Fact Extraction
 
-**Status:** Planned  
+**Status:** Implemented
 **Depends on:** ATLAS-V2-001
 
 ## Outcome
@@ -37,3 +37,14 @@ semantic facts sufficient for all supported graph kinds.
   through the Agents Bridge, with exact page provenance.
 - OCR uncertainty is visible; Atlas never changes original displayed PDF bytes
   or invents coordinates to force a highlight.
+
+## Implementation evidence
+
+- `@company/ces-atlas-semantic-facts` defines the v2 input, intermediate, fact,
+  term, evidence, and deterministic finalization contracts.
+- `atlas.semantic-fact-extractor@2.0.0` is registered through the generic Agents
+  Bridge execution path and neither parses PDFs nor selects graphs.
+- Focused tests cover text-PDF coordinates, scanned/OCR no-coordinate behavior,
+  exact-quote enforcement, source-free term rejection, and human-review policy.
+- Real document/provider/browser qualification remains an end-to-end release
+  gate in ATLAS-V2-009; it is not replaced by fixture-only evidence here.
