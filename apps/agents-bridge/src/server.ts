@@ -1,7 +1,5 @@
 import { createHash, randomUUID, timingSafeEqual } from "node:crypto";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
-import { AtlasProviderRequestSchema } from "@company/ces-agent-provider-sdk";
-import { z } from "zod";
 import { BridgeIdentifierSchema, GenericAgentExecutionRequestSchema, authorizeAgent } from "./core/contracts.js";
 import { BridgeExecutionError, executeRegisteredAgent, type BridgeRegistries } from "./core/executor.js";
 import { validateRegistries } from "./core/registry.js";
@@ -10,12 +8,6 @@ import {
   type BridgeAdmissionController,
 } from "./core/admission.js";
 import type { BridgeRuntimeConfig, RuntimeClient } from "./config/environment.js";
-
-const AtlasCompatibilityEnvelopeSchema = z.object({
-  contract: z.literal("1.0.0"),
-  model: z.string().trim().min(1),
-  request: AtlasProviderRequestSchema,
-}).strict();
 
 export interface BridgeLogger {
   log(event: Readonly<{
@@ -88,33 +80,6 @@ export function createBridgeHandler(runtime: BridgeRuntime) {
         response = json(200, pathname === "/healthz"
           ? { status: "ok", service: "ces-agents-bridge" }
           : { status: "ready", service: "ces-agents-bridge" });
-      } else if (pathname === "/v1/atlas/analyze") {
-        route = pathname;
-        agentId = "atlas.requirement-extractor";
-        if (request.method !== "POST") throw error(405, "METHOD_NOT_ALLOWED", "The method is not allowed.");
-        const atlas = runtime.config.atlas;
-        if (!atlas) throw error(503, "BRIDGE_NOT_READY", "The bridge is not ready.");
-        const client = authenticate(request.headers, runtime.config.clients);
-        authorize(client, agentId, route);
-        const raw = await readBody(request.body, runtime.config.ceilings.max_request_bytes);
-        inputBytes = Buffer.byteLength(raw, "utf8");
-        let envelope: ReturnType<typeof AtlasCompatibilityEnvelopeSchema.parse>;
-        try {
-          envelope = AtlasCompatibilityEnvelopeSchema.parse(JSON.parse(raw));
-        } catch {
-          throw error(400, "INVALID_ATLAS_REQUEST", "The Atlas provider request is invalid.");
-        }
-        if (envelope.model !== atlas.legacy_model) {
-          throw error(400, "INVALID_ATLAS_REQUEST", "The Atlas provider request is invalid.");
-        }
-        sourceDocuments = envelope.request.source_documents.length;
-        response = await runAgent(runtime, {
-          agent_id: agentId,
-          agent_version: atlas.agent_version,
-          value: envelope.request,
-          request_id: requestId,
-          client,
-        }, admission);
       } else {
         const match = /^\/v1\/agents\/([^/]+)\/execute$/u.exec(pathname);
         if (!match) throw error(404, "AGENT_NOT_FOUND", "The route was not found.");

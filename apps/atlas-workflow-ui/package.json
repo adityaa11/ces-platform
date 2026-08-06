@@ -10,14 +10,8 @@
     "typecheck": "next typegen && tsc --noEmit --pretty false"
   },
   "dependencies": {
-    "@company/ces-approved-project-model": "workspace:*",
-    "@company/ces-atlas-intent-graph": "workspace:*",
     "@company/ces-atlas-knowledge-contracts": "workspace:*",
-    "@company/ces-atlas-model-review-contracts": "workspace:*",
-    "@company/ces-atlas-review": "workspace:*",
-    "@company/ces-proposed-project-model": "workspace:*",
     "@xyflow/react": "^12.11.2",
-    "elkjs": "^0.12.0",
     "next": "^16.2.12",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"

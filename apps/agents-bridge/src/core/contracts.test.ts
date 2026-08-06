@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
-  ATLAS_COMPATIBILITY_ROUTE,
+  CANONICAL_AGENT_ROUTE,
   AgentRegistry,
   GenericAgentExecutionRequestSchema,
   ModelRegistry,
@@ -108,16 +108,16 @@ describe("Agents Bridge contracts and registries", () => {
       client_id: "atlas-cli",
       audit_identity: "Atlas CLI",
       allowed_agents: ["atlas.requirement-extractor"],
-      allowed_routes: [ATLAS_COMPATIBILITY_ROUTE],
+      allowed_routes: [CANONICAL_AGENT_ROUTE],
       max_concurrency: 2,
       requests_per_minute: 10,
     };
     expect(authorizeAgent(
       client,
       "atlas.requirement-extractor",
-      ATLAS_COMPATIBILITY_ROUTE,
+      CANONICAL_AGENT_ROUTE,
     )).toEqual(client);
-    expect(() => authorizeAgent(client, "other.agent", ATLAS_COMPATIBILITY_ROUTE))
+    expect(() => authorizeAgent(client, "other.agent", CANONICAL_AGENT_ROUTE))
       .toThrow("not authorized");
   });
 

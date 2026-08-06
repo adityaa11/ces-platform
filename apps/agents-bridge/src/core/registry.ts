@@ -82,12 +82,6 @@ export class AgentRegistry {
     BridgeVersionSchema.parse(definition.version);
     if (definition.description.trim().length === 0) throw new Error("Agent description is required");
     StructuredGenerationPolicySchema.parse(definition.execution_policy);
-    if (
-      definition.id === "atlas.requirement-extractor"
-      && !definition.execution_policy.requires_human_review
-    ) {
-      throw new Error("Atlas requirement extraction must require human review");
-    }
     const key = agentKey(definition.id, definition.version);
     if (this.definitions.has(key)) throw new Error(`Duplicate agent registration: ${key}`);
     this.definitions.set(key, definition as AnyAgent);

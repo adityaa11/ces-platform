@@ -1,11 +1,13 @@
-import { access, readFile, readdir } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { join, relative, resolve, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 
 type Ledger = {
   schema_version: "1.0.0";
+  active_runtime_roots: string[];
   components: Array<{
     id: string;
+    status: "retired" | "rewritten" | "deleted";
     paths: string[];
     disposition: "rewrite" | "delete";
     owner_tickets: string[];
@@ -53,14 +55,13 @@ describe("ATLAS-V2-000 legacy runtime quarantine", () => {
       expect(component.owner_tickets.length).toBeGreaterThan(0);
       expect(component.owner_tickets.every((ticket) =>
         /^ATLAS-V2-00[1-9]$/u.test(ticket))).toBe(true);
-      for (const path of component.paths) await expect(access(join(workspace, path)))
-        .resolves.toBeUndefined();
+      expect(["retired", "rewritten", "deleted"]).toContain(component.status);
     }
   });
 
   it("rejects legacy dependencies outside their quarantined roots", async () => {
     const ledger = JSON.parse(await readFile(ledgerPath, "utf8")) as Ledger;
-    const files = (await Promise.all(["apps", "packages"].map((root) =>
+    const files = (await Promise.all(ledger.active_runtime_roots.map((root) =>
       filesBelow(join(workspace, root))))).flat();
     const violations: string[] = [];
     for (const absolute of files) {

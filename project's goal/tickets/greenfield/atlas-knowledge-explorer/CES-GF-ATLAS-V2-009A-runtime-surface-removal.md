@@ -1,6 +1,6 @@
 # CES-GF-ATLAS-V2-009A - Runtime Surface Removal
 
-**Status:** In Progress
+**Status:** Implemented
 **Depends on:** ATLAS-V2-008
 
 ## Outcome
@@ -22,3 +22,14 @@ Only V2 UI and Agents Bridge runtime surfaces remain executable.
 - No V1 UI dependency remains in the Next.js package.
 - UI and Bridge typechecks, focused tests, and the production build pass.
 
+## Implementation evidence
+
+- Deleted the five V1 Next.js Atlas routes, fixed-tab workspace, its backing
+  readers/tests, and the unused static UI implementation.
+- Removed all V1 UI package dependencies; the optimized route table contains
+  only `/api/atlas/v2/*` endpoints.
+- Deleted the Bridge compatibility endpoint and superseded requirement,
+  structure, and candidate agents; production registers only the V2 semantic
+  fact agent through `/v1/agents/:agentId/execute`.
+- CLI, Bridge, and UI typechecks pass; focused runtime tests pass 14/14 and the
+  optimized Next.js production build succeeds.

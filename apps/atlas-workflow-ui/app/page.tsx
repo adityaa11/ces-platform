@@ -1,5 +1,4 @@
-import { readKnowledgeOverview } from "../lib/knowledge-v2";
-import { atlasArtifactRoot } from "../lib/workspace";
+import { atlasArtifactRoot, readKnowledgeOverview } from "../lib/knowledge-v2";
 import { KnowledgeWorkspace } from "./knowledge-workspace";
 export const dynamic = "force-dynamic";
 export default async function Page({ searchParams }: {

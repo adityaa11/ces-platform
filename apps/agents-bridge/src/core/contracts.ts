@@ -2,7 +2,6 @@ import { z } from "zod";
 
 export const AGENTS_BRIDGE_CONTRACT_VERSION = "1.0.0" as const;
 export const CANONICAL_AGENT_ROUTE = "/v1/agents/:agentId/execute" as const;
-export const ATLAS_COMPATIBILITY_ROUTE = "/v1/atlas/analyze" as const;
 
 export const BridgeIdentifierSchema = z.string().trim()
   .regex(/^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$/u);

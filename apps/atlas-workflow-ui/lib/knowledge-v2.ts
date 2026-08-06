@@ -3,6 +3,10 @@ import { basename, relative, resolve } from "node:path";
 import { AtlasKnowledgeBundleSchema, knowledgeBreadcrumb } from "@company/ces-atlas-knowledge-contracts";
 
 const Id = /^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u;
+export function atlasArtifactRoot(): string {
+  return resolve(process.env.CES_ATLAS_ARTIFACT_ROOT
+    ?? resolve(/* turbopackIgnore: true */ process.cwd(), "../../.ces/generated"));
+}
 export function assertAtlasId(value: string, label: string): void {
   if (!Id.test(value)) throw new Error(`Invalid Atlas ${label}`);
 }

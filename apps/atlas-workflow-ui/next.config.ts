@@ -17,7 +17,7 @@ export function atlasContentSecurityPolicy(environment = process.env.NODE_ENV): 
 }
 
 const config: NextConfig = {
-  transpilePackages: ["@company/ces-atlas-model-review-contracts"],
+  transpilePackages: ["@company/ces-atlas-knowledge-contracts"],
   experimental: { useTypeScriptCli: true },
   async headers() {
     return [{ source: "/:path*", headers: [

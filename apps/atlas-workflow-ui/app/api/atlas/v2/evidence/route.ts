@@ -1,6 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { authorizeAtlasRequest, readKnowledgeEvidence } from "../../../../../lib/knowledge-v2";
-import { atlasArtifactRoot } from "../../../../../lib/workspace";
+import { atlasArtifactRoot, authorizeAtlasRequest, readKnowledgeEvidence } from "../../../../../lib/knowledge-v2";
 export const runtime = "nodejs"; export const dynamic = "force-dynamic";
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {

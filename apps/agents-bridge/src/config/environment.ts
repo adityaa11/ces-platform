@@ -18,10 +18,6 @@ const RuntimeConfigSchema = z.object({
   ceilings: ServiceExecutionCeilingsSchema,
   clients: z.array(RuntimeClientSchema).min(1),
   provider_max_concurrency: z.number().int().positive().default(16),
-  atlas: z.object({
-    legacy_model: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]*$/u),
-    agent_version: z.literal("1.0.0"),
-  }).strict().optional(),
 }).strict();
 
 export interface RuntimeClient {
@@ -36,10 +32,6 @@ export interface BridgeRuntimeConfig {
   readonly ceilings: ServiceExecutionCeilings;
   readonly clients: readonly RuntimeClient[];
   readonly provider_max_concurrency: number;
-  readonly atlas?: {
-    readonly legacy_model: string;
-    readonly agent_version: "1.0.0";
-  };
 }
 
 export function parseRuntimeConfig(value: unknown): BridgeRuntimeConfig {
@@ -62,7 +54,6 @@ export function parseRuntimeConfig(value: unknown): BridgeRuntimeConfig {
     ceilings: config.ceilings,
     clients: config.clients,
     provider_max_concurrency: config.provider_max_concurrency,
-    ...(config.atlas ? { atlas: config.atlas } : {}),
   };
 }
 
@@ -77,11 +68,9 @@ export function runtimeConfigFromEnvironment(
         client_id: "atlas-cli",
         audit_identity: "Atlas CLI",
         allowed_agents: [
-          "atlas.requirement-extractor",
-          "atlas.structure-classifier",
-          "atlas.candidate-extractor",
+          "atlas.semantic-fact-extractor",
         ],
-        allowed_routes: ["/v1/atlas/analyze", "/v1/agents/:agentId/execute"],
+        allowed_routes: ["/v1/agents/:agentId/execute"],
         max_concurrency: integer(environment.CLIENT_MAX_CONCURRENCY, 4),
         requests_per_minute: integer(environment.CLIENT_REQUESTS_PER_MINUTE, 60),
       },
@@ -102,10 +91,6 @@ export function runtimeConfigFromEnvironment(
     },
     clients: configuredClients,
     provider_max_concurrency: integer(environment.PROVIDER_MAX_CONCURRENCY, 16),
-    atlas: {
-      legacy_model: environment.GEMINI_MODEL ?? "gemini-2.5-flash",
-      agent_version: "1.0.0",
-    },
   });
 }
 
