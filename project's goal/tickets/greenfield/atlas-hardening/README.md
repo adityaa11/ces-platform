@@ -40,7 +40,7 @@ parallel semantic model, source identity system, or approval path.
 | 23 | [ATLAS-HARD-024](CES-GF-ATLAS-HARD-024-multi-target-relationships.md) | Zero-, one-, and multi-target relationships | 022–023 |
 | 24 | [ATLAS-HARD-025](CES-GF-ATLAS-HARD-025-focused-ui-projections.md) | Focused backend-owned UI projections | 010, 018–024 |
 | 25 | [ATLAS-HARD-026](CES-GF-ATLAS-HARD-026-expanded-approval-and-eligibility.md) | Approval and eligibility across governed entities | 011–013, 022–025 |
-| 26 | [ATLAS-HARD-027](CES-GF-ATLAS-HARD-027-golden-model-profile-safara-workflow-qualification.md) | Golden model profile and Safara workflow qualification | 018–026 |
+| 26 | [ATLAS-HARD-027](CES-GF-ATLAS-HARD-027-golden-model-profile-safara-workflow-qualification.md) | Recursive knowledge-explorer golden qualification | 018–026 |
 | 27 | [ATLAS-HARD-015](CES-GF-ATLAS-HARD-015-safara-qualification-gate.md) | Final qualification gate — executed last | 001–014, 016–027, ATLAS-UI-001–005 |
 
 ATLAS-HARD-015 is reopened and blocked until backend HARD-021 through HARD-027
@@ -52,12 +52,12 @@ workflow inventory had no connected topology or approved topology replay.
 Earlier library-level completion, the pre-refinement live artifacts, or cleaner
 graph output is not production integration evidence.
 
-ATLAS-HARD-027 defines the golden Safara model-support profile, its qualified
-workflow projection, and mandatory negative and structurally different
-regression fixtures. Fixture-specific labels and topology remain outside
-generic production compiler logic. HARD-027 owns only fixtures, assertions,
-regression scans, and integrated backend qualification evidence; failures are
-fixed in the production ticket that owns the contract.
+ATLAS-HARD-027 defines the renderer-neutral recursive knowledge-explorer
+golden: one permanent Main Workflow, module-scoped supporting graphs and
+content, backend-owned recursive navigation, and mandatory structurally
+different regression coverage. Fixture-specific labels and topology remain
+outside generic production compiler logic. The former workflow-only golden and
+fixed-detail navigation model are superseded.
 ATLAS-REL-001 combines successful HARD-015 and UI-005 results for release.
 
 ## Program rules

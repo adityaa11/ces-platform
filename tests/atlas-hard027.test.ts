@@ -5,18 +5,35 @@ import { describe, expect, it } from "vitest";
 const fixture = (path: string) => join("tests", "fixtures", path);
 
 describe("ATLAS-HARD-027 qualification fixtures", () => {
-  it("freezes one connected, internally consistent Safara semantic oracle", async () => {
+  it("freezes the renderer-neutral recursive Safara knowledge explorer", async () => {
     const oracle = JSON.parse(await readFile(
       fixture("safara/golden-main-workflow.json"), "utf8",
     )) as {
-      nodes: { concept: string; accepted_source_labels: string[] }[];
-      relationships: { from: string; to: string; kind: string }[];
+      schema_version: string;
+      renderer_policy: { interactive_required: boolean; locked_renderer: string | null;
+        semantic_membership_owned_by_renderer: boolean };
+      main_workflow: { maximum_instances_per_project: number; permanently_visible: boolean;
+        nodes: { concept: string; kind: string; accepted_source_labels: string[] }[];
+        relationships: { from: string; to: string; kind: string }[] };
+      knowledge_nodes: { knowledge_id: string; parent_id: string | null; kind: string;
+        graph_type_id?: string; renderer_requirement?: string; children: string[] }[];
+      required_breadcrumbs: string[][];
+      navigation_invariants: { main_workflow_always_visible: boolean;
+        selection_never_replaces_main_workflow: boolean; recursive_children: boolean;
+        maximum_semantic_depth: number | null; cycle_free: boolean;
+        frontend_may_infer_children: boolean; frontend_may_infer_topology: boolean };
     };
-    const concepts = new Set(oracle.nodes.map(({ concept }) => concept));
-    expect(concepts.size).toBe(oracle.nodes.length);
-    expect(oracle.nodes.every(({ accepted_source_labels }) =>
+    expect(oracle.schema_version).toBe("2.0.0");
+    expect(oracle.renderer_policy).toEqual({ interactive_required: true,
+      locked_renderer: null, semantic_membership_owned_by_renderer: false });
+    const concepts = new Set(oracle.main_workflow.nodes.map(({ concept }) => concept));
+    expect(concepts.size).toBe(9);
+    expect(oracle.main_workflow.maximum_instances_per_project).toBe(1);
+    expect(oracle.main_workflow.permanently_visible).toBe(true);
+    expect(oracle.main_workflow.nodes.every(({ kind }) => kind === "module")).toBe(true);
+    expect(oracle.main_workflow.nodes.every(({ accepted_source_labels }) =>
       accepted_source_labels.length > 0)).toBe(true);
-    const normalizedLabels = oracle.nodes.flatMap(({ concept, accepted_source_labels }) =>
+    const normalizedLabels = oracle.main_workflow.nodes.flatMap(({ concept, accepted_source_labels }) =>
       accepted_source_labels.map((label) => ({
         concept,
         label: label.normalize("NFKC").toLocaleLowerCase("en-US")
@@ -24,53 +41,52 @@ describe("ATLAS-HARD-027 qualification fixtures", () => {
       })));
     expect(new Set(normalizedLabels.map(({ label }) => label)).size)
       .toBe(normalizedLabels.length);
-    expect(oracle.relationships.every(({ from, to }) =>
+    expect(oracle.main_workflow.relationships.every(({ from, to }) =>
       concepts.has(from) && concepts.has(to))).toBe(true);
-    expect(oracle.relationships.filter(({ kind }) =>
-      kind === "provides_data_to")).toHaveLength(16);
-    expect(oracle.relationships).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        from: "pilgrim_registration", to: "payment_review",
-        kind: "enables",
-      }),
-      expect.objectContaining({
-        from: "pilgrim_registration", to: "document_review",
-        kind: "enables",
-      }),
-      expect.objectContaining({
-        from: "travel_readiness", to: "readiness_decision",
-        kind: "evaluated_by",
-      }),
-      expect.objectContaining({
-        from: "readiness_decision", to: "blocked",
-        kind: "branches_to", condition: "No",
-      }),
-      expect.objectContaining({
-        from: "readiness_decision", to: "ready",
-        kind: "branches_to", condition: "Yes",
-      }),
-      expect.objectContaining({
-        from: "ready", to: "manifest_finalization",
-        kind: "enables",
-      }),
-      expect.objectContaining({
-        from: "pilgrim_data", to: "pilgrim_registration",
-        kind: "provides_data_to",
-      }),
-      expect.objectContaining({
-        from: "pilgrim_data", to: "document_review",
-        kind: "provides_data_to",
-      }),
-      expect.objectContaining({
-        from: "package_departure", to: "pilgrim_registration",
-        kind: "provides_context_to",
-      }),
+    expect(oracle.main_workflow.relationships.filter(({ kind }) => kind === "summarized_in"))
+      .toHaveLength(7);
+    expect(oracle.main_workflow.relationships.filter(({ kind }) => kind === "records_into"))
+      .toHaveLength(7);
+    expect(oracle.main_workflow.relationships).toEqual(expect.arrayContaining([
+      { from: "package_departure", to: "pilgrim_registration", kind: "creates" },
+      { from: "pilgrim_data", to: "pilgrim_registration", kind: "registers_into" },
+      { from: "pilgrim_registration", to: "billing_payment", kind: "generates" },
+      { from: "pilgrim_registration", to: "pilgrim_documents", kind: "requires" },
+      { from: "travel_readiness", to: "departure_manifest", kind: "qualifies" },
     ]));
-    expect(oracle.nodes.flatMap(({ accepted_source_labels }) =>
-      accepted_source_labels)).not.toEqual(expect.arrayContaining([
-        "Payment Review", "Document Review", "Travel Readiness",
-        "Manifest Finalization",
-      ]));
+
+    const knowledge = new Map(oracle.knowledge_nodes.map((node) => [node.knowledge_id, node]));
+    expect(knowledge.size).toBe(oracle.knowledge_nodes.length);
+    expect(knowledge.get("main_workflow")?.parent_id).toBeNull();
+    for (const node of oracle.knowledge_nodes) {
+      if (node.parent_id) expect(knowledge.has(node.parent_id)).toBe(true);
+      for (const childId of node.children) {
+        expect(knowledge.get(childId)?.parent_id).toBe(node.knowledge_id);
+      }
+      if (node.kind === "visualization") {
+        expect(node.graph_type_id).toMatch(/^atlas\.graph\./u);
+        if (node.knowledge_id !== "main_workflow") expect(node.renderer_requirement).toBe("interactive");
+      }
+    }
+    const visit = (id: string, ancestors = new Set<string>()): void => {
+      expect(ancestors.has(id)).toBe(false);
+      const next = new Set(ancestors).add(id);
+      for (const child of knowledge.get(id)?.children ?? []) visit(child, next);
+    };
+    visit("main_workflow");
+    expect(oracle.required_breadcrumbs).toContainEqual([
+      "main_workflow", "travel_readiness", "blocking_conditions",
+      "visa_validation", "visa_business_rules",
+    ]);
+    expect(oracle.navigation_invariants).toEqual({
+      main_workflow_always_visible: true,
+      selection_never_replaces_main_workflow: true,
+      recursive_children: true,
+      maximum_semantic_depth: null,
+      cycle_free: true,
+      frontend_may_infer_children: false,
+      frontend_may_infer_topology: false,
+    });
   });
 
   it("freezes a structurally different non-travel oracle", async () => {
