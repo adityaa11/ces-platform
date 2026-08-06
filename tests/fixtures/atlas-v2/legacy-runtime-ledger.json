@@ -1,0 +1,109 @@
+{
+  "schema_version": "1.0.0",
+  "components": [
+    {
+      "id": "provider-candidate-contract",
+      "paths": [
+        "packages/agent-provider-sdk/src",
+        "packages/atlas-extraction/src",
+        "apps/agents-bridge/src/agents/atlas-requirement-extractor"
+      ],
+      "disposition": "rewrite",
+      "owner_tickets": ["ATLAS-V2-002"]
+    },
+    {
+      "id": "bridge-atlas-compatibility-route",
+      "paths": [
+        "apps/agents-bridge/src/server.ts",
+        "apps/agents-bridge/src/core/contracts.ts",
+        "apps/agents-bridge/src/config/environment.ts"
+      ],
+      "disposition": "delete",
+      "owner_tickets": ["ATLAS-V2-002", "ATLAS-V2-009"]
+    },
+    {
+      "id": "workflow-focused-projection-compiler",
+      "paths": ["packages/atlas-intent-graph/src"],
+      "disposition": "rewrite",
+      "owner_tickets": ["ATLAS-V2-003", "ATLAS-V2-004", "ATLAS-V2-009"]
+    },
+    {
+      "id": "v1-model-review-contracts",
+      "paths": ["packages/atlas-model-review-contracts/src"],
+      "disposition": "delete",
+      "owner_tickets": ["ATLAS-V2-001", "ATLAS-V2-006", "ATLAS-V2-007", "ATLAS-V2-009"]
+    },
+    {
+      "id": "duplicated-cli-atlas-assembly",
+      "paths": ["apps/cli/src/index.ts"],
+      "disposition": "rewrite",
+      "owner_tickets": ["ATLAS-V2-005", "ATLAS-V2-009"]
+    },
+    {
+      "id": "v1-approved-projection-publication",
+      "paths": ["packages/approved-project-model/src"],
+      "disposition": "rewrite",
+      "owner_tickets": ["ATLAS-V2-005", "ATLAS-V2-006", "ATLAS-V2-009"]
+    },
+    {
+      "id": "fixed-detail-next-workspace",
+      "paths": ["apps/atlas-workflow-ui/app", "apps/atlas-workflow-ui/lib"],
+      "disposition": "rewrite",
+      "owner_tickets": ["ATLAS-V2-007", "ATLAS-V2-008", "ATLAS-V2-009"]
+    },
+    {
+      "id": "unused-static-atlas-ui",
+      "paths": ["apps/atlas-workflow-ui/src", "apps/atlas-workflow-ui/index.html"],
+      "disposition": "delete",
+      "owner_tickets": ["ATLAS-V2-009"]
+    }
+  ],
+  "denylist_rules": [
+    {
+      "id": "v1-model-review-import",
+      "needle": "@company/ces-atlas-model-review-contracts",
+      "allowed_roots": [
+        "apps/atlas-workflow-ui",
+        "packages/approved-project-model",
+        "packages/atlas-intent-graph",
+        "packages/atlas-model-review-contracts",
+        "packages/atlas-quality-evidence",
+        "tests/architecture.test.ts"
+      ]
+    },
+    {
+      "id": "atlas-compatibility-endpoint",
+      "needle": "/v1/atlas/analyze",
+      "allowed_roots": [
+        "apps/agents-bridge",
+        "packages/agent-provider-sdk",
+        "tests/agents-bridge-atlas-integration.test.ts"
+      ]
+    },
+    {
+      "id": "v1-focused-projection-builder",
+      "needle": "createFocusedAtlasProjections",
+      "allowed_roots": [
+        "apps/atlas-workflow-ui",
+        "apps/cli",
+        "packages/approved-project-model",
+        "packages/atlas-intent-graph"
+      ]
+    },
+    {
+      "id": "v1-workflow-detail-artifact",
+      "needle": "proposed-workflow-detail-graphs.json",
+      "allowed_roots": ["apps/cli"]
+    },
+    {
+      "id": "v1-detail-tabs-route",
+      "needle": "/api/atlas/detail-tabs",
+      "allowed_roots": ["apps/atlas-workflow-ui"]
+    },
+    {
+      "id": "required-workflow-mermaid-artifact",
+      "needle": "flow.mmd",
+      "allowed_roots": ["apps/cli", "packages/approved-project-model"]
+    }
+  ]
+}

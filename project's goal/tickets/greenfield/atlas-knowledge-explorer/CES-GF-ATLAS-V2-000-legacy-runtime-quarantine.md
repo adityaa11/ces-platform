@@ -1,6 +1,6 @@
 # CES-GF-ATLAS-V2-000 - Legacy Runtime Quarantine and Removal Map
 
-**Status:** Planned; execute before ATLAS-V2-001 implementation  
+**Status:** Implemented
 **Depends on:** None
 
 ## Outcome
@@ -69,10 +69,14 @@ depends on the ATLAS-V2 contract without a v1 compatibility branch.
 
 ## Acceptance
 
-- [ ] Runtime dependency map identifies every producer and consumer listed
+- [x] Runtime dependency map identifies every producer and consumer listed
       above.
-- [ ] Denylist test fails on new v1 dependencies.
-- [ ] Each rewrite/delete entry is assigned to ATLAS-V2-001 through V2-009.
-- [ ] No ticket or product context authorizes v1 behavior.
+- [x] Denylist test fails on new v1 dependencies.
+- [x] Each rewrite/delete entry is assigned to ATLAS-V2-001 through V2-009.
+- [x] No ticket or product context authorizes v1 behavior.
 - [ ] The final repository scan reports zero active legacy paths.
 
+The final zero-path criterion is intentionally closed by ATLAS-V2-009 after
+all replacements land. The executable ledger is
+`tests/fixtures/atlas-v2/legacy-runtime-ledger.json`; its quarantine gate is
+`tests/atlas-v2-legacy-quarantine.test.ts`.
