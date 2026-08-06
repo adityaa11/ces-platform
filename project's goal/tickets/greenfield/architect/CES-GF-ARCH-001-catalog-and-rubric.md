@@ -7,13 +7,13 @@
 ## Goal
 
 Produce explainable architecture candidates directly from the authoritative
-ApprovedProjectModel revision and project constraints using deterministic,
+approved ATLAS-V2 knowledge-bundle revision and project constraints using deterministic,
 versioned scoring.
 
 ## Work
 
 - Define Project Intent, System Characteristic, and technology-catalog contracts.
-- Accept the DAPE-008 ApprovedProjectModel revision/hash as authoritative input.
+- Accept the ATLAS-V2-006 approved knowledge-bundle revision/hash as authoritative input.
 - Derive characteristics from approved requirements, business rules,
   permissions, validations, calculations, state models, nonfunctional
   requirements, and project intent with traceable rules.
@@ -39,7 +39,7 @@ versioned scoring.
 - [ ] Catalog and rubric schemas.
 - [ ] Golden scoring fixtures and boundary cases.
 - [ ] Adapter-availability fixtures.
-- [ ] ApprovedProjectModel input and legacy-input rejection fixtures.
+- [ ] Approved ATLAS-V2 bundle input and legacy-input rejection fixtures.
 
 ## Out of scope
 
@@ -49,4 +49,4 @@ versioned scoring.
 
 ## Depends on
 
-- `CES-GF-DAPE-008`
+- `CES-GF-ATLAS-V2-006`

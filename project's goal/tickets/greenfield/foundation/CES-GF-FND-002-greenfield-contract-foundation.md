@@ -3,7 +3,7 @@
 **Phase:** 3 — Shared Greenfield Contracts  
 **Parent:** Greenfield Product Suite  
 **Depends on:** CES-GF-FND-001
-**Status:** Validated in CI
+**Status:** Validated historical foundation; not Atlas v2 product authority
 
 **Evidence:** [`evidence/CES-GF-FND-002-local-contracts.md`](evidence/CES-GF-FND-002-local-contracts.md)
 ## Goal
@@ -13,7 +13,8 @@ requirements without weakening the existing deterministic core.
 
 ## Work
 
-- Define a versioned Requirement Collection that references individually valid
+- Define the historical versioned Requirement Collection used by existing
+  non-v2 consumers and references individually valid
   Requirement Packages.
 - Separate persistent logical IDs from immutable normalized revision hashes.
 - Generalize actors, actions, resources, states, and relationships through

@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-V2-009 - Legacy Removal and Qualification
 
 **Status:** Planned  
-**Depends on:** ATLAS-V2-001 through ATLAS-V2-008
+**Depends on:** ATLAS-V2-000 through ATLAS-V2-008
 
 ## Outcome
 
@@ -26,4 +26,4 @@ can execute in production.
 - Production build, contract, browser, approval, determinism, and security gates
   pass.
 - Completion is prohibited while a v1 fallback or parallel route remains.
-
+- Every entry in the ATLAS-V2-000 rewrite/delete ledger is closed.

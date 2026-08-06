@@ -4,8 +4,6 @@
 **Parent:** Greenfield Product Suite  
 **Status:** Implemented locally; hosted CI pending
 
-**Evidence:** [`evidence/CES-GF-AGB-002-local-runtime.md`](evidence/CES-GF-AGB-002-local-runtime.md)
-
 ## Goal
 
 Provide the minimal reusable HTTP runtime needed to operate centralized CES

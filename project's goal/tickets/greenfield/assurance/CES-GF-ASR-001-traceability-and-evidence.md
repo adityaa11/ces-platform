@@ -11,7 +11,7 @@ policies, implementation tasks, evidence requirements, and verification results.
 
 ## Work
 
-- Consume the DAPE-009 ApprovedProjectModel identity and traceability chain.
+- Consume the ATLAS-V2 approved knowledge-bundle identity and evidence chain.
 - Define traceability, evidence-requirement, evidence-record, and status contracts.
 - Distinguish required, supplied, observed, validated, rejected, and missing evidence.
 - Connect existing Policy and Verification Manifests without changing them.
@@ -26,7 +26,7 @@ policies, implementation tasks, evidence requirements, and verification results.
 - [ ] Generated claims are distinct from observed evidence.
 - [ ] Assurance cannot mutate Policy or Verification Manifests.
 - [ ] Equivalent inputs produce byte-identical traceability reports.
-- [ ] Every report pins the ApprovedProjectModel revision and traces source
+- [ ] Every report pins the approved ATLAS-V2 bundle revision and traces source
       units through semantic records, mappings, obligations, evidence, and
       verification.
 
@@ -44,7 +44,7 @@ policies, implementation tasks, evidence requirements, and verification results.
 
 ## Depends on
 
-- `CES-GF-DAPE-009`
+- `CES-GF-ATLAS-V2-006`
 
-Implementation cannot be accepted as complete until DAPE-016A propagates the
-shared model through core, Forge, and Verification.
+Implementation cannot be accepted until downstream consumers use the same
+ATLAS-V2 canonical identities without translating through a legacy model.

@@ -1,5 +1,13 @@
 # CES Greenfield Product Suite Context
 
+> **Atlas supersession notice:** All Atlas-specific extraction, graph,
+> artifact, approval, CLI, and UI direction in this document is historical and
+> non-authoritative. Current Atlas product behavior is defined exclusively by
+> `graphs context.md`, `supporting graphs context.md`, the ATLAS-V2 ticket plan,
+> and HARD-027. No Requirement Collection, system-intent graph, Mermaid output,
+> candidate-only provider contract, or compatibility path described below may
+> constrain or supplement Atlas v2.
+
 **Status:** Proposed product integration context  
 **Repository:** `adityaa11/ces-platform`  
 **Scope:** Greenfield projects first  
@@ -1565,7 +1573,7 @@ agent. Normalized source text enters the existing schema-constrained agent
 boundary only during candidate extraction. Original PDF bytes are not sent to
 the agent provider.
 
-Complete `CES-GF-ATLAS-004` and `CES-GF-ATLAS-005` before beginning the
+Complete ATLAS-V2-001 through ATLAS-V2-006 before beginning the
 Architect implementation sequence.
 
 ## Phase 4A — Architect

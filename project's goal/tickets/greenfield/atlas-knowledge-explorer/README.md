@@ -9,10 +9,11 @@ legacy workflow-only artifacts, fixed detail tabs, or compatibility fallbacks.
 
 ## Product authority
 
+- [`CES_ATLAS_AUTHORITY.md`](../../../CES_ATLAS_AUTHORITY.md)
 - [`graphs context.md`](../../../graphs%20context.md)
 - [`supporting graphs context.md`](../../../supporting%20graphs%20context.md)
 - [HARD-027 golden qualification](../atlas-hardening/CES-GF-ATLAS-HARD-027-golden-model-profile-safara-workflow-qualification.md)
-- [`golden-main-workflow.json`](../../../../../tests/fixtures/safara/golden-main-workflow.json)
+- [`golden-main-workflow.json`](../../../../tests/fixtures/safara/golden-main-workflow.json)
 
 If these sources conflict, the two context documents define product behavior;
 the golden fixture provides concrete qualification evidence.
@@ -21,6 +22,7 @@ the golden fixture provides concrete qualification evidence.
 
 | Order | Ticket | Outcome |
 |---:|---|---|
+| 0 | [ATLAS-V2-000](CES-GF-ATLAS-V2-000-legacy-runtime-quarantine.md) | Quarantine and map every legacy runtime path |
 | 1 | [ATLAS-V2-001](CES-GF-ATLAS-V2-001-recursive-knowledge-contract.md) | One renderer-neutral recursive contract |
 | 2 | [ATLAS-V2-002](CES-GF-ATLAS-V2-002-semantic-fact-extraction.md) | Evidence-grounded semantic facts from any PRD |
 | 3 | [ATLAS-V2-003](CES-GF-ATLAS-V2-003-graph-selection.md) | General graph-type selection |
@@ -46,4 +48,3 @@ introduce a temporary legacy contract or parallel production path.
 - Reuse is allowed only for naturally graph-neutral infrastructure.
 - No adapter may preserve workflow-only or fixed-tab behavior in v2.
 - V1 removal is required for completion, not optional cleanup.
-

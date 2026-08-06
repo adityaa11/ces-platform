@@ -4,8 +4,6 @@
 **Parent:** Greenfield Product Suite  
 **Status:** Implemented locally; hosted CI pending
 
-**Evidence:** [`evidence/CES-GF-AGB-003-local-gemini-provider.md`](evidence/CES-GF-AGB-003-local-gemini-provider.md)
-
 ## Goal
 
 Implement Gemini as the first provider adapter for the provider-neutral

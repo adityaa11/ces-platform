@@ -5,7 +5,7 @@
 
 ## Delivered boundaries
 
-### Approved Requirement Collection
+### Historical Approved Requirement Collection (not Atlas v2 authority)
 
 Package: `@company/ces-requirement-collection-schema`
 

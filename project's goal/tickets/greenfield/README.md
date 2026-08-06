@@ -2,8 +2,10 @@
 
 **Status:** In progress; Atlas delivery is governed by the clean v2 sequence
 
-The authoritative product direction is
+The general product direction is documented in
 [CES Greenfield Product Suite Context](../../CES_GREENFIELD_FOUR_END_PRODUCTS_CONTEXT.md).
+For Atlas, the two graph contexts and the ATLAS-V2 ticket plan exclusively
+override that document's historical Atlas sections.
 This plan converts that direction into evidence-gated work organized by shared
 foundation, Atlas, Architect, Forge, Assurance, and integration.
 
@@ -38,18 +40,6 @@ It replaces the deleted workflow-only extraction, hardening, and fixed-detail
 UI ticket sequences. HARD-027 remains only as the recursive golden acceptance
 oracle.
 
-## Dynamic Atlas completeness gate
-
-Atlas candidate extraction is not complete until
-[DAPE-000 through DAPE-008](dynamic-atlas-policy-evolution/README.md) prove
-domain-faithful extraction, deterministic source coverage, unsupported-output
-detection, human correction of omissions, and publication of a
-coverage-complete Approved Project Model.
-
-Architect implementation is blocked until `CES-GF-DAPE-008` is accepted.
-Deterministic DAPE source modeling depends on the accepted Atlas ingestion
-baseline, while agent orchestration begins only at DAPE-004.
-
 ## Atlas production gate
 
 Atlas production release is blocked until ATLAS-V2-009 proves the real
@@ -60,23 +50,22 @@ no legacy Atlas runtime remains active.
 
 | Order | Ticket | Outcome | Depends on |
 |---:|---|---|---|
-| 1 | [CES-GF-ARCH-001](architect/CES-GF-ARCH-001-catalog-and-rubric.md) | Versioned technology catalog and deterministic scoring rubric | DAPE-008 |
+| 1 | [CES-GF-ARCH-001](architect/CES-GF-ARCH-001-catalog-and-rubric.md) | Versioned technology catalog and deterministic scoring rubric | ATLAS-V2-006 |
 | 2 | [CES-GF-ARCH-002](architect/CES-GF-ARCH-002-decision-and-context.md) | Approved ADR and exact technical-context emission | ARCH-001 |
 
 ## CES Central Agents Bridge
 
-The centralized bridge is operational infrastructure for agent-backed CES
-workflows, not a fifth greenfield end product. Its first vertical slice serves
-Atlas through the existing HTTP provider contract. See the
+The centralized bridge is generic operational infrastructure for registered
+agent execution, not a fifth greenfield end product and not an Atlas semantic
+authority. See the
 [agents bridge ticket plan](agents-bridge/README.md).
 
 | Order | Ticket | Outcome | Depends on |
 |---:|---|---|---|
-| 1 | [CES-GF-AGB-001](agents-bridge/CES-GF-AGB-001-service-boundary-and-contracts.md) | Versioned agent, provider, registry, and execution contracts | ATLAS-005 |
+| 1 | [CES-GF-AGB-001](agents-bridge/CES-GF-AGB-001-service-boundary-and-contracts.md) | Versioned agent, provider, registry, and execution contracts | FND-002 |
 | 2 | [CES-GF-AGB-002](agents-bridge/CES-GF-AGB-002-secure-shared-runtime.md) | Secure generic Agents Bridge runtime | AGB-001 |
 | 3 | [CES-GF-AGB-003](agents-bridge/CES-GF-AGB-003-gemini-provider-adapter.md) | Gemini structured-generation provider adapter | AGB-002 |
-| 4 | [CES-GF-AGB-004](agents-bridge/CES-GF-AGB-004-atlas-gemini-vertical-slice.md) | Registered Atlas extraction agent and compatibility endpoint | AGB-003 |
-| 5 | [CES-GF-AGB-005](agents-bridge/CES-GF-AGB-005-production-operations.md) | Production-ready centralized deployment | AGB-004 |
+| 4 | [CES-GF-AGB-005](agents-bridge/CES-GF-AGB-005-production-operations.md) | Production-ready generic deployment | AGB-003 |
 
 ## CES Forge
 
@@ -89,7 +78,7 @@ Atlas through the existing HTTP provider contract. See the
 
 | Order | Ticket | Outcome | Depends on |
 |---:|---|---|---|
-| 1 | [CES-GF-ASR-001](assurance/CES-GF-ASR-001-traceability-and-evidence.md) | Traceability and evidence-state contracts | DAPE-009; acceptance completes with DAPE-016A |
+| 1 | [CES-GF-ASR-001](assurance/CES-GF-ASR-001-traceability-and-evidence.md) | Traceability and evidence-state contracts | ATLAS-V2-006 |
 | 2 | [CES-GF-ASR-002](assurance/CES-GF-ASR-002-assurance-views.md) | Developer and delivery views connected to verification | ASR-001, FORGE-001 |
 | 3 | [CES-GF-ASR-003](assurance/CES-GF-ASR-003-standards-pack.md) | First independent versioned standards pack | ASR-002 |
 

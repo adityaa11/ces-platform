@@ -14,7 +14,8 @@ project-management application using the approved greenfield contracts.
 - Author a realistic Markdown PRD and small Project Intent input.
 - Cover company, membership, project, task, assignment, invitation,
   notification, audit, authorization, tenancy, and state transitions.
-- Run Atlas extraction, clarification, approval, collection, and graph.
+- Run the complete ATLAS-V2 semantic extraction, graph selection, recursive
+  knowledge assembly, human approval, API, and interactive workspace path.
 - Run Architect analysis and human decision.
 - Compile the existing deterministic core and Laravel adapter.
 - Generate Forge tasks and the Laravel baseline.
