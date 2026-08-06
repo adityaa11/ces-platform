@@ -1,6 +1,6 @@
 # CES-GF-ATLAS-V2-003 - Graph Selection
 
-**Status:** Planned  
+**Status:** Implemented
 **Depends on:** ATLAS-V2-002
 
 ## Outcome
@@ -25,3 +25,6 @@ in `supporting graphs context.md`.
 - Domain labels, Safara headings, and fixed keyword templates are not embedded
   in production selection logic.
 
+Implemented by `@company/ces-atlas-graph-selection`. The selector uses typed
+semantic facts and original context paths, emits evidence-linked support
+assessments, and contains no renderer selection or Safara vocabulary.

@@ -271,6 +271,19 @@ importers:
         specifier: workspace:*
         version: link:../greenfield-contracts
 
+  packages/atlas-graph-selection:
+    dependencies:
+      '@company/ces-atlas-semantic-facts':
+        specifier: workspace:*
+        version: link:../atlas-semantic-facts
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
+
   packages/atlas-intent-graph:
     dependencies:
       '@company/ces-agent-provider-sdk':

@@ -63,6 +63,7 @@ export const SemanticFactIntermediateSchema = z.object({
 export const SemanticFactSchema = SemanticFactCandidateSchema.omit({ candidate_id: true }).extend({
   fact_id: Id,
   evidence_ids: z.array(Id).min(1),
+  context_paths: z.array(ExactText),
   equivalence_status: z.enum(["not_proposed", "pending_review"]),
 }).strict();
 
@@ -135,6 +136,8 @@ z.infer<typeof SemanticFactExtractionOutputSchema> {
       ...semantic,
       fact_id: `${input.project_id}.fact.${stable(identity).slice(0, 16)}`,
       evidence_ids: [...new Set(evidenceIds)].sort(),
+      context_paths: [...new Set(cited.flatMap(({ section_path }) =>
+        section_path.length ? [section_path.join(" > ")] : []))].sort(),
       equivalence_status: candidate.proposed_equivalence_key
         ? "pending_review" : "not_proposed",
     });
