@@ -32,6 +32,12 @@ the golden fixture provides concrete qualification evidence.
 | 7 | [ATLAS-V2-007](CES-GF-ATLAS-V2-007-knowledge-api.md) | Revision-pinned recursive API |
 | 8 | [ATLAS-V2-008](CES-GF-ATLAS-V2-008-interactive-workspace.md) | Recursive interactive Next.js workspace |
 | 9 | [ATLAS-V2-009](CES-GF-ATLAS-V2-009-legacy-removal-qualification.md) | Legacy removal and production qualification |
+| 9A | [ATLAS-V2-009A](CES-GF-ATLAS-V2-009A-runtime-surface-removal.md) | Remove V1 UI and Bridge runtime surfaces |
+| 9B | [ATLAS-V2-009B](CES-GF-ATLAS-V2-009B-cli-package-retirement.md) | Remove legacy CLI assembly and retired packages |
+| 9C | [ATLAS-V2-009C](CES-GF-ATLAS-V2-009C-qualification-fixtures.md) | Golden and generic qualification fixtures |
+| 9D | [ATLAS-V2-009D](CES-GF-ATLAS-V2-009D-end-to-end-qualification.md) | Full V2 pipeline qualification |
+| 9E | [ATLAS-V2-009E](CES-GF-ATLAS-V2-009E-pdf-browser-qualification.md) | Text and scanned PDF browser qualification |
+| 9F | [ATLAS-V2-009F](CES-GF-ATLAS-V2-009F-final-gates-ledger-closure.md) | Final gates and ledger closure |
 
 Tickets execute in order. A later ticket may add tests early, but it may not
 introduce a temporary legacy contract or parallel production path.
