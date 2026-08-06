@@ -1,6 +1,6 @@
 # CES-GF-ATLAS-V2-008 - Interactive Knowledge Workspace
 
-**Status:** Planned  
+**Status:** Implemented
 **Depends on:** ATLAS-V2-007
 
 ## Outcome
@@ -38,3 +38,14 @@ Implement the Next.js workspace defined by `graphs context.md` using the v2 API.
   coordinates, while the card exposes OCR confidence.
 - PDF loading is authorized, revision-pinned, CSP-compatible, accessible, and
   does not expose filesystem paths.
+
+## Implementation evidence
+
+- The V2 page renders left-side recursive navigation, an always-present
+  minimizable Main Workflow, breadcrumbed supporting knowledge below it, and a
+  right-side revision-pinned PDF/evidence workspace.
+- React Flow is isolated as a renderer of backend graph membership and type;
+  the UI does not infer graph types, children, or relationships.
+- Evidence cards preserve exact source text, page and confidence; coordinate
+  absence is reported explicitly and no highlight is guessed.
+- Fixed semantic tabs and V1 detail-index requests are absent from the V2 page.

@@ -1,29 +1,17 @@
-import { readWorkspace } from "../lib/workspace";
-import { GraphWorkspace } from "./graph-workspace";
-
+import { readKnowledgeOverview } from "../lib/knowledge-v2";
+import { atlasArtifactRoot } from "../lib/workspace";
+import { KnowledgeWorkspace } from "./knowledge-workspace";
 export const dynamic = "force-dynamic";
-
 export default async function Page({ searchParams }: {
-  searchParams: Promise<{ project?: string; lifecycle?: string }>;
+  searchParams: Promise<{ project?: string; revision?: string; lifecycle?: string }>;
 }) {
-  const query = await searchParams;
-  if (!query.project) return <main className="state"><h1>CES Atlas</h1>
-    <p>Select a generated project with <code>?project=project-id</code>.</p></main>;
+  const query = await searchParams; const revision = Number(query.revision ?? "1");
+  if (!query.project) return <main className="state"><h1>Atlas</h1>
+    <p>Select a generated project with <code>?project=project-id&amp;revision=1</code>.</p></main>;
   try {
-    const workspace = await readWorkspace({ projectId: query.project,
-      lifecycle: query.lifecycle === "approved" ? "approved" : "proposed" });
-    return <main>
-      <header><div><p className="eyebrow">Model review workspace</p>
-        <h1>{workspace.project_id}</h1></div>
-        <dl><div><dt>Lifecycle</dt><dd>{workspace.authority.lifecycle}</dd></div>
-          <div><dt>Authority</dt><dd>{workspace.authority.authority}</dd></div>
-          <div><dt>Execution</dt><dd>{workspace.authority.downstream_execution.status}</dd></div>
-          <div><dt>Revision</dt><dd>{workspace.revision}</dd></div></dl></header>
-      <GraphWorkspace workspace={workspace} artifactProjectId={query.project}
-        csrfToken={process.env.CES_ATLAS_CSRF_TOKEN} />
-    </main>;
-  } catch (error) {
-    return <main className="state"><h1>Workspace unavailable</h1>
-      <p>{error instanceof Error ? error.message : "Atlas data could not be loaded."}</p></main>;
-  }
+    const overview = await readKnowledgeOverview({ root: atlasArtifactRoot(), projectId: query.project,
+      revision, lifecycle: query.lifecycle === "approved" ? "approved" : "proposed" });
+    return <KnowledgeWorkspace overview={overview} />;
+  } catch (error) { return <main className="state"><h1>Workspace unavailable</h1>
+    <p>{error instanceof Error ? error.message : "Atlas data could not be loaded."}</p></main>; }
 }
