@@ -117,6 +117,31 @@ describe("DAPE-001 deterministic source units", () => {
     expect(result.source_units[1]?.section_path).toEqual(["Temperature Release"]);
   });
 
+  it("reconstructs generic numbered PDF sections and wrapped paragraphs", () => {
+    const result = buildSourceArtifacts({
+      document_id: "travel",
+      path: "docs/travel.pdf.md",
+      paragraph_mode: "pdf_structural",
+      source_spans: [{ line_start: 1, line_end: 10, source_kind: "pdf_text" }],
+      content: [
+        "# PDF page 1", "", "Project introduction.",
+        "1. Package Planning", "An operator creates a package and", "publishes its schedule.",
+        "2. Registration", "A customer selects an available package.", "", "",
+      ].join("\n"),
+    });
+    expect(result.source_units.map(({ kind }) => kind)).toEqual([
+      "caption", "paragraph", "heading", "paragraph", "heading", "paragraph",
+    ]);
+    expect(result.source_units.find(({ text }) => text === "Package Planning")?.section_path)
+      .toEqual(["Package Planning"]);
+    expect(result.source_units.find(({ text }) => text.includes("publishes"))).toMatchObject({
+      text: "An operator creates a package and publishes its schedule.",
+      exact_text: "An operator creates a package and\npublishes its schedule.",
+      section_path: ["Package Planning"],
+      source_kind: "pdf_text",
+    });
+  });
+
   it("rejects invalid identity, empty content and invalid provenance", () => {
     expect(() => buildSourceArtifacts({ ...input, document_id: "INVALID ID" })).toThrow();
     expect(() => buildSourceArtifacts({ ...input, content: " \n" })).toThrow();

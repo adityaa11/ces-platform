@@ -87,7 +87,7 @@ export interface SourceDocumentInput {
   readonly path: string;
   readonly content: string;
   readonly original_content_hash?: string;
-  readonly paragraph_mode?: "contiguous" | "line";
+  readonly paragraph_mode?: "contiguous" | "line" | "pdf_structural";
   readonly parser?: {
     readonly id: string;
     readonly version: string;
@@ -334,10 +334,12 @@ function provenanceFor(block: Block, spans: readonly SourceSpan[]): {
 
 function mechanicalBlocks(
   content: string,
-  paragraphMode: "contiguous" | "line",
+  paragraphMode: "contiguous" | "line" | "pdf_structural",
 ): Block[] {
   const lines = content.split("\n");
   const blocks: Block[] = [];
+  const structuralHeadings = paragraphMode === "pdf_structural"
+    ? structuralHeadingLines(lines) : new Set<number>();
   let page: number | undefined;
   let paragraph: { lines: string[]; exactLines: string[]; start: number } | undefined;
   const flush = (end: number): void => {
@@ -364,14 +366,26 @@ function mechanicalBlocks(
     const numbered = /^(\d+)[.)]\s+(.+)$/u.exec(line);
     const table = /^\|.*\|$/u.test(line);
     const caption = /^(?:figure|table|gambar|tabel)\s+\d+\s*[:.-]\s*(.+)$/iu.exec(line);
-    if (heading || bullet || numbered || table || caption) {
+    const structuralHeading = structuralHeadings.has(index);
+    if (heading || bullet || numbered || table || caption || structuralHeading) {
       flush(lineNumber - 1);
       if (heading) {
-        const pageMatch = /^PDF page (\d+)$/iu.exec(heading[2]!);
-        if (pageMatch) page = Number(pageMatch[1]);
-        blocks.push({ kind: "heading", text: heading[2]!, exactText: raw,
-          lineStart: lineNumber,
-          lineEnd: lineNumber, headingLevel: heading[1]!.length, ...(page ? { page } : {}) });
+        const pageMatch = /^PDF page (\d+)(?:\s+\[OCR confidence=[^\]]+\])?$/iu.exec(heading[2]!);
+        if (pageMatch && paragraphMode === "pdf_structural") {
+          page = Number(pageMatch[1]);
+          blocks.push({ kind: "caption", text: heading[2]!, exactText: raw,
+            lineStart: lineNumber, lineEnd: lineNumber, page });
+        } else {
+          if (pageMatch) page = Number(pageMatch[1]);
+          blocks.push({ kind: "heading", text: heading[2]!, exactText: raw,
+            lineStart: lineNumber,
+            lineEnd: lineNumber, headingLevel: heading[1]!.length, ...(page ? { page } : {}) });
+        }
+      } else if (structuralHeading) {
+        const label = numbered?.[2] ?? line;
+        blocks.push({ kind: "heading", text: label, exactText: raw,
+          lineStart: lineNumber, lineEnd: lineNumber, headingLevel: 1,
+          ...(page ? { page } : {}) });
       } else {
         blocks.push({
           kind: bullet ? "bullet" : numbered ? "numbered_item" : table ? "table_row" : "caption",
@@ -391,6 +405,40 @@ function mechanicalBlocks(
   });
   flush(lines.length);
   return blocks;
+}
+
+function structuralHeadingLines(lines: readonly string[]): Set<number> {
+  const numbered = lines.flatMap((raw, index) => {
+    const match = /^(\d{1,3})[.)]\s+(.+)$/u.exec(raw.trim());
+    if (!match || !headingLikeLabel(match[2]!)) return [];
+    return [{ index, number: Number(match[1]) }];
+  });
+  const result = new Set<number>();
+  let run: typeof numbered = [];
+  const commit = (): void => {
+    if (run.length >= 2) for (const item of run) result.add(item.index);
+    run = [];
+  };
+  for (const candidate of numbered) {
+    if (run.length === 0 || candidate.number === run.at(-1)!.number + 1) run.push(candidate);
+    else { commit(); run.push(candidate); }
+  }
+  commit();
+  for (let index = 0; index < lines.length; index += 1) {
+    const label = lines[index]!.trim();
+    if (result.has(index) || !headingLikeLabel(label) || /^#\s+PDF page/iu.test(label)) continue;
+    const isolated = (index === 0 || lines[index - 1]!.trim() === "")
+      && (index === lines.length - 1 || lines[index + 1]!.trim() === "");
+    if (isolated && label.split(/\s+/u).length <= 8) result.add(index);
+  }
+  return result;
+}
+
+function headingLikeLabel(value: string): boolean {
+  const label = value.trim();
+  return label.length >= 2 && label.length <= 100
+    && !/[.!?;:]$/u.test(label)
+    && !/^(?:if|when|jika|apabila)\b/iu.test(label);
 }
 
 function validateCoverage(content: string, blocks: readonly Block[]): void {

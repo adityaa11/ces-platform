@@ -470,7 +470,7 @@ async function runAtlasV2(
     throw new CliInputError("Atlas PRD input must use .md or .pdf");
   }
   const source = buildSourceArtifacts({ document_id: documentId, path: workspacePath,
-    content, paragraph_mode: mediaType === "application/pdf" ? "line" : "contiguous",
+    content, paragraph_mode: mediaType === "application/pdf" ? "pdf_structural" : "contiguous",
     original_content_hash: originalHash, ...(sourceSpans ? { source_spans: sourceSpans } : {}) });
   const extractionInput = {
     schema_version: "2.0.0" as const, project_id: projectId,

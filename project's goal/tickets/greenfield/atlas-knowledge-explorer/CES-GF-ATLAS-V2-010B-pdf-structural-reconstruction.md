@@ -1,6 +1,6 @@
 # CES-GF-ATLAS-V2-010B - PDF Structural Reconstruction
 
-**Status:** Planned
+**Status:** Completed
 **Depends on:** ATLAS-V2-010A
 
 ## Outcome
@@ -36,3 +36,15 @@ and section paths before semantic extraction.
 - Generic numbered and unnumbered fixtures reconstruct correctly.
 - Every reconstructed unit maps exactly back to original page text and regions.
 
+## Completion Evidence
+
+- PDF source construction now uses a generic structural mode rather than
+  producing one source unit per visual line.
+- Consecutive numbered section patterns and isolated headings are recognized
+  without domain labels or fixed section counts.
+- Synthetic PDF page markers remain provenance captions and no longer become
+  document section ancestors.
+- Wrapped lines are joined for semantic text while `exact_text` retains their
+  original line breaks and page provenance.
+- Native-text and OCR provenance continue through the existing source-span
+  contract; unavailable coordinates remain explicit rather than guessed.
