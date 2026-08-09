@@ -78,8 +78,8 @@ export const SemanticFactSchema = SemanticFactCandidateSchema.omit({ candidate_i
   evidence_ids: z.array(Id).min(1),
   context_paths: z.array(ExactText),
   equivalence_status: z.enum(["not_proposed", "pending_review"]),
-  engineering_intent: EngineeringIntentSchema,
-  decomposition_status: SemanticDecompositionStatusSchema,
+  engineering_intent: EngineeringIntentSchema.default("context"),
+  decomposition_status: SemanticDecompositionStatusSchema.default("atomic"),
 }).strict();
 
 export const SemanticSourceDispositionSchema = z.object({

@@ -1,6 +1,6 @@
 # CES-GF-ATLAS-V2-011C - Semantic Hierarchy Assembly
 
-**Status:** Planned
+**Status:** Completed
 **Depends on:** ATLAS-V2-011B
 
 ## Outcome
@@ -26,3 +26,12 @@ independent from graph types and directly supports navigation.
   independently supported as a business or engineering concept.
 - Selecting a module exposes its actual concepts before any representation.
 - Hierarchy labels remain exact source wording.
+
+## Completion evidence
+
+- Knowledge bundles now include a validated graph-neutral semantic model and
+  recursively navigable concept knowledge nodes.
+- Modules own semantic children and reference graph representations separately;
+  visualization nodes can no longer be semantic children.
+- Assembly derives evidence-grounded parentage from exact parent hints, canonical
+  section ownership, and module references, with cycles and unreachable data gated.

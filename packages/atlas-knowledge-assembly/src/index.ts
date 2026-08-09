@@ -44,6 +44,10 @@ export function assembleAtlasKnowledge(inputValue: unknown) {
       moduleByLabel.set(conceptKey(label), item);
     }
   }
+  const semanticConcepts = buildSemanticConcepts(input.project_id, input.extraction.facts,
+    moduleItems, moduleByLabel);
+  const semanticById = new Map(semanticConcepts.map((concept) => [concept.concept_id, concept]));
+  const conceptKnowledgeId = (id: string) => `${input.project_id}.knowledge.concept.${short(id)}`;
   const assessmentsByModule = new Map(moduleItems.map((item) => [item.knowledgeId,
     input.selection.assessments.filter(({ scope_id, scope_kind }) =>
       scope_kind === "module" && scope_id.endsWith(`.${short(item.fact.fact_id)}`))
@@ -55,6 +59,7 @@ export function assembleAtlasKnowledge(inputValue: unknown) {
         .filter((fact): fact is NonNullable<typeof fact> => Boolean(fact));
       return {
         knowledge_id: knowledgeId, parent_id: item.knowledgeId, child_ids: [],
+        representation_ids: [],
         kind: "visualization" as const, display_name: graphName(assessment.graph_type_id),
         evidence_ids: unique(supporting.flatMap(({ evidence_ids }) => evidence_ids)),
         support_status: assessment.support_status === "supported" ? "supported" as const
@@ -65,13 +70,30 @@ export function assembleAtlasKnowledge(inputValue: unknown) {
     }));
   const moduleNodes = moduleItems.map((item) => ({
     knowledge_id: item.knowledgeId, parent_id: rootId,
-    child_ids: visualizations.filter(({ parent_id }) => parent_id === item.knowledgeId)
+    child_ids: semanticConcepts.filter(({ parent_concept_id }) =>
+      parent_concept_id === conceptId(input.project_id, item.fact.exact_statement))
+      .map(({ concept_id }) => conceptKnowledgeId(concept_id)),
+    representation_ids: visualizations.filter(({ parent_id }) => parent_id === item.knowledgeId)
       .map(({ knowledge_id }) => knowledge_id),
     canonical_concept_id: conceptId(input.project_id, item.fact.exact_statement),
     kind: "module" as const, display_name: item.fact.exact_statement,
     source_label: item.fact.exact_statement, evidence_ids: item.fact.evidence_ids,
     support_status: "supported" as const,
   }));
+  const conceptNodes = semanticConcepts.filter(({ semantic_kind }) => semantic_kind !== "module")
+    .map((concept) => {
+      const parent = semanticById.get(concept.parent_concept_id!);
+      const parentModule = moduleItems.find((item) =>
+        conceptId(input.project_id, item.fact.exact_statement) === concept.parent_concept_id);
+      return { knowledge_id: conceptKnowledgeId(concept.concept_id),
+        parent_id: parentModule?.knowledgeId ?? (parent ? conceptKnowledgeId(parent.concept_id) : null),
+        child_ids: concept.child_concept_ids.map(conceptKnowledgeId), representation_ids: [],
+        canonical_concept_id: concept.concept_id, kind: "concept" as const,
+        display_name: concept.source_label, source_label: concept.source_label,
+        semantic_kind: concept.semantic_kind, evidence_ids: concept.evidence_ids,
+        confidence: concept.confidence, review_status: concept.review_status,
+        decomposition_status: concept.decomposition_status, support_status: "supported" as const };
+    });
   const rootGraphNodes = moduleItems.map((item) => graphNode(input.project_id,
     item.fact.exact_statement, item.fact.kind, item.fact.evidence_ids, item.knowledgeId));
   const rootNodeByKnowledge = new Map(rootGraphNodes.map((node) => [node.knowledge_id, node]));
@@ -93,6 +115,7 @@ export function assembleAtlasKnowledge(inputValue: unknown) {
   const root = {
     knowledge_id: rootId, parent_id: null, kind: "visualization" as const,
     child_ids: moduleNodes.map(({ knowledge_id }) => knowledge_id),
+    representation_ids: [],
     display_name: "Main Workflow",
     evidence_ids: unique([...moduleItems.flatMap(({ fact }) => fact.evidence_ids),
       ...rootEdges.flatMap(({ evidence_ids }) => evidence_ids)]),
@@ -108,10 +131,91 @@ export function assembleAtlasKnowledge(inputValue: unknown) {
     authority: { lifecycle: "proposed", authority: "non_authoritative" },
     root_knowledge_id: rootId, documents: input.documents,
     evidence: input.extraction.evidence,
-    knowledge_nodes: [root, ...moduleNodes, ...visualizations] });
+    semantic_model: { concepts: semanticConcepts, relationships: [] },
+    knowledge_nodes: [root, ...moduleNodes, ...conceptNodes, ...visualizations] });
 }
 
 type Fact = z.infer<typeof SemanticFactExtractionOutputSchema>["facts"][number];
+type ModuleItem = { fact: Fact; knowledgeId: string };
+function buildSemanticConcepts(project: string, facts: Fact[], modules: ModuleItem[],
+  moduleByLabel: Map<string, ModuleItem>) {
+  type Draft = { label: string; kind: ReturnType<typeof semanticKind>; evidence: string[];
+    confidence: number; status: Fact["decomposition_status"]; parentLabel?: string;
+    owner?: ModuleItem };
+  const drafts: Draft[] = modules.map(({ fact }) => ({ label: fact.exact_statement,
+    kind: "module", evidence: fact.evidence_ids, confidence: fact.confidence,
+    status: fact.decomposition_status }));
+  for (const fact of facts.filter(({ kind }) => kind !== "module")) {
+    const owner = resolveOwningModule(fact, modules, moduleByLabel);
+    const entries = fact.terms.length ? fact.terms.map((term) => ({ label: term.exact_text,
+      kind: semanticKind(fact.kind, term.role_id) }))
+      : [{ label: fact.exact_statement, kind: semanticKind(fact.kind) }];
+    for (const entry of entries) {
+      if (moduleByLabel.has(conceptKey(entry.label))) continue;
+      drafts.push({ ...entry, evidence: fact.evidence_ids, confidence: fact.confidence,
+        status: fact.decomposition_status,
+        ...(fact.parent_source_label ? { parentLabel: fact.parent_source_label } : {}),
+        ...(owner ? { owner } : {}) });
+    }
+  }
+  const grouped = new Map<string, Draft[]>();
+  for (const draft of drafts) {
+    const key = conceptKey(draft.label); const group = grouped.get(key) ?? [];
+    group.push(draft); grouped.set(key, group);
+  }
+  const merged = [...grouped.values()].map((group) => ({ ...group[0]!,
+    evidence: unique(group.flatMap(({ evidence }) => evidence)),
+    confidence: Math.max(...group.map(({ confidence }) => confidence)) }));
+  const idByLabel = new Map(merged.map(({ label }) => [conceptKey(label), conceptId(project, label)]));
+  const concepts = merged.filter((draft) => draft.kind === "module" || draft.owner
+    || (draft.parentLabel && idByLabel.has(conceptKey(draft.parentLabel)))).map((draft) => {
+    const id = conceptId(project, draft.label);
+    const explicitParent = draft.parentLabel ? idByLabel.get(conceptKey(draft.parentLabel)) : undefined;
+    const moduleParent = draft.owner ? conceptId(project, draft.owner.fact.exact_statement) : undefined;
+    const parent = draft.kind === "module" ? null
+      : explicitParent && explicitParent !== id ? explicitParent : moduleParent ?? null;
+    return { concept_id: id, parent_concept_id: parent, child_concept_ids: [] as string[],
+      semantic_kind: draft.kind, source_label: draft.label, evidence_ids: draft.evidence,
+      confidence: draft.confidence, review_status: "unreviewed" as const,
+      decomposition_status: draft.status === "context_only" ? "context_only" as const
+        : draft.status === "review_required" ? "review_required" as const
+        : draft.status === "unsupported" ? "unsupported" as const
+        : draft.status === "decomposable" ? "decomposable" as const : "atomic" as const };
+  });
+  const byId = new Map(concepts.map((concept) => [concept.concept_id, concept]));
+  for (const concept of concepts) {
+    if (concept.parent_concept_id) byId.get(concept.parent_concept_id)?.child_concept_ids.push(concept.concept_id);
+  }
+  for (const concept of concepts) concept.child_concept_ids.sort();
+  return concepts;
+}
+function resolveOwningModule(fact: Fact, modules: ModuleItem[], moduleByLabel: Map<string, ModuleItem>) {
+  for (const path of fact.context_paths) {
+    for (const segment of path.split(" > ")) {
+      const module = moduleByLabel.get(conceptKey(segment)); if (module) return module;
+    }
+  }
+  const matches = unique(fact.terms.flatMap(({ exact_text }) => {
+    const module = resolveModule(exact_text, moduleByLabel); return module ? [module.knowledgeId] : [];
+  }));
+  return matches.length === 1 ? modules.find(({ knowledgeId }) => knowledgeId === matches[0]) : undefined;
+}
+function semanticKind(kind: Fact["kind"], role = ""):
+"business_capability" | "module" | "concept" | "actor" | "entity" | "input" | "action" |
+"precondition" | "state" | "rule" | "decision" | "condition" | "outcome" | "validation" |
+"permission" | "event" | "dependency" {
+  if (/actor|user|role/u.test(role) || kind === "actor") return "actor";
+  if (/input/u.test(role)) return "input";
+  if (/condition|precondition/u.test(role) || kind === "condition") return "condition";
+  if (/outcome|result/u.test(role) || kind === "outcome") return "outcome";
+  if (/state/u.test(role) || kind === "state" || kind === "state_transition") return "state";
+  if (/entity/u.test(role) || kind === "entity" || kind === "entity_relationship") return "entity";
+  if (kind === "activity" || kind === "activity_order" || /activity|action|source|target/u.test(role)) return "action";
+  if (kind === "business_rule") return "rule"; if (kind === "decision") return "decision";
+  if (kind === "validation") return "validation"; if (kind === "permission") return "permission";
+  if (kind === "event") return "event"; if (kind === "dependency") return "dependency";
+  return "concept";
+}
 function buildGraph(graphType: string, facts: Fact[]) {
   const termEntries = facts.flatMap((fact) => fact.terms.map((term) => ({ fact, term })));
   const labels = unique(termEntries.map(({ term }) => term.exact_text));

@@ -53,6 +53,11 @@ const bundle = {
   documents: [{ document_id: "project.document.prd", revision: 1,
     content_hash: hash, media_type: "application/pdf", original_name: "PRD.pdf", page_count: 3 }],
   evidence: [evidence], knowledge_nodes: [root, module, content],
+  semantic_model: { concepts: [{ concept_id: module.canonical_concept_id,
+    parent_concept_id: null, child_concept_ids: [], semantic_kind: "module" as const,
+    source_label: module.source_label, evidence_ids: [evidence.evidence_id], confidence: 1,
+    review_status: "accepted" as const, decomposition_status: "atomic" as const }],
+    relationships: [] },
 };
 
 describe("Atlas recursive knowledge contract", () => {

@@ -185,12 +185,22 @@ const KnowledgeBaseSchema = z.object({
   display_name: ExactText,
   evidence_ids: z.array(Id),
   support_status: z.enum(["supported", "partial", "review_required"]),
+  representation_ids: z.array(Id).default([]),
 }).strict();
 
 export const AtlasModuleKnowledgeSchema = KnowledgeBaseSchema.extend({
   kind: z.literal("module"),
   canonical_concept_id: Id,
   source_label: ExactText,
+}).strict();
+export const AtlasConceptKnowledgeSchema = KnowledgeBaseSchema.extend({
+  kind: z.literal("concept"),
+  canonical_concept_id: Id,
+  semantic_kind: AtlasSemanticKindSchema,
+  source_label: ExactText,
+  confidence: Confidence,
+  review_status: z.enum(["unreviewed", "accepted", "rejected"]),
+  decomposition_status: AtlasDecompositionStatusSchema,
 }).strict();
 export const AtlasVisualizationKnowledgeSchema = KnowledgeBaseSchema.extend({
   kind: z.literal("visualization"),
@@ -205,6 +215,7 @@ export const AtlasContentKnowledgeSchema = KnowledgeBaseSchema.extend({
 
 export const AtlasKnowledgeNodeSchema = z.discriminatedUnion("kind", [
   AtlasModuleKnowledgeSchema,
+  AtlasConceptKnowledgeSchema,
   AtlasVisualizationKnowledgeSchema,
   AtlasContentKnowledgeSchema,
 ]);
@@ -223,6 +234,7 @@ export const AtlasKnowledgeBundleSchema = z.object({
   root_knowledge_id: Id,
   documents: z.array(AtlasDocumentSchema).min(1),
   evidence: z.array(AtlasEvidenceSchema),
+  semantic_model: AtlasSemanticModelSchema,
   knowledge_nodes: z.array(AtlasKnowledgeNodeSchema).min(1),
 }).strict().superRefine((bundle, context) => {
   const issue = (message: string): void => context.addIssue({ code: "custom", message });
@@ -259,6 +271,15 @@ export const AtlasKnowledgeBundleSchema = z.object({
     for (const evidenceId of node.evidence_ids) {
       if (!evidence.has(evidenceId)) issue(`Knowledge node references unknown evidence ${evidenceId}`);
     }
+    for (const representationId of node.representation_ids) {
+      const representation = nodes.get(representationId);
+      if (representation?.kind !== "visualization" || representation.parent_id !== node.knowledge_id) {
+        issue(`Knowledge representation ${representationId} does not link back to ${node.knowledge_id}`);
+      }
+    }
+    if (node.child_ids.some((id) => nodes.get(id)?.kind === "visualization")) {
+      issue(`Knowledge node ${node.knowledge_id} uses a graph as a semantic child`);
+    }
     if (node.kind === "visualization") {
       const graphNodes = new Set(node.visualization.nodes.map(({ graph_node_id }) => graph_node_id));
       if (graphNodes.size !== node.visualization.nodes.length) {
@@ -288,13 +309,24 @@ export const AtlasKnowledgeBundleSchema = z.object({
       issue("Main Workflow graph must map every direct module exactly once");
     }
   }
+  for (const concept of bundle.semantic_model.concepts) {
+    for (const evidenceId of concept.evidence_ids) {
+      if (!evidence.has(evidenceId)) issue(`Semantic concept references unknown evidence ${evidenceId}`);
+    }
+  }
+  for (const relationship of bundle.semantic_model.relationships) {
+    for (const evidenceId of relationship.evidence_ids) {
+      if (!evidence.has(evidenceId)) issue(`Semantic relationship references unknown evidence ${evidenceId}`);
+    }
+  }
   const visiting = new Set<string>();
   const visited = new Set<string>();
   const visit = (id: string): void => {
     if (visiting.has(id)) { issue(`Knowledge hierarchy contains a cycle at ${id}`); return; }
     if (visited.has(id)) return;
     visiting.add(id);
-    for (const child of nodes.get(id)?.child_ids ?? []) visit(child);
+    const node = nodes.get(id);
+    for (const child of [...node?.child_ids ?? [], ...node?.representation_ids ?? []]) visit(child);
     visiting.delete(id);
     visited.add(id);
   };

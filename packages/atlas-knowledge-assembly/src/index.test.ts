@@ -51,6 +51,15 @@ describe("recursive Atlas knowledge assembly", () => {
     expect(root.visualization.nodes.map(({ label }) => label)).toEqual(["Pemesanan", "Pembayaran"]);
     const decision = result.knowledge_nodes.find((node) => node.kind === "visualization" &&
       node.visualization.graph_type_id === "atlas.graph.decision-tree")!;
+    const owner = result.knowledge_nodes.find(({ knowledge_id }) =>
+      knowledge_id === decision.parent_id)!;
+    expect(owner.kind).toBe("module");
+    expect(owner.child_ids.every((id) => result.knowledge_nodes.find((node) =>
+      node.knowledge_id === id)?.kind === "concept")).toBe(true);
+    expect(owner.representation_ids).toContain(decision.knowledge_id);
+    expect(owner.child_ids).not.toContain(decision.knowledge_id);
+    expect(result.semantic_model.concepts.some(({ semantic_kind }) => semantic_kind === "condition"))
+      .toBe(true);
     expect(knowledgeBreadcrumb(result, decision.knowledge_id)).toEqual([
       result.root_knowledge_id, decision.parent_id, decision.knowledge_id]);
   });
