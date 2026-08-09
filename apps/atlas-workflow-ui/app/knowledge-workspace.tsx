@@ -1,9 +1,11 @@
 "use client";
-import { Background, Controls, MarkerType, ReactFlow, type Edge, type Node } from "@xyflow/react";
+import { Background, BackgroundVariant, Controls, MarkerType, Position, ReactFlow,
+  type Edge, type Node } from "@xyflow/react";
 import { useMemo, useState } from "react";
 import "@xyflow/react/dist/style.css";
 import type { BrowserEvidence as Evidence } from "../lib/evidence-browser";
 import { PdfEvidenceViewer } from "./pdf-evidence-viewer";
+import { layeredGraphLayout } from "../lib/graph-layout";
 
 type Summary = { knowledge_id: string; kind: string; display_name: string;
   support_status: string; child_count: number };
@@ -78,21 +80,39 @@ export function KnowledgeWorkspace({ overview }: { overview: Overview }) {
 function GraphView({ knowledge, onSelect, onEvidence }: { knowledge: Knowledge;
   onSelect: (id: string) => void; onEvidence: (id: string) => void }) {
   const graph = knowledge.visualization!;
-  const nodes = useMemo<Node[]>(() => graph.nodes.map((item, index) => ({ id: item.graph_node_id,
-    position: { x: (index % 3) * 260, y: Math.floor(index / 3) * 150 }, data: { label: item.label },
-    className: "atlas-node", style: { width: 210, minHeight: 72 } })), [graph]);
+  const layout = useMemo(() => layeredGraphLayout(graph.nodes.map(({ graph_node_id }) => graph_node_id),
+    graph.edges.map(({ from_graph_node_id, to_graph_node_id }) => ({
+      source: from_graph_node_id, target: to_graph_node_id }))), [graph]);
+  const nodes = useMemo<Node[]>(() => graph.nodes.map((item) => ({ id: item.graph_node_id,
+    position: layout.get(item.graph_node_id) ?? { x: 0, y: 0 }, data: { label: item.label },
+    sourcePosition: Position.Right, targetPosition: Position.Left,
+    className: `atlas-node ${item.semantic_kind_id.replaceAll(".", "-")}`,
+    style: { width: 232, minHeight: 76 } })), [graph, layout]);
   const edges = useMemo<Edge[]>(() => graph.edges.map((item) => ({ id: item.graph_edge_id,
-    source: item.from_graph_node_id, target: item.to_graph_node_id, label: item.display_label,
-    markerEnd: { type: MarkerType.ArrowClosed }, className: "atlas-edge core" })), [graph]);
+    source: item.from_graph_node_id, target: item.to_graph_node_id,
+    type: "smoothstep", pathOptions: { borderRadius: 18, offset: 24 },
+    markerEnd: { type: MarkerType.ArrowClosed, width: 16, height: 16 },
+    label: graph.edges.length <= 12 ? item.display_label : undefined,
+    labelShowBg: true, labelBgPadding: [5, 3], labelBgBorderRadius: 4,
+    className: `atlas-edge ${["activity_order", "state_transition", "audit_flow"].includes(item.relationship_kind)
+      ? "workflow" : "dependency"}`
+  })), [graph]);
   const linked = new Map(graph.nodes.map((item) => [item.graph_node_id, item.knowledge_id]));
   const evidenceByNode = new Map(graph.nodes.map((item) => [item.graph_node_id, item.evidence_ids]));
   const evidenceByEdge = new Map(graph.edges.map((item) => [item.graph_edge_id, item.evidence_ids]));
-  return <><p className="graph-kind">{graph.graph_type_id}</p><div className="flow-canvas"><ReactFlow nodes={nodes}
-    edges={edges} fitView minZoom={0.2} maxZoom={2} onNodeClick={(_event, node) => {
+  return <><div className="graph-meta"><p className="graph-kind">{graph.graph_type_id}</p>
+    <p>{graph.nodes.length} nodes · {graph.edges.length} relationships</p></div>
+    <div className="graph-legend" aria-label="Relationship legend"><span><i className="legend-line workflow" />Workflow order</span>
+      <span><i className="legend-line dependency" />Dependency</span></div>
+    <div className="flow-canvas"><ReactFlow key={knowledge.knowledge_id} nodes={nodes}
+    edges={edges} fitView fitViewOptions={{ padding: 0.18, minZoom: 0.35, maxZoom: 1.15 }}
+    minZoom={0.2} maxZoom={1.8} nodesDraggable={false} nodesConnectable={false}
+    onNodeClick={(_event, node) => {
       const id = linked.get(node.id); if (id) onSelect(id);
       else { const evidenceId = evidenceByNode.get(node.id)?.[0]; if (evidenceId) onEvidence(evidenceId); } }}
     onEdgeClick={(_event, edge) => { const evidenceId = evidenceByEdge.get(edge.id)?.[0];
-      if (evidenceId) onEvidence(evidenceId); }}><Background /><Controls /></ReactFlow></div>
+      if (evidenceId) onEvidence(evidenceId); }}><Background variant={BackgroundVariant.Dots}
+        gap={24} size={1} color="#cbd5e1" /><Controls showInteractive={false} /></ReactFlow></div>
     <details className="graph-summary"><summary>Accessible graph summary</summary><ul>
       {graph.nodes.map((node) => <li key={node.graph_node_id}>{node.label}</li>)}
       {graph.edges.map((edge) => <li key={edge.graph_edge_id}>{edge.from_graph_node_id} {edge.display_label} {edge.to_graph_node_id}</li>)}</ul></details></>;
