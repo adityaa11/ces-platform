@@ -75,7 +75,7 @@ export function assembleAtlasKnowledge(inputValue: unknown) {
   const rootGraphNodes = moduleItems.map((item) => graphNode(input.project_id,
     item.fact.exact_statement, item.fact.kind, item.fact.evidence_ids, item.knowledgeId));
   const rootNodeByKnowledge = new Map(rootGraphNodes.map((node) => [node.knowledge_id, node]));
-  const rootEdges = input.extraction.facts.filter(({ kind }) =>
+  const rootEdges = deduplicateEdges(input.extraction.facts.filter(({ kind }) =>
     kind === "dependency" || kind === "activity_order").flatMap((fact) => {
       const endpoints = orderedEndpointTerms(fact).map(({ exact_text }) =>
         resolveModule(exact_text, moduleByLabel)).filter(Boolean);
@@ -84,7 +84,7 @@ export function assembleAtlasKnowledge(inputValue: unknown) {
       const to = rootNodeByKnowledge.get(endpoints[1]!.knowledgeId);
       if (!from || !to || from.graph_node_id === to.graph_node_id) return [];
       return [edge(fact, from.graph_node_id, to.graph_node_id)];
-    });
+    }));
   const businessWorkflowSupported = input.selection.assessments.some(({ scope_kind,
     graph_type_id, support_status }) => scope_kind === "project"
       && graph_type_id === "atlas.graph.business-workflow" && support_status === "supported");
@@ -94,7 +94,8 @@ export function assembleAtlasKnowledge(inputValue: unknown) {
     knowledge_id: rootId, parent_id: null, kind: "visualization" as const,
     child_ids: moduleNodes.map(({ knowledge_id }) => knowledge_id),
     display_name: "Main Workflow",
-    evidence_ids: unique(moduleItems.flatMap(({ fact }) => fact.evidence_ids)),
+    evidence_ids: unique([...moduleItems.flatMap(({ fact }) => fact.evidence_ids),
+      ...rootEdges.flatMap(({ evidence_ids }) => evidence_ids)]),
     support_status: rootEdges.length ? "supported" as const : "partial" as const,
     permanently_visible: true,
     visualization: { graph_type_id: rootGraphType,
@@ -144,6 +145,18 @@ function edge(fact: Fact, from: string, to: string) {
     to_graph_node_id: to, relationship_kind: relationship.replaceAll("-", "_"),
     display_label: relationship.replaceAll("_", " "), evidence_ids: fact.evidence_ids,
     confidence: fact.confidence };
+}
+function deduplicateEdges<T extends ReturnType<typeof edge>>(edges: T[]): T[] {
+  const groups = new Map<string, T[]>();
+  for (const item of edges) {
+    const key = `${item.from_graph_node_id}\u0000${item.relationship_kind}\u0000${item.to_graph_node_id}`;
+    const group = groups.get(key) ?? []; group.push(item); groups.set(key, group);
+  }
+  return [...groups.entries()].map(([key, group]) => ({ ...group[0]!,
+    graph_edge_id: `atlas.graph-edge.${digest(key).slice(0, 16)}`,
+    evidence_ids: unique(group.flatMap(({ evidence_ids }) => evidence_ids)),
+    confidence: Math.max(...group.map(({ confidence }) => confidence)) } as T))
+    .sort((a, b) => a.graph_edge_id.localeCompare(b.graph_edge_id));
 }
 function capabilities() { return { interactive_required: true,
   capabilities: ["pan", "zoom", "select", "focus_relationships", "accessible_summary"] as const }; }

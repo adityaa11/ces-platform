@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { createHash, randomUUID } from "node:crypto";
-import { access, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { access, copyFile, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { basename, dirname, extname, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { assembleAtlasKnowledge } from "@company/ces-atlas-knowledge-assembly";
@@ -422,7 +422,7 @@ async function approveAtlasV2(options: Readonly<Record<string, string>>, io: Cli
   }
   const result = approveAtlasKnowledge({ proposal, decisions: decisionFile.decisions });
   const retained = await Promise.all([
-    "atlas-knowledge.json", "atlas-evidence.json", "atlas-diagnostics.json",
+    "atlas-knowledge.json", "atlas-evidence.json", "atlas-extraction.json", "atlas-diagnostics.json",
     "source-manifest.json", "run-manifest.json",
   ].map(async (name) => [name, await readFile(resolve(outputDirectory, name), "utf8")] as const));
   await publishAtlasArtifacts(outputDirectory, {
@@ -480,6 +480,7 @@ async function runAtlasV2(
       document_revision_id: source.document_revision.id, revision: 1,
       content_hash: originalHash, media_type: mediaType, original_name: basename(prdPath) }],
     source_units: [...source.source_units],
+    extraction_focus: "all" as const,
   };
   const extractionRun = await obtainAtlasV2Facts(options, extractionInput);
   const extraction = extractionRun.extraction;
@@ -512,6 +513,7 @@ async function runAtlasV2(
     status: "awaiting_human_review", project_id: projectId, revision: 1,
     knowledge_bundle_hash: semanticHash, source_content_hash: originalHash };
   await publishAtlasArtifacts(outputDirectory, {
+    "atlas-extraction.json": collectionCanonicalJson(extraction),
     "atlas-knowledge.json": collectionCanonicalJson(bundle),
     "atlas-evidence.json": collectionCanonicalJson({ schema_version: "2.0.0",
       project_id: projectId, revision: 1, evidence: extraction.evidence }),
@@ -524,8 +526,22 @@ async function runAtlasV2(
     "run-manifest.json": collectionCanonicalJson({ ...manifestBase,
       run_revision_hash: hashCanonical(manifestBase) }),
   });
+  if (mediaType === "application/pdf" && process.env.CES_ATLAS_PDF_ROOT) {
+    await stageAtlasPdf(prdPath, process.env.CES_ATLAS_PDF_ROOT, projectId, basename(prdPath));
+  }
   io.stdout(`Atlas V2 knowledge bundle written to ${outputDirectory}\n`);
   return 7;
+}
+
+async function stageAtlasPdf(source: string, configuredRoot: string, projectId: string,
+  originalName: string): Promise<void> {
+  const root = resolve(configuredRoot); const project = resolve(root, projectId);
+  const target = resolve(project, basename(originalName));
+  if (relative(root, project).startsWith("..") || relative(project, target).startsWith("..")) {
+    throw new CliInputError("Atlas PDF storage path is unsafe");
+  }
+  await mkdir(project, { recursive: true });
+  await copyFile(resolve(source), target);
 }
 
 interface ExtractionScopeDiagnostic {
@@ -536,6 +552,8 @@ interface ExtractionScopeDiagnostic {
   readonly attempts: number;
   readonly disposition: "facts_extracted" | "context_only" | "unsupported" | "failed";
   readonly fact_count: number;
+  readonly rejected_count?: number;
+  readonly rejection_codes?: readonly string[];
   readonly rejection_code?: string;
 }
 
@@ -551,38 +569,85 @@ async function obtainAtlasV2Facts(options: Readonly<Record<string, string>>,
       kind: "document", section_path: [],
       source_unit_ids: input.source_units.map(({ id }) => id), attempts: 1,
       disposition: extraction.facts.length ? "facts_extracted" : "unsupported",
-      fact_count: extraction.facts.length }] };
+      fact_count: extraction.facts.length, rejected_count: extraction.rejections.length,
+      rejection_codes: [...new Set(extraction.rejections.map(({ reason_code }) => reason_code))].sort() }] };
   }
   const scopes = buildExtractionScopes(input);
   const outputs: ReturnType<typeof finalizeSemanticFacts>[] = [];
   const diagnostics: ExtractionScopeDiagnostic[] = [];
-  for (const scope of scopes) {
-    let attempts = 0;
-    let lastFailure: { code: string; message: string } | undefined;
-    while (attempts < 2) {
-      attempts += 1;
-      try {
-        const extraction = await requestAtlasScope(options, { ...input,
-          source_units: scope.source_units });
-        outputs.push(extraction);
-        diagnostics.push({ scope_id: scope.scope_id, kind: scope.kind,
-          section_path: scope.section_path,
-          source_unit_ids: scope.source_units.map(({ id }) => id), attempts,
-          disposition: extraction.facts.length ? "facts_extracted"
-            : scope.kind === "document" ? "context_only" : "unsupported",
-          fact_count: extraction.facts.length });
-        lastFailure = undefined;
-        break;
-      } catch (caught) {
-        lastFailure = atlasProviderFailure(caught);
-        if (!lastFailure.code.startsWith("HTTP_422") && !lastFailure.code.startsWith("HTTP_502")) break;
-      }
+  for (let offset = 0; offset < scopes.length; offset += 3) {
+    const batch = await Promise.all(scopes.slice(offset, offset + 3).map((scope) =>
+      extractAtlasScope(options, input, scope)));
+    for (const result of batch) {
+      if (result.extraction) outputs.push(result.extraction);
+      diagnostics.push(result.diagnostic);
     }
-    if (lastFailure) diagnostics.push({ scope_id: scope.scope_id, kind: scope.kind,
-      section_path: scope.section_path, source_unit_ids: scope.source_units.map(({ id }) => id),
-      attempts, disposition: "failed", fact_count: 0, rejection_code: lastFailure.code });
   }
-  return { extraction: mergeAtlasExtractions(input.project_id, outputs), scopes: diagnostics };
+  return { extraction: mergeAtlasExtractions(input.project_id, outputs),
+    scopes: diagnostics.sort((a, b) => a.scope_id.localeCompare(b.scope_id)) };
+}
+
+async function extractAtlasScope(options: Readonly<Record<string, string>>,
+  input: SemanticFactExtractionInput, scope: ReturnType<typeof buildExtractionScopes>[number]) {
+  let attempts = 0;
+  let lastFailure: { code: string; message: string } | undefined;
+  while (attempts < 2) {
+    attempts += 1;
+    try {
+      const rawExtraction = await requestAtlasScope(options, { ...input,
+        source_units: scope.source_units,
+        extraction_focus: scope.kind === "cross_section"
+          ? attempts > 1 ? "relationships_retry" : "relationships" : "all" });
+      const extraction = ensureSectionModule(input, scope, rawExtraction);
+      if (scope.kind === "cross_section" && extraction.facts.length === 0
+        && extraction.rejections.length > 0) {
+        lastFailure = { code: "HTTP_422:INVALID_AGENT_RESULT:semantic-grounding:rejected-candidates",
+          message: "Relationship candidates failed exact grounding." };
+        continue;
+      }
+      return { extraction, diagnostic: { scope_id: scope.scope_id, kind: scope.kind,
+        section_path: scope.section_path,
+        source_unit_ids: scope.source_units.map(({ id }) => id), attempts,
+        disposition: extraction.facts.length ? "facts_extracted" as const
+          : extraction.rejections.length ? "failed" as const
+            : scope.kind === "document" ? "context_only" as const : "unsupported" as const,
+        fact_count: extraction.facts.length, rejected_count: extraction.rejections.length,
+        rejection_codes: [...new Set(extraction.rejections.map(({ reason_code }) => reason_code))].sort()
+      } satisfies ExtractionScopeDiagnostic };
+    } catch (caught) {
+      lastFailure = atlasProviderFailure(caught);
+      if (!lastFailure.code.startsWith("HTTP_422") && !lastFailure.code.startsWith("HTTP_502")) break;
+    }
+  }
+  return { extraction: undefined, diagnostic: { scope_id: scope.scope_id, kind: scope.kind,
+    section_path: scope.section_path, source_unit_ids: scope.source_units.map(({ id }) => id),
+    attempts, disposition: "failed" as const, fact_count: 0,
+    rejection_code: lastFailure?.code ?? "INVALID_RESPONSE" } satisfies ExtractionScopeDiagnostic };
+}
+
+function ensureSectionModule(input: SemanticFactExtractionInput,
+  scope: ReturnType<typeof buildExtractionScopes>[number],
+  extraction: ReturnType<typeof finalizeSemanticFacts>): ReturnType<typeof finalizeSemanticFacts> {
+  if (scope.kind === "document") return SemanticFactExtractionOutputSchema.parse({ ...extraction,
+    facts: extraction.facts.filter(({ kind }) => kind !== "module") });
+  if (scope.kind !== "section") return extraction;
+  const moduleBearing = new Set(["activity", "activity_order", "decision", "condition", "outcome",
+    "business_rule", "state", "state_transition", "entity", "entity_relationship", "dependency",
+    "event", "permission", "validation", "audit_action"]);
+  if (!extraction.facts.some(({ kind }) => moduleBearing.has(kind))) return extraction;
+  const heading = scope.source_units.find(({ kind }) => kind === "heading");
+  if (!heading) return extraction;
+  const sectionFacts = SemanticFactExtractionOutputSchema.parse({ ...extraction,
+    facts: extraction.facts.filter(({ kind }) => kind !== "module") });
+  const inferred = finalizeSemanticFacts({ ...input, source_units: scope.source_units }, {
+    schema_version: "2.0.0", facts: [{
+      candidate_id: stableId(`${input.project_id}.candidate.module.${heading.id}`),
+      kind: "module", exact_statement: heading.text, source_unit_ids: [heading.id],
+      terms: [], confidence: 1,
+      uncertainty: "Module classification derived from an evidenced semantic section.",
+    }],
+  });
+  return mergeAtlasExtractions(input.project_id, [sectionFacts, inferred]);
 }
 
 interface AtlasCoverage {
@@ -635,6 +700,10 @@ function assessAtlasCoverage(input: {
         issues.push({ code: "isolated_workflow_module", subject_id: node.knowledge_id ?? node.graph_node_id });
       }
     }
+    if (root?.kind === "visualization" && root.visualization.nodes.length > 1
+      && root.visualization.edges.length === 0) {
+      issues.push({ code: "project_relationships_missing", subject_id: root.knowledge_id });
+    }
     for (const node of input.bundle.knowledge_nodes.filter((item) =>
       item.parent_id !== null && item.evidence_ids.length === 0)) {
       issues.push({ code: "knowledge_evidence_missing", subject_id: node.knowledge_id });
@@ -678,7 +747,9 @@ async function publishIncompleteAtlasRun(input: {
 async function requestAtlasScope(options: Readonly<Record<string, string>>,
   input: SemanticFactExtractionInput): Promise<ReturnType<typeof finalizeSemanticFacts>> {
   const configured = new URL(requireOption(options, "provider-endpoint"));
-  configured.pathname = "/v1/agents/atlas.semantic-fact-extractor/execute";
+  configured.pathname = input.extraction_focus === "all"
+    ? "/v1/agents/atlas.semantic-fact-extractor/execute"
+    : "/v1/agents/atlas.project-relationship-extractor/execute";
   configured.search = "";
   const credential = process.env.CES_ATLAS_API_KEY ?? process.env.AGENTS_BRIDGE_API_KEY;
   const response = await fetch(configured, { method: "POST", headers: {
@@ -701,16 +772,29 @@ function buildExtractionScopes(input: SemanticFactExtractionInput): readonly {
   const scopes: {
     scope_id: string; kind: ExtractionScopeDiagnostic["kind"]; section_path: readonly string[];
     source_units: SemanticFactExtractionInput["source_units"];
-  }[] = [...bySection.entries()].map(([section, source_units], index) => ({
-    scope_id: `${input.project_id}.scope.${section ? "section" : "document"}.${String(index + 1).padStart(3, "0")}`,
-    kind: section ? "section" as const : "document" as const,
-    section_path: section ? [section] : [], source_units,
-  }));
-  const crossCandidates = input.source_units.filter((unit) => unit.kind !== "caption");
-  const size = 24;
-  for (let offset = 0; offset < crossCandidates.length; offset += size) {
-    const source_units = crossCandidates.slice(offset, offset + size);
-    if (new Set(source_units.flatMap(({ section_path }) => section_path.slice(0, 1))).size < 2) continue;
+  }[] = [];
+  let scopeNumber = 0;
+  for (const [section, units] of bySection) {
+    const heading = units.find(({ kind }) => kind === "heading");
+    const content = units.filter(({ id }) => id !== heading?.id);
+    const size = heading ? 23 : 24;
+    for (let offset = 0; offset < Math.max(1, content.length); offset += size) {
+      scopeNumber += 1;
+      scopes.push({
+        scope_id: `${input.project_id}.scope.${section ? "section" : "document"}.${String(scopeNumber).padStart(3, "0")}`,
+        kind: section ? "section" : "document", section_path: section ? [section] : [],
+        source_units: [...(heading ? [heading] : []), ...content.slice(offset, offset + size)]
+          .sort((a, b) => a.order - b.order),
+      });
+    }
+  }
+  const headings = input.source_units.filter(({ kind }) => kind === "heading");
+  const relationshipEvidence = input.source_units.filter(({ kind }) =>
+    kind !== "heading" && kind !== "caption");
+  const size = Math.max(1, 40 - headings.length);
+  for (let offset = 0; offset < relationshipEvidence.length; offset += size) {
+    const source_units = [...headings, ...relationshipEvidence.slice(offset, offset + size)]
+      .sort((a, b) => a.order - b.order);
     scopes.push({ scope_id: `${input.project_id}.scope.cross.${String(offset / size + 1).padStart(3, "0")}`,
       kind: "cross_section", section_path: [], source_units });
   }
@@ -722,21 +806,27 @@ function mergeAtlasExtractions(projectId: string,
   const facts = new Map(outputs.flatMap(({ facts }) => facts).map((fact) => [fact.fact_id, fact]));
   const evidence = new Map(outputs.flatMap((output) => output.evidence)
     .map((item) => [item.evidence_id, item]));
+  const rejections = new Map(outputs.flatMap((output) => output.rejections)
+    .map((item) => [`${item.candidate_id}:${item.reason_code}`, item]));
   return SemanticFactExtractionOutputSchema.parse({ schema_version: "2.0.0", project_id: projectId,
     facts: [...facts.values()].sort((a, b) => a.fact_id.localeCompare(b.fact_id)),
-    evidence: [...evidence.values()].sort((a, b) => a.evidence_id.localeCompare(b.evidence_id)) });
+    evidence: [...evidence.values()].sort((a, b) => a.evidence_id.localeCompare(b.evidence_id)),
+    rejections: [...rejections.values()].sort((a, b) => a.candidate_id.localeCompare(b.candidate_id)
+      || a.reason_code.localeCompare(b.reason_code)) });
 }
 
 function safeProviderError(body: string): string {
   try {
-    const value = JSON.parse(body) as { error?: { code?: unknown } };
-    return typeof value.error?.code === "string" ? value.error.code : "provider_error";
+    const value = JSON.parse(body) as { error?: { code?: unknown; diagnostic_stage?: unknown } };
+    if (typeof value.error?.code !== "string") return "provider_error";
+    return typeof value.error.diagnostic_stage === "string"
+      ? `${value.error.code}:${value.error.diagnostic_stage}` : value.error.code;
   } catch { return "provider_error"; }
 }
 
 function atlasProviderFailure(caught: unknown): { code: string; message: string } {
   const message = caught instanceof Error ? caught.message : "provider_error";
-  return { code: /^HTTP_\d+:[a-z0-9_-]+$/iu.test(message) ? message : "INVALID_RESPONSE",
+  return { code: /^HTTP_\d+:[a-z0-9_:-]+$/iu.test(message) ? message : "INVALID_RESPONSE",
     message: "The bounded extraction scope failed validation." };
 }
 

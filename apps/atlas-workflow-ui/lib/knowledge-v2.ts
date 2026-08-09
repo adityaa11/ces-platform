@@ -1,11 +1,16 @@
 import { readFile, stat } from "node:fs/promises";
-import { basename, relative, resolve } from "node:path";
+import { basename, isAbsolute, relative, resolve } from "node:path";
 import { AtlasKnowledgeBundleSchema, knowledgeBreadcrumb } from "@company/ces-atlas-knowledge-contracts";
 
 const Id = /^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u;
 export function atlasArtifactRoot(): string {
-  return resolve(process.env.CES_ATLAS_ARTIFACT_ROOT
-    ?? resolve(/* turbopackIgnore: true */ process.cwd(), "../../.ces/generated"));
+  const configured = process.env.CES_ATLAS_ARTIFACT_ROOT;
+  return configured ? resolveAtlasConfiguredPath(configured)
+    : resolve(/* turbopackIgnore: true */ process.cwd(), "../../.ces/generated");
+}
+export function resolveAtlasConfiguredPath(value: string, cwd = process.cwd(),
+  invocationRoot = process.env.INIT_CWD): string {
+  return isAbsolute(value) ? resolve(value) : resolve(invocationRoot ?? cwd, value);
 }
 export function assertAtlasId(value: string, label: string): void {
   if (!Id.test(value)) throw new Error(`Invalid Atlas ${label}`);
@@ -74,7 +79,7 @@ export async function resolvePdfDocument(input: { artifactRoot: string; pdfRoot?
     throw new Error("Atlas PDF revision is unavailable");
   const configured = input.pdfRoot ?? process.env.CES_ATLAS_PDF_ROOT;
   if (!configured) throw new Error("Atlas PDF storage is unavailable");
-  const base = resolve(configured); const project = resolve(base, input.projectId);
+  const base = resolveAtlasConfiguredPath(configured); const project = resolve(base, input.projectId);
   const path = resolve(project, basename(document.original_name));
   if (relative(base, path).startsWith("..") || relative(project, path).startsWith(".."))
     throw new Error("Unsafe Atlas PDF path");

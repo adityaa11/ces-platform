@@ -48,7 +48,7 @@ describe("Atlas V2 CLI", () => {
       expect(await runCli(args, { stdout: () => undefined, stderr: () => undefined })).toBe(7);
       const first = await readFile(join(output, "run-manifest.json"), "utf8");
       expect((await readdir(output)).sort()).toEqual(["atlas-diagnostics.json",
-        "atlas-evidence.json", "atlas-knowledge.json", "run-manifest.json",
+        "atlas-evidence.json", "atlas-extraction.json", "atlas-knowledge.json", "run-manifest.json",
         "source-manifest.json"]);
       expect(await runCli(args, { stdout: () => undefined, stderr: () => undefined })).toBe(7);
       expect(await readFile(join(output, "run-manifest.json"), "utf8")).toBe(first);
@@ -72,6 +72,7 @@ describe("Atlas V2 CLI", () => {
         { stdout: () => undefined, stderr: () => undefined })).toBe(0);
       expect((await readdir(output)).sort()).toEqual(["atlas-approval-audit.json",
         "atlas-approved-knowledge.json", "atlas-diagnostics.json", "atlas-evidence.json",
+        "atlas-extraction.json",
         "atlas-knowledge.json", "run-manifest.json", "source-manifest.json"]);
       expect(JSON.parse(await readFile(join(output, "atlas-approved-knowledge.json"), "utf8"))
         .authority.lifecycle).toBe("approved");

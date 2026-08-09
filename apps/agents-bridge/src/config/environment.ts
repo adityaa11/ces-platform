@@ -69,6 +69,7 @@ export function runtimeConfigFromEnvironment(
         audit_identity: "Atlas CLI",
         allowed_agents: [
           "atlas.semantic-fact-extractor",
+          "atlas.project-relationship-extractor",
         ],
         allowed_routes: ["/v1/agents/:agentId/execute"],
         max_concurrency: integer(environment.CLIENT_MAX_CONCURRENCY, 4),

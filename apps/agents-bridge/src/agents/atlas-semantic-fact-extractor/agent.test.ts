@@ -9,6 +9,7 @@ describe("Atlas V2 semantic fact registered agent", () => {
     expect(agent.version).toBe("2.0.0");
     expect(agent.execution_policy.requires_human_review).toBe(true);
     const source = agent.buildExecutionRequest({ schema_version: "2.0.0", project_id: "project",
+      extraction_focus: "all",
       documents: [{ document_id: "project.document", document_revision_id: "project.revision",
         revision: 1, content_hash: `sha256:${"a".repeat(64)}`, media_type: "application/pdf",
         original_name: "PRD.pdf" }], source_units: [{ schema_version: "1.1.0",

@@ -1,6 +1,6 @@
 # CES-GF-ATLAS-V2-010F - Live Provider and Production UI Qualification
 
-**Status:** Planned
+**Status:** In Progress — Safara live qualification passed; unrelated live PDFs pending
 **Depends on:** ATLAS-V2-010E
 
 ## Outcome
@@ -51,3 +51,27 @@ only curated provider-result fixtures.
 - A human manual review confirms the production UI against all three documents.
 - Synthetic fixtures remain supporting unit tests and are not accepted as sole
   completion evidence.
+
+## Qualification Evidence So Far
+
+- The configured live Gemini provider processed the complete seven-page Safara
+  PDF through nineteen bounded scopes.
+- The published proposal contains exactly nine source-worded module headings,
+  twenty-one deduplicated project relationships, nineteen applicable supporting
+  graphs, ninety-seven evidence records, and evidence coverage across all seven
+  pages. It remains proposed and awaiting human review.
+- The production Next.js build passes. API-layer qualification confirms that
+  `Main Workflow` remains the breadcrumb root, a selected module exposes its
+  supporting children below it, nested breadcrumbs remain valid, evidence is
+  selectable, and the staged original PDF revision resolves successfully.
+- The UI now provides clickable breadcrumbs and graph-node/edge evidence
+  synchronization while preserving the permanent Main Workflow.
+
+## Remaining Before Completion
+
+- Run the same live path with one unrelated workflow-oriented PDF.
+- Run the same live path with one unrelated non-workflow PDF and confirm that it
+  is not forced into a business workflow.
+- Complete human production-UI review for all three documents. The repository
+  currently contains only the Safara qualification PDF, so this ticket must not
+  be marked completed yet.

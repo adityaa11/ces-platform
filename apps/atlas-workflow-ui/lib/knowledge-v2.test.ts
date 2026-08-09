@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { authorizeAtlasRequest, parseByteRange, readKnowledgeNode,
-  resolvePdfDocument } from "./knowledge-v2";
+  resolveAtlasConfiguredPath, resolvePdfDocument } from "./knowledge-v2";
 
 function fixture() {
   const evidence = { evidence_id: "sample.evidence.one", exact_text: "Orders", language: "en",
@@ -32,6 +32,12 @@ function fixture() {
           label_origin: "original_document", evidence_ids: [evidence.evidence_id] }] } }, module] };
 }
 describe("Atlas V2 knowledge API backing", () => {
+  it("resolves env-file paths from the pnpm invocation root", () => {
+    expect(resolveAtlasConfiguredPath(".ces/generated", "C:/repo/apps/atlas-workflow-ui",
+      "C:/repo").replaceAll("\\", "/")).toBe("C:/repo/.ces/generated");
+    expect(resolveAtlasConfiguredPath("C:/atlas/generated", "C:/repo/apps", "C:/repo")
+      .replaceAll("\\", "/")).toBe("C:/atlas/generated");
+  });
   it("returns recursive context and rejects stale revisions", async () => {
     const root = await mkdtemp(join(tmpdir(), "atlas-api-"));
     try { await mkdir(join(root, "sample"));

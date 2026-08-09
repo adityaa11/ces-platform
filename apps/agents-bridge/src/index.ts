@@ -9,3 +9,4 @@ export * from "./providers/gemini/provider.js";
 export * from "./operations/telemetry.js";
 export * from "./main.js";
 export * from "./agents/atlas-semantic-fact-extractor/agent.js";
+export * from "./agents/atlas-project-relationship-extractor/agent.js";

@@ -34,6 +34,7 @@ export const SemanticFactExtractionInputSchema = z.object({
   project_id: Id,
   documents: z.array(DocumentInputSchema).min(1),
   source_units: z.array(SourceUnitSchema).min(1),
+  extraction_focus: z.enum(["all", "relationships", "relationships_retry"]).default("all"),
 }).strict().superRefine((input, context) => {
   const revisions = new Set(input.documents.map(({ document_revision_id }) =>
     document_revision_id));
@@ -72,6 +73,9 @@ export const SemanticFactExtractionOutputSchema = z.object({
   project_id: Id,
   facts: z.array(SemanticFactSchema),
   evidence: z.array(AtlasEvidenceSchema),
+  rejections: z.array(z.object({ candidate_id: Id,
+    reason_code: z.enum(["unknown_source_unit", "non_exact_statement", "non_exact_term",
+      "duplicate_fact", "invalid_candidate"]) }).strict()).default([]),
 }).strict();
 
 export function finalizeSemanticFacts(inputValue: unknown, resultValue: unknown):
@@ -82,17 +86,20 @@ z.infer<typeof SemanticFactExtractionOutputSchema> {
   const documents = new Map(input.documents.map((document) =>
     [document.document_revision_id, document]));
   const evidence = new Map<string, z.infer<typeof AtlasEvidenceSchema>>();
-  const facts = result.facts.map((candidate) => {
+  const rejections: { candidate_id: string; reason_code: "unknown_source_unit" |
+    "non_exact_statement" | "non_exact_term" | "duplicate_fact" | "invalid_candidate" }[] = [];
+  const facts = result.facts.flatMap((candidate) => {
+    try {
     const cited = candidate.source_unit_ids.map((id) => {
       const unit = units.get(id);
       if (!unit) throw new Error(`Semantic fact references unknown source unit ${id}`);
       return unit;
     });
-    if (!cited.some(({ exact_text }) => exact_text.includes(candidate.exact_statement))) {
+    if (!containsExactWordingAcross(cited, candidate.exact_statement)) {
       throw new Error(`Semantic fact ${candidate.candidate_id} does not preserve an exact source quote`);
     }
     for (const term of candidate.terms) {
-      if (!cited.some(({ exact_text }) => exact_text.includes(term.exact_text))) {
+      if (!cited.some(({ exact_text }) => containsExactWording(exact_text, term.exact_text))) {
         throw new Error(`Semantic fact term ${term.role_id} is not present in cited source text`);
       }
     }
@@ -136,7 +143,7 @@ z.infer<typeof SemanticFactExtractionOutputSchema> {
         .sort((left, right) => left.role_id.localeCompare(right.role_id)
           || left.exact_text.localeCompare(right.exact_text)) };
     const { candidate_id: _candidateId, ...semantic } = candidate;
-    return SemanticFactSchema.parse({
+    return [SemanticFactSchema.parse({
       ...semantic,
       fact_id: `${input.project_id}.fact.${stable(identity).slice(0, 16)}`,
       evidence_ids: [...new Set(evidenceIds)].sort(),
@@ -144,18 +151,49 @@ z.infer<typeof SemanticFactExtractionOutputSchema> {
         section_path.length ? [section_path.join(" > ")] : []))].sort(),
       equivalence_status: candidate.proposed_equivalence_key
         ? "pending_review" : "not_proposed",
-    });
+    })];
+    } catch (caught) {
+      rejections.push({ candidate_id: candidate.candidate_id,
+        reason_code: semanticRejectionCode(caught) });
+      return [];
+    }
   }).sort((left, right) => left.fact_id.localeCompare(right.fact_id));
-  if (new Set(facts.map(({ fact_id }) => fact_id)).size !== facts.length) {
-    throw new Error("Duplicate semantic facts are not allowed");
-  }
+  const uniqueFacts = facts.filter((fact, index) => {
+    const duplicate = facts.findIndex(({ fact_id }) => fact_id === fact.fact_id) !== index;
+    if (duplicate) rejections.push({ candidate_id: fact.fact_id, reason_code: "duplicate_fact" });
+    return !duplicate;
+  });
   return SemanticFactExtractionOutputSchema.parse({
     schema_version: ATLAS_SEMANTIC_FACT_VERSION,
     project_id: input.project_id,
-    facts,
+    facts: uniqueFacts,
     evidence: [...evidence.values()].sort((left, right) =>
       left.evidence_id.localeCompare(right.evidence_id)),
+    rejections: rejections.sort((left, right) => left.candidate_id.localeCompare(right.candidate_id)
+      || left.reason_code.localeCompare(right.reason_code)),
   });
+}
+
+function semanticRejectionCode(caught: unknown): "unknown_source_unit" |
+"non_exact_statement" | "non_exact_term" | "invalid_candidate" {
+  const message = caught instanceof Error ? caught.message : "";
+  if (message.includes("unknown source unit")) return "unknown_source_unit";
+  if (message.includes("exact source quote")) return "non_exact_statement";
+  if (message.includes("not present in cited source text")) return "non_exact_term";
+  return "invalid_candidate";
+}
+
+function containsExactWording(source: string, candidate: string): boolean {
+  const normalizeLayoutWhitespace = (value: string) => value.replace(/\s+/gu, " ").trim();
+  return normalizeLayoutWhitespace(source).includes(normalizeLayoutWhitespace(candidate));
+}
+
+function containsExactWordingAcross(cited: readonly { exact_text: string; order: number }[],
+  candidate: string): boolean {
+  if (cited.some(({ exact_text }) => containsExactWording(exact_text, candidate))) return true;
+  const ordered = [...cited].sort((left, right) => left.order - right.order)
+    .map(({ exact_text }) => exact_text).join(" ");
+  return containsExactWording(ordered, candidate);
 }
 
 function stable(value: unknown): string {

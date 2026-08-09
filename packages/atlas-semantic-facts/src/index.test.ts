@@ -55,16 +55,21 @@ describe("Atlas semantic fact extraction", () => {
   it("rejects paraphrases and source-free terms", () => {
     const source = unit({ id: "project.source.rule", text: "Only managers may cancel orders.",
       sourceKind: "pdf_text" });
-    expect(() => finalizeSemanticFacts(input(source), { schema_version: "2.0.0", facts: [{
+    const paraphrase = finalizeSemanticFacts(input(source), { schema_version: "2.0.0", facts: [{
       candidate_id: "candidate.paraphrase", kind: "permission",
       exact_statement: "Managers can cancel an order.", source_unit_ids: [source.id],
       confidence: 1, terms: [{ role_id: "actor", exact_text: "managers" }],
-    }] })).toThrow(/exact source quote/u);
-    expect(() => finalizeSemanticFacts(input(source), { schema_version: "2.0.0", facts: [{
+    }] });
+    expect(paraphrase.facts).toEqual([]);
+    expect(paraphrase.rejections).toEqual([{ candidate_id: "candidate.paraphrase",
+      reason_code: "non_exact_statement" }]);
+    const missingTerm = finalizeSemanticFacts(input(source), { schema_version: "2.0.0", facts: [{
       candidate_id: "candidate.rule", kind: "permission",
       exact_statement: source.exact_text, source_unit_ids: [source.id],
       confidence: 1, terms: [{ role_id: "actor", exact_text: "Administrators" }],
-    }] })).toThrow(/not present in cited source text/u);
+    }] });
+    expect(missingTerm.facts).toEqual([]);
+    expect(missingTerm.rejections[0]?.reason_code).toBe("non_exact_term");
   });
 
   it("gives distinct identities to different relationships from one exact sentence", () => {
@@ -82,5 +87,35 @@ describe("Atlas semantic fact extraction", () => {
     }] });
     expect(output.facts).toHaveLength(2);
     expect(new Set(output.facts.map(({ fact_id }) => fact_id)).size).toBe(2);
+  });
+
+  it("accepts exact wording split only by PDF layout whitespace", () => {
+    const source = unit({ id: "project.source.wrapped",
+      text: "Registration creates an invoice\nand records its status.", sourceKind: "pdf_text" });
+    const output = finalizeSemanticFacts(input(source), { schema_version: "2.0.0", facts: [{
+      candidate_id: "candidate.wrapped", kind: "activity",
+      exact_statement: "Registration creates an invoice and records its status.",
+      source_unit_ids: [source.id], confidence: 1,
+      terms: [{ role_id: "activity", exact_text: "creates an invoice" }],
+    }] });
+    expect(output.facts[0]?.exact_statement)
+      .toBe("Registration creates an invoice and records its status.");
+    expect(output.evidence[0]?.exact_text)
+      .toBe("Registration creates an invoice\nand records its status.");
+  });
+
+  it("accepts verbatim relationship wording across ordered cited units", () => {
+    const first = unit({ id: "project.source.first", text: "Create Registration.",
+      sourceKind: "pdf_text" });
+    const second = { ...unit({ id: "project.source.second", text: "Generate Invoice.",
+      sourceKind: "pdf_text" }), order: 1 };
+    const output = finalizeSemanticFacts({ ...input(first), source_units: [first, second] },
+      { schema_version: "2.0.0", facts: [{ candidate_id: "candidate.sequence",
+        kind: "activity_order", exact_statement: "Create Registration. Generate Invoice.",
+        source_unit_ids: [first.id, second.id], confidence: 1,
+        terms: [{ role_id: "source", exact_text: "Registration" },
+          { role_id: "target", exact_text: "Invoice" }] }] });
+    expect(output.facts).toHaveLength(1);
+    expect(output.rejections).toEqual([]);
   });
 });

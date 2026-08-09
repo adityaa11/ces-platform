@@ -263,7 +263,9 @@ async function withAbort<T>(promise: Promise<T>, signal: AbortSignal): Promise<T
 
 function errorResponse(caught: unknown, requestId: string): BridgeResponse {
   if (caught instanceof BridgeExecutionError) {
-    return json(caught.status, { error: { code: caught.code, message: caught.message, request_id: requestId } });
+    return json(caught.status, { error: { code: caught.code, message: caught.message,
+      request_id: requestId,
+      ...(caught.diagnostic_stage ? { diagnostic_stage: caught.diagnostic_stage } : {}) } });
   }
   return json(500, {
     error: { code: "INTERNAL_ERROR", message: "The bridge request failed.", request_id: requestId },

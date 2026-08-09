@@ -404,7 +404,16 @@ function mechanicalBlocks(
     }
   });
   flush(lines.length);
-  return blocks;
+  return paragraphMode === "pdf_structural" ? blocks.flatMap(splitStructuralParagraph) : blocks;
+}
+
+function splitStructuralParagraph(block: Block): Block[] {
+  if (block.kind !== "paragraph") return [block];
+  const sentences = [...block.exactText.matchAll(/[^.!?]+(?:[.!?]+(?=\s|$)|$)/gu)]
+    .map(({ 0: value }) => value.trim()).filter(Boolean);
+  if (sentences.length <= 1) return [block];
+  return sentences.map((exactText) => ({ ...block, exactText,
+    text: exactText.replace(/\s+/gu, " ").trim() }));
 }
 
 function structuralHeadingLines(lines: readonly string[]): Set<number> {
