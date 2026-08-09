@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AtlasKnowledgeBundleSchema, knowledgeBreadcrumb } from "./index.js";
+import { AtlasKnowledgeBundleSchema, AtlasSemanticModelSchema, knowledgeBreadcrumb } from "./index.js";
 
 const hash = `sha256:${"a".repeat(64)}`;
 const evidence = {
@@ -71,5 +71,27 @@ describe("Atlas recursive knowledge contract", () => {
         reason: "ocr_coordinates_unreliable" } } }] })).toThrow();
     expect(() => AtlasKnowledgeBundleSchema.parse({ ...bundle,
       knowledge_nodes: [root, { ...module, child_ids: [root.knowledge_id] }, content] })).toThrow();
+  });
+
+  it("validates graph-neutral recursive semantic concepts and relationships", () => {
+    const concepts = [{ concept_id: "project.concept.payment", parent_concept_id: null,
+      child_concept_ids: ["project.concept.verification"], semantic_kind: "module",
+      source_label: "Pembayaran", evidence_ids: [evidence.evidence_id], confidence: 1,
+      review_status: "unreviewed", decomposition_status: "decomposable" },
+    { concept_id: "project.concept.verification", parent_concept_id: "project.concept.payment",
+      child_concept_ids: [], semantic_kind: "action", source_label: "Verifikasi Pembayaran",
+      evidence_ids: [evidence.evidence_id], confidence: .95, review_status: "unreviewed",
+      decomposition_status: "atomic" }];
+    const parsed = AtlasSemanticModelSchema.parse({ concepts, relationships: [{
+      relationship_id: "project.relationship.contains", from_concept_id: concepts[0]!.concept_id,
+      to_concept_id: concepts[1]!.concept_id, relationship_kind: "contains",
+      display_label: "contains", evidence_ids: [evidence.evidence_id], confidence: .95,
+      review_status: "unreviewed" }] });
+    expect(parsed.concepts[1]?.source_label).toBe("Verifikasi Pembayaran");
+    expect(JSON.stringify(parsed)).not.toContain("graph_type");
+    expect(() => AtlasSemanticModelSchema.parse({ concepts: [
+      { ...concepts[0], parent_concept_id: concepts[1]!.concept_id },
+      { ...concepts[1], child_concept_ids: [concepts[0]!.concept_id] }], relationships: [] }))
+      .toThrow(/cycle/u);
   });
 });

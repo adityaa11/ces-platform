@@ -1,6 +1,6 @@
 # CES-GF-ATLAS-V2-011A - Semantic Decomposition Contract
 
-**Status:** Planned
+**Status:** Completed
 **Depends on:** ATLAS-V2-011
 
 ## Outcome
@@ -31,3 +31,10 @@ semantic knowledge before changing extraction or UI behavior.
 - The contract validates `graph node -> semantic concept -> source unit -> PDF
   page -> exact original text`, including confidence and review status.
 - Existing shallow module-to-visualization bundles fail the semantic-depth fixture.
+
+## Completion evidence
+
+- Added graph-neutral semantic concept, relationship, decomposition-status, and
+  semantic-model schemas with stable identity, source labels, evidence, confidence,
+  review state, ordered children, endpoint validation, reachability, and cycle gates.
+- Contract tests prove recursive semantic validation independently from graph types.

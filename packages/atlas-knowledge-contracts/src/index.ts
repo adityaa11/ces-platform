@@ -7,6 +7,86 @@ const Hash = z.string().regex(/^sha256:[0-9a-f]{64}$/u);
 const ExactText = z.string().min(1);
 const Confidence = z.number().min(0).max(1);
 
+export const AtlasSemanticKindSchema = z.enum([
+  "business_capability", "module", "concept", "actor", "entity", "input",
+  "action", "precondition", "state", "rule", "decision", "condition",
+  "outcome", "validation", "permission", "event", "dependency",
+]);
+
+export const AtlasDecompositionStatusSchema = z.enum([
+  "decomposable", "atomic", "context_only", "unsupported", "review_required",
+  "extraction_failed",
+]);
+
+export const AtlasSemanticConceptSchema = z.object({
+  concept_id: Id,
+  parent_concept_id: Id.nullable(),
+  child_concept_ids: z.array(Id),
+  semantic_kind: AtlasSemanticKindSchema,
+  source_label: ExactText,
+  evidence_ids: z.array(Id).min(1),
+  confidence: Confidence,
+  review_status: z.enum(["unreviewed", "accepted", "rejected"]),
+  decomposition_status: AtlasDecompositionStatusSchema,
+}).strict();
+
+export const AtlasSemanticRelationshipSchema = z.object({
+  relationship_id: Id,
+  from_concept_id: Id,
+  to_concept_id: Id,
+  relationship_kind: Id,
+  display_label: z.string().regex(/^[a-z][a-z0-9]*(?:[ -][a-z0-9]+)*$/u),
+  evidence_ids: z.array(Id).min(1),
+  confidence: Confidence,
+  review_status: z.enum(["unreviewed", "accepted", "rejected"]),
+}).strict();
+
+export const AtlasSemanticModelSchema = z.object({
+  concepts: z.array(AtlasSemanticConceptSchema),
+  relationships: z.array(AtlasSemanticRelationshipSchema),
+}).strict().superRefine((model, context) => {
+  const concepts = new Map(model.concepts.map((concept) => [concept.concept_id, concept]));
+  const issue = (message: string): void => context.addIssue({ code: "custom", message });
+  if (concepts.size !== model.concepts.length) issue("Semantic concept IDs must be unique");
+  for (const concept of model.concepts) {
+    if (new Set(concept.child_concept_ids).size !== concept.child_concept_ids.length) {
+      issue(`Semantic concept ${concept.concept_id} has duplicate children`);
+    }
+    if (concept.parent_concept_id && !concepts.has(concept.parent_concept_id)) {
+      issue(`Semantic concept ${concept.concept_id} has an unknown parent`);
+    }
+    if (concept.parent_concept_id &&
+        !concepts.get(concept.parent_concept_id)?.child_concept_ids.includes(concept.concept_id)) {
+      issue(`Semantic parent does not link to ${concept.concept_id}`);
+    }
+    for (const child of concept.child_concept_ids) {
+      if (concepts.get(child)?.parent_concept_id !== concept.concept_id) {
+        issue(`Semantic child ${child} does not link back to ${concept.concept_id}`);
+      }
+    }
+  }
+  for (const relationship of model.relationships) {
+    if (!concepts.has(relationship.from_concept_id) || !concepts.has(relationship.to_concept_id)) {
+      issue(`Semantic relationship ${relationship.relationship_id} has an unknown endpoint`);
+    }
+  }
+  const visiting = new Set<string>(); const visited = new Set<string>();
+  const visit = (id: string): void => {
+    if (visiting.has(id)) { issue(`Semantic hierarchy contains a cycle at ${id}`); return; }
+    if (visited.has(id)) return;
+    visiting.add(id);
+    for (const child of concepts.get(id)?.child_concept_ids ?? []) visit(child);
+    visiting.delete(id); visited.add(id);
+  };
+  const roots = model.concepts.filter(({ parent_concept_id }) => !parent_concept_id);
+  for (const concept of roots) {
+    visit(concept.concept_id);
+  }
+  for (const concept of model.concepts) visit(concept.concept_id);
+  if (model.concepts.length && roots.length === 0) issue("Semantic model requires a root concept");
+  if (visited.size !== concepts.size) issue("Every semantic concept must be reachable from a root concept");
+});
+
 export const AtlasNormalizedBoundingBoxSchema = z.object({
   x: z.number().min(0).max(1),
   y: z.number().min(0).max(1),
@@ -238,3 +318,6 @@ export function knowledgeBreadcrumb(bundleValue: unknown, knowledgeId: string): 
 export type AtlasKnowledgeBundle = z.infer<typeof AtlasKnowledgeBundleSchema>;
 export type AtlasKnowledgeNode = z.infer<typeof AtlasKnowledgeNodeSchema>;
 export type AtlasEvidence = z.infer<typeof AtlasEvidenceSchema>;
+export type AtlasSemanticConcept = z.infer<typeof AtlasSemanticConceptSchema>;
+export type AtlasSemanticRelationship = z.infer<typeof AtlasSemanticRelationshipSchema>;
+export type AtlasSemanticModel = z.infer<typeof AtlasSemanticModelSchema>;
