@@ -1,6 +1,6 @@
 # CES-GF-ATLAS-V2-010A - Emergency Change Audit and Live Diagnostics
 
-**Status:** Planned
+**Status:** Completed
 **Depends on:** ATLAS-V2-010
 
 ## Outcome
@@ -34,3 +34,15 @@ without exposing document contents, credentials, prompts, or hidden reasoning.
 - A failed live run leaves enough sanitized evidence to locate the failed stage.
 - Existing valid V2 fixture behavior remains deterministic.
 
+## Completion Evidence
+
+- Removed the unsafe whole-source substitution path; paraphrased statements
+  remain rejected at semantic grounding.
+- Retained and tested Gemini JSON Schema literal compatibility without changing
+  the semantic output contract.
+- Retained and tested stable identities that distinguish separate evidenced
+  relationships from the same exact statement.
+- Bridge logs expose bounded failure-stage reason codes without returning source
+  text, prompts, credentials, or provider reasoning.
+- Scope-level attempt and rejection diagnostics are completed with the bounded
+  extraction orchestration in ATLAS-V2-010C, where scope identities exist.

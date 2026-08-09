@@ -269,11 +269,13 @@ describe("Gemini structured-generation provider", () => {
     });
     expect(sanitizeJsonSchema({
       type: "object",
-      properties: { item: { type: "string", minLength: 1 } },
+      properties: { item: { type: "string", minLength: 1 },
+        schema_version: { type: "string", const: "2.0.0" } },
       patternProperties: {},
     })).toEqual({
       type: "object",
-      properties: { item: { type: "string" } },
+      properties: { item: { type: "string" },
+        schema_version: { type: "string", enum: ["2.0.0"] } },
     });
   });
 });

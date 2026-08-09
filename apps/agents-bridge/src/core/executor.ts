@@ -96,8 +96,18 @@ export async function executeRegisteredAgent(input: {
     return agent.output_schema.parse(transformed);
   } catch (caught) {
     if (caught instanceof BridgeExecutionError) throw caught;
-    throw new BridgeExecutionError(422, "INVALID_AGENT_RESULT", "The registered agent result is invalid.");
+    throw new BridgeExecutionError(422, "INVALID_AGENT_RESULT",
+      "The registered agent result is invalid.", semanticFailureStage(caught));
   }
+}
+
+function semanticFailureStage(caught: unknown): string {
+  const message = caught instanceof Error ? caught.message : "";
+  if (message.includes("unknown source unit")) return "semantic-grounding:unknown-source-unit";
+  if (message.includes("exact source quote")) return "semantic-grounding:non-exact-statement";
+  if (message.includes("is not present in cited source text")) return "semantic-grounding:non-exact-term";
+  if (message.includes("Duplicate semantic facts")) return "semantic-grounding:duplicate-fact";
+  return "semantic-grounding:invalid-result";
 }
 
 async function abortable<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {

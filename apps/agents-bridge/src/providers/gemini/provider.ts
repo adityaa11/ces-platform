@@ -181,7 +181,8 @@ function toGeminiRequest(request: StructuredGenerationRequest): unknown {
 export function sanitizeJsonSchema(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(sanitizeJsonSchema);
   if (value === null || typeof value !== "object") return value;
-  return Object.fromEntries(Object.entries(value)
+  const source = value as Record<string, unknown>;
+  const sanitized = Object.fromEntries(Object.entries(source)
     .filter(([key]) => supportedSchemaKeys.has(key))
     .map(([key, child]) => {
       if (key === "properties" || key === "$defs") {
@@ -192,6 +193,10 @@ export function sanitizeJsonSchema(value: unknown): unknown {
       }
       return [key, sanitizeJsonSchema(child)];
     }));
+  if ("const" in source && !("enum" in sanitized)) {
+    sanitized.enum = [sanitizeJsonSchema(source.const)];
+  }
+  return sanitized;
 }
 
 function parseGeminiResult<TOutput>(

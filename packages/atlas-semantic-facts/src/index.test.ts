@@ -56,9 +56,31 @@ describe("Atlas semantic fact extraction", () => {
     const source = unit({ id: "project.source.rule", text: "Only managers may cancel orders.",
       sourceKind: "pdf_text" });
     expect(() => finalizeSemanticFacts(input(source), { schema_version: "2.0.0", facts: [{
-      candidate_id: "candidate.rule", kind: "permission",
-      exact_statement: "Managers can delete purchases.", source_unit_ids: [source.id],
-      confidence: 1, terms: [{ role_id: "actor", exact_text: "Administrators" }],
+      candidate_id: "candidate.paraphrase", kind: "permission",
+      exact_statement: "Managers can cancel an order.", source_unit_ids: [source.id],
+      confidence: 1, terms: [{ role_id: "actor", exact_text: "managers" }],
     }] })).toThrow(/exact source quote/u);
+    expect(() => finalizeSemanticFacts(input(source), { schema_version: "2.0.0", facts: [{
+      candidate_id: "candidate.rule", kind: "permission",
+      exact_statement: source.exact_text, source_unit_ids: [source.id],
+      confidence: 1, terms: [{ role_id: "actor", exact_text: "Administrators" }],
+    }] })).toThrow(/not present in cited source text/u);
+  });
+
+  it("gives distinct identities to different relationships from one exact sentence", () => {
+    const source = unit({ id: "project.source.sequence",
+      text: "Registration creates Billing and requires Documents.", sourceKind: "pdf_text" });
+    const common = { kind: "activity_order" as const, exact_statement: source.exact_text,
+      source_unit_ids: [source.id], confidence: 1 };
+    const output = finalizeSemanticFacts(input(source), { schema_version: "2.0.0", facts: [{
+      ...common, candidate_id: "candidate.billing", relation_kind: "creates", terms: [
+        { role_id: "source", exact_text: "Registration" },
+        { role_id: "target", exact_text: "Billing" }],
+    }, { ...common, candidate_id: "candidate.documents", relation_kind: "requires", terms: [
+      { role_id: "source", exact_text: "Registration" },
+      { role_id: "target", exact_text: "Documents" }],
+    }] });
+    expect(output.facts).toHaveLength(2);
+    expect(new Set(output.facts.map(({ fact_id }) => fact_id)).size).toBe(2);
   });
 });
