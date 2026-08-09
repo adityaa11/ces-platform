@@ -1,6 +1,6 @@
 # CES-GF-ATLAS-V2-011D - Semantic Relationship Assembly
 
-**Status:** Planned
+**Status:** Completed
 **Depends on:** ATLAS-V2-011C
 
 ## Outcome
@@ -23,3 +23,12 @@ model data rather than renderer-created graph edges.
 - Every relationship has exact evidence and deterministic identity.
 - Same-meaning multilingual concepts are not duplicated without evidence.
 - No edge is created merely because it is typical for the domain.
+
+## Completion evidence
+
+- Relationship facts now resolve into deterministic semantic relationships with
+  canonical concept endpoints, evidence, confidence, review state, and controlled
+  English display labels.
+- Equivalent resolved relationships merge evidence without merging distinct kinds.
+- Missing or ambiguous endpoints publish explicit review-required candidates;
+  assembly never guesses an endpoint to make a graph look complete.

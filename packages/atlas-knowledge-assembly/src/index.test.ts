@@ -60,8 +60,20 @@ describe("recursive Atlas knowledge assembly", () => {
     expect(owner.child_ids).not.toContain(decision.knowledge_id);
     expect(result.semantic_model.concepts.some(({ semantic_kind }) => semantic_kind === "condition"))
       .toBe(true);
+    expect(result.semantic_model.relationships).toContainEqual(expect.objectContaining({
+      relationship_kind: "activity_order", evidence_ids: ["sample.evidence.order"] }));
     expect(knowledgeBreadcrumb(result, decision.knowledge_id)).toEqual([
       result.root_knowledge_id, decision.parent_id, decision.knowledge_id]);
+  });
+
+  it("publishes unresolved relationship endpoints for review instead of guessing", () => {
+    const result = bundle([fact("orders", "module", "Orders", "Orders"),
+      fact("missing", "dependency", "Orders require an external ledger", "Orders",
+        [{ role_id: "source", exact_text: "Orders" }])]);
+    expect(result.semantic_model.relationships).toEqual([]);
+    expect(result.semantic_model.unresolved_relationships).toEqual([
+      expect.objectContaining({ endpoint_labels: ["Orders"],
+        reason: "missing_endpoint", review_status: "review_required" })]);
   });
 
   it("builds a different hierarchy for an entity-relationship document", () => {

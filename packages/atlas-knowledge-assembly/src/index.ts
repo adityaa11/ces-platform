@@ -46,6 +46,8 @@ export function assembleAtlasKnowledge(inputValue: unknown) {
   }
   const semanticConcepts = buildSemanticConcepts(input.project_id, input.extraction.facts,
     moduleItems, moduleByLabel);
+  const semanticRelationships = buildSemanticRelationships(input.project_id,
+    input.extraction.facts, semanticConcepts);
   const semanticById = new Map(semanticConcepts.map((concept) => [concept.concept_id, concept]));
   const conceptKnowledgeId = (id: string) => `${input.project_id}.knowledge.concept.${short(id)}`;
   const assessmentsByModule = new Map(moduleItems.map((item) => [item.knowledgeId,
@@ -131,12 +133,66 @@ export function assembleAtlasKnowledge(inputValue: unknown) {
     authority: { lifecycle: "proposed", authority: "non_authoritative" },
     root_knowledge_id: rootId, documents: input.documents,
     evidence: input.extraction.evidence,
-    semantic_model: { concepts: semanticConcepts, relationships: [] },
+    semantic_model: { concepts: semanticConcepts,
+      relationships: semanticRelationships.resolved,
+      unresolved_relationships: semanticRelationships.unresolved },
     knowledge_nodes: [root, ...moduleNodes, ...conceptNodes, ...visualizations] });
 }
 
 type Fact = z.infer<typeof SemanticFactExtractionOutputSchema>["facts"][number];
 type ModuleItem = { fact: Fact; knowledgeId: string };
+function buildSemanticRelationships(project: string, facts: Fact[], concepts: Array<{
+  concept_id: string; source_label: string }>) {
+  const relationKinds = new Set<Fact["kind"]>(["activity_order", "state_transition",
+    "entity_relationship", "dependency", "audit_action"]);
+  const byLabel = new Map<string, string[]>();
+  for (const concept of concepts) {
+    const key = conceptKey(concept.source_label); const ids = byLabel.get(key) ?? [];
+    ids.push(concept.concept_id); byLabel.set(key, ids);
+  }
+  const resolved = []; const unresolved = [];
+  for (const fact of facts.filter(({ kind }) => relationKinds.has(kind))) {
+    const terms = orderedEndpointTerms(fact); const endpointLabels = terms.map(({ exact_text }) => exact_text);
+    const matches = endpointLabels.map((label) => byLabel.get(conceptKey(label)) ?? []);
+    const relationshipKind = normalizedRelationshipKind(fact.relation_kind ?? fact.kind);
+    if (matches.length < 2 || matches.some(({ length }) => length === 0)) {
+      unresolved.push({ candidate_id: `${project}.relationship-candidate.${short(fact.fact_id)}`,
+        relationship_kind: relationshipKind, endpoint_labels: endpointLabels,
+        evidence_ids: fact.evidence_ids, confidence: fact.confidence,
+        review_status: "review_required" as const, reason: "missing_endpoint" as const });
+      continue;
+    }
+    if (matches.some(({ length }) => length > 1)) {
+      unresolved.push({ candidate_id: `${project}.relationship-candidate.${short(fact.fact_id)}`,
+        relationship_kind: relationshipKind, endpoint_labels: endpointLabels,
+        evidence_ids: fact.evidence_ids, confidence: fact.confidence,
+        review_status: "review_required" as const, reason: "ambiguous_endpoint" as const });
+      continue;
+    }
+    const from = matches[0]![0]!; const to = matches[1]![0]!;
+    if (from === to) continue;
+    const identity = `${from}\u0000${relationshipKind}\u0000${to}`;
+    resolved.push({ relationship_id: `${project}.relationship.${digest(identity).slice(0, 16)}`,
+      from_concept_id: from, to_concept_id: to, relationship_kind: relationshipKind,
+      display_label: relationshipKind.split(".").at(-1)!.replaceAll("_", " "),
+      evidence_ids: fact.evidence_ids, confidence: fact.confidence,
+      review_status: "unreviewed" as const });
+  }
+  return { resolved: deduplicateSemanticRelationships(resolved), unresolved };
+}
+function deduplicateSemanticRelationships<T extends { relationship_id: string; from_concept_id: string;
+  to_concept_id: string; relationship_kind: string; evidence_ids: string[]; confidence: number }>(items: T[]) {
+  const groups = new Map<string, T[]>();
+  for (const item of items) { const key = `${item.from_concept_id}\u0000${item.relationship_kind}\u0000${item.to_concept_id}`;
+    const group = groups.get(key) ?? []; group.push(item); groups.set(key, group); }
+  return [...groups.values()].map((group) => ({ ...group[0]!,
+    evidence_ids: unique(group.flatMap(({ evidence_ids }) => evidence_ids)),
+    confidence: Math.max(...group.map(({ confidence }) => confidence)) }));
+}
+function normalizedRelationshipKind(value: string) {
+  return value.normalize("NFKC").toLocaleLowerCase().replace(/[^a-z0-9._-]+/gu, "_")
+    .replace(/_+/gu, "_").replace(/^_|_$/gu, "") || "relationship";
+}
 function buildSemanticConcepts(project: string, facts: Fact[], modules: ModuleItem[],
   moduleByLabel: Map<string, ModuleItem>) {
   type Draft = { label: string; kind: ReturnType<typeof semanticKind>; evidence: string[];

@@ -41,9 +41,20 @@ export const AtlasSemanticRelationshipSchema = z.object({
   review_status: z.enum(["unreviewed", "accepted", "rejected"]),
 }).strict();
 
+export const AtlasUnresolvedSemanticRelationshipSchema = z.object({
+  candidate_id: Id,
+  relationship_kind: Id,
+  endpoint_labels: z.array(ExactText),
+  evidence_ids: z.array(Id).min(1),
+  confidence: Confidence,
+  review_status: z.literal("review_required"),
+  reason: z.enum(["missing_endpoint", "ambiguous_endpoint"]),
+}).strict();
+
 export const AtlasSemanticModelSchema = z.object({
   concepts: z.array(AtlasSemanticConceptSchema),
   relationships: z.array(AtlasSemanticRelationshipSchema),
+  unresolved_relationships: z.array(AtlasUnresolvedSemanticRelationshipSchema).default([]),
 }).strict().superRefine((model, context) => {
   const concepts = new Map(model.concepts.map((concept) => [concept.concept_id, concept]));
   const issue = (message: string): void => context.addIssue({ code: "custom", message });
@@ -319,6 +330,11 @@ export const AtlasKnowledgeBundleSchema = z.object({
       if (!evidence.has(evidenceId)) issue(`Semantic relationship references unknown evidence ${evidenceId}`);
     }
   }
+  for (const relationship of bundle.semantic_model.unresolved_relationships) {
+    for (const evidenceId of relationship.evidence_ids) {
+      if (!evidence.has(evidenceId)) issue(`Unresolved relationship references unknown evidence ${evidenceId}`);
+    }
+  }
   const visiting = new Set<string>();
   const visited = new Set<string>();
   const visit = (id: string): void => {
@@ -352,4 +368,5 @@ export type AtlasKnowledgeNode = z.infer<typeof AtlasKnowledgeNodeSchema>;
 export type AtlasEvidence = z.infer<typeof AtlasEvidenceSchema>;
 export type AtlasSemanticConcept = z.infer<typeof AtlasSemanticConceptSchema>;
 export type AtlasSemanticRelationship = z.infer<typeof AtlasSemanticRelationshipSchema>;
+export type AtlasUnresolvedSemanticRelationship = z.infer<typeof AtlasUnresolvedSemanticRelationshipSchema>;
 export type AtlasSemanticModel = z.infer<typeof AtlasSemanticModelSchema>;
