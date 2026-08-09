@@ -22,15 +22,28 @@ export function assembleAtlasKnowledge(inputValue: unknown) {
   const facts = new Map(input.extraction.facts.map((fact) => [fact.fact_id, fact]));
   const evidence = new Map(input.extraction.evidence.map((item) =>
     [item.evidence_id, item]));
-  const modules = input.extraction.facts.filter(({ kind }) => kind === "module")
+  const moduleFacts = input.extraction.facts.filter(({ kind }) => kind === "module")
     .sort((left, right) => sourceOrder(left, evidence).localeCompare(sourceOrder(right, evidence))
       || left.fact_id.localeCompare(right.fact_id));
+  const groupedModules = new Map<string, Fact[]>();
+  for (const module of moduleFacts) {
+    const key = conceptKey(module.exact_statement);
+    const group = groupedModules.get(key) ?? [];
+    group.push(module); groupedModules.set(key, group);
+  }
+  const modules = [...groupedModules.values()].map((group) => ({ ...group[0]!,
+    evidence_ids: unique(group.flatMap(({ evidence_ids }) => evidence_ids)) }));
   if (modules.length === 0) throw new Error("Main Workflow requires at least one evidenced module");
   const rootId = `${input.project_id}.knowledge.main-workflow`;
   const moduleItems = modules.map((fact) => ({ fact,
     knowledgeId: `${input.project_id}.knowledge.module.${short(fact.fact_id)}` }));
-  const moduleByLabel = new Map(moduleItems.map((item) =>
-    [item.fact.exact_statement.toLocaleLowerCase(), item]));
+  const moduleByLabel = new Map<string, typeof moduleItems[number]>();
+  for (const item of moduleItems) {
+    for (const label of [item.fact.exact_statement,
+      ...item.fact.terms.map(({ exact_text }) => exact_text)]) {
+      moduleByLabel.set(conceptKey(label), item);
+    }
+  }
   const assessmentsByModule = new Map(moduleItems.map((item) => [item.knowledgeId,
     input.selection.assessments.filter(({ scope_id, scope_kind }) =>
       scope_kind === "module" && scope_id.endsWith(`.${short(item.fact.fact_id)}`))
@@ -61,16 +74,22 @@ export function assembleAtlasKnowledge(inputValue: unknown) {
   }));
   const rootGraphNodes = moduleItems.map((item) => graphNode(input.project_id,
     item.fact.exact_statement, item.fact.kind, item.fact.evidence_ids, item.knowledgeId));
+  const rootNodeByKnowledge = new Map(rootGraphNodes.map((node) => [node.knowledge_id, node]));
   const rootEdges = input.extraction.facts.filter(({ kind }) =>
     kind === "dependency" || kind === "activity_order").flatMap((fact) => {
-      const endpoints = fact.terms.map(({ exact_text }) =>
-        moduleByLabel.get(exact_text.toLocaleLowerCase())).filter(Boolean);
+      const endpoints = orderedEndpointTerms(fact).map(({ exact_text }) =>
+        resolveModule(exact_text, moduleByLabel)).filter(Boolean);
       if (endpoints.length < 2) return [];
-      return [edge(fact, rootGraphNodes.find(({ knowledge_id }) =>
-        knowledge_id === endpoints[0]!.knowledgeId)!.graph_node_id,
-      rootGraphNodes.find(({ knowledge_id }) =>
-        knowledge_id === endpoints[1]!.knowledgeId)!.graph_node_id)];
+      const from = rootNodeByKnowledge.get(endpoints[0]!.knowledgeId);
+      const to = rootNodeByKnowledge.get(endpoints[1]!.knowledgeId);
+      if (!from || !to || from.graph_node_id === to.graph_node_id) return [];
+      return [edge(fact, from.graph_node_id, to.graph_node_id)];
     });
+  const businessWorkflowSupported = input.selection.assessments.some(({ scope_kind,
+    graph_type_id, support_status }) => scope_kind === "project"
+      && graph_type_id === "atlas.graph.business-workflow" && support_status === "supported");
+  const rootGraphType = businessWorkflowSupported ? "atlas.graph.business-workflow"
+    : rootEdges.length ? "atlas.graph.dependency-graph" : "atlas.graph.project-map";
   const root = {
     knowledge_id: rootId, parent_id: null, kind: "visualization" as const,
     child_ids: moduleNodes.map(({ knowledge_id }) => knowledge_id),
@@ -78,7 +97,7 @@ export function assembleAtlasKnowledge(inputValue: unknown) {
     evidence_ids: unique(moduleItems.flatMap(({ fact }) => fact.evidence_ids)),
     support_status: rootEdges.length ? "supported" as const : "partial" as const,
     permanently_visible: true,
-    visualization: { graph_type_id: "atlas.graph.business-workflow",
+    visualization: { graph_type_id: rootGraphType,
       nodes: rootGraphNodes, edges: rootEdges,
       ordering_status: rootEdges.length ? "partial" as const : "not_applicable" as const,
       renderer_capabilities: capabilities() },
@@ -101,10 +120,13 @@ function buildGraph(graphType: string, facts: Fact[]) {
     : facts.map((fact) => ({ label: fact.exact_statement, evidence: fact.evidence_ids,
       kind: `atlas.semantic.${fact.kind.replaceAll("_", "-")}` }));
   const nodes = source.map((item) => graphNode("atlas", item.label, item.kind, item.evidence));
-  const nodeByLabel = new Map(nodes.map((node) => [node.label, node]));
-  const edges = facts.flatMap((fact) => fact.terms.length >= 2 ? [edge(fact,
-    nodeByLabel.get(fact.terms[0]!.exact_text)!.graph_node_id,
-    nodeByLabel.get(fact.terms[1]!.exact_text)!.graph_node_id)] : []);
+  const nodeByLabel = new Map(nodes.map((node) => [conceptKey(node.label), node]));
+  const edges = facts.flatMap((fact) => {
+    const endpoints = orderedEndpointTerms(fact).map(({ exact_text }) =>
+      nodeByLabel.get(conceptKey(exact_text))).filter(Boolean);
+    return endpoints.length >= 2 && endpoints[0]!.graph_node_id !== endpoints[1]!.graph_node_id
+      ? [edge(fact, endpoints[0]!.graph_node_id, endpoints[1]!.graph_node_id)] : [];
+  });
   return { graph_type_id: graphType, nodes, edges,
     ordering_status: edges.length ? "established" as const : "not_applicable" as const,
     renderer_capabilities: capabilities() };
@@ -126,7 +148,23 @@ function edge(fact: Fact, from: string, to: string) {
 function capabilities() { return { interactive_required: true,
   capabilities: ["pan", "zoom", "select", "focus_relationships", "accessible_summary"] as const }; }
 function conceptId(project: string, label: string) {
-  return `${project}.concept.${digest(label.toLocaleLowerCase()).slice(0, 16)}`;
+  return `${project}.concept.${digest(conceptKey(label)).slice(0, 16)}`;
+}
+function conceptKey(value: string) { return value.normalize("NFKC").toLocaleLowerCase()
+  .replace(/^\s*\d{1,3}[.)-]\s*/u, "").replace(/[^\p{L}\p{N}]+/gu, " ")
+  .trim().replace(/\s+/gu, " "); }
+function orderedEndpointTerms(fact: Fact) {
+  const source = fact.terms.find(({ role_id }) => /^(?:source|from|actor|entity_source)$/u.test(role_id));
+  const target = fact.terms.find(({ role_id }) => /^(?:target|to|outcome|entity_target)$/u.test(role_id));
+  return source && target ? [source, target] : fact.terms.slice(0, 2);
+}
+function resolveModule(label: string, modules: Map<string, { fact: Fact; knowledgeId: string }>) {
+  const key = conceptKey(label);
+  const exact = modules.get(key);
+  if (exact) return exact;
+  const matches = [...modules.entries()].filter(([candidate]) =>
+    candidate.includes(key) || key.includes(candidate)).map(([, item]) => item);
+  return matches.length === 1 ? matches[0] : undefined;
 }
 function graphName(id: string) { return id.split(".").at(-1)!.split("-")
   .map((part) => part[0]!.toUpperCase() + part.slice(1)).join(" "); }

@@ -45,4 +45,17 @@ describe("Atlas graph selection heuristics", () => {
       missing_prerequisites: ["a lifecycle event or transition"],
     })]);
   });
+
+  it("owns supporting facts through canonical section and term references", () => {
+    const output = selectAtlasGraphTypes(extraction([
+      fact("module", "module", "1. Registration", "Registration"),
+      { ...fact("order", "activity_order", "Registration enables Payment", "Registration"),
+        terms: [{ role_id: "source", exact_text: "Registration" },
+          { role_id: "target", exact_text: "Payment" }] },
+    ]));
+    expect(output.assessments).toContainEqual(expect.objectContaining({
+      scope_kind: "module", graph_type_id: "atlas.graph.workflow",
+      support_status: "supported",
+    }));
+  });
 });

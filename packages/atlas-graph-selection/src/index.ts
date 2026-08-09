@@ -98,7 +98,14 @@ z.infer<typeof GraphSelectionOutputSchema> {
 
 function belongsToModule(fact: Fact, module: Fact): boolean {
   const labels = [module.exact_statement, ...module.terms.map(({ exact_text }) => exact_text)];
-  return fact.context_paths.some((path) => labels.some((label) =>
-    path.toLocaleLowerCase().includes(label.toLocaleLowerCase())));
+  const keys = new Set(labels.map(conceptKey));
+  return fact.fact_id === module.fact_id
+    || fact.context_paths.some((path) => path.split(" > ").some((segment) =>
+      keys.has(conceptKey(segment))))
+    || fact.terms.some(({ exact_text }) => keys.has(conceptKey(exact_text)));
+}
+function conceptKey(value: string): string {
+  return value.normalize("NFKC").toLocaleLowerCase().replace(/^\s*\d{1,3}[.)-]\s*/u, "")
+    .replace(/[^\p{L}\p{N}]+/gu, " ").trim().replace(/\s+/gu, " ");
 }
 function suffix(id: string): string { return id.split(".").at(-1) ?? id; }

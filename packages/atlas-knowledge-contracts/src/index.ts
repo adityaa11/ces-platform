@@ -154,7 +154,6 @@ export const AtlasKnowledgeBundleSchema = z.object({
   if (evidence.size !== bundle.evidence.length) issue("Evidence IDs must be unique");
   const root = nodes.get(bundle.root_knowledge_id);
   if (!root || root.parent_id !== null || root.kind !== "visualization"
-    || root.visualization.graph_type_id !== "atlas.graph.business-workflow"
     || !root.permanently_visible) issue("Root must be the permanent Main Workflow");
   if (bundle.knowledge_nodes.filter(({ parent_id }) => parent_id === null).length !== 1) {
     issue("Knowledge hierarchy requires exactly one root");

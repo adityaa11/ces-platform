@@ -1,6 +1,6 @@
 # CES-GF-ATLAS-V2-010D - Semantic Merge, Scope, and Endpoint Resolution
 
-**Status:** Planned
+**Status:** Completed
 **Depends on:** ATLAS-V2-010C
 
 ## Outcome
@@ -51,3 +51,15 @@ graphs or relationships because of superficial label differences.
 - Non-workflow input is not forced into a Business Workflow.
 - Original labels remain exact and English is used only for standardized
   relationship descriptions.
+
+## Completion Evidence
+
+- Module concepts use deterministic normalized identities while retaining the
+  first evidenced original source label for display.
+- Numbering and punctuation differences no longer discard otherwise unique
+  evidenced relationship endpoints; ambiguous matches remain unresolved.
+- Source/target role identities determine edge direction when available.
+- Module ownership uses canonical section segments and explicit semantic terms,
+  not page-marker paths or raw substring matching.
+- Supporting graph nodes remain recursive children of their owning module, and
+  breadcrumbs continue to derive from the validated backend hierarchy.

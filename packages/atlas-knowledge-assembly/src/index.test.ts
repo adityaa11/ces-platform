@@ -66,5 +66,25 @@ describe("recursive Atlas knowledge assembly", () => {
       .map((node) => node.visualization.graph_type_id);
     expect(graphs).toContain("atlas.graph.entity-relationship");
     expect(graphs).not.toContain("atlas.graph.workflow");
+    const root = result.knowledge_nodes.find(({ knowledge_id }) =>
+      knowledge_id === result.root_knowledge_id);
+    expect(root?.kind === "visualization" && root.visualization.graph_type_id)
+      .toBe("atlas.graph.project-map");
+  });
+
+  it("resolves numbered module labels through canonical endpoint identities", () => {
+    const result = bundle([
+      fact("registration", "module", "1. Registration", "Registration"),
+      fact("payment", "module", "2. Payment", "Payment"),
+      fact("link", "dependency", "Registration provides data to Payment", "Registration",
+        [{ role_id: "source", exact_text: "Registration" },
+          { role_id: "target", exact_text: "Payment" }]),
+    ]);
+    const root = result.knowledge_nodes.find(({ knowledge_id }) =>
+      knowledge_id === result.root_knowledge_id);
+    if (root?.kind !== "visualization") throw new Error("expected root visualization");
+    expect(root.visualization.edges).toHaveLength(1);
+    expect(root.visualization.nodes.map(({ label }) => label).sort())
+      .toEqual(["1. Registration", "2. Payment"]);
   });
 });
