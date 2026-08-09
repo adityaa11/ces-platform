@@ -80,6 +80,22 @@ nav span { color: #667286; font-size: .75rem; text-transform: capitalize; }
 .child-grid button { min-height: 6rem; padding: 1rem; text-align: left; background: #fff;
   border: 1px solid #b9c5d5; border-radius: .55rem; cursor: pointer; }
 .child-grid span { display: block; margin-top: .5rem; color: #657287; }
+.semantic-summary { margin: 1rem 0 1.5rem; padding: 1rem; border: 1px solid #d4dce7;
+  border-radius: .65rem; background: #f8fafc; }
+.semantic-summary dl { display: grid; grid-template-columns: repeat(4, minmax(7rem, 1fr)); gap: .75rem;
+  margin: 0; }.semantic-summary dt { color: #657287; font-size: .72rem; text-transform: uppercase; }
+.semantic-summary dd { margin: .25rem 0 0; font-weight: 650; }
+.source-overview { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #d4dce7; }
+.source-overview p { margin: .5rem 0; white-space: pre-wrap; }
+.representation-picker { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: .75rem; margin-bottom: 1.25rem; }
+.representation-picker button { display: grid; gap: .4rem; padding: 1rem; text-align: left;
+  border: 1px solid #b9c5d5; border-radius: .55rem; background: #fff; cursor: pointer; }
+.representation-picker button[aria-pressed="true"] { border-color: #315e9e;
+  box-shadow: 0 0 0 2px #315e9e; background: #f4f8fd; }
+.representation-picker span { color: #657287; font-size: .75rem; overflow-wrap: anywhere; }
+.selected-representation { margin-top: 1rem; }.empty-detail { padding: 1rem; color: #657287;
+  border: 1px dashed #b9c5d5; border-radius: .55rem; }
 .evidence-panel { overflow: auto; }.pdf-toolbar { display: flex; align-items: center; gap: .4rem;
   margin-bottom: .6rem; }.pdf-toolbar button { padding: .35rem .5rem; }.pdf-toolbar span { margin-right: auto; }
 .pdf-frame { height: 56vh; min-height: 28rem; border: 1px solid #c7d0dd;

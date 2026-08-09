@@ -1,6 +1,6 @@
 # CES-GF-ATLAS-V2-011F - Knowledge API and Detail Workspace
 
-**Status:** Planned
+**Status:** Completed
 **Depends on:** ATLAS-V2-011E
 
 ## Outcome
@@ -29,3 +29,13 @@ three-column Atlas layout and permanently visible Main Workflow.
 - PDF evidence remains original-language, revision-pinned, and traceable.
 - The evidence panel exposes exact text, PDF page/source unit, confidence, and
   review status for the selected semantic node or relationship.
+
+## Completion evidence
+
+- The revision-pinned API returns semantic children, depth, source pages/unit
+  counts, exact overview evidence, and full available representations separately.
+- Explore expands source-supported concepts; the detail workspace renders source
+  coverage, nested concepts, representation choices, and the selected projection
+  below the permanently visible Main Workflow.
+- Representation switching does not alter semantic breadcrumbs, while semantic
+  and graph selection continue synchronizing the PDF evidence panel.

@@ -48,7 +48,13 @@ export async function readKnowledgeNode(input: Parameters<typeof readKnowledgeBu
     revision: bundle.revision, authority: bundle.authority, node,
     parent: node.parent_id ? summarize(bundle, node.parent_id) : null,
     breadcrumb: knowledgeBreadcrumb(bundle, node.knowledge_id).map((id) => summarize(bundle, id)),
-    children: node.child_ids.map((id) => summarize(bundle, id)) };
+    children: node.child_ids.map((id) => summarize(bundle, id)),
+    representations: node.representation_ids.map((id) => {
+      const representation = bundle.knowledge_nodes.find(({ knowledge_id }) => knowledge_id === id);
+      if (representation?.kind !== "visualization") throw new Error(`Broken Atlas representation at ${id}`);
+      return representation;
+    }),
+    source_coverage: sourceCoverage(bundle, node.evidence_ids) };
 }
 export async function readKnowledgeEvidence(input: Parameters<typeof readKnowledgeBundle>[0] &
   { knowledgeId: string; evidenceId?: string }) {
@@ -64,7 +70,18 @@ function summarize(bundle: Awaited<ReturnType<typeof readKnowledgeBundle>>, id: 
   const node = bundle.knowledge_nodes.find(({ knowledge_id }) => knowledge_id === id);
   if (!node) throw new Error(`Broken Atlas hierarchy at ${id}`);
   return { knowledge_id: node.knowledge_id, kind: node.kind, display_name: node.display_name,
-    support_status: node.support_status, child_count: node.child_ids.length };
+    support_status: node.support_status, child_count: node.child_ids.length,
+    representation_count: node.representation_ids.length, parent_id: node.parent_id,
+    depth: knowledgeBreadcrumb(bundle, id).length - 2,
+    ...(node.kind === "concept" ? { semantic_kind: node.semantic_kind } : {}) };
+}
+function sourceCoverage(bundle: Awaited<ReturnType<typeof readKnowledgeBundle>>, ids: string[]) {
+  const selected = bundle.evidence.filter(({ evidence_id }) => ids.includes(evidence_id));
+  return { page_numbers: [...new Set(selected.map(({ location }) => location.page_number))]
+      .sort((a, b) => a - b),
+    source_unit_count: new Set(selected.map(({ location }) => location.source_unit_id)).size,
+    evidence_count: selected.length,
+    overview_text: selected.map(({ exact_text }) => exact_text).slice(0, 3) };
 }
 export function authorizeAtlasRequest(header: string | null, configured = process.env.CES_ATLAS_UI_TOKEN): void {
   if (configured && header !== `Bearer ${configured}`) throw new Error("Atlas authorization required");
