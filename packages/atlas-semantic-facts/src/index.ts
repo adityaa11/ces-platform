@@ -20,6 +20,15 @@ export const SemanticFactTermSchema = z.object({
   exact_text: ExactText,
 }).strict();
 
+export const EngineeringIntentSchema = z.enum([
+  "business_capability", "participant", "input", "action", "precondition",
+  "decision", "result", "state", "rule", "validation", "permission",
+  "relationship", "quality", "context",
+]);
+export const SemanticDecompositionStatusSchema = z.enum([
+  "decomposable", "atomic", "context_only", "unsupported", "review_required",
+]);
+
 const DocumentInputSchema = z.object({
   document_id: Id,
   document_revision_id: Id,
@@ -54,6 +63,9 @@ export const SemanticFactCandidateSchema = z.object({
   confidence: z.number().min(0).max(1),
   uncertainty: ExactText.optional(),
   proposed_equivalence_key: Id.optional(),
+  parent_source_label: ExactText.optional(),
+  engineering_intent: EngineeringIntentSchema.optional(),
+  decomposition_status: SemanticDecompositionStatusSchema.optional(),
 }).strict();
 
 export const SemanticFactIntermediateSchema = z.object({
@@ -66,6 +78,14 @@ export const SemanticFactSchema = SemanticFactCandidateSchema.omit({ candidate_i
   evidence_ids: z.array(Id).min(1),
   context_paths: z.array(ExactText),
   equivalence_status: z.enum(["not_proposed", "pending_review"]),
+  engineering_intent: EngineeringIntentSchema,
+  decomposition_status: SemanticDecompositionStatusSchema,
+}).strict();
+
+export const SemanticSourceDispositionSchema = z.object({
+  source_unit_id: Id,
+  disposition: z.enum(["facts_extracted", "no_supported_fact"]),
+  fact_ids: z.array(Id),
 }).strict();
 
 export const SemanticFactExtractionOutputSchema = z.object({
@@ -73,6 +93,7 @@ export const SemanticFactExtractionOutputSchema = z.object({
   project_id: Id,
   facts: z.array(SemanticFactSchema),
   evidence: z.array(AtlasEvidenceSchema),
+  source_dispositions: z.array(SemanticSourceDispositionSchema).default([]),
   rejections: z.array(z.object({ candidate_id: Id,
     reason_code: z.enum(["unknown_source_unit", "non_exact_statement", "non_exact_term",
       "duplicate_fact", "invalid_candidate"]) }).strict()).default([]),
@@ -142,6 +163,10 @@ z.infer<typeof SemanticFactExtractionOutputSchema> {
       terms: [...candidate.terms].map(({ role_id, exact_text }) => ({ role_id, exact_text }))
         .sort((left, right) => left.role_id.localeCompare(right.role_id)
           || left.exact_text.localeCompare(right.exact_text)) };
+    if (candidate.parent_source_label &&
+        !cited.some(({ exact_text }) => containsExactWording(exact_text, candidate.parent_source_label!))) {
+      throw new Error("Semantic parent label is not present in cited source text");
+    }
     const { candidate_id: _candidateId, ...semantic } = candidate;
     return [SemanticFactSchema.parse({
       ...semantic,
@@ -151,6 +176,9 @@ z.infer<typeof SemanticFactExtractionOutputSchema> {
         section_path.length ? [section_path.join(" > ")] : []))].sort(),
       equivalence_status: candidate.proposed_equivalence_key
         ? "pending_review" : "not_proposed",
+      engineering_intent: candidate.engineering_intent ?? intentFor(candidate.kind),
+      decomposition_status: candidate.decomposition_status
+        ?? (candidate.kind === "module" ? "decomposable" : "atomic"),
     })];
     } catch (caught) {
       rejections.push({ candidate_id: candidate.candidate_id,
@@ -163,15 +191,42 @@ z.infer<typeof SemanticFactExtractionOutputSchema> {
     if (duplicate) rejections.push({ candidate_id: fact.fact_id, reason_code: "duplicate_fact" });
     return !duplicate;
   });
+  const sourceDispositions = input.source_units.map((unit) => {
+    const factIds = uniqueFacts.filter(({ source_unit_ids }) => source_unit_ids.includes(unit.id))
+      .map(({ fact_id }) => fact_id).sort();
+    return { source_unit_id: unit.id,
+      disposition: factIds.length ? "facts_extracted" as const : "no_supported_fact" as const,
+      fact_ids: factIds };
+  });
   return SemanticFactExtractionOutputSchema.parse({
     schema_version: ATLAS_SEMANTIC_FACT_VERSION,
     project_id: input.project_id,
     facts: uniqueFacts,
     evidence: [...evidence.values()].sort((left, right) =>
       left.evidence_id.localeCompare(right.evidence_id)),
+    source_dispositions: sourceDispositions,
     rejections: rejections.sort((left, right) => left.candidate_id.localeCompare(right.candidate_id)
       || left.reason_code.localeCompare(right.reason_code)),
   });
+}
+
+function intentFor(kind: z.infer<typeof SemanticFactKindSchema>):
+z.infer<typeof EngineeringIntentSchema> {
+  if (kind === "module") return "business_capability";
+  if (kind === "actor" || kind === "entity") return "participant";
+  if (kind === "activity") return "action";
+  if (kind === "condition") return "precondition";
+  if (kind === "decision") return "decision";
+  if (kind === "outcome" || kind === "event") return "result";
+  if (kind === "state" || kind === "state_transition") return "state";
+  if (kind === "business_rule") return "rule";
+  if (kind === "validation") return "validation";
+  if (kind === "permission") return "permission";
+  if (["activity_order", "entity_relationship", "dependency", "audit_action"].includes(kind)) {
+    return "relationship";
+  }
+  if (kind === "nonfunctional_requirement") return "quality";
+  return "context";
 }
 
 function semanticRejectionCode(caught: unknown): "unknown_source_unit" |

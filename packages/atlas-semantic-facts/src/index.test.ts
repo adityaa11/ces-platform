@@ -35,7 +35,29 @@ describe("Atlas semantic fact extraction", () => {
       ],
     }] });
     expect(output.facts[0]?.exact_statement).toBe(source.exact_text);
+    expect(output.facts[0]?.engineering_intent).toBe("relationship");
+    expect(output.facts[0]?.decomposition_status).toBe("atomic");
+    expect(output.source_dispositions).toEqual([{ source_unit_id: source.id,
+      disposition: "facts_extracted", fact_ids: [output.facts[0]!.fact_id] }]);
     expect(output.evidence[0]?.location.coordinates.coordinate_status).toBe("available");
+  });
+
+  it("records every bounded source unit and evidence-grounded recursive parent hints", () => {
+    const moduleUnit = unit({ id: "project.source.payment",
+      text: "Payments include Payment Verification.", sourceKind: "pdf_text" });
+    const contextUnit = { ...unit({ id: "project.source.context",
+      text: "This document describes the application.", sourceKind: "pdf_text" }), order: 1 };
+    const output = finalizeSemanticFacts({ ...input(moduleUnit),
+      source_units: [moduleUnit, contextUnit] }, { schema_version: "2.0.0", facts: [{
+      candidate_id: "candidate.verification", kind: "activity",
+      exact_statement: moduleUnit.exact_text, source_unit_ids: [moduleUnit.id], confidence: .9,
+      parent_source_label: "Payments", engineering_intent: "action",
+      decomposition_status: "atomic",
+      terms: [{ role_id: "action", exact_text: "Payment Verification" }],
+    }] });
+    expect(output.facts[0]?.parent_source_label).toBe("Payments");
+    expect(output.source_dispositions.map(({ disposition }) => disposition))
+      .toEqual(["facts_extracted", "no_supported_fact"]);
   });
 
   it("preserves OCR uncertainty and never guesses a highlight", () => {

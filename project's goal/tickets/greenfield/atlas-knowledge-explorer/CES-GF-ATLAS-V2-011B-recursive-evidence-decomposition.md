@@ -1,6 +1,6 @@
 # CES-GF-ATLAS-V2-011B - Recursive Evidence Decomposition
 
-**Status:** Planned
+**Status:** Completed
 **Depends on:** ATLAS-V2-011A
 
 ## Outcome
@@ -33,3 +33,12 @@ source-supported engineering and business concepts.
 - Extracted depth is determined by semantic atomicity and evidence, not headings,
   provider response size, a fixed recursion count, or desired graph appearance.
 - An unrelated workflow and non-workflow PDF use the same bounded process.
+
+## Completion evidence
+
+- Semantic facts now carry explicit engineering intent, decomposition status,
+  and optional exact-source parent hints validated against cited units.
+- Every bounded source unit receives a deterministic extracted/no-supported-fact
+  disposition, including units that produce no semantic fact.
+- The centralized agent prompt requires atomic decomposition, rejects heading-as-
+  behavior shortcuts, and remains graph-neutral and domain-neutral.
