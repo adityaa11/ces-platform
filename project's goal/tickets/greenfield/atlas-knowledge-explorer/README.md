@@ -1,6 +1,6 @@
 # CES Atlas V2 Recursive Knowledge Explorer
 
-**Status:** Implemented
+**Status:** Live extraction blocked by ATLAS-V2-010
 
 This is the only active ticket sequence for the Atlas recursive Knowledge
 Explorer. Older Atlas, hardening, workflow-UI, and release tickets remain as
@@ -37,9 +37,20 @@ the V2 qualification cases provide concrete, source-derived evidence.
 | 9D | [ATLAS-V2-009D](CES-GF-ATLAS-V2-009D-end-to-end-qualification.md) | Full V2 pipeline qualification |
 | 9E | [ATLAS-V2-009E](CES-GF-ATLAS-V2-009E-pdf-browser-qualification.md) | Text and scanned PDF browser qualification |
 | 9F | [ATLAS-V2-009F](CES-GF-ATLAS-V2-009F-final-gates-ledger-closure.md) | Final gates and ledger closure |
+| 10 | [ATLAS-V2-010](CES-GF-ATLAS-V2-010-live-pdf-extraction-correction.md) | Correct live PDF extraction and reject misleading incomplete output |
+| 10A | [ATLAS-V2-010A](CES-GF-ATLAS-V2-010A-emergency-change-audit-diagnostics.md) | Audit emergency changes and persist safe diagnostics |
+| 10B | [ATLAS-V2-010B](CES-GF-ATLAS-V2-010B-pdf-structural-reconstruction.md) | Reconstruct PDF headings, paragraphs, and section hierarchy |
+| 10C | [ATLAS-V2-010C](CES-GF-ATLAS-V2-010C-bounded-exhaustive-extraction.md) | Extract every relevant bounded section |
+| 10D | [ATLAS-V2-010D](CES-GF-ATLAS-V2-010D-semantic-merge-scope-resolution.md) | Merge facts and resolve module scopes and endpoints |
+| 10E | [ATLAS-V2-010E](CES-GF-ATLAS-V2-010E-coverage-publication-gates.md) | Reject incomplete output before proposal publication |
+| 10F | [ATLAS-V2-010F](CES-GF-ATLAS-V2-010F-live-provider-qualification.md) | Qualify the real provider and production UI |
 
 Tickets execute in order. A later ticket may add tests early, but it may not
 introduce a temporary legacy contract or parallel production path.
+
+ATLAS-V2-002 through V2-005 are downstream foundation evidence only. Their
+synthetic tests do not satisfy live extraction acceptance; V2-010A through
+V2-010F are the active authority for that correction.
 
 ## Clean-state rules
 
