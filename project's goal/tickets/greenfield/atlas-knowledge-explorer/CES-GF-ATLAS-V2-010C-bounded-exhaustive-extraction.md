@@ -1,6 +1,6 @@
 # CES-GF-ATLAS-V2-010C - Bounded Exhaustive Semantic Extraction
 
-**Status:** Planned
+**Status:** Completed
 **Depends on:** ATLAS-V2-010B
 
 ## Outcome
@@ -34,3 +34,15 @@ summarize an entire document.
   document.
 - Provider calls and artifacts remain bounded, deterministic, and auditable.
 
+## Completion Evidence
+
+- Live extraction is partitioned deterministically by reconstructed section,
+  with additional capped cross-section scopes for relationship discovery.
+- Every scope records stable identity, source-unit identities, attempt count,
+  disposition, rejection code when applicable, and accepted fact count.
+- Each live scope is schema- and grounding-validated by Agents Bridge before
+  deterministic fact and evidence merging.
+- Invalid semantic responses receive at most one bounded corrective retry and
+  cannot be silently replaced or omitted.
+- Provider-result fixtures retain a single documented scope for deterministic
+  offline qualification.

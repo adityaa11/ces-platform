@@ -53,6 +53,11 @@ describe("Atlas V2 CLI", () => {
       expect(await runCli(args, { stdout: () => undefined, stderr: () => undefined })).toBe(7);
       expect(await readFile(join(output, "run-manifest.json"), "utf8")).toBe(first);
       const proposal = JSON.parse(await readFile(join(output, "atlas-knowledge.json"), "utf8"));
+      const diagnostics = JSON.parse(await readFile(join(output, "atlas-diagnostics.json"), "utf8"));
+      expect(diagnostics.extraction_scopes).toEqual([expect.objectContaining({
+        scope_id: "sample.scope.document", attempts: 1,
+        disposition: "facts_extracted", fact_count: 3,
+      })]);
       const proposalHash = atlasProposalHash(proposal);
       const decisions = join(directory, "decisions.json");
       await writeFile(decisions, JSON.stringify({ schema_version: "2.0.0",

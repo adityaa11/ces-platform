@@ -13,6 +13,7 @@ import {
   SemanticFactExtractionOutputSchema,
   SemanticFactIntermediateSchema,
   finalizeSemanticFacts,
+  type SemanticFactExtractionInput,
 } from "@company/ces-atlas-semantic-facts";
 import { sourceContentHash } from "@company/ces-document-ingestion";
 import { ProjectIntentSchema } from "@company/ces-greenfield-contracts";
@@ -477,9 +478,10 @@ async function runAtlasV2(
     documents: [{ document_id: documentId,
       document_revision_id: source.document_revision.id, revision: 1,
       content_hash: originalHash, media_type: mediaType, original_name: basename(prdPath) }],
-    source_units: source.source_units,
+    source_units: [...source.source_units],
   };
-  const extraction = await obtainAtlasV2Facts(options, extractionInput);
+  const extractionRun = await obtainAtlasV2Facts(options, extractionInput);
+  const extraction = extractionRun.extraction;
   const selection = selectAtlasGraphTypes(extraction);
   const bundle = assembleAtlasKnowledge({ project_id: projectId, revision: 1,
     documents: [{ document_id: documentId, revision: 1, content_hash: originalHash,
@@ -494,7 +496,8 @@ async function runAtlasV2(
     "atlas-evidence.json": collectionCanonicalJson({ schema_version: "2.0.0",
       project_id: projectId, revision: 1, evidence: extraction.evidence }),
     "atlas-diagnostics.json": collectionCanonicalJson({ schema_version: "2.0.0",
-      project_id: projectId, graph_assessments: selection.assessments }),
+      project_id: projectId, extraction_scopes: extractionRun.scopes,
+      graph_assessments: selection.assessments }),
     "source-manifest.json": collectionCanonicalJson({ schema_version: "2.0.0",
       project_id: projectId, documents: bundle.documents,
       document_revision: source.document_revision }),
@@ -505,13 +508,67 @@ async function runAtlasV2(
   return 7;
 }
 
-async function obtainAtlasV2Facts(options: Readonly<Record<string, string>>, input: unknown) {
+interface ExtractionScopeDiagnostic {
+  readonly scope_id: string;
+  readonly kind: "document" | "section" | "cross_section";
+  readonly section_path: readonly string[];
+  readonly source_unit_ids: readonly string[];
+  readonly attempts: number;
+  readonly disposition: "facts_extracted" | "context_only" | "unsupported" | "failed";
+  readonly fact_count: number;
+  readonly rejection_code?: string;
+}
+
+async function obtainAtlasV2Facts(options: Readonly<Record<string, string>>,
+  input: SemanticFactExtractionInput): Promise<{ extraction: ReturnType<typeof finalizeSemanticFacts>;
+    scopes: readonly ExtractionScopeDiagnostic[] }> {
   if (options["provider-result"]) {
     const value = await readJsonValue(options["provider-result"]);
     const output = SemanticFactExtractionOutputSchema.safeParse(value);
-    return output.success ? output.data
+    const extraction = output.success ? output.data
       : finalizeSemanticFacts(input, SemanticFactIntermediateSchema.parse(value));
+    return { extraction, scopes: [{ scope_id: `${input.project_id}.scope.document`,
+      kind: "document", section_path: [],
+      source_unit_ids: input.source_units.map(({ id }) => id), attempts: 1,
+      disposition: extraction.facts.length ? "facts_extracted" : "unsupported",
+      fact_count: extraction.facts.length }] };
   }
+  const scopes = buildExtractionScopes(input);
+  const outputs: ReturnType<typeof finalizeSemanticFacts>[] = [];
+  const diagnostics: ExtractionScopeDiagnostic[] = [];
+  for (const scope of scopes) {
+    let attempts = 0;
+    let lastFailure: { code: string; message: string } | undefined;
+    while (attempts < 2) {
+      attempts += 1;
+      try {
+        const extraction = await requestAtlasScope(options, { ...input,
+          source_units: scope.source_units });
+        outputs.push(extraction);
+        diagnostics.push({ scope_id: scope.scope_id, kind: scope.kind,
+          section_path: scope.section_path,
+          source_unit_ids: scope.source_units.map(({ id }) => id), attempts,
+          disposition: extraction.facts.length ? "facts_extracted"
+            : scope.kind === "document" ? "context_only" : "unsupported",
+          fact_count: extraction.facts.length });
+        lastFailure = undefined;
+        break;
+      } catch (caught) {
+        lastFailure = atlasProviderFailure(caught);
+        if (!lastFailure.code.startsWith("HTTP_422") && !lastFailure.code.startsWith("HTTP_502")) break;
+      }
+    }
+    if (lastFailure) diagnostics.push({ scope_id: scope.scope_id, kind: scope.kind,
+      section_path: scope.section_path, source_unit_ids: scope.source_units.map(({ id }) => id),
+      attempts, disposition: "failed", fact_count: 0, rejection_code: lastFailure.code });
+  }
+  const failed = diagnostics.filter(({ disposition }) => disposition === "failed");
+  if (failed.length) throw new CliInputError(`Atlas V2 extraction failed for ${failed.length} bounded scope(s): ${failed.map(({ scope_id, rejection_code }) => `${scope_id} (${rejection_code})`).join(", ")}`);
+  return { extraction: mergeAtlasExtractions(input.project_id, outputs), scopes: diagnostics };
+}
+
+async function requestAtlasScope(options: Readonly<Record<string, string>>,
+  input: SemanticFactExtractionInput): Promise<ReturnType<typeof finalizeSemanticFacts>> {
   const configured = new URL(requireOption(options, "provider-endpoint"));
   configured.pathname = "/v1/agents/atlas.semantic-fact-extractor/execute";
   configured.search = "";
@@ -520,10 +577,59 @@ async function obtainAtlasV2Facts(options: Readonly<Record<string, string>>, inp
     "content-type": "application/json", ...(credential
       ? { authorization: `Bearer ${credential}` } : {}) },
     body: JSON.stringify({ agent_version: "2.0.0", input }) });
-  if (!response.ok) throw new CliInputError(
-    `Atlas V2 provider failed with HTTP ${response.status}: ${await response.text()}`,
-  );
+  if (!response.ok) throw new Error(`HTTP_${response.status}:${safeProviderError(await response.text())}`);
   return SemanticFactExtractionOutputSchema.parse(await response.json());
+}
+
+function buildExtractionScopes(input: SemanticFactExtractionInput): readonly {
+  scope_id: string; kind: ExtractionScopeDiagnostic["kind"]; section_path: readonly string[];
+  source_units: SemanticFactExtractionInput["source_units"] }[] {
+  const bySection = new Map<string, SemanticFactExtractionInput["source_units"][number][]>();
+  for (const unit of input.source_units) {
+    const key = unit.section_path[0] ?? "";
+    const values = bySection.get(key) ?? [];
+    values.push(unit); bySection.set(key, values);
+  }
+  const scopes: {
+    scope_id: string; kind: ExtractionScopeDiagnostic["kind"]; section_path: readonly string[];
+    source_units: SemanticFactExtractionInput["source_units"];
+  }[] = [...bySection.entries()].map(([section, source_units], index) => ({
+    scope_id: `${input.project_id}.scope.${section ? "section" : "document"}.${String(index + 1).padStart(3, "0")}`,
+    kind: section ? "section" as const : "document" as const,
+    section_path: section ? [section] : [], source_units,
+  }));
+  const crossCandidates = input.source_units.filter((unit) => unit.kind !== "caption");
+  const size = 24;
+  for (let offset = 0; offset < crossCandidates.length; offset += size) {
+    const source_units = crossCandidates.slice(offset, offset + size);
+    if (new Set(source_units.flatMap(({ section_path }) => section_path.slice(0, 1))).size < 2) continue;
+    scopes.push({ scope_id: `${input.project_id}.scope.cross.${String(offset / size + 1).padStart(3, "0")}`,
+      kind: "cross_section", section_path: [], source_units });
+  }
+  return scopes;
+}
+
+function mergeAtlasExtractions(projectId: string,
+  outputs: readonly ReturnType<typeof finalizeSemanticFacts>[]): ReturnType<typeof finalizeSemanticFacts> {
+  const facts = new Map(outputs.flatMap(({ facts }) => facts).map((fact) => [fact.fact_id, fact]));
+  const evidence = new Map(outputs.flatMap((output) => output.evidence)
+    .map((item) => [item.evidence_id, item]));
+  return SemanticFactExtractionOutputSchema.parse({ schema_version: "2.0.0", project_id: projectId,
+    facts: [...facts.values()].sort((a, b) => a.fact_id.localeCompare(b.fact_id)),
+    evidence: [...evidence.values()].sort((a, b) => a.evidence_id.localeCompare(b.evidence_id)) });
+}
+
+function safeProviderError(body: string): string {
+  try {
+    const value = JSON.parse(body) as { error?: { code?: unknown } };
+    return typeof value.error?.code === "string" ? value.error.code : "provider_error";
+  } catch { return "provider_error"; }
+}
+
+function atlasProviderFailure(caught: unknown): { code: string; message: string } {
+  const message = caught instanceof Error ? caught.message : "provider_error";
+  return { code: /^HTTP_\d+:[a-z0-9_-]+$/iu.test(message) ? message : "INVALID_RESPONSE",
+    message: "The bounded extraction scope failed validation." };
 }
 
 
