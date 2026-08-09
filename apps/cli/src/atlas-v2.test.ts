@@ -77,4 +77,47 @@ describe("Atlas V2 CLI", () => {
         .authority.lifecycle).toBe("approved");
     } finally { await rm(directory, { recursive: true, force: true }); }
   });
+
+  it("withholds an introduction-only proposal and publishes incomplete diagnostics", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "atlas-v2-incomplete-"));
+    try {
+      const prd = join(directory, "sample.md");
+      const intent = join(directory, "intent.json");
+      const provider = join(directory, "facts.json");
+      const output = join(directory, "output");
+      await writeFile(prd, "We need an internal application.\n", "utf8");
+      await writeFile(intent, JSON.stringify({ schema_version: "1.0.0",
+        project: { id: "sample", lifecycle: "greenfield",
+          application_type: "transactional_web_application", business_domain: "commerce" },
+        delivery: { team_size: 2, expected_delivery_months: 2,
+          deployment_preference: "managed_cloud" },
+        constraints: { expected_users: 10, data_sensitivity: "internal", multi_tenant: false },
+        skills: { preferred_languages: ["typescript"], preferred_databases: ["postgresql"] } }),
+      );
+      await writeFile(provider, JSON.stringify({ schema_version: "2.0.0", project_id: "sample",
+        facts: [{ fact_id: "sample.fact.intro", kind: "module",
+          exact_statement: "We need an internal application.",
+          source_unit_ids: ["sample.unit.intro"], terms: [], confidence: 1,
+          evidence_ids: ["sample.evidence.intro"], context_paths: [],
+          equivalence_status: "not_proposed" }], evidence: [{
+          evidence_id: "sample.evidence.intro", exact_text: "We need an internal application.",
+          language: "en", location: { document_id: "sample.document.prd", document_revision: 1,
+            source_unit_id: "sample.unit.intro", page_number: 1, page_number_base: 1,
+            text_span: { start: 0, end: 32 }, coordinates: { coordinate_status: "unavailable",
+              bounding_boxes: [], reason: "source_has_no_coordinates" } },
+          extraction_method: "structured_text", extraction_confidence: 1,
+          review_status: "unreviewed" }] }), "utf8");
+      const code = await runCli(["atlas", "run", "--prd", prd, "--project-intent", intent,
+        "--provider-result", provider, "--output", output],
+      { stdout: () => undefined, stderr: () => undefined });
+      expect(code).toBe(8);
+      expect((await readdir(output)).sort()).toEqual(["atlas-diagnostics.json",
+        "atlas-extraction.json", "run-manifest.json", "source-manifest.json"]);
+      const diagnostics = JSON.parse(await readFile(join(output, "atlas-diagnostics.json"), "utf8"));
+      expect(diagnostics.coverage.status).toBe("incomplete");
+      expect(diagnostics.coverage.issues).toContainEqual(expect.objectContaining({
+        code: "unscoped_module",
+      }));
+    } finally { await rm(directory, { recursive: true, force: true }); }
+  });
 });

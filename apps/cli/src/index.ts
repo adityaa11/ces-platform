@@ -75,6 +75,7 @@ Exit codes:
   5  adapter gap (adapter-report.json is written; no partial adapter artifacts)
   6  verification failure (verification-report.json is written)
   7  Atlas paused for human review (resumable review artifacts are written)
+  8  Atlas extraction incomplete (diagnostics are written; no proposal is published)
 `;
 
 export async function runCli(
@@ -483,10 +484,29 @@ async function runAtlasV2(
   const extractionRun = await obtainAtlasV2Facts(options, extractionInput);
   const extraction = extractionRun.extraction;
   const selection = selectAtlasGraphTypes(extraction);
+  const documents = [{ document_id: documentId, revision: 1, content_hash: originalHash,
+    media_type: mediaType, original_name: basename(prdPath),
+    ...(pageCount ? { page_count: pageCount } : {}) }];
+  const preflight = assessAtlasCoverage({ extraction, selection,
+    scopes: extractionRun.scopes });
+  if (preflight.status !== "awaiting_human_review") {
+    await publishIncompleteAtlasRun({ outputDirectory, projectId, originalHash,
+      documents, documentRevision: source.document_revision, extraction,
+      scopes: extractionRun.scopes, selection, coverage: preflight });
+    io.stderr(`Atlas V2 extraction is incomplete; diagnostics written to ${outputDirectory}\n`);
+    return 8;
+  }
   const bundle = assembleAtlasKnowledge({ project_id: projectId, revision: 1,
-    documents: [{ document_id: documentId, revision: 1, content_hash: originalHash,
-      media_type: mediaType, original_name: basename(prdPath),
-      ...(pageCount ? { page_count: pageCount } : {}) }], extraction, selection });
+    documents, extraction, selection });
+  const coverage = assessAtlasCoverage({ extraction, selection,
+    scopes: extractionRun.scopes, bundle });
+  if (coverage.status !== "awaiting_human_review") {
+    await publishIncompleteAtlasRun({ outputDirectory, projectId, originalHash,
+      documents, documentRevision: source.document_revision, extraction,
+      scopes: extractionRun.scopes, selection, coverage });
+    io.stderr(`Atlas V2 extraction is incomplete; diagnostics written to ${outputDirectory}\n`);
+    return 8;
+  }
   const semanticHash = hashCanonical(bundle);
   const manifestBase = { schema_version: "2.0.0", pipeline: "atlas-v2",
     status: "awaiting_human_review", project_id: projectId, revision: 1,
@@ -497,7 +517,7 @@ async function runAtlasV2(
       project_id: projectId, revision: 1, evidence: extraction.evidence }),
     "atlas-diagnostics.json": collectionCanonicalJson({ schema_version: "2.0.0",
       project_id: projectId, extraction_scopes: extractionRun.scopes,
-      graph_assessments: selection.assessments }),
+      coverage, graph_assessments: selection.assessments }),
     "source-manifest.json": collectionCanonicalJson({ schema_version: "2.0.0",
       project_id: projectId, documents: bundle.documents,
       document_revision: source.document_revision }),
@@ -562,9 +582,97 @@ async function obtainAtlasV2Facts(options: Readonly<Record<string, string>>,
       section_path: scope.section_path, source_unit_ids: scope.source_units.map(({ id }) => id),
       attempts, disposition: "failed", fact_count: 0, rejection_code: lastFailure.code });
   }
-  const failed = diagnostics.filter(({ disposition }) => disposition === "failed");
-  if (failed.length) throw new CliInputError(`Atlas V2 extraction failed for ${failed.length} bounded scope(s): ${failed.map(({ scope_id, rejection_code }) => `${scope_id} (${rejection_code})`).join(", ")}`);
   return { extraction: mergeAtlasExtractions(input.project_id, outputs), scopes: diagnostics };
+}
+
+interface AtlasCoverage {
+  readonly status: "awaiting_human_review" | "incomplete" | "failed";
+  readonly pages_covered: number;
+  readonly scope_count: number;
+  readonly fact_count: number;
+  readonly module_count: number;
+  readonly relationship_count: number;
+  readonly assessment_count: number;
+  readonly issues: readonly { code: string; subject_id: string }[];
+}
+
+function assessAtlasCoverage(input: {
+  extraction: ReturnType<typeof finalizeSemanticFacts>;
+  selection: ReturnType<typeof selectAtlasGraphTypes>;
+  scopes: readonly ExtractionScopeDiagnostic[];
+  bundle?: z.infer<typeof AtlasKnowledgeBundleSchema>;
+}): AtlasCoverage {
+  const modules = input.extraction.facts.filter(({ kind }) => kind === "module");
+  const relationships = input.extraction.facts.filter(({ kind }) =>
+    kind === "dependency" || kind === "activity_order");
+  const issues: { code: string; subject_id: string }[] = [];
+  for (const scope of input.scopes.filter(({ disposition }) => disposition === "failed")) {
+    issues.push({ code: "extraction_scope_failed", subject_id: scope.scope_id });
+  }
+  if (!input.scopes.length) issues.push({ code: "extraction_scopes_missing", subject_id: "run" });
+  if (!input.extraction.facts.length) issues.push({ code: "semantic_facts_missing", subject_id: "run" });
+  if (!modules.length) issues.push({ code: "modules_missing", subject_id: "project" });
+  for (const module of modules.filter(({ context_paths }) => context_paths.length === 0)) {
+    issues.push({ code: "unscoped_module", subject_id: module.fact_id });
+  }
+  if (!input.selection.assessments.length) {
+    issues.push({ code: "graph_assessments_missing", subject_id: "project" });
+  } else if (!input.selection.assessments.some(({ support_status }) => support_status === "supported")) {
+    issues.push({ code: "supported_graph_missing", subject_id: "project" });
+  }
+  if (input.bundle) {
+    const root = input.bundle.knowledge_nodes.find(({ knowledge_id }) =>
+      knowledge_id === input.bundle!.root_knowledge_id);
+    if (root?.kind === "visualization" && root.visualization.graph_type_id
+      === "atlas.graph.business-workflow") {
+      if (!root.visualization.edges.length) {
+        issues.push({ code: "workflow_relationships_missing", subject_id: root.knowledge_id });
+      }
+      const connected = new Set(root.visualization.edges.flatMap(({ from_graph_node_id,
+        to_graph_node_id }) => [from_graph_node_id, to_graph_node_id]));
+      for (const node of root.visualization.nodes.filter(({ graph_node_id }) =>
+        !connected.has(graph_node_id))) {
+        issues.push({ code: "isolated_workflow_module", subject_id: node.knowledge_id ?? node.graph_node_id });
+      }
+    }
+    for (const node of input.bundle.knowledge_nodes.filter((item) =>
+      item.parent_id !== null && item.evidence_ids.length === 0)) {
+      issues.push({ code: "knowledge_evidence_missing", subject_id: node.knowledge_id });
+    }
+  }
+  return { status: input.scopes.some(({ disposition }) => disposition === "failed")
+    ? "failed" : issues.length ? "incomplete" : "awaiting_human_review",
+    pages_covered: new Set(input.extraction.evidence.map(({ location }) =>
+      `${location.document_id}:${location.document_revision}:${location.page_number}`)).size,
+    scope_count: input.scopes.length, fact_count: input.extraction.facts.length,
+    module_count: modules.length, relationship_count: relationships.length,
+    assessment_count: input.selection.assessments.length,
+    issues: issues.sort((a, b) => a.code.localeCompare(b.code)
+      || a.subject_id.localeCompare(b.subject_id)) };
+}
+
+async function publishIncompleteAtlasRun(input: {
+  outputDirectory: string; projectId: string; originalHash: string;
+  documents: unknown[]; documentRevision: unknown;
+  extraction: ReturnType<typeof finalizeSemanticFacts>;
+  scopes: readonly ExtractionScopeDiagnostic[];
+  selection: ReturnType<typeof selectAtlasGraphTypes>;
+  coverage: AtlasCoverage;
+}): Promise<void> {
+  const manifest = { schema_version: "2.0.0", pipeline: "atlas-v2",
+    status: input.coverage.status, project_id: input.projectId, revision: 1,
+    source_content_hash: input.originalHash, coverage: input.coverage };
+  await publishAtlasArtifacts(input.outputDirectory, {
+    "atlas-diagnostics.json": collectionCanonicalJson({ schema_version: "2.0.0",
+      project_id: input.projectId, extraction_scopes: input.scopes,
+      coverage: input.coverage, graph_assessments: input.selection.assessments }),
+    "atlas-extraction.json": collectionCanonicalJson(input.extraction),
+    "source-manifest.json": collectionCanonicalJson({ schema_version: "2.0.0",
+      project_id: input.projectId, documents: input.documents,
+      document_revision: input.documentRevision }),
+    "run-manifest.json": collectionCanonicalJson({ ...manifest,
+      run_revision_hash: hashCanonical(manifest) }),
+  });
 }
 
 async function requestAtlasScope(options: Readonly<Record<string, string>>,

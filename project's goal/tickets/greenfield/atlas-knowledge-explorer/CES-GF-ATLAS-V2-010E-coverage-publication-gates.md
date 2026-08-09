@@ -1,6 +1,6 @@
 # CES-GF-ATLAS-V2-010E - Coverage and Publication Gates
 
-**Status:** Planned
+**Status:** Completed
 **Depends on:** ATLAS-V2-010D
 
 ## Outcome
@@ -40,3 +40,15 @@ to be published as a usable Atlas proposal.
 - Diagnostics state exactly which sections, facts, endpoints, or graph
   prerequisites remain unresolved.
 - Complete repeated runs remain byte-deterministic.
+
+## Completion Evidence
+
+- Coverage now reports pages, scopes, facts, modules, relationships, graph
+  assessments, and stable issue codes.
+- Failed scopes, empty facts, missing modules, unscoped introductory modules,
+  absent supported graphs, empty business workflows, isolated workflow modules,
+  and unevidenced detail children block proposal publication.
+- Incomplete runs return exit code `8` and publish only diagnostics, validated
+  intermediate extraction, source manifest, and an incomplete run manifest.
+- `atlas-knowledge.json` and the usable evidence proposal are withheld until the
+  structural gate reaches `awaiting_human_review`.
