@@ -1,6 +1,6 @@
 # CES Atlas V2 Recursive Knowledge Explorer
 
-**Status:** Live extraction blocked by ATLAS-V2-010
+**Status:** Semantic-depth correction planned in ATLAS-V2-011
 
 This is the only active ticket sequence for the Atlas recursive Knowledge
 Explorer. Older Atlas, hardening, workflow-UI, and release tickets remain as
@@ -12,6 +12,7 @@ legacy workflow-only artifacts, fixed detail tabs, or compatibility fallbacks.
 - [`CES_ATLAS_AUTHORITY.md`](../../../CES_ATLAS_AUTHORITY.md)
 - [`graphs context.md`](../../../graphs%20context.md)
 - [`supporting graphs context.md`](../../../supporting%20graphs%20context.md)
+- [`atlas_semantic_extraction_feedback_context.md`](../../../atlas_semantic_extraction_feedback_context.md)
 - [`qualification-cases.json`](../../../../tests/fixtures/atlas-v2/qualification-cases.json)
 
 If these sources conflict, the two context documents define product behavior;
@@ -44,6 +45,14 @@ the V2 qualification cases provide concrete, source-derived evidence.
 | 10D | [ATLAS-V2-010D](CES-GF-ATLAS-V2-010D-semantic-merge-scope-resolution.md) | Merge facts and resolve module scopes and endpoints |
 | 10E | [ATLAS-V2-010E](CES-GF-ATLAS-V2-010E-coverage-publication-gates.md) | Reject incomplete output before proposal publication |
 | 10F | [ATLAS-V2-010F](CES-GF-ATLAS-V2-010F-live-provider-qualification.md) | Qualify the real provider and production UI |
+| 11 | [ATLAS-V2-011](CES-GF-ATLAS-V2-011-semantic-decomposition.md) | Separate recursive semantic understanding from graph views |
+| 11A | [ATLAS-V2-011A](CES-GF-ATLAS-V2-011A-semantic-decomposition-contract.md) | Contract source-grounded semantic concepts and relationships |
+| 11B | [ATLAS-V2-011B](CES-GF-ATLAS-V2-011B-recursive-evidence-decomposition.md) | Decompose every module's relevant evidence to atomic concepts |
+| 11C | [ATLAS-V2-011C](CES-GF-ATLAS-V2-011C-semantic-hierarchy-assembly.md) | Assemble navigable semantic hierarchy independently of graphs |
+| 11D | [ATLAS-V2-011D](CES-GF-ATLAS-V2-011D-semantic-relationship-assembly.md) | Resolve evidenced concept relationships without invention |
+| 11E | [ATLAS-V2-011E](CES-GF-ATLAS-V2-011E-graph-projection.md) | Project applicable graph views from the semantic model |
+| 11F | [ATLAS-V2-011F](CES-GF-ATLAS-V2-011F-knowledge-api-workspace.md) | Expose and render recursive detail, representations, and evidence |
+| 11G | [ATLAS-V2-011G](CES-GF-ATLAS-V2-011G-live-semantic-depth-qualification.md) | Qualify semantic depth on Safara and unrelated PDFs |
 
 Tickets execute in order. A later ticket may add tests early, but it may not
 introduce a temporary legacy contract or parallel production path.
@@ -51,6 +60,9 @@ introduce a temporary legacy contract or parallel production path.
 ATLAS-V2-002 through V2-005 are downstream foundation evidence only. Their
 synthetic tests do not satisfy live extraction acceptance; V2-010A through
 V2-010F are the active authority for that correction.
+
+ATLAS-V2-011 supersedes any interpretation of “recursive” that makes graph
+types the semantic hierarchy. Graphs are projections from semantic knowledge.
 
 ## Clean-state rules
 

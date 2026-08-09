@@ -6,11 +6,12 @@ Atlas implementation and review must use only:
 
 1. [`graphs context.md`](graphs%20context.md)
 2. [`supporting graphs context.md`](supporting%20graphs%20context.md)
-3. [ATLAS-V2 ticket sequence](tickets/greenfield/atlas-knowledge-explorer/README.md)
-4. [HARD-027 golden qualification](tickets/greenfield/atlas-hardening/CES-GF-ATLAS-HARD-027-golden-model-profile-safara-workflow-qualification.md)
-5. [`golden-main-workflow.json`](../tests/fixtures/safara/golden-main-workflow.json)
+3. [`atlas_semantic_extraction_feedback_context.md`](atlas_semantic_extraction_feedback_context.md)
+4. [ATLAS-V2 ticket sequence](tickets/greenfield/atlas-knowledge-explorer/README.md)
+5. [HARD-027 golden qualification](tickets/greenfield/atlas-hardening/CES-GF-ATLAS-HARD-027-golden-model-profile-safara-workflow-qualification.md)
+6. [`golden-main-workflow.json`](../tests/fixtures/safara/golden-main-workflow.json)
 
-The context documents define product behavior. Tickets define implementation
+The three context documents define product behavior. Tickets define implementation
 order and acceptance. HARD-027 and its fixture qualify behavior without
 becoming production extraction templates.
 
