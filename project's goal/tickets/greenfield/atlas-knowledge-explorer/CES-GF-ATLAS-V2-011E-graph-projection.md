@@ -1,6 +1,6 @@
 # CES-GF-ATLAS-V2-011E - Graph Projection from Semantic Model
 
-**Status:** Planned
+**Status:** Completed
 **Depends on:** ATLAS-V2-011D
 
 ## Outcome
@@ -29,3 +29,12 @@ the semantic model, never as the semantic model itself.
 - A non-workflow PRD is never presented as a business workflow.
 - CES Standards can inspect the same semantic identities without being encoded
   as invented nodes or edges in Atlas graph projections.
+
+## Completion evidence
+
+- Supporting graph nodes now project canonical semantic concept identities and
+  graph edges project semantic relationship identities with their evidence.
+- Graph-specific relationship prerequisites control topology; representations
+  with no evidenced nodes or required edges are suppressed.
+- Main Workflow projects only module-level activity-order/dependency semantics,
+  while internal concepts remain in detail views.

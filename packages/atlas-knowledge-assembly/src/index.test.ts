@@ -42,6 +42,9 @@ describe("recursive Atlas knowledge assembly", () => {
         [{ role_id: "condition", exact_text: "pembayaran berhasil" }]),
       fact("outcome", "outcome", "Pesanan dikonfirmasi", "Pemesanan > Keputusan",
         [{ role_id: "outcome", exact_text: "Pesanan dikonfirmasi" }]),
+      fact("decision", "decision", "Jika pembayaran berhasil, Pesanan dikonfirmasi",
+        "Pemesanan > Keputusan", [{ role_id: "condition", exact_text: "pembayaran berhasil" },
+          { role_id: "outcome", exact_text: "Pesanan dikonfirmasi" }]),
     ]);
     const root = result.knowledge_nodes.find(({ knowledge_id }) =>
       knowledge_id === result.root_knowledge_id)!;
@@ -91,6 +94,13 @@ describe("recursive Atlas knowledge assembly", () => {
       knowledge_id === result.root_knowledge_id);
     expect(root?.kind === "visualization" && root.visualization.graph_type_id)
       .toBe("atlas.graph.project-map");
+    const entityGraph = result.knowledge_nodes.find((node) => node.kind === "visualization"
+      && node.visualization.graph_type_id === "atlas.graph.entity-relationship");
+    if (entityGraph?.kind !== "visualization") throw new Error("expected entity graph");
+    const semanticIds = new Set(result.semantic_model.concepts.map(({ concept_id }) => concept_id));
+    expect(entityGraph.visualization.nodes.every(({ canonical_concept_id }) =>
+      semanticIds.has(canonical_concept_id))).toBe(true);
+    expect(entityGraph.visualization.edges[0]?.relationship_kind).toBe("entity_relationship");
   });
 
   it("resolves numbered module labels through canonical endpoint identities", () => {

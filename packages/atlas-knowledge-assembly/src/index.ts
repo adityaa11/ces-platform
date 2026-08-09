@@ -50,16 +50,21 @@ export function assembleAtlasKnowledge(inputValue: unknown) {
     input.extraction.facts, semanticConcepts);
   const semanticById = new Map(semanticConcepts.map((concept) => [concept.concept_id, concept]));
   const conceptKnowledgeId = (id: string) => `${input.project_id}.knowledge.concept.${short(id)}`;
+  const knowledgeIdForConcept = (id: string) => moduleItems.find((item) =>
+    conceptId(input.project_id, item.fact.exact_statement) === id)?.knowledgeId ?? conceptKnowledgeId(id);
   const assessmentsByModule = new Map(moduleItems.map((item) => [item.knowledgeId,
     input.selection.assessments.filter(({ scope_id, scope_kind }) =>
       scope_kind === "module" && scope_id.endsWith(`.${short(item.fact.fact_id)}`))
       .filter(({ support_status }) => support_status === "supported")]));
   const visualizations = moduleItems.flatMap((item) =>
-    (assessmentsByModule.get(item.knowledgeId) ?? []).map((assessment) => {
+    (assessmentsByModule.get(item.knowledgeId) ?? []).flatMap((assessment) => {
       const knowledgeId = `${item.knowledgeId}.visualization.${assessment.graph_type_id.split(".").at(-1)}`;
       const supporting = assessment.supporting_fact_ids.map((id) => facts.get(id))
         .filter((fact): fact is NonNullable<typeof fact> => Boolean(fact));
-      return {
+      const visualization = buildGraph(assessment.graph_type_id, supporting,
+        semanticConcepts, semanticRelationships.resolved, knowledgeIdForConcept);
+      if (!projectionSupported(assessment.graph_type_id, visualization)) return [];
+      return [{
         knowledge_id: knowledgeId, parent_id: item.knowledgeId, child_ids: [],
         representation_ids: [],
         kind: "visualization" as const, display_name: graphName(assessment.graph_type_id),
@@ -67,8 +72,8 @@ export function assembleAtlasKnowledge(inputValue: unknown) {
         support_status: assessment.support_status === "supported" ? "supported" as const
           : "review_required" as const,
         permanently_visible: false,
-        visualization: buildGraph(assessment.graph_type_id, supporting),
-      };
+        visualization,
+      }];
     }));
   const moduleNodes = moduleItems.map((item) => ({
     knowledge_id: item.knowledgeId, parent_id: rootId,
@@ -99,16 +104,14 @@ export function assembleAtlasKnowledge(inputValue: unknown) {
   const rootGraphNodes = moduleItems.map((item) => graphNode(input.project_id,
     item.fact.exact_statement, item.fact.kind, item.fact.evidence_ids, item.knowledgeId));
   const rootNodeByKnowledge = new Map(rootGraphNodes.map((node) => [node.knowledge_id, node]));
-  const rootEdges = deduplicateEdges(input.extraction.facts.filter(({ kind }) =>
-    kind === "dependency" || kind === "activity_order").flatMap((fact) => {
-      const endpoints = orderedEndpointTerms(fact).map(({ exact_text }) =>
-        resolveModule(exact_text, moduleByLabel)).filter(Boolean);
-      if (endpoints.length < 2) return [];
-      const from = rootNodeByKnowledge.get(endpoints[0]!.knowledgeId);
-      const to = rootNodeByKnowledge.get(endpoints[1]!.knowledgeId);
-      if (!from || !to || from.graph_node_id === to.graph_node_id) return [];
-      return [edge(fact, from.graph_node_id, to.graph_node_id)];
-    }));
+  const moduleKnowledgeByConcept = new Map(moduleItems.map((item) =>
+    [conceptId(input.project_id, item.fact.exact_statement), item.knowledgeId]));
+  const rootEdges = semanticRelationships.resolved.flatMap((relationship) => {
+    if (!["dependency", "activity_order"].includes(relationship.relationship_kind)) return [];
+    const from = rootNodeByKnowledge.get(moduleKnowledgeByConcept.get(relationship.from_concept_id));
+    const to = rootNodeByKnowledge.get(moduleKnowledgeByConcept.get(relationship.to_concept_id));
+    return from && to ? [semanticEdge(relationship, from.graph_node_id, to.graph_node_id)] : [];
+  });
   const businessWorkflowSupported = input.selection.assessments.some(({ scope_kind,
     graph_type_id, support_status }) => scope_kind === "project"
       && graph_type_id === "atlas.graph.business-workflow" && support_status === "supported");
@@ -144,7 +147,7 @@ type ModuleItem = { fact: Fact; knowledgeId: string };
 function buildSemanticRelationships(project: string, facts: Fact[], concepts: Array<{
   concept_id: string; source_label: string }>) {
   const relationKinds = new Set<Fact["kind"]>(["activity_order", "state_transition",
-    "entity_relationship", "dependency", "audit_action"]);
+    "entity_relationship", "dependency", "audit_action", "decision"]);
   const byLabel = new Map<string, string[]>();
   for (const concept of concepts) {
     const key = conceptKey(concept.source_label); const ids = byLabel.get(key) ?? [];
@@ -154,7 +157,9 @@ function buildSemanticRelationships(project: string, facts: Fact[], concepts: Ar
   for (const fact of facts.filter(({ kind }) => relationKinds.has(kind))) {
     const terms = orderedEndpointTerms(fact); const endpointLabels = terms.map(({ exact_text }) => exact_text);
     const matches = endpointLabels.map((label) => byLabel.get(conceptKey(label)) ?? []);
-    const relationshipKind = normalizedRelationshipKind(fact.relation_kind ?? fact.kind);
+    const relationshipKind = normalizedRelationshipKind(fact.kind);
+    const displayLabel = normalizedRelationshipKind(fact.relation_kind ?? fact.kind)
+      .split(".").at(-1)!.replaceAll("_", " ");
     if (matches.length < 2 || matches.some(({ length }) => length === 0)) {
       unresolved.push({ candidate_id: `${project}.relationship-candidate.${short(fact.fact_id)}`,
         relationship_kind: relationshipKind, endpoint_labels: endpointLabels,
@@ -174,7 +179,7 @@ function buildSemanticRelationships(project: string, facts: Fact[], concepts: Ar
     const identity = `${from}\u0000${relationshipKind}\u0000${to}`;
     resolved.push({ relationship_id: `${project}.relationship.${digest(identity).slice(0, 16)}`,
       from_concept_id: from, to_concept_id: to, relationship_kind: relationshipKind,
-      display_label: relationshipKind.split(".").at(-1)!.replaceAll("_", " "),
+      display_label: displayLabel,
       evidence_ids: fact.evidence_ids, confidence: fact.confidence,
       review_status: "unreviewed" as const });
   }
@@ -272,25 +277,59 @@ function semanticKind(kind: Fact["kind"], role = ""):
   if (kind === "event") return "event"; if (kind === "dependency") return "dependency";
   return "concept";
 }
-function buildGraph(graphType: string, facts: Fact[]) {
-  const termEntries = facts.flatMap((fact) => fact.terms.map((term) => ({ fact, term })));
-  const labels = unique(termEntries.map(({ term }) => term.exact_text));
-  const source = labels.length ? labels.map((label) => ({ label,
-    evidence: unique(termEntries.filter(({ term }) => term.exact_text === label)
-      .flatMap(({ fact }) => fact.evidence_ids)), kind: "atlas.semantic.concept" }))
-    : facts.map((fact) => ({ label: fact.exact_statement, evidence: fact.evidence_ids,
-      kind: `atlas.semantic.${fact.kind.replaceAll("_", "-")}` }));
-  const nodes = source.map((item) => graphNode("atlas", item.label, item.kind, item.evidence));
-  const nodeByLabel = new Map(nodes.map((node) => [conceptKey(node.label), node]));
-  const edges = facts.flatMap((fact) => {
-    const endpoints = orderedEndpointTerms(fact).map(({ exact_text }) =>
-      nodeByLabel.get(conceptKey(exact_text))).filter(Boolean);
-    return endpoints.length >= 2 && endpoints[0]!.graph_node_id !== endpoints[1]!.graph_node_id
-      ? [edge(fact, endpoints[0]!.graph_node_id, endpoints[1]!.graph_node_id)] : [];
+function buildGraph(graphType: string, facts: Fact[], concepts: Array<{ concept_id: string;
+  semantic_kind: string; source_label: string; evidence_ids: string[] }>, relationships: Array<{
+  relationship_id: string; from_concept_id: string; to_concept_id: string;
+  relationship_kind: string; display_label: string; evidence_ids: string[]; confidence: number }>,
+  knowledgeIdForConcept: (id: string) => string) {
+  const evidence = new Set(facts.flatMap(({ evidence_ids }) => evidence_ids));
+  const selectedRelationships = relationships.filter((relationship) =>
+    relationshipKindsForGraph(graphType).includes(relationship.relationship_kind)
+    && relationship.evidence_ids.some((id) => evidence.has(id)));
+  const relatedIds = new Set(selectedRelationships.flatMap(({ from_concept_id, to_concept_id }) =>
+    [from_concept_id, to_concept_id]));
+  const selected = concepts.filter((concept) => relatedIds.has(concept.concept_id)
+    || concept.evidence_ids.some((id) => evidence.has(id)) && concept.semantic_kind !== "module");
+  const nodes = selected.map((concept) => ({ graph_node_id: `atlas.graph-node.${short(concept.concept_id)}`,
+    canonical_concept_id: concept.concept_id, knowledge_id: knowledgeIdForConcept(concept.concept_id),
+    semantic_kind_id: `atlas.semantic.${concept.semantic_kind.replaceAll("_", "-")}`,
+    label: concept.source_label, label_origin: "original_document" as const,
+    evidence_ids: concept.evidence_ids }));
+  const nodeByConcept = new Map(nodes.map((node) => [node.canonical_concept_id, node]));
+  const edges = selectedRelationships.flatMap((relationship) => {
+    const from = nodeByConcept.get(relationship.from_concept_id);
+    const to = nodeByConcept.get(relationship.to_concept_id);
+    return from && to ? [semanticEdge(relationship, from.graph_node_id, to.graph_node_id)] : [];
   });
   return { graph_type_id: graphType, nodes, edges,
     ordering_status: edges.length ? "established" as const : "not_applicable" as const,
     renderer_capabilities: capabilities() };
+}
+function projectionSupported(graphType: string, graph: ReturnType<typeof buildGraph>) {
+  if (!graph.nodes.length) return false;
+  return ["atlas.graph.workflow", "atlas.graph.state-machine", "atlas.graph.decision-tree",
+    "atlas.graph.entity-lifecycle", "atlas.graph.dependency-graph", "atlas.graph.audit-flow",
+    "atlas.graph.entity-relationship"].includes(graphType) ? graph.edges.length > 0 : true;
+}
+function relationshipKindsForGraph(graphType: string): string[] {
+  const kinds: Record<string, string[]> = {
+    "atlas.graph.workflow": ["activity_order"],
+    "atlas.graph.state-machine": ["state_transition"],
+    "atlas.graph.decision-tree": ["decision"],
+    "atlas.graph.entity-lifecycle": ["state_transition", "event"],
+    "atlas.graph.dependency-graph": ["dependency"],
+    "atlas.graph.audit-flow": ["audit_action"],
+    "atlas.graph.entity-relationship": ["entity_relationship"],
+  };
+  return kinds[graphType] ?? [];
+}
+function semanticEdge(relationship: { relationship_id: string; relationship_kind: string;
+  display_label: string; evidence_ids: string[]; confidence: number }, from: string, to: string) {
+  return { graph_edge_id: `atlas.graph-edge.${short(relationship.relationship_id)}`,
+    from_graph_node_id: from, to_graph_node_id: to,
+    relationship_kind: relationship.relationship_kind.replaceAll("-", "_"),
+    display_label: relationship.display_label, evidence_ids: relationship.evidence_ids,
+    confidence: relationship.confidence };
 }
 function graphNode(project: string, label: string, kind: string, evidence: string[], knowledgeId?: string) {
   const identity = digest(label.toLocaleLowerCase()).slice(0, 16);
@@ -298,25 +337,6 @@ function graphNode(project: string, label: string, kind: string, evidence: strin
     canonical_concept_id: conceptId(project, label), ...(knowledgeId ? { knowledge_id: knowledgeId } : {}),
     semantic_kind_id: kind, label, label_origin: "original_document" as const,
     evidence_ids: unique(evidence) };
-}
-function edge(fact: Fact, from: string, to: string) {
-  const relationship = fact.relation_kind ?? fact.kind;
-  return { graph_edge_id: `atlas.graph-edge.${short(fact.fact_id)}`, from_graph_node_id: from,
-    to_graph_node_id: to, relationship_kind: relationship.replaceAll("-", "_"),
-    display_label: relationship.replaceAll("_", " "), evidence_ids: fact.evidence_ids,
-    confidence: fact.confidence };
-}
-function deduplicateEdges<T extends ReturnType<typeof edge>>(edges: T[]): T[] {
-  const groups = new Map<string, T[]>();
-  for (const item of edges) {
-    const key = `${item.from_graph_node_id}\u0000${item.relationship_kind}\u0000${item.to_graph_node_id}`;
-    const group = groups.get(key) ?? []; group.push(item); groups.set(key, group);
-  }
-  return [...groups.entries()].map(([key, group]) => ({ ...group[0]!,
-    graph_edge_id: `atlas.graph-edge.${digest(key).slice(0, 16)}`,
-    evidence_ids: unique(group.flatMap(({ evidence_ids }) => evidence_ids)),
-    confidence: Math.max(...group.map(({ confidence }) => confidence)) } as T))
-    .sort((a, b) => a.graph_edge_id.localeCompare(b.graph_edge_id));
 }
 function capabilities() { return { interactive_required: true,
   capabilities: ["pan", "zoom", "select", "focus_relationships", "accessible_summary"] as const }; }

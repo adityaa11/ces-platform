@@ -43,8 +43,7 @@ const rules: Rule[] = [
   { graph: "atlas.graph.state-machine", scope: "module",
     required: [{ any: ["state_transition"], label: "an explicit state transition" }] },
   { graph: "atlas.graph.decision-tree", scope: "module", required: [
-    { any: ["condition"], label: "a decision condition" },
-    { any: ["outcome"], label: "an explicit outcome" },
+    { any: ["decision"], label: "an explicit decision relating a condition and outcome" },
   ] },
   { graph: "atlas.graph.entity-lifecycle", scope: "module", required: [
     { any: ["entity"], label: "an entity" },

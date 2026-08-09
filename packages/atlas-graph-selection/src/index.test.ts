@@ -16,6 +16,7 @@ describe("Atlas graph selection heuristics", () => {
       fact("module", "module", "Order Fulfillment"),
       fact("order", "activity_order", "Payment occurs after checkout."),
       fact("transition", "state_transition", "Paid orders become Fulfilled."),
+      fact("decision", "decision", "If payment succeeds, the order is accepted"),
       fact("condition", "condition", "If payment succeeds"),
       fact("outcome", "outcome", "the order is accepted"),
     ]));
