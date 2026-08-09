@@ -708,6 +708,18 @@ function assessAtlasCoverage(input: {
       item.parent_id !== null && item.evidence_ids.length === 0)) {
       issues.push({ code: "knowledge_evidence_missing", subject_id: node.knowledge_id });
     }
+    const semanticDetails = input.bundle.semantic_model.concepts.filter(({ semantic_kind }) =>
+      semantic_kind !== "module");
+    if (input.extraction.facts.some(({ kind }) => !["module", "activity_order", "dependency"]
+      .includes(kind)) && !semanticDetails.length) {
+      issues.push({ code: "semantic_decomposition_missing", subject_id: "project" });
+    }
+    const modulesWithDetail = input.bundle.knowledge_nodes.filter((node) => node.kind === "module"
+      && (node.child_ids.length > 0 || node.representation_ids.length > 0));
+    if (input.selection.assessments.some(({ scope_kind, support_status }) =>
+      scope_kind === "module" && support_status === "supported") && !modulesWithDetail.length) {
+      issues.push({ code: "semantic_module_detail_missing", subject_id: "project" });
+    }
   }
   return { status: input.scopes.some(({ disposition }) => disposition === "failed")
     ? "failed" : issues.length ? "incomplete" : "awaiting_human_review",
@@ -808,9 +820,19 @@ function mergeAtlasExtractions(projectId: string,
     .map((item) => [item.evidence_id, item]));
   const rejections = new Map(outputs.flatMap((output) => output.rejections)
     .map((item) => [`${item.candidate_id}:${item.reason_code}`, item]));
+  const dispositions = new Map<string, { source_unit_id: string;
+    disposition: "facts_extracted" | "no_supported_fact"; fact_ids: string[] }>();
+  for (const item of outputs.flatMap(({ source_dispositions }) => source_dispositions)) {
+    const current = dispositions.get(item.source_unit_id); const factIds = [...new Set([
+      ...(current?.fact_ids ?? []), ...item.fact_ids])].sort();
+    dispositions.set(item.source_unit_id, { source_unit_id: item.source_unit_id,
+      disposition: factIds.length ? "facts_extracted" : "no_supported_fact", fact_ids: factIds });
+  }
   return SemanticFactExtractionOutputSchema.parse({ schema_version: "2.0.0", project_id: projectId,
     facts: [...facts.values()].sort((a, b) => a.fact_id.localeCompare(b.fact_id)),
     evidence: [...evidence.values()].sort((a, b) => a.evidence_id.localeCompare(b.evidence_id)),
+    source_dispositions: [...dispositions.values()].sort((a, b) =>
+      a.source_unit_id.localeCompare(b.source_unit_id)),
     rejections: [...rejections.values()].sort((a, b) => a.candidate_id.localeCompare(b.candidate_id)
       || a.reason_code.localeCompare(b.reason_code)) });
 }

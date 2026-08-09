@@ -12,6 +12,7 @@ import { readKnowledgeNode, readKnowledgeOverview } from
 import { describe, expect, it } from "vitest";
 
 type Fixture = { case_id: string; source: string; expected_root_modules: string[];
+  expected_graph_types: string[]; forbidden_graph_types?: string[]; expected_recursive_path?: string[];
   facts: Array<{ kind: string; quote: string; relation?: string; terms: [string, string][] }> };
 const fixtureRoot = resolve("tests/fixtures/atlas-v2");
 const fixtures = (JSON.parse(await readFile(resolve(fixtureRoot,
@@ -49,6 +50,32 @@ describe("Atlas V2 end-to-end qualification", () => {
           .toEqual(["Main Workflow", child.display_name]);
 
         const proposal = JSON.parse(firstKnowledge);
+        const graphTypes = proposal.knowledge_nodes.filter((node: { kind: string }) =>
+          node.kind === "visualization").map((node: { visualization: { graph_type_id: string } }) =>
+          node.visualization.graph_type_id);
+        for (const expected of fixture.expected_graph_types) expect(graphTypes).toContain(expected);
+        for (const forbidden of fixture.forbidden_graph_types ?? []) expect(graphTypes).not.toContain(forbidden);
+        expect(proposal.semantic_model.concepts.some((concept: { semantic_kind: string }) =>
+          concept.semantic_kind !== "module")).toBe(true);
+        expect(proposal.knowledge_nodes.filter((node: { kind: string }) => node.kind === "module")
+          .every((node: { child_ids: string[] }) => node.child_ids.every((id) =>
+            proposal.knowledge_nodes.find((candidate: { knowledge_id: string }) =>
+              candidate.knowledge_id === id)?.kind !== "visualization"))).toBe(true);
+        if (fixture.expected_recursive_path) {
+          let current = proposal.knowledge_nodes.find((node: { display_name: string }) =>
+            node.display_name === fixture.expected_recursive_path![0]);
+          for (const label of fixture.expected_recursive_path.slice(1)) {
+            current = current?.child_ids.map((id: string) => proposal.knowledge_nodes.find(
+              (node: { knowledge_id: string }) => node.knowledge_id === id))
+              .find((node: { display_name: string }) => node.display_name === label);
+            expect(current, `Missing recursive semantic path segment ${label}`).toBeTruthy();
+          }
+          const nested = await readKnowledgeNode({ root: artifactRoot,
+            projectId: fixture.case_id, revision: 1, knowledgeId: current.knowledge_id });
+          expect(nested.breadcrumb.map(({ display_name }) => display_name))
+            .toEqual(["Main Workflow", ...fixture.expected_recursive_path]);
+        }
+
         const proposalHash = atlasProposalHash(proposal);
         const decisionsPath = resolve(temporary, "decisions.json");
         await writeFile(decisionsPath, JSON.stringify({ schema_version: "2.0.0",

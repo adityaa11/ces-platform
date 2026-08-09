@@ -1,6 +1,7 @@
 # CES Atlas V2 Recursive Knowledge Explorer
 
-**Status:** Semantic-depth correction planned in ATLAS-V2-011
+**Status:** Semantic-depth implementation complete through ATLAS-V2-011F;
+ATLAS-V2-011G live generic PDF qualification remains
 
 This is the only active ticket sequence for the Atlas recursive Knowledge
 Explorer. Older Atlas, hardening, workflow-UI, and release tickets remain as

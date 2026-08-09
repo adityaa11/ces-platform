@@ -147,7 +147,7 @@ type ModuleItem = { fact: Fact; knowledgeId: string };
 function buildSemanticRelationships(project: string, facts: Fact[], concepts: Array<{
   concept_id: string; source_label: string }>) {
   const relationKinds = new Set<Fact["kind"]>(["activity_order", "state_transition",
-    "entity_relationship", "dependency", "audit_action", "decision"]);
+    "entity_relationship", "dependency", "audit_action", "decision", "event"]);
   const byLabel = new Map<string, string[]>();
   for (const concept of concepts) {
     const key = conceptKey(concept.source_label); const ids = byLabel.get(key) ?? [];

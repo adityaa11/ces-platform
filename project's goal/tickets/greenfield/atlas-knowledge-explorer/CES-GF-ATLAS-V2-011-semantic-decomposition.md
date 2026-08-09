@@ -1,6 +1,6 @@
 # CES-GF-ATLAS-V2-011 - Semantic Decomposition
 
-**Status:** Planned
+**Status:** In Progress — V2-011A through V2-011F complete; V2-011G live generic qualification remains
 **Depends on:** ATLAS-V2-010F
 **Priority:** Blocking
 

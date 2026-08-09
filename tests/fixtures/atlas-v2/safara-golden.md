@@ -24,6 +24,8 @@ Status Perjalanan dan Kesiapan is Ready if payment is Paid and Dokumen Jemaah is
 
 # Manifest Keberangkatan
 
+Status Perjalanan dan Kesiapan enables Manifest Keberangkatan.
+
 Petugas generates Manifest Keberangkatan after readiness is Ready.
 
 # Dashboard dan Laporan
@@ -31,5 +33,7 @@ Petugas generates Manifest Keberangkatan after readiness is Ready.
 Dashboard dan Laporan depends on Paket dan Jadwal Keberangkatan, Data Jemaah, Pendaftaran Jemaah, Tagihan dan Pembayaran, Dokumen Jemaah, Status Perjalanan dan Kesiapan, and Manifest Keberangkatan.
 
 # Riwayat Aktivitas
+
+Manifest Keberangkatan activity is recorded in Riwayat Aktivitas.
 
 Riwayat Aktivitas records each user action with its actor and timestamp.

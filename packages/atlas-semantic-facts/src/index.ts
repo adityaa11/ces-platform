@@ -164,8 +164,9 @@ z.infer<typeof SemanticFactExtractionOutputSchema> {
         .sort((left, right) => left.role_id.localeCompare(right.role_id)
           || left.exact_text.localeCompare(right.exact_text)) };
     if (candidate.parent_source_label &&
-        !cited.some(({ exact_text }) => containsExactWording(exact_text, candidate.parent_source_label!))) {
-      throw new Error("Semantic parent label is not present in cited source text");
+        !input.source_units.some(({ exact_text }) =>
+          containsExactWording(exact_text, candidate.parent_source_label!))) {
+      throw new Error("Semantic parent label is not present in the bounded source scope");
     }
     const { candidate_id: _candidateId, ...semantic } = candidate;
     return [SemanticFactSchema.parse({

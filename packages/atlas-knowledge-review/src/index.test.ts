@@ -8,7 +8,7 @@ const evidence = { evidence_id: "sample.evidence.one", exact_text: "Orders", lan
       bounding_boxes: [], reason: "source_has_no_coordinates" } },
   extraction_method: "text_layer", extraction_confidence: 1, review_status: "unreviewed" };
 const moduleNode = { knowledge_id: "sample.knowledge.module.orders",
-  parent_id: "sample.knowledge.main-workflow", child_ids: [],
+  parent_id: "sample.knowledge.main-workflow", child_ids: [], representation_ids: [],
   canonical_concept_id: "sample.concept.orders", kind: "module", display_name: "Orders",
   source_label: "Orders", evidence_ids: [evidence.evidence_id], support_status: "supported" };
 const proposal = { schema_version: "2.0.0", project_id: "sample", revision: 1,
@@ -16,9 +16,15 @@ const proposal = { schema_version: "2.0.0", project_id: "sample", revision: 1,
   root_knowledge_id: "sample.knowledge.main-workflow",
   documents: [{ document_id: "sample.document", revision: 1,
     content_hash: `sha256:${"a".repeat(64)}`, media_type: "application/pdf",
-    original_name: "sample.pdf" }], evidence: [evidence], knowledge_nodes: [{
+    original_name: "sample.pdf" }], evidence: [evidence],
+  semantic_model: { concepts: [{ concept_id: moduleNode.canonical_concept_id,
+    parent_concept_id: null, child_concept_ids: [], semantic_kind: "module",
+    source_label: "Orders", evidence_ids: [evidence.evidence_id], confidence: 1,
+    review_status: "unreviewed", decomposition_status: "atomic" }], relationships: [] },
+  knowledge_nodes: [{
       knowledge_id: "sample.knowledge.main-workflow", parent_id: null,
-      child_ids: [moduleNode.knowledge_id], kind: "visualization", display_name: "Main Workflow",
+      child_ids: [moduleNode.knowledge_id], representation_ids: [],
+      kind: "visualization", display_name: "Main Workflow",
       evidence_ids: [evidence.evidence_id], support_status: "supported", permanently_visible: true,
       visualization: { graph_type_id: "atlas.graph.business-workflow", edges: [],
         ordering_status: "not_applicable", renderer_capabilities: { interactive_required: true,
