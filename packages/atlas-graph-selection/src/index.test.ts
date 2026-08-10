@@ -47,7 +47,7 @@ describe("Atlas graph selection heuristics", () => {
     })]);
   });
 
-  it("owns supporting facts through canonical section and term references", () => {
+  it("owns supporting facts through one canonical section", () => {
     const output = selectAtlasGraphTypes(extraction([
       fact("module", "module", "1. Registration", "Registration"),
       { ...fact("order", "activity_order", "Registration enables Payment", "Registration"),
@@ -58,5 +58,23 @@ describe("Atlas graph selection heuristics", () => {
       scope_kind: "module", graph_type_id: "atlas.graph.workflow",
       support_status: "supported",
     }));
+  });
+
+  it("keeps cross-module relationships out of module detail projections", () => {
+    const output = selectAtlasGraphTypes(extraction([
+      fact("orders", "module", "Orders", "Orders"),
+      fact("payment", "module", "Payment", "Payment"),
+      fact("reporting", "module", "Reporting", "Reporting"),
+      { ...fact("orders-payment", "dependency", "Orders provide Payment data", "Orders"),
+        context_paths: ["Orders", "Payment"], terms: [
+          { role_id: "source", exact_text: "Orders" },
+          { role_id: "target", exact_text: "Payment" }] },
+      { ...fact("payment-reporting", "dependency", "Payment provides Reporting data", "Payment"),
+        context_paths: ["Payment", "Reporting"], terms: [
+          { role_id: "source", exact_text: "Payment" },
+          { role_id: "target", exact_text: "Reporting" }] },
+    ]));
+    expect(output.assessments.filter(({ scope_kind, graph_type_id }) =>
+      scope_kind === "module" && graph_type_id === "atlas.graph.dependency-graph")).toEqual([]);
   });
 });

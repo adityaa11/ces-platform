@@ -79,6 +79,27 @@ describe("recursive Atlas knowledge assembly", () => {
         reason: "missing_endpoint", review_status: "review_required" })]);
   });
 
+  it("keeps project dependency topology in Main Workflow instead of duplicating it per module", () => {
+    const result = bundle([
+      fact("orders", "module", "Orders", "Orders"),
+      fact("payment", "module", "Payment", "Payment"),
+      fact("reporting", "module", "Reporting", "Reporting"),
+      { ...fact("orders-payment", "dependency", "Orders provide Payment data", "Orders",
+        [{ role_id: "source", exact_text: "Orders" },
+          { role_id: "target", exact_text: "Payment" }]), context_paths: ["Orders", "Payment"] },
+      { ...fact("payment-reporting", "dependency", "Payment provides Reporting data", "Payment",
+        [{ role_id: "source", exact_text: "Payment" },
+          { role_id: "target", exact_text: "Reporting" }]), context_paths: ["Payment", "Reporting"] },
+    ]);
+    const root = result.knowledge_nodes.find(({ knowledge_id }) =>
+      knowledge_id === result.root_knowledge_id);
+    if (root?.kind !== "visualization") throw new Error("expected Main Workflow");
+    expect(root.visualization.edges).toHaveLength(2);
+    expect(result.knowledge_nodes.filter((node) => node.kind === "visualization"
+      && !node.permanently_visible
+      && node.visualization.graph_type_id === "atlas.graph.dependency-graph")).toEqual([]);
+  });
+
   it("builds a different hierarchy for an entity-relationship document", () => {
     const result = bundle([
       fact("catalog", "module", "Catalog", "Catalog"),

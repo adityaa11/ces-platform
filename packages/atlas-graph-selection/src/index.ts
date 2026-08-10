@@ -66,7 +66,7 @@ z.infer<typeof GraphSelectionOutputSchema> {
       facts: extraction.facts },
     ...modules.map((module) => ({ id: `${extraction.project_id}.scope.${suffix(module.fact_id)}`,
       kind: "module" as const, facts: extraction.facts.filter((fact) =>
-        fact.fact_id === module.fact_id || belongsToModule(fact, module)) })),
+        fact.fact_id === module.fact_id || belongsToModule(fact, module, modules)) })),
   ];
   const assessments = scopes.flatMap((scope) => rules.flatMap((rule) => {
     if (rule.scope !== scope.kind) return [];
@@ -95,13 +95,21 @@ z.infer<typeof GraphSelectionOutputSchema> {
     project_id: extraction.project_id, assessments });
 }
 
-function belongsToModule(fact: Fact, module: Fact): boolean {
+const RelationshipKinds = new Set<Fact["kind"]>(["activity_order", "state_transition",
+  "decision", "entity_relationship", "dependency", "event", "audit_action"]);
+function belongsToModule(fact: Fact, module: Fact, modules: Fact[]): boolean {
   const labels = [module.exact_statement, ...module.terms.map(({ exact_text }) => exact_text)];
   const keys = new Set(labels.map(conceptKey));
-  return fact.fact_id === module.fact_id
-    || fact.context_paths.some((path) => path.split(" > ").some((segment) =>
-      keys.has(conceptKey(segment))))
-    || fact.terms.some(({ exact_text }) => keys.has(conceptKey(exact_text)));
+  if (fact.parent_source_label && keys.has(conceptKey(fact.parent_source_label))) return true;
+  const moduleKeys = new Map(modules.flatMap((candidate) =>
+    [candidate.exact_statement, ...candidate.terms.map(({ exact_text }) => exact_text)]
+      .map((label) => [conceptKey(label), candidate.fact_id] as const)));
+  const contextOwners = new Set(fact.context_paths.flatMap((path) => path.split(" > ")
+    .flatMap((segment) => { const owner = moduleKeys.get(conceptKey(segment));
+      return owner ? [owner] : []; })));
+  if (contextOwners.size > 0) return contextOwners.size === 1 && contextOwners.has(module.fact_id);
+  if (RelationshipKinds.has(fact.kind)) return false;
+  return fact.terms.some(({ exact_text }) => keys.has(conceptKey(exact_text)));
 }
 function conceptKey(value: string): string {
   return value.normalize("NFKC").toLocaleLowerCase().replace(/^\s*\d{1,3}[.)-]\s*/u, "")
