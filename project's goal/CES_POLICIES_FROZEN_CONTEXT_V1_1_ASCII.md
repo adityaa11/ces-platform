@@ -1,9 +1,9 @@
 # CES Policies -- Frozen Context v1.1
 
-**Status:** Proposed successor frozen context
+**Status:** Authoritative frozen context for CES Policies v1.1
 **Purpose:** Apply accepted POL-000-R01 source governance without rewriting CES Policies Frozen Context v1
 **Scope:** CES Policies only
-**Proposed:** 2026-08-11
+**Frozen:** 2026-08-11
 **Predecessor:** `CES_POLICIES_FROZEN_CONTEXT_V1_ASCII.md`
 **Authority:** Accepted `POL-000` and `POL-000-R01`
 
@@ -277,12 +277,9 @@ POL-000-R01 Source Strategy Revision 001 -- ACCEPTED
 CES Policies Frozen Context v1.1
 ```
 
-Until this proposed context receives an allowed terminal review outcome that
-accepts it, Frozen Context v1 remains the active authoritative context. Upon
-acceptance, v1.1 becomes the active context and v1 remains immutable historical
-evidence.
+Frozen Context v1.1 is the active authoritative context. Frozen Context v1
+remains immutable historical evidence.
 
 ---
 
-**End of proposed frozen CES Policies v1.1 context.**
-
+**End of frozen CES Policies v1.1 context.**

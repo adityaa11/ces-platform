@@ -1,6 +1,6 @@
 # CES-GF-POL-000-R01-F01 - Publish Frozen Context v1.1
 
-**Status:** Proposed
+**Status:** Accepted
 **Depends on:** Accepted POL-000-R01
 
 ## Outcome
@@ -44,3 +44,11 @@ Review only faithful application of accepted POL-000-R01, historical lineage,
 source boundaries, reconciliation gates, and preservation of the remaining v1
 contract. Use only the frozen terminal review outcomes.
 
+## Acceptance evidence
+
+- Commit `085897f` proposed the successor frozen context and publication
+  contract.
+- Round 1 result: `NOT ACCEPTED`; REQUIRED-01 identified the missing explicit
+  NIST foreign-rights and geographic condition.
+- Commit `e08e623` preserved NIST's foreign-rights and worldwide-grant terms.
+- Round 2 closure result: `ACCEPTED`.

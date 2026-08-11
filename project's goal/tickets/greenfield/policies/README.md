@@ -2,10 +2,12 @@
 
 **Status:** Proposed
 
-This is the active greenfield delivery sequence for CES Policies v1. It is
-governed by [`CES_POLICIES_FROZEN_CONTEXT_V1_ASCII.md`](../../../CES_POLICIES_FROZEN_CONTEXT_V1_ASCII.md).
-If a ticket conflicts with that context, the frozen context wins and the
-ticket must be corrected through an explicit change proposal.
+This is the active greenfield delivery sequence for CES Policies v1.1. It is
+governed by [`CES_POLICIES_FROZEN_CONTEXT_V1_1_ASCII.md`](../../../CES_POLICIES_FROZEN_CONTEXT_V1_1_ASCII.md).
+The predecessor [`CES_POLICIES_FROZEN_CONTEXT_V1_ASCII.md`](../../../CES_POLICIES_FROZEN_CONTEXT_V1_ASCII.md)
+remains immutable historical evidence. If a ticket conflicts with the active
+context, the frozen context wins and the ticket must be corrected through an
+explicit change proposal.
 
 ## Delivery sequence
 
