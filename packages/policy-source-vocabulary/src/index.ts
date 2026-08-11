@@ -1,4 +1,7 @@
-import { SourceGlossarySchema } from "@company/ces-policy-source-glossary";
+import {
+  GovernedSourceGlossarySchema,
+  SourceGlossarySchema,
+} from "@company/ces-policy-source-glossary";
 import { z } from "zod";
 
 export const POLICY_SOURCE_VOCABULARY_VERSION = "1.0.0" as const;
@@ -88,6 +91,24 @@ export function validateRawSourceVocabulary(
   if (!glossary.releases.some(({ release_id }) =>
     release_id === vocabulary.source_release_id)) {
     throw new Error(`Raw vocabulary references unknown release ${vocabulary.source_release_id}`);
+  }
+  return vocabulary;
+}
+
+export function validateGovernedRawSourceVocabulary(
+  governedGlossaryValue: unknown,
+  vocabularyValue: unknown,
+) {
+  const governedGlossary = GovernedSourceGlossarySchema.parse(governedGlossaryValue);
+  const vocabulary = validateRawSourceVocabulary(
+    governedGlossary.source_glossary, vocabularyValue);
+  const governance = governedGlossary.governance.find(({ release_id }) =>
+    release_id === vocabulary.source_release_id);
+  if (!governance || governance.corpus_activation !== "ACTIVE" ||
+      governance.source_class === "REFERENCE_ONLY") {
+    throw new Error(
+      `Raw vocabulary source ${vocabulary.source_release_id} is not an active machine corpus input`,
+    );
   }
   return vocabulary;
 }

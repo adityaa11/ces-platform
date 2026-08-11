@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { CES_POLICY_CORE_SOURCE_GLOSSARY_V1 } from
+import {
+  CES_POLICY_CORE_SOURCE_GLOSSARY_V1,
+  CES_POLICY_GOVERNED_SOURCE_GLOSSARY_V1_1,
+} from
   "@company/ces-policy-source-glossary/core-sources";
 import {
   RawSourceConceptSchema,
   RawSourceVocabularySchema,
+  validateGovernedRawSourceVocabulary,
   validateRawSourceVocabulary,
 } from "./index.js";
 
@@ -84,5 +88,22 @@ describe("raw source vocabulary contract", () => {
   it("rejects vocabulary for an unknown source release", () => {
     expect(() => validateRawSourceVocabulary(CES_POLICY_CORE_SOURCE_GLOSSARY_V1,
       vocabulary("unknown.release"))).toThrow(/unknown release/u);
+  });
+
+  it("accepts governed core and evaluation inputs without changing the raw shape", () => {
+    for (const releaseId of ["nist.csf.2-0", "nist.sp-800-53.r5-2-0",
+      "owasp.asvs.5-0-0", "owasp.wstg.4-2"]) {
+      const parsed = validateGovernedRawSourceVocabulary(
+        CES_POLICY_GOVERNED_SOURCE_GLOSSARY_V1_1, vocabulary(releaseId));
+      expect(parsed).toEqual(vocabulary(releaseId));
+    }
+  });
+
+  it("rejects raw vocabulary from governed reference-only releases", () => {
+    for (const releaseId of ["iso.iec-27001.2022-amd1-2024", "iso.iec-27002.2022"]) {
+      expect(() => validateGovernedRawSourceVocabulary(
+        CES_POLICY_GOVERNED_SOURCE_GLOSSARY_V1_1, vocabulary(releaseId)))
+        .toThrow(/not an active machine corpus input/u);
+    }
   });
 });
