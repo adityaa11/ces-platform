@@ -11,12 +11,13 @@ ticket must be corrected through an explicit change proposal.
 
 | Order | Ticket | Outcome | Depends on |
 |---:|---|---|---|
+| G01 | [POL-000](CES-GF-POL-000-source-glossary-governance.md) | Permanent source glossary governance contract | POL-001 |
 | P01 | [POL-001](CES-GF-POL-001-freeze-policy-charter.md) | Frozen CES Policies charter | None |
 | P02 | [POL-002](CES-GF-POL-002-source-glossary-model.md) | Versioned source glossary contract | POL-001, FND-002 |
 | P03 | [POL-003](CES-GF-POL-003-seed-core-source-releases.md) | Four governed core source releases | POL-002 |
 | P04 | [POL-004](CES-GF-POL-004-source-update-detection.md) | Non-mutating update candidates | POL-003 |
 | P05 | [POL-005](CES-GF-POL-005-raw-source-vocabulary-model.md) | Source-faithful vocabulary contract | POL-002 |
-| P06 | [POL-006](CES-GF-POL-006-raw-vocabulary-extraction.md) | Traceable raw vocabulary corpus | POL-003, POL-005 |
+| P06 | [POL-006](CES-GF-POL-006-raw-vocabulary-extraction.md) | Traceable raw vocabulary corpus; currently blocked by source governance | POL-003, POL-005, accepted POL-000 revision and required reconciliation |
 | P07 | [POL-007](CES-GF-POL-007-canonical-vocabulary.md) | Versioned CES canonical concepts | POL-006 |
 | P08 | [POL-008](CES-GF-POL-008-canonical-policy-taxonomy.md) | Small enduring policy taxonomy | POL-007 |
 | P09 | [POL-009](CES-GF-POL-009-policy-contract.md) | Canonical policy, concern, and capability contract | POL-008 |
@@ -32,6 +33,12 @@ ticket must be corrected through an explicit change proposal.
 Tickets execute in dependency order. P04 may proceed beside P05 after P03;
 otherwise a later ticket must not pull its model or behavior into an earlier
 ticket.
+
+POL-000 is a permanent governance layer established after the v1 source-rights
+blocker was discovered; its `G01` label does not rewrite the historical P01-P05
+execution order. Concrete source-set changes use `POL-000-Rxx` revision tickets.
+POL-006 remains blocked until the applicable revision is accepted, a successor
+frozen context is published, and its declared upstream reconciliations close.
 
 ## Review closure contract
 
