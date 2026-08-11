@@ -1,6 +1,6 @@
 # CES-GF-POL-002 - Source Glossary Model
 
-**Status:** Implemented; pending review
+**Status:** Accepted
 **Depends on:** POL-001 and FND-002
 
 ## Outcome
@@ -40,3 +40,4 @@ and their governance lifecycle.
   published release mutation or deletion while allowing additive successors.
 - Five generic fixture tests cover valid contracts, invalid identity/reference
   cases, immutability, and non-mutating release supersession.
+- Terminal review result: `ACCEPTED` for commit `70e47a7`.
