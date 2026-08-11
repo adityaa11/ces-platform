@@ -20,6 +20,7 @@ explicit change proposal.
 | R03 | [POL-003-R01](CES-GF-POL-003-R01-governed-source-set-reconciliation.md) | Six-record governed source-set successor | POL-002-R01, POL-003 |
 | R04 | [POL-004-R01](CES-GF-POL-004-R01-class-aware-update-reconciliation.md) | Class-aware, authority-neutral source update detection | POL-002-R01, POL-003-R01, POL-004 |
 | R05 | [POL-005-V01](CES-GF-POL-005-V01-governed-compatibility-validation.md) | Governed raw-vocabulary compatibility validation | POL-002-R01, POL-003-R01, POL-005 |
+| R06 | [POL-006-R01](CES-GF-POL-006-R01-extraction-contract-synchronization.md) | Governed extraction-contract synchronization only | POL-003-R01, POL-004-R01, POL-005-V01, POL-006 |
 | P01 | [POL-001](CES-GF-POL-001-freeze-policy-charter.md) | Frozen CES Policies charter | None |
 | P02 | [POL-002](CES-GF-POL-002-source-glossary-model.md) | Versioned source glossary contract | POL-001, FND-002 |
 | P03 | [POL-003](CES-GF-POL-003-seed-core-source-releases.md) | Four governed core source releases | POL-002 |
