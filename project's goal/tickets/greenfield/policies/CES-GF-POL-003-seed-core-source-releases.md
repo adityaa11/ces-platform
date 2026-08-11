@@ -1,6 +1,6 @@
 # CES-GF-POL-003 - Seed Four Core Source Releases
 
-**Status:** Implemented; pending review
+**Status:** Accepted
 **Depends on:** POL-002
 
 ## Outcome
@@ -44,3 +44,4 @@ frozen CES Policies v1 sources.
 - Round 2 correction separates metadata `observation_hash` provenance from
   retrieved-source `content_hash` provenance without weakening immutability or
   ISO access restrictions.
+- Terminal Round 2 result: `ACCEPTED` for commit `ce0460e`.
