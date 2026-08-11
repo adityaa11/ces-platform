@@ -13,6 +13,26 @@ export const SourceFamilySchema = z.object({
   lifecycle: z.enum(["active", "retired"]),
 }).strict();
 
+const SourceContentRetrievalSchema = z.object({
+  retrieval_kind: z.literal("source_content"),
+  retrieved_at: z.iso.datetime({ offset: true }),
+  retrieved_from: z.url(),
+  content_hash: Sha256Schema,
+}).strict();
+
+const MetadataObservationSchema = z.object({
+  retrieval_kind: z.literal("metadata_observation"),
+  observed_at: z.iso.datetime({ offset: true }),
+  observed_from: z.url(),
+  verified_metadata: NonEmptyStringSchema,
+  observation_hash: Sha256Schema,
+}).strict();
+
+export const SourceReleaseProvenanceSchema = z.discriminatedUnion("retrieval_kind", [
+  SourceContentRetrievalSchema,
+  MetadataObservationSchema,
+]);
+
 export const SourceReleaseSchema = z.object({
   release_id: IdSchema,
   family_id: IdSchema,
@@ -23,11 +43,7 @@ export const SourceReleaseSchema = z.object({
     published_on: z.iso.date(),
     authoritative_uri: z.url(),
   }).strict(),
-  retrieval: z.object({
-    retrieved_at: z.iso.datetime({ offset: true }),
-    retrieved_from: z.url(),
-    content_hash: Sha256Schema,
-  }).strict(),
+  retrieval: SourceReleaseProvenanceSchema,
   last_checked_at: z.iso.datetime({ offset: true }),
 }).strict();
 
@@ -70,8 +86,11 @@ export const SourceGlossarySchema = z.object({
       issue(`Source family ${release.family_id} has a duplicate edition`);
     }
     editions.add(editionKey);
-    if (Date.parse(release.last_checked_at) < Date.parse(release.retrieval.retrieved_at)) {
-      issue(`Source release ${release.release_id} was checked before it was retrieved`);
+    const provenanceTime = release.retrieval.retrieval_kind === "source_content"
+      ? release.retrieval.retrieved_at
+      : release.retrieval.observed_at;
+    if (Date.parse(release.last_checked_at) < Date.parse(provenanceTime)) {
+      issue(`Source release ${release.release_id} was checked before its provenance was recorded`);
     }
   }
 
@@ -138,5 +157,6 @@ export function validateSourceGlossaryTransition(previousValue: unknown, nextVal
 
 export type SourceFamily = z.infer<typeof SourceFamilySchema>;
 export type SourceRelease = z.infer<typeof SourceReleaseSchema>;
+export type SourceReleaseProvenance = z.infer<typeof SourceReleaseProvenanceSchema>;
 export type SourceReleaseSupersession = z.infer<typeof SourceReleaseSupersessionSchema>;
 export type SourceGlossary = z.infer<typeof SourceGlossarySchema>;

@@ -16,6 +16,7 @@ const release = {
   lifecycle: "published" as const,
   publication: { published_on: "2025-02-01", authoritative_uri: "https://example.test/2025" },
   retrieval: { retrieved_at: "2026-08-11T10:00:00+00:00",
+    retrieval_kind: "source_content" as const,
     retrieved_from: "https://example.test/2025", content_hash: hash("a") },
   last_checked_at: "2026-08-11T11:00:00+00:00",
 };
@@ -29,6 +30,21 @@ const glossary = {
 describe("CES Policy source glossary contract", () => {
   it("validates generic source families and immutable release provenance", () => {
     expect(SourceGlossarySchema.parse(glossary)).toEqual(glossary);
+  });
+
+  it("cannot confuse source-content hashes with metadata-observation hashes", () => {
+    const metadataRetrieval = {
+      retrieval_kind: "metadata_observation",
+      observed_at: "2026-08-11T10:00:00+00:00",
+      observed_from: "https://example.test/2025",
+      verified_metadata: "Example Standard 2025",
+      observation_hash: hash("b"),
+    };
+    expect(SourceGlossarySchema.parse({ ...glossary,
+      releases: [{ ...release, retrieval: metadataRetrieval }] }).releases[0]?.retrieval)
+      .toEqual(metadataRetrieval);
+    expect(() => SourceGlossarySchema.parse({ ...glossary, releases: [{ ...release,
+      retrieval: { ...metadataRetrieval, content_hash: hash("c") } }] })).toThrow();
   });
 
   it("rejects duplicate releases and broken family membership", () => {

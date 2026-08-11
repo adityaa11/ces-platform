@@ -12,8 +12,6 @@ export const CoreSourceRoleSchema = z.enum([
 
 export const CoreSourceSeedSchema = z.object({
   role: CoreSourceRoleSchema,
-  verified_metadata: z.string().min(1),
-  hash_scope: z.literal("utf8_sha256_of_verified_metadata"),
   source_content_access: z.object({
     license_or_terms: z.string().min(1),
     machine_use: z.enum([
@@ -30,8 +28,6 @@ export const CoreSourceSeedSchema = z.object({
 export const CES_POLICY_CORE_SOURCE_SEEDS_V1 = [
   {
     role: "certification_anchor",
-    verified_metadata: "ISO/IEC 27001:2022 (Edition 3); Amendment ISO/IEC 27001:2022/Amd 1:2024; published 2022-10-25 and 2024-02-23",
-    hash_scope: "utf8_sha256_of_verified_metadata",
     source_content_access: {
       license_or_terms: "ISO copyright and terms of use",
       machine_use: "prohibited_without_written_permission",
@@ -58,17 +54,17 @@ export const CES_POLICY_CORE_SOURCE_SEEDS_V1 = [
         authoritative_uri: "https://www.iso.org/standard/27001",
       },
       retrieval: {
-        retrieved_at: CHECKED_AT,
-        retrieved_from: "https://www.iso.org/standard/27001",
-        content_hash: "sha256:7bbf4bdd153b438b70151e814081be1c81569db7eecbaf9c82bad47cbe5a2381",
+        retrieval_kind: "metadata_observation",
+        observed_at: CHECKED_AT,
+        observed_from: "https://www.iso.org/standard/27001",
+        verified_metadata: "ISO/IEC 27001:2022 (Edition 3); Amendment ISO/IEC 27001:2022/Amd 1:2024; published 2022-10-25 and 2024-02-23",
+        observation_hash: "sha256:7bbf4bdd153b438b70151e814081be1c81569db7eecbaf9c82bad47cbe5a2381",
       },
       last_checked_at: CHECKED_AT,
     },
   },
   {
     role: "control_guidance",
-    verified_metadata: "ISO/IEC 27002:2022 (Edition 3); published 2022-02-15; corrected English version 2022-03",
-    hash_scope: "utf8_sha256_of_verified_metadata",
     source_content_access: {
       license_or_terms: "ISO copyright and terms of use",
       machine_use: "prohibited_without_written_permission",
@@ -92,17 +88,17 @@ export const CES_POLICY_CORE_SOURCE_SEEDS_V1 = [
         authoritative_uri: "https://www.iso.org/standard/75652.html",
       },
       retrieval: {
-        retrieved_at: CHECKED_AT,
-        retrieved_from: "https://www.iso.org/standard/75652.html",
-        content_hash: "sha256:ca5d33e342afe99973c58fbdc2f37cd2d5e48e52623e3738ef90331d27606c5c",
+        retrieval_kind: "metadata_observation",
+        observed_at: CHECKED_AT,
+        observed_from: "https://www.iso.org/standard/75652.html",
+        verified_metadata: "ISO/IEC 27002:2022 (Edition 3); published 2022-02-15; corrected English version 2022-03",
+        observation_hash: "sha256:ca5d33e342afe99973c58fbdc2f37cd2d5e48e52623e3738ef90331d27606c5c",
       },
       last_checked_at: CHECKED_AT,
     },
   },
   {
     role: "application_security_verification",
-    verified_metadata: "OWASP Application Security Verification Standard 5.0.0; tag v5.0.0_release; commit 5cf9b03; released 2025-05-30",
-    hash_scope: "utf8_sha256_of_verified_metadata",
     source_content_access: {
       license_or_terms: "Creative Commons Attribution-ShareAlike 4.0 International",
       machine_use: "permitted_with_license_compliance",
@@ -129,17 +125,17 @@ export const CES_POLICY_CORE_SOURCE_SEEDS_V1 = [
         authoritative_uri: "https://github.com/OWASP/ASVS/releases/tag/v5.0.0_release",
       },
       retrieval: {
-        retrieved_at: CHECKED_AT,
-        retrieved_from: "https://github.com/OWASP/ASVS/releases/tag/v5.0.0_release",
-        content_hash: "sha256:0d469f3ec6cd68f939aefc012985cf47725282010af080ece5b694057f28d2a6",
+        retrieval_kind: "metadata_observation",
+        observed_at: CHECKED_AT,
+        observed_from: "https://github.com/OWASP/ASVS/releases/tag/v5.0.0_release",
+        verified_metadata: "OWASP Application Security Verification Standard 5.0.0; tag v5.0.0_release; commit 5cf9b03; released 2025-05-30",
+        observation_hash: "sha256:0d469f3ec6cd68f939aefc012985cf47725282010af080ece5b694057f28d2a6",
       },
       last_checked_at: CHECKED_AT,
     },
   },
   {
     role: "adversarial_testing",
-    verified_metadata: "OWASP Web Security Testing Guide 4.2; released 2020-12-03; versioned path v42",
-    hash_scope: "utf8_sha256_of_verified_metadata",
     source_content_access: {
       license_or_terms: "Creative Commons Attribution-ShareAlike 4.0 International",
       machine_use: "permitted_with_license_compliance",
@@ -166,9 +162,11 @@ export const CES_POLICY_CORE_SOURCE_SEEDS_V1 = [
         authoritative_uri: "https://owasp.org/www-project-web-security-testing-guide/v42/",
       },
       retrieval: {
-        retrieved_at: CHECKED_AT,
-        retrieved_from: "https://owasp.org/www-project-web-security-testing-guide/v42/",
-        content_hash: "sha256:7829bca873c5f6b8e8ca21f7851d0e02c5602680373fb837578549bbb3fed081",
+        retrieval_kind: "metadata_observation",
+        observed_at: CHECKED_AT,
+        observed_from: "https://owasp.org/www-project-web-security-testing-guide/v42/",
+        verified_metadata: "OWASP Web Security Testing Guide 4.2; released 2020-12-03; versioned path v42",
+        observation_hash: "sha256:7829bca873c5f6b8e8ca21f7851d0e02c5602680373fb837578549bbb3fed081",
       },
       last_checked_at: CHECKED_AT,
     },

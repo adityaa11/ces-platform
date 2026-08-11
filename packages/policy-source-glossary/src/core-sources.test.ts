@@ -23,8 +23,10 @@ describe("CES Policies v1 core source seeds", () => {
 
   it("hashes the exact normalized metadata observation", () => {
     for (const seed of CES_POLICY_CORE_SOURCE_SEEDS_V1) {
-      const digest = createHash("sha256").update(seed.verified_metadata, "utf8").digest("hex");
-      expect(seed.release.retrieval.content_hash).toBe(`sha256:${digest}`);
+      expect(seed.release.retrieval.retrieval_kind).toBe("metadata_observation");
+      const digest = createHash("sha256")
+        .update(seed.release.retrieval.verified_metadata, "utf8").digest("hex");
+      expect(seed.release.retrieval.observation_hash).toBe(`sha256:${digest}`);
     }
   });
 

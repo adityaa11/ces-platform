@@ -12,9 +12,11 @@
 | OWASP ASVS | 5.0.0, tag `v5.0.0_release`, commit `5cf9b03` | [OWASP project](https://owasp.org/www-project-application-security-verification-standard/), [versioned release](https://github.com/OWASP/ASVS/releases/tag/v5.0.0_release) |
 | OWASP WSTG | 4.2 | [OWASP project](https://owasp.org/www-project-web-security-testing-guide/), [versioned release](https://owasp.org/www-project-web-security-testing-guide/v42/) |
 
-The seed hashes cover the exact normalized `verified_metadata` strings stored
-with each seed. They do not claim to hash a licensed ISO publication or a full
-OWASP release artifact.
+Each seed uses `retrieval_kind: metadata_observation`. Its `observation_hash`
+covers the exact normalized `verified_metadata` stored inside that provenance
+object. It is structurally distinct from `retrieval_kind: source_content`,
+whose `content_hash` would cover actually retrieved source bytes. The current
+seeds do not claim to hash a licensed ISO publication or a full OWASP artifact.
 
 ## Access constraints
 

@@ -41,3 +41,6 @@ frozen CES Policies v1 sources.
   authorization; OWASP processing requires CC BY-SA 4.0 compliance.
 - Five focused tests cover exact family membership, idempotence, observation
   hashes, conflicting identity rejection, and access-policy classification.
+- Round 2 correction separates metadata `observation_hash` provenance from
+  retrieved-source `content_hash` provenance without weakening immutability or
+  ISO access restrictions.
