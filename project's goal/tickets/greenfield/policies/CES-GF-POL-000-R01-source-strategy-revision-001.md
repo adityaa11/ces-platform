@@ -1,6 +1,6 @@
 # CES-GF-POL-000-R01 - Source Strategy Revision 001
 
-**Status:** Proposed
+**Status:** Accepted
 **Governed by:** POL-000
 **Depends on:** Accepted POL-000
 **Blocks:** POL-006
@@ -224,3 +224,9 @@ review protocol.
 The review must terminate only as `ACCEPTED`, `NOT ACCEPTED`, or
 `ACCEPTED WITH DEFERRED ITEMS`.
 
+## Acceptance evidence
+
+- Commit `389fd93` introduced the concrete source-strategy revision and its
+  authoritative NIST evidence.
+- Round 1 result: `ACCEPTED`.
+- No BLOCKER, REQUIRED, or DEFERRED findings were recorded.
