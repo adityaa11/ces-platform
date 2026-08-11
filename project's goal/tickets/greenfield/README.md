@@ -67,6 +67,17 @@ authority. See the
 | 3 | [CES-GF-AGB-003](agents-bridge/CES-GF-AGB-003-gemini-provider-adapter.md) | Gemini structured-generation provider adapter | AGB-002 |
 | 4 | [CES-GF-AGB-005](agents-bridge/CES-GF-AGB-005-production-operations.md) | Production-ready generic deployment | AGB-003 |
 
+## CES Policies
+
+The active CES Policies delivery order is the
+[CES Policies plan](policies/README.md). It is governed by the frozen CES
+Policies v1 context and builds versioned source knowledge before defining the
+canonical policy baseline or connecting policy reasoning to Atlas.
+
+CES Policies consumes approved, revision-pinned Atlas facts. It does not
+reinterpret source PRDs, choose architecture or stack, or place policy
+semantics inside the Agents Bridge.
+
 ## CES Forge
 
 | Order | Ticket | Outcome | Depends on |
