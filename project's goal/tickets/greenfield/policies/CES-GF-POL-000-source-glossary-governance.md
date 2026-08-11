@@ -1,6 +1,6 @@
 # CES-GF-POL-000 - Source Glossary Governance
 
-**Status:** Proposed
+**Status:** Accepted
 **Depends on:** POL-001
 
 ## Outcome
@@ -130,3 +130,8 @@ It must not review the merits of the concrete POL-000-R01 source proposal.
 
 Round 2 is closure-only under the frozen bounded review protocol.
 
+## Acceptance evidence
+
+- Commit `e0f6d98` introduced the generic source-governance contract and the
+  explicit POL-006 governance gate.
+- Review result: `ACCEPTED`.
