@@ -10,13 +10,14 @@
 
 # 1. Core Principle
 
-CES now uses:
+CES proposes to use:
 
 ```text
 DEPENDENCY-AWARE REVIEW BATCHING
 ```
 
-instead of requiring every ticket to pass review before all downstream implementation can begin.
+If REV-001 is accepted, this workflow will replace the requirement that every
+ticket pass review before all downstream implementation can begin.
 
 The governing principle is:
 
@@ -27,7 +28,7 @@ This means:
 ```text
 - some downstream implementation may proceed provisionally;
 - authoritative decisions must still pass before dependent work executes them;
-- every ticket still has its own commit;
+- every ticket still has its own bounded commit chain;
 - every ticket still has its own acceptance contract;
 - every ticket still receives its own terminal review outcome.
 ```
@@ -956,12 +957,13 @@ Before starting a batchable ticket:
 3. Implement provisionally.
 4. Do not invent new authority.
 5. If new authority is required, stop and promote/split to REVIEW_GATE.
-6. Keep one commit per ticket.
+6. Keep one primary implementation commit per ticket, with only scoped
+   remediation commits and an optional acceptance-bookkeeping commit afterward.
 ```
 
 ---
 
-# 30. Why CES Is Adopting This
+# 30. Why CES Proposes This
 
 The previous fully serial process caused unnecessary friction:
 
@@ -1008,7 +1010,7 @@ This workflow does not change:
 - source-rights fail-closed behavior;
 - frozen review terminal outcomes;
 - Round 1 / Round 2 closure discipline;
-- one commit per ticket.
+- bounded per-ticket commit provenance.
 ```
 
 It changes only:
@@ -1049,7 +1051,7 @@ their commit histories.
 
 # 33. Final Operating Rule
 
-The CES review workflow is now:
+The proposed CES review workflow is:
 
 ```text
 Classify ticket
@@ -1064,7 +1066,7 @@ must be accepted          may proceed provisionally
 before dependent          after accepted gates
 authority executes              |
         |                       v
-        |                 own commit
+        |                 own bounded commit chain
         |                       |
         |                       v
         |                 own review
