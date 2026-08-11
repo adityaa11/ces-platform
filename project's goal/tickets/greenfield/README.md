@@ -50,7 +50,7 @@ no legacy Atlas runtime remains active.
 
 | Order | Ticket | Outcome | Depends on |
 |---:|---|---|---|
-| 1 | [CES-GF-ARCH-001](architect/CES-GF-ARCH-001-catalog-and-rubric.md) | Versioned technology catalog and deterministic scoring rubric | ATLAS-V2-006 |
+| 1 | [CES-GF-ARCH-001](architect/CES-GF-ARCH-001-catalog-and-rubric.md) | Versioned technology catalog and deterministic scoring rubric | ATLAS-V2-006, POL-015 |
 | 2 | [CES-GF-ARCH-002](architect/CES-GF-ARCH-002-decision-and-context.md) | Approved ADR and exact technical-context emission | ARCH-001 |
 
 ## CES Central Agents Bridge

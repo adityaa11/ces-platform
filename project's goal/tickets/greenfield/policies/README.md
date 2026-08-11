@@ -3,7 +3,7 @@
 **Status:** Proposed
 
 This is the active greenfield delivery sequence for CES Policies v1. It is
-governed by [`CES_POLICIES_FROZEN_CONTEXT_V1_ASCII(1).md`](../../../CES_POLICIES_FROZEN_CONTEXT_V1_ASCII(1).md).
+governed by [`CES_POLICIES_FROZEN_CONTEXT_V1_ASCII.md`](../../../CES_POLICIES_FROZEN_CONTEXT_V1_ASCII.md).
 If a ticket conflicts with that context, the frozen context wins and the
 ticket must be corrected through an explicit change proposal.
 
@@ -54,6 +54,8 @@ ticket.
 - Atlas owns business and system facts; Policies owns engineering awareness.
 - Policies references durable Atlas identities and never substitutes a fresh
   interpretation of the buyer PRD.
+- Architect project analysis and final decisions consume the governed POL-015
+  baseline; approved Atlas facts alone are not sufficient architecture input.
 - The Agents Bridge owns execution infrastructure only.
 - Architecture, stack, implementation guidance, and full ISMS management are
   outside CES Policies v1.
