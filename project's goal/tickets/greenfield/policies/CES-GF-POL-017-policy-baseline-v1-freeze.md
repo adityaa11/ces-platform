@@ -1,11 +1,11 @@
-# CES-GF-POL-017 - CES Policy Baseline v1 Freeze
+# CES-GF-POL-017 - CES Policy Baseline v1.1 Freeze
 
 **Status:** Proposed
-**Depends on:** POL-016
+**Depends on:** Accepted POL-016-V01
 
 ## Outcome
 
-Publish an immutable, traceable CES Policy Baseline v1 and close the v1 delivery
+Publish an immutable, traceable CES Policy Baseline v1.1 and close the v1.1 delivery
 sequence with explicit qualification and review evidence.
 
 ## Scope
@@ -22,7 +22,8 @@ sequence with explicit qualification and review evidence.
 - Every baseline object traces through canonical/raw mappings to governed source
   releases and through bindings to Atlas facts where project-specific.
 - Published artifacts are immutable, integrity-checkable, and versioned.
-- POL-016 qualification passes with no open BLOCKER or REQUIRED findings.
+- POL-016 and POL-016-V01 qualification pass with no open BLOCKER or REQUIRED
+  findings.
 - Deferred items are recorded without reopening accepted tickets.
 - Future source updates or enhancements create a new candidate baseline and do
   not silently mutate v1.

@@ -37,7 +37,8 @@ explicit change proposal.
 | P14 | [POL-014](CES-GF-POL-014-agents-bridge-integration.md) | Generic bridge execution integration | POL-013, AGB-002 |
 | P15 | [POL-015](CES-GF-POL-015-developer-baseline-output.md) | Developer-facing baseline awareness | POL-014 |
 | P16 | [POL-016](CES-GF-POL-016-cross-domain-validation.md) | Domain-neutral qualification evidence | POL-015 |
-| P17 | [POL-017](CES-GF-POL-017-policy-baseline-v1-freeze.md) | Immutable CES Policy Baseline v1 | POL-016 |
+| P16A | [POL-016-V01](CES-GF-POL-016-V01-safara-complete-prd-coverage.md) | Complete Safara PRD baseline-awareness accountability | Accepted POL-016 |
+| P17 | [POL-017](CES-GF-POL-017-policy-baseline-v1-freeze.md) | Immutable CES Policy Baseline v1.1 | Accepted POL-016-V01 |
 
 Tickets execute in dependency order. P04 may proceed beside P05 after P03;
 otherwise a later ticket must not pull its model or behavior into an earlier
