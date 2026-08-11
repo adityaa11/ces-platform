@@ -63,9 +63,9 @@ source authority or satisfy that gate.
 
 ## Implementation evidence
 
-- Four official artifacts are pinned by exact SHA-256 and upstream revision:
-  NIST CSF 2.0 Core export, NIST SP 800-53 OSCAL 5.2.0, ASVS 5.0.0 CSV, and
-  WSTG 4.2 tagged repository.
+- Four governed inputs have exact SHA-256 and revision evidence: a committed
+  deterministic NIST CSF 2.0 normalized extraction slice, NIST SP 800-53
+  OSCAL 5.2.0, ASVS 5.0.0 CSV, and the WSTG 4.2 tagged repository.
 - The compact representative corpus contains source-faithful concepts for all
   four governed machine inputs and contains no ISO vocabulary.
 - Raw roles cover objectives, controls, requirements, a risk concern, and
@@ -74,3 +74,6 @@ source authority or satisfy that gate.
   EVALUATION_SOURCE status.
 - Deterministic tests validate governed input authority, provenance, semantic
   coverage, ISO exclusion, and repeatable output.
+- Every concept records confidence; every ambiguous scope classification and
+  each release's non-exhaustive representative coverage have explicit Round 1
+  human-review evidence.

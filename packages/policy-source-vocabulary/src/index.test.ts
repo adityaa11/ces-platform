@@ -26,6 +26,7 @@ const concept = (releaseId: string, index: number) => ({
   bounded_description: `Source-faithful description ${index}`,
   semantic_role: "requirement" as const,
   scope_disposition: "software_relevant" as const,
+  confidence: "high" as const,
   provenance: {
     extraction_method: "manual" as const,
     extracted_at: "2026-08-11T14:00:00+00:00",

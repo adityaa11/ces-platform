@@ -60,6 +60,7 @@ export const RawSourceConceptSchema = z.object({
   bounded_description: z.string().trim().min(1).max(2_000),
   semantic_role: RawSourceSemanticRoleSchema,
   scope_disposition: RawSourceScopeDispositionSchema,
+  confidence: z.enum(["high", "medium", "low"]),
   provenance: RawSourceExtractionProvenanceSchema,
   review_status: z.enum(["candidate", "accepted", "rejected"]),
 }).strict();

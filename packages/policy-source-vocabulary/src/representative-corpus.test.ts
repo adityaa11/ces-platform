@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { createHash } from "node:crypto";
 import { buildRepresentativeExtractionCorpus,
   CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1 } from "./representative-corpus.js";
 
@@ -18,6 +19,29 @@ describe("POL-006 representative extraction corpus", () => {
       expect(item.provenance.extraction_input.hash).toBe(hashes.get(vocabulary.source_release_id));
       expect(item.source_locator.source_uri).toMatch(/^https:\/\//u);
     }
+  });
+
+  it("reproduces the CSF hash from committed normalized UTF-8 content", () => {
+    const artifact = CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1.artifacts
+      .find(({ release_id }) => release_id === "nist.csf.2-0");
+    expect(artifact?.artifact_format).toBe("normalized_utf8");
+    expect(artifact?.normalized_content).toBeTruthy();
+    expect(`sha256:${createHash("sha256").update(artifact!.normalized_content!, "utf8").digest("hex")}`)
+      .toBe(artifact?.sha256);
+  });
+
+  it("records confidence plus human ambiguity and per-release coverage review", () => {
+    const corpus = CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1;
+    const concepts = corpus.vocabularies.flatMap(({ concepts }) => concepts);
+    expect(concepts.every(({ confidence }) => ["high", "medium", "low"].includes(confidence)))
+      .toBe(true);
+    expect(new Set(corpus.human_classification_reviews.map(({ concept_id }) => concept_id)))
+      .toEqual(new Set(concepts.filter(({ scope_disposition }) =>
+        scope_disposition === "review_required").map(({ concept_id }) => concept_id)));
+    expect(new Set(corpus.coverage_reviews.map(({ release_id }) => release_id)))
+      .toEqual(new Set(corpus.vocabularies.map(({ source_release_id }) => source_release_id)));
+    expect(corpus.coverage_reviews.every(({ non_exhaustive, covered_locators }) =>
+      non_exhaustive && covered_locators.length > 0)).toBe(true);
   });
 
   it("preserves NIST boundaries and OWASP ShareAlike notices", () => {

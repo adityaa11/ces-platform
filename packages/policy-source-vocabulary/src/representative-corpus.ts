@@ -2,17 +2,54 @@ import { z } from "zod";
 import { CES_POLICY_GOVERNED_SOURCE_GLOSSARY_V1_1 } from
   "@company/ces-policy-source-glossary/core-sources";
 import { RawSourceVocabularySchema, validateGovernedRawSourceVocabulary } from "./index.js";
+import { createHash } from "node:crypto";
 
 const EXTRACTED_AT = "2026-08-11T15:00:00+00:00" as const;
 const EXTRACTOR_ID = "ces.pol-006.structured-extractor" as const;
+const REVIEWED_AT = "2026-08-11T16:00:00+00:00" as const;
+const REVIEW_EVIDENCE_ID = "CES_POLICIES_REVIEW_19c4f25" as const;
 const Sha256Schema = z.string().regex(/^sha256:[0-9a-f]{64}$/u);
+
+const CSF_NORMALIZED_CONTENT = [
+  "GV.OC-04|Critical objectives, capabilities, and services|Critical objectives, capabilities, and services that external stakeholders depend on or expect from the organization are understood and communicated.",
+  "ID.AM-05|Assets are prioritized|Assets are prioritized based on classification, criticality, resources, and impact on the mission.",
+  "PR.AA-05|Access permissions, entitlements, and authorizations|Access permissions, entitlements, and authorizations are defined in policy, managed, enforced, and reviewed with least privilege and separation of duties.",
+  "DE.CM-01|Networks and network services are monitored|Networks and network services are monitored to find potentially adverse events.",
+  "RS.MA-01|The incident response plan is executed|The incident response plan is executed in coordination with relevant third parties once an incident is declared.",
+  "RC.RP-03|The integrity of backups and other restoration assets|The integrity of backups and other restoration assets is verified before using them for restoration.",
+].join("\n");
 
 const ArtifactEvidenceSchema = z.object({
   release_id: z.string().min(1), source_uri: z.url(),
-  artifact_format: z.enum(["xlsx", "oscal_json", "csv", "tagged_repository_zip"]),
+  artifact_format: z.enum(["normalized_utf8", "oscal_json", "csv", "tagged_repository_zip"]),
   sha256: Sha256Schema, pinned_revision: z.string().min(1),
+  hash_scope: z.string().min(1), normalized_content: z.string().min(1).optional(),
   retrieved_at: z.iso.datetime({ offset: true }), attribution: z.string().min(1),
   reuse_notice: z.string().min(1),
+}).strict().superRefine((artifact, context) => {
+  if (artifact.artifact_format === "normalized_utf8") {
+    if (!artifact.normalized_content) {
+      context.addIssue({ code: "custom", message: "Normalized artifacts require committed content" });
+    } else {
+      const digest = `sha256:${createHash("sha256").update(artifact.normalized_content, "utf8").digest("hex")}`;
+      if (digest !== artifact.sha256) {
+        context.addIssue({ code: "custom", message: "Normalized artifact hash does not match its committed UTF-8 content" });
+      }
+    }
+  }
+});
+
+const HumanClassificationReviewSchema = z.object({
+  concept_id: z.string().min(1), reviewer_evidence_id: z.string().min(1),
+  reviewed_at: z.iso.datetime({ offset: true }), outcome: z.literal("ambiguity_confirmed"),
+  rationale: z.string().min(1),
+}).strict();
+
+const CoverageReviewSchema = z.object({
+  release_id: z.string().min(1), reviewer_evidence_id: z.string().min(1),
+  reviewed_at: z.iso.datetime({ offset: true }), outcome: z.literal("representative_coverage_confirmed"),
+  selection_boundary: z.string().min(1), covered_locators: z.array(z.string().min(1)).min(1),
+  non_exhaustive: z.literal(true),
 }).strict();
 
 export const Sp80053ContributionSchema = z.enum([
@@ -25,6 +62,8 @@ export const RepresentativeExtractionCorpusSchema = z.object({
   extraction_contract_revision: z.literal("pol-006-r01"),
   artifacts: z.array(ArtifactEvidenceSchema).length(4),
   vocabularies: z.array(RawSourceVocabularySchema).length(4),
+  human_classification_reviews: z.array(HumanClassificationReviewSchema),
+  coverage_reviews: z.array(CoverageReviewSchema).length(4),
   sp800_53_evaluation: z.array(z.object({ concept_id: z.string().min(1),
     contribution: Sp80053ContributionSchema, rationale: z.string().min(1) }).strict()),
 }).strict().superRefine((corpus, context) => {
@@ -39,14 +78,29 @@ export const RepresentativeExtractionCorpusSchema = z.object({
     context.addIssue({ code: "custom",
       message: "SP 800-53 evaluation must reference an extracted SP 800-53 concept" });
   }
+  const concepts = corpus.vocabularies.flatMap(({ concepts }) => concepts);
+  const reviewRequiredIds = concepts.filter(({ scope_disposition }) =>
+    scope_disposition === "review_required").map(({ concept_id }) => concept_id).sort();
+  const reviewedIds = corpus.human_classification_reviews.map(({ concept_id }) => concept_id).sort();
+  if (JSON.stringify(reviewRequiredIds) !== JSON.stringify(reviewedIds)) {
+    context.addIssue({ code: "custom",
+      message: "Every ambiguous classification must have exactly one human-review record" });
+  }
+  const coverageReleaseIds = corpus.coverage_reviews.map(({ release_id }) => release_id).sort();
+  if (JSON.stringify([...releases].sort()) !== JSON.stringify(coverageReleaseIds)) {
+    context.addIssue({ code: "custom",
+      message: "Every extracted release must have exactly one coverage-review record" });
+  }
 });
 
 export const CES_POLICY_SOURCE_ARTIFACTS_V1_1 = [
   { release_id: "nist.csf.2-0",
     source_uri: "https://csrc.nist.gov/extensions/nudp/services/json/csf/download",
-    artifact_format: "xlsx",
-    sha256: "sha256:3c719517ab57cbd4c1a6f30a4c5d9f0b2a4519e5e9cef4e20c1786b87d26e311",
-    pinned_revision: "NIST CSF 2.0 Reference Tool final Core export retrieved 2026-08-11",
+    artifact_format: "normalized_utf8",
+    sha256: "sha256:c99d227af5fe345828feafa6ac65a2e6825caefcd445ec1d8eb8ebf2c75ca09d",
+    pinned_revision: "NIST CSF 2.0 final Core; normalized from Reference Tool export retrieved 2026-08-11",
+    hash_scope: "Committed UTF-8 normalized rows, joined by LF in locator|term|description order",
+    normalized_content: CSF_NORMALIZED_CONTENT,
     retrieved_at: EXTRACTED_AT,
     attribution: "National Institute of Standards and Technology, NIST CSWP 29",
     reuse_notice: "NIST-authored Core only; preserve NIST foreign-rights terms, exclude or separately review third-party material, and do not imply NIST endorsement." },
@@ -55,6 +109,7 @@ export const CES_POLICY_SOURCE_ARTIFACTS_V1_1 = [
     artifact_format: "oscal_json",
     sha256: "sha256:01f37cf90ea99d92242c936cbfbdebcc338eef1f71454e2acac36cc56e9bc062",
     pinned_revision: "usnistgov/oscal-content commit 78650f02ad9321bb7b817846f8fbd4f2bcd620de; catalog version 5.2.0",
+    hash_scope: "Complete immutable OSCAL JSON artifact bytes",
     retrieved_at: EXTRACTED_AT,
     attribution: "National Institute of Standards and Technology, NIST SP 800-53 Rev. 5 Release 5.2.0",
     reuse_notice: "NIST-authored catalog only; preserve NIST foreign-rights terms, exclude or separately review third-party material, and do not imply NIST endorsement." },
@@ -63,6 +118,7 @@ export const CES_POLICY_SOURCE_ARTIFACTS_V1_1 = [
     artifact_format: "csv",
     sha256: "sha256:98c8fe911b9edb403af8ee05d3ce8201ecac2659e313b053890a62847cdcf680",
     pinned_revision: "OWASP/ASVS tag v5.0.0_release commit 5cf9b032440be53ce345ab3c130fda46ba1ce7a2",
+    hash_scope: "Complete immutable CSV artifact bytes",
     retrieved_at: EXTRACTED_AT,
     attribution: "OWASP Application Security Verification Standard 5.0.0, CC BY-SA 4.0",
     reuse_notice: "Extracted or adapted ASVS material remains subject to attribution and ShareAlike under CC BY-SA 4.0." },
@@ -71,6 +127,7 @@ export const CES_POLICY_SOURCE_ARTIFACTS_V1_1 = [
     artifact_format: "tagged_repository_zip",
     sha256: "sha256:3eb8490a828704ce0c1976b520b09494d312e662ac483f8fe04e522b570a4220",
     pinned_revision: "OWASP/wstg tag v4.2 commit e7267903759671fa38b478628725d8ef78d07c03",
+    hash_scope: "Complete immutable tagged repository ZIP bytes",
     retrieved_at: EXTRACTED_AT,
     attribution: "OWASP Web Security Testing Guide 4.2, CC BY-SA 4.0",
     reuse_notice: "Extracted or adapted WSTG material remains subject to attribution and ShareAlike under CC BY-SA 4.0." },
@@ -91,10 +148,10 @@ function concept(releaseId: string, id: string, locatorType: "section" | "contro
     source_locator: { locator_type: locatorType, locator, source_uri: sourceUri, language: "en" },
     source_term: sourceTerm, bounded_description: description, semantic_role: semanticRole,
     scope_disposition: disposition,
+    confidence: disposition === "review_required" ? "medium" as const : "high" as const,
     provenance: { extraction_method: "agent_assisted" as const,
       extracted_at: EXTRACTED_AT, extractor_id: EXTRACTOR_ID,
-      extraction_input: { hash: artifact.sha256,
-        hash_scope: `Complete pinned ${artifact.artifact_format} artifact` } },
+      extraction_input: { hash: artifact.sha256, hash_scope: artifact.hash_scope } },
     review_status: "candidate" as const };
 }
 
@@ -190,7 +247,37 @@ const vocabularies = [
 
 const corpusValue = { corpus_id: "ces-policies.raw-vocabulary.representative-v1-1",
   extraction_contract_revision: "pol-006-r01", artifacts: CES_POLICY_SOURCE_ARTIFACTS_V1_1,
-  vocabularies, sp800_53_evaluation: [
+  vocabularies,
+  human_classification_reviews: [
+    { concept_id: "raw.nist-csf.gv-oc-04", reviewer_evidence_id: REVIEW_EVIDENCE_ID,
+      reviewed_at: REVIEWED_AT, outcome: "ambiguity_confirmed",
+      rationale: "The objective mixes organizational stakeholder context with possible software relevance, so review_required remains explicit." },
+    { concept_id: "raw.nist-csf.rs-ma-01", reviewer_evidence_id: REVIEW_EVIDENCE_ID,
+      reviewed_at: REVIEWED_AT, outcome: "ambiguity_confirmed",
+      rationale: "Incident-plan execution spans organizational and software responsibilities, so review_required remains explicit." },
+    { concept_id: "raw.nist-sp800-53.sr-3", reviewer_evidence_id: REVIEW_EVIDENCE_ID,
+      reviewed_at: REVIEWED_AT, outcome: "ambiguity_confirmed",
+      rationale: "The broad supply-chain process needs later software-scope decomposition, so review_required remains explicit." },
+  ],
+  coverage_reviews: [
+    { release_id: "nist.csf.2-0", reviewer_evidence_id: REVIEW_EVIDENCE_ID,
+      reviewed_at: REVIEWED_AT, outcome: "representative_coverage_confirmed", non_exhaustive: true,
+      selection_boundary: "One source-faithful outcome from each CSF 2.0 Function, retaining both clear software relevance and cross-boundary ambiguity.",
+      covered_locators: ["GV.OC-04", "ID.AM-05", "PR.AA-05", "DE.CM-01", "RS.MA-01", "RC.RP-03"] },
+    { release_id: "nist.sp-800-53.r5-2-0", reviewer_evidence_id: REVIEW_EVIDENCE_ID,
+      reviewed_at: REVIEWED_AT, outcome: "representative_coverage_confirmed", non_exhaustive: true,
+      selection_boundary: "Bounded evaluation sample spanning access, audit, recovery, flaw remediation, and organizational supply-chain controls.",
+      covered_locators: ["AC-3", "AU-2", "CP-10", "SI-2", "SR-3"] },
+    { release_id: "owasp.asvs.5-0-0", reviewer_evidence_id: REVIEW_EVIDENCE_ID,
+      reviewed_at: REVIEWED_AT, outcome: "representative_coverage_confirmed", non_exhaustive: true,
+      selection_boundary: "Application requirements sampled across business logic, password, session, backend communication, and data protection chapters.",
+      covered_locators: ["v5.0.0-V2.3.1", "v5.0.0-V2.3.3", "v5.0.0-V6.2.1", "v5.0.0-V7.2.1", "v5.0.0-V13.2.1", "v5.0.0-V14.2.1"] },
+    { release_id: "owasp.wstg.4-2", reviewer_evidence_id: REVIEW_EVIDENCE_ID,
+      reviewed_at: REVIEWED_AT, outcome: "representative_coverage_confirmed", non_exhaustive: true,
+      selection_boundary: "Testing perspectives sampled across authorization, session management, and business logic, including context and risk-concern roles.",
+      covered_locators: ["WSTG-v42-ATHZ-04", "WSTG-v42-SESS-07", "WSTG-v42-BUSL-04"] },
+  ],
+  sp800_53_evaluation: [
     { concept_id: "raw.nist-sp800-53.ac-3", contribution: "REINFORCES_EXISTING_CONCEPT",
       rationale: "Reinforces application authorization coverage already represented by ASVS." },
     { concept_id: "raw.nist-sp800-53.au-2", contribution: "REINFORCES_EXISTING_CONCEPT",
