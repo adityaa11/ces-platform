@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const POLICY_SOURCE_GLOSSARY_VERSION = "1.0.0" as const;
+export const GOVERNED_POLICY_SOURCE_GLOSSARY_VERSION = "1.1.0" as const;
 
 const IdSchema = z.string().regex(/^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u);
 const NonEmptyStringSchema = z.string().trim().min(1);
@@ -125,6 +126,106 @@ export const SourceGlossarySchema = z.object({
   }
 });
 
+export const GovernedSourceClassSchema = z.enum([
+  "CORE",
+  "EVALUATION_SOURCE",
+  "REFERENCE_ONLY",
+]);
+
+export const SourceProcessingAuthorizationSchema = z.enum([
+  "AUTHORIZED",
+  "PENDING",
+  "PROHIBITED",
+  "REFERENCE_ONLY",
+]);
+
+const SourceProcessingGovernanceSchema = z.object({
+  machine_processing: SourceProcessingAuthorizationSchema,
+  structured_extraction: SourceProcessingAuthorizationSchema,
+  ai_assisted_analysis: SourceProcessingAuthorizationSchema,
+}).strict();
+
+export const SourceReleaseGovernanceSchema = z.object({
+  release_id: IdSchema,
+  family_id: IdSchema,
+  role: IdSchema,
+  source_class: GovernedSourceClassSchema,
+  corpus_activation: z.enum(["ACTIVE", "BLOCKED"]),
+  processing: SourceProcessingGovernanceSchema,
+  rights: z.object({
+    classification: NonEmptyStringSchema,
+    evidence_uris: z.array(z.url()).min(1),
+    attribution: z.enum(["required", "recommended", "not_required"]),
+    third_party_content: z.enum(["separate_review_or_exclude", "not_identified"]),
+    geographic_condition: NonEmptyStringSchema,
+    additional_conditions: z.array(NonEmptyStringSchema),
+  }).strict(),
+  decision: z.object({
+    revision_id: IdSchema,
+    decided_at: z.iso.datetime({ offset: true }),
+    rationale: NonEmptyStringSchema,
+  }).strict(),
+}).strict().superRefine((governance, context) => {
+  const states = Object.values(governance.processing);
+  if (governance.source_class === "REFERENCE_ONLY") {
+    if (governance.corpus_activation !== "BLOCKED" ||
+        states.some((state) => state === "AUTHORIZED")) {
+      context.addIssue({ code: "custom",
+        message: "REFERENCE_ONLY sources cannot be active or authorized" });
+    }
+  } else if (governance.corpus_activation === "ACTIVE" &&
+      states.some((state) => state !== "AUTHORIZED")) {
+    context.addIssue({ code: "custom",
+      message: "Active machine corpus sources require authorization for every operation" });
+  }
+});
+
+export const GovernedSourceGlossarySchema = z.object({
+  schema_version: z.literal(GOVERNED_POLICY_SOURCE_GLOSSARY_VERSION),
+  predecessor_schema_version: z.literal(POLICY_SOURCE_GLOSSARY_VERSION),
+  baseline_id: IdSchema,
+  source_glossary: SourceGlossarySchema,
+  governance: z.array(SourceReleaseGovernanceSchema),
+}).strict().superRefine((value, context) => {
+  const releases = new Map(value.source_glossary.releases.map((release) =>
+    [release.release_id, release]));
+  const governedIds = new Set<string>();
+  for (const governance of value.governance) {
+    if (governedIds.has(governance.release_id)) {
+      context.addIssue({ code: "custom",
+        message: `Source release ${governance.release_id} has duplicate governance` });
+      continue;
+    }
+    governedIds.add(governance.release_id);
+    const release = releases.get(governance.release_id);
+    if (!release || release.family_id !== governance.family_id) {
+      context.addIssue({ code: "custom",
+        message: `Governance for ${governance.release_id} does not match a source release` });
+    }
+  }
+  for (const releaseId of releases.keys()) {
+    if (!governedIds.has(releaseId)) {
+      context.addIssue({ code: "custom",
+        message: `Source release ${releaseId} has no governance decision` });
+    }
+  }
+});
+
+export function migrateSourceGlossaryV1ToGovernedV1_1(
+  sourceGlossaryValue: unknown,
+  baselineId: string,
+  governanceValue: unknown,
+) {
+  const sourceGlossary = SourceGlossarySchema.parse(sourceGlossaryValue);
+  return GovernedSourceGlossarySchema.parse({
+    schema_version: GOVERNED_POLICY_SOURCE_GLOSSARY_VERSION,
+    predecessor_schema_version: POLICY_SOURCE_GLOSSARY_VERSION,
+    baseline_id: baselineId,
+    source_glossary: sourceGlossary,
+    governance: governanceValue,
+  });
+}
+
 function stableValue(value: unknown): string {
   return JSON.stringify(value);
 }
@@ -160,3 +261,8 @@ export type SourceRelease = z.infer<typeof SourceReleaseSchema>;
 export type SourceReleaseProvenance = z.infer<typeof SourceReleaseProvenanceSchema>;
 export type SourceReleaseSupersession = z.infer<typeof SourceReleaseSupersessionSchema>;
 export type SourceGlossary = z.infer<typeof SourceGlossarySchema>;
+export type GovernedSourceClass = z.infer<typeof GovernedSourceClassSchema>;
+export type SourceProcessingAuthorization =
+  z.infer<typeof SourceProcessingAuthorizationSchema>;
+export type SourceReleaseGovernance = z.infer<typeof SourceReleaseGovernanceSchema>;
+export type GovernedSourceGlossary = z.infer<typeof GovernedSourceGlossarySchema>;

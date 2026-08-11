@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { SourceGlossarySchema, validateSourceGlossaryTransition } from "./index.js";
+import {
+  GovernedSourceGlossarySchema,
+  migrateSourceGlossaryV1ToGovernedV1_1,
+  SourceGlossarySchema,
+  validateSourceGlossaryTransition,
+} from "./index.js";
 
 const hash = (character: string): string => `sha256:${character.repeat(64)}`;
 const family = {
@@ -101,5 +106,64 @@ describe("CES Policy source glossary contract", () => {
       successor_release_id: release.release_id,
       recorded_at: "2026-08-11T12:00:00+00:00",
     }] })).toThrow(/supersede itself/u);
+  });
+
+  it("migrates v1 without mutating it and records complete release governance", () => {
+    const before = JSON.stringify(glossary);
+    const governed = migrateSourceGlossaryV1ToGovernedV1_1(glossary,
+      "ces-policies.source-glossary.v1-1", [{
+        release_id: release.release_id,
+        family_id: family.family_id,
+        role: "example_role",
+        source_class: "CORE",
+        corpus_activation: "ACTIVE",
+        processing: {
+          machine_processing: "AUTHORIZED",
+          structured_extraction: "AUTHORIZED",
+          ai_assisted_analysis: "AUTHORIZED",
+        },
+        rights: {
+          classification: "Example terms",
+          evidence_uris: ["https://example.test/terms"],
+          attribution: "required",
+          third_party_content: "separate_review_or_exclude",
+          geographic_condition: "Review any jurisdiction-specific restriction",
+          additional_conditions: [],
+        },
+        decision: {
+          revision_id: "pol-000-r01",
+          decided_at: "2026-08-11T12:00:00+00:00",
+          rationale: "Approved machine corpus source",
+        },
+      }]);
+    expect(governed.schema_version).toBe("1.1.0");
+    expect(governed.source_glossary).toEqual(glossary);
+    expect(JSON.stringify(glossary)).toBe(before);
+  });
+
+  it("fails closed for missing governance and invalid class authorization", () => {
+    expect(() => migrateSourceGlossaryV1ToGovernedV1_1(glossary,
+      "ces-policies.source-glossary.v1-1", [])).toThrow(/no governance decision/u);
+    const invalidReference = {
+      schema_version: "1.1.0",
+      predecessor_schema_version: "1.0.0",
+      baseline_id: "ces-policies.source-glossary.v1-1",
+      source_glossary: glossary,
+      governance: [{
+        release_id: release.release_id, family_id: family.family_id,
+        role: "alignment_target", source_class: "REFERENCE_ONLY",
+        corpus_activation: "BLOCKED",
+        processing: { machine_processing: "AUTHORIZED",
+          structured_extraction: "REFERENCE_ONLY", ai_assisted_analysis: "REFERENCE_ONLY" },
+        rights: { classification: "Reference terms",
+          evidence_uris: ["https://example.test/terms"], attribution: "required",
+          third_party_content: "separate_review_or_exclude",
+          geographic_condition: "Review applicable rights", additional_conditions: [] },
+        decision: { revision_id: "pol-000-r01",
+          decided_at: "2026-08-11T12:00:00+00:00", rationale: "Reference only" },
+      }],
+    };
+    expect(() => GovernedSourceGlossarySchema.parse(invalidReference))
+      .toThrow(/cannot be active or authorized/u);
   });
 });
