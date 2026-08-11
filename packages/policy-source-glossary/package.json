@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./dist/index.js",
-    "./core-sources": "./dist/core-sources.js"
+    "./core-sources": "./dist/core-sources.js",
+    "./update-detection": "./dist/update-detection.js"
   },
   "types": "./dist/index.d.ts",
   "dependencies": {

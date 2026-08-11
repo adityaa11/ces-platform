@@ -1,6 +1,6 @@
 # CES-GF-POL-004 - Source Update Detection
 
-**Status:** Proposed
+**Status:** Implemented; pending review
 **Depends on:** POL-003
 
 ## Outcome
@@ -27,3 +27,16 @@ changing an approved source release or CES baseline.
 
 - Automatically accepting an update or rewriting vocabulary and policies.
 - General web crawling, implementation-source support, or notification UI.
+
+## Implementation evidence
+
+- Four source-family adapter registrations share one validated probe contract;
+  network/parsing behavior remains adapter-owned and injectable.
+- Update observations distinguish unchanged, detected, ambiguous, and failed
+  checks with evidence and safe diagnostics.
+- Deterministic candidate IDs make repeated detection idempotent, while
+  conflicting reuse fails closed.
+- Human disposition records acceptance, rejection, or deferral but never adds
+  or activates a source release; impact analysis begins as `not_assessed`.
+- Five focused tests cover registration, unchanged/failure behavior,
+  idempotence, non-mutation, human disposition, and malformed identity output.
