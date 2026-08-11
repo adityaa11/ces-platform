@@ -1,6 +1,11 @@
 import { z } from "zod";
 import type { SourceGlossary, SourceRelease } from "./index.js";
-import { SourceGlossarySchema, SourceReleaseSchema } from "./index.js";
+import {
+  GovernedSourceClassSchema,
+  GovernedSourceGlossarySchema,
+  SourceGlossarySchema,
+  SourceReleaseSchema,
+} from "./index.js";
 
 const IdSchema = z.string().regex(/^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u);
 const NonEmptyStringSchema = z.string().trim().min(1);
@@ -85,9 +90,38 @@ export const CORE_SOURCE_UPDATE_ADAPTER_DESCRIPTORS = [
     check_uri: "https://owasp.org/www-project-web-security-testing-guide/" },
 ] as const;
 
+export const GOVERNED_SOURCE_UPDATE_ADAPTER_DESCRIPTORS = [
+  ...CORE_SOURCE_UPDATE_ADAPTER_DESCRIPTORS.map((descriptor) => ({ ...descriptor,
+    source_class: descriptor.family_id.startsWith("iso.")
+      ? "REFERENCE_ONLY" as const : "CORE" as const })),
+  { adapter_id: "source-update.nist-csf", family_id: "nist.csf",
+    check_uri: "https://www.nist.gov/publications/nist-cybersecurity-framework-csf-20",
+    source_class: "CORE" as const },
+  { adapter_id: "source-update.nist-sp-800-53", family_id: "nist.sp-800-53",
+    check_uri: "https://csrc.nist.gov/Pubs/sp/800/53/r5/upd1/Final",
+    source_class: "EVALUATION_SOURCE" as const },
+] as const;
+
+export const GovernedSourceUpdateAdapterDescriptorSchema =
+  SourceUpdateAdapterDescriptorSchema.extend({
+    source_class: GovernedSourceClassSchema,
+  }).strict();
+
+export const GovernedSourceUpdateCandidateSchema = z.object({
+  candidate: SourceUpdateCandidateSchema,
+  governance_snapshot: z.object({
+    source_class: GovernedSourceClassSchema,
+    corpus_activation: z.enum(["ACTIVE", "BLOCKED"]),
+    decision_revision_id: IdSchema,
+  }).strict(),
+  authority_effect: z.literal("NONE"),
+}).strict();
+
 export type SourceUpdateAdapterDescriptor = z.infer<typeof SourceUpdateAdapterDescriptorSchema>;
 export type SourceUpdateObservation = z.infer<typeof SourceUpdateObservationSchema>;
 export type SourceUpdateCandidate = z.infer<typeof SourceUpdateCandidateSchema>;
+export type GovernedSourceUpdateCandidate =
+  z.infer<typeof GovernedSourceUpdateCandidateSchema>;
 export type SourceUpdateProbe = (
   descriptor: SourceUpdateAdapterDescriptor,
   currentRelease: SourceRelease,
@@ -99,8 +133,19 @@ export interface SourceUpdateAdapter {
 }
 
 export function createCoreSourceUpdateAdapters(probe: SourceUpdateProbe): SourceUpdateAdapter[] {
-  return CORE_SOURCE_UPDATE_ADAPTER_DESCRIPTORS.map((value) => {
-    const descriptor = SourceUpdateAdapterDescriptorSchema.parse(value);
+  return createSourceUpdateAdapters(CORE_SOURCE_UPDATE_ADAPTER_DESCRIPTORS, probe);
+}
+
+function createSourceUpdateAdapters(
+  descriptorValues: readonly { adapter_id: string; family_id: string; check_uri: string }[],
+  probe: SourceUpdateProbe,
+): SourceUpdateAdapter[] {
+  return descriptorValues.map((value) => {
+    const descriptor = SourceUpdateAdapterDescriptorSchema.parse({
+      adapter_id: value.adapter_id,
+      family_id: value.family_id,
+      check_uri: value.check_uri,
+    });
     return {
       descriptor,
       async check(currentReleaseValue: unknown): Promise<SourceUpdateObservation> {
@@ -119,6 +164,14 @@ export function createCoreSourceUpdateAdapters(probe: SourceUpdateProbe): Source
       },
     };
   });
+}
+
+export function createGovernedSourceUpdateAdapters(
+  probe: SourceUpdateProbe,
+): SourceUpdateAdapter[] {
+  GOVERNED_SOURCE_UPDATE_ADAPTER_DESCRIPTORS.forEach((value) =>
+    GovernedSourceUpdateAdapterDescriptorSchema.parse(value));
+  return createSourceUpdateAdapters(GOVERNED_SOURCE_UPDATE_ADAPTER_DESCRIPTORS, probe);
 }
 
 export type SourceUpdateDetectionResult =
@@ -179,6 +232,36 @@ export function reviewSourceUpdateCandidate(
     throw new Error(`Update candidate ${candidate.candidate_id} already has a decision`);
   }
   return SourceUpdateCandidateSchema.parse({ ...candidate, status: review.decision, review });
+}
+
+export function detectGovernedSourceUpdate(
+  governedGlossaryValue: unknown,
+  observationValue: unknown,
+  existingCandidateValues: readonly unknown[] = [],
+): SourceUpdateDetectionResult | { outcome: "governed_candidate";
+  observation: SourceUpdateObservation; candidate: GovernedSourceUpdateCandidate } {
+  const governedGlossary = GovernedSourceGlossarySchema.parse(governedGlossaryValue);
+  const existingBaseCandidates = existingCandidateValues.map((value) =>
+    GovernedSourceUpdateCandidateSchema.parse(value).candidate);
+  const result = detectSourceUpdate(governedGlossary.source_glossary, observationValue,
+    existingBaseCandidates);
+  if (result.outcome !== "candidate") return result;
+  const governance = governedGlossary.governance.find(({ family_id }) =>
+    family_id === result.candidate.family_id);
+  if (!governance) throw new Error("Governed update candidate has no source governance");
+  return {
+    outcome: "governed_candidate",
+    observation: result.observation,
+    candidate: GovernedSourceUpdateCandidateSchema.parse({
+      candidate: result.candidate,
+      governance_snapshot: {
+        source_class: governance.source_class,
+        corpus_activation: governance.corpus_activation,
+        decision_revision_id: governance.decision.revision_id,
+      },
+      authority_effect: "NONE",
+    }),
+  };
 }
 
 function assertObservationIdentity(
