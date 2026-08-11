@@ -1,6 +1,6 @@
 # CES-GF-POL-002 - Source Glossary Model
 
-**Status:** Proposed
+**Status:** Implemented; pending review
 **Depends on:** POL-001 and FND-002
 
 ## Outcome
@@ -29,3 +29,14 @@ and their governance lifecycle.
 - Seeding the four sources or fetching external documents.
 - Update scheduling, vocabulary extraction, policy taxonomy, mappings, or UI.
 - Selecting a persistence technology.
+
+## Implementation evidence
+
+- `@company/ces-policy-source-glossary` defines strict, renderer-neutral source
+  family, immutable release, provenance, lifecycle, and supersession contracts.
+- Glossary validation rejects duplicate identities and editions, missing family
+  membership, broken/cross-family supersession, cycles, and invalid timestamps.
+- Transition validation preserves existing family identities and prevents
+  published release mutation or deletion while allowing additive successors.
+- Five generic fixture tests cover valid contracts, invalid identity/reference
+  cases, immutability, and non-mutating release supersession.
