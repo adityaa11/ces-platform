@@ -40,6 +40,10 @@ describe("POL-006 representative extraction corpus", () => {
         scope_disposition === "review_required").map(({ concept_id }) => concept_id)));
     expect(new Set(corpus.coverage_reviews.map(({ release_id }) => release_id)))
       .toEqual(new Set(corpus.vocabularies.map(({ source_release_id }) => source_release_id)));
+    expect(corpus.human_classification_reviews.every(({ reviewer_evidence_id }) =>
+      reviewer_evidence_id === "CES-GF-POL-006-H01")).toBe(true);
+    expect(corpus.coverage_reviews.every(({ reviewer_evidence_id }) =>
+      reviewer_evidence_id === "CES-GF-POL-006-H01")).toBe(true);
     expect(corpus.coverage_reviews.every(({ non_exhaustive, covered_locators }) =>
       non_exhaustive && covered_locators.length > 0)).toBe(true);
   });

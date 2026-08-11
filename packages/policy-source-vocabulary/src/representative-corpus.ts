@@ -7,7 +7,7 @@ import { createHash } from "node:crypto";
 const EXTRACTED_AT = "2026-08-11T15:00:00+00:00" as const;
 const EXTRACTOR_ID = "ces.pol-006.structured-extractor" as const;
 const REVIEWED_AT = "2026-08-11T16:00:00+00:00" as const;
-const REVIEW_EVIDENCE_ID = "CES_POLICIES_REVIEW_19c4f25" as const;
+const REVIEW_EVIDENCE_ID = "CES-GF-POL-006-H01" as const;
 const Sha256Schema = z.string().regex(/^sha256:[0-9a-f]{64}$/u);
 
 const CSF_NORMALIZED_CONTENT = [

@@ -77,3 +77,5 @@ source authority or satisfy that gate.
 - Every concept records confidence; every ambiguous scope classification and
   each release's non-exhaustive representative coverage have explicit Round 1
   human-review evidence.
+- Human approval evidence is recorded as `CES-GF-POL-006-H01`; corpus review
+  records reference that approval rather than a prior defect report.
