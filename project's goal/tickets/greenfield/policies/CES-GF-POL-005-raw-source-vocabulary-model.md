@@ -1,6 +1,6 @@
 # CES-GF-POL-005 - Raw Source Vocabulary Model
 
-**Status:** Proposed
+**Status:** Implemented; pending review
 **Depends on:** POL-002
 
 ## Outcome
@@ -33,3 +33,16 @@ canonicalization.
 - Treating a WSTG test, implementation technique, or organizational control as
   a canonical policy.
 - Selecting storage or search technology.
+
+## Implementation evidence
+
+- `@company/ces-policy-source-vocabulary` defines strict, source-neutral raw
+  concept and per-release vocabulary contracts.
+- Exact source term, bounded description, locator, language, extraction method,
+  timestamp, extractor, and explicitly scoped input hash preserve provenance.
+- Semantic role and software-scope disposition are independent fields, allowing
+  an organizational control to remain a `control` while staying out of scope.
+- Glossary-aware validation rejects unknown/mixed releases, duplicate concept
+  identities, missing provenance, and canonical-policy leakage while allowing
+  several concepts to trace to one source locator.
+- Six focused tests exercise all four frozen source families and invalid cases.
