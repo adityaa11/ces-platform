@@ -112,6 +112,7 @@ structured extraction: AUTHORIZED
 AI-assisted analysis: AUTHORIZED
 attribution: REQUIRED BY CES GOVERNANCE
 third-party content: SEPARATE REVIEW OR EXCLUDE
+geographic / foreign-rights condition: PRESERVE NIST FOREIGN-RIGHTS AND WORLDWIDE-GRANT TERMS
 content-specific conflict: FAIL CLOSED AND ESCALATE
 endorsement claim: PROHIBITED
 ```
