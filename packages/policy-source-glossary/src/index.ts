@@ -184,6 +184,7 @@ export const GovernedSourceGlossarySchema = z.object({
   schema_version: z.literal(GOVERNED_POLICY_SOURCE_GLOSSARY_VERSION),
   predecessor_schema_version: z.literal(POLICY_SOURCE_GLOSSARY_VERSION),
   baseline_id: IdSchema,
+  predecessor_baseline_id: IdSchema,
   source_glossary: SourceGlossarySchema,
   governance: z.array(SourceReleaseGovernanceSchema),
 }).strict().superRefine((value, context) => {
@@ -214,6 +215,7 @@ export const GovernedSourceGlossarySchema = z.object({
 export function migrateSourceGlossaryV1ToGovernedV1_1(
   sourceGlossaryValue: unknown,
   baselineId: string,
+  predecessorBaselineId: string,
   governanceValue: unknown,
 ) {
   const sourceGlossary = SourceGlossarySchema.parse(sourceGlossaryValue);
@@ -221,6 +223,7 @@ export function migrateSourceGlossaryV1ToGovernedV1_1(
     schema_version: GOVERNED_POLICY_SOURCE_GLOSSARY_VERSION,
     predecessor_schema_version: POLICY_SOURCE_GLOSSARY_VERSION,
     baseline_id: baselineId,
+    predecessor_baseline_id: predecessorBaselineId,
     source_glossary: sourceGlossary,
     governance: governanceValue,
   });

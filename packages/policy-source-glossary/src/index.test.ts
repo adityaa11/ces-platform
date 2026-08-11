@@ -111,7 +111,7 @@ describe("CES Policy source glossary contract", () => {
   it("migrates v1 without mutating it and records complete release governance", () => {
     const before = JSON.stringify(glossary);
     const governed = migrateSourceGlossaryV1ToGovernedV1_1(glossary,
-      "ces-policies.source-glossary.v1-1", [{
+      "ces-policies.source-glossary.v1-1", "ces-policies.source-glossary.v1", [{
         release_id: release.release_id,
         family_id: family.family_id,
         role: "example_role",
@@ -137,17 +137,20 @@ describe("CES Policy source glossary contract", () => {
         },
       }]);
     expect(governed.schema_version).toBe("1.1.0");
+    expect(governed.predecessor_baseline_id).toBe("ces-policies.source-glossary.v1");
     expect(governed.source_glossary).toEqual(glossary);
     expect(JSON.stringify(glossary)).toBe(before);
   });
 
   it("fails closed for missing governance and invalid class authorization", () => {
     expect(() => migrateSourceGlossaryV1ToGovernedV1_1(glossary,
-      "ces-policies.source-glossary.v1-1", [])).toThrow(/no governance decision/u);
+      "ces-policies.source-glossary.v1-1", "ces-policies.source-glossary.v1", []))
+      .toThrow(/no governance decision/u);
     const invalidReference = {
       schema_version: "1.1.0",
       predecessor_schema_version: "1.0.0",
       baseline_id: "ces-policies.source-glossary.v1-1",
+      predecessor_baseline_id: "ces-policies.source-glossary.v1",
       source_glossary: glossary,
       governance: [{
         release_id: release.release_id, family_id: family.family_id,

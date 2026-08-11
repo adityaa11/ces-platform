@@ -43,7 +43,8 @@ POL-000-R01 without mutating the accepted v1 contract or source records.
 ## Implementation evidence
 
 - `GovernedSourceGlossarySchema` composes the immutable accepted v1 glossary
-  with complete release-level governance in schema version 1.1.0.
+  with complete release-level governance in schema version 1.1.0 and identifies
+  both the current baseline and its specific historical predecessor baseline.
 - `migrateSourceGlossaryV1ToGovernedV1_1` validates and nests the accepted v1
   value without modifying it.
 - Generic fixtures cover valid migration, complete coverage, and fail-closed
