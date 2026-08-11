@@ -1,6 +1,6 @@
 # CES-GF-POL-004 - Source Update Detection
 
-**Status:** Implemented; pending review
+**Status:** Accepted
 **Depends on:** POL-003
 
 ## Outcome
@@ -40,3 +40,4 @@ changing an approved source release or CES baseline.
   or activates a source release; impact analysis begins as `not_assessed`.
 - Five focused tests cover registration, unchanged/failure behavior,
   idempotence, non-mutation, human disposition, and malformed identity output.
+- Terminal review result: `ACCEPTED` for commit `ee18ec5`.
