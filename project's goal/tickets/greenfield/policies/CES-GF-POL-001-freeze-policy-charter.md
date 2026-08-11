@@ -1,6 +1,6 @@
 # CES-GF-POL-001 - Freeze Policy Charter
 
-**Status:** Ready for review
+**Status:** Accepted
 **Depends on:** None
 
 ## Outcome
@@ -29,3 +29,10 @@ subsequent Policies work.
 - Defining schemas, policy IDs, source editions, mappings, prompts, UI, or
   implementation technology.
 - Implementing any runtime behavior.
+
+## Acceptance evidence
+
+- Commit `7271cc9` introduced the bounded P01-P17 ticket sequence.
+- Commit `04e66e7` committed the stable authoritative ASCII context and closed
+  the two Round 1 findings.
+- Round 2 result: `ACCEPTED`.
