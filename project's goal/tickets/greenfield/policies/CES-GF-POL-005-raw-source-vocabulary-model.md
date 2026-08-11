@@ -1,6 +1,6 @@
 # CES-GF-POL-005 - Raw Source Vocabulary Model
 
-**Status:** Implemented; pending review
+**Status:** Accepted
 **Depends on:** POL-002
 
 ## Outcome
@@ -46,3 +46,4 @@ canonicalization.
   identities, missing provenance, and canonical-policy leakage while allowing
   several concepts to trace to one source locator.
 - Six focused tests exercise all four frozen source families and invalid cases.
+- Terminal review result: `ACCEPTED` for commit `b3cb4bd`.
