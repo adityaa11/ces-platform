@@ -1,6 +1,6 @@
 # CES-GF-POL-006 - Raw Vocabulary Extraction
 
-**Status:** Implemented; pending REVIEW_GATE review
+**Status:** Accepted
 **Review class:** REVIEW_GATE
 **Depends on:** Accepted POL-003-R01, POL-004-R01, and POL-005-V01
 
@@ -54,12 +54,11 @@ v1.1 machine inputs, including a bounded evaluation of SP 800-53.
 - Adding sources beyond the governed Frozen Context v1.1 source set.
 - Deciding permanent SP 800-53 admission or changing source governance.
 
-## Execution gate
+## Execution gate evidence
 
-This ticket remains blocked from extraction execution until POL-003-R01,
-POL-004-R01, POL-005-V01, and this synchronized contract each receive an
-accepting terminal outcome. Provisional contract implementation does not grant
-source authority or satisfy that gate.
+POL-003-R01, POL-004-R01, POL-005-V01, and POL-006-R01 received accepting
+terminal outcomes before extraction began. Acceptance bookkeeping commit
+`f8e2e41` recorded closure of that source-governance gate.
 
 ## Implementation evidence
 
@@ -79,3 +78,14 @@ source authority or satisfy that gate.
   human-review evidence.
 - Human approval evidence is recorded as `CES-GF-POL-006-H01`; corpus review
   records reference that approval rather than a prior defect report.
+
+## Acceptance evidence
+
+- Primary implementation commit: `19c4f25`.
+- Reproducible-provenance, confidence, and review-evidence remediation commit:
+  `86f090c`.
+- Human approval evidence and truthful corpus-reference commit: `b3bebc0`.
+- Combined dependency-aware review artifact:
+  `CES_COMBINED_REVIEW_b3bebc0_5293980.md`.
+- Continued Round 2 closure terminal result: `ACCEPTED`.
+- BLOCKER: none; REQUIRED: none.

@@ -48,7 +48,8 @@ POL-000 is a permanent governance layer established after the v1 source-rights
 blocker was discovered; its `G01` label does not rewrite the historical P01-P05
 execution order. Concrete source-set changes use `POL-000-Rxx` revision tickets.
 The POL-006 source-governance gate closed in acceptance-bookkeeping commit
-`f8e2e41`; extraction remains subject to POL-006's own REVIEW_GATE outcome.
+`f8e2e41`; POL-006's own REVIEW_GATE later received an `ACCEPTED` terminal
+outcome after implementation and bounded remediation through `b3bebc0`.
 
 ## Review closure contract
 
