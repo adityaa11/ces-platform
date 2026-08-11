@@ -1,6 +1,6 @@
 # CES-GF-POL-003 - Seed Four Core Source Releases
 
-**Status:** Proposed
+**Status:** Implemented; pending review
 **Depends on:** POL-002
 
 ## Outcome
@@ -28,3 +28,16 @@ frozen CES Policies v1 sources.
 - Extracting source vocabulary or copying protected source text into CES.
 - Defining policies, concerns, capabilities, or source mappings.
 - Adding conditional or implementation sources.
+
+## Implementation evidence
+
+- Deterministic seeds contain exactly the four frozen families and one pinned,
+  published release per family.
+- Release metadata was checked against official ISO, OWASP, and versioned
+  GitHub/OWASP release pages on 2026-08-11.
+- Normalized metadata observation hashes, evidence URIs, release dates, roles,
+  and access constraints are stored without copying protected ISO content.
+- ISO content extraction is explicitly blocked pending licensed written
+  authorization; OWASP processing requires CC BY-SA 4.0 compliance.
+- Five focused tests cover exact family membership, idempotence, observation
+  hashes, conflicting identity rejection, and access-policy classification.
