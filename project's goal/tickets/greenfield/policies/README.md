@@ -26,7 +26,7 @@ explicit change proposal.
 | P03 | [POL-003](CES-GF-POL-003-seed-core-source-releases.md) | Four governed core source releases | POL-002 |
 | P04 | [POL-004](CES-GF-POL-004-source-update-detection.md) | Non-mutating update candidates | POL-003 |
 | P05 | [POL-005](CES-GF-POL-005-raw-source-vocabulary-model.md) | Source-faithful vocabulary contract | POL-002 |
-| P06 | [POL-006](CES-GF-POL-006-raw-vocabulary-extraction.md) | Traceable raw vocabulary corpus; currently blocked by source governance | POL-003, POL-005, accepted POL-000 revision and required reconciliation |
+| P06 | [POL-006](CES-GF-POL-006-raw-vocabulary-extraction.md) | Traceable representative raw vocabulary corpus | Accepted POL-003-R01, POL-004-R01, POL-005-V01, and POL-006-R01 |
 | P07 | [POL-007](CES-GF-POL-007-canonical-vocabulary.md) | Versioned CES canonical concepts | POL-006 |
 | P08 | [POL-008](CES-GF-POL-008-canonical-policy-taxonomy.md) | Small enduring policy taxonomy | POL-007 |
 | P09 | [POL-009](CES-GF-POL-009-policy-contract.md) | Canonical policy, concern, and capability contract | POL-008 |
@@ -46,8 +46,8 @@ ticket.
 POL-000 is a permanent governance layer established after the v1 source-rights
 blocker was discovered; its `G01` label does not rewrite the historical P01-P05
 execution order. Concrete source-set changes use `POL-000-Rxx` revision tickets.
-POL-006 remains blocked until the applicable revision is accepted, a successor
-frozen context is published, and its declared upstream reconciliations close.
+The POL-006 source-governance gate closed in acceptance-bookkeeping commit
+`f8e2e41`; extraction remains subject to POL-006's own REVIEW_GATE outcome.
 
 ## Review closure contract
 

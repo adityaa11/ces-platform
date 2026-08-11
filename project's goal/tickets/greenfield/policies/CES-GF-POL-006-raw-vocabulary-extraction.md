@@ -1,6 +1,7 @@
 # CES-GF-POL-006 - Raw Vocabulary Extraction
 
-**Status:** Proposed
+**Status:** Implemented; pending REVIEW_GATE review
+**Review class:** REVIEW_GATE
 **Depends on:** Accepted POL-003-R01, POL-004-R01, and POL-005-V01
 
 ## Outcome
@@ -59,3 +60,17 @@ This ticket remains blocked from extraction execution until POL-003-R01,
 POL-004-R01, POL-005-V01, and this synchronized contract each receive an
 accepting terminal outcome. Provisional contract implementation does not grant
 source authority or satisfy that gate.
+
+## Implementation evidence
+
+- Four official artifacts are pinned by exact SHA-256 and upstream revision:
+  NIST CSF 2.0 Core export, NIST SP 800-53 OSCAL 5.2.0, ASVS 5.0.0 CSV, and
+  WSTG 4.2 tagged repository.
+- The compact representative corpus contains source-faithful concepts for all
+  four governed machine inputs and contains no ISO vocabulary.
+- Raw roles cover objectives, controls, requirements, a risk concern, and
+  verification contexts with exact release locators and artifact-level hashes.
+- SP 800-53 concepts have bounded contribution evidence without changing its
+  EVALUATION_SOURCE status.
+- Deterministic tests validate governed input authority, provenance, semantic
+  coverage, ISO exclusion, and repeatable output.
