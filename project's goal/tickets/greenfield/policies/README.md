@@ -17,6 +17,7 @@ explicit change proposal.
 | G02 | [POL-000-R01](CES-GF-POL-000-R01-source-strategy-revision-001.md) | Governed machine-source strategy revision | POL-000 |
 | G03 | [POL-000-R01-F01](CES-GF-POL-000-R01-F01-publish-frozen-context-v1-1.md) | Successor frozen source context v1.1 | POL-000-R01 |
 | R02 | [POL-002-R01](CES-GF-POL-002-R01-source-governance-reconciliation.md) | Versioned source-governance model reconciliation | POL-000-R01-F01, POL-002 |
+| R03 | [POL-003-R01](CES-GF-POL-003-R01-governed-source-set-reconciliation.md) | Six-record governed source-set successor | POL-002-R01, POL-003 |
 | P01 | [POL-001](CES-GF-POL-001-freeze-policy-charter.md) | Frozen CES Policies charter | None |
 | P02 | [POL-002](CES-GF-POL-002-source-glossary-model.md) | Versioned source glossary contract | POL-001, FND-002 |
 | P03 | [POL-003](CES-GF-POL-003-seed-core-source-releases.md) | Four governed core source releases | POL-002 |

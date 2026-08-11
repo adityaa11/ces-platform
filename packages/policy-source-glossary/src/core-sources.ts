@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { SourceGlossarySchema } from "./index.js";
+import {
+  migrateSourceGlossaryV1ToGovernedV1_1,
+  SourceGlossarySchema,
+  validateSourceGlossaryTransition,
+} from "./index.js";
 
 const CHECKED_AT = "2026-08-11T12:20:00+00:00" as const;
 
@@ -189,3 +193,208 @@ export function validateCoreSourceSeedsV1() {
   }
   return seeds;
 }
+
+const NIST_SOURCE_ADDITIONS_V1_1 = [
+  {
+    family: {
+      family_id: "nist.csf",
+      canonical_name: "NIST Cybersecurity Framework",
+      publisher: "National Institute of Standards and Technology",
+      lifecycle: "active",
+    },
+    release: {
+      release_id: "nist.csf.2-0",
+      family_id: "nist.csf",
+      edition: "2.0",
+      release_label: "NIST Cybersecurity Framework 2.0 (NIST CSWP 29)",
+      lifecycle: "published",
+      publication: {
+        published_on: "2024-02-26",
+        authoritative_uri: "https://doi.org/10.6028/NIST.CSWP.29",
+      },
+      retrieval: {
+        retrieval_kind: "metadata_observation",
+        observed_at: CHECKED_AT,
+        observed_from: "https://www.nist.gov/publications/nist-cybersecurity-framework-csf-20",
+        verified_metadata: "NIST Cybersecurity Framework 2.0; NIST CSWP 29; published 2024-02-26; DOI 10.6028/NIST.CSWP.29",
+        observation_hash: "sha256:458021904211ac9ffa2ae48b9c85a765e30df49723502ea77170997734a1cc7c",
+      },
+      last_checked_at: CHECKED_AT,
+    },
+  },
+  {
+    family: {
+      family_id: "nist.sp-800-53",
+      canonical_name: "NIST SP 800-53",
+      publisher: "National Institute of Standards and Technology",
+      lifecycle: "active",
+    },
+    release: {
+      release_id: "nist.sp-800-53.r5-2-0",
+      family_id: "nist.sp-800-53",
+      edition: "Rev. 5, Release 5.2.0",
+      release_label: "NIST SP 800-53 Rev. 5, Release 5.2.0",
+      lifecycle: "published",
+      publication: {
+        published_on: "2025-08-27",
+        authoritative_uri: "https://csrc.nist.gov/Pubs/sp/800/53/r5/upd1/Final",
+      },
+      retrieval: {
+        retrieval_kind: "metadata_observation",
+        observed_at: CHECKED_AT,
+        observed_from: "https://csrc.nist.gov/Pubs/sp/800/53/r5/upd1/Final",
+        verified_metadata: "NIST SP 800-53 Rev. 5, Release 5.2.0; issued 2025-08-27; official NIST publication record and release announcement",
+        observation_hash: "sha256:797939b7b3c451fc1e1cc6a91d0eae1f37b56e2928d177f8dbd3119ce4c958e2",
+      },
+      last_checked_at: CHECKED_AT,
+    },
+  },
+] as const;
+
+export const CES_POLICY_SOURCE_GLOSSARY_SUCCESSOR_V1_1 =
+  validateSourceGlossaryTransition(CES_POLICY_CORE_SOURCE_GLOSSARY_V1, {
+    ...CES_POLICY_CORE_SOURCE_GLOSSARY_V1,
+    families: [...CES_POLICY_CORE_SOURCE_GLOSSARY_V1.families,
+      ...NIST_SOURCE_ADDITIONS_V1_1.map(({ family }) => family)],
+    releases: [...CES_POLICY_CORE_SOURCE_GLOSSARY_V1.releases,
+      ...NIST_SOURCE_ADDITIONS_V1_1.map(({ release }) => release)],
+  });
+
+const AUTHORIZED_PROCESSING = {
+  machine_processing: "AUTHORIZED",
+  structured_extraction: "AUTHORIZED",
+  ai_assisted_analysis: "AUTHORIZED",
+} as const;
+
+const REFERENCE_ONLY_PROCESSING = {
+  machine_processing: "REFERENCE_ONLY",
+  structured_extraction: "REFERENCE_ONLY",
+  ai_assisted_analysis: "REFERENCE_ONLY",
+} as const;
+
+const DECIDED_AT = "2026-08-11T14:00:00+00:00" as const;
+const NIST_RIGHTS_EVIDENCE = [
+  "https://www.nist.gov/copyrights-disclaimers",
+  "https://www.nist.gov/open/copyright-fair-use-and-licensing-statements-srd-data-software-and-technical-series-publications",
+] as const;
+
+export const CES_POLICY_SOURCE_GOVERNANCE_V1_1 = [
+  {
+    release_id: "iso.iec-27001.2022-amd1-2024",
+    family_id: "iso.iec-27001",
+    role: "certification_alignment_target",
+    source_class: "REFERENCE_ONLY",
+    corpus_activation: "BLOCKED",
+    processing: REFERENCE_ONLY_PROCESSING,
+    rights: {
+      classification: "ISO copyrighted licensed standard",
+      evidence_uris: ["https://www.iso.org/terms-and-conditions.html"],
+      attribution: "required",
+      third_party_content: "separate_review_or_exclude",
+      geographic_condition: "Use only under applicable ISO license and jurisdictional terms",
+      additional_conditions: ["Machine extraction requires separately recorded written permission"],
+    },
+    decision: { revision_id: "pol-000-r01", decided_at: DECIDED_AT,
+      rationale: "Retained as a certification alignment target without extraction authority" },
+  },
+  {
+    release_id: "iso.iec-27002.2022",
+    family_id: "iso.iec-27002",
+    role: "control_alignment_target",
+    source_class: "REFERENCE_ONLY",
+    corpus_activation: "BLOCKED",
+    processing: REFERENCE_ONLY_PROCESSING,
+    rights: {
+      classification: "ISO copyrighted licensed standard",
+      evidence_uris: ["https://www.iso.org/terms-and-conditions.html"],
+      attribution: "required",
+      third_party_content: "separate_review_or_exclude",
+      geographic_condition: "Use only under applicable ISO license and jurisdictional terms",
+      additional_conditions: ["Machine extraction requires separately recorded written permission"],
+    },
+    decision: { revision_id: "pol-000-r01", decided_at: DECIDED_AT,
+      rationale: "Retained as a control alignment target without extraction authority" },
+  },
+  {
+    release_id: "owasp.asvs.5-0-0",
+    family_id: "owasp.asvs",
+    role: "application_security_verification",
+    source_class: "CORE",
+    corpus_activation: "ACTIVE",
+    processing: AUTHORIZED_PROCESSING,
+    rights: {
+      classification: "Creative Commons Attribution-ShareAlike 4.0 International",
+      evidence_uris: ["https://github.com/OWASP/ASVS/blob/v5.0.0_release/LICENSE.md"],
+      attribution: "required",
+      third_party_content: "separate_review_or_exclude",
+      geographic_condition: "Apply the worldwide CC BY-SA 4.0 license terms",
+      additional_conditions: ["Preserve attribution and applicable ShareAlike obligations"],
+    },
+    decision: { revision_id: "pol-000-r01", decided_at: DECIDED_AT,
+      rationale: "Retained as a core application-security verification source" },
+  },
+  {
+    release_id: "owasp.wstg.4-2",
+    family_id: "owasp.wstg",
+    role: "adversarial_testing",
+    source_class: "CORE",
+    corpus_activation: "ACTIVE",
+    processing: AUTHORIZED_PROCESSING,
+    rights: {
+      classification: "Creative Commons Attribution-ShareAlike 4.0 International",
+      evidence_uris: ["https://github.com/OWASP/wstg/blob/v4.2/LICENSE"],
+      attribution: "required",
+      third_party_content: "separate_review_or_exclude",
+      geographic_condition: "Apply the worldwide CC BY-SA 4.0 license terms",
+      additional_conditions: ["Preserve attribution and applicable ShareAlike obligations"],
+    },
+    decision: { revision_id: "pol-000-r01", decided_at: DECIDED_AT,
+      rationale: "Retained as a core adversarial security testing source" },
+  },
+  {
+    release_id: "nist.csf.2-0",
+    family_id: "nist.csf",
+    role: "security_governance_outcomes",
+    source_class: "CORE",
+    corpus_activation: "ACTIVE",
+    processing: AUTHORIZED_PROCESSING,
+    rights: {
+      classification: "NIST-authored United States government publication",
+      evidence_uris: [...NIST_RIGHTS_EVIDENCE,
+        "https://www.nist.gov/cyberframework/faqs"],
+      attribution: "required",
+      third_party_content: "separate_review_or_exclude",
+      geographic_condition: "Preserve NIST foreign-rights and worldwide-grant terms",
+      additional_conditions: ["Do not imply NIST endorsement or certification"],
+    },
+    decision: { revision_id: "pol-000-r01", decided_at: DECIDED_AT,
+      rationale: "Admitted as the core machine-processable governance outcome source" },
+  },
+  {
+    release_id: "nist.sp-800-53.r5-2-0",
+    family_id: "nist.sp-800-53",
+    role: "security_control_catalog",
+    source_class: "EVALUATION_SOURCE",
+    corpus_activation: "ACTIVE",
+    processing: AUTHORIZED_PROCESSING,
+    rights: {
+      classification: "NIST-authored United States government publication",
+      evidence_uris: [...NIST_RIGHTS_EVIDENCE,
+        "https://csrc.nist.gov/news/2025/nist-releases-revision-to-sp-800-53-controls"],
+      attribution: "required",
+      third_party_content: "separate_review_or_exclude",
+      geographic_condition: "Preserve NIST foreign-rights and worldwide-grant terms",
+      additional_conditions: ["Do not imply NIST endorsement or certification"],
+    },
+    decision: { revision_id: "pol-000-r01", decided_at: DECIDED_AT,
+      rationale: "Admitted only for bounded evaluation of control-catalog value" },
+  },
+] as const;
+
+export const CES_POLICY_GOVERNED_SOURCE_GLOSSARY_V1_1 =
+  migrateSourceGlossaryV1ToGovernedV1_1(
+    CES_POLICY_SOURCE_GLOSSARY_SUCCESSOR_V1_1,
+    "ces-policies.source-glossary.v1-1",
+    "ces-policies.source-glossary.v1",
+    CES_POLICY_SOURCE_GOVERNANCE_V1_1,
+  );
