@@ -12,6 +12,15 @@ foundation, Atlas, Architect, Forge, Assurance, and integration.
 Ticket IDs describe ownership, not scheduling. Product work may overlap only
 when its declared dependencies and the Phase 0 gate permit it.
 
+## CES review governance
+
+| Order | Ticket | Outcome | Depends on |
+|---:|---|---|---|
+| 1 | [CES-GF-REV-001](review-governance/CES-GF-REV-001-dependency-aware-review-batching.md) | Dependency-aware review batching with per-ticket terminal outcomes | Existing bounded CES review protocol |
+
+REV-001 is a proposed REVIEW_GATE. Dependency-aware batching does not become
+active until that ticket receives an accepting terminal review outcome.
+
 ## Phase 0 implementation gate
 
 | Order | Ticket | Outcome | Depends on |
