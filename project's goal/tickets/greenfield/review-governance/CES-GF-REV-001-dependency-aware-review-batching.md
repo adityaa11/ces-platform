@@ -1,6 +1,6 @@
 # CES-GF-REV-001 - Dependency-Aware Review Batching
 
-**Status:** Proposed
+**Status:** Accepted
 **Review class:** REVIEW_GATE
 **Depends on:** Existing bounded CES review protocol
 
@@ -49,3 +49,10 @@ Review only sequencing safety, activation authority, per-ticket review
 independence, dependency propagation, commit provenance, and consistency with
 the existing bounded two-round protocol.
 
+## Acceptance evidence
+
+- Commit `feb49b6` introduced the proposed dependency-aware batching gate.
+- Round 1 result: `NOT ACCEPTED`; REQUIRED-01 and REQUIRED-02 required
+  consistent inactive proposal wording and bounded commit-chain terminology.
+- Commit `d8c6421` corrected both internal inconsistencies.
+- Round 2 closure result: `ACCEPTED`.

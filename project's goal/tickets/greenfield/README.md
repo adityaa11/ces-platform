@@ -18,8 +18,8 @@ when its declared dependencies and the Phase 0 gate permit it.
 |---:|---|---|---|
 | 1 | [CES-GF-REV-001](review-governance/CES-GF-REV-001-dependency-aware-review-batching.md) | Dependency-aware review batching with per-ticket terminal outcomes | Existing bounded CES review protocol |
 
-REV-001 is a proposed REVIEW_GATE. Dependency-aware batching does not become
-active until that ticket receives an accepting terminal review outcome.
+REV-001 is an accepted REVIEW_GATE. Dependency-aware batching is the active CES
+implementation/review sequencing supplement.
 
 ## Phase 0 implementation gate
 

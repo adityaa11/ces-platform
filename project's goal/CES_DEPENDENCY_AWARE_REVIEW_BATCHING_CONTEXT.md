@@ -1,6 +1,6 @@
 # CES Review Workflow - Dependency-Aware Review Batching
 
-**Status:** Proposed review workflow context  
+**Status:** Active review workflow context  
 **Review class:** REVIEW_GATE  
 **Scope:** CES implementation/review sequencing  
 **Purpose:** Reduce unnecessary serial review blocking while preserving governance, traceability, and one terminal outcome per ticket  
@@ -10,14 +10,14 @@
 
 # 1. Core Principle
 
-CES proposes to use:
+CES uses:
 
 ```text
 DEPENDENCY-AWARE REVIEW BATCHING
 ```
 
-If REV-001 is accepted, this workflow will replace the requirement that every
-ticket pass review before all downstream implementation can begin.
+This workflow replaces the requirement that every ticket pass review before
+all downstream implementation can begin.
 
 The governing principle is:
 
@@ -963,7 +963,7 @@ Before starting a batchable ticket:
 
 ---
 
-# 30. Why CES Proposes This
+# 30. Why CES Adopted This
 
 The previous fully serial process caused unnecessary friction:
 
@@ -1027,11 +1027,11 @@ when dependencies allow provisional batching.
 This document changes CES-wide implementation and review sequencing and is
 therefore itself a `REVIEW_GATE`.
 
-Until this proposal receives an allowed accepting terminal outcome:
+Before REV-001 received its accepting terminal outcome:
 
 ```text
 - the previously accepted bounded review protocol remains authoritative;
-- this document does not authorize provisional downstream implementation;
+- this document did not authorize provisional downstream implementation;
 - no plan may claim dependency-aware batching is active.
 ```
 
@@ -1051,7 +1051,7 @@ their commit histories.
 
 # 33. Final Operating Rule
 
-The proposed CES review workflow is:
+The CES review workflow is:
 
 ```text
 Classify ticket
