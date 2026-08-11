@@ -1,6 +1,6 @@
 # CES-GF-POL-006-R01 - Extraction Contract Synchronization
 
-**Status:** Proposed
+**Status:** Accepted
 **Review class:** BATCHABLE
 **Depends on:** Accepted Frozen Context v1.1 and POL-002-R01; provisionally consumes POL-003-R01, POL-004-R01, and POL-005-V01
 
@@ -48,3 +48,8 @@ any extraction operation.
 - Its execution gate prevents this documentation synchronization from being
   mistaken for extraction authority.
 
+## Acceptance evidence
+
+- Primary implementation commit: `3c7ccef`.
+- Combined dependency-aware review: Round 1 `ACCEPTED`.
+- No BLOCKER, REQUIRED, or DEFERRED findings were recorded.

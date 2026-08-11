@@ -1,6 +1,6 @@
 # CES-GF-POL-005-V01 - Governed Compatibility Validation
 
-**Status:** Proposed
+**Status:** Accepted
 **Review class:** BATCHABLE
 **Depends on:** Accepted POL-002-R01 and accepted POL-005; provisionally consumes POL-003-R01
 
@@ -48,3 +48,8 @@ REFERENCE_ONLY releases that must not become vocabulary inputs.
 - Tests accept all four governed machine inputs, reject both ISO references,
   and preserve the exact raw vocabulary value and original v1 behavior.
 
+## Acceptance evidence
+
+- Primary implementation commit: `d3d7971`.
+- Combined dependency-aware review: Round 1 `ACCEPTED`.
+- No BLOCKER, REQUIRED, or DEFERRED findings were recorded.

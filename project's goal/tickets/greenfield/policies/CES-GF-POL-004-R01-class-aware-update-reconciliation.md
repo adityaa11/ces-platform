@@ -1,6 +1,6 @@
 # CES-GF-POL-004-R01 - Class-Aware Update Reconciliation
 
-**Status:** Proposed
+**Status:** Accepted
 **Review class:** BATCHABLE
 **Depends on:** Accepted POL-002-R01; provisionally consumes POL-003-R01
 
@@ -44,3 +44,8 @@ processing authority, corpus activation, or a published baseline.
 - Tests prove exact registration, ISO reference-only awareness, non-mutation,
   and all accepted POL-004 behavior.
 
+## Acceptance evidence
+
+- Primary implementation commit: `bc1ea92`.
+- Combined dependency-aware review: Round 1 `ACCEPTED`.
+- No BLOCKER, REQUIRED, or DEFERRED findings were recorded.

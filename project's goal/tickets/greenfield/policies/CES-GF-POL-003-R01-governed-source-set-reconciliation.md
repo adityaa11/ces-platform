@@ -1,6 +1,6 @@
 # CES-GF-POL-003-R01 - Governed Source Set Reconciliation
 
-**Status:** Proposed
+**Status:** Accepted
 **Depends on:** Accepted POL-002-R01 and accepted POL-003
 
 ## Outcome
@@ -49,3 +49,8 @@ specific immutable predecessor.
 - Tests preserve the historical prefix, assert the exact six classifications,
   and enforce the ISO and NIST processing boundaries.
 
+## Acceptance evidence
+
+- Primary implementation commit: `53df311`.
+- Combined dependency-aware review: Round 1 `ACCEPTED`.
+- No BLOCKER, REQUIRED, or DEFERRED findings were recorded.
