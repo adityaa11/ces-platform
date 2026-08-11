@@ -1,6 +1,6 @@
 # CES-GF-POL-002-R01 - Source Governance Reconciliation
 
-**Status:** Proposed
+**Status:** Accepted
 **Depends on:** Accepted Frozen Context v1.1 and accepted POL-002
 
 ## Outcome
@@ -49,3 +49,11 @@ POL-000-R01 without mutating the accepted v1 contract or source records.
   value without modifying it.
 - Generic fixtures cover valid migration, complete coverage, and fail-closed
   reference-only authorization.
+
+## Acceptance evidence
+
+- Commit `af919e2` introduced the versioned source-governance wrapper.
+- Round 1 result: `NOT ACCEPTED`; REQUIRED-01 required the specific predecessor
+  baseline identity in addition to its schema version.
+- Commit `9948cb7` added and verified `predecessor_baseline_id`.
+- Round 2 closure result: `ACCEPTED`.
