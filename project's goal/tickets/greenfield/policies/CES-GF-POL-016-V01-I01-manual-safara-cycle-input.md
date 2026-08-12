@@ -1,6 +1,6 @@
 # CES-GF-POL-016-V01-I01 - Manual Safara Cycle Input
 
-**Status:** Proposed
+**Status:** Accepted
 
 **Review class:** REVIEW_GATE
 
@@ -14,6 +14,10 @@ candidate taxonomy
 Establish a human-reconciled, machine-readable inventory of the complete Safara
 Buyer Business PRD as the demand-side input for the first CES Policy knowledge-
 evolution cycle while Atlas extraction remains untrusted.
+
+This is a preparatory bootstrap artifact executed before POL-009 and reused
+later by formal POL-016-V01 validation. Its historical identifier does not
+indicate mainline execution has reached POL-016.
 
 ## Authority boundary
 
@@ -79,3 +83,12 @@ Review decides whether this exact manual inventory and its temporary
 qualification-only consumption boundary are trustworthy. It does not approve
 Atlas, CES Policy gaps discovered later, successor canonical knowledge, or the
 final Safara coverage gate.
+
+## Review evidence
+
+- Inventory commit: `11f1953`
+- Closure correction: `946f51f`
+- Corrected Round 1 result for `11f1953`: `NOT ACCEPTED`
+- Closure review result for `946f51f`: `ACCEPTED`
+- Accepted inventory SHA-256:
+  `b1cbfaf6d3ad78cafc1b85dd7dc92344ed03d42f0f693ef5543c0b31e60526d2`

@@ -2,7 +2,7 @@
 
 **Status:** Proposed
 **Review class:** REVIEW_GATE
-**Depends on:** POL-008
+**Depends on:** Accepted POL-008 after an accepting POL-008-V01 result
 
 ## Outcome
 

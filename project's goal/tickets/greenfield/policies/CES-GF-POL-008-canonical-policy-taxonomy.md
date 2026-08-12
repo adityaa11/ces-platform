@@ -25,6 +25,9 @@ the canonical vocabulary.
 - No policy names a vendor, framework, data store, protocol, or implementation
   technique.
 - Cross-source overlap is consolidated unless meanings materially differ.
+- Final semantic approval requires an accepting POL-008-V01 Safara bootstrap
+  result; the currently implemented four-Policy taxonomy remains candidate
+  probe material until then.
 
 ## Explicit non-goals
 

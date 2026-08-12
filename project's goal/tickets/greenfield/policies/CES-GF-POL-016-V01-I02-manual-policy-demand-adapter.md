@@ -12,6 +12,10 @@ Allow the approved manual Safara golden fixture to feed the first CES Policy
 development coverage cycle through a validated, qualification-only
 `PolicyDemandFact` adapter.
 
+This is a preparatory bootstrap implementation executed before POL-009 and
+reused later by formal POL-016-V01 validation. Its historical identifier does
+not indicate mainline execution has reached POL-016.
+
 ## Scope
 
 - Define a machine-readable schema for the approved manual fixture.
@@ -54,4 +58,3 @@ that decision to a dedicated REVIEW_GATE before continuing.
 - Approving the POL-008 taxonomy or a successor Policy proposal.
 - Producing production Context Bindings.
 - Closing POL-016-V01 or freezing CES Policies v1.1.
-

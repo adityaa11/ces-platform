@@ -1,11 +1,11 @@
 {
   "schema_version": "1.0.0",
   "fixture_id": "safara-v1.1-cycle-01",
-  "status": "proposed",
-  "decision": null,
-  "inventory_sha256": null,
-  "reviewer": null,
-  "reviewed_at": null,
-  "note": "Pending semantic review of the exact manual fact inventory."
+  "status": "accepted",
+  "decision": "ACCEPTED",
+  "inventory_sha256": "b1cbfaf6d3ad78cafc1b85dd7dc92344ed03d42f0f693ef5543c0b31e60526d2",
+  "reviewer": "CES project owner",
+  "reviewed_at": "2026-08-12",
+  "reviewed_commit": "946f51f",
+  "note": "Accepted as the development-only Safara golden fact inventory. This does not approve Atlas facts, production Context Bindings, Policy coverage conclusions, or final POL-016-V01 qualification."
 }
-
