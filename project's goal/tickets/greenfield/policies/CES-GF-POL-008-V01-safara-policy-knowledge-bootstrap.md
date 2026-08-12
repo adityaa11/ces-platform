@@ -1,6 +1,6 @@
 # CES-GF-POL-008-V01 - Safara Policy Knowledge Bootstrap
 
-**Status:** Implemented first coverage result; pending REVIEW_GATE review
+**Status:** Implemented second coverage result; pending REVIEW_GATE review
 
 **Review class:** REVIEW_GATE
 
@@ -143,3 +143,38 @@ extracted `raw.asvs.v2-3-1`.
 These gates may be reviewed independently because they alter different
 accepted knowledge layers. A new versioned Safara result must wait until both
 receive accepting terminal outcomes. Neither ticket implies a new Policy.
+
+## Second coverage-result evidence
+
+- Result identity: `ces-policies.safara-bootstrap.coverage-v2`
+- Exact predecessor: `ces-policies.safara-bootstrap.coverage-v1`
+- Evaluator version: `1.1.0`
+- Accepted raw corpus: `ces-policies.raw-vocabulary.representative-v1-2`
+- Approved canonical vocabulary revision: `1.3.0`
+- Candidate taxonomy revision: `1.0.0`
+- Candidate authority: `false`
+- Proposed deterministic result SHA-256:
+  `7a28f7624e7e4c6a4aa3fde8dd13d7fd9298f0ea46d9f60ef7970614a4a9fbee`
+
+Coverage v2 preserves all 111 explicit fact classifications and the v1 result
+unchanged. Its counts remain:
+
+- 77 `AWARENESS_EMITTED`, all `candidate_only`;
+- 24 `NO_SECURITY_AWARENESS_REQUIRED`;
+- 5 `OUTSIDE_SOFTWARE_SCOPE`;
+- 5 `SOURCE_OR_POLICY_GAP`.
+
+The accepted successors advance all five gaps to their new earliest incomplete
+layers:
+
+- Fact `0016`: `POLICY_GAP`. Approved canonical concept
+  `ces.sequential-business-flow` exists, but candidate taxonomy revision
+  `1.0.0` has no Policy representing it.
+- Facts `0024`, `0035`, and `0045`: `CANONICALIZATION_GAP`, with accepted raw
+  support `raw.asvs.v14-1-1`.
+- Fact `0027`: `CANONICALIZATION_GAP`, with accepted raw support
+  `raw.asvs.v14-2-6`.
+
+Coverage v2 therefore does not claim bootstrap closure or POL-008 acceptance.
+It supplies bounded evidence for the next targeted canonicalization and Policy
+taxonomy successor decisions.

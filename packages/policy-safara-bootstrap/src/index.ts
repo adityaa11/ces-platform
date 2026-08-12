@@ -1,9 +1,13 @@
 import { createHash } from "node:crypto";
 import { CES_POLICY_APPROVED_CANONICAL_VOCABULARY_V1_1 } from
   "@company/ces-policy-canonical-vocabulary/representative-catalog";
+import { CES_POLICY_APPROVED_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_3 } from
+  "@company/ces-policy-canonical-vocabulary/representative-catalog";
 import { QualificationPolicyDemandFactSchema, type QualificationPolicyDemandFact } from
   "@company/ces-policy-manual-demand-adapter";
 import { CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1 } from
+  "@company/ces-policy-source-vocabulary/representative-corpus";
+import { CES_POLICY_ACCEPTED_TARGETED_EXTRACTION_CORPUS_V1_2 } from
   "@company/ces-policy-source-vocabulary/representative-corpus";
 import { CES_POLICY_REPRESENTATIVE_TAXONOMY_V1 } from
   "@company/ces-policy-taxonomy/representative-taxonomy";
@@ -12,6 +16,7 @@ import { resolvePolicySourceLineage } from
 import { z } from "zod";
 
 export const SAFARA_BOOTSTRAP_EVALUATOR_VERSION = "1.0.0" as const;
+export const SAFARA_BOOTSTRAP_EVALUATOR_V2_VERSION = "1.1.0" as const;
 const Id = z.string().min(1);
 const NonEmpty = z.string().trim().min(1);
 
@@ -90,6 +95,23 @@ export const SafaraBootstrapCoverageSchema = z.object({
   result_hash: z.string().regex(/^[0-9a-f]{64}$/u),
 }).strict();
 
+export const SafaraBootstrapCoverageV2Schema = z.object({
+  schema_version: z.literal("1.0.0"),
+  result_id: z.literal("ces-policies.safara-bootstrap.coverage-v2"),
+  predecessor_result_id: z.literal("ces-policies.safara-bootstrap.coverage-v1"),
+  lifecycle: z.literal("proposed"),
+  evaluator_version: z.literal(SAFARA_BOOTSTRAP_EVALUATOR_V2_VERSION),
+  manual_inventory_sha256: z.literal(
+    "b1cbfaf6d3ad78cafc1b85dd7dc92344ed03d42f0f693ef5543c0b31e60526d2"),
+  raw_corpus_id: z.literal("ces-policies.raw-vocabulary.representative-v1-2"),
+  raw_publication_status: z.literal("accepted"),
+  canonical_vocabulary_revision: z.literal("1.3.0"),
+  candidate_taxonomy_revision: z.literal("1.0.0"),
+  candidate_is_authoritative: z.literal(false),
+  entries: z.array(SafaraCoverageEntrySchema).length(111),
+  result_hash: z.string().regex(/^[0-9a-f]{64}$/u),
+}).strict();
+
 const accessIds = idSet([
   11, 12, 13, 14, 15, 17, 23, 28, 47, 51, 56, 57, 58, 79, 89, 94, 95, 101, 108,
 ]);
@@ -111,6 +133,15 @@ const extractionGaps = new Map<string, readonly SourceCandidate[]>([
     "Sensitive-data identification and classification is relevant to payment records and evidence.")]],
   [factId(45), [asvsCandidate("v5.0.0-V14.1.1",
     "Sensitive-data identification and classification is relevant to identity and health document classes.")]],
+]);
+const v2PolicyGaps = new Map<string, readonly string[]>([
+  [factId(16), ["ces.sequential-business-flow"]],
+]);
+const v2CanonicalizationGaps = new Map<string, readonly string[]>([
+  [factId(24), ["raw.asvs.v14-1-1"]],
+  [factId(27), ["raw.asvs.v14-2-6"]],
+  [factId(35), ["raw.asvs.v14-1-1"]],
+  [factId(45), ["raw.asvs.v14-1-1"]],
 ]);
 const outsideScope = idSet([96, 97, 99, 100, 110]);
 const noAwarenessIds = idSet([
@@ -151,6 +182,58 @@ export function evaluateSafaraBootstrapCoverage(
   };
   return SafaraBootstrapCoverageSchema.parse({ ...valueWithoutHash,
     result_hash: stableHash(valueWithoutHash) });
+}
+
+export function evaluateSafaraBootstrapCoverageV2(
+  demandFacts: readonly QualificationPolicyDemandFact[],
+) {
+  const facts = demandFacts.map((fact) => QualificationPolicyDemandFactSchema.parse(fact));
+  if (facts.length !== 111 || new Set(facts.map(({ demand_fact_id }) => demand_fact_id)).size !== 111) {
+    throw new Error("Safara bootstrap v2 requires all 111 unique manual demand facts");
+  }
+  assertPinnedKnowledgeV2();
+  assertExplicitClassificationPartitionV2(facts.map(({ demand_fact_id }) => demand_fact_id));
+  const entries = facts.map(classifyV2);
+  const valueWithoutHash = {
+    schema_version: "1.0.0" as const,
+    result_id: "ces-policies.safara-bootstrap.coverage-v2" as const,
+    predecessor_result_id: "ces-policies.safara-bootstrap.coverage-v1" as const,
+    lifecycle: "proposed" as const,
+    evaluator_version: SAFARA_BOOTSTRAP_EVALUATOR_V2_VERSION,
+    manual_inventory_sha256:
+      "b1cbfaf6d3ad78cafc1b85dd7dc92344ed03d42f0f693ef5543c0b31e60526d2" as const,
+    raw_corpus_id: "ces-policies.raw-vocabulary.representative-v1-2" as const,
+    raw_publication_status: "accepted" as const,
+    canonical_vocabulary_revision: "1.3.0" as const,
+    candidate_taxonomy_revision: "1.0.0" as const,
+    candidate_is_authoritative: false as const,
+    entries,
+  };
+  return SafaraBootstrapCoverageV2Schema.parse({ ...valueWithoutHash,
+    result_hash: stableHash(valueWithoutHash) });
+}
+
+function classifyV2(fact: QualificationPolicyDemandFact): z.infer<typeof SafaraCoverageEntrySchema> {
+  const id = fact.demand_fact_id;
+  const manual_provenance = {
+    kind: fact.provenance.kind, source_sha256: fact.provenance.source_sha256,
+    inventory_sha256: fact.provenance.inventory_sha256, page: fact.provenance.page,
+    exact_text: fact.provenance.exact_text,
+    extraction_method: fact.provenance.extraction_method,
+  } as const;
+  const canonicalSupport = v2PolicyGaps.get(id);
+  if (canonicalSupport) return { demand_fact_id: id, manual_provenance,
+    disposition: "SOURCE_OR_POLICY_GAP",
+    rationale: `Approved canonical support ${canonicalSupport.join(", ")} exists, but no candidate Policy represents it.`,
+    policy_support: [], gap_route: "POLICY_GAP", raw_support_ids: ["raw.asvs.v2-3-1"],
+    source_support_candidates: [] };
+  const rawSupport = v2CanonicalizationGaps.get(id);
+  if (rawSupport) return { demand_fact_id: id, manual_provenance,
+    disposition: "SOURCE_OR_POLICY_GAP",
+    rationale: "Accepted raw data-protection knowledge exists, but no approved canonical concept represents it.",
+    policy_support: [], gap_route: "CANONICALIZATION_GAP", raw_support_ids: [...rawSupport],
+    source_support_candidates: [] };
+  return classify(fact);
 }
 
 function classify(fact: QualificationPolicyDemandFact): z.infer<typeof SafaraCoverageEntrySchema> {
@@ -239,6 +322,22 @@ function assertExplicitClassificationPartition(inputIds: readonly string[]): voi
   }
 }
 
+function assertExplicitClassificationPartitionV2(inputIds: readonly string[]): void {
+  const sets = [accessIds, traceIds, transactionIds, v2PolicyGaps,
+    v2CanonicalizationGaps, outsideScope, noAwarenessIds];
+  const assigned = new Map<string, number>();
+  for (const values of sets) {
+    for (const id of values.keys()) assigned.set(id, (assigned.get(id) ?? 0) + 1);
+  }
+  const accepted = new Set(inputIds);
+  const duplicates = [...assigned].filter(([, count]) => count !== 1).map(([id]) => id);
+  const missing = [...accepted].filter((id) => !assigned.has(id));
+  const unknown = [...assigned.keys()].filter((id) => !accepted.has(id));
+  if (duplicates.length || missing.length || unknown.length || assigned.size !== 111) {
+    throw new Error(`Invalid explicit Safara v2 classification partition: duplicates=${duplicates.join(",")}; missing=${missing.join(",")}; unknown=${unknown.join(",")}`);
+  }
+}
+
 function assertPinnedKnowledge(): void {
   if (CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1.corpus_id !==
       "ces-policies.raw-vocabulary.representative-v1-1" ||
@@ -246,6 +345,21 @@ function assertPinnedKnowledge(): void {
       CES_POLICY_REPRESENTATIVE_TAXONOMY_V1.taxonomy_revision !== "1.0.0" ||
       CES_POLICY_REPRESENTATIVE_TAXONOMY_V1.lifecycle !== "candidate") {
     throw new Error("Safara bootstrap knowledge inputs do not match the pinned revisions");
+  }
+}
+
+
+function assertPinnedKnowledgeV2(): void {
+  if (CES_POLICY_ACCEPTED_TARGETED_EXTRACTION_CORPUS_V1_2.publication_status !== "accepted" ||
+      CES_POLICY_ACCEPTED_TARGETED_EXTRACTION_CORPUS_V1_2.corpus.corpus_id !==
+      "ces-policies.raw-vocabulary.representative-v1-2" ||
+      CES_POLICY_APPROVED_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_3.vocabulary_revision !==
+      "1.3.0" ||
+      CES_POLICY_APPROVED_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_3.vocabulary_status !==
+      "approved" ||
+      CES_POLICY_REPRESENTATIVE_TAXONOMY_V1.taxonomy_revision !== "1.0.0" ||
+      CES_POLICY_REPRESENTATIVE_TAXONOMY_V1.lifecycle !== "candidate") {
+    throw new Error("Safara bootstrap v2 knowledge inputs do not match the pinned revisions");
   }
 }
 
