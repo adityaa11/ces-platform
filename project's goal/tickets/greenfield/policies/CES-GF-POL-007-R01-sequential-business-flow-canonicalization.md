@@ -1,6 +1,6 @@
 # CES-GF-POL-007-R01 - Sequential Business-Flow Canonicalization
 
-**Status:** Ready for REVIEW_GATE
+**Status:** Accepted authority published
 
 **Review class:** REVIEW_GATE
 
@@ -83,3 +83,15 @@ Safara facts ultimately activate the concept.
 - Focused validation rejects same-revision mutation, unsupported mappings,
   erased predecessor lineage, Safara-specific terminology, and altered meaning.
 - No Policy is created or implied.
+
+## Acceptance publication
+
+- REVIEW_GATE terminal outcome: `ACCEPTED` for commit
+  `8e42e032a6e3995c89b80befdf5a6b7f77af267c`.
+- Human evidence: project-owner confirmation recorded as
+  `CES-GF-POL-007-R01-H01` on 2026-08-12.
+- Accepted canonical publication: revision `1.3.0`, with exact predecessor
+  candidate revision `1.2.0`.
+- Approval changes only `ces.sequential-business-flow` lifecycle and its
+  addition-decision review fields. All mappings and prior approved authority
+  remain unchanged.

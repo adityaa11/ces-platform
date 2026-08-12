@@ -4,6 +4,9 @@ import { CanonicalVocabularySchema, validateCanonicalVocabularyAgainstRawConcept
 import { CES_POLICY_CANONICAL_VOCABULARY_V1,
   CES_POLICY_APPROVED_CANONICAL_VOCABULARY_V1_1,
   CES_POLICY_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_2,
+  CES_POLICY_APPROVED_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_3,
+  SEQUENTIAL_FLOW_APPROVAL_EVIDENCE,
+  approveSequentialBusinessFlowCanonicalSuccessor,
   buildSequentialBusinessFlowCanonicalSuccessor,
   changeCanonicalConceptLifecycle,
   replaceRawMappingForSourceRenumbering,
@@ -212,5 +215,39 @@ describe("POL-007-R01 sequential business-flow canonicalization", () => {
     const broadened = clone(CES_POLICY_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_2);
     broadened.concepts.at(-1)!.definition = "Every operation must always succeed.";
     expect(() => buildSequentialBusinessFlowCanonicalSuccessor(broadened)).toThrow(/altered/u);
+  });
+});
+
+describe("POL-007-R01 accepted authority publication", () => {
+  it("publishes approval as an immutable successor of the reviewed candidate", () => {
+    const candidate = CES_POLICY_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_2;
+    const approved = CES_POLICY_APPROVED_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_3;
+    expect(approved).toMatchObject({ vocabulary_revision: "1.3.0",
+      predecessor_revision: candidate.vocabulary_revision, vocabulary_status: "approved" });
+    expect(approved.concepts.find(({ concept_id }) =>
+      concept_id === "ces.sequential-business-flow")?.lifecycle).toBe("approved");
+  });
+
+  it("records project-owner approval bound to the reviewed commit", () => {
+    expect(SEQUENTIAL_FLOW_APPROVAL_EVIDENCE).toMatchObject({
+      evidence_id: "CES-GF-POL-007-R01-H01",
+      evidence_type: "project_owner_confirmation", terminal_outcome: "ACCEPTED",
+      reviewed_commit: "8e42e032a6e3995c89b80befdf5a6b7f77af267c" });
+    expect(CES_POLICY_APPROVED_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_3.decisions.at(-1))
+      .toMatchObject({ status: "approved",
+        reviewer_evidence_id: SEQUENTIAL_FLOW_APPROVAL_EVIDENCE.evidence_id });
+  });
+
+  it("changes only the new lifecycle and decision review fields", () => {
+    const candidate = CES_POLICY_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_2;
+    const approved = CES_POLICY_APPROVED_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_3;
+    expect(approved.mappings).toEqual(candidate.mappings);
+    expect(approved.concepts.slice(0, -1)).toEqual(candidate.concepts.slice(0, -1));
+    expect(approved.decisions.slice(0, -1)).toEqual(candidate.decisions.slice(0, -1));
+  });
+
+  it("deterministically reproduces the accepted successor", () => {
+    expect(approveSequentialBusinessFlowCanonicalSuccessor())
+      .toEqual(CES_POLICY_APPROVED_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_3);
   });
 });

@@ -255,3 +255,45 @@ export function buildSequentialBusinessFlowCanonicalSuccessor(
 
 export const CES_POLICY_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_2 =
   buildSequentialBusinessFlowCanonicalSuccessor();
+
+export const SEQUENTIAL_FLOW_APPROVAL_EVIDENCE = {
+  evidence_id: "CES-GF-POL-007-R01-H01",
+  evidence_type: "project_owner_confirmation",
+  terminal_outcome: "ACCEPTED",
+  reviewed_commit: "8e42e032a6e3995c89b80befdf5a6b7f77af267c",
+  recorded_on: "2026-08-12",
+  approved_scope: "ces.sequential-business-flow canonicalization decision",
+} as const;
+
+export function approveSequentialBusinessFlowCanonicalSuccessor() {
+  const candidate = CES_POLICY_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_2;
+  const successor = CanonicalVocabularySchema.parse({
+    ...candidate,
+    vocabulary_revision: "1.3.0",
+    predecessor_revision: candidate.vocabulary_revision,
+    vocabulary_status: "approved",
+    concepts: candidate.concepts.map((concept) => concept.concept_id ===
+      SEQUENTIAL_FLOW_CONCEPT.concept_id ? { ...concept, lifecycle: "approved" } : concept),
+    decisions: candidate.decisions.map((decision) => decision.decision_id ===
+      SEQUENTIAL_FLOW_DECISION.decision_id ? { ...decision, status: "approved",
+        reviewed_at: "2026-08-12T00:00:00+00:00",
+        reviewer_evidence_id: SEQUENTIAL_FLOW_APPROVAL_EVIDENCE.evidence_id } : decision),
+  });
+  const transition = validateCanonicalVocabularySuccessor(candidate, successor);
+  if (!transition.lifecycle_changed || transition.mapping_changed) {
+    throw new Error("POL-007-R01 approval must change lifecycle without changing mappings");
+  }
+  if (JSON.stringify(successor.mappings) !== JSON.stringify(candidate.mappings) ||
+      JSON.stringify(successor.concepts.slice(0, -1)) !==
+      JSON.stringify(candidate.concepts.slice(0, -1)) ||
+      JSON.stringify(successor.decisions.slice(0, -1)) !==
+      JSON.stringify(candidate.decisions.slice(0, -1))) {
+    throw new Error("POL-007-R01 approval must preserve all candidate lineage and prior authority");
+  }
+  const rawConcepts = CES_POLICY_ACCEPTED_TARGETED_EXTRACTION_CORPUS_V1_2.corpus.vocabularies
+    .flatMap(({ concepts: values }) => values);
+  return validateCanonicalVocabularyAgainstRawConcepts(successor, rawConcepts);
+}
+
+export const CES_POLICY_APPROVED_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_3 =
+  approveSequentialBusinessFlowCanonicalSuccessor();
