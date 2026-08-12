@@ -3,7 +3,7 @@
 **Status:** Proposed; implementation unauthorized
 **Review class:** REVIEW_GATE
 **Depends on:** Accepted POL-008-V01 publication; AGB-001 through AGB-003
-**Blocks:** AGB-007, AGB-009, AGB-012, AGB-013
+**Blocks:** AGB-008, AGB-007, AGB-009, AGB-012, AGB-013
 
 ## Outcome
 

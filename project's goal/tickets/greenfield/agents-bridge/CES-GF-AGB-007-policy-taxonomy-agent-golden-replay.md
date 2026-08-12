@@ -2,8 +2,8 @@
 
 **Status:** Proposed; implementation unauthorized
 **Review class:** REVIEW_GATE
-**Depends on:** Accepted AGB-006
-**Blocks:** AGB-008 and AGB-014
+**Depends on:** Accepted AGB-006 and AGB-008
+**Blocks:** AGB-014
 
 ## Outcome
 

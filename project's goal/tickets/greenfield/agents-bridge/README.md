@@ -24,8 +24,8 @@ blocked throughout this sequence.
 | Order | Ticket | Outcome | Depends on | Review |
 |---:|---|---|---|---|
 | 1 | [AGB-006](CES-GF-AGB-006-policy-knowledge-proposal-contracts.md) | Proposal and execution-evidence contracts | POL-008-V01; AGB-001..003 | REVIEW_GATE |
-| 2 | [AGB-007](CES-GF-AGB-007-policy-taxonomy-agent-golden-replay.md) | POL-008-R02 taxonomy-agent replay | AGB-006 | REVIEW_GATE |
-| 3 | [AGB-008](CES-GF-AGB-008-policy-proposal-deterministic-validation.md) | Deterministic proposal validation | AGB-006, AGB-007 | BATCHABLE |
+| 2 | [AGB-008](CES-GF-AGB-008-policy-proposal-deterministic-validation.md) | Deterministic proposal validation | AGB-006 | REVIEW_GATE |
+| 3 | [AGB-007](CES-GF-AGB-007-policy-taxonomy-agent-golden-replay.md) | POL-008-R02 taxonomy-agent replay | AGB-006, AGB-008 | REVIEW_GATE |
 | 4 | [AGB-009](CES-GF-AGB-009-knowledge-evolution-workflow-state.md) | Durable orchestration state | AGB-006, AGB-008 | REVIEW_GATE |
 | 5 | [AGB-010](CES-GF-AGB-010-review-suspension-and-authority-resume.md) | REVIEW_GATE suspend/resume | AGB-009 | REVIEW_GATE |
 | 6 | [AGB-011](CES-GF-AGB-011-non-convergence-controls.md) | Duplicate/no-progress/attempt controls | AGB-009, AGB-010 | REVIEW_GATE |
@@ -36,7 +36,7 @@ blocked throughout this sequence.
 
 Recommended review transport:
 
-- Batch 1: AGB-006, then AGB-007, then AGB-008, with independent terminal
+- Group 1: AGB-006, then AGB-008, then AGB-007, with independent terminal
   outcomes and topological review.
 - Batch 2: AGB-009, then AGB-010, then AGB-011.
 - Batch 3: AGB-012, then AGB-013.

@@ -1,9 +1,9 @@
 # CES-GF-AGB-008 - Policy Proposal Deterministic Validation Boundary
 
 **Status:** Proposed; implementation unauthorized
-**Review class:** BATCHABLE
-**Depends on:** Accepted AGB-006 and AGB-007
-**Blocks:** AGB-009 and AGB-014
+**Review class:** REVIEW_GATE
+**Depends on:** Accepted AGB-006
+**Blocks:** AGB-007, AGB-009, and AGB-014
 
 ## Outcome
 
