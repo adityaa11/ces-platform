@@ -213,3 +213,35 @@ The accepted successors advance the five prior gaps:
 Coverage v3 therefore does not yet close POL-008-V01. The remaining four gaps
 require a targeted POL-008 taxonomy decision; they must not be treated as
 covered merely because approved canonical knowledge now exists.
+
+## Fourth coverage-result evidence
+
+- Result identity: `ces-policies.safara-bootstrap.coverage-v4`
+- Exact predecessor: `ces-policies.safara-bootstrap.coverage-v3`
+- Evaluator version: `1.3.0`
+- Accepted raw corpus: `ces-policies.raw-vocabulary.representative-v1-2`
+- Approved canonical vocabulary revision: `1.5.0`
+- Candidate taxonomy revision: `1.2.0`
+- POL-008-R02 bounded decision publication: `accepted`
+- Candidate authority: `false`
+- Proposed deterministic result SHA-256:
+  `ee13f46edb903fde96a37f2cfc2942aafc5092c9c3829dbefc915b1574f4b6af`
+
+Coverage v4 preserves all 111 explicit classifications and historical results.
+Its counts are:
+
+- 82 `AWARENESS_EMITTED`, all `candidate_only`;
+- 24 `NO_SECURITY_AWARENESS_REQUIRED`;
+- 5 `OUTSIDE_SOFTWARE_SCOPE`;
+- 0 `SOURCE_OR_POLICY_GAP`.
+
+Facts `0024`, `0027`, `0035`, and `0045` now emit candidate awareness through
+`policy.sensitive-data-protection`. Each result retains both independent
+canonical supports and both ASVS raw lineages because the consolidated Policy
+is materially supported by classification and disclosure-minimization
+obligations.
+
+Coverage v4 satisfies the mechanical bootstrap condition of complete explicit
+accounting with no unexplained knowledge gap. This remains proposed REVIEW_GATE
+evidence: it does not self-accept POL-008-V01, make candidate Policies
+authoritative, or grant final POL-008 approval.

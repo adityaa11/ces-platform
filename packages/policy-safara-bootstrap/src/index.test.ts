@@ -6,6 +6,7 @@ import { loadManualSafaraDemandFacts } from
 import { evaluateSafaraBootstrapCoverage } from "./index.js";
 import { evaluateSafaraBootstrapCoverageV2 } from "./index.js";
 import { evaluateSafaraBootstrapCoverageV3 } from "./index.js";
+import { evaluateSafaraBootstrapCoverageV4 } from "./index.js";
 
 const root = resolve(import.meta.dirname, "../../..");
 const fixture = resolve(root, "fixtures/policies/safara-v1.1-cycle-01");
@@ -195,5 +196,60 @@ describe("POL-008-V01 Safara bootstrap coverage v3", () => {
       .toHaveLength(78);
     expect(first.entries.filter(({ disposition }) => disposition === "SOURCE_OR_POLICY_GAP"))
       .toHaveLength(4);
+  });
+});
+
+describe("POL-008-V01 Safara bootstrap coverage v4", () => {
+  it("pins accepted data-protection decision taxonomy v1.2 without final authority", () => {
+    const v3 = evaluateSafaraBootstrapCoverageV3(demandFacts());
+    const v4 = evaluateSafaraBootstrapCoverageV4(demandFacts());
+    expect(v4).toMatchObject({ result_id: "ces-policies.safara-bootstrap.coverage-v4",
+      predecessor_result_id: v3.result_id, canonical_vocabulary_revision: "1.5.0",
+      candidate_taxonomy_revision: "1.2.0",
+      taxonomy_decision_publication_status: "accepted",
+      candidate_is_authoritative: false });
+  });
+
+  it("closes all four Policy gaps as candidate awareness with dual lineage", () => {
+    const entries = new Map(evaluateSafaraBootstrapCoverageV4(demandFacts()).entries
+      .map((entry) => [entry.demand_fact_id, entry]));
+    for (const id of ["safara.manual.fact.0024", "safara.manual.fact.0027",
+      "safara.manual.fact.0035", "safara.manual.fact.0045"]) {
+      const entry = entries.get(id)!;
+      expect(entry).toMatchObject({ disposition: "AWARENESS_EMITTED", gap_route: null,
+        policy_support: [{ policy_id: "policy.sensitive-data-protection",
+          support_status: "candidate_only", canonical_concept_ids: [
+            "ces.sensitive-data-classification",
+            "ces.sensitive-data-disclosure-minimization"] }] });
+      expect(entry.policy_support[0]?.source_lineage.map(({ raw_concept_id,
+        source_locator }) => ({ raw_concept_id, source_locator }))).toEqual([
+          { raw_concept_id: "raw.asvs.v14-1-1", source_locator: "v5.0.0-V14.1.1" },
+          { raw_concept_id: "raw.asvs.v14-2-6", source_locator: "v5.0.0-V14.2.6" },
+        ]);
+    }
+  });
+
+  it("accounts for all facts with zero unexplained knowledge gaps", () => {
+    const first = evaluateSafaraBootstrapCoverageV4(demandFacts());
+    expect(first.result_hash)
+      .toBe("ee13f46edb903fde96a37f2cfc2942aafc5092c9c3829dbefc915b1574f4b6af");
+    expect(first).toEqual(evaluateSafaraBootstrapCoverageV4(demandFacts()));
+    expect(first.entries).toHaveLength(111);
+    expect(new Set(first.entries.map(({ demand_fact_id }) => demand_fact_id)).size).toBe(111);
+    expect(first.entries.filter(({ disposition }) => disposition === "AWARENESS_EMITTED"))
+      .toHaveLength(82);
+    expect(first.entries.filter(({ disposition }) => disposition === "SOURCE_OR_POLICY_GAP"))
+      .toHaveLength(0);
+    expect(first.entries.filter(({ disposition }) =>
+      disposition === "NO_SECURITY_AWARENESS_REQUIRED")).toHaveLength(24);
+    expect(first.entries.filter(({ disposition }) => disposition === "OUTSIDE_SOFTWARE_SCOPE"))
+      .toHaveLength(5);
+  });
+
+  it("fails closed for incomplete or unknown demand input", () => {
+    expect(() => evaluateSafaraBootstrapCoverageV4(demandFacts().slice(1))).toThrow(/111/u);
+    const facts = [...demandFacts()];
+    facts[0] = { ...facts[0]!, demand_fact_id: "safara.manual.fact.0112" };
+    expect(() => evaluateSafaraBootstrapCoverageV4(facts)).toThrow(/partition/u);
   });
 });
