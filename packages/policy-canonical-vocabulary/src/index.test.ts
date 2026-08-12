@@ -364,4 +364,31 @@ describe("POL-007-R02 accepted authority publication", () => {
     expect(approveDataProtectionCanonicalSuccessor())
       .toEqual(CES_POLICY_APPROVED_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_5);
   });
+
+  it("resolves approved data-protection concepts through accepted raw v1.2", () => {
+    expect(resolveCanonicalSourceLineage("ces.sensitive-data-classification")
+      .map(({ raw_concept }) => ({ id: raw_concept.concept_id,
+        release: raw_concept.source_release_id,
+        locator: raw_concept.source_locator.locator }))).toEqual([{
+          id: "raw.asvs.v14-1-1", release: "owasp.asvs.5-0-0",
+          locator: "v5.0.0-V14.1.1" }]);
+    expect(resolveCanonicalSourceLineage("ces.sensitive-data-disclosure-minimization")
+      .map(({ raw_concept }) => ({ id: raw_concept.concept_id,
+        release: raw_concept.source_release_id,
+        locator: raw_concept.source_locator.locator }))).toEqual([{
+          id: "raw.asvs.v14-2-6", release: "owasp.asvs.5-0-0",
+          locator: "v5.0.0-V14.2.6" }]);
+  });
+
+  it("preserves prior representative, transaction, and sequential lineage", () => {
+    const expected = new Map([
+      ["ces.access-authorization", ["raw.nist-csf.pr-aa-05", "raw.nist-sp800-53.ac-3"]],
+      ["ces.transaction-integrity", ["raw.asvs.v2-3-3"]],
+      ["ces.sequential-business-flow", ["raw.asvs.v2-3-1"]],
+    ]);
+    for (const [conceptId, rawIds] of expected) {
+      expect(resolveCanonicalSourceLineage(conceptId).map(({ raw_concept }) =>
+        raw_concept.concept_id)).toEqual(rawIds);
+    }
+  });
 });

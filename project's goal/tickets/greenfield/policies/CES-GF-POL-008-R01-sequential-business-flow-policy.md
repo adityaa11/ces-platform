@@ -91,3 +91,15 @@ POL-008-V01, approve project applicability, or authorize POL-009.
 - Focused validation rejects same-revision mutation, unsupported canonical
   support, lost predecessor authority, invented approval, and project-specific
   Policy meaning.
+
+## Round 1 remediation
+
+- `REQUIRED-01` fixed: shared canonical lineage resolution now pairs approved
+  canonical vocabulary revision `1.5.0` with accepted raw corpus v1.2 instead
+  of representative raw v1.1.
+- Regression coverage proves both approved data-protection concepts resolve to
+  their exact ASVS raw identities and locators.
+- Existing access-authorization, transaction-integrity, and sequential-flow
+  lineage remains resolvable.
+- The candidate sequential-flow Policy, comparison, decision, lifecycle, and
+  taxonomy successor are unchanged by this closure-only fix.
