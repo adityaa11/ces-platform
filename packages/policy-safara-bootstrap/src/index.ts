@@ -329,6 +329,9 @@ export function evaluateSafaraBootstrapCoverageV4(
 function classifyV4(fact: QualificationPolicyDemandFact): z.infer<typeof SafaraCoverageEntrySchema> {
   const id = fact.demand_fact_id;
   if (!v4DataProtectionAwareness.has(id)) return classifyV3(fact);
+  const canonicalConceptId = id === "safara.manual.fact.0027"
+    ? "ces.sensitive-data-disclosure-minimization"
+    : "ces.sensitive-data-classification";
   const manual_provenance = {
     kind: fact.provenance.kind, source_sha256: fact.provenance.source_sha256,
     inventory_sha256: fact.provenance.inventory_sha256, page: fact.provenance.page,
@@ -336,6 +339,8 @@ function classifyV4(fact: QualificationPolicyDemandFact): z.infer<typeof SafaraC
     extraction_method: fact.provenance.extraction_method,
   } as const;
   const sourceLineage = resolveDataProtectionPolicySourceLineage()
+    .filter(({ canonical_support }) =>
+      canonical_support.canonical_concept_id === canonicalConceptId)
     .flatMap(({ canonical_support, source_lineage }) => source_lineage.map(({ raw_concept }) => ({
       canonical_concept_id: canonical_support.canonical_concept_id,
       raw_concept_id: raw_concept.concept_id, source_release_id: raw_concept.source_release_id,
@@ -346,8 +351,7 @@ function classifyV4(fact: QualificationPolicyDemandFact): z.infer<typeof SafaraC
     rationale: "The fact activates candidate sensitive-data protection awareness; the accepted bounded add/merge decisions do not make the candidate Policy authoritative.",
     policy_support: [{ policy_id: "policy.sensitive-data-protection", policy_revision: "1.0.0",
       support_status: "candidate_only",
-      canonical_concept_ids: ["ces.sensitive-data-classification",
-        "ces.sensitive-data-disclosure-minimization"], source_lineage: sourceLineage }],
+      canonical_concept_ids: [canonicalConceptId], source_lineage: sourceLineage }],
     gap_route: null, raw_support_ids: [], source_support_candidates: [] };
 }
 

@@ -210,21 +210,27 @@ describe("POL-008-V01 Safara bootstrap coverage v4", () => {
       candidate_is_authoritative: false });
   });
 
-  it("closes all four Policy gaps as candidate awareness with dual lineage", () => {
+  it("closes all four Policy gaps with fact-specific candidate lineage", () => {
     const entries = new Map(evaluateSafaraBootstrapCoverageV4(demandFacts()).entries
       .map((entry) => [entry.demand_fact_id, entry]));
-    for (const id of ["safara.manual.fact.0024", "safara.manual.fact.0027",
-      "safara.manual.fact.0035", "safara.manual.fact.0045"]) {
+    const expected = new Map([
+      ["safara.manual.fact.0024", ["ces.sensitive-data-classification",
+        "raw.asvs.v14-1-1", "v5.0.0-V14.1.1"]],
+      ["safara.manual.fact.0027", ["ces.sensitive-data-disclosure-minimization",
+        "raw.asvs.v14-2-6", "v5.0.0-V14.2.6"]],
+      ["safara.manual.fact.0035", ["ces.sensitive-data-classification",
+        "raw.asvs.v14-1-1", "v5.0.0-V14.1.1"]],
+      ["safara.manual.fact.0045", ["ces.sensitive-data-classification",
+        "raw.asvs.v14-1-1", "v5.0.0-V14.1.1"]],
+    ]);
+    for (const [id, [canonicalConceptId, rawConceptId, sourceLocator]] of expected) {
       const entry = entries.get(id)!;
       expect(entry).toMatchObject({ disposition: "AWARENESS_EMITTED", gap_route: null,
         policy_support: [{ policy_id: "policy.sensitive-data-protection",
-          support_status: "candidate_only", canonical_concept_ids: [
-            "ces.sensitive-data-classification",
-            "ces.sensitive-data-disclosure-minimization"] }] });
+          support_status: "candidate_only", canonical_concept_ids: [canonicalConceptId] }] });
       expect(entry.policy_support[0]?.source_lineage.map(({ raw_concept_id,
         source_locator }) => ({ raw_concept_id, source_locator }))).toEqual([
-          { raw_concept_id: "raw.asvs.v14-1-1", source_locator: "v5.0.0-V14.1.1" },
-          { raw_concept_id: "raw.asvs.v14-2-6", source_locator: "v5.0.0-V14.2.6" },
+          { raw_concept_id: rawConceptId, source_locator: sourceLocator },
         ]);
     }
   });
@@ -232,7 +238,7 @@ describe("POL-008-V01 Safara bootstrap coverage v4", () => {
   it("accounts for all facts with zero unexplained knowledge gaps", () => {
     const first = evaluateSafaraBootstrapCoverageV4(demandFacts());
     expect(first.result_hash)
-      .toBe("ee13f46edb903fde96a37f2cfc2942aafc5092c9c3829dbefc915b1574f4b6af");
+      .toBe("3e0e7253279437cd5c76780d11acccacd81290d80b74c7e135bc3cdb7591b3a3");
     expect(first).toEqual(evaluateSafaraBootstrapCoverageV4(demandFacts()));
     expect(first.entries).toHaveLength(111);
     expect(new Set(first.entries.map(({ demand_fact_id }) => demand_fact_id)).size).toBe(111);
