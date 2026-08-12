@@ -8,6 +8,9 @@ import { CES_POLICY_REPRESENTATIVE_TAXONOMY_V1,
   buildSequentialBusinessFlowPolicySuccessor,
   CES_POLICY_ACCEPTED_SEQUENTIAL_FLOW_DECISION_V1,
   publishAcceptedSequentialFlowDecision,
+  CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2,
+  buildDataProtectionPolicySuccessor,
+  resolveDataProtectionPolicySourceLineage,
   resolvePolicySourceLineage,
   resolveSequentialFlowPolicySourceLineage } from "./representative-taxonomy.js";
 
@@ -192,5 +195,85 @@ describe("POL-008-R01 accepted decision publication", () => {
       reviewed_at: "2026-08-12T00:00:00+00:00", reviewer_evidence_id: "invented" };
     expect(() => publishAcceptedSequentialFlowDecision(falseAuthority))
       .toThrow(/preserve|final POL-008 authority/u);
+  });
+});
+
+describe("POL-008-R02 data-protection Policy decisions", () => {
+  it("publishes a candidate successor pinned to taxonomy v1.1 and canonical v1.5", () => {
+    const { taxonomy } = CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2;
+    expect(taxonomy).toMatchObject({ taxonomy_revision: "1.2.0",
+      predecessor_revision: "1.1.0", canonical_vocabulary_revision: "1.5.0",
+      lifecycle: "candidate" });
+    expect(taxonomy.policies.at(-1)).toMatchObject({
+      policy_id: "policy.sensitive-data-protection", lifecycle: "candidate",
+      approval: { status: "proposed", reviewed_at: null, reviewer_evidence_id: null } });
+  });
+
+  it("records independent add and merge decisions without one-to-one promotion", () => {
+    expect(CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2.decisions.map(({ decision,
+      canonical_concept_id, policy_id }) => ({ decision, canonical_concept_id, policy_id })))
+      .toEqual([
+        { decision: "add", canonical_concept_id: "ces.sensitive-data-classification",
+          policy_id: "policy.sensitive-data-protection" },
+        { decision: "merge",
+          canonical_concept_id: "ces.sensitive-data-disclosure-minimization",
+          policy_id: "policy.sensitive-data-protection" },
+      ]);
+    expect(CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2.taxonomy.policies).toHaveLength(6);
+  });
+
+  it("preserves both meanings as separate canonical support", () => {
+    const policy = CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2.taxonomy.policies.at(-1)!;
+    expect(policy.canonical_support.map(({ canonical_concept_id }) => canonical_concept_id))
+      .toEqual(["ces.sensitive-data-classification",
+        "ces.sensitive-data-disclosure-minimization"]);
+    expect(policy.obligation).toContain("classified into appropriate protection levels");
+    expect(policy.obligation).toContain("disclosure must be limited");
+    expect(policy.obligation).toContain("complete values must remain concealed");
+  });
+
+  it("resolves both independent ASVS lineages", () => {
+    expect(resolveDataProtectionPolicySourceLineage().map(({ canonical_support,
+      source_lineage }) => ({ canonical: canonical_support.canonical_concept_id,
+      raw: source_lineage.map(({ raw_concept }) => raw_concept.concept_id),
+      locator: source_lineage.map(({ raw_concept }) => raw_concept.source_locator.locator) })))
+      .toEqual([
+        { canonical: "ces.sensitive-data-classification", raw: ["raw.asvs.v14-1-1"],
+          locator: ["v5.0.0-V14.1.1"] },
+        { canonical: "ces.sensitive-data-disclosure-minimization",
+          raw: ["raw.asvs.v14-2-6"], locator: ["v5.0.0-V14.2.6"] },
+      ]);
+  });
+
+  it("preserves every predecessor Policy and approval", () => {
+    const predecessor = CES_POLICY_ACCEPTED_SEQUENTIAL_FLOW_DECISION_V1.artifact.taxonomy;
+    expect(CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2.taxonomy.policies
+      .slice(0, predecessor.policies.length)).toEqual(predecessor.policies);
+  });
+
+  it("fails closed on wrong revision, unsupported support, or lost predecessor", () => {
+    const wrong = clone(CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2);
+    wrong.taxonomy.canonical_vocabulary_revision = "1.3.0";
+    expect(() => buildDataProtectionPolicySuccessor(wrong)).toThrow(/exact approved/u);
+    const unsupported = clone(CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2);
+    unsupported.taxonomy.policies.at(-1)!.canonical_support[0]!.canonical_concept_id =
+      "ces.object-authorization-bypass";
+    expect(() => buildDataProtectionPolicySuccessor(unsupported))
+      .toThrow(/approved obligation/u);
+    const lost = clone(CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2);
+    lost.taxonomy.policies.shift();
+    expect(() => buildDataProtectionPolicySuccessor(lost)).toThrow(/preserve|bounded/u);
+  });
+
+  it("fails closed on altered meaning, invented approval, or project terminology", () => {
+    const altered = clone(CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2);
+    altered.taxonomy.policies.at(-1)!.obligation = "Encrypt everything forever.";
+    expect(() => buildDataProtectionPolicySuccessor(altered)).toThrow(/altered/u);
+    const approved = clone(CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2);
+    approved.taxonomy.policies.at(-1)!.approval.status = "approved";
+    expect(() => buildDataProtectionPolicySuccessor(approved)).toThrow(/review evidence/u);
+    const specific = clone(CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2);
+    specific.taxonomy.policies.at(-1)!.obligation = "Mask each Safara pilgrim passport.";
+    expect(() => buildDataProtectionPolicySuccessor(specific)).toThrow(/reusable|altered/u);
   });
 });

@@ -1,5 +1,6 @@
 import { CES_POLICY_APPROVED_CANONICAL_VOCABULARY_V1_1,
   CES_POLICY_APPROVED_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_3,
+  CES_POLICY_APPROVED_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_5,
   resolveCanonicalSourceLineage } from
   "@company/ces-policy-canonical-vocabulary/representative-catalog";
 import { z } from "zod";
@@ -211,3 +212,113 @@ export function publishAcceptedSequentialFlowDecision(
 
 export const CES_POLICY_ACCEPTED_SEQUENTIAL_FLOW_DECISION_V1 =
   publishAcceptedSequentialFlowDecision();
+
+const SENSITIVE_DATA_PROTECTION_POLICY = {
+  policy_id: "policy.sensitive-data-protection", policy_version: "1.0.0",
+  title: "Sensitive-data protection", lifecycle: "candidate", approval: proposed,
+  obligation: "Sensitive data must be identified and classified into appropriate protection levels; its disclosure must be limited to what functionality requires, and complete values must remain concealed unless specifically viewed.",
+  technology_independence: independence("Defines classification and disclosure outcomes without prescribing inventories, classification schemes, storage, interface components, or masking mechanisms."),
+  canonical_support: [
+    support("ces.sensitive-data-classification",
+      "Supplies the enduring obligation to identify sensitive data and classify it into protection levels that account for applicable requirements."),
+    support("ces.sensitive-data-disclosure-minimization",
+      "Supplies the distinct enduring obligation to minimize sensitive-data disclosure and conceal complete values unless specifically viewed."),
+  ],
+} as const;
+
+const DataProtectionPolicyDecisionSchema = z.object({
+  decision_id: z.string().min(1), decision: z.enum(["add", "merge", "reject"]),
+  status: z.literal("proposed"),
+  canonical_concept_id: z.enum(["ces.sensitive-data-classification",
+    "ces.sensitive-data-disclosure-minimization"]),
+  policy_id: z.literal("policy.sensitive-data-protection"), rationale: z.string().min(1),
+  proposed_at: z.literal("2026-08-12T12:00:00+00:00"), reviewed_at: z.null(),
+  reviewer_evidence_id: z.null(),
+}).strict();
+
+const DATA_PROTECTION_POLICY_DECISIONS = [
+  { decision_id: "decision.pol-008-r02.add.sensitive-data-classification",
+    decision: "add", status: "proposed",
+    canonical_concept_id: "ces.sensitive-data-classification",
+    policy_id: "policy.sensitive-data-protection",
+    rationale: "Add one broad sensitive-data protection Policy grounded in approved ces.sensitive-data-classification and raw ASVS identity owasp.asvs.5-0-0/raw.asvs.v14-1-1 at v5.0.0-V14.1.1. No existing candidate Policy governs identification and protection-level classification.",
+    proposed_at: "2026-08-12T12:00:00+00:00", reviewed_at: null,
+    reviewer_evidence_id: null },
+  { decision_id: "decision.pol-008-r02.merge.sensitive-data-disclosure-minimization",
+    decision: "merge", status: "proposed",
+    canonical_concept_id: "ces.sensitive-data-disclosure-minimization",
+    policy_id: "policy.sensitive-data-protection",
+    rationale: "Merge support from approved ces.sensitive-data-disclosure-minimization and raw ASVS identity owasp.asvs.5-0-0/raw.asvs.v14-2-6 at v5.0.0-V14.2.6 into the new broad Policy. The combined obligation preserves minimum disclosure and conditional concealment as a distinct clause while avoiding a one-concept-per-Policy taxonomy.",
+    proposed_at: "2026-08-12T12:00:00+00:00", reviewed_at: null,
+    reviewer_evidence_id: null },
+] as const;
+
+const DataProtectionTaxonomyArtifactSchema = z.object({
+  taxonomy: z.custom<ReturnType<typeof validatePolicyTaxonomyAgainstCanonicalVocabulary>>(),
+  decisions: z.array(DataProtectionPolicyDecisionSchema).length(2),
+}).strict();
+
+function buildDataProtectionTaxonomyValue() {
+  const predecessor = CES_POLICY_ACCEPTED_SEQUENTIAL_FLOW_DECISION_V1.artifact.taxonomy;
+  return { ...predecessor, taxonomy_revision: "1.2.0",
+    predecessor_revision: predecessor.taxonomy_revision,
+    canonical_vocabulary_revision: "1.5.0",
+    policies: [...predecessor.policies, SENSITIVE_DATA_PROTECTION_POLICY] } as const;
+}
+
+export function buildDataProtectionPolicySuccessor(
+  value: unknown = { taxonomy: buildDataProtectionTaxonomyValue(),
+    decisions: DATA_PROTECTION_POLICY_DECISIONS },
+) {
+  const parsed = DataProtectionTaxonomyArtifactSchema.parse(value);
+  const taxonomy = validatePolicyTaxonomyAgainstCanonicalVocabulary(parsed.taxonomy,
+    CES_POLICY_APPROVED_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_5);
+  const predecessor = CES_POLICY_ACCEPTED_SEQUENTIAL_FLOW_DECISION_V1.artifact.taxonomy;
+  if (taxonomy.taxonomy_id !== predecessor.taxonomy_id ||
+      taxonomy.taxonomy_revision === predecessor.taxonomy_revision) {
+    throw new Error("POL-008-R02 successor requires preserved identity and a distinct revision");
+  }
+  if (taxonomy.predecessor_revision !== predecessor.taxonomy_revision) {
+    throw new Error("POL-008-R02 successor must link to the exact predecessor revision");
+  }
+  if (JSON.stringify(taxonomy.policies.slice(0, predecessor.policies.length)) !==
+      JSON.stringify(predecessor.policies)) {
+    throw new Error("POL-008-R02 successor must preserve every predecessor Policy and approval");
+  }
+  if (taxonomy.policies.length !== predecessor.policies.length + 1) {
+    throw new Error("POL-008-R02 successor may add only its bounded consolidated Policy");
+  }
+  const expectedTaxonomy = validatePolicyTaxonomyAgainstCanonicalVocabulary(
+    buildDataProtectionTaxonomyValue(),
+    CES_POLICY_APPROVED_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_5);
+  const expectedDecisions = DATA_PROTECTION_POLICY_DECISIONS.map((decision) =>
+    DataProtectionPolicyDecisionSchema.parse(decision));
+  if (JSON.stringify(taxonomy.policies.at(-1)) !==
+      JSON.stringify(expectedTaxonomy.policies.at(-1)) ||
+      JSON.stringify(parsed.decisions) !== JSON.stringify(expectedDecisions)) {
+    throw new Error("POL-008-R02 successor contains altered or unsupported Policy meaning");
+  }
+  if (new Set(parsed.decisions.map(({ canonical_concept_id }) => canonical_concept_id)).size !== 2 ||
+      !parsed.decisions.some(({ decision }) => decision === "add") ||
+      !parsed.decisions.some(({ decision }) => decision === "merge")) {
+    throw new Error("POL-008-R02 requires explicit independent treatment of both obligations");
+  }
+  const bounded = JSON.stringify({ policy: taxonomy.policies.at(-1),
+    decisions: parsed.decisions }).toLowerCase();
+  if (["safara", "pilgrim", "nik", "passport", "payment", "health document", "package",
+    "manifest", "framework", "database", "ui component", "atlas"].some((term) =>
+    bounded.includes(term))) {
+    throw new Error("POL-008-R02 Policy meaning must remain reusable and technology-independent");
+  }
+  return { taxonomy, decisions: parsed.decisions } as const;
+}
+
+export const CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2 =
+  buildDataProtectionPolicySuccessor();
+
+export function resolveDataProtectionPolicySourceLineage() {
+  return CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2.taxonomy.policies
+    .find(({ policy_id }) => policy_id === "policy.sensitive-data-protection")!
+    .canonical_support.map((canonicalSupport) => ({ canonical_support: canonicalSupport,
+      source_lineage: resolveCanonicalSourceLineage(canonicalSupport.canonical_concept_id) }));
+}

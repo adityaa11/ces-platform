@@ -1,6 +1,6 @@
 # CES-GF-POL-008-R02 - Data-Protection Policy Decisions
 
-**Status:** Proposed
+**Status:** Ready for REVIEW_GATE
 
 **Review class:** REVIEW_GATE
 
@@ -96,3 +96,22 @@ POL-008-V01, approve applicability, or authorize POL-009.
 - Creating Atlas Context Bindings, architecture, stack, or implementation
   decisions.
 - Reopening accepted sequential-flow Policy semantics.
+
+## Implementation evidence
+
+- Candidate taxonomy successor: revision `1.2.0`, with exact predecessor
+  revision `1.1.0` and approved canonical vocabulary revision `1.5.0`.
+- Proposed consolidated addition: `policy.sensitive-data-protection`.
+- Independent decisions record `add` for
+  `ces.sensitive-data-classification` and `merge` of
+  `ces.sensitive-data-disclosure-minimization` support into the same new
+  Policy; neither canonical identity nor lineage is collapsed.
+- The combined obligation explicitly retains protection-level classification,
+  minimum necessary disclosure, and conditional concealment of complete
+  values while avoiding mechanical one-concept-per-Policy promotion.
+- The new Policy and both decisions remain candidate/proposed without human
+  review evidence; final POL-008 authority remains unapproved.
+- All five predecessor Policies and their approval fields remain unchanged.
+- Focused validation rejects wrong revisions, unsupported support, lost
+  predecessor authority, altered meaning, invented approval, and
+  project-specific terminology.
