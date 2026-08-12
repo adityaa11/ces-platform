@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "fixture_id": "safara-v1.1-cycle-01",
+  "purpose": "ces_policy_qualification",
+  "authority": "human_reconciled_project_truth",
+  "atlas_authority": false,
+  "source": {
+    "path": "docs/prd/Safara_Buyer_Business_PRD.pdf",
+    "sha256": "189dc08b084e5ee7edd4b947517ca659e93f22eec78954de6fd1c2df8359baee",
+    "page_count": 7,
+    "document_date": "2026-07-27"
+  },
+  "inventory": "manual-facts.json",
+  "review_record": "human-review-record.json"
+}
+

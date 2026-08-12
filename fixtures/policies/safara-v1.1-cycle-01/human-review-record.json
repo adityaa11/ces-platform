@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "fixture_id": "safara-v1.1-cycle-01",
+  "status": "proposed",
+  "decision": null,
+  "inventory_sha256": null,
+  "reviewer": null,
+  "reviewed_at": null,
+  "note": "Pending semantic review of the exact manual fact inventory."
+}
+
