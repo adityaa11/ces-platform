@@ -403,6 +403,25 @@ importers:
         specifier: 24.13.3
         version: 24.13.3
 
+  packages/policy-knowledge-validation:
+    dependencies:
+      '@company/ces-policy-canonical-vocabulary':
+        specifier: workspace:*
+        version: link:../policy-canonical-vocabulary
+      '@company/ces-policy-knowledge-proposals':
+        specifier: workspace:*
+        version: link:../policy-knowledge-proposals
+      '@company/ces-policy-taxonomy':
+        specifier: workspace:*
+        version: link:../policy-taxonomy
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
+
   packages/policy-manifest:
     dependencies:
       zod:
