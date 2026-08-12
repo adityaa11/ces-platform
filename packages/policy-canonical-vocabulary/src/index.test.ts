@@ -7,6 +7,8 @@ import { CES_POLICY_CANONICAL_VOCABULARY_V1,
   CES_POLICY_APPROVED_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_3,
   SEQUENTIAL_FLOW_APPROVAL_EVIDENCE,
   approveSequentialBusinessFlowCanonicalSuccessor,
+  CES_POLICY_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_4,
+  buildDataProtectionCanonicalSuccessor,
   buildSequentialBusinessFlowCanonicalSuccessor,
   changeCanonicalConceptLifecycle,
   replaceRawMappingForSourceRenumbering,
@@ -249,5 +251,81 @@ describe("POL-007-R01 accepted authority publication", () => {
   it("deterministically reproduces the accepted successor", () => {
     expect(approveSequentialBusinessFlowCanonicalSuccessor())
       .toEqual(CES_POLICY_APPROVED_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_3);
+  });
+});
+
+describe("POL-007-R02 data-protection canonicalization", () => {
+  it("publishes a candidate successor linked to approved revision 1.3.0", () => {
+    const successor = CES_POLICY_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_4;
+    expect(successor).toMatchObject({ vocabulary_revision: "1.4.0",
+      predecessor_revision: "1.3.0", vocabulary_status: "candidate" });
+    expect(successor.concepts.slice(-2).map(({ concept_id, lifecycle }) =>
+      ({ concept_id, lifecycle }))).toEqual([
+        { concept_id: "ces.sensitive-data-classification", lifecycle: "candidate" },
+        { concept_id: "ces.sensitive-data-disclosure-minimization", lifecycle: "candidate" },
+      ]);
+  });
+
+  it("records two independently proposed addition decisions", () => {
+    expect(CES_POLICY_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_4.decisions.slice(-2)
+      .map(({ decision_kind, status, reviewed_at, reviewer_evidence_id }) =>
+        ({ decision_kind, status, reviewed_at, reviewer_evidence_id }))).toEqual([
+          { decision_kind: "addition", status: "proposed", reviewed_at: null,
+            reviewer_evidence_id: null },
+          { decision_kind: "addition", status: "proposed", reviewed_at: null,
+            reviewer_evidence_id: null },
+        ]);
+  });
+
+  it("preserves exact accepted raw identities and source locators", () => {
+    const successor = CES_POLICY_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_4;
+    expect(successor.mappings.slice(-2).map(({ raw_source_release_id, raw_concept_id }) =>
+      ({ raw_source_release_id, raw_concept_id }))).toEqual([
+        { raw_source_release_id: "owasp.asvs.5-0-0", raw_concept_id: "raw.asvs.v14-1-1" },
+        { raw_source_release_id: "owasp.asvs.5-0-0", raw_concept_id: "raw.asvs.v14-2-6" },
+      ]);
+    expect(successor.decisions.slice(-2).map(({ rationale }) => rationale)).toEqual([
+      expect.stringContaining("v5.0.0-V14.1.1"),
+      expect.stringContaining("v5.0.0-V14.2.6"),
+    ]);
+  });
+
+  it("keeps classification distinct from disclosure minimization", () => {
+    const concepts = CES_POLICY_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_4.concepts.slice(-2);
+    expect(concepts[0]?.definition).toContain("classified into protection levels");
+    expect(concepts[1]?.definition).toContain("minimum sensitive data required");
+    expect(concepts[1]?.definition).toContain("masks complete values");
+  });
+
+  it("preserves every predecessor concept, mapping, decision, and approval", () => {
+    const predecessor = CES_POLICY_APPROVED_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_3;
+    const successor = CES_POLICY_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_4;
+    expect(successor.concepts.slice(0, predecessor.concepts.length)).toEqual(predecessor.concepts);
+    expect(successor.mappings.slice(0, predecessor.mappings.length)).toEqual(predecessor.mappings);
+    expect(successor.decisions.slice(0, predecessor.decisions.length)).toEqual(predecessor.decisions);
+  });
+
+  it("fails closed on unsupported mapping, erased lineage, or altered meaning", () => {
+    const unsupported = clone(CES_POLICY_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_4);
+    unsupported.mappings.at(-1)!.raw_concept_id = "raw.asvs.unknown";
+    expect(() => buildDataProtectionCanonicalSuccessor(unsupported)).toThrow(/missing/u);
+
+    const erased = clone(CES_POLICY_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_4);
+    erased.mappings.shift();
+    expect(() => buildDataProtectionCanonicalSuccessor(erased)).toThrow(/authority|bounded/u);
+
+    const altered = clone(CES_POLICY_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_4);
+    altered.concepts.at(-1)!.definition = "Encrypt and retain all private data.";
+    expect(() => buildDataProtectionCanonicalSuccessor(altered)).toThrow(/altered/u);
+  });
+
+  it("fails closed on same-revision or Safara-specific successors", () => {
+    const sameRevision = clone(CES_POLICY_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_4);
+    sameRevision.vocabulary_revision = "1.3.0";
+    expect(() => buildDataProtectionCanonicalSuccessor(sameRevision)).toThrow(/distinct/u);
+
+    const specific = clone(CES_POLICY_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_4);
+    specific.concepts.at(-1)!.definition = "Mask every Safara pilgrim passport.";
+    expect(() => buildDataProtectionCanonicalSuccessor(specific)).toThrow(/reusable/u);
   });
 });

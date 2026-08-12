@@ -297,3 +297,91 @@ export function approveSequentialBusinessFlowCanonicalSuccessor() {
 
 export const CES_POLICY_APPROVED_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_3 =
   approveSequentialBusinessFlowCanonicalSuccessor();
+
+const DATA_PROTECTION_CONCEPTS = [
+  { concept_id: "ces.sensitive-data-classification", meaning_version: "1.0.0",
+    preferred_term: "Sensitive-data classification", semantic_kind: "obligation",
+    lifecycle: "candidate", aliases: ["sensitive-data protection levels"],
+    definition: "Sensitive data created and processed by software is identified and classified into protection levels that account for applicable data-protection and privacy requirements, including easily decoded data." },
+  { concept_id: "ces.sensitive-data-disclosure-minimization", meaning_version: "1.0.0",
+    preferred_term: "Sensitive-data disclosure minimization", semantic_kind: "obligation",
+    lifecycle: "candidate", aliases: ["minimum sensitive-data return"],
+    definition: "Software returns only the minimum sensitive data required for its functionality and masks complete values in the user interface unless the user specifically views them." },
+] as const;
+
+const DATA_PROTECTION_MAPPINGS = [
+  { canonical_concept_id: "ces.sensitive-data-classification",
+    raw_concept_id: "raw.asvs.v14-1-1", raw_source_release_id: "owasp.asvs.5-0-0",
+    relationship: "supports",
+    rationale: "ASVS v5.0.0-V14.1.1 directly supports identifying sensitive application data and classifying it into protection levels that account for applicable data-protection and privacy requirements." },
+  { canonical_concept_id: "ces.sensitive-data-disclosure-minimization",
+    raw_concept_id: "raw.asvs.v14-2-6", raw_source_release_id: "owasp.asvs.5-0-0",
+    relationship: "supports",
+    rationale: "ASVS v5.0.0-V14.2.6 directly supports minimum required sensitive-data return and UI masking of complete values unless specifically viewed." },
+] as const;
+
+const DATA_PROTECTION_DECISIONS = [
+  { decision_id: "decision.pol-007-r02.add.sensitive-data-classification",
+    decision_kind: "addition", status: "proposed",
+    affected_canonical_concept_ids: ["ces.sensitive-data-classification"],
+    affected_raw_concept_ids: ["raw.asvs.v14-1-1"],
+    rationale: "Add a distinct obligation from accepted raw identity owasp.asvs.5-0-0/raw.asvs.v14-1-1 at v5.0.0-V14.1.1. Its identification and protection-level classification meaning does not overlap existing authorization, logging, recovery, transaction, sequence, concern, or verification meanings.",
+    proposed_at: "2026-08-12T10:00:00+00:00", reviewed_at: null,
+    reviewer_evidence_id: null },
+  { decision_id: "decision.pol-007-r02.add.sensitive-data-disclosure-minimization",
+    decision_kind: "addition", status: "proposed",
+    affected_canonical_concept_ids: ["ces.sensitive-data-disclosure-minimization"],
+    affected_raw_concept_ids: ["raw.asvs.v14-2-6"],
+    rationale: "Add a separate obligation from accepted raw identity owasp.asvs.5-0-0/raw.asvs.v14-2-6 at v5.0.0-V14.2.6. Minimum return and conditional UI masking govern disclosure behavior and are not aliases or merges of data classification or existing canonical meanings.",
+    proposed_at: "2026-08-12T10:00:00+00:00", reviewed_at: null,
+    reviewer_evidence_id: null },
+] as const;
+
+function buildDataProtectionValue() {
+  const predecessor = CES_POLICY_APPROVED_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_3;
+  return { ...predecessor, vocabulary_revision: "1.4.0",
+    predecessor_revision: predecessor.vocabulary_revision, vocabulary_status: "candidate",
+    concepts: [...predecessor.concepts, ...DATA_PROTECTION_CONCEPTS],
+    mappings: [...predecessor.mappings, ...DATA_PROTECTION_MAPPINGS],
+    decisions: [...predecessor.decisions, ...DATA_PROTECTION_DECISIONS] } as const;
+}
+
+export function buildDataProtectionCanonicalSuccessor(
+  value: unknown = buildDataProtectionValue(),
+) {
+  const predecessor = CES_POLICY_APPROVED_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_3;
+  const rawConcepts = CES_POLICY_ACCEPTED_TARGETED_EXTRACTION_CORPUS_V1_2.corpus.vocabularies
+    .flatMap(({ concepts: values }) => values);
+  const successor = validateCanonicalVocabularyAgainstRawConcepts(value, rawConcepts);
+  validateCanonicalVocabularySuccessor(predecessor, successor);
+  if (JSON.stringify(successor.concepts.slice(0, predecessor.concepts.length)) !==
+      JSON.stringify(predecessor.concepts) ||
+      JSON.stringify(successor.mappings.slice(0, predecessor.mappings.length)) !==
+      JSON.stringify(predecessor.mappings) ||
+      JSON.stringify(successor.decisions.slice(0, predecessor.decisions.length)) !==
+      JSON.stringify(predecessor.decisions)) {
+    throw new Error("POL-007-R02 successor must preserve complete predecessor authority");
+  }
+  if (successor.concepts.length !== predecessor.concepts.length + 2 ||
+      successor.mappings.length !== predecessor.mappings.length + 2 ||
+      successor.decisions.length !== predecessor.decisions.length + 2) {
+    throw new Error("POL-007-R02 successor may add only its two bounded decisions");
+  }
+  const bounded = JSON.stringify({ concepts: successor.concepts.slice(-2),
+    mappings: successor.mappings.slice(-2), decisions: successor.decisions.slice(-2) })
+    .toLowerCase();
+  if (["safara", "pilgrim", "passport", "nik", "payment record", "health document",
+    "package", "manifest"].some((term) => bounded.includes(term))) {
+    throw new Error("POL-007-R02 canonical meaning must remain reusable and source-grounded");
+  }
+  const expected = CanonicalVocabularySchema.parse(buildDataProtectionValue());
+  if (JSON.stringify(successor.concepts.slice(-2)) !== JSON.stringify(expected.concepts.slice(-2)) ||
+      JSON.stringify(successor.mappings.slice(-2)) !== JSON.stringify(expected.mappings.slice(-2)) ||
+      JSON.stringify(successor.decisions.slice(-2)) !== JSON.stringify(expected.decisions.slice(-2))) {
+    throw new Error("POL-007-R02 successor contains altered or unsupported canonical meaning");
+  }
+  return successor;
+}
+
+export const CES_POLICY_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_4 =
+  buildDataProtectionCanonicalSuccessor();

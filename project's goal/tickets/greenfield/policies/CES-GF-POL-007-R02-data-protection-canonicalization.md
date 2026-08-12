@@ -1,6 +1,6 @@
 # CES-GF-POL-007-R02 - Data-Protection Canonicalization
 
-**Status:** Proposed
+**Status:** Ready for REVIEW_GATE
 
 **Review class:** REVIEW_GATE
 
@@ -78,3 +78,21 @@ POL-008-V01, or authorize production applicability.
 - Defining data schemas, masking implementations, retention schedules,
   authorization rules, or compliance claims.
 - Creating Atlas Context Bindings or Safara-specific shared knowledge.
+
+## Implementation evidence
+
+- Candidate canonical successor: revision `1.4.0`, with exact approved
+  predecessor revision `1.3.0`.
+- Proposed independent additions:
+  `ces.sensitive-data-classification` from `raw.asvs.v14-1-1`, and
+  `ces.sensitive-data-disclosure-minimization` from `raw.asvs.v14-2-6`.
+- Semantic comparison records that classification/protection-level awareness
+  and minimum-return/conditional-masking behavior are distinct from one
+  another and from all existing approved canonical meanings.
+- Both additions remain candidate with proposed decisions and no claimed human
+  review evidence.
+- All predecessor concepts, mappings, decisions, approvals, and raw lineage
+  remain unchanged.
+- Focused validation rejects unsupported mappings, erased lineage, altered
+  meanings, same-revision mutation, and Safara-specific canonicalization.
+- No Policy is created or implied.
