@@ -1,6 +1,6 @@
 # CES-GF-AGB-006 - Policy Knowledge Proposal and Execution Evidence Contracts
 
-**Status:** Proposed; implementation unauthorized
+**Status:** Implemented candidate; pending REVIEW_GATE
 **Review class:** REVIEW_GATE
 **Depends on:** Accepted POL-008-V01 publication; AGB-001 through AGB-003
 **Blocks:** AGB-008, AGB-007, AGB-009, AGB-012, AGB-013
@@ -45,3 +45,18 @@ redacted execution evidence.
 Authority separation, provenance completeness, provider neutrality, evidence
 privacy, deterministic integrity, and compatibility with accepted POL-006,
 POL-007, POL-008, and Coverage V4 artifacts.
+
+## Candidate implementation evidence
+
+- Package: `@company/ces-policy-knowledge-proposals`.
+- Distinct content-addressed raw, canonical, and Policy proposal envelopes.
+- Governed context pins the gap, demand facts, all layered revisions, and exact
+  predecessor artifact identity/hash.
+- Redacted execution evidence binds request/attempt, agent, provider/model,
+  governed context, proposal, and deterministic validation identities.
+- Authority is fixed to proposed, not submitted, not published, and false.
+- Focused tests cover all three layers, altered contents, unknown authority
+  fields, duplicate fact identities, evidence redaction, and evidence mutation.
+
+This candidate does not activate AGB-008 or any agent/workflow implementation
+until AGB-006 receives an accepting terminal review outcome.
