@@ -1,6 +1,6 @@
 # CES-GF-AGB-011 - Knowledge-Evolution Non-Convergence Controls
 
-**Status:** Proposed; implementation unauthorized
+**Status:** Implemented candidate; pending REVIEW_GATE
 **Review class:** REVIEW_GATE
 **Depends on:** Accepted AGB-009 and AGB-010
 **Blocks:** AGB-014
@@ -39,3 +39,24 @@ deterministic attempt, duplicate, progress, and escalation controls.
 
 Loop termination, normalization safety, progress semantics, retry authority,
 historical immutability, and false-positive/false-negative duplicate fixtures.
+
+## Implementation evidence
+
+- A Policies-owned content-addressed convergence ledger binds one governed gap
+  fingerprint to an injected, reviewed attempt policy and immutable attempts.
+- Semantic proposal fingerprints normalize structured decisions, targets,
+  support, lineage, comparisons, and obligation/definition meaning while
+  excluding rationale prose; cosmetic wording/order changes cannot evade
+  duplicate detection, and materially distinct targets/meanings remain distinct.
+- Duplicate proposals and exhausted policy budgets suspend without creating a
+  new attempt, review, successor, or coverage cycle. Retry after `NOT ACCEPTED`
+  requires explicit bounded REQUIRED identities and consumes an attempt.
+- Coverage comparison detects unchanged fact/layer semantics after an accepted
+  successor as `NO_PROGRESS`; zero gaps converges, while a genuinely changed
+  layer/gap identity may start a separately linked history without mutation.
+- Authority-unavailable and governed-source-unavailable are explicit suspension
+  reasons and are not silently converted into `DECISION_REQUIRED`.
+- Focused convergence, workflow architecture, and typechecking evidence passes.
+
+The numeric budget is supplied by a reviewed policy artifact; this ticket does
+not choose a production number or authorize autonomous retries.
