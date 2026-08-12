@@ -7,6 +7,7 @@ import { evaluateSafaraBootstrapCoverage } from "./index.js";
 import { evaluateSafaraBootstrapCoverageV2 } from "./index.js";
 import { evaluateSafaraBootstrapCoverageV3 } from "./index.js";
 import { evaluateSafaraBootstrapCoverageV4 } from "./index.js";
+import { publishAcceptedSafaraBootstrapCoverageV4 } from "./index.js";
 
 const root = resolve(import.meta.dirname, "../../..");
 const fixture = resolve(root, "fixtures/policies/safara-v1.1-cycle-01");
@@ -257,5 +258,35 @@ describe("POL-008-V01 Safara bootstrap coverage v4", () => {
     const facts = [...demandFacts()];
     facts[0] = { ...facts[0]!, demand_fact_id: "safara.manual.fact.0112" };
     expect(() => evaluateSafaraBootstrapCoverageV4(facts)).toThrow(/partition/u);
+  });
+});
+
+describe("accepted POL-008-V01 coverage publication", () => {
+  it("pins the reviewed result and preserves the final POL-008 authority boundary", () => {
+    const publication = publishAcceptedSafaraBootstrapCoverageV4(
+      evaluateSafaraBootstrapCoverageV4(demandFacts()));
+    expect(publication).toMatchObject({
+      publication_id: "ces-policies.safara-bootstrap.coverage-v4.accepted-v1",
+      publication_status: "accepted",
+      artifact: {
+        result_id: "ces-policies.safara-bootstrap.coverage-v4",
+        result_hash: "3e0e7253279437cd5c76780d11acccacd81290d80b74c7e135bc3cdb7591b3a3",
+        lifecycle: "proposed",
+        candidate_is_authoritative: false,
+      },
+      approval: {
+        terminal_outcome: "ACCEPTED",
+        reviewed_closure_commit: "94b50d84fb2fa693d1dc78d58353ea0585755626",
+        review_class: "REVIEW_GATE",
+        evidence_type: "project_owner_confirmation",
+        final_pol_008_approval: false,
+      },
+    });
+  });
+
+  it("rejects an altered result artifact", () => {
+    const artifact = evaluateSafaraBootstrapCoverageV4(demandFacts());
+    expect(() => publishAcceptedSafaraBootstrapCoverageV4({ ...artifact,
+      result_hash: "0".repeat(64) })).toThrow(/preserve the reviewed result/u);
   });
 });

@@ -157,6 +157,62 @@ export const SafaraBootstrapCoverageV4Schema = z.object({
   result_hash: z.string().regex(/^[0-9a-f]{64}$/u),
 }).strict();
 
+export const AcceptedSafaraBootstrapCoverageV4PublicationSchema = z.object({
+  publication_id: z.literal("ces-policies.safara-bootstrap.coverage-v4.accepted-v1"),
+  publication_status: z.literal("accepted"),
+  artifact: SafaraBootstrapCoverageV4Schema,
+  approval: z.object({
+    terminal_outcome: z.literal("ACCEPTED"),
+    reviewed_implementation_commit: z.literal(
+      "16d83db1657f40450f704881d1c2e5d11e558dc3"),
+    reviewed_closure_commit: z.literal(
+      "94b50d84fb2fa693d1dc78d58353ea0585755626"),
+    reviewer_evidence_id: z.literal("CES-GF-POL-008-V01-H01"),
+    reviewer_evidence_path: z.literal(
+      "project's goal/feedback/CES_POLICIES_REVIEW_94b50d8.md"),
+    review_class: z.literal("REVIEW_GATE"),
+    review_round: z.literal(2),
+    evidence_type: z.literal("project_owner_confirmation"),
+    recorded_on: z.literal("2026-08-12"),
+    approved_scope: z.literal("POL-008-V01 Safara bootstrap coverage v4"),
+    final_pol_008_approval: z.literal(false),
+  }).strict(),
+}).strict().superRefine((publication, context) => {
+  if (publication.artifact.result_hash !==
+      "3e0e7253279437cd5c76780d11acccacd81290d80b74c7e135bc3cdb7591b3a3") {
+    context.addIssue({ code: "custom",
+      message: "Accepted Safara coverage publication must preserve the reviewed result" });
+  }
+  if (publication.artifact.lifecycle !== "proposed" ||
+      publication.artifact.candidate_is_authoritative !== false) {
+    context.addIssue({ code: "custom",
+      message: "POL-008-V01 acceptance cannot claim final POL-008 authority" });
+  }
+});
+
+export function publishAcceptedSafaraBootstrapCoverageV4(
+  artifact: z.infer<typeof SafaraBootstrapCoverageV4Schema>,
+) {
+  return AcceptedSafaraBootstrapCoverageV4PublicationSchema.parse({
+    publication_id: "ces-policies.safara-bootstrap.coverage-v4.accepted-v1",
+    publication_status: "accepted",
+    artifact,
+    approval: {
+      terminal_outcome: "ACCEPTED",
+      reviewed_implementation_commit: "16d83db1657f40450f704881d1c2e5d11e558dc3",
+      reviewed_closure_commit: "94b50d84fb2fa693d1dc78d58353ea0585755626",
+      reviewer_evidence_id: "CES-GF-POL-008-V01-H01",
+      reviewer_evidence_path: "project's goal/feedback/CES_POLICIES_REVIEW_94b50d8.md",
+      review_class: "REVIEW_GATE",
+      review_round: 2,
+      evidence_type: "project_owner_confirmation",
+      recorded_on: "2026-08-12",
+      approved_scope: "POL-008-V01 Safara bootstrap coverage v4",
+      final_pol_008_approval: false,
+    },
+  });
+}
+
 const accessIds = idSet([
   11, 12, 13, 14, 15, 17, 23, 28, 47, 51, 56, 57, 58, 79, 89, 94, 95, 101, 108,
 ]);

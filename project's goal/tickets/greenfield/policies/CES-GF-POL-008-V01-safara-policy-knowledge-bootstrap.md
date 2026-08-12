@@ -1,6 +1,6 @@
 # CES-GF-POL-008-V01 - Safara Policy Knowledge Bootstrap
 
-**Status:** Implemented second coverage result; pending REVIEW_GATE review
+**Status:** Accepted; Coverage V4 publication implemented
 
 **Review class:** REVIEW_GATE
 
@@ -224,8 +224,8 @@ covered merely because approved canonical knowledge now exists.
 - Candidate taxonomy revision: `1.2.0`
 - POL-008-R02 bounded decision publication: `accepted`
 - Candidate authority: `false`
-- Proposed deterministic result SHA-256:
-  `ee13f46edb903fde96a37f2cfc2942aafc5092c9c3829dbefc915b1574f4b6af`
+- Accepted deterministic result SHA-256:
+  `3e0e7253279437cd5c76780d11acccacd81290d80b74c7e135bc3cdb7591b3a3`
 
 Coverage v4 preserves all 111 explicit classifications and historical results.
 Its counts are:
@@ -236,12 +236,28 @@ Its counts are:
 - 0 `SOURCE_OR_POLICY_GAP`.
 
 Facts `0024`, `0027`, `0035`, and `0045` now emit candidate awareness through
-`policy.sensitive-data-protection`. Each result retains both independent
-canonical supports and both ASVS raw lineages because the consolidated Policy
-is materially supported by classification and disclosure-minimization
-obligations.
+`policy.sensitive-data-protection`. Each fact retains only the canonical and raw
+lineage that materially explains it: `0024`, `0035`, and `0045` retain the
+classification branch, while `0027` retains the disclosure-minimization branch.
 
 Coverage v4 satisfies the mechanical bootstrap condition of complete explicit
 accounting with no unexplained knowledge gap. This remains proposed REVIEW_GATE
-evidence: it does not self-accept POL-008-V01, make candidate Policies
-authoritative, or grant final POL-008 approval.
+evidence: it does not make candidate Policies authoritative or grant final
+POL-008 approval.
+
+## Accepted Coverage V4 publication
+
+- Publication identity:
+  `ces-policies.safara-bootstrap.coverage-v4.accepted-v1`
+- Terminal outcome: `ACCEPTED`
+- Review class: `REVIEW_GATE`
+- Review round: `2`
+- Reviewed implementation commit: `16d83db1657f40450f704881d1c2e5d11e558dc3`
+- Reviewed closure commit: `94b50d84fb2fa693d1dc78d58353ea0585755626`
+- Review evidence:
+  `project's goal/feedback/CES_POLICIES_REVIEW_94b50d8.md`
+- Final POL-008 approval: `false`
+
+This publication durably closes POL-008-V01 while preserving Coverage V4 as
+candidate-only evidence. Final taxonomy authority remains a separate POL-008
+approval step, and POL-009 remains gated until that approval is accepted.
