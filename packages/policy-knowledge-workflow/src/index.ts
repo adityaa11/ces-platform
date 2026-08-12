@@ -3,6 +3,7 @@ import { z } from "zod";
 
 const Id = z.string().regex(/^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u);
 const Hash = z.string().regex(/^[0-9a-f]{64}$/u);
+const GitCommitSha = z.string().regex(/^[0-9a-f]{40}$/u);
 const Revision = z.string().regex(/^[1-9][0-9]*\.[0-9]+\.[0-9]+$/u);
 const Disposition = z.enum(["AWARENESS_EMITTED", "NO_SECURITY_AWARENESS_REQUIRED",
   "OUTSIDE_SOFTWARE_SCOPE", "DECISION_REQUIRED", "SOURCE_OR_POLICY_GAP"]);
@@ -36,7 +37,7 @@ const Snapshot = z.object({ state: StateName, coverage_result_id: Id, revisions:
   suspension_reason: z.enum(["REVIEW_REQUIRED", "VALIDATION_FAILED"]).nullable(),
   review_id: Id.nullable(), review_outcome: z.enum(["ACCEPTED", "NOT ACCEPTED",
     "ACCEPTED WITH DEFERRED ITEMS"]).nullable(), review_round: z.number().int().positive().nullable(),
-  predecessor_review_id: Id.nullable(), reviewed_commit: Hash.nullable(),
+  predecessor_review_id: Id.nullable(), reviewed_commit: GitCommitSha.nullable(),
   reviewed_artifact_hash: Hash.nullable(), required_finding_ids: z.array(Id),
   reviewed_finding_ids: z.array(Id), qualifying_regression: z.boolean(),
   publication_id: Id.nullable(), publication_artifact_hash: Hash.nullable(),
@@ -127,7 +128,7 @@ export function recordKnowledgeReview(workflowValue: unknown, input: Evidence & 
   const workflow = requireState(workflowValue, "GOVERNED_SUSPENSION");
   if (workflow.suspension_reason !== "REVIEW_REQUIRED" ||
       workflow.proposal_hash !== input.reviewed_artifact_hash) throw new Error("Review artifact mismatch");
-  Hash.parse(input.reviewed_commit); Hash.parse(input.reviewed_artifact_hash);
+  GitCommitSha.parse(input.reviewed_commit); Hash.parse(input.reviewed_artifact_hash);
   if (new Set(input.required_finding_ids).size !== input.required_finding_ids.length)
     throw new Error("Duplicate REQUIRED finding identity");
   if (new Set(input.reviewed_finding_ids).size !== input.reviewed_finding_ids.length)
@@ -138,8 +139,14 @@ export function recordKnowledgeReview(workflowValue: unknown, input: Evidence & 
   if (workflow.review_id && !input.qualifying_regression &&
       input.reviewed_finding_ids.some((id) => !workflow.required_finding_ids.includes(id)))
     throw new Error("Closure review exceeds bounded REQUIRED findings");
-  if (input.outcome === "NOT ACCEPTED" && input.required_finding_ids.length === 0)
-    throw new Error("NOT ACCEPTED requires bounded REQUIRED findings");
+  if (!validReviewSemantics(workflow, { ...workflow, review_id: input.review_id,
+    review_outcome: input.outcome, review_round: input.review_round,
+    predecessor_review_id: input.predecessor_review_id, reviewed_commit: input.reviewed_commit,
+    reviewed_artifact_hash: input.reviewed_artifact_hash,
+    required_finding_ids: [...input.required_finding_ids].sort(),
+    reviewed_finding_ids: [...input.reviewed_finding_ids].sort(),
+    qualifying_regression: input.qualifying_regression }))
+    throw new Error("Review does not satisfy bounded terminal outcome semantics");
   return update(workflow, input, "REVIEW_RECORDED", { review_id: input.review_id,
     review_outcome: input.outcome, review_round: input.review_round,
     predecessor_review_id: input.predecessor_review_id, reviewed_commit: input.reviewed_commit,
@@ -157,7 +164,7 @@ export function recordAcceptedPublication(workflowValue: unknown, input: Evidenc
       workflow.reviewed_commit !== input.reviewed_commit ||
       workflow.reviewed_artifact_hash !== input.artifact_hash)
     throw new Error("Publication does not match the accepted reviewed artifact");
-  Hash.parse(input.reviewed_commit); Hash.parse(input.artifact_hash);
+  GitCommitSha.parse(input.reviewed_commit); Hash.parse(input.artifact_hash);
   return update(workflow, input, "PUBLICATION_RECORDED", {
     publication_id: input.publication_id, publication_artifact_hash: input.artifact_hash,
     publication_authority_evidence_id: input.authority_evidence_id });
@@ -242,16 +249,38 @@ function validTransition(previous: z.infer<typeof Snapshot> | undefined,
     previous.state === "GOVERNED_SUSPENSION" && next.state === previous.state &&
     next.review_id !== null && next.review_outcome !== null && next.review_round !== null &&
     next.reviewed_commit !== null && next.reviewed_artifact_hash === next.proposal_hash &&
-    previous.publication_id === next.publication_id && previous.resume_id === next.resume_id;
+    previous.publication_id === next.publication_id && previous.resume_id === next.resume_id &&
+    validReviewSemantics(previous, next);
   if (kind === "PUBLICATION_RECORDED") return governedStable &&
     previous.state === "GOVERNED_SUSPENSION" && next.state === previous.state &&
     previous.review_id === next.review_id && previous.review_outcome === next.review_outcome &&
     previous.publication_id === null && next.publication_id !== null &&
-    next.publication_artifact_hash === next.reviewed_artifact_hash && next.resume_id === null;
+    isAccepting(previous.review_outcome) && previous.required_finding_ids.length === 0 &&
+    next.publication_artifact_hash === next.reviewed_artifact_hash &&
+    next.publication_authority_evidence_id !== null && next.resume_id === null;
   if (kind === "WORKFLOW_RESUMED") return governedStable &&
     previous.state === "GOVERNED_SUSPENSION" && next.state === "COVERAGE_RERUN_PENDING" &&
     previous.review_id === next.review_id && previous.publication_id === next.publication_id &&
-    previous.resume_id === null && next.resume_id !== null && next.suspension_reason === null;
+    isAccepting(previous.review_outcome) && previous.required_finding_ids.length === 0 &&
+    previous.publication_id !== null && previous.publication_artifact_hash === previous.reviewed_artifact_hash &&
+    previous.publication_authority_evidence_id !== null && previous.resume_id === null &&
+    next.resume_id !== null && next.suspension_reason === null;
   return false;
+}
+function isAccepting(value: string | null) {
+  return value === "ACCEPTED" || value === "ACCEPTED WITH DEFERRED ITEMS";
+}
+function validReviewSemantics(previous: z.infer<typeof Snapshot>, next: z.infer<typeof Snapshot>) {
+  if (previous.state !== "GOVERNED_SUSPENSION" ||
+      previous.suspension_reason !== "REVIEW_REQUIRED" || next.review_round !==
+      (previous.review_round ?? 0) + 1 || next.predecessor_review_id !== previous.review_id ||
+      next.reviewed_artifact_hash !== previous.proposal_hash || !next.reviewed_commit) return false;
+  if (next.review_outcome === "NOT ACCEPTED") return next.required_finding_ids.length > 0;
+  if (!isAccepting(next.review_outcome) || next.required_finding_ids.length > 0) return false;
+  if (!previous.review_id) return true;
+  const reviewed = new Set(next.reviewed_finding_ids);
+  if (previous.required_finding_ids.some((id) => !reviewed.has(id))) return false;
+  return next.qualifying_regression || next.reviewed_finding_ids.every((id) =>
+    previous.required_finding_ids.includes(id));
 }
 function stableHash(value: unknown) { return createHash("sha256").update(JSON.stringify(value)).digest("hex"); }

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { createHash } from "node:crypto";
 import { gapFingerprint, recordKnowledgeAttempt, recordKnowledgeProposal,
   recordKnowledgeValidation, startPolicyKnowledgeWorkflow,
   PolicyKnowledgeWorkflowSchema, recordKnowledgeReview, recordAcceptedPublication,
@@ -87,14 +88,14 @@ describe("AGB-009 Policy knowledge workflow", () => {
     workflow = recordKnowledgeReview(workflow, { review_id: "review.1", outcome: "ACCEPTED",
       review_round: 1, predecessor_review_id: null, reviewed_finding_ids: [],
       qualifying_regression: false,
-      reviewed_commit: "c".repeat(64), reviewed_artifact_hash: "a".repeat(64),
+      reviewed_commit: "c".repeat(40), reviewed_artifact_hash: "a".repeat(64),
       required_finding_ids: [], ...evidence(5) });
     expect(workflow.state).toBe("GOVERNED_SUSPENSION");
     expect(() => resumeKnowledgeWorkflow(workflow, { resume_id: "resume.early",
       publication_id: "publication.missing", artifact_hash: "a".repeat(64), ...evidence(6) }))
       .toThrow(/publication/u);
     workflow = recordAcceptedPublication(workflow, { publication_id: "publication.1",
-      review_id: "review.1", reviewed_commit: "c".repeat(64), artifact_hash: "a".repeat(64),
+      review_id: "review.1", reviewed_commit: "c".repeat(40), artifact_hash: "a".repeat(64),
       authority_evidence_id: "authority.project-owner.1", ...evidence(6) });
     expect(workflow.state).toBe("GOVERNED_SUSPENSION");
     const resumed = resumeKnowledgeWorkflow(workflow, { resume_id: "resume.1",
@@ -114,20 +115,95 @@ describe("AGB-009 Policy knowledge workflow", () => {
     workflow = recordKnowledgeValidation(workflow, { proposal_id: "proposal.1",
       proposal_hash: "a".repeat(64), validation_id: "validation.1", status: "valid", ...evidence(4) });
     expect(() => recordKnowledgeReview(workflow, { review_id: "review.empty",
-      outcome: "NOT ACCEPTED", reviewed_commit: "c".repeat(64),
+      outcome: "NOT ACCEPTED", reviewed_commit: "c".repeat(40),
       review_round: 1, predecessor_review_id: null, reviewed_finding_ids: [],
       qualifying_regression: false, reviewed_artifact_hash: "a".repeat(64),
       required_finding_ids: [], ...evidence(5) }))
-      .toThrow(/bounded REQUIRED/u);
+      .toThrow(/bounded terminal outcome/u);
     const rejected = recordKnowledgeReview(workflow, { review_id: "review.1",
-      outcome: "NOT ACCEPTED", reviewed_commit: "c".repeat(64),
+      outcome: "NOT ACCEPTED", reviewed_commit: "c".repeat(40),
       review_round: 1, predecessor_review_id: null, reviewed_finding_ids: [],
       qualifying_regression: false,
       reviewed_artifact_hash: "a".repeat(64), required_finding_ids: ["required.1"], ...evidence(5) });
     expect(rejected).toMatchObject({ state: "GOVERNED_SUSPENSION",
       review_outcome: "NOT ACCEPTED", required_finding_ids: ["required.1"] });
     expect(() => recordAcceptedPublication(rejected, { publication_id: "publication.invalid",
-      review_id: "review.1", reviewed_commit: "c".repeat(64), artifact_hash: "a".repeat(64),
+      review_id: "review.1", reviewed_commit: "c".repeat(40), artifact_hash: "a".repeat(64),
       authority_evidence_id: "authority.1", ...evidence(6) })).toThrow(/accepted reviewed/u);
   });
+  it("enforces closure accounting and distinct provenance hash types", () => {
+    let workflow = reviewReady("workflow.closure");
+    expect(() => recordKnowledgeReview(workflow, { review_id: "review.bad-commit",
+      outcome: "ACCEPTED", review_round: 1, predecessor_review_id: null,
+      reviewed_commit: "c".repeat(64), reviewed_artifact_hash: "a".repeat(64),
+      required_finding_ids: [], reviewed_finding_ids: [], qualifying_regression: false,
+      ...evidence(5) })).toThrow();
+    const rejected = recordKnowledgeReview(workflow, { review_id: "review.1",
+      outcome: "NOT ACCEPTED", review_round: 1, predecessor_review_id: null,
+      reviewed_commit: "6bce2a30c5b76bb4698487c9184a280b9c8c5b53",
+      reviewed_artifact_hash: "a".repeat(64), required_finding_ids: ["required.1"],
+      reviewed_finding_ids: [], qualifying_regression: false, ...evidence(5) });
+    expect(() => recordKnowledgeReview(rejected, { review_id: "review.2", outcome: "ACCEPTED",
+      review_round: 2, predecessor_review_id: "review.1", reviewed_commit: "d".repeat(40),
+      reviewed_artifact_hash: "a".repeat(64), required_finding_ids: [], reviewed_finding_ids: [],
+      qualifying_regression: false, ...evidence(6) })).toThrow(/bounded terminal outcome/u);
+    const accepted = recordKnowledgeReview(rejected, { review_id: "review.2", outcome: "ACCEPTED",
+      review_round: 2, predecessor_review_id: "review.1", reviewed_commit: "d".repeat(40),
+      reviewed_artifact_hash: "a".repeat(64), required_finding_ids: [],
+      reviewed_finding_ids: ["required.1"], qualifying_regression: false, ...evidence(6) });
+    expect(accepted.reviewed_commit).toHaveLength(40);
+  });
+
+  it("rejects rehashed unauthorized authority histories", () => {
+    const failed = reviewReady("workflow.failed", "invalid");
+    const forgedReview = appendForged(failed, "REVIEW_RECORDED", {
+      review_id: "review.forged", review_outcome: "ACCEPTED", review_round: 1,
+      predecessor_review_id: null, reviewed_commit: "c".repeat(40),
+      reviewed_artifact_hash: "a".repeat(64), required_finding_ids: [],
+      reviewed_finding_ids: [], qualifying_regression: false });
+    expect(() => PolicyKnowledgeWorkflowSchema.parse(forgedReview)).toThrow(/history/u);
+    let rejected = reviewReady("workflow.rehashed-rejected");
+    rejected = recordKnowledgeReview(rejected, { review_id: "review.1", outcome: "NOT ACCEPTED",
+      review_round: 1, predecessor_review_id: null, reviewed_commit: "c".repeat(40),
+      reviewed_artifact_hash: "a".repeat(64), required_finding_ids: ["required.1"],
+      reviewed_finding_ids: [], qualifying_regression: false, ...evidence(5) });
+    const forgedPublication = appendForged(rejected, "PUBLICATION_RECORDED", {
+      publication_id: "publication.forged", publication_artifact_hash: "a".repeat(64),
+      publication_authority_evidence_id: "authority.forged" });
+    expect(() => PolicyKnowledgeWorkflowSchema.parse(forgedPublication)).toThrow(/history/u);
+    const forgedResume = appendForged(rejected, "WORKFLOW_RESUMED", {
+      state: "COVERAGE_RERUN_PENDING", suspension_reason: null,
+      publication_id: "publication.forged", publication_artifact_hash: "a".repeat(64),
+      publication_authority_evidence_id: "authority.forged", resume_id: "resume.forged" });
+    expect(() => PolicyKnowledgeWorkflowSchema.parse(forgedResume)).toThrow(/history/u);
+    const accepted = recordKnowledgeReview(reviewReady("workflow.no-authority"), {
+      review_id: "review.1", outcome: "ACCEPTED", review_round: 1, predecessor_review_id: null,
+      reviewed_commit: "c".repeat(40), reviewed_artifact_hash: "a".repeat(64),
+      required_finding_ids: [], reviewed_finding_ids: [], qualifying_regression: false,
+      ...evidence(5) });
+    const noAuthority = appendForged(accepted, "PUBLICATION_RECORDED", {
+      publication_id: "publication.no-authority", publication_artifact_hash: "a".repeat(64),
+      publication_authority_evidence_id: null });
+    expect(() => PolicyKnowledgeWorkflowSchema.parse(noAuthority)).toThrow(/history/u);
+  });
 });
+
+function reviewReady(workflowId: string, status: "valid" | "invalid" = "valid") {
+  let workflow = startPolicyKnowledgeWorkflow({ workflow_id: workflowId, gap_id: "gap.1",
+    coverage_result: coverage("SOURCE_OR_POLICY_GAP"), ...evidence(1) });
+  workflow = recordKnowledgeAttempt(workflow, { attempt_id: "attempt.1", ...evidence(2) });
+  workflow = recordKnowledgeProposal(workflow, { attempt_id: "attempt.1", proposal_id: "proposal.1",
+    proposal_hash: "a".repeat(64), ...evidence(3) });
+  return recordKnowledgeValidation(workflow, { proposal_id: "proposal.1",
+    proposal_hash: "a".repeat(64), validation_id: "validation.1", status, ...evidence(4) });
+}
+function digest(value: unknown) { return createHash("sha256").update(JSON.stringify(value)).digest("hex"); }
+function appendForged(workflow: any, kind: string, changed: Record<string, unknown>) {
+  const snapshot = { ...workflow.events.at(-1).snapshot, ...changed };
+  const body = { event_id: `event.forged.${workflow.events.length + 1}`,
+    workflow_id: workflow.workflow_id, sequence: workflow.events.length + 1, kind,
+    occurred_at: "2026-08-12T09:00:00+00:00",
+    previous_event_hash: workflow.events.at(-1).event_hash, evidence_id: "evidence.forged",
+    snapshot, transition_payload_hash: digest(snapshot) };
+  return { ...workflow, ...snapshot, events: [...workflow.events, { ...body, event_hash: digest(body) }] };
+}

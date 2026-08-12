@@ -52,6 +52,13 @@ publication integrity, idempotency, and absence of self-approval.
   publication can resume into `COVERAGE_RERUN_PENDING`.
 - Altered, missing, rejected, stale, and duplicate resume paths fail. Proposal,
   validation, and review alone never advance coverage.
+- Shared authority predicates now govern both public helpers and authoritative
+  event replay: accepting outcomes cannot retain REQUIRED findings, closure
+  acceptance accounts for every predecessor REQUIRED identity, publication
+  requires an accepting outcome plus external authority evidence, and resume
+  requires that exact publication even when hostile histories are rehashed.
+- Git commit provenance uses the repository's 40-hex commit identity while
+  proposal and publication artifacts retain distinct 64-hex SHA-256 identity.
 - Focused workflow and architecture tests pass, together with package
   typechecking.
 
