@@ -222,6 +222,34 @@ describe("POL-008-R02 data-protection Policy decisions", () => {
     expect(CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2.taxonomy.policies).toHaveLength(6);
   });
 
+  it("durably compares each obligation with all predecessor Policies", () => {
+    const comparisons = CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2.semantic_comparisons;
+    const predecessorIds = ["policy.access-authorization",
+      "policy.security-event-traceability", "policy.recoverable-trustworthy-state",
+      "policy.transaction-integrity", "policy.sequential-business-flow"];
+    for (const conceptId of ["ces.sensitive-data-classification",
+      "ces.sensitive-data-disclosure-minimization"]) {
+      const rows = comparisons.filter(({ canonical_concept_id, comparison_target_id }) =>
+        canonical_concept_id === conceptId && predecessorIds.includes(comparison_target_id));
+      expect(rows.map(({ comparison_target_id }) => comparison_target_id)).toEqual(predecessorIds);
+      expect(rows.every(({ semantic_overlap, decision_consequence, rationale }) =>
+        semantic_overlap === "none" &&
+        decision_consequence === "distinct_from_predecessor_policy" &&
+        rationale.length > 0)).toBe(true);
+    }
+  });
+
+  it("compares the two obligations to one another in both directions", () => {
+    const mutual = CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2.semantic_comparisons
+      .filter(({ comparison_target_id }) => comparison_target_id.startsWith("ces."));
+    expect(mutual).toHaveLength(2);
+    expect(mutual.every(({ semantic_overlap, decision_consequence, rationale }) =>
+      semantic_overlap === "bounded_shared_domain" &&
+      decision_consequence === "coexist_in_consolidated_policy" &&
+      rationale.includes("classification") &&
+      (rationale.includes("Disclosure") || rationale.includes("disclosure")))).toBe(true);
+  });
+
   it("preserves both meanings as separate canonical support", () => {
     const policy = CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2.taxonomy.policies.at(-1)!;
     expect(policy.canonical_support.map(({ canonical_concept_id }) => canonical_concept_id))
@@ -275,5 +303,17 @@ describe("POL-008-R02 data-protection Policy decisions", () => {
     const specific = clone(CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2);
     specific.taxonomy.policies.at(-1)!.obligation = "Mask each Safara pilgrim passport.";
     expect(() => buildDataProtectionPolicySuccessor(specific)).toThrow(/reusable|altered/u);
+  });
+
+  it("fails closed on missing, duplicate, or altered comparison evidence", () => {
+    const missing = clone(CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2);
+    missing.semantic_comparisons.pop();
+    expect(() => buildDataProtectionPolicySuccessor(missing)).toThrow();
+    const duplicate = clone(CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2);
+    duplicate.semantic_comparisons[11] = duplicate.semantic_comparisons[0]!;
+    expect(() => buildDataProtectionPolicySuccessor(duplicate)).toThrow(/altered|pair/u);
+    const altered = clone(CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2);
+    altered.semantic_comparisons[0]!.rationale = "Demand count says add it.";
+    expect(() => buildDataProtectionPolicySuccessor(altered)).toThrow(/altered/u);
   });
 });

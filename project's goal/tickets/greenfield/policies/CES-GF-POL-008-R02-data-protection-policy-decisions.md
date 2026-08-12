@@ -115,3 +115,18 @@ POL-008-V01, approve applicability, or authorize POL-009.
 - Focused validation rejects wrong revisions, unsupported support, lost
   predecessor authority, altered meaning, invented approval, and
   project-specific terminology.
+
+## Round 1 remediation
+
+- `REQUIRED-01` fixed with 12 durable semantic-comparison records.
+- Each of the two approved obligations is compared independently against all
+  five predecessor Policies, recording overlap, decision consequence, and
+  rationale.
+- The obligations are compared with one another in both directions: their
+  meanings remain distinct, while their bounded shared protection domain
+  supports coexistence as separate clauses and support mappings in one Policy.
+- Comparison evidence is semantic and source-bounded; it does not use Safara
+  demand count as the decision basis.
+- Missing, duplicate, or altered comparison evidence fails closed.
+- Taxonomy revision `1.2.0`, predecessor `1.1.0`, canonical revision `1.5.0`,
+  Policy wording, add/merge decisions, lifecycle, and lineage remain unchanged.

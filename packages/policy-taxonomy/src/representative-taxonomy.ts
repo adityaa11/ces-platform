@@ -253,9 +253,55 @@ const DATA_PROTECTION_POLICY_DECISIONS = [
     reviewer_evidence_id: null },
 ] as const;
 
+const DataProtectionSemanticComparisonSchema = z.object({
+  canonical_concept_id: z.enum(["ces.sensitive-data-classification",
+    "ces.sensitive-data-disclosure-minimization"]),
+  comparison_target_id: z.enum(["policy.access-authorization",
+    "policy.security-event-traceability", "policy.recoverable-trustworthy-state",
+    "policy.transaction-integrity", "policy.sequential-business-flow",
+    "ces.sensitive-data-classification", "ces.sensitive-data-disclosure-minimization"]),
+  semantic_overlap: z.enum(["none", "bounded_shared_domain"]),
+  decision_consequence: z.enum(["distinct_from_predecessor_policy",
+    "coexist_in_consolidated_policy"]),
+  rationale: z.string().min(1),
+}).strict();
+
+const predecessorComparison = [
+  ["policy.access-authorization", "Access authorization governs who may access resources; it does not identify sensitive data, assign protection levels, minimize returned data, or conceal complete values."],
+  ["policy.security-event-traceability", "Traceability governs recording security-relevant activity; it does not classify sensitive data or constrain disclosure of complete values."],
+  ["policy.recoverable-trustworthy-state", "Recovery governs restoration to a trustworthy state; it does not classify data or minimize sensitive-data disclosure."],
+  ["policy.transaction-integrity", "Transaction integrity governs complete-or-restore state behavior; it does not identify protection levels or constrain how much sensitive data is returned."],
+  ["policy.sequential-business-flow", "Sequential-flow integrity governs ordered non-skipped steps; it does not classify sensitive data or limit disclosure."],
+] as const;
+
+const DATA_PROTECTION_SEMANTIC_COMPARISONS = [
+  ...predecessorComparison.map(([comparison_target_id, rationale]) => ({
+    canonical_concept_id: "ces.sensitive-data-classification" as const,
+    comparison_target_id, semantic_overlap: "none" as const,
+    decision_consequence: "distinct_from_predecessor_policy" as const, rationale,
+  })),
+  { canonical_concept_id: "ces.sensitive-data-classification",
+    comparison_target_id: "ces.sensitive-data-disclosure-minimization",
+    semantic_overlap: "bounded_shared_domain",
+    decision_consequence: "coexist_in_consolidated_policy",
+    rationale: "Both govern sensitive-data protection, but classification determines what data is sensitive and its protection level, while disclosure minimization limits exposure. Their distinct clauses can coexist honestly in one broad Policy." },
+  ...predecessorComparison.map(([comparison_target_id, rationale]) => ({
+    canonical_concept_id: "ces.sensitive-data-disclosure-minimization" as const,
+    comparison_target_id, semantic_overlap: "none" as const,
+    decision_consequence: "distinct_from_predecessor_policy" as const,
+    rationale,
+  })),
+  { canonical_concept_id: "ces.sensitive-data-disclosure-minimization",
+    comparison_target_id: "ces.sensitive-data-classification",
+    semantic_overlap: "bounded_shared_domain",
+    decision_consequence: "coexist_in_consolidated_policy",
+    rationale: "Disclosure minimization governs minimum return and concealment, whereas classification identifies sensitive data and assigns protection levels. Shared subject matter supports consolidation without merging their meanings or lineage." },
+] as const;
+
 const DataProtectionTaxonomyArtifactSchema = z.object({
   taxonomy: z.custom<ReturnType<typeof validatePolicyTaxonomyAgainstCanonicalVocabulary>>(),
   decisions: z.array(DataProtectionPolicyDecisionSchema).length(2),
+  semantic_comparisons: z.array(DataProtectionSemanticComparisonSchema).length(12),
 }).strict();
 
 function buildDataProtectionTaxonomyValue() {
@@ -268,7 +314,8 @@ function buildDataProtectionTaxonomyValue() {
 
 export function buildDataProtectionPolicySuccessor(
   value: unknown = { taxonomy: buildDataProtectionTaxonomyValue(),
-    decisions: DATA_PROTECTION_POLICY_DECISIONS },
+    decisions: DATA_PROTECTION_POLICY_DECISIONS,
+    semantic_comparisons: DATA_PROTECTION_SEMANTIC_COMPARISONS },
 ) {
   const parsed = DataProtectionTaxonomyArtifactSchema.parse(value);
   const taxonomy = validatePolicyTaxonomyAgainstCanonicalVocabulary(parsed.taxonomy,
@@ -293,9 +340,12 @@ export function buildDataProtectionPolicySuccessor(
     CES_POLICY_APPROVED_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_5);
   const expectedDecisions = DATA_PROTECTION_POLICY_DECISIONS.map((decision) =>
     DataProtectionPolicyDecisionSchema.parse(decision));
+  const expectedComparisons = DATA_PROTECTION_SEMANTIC_COMPARISONS.map((comparison) =>
+    DataProtectionSemanticComparisonSchema.parse(comparison));
   if (JSON.stringify(taxonomy.policies.at(-1)) !==
       JSON.stringify(expectedTaxonomy.policies.at(-1)) ||
-      JSON.stringify(parsed.decisions) !== JSON.stringify(expectedDecisions)) {
+      JSON.stringify(parsed.decisions) !== JSON.stringify(expectedDecisions) ||
+      JSON.stringify(parsed.semantic_comparisons) !== JSON.stringify(expectedComparisons)) {
     throw new Error("POL-008-R02 successor contains altered or unsupported Policy meaning");
   }
   if (new Set(parsed.decisions.map(({ canonical_concept_id }) => canonical_concept_id)).size !== 2 ||
@@ -310,7 +360,13 @@ export function buildDataProtectionPolicySuccessor(
     bounded.includes(term))) {
     throw new Error("POL-008-R02 Policy meaning must remain reusable and technology-independent");
   }
-  return { taxonomy, decisions: parsed.decisions } as const;
+  const comparisonKeys = parsed.semantic_comparisons.map(({ canonical_concept_id,
+    comparison_target_id }) => `${canonical_concept_id}:${comparison_target_id}`);
+  if (new Set(comparisonKeys).size !== 12) {
+    throw new Error("POL-008-R02 semantic comparisons must cover every required pair exactly once");
+  }
+  return { taxonomy, decisions: parsed.decisions,
+    semantic_comparisons: parsed.semantic_comparisons } as const;
 }
 
 export const CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2 =
