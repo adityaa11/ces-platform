@@ -1,7 +1,8 @@
 import { CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1 } from
   "@company/ces-policy-source-vocabulary/representative-corpus";
 import { CanonicalVocabularySchema,
-  validateCanonicalVocabularyAgainstRawConcepts } from "./index.js";
+  rawConceptIdentityKey, validateCanonicalVocabularyAgainstRawConcepts,
+  validateCanonicalVocabularySuccessor } from "./index.js";
 
 const PROPOSED_AT = "2026-08-12T01:00:00+00:00" as const;
 
@@ -83,7 +84,7 @@ const decisions = [
 
 const catalogValue = {
   schema_version: "1.0.0", vocabulary_id: "ces-policy-canonical-vocabulary",
-  vocabulary_revision: "1.0.0", predecessor_revision: null,
+  vocabulary_revision: "1.0.0", predecessor_revision: null, vocabulary_status: "candidate",
   concepts, mappings, decisions,
 };
 
@@ -95,21 +96,46 @@ export function buildRepresentativeCanonicalVocabulary() {
 
 export function replaceRawMappingForSourceRenumbering(
   vocabularyValue: unknown,
-  previousRawConceptId: string,
+  previous: { raw_concept_id: string; raw_source_release_id: string },
   replacement: { raw_concept_id: string; raw_source_release_id: string },
   nextRevision: string,
 ) {
   const vocabulary = CanonicalVocabularySchema.parse(vocabularyValue);
-  const mappings = vocabulary.mappings.map((mapping) => mapping.raw_concept_id === previousRawConceptId
-    ? { ...mapping, ...replacement,
-      rationale: `${mapping.rationale} Mapping locator updated for source renumbering.` }
-    : mapping);
-  if (!mappings.some(({ raw_concept_id }) => raw_concept_id === replacement.raw_concept_id)) {
-    throw new Error(`Raw mapping ${previousRawConceptId} was not found`);
+  let replacementCount = 0;
+  const previousKey = rawConceptIdentityKey(previous);
+  const mappings = vocabulary.mappings.map((mapping) => {
+    if (rawConceptIdentityKey(mapping) !== previousKey) return mapping;
+    replacementCount += 1;
+    return { ...mapping, ...replacement,
+      rationale: `${mapping.rationale} Mapping locator updated for source renumbering.` };
+  });
+  if (replacementCount === 0) {
+    throw new Error(`Raw mapping ${previous.raw_source_release_id}/${previous.raw_concept_id} was not found`);
   }
-  return CanonicalVocabularySchema.parse({ ...vocabulary,
+  const successor = CanonicalVocabularySchema.parse({ ...vocabulary,
     vocabulary_revision: nextRevision, predecessor_revision: vocabulary.vocabulary_revision,
     mappings });
+  return validateCanonicalVocabularySuccessor(vocabulary, successor).successor;
+}
+
+export function changeCanonicalConceptLifecycle(
+  vocabularyValue: unknown,
+  conceptId: string,
+  lifecycle: "candidate" | "approved" | "retired",
+  nextRevision: string,
+) {
+  const vocabulary = CanonicalVocabularySchema.parse(vocabularyValue);
+  let replacementCount = 0;
+  const concepts = vocabulary.concepts.map((concept) => {
+    if (concept.concept_id !== conceptId) return concept;
+    replacementCount += 1;
+    return { ...concept, lifecycle };
+  });
+  if (replacementCount === 0) throw new Error(`Canonical concept ${conceptId} was not found`);
+  const successor = CanonicalVocabularySchema.parse({ ...vocabulary,
+    vocabulary_revision: nextRevision, predecessor_revision: vocabulary.vocabulary_revision,
+    concepts });
+  return validateCanonicalVocabularySuccessor(vocabulary, successor).successor;
 }
 
 export const CES_POLICY_CANONICAL_VOCABULARY_V1 = buildRepresentativeCanonicalVocabulary();

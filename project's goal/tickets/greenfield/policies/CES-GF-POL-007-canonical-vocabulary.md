@@ -1,6 +1,7 @@
 # CES-GF-POL-007 - CES Canonical Vocabulary
 
 **Status:** Implemented; pending review
+**Review class:** REVIEW_GATE
 **Depends on:** Accepted POL-006
 
 ## Outcome
@@ -45,3 +46,7 @@ without adopting any external source schema.
   rejects unknown canonical or raw references.
 - Tests prove that source renumbering creates a successor mapping revision
   without changing stable canonical meaning.
+- Composite raw identity is preserved as source release plus raw concept ID in
+  validation, duplicate detection, and targeted renumbering.
+- Mapping and lifecycle helpers require a distinct successor revision with
+  exact predecessor linkage; same-revision mutation is rejected.

@@ -40,6 +40,15 @@ export const RawConceptMappingSchema = z.object({
   rationale: NonEmptyStringSchema,
 }).strict();
 
+export interface RawConceptIdentity {
+  readonly raw_source_release_id: string;
+  readonly raw_concept_id: string;
+}
+
+export function rawConceptIdentityKey(identity: RawConceptIdentity): string {
+  return JSON.stringify([identity.raw_source_release_id, identity.raw_concept_id]);
+}
+
 export const VocabularyDecisionSchema = z.object({
   decision_id: IdSchema,
   decision_kind: VocabularyDecisionKindSchema,
@@ -67,6 +76,7 @@ export const CanonicalVocabularySchema = z.object({
   vocabulary_id: IdSchema,
   vocabulary_revision: RevisionSchema,
   predecessor_revision: RevisionSchema.nullable(),
+  vocabulary_status: z.enum(["candidate", "approved", "retired"]),
   concepts: z.array(CanonicalConceptSchema).min(1),
   mappings: z.array(RawConceptMappingSchema).min(1),
   decisions: z.array(VocabularyDecisionSchema),
@@ -81,7 +91,8 @@ export const CanonicalVocabularySchema = z.object({
       context.addIssue({ code: "custom",
         message: `Mapping references unknown canonical concept ${mapping.canonical_concept_id}` });
     }
-    const key = `${mapping.canonical_concept_id}:${mapping.raw_concept_id}`;
+    const key = JSON.stringify([mapping.canonical_concept_id,
+      mapping.raw_source_release_id, mapping.raw_concept_id]);
     if (mappingKeys.has(key)) {
       context.addIssue({ code: "custom", message: `Duplicate canonical/raw mapping ${key}` });
     }
@@ -107,14 +118,57 @@ export function validateCanonicalVocabularyAgainstRawConcepts(
   rawConcepts: ReadonlyArray<{ concept_id: string; source_release_id: string }>,
 ) {
   const vocabulary = CanonicalVocabularySchema.parse(vocabularyValue);
-  const rawById = new Map(rawConcepts.map((concept) => [concept.concept_id, concept]));
+  const rawById = new Map(rawConcepts.map((concept) => [rawConceptIdentityKey({
+    raw_source_release_id: concept.source_release_id,
+    raw_concept_id: concept.concept_id,
+  }), concept]));
   for (const mapping of vocabulary.mappings) {
-    const raw = rawById.get(mapping.raw_concept_id);
-    if (!raw || raw.source_release_id !== mapping.raw_source_release_id) {
+    const raw = rawById.get(rawConceptIdentityKey(mapping));
+    if (!raw) {
       throw new Error(`Mapping references missing or mismatched raw concept ${mapping.raw_concept_id}`);
     }
   }
   return vocabulary;
+}
+
+function mappingFingerprint(vocabulary: CanonicalVocabulary): string {
+  return JSON.stringify(vocabulary.mappings.map((mapping) => ({
+    canonical_concept_id: mapping.canonical_concept_id,
+    raw_source_release_id: mapping.raw_source_release_id,
+    raw_concept_id: mapping.raw_concept_id,
+    relationship: mapping.relationship,
+    rationale: mapping.rationale,
+  })).sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right))));
+}
+
+function lifecycleFingerprint(vocabulary: CanonicalVocabulary): string {
+  return JSON.stringify(vocabulary.concepts.map(({ concept_id, lifecycle }) =>
+    ({ concept_id, lifecycle })).sort((left, right) =>
+    left.concept_id.localeCompare(right.concept_id)));
+}
+
+export function validateCanonicalVocabularySuccessor(
+  predecessorValue: unknown,
+  successorValue: unknown,
+) {
+  const predecessor = CanonicalVocabularySchema.parse(predecessorValue);
+  const successor = CanonicalVocabularySchema.parse(successorValue);
+  if (successor.vocabulary_id !== predecessor.vocabulary_id) {
+    throw new Error("Canonical vocabulary successor must preserve vocabulary identity");
+  }
+  if (successor.vocabulary_revision === predecessor.vocabulary_revision) {
+    throw new Error("Canonical vocabulary successor revision must be distinct");
+  }
+  if (successor.predecessor_revision !== predecessor.vocabulary_revision) {
+    throw new Error("Canonical vocabulary successor must link to the exact predecessor revision");
+  }
+  const mappingChanged = mappingFingerprint(predecessor) !== mappingFingerprint(successor);
+  const lifecycleChanged = lifecycleFingerprint(predecessor) !== lifecycleFingerprint(successor);
+  if (predecessor.vocabulary_status === "approved" && !mappingChanged && !lifecycleChanged) {
+    throw new Error("Approved vocabulary successor must record a mapping or lifecycle change");
+  }
+  return { predecessor, successor, mapping_changed: mappingChanged,
+    lifecycle_changed: lifecycleChanged } as const;
 }
 
 export type CanonicalSemanticKind = z.infer<typeof CanonicalSemanticKindSchema>;
