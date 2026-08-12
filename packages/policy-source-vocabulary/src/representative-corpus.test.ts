@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { createHash } from "node:crypto";
 import { buildRepresentativeExtractionCorpus,
-  CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1 } from "./representative-corpus.js";
+  buildTargetedExtractionSuccessor, CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1,
+  CES_POLICY_TARGETED_EXTRACTION_CORPUS_V1_2 } from "./representative-corpus.js";
 
 describe("POL-006 representative extraction corpus", () => {
   it("covers exactly the four governed machine inputs and excludes ISO", () => {
@@ -77,5 +78,76 @@ describe("POL-006 representative extraction corpus", () => {
 
   it("is deterministic for the same pinned inputs", () => {
     expect(buildRepresentativeExtractionCorpus()).toEqual(buildRepresentativeExtractionCorpus());
+  });
+});
+
+describe("POL-006-R02 targeted ASVS extraction successor", () => {
+  it("pins its predecessor and remains candidate pending human semantic review", () => {
+    expect(CES_POLICY_TARGETED_EXTRACTION_CORPUS_V1_2.predecessor).toEqual({
+      corpus_id: CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1.corpus_id,
+      extraction_contract_revision:
+        CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1.extraction_contract_revision,
+    });
+    expect(CES_POLICY_TARGETED_EXTRACTION_CORPUS_V1_2.successor_review.review_status)
+      .toBe("candidate");
+    expect(CES_POLICY_TARGETED_EXTRACTION_CORPUS_V1_2.successor_review.demand_evidence)
+      .toEqual({ artifact_id: "safara-buyer-business-prd.manual-facts.v1",
+        fact_ids: ["0024", "0027", "0035", "0045"], role: "qualification_only" });
+  });
+
+  it("adds only the two exact targeted ASVS concepts", () => {
+    const previous = CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1.vocabularies
+      .find(({ source_release_id }) => source_release_id === "owasp.asvs.5-0-0")!;
+    const successor = CES_POLICY_TARGETED_EXTRACTION_CORPUS_V1_2.vocabularies
+      .find(({ source_release_id }) => source_release_id === "owasp.asvs.5-0-0")!;
+    expect(successor.concepts.slice(previous.concepts.length).map(({ concept_id,
+      source_locator: { locator }, source_term }) => ({ concept_id, locator, source_term })))
+      .toEqual([
+        { concept_id: "raw.asvs.v14-1-1", locator: "v5.0.0-V14.1.1",
+          source_term: "Data Protection Documentation" },
+        { concept_id: "raw.asvs.v14-2-6", locator: "v5.0.0-V14.2.6",
+          source_term: "General Data Protection" },
+      ]);
+    expect(successor.concepts.find(({ concept_id }) => concept_id === "raw.asvs.v14-2-1"))
+      .toEqual(previous.concepts.find(({ concept_id }) => concept_id === "raw.asvs.v14-2-1"));
+  });
+
+  it("preserves every predecessor governance field and concept", () => {
+    const successor = CES_POLICY_TARGETED_EXTRACTION_CORPUS_V1_2;
+    for (const field of ["artifacts", "human_classification_reviews", "coverage_reviews",
+      "sp800_53_evaluation"] as const) expect(successor[field])
+        .toEqual(CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1[field]);
+    for (const previous of CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1.vocabularies) {
+      const current = successor.vocabularies.find(({ source_release_id }) =>
+        source_release_id === previous.source_release_id)!;
+      expect(current.concepts.slice(0, previous.concepts.length)).toEqual(previous.concepts);
+    }
+  });
+
+  it("fails closed on an unknown locator or altered bounded meaning", () => {
+    const value = structuredClone(CES_POLICY_TARGETED_EXTRACTION_CORPUS_V1_2);
+    const asvs = value.vocabularies.find(({ source_release_id }) =>
+      source_release_id === "owasp.asvs.5-0-0")!;
+    asvs.concepts.at(-1)!.source_locator.locator = "v5.0.0-V14.2.999";
+    expect(() => buildTargetedExtractionSuccessor(value)).toThrow(/altered or unknown concepts/u);
+    const altered = structuredClone(CES_POLICY_TARGETED_EXTRACTION_CORPUS_V1_2);
+    altered.vocabularies.find(({ source_release_id }) =>
+      source_release_id === "owasp.asvs.5-0-0")!.concepts.at(-1)!.bounded_description =
+        "Return any sensitive data requested.";
+    expect(() => buildTargetedExtractionSuccessor(altered)).toThrow(/altered or unknown concepts/u);
+  });
+
+  it("fails closed on missing provenance, duplicate identity, and same-revision mutation", () => {
+    const missing = structuredClone(CES_POLICY_TARGETED_EXTRACTION_CORPUS_V1_2) as any;
+    delete missing.vocabularies[2].concepts.at(-1).provenance;
+    expect(() => buildTargetedExtractionSuccessor(missing)).toThrow();
+
+    const duplicate = structuredClone(CES_POLICY_TARGETED_EXTRACTION_CORPUS_V1_2);
+    duplicate.vocabularies[2]!.concepts.at(-1)!.concept_id = "raw.asvs.v14-1-1";
+    expect(() => buildTargetedExtractionSuccessor(duplicate)).toThrow(/unique/u);
+
+    const mutated = structuredClone(CES_POLICY_TARGETED_EXTRACTION_CORPUS_V1_2);
+    mutated.artifacts[2]!.reuse_notice = "changed rights boundary";
+    expect(() => buildTargetedExtractionSuccessor(mutated)).toThrow(/preserve predecessor/u);
   });
 });

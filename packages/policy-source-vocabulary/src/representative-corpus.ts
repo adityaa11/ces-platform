@@ -301,3 +301,106 @@ export function buildRepresentativeExtractionCorpus() {
 export const CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1 =
   buildRepresentativeExtractionCorpus();
 export type RepresentativeExtractionCorpus = z.infer<typeof RepresentativeExtractionCorpusSchema>;
+
+const TARGETED_ASVS_CONCEPTS = [
+  concept("owasp.asvs.5-0-0", "raw.asvs.v14-1-1", "requirement", "v5.0.0-V14.1.1",
+    "Data Protection Documentation",
+    "Verify that all sensitive data created and processed by the application is identified and classified into protection levels that account for applicable data-protection and privacy requirements, including easily decoded data.",
+    "requirement", "software_relevant", ASVS_URI),
+  concept("owasp.asvs.5-0-0", "raw.asvs.v14-2-6", "requirement", "v5.0.0-V14.2.6",
+    "General Data Protection",
+    "Verify that the application returns only the minimum sensitive data required for its functionality and, when complete data is required, masks it in the user interface unless the user specifically views it.",
+    "requirement", "software_relevant", ASVS_URI),
+] as const;
+
+const TargetedSuccessorReviewSchema = z.object({
+  review_status: z.literal("candidate"),
+  required_review: z.literal("human_semantic_review"),
+  review_boundary: z.literal("ASVS V14.1.1 and V14.2.6 bounded raw extraction only"),
+  demand_evidence: z.object({
+    artifact_id: z.literal("safara-buyer-business-prd.manual-facts.v1"),
+    fact_ids: z.tuple([
+      z.literal("0024"), z.literal("0027"), z.literal("0035"), z.literal("0045"),
+    ]),
+    role: z.literal("qualification_only"),
+  }).strict(),
+}).strict();
+
+export const TargetedExtractionSuccessorSchema = z.object({
+  corpus_id: z.literal("ces-policies.raw-vocabulary.representative-v1-2"),
+  corpus_revision: z.literal("pol-006-r02"),
+  predecessor: z.object({
+    corpus_id: z.literal("ces-policies.raw-vocabulary.representative-v1-1"),
+    extraction_contract_revision: z.literal("pol-006-r01"),
+  }).strict(),
+  artifacts: z.array(ArtifactEvidenceSchema).length(4),
+  vocabularies: z.array(RawSourceVocabularySchema).length(4),
+  human_classification_reviews: z.array(HumanClassificationReviewSchema),
+  coverage_reviews: z.array(CoverageReviewSchema).length(4),
+  sp800_53_evaluation: z.array(z.object({ concept_id: z.string().min(1),
+    contribution: Sp80053ContributionSchema, rationale: z.string().min(1) }).strict()),
+  successor_review: TargetedSuccessorReviewSchema,
+}).strict().superRefine((successor, context) => {
+  const predecessor = CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1;
+  for (const field of ["artifacts", "human_classification_reviews", "coverage_reviews",
+    "sp800_53_evaluation"] as const) {
+    if (JSON.stringify(successor[field]) !== JSON.stringify(predecessor[field])) {
+      context.addIssue({ code: "custom", message: `Successor must preserve predecessor ${field}` });
+    }
+  }
+
+  const predecessorVocabularies = new Map(predecessor.vocabularies.map((value) =>
+    [value.source_release_id, value]));
+  for (const vocabulary of successor.vocabularies) {
+    const previous = predecessorVocabularies.get(vocabulary.source_release_id);
+    if (!previous) {
+      context.addIssue({ code: "custom", message: "Successor cannot introduce a source release" });
+      continue;
+    }
+    const expectedConcepts = vocabulary.source_release_id === "owasp.asvs.5-0-0"
+      ? [...previous.concepts, ...TARGETED_ASVS_CONCEPTS]
+      : previous.concepts;
+    if (JSON.stringify(vocabulary.concepts) !== JSON.stringify(expectedConcepts)) {
+      context.addIssue({ code: "custom",
+        message: `Successor has altered or unknown concepts for ${vocabulary.source_release_id}` });
+    }
+  }
+  const compositeIds = successor.vocabularies.flatMap(({ source_release_id, concepts }) =>
+    concepts.map(({ concept_id }) => `${source_release_id}:${concept_id}`));
+  if (new Set(compositeIds).size !== compositeIds.length) {
+    context.addIssue({ code: "custom", message: "Raw concept composite identities must be unique" });
+  }
+});
+
+const successorValue = {
+  corpus_id: "ces-policies.raw-vocabulary.representative-v1-2",
+  corpus_revision: "pol-006-r02",
+  predecessor: { corpus_id: CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1.corpus_id,
+    extraction_contract_revision:
+      CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1.extraction_contract_revision },
+  artifacts: CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1.artifacts,
+  vocabularies: CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1.vocabularies.map((vocabulary) =>
+    vocabulary.source_release_id === "owasp.asvs.5-0-0"
+      ? { ...vocabulary, concepts: [...vocabulary.concepts, ...TARGETED_ASVS_CONCEPTS] }
+      : vocabulary),
+  human_classification_reviews:
+    CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1.human_classification_reviews,
+  coverage_reviews: CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1.coverage_reviews,
+  sp800_53_evaluation: CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1.sp800_53_evaluation,
+  successor_review: { review_status: "candidate", required_review: "human_semantic_review",
+    review_boundary: "ASVS V14.1.1 and V14.2.6 bounded raw extraction only",
+    demand_evidence: { artifact_id: "safara-buyer-business-prd.manual-facts.v1",
+      fact_ids: ["0024", "0027", "0035", "0045"], role: "qualification_only" } },
+} as const;
+
+export function buildTargetedExtractionSuccessor(value: unknown = successorValue) {
+  const corpus = TargetedExtractionSuccessorSchema.parse(value);
+  for (const vocabulary of corpus.vocabularies) {
+    validateGovernedRawSourceVocabulary(CES_POLICY_GOVERNED_SOURCE_GLOSSARY_V1_1, vocabulary);
+  }
+  return corpus;
+}
+
+export const CES_POLICY_TARGETED_EXTRACTION_CORPUS_V1_2 =
+  buildTargetedExtractionSuccessor();
+export type TargetedExtractionSuccessor = z.infer<typeof TargetedExtractionSuccessorSchema>;

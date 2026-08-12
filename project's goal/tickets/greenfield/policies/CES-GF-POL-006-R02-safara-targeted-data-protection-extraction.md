@@ -1,6 +1,6 @@
 # CES-GF-POL-006-R02 - Safara-Discovered Data-Protection Extraction
 
-**Status:** Proposed
+**Status:** Ready for REVIEW_GATE
 
 **Review class:** REVIEW_GATE
 
@@ -69,3 +69,19 @@ creation, Safara coverage closure, or production applicability.
   requirement.
 - Changing source governance, rights authorization, or Atlas.
 - Adding Safara-specific terminology to shared CES source vocabulary.
+
+## Implementation evidence
+
+- Candidate successor: `ces-policies.raw-vocabulary.representative-v1-2`
+  (`pol-006-r02`), pinned to predecessor
+  `ces-policies.raw-vocabulary.representative-v1-1` (`pol-006-r01`).
+- Added raw candidates only for `v5.0.0-V14.1.1` and
+  `v5.0.0-V14.2.6`; the accepted predecessor and V14.2.1 remain unchanged.
+- Safara facts `0024`, `0027`, `0035`, and `0045` are recorded only as
+  qualification evidence, separate from reusable raw concepts.
+- Successor state remains `candidate` with required
+  `human_semantic_review`; this implementation does not self-accept authority.
+- Focused validation: 13 tests pass, including preservation and fail-closed
+  checks for unknown locators, altered meanings, missing provenance, duplicate
+  identities, and same-revision mutation.
+- Package-local TypeScript typecheck passes.
