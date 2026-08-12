@@ -1,6 +1,6 @@
 # CES-GF-POL-006-R02 - Safara-Discovered Data-Protection Extraction
 
-**Status:** Ready for REVIEW_GATE
+**Status:** Accepted authority published
 
 **Review class:** REVIEW_GATE
 
@@ -85,3 +85,14 @@ creation, Safara coverage closure, or production applicability.
   checks for unknown locators, altered meanings, missing provenance, duplicate
   identities, and same-revision mutation.
 - Package-local TypeScript typecheck passes.
+
+## Acceptance publication
+
+- REVIEW_GATE terminal outcome: `ACCEPTED` for commit
+  `61d1ebb3e6a7d15f7c9ceb84cef5334e0d0acedf`.
+- Review evidence: `CES-POLICIES-REVIEW-61D1EBB`, stored at
+  `project's goal/feedback/CES_POLICIES_REVIEW_61d1ebb.md`.
+- Accepted publication:
+  `ces-policies.raw-vocabulary.representative-v1-2.accepted`.
+- The publication binds the exact reviewed candidate by SHA-256. It does not
+  rewrite the candidate, its raw concepts, or its review-time lifecycle state.

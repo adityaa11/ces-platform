@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { createHash } from "node:crypto";
 import { buildRepresentativeExtractionCorpus,
   buildTargetedExtractionSuccessor, CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1,
-  CES_POLICY_TARGETED_EXTRACTION_CORPUS_V1_2 } from "./representative-corpus.js";
+  CES_POLICY_TARGETED_EXTRACTION_CORPUS_V1_2,
+  CES_POLICY_ACCEPTED_TARGETED_EXTRACTION_CORPUS_V1_2,
+  publishAcceptedTargetedExtraction } from "./representative-corpus.js";
 
 describe("POL-006 representative extraction corpus", () => {
   it("covers exactly the four governed machine inputs and excludes ISO", () => {
@@ -149,5 +151,33 @@ describe("POL-006-R02 targeted ASVS extraction successor", () => {
     const mutated = structuredClone(CES_POLICY_TARGETED_EXTRACTION_CORPUS_V1_2);
     mutated.artifacts[2]!.reuse_notice = "changed rights boundary";
     expect(() => buildTargetedExtractionSuccessor(mutated)).toThrow(/preserve predecessor/u);
+  });
+});
+
+describe("POL-006-R02 accepted authority publication", () => {
+  it("records the accepting REVIEW_GATE with commit and artifact provenance", () => {
+    const publication = CES_POLICY_ACCEPTED_TARGETED_EXTRACTION_CORPUS_V1_2;
+    expect(publication.publication_status).toBe("accepted");
+    expect(publication.approval).toMatchObject({ terminal_outcome: "ACCEPTED",
+      reviewed_commit: "61d1ebb3e6a7d15f7c9ceb84cef5334e0d0acedf",
+      reviewer_evidence_id: "CES-POLICIES-REVIEW-61D1EBB",
+      reviewer_evidence_path: "project's goal/feedback/CES_POLICIES_REVIEW_61d1ebb.md",
+      review_class: "REVIEW_GATE", review_round: 1 });
+  });
+
+  it("publishes the exact reviewed candidate without lifecycle mutation", () => {
+    const publication = CES_POLICY_ACCEPTED_TARGETED_EXTRACTION_CORPUS_V1_2;
+    expect(publication.corpus).toEqual(CES_POLICY_TARGETED_EXTRACTION_CORPUS_V1_2);
+    expect(publication.corpus.successor_review.review_status).toBe("candidate");
+  });
+
+  it("fails closed when the accepted corpus or its binding hash changes", () => {
+    const changed = structuredClone(CES_POLICY_ACCEPTED_TARGETED_EXTRACTION_CORPUS_V1_2);
+    changed.corpus.vocabularies[2]!.concepts.at(-1)!.bounded_description = "broadened";
+    expect(() => publishAcceptedTargetedExtraction(changed)).toThrow(/preserve|hash/u);
+
+    const wrongHash = structuredClone(CES_POLICY_ACCEPTED_TARGETED_EXTRACTION_CORPUS_V1_2);
+    wrongHash.corpus_hash = `sha256:${"0".repeat(64)}`;
+    expect(() => publishAcceptedTargetedExtraction(wrongHash)).toThrow(/hash/u);
   });
 });

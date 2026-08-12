@@ -404,3 +404,55 @@ export function buildTargetedExtractionSuccessor(value: unknown = successorValue
 export const CES_POLICY_TARGETED_EXTRACTION_CORPUS_V1_2 =
   buildTargetedExtractionSuccessor();
 export type TargetedExtractionSuccessor = z.infer<typeof TargetedExtractionSuccessorSchema>;
+
+function hashCorpus(value: unknown): `sha256:${string}` {
+  return `sha256:${createHash("sha256").update(JSON.stringify(value), "utf8").digest("hex")}`;
+}
+
+export const AcceptedTargetedExtractionPublicationSchema = z.object({
+  publication_id: z.literal("ces-policies.raw-vocabulary.representative-v1-2.accepted"),
+  publication_status: z.literal("accepted"),
+  corpus: TargetedExtractionSuccessorSchema,
+  corpus_hash: Sha256Schema,
+  approval: z.object({
+    terminal_outcome: z.literal("ACCEPTED"),
+    reviewed_commit: z.literal("61d1ebb3e6a7d15f7c9ceb84cef5334e0d0acedf"),
+    reviewer_evidence_id: z.literal("CES-POLICIES-REVIEW-61D1EBB"),
+    reviewer_evidence_path: z.literal(
+      "project's goal/feedback/CES_POLICIES_REVIEW_61d1ebb.md"),
+    review_class: z.literal("REVIEW_GATE"),
+    review_round: z.literal(1),
+    recorded_on: z.literal("2026-08-12"),
+  }).strict(),
+}).strict().superRefine((publication, context) => {
+  if (JSON.stringify(publication.corpus) !==
+      JSON.stringify(CES_POLICY_TARGETED_EXTRACTION_CORPUS_V1_2)) {
+    context.addIssue({ code: "custom",
+      message: "Accepted publication must preserve the reviewed candidate exactly" });
+  }
+  if (publication.corpus_hash !== hashCorpus(publication.corpus)) {
+    context.addIssue({ code: "custom",
+      message: "Accepted publication corpus hash does not match the reviewed candidate" });
+  }
+});
+
+const acceptedPublicationValue = {
+  publication_id: "ces-policies.raw-vocabulary.representative-v1-2.accepted",
+  publication_status: "accepted",
+  corpus: CES_POLICY_TARGETED_EXTRACTION_CORPUS_V1_2,
+  corpus_hash: hashCorpus(CES_POLICY_TARGETED_EXTRACTION_CORPUS_V1_2),
+  approval: { terminal_outcome: "ACCEPTED",
+    reviewed_commit: "61d1ebb3e6a7d15f7c9ceb84cef5334e0d0acedf",
+    reviewer_evidence_id: "CES-POLICIES-REVIEW-61D1EBB",
+    reviewer_evidence_path: "project's goal/feedback/CES_POLICIES_REVIEW_61d1ebb.md",
+    review_class: "REVIEW_GATE", review_round: 1, recorded_on: "2026-08-12" },
+} as const;
+
+export function publishAcceptedTargetedExtraction(value: unknown = acceptedPublicationValue) {
+  return AcceptedTargetedExtractionPublicationSchema.parse(value);
+}
+
+export const CES_POLICY_ACCEPTED_TARGETED_EXTRACTION_CORPUS_V1_2 =
+  publishAcceptedTargetedExtraction();
+export type AcceptedTargetedExtractionPublication =
+  z.infer<typeof AcceptedTargetedExtractionPublicationSchema>;
