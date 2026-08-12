@@ -66,8 +66,10 @@ export function validatePolicyTaxonomyProposal(
     [item.concept_id, item]));
   const raw = new Set(knowledge.raw_concepts.map(({ concept_id, source_release_id }) =>
     `${source_release_id}:${concept_id}`));
+  const decisionIds = proposal.proposal.decisions.map(({ canonical_concept_id }) =>
+    canonical_concept_id);
   const supportIds = proposal.proposal.proposed_policy?.canonical_support_ids ?? [];
-  for (const id of supportIds) {
+  for (const id of decisionIds) {
     const concept = canonical.get(id);
     if (!concept || concept.lifecycle !== "approved" || concept.semantic_kind !== "obligation") {
       issues.add("CANONICAL_SUPPORT_INVALID");
@@ -79,18 +81,30 @@ export function validatePolicyTaxonomyProposal(
       issues.add("RAW_LINEAGE_INVALID");
     }
   }
-  const decisionIds = proposal.proposal.decisions.map(({ canonical_concept_id }) =>
-    canonical_concept_id);
+  const acceptedDecisionIds = proposal.proposal.decisions
+    .filter(({ decision }) => decision !== "REJECT")
+    .map(({ canonical_concept_id }) => canonical_concept_id);
+  const rejectedDecisionIds = proposal.proposal.decisions
+    .filter(({ decision }) => decision === "REJECT")
+    .map(({ canonical_concept_id }) => canonical_concept_id);
+  const resultingPolicyId = proposal.proposal.proposed_policy?.policy_id;
+  const decisionTargetsCoherent = proposal.proposal.decisions.every(({ decision,
+    target_policy_id }) => decision === "REJECT" ? target_policy_id === null :
+    target_policy_id === resultingPolicyId);
+  const policyPresenceCoherent = acceptedDecisionIds.length === 0
+    ? proposal.proposal.proposed_policy === null
+    : proposal.proposal.proposed_policy !== null;
   if (new Set(decisionIds).size !== decisionIds.length ||
-      decisionIds.some((id) => !supportIds.includes(id)) ||
-      supportIds.some((id) => !decisionIds.includes(id)) ||
-      proposal.proposal.decisions.some(({ decision, target_policy_id }) =>
-        decision === "REJECT" ? target_policy_id !== null : target_policy_id === null)) {
+      new Set(supportIds).size !== supportIds.length ||
+      acceptedDecisionIds.some((id) => !supportIds.includes(id)) ||
+      supportIds.some((id) => !acceptedDecisionIds.includes(id)) ||
+      rejectedDecisionIds.some((id) => supportIds.includes(id)) ||
+      !decisionTargetsCoherent || !policyPresenceCoherent) {
     issues.add("DECISION_INVALID");
   }
   const targets = [...knowledge.predecessor_taxonomy.policies.map(({ policy_id }) => policy_id),
-    ...supportIds];
-  const expected = supportIds.flatMap((subject) => targets.filter((target) => target !== subject)
+    ...decisionIds];
+  const expected = decisionIds.flatMap((subject) => targets.filter((target) => target !== subject)
     .map((target) => `${subject}:${target}`));
   const actual = proposal.proposal.semantic_comparisons.map(({ subject_canonical_concept_id,
     comparison_target_id }) => `${subject_canonical_concept_id}:${comparison_target_id}`);
@@ -99,8 +113,10 @@ export function validatePolicyTaxonomyProposal(
   const semanticText = JSON.stringify(proposal.proposal).toLowerCase();
   if (PROJECT_TERMS.some((term) => semanticText.includes(term))) issues.add("PROJECT_LEAKAGE");
   if (findProhibitedTechnologyTerms(semanticText).length > 0) issues.add("TECHNOLOGY_LEAKAGE");
-  if (proposal.lifecycle !== "proposed" || proposal.proposal.proposed_policy?.lifecycle !==
-      "candidate" || proposal.proposal.proposed_policy?.approval_status !== "proposed") {
+  const proposedPolicy = proposal.proposal.proposed_policy;
+  if (proposal.lifecycle !== "proposed" || (proposedPolicy !== null &&
+      (proposedPolicy.lifecycle !== "candidate" ||
+       proposedPolicy.approval_status !== "proposed"))) {
     issues.add("AUTHORITY_INVALID");
   }
   const issue_codes = [...issues].sort();

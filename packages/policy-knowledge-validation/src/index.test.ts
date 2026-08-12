@@ -46,6 +46,29 @@ function goldenProposal() {
         rationale })) } });
 }
 
+function withDecisions(
+  decisions: Array<{ canonical_concept_id: string; decision: "ADD" | "MERGE" | "REJECT";
+    target_policy_id: string | null; rationale: string }>,
+  supportIds: string[] | null,
+) {
+  const proposal = goldenProposal();
+  const body = proposal.proposal;
+  if (body.layer !== "policy_taxonomy") throw new Error("fixture layer");
+  const { proposal_hash: _proposalHash, ...withoutHash } = proposal;
+  return createPolicyKnowledgeProposal({ ...withoutHash, proposal: { ...body, decisions,
+    proposed_policy: supportIds === null ? null : { ...body.proposed_policy!,
+      canonical_support_ids: supportIds } } });
+}
+
+const classification = "ces.sensitive-data-classification";
+const disclosure = "ces.sensitive-data-disclosure-minimization";
+const target = "policy.sensitive-data-protection";
+const decision = (canonical_concept_id: string, kind: "ADD" | "MERGE" | "REJECT",
+  target_policy_id: string | null = kind === "REJECT" ? null : target) => ({
+  canonical_concept_id, decision: kind, target_policy_id,
+  rationale: `Governed ${kind} decision for ${canonical_concept_id}.`,
+});
+
 describe("AGB-008 deterministic Policy proposal validation", () => {
   it("accepts the historical POL-008-R02 semantic fixture deterministically", () => {
     const first = validatePolicyTaxonomyProposal(goldenProposal(), knowledge);
@@ -90,5 +113,59 @@ describe("AGB-008 deterministic Policy proposal validation", () => {
     expect(result.issue_codes).toEqual(expect.arrayContaining([
       "PROJECT_LEAKAGE", "TECHNOLOGY_LEAKAGE",
     ]));
+  });
+
+  it("accepts all-REJECT with no resulting Policy and retained comparisons", () => {
+    const proposal = withDecisions([
+      decision(classification, "REJECT"), decision(disclosure, "REJECT"),
+    ], null);
+    expect(validatePolicyTaxonomyProposal(proposal, knowledge)).toMatchObject({
+      status: "valid", issue_codes: [], review_eligibility: "reviewable_proposal",
+    });
+  });
+
+  it.each(["ADD", "MERGE"] as const)(
+    "accepts mixed %s/REJECT with support only for the non-rejected concept",
+    (kind) => {
+      const proposal = withDecisions([
+        decision(classification, kind), decision(disclosure, "REJECT"),
+      ], [classification]);
+      expect(validatePolicyTaxonomyProposal(proposal, knowledge)).toMatchObject({
+        status: "valid", issue_codes: [],
+      });
+    },
+  );
+
+  it("rejects contradictory support and incoherent or invented targets", () => {
+    const rejectedAsSupport = withDecisions([
+      decision(classification, "ADD"), decision(disclosure, "REJECT"),
+    ], [classification, disclosure]);
+    expect(validatePolicyTaxonomyProposal(rejectedAsSupport, knowledge).issue_codes)
+      .toContain("DECISION_INVALID");
+    const rejectWithTarget = withDecisions([
+      decision(classification, "REJECT", target), decision(disclosure, "REJECT"),
+    ], null);
+    expect(validatePolicyTaxonomyProposal(rejectWithTarget, knowledge).issue_codes)
+      .toContain("DECISION_INVALID");
+    const inventedTarget = withDecisions([
+      decision(classification, "ADD", "policy.invented.target"),
+      decision(disclosure, "REJECT"),
+    ], [classification]);
+    expect(validatePolicyTaxonomyProposal(inventedTarget, knowledge).issue_codes)
+      .toContain("DECISION_INVALID");
+  });
+
+  it("requires comparisons for rejected decision concepts", () => {
+    const proposal = withDecisions([
+      decision(classification, "ADD"), decision(disclosure, "REJECT"),
+    ], [classification]);
+    const body = proposal.proposal;
+    if (body.layer !== "policy_taxonomy") throw new Error("fixture layer");
+    const { proposal_hash: _proposalHash, ...withoutHash } = proposal;
+    const missingRejected = createPolicyKnowledgeProposal({ ...withoutHash,
+      proposal: { ...body, semantic_comparisons: body.semantic_comparisons.filter(
+        ({ subject_canonical_concept_id }) => subject_canonical_concept_id !== disclosure) } });
+    expect(validatePolicyTaxonomyProposal(missingRejected, knowledge).issue_codes)
+      .toContain("COMPARISON_INCOMPLETE");
   });
 });

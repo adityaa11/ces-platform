@@ -43,6 +43,9 @@ absence of semantic authority in provider output.
   revisions and content-addressed predecessor identity.
 - Requires approved obligation support, complete raw lineage, coherent decisions,
   complete pairwise comparisons, and project/technology independence.
+- Supports all-REJECT and mixed ADD/MERGE/REJECT results while requiring Policy
+  support to equal exactly the non-rejected concepts and targets to resolve to
+  the governed resulting Policy.
 - Produces deterministic `reviewable_proposal` or `rejected_before_review`
   evidence while always granting no Policy authority.
 
