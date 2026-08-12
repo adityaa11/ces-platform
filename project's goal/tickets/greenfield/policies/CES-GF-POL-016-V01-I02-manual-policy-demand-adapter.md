@@ -26,8 +26,6 @@ not indicate mainline execution has reached POL-016.
 - Map each accepted manual record into a neutral `PolicyDemandFact` while
   preserving its stable manual ID, normalized statement, exact PDF quotation,
   page locator, category, and manual provenance.
-- Test that the available POL-008 candidate taxonomy can be used as coverage
-  probe material without being represented as accepted or sufficient.
 - Keep the manual adapter outside every production Policies entry point.
 
 ## Acceptance contract
@@ -36,7 +34,7 @@ not indicate mainline execution has reached POL-016.
 - The adapter accepts only a human-review record that pins the exact inventory
   hash with an allowed accepting terminal outcome.
 - Mapping is deterministic for the same source manifest, inventory, review
-  record, adapter version, and Policy candidate revision.
+  record, and adapter version.
 - The output contains no fabricated Atlas project, revision, fact, evidence, or
   approval identity.
 - Production Context Binding creation rejects manual demand-fact provenance.
