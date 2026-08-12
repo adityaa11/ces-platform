@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "dist/.tsbuildinfo",
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts"],
+  "references": [
+    { "path": "../policy-manual-demand-adapter" },
+    { "path": "../policy-source-vocabulary" },
+    { "path": "../policy-canonical-vocabulary" },
+    { "path": "../policy-taxonomy" }
+  ]
+}

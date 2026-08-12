@@ -1,6 +1,6 @@
 # CES-GF-POL-008-V01 - Safara Policy Knowledge Bootstrap
 
-**Status:** Proposed
+**Status:** Implemented first coverage result; pending REVIEW_GATE review
 
 **Review class:** REVIEW_GATE
 
@@ -84,3 +84,28 @@ must not start until the resulting POL-008 taxonomy is accepted.
   Atlas-backed validation.
 - Architecture, stack, implementation, scoring, or UI decisions.
 
+## First coverage-result evidence
+
+- Evaluator package: `@company/ces-policy-safara-bootstrap`
+- Evaluator version: `1.0.0`
+- Manual inventory SHA-256:
+  `b1cbfaf6d3ad78cafc1b85dd7dc92344ed03d42f0f693ef5543c0b31e60526d2`
+- Raw corpus: `ces-policies.raw-vocabulary.representative-v1-1`
+- Approved canonical vocabulary revision: `1.1.0`
+- Candidate taxonomy revision: `1.0.0`
+- Candidate authority: `false`
+- Proposed deterministic result SHA-256:
+  `cb04d795620429b832db43f6d684b848d51d25dcf0dae5406b3ad03f947d38c6`
+
+The first proposed result accounts for all 111 facts:
+
+- 77 `AWARENESS_EMITTED`, all explicitly `candidate_only`;
+- 15 `NO_SECURITY_AWARENESS_REQUIRED`;
+- 5 `OUTSIDE_SOFTWARE_SCOPE`;
+- 14 `SOURCE_OR_POLICY_GAP`, all initially routed to
+  `CANONICALIZATION_GAP` with existing raw support.
+
+The REVIEW_GATE decides whether each individual classification and support
+mapping is semantically correct. These counts and gaps are proposed evidence,
+not accepted shared CES knowledge. No POL-006, POL-007, or POL-008 artifact is
+mutated by this result.

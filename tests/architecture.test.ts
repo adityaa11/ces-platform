@@ -21,6 +21,7 @@ const ALLOWED_WORKSPACE_DEPENDENCIES: Readonly<Record<string, readonly string[]>
   "@company/ces-policy-canonical-vocabulary": ["@company/ces-policy-source-vocabulary"],
   "@company/ces-policy-taxonomy": ["@company/ces-policy-canonical-vocabulary"],
   "@company/ces-policy-manual-demand-adapter": [],
+  "@company/ces-policy-safara-bootstrap": ["@company/ces-policy-canonical-vocabulary", "@company/ces-policy-manual-demand-adapter", "@company/ces-policy-source-vocabulary", "@company/ces-policy-taxonomy"],
   "@company/ces-project-schema": [],
   "@company/ces-requirement-schema": ["@company/ces-business-rule-schema"],
   "@company/ces-requirement-collection-schema": ["@company/ces-requirement-schema"],
