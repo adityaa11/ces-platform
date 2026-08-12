@@ -1,6 +1,6 @@
 # CES-GF-POL-008-R01 - Sequential Business-Flow Policy Decision
 
-**Status:** Ready for REVIEW_GATE
+**Status:** Accepted bounded decision published
 
 **Review class:** REVIEW_GATE
 
@@ -103,3 +103,17 @@ POL-008-V01, approve project applicability, or authorize POL-009.
   lineage remains resolvable.
 - The candidate sequential-flow Policy, comparison, decision, lifecycle, and
   taxonomy successor are unchanged by this closure-only fix.
+
+## Acceptance publication
+
+- Closure-only Round 2 terminal outcome: `ACCEPTED` for commit
+  `21ee03cebc394c726028c83767d04029b51e5fc9`, following reviewed
+  implementation commit `8ab40952ca9bb980fab1388d9ecc5037ca0ab5d7`.
+- Human evidence: project-owner confirmation recorded as
+  `CES-GF-POL-008-R01-H01` on 2026-08-12.
+- Accepted publication:
+  `ces-policy-taxonomy.sequential-flow-decision.accepted-v1`.
+- The publication binds the exact candidate taxonomy revision `1.1.0` and its
+  proposed add decision, together with exact reviewed commit identities.
+  Taxonomy and Policy lifecycle remain candidate; this is not final POL-008
+  approval.

@@ -6,6 +6,8 @@ import { CanonicalPolicyCandidateSchema,
 import { CES_POLICY_REPRESENTATIVE_TAXONOMY_V1,
   CES_POLICY_SEQUENTIAL_FLOW_TAXONOMY_V1_1,
   buildSequentialBusinessFlowPolicySuccessor,
+  CES_POLICY_ACCEPTED_SEQUENTIAL_FLOW_DECISION_V1,
+  publishAcceptedSequentialFlowDecision,
   resolvePolicySourceLineage,
   resolveSequentialFlowPolicySourceLineage } from "./representative-taxonomy.js";
 
@@ -157,5 +159,38 @@ describe("POL-008-R01 sequential business-flow Policy decision", () => {
       "Every Safara package must enter a pilgrim manifest.";
     expect(() => buildSequentialBusinessFlowPolicySuccessor(specific))
       .toThrow(/reusable|altered/u);
+  });
+});
+
+describe("POL-008-R01 accepted decision publication", () => {
+  it("binds acceptance to the implementation and closure commits", () => {
+    expect(CES_POLICY_ACCEPTED_SEQUENTIAL_FLOW_DECISION_V1.approval).toMatchObject({
+      terminal_outcome: "ACCEPTED",
+      reviewed_implementation_commit: "8ab40952ca9bb980fab1388d9ecc5037ca0ab5d7",
+      reviewed_closure_commit: "21ee03cebc394c726028c83767d04029b51e5fc9",
+      reviewer_evidence_id: "CES-GF-POL-008-R01-H01",
+      final_pol_008_approval: false });
+  });
+
+  it("publishes the exact candidate taxonomy and proposed decision", () => {
+    const publication = CES_POLICY_ACCEPTED_SEQUENTIAL_FLOW_DECISION_V1;
+    expect(publication.artifact).toEqual(CES_POLICY_SEQUENTIAL_FLOW_TAXONOMY_V1_1);
+    expect(publication.artifact.taxonomy.lifecycle).toBe("candidate");
+    expect(publication.artifact.taxonomy.policies.every(({ lifecycle, approval }) =>
+      lifecycle === "candidate" && approval.status === "proposed")).toBe(true);
+    expect(publication.artifact.decision.status).toBe("proposed");
+  });
+
+  it("fails closed on artifact mutation or false final authority", () => {
+    const changed = clone(CES_POLICY_ACCEPTED_SEQUENTIAL_FLOW_DECISION_V1);
+    changed.artifact.taxonomy.policies.at(-1)!.obligation = "Altered obligation.";
+    expect(() => publishAcceptedSequentialFlowDecision(changed)).toThrow(/preserve|hash/u);
+
+    const falseAuthority = clone(CES_POLICY_ACCEPTED_SEQUENTIAL_FLOW_DECISION_V1);
+    falseAuthority.artifact.taxonomy.policies.at(-1)!.lifecycle = "approved";
+    falseAuthority.artifact.taxonomy.policies.at(-1)!.approval = { status: "approved",
+      reviewed_at: "2026-08-12T00:00:00+00:00", reviewer_evidence_id: "invented" };
+    expect(() => publishAcceptedSequentialFlowDecision(falseAuthority))
+      .toThrow(/preserve|final POL-008 authority/u);
   });
 });

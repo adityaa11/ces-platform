@@ -158,3 +158,56 @@ export function resolveSequentialFlowPolicySourceLineage() {
     .canonical_support.map((canonicalSupport) => ({ canonical_support: canonicalSupport,
       source_lineage: resolveCanonicalSourceLineage(canonicalSupport.canonical_concept_id) }));
 }
+
+export const AcceptedSequentialFlowDecisionPublicationSchema = z.object({
+  publication_id: z.literal("ces-policy-taxonomy.sequential-flow-decision.accepted-v1"),
+  publication_status: z.literal("accepted"),
+  artifact: SequentialFlowTaxonomyArtifactSchema,
+  approval: z.object({
+    terminal_outcome: z.literal("ACCEPTED"),
+    reviewed_implementation_commit: z.literal(
+      "8ab40952ca9bb980fab1388d9ecc5037ca0ab5d7"),
+    reviewed_closure_commit: z.literal(
+      "21ee03cebc394c726028c83767d04029b51e5fc9"),
+    reviewer_evidence_id: z.literal("CES-GF-POL-008-R01-H01"),
+    evidence_type: z.literal("project_owner_confirmation"),
+    recorded_on: z.literal("2026-08-12"),
+    approved_scope: z.literal("POL-008-R01 bounded add decision"),
+    final_pol_008_approval: z.literal(false),
+  }).strict(),
+}).strict().superRefine((publication, context) => {
+  if (JSON.stringify(publication.artifact) !==
+      JSON.stringify(CES_POLICY_SEQUENTIAL_FLOW_TAXONOMY_V1_1)) {
+    context.addIssue({ code: "custom",
+      message: "Accepted decision publication must preserve the reviewed candidate artifact" });
+  }
+  if (publication.artifact.taxonomy.lifecycle !== "candidate" ||
+      publication.artifact.taxonomy.policies.some(({ lifecycle, approval }) =>
+        lifecycle !== "candidate" || approval.status !== "proposed") ||
+      publication.artifact.decision.status !== "proposed") {
+    context.addIssue({ code: "custom",
+      message: "POL-008-R01 publication cannot claim final POL-008 authority" });
+  }
+});
+
+const acceptedSequentialFlowDecisionValue = {
+  publication_id: "ces-policy-taxonomy.sequential-flow-decision.accepted-v1",
+  publication_status: "accepted",
+  artifact: CES_POLICY_SEQUENTIAL_FLOW_TAXONOMY_V1_1,
+  approval: { terminal_outcome: "ACCEPTED",
+    reviewed_implementation_commit: "8ab40952ca9bb980fab1388d9ecc5037ca0ab5d7",
+    reviewed_closure_commit: "21ee03cebc394c726028c83767d04029b51e5fc9",
+    reviewer_evidence_id: "CES-GF-POL-008-R01-H01",
+    evidence_type: "project_owner_confirmation", recorded_on: "2026-08-12",
+    approved_scope: "POL-008-R01 bounded add decision",
+    final_pol_008_approval: false },
+} as const;
+
+export function publishAcceptedSequentialFlowDecision(
+  value: unknown = acceptedSequentialFlowDecisionValue,
+) {
+  return AcceptedSequentialFlowDecisionPublicationSchema.parse(value);
+}
+
+export const CES_POLICY_ACCEPTED_SEQUENTIAL_FLOW_DECISION_V1 =
+  publishAcceptedSequentialFlowDecision();
