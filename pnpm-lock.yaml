@@ -399,6 +399,16 @@ importers:
         specifier: 4.4.3
         version: 4.4.3
 
+  packages/policy-manual-demand-adapter:
+    dependencies:
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
+
   packages/policy-registry:
     dependencies:
       '@company/ces-capability-registry':

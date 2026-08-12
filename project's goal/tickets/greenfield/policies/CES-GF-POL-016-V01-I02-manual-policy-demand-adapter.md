@@ -1,6 +1,6 @@
 # CES-GF-POL-016-V01-I02 - Manual Policy Demand Adapter
 
-**Status:** Proposed
+**Status:** Implemented; pending BATCHABLE review
 
 **Review class:** BATCHABLE
 
@@ -58,3 +58,22 @@ that decision to a dedicated REVIEW_GATE before continuing.
 - Approving the POL-008 taxonomy or a successor Policy proposal.
 - Producing production Context Bindings.
 - Closing POL-016-V01 or freezing CES Policies v1.1.
+
+## Implementation evidence
+
+- `@company/ces-policy-manual-demand-adapter` defines strict schemas for the
+  accepted source manifest, 111-fact inventory, human review record, and
+  qualification-local demand facts.
+- Loading verifies the exact accepted inventory SHA-256 and pinned Safara PDF
+  SHA-256 before mapping any fact.
+- Validation rejects duplicate IDs, unknown categories, invalid pages, empty
+  source text, unsupported extraction methods, non-accepted review evidence,
+  and Atlas-authority claims.
+- Deterministic mapping preserves manual fact ID, normalized statement,
+  category, page, exact quotation, extraction method, source hash, and
+  inventory hash.
+- Every output is tagged `manual_golden_fixture` and
+  `production_context_binding_eligible: false`; the explicit production
+  eligibility guard always rejects it.
+- The package has no workspace dependencies and no production package imports
+  it, so it does not preempt the later POL-010/POL-011 production contract.
