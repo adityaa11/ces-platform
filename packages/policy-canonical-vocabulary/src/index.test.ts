@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import { CanonicalVocabularySchema, validateCanonicalVocabularyAgainstRawConcepts,
   validateCanonicalVocabularySuccessor } from "./index.js";
 import { CES_POLICY_CANONICAL_VOCABULARY_V1,
+  CES_POLICY_APPROVED_CANONICAL_VOCABULARY_V1_1,
   changeCanonicalConceptLifecycle,
-  replaceRawMappingForSourceRenumbering } from "./representative-catalog.js";
+  replaceRawMappingForSourceRenumbering,
+  resolveCanonicalSourceLineage } from "./representative-catalog.js";
 
 describe("POL-007 canonical vocabulary", () => {
   it("requires raw support and rationale for every canonical concept", () => {
@@ -122,5 +124,26 @@ describe("POL-007 canonical vocabulary", () => {
     expect(next.concepts.find(({ concept_id }) => concept_id === "ces.access-authorization")
       ?.lifecycle).toBe("approved");
     expect(validateCanonicalVocabularySuccessor(current, next).lifecycle_changed).toBe(true);
+  });
+
+  it("publishes the human-approved vocabulary as a linked successor", () => {
+    const candidate = CES_POLICY_CANONICAL_VOCABULARY_V1;
+    const approved = CES_POLICY_APPROVED_CANONICAL_VOCABULARY_V1_1;
+    expect(approved.vocabulary_revision).toBe("1.1.0");
+    expect(approved.predecessor_revision).toBe("1.0.0");
+    expect(approved.vocabulary_status).toBe("approved");
+    expect(approved.concepts.every(({ lifecycle }) => lifecycle === "approved")).toBe(true);
+    expect(approved.decisions.every(({ status, reviewer_evidence_id }) =>
+      status === "approved" && reviewer_evidence_id === "CES-GF-POL-007-H01")).toBe(true);
+    expect(approved.mappings).toEqual(candidate.mappings);
+  });
+
+  it("resolves every supporting source and exact locator without flattening", () => {
+    const lineage = resolveCanonicalSourceLineage("ces.access-authorization");
+    expect(lineage).toHaveLength(2);
+    expect(new Set(lineage.map(({ raw_concept }) => raw_concept.source_release_id)))
+      .toEqual(new Set(["nist.csf.2-0", "nist.sp-800-53.r5-2-0"]));
+    expect(new Set(lineage.map(({ raw_concept }) => raw_concept.source_locator.locator)))
+      .toEqual(new Set(["PR.AA-05", "AC-3"]));
   });
 });

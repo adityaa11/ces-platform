@@ -5,6 +5,8 @@ import { CanonicalVocabularySchema,
   validateCanonicalVocabularySuccessor } from "./index.js";
 
 const PROPOSED_AT = "2026-08-12T01:00:00+00:00" as const;
+const APPROVED_AT = "2026-08-12T04:00:00+00:00" as const;
+const APPROVAL_EVIDENCE_ID = "CES-GF-POL-007-H01" as const;
 
 const concepts = [
   { concept_id: "ces.access-authorization", meaning_version: "1.0.0",
@@ -139,3 +141,41 @@ export function changeCanonicalConceptLifecycle(
 }
 
 export const CES_POLICY_CANONICAL_VOCABULARY_V1 = buildRepresentativeCanonicalVocabulary();
+
+export function approveRepresentativeCanonicalVocabulary() {
+  const candidate = CES_POLICY_CANONICAL_VOCABULARY_V1;
+  const successor = CanonicalVocabularySchema.parse({
+    ...candidate,
+    vocabulary_revision: "1.1.0",
+    predecessor_revision: candidate.vocabulary_revision,
+    vocabulary_status: "approved",
+    concepts: candidate.concepts.map((concept) => ({ ...concept, lifecycle: "approved" })),
+    decisions: candidate.decisions.map((decision) => ({ ...decision, status: "approved",
+      reviewed_at: APPROVED_AT, reviewer_evidence_id: APPROVAL_EVIDENCE_ID })),
+  });
+  const transition = validateCanonicalVocabularySuccessor(candidate, successor);
+  if (!transition.lifecycle_changed || transition.mapping_changed) {
+    throw new Error("POL-007 approval must change lifecycle without changing source mappings");
+  }
+  const rawConcepts = CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1.vocabularies
+    .flatMap(({ concepts: values }) => values);
+  return validateCanonicalVocabularyAgainstRawConcepts(successor, rawConcepts);
+}
+
+export const CES_POLICY_APPROVED_CANONICAL_VOCABULARY_V1_1 =
+  approveRepresentativeCanonicalVocabulary();
+
+export function resolveCanonicalSourceLineage(canonicalConceptId: string) {
+  const vocabulary = CES_POLICY_APPROVED_CANONICAL_VOCABULARY_V1_1;
+  const rawConcepts = CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1.vocabularies
+    .flatMap(({ concepts: values }) => values);
+  return vocabulary.mappings
+    .filter(({ canonical_concept_id }) => canonical_concept_id === canonicalConceptId)
+    .map((mapping) => {
+      const raw = rawConcepts.find(({ concept_id, source_release_id }) =>
+        concept_id === mapping.raw_concept_id &&
+        source_release_id === mapping.raw_source_release_id);
+      if (!raw) throw new Error(`Missing raw lineage for ${mapping.raw_concept_id}`);
+      return { mapping, raw_concept: raw };
+    });
+}

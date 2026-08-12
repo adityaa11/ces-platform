@@ -57,3 +57,7 @@ without adopting any external source schema.
 - Composite-identity and successor-version remediation commit: `4eb3912`.
 - Round 2 closure terminal result: `ACCEPTED`.
 - BLOCKER: none; REQUIRED: none.
+- Human semantic approval evidence: `CES-GF-POL-007-H01`, pinned to candidate
+  revision `1.0.0` and implementation chain `7e1117c` -> `4eb3912`.
+- Approved successor vocabulary revision: `1.1.0`, with all seven concepts and
+  three decisions approved while preserving all ten raw-source mappings.
