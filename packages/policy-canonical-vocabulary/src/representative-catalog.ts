@@ -385,3 +385,48 @@ export function buildDataProtectionCanonicalSuccessor(
 
 export const CES_POLICY_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_4 =
   buildDataProtectionCanonicalSuccessor();
+
+export const DATA_PROTECTION_APPROVAL_EVIDENCE = {
+  evidence_id: "CES-GF-POL-007-R02-H01",
+  evidence_type: "project_owner_confirmation",
+  terminal_outcome: "ACCEPTED",
+  reviewed_commit: "77f2840f21e04f7a38c613e158cb13ed2e14e4ae",
+  recorded_on: "2026-08-12",
+  approved_scope: "POL-007-R02 data-protection canonicalization decisions",
+} as const;
+
+export function approveDataProtectionCanonicalSuccessor() {
+  const candidate = CES_POLICY_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_4;
+  const conceptIds = new Set(DATA_PROTECTION_CONCEPTS.map(({ concept_id }) => concept_id));
+  const decisionIds = new Set(DATA_PROTECTION_DECISIONS.map(({ decision_id }) => decision_id));
+  const successor = CanonicalVocabularySchema.parse({
+    ...candidate,
+    vocabulary_revision: "1.5.0",
+    predecessor_revision: candidate.vocabulary_revision,
+    vocabulary_status: "approved",
+    concepts: candidate.concepts.map((concept) => conceptIds.has(concept.concept_id as
+      (typeof DATA_PROTECTION_CONCEPTS)[number]["concept_id"])
+      ? { ...concept, lifecycle: "approved" } : concept),
+    decisions: candidate.decisions.map((decision) => decisionIds.has(decision.decision_id as
+      (typeof DATA_PROTECTION_DECISIONS)[number]["decision_id"])
+      ? { ...decision, status: "approved", reviewed_at: "2026-08-12T00:00:00+00:00",
+        reviewer_evidence_id: DATA_PROTECTION_APPROVAL_EVIDENCE.evidence_id } : decision),
+  });
+  const transition = validateCanonicalVocabularySuccessor(candidate, successor);
+  if (!transition.lifecycle_changed || transition.mapping_changed) {
+    throw new Error("POL-007-R02 approval must change lifecycle without changing mappings");
+  }
+  if (JSON.stringify(successor.mappings) !== JSON.stringify(candidate.mappings) ||
+      JSON.stringify(successor.concepts.slice(0, -2)) !==
+      JSON.stringify(candidate.concepts.slice(0, -2)) ||
+      JSON.stringify(successor.decisions.slice(0, -2)) !==
+      JSON.stringify(candidate.decisions.slice(0, -2))) {
+    throw new Error("POL-007-R02 approval must preserve candidate lineage and prior authority");
+  }
+  const rawConcepts = CES_POLICY_ACCEPTED_TARGETED_EXTRACTION_CORPUS_V1_2.corpus.vocabularies
+    .flatMap(({ concepts: values }) => values);
+  return validateCanonicalVocabularyAgainstRawConcepts(successor, rawConcepts);
+}
+
+export const CES_POLICY_APPROVED_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_5 =
+  approveDataProtectionCanonicalSuccessor();

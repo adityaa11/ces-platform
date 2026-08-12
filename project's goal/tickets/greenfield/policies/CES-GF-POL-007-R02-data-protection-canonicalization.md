@@ -1,6 +1,6 @@
 # CES-GF-POL-007-R02 - Data-Protection Canonicalization
 
-**Status:** Ready for REVIEW_GATE
+**Status:** Accepted authority published
 
 **Review class:** REVIEW_GATE
 
@@ -96,3 +96,14 @@ POL-008-V01, or authorize production applicability.
 - Focused validation rejects unsupported mappings, erased lineage, altered
   meanings, same-revision mutation, and Safara-specific canonicalization.
 - No Policy is created or implied.
+
+## Acceptance publication
+
+- REVIEW_GATE terminal outcome: `ACCEPTED` for commit
+  `77f2840f21e04f7a38c613e158cb13ed2e14e4ae`.
+- Human evidence: project-owner confirmation recorded as
+  `CES-GF-POL-007-R02-H01` on 2026-08-12.
+- Accepted canonical publication: revision `1.5.0`, with exact predecessor
+  candidate revision `1.4.0`.
+- Approval changes only the two new concept lifecycles and their decision
+  review fields. All mappings and prior approved authority remain unchanged.

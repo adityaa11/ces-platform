@@ -9,6 +9,9 @@ import { CES_POLICY_CANONICAL_VOCABULARY_V1,
   approveSequentialBusinessFlowCanonicalSuccessor,
   CES_POLICY_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_4,
   buildDataProtectionCanonicalSuccessor,
+  CES_POLICY_APPROVED_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_5,
+  DATA_PROTECTION_APPROVAL_EVIDENCE,
+  approveDataProtectionCanonicalSuccessor,
   buildSequentialBusinessFlowCanonicalSuccessor,
   changeCanonicalConceptLifecycle,
   replaceRawMappingForSourceRenumbering,
@@ -327,5 +330,38 @@ describe("POL-007-R02 data-protection canonicalization", () => {
     const specific = clone(CES_POLICY_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_4);
     specific.concepts.at(-1)!.definition = "Mask every Safara pilgrim passport.";
     expect(() => buildDataProtectionCanonicalSuccessor(specific)).toThrow(/reusable/u);
+  });
+});
+
+describe("POL-007-R02 accepted authority publication", () => {
+  it("publishes approval as an immutable successor of candidate revision 1.4.0", () => {
+    const approved = CES_POLICY_APPROVED_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_5;
+    expect(approved).toMatchObject({ vocabulary_revision: "1.5.0",
+      predecessor_revision: "1.4.0", vocabulary_status: "approved" });
+    expect(approved.concepts.slice(-2).every(({ lifecycle }) => lifecycle === "approved"))
+      .toBe(true);
+  });
+
+  it("records project-owner approval bound to the full reviewed commit", () => {
+    expect(DATA_PROTECTION_APPROVAL_EVIDENCE).toMatchObject({
+      evidence_id: "CES-GF-POL-007-R02-H01",
+      evidence_type: "project_owner_confirmation", terminal_outcome: "ACCEPTED",
+      reviewed_commit: "77f2840f21e04f7a38c613e158cb13ed2e14e4ae" });
+    expect(CES_POLICY_APPROVED_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_5.decisions.slice(-2)
+      .every(({ status, reviewer_evidence_id }) => status === "approved" &&
+        reviewer_evidence_id === DATA_PROTECTION_APPROVAL_EVIDENCE.evidence_id)).toBe(true);
+  });
+
+  it("changes only the two new lifecycles and decision review fields", () => {
+    const candidate = CES_POLICY_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_4;
+    const approved = CES_POLICY_APPROVED_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_5;
+    expect(approved.mappings).toEqual(candidate.mappings);
+    expect(approved.concepts.slice(0, -2)).toEqual(candidate.concepts.slice(0, -2));
+    expect(approved.decisions.slice(0, -2)).toEqual(candidate.decisions.slice(0, -2));
+  });
+
+  it("deterministically reproduces the accepted successor", () => {
+    expect(approveDataProtectionCanonicalSuccessor())
+      .toEqual(CES_POLICY_APPROVED_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_5);
   });
 });
