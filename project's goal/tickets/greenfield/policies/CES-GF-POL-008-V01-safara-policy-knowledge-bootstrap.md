@@ -178,3 +178,38 @@ layers:
 Coverage v2 therefore does not claim bootstrap closure or POL-008 acceptance.
 It supplies bounded evidence for the next targeted canonicalization and Policy
 taxonomy successor decisions.
+
+## Third coverage-result evidence
+
+- Result identity: `ces-policies.safara-bootstrap.coverage-v3`
+- Exact predecessor: `ces-policies.safara-bootstrap.coverage-v2`
+- Evaluator version: `1.2.0`
+- Accepted raw corpus: `ces-policies.raw-vocabulary.representative-v1-2`
+- Approved canonical vocabulary revision: `1.5.0`
+- Candidate taxonomy revision: `1.1.0`
+- POL-008-R01 bounded decision publication: `accepted`
+- Candidate authority: `false`
+- Proposed deterministic result SHA-256:
+  `b78d1be0fa6dcb9cfcfb2b50f0056e1c5e99f07aff011a0d0a71b889d349f98e`
+
+Coverage v3 preserves all 111 explicit classifications and both historical
+results unchanged. Its counts are:
+
+- 78 `AWARENESS_EMITTED`, all `candidate_only`;
+- 24 `NO_SECURITY_AWARENESS_REQUIRED`;
+- 5 `OUTSIDE_SOFTWARE_SCOPE`;
+- 4 `SOURCE_OR_POLICY_GAP`, all `POLICY_GAP`.
+
+The accepted successors advance the five prior gaps:
+
+- Fact `0016` now emits candidate awareness through
+  `policy.sequential-business-flow` -> `ces.sequential-business-flow` ->
+  `raw.asvs.v2-3-1` -> ASVS `v5.0.0-V2.3.1`.
+- Facts `0024`, `0035`, and `0045` advance to `POLICY_GAP` with approved
+  canonical support `ces.sensitive-data-classification`.
+- Fact `0027` advances to `POLICY_GAP` with approved canonical support
+  `ces.sensitive-data-disclosure-minimization`.
+
+Coverage v3 therefore does not yet close POL-008-V01. The remaining four gaps
+require a targeted POL-008 taxonomy decision; they must not be treated as
+covered merely because approved canonical knowledge now exists.

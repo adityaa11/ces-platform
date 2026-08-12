@@ -5,6 +5,7 @@ import { loadManualSafaraDemandFacts } from
   "@company/ces-policy-manual-demand-adapter";
 import { evaluateSafaraBootstrapCoverage } from "./index.js";
 import { evaluateSafaraBootstrapCoverageV2 } from "./index.js";
+import { evaluateSafaraBootstrapCoverageV3 } from "./index.js";
 
 const root = resolve(import.meta.dirname, "../../..");
 const fixture = resolve(root, "fixtures/policies/safara-v1.1-cycle-01");
@@ -147,5 +148,52 @@ describe("POL-008-V01 Safara bootstrap coverage v2", () => {
     const facts = [...demandFacts()];
     facts[0] = { ...facts[0]!, demand_fact_id: "safara.manual.fact.0112" };
     expect(() => evaluateSafaraBootstrapCoverageV2(facts)).toThrow(/partition/u);
+  });
+});
+
+describe("POL-008-V01 Safara bootstrap coverage v3", () => {
+  it("pins approved canonical v1.5 and accepted candidate decision taxonomy v1.1", () => {
+    const v2 = evaluateSafaraBootstrapCoverageV2(demandFacts());
+    const v3 = evaluateSafaraBootstrapCoverageV3(demandFacts());
+    expect(v3).toMatchObject({ result_id: "ces-policies.safara-bootstrap.coverage-v3",
+      predecessor_result_id: v2.result_id, canonical_vocabulary_revision: "1.5.0",
+      candidate_taxonomy_revision: "1.1.0",
+      taxonomy_decision_publication_status: "accepted",
+      candidate_is_authoritative: false });
+  });
+
+  it("advances sequential flow to candidate awareness with complete lineage", () => {
+    const entry = evaluateSafaraBootstrapCoverageV3(demandFacts()).entries
+      .find(({ demand_fact_id }) => demand_fact_id === "safara.manual.fact.0016")!;
+    expect(entry).toMatchObject({ disposition: "AWARENESS_EMITTED", gap_route: null,
+      policy_support: [{ policy_id: "policy.sequential-business-flow",
+        support_status: "candidate_only", canonical_concept_ids: ["ces.sequential-business-flow"],
+        source_lineage: [{ raw_concept_id: "raw.asvs.v2-3-1",
+          source_release_id: "owasp.asvs.5-0-0", source_locator: "v5.0.0-V2.3.1" }] }] });
+  });
+
+  it("advances all four data-protection facts to Policy gaps", () => {
+    const entries = new Map(evaluateSafaraBootstrapCoverageV3(demandFacts()).entries
+      .map((entry) => [entry.demand_fact_id, entry]));
+    for (const id of ["safara.manual.fact.0024", "safara.manual.fact.0035",
+      "safara.manual.fact.0045"]) expect(entries.get(id)).toMatchObject({
+        disposition: "SOURCE_OR_POLICY_GAP", gap_route: "POLICY_GAP",
+        raw_support_ids: ["raw.asvs.v14-1-1"], policy_support: [] });
+    expect(entries.get("safara.manual.fact.0027")).toMatchObject({
+      disposition: "SOURCE_OR_POLICY_GAP", gap_route: "POLICY_GAP",
+      raw_support_ids: ["raw.asvs.v14-2-6"], policy_support: [] });
+  });
+
+  it("remains deterministic, complete, and non-authoritative", () => {
+    const first = evaluateSafaraBootstrapCoverageV3(demandFacts());
+    expect(first.result_hash)
+      .toBe("b78d1be0fa6dcb9cfcfb2b50f0056e1c5e99f07aff011a0d0a71b889d349f98e");
+    expect(first).toEqual(evaluateSafaraBootstrapCoverageV3(demandFacts()));
+    expect(first.entries).toHaveLength(111);
+    expect(new Set(first.entries.map(({ demand_fact_id }) => demand_fact_id)).size).toBe(111);
+    expect(first.entries.filter(({ disposition }) => disposition === "AWARENESS_EMITTED"))
+      .toHaveLength(78);
+    expect(first.entries.filter(({ disposition }) => disposition === "SOURCE_OR_POLICY_GAP"))
+      .toHaveLength(4);
   });
 });
