@@ -132,3 +132,14 @@ These locators are source-level candidates for a later targeted POL-006
 successor REVIEW_GATE; this evaluator does not add them to the accepted raw
 corpus. Fact `0016` remains a `CANONICALIZATION_GAP` supported by already
 extracted `raw.asvs.v2-3-1`.
+
+## Open governed-successor gates
+
+- `POL-006-R02` owns targeted V14.1.1/V14.2.6 raw extraction for facts `0024`,
+  `0027`, `0035`, and `0045`.
+- `POL-007-R01` owns canonicalization of accepted `raw.asvs.v2-3-1` for fact
+  `0016`.
+
+These gates may be reviewed independently because they alter different
+accepted knowledge layers. A new versioned Safara result must wait until both
+receive accepting terminal outcomes. Neither ticket implies a new Policy.

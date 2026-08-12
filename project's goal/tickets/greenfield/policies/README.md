@@ -21,6 +21,8 @@ explicit change proposal.
 | R04 | [POL-004-R01](CES-GF-POL-004-R01-class-aware-update-reconciliation.md) | Class-aware, authority-neutral source update detection | POL-002-R01, POL-003-R01, POL-004 |
 | R05 | [POL-005-V01](CES-GF-POL-005-V01-governed-compatibility-validation.md) | Governed raw-vocabulary compatibility validation | POL-002-R01, POL-003-R01, POL-005 |
 | R06 | [POL-006-R01](CES-GF-POL-006-R01-extraction-contract-synchronization.md) | Governed extraction-contract synchronization only | POL-003-R01, POL-004-R01, POL-005-V01, POL-006 |
+| R07 | [POL-006-R02](CES-GF-POL-006-R02-safara-targeted-data-protection-extraction.md) | Targeted ASVS data-protection raw-corpus successor | Accepted POL-006; POL-008-V01 result `b45a379` |
+| R08 | [POL-007-R01](CES-GF-POL-007-R01-sequential-business-flow-canonicalization.md) | Sequential business-flow canonical successor | Accepted POL-007; POL-008-V01 result `b45a379` |
 | P01 | [POL-001](CES-GF-POL-001-freeze-policy-charter.md) | Frozen CES Policies charter | None |
 | P02 | [POL-002](CES-GF-POL-002-source-glossary-model.md) | Versioned source glossary contract | POL-001, FND-002 |
 | P03 | [POL-003](CES-GF-POL-003-seed-core-source-releases.md) | Four governed core source releases | POL-002 |
@@ -68,7 +70,8 @@ The explicit ticket headers are authoritative. The current grouping is:
 
 - `REVIEW_GATE`: POL-000, POL-000-R01, POL-000-R01-F01, POL-001, POL-002,
   POL-002-R01, POL-005, POL-006, POL-007, POL-008, POL-009, POL-010, POL-011,
-  POL-008-V01, POL-013, POL-016, POL-016-V01, POL-016-V01-I01, and POL-017.
+  POL-006-R02, POL-007-R01, POL-008-V01, POL-013, POL-016, POL-016-V01,
+  POL-016-V01-I01, and POL-017.
 - `BATCHABLE`: POL-003, POL-003-R01, POL-004, POL-004-R01, POL-005-V01,
   POL-006-R01, POL-012, POL-014, POL-015, and POL-016-V01-I02.
 
