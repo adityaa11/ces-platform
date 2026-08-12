@@ -329,6 +329,7 @@ describe("POL-008-R02 accepted decision publication", () => {
       reviewer_evidence_id: "CES-GF-POL-008-R02-H01",
       reviewer_evidence_path: "project's goal/feedback/CES_POLICIES_REVIEW_10aed9f.md",
       review_class: "REVIEW_GATE", review_round: 2,
+      evidence_type: "project_owner_confirmation",
       final_pol_008_approval: false });
   });
 

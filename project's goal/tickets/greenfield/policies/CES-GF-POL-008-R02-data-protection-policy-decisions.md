@@ -143,3 +143,12 @@ POL-008-V01, approve applicability, or authorize POL-009.
 - The publication preserves the exact candidate taxonomy revision `1.2.0`,
   both proposed decisions, and all 12 semantic comparisons. Taxonomy and
   Policy lifecycle remain candidate; this is not final POL-008 approval.
+
+## Publication remediation
+
+- Publication `REQUIRED-01` fixed: the human authority is classified as
+  `project_owner_confirmation`; the semantic review remains represented by
+  the accepted `CES_POLICIES_REVIEW_10aed9f.md` artifact and its terminal
+  outcome.
+- All commit bindings, evidence identity/path, reviewed artifact, comparisons,
+  decisions, revisions, and candidate/final-authority boundaries are unchanged.

@@ -393,7 +393,7 @@ export const AcceptedDataProtectionDecisionPublicationSchema = z.object({
     reviewer_evidence_path: z.literal(
       "project's goal/feedback/CES_POLICIES_REVIEW_10aed9f.md"),
     review_class: z.literal("REVIEW_GATE"),
-    review_round: z.literal(2), evidence_type: z.literal("human_semantic_review"),
+    review_round: z.literal(2), evidence_type: z.literal("project_owner_confirmation"),
     recorded_on: z.literal("2026-08-12"),
     approved_scope: z.literal("POL-008-R02 bounded add and merge decisions"),
     final_pol_008_approval: z.literal(false),
@@ -422,7 +422,7 @@ const acceptedDataProtectionDecisionValue = {
     reviewer_evidence_id: "CES-GF-POL-008-R02-H01",
     reviewer_evidence_path: "project's goal/feedback/CES_POLICIES_REVIEW_10aed9f.md",
     review_class: "REVIEW_GATE", review_round: 2,
-    evidence_type: "human_semantic_review", recorded_on: "2026-08-12",
+    evidence_type: "project_owner_confirmation", recorded_on: "2026-08-12",
     approved_scope: "POL-008-R02 bounded add and merge decisions",
     final_pol_008_approval: false },
 } as const;
