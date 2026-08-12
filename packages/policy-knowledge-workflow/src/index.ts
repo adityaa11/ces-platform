@@ -27,25 +27,32 @@ const StateName = z.enum(["AGENT_EXECUTION_PENDING", "AGENT_EXECUTION_COMPLETE",
   "VALIDATION_PENDING", "GOVERNED_SUSPENSION", "KNOWLEDGE_CONVERGED", "FULLY_RESOLVED"]);
 const EventKind = z.enum(["WORKFLOW_STARTED", "ATTEMPT_COMPLETED", "PROPOSAL_RECORDED",
   "VALIDATION_RECORDED"]);
+const Gap = z.object({ gap_id: Id, fact_id: Id, earliest_incomplete_layer: Layer,
+  gap_fingerprint: Hash }).strict();
+const Snapshot = z.object({ state: StateName, coverage_result_id: Id, revisions: Revisions,
+  gap: Gap.nullable(), attempt_id: Id.nullable(), proposal_id: Id.nullable(),
+  proposal_hash: Hash.nullable(), validation_id: Id.nullable(),
+  suspension_reason: z.enum(["REVIEW_REQUIRED", "VALIDATION_FAILED"]).nullable(),
+  review_id: Id.nullable(), publication_id: Id.nullable(), resume_id: Id.nullable() }).strict();
 const Event = z.object({ event_id: Id, workflow_id: Id, sequence: z.number().int().positive(),
   kind: EventKind, occurred_at: z.iso.datetime({ offset: true }), previous_event_hash: Hash.nullable(),
-  evidence_id: Id, transition_payload_hash: Hash, event_hash: Hash }).strict();
+  evidence_id: Id, snapshot: Snapshot, transition_payload_hash: Hash, event_hash: Hash }).strict();
 export const PolicyKnowledgeWorkflowSchema = z.object({ schema_version: z.literal("1.0.0"),
-  workflow_id: Id, state: StateName, coverage_result_id: Id, revisions: Revisions,
-  gap: z.object({ gap_id: Id, fact_id: Id, earliest_incomplete_layer: Layer,
-    gap_fingerprint: Hash }).strict().nullable(), attempt_id: Id.nullable(),
-  proposal_id: Id.nullable(), proposal_hash: Hash.nullable(), validation_id: Id.nullable(),
-  suspension_reason: z.enum(["REVIEW_REQUIRED", "VALIDATION_FAILED"]).nullable(),
-  review_id: Id.nullable(), publication_id: Id.nullable(), resume_id: Id.nullable(),
+  workflow_id: Id, ...Snapshot.shape,
   events: z.array(Event) }).strict().superRefine((value, context) => {
   let previous: string | null = null;
   value.events.forEach((event, index) => {
     const { event_hash, ...body } = event;
     if (event.workflow_id !== value.workflow_id || event.sequence !== index + 1 ||
-        event.previous_event_hash !== previous || stableHash(body) !== event_hash)
+        event.previous_event_hash !== previous || stableHash(body) !== event_hash ||
+        event.transition_payload_hash !== stableHash(event.snapshot) ||
+        !validTransition(value.events[index - 1]?.snapshot, event.kind, event.snapshot))
       context.addIssue({ code: "custom", message: "Broken append-only workflow history" });
     previous = event_hash;
   });
+  const finalSnapshot = value.events.at(-1)?.snapshot;
+  if (!finalSnapshot || JSON.stringify(snapshotOf(value)) !== JSON.stringify(finalSnapshot))
+    context.addIssue({ code: "custom", message: "Workflow snapshot does not match event history" });
 });
 export type PolicyKnowledgeWorkflow = z.infer<typeof PolicyKnowledgeWorkflowSchema>;
 
@@ -71,7 +78,9 @@ export function startPolicyKnowledgeWorkflow(input: { workflow_id: string; gap_i
     attempt_id: null, proposal_id: null, proposal_hash: null, validation_id: null,
     suspension_reason: null, review_id: null, publication_id: null, resume_id: null,
     events: [event(input, "WORKFLOW_STARTED", null, 1, { state, coverage_result_id:
-      coverage.coverage_result_id, revisions: coverage.revisions, gap })] });
+      coverage.coverage_result_id, revisions: coverage.revisions, gap, attempt_id: null,
+      proposal_id: null, proposal_hash: null, validation_id: null, suspension_reason: null,
+      review_id: null, publication_id: null, resume_id: null })] });
 }
 
 export function recordKnowledgeAttempt(workflowValue: unknown, input: Evidence & { attempt_id: string }) {
@@ -100,17 +109,45 @@ export function recordKnowledgeValidation(workflowValue: unknown, input: Evidenc
 type Evidence = { event_id: string; evidence_id: string; occurred_at: string };
 function update(workflow: PolicyKnowledgeWorkflow, input: Evidence, kind: z.infer<typeof EventKind>,
   changed: Record<string, unknown>) { const previous = workflow.events.at(-1)!.event_hash;
-  return PolicyKnowledgeWorkflowSchema.parse({ ...workflow, ...changed,
+  const next = { ...workflow, ...changed };
+  return PolicyKnowledgeWorkflowSchema.parse({ ...next,
     events: [...workflow.events, event({ ...input, workflow_id: workflow.workflow_id }, kind,
-      previous, workflow.events.length + 1, changed)] }); }
+      previous, workflow.events.length + 1, snapshotOf(next))] }); }
 function requireState(value: unknown, state: z.infer<typeof StateName>) { const workflow =
   PolicyKnowledgeWorkflowSchema.parse(value); if (workflow.state !== state)
   throw new Error(`Illegal workflow transition from ${workflow.state}`); return workflow; }
 function event(input: { workflow_id: string; event_id: string; evidence_id: string; occurred_at: string },
   kind: z.infer<typeof EventKind>, previous: string | null, sequence: number,
-  transitionPayload: unknown) { const body = {
+  snapshot: z.infer<typeof Snapshot>) { const body = {
   event_id: input.event_id, workflow_id: input.workflow_id, sequence, kind,
   occurred_at: input.occurred_at, previous_event_hash: previous, evidence_id: input.evidence_id,
-  transition_payload_hash: stableHash(transitionPayload) };
+  snapshot, transition_payload_hash: stableHash(snapshot) };
   return { ...body, event_hash: stableHash(body) }; }
+function snapshotOf(value: Record<string, unknown>) { return Snapshot.parse({ state: value.state,
+  coverage_result_id: value.coverage_result_id, revisions: value.revisions, gap: value.gap,
+  attempt_id: value.attempt_id, proposal_id: value.proposal_id, proposal_hash: value.proposal_hash,
+  validation_id: value.validation_id, suspension_reason: value.suspension_reason,
+  review_id: value.review_id, publication_id: value.publication_id, resume_id: value.resume_id }); }
+function validTransition(previous: z.infer<typeof Snapshot> | undefined,
+  kind: z.infer<typeof EventKind>, next: z.infer<typeof Snapshot>) {
+  if (!previous) return kind === "WORKFLOW_STARTED" && ["AGENT_EXECUTION_PENDING",
+    "KNOWLEDGE_CONVERGED", "FULLY_RESOLVED"].includes(next.state) && next.attempt_id === null &&
+    next.proposal_id === null && next.validation_id === null && next.suspension_reason === null;
+  const stable = previous.coverage_result_id === next.coverage_result_id &&
+    JSON.stringify(previous.revisions) === JSON.stringify(next.revisions) &&
+    JSON.stringify(previous.gap) === JSON.stringify(next.gap) && previous.review_id === next.review_id &&
+    previous.publication_id === next.publication_id && previous.resume_id === next.resume_id;
+  if (!stable) return false;
+  if (kind === "ATTEMPT_COMPLETED") return previous.state === "AGENT_EXECUTION_PENDING" &&
+    next.state === "AGENT_EXECUTION_COMPLETE" && previous.attempt_id === null && next.attempt_id !== null &&
+    next.proposal_id === null && next.validation_id === null;
+  if (kind === "PROPOSAL_RECORDED") return previous.state === "AGENT_EXECUTION_COMPLETE" &&
+    next.state === "VALIDATION_PENDING" && next.attempt_id === previous.attempt_id &&
+    next.proposal_id !== null && next.proposal_hash !== null && next.validation_id === null;
+  if (kind === "VALIDATION_RECORDED") return previous.state === "VALIDATION_PENDING" &&
+    next.state === "GOVERNED_SUSPENSION" && next.attempt_id === previous.attempt_id &&
+    next.proposal_id === previous.proposal_id && next.proposal_hash === previous.proposal_hash &&
+    next.validation_id !== null && next.suspension_reason !== null;
+  return false;
+}
 function stableHash(value: unknown) { return createHash("sha256").update(JSON.stringify(value)).digest("hex"); }

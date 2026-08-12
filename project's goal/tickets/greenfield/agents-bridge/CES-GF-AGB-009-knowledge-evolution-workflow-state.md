@@ -53,6 +53,10 @@ predicates, and compatibility with a stateless Agents Bridge.
   hash-chained, and bind their transition payloads. Valid proposals enter
   `GOVERNED_SUSPENSION` with `REVIEW_REQUIRED`; review decisions and authority
   resume remain reserved for AGB-010.
+- Every event now contains its complete resulting snapshot under the event
+  hash. The schema deterministically verifies each transition and requires the
+  top-level snapshot to equal the final replayed event snapshot, preventing
+  forged state or identity fields from manufacturing skipped transitions.
 - Focused workflow and architecture tests pass, together with package
   typechecking.
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { gapFingerprint, recordKnowledgeAttempt, recordKnowledgeProposal,
-  recordKnowledgeValidation, startPolicyKnowledgeWorkflow } from "./index.js";
+  recordKnowledgeValidation, startPolicyKnowledgeWorkflow,
+  PolicyKnowledgeWorkflowSchema } from "./index.js";
 const revisions = { source_glossary_revision: "1.1.0", raw_vocabulary_revision: "1.2.0",
   canonical_vocabulary_revision: "1.5.0", policy_taxonomy_revision: "1.1.0" };
 const evidence = (n: number) => ({ event_id: `event.workflow.${n}`, evidence_id: `evidence.${n}`,
@@ -52,5 +53,26 @@ describe("AGB-009 Policy knowledge workflow", () => {
       .toThrow(/mismatch/u);
     expect(() => recordKnowledgeAttempt({ ...workflow, workflow_id: "workflow.other" },
       { attempt_id: "attempt.1", ...evidence(2) })).toThrow(/history/u);
+  });
+  it("rejects every forged snapshot field while preserving the legitimate replay", () => {
+    const started = startPolicyKnowledgeWorkflow({ workflow_id: "workflow.forgery", gap_id: "gap.1",
+      coverage_result: coverage("SOURCE_OR_POLICY_GAP"), ...evidence(1) });
+    const attempted = recordKnowledgeAttempt(started, { attempt_id: "attempt.1", ...evidence(2) });
+    const proposed = recordKnowledgeProposal(attempted, { attempt_id: "attempt.1",
+      proposal_id: "proposal.1", proposal_hash: "a".repeat(64), ...evidence(3) });
+    const validated = recordKnowledgeValidation(proposed, { proposal_id: "proposal.1",
+      proposal_hash: "a".repeat(64), validation_id: "validation.1", status: "valid", ...evidence(4) });
+    const forgeries = [{ ...started, state: "AGENT_EXECUTION_COMPLETE", attempt_id: "attempt.forged" },
+      { ...attempted, attempt_id: "attempt.forged" },
+      { ...proposed, proposal_id: "proposal.forged" },
+      { ...proposed, proposal_hash: "b".repeat(64) },
+      { ...validated, validation_id: "validation.forged" },
+      { ...validated, suspension_reason: "VALIDATION_FAILED" }];
+    for (const forged of forgeries) expect(() => PolicyKnowledgeWorkflowSchema.parse(forged))
+      .toThrow(/snapshot does not match event history/u);
+    expect(() => recordKnowledgeProposal(forgeries[0], { attempt_id: "attempt.forged",
+      proposal_id: "proposal.forged", proposal_hash: "b".repeat(64), ...evidence(2) }))
+      .toThrow(/snapshot does not match event history/u);
+    expect(PolicyKnowledgeWorkflowSchema.parse(validated)).toEqual(validated);
   });
 });
