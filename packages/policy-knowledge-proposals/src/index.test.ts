@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   PolicyKnowledgeExecutionEvidenceSchema,
+  PolicyKnowledgeAgentRequestSchema,
   PolicyKnowledgeProposalSchema,
+  createPolicyKnowledgeAgentRequest,
   createPolicyKnowledgeExecutionEvidence,
   createPolicyKnowledgeProposal,
   governedContextHash,
@@ -48,6 +50,57 @@ function policyProposal() {
 }
 
 describe("AGB-006 Policy knowledge proposal contracts", () => {
+  it("creates provider-neutral bounded requests for all three knowledge layers", () => {
+    const requests = [
+      createPolicyKnowledgeAgentRequest({ schema_version: "1.0.0",
+        request_id: "request.raw.001", lifecycle: "proposed", governed_context: context,
+        request: { layer: "raw_source_vocabulary", gap_route: "EXTRACTION_GAP",
+          bounded_task: "Evaluate the cited governed source locations for the bounded gap.",
+          governed_source_release_ids: ["source.asvs.v5"],
+          source_locator_candidates: ["v5.0.0-V14.2.6"], existing_raw_concept_ids: [] } }),
+      createPolicyKnowledgeAgentRequest({ schema_version: "1.0.0",
+        request_id: "request.canonical.001", lifecycle: "proposed",
+        governed_context: context,
+        request: { layer: "canonical_vocabulary", gap_route: "CANONICALIZATION_GAP",
+          bounded_task: "Compare the accepted raw support with existing canonical concepts.",
+          accepted_raw_support: [{ source_release_id: "source.asvs.v5",
+            source_locator: "v5.0.0-V14.2.6", raw_concept_id: "raw.asvs.v14.2.6" }],
+          existing_canonical_concept_ids: ["ces.sensitive.data.classification"] } }),
+      createPolicyKnowledgeAgentRequest({ schema_version: "1.0.0",
+        request_id: "request.policy.001", lifecycle: "proposed", governed_context: context,
+        request: { layer: "policy_taxonomy", gap_route: "POLICY_GAP",
+          bounded_task: "Compare the approved obligations with the predecessor taxonomy.",
+          approved_canonical_concept_ids: ["ces.sensitive.data.classification"],
+          predecessor_policy_ids: ["policy.access.control"] } }),
+    ];
+    expect(requests.map(({ request }) => request.gap_route)).toEqual([
+      "EXTRACTION_GAP", "CANONICALIZATION_GAP", "POLICY_GAP",
+    ]);
+    expect(requests.every(({ request_hash }) => request_hash.length === 64)).toBe(true);
+  });
+
+  it("rejects altered, cross-layer, provider-controlled, and authoritative requests", () => {
+    const request = createPolicyKnowledgeAgentRequest({ schema_version: "1.0.0",
+      request_id: "request.policy.002", lifecycle: "proposed", governed_context: context,
+      request: { layer: "policy_taxonomy", gap_route: "POLICY_GAP",
+        bounded_task: "Compare approved obligations with the predecessor taxonomy.",
+        approved_canonical_concept_ids: ["ces.sensitive.data.classification"],
+        predecessor_policy_ids: ["policy.access.control"] } });
+    expect(() => PolicyKnowledgeAgentRequestSchema.parse({ ...request,
+      governed_context: { ...request.governed_context,
+        canonical_vocabulary_revision: "1.6.0" } })).toThrow(/hash/u);
+    expect(() => PolicyKnowledgeAgentRequestSchema.parse({ ...request,
+      provider_id: "gemini" })).toThrow();
+    expect(() => PolicyKnowledgeAgentRequestSchema.parse({ ...request,
+      prompt: "caller controlled", publication_status: "accepted" })).toThrow();
+    expect(() => createPolicyKnowledgeAgentRequest({ schema_version: "1.0.0",
+      request_id: "request.invalid.001", lifecycle: "proposed", governed_context: context,
+      request: { layer: "policy_taxonomy", gap_route: "EXTRACTION_GAP",
+        bounded_task: "Invalid cross-layer request.",
+        approved_canonical_concept_ids: ["ces.sensitive.data.classification"],
+        predecessor_policy_ids: ["policy.access.control"] } as never })).toThrow();
+  });
+
   it("creates a content-addressed candidate Policy proposal", () => {
     const proposal = policyProposal();
     expect(proposal).toMatchObject({ lifecycle: "proposed",

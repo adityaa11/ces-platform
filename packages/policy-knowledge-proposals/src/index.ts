@@ -38,6 +38,52 @@ const SourceLineageSchema = z.object({
   raw_concept_id: Id,
 }).strict();
 
+const RawRequestSchema = z.object({
+  layer: z.literal("raw_source_vocabulary"),
+  gap_route: z.literal("EXTRACTION_GAP"),
+  bounded_task: NonEmpty,
+  governed_source_release_ids: z.array(Id).min(1),
+  source_locator_candidates: z.array(NonEmpty).min(1),
+  existing_raw_concept_ids: z.array(Id),
+}).strict();
+
+const CanonicalRequestSchema = z.object({
+  layer: z.literal("canonical_vocabulary"),
+  gap_route: z.literal("CANONICALIZATION_GAP"),
+  bounded_task: NonEmpty,
+  accepted_raw_support: z.array(SourceLineageSchema).min(1),
+  existing_canonical_concept_ids: z.array(Id),
+}).strict();
+
+const PolicyRequestSchema = z.object({
+  layer: z.literal("policy_taxonomy"),
+  gap_route: z.literal("POLICY_GAP"),
+  bounded_task: NonEmpty,
+  approved_canonical_concept_ids: z.array(Id).min(1),
+  predecessor_policy_ids: z.array(Id).min(1),
+}).strict();
+
+export const PolicyKnowledgeRequestBodySchema = z.discriminatedUnion("layer", [
+  RawRequestSchema, CanonicalRequestSchema, PolicyRequestSchema,
+]);
+
+export const PolicyKnowledgeAgentRequestSchema = z.object({
+  schema_version: z.literal(POLICY_KNOWLEDGE_PROPOSAL_SCHEMA_VERSION),
+  request_id: Id,
+  lifecycle: z.literal("proposed"),
+  governed_context: GovernedContextSchema,
+  request: PolicyKnowledgeRequestBodySchema,
+  request_hash: Hash,
+}).strict().superRefine((value, context) => {
+  if (value.request.layer !== routeLayer(value.request.gap_route)) {
+    context.addIssue({ code: "custom", message: "Gap route does not match request layer" });
+  }
+  const { request_hash: requestHash, ...withoutHash } = value;
+  if (stableHash(withoutHash) !== requestHash) {
+    context.addIssue({ code: "custom", message: "Request hash does not match request contents" });
+  }
+});
+
 const RawProposalSchema = z.object({
   layer: z.literal("raw_source_vocabulary"),
   gap_route: z.literal("EXTRACTION_GAP"),
@@ -150,6 +196,13 @@ export function createPolicyKnowledgeProposal(input: Omit<
   return PolicyKnowledgeProposalSchema.parse(value);
 }
 
+export function createPolicyKnowledgeAgentRequest(input: Omit<
+  z.input<typeof PolicyKnowledgeAgentRequestSchema>, "request_hash"
+>) {
+  const value = { ...input, request_hash: stableHash(input) };
+  return PolicyKnowledgeAgentRequestSchema.parse(value);
+}
+
 export function createPolicyKnowledgeExecutionEvidence(input: Omit<
   z.input<typeof PolicyKnowledgeExecutionEvidenceSchema>, "evidence_hash"
 >) {
@@ -174,5 +227,6 @@ function stableHash(value: unknown): string {
 }
 
 export type PolicyKnowledgeProposal = z.infer<typeof PolicyKnowledgeProposalSchema>;
+export type PolicyKnowledgeAgentRequest = z.infer<typeof PolicyKnowledgeAgentRequestSchema>;
 export type PolicyKnowledgeExecutionEvidence =
   z.infer<typeof PolicyKnowledgeExecutionEvidenceSchema>;

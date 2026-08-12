@@ -49,6 +49,9 @@ POL-007, POL-008, and Coverage V4 artifacts.
 ## Candidate implementation evidence
 
 - Package: `@company/ces-policy-knowledge-proposals`.
+- Versioned, content-addressed request envelope reusable across extraction,
+  canonicalization, and Policy-taxonomy agents without caller-controlled
+  provider, model, prompt, credential, review, or publication fields.
 - Distinct content-addressed raw, canonical, and Policy proposal envelopes.
 - Governed context pins the gap, demand facts, all layered revisions, and exact
   predecessor artifact identity/hash.
