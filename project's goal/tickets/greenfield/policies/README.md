@@ -38,7 +38,8 @@ explicit change proposal.
 | P15 | [POL-015](CES-GF-POL-015-developer-baseline-output.md) | Developer-facing baseline awareness | POL-014 |
 | P16 | [POL-016](CES-GF-POL-016-cross-domain-validation.md) | Domain-neutral qualification evidence | POL-015 |
 | P16A | [POL-016-V01](CES-GF-POL-016-V01-safara-complete-prd-coverage.md) | Complete Safara PRD baseline-awareness accountability | Accepted POL-016 |
-| P16A-I01 | [POL-016-V01-I01](CES-GF-POL-016-V01-I01-manual-safara-cycle-input.md) | Human-reconciled Safara input for the first Policy evolution cycle | Accepted POL-008 direction |
+| P16A-I01 | [POL-016-V01-I01](CES-GF-POL-016-V01-I01-manual-safara-cycle-input.md) | Human-reconciled Safara input for the first Policy evolution cycle | Accepted POL-007; available POL-008 candidate taxonomy |
+| P16A-I02 | [POL-016-V01-I02](CES-GF-POL-016-V01-I02-manual-policy-demand-adapter.md) | Qualification-only manual PolicyDemandFact adapter | Accepted POL-016-V01-I01 |
 | P17 | [POL-017](CES-GF-POL-017-policy-baseline-v1-freeze.md) | Immutable CES Policy Baseline v1.1 | Accepted POL-016-V01 |
 
 Tickets execute in dependency order. P04 may proceed beside P05 after P03;
@@ -60,7 +61,7 @@ The explicit ticket headers are authoritative. The current grouping is:
   POL-002-R01, POL-005, POL-006, POL-007, POL-008, POL-009, POL-010, POL-011,
   POL-013, POL-016, POL-016-V01, POL-016-V01-I01, and POL-017.
 - `BATCHABLE`: POL-003, POL-003-R01, POL-004, POL-004-R01, POL-005-V01,
-  POL-006-R01, POL-012, POL-014, and POL-015.
+  POL-006-R01, POL-012, POL-014, POL-015, and POL-016-V01-I02.
 
 `CES-GF-POL-006-H01` is human approval evidence rather than a ticket, so it has
 no review class. A `BATCHABLE` ticket must still stop or split at any newly

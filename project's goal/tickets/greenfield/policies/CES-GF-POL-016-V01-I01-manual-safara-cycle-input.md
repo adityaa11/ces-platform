@@ -4,7 +4,10 @@
 
 **Review class:** REVIEW_GATE
 
-**Depends on:** Accepted POL-008 direction
+**Depends on:** Accepted POL-007 canonical vocabulary and an available POL-008
+candidate taxonomy
+
+**Does not depend on:** An accepted or sufficient POL-008 taxonomy
 
 ## Outcome
 
@@ -30,12 +33,16 @@ evolution cycle while Atlas extraction remains untrusted.
 - Pages: 1-7
 - Fixture: `fixtures/policies/safara-v1.1-cycle-01/manual-facts.json`
 
-## Consumption contract
+## Development-cycle boundary
 
-The qualification harness validates the fixture and maps each record into a
-neutral `PolicyDemandFact`. The manual adapter and future Atlas adapter may feed
-that neutral boundary, but provenance remains distinct and the manual adapter
-is unavailable to production runtime entry points.
+After this gate is accepted, POL-016-V01-I02 may implement a qualification-only
+adapter that maps the fixture into a neutral `PolicyDemandFact`. The available
+POL-008 candidate taxonomy is probe material: Safara may expose that it is
+incomplete before POL-008 receives an accepting terminal review outcome.
+
+The future manual and Atlas adapters may feed the same neutral boundary, but
+their provenance remains distinct and the manual path stays unavailable to
+production runtime entry points.
 
 Every cycle result must retain the manual fact ID and exact PDF locator and use
 one POL-016-V01 disposition:
@@ -58,9 +65,9 @@ More precise gap routing is diagnostic metadata beneath
   `human_reconciled` extraction method.
 - The fixture contains no Atlas project, revision, fact, evidence, or approval
   identity.
-- Validation rejects duplicate IDs, unknown categories, invalid pages, empty
-  source text, a mismatched document hash, and any claim that the fixture is an
-  approved Atlas input.
+- The inventory is reviewed as an exact, proposed golden fixture; executable
+  schema, validation, hash checking, and `PolicyDemandFact` mapping belong to
+  POL-016-V01-I02.
 - A human review record pins the exact fixture hash before the inventory is
   treated as accepted cycle input.
 - Coverage results cannot be promoted to final POL-016-V01 evidence until they
@@ -72,4 +79,3 @@ Review decides whether this exact manual inventory and its temporary
 qualification-only consumption boundary are trustworthy. It does not approve
 Atlas, CES Policy gaps discovered later, successor canonical knowledge, or the
 final Safara coverage gate.
-
