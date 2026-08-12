@@ -11,6 +11,7 @@
     { "path": "../../packages/policy-canonical-vocabulary" },
     { "path": "../../packages/policy-knowledge-proposals" },
     { "path": "../../packages/policy-knowledge-validation" },
+    { "path": "../../packages/policy-source-vocabulary" },
     { "path": "../../packages/policy-taxonomy" }
   ]
 }

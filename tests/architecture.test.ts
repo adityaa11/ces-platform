@@ -48,7 +48,7 @@ const ALLOWED_WORKSPACE_DEPENDENCIES: Readonly<Record<string, readonly string[]>
   "@company/ces-test-fixture-adapter": ["@company/ces-adapter-sdk", "@company/ces-policy-manifest", "@company/ces-project-schema"],
   "@company/ces-integration-contracts": ["@company/ces-project-schema"],
   "@company/ces-bootstrap-runner": ["@company/ces-integration-contracts", "@company/ces-project-schema"],
-  "@company/ces-agents-bridge": ["@company/ces-atlas-semantic-facts", "@company/ces-policy-canonical-vocabulary", "@company/ces-policy-knowledge-proposals", "@company/ces-policy-knowledge-validation", "@company/ces-policy-taxonomy"],
+  "@company/ces-agents-bridge": ["@company/ces-atlas-semantic-facts", "@company/ces-policy-canonical-vocabulary", "@company/ces-policy-knowledge-proposals", "@company/ces-policy-knowledge-validation", "@company/ces-policy-source-vocabulary", "@company/ces-policy-taxonomy"],
   "@company/ces-atlas-workflow-ui": ["@company/ces-atlas-knowledge-contracts"],
   "@company/ces-cli": ["@company/ces-adapter-sdk", "@company/ces-atlas-graph-selection", "@company/ces-atlas-knowledge-assembly", "@company/ces-atlas-knowledge-contracts", "@company/ces-atlas-knowledge-review", "@company/ces-atlas-semantic-facts", "@company/ces-document-ingestion", "@company/ces-greenfield-contracts", "@company/ces-implementation-compiler", "@company/ces-laravel-adapter", "@company/ces-pdf-ingestion", "@company/ces-policy-engine", "@company/ces-policy-manifest", "@company/ces-project-schema", "@company/ces-requirement-collection-schema", "@company/ces-requirement-schema", "@company/ces-source-unit-schema", "@company/ces-test-fixture-adapter", "@company/ces-verification-engine"],
 };

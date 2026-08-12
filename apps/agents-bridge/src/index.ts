@@ -11,3 +11,4 @@ export * from "./main.js";
 export * from "./agents/atlas-semantic-fact-extractor/agent.js";
 export * from "./agents/atlas-project-relationship-extractor/agent.js";
 export * from "./agents/policy-taxonomy-agent/agent.js";
+export * from "./agents/policy-taxonomy-agent/governed-knowledge.js";

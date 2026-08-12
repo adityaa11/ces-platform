@@ -1,5 +1,6 @@
 import { PolicyKnowledgeAgentRequestSchema, PolicyKnowledgeProposalSchema,
   createPolicyKnowledgeProposal } from "@company/ces-policy-knowledge-proposals";
+import { validatePolicyTaxonomyProposal } from "@company/ces-policy-knowledge-validation";
 import { z } from "zod";
 import type { StructuredGenerationPolicy, StructuredGenerationRequest } from "../../core/contracts.js";
 import type { StructuredGenerationAgentDefinition } from "../../core/registry.js";
@@ -52,8 +53,18 @@ type Input = z.infer<typeof PolicyTaxonomyAgentInputSchema>;
 type Intermediate = z.infer<typeof IntermediateSchema>;
 type Output = z.infer<typeof PolicyKnowledgeProposalSchema>;
 
+export interface PolicyTaxonomyGovernedKnowledge {
+  readonly validation_input: Parameters<typeof validatePolicyTaxonomyProposal>[1];
+  readonly approved_canonical_obligations: Input["approved_canonical_obligations"];
+  readonly predecessor_policies: Input["predecessor_policies"];
+}
+
+export type PolicyTaxonomyKnowledgeResolver =
+  (request: Input["request"]) => PolicyTaxonomyGovernedKnowledge;
+
 export function createPolicyTaxonomyAgent(options: {
   model_alias: string; provider_id: string;
+  resolve_governed_knowledge: PolicyTaxonomyKnowledgeResolver;
   policy: Partial<Pick<StructuredGenerationPolicy, "timeout_ms" | "max_attempts" |
     "max_input_bytes" | "max_output_bytes" | "max_output_tokens">>;
 }): StructuredGenerationAgentDefinition<Input, Intermediate, Output> {
@@ -71,23 +82,45 @@ export function createPolicyTaxonomyAgent(options: {
     mode: "structured-generation", input_schema: PolicyTaxonomyAgentInputSchema,
     intermediate_schema: IntermediateSchema, output_schema: PolicyKnowledgeProposalSchema,
     execution_policy: policy,
-    buildExecutionRequest: (input) => buildRequest(input, options.model_alias, policy),
-    transformResult: async (result, input) => createPolicyKnowledgeProposal({
-      schema_version: "1.0.0", proposal_id: `proposal.${input.request.request_id}`,
-      lifecycle: "proposed", governed_context: input.request.governed_context,
-      proposal: { layer: "policy_taxonomy", gap_route: "POLICY_GAP", ...result },
-    }) };
+    buildExecutionRequest: (input) => buildRequest(input, options.model_alias, policy,
+      resolveAndVerify(input, options.resolve_governed_knowledge)),
+    transformResult: async (result, input) => {
+      const governed = resolveAndVerify(input, options.resolve_governed_knowledge);
+      const proposal = createPolicyKnowledgeProposal({ schema_version: "1.0.0",
+        proposal_id: `proposal.${input.request.request_id}`, lifecycle: "proposed",
+        governed_context: input.request.governed_context,
+        proposal: { layer: "policy_taxonomy", gap_route: "POLICY_GAP", ...result } });
+      const validation = validatePolicyTaxonomyProposal(proposal, governed.validation_input);
+      if (validation.status !== "valid" ||
+          validation.review_eligibility !== "reviewable_proposal") {
+        throw new Error(`AGB-008 rejected Policy proposal: ${validation.issue_codes.join(",")}`);
+      }
+      return proposal;
+    } };
 }
 
 function buildRequest(input: Input, modelAlias: string,
-  policy: StructuredGenerationPolicy): StructuredGenerationRequest {
+  policy: StructuredGenerationPolicy,
+  governed?: PolicyTaxonomyGovernedKnowledge): StructuredGenerationRequest {
+  const knowledge = governed ?? { approved_canonical_obligations: input.approved_canonical_obligations,
+    predecessor_policies: input.predecessor_policies };
   return { system_instructions: `Propose only a bounded reusable CES Policy taxonomy decision. Compare every approved canonical obligation against every predecessor Policy and against every other proposed obligation. Preserve distinct canonical meanings and raw lineage. Use ADD, MERGE, or REJECT. Policy wording must state WHAT is required, never implementation HOW, and must be technology- and project-independent. Lifecycle must remain candidate and approval_status proposed. Do not claim acceptance, publication, or authority. Return JSON only.`,
     messages: [{ role: "user", content: JSON.stringify({
       bounded_task: input.request.request.layer === "policy_taxonomy"
         ? input.request.request.bounded_task : "",
       governed_context: input.request.governed_context,
-      approved_canonical_obligations: input.approved_canonical_obligations,
-      predecessor_policies: input.predecessor_policies,
+      approved_canonical_obligations: knowledge.approved_canonical_obligations,
+      predecessor_policies: knowledge.predecessor_policies,
     }) }], response_json_schema: z.toJSONSchema(IntermediateSchema),
     model_alias: modelAlias, max_output_tokens: policy.max_output_tokens };
+}
+
+function resolveAndVerify(input: Input, resolver: PolicyTaxonomyKnowledgeResolver) {
+  const governed = resolver(input.request);
+  if (JSON.stringify(input.approved_canonical_obligations) !==
+      JSON.stringify(governed.approved_canonical_obligations) ||
+      JSON.stringify(input.predecessor_policies) !== JSON.stringify(governed.predecessor_policies)) {
+    throw new Error("Caller Policy knowledge does not match the governed revision registry");
+  }
+  return governed;
 }

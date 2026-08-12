@@ -55,7 +55,13 @@ bridge reuse, and the non-authoritative proposal boundary.
 - The POL-008-R02 golden replay uses semantically equivalent, non-byte-identical
   rationales and passes the accepted AGB-008 validator as a reviewable proposal
   with `grants_policy_authority: false`.
-- Focused evidence: 23 bridge/architecture tests passed and
+- The production agent resolves the accepted raw v1.2, canonical v1.5, and
+  predecessor taxonomy v1.1 tuple from a server-controlled, fail-closed
+  registry and enforces AGB-008 before returning any proposal.
+- A canonical `executeRegisteredAgent(...)` test proves both branches: valid
+  replay output returns, while structurally valid but AGB-008-invalid output
+  fails with `INVALID_AGENT_RESULT` and cannot escape successfully.
+- Focused evidence: 24 bridge/architecture tests passed and
   `@company/ces-agents-bridge` typecheck passed.
 
 This evidence is implementation evidence only. It does not accept this ticket,

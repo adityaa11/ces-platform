@@ -56,6 +56,9 @@ importers:
       '@company/ces-policy-knowledge-validation':
         specifier: workspace:*
         version: link:../../packages/policy-knowledge-validation
+      '@company/ces-policy-source-vocabulary':
+        specifier: workspace:*
+        version: link:../../packages/policy-source-vocabulary
       '@company/ces-policy-taxonomy':
         specifier: workspace:*
         version: link:../../packages/policy-taxonomy

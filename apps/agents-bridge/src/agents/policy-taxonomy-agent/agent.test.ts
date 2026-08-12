@@ -8,6 +8,10 @@ import { CES_POLICY_ACCEPTED_SEQUENTIAL_FLOW_DECISION_V1,
   CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2 } from
   "@company/ces-policy-taxonomy/representative-taxonomy";
 import { createPolicyTaxonomyAgent, PolicyTaxonomyAgentInputSchema } from "./agent.js";
+import { resolveAcceptedPolicyTaxonomyKnowledge } from "./governed-knowledge.js";
+import { BridgeExecutionError, executeRegisteredAgent } from "../../core/executor.js";
+import { AgentRegistry, ModelRegistry, ProviderRegistry, ToolRegistry,
+  type AgentProvider } from "../../core/registry.js";
 
 const canonical = CES_POLICY_APPROVED_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_5;
 const predecessor = CES_POLICY_ACCEPTED_SEQUENTIAL_FLOW_DECISION_V1.artifact.taxonomy;
@@ -72,7 +76,8 @@ function semanticReplay() {
 describe("AGB-007 Policy Taxonomy Agent golden replay", () => {
   it("registers a proposal-only provider-neutral agent", () => {
     const agent = createPolicyTaxonomyAgent({ model_alias: "policy-default",
-      provider_id: "gemini", policy: {} });
+      provider_id: "gemini", resolve_governed_knowledge: resolveAcceptedPolicyTaxonomyKnowledge,
+      policy: {} });
     expect(agent).toMatchObject({ id: "ces.policy-taxonomy-agent", version: "1.0.0" });
     expect(agent.execution_policy).toMatchObject({ allowed_tools: [],
       requires_structured_output: true, requires_human_review: true });
@@ -83,7 +88,8 @@ describe("AGB-007 Policy Taxonomy Agent golden replay", () => {
 
   it("replays POL-008-R02 semantically and passes the accepted AGB-008 validator", async () => {
     const agent = createPolicyTaxonomyAgent({ model_alias: "policy-default",
-      provider_id: "gemini", policy: {} });
+      provider_id: "gemini", resolve_governed_knowledge: resolveAcceptedPolicyTaxonomyKnowledge,
+      policy: {} });
     const governedInput = input();
     const intermediate = agent.intermediate_schema.parse(semanticReplay());
     const proposal = await agent.transformResult(intermediate, governedInput, {} as never);
@@ -107,9 +113,48 @@ describe("AGB-007 Policy Taxonomy Agent golden replay", () => {
       approved_canonical_obligations: governedInput.approved_canonical_obligations.slice(1) }))
       .toThrow(/must match requested concepts/u);
     const agent = createPolicyTaxonomyAgent({ model_alias: "policy-default",
-      provider_id: "gemini", policy: {} });
+      provider_id: "gemini", resolve_governed_knowledge: resolveAcceptedPolicyTaxonomyKnowledge,
+      policy: {} });
     expect(() => agent.intermediate_schema.parse({ ...semanticReplay(),
       proposed_policy: { ...semanticReplay().proposed_policy,
         approval_status: "accepted" } })).toThrow();
+  });
+
+  it("enforces AGB-008 on the canonical registered-agent execution path", async () => {
+    async function execute(providerOutput: unknown) {
+      const agents = new AgentRegistry();
+      agents.register(createPolicyTaxonomyAgent({ model_alias: "policy-default",
+        provider_id: "fixture-provider",
+        resolve_governed_knowledge: resolveAcceptedPolicyTaxonomyKnowledge, policy: {} }));
+      const provider: AgentProvider = { provider_id: "fixture-provider",
+        capabilities: ["structured-output"],
+        async executeStructured(_request, schema) {
+          return { output: schema.parse(providerOutput), provider_id: "fixture-provider",
+            requested_model_alias: "policy-default", resolved_model: "fixture-model",
+            finish_reason: "completed" };
+        } };
+      const providers = new ProviderRegistry();
+      providers.register(provider);
+      const models = new ModelRegistry();
+      models.register({ alias: "policy-default", provider_id: "fixture-provider",
+        physical_model: "fixture-model", capabilities: ["structured-output"] });
+      return executeRegisteredAgent({ agent_id: "ces.policy-taxonomy-agent",
+        agent_version: "1.0.0", value: input(), request_id: "agb-007-production-path",
+        client: { client_id: "policy-client", audit_identity: "Policy test client",
+          allowed_agents: ["ces.policy-taxonomy-agent"], allowed_routes: ["agent"],
+          max_concurrency: 1, requests_per_minute: 10 },
+        ceilings: { max_request_bytes: 2_000_000, max_source_documents: 20,
+          max_total_source_characters: 5_000_000, max_single_source_characters: 1_000_000,
+          max_provider_response_bytes: 2_000_000, max_output_tokens: 20_000,
+          max_provider_attempts: 3, max_timeout_ms: 100_000 },
+        registries: { agents, providers, models, tools: new ToolRegistry() },
+        signal: new AbortController().signal });
+    }
+    await expect(execute(semanticReplay())).resolves.toMatchObject({
+      lifecycle: "proposed", proposal: { proposed_policy: { approval_status: "proposed" } } });
+    const incomplete = { ...semanticReplay(),
+      semantic_comparisons: semanticReplay().semantic_comparisons.slice(0, 1) };
+    await expect(execute(incomplete)).rejects.toMatchObject({
+      constructor: BridgeExecutionError, status: 422, code: "INVALID_AGENT_RESULT" });
   });
 });

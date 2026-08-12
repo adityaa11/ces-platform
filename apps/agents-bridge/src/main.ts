@@ -16,6 +16,8 @@ import { createAtlasSemanticFactExtractor } from "./agents/atlas-semantic-fact-e
 import { createAtlasProjectRelationshipExtractor } from
   "./agents/atlas-project-relationship-extractor/agent.js";
 import { createPolicyTaxonomyAgent } from "./agents/policy-taxonomy-agent/agent.js";
+import { resolveAcceptedPolicyTaxonomyKnowledge } from
+  "./agents/policy-taxonomy-agent/governed-knowledge.js";
 import { createJsonTelemetry } from "./operations/telemetry.js";
 import { closeBridgeServer, listenBridgeServer, type BridgeRuntime } from "./server.js";
 
@@ -71,6 +73,7 @@ export function createProductionRuntime(
   agents.register(createPolicyTaxonomyAgent({
     model_alias: environment.POLICY_MODEL_ALIAS ?? environment.ATLAS_MODEL_ALIAS ?? "atlas-default",
     provider_id: provider.provider_id,
+    resolve_governed_knowledge: resolveAcceptedPolicyTaxonomyKnowledge,
     policy: { timeout_ms: config.ceilings.max_timeout_ms,
       max_attempts: config.ceilings.max_provider_attempts,
       max_input_bytes: config.ceilings.max_request_bytes,
