@@ -1,6 +1,6 @@
 # CES-GF-AGB-010 - REVIEW_GATE Suspension and Authority Resume
 
-**Status:** Proposed; implementation unauthorized
+**Status:** Implemented candidate; pending REVIEW_GATE
 **Review class:** REVIEW_GATE
 **Depends on:** Accepted AGB-009
 **Blocks:** AGB-011 and AGB-014
@@ -36,3 +36,25 @@ workflow only from an externally accepted, durably published authority event.
 
 Suspension correctness, external authority, bounded review behavior,
 publication integrity, idempotency, and absence of self-approval.
+
+## Implementation evidence
+
+- The accepted event-authoritative workflow now records review, publication,
+  and resume as hash-bound transitions while remaining suspended after proposal
+  validation, review, and publication.
+- Review outcomes are restricted to `ACCEPTED`, `NOT ACCEPTED`, and
+  `ACCEPTED WITH DEFERRED ITEMS`; `NOT ACCEPTED` requires explicit bounded
+  REQUIRED identities and cannot publish or trigger autonomous regeneration.
+- Review rounds bind predecessor review, reviewed commit, exact proposal hash,
+  bounded closure findings, and any qualifying-regression declaration.
+- Publication requires an accepting review and binds the same review, commit,
+  artifact hash, and external authority evidence. Only that exact, unconsumed
+  publication can resume into `COVERAGE_RERUN_PENDING`.
+- Altered, missing, rejected, stale, and duplicate resume paths fail. Proposal,
+  validation, and review alone never advance coverage.
+- Focused workflow and architecture tests pass, together with package
+  typechecking.
+
+This candidate records external authority; it does not generate a review
+verdict, self-approve, grant final POL-008 authority, or implement AGB-011 retry
+and non-convergence policy.
