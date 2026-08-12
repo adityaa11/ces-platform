@@ -1,6 +1,6 @@
 # CES-GF-POL-007-R01 - Sequential Business-Flow Canonicalization
 
-**Status:** Proposed
+**Status:** Ready for REVIEW_GATE
 
 **Review class:** REVIEW_GATE
 
@@ -68,3 +68,18 @@ Safara facts ultimately activate the concept.
 - Canonicalizing the POL-006-R02 data-protection candidates before their raw
   successor is accepted.
 - Reopening unrelated POL-007 concepts or decisions.
+
+## Implementation evidence
+
+- Candidate canonical successor: revision `1.2.0`, with exact predecessor
+  revision `1.1.0`.
+- Proposed addition: `ces.sequential-business-flow`, supported only by accepted
+  raw identity `owasp.asvs.5-0-0` / `raw.asvs.v2-3-1` at
+  `v5.0.0-V2.3.1`.
+- The new obligation remains candidate and its addition decision remains
+  proposed without human-review evidence.
+- `ces.transaction-integrity` and all predecessor concepts, mappings, approval
+  decisions, and source lineage remain unchanged.
+- Focused validation rejects same-revision mutation, unsupported mappings,
+  erased predecessor lineage, Safara-specific terminology, and altered meaning.
+- No Policy is created or implied.

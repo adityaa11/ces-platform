@@ -3,9 +3,15 @@ import { CanonicalVocabularySchema, validateCanonicalVocabularyAgainstRawConcept
   validateCanonicalVocabularySuccessor } from "./index.js";
 import { CES_POLICY_CANONICAL_VOCABULARY_V1,
   CES_POLICY_APPROVED_CANONICAL_VOCABULARY_V1_1,
+  CES_POLICY_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_2,
+  buildSequentialBusinessFlowCanonicalSuccessor,
   changeCanonicalConceptLifecycle,
   replaceRawMappingForSourceRenumbering,
   resolveCanonicalSourceLineage } from "./representative-catalog.js";
+
+function clone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
+}
 
 describe("POL-007 canonical vocabulary", () => {
   it("requires raw support and rationale for every canonical concept", () => {
@@ -145,5 +151,66 @@ describe("POL-007 canonical vocabulary", () => {
       .toEqual(new Set(["nist.csf.2-0", "nist.sp-800-53.r5-2-0"]));
     expect(new Set(lineage.map(({ raw_concept }) => raw_concept.source_locator.locator)))
       .toEqual(new Set(["PR.AA-05", "AC-3"]));
+  });
+});
+
+describe("POL-007-R01 sequential business-flow canonicalization", () => {
+  it("publishes a candidate successor linked to approved revision 1.1.0", () => {
+    const successor = CES_POLICY_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_2;
+    expect(successor).toMatchObject({ vocabulary_revision: "1.2.0",
+      predecessor_revision: "1.1.0", vocabulary_status: "candidate" });
+    expect(successor.concepts.at(-1)).toMatchObject({
+      concept_id: "ces.sequential-business-flow", semantic_kind: "obligation",
+      lifecycle: "candidate" });
+    expect(successor.decisions.at(-1)).toMatchObject({ decision_kind: "addition",
+      status: "proposed", reviewed_at: null, reviewer_evidence_id: null });
+  });
+
+  it("maps only to accepted ASVS V2.3.1 with exact raw lineage", () => {
+    const mapping = CES_POLICY_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_2.mappings.at(-1);
+    expect(mapping).toMatchObject({ canonical_concept_id: "ces.sequential-business-flow",
+      raw_concept_id: "raw.asvs.v2-3-1", raw_source_release_id: "owasp.asvs.5-0-0",
+      relationship: "supports" });
+  });
+
+  it("keeps sequence integrity distinct from transaction atomicity", () => {
+    const concepts = CES_POLICY_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_2.concepts;
+    expect(concepts.find(({ concept_id }) => concept_id === "ces.transaction-integrity"))
+      .toEqual(CES_POLICY_APPROVED_CANONICAL_VOCABULARY_V1_1.concepts
+        .find(({ concept_id }) => concept_id === "ces.transaction-integrity"));
+    expect(concepts.find(({ concept_id }) => concept_id === "ces.sequential-business-flow")
+      ?.definition).toContain("sequential step order without skipped steps");
+  });
+
+  it("preserves every predecessor concept, mapping, decision, and approval", () => {
+    const predecessor = CES_POLICY_APPROVED_CANONICAL_VOCABULARY_V1_1;
+    const successor = CES_POLICY_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_2;
+    expect(successor.concepts.slice(0, predecessor.concepts.length)).toEqual(predecessor.concepts);
+    expect(successor.mappings.slice(0, predecessor.mappings.length)).toEqual(predecessor.mappings);
+    expect(successor.decisions.slice(0, predecessor.decisions.length)).toEqual(predecessor.decisions);
+  });
+
+  it("fails closed on same-revision mutation, unsupported mapping, or erased lineage", () => {
+    const current = clone(CES_POLICY_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_2);
+    current.vocabulary_revision = "1.1.0";
+    expect(() => buildSequentialBusinessFlowCanonicalSuccessor(current)).toThrow(/distinct/u);
+
+    const unsupported = clone(CES_POLICY_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_2);
+    unsupported.mappings.at(-1)!.raw_concept_id = "raw.asvs.unknown";
+    expect(() => buildSequentialBusinessFlowCanonicalSuccessor(unsupported)).toThrow(/missing/u);
+
+    const erased = clone(CES_POLICY_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_2);
+    erased.mappings.shift();
+    expect(() => buildSequentialBusinessFlowCanonicalSuccessor(erased)).toThrow(/lineage|bounded/u);
+  });
+
+  it("fails closed on Safara-specific or broadened canonical meaning", () => {
+    const specific = clone(CES_POLICY_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_2);
+    specific.concepts.at(-1)!.definition = "A Safara package proceeds to its manifest.";
+    expect(() => buildSequentialBusinessFlowCanonicalSuccessor(specific)).toThrow(/reusable/u);
+
+    const broadened = clone(CES_POLICY_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_2);
+    broadened.concepts.at(-1)!.definition = "Every operation must always succeed.";
+    expect(() => buildSequentialBusinessFlowCanonicalSuccessor(broadened)).toThrow(/altered/u);
   });
 });

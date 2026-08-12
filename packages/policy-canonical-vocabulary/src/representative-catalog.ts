@@ -1,5 +1,7 @@
 import { CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1 } from
   "@company/ces-policy-source-vocabulary/representative-corpus";
+import { CES_POLICY_ACCEPTED_TARGETED_EXTRACTION_CORPUS_V1_2 } from
+  "@company/ces-policy-source-vocabulary/representative-corpus";
 import { CanonicalVocabularySchema,
   rawConceptIdentityKey, validateCanonicalVocabularyAgainstRawConcepts,
   validateCanonicalVocabularySuccessor } from "./index.js";
@@ -179,3 +181,77 @@ export function resolveCanonicalSourceLineage(canonicalConceptId: string) {
       return { mapping, raw_concept: raw };
     });
 }
+
+const SEQUENTIAL_FLOW_CONCEPT = {
+  concept_id: "ces.sequential-business-flow", meaning_version: "1.0.0",
+  preferred_term: "Sequential business flow", semantic_kind: "obligation",
+  lifecycle: "candidate", aliases: ["required business-flow sequence"],
+  definition: "A user's required business flow proceeds in its expected sequential step order without skipped steps.",
+} as const;
+
+const SEQUENTIAL_FLOW_MAPPING = {
+  canonical_concept_id: "ces.sequential-business-flow",
+  raw_concept_id: "raw.asvs.v2-3-1", raw_source_release_id: "owasp.asvs.5-0-0",
+  relationship: "supports",
+  rationale: "ASVS v5.0.0-V2.3.1 directly requires same-user business flows to execute in expected sequential order without skipped steps.",
+} as const;
+
+const SEQUENTIAL_FLOW_DECISION = {
+  decision_id: "decision.pol-007-r01.add.sequential-business-flow",
+  decision_kind: "addition", status: "proposed",
+  affected_canonical_concept_ids: ["ces.sequential-business-flow"],
+  affected_raw_concept_ids: ["raw.asvs.v2-3-1"],
+  rationale: "Add a distinct obligation from accepted raw identity owasp.asvs.5-0-0/raw.asvs.v2-3-1 at v5.0.0-V2.3.1 because ordered, non-skipped flow execution is reusable security meaning and is not equivalent to complete-or-rollback transaction integrity.",
+  proposed_at: "2026-08-12T09:00:00+00:00", reviewed_at: null,
+  reviewer_evidence_id: null,
+} as const;
+
+function buildSequentialFlowValue() {
+  const predecessor = CES_POLICY_APPROVED_CANONICAL_VOCABULARY_V1_1;
+  return { ...predecessor, vocabulary_revision: "1.2.0",
+    predecessor_revision: predecessor.vocabulary_revision, vocabulary_status: "candidate",
+    concepts: [...predecessor.concepts, SEQUENTIAL_FLOW_CONCEPT],
+    mappings: [...predecessor.mappings, SEQUENTIAL_FLOW_MAPPING],
+    decisions: [...predecessor.decisions, SEQUENTIAL_FLOW_DECISION] } as const;
+}
+
+export function buildSequentialBusinessFlowCanonicalSuccessor(
+  value: unknown = buildSequentialFlowValue(),
+) {
+  const predecessor = CES_POLICY_APPROVED_CANONICAL_VOCABULARY_V1_1;
+  const rawConcepts = CES_POLICY_ACCEPTED_TARGETED_EXTRACTION_CORPUS_V1_2.corpus.vocabularies
+    .flatMap(({ concepts: values }) => values);
+  const successor = validateCanonicalVocabularyAgainstRawConcepts(value, rawConcepts);
+  validateCanonicalVocabularySuccessor(predecessor, successor);
+
+  if (JSON.stringify(successor.concepts.slice(0, predecessor.concepts.length)) !==
+      JSON.stringify(predecessor.concepts) ||
+      JSON.stringify(successor.mappings.slice(0, predecessor.mappings.length)) !==
+      JSON.stringify(predecessor.mappings) ||
+      JSON.stringify(successor.decisions.slice(0, predecessor.decisions.length)) !==
+      JSON.stringify(predecessor.decisions)) {
+    throw new Error("POL-007-R01 successor must preserve complete predecessor lineage");
+  }
+  if (successor.concepts.length !== predecessor.concepts.length + 1 ||
+      successor.mappings.length !== predecessor.mappings.length + 1 ||
+      successor.decisions.length !== predecessor.decisions.length + 1) {
+    throw new Error("POL-007-R01 successor may add only its bounded concept, mapping, and decision");
+  }
+  const serializedMeaning = JSON.stringify({ concept: successor.concepts.at(-1),
+    mapping: successor.mappings.at(-1), decision: successor.decisions.at(-1) }).toLowerCase();
+  if (["safara", "package", "pilgrim", "payment", "manifest", "framework",
+    "workflow-engine", "state-machine", "orchestration"].some((term) =>
+    serializedMeaning.includes(term))) {
+    throw new Error("POL-007-R01 canonical meaning must remain reusable and source-grounded");
+  }
+  const expected = CanonicalVocabularySchema.parse(buildSequentialFlowValue());
+  if (JSON.stringify(successor.concepts.at(-1)) !== JSON.stringify(expected.concepts.at(-1)) ||
+      JSON.stringify(successor.mappings.at(-1)) !== JSON.stringify(expected.mappings.at(-1)) ||
+      JSON.stringify(successor.decisions.at(-1)) !== JSON.stringify(expected.decisions.at(-1))) {
+    throw new Error("POL-007-R01 successor contains altered or unsupported canonical meaning");
+  }
+  return successor;
+}
+
+export const CES_POLICY_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_2 =
+  buildSequentialBusinessFlowCanonicalSuccessor();

@@ -20,7 +20,9 @@ export const MappingRelationshipSchema = z.enum([
   "verifies",
   "expresses_concern",
 ]);
-export const VocabularyDecisionKindSchema = z.enum(["merge", "split", "alias", "retirement"]);
+export const VocabularyDecisionKindSchema = z.enum([
+  "addition", "merge", "split", "alias", "retirement",
+]);
 
 export const CanonicalConceptSchema = z.object({
   concept_id: IdSchema,
