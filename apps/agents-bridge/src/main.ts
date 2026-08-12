@@ -15,6 +15,7 @@ import {
 import { createAtlasSemanticFactExtractor } from "./agents/atlas-semantic-fact-extractor/agent.js";
 import { createAtlasProjectRelationshipExtractor } from
   "./agents/atlas-project-relationship-extractor/agent.js";
+import { createPolicyTaxonomyAgent } from "./agents/policy-taxonomy-agent/agent.js";
 import { createJsonTelemetry } from "./operations/telemetry.js";
 import { closeBridgeServer, listenBridgeServer, type BridgeRuntime } from "./server.js";
 
@@ -67,6 +68,15 @@ export function createProductionRuntime(
       max_output_bytes: config.ceilings.max_provider_response_bytes,
       max_output_tokens: config.ceilings.max_output_tokens },
   }));
+  agents.register(createPolicyTaxonomyAgent({
+    model_alias: environment.POLICY_MODEL_ALIAS ?? environment.ATLAS_MODEL_ALIAS ?? "atlas-default",
+    provider_id: provider.provider_id,
+    policy: { timeout_ms: config.ceilings.max_timeout_ms,
+      max_attempts: config.ceilings.max_provider_attempts,
+      max_input_bytes: config.ceilings.max_request_bytes,
+      max_output_bytes: config.ceilings.max_provider_response_bytes,
+      max_output_tokens: config.ceilings.max_output_tokens },
+  }));
   const providers = new ProviderRegistry();
   providers.register(provider);
   const models = new ModelRegistry();
@@ -79,6 +89,15 @@ export function createProductionRuntime(
     physical_model: physicalModel,
     capabilities: ["structured-output"],
   });
+  const policyAlias = environment.POLICY_MODEL_ALIAS ?? alias;
+  if (policyAlias !== alias) {
+    const policyPhysicalModel = geminiConfig.models[policyAlias];
+    if (!policyPhysicalModel) {
+      throw new Error(`Gemini model alias is not configured: ${policyAlias}`);
+    }
+    models.register({ alias: policyAlias, provider_id: provider.provider_id,
+      physical_model: policyPhysicalModel, capabilities: ["structured-output"] });
+  }
   const tools = new ToolRegistry();
   validateRegistries({ agents, providers, models, tools });
   return {

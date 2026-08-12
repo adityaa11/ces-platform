@@ -6,5 +6,11 @@
     "tsBuildInfoFile": "dist/.tsbuildinfo",
     "types": ["node"]
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts"],
+  "references": [
+    { "path": "../../packages/policy-canonical-vocabulary" },
+    { "path": "../../packages/policy-knowledge-proposals" },
+    { "path": "../../packages/policy-knowledge-validation" },
+    { "path": "../../packages/policy-taxonomy" }
+  ]
 }

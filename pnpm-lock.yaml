@@ -47,6 +47,18 @@ importers:
       '@company/ces-atlas-semantic-facts':
         specifier: workspace:*
         version: link:../../packages/atlas-semantic-facts
+      '@company/ces-policy-canonical-vocabulary':
+        specifier: workspace:*
+        version: link:../../packages/policy-canonical-vocabulary
+      '@company/ces-policy-knowledge-proposals':
+        specifier: workspace:*
+        version: link:../../packages/policy-knowledge-proposals
+      '@company/ces-policy-knowledge-validation':
+        specifier: workspace:*
+        version: link:../../packages/policy-knowledge-validation
+      '@company/ces-policy-taxonomy':
+        specifier: workspace:*
+        version: link:../../packages/policy-taxonomy
       zod:
         specifier: 4.4.3
         version: 4.4.3

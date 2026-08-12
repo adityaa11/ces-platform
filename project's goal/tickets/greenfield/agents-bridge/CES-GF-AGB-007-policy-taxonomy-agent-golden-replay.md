@@ -1,6 +1,6 @@
 # CES-GF-AGB-007 - Policy Taxonomy Agent Golden Replay
 
-**Status:** Proposed; implementation unauthorized
+**Status:** Implemented candidate; pending REVIEW_GATE
 **Review class:** REVIEW_GATE
 **Depends on:** Accepted AGB-006 and AGB-008
 **Blocks:** AGB-014
@@ -43,3 +43,20 @@ semantic replay.
 
 Semantic fidelity, project independence, lineage, predecessor comparison,
 bridge reuse, and the non-authoritative proposal boundary.
+
+## Implementation evidence
+
+- Registered agent: `ces.policy-taxonomy-agent` version `1.0.0` in the existing
+  Agents Bridge runtime and provider/model registries.
+- Governed input requires an AGB-006 `POLICY_GAP` request plus exact approved
+  canonical-obligation and predecessor-Policy payloads.
+- Output is transformed into the AGB-006 content-addressed proposal contract;
+  execution requires structured output and human review and permits no tools.
+- The POL-008-R02 golden replay uses semantically equivalent, non-byte-identical
+  rationales and passes the accepted AGB-008 validator as a reviewable proposal
+  with `grants_policy_authority: false`.
+- Focused evidence: 23 bridge/architecture tests passed and
+  `@company/ces-agents-bridge` typecheck passed.
+
+This evidence is implementation evidence only. It does not accept this ticket,
+publish the proposed Policy, or grant final POL-008 authority.
