@@ -95,17 +95,40 @@ must not start until the resulting POL-008 taxonomy is accepted.
 - Candidate taxonomy revision: `1.0.0`
 - Candidate authority: `false`
 - Proposed deterministic result SHA-256:
-  `cb04d795620429b832db43f6d684b848d51d25dcf0dae5406b3ad03f947d38c6`
+  `0fa60c21a449dd43f1c24dcf5a3fcd5a5037982333d627378aeb721dd953945e`
 
 The first proposed result accounts for all 111 facts:
 
 - 77 `AWARENESS_EMITTED`, all explicitly `candidate_only`;
-- 15 `NO_SECURITY_AWARENESS_REQUIRED`;
+- 24 `NO_SECURITY_AWARENESS_REQUIRED`;
 - 5 `OUTSIDE_SOFTWARE_SCOPE`;
-- 14 `SOURCE_OR_POLICY_GAP`, all initially routed to
-  `CANONICALIZATION_GAP` with existing raw support.
+- 5 `SOURCE_OR_POLICY_GAP`: one `CANONICALIZATION_GAP` with existing raw
+  support and four `EXTRACTION_GAP` proposals with closer governed-source
+  candidates absent from the representative raw corpus.
 
 The REVIEW_GATE decides whether each individual classification and support
 mapping is semantically correct. These counts and gaps are proposed evidence,
 not accepted shared CES knowledge. No POL-006, POL-007, or POL-008 artifact is
 mutated by this result.
+
+Round 2 remediation makes every disposition an explicit, mutually exclusive
+fact-ID assignment whose union is the exact 111-fact input. There is no default
+non-awareness outcome; an unclassified or unknown ID fails closed. Every
+coverage entry now embeds its page, exact buyer wording, source hash, inventory
+hash, extraction method, and manual provenance.
+
+The prior thirteen `raw.asvs.v14-2-1` mappings were removed because that raw
+concept is narrowly about URL/query-string and HTTP message placement. Nine
+functional, reporting, format, or delivery facts now have explicit
+`NO_SECURITY_AWARENESS_REQUIRED` dispositions. Four facts have individual
+`EXTRACTION_GAP` proposals:
+
+- `0024`, `0035`, and `0045` cite governed ASVS `V14.1.1` as a closer
+  sensitive-data identification/classification candidate;
+- `0027` cites governed ASVS `V14.2.6` as the closer minimum-data/UI-masking
+  candidate.
+
+These locators are source-level candidates for a later targeted POL-006
+successor REVIEW_GATE; this evaluator does not add them to the accepted raw
+corpus. Fact `0016` remains a `CANONICALIZATION_GAP` supported by already
+extracted `raw.asvs.v2-3-1`.

@@ -38,11 +38,24 @@ const PolicySupportSchema = z.object({
 
 export const SafaraCoverageEntrySchema = z.object({
   demand_fact_id: Id,
+  manual_provenance: z.object({
+    kind: z.literal("manual_golden_fixture"),
+    source_sha256: z.string().regex(/^[0-9a-f]{64}$/u),
+    inventory_sha256: z.string().regex(/^[0-9a-f]{64}$/u),
+    page: z.number().int().min(1).max(7),
+    exact_text: NonEmpty,
+    extraction_method: z.literal("human_reconciled"),
+  }).strict(),
   disposition: GovernedDispositionSchema,
   rationale: NonEmpty,
   policy_support: z.array(PolicySupportSchema),
   gap_route: GapRouteSchema.nullable(),
   raw_support_ids: z.array(Id),
+  source_support_candidates: z.array(z.object({
+    source_release_id: Id,
+    source_locator: NonEmpty,
+    bounded_relevance: NonEmpty,
+  }).strict()),
 }).strict().superRefine((entry, context) => {
   if (entry.disposition === "AWARENESS_EMITTED" && entry.policy_support.length === 0) {
     context.addIssue({ code: "custom", message: "Awareness requires candidate Policy support" });
@@ -52,6 +65,13 @@ export const SafaraCoverageEntrySchema = z.object({
   }
   if (entry.disposition !== "SOURCE_OR_POLICY_GAP" && entry.gap_route) {
     context.addIssue({ code: "custom", message: "Only knowledge gaps may have a gap route" });
+  }
+  if (entry.gap_route === "CANONICALIZATION_GAP" && entry.raw_support_ids.length === 0) {
+    context.addIssue({ code: "custom", message: "Canonicalization gaps require raw support" });
+  }
+  if (entry.gap_route === "EXTRACTION_GAP" &&
+      entry.source_support_candidates.length === 0) {
+    context.addIssue({ code: "custom", message: "Extraction gaps require source candidates" });
   }
 });
 
@@ -80,11 +100,23 @@ const transactionIds = idSet([
   93, 102, 103, 104, 105, 106, 107, 111,
 ]);
 const canonicalizationGaps = new Map<string, readonly string[]>([
-  ...[2, 24, 27, 35, 36, 44, 45, 61, 62, 63, 64, 65, 98]
-    .map((number) => [factId(number), ["raw.asvs.v14-2-1"]] as const),
   [factId(16), ["raw.asvs.v2-3-1"]],
 ]);
+const extractionGaps = new Map<string, readonly SourceCandidate[]>([
+  [factId(24), [asvsCandidate("v5.0.0-V14.1.1",
+    "Sensitive-data identification and classification is relevant to the enumerated pilgrim identity data.")]],
+  [factId(27), [asvsCandidate("v5.0.0-V14.2.6",
+    "Minimum necessary return and UI masking are directly relevant to partially displayed NIK and passport values.")]],
+  [factId(35), [asvsCandidate("v5.0.0-V14.1.1",
+    "Sensitive-data identification and classification is relevant to payment records and evidence.")]],
+  [factId(45), [asvsCandidate("v5.0.0-V14.1.1",
+    "Sensitive-data identification and classification is relevant to identity and health document classes.")]],
+]);
 const outsideScope = idSet([96, 97, 99, 100, 110]);
+const noAwarenessIds = idSet([
+  1, 2, 3, 4, 6, 7, 8, 10, 18, 19, 20, 25, 36, 44, 46, 48, 61, 62, 63,
+  64, 65, 88, 92, 98,
+]);
 
 const policyDefinitions = {
   access: { policy_id: "policy.access-authorization", canonical: "ces.access-authorization" },
@@ -102,6 +134,7 @@ export function evaluateSafaraBootstrapCoverage(
     throw new Error("Safara bootstrap requires all 111 unique manual demand facts");
   }
   assertPinnedKnowledge();
+  assertExplicitClassificationPartition(facts.map(({ demand_fact_id }) => demand_fact_id));
   const entries = facts.map(classify);
   const valueWithoutHash = {
     schema_version: "1.0.0" as const,
@@ -122,27 +155,47 @@ export function evaluateSafaraBootstrapCoverage(
 
 function classify(fact: QualificationPolicyDemandFact): z.infer<typeof SafaraCoverageEntrySchema> {
   const id = fact.demand_fact_id;
+  const manual_provenance = {
+    kind: fact.provenance.kind,
+    source_sha256: fact.provenance.source_sha256,
+    inventory_sha256: fact.provenance.inventory_sha256,
+    page: fact.provenance.page,
+    exact_text: fact.provenance.exact_text,
+    extraction_method: fact.provenance.extraction_method,
+  } as const;
   const rawSupport = canonicalizationGaps.get(id);
-  if (rawSupport) return { demand_fact_id: id, disposition: "SOURCE_OR_POLICY_GAP",
+  if (rawSupport) return { demand_fact_id: id, manual_provenance,
+    disposition: "SOURCE_OR_POLICY_GAP",
     rationale: id === factId(16)
       ? "The raw corpus contains sequential business-flow knowledge but no approved canonical obligation represents it."
-      : "The raw corpus contains sensitive-data protection knowledge but no approved canonical obligation represents it.",
-    policy_support: [], gap_route: "CANONICALIZATION_GAP", raw_support_ids: [...rawSupport] };
-  if (outsideScope.has(id)) return { demand_fact_id: id, disposition: "OUTSIDE_SOFTWARE_SCOPE",
+      : "The raw corpus contains relevant knowledge but no approved canonical obligation represents it.",
+    policy_support: [], gap_route: "CANONICALIZATION_GAP", raw_support_ids: [...rawSupport],
+    source_support_candidates: [] };
+  const sourceCandidates = extractionGaps.get(id);
+  if (sourceCandidates) return { demand_fact_id: id, manual_provenance,
+    disposition: "SOURCE_OR_POLICY_GAP",
+    rationale: "The governed ASVS release contains closer source knowledge, but the representative POL-006 raw corpus did not extract it.",
+    policy_support: [], gap_route: "EXTRACTION_GAP", raw_support_ids: [],
+    source_support_candidates: [...sourceCandidates] };
+  if (outsideScope.has(id)) return { demand_fact_id: id, manual_provenance,
+    disposition: "OUTSIDE_SOFTWARE_SCOPE",
     rationale: "This delivery or organizational handover commitment is accounted for but does not create software-side CES Policy awareness.",
-    policy_support: [], gap_route: null, raw_support_ids: [] };
+    policy_support: [], gap_route: null, raw_support_ids: [], source_support_candidates: [] };
   if (accessIds.has(id)) return awareness(id, "access",
-    "The fact activates candidate authorization awareness; candidate support is not authoritative coverage.");
+    "The fact activates candidate authorization awareness; candidate support is not authoritative coverage.", manual_provenance);
   if (traceIds.has(id)) return awareness(id, "trace",
-    "The fact activates candidate security-event traceability awareness; candidate support is not authoritative coverage.");
+    "The fact activates candidate security-event traceability awareness; candidate support is not authoritative coverage.", manual_provenance);
   if (transactionIds.has(id)) return awareness(id, "transaction",
-    "The fact activates candidate transaction-integrity awareness; candidate support is not authoritative coverage.");
-  return { demand_fact_id: id, disposition: "NO_SECURITY_AWARENESS_REQUIRED",
+    "The fact activates candidate transaction-integrity awareness; candidate support is not authoritative coverage.", manual_provenance);
+  if (noAwarenessIds.has(id)) return { demand_fact_id: id, manual_provenance,
+    disposition: "NO_SECURITY_AWARENESS_REQUIRED",
     rationale: "The fact remains project truth or a functional detail and does not independently require software-security awareness in the current governed knowledge scope.",
-    policy_support: [], gap_route: null, raw_support_ids: [] };
+    policy_support: [], gap_route: null, raw_support_ids: [], source_support_candidates: [] };
+  throw new Error(`Safara demand fact has no explicit classification: ${id}`);
 }
 
-function awareness(id: string, kind: keyof typeof policyDefinitions, rationale: string) {
+function awareness(id: string, kind: keyof typeof policyDefinitions, rationale: string,
+  manualProvenance: z.infer<typeof SafaraCoverageEntrySchema>["manual_provenance"]) {
   const definition = policyDefinitions[kind];
   const sourceLineage = resolvePolicySourceLineage(definition.policy_id)
     .flatMap(({ canonical_support, source_lineage }) => source_lineage.map(({ raw_concept }) => ({
@@ -151,11 +204,39 @@ function awareness(id: string, kind: keyof typeof policyDefinitions, rationale: 
       source_release_id: raw_concept.source_release_id,
       source_locator: raw_concept.source_locator.locator,
     })));
-  return { demand_fact_id: id, disposition: "AWARENESS_EMITTED" as const, rationale,
+  return { demand_fact_id: id, manual_provenance: manualProvenance,
+    disposition: "AWARENESS_EMITTED" as const, rationale,
     policy_support: [{ policy_id: definition.policy_id, policy_revision: "1.0.0",
       support_status: "candidate_only" as const,
       canonical_concept_ids: [definition.canonical], source_lineage: sourceLineage }],
-    gap_route: null, raw_support_ids: [] };
+    gap_route: null, raw_support_ids: [], source_support_candidates: [] };
+}
+
+interface SourceCandidate {
+  readonly source_release_id: "owasp.asvs.5-0-0";
+  readonly source_locator: string;
+  readonly bounded_relevance: string;
+}
+
+function asvsCandidate(sourceLocator: string, boundedRelevance: string): SourceCandidate {
+  return { source_release_id: "owasp.asvs.5-0-0", source_locator: sourceLocator,
+    bounded_relevance: boundedRelevance };
+}
+
+function assertExplicitClassificationPartition(inputIds: readonly string[]): void {
+  const sets = [accessIds, traceIds, transactionIds, canonicalizationGaps,
+    extractionGaps, outsideScope, noAwarenessIds];
+  const assigned = new Map<string, number>();
+  for (const values of sets) {
+    for (const id of values.keys()) assigned.set(id, (assigned.get(id) ?? 0) + 1);
+  }
+  const accepted = new Set(inputIds);
+  const duplicates = [...assigned].filter(([, count]) => count !== 1).map(([id]) => id);
+  const missing = [...accepted].filter((id) => !assigned.has(id));
+  const unknown = [...assigned.keys()].filter((id) => !accepted.has(id));
+  if (duplicates.length || missing.length || unknown.length || assigned.size !== 111) {
+    throw new Error(`Invalid explicit Safara classification partition: duplicates=${duplicates.join(",")}; missing=${missing.join(",")}; unknown=${unknown.join(",")}`);
+  }
 }
 
 function assertPinnedKnowledge(): void {

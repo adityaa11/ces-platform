@@ -28,6 +28,10 @@ describe("POL-008-V01 Safara bootstrap coverage", () => {
     expect(first.entries).toHaveLength(111);
     expect(new Set(first.entries.map(({ demand_fact_id }) => demand_fact_id)).size).toBe(111);
     expect(first.result_hash).toHaveLength(64);
+    expect(first.entries.every(({ manual_provenance }) =>
+      manual_provenance.kind === "manual_golden_fixture" &&
+      manual_provenance.page >= 1 && manual_provenance.page <= 7 &&
+      manual_provenance.exact_text.length > 0)).toBe(true);
   });
 
   it("keeps all Policy support explicitly candidate-only", () => {
@@ -46,19 +50,30 @@ describe("POL-008-V01 Safara bootstrap coverage", () => {
         source_locator.length > 0)).toBe(true);
   });
 
-  it("routes sensitive-data and workflow knowledge to canonicalization", () => {
+  it("routes workflow canonicalization and individual sensitive-data extraction gaps", () => {
     const entries = new Map(evaluateSafaraBootstrapCoverage(demandFacts()).entries
       .map((entry) => [entry.demand_fact_id, entry]));
     expect(entries.get("safara.manual.fact.0016")).toMatchObject({
       disposition: "SOURCE_OR_POLICY_GAP", gap_route: "CANONICALIZATION_GAP",
       raw_support_ids: ["raw.asvs.v2-3-1"],
     });
-    for (const id of ["safara.manual.fact.0024", "safara.manual.fact.0027",
-      "safara.manual.fact.0036", "safara.manual.fact.0045"]) {
-      expect(entries.get(id)).toMatchObject({ disposition: "SOURCE_OR_POLICY_GAP",
-        gap_route: "CANONICALIZATION_GAP",
-        raw_support_ids: ["raw.asvs.v14-2-1"] });
-    }
+    expect(entries.get("safara.manual.fact.0027")).toMatchObject({
+      disposition: "SOURCE_OR_POLICY_GAP", gap_route: "EXTRACTION_GAP",
+      raw_support_ids: [], source_support_candidates: [
+        { source_release_id: "owasp.asvs.5-0-0", source_locator: "v5.0.0-V14.2.6" }],
+    });
+    for (const id of ["safara.manual.fact.0024", "safara.manual.fact.0035",
+      "safara.manual.fact.0045"]) expect(entries.get(id)).toMatchObject({
+        disposition: "SOURCE_OR_POLICY_GAP", gap_route: "EXTRACTION_GAP",
+        source_support_candidates: [{ source_locator: "v5.0.0-V14.1.1" }],
+      });
+    expect(JSON.stringify([...entries.values()])).not.toContain("raw.asvs.v14-2-1");
+    for (const id of ["safara.manual.fact.0002", "safara.manual.fact.0036",
+      "safara.manual.fact.0044", "safara.manual.fact.0061",
+      "safara.manual.fact.0062", "safara.manual.fact.0063",
+      "safara.manual.fact.0064", "safara.manual.fact.0065",
+      "safara.manual.fact.0098"]) expect(entries.get(id)?.disposition)
+        .toBe("NO_SECURITY_AWARENESS_REQUIRED");
   });
 
   it("uses only the five governed dispositions and explicit non-emitting rationale", () => {
@@ -74,5 +89,11 @@ describe("POL-008-V01 Safara bootstrap coverage", () => {
 
   it("rejects incomplete demand input", () => {
     expect(() => evaluateSafaraBootstrapCoverage(demandFacts().slice(1))).toThrow(/111/u);
+  });
+
+  it("fails closed when an accepted slot has no explicit classification", () => {
+    const facts = [...demandFacts()];
+    facts[0] = { ...facts[0]!, demand_fact_id: "safara.manual.fact.0112" };
+    expect(() => evaluateSafaraBootstrapCoverage(facts)).toThrow(/classification partition/u);
   });
 });
