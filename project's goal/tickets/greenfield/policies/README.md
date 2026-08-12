@@ -25,6 +25,7 @@ explicit change proposal.
 | R08 | [POL-007-R01](CES-GF-POL-007-R01-sequential-business-flow-canonicalization.md) | Sequential business-flow canonical successor | Accepted POL-007; POL-008-V01 result `b45a379` |
 | R09 | [POL-007-R02](CES-GF-POL-007-R02-data-protection-canonicalization.md) | Targeted ASVS data-protection canonical decisions | Approved canonical v1.3; POL-008-V01 coverage v2 `3447561` |
 | R10 | [POL-008-R01](CES-GF-POL-008-R01-sequential-business-flow-policy.md) | Sequential business-flow Policy taxonomy decision | Approved canonical v1.3; candidate POL-008; coverage v2 `3447561` |
+| R11 | [POL-008-R02](CES-GF-POL-008-R02-data-protection-policy-decisions.md) | Data-protection Policy taxonomy decisions | Approved canonical v1.5; candidate taxonomy v1.1; coverage v3 `e011008` |
 | P01 | [POL-001](CES-GF-POL-001-freeze-policy-charter.md) | Frozen CES Policies charter | None |
 | P02 | [POL-002](CES-GF-POL-002-source-glossary-model.md) | Versioned source glossary contract | POL-001, FND-002 |
 | P03 | [POL-003](CES-GF-POL-003-seed-core-source-releases.md) | Four governed core source releases | POL-002 |
@@ -72,7 +73,8 @@ The explicit ticket headers are authoritative. The current grouping is:
 
 - `REVIEW_GATE`: POL-000, POL-000-R01, POL-000-R01-F01, POL-001, POL-002,
   POL-002-R01, POL-005, POL-006, POL-007, POL-008, POL-009, POL-010, POL-011,
-  POL-006-R02, POL-007-R01, POL-007-R02, POL-008-R01, POL-008-V01, POL-013, POL-016, POL-016-V01,
+  POL-006-R02, POL-007-R01, POL-007-R02, POL-008-R01, POL-008-R02,
+  POL-008-V01, POL-013, POL-016, POL-016-V01,
   POL-016-V01-I01, and POL-017.
 - `BATCHABLE`: POL-003, POL-003-R01, POL-004, POL-004-R01, POL-005-V01,
   POL-006-R01, POL-012, POL-014, POL-015, and POL-016-V01-I02.
