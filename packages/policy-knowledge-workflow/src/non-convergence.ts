@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
+import { PolicyKnowledgeWorkflowSchema } from "./index.js";
 
 const Id = z.string().regex(/^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u);
 const Hash = z.string().regex(/^[0-9a-f]{64}$/u);
@@ -9,11 +10,22 @@ const Suspension = z.enum(["DUPLICATE_PROPOSAL", "NO_PROGRESS", "ATTEMPT_EXHAUST
 
 export const KnowledgeAttemptPolicySchema = z.object({ policy_id: Id, policy_version: Revision,
   max_attempts: z.number().int().positive(), reviewer_evidence_id: Id }).strict();
+const MeaningAtom = z.object({ atom_id: Id, modality: z.enum(["require", "prohibit", "permit"]),
+  predicate: Id, object: Id, qualifier_ids: z.array(Id) }).strict();
+export const GovernedNormalizedMeaningArtifactSchema = z.object({ artifact_id: Id,
+  lifecycle: z.literal("accepted"), meaning_id: Id, semantic_atoms: z.array(MeaningAtom).min(1),
+  evidence_surface_hashes: z.array(Hash).min(1), reviewer_evidence_id: Id,
+  artifact_hash: Hash }).strict().superRefine((value, context) => {
+  const { artifact_hash, ...body } = value;
+  if (hash(body) !== artifact_hash) context.addIssue({ code: "custom",
+    message: "Normalized meaning artifact hash mismatch" });
+});
+export type GovernedMeaningResolver = (artifactId: string) => unknown;
 export const NormalizedProposalSemanticsSchema = z.object({ layer: z.enum([
   "raw_source_vocabulary", "canonical_vocabulary", "policy_taxonomy"]),
   decisions: z.array(z.object({ subject_id: Id, decision: z.enum(["ADD", "MERGE", "REJECT"]),
     target_id: Id.nullable() }).strict()).min(1), resulting_concept_or_policy: z.object({ id: Id,
-    obligation_or_definition: z.string().trim().min(1), semantic_atom_ids: z.array(Id).min(1),
+    obligation_or_definition: z.string().trim().min(1), normalized_meaning_artifact_id: Id,
     support_ids: z.array(Id) }).strict().nullable(),
   lineage: z.array(z.object({ subject_id: Id, source_release_id: Id,
     raw_concept_id: Id }).strict()), comparisons: z.array(z.object({ subject_id: Id,
@@ -35,14 +47,25 @@ export const NonConvergenceLedgerSchema = z.object({ schema_version: z.literal("
 });
 export type NonConvergenceLedger = z.infer<typeof NonConvergenceLedgerSchema>;
 
-export function proposalSemanticFingerprint(value: unknown) {
+export function createGovernedNormalizedMeaningArtifact(input: Omit<z.input<
+  typeof GovernedNormalizedMeaningArtifactSchema>, "artifact_hash">) {
+  return GovernedNormalizedMeaningArtifactSchema.parse({ ...input, artifact_hash: hash(input) });
+}
+export function governedSurfaceHash(value: string) { return hash(normalizeSurface(value)); }
+export function proposalSemanticFingerprint(value: unknown, resolveMeaning: GovernedMeaningResolver) {
   const parsed = NormalizedProposalSemanticsSchema.parse(value);
+  const result = parsed.resulting_concept_or_policy;
+  const meaning = result ? GovernedNormalizedMeaningArtifactSchema.parse(
+    resolveMeaning(result.normalized_meaning_artifact_id)) : null;
+  if (result && (!meaning || meaning.artifact_id !== result.normalized_meaning_artifact_id ||
+      !meaning.evidence_surface_hashes.includes(governedSurfaceHash(result.obligation_or_definition))))
+    throw new Error("Proposal wording is not bound to the accepted normalized meaning artifact");
   return hash({ ...parsed,
     decisions: sorted(parsed.decisions, (item) => `${item.subject_id}:${item.decision}:${item.target_id}`),
     resulting_concept_or_policy: parsed.resulting_concept_or_policy && {
-      ...parsed.resulting_concept_or_policy,
-      obligation_or_definition: undefined,
-      semantic_atom_ids: [...parsed.resulting_concept_or_policy.semantic_atom_ids].sort(),
+      id: parsed.resulting_concept_or_policy.id, meaning_id: meaning!.meaning_id,
+      semantic_atoms: sorted(meaning!.semantic_atoms, (item) => item.atom_id).map((atom) =>
+        ({ ...atom, qualifier_ids: [...atom.qualifier_ids].sort() })),
       support_ids: [...parsed.resulting_concept_or_policy.support_ids].sort() },
     lineage: sorted(parsed.lineage, (item) =>
       `${item.subject_id}:${item.source_release_id}:${item.raw_concept_id}`),
@@ -73,15 +96,15 @@ export function createSuccessorConvergenceLedger(previousValue: unknown, input: 
 }
 
 export function recordBoundedAttempt(ledgerValue: unknown, input: { attempt_id: string;
-  proposal_semantics: unknown; prior_review?: { outcome: "NOT ACCEPTED";
-    required_finding_ids: string[] } }) {
+  proposal_semantics: unknown; resolve_meaning: GovernedMeaningResolver;
+  authorization: { kind: "INITIAL" } | { kind: "NOT_ACCEPTED_REMEDIATION";
+    workflow: unknown; review_id: string } }) {
   const ledger = NonConvergenceLedgerSchema.parse(ledgerValue);
   if (ledger.suspension_reason) throw new Error("Suspended convergence ledger cannot retry");
-  if (input.prior_review && input.prior_review.required_finding_ids.length === 0)
-    throw new Error("Retry after NOT ACCEPTED requires bounded REQUIRED findings");
+  assertAttemptAuthority(ledger, input.authorization);
   if (ledger.attempts.length >= ledger.attempt_policy.max_attempts)
     return suspend(ledger, "ATTEMPT_EXHAUSTED");
-  const fingerprint = proposalSemanticFingerprint(input.proposal_semantics);
+  const fingerprint = proposalSemanticFingerprint(input.proposal_semantics, input.resolve_meaning);
   if (ledger.attempts.some(({ proposal_fingerprint }) => proposal_fingerprint === fingerprint))
     return suspend(ledger, "DUPLICATE_PROPOSAL");
   return make({ ...withoutHash(ledger), attempts: [...ledger.attempts,
@@ -96,7 +119,8 @@ export function evaluateCoverageProgress(ledgerValue: unknown, input: {
     ledger };
   Hash.parse(input.source_or_policy_gap.gap_fingerprint);
   const sameSemanticGap = input.source_or_policy_gap.fact_id === ledger.fact_id &&
-    input.source_or_policy_gap.earliest_incomplete_layer === ledger.earliest_incomplete_layer;
+    input.source_or_policy_gap.earliest_incomplete_layer === ledger.earliest_incomplete_layer &&
+    input.source_or_policy_gap.gap_fingerprint === ledger.gap_fingerprint;
   if (sameSemanticGap) return { outcome: "GOVERNED_SUSPENSION" as const,
     ledger: suspend(ledger, "NO_PROGRESS") };
   return { outcome: "PROGRESS" as const, ledger,
@@ -117,4 +141,20 @@ function withoutHash(ledger: NonConvergenceLedger) { const { ledger_hash: _, ...
   return body; }
 function sorted<T>(items: T[], key: (value: T) => string) { return [...items].sort((a, b) =>
   key(a).localeCompare(key(b))); }
+function assertAttemptAuthority(ledger: NonConvergenceLedger,
+  authorization: { kind: "INITIAL" } | { kind: "NOT_ACCEPTED_REMEDIATION";
+    workflow: unknown; review_id: string }) {
+  if (authorization.kind === "INITIAL") {
+    if (ledger.attempts.length !== 0) throw new Error("Only the first attempt may use initial authority");
+    return;
+  }
+  const workflow = PolicyKnowledgeWorkflowSchema.parse(authorization.workflow);
+  if (ledger.attempts.length === 0 || workflow.state !== "GOVERNED_SUSPENSION" ||
+      workflow.review_id !== authorization.review_id || workflow.review_outcome !== "NOT ACCEPTED" ||
+      workflow.required_finding_ids.length === 0 || !workflow.gap ||
+      workflow.gap.gap_fingerprint !== ledger.gap_fingerprint)
+    throw new Error("Retry requires authoritative bounded NOT ACCEPTED review state");
+}
+function normalizeSurface(value: string) { return value.normalize("NFKC").toLowerCase()
+  .replace(/[^a-z0-9]+/gu, " ").trim().replace(/\s+/gu, " "); }
 function hash(value: unknown) { return createHash("sha256").update(JSON.stringify(value)).digest("hex"); }

@@ -48,12 +48,21 @@ historical immutability, and false-positive/false-negative duplicate fixtures.
   support, lineage, comparisons, and obligation/definition meaning while
   excluding rationale prose; cosmetic wording/order changes cannot evade
   duplicate detection, and materially distinct targets/meanings remain distinct.
+- Obligation meaning is resolved server-side from an accepted, content-addressed
+  normalized-meaning artifact that binds structured semantic atoms to reviewed
+  wording evidence. Callers cannot reuse atom IDs to disguise contradictory
+  wording, while approved paraphrases share the same governed meaning identity.
 - Duplicate proposals and exhausted policy budgets suspend without creating a
   new attempt, review, successor, or coverage cycle. Retry after `NOT ACCEPTED`
   requires explicit bounded REQUIRED identities and consumes an attempt.
 - Coverage comparison detects unchanged fact/layer semantics after an accepted
-  successor as `NO_PROGRESS`; zero gaps converges, while a genuinely changed
-  layer/gap identity may start a separately linked history without mutation.
+  successor as `NO_PROGRESS` only when fact, layer, and governed gap fingerprint
+  all match; zero gaps converges, while any accepted changed fingerprint may
+  start a separately linked history without mutation.
+- Initial authority is valid only for an empty ledger. Every later attempt must
+  parse and bind the accepted AGB-010 event-authoritative workflow in
+  `NOT ACCEPTED` suspension with bounded REQUIRED findings, the exact review ID,
+  and the same governed gap fingerprint.
 - Authority-unavailable and governed-source-unavailable are explicit suspension
   reasons and are not silently converted into `DECISION_REQUIRED`.
 - Focused convergence, workflow architecture, and typechecking evidence passes.
