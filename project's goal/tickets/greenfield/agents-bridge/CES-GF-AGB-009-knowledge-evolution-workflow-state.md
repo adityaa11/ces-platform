@@ -1,6 +1,6 @@
 # CES-GF-AGB-009 - Policy Knowledge-Evolution Workflow State
 
-**Status:** Proposed; implementation unauthorized
+**Status:** Implemented candidate; pending REVIEW_GATE
 **Review class:** REVIEW_GATE
 **Depends on:** Accepted AGB-006 and AGB-008
 **Blocks:** AGB-010 and AGB-011
@@ -38,3 +38,23 @@ Agents Bridge for one bounded knowledge gap at a time.
 
 Ownership boundary, state determinism, immutable history, exact entry/terminal
 predicates, and compatibility with a stateless Agents Bridge.
+
+## Implementation evidence
+
+- Policies-owned `@company/ces-policy-knowledge-workflow` defines the versioned,
+  append-only state and deterministic transition contract; Agents Bridge core
+  remains unchanged and stateless.
+- Valid, complete coverage routes exactly one `SOURCE_OR_POLICY_GAP` into a
+  bounded attempt. `DECISION_REQUIRED` enters `KNOWLEDGE_CONVERGED` without an
+  agent, while zero remaining gaps or decisions enters `FULLY_RESOLVED`.
+- Gap fingerprints bind fact identity, earliest incomplete layer, and all four
+  governed knowledge revisions.
+- Attempt, proposal, and validation transitions are ordered, evidence-linked,
+  hash-chained, and bind their transition payloads. Valid proposals enter
+  `GOVERNED_SUSPENSION` with `REVIEW_REQUIRED`; review decisions and authority
+  resume remain reserved for AGB-010.
+- Focused workflow and architecture tests pass, together with package
+  typechecking.
+
+This candidate does not implement review verdicts, publication resume,
+non-convergence policy, or any workflow authority inside Agents Bridge.
