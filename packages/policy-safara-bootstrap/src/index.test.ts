@@ -284,9 +284,18 @@ describe("accepted POL-008-V01 coverage publication", () => {
     });
   });
 
-  it("rejects an altered result artifact", () => {
+  it("rejects an altered hash field", () => {
     const artifact = evaluateSafaraBootstrapCoverageV4(demandFacts());
     expect(() => publishAcceptedSafaraBootstrapCoverageV4({ ...artifact,
       result_hash: "0".repeat(64) })).toThrow(/preserve the reviewed result/u);
+  });
+
+  it("rejects altered artifact contents retaining the accepted hash", () => {
+    const artifact = evaluateSafaraBootstrapCoverageV4(demandFacts());
+    const entries = artifact.entries.map((entry, index) => index === 0
+      ? { ...entry, rationale: `${entry.rationale} Altered.` }
+      : entry);
+    expect(() => publishAcceptedSafaraBootstrapCoverageV4({ ...artifact, entries }))
+      .toThrow(/preserve the reviewed result/u);
   });
 });

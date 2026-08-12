@@ -178,7 +178,8 @@ export const AcceptedSafaraBootstrapCoverageV4PublicationSchema = z.object({
     final_pol_008_approval: z.literal(false),
   }).strict(),
 }).strict().superRefine((publication, context) => {
-  if (publication.artifact.result_hash !==
+  const { result_hash: resultHash, ...artifactWithoutHash } = publication.artifact;
+  if (stableHash(artifactWithoutHash) !== resultHash || resultHash !==
       "3e0e7253279437cd5c76780d11acccacd81290d80b74c7e135bc3cdb7591b3a3") {
     context.addIssue({ code: "custom",
       message: "Accepted Safara coverage publication must preserve the reviewed result" });
