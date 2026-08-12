@@ -1,6 +1,6 @@
 # CES-GF-POL-008-R01 - Sequential Business-Flow Policy Decision
 
-**Status:** Proposed
+**Status:** Ready for REVIEW_GATE
 
 **Review class:** REVIEW_GATE
 
@@ -75,3 +75,19 @@ POL-008-V01, approve project applicability, or authorize POL-009.
 - Creating Atlas Context Bindings, architecture, stack, or implementation
   decisions.
 - Treating one Safara fact as sufficient evidence of universal applicability.
+
+## Implementation evidence
+
+- Candidate taxonomy successor: revision `1.1.0`, with exact predecessor
+  revision `1.0.0` and approved canonical vocabulary revision `1.3.0`.
+- Proposed addition: `policy.sequential-business-flow`, supported only by
+  approved `ces.sequential-business-flow` and its complete ASVS V2.3.1 raw
+  lineage.
+- The explicit add decision records that sequential non-skipped ordering and
+  transaction complete-or-restore atomicity are distinct enduring obligations.
+- The new Policy and its decision remain candidate/proposed without human
+  review evidence; final POL-008 authority remains unapproved.
+- Every predecessor Policy and approval field remains unchanged.
+- Focused validation rejects same-revision mutation, unsupported canonical
+  support, lost predecessor authority, invented approval, and project-specific
+  Policy meaning.

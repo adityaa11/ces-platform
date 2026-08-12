@@ -168,7 +168,7 @@ export const CES_POLICY_APPROVED_CANONICAL_VOCABULARY_V1_1 =
   approveRepresentativeCanonicalVocabulary();
 
 export function resolveCanonicalSourceLineage(canonicalConceptId: string) {
-  const vocabulary = CES_POLICY_APPROVED_CANONICAL_VOCABULARY_V1_1;
+  const vocabulary = CES_POLICY_APPROVED_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_5;
   const rawConcepts = CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1.vocabularies
     .flatMap(({ concepts: values }) => values);
   return vocabulary.mappings
