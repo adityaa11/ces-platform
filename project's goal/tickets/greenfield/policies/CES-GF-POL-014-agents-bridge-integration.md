@@ -1,6 +1,7 @@
 # CES-GF-POL-014 - Agents Bridge Integration
 
 **Status:** Proposed
+**Review class:** BATCHABLE
 **Depends on:** POL-013 and AGB-002
 
 ## Outcome

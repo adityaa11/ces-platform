@@ -1,6 +1,7 @@
 # CES-GF-POL-005 - Raw Source Vocabulary Model
 
 **Status:** Accepted
+**Review class:** REVIEW_GATE
 **Depends on:** POL-002
 
 ## Outcome

@@ -1,6 +1,7 @@
 # CES-GF-POL-003 - Seed Four Core Source Releases
 
 **Status:** Accepted
+**Review class:** BATCHABLE
 **Depends on:** POL-002
 
 ## Outcome

@@ -1,6 +1,7 @@
 # CES-GF-POL-004 - Source Update Detection
 
 **Status:** Accepted
+**Review class:** BATCHABLE
 **Depends on:** POL-003
 
 ## Outcome

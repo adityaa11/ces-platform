@@ -1,6 +1,6 @@
 # CES-GF-POL-007 - CES Canonical Vocabulary
 
-**Status:** Implemented; pending review
+**Status:** Accepted
 **Review class:** REVIEW_GATE
 **Depends on:** Accepted POL-006
 
@@ -50,3 +50,10 @@ without adopting any external source schema.
   validation, duplicate detection, and targeted renumbering.
 - Mapping and lifecycle helpers require a distinct successor revision with
   exact predecessor linkage; same-revision mutation is rejected.
+
+## Acceptance evidence
+
+- Primary implementation commit: `7e1117c`.
+- Composite-identity and successor-version remediation commit: `4eb3912`.
+- Round 2 closure terminal result: `ACCEPTED`.
+- BLOCKER: none; REQUIRED: none.

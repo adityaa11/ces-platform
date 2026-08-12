@@ -1,6 +1,7 @@
 # CES-GF-POL-001 - Freeze Policy Charter
 
 **Status:** Accepted
+**Review class:** REVIEW_GATE
 **Depends on:** None
 
 ## Outcome

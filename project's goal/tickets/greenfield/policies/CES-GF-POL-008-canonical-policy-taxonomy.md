@@ -1,6 +1,7 @@
 # CES-GF-POL-008 - Canonical Policy Taxonomy
 
 **Status:** Proposed
+**Review class:** REVIEW_GATE
 **Depends on:** POL-007
 
 ## Outcome

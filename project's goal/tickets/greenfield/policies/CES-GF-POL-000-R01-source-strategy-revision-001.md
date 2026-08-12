@@ -1,6 +1,7 @@
 # CES-GF-POL-000-R01 - Source Strategy Revision 001
 
 **Status:** Accepted
+**Review class:** REVIEW_GATE
 **Governed by:** POL-000
 **Depends on:** Accepted POL-000
 **Blocks:** POL-006

@@ -1,6 +1,7 @@
 # CES-GF-POL-003-R01 - Governed Source Set Reconciliation
 
 **Status:** Accepted
+**Review class:** BATCHABLE
 **Depends on:** Accepted POL-002-R01 and accepted POL-003
 
 ## Outcome

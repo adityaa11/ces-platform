@@ -51,6 +51,20 @@ The POL-006 source-governance gate closed in acceptance-bookkeeping commit
 `f8e2e41`; POL-006's own REVIEW_GATE later received an `ACCEPTED` terminal
 outcome after implementation and bounded remediation through `b3bebc0`.
 
+## Review classification ledger
+
+The explicit ticket headers are authoritative. The current grouping is:
+
+- `REVIEW_GATE`: POL-000, POL-000-R01, POL-000-R01-F01, POL-001, POL-002,
+  POL-002-R01, POL-005, POL-006, POL-007, POL-008, POL-009, POL-010, POL-011,
+  POL-013, POL-016, POL-016-V01, and POL-017.
+- `BATCHABLE`: POL-003, POL-003-R01, POL-004, POL-004-R01, POL-005-V01,
+  POL-006-R01, POL-012, POL-014, and POL-015.
+
+`CES-GF-POL-006-H01` is human approval evidence rather than a ticket, so it has
+no review class. A `BATCHABLE` ticket must still stop or split at any newly
+discovered authority decision under the accepted promotion rule.
+
 ## Review closure contract
 
 - Every review finding must have a stable ID, class, cited ticket criterion,

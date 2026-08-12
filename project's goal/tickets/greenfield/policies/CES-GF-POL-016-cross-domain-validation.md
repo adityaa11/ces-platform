@@ -1,6 +1,7 @@
 # CES-GF-POL-016 - Cross-Domain Validation
 
 **Status:** Proposed
+**Review class:** REVIEW_GATE
 **Depends on:** POL-015
 
 ## Outcome

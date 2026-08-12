@@ -1,6 +1,7 @@
 # CES-GF-POL-015 - Developer Baseline Awareness Output
 
 **Status:** Proposed
+**Review class:** BATCHABLE
 **Depends on:** POL-014
 
 ## Outcome

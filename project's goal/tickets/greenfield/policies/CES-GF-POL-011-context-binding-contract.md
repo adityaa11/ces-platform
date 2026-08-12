@@ -1,6 +1,7 @@
 # CES-GF-POL-011 - Context Binding Contract
 
 **Status:** Proposed
+**Review class:** REVIEW_GATE
 **Depends on:** POL-009 and POL-010
 
 ## Outcome

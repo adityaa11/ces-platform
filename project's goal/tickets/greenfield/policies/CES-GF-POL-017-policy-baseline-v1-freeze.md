@@ -1,6 +1,7 @@
 # CES-GF-POL-017 - CES Policy Baseline v1.1 Freeze
 
 **Status:** Proposed
+**Review class:** REVIEW_GATE
 **Depends on:** Accepted POL-016-V01
 
 ## Outcome

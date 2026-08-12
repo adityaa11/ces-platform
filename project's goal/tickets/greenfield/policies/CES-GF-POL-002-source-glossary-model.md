@@ -1,6 +1,7 @@
 # CES-GF-POL-002 - Source Glossary Model
 
 **Status:** Accepted
+**Review class:** REVIEW_GATE
 **Depends on:** POL-001 and FND-002
 
 ## Outcome

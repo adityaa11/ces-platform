@@ -1,6 +1,7 @@
 # CES-GF-POL-013 - Policy Reasoning Agent
 
 **Status:** Proposed
+**Review class:** REVIEW_GATE
 **Depends on:** POL-012
 
 ## Outcome

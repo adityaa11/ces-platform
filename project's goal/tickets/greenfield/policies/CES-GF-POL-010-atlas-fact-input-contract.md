@@ -1,6 +1,7 @@
 # CES-GF-POL-010 - Atlas Fact Input Contract
 
 **Status:** Proposed
+**Review class:** REVIEW_GATE
 **Depends on:** POL-009 and ATLAS-V2-007
 
 ## Outcome

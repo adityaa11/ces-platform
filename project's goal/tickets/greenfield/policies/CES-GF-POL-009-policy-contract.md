@@ -1,6 +1,7 @@
 # CES-GF-POL-009 - Policy Contract
 
 **Status:** Proposed
+**Review class:** REVIEW_GATE
 **Depends on:** POL-008
 
 ## Outcome

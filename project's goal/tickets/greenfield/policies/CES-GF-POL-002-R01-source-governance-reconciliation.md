@@ -1,6 +1,7 @@
 # CES-GF-POL-002-R01 - Source Governance Reconciliation
 
 **Status:** Accepted
+**Review class:** REVIEW_GATE
 **Depends on:** Accepted Frozen Context v1.1 and accepted POL-002
 
 ## Outcome

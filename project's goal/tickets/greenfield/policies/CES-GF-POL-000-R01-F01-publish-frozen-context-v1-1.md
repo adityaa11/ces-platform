@@ -1,6 +1,7 @@
 # CES-GF-POL-000-R01-F01 - Publish Frozen Context v1.1
 
 **Status:** Accepted
+**Review class:** REVIEW_GATE
 **Depends on:** Accepted POL-000-R01
 
 ## Outcome

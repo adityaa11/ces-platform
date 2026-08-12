@@ -1,6 +1,7 @@
 # CES-GF-POL-012 - Deterministic Validator
 
 **Status:** Proposed
+**Review class:** BATCHABLE
 **Depends on:** POL-011
 
 ## Outcome

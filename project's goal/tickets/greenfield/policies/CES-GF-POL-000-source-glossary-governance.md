@@ -1,6 +1,7 @@
 # CES-GF-POL-000 - Source Glossary Governance
 
 **Status:** Accepted
+**Review class:** REVIEW_GATE
 **Depends on:** POL-001
 
 ## Outcome
