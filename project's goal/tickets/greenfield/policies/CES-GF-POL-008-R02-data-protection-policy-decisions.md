@@ -1,6 +1,6 @@
 # CES-GF-POL-008-R02 - Data-Protection Policy Decisions
 
-**Status:** Ready for REVIEW_GATE
+**Status:** Accepted bounded decision published
 
 **Review class:** REVIEW_GATE
 
@@ -130,3 +130,16 @@ POL-008-V01, approve applicability, or authorize POL-009.
 - Missing, duplicate, or altered comparison evidence fails closed.
 - Taxonomy revision `1.2.0`, predecessor `1.1.0`, canonical revision `1.5.0`,
   Policy wording, add/merge decisions, lifecycle, and lineage remain unchanged.
+
+## Acceptance publication
+
+- Closure-only Round 2 terminal outcome: `ACCEPTED` for commit
+  `10aed9f2d629ec096580ace6d86309ab29ff3926`, following reviewed
+  implementation commit `270e59af09d2fce82e7346f90c9700742c19b741`.
+- Review evidence: `CES-GF-POL-008-R02-H01`, stored at
+  `project's goal/feedback/CES_POLICIES_REVIEW_10aed9f.md`.
+- Accepted publication:
+  `ces-policy-taxonomy.data-protection-decision.accepted-v1`.
+- The publication preserves the exact candidate taxonomy revision `1.2.0`,
+  both proposed decisions, and all 12 semantic comparisons. Taxonomy and
+  Policy lifecycle remain candidate; this is not final POL-008 approval.

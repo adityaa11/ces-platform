@@ -11,6 +11,8 @@ import { CES_POLICY_REPRESENTATIVE_TAXONOMY_V1,
   CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2,
   buildDataProtectionPolicySuccessor,
   resolveDataProtectionPolicySourceLineage,
+  CES_POLICY_ACCEPTED_DATA_PROTECTION_DECISION_V1,
+  publishAcceptedDataProtectionDecision,
   resolvePolicySourceLineage,
   resolveSequentialFlowPolicySourceLineage } from "./representative-taxonomy.js";
 
@@ -315,5 +317,39 @@ describe("POL-008-R02 data-protection Policy decisions", () => {
     const altered = clone(CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2);
     altered.semantic_comparisons[0]!.rationale = "Demand count says add it.";
     expect(() => buildDataProtectionPolicySuccessor(altered)).toThrow(/altered/u);
+  });
+});
+
+describe("POL-008-R02 accepted decision publication", () => {
+  it("binds acceptance to implementation, closure, and review evidence", () => {
+    expect(CES_POLICY_ACCEPTED_DATA_PROTECTION_DECISION_V1.approval).toMatchObject({
+      terminal_outcome: "ACCEPTED",
+      reviewed_implementation_commit: "270e59af09d2fce82e7346f90c9700742c19b741",
+      reviewed_closure_commit: "10aed9f2d629ec096580ace6d86309ab29ff3926",
+      reviewer_evidence_id: "CES-GF-POL-008-R02-H01",
+      reviewer_evidence_path: "project's goal/feedback/CES_POLICIES_REVIEW_10aed9f.md",
+      review_class: "REVIEW_GATE", review_round: 2,
+      final_pol_008_approval: false });
+  });
+
+  it("publishes the exact candidate artifact including all 12 comparisons", () => {
+    const publication = CES_POLICY_ACCEPTED_DATA_PROTECTION_DECISION_V1;
+    expect(publication.artifact).toEqual(CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2);
+    expect(publication.artifact.semantic_comparisons).toHaveLength(12);
+    expect(publication.artifact.taxonomy.lifecycle).toBe("candidate");
+    expect(publication.artifact.taxonomy.policies.every(({ lifecycle, approval }) =>
+      lifecycle === "candidate" && approval.status === "proposed")).toBe(true);
+  });
+
+  it("fails closed on artifact mutation or false final authority", () => {
+    const changed = clone(CES_POLICY_ACCEPTED_DATA_PROTECTION_DECISION_V1);
+    changed.artifact.semantic_comparisons[0]!.rationale = "Changed after review.";
+    expect(() => publishAcceptedDataProtectionDecision(changed)).toThrow(/preserve/u);
+    const falseAuthority = clone(CES_POLICY_ACCEPTED_DATA_PROTECTION_DECISION_V1);
+    falseAuthority.artifact.taxonomy.policies.at(-1)!.lifecycle = "approved";
+    falseAuthority.artifact.taxonomy.policies.at(-1)!.approval = { status: "approved",
+      reviewed_at: "2026-08-12T00:00:00+00:00", reviewer_evidence_id: "invented" };
+    expect(() => publishAcceptedDataProtectionDecision(falseAuthority))
+      .toThrow(/preserve|final POL-008 authority/u);
   });
 });

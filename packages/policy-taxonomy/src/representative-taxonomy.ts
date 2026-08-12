@@ -378,3 +378,60 @@ export function resolveDataProtectionPolicySourceLineage() {
     .canonical_support.map((canonicalSupport) => ({ canonical_support: canonicalSupport,
       source_lineage: resolveCanonicalSourceLineage(canonicalSupport.canonical_concept_id) }));
 }
+
+export const AcceptedDataProtectionDecisionPublicationSchema = z.object({
+  publication_id: z.literal("ces-policy-taxonomy.data-protection-decision.accepted-v1"),
+  publication_status: z.literal("accepted"),
+  artifact: DataProtectionTaxonomyArtifactSchema,
+  approval: z.object({
+    terminal_outcome: z.literal("ACCEPTED"),
+    reviewed_implementation_commit: z.literal(
+      "270e59af09d2fce82e7346f90c9700742c19b741"),
+    reviewed_closure_commit: z.literal(
+      "10aed9f2d629ec096580ace6d86309ab29ff3926"),
+    reviewer_evidence_id: z.literal("CES-GF-POL-008-R02-H01"),
+    reviewer_evidence_path: z.literal(
+      "project's goal/feedback/CES_POLICIES_REVIEW_10aed9f.md"),
+    review_class: z.literal("REVIEW_GATE"),
+    review_round: z.literal(2), evidence_type: z.literal("human_semantic_review"),
+    recorded_on: z.literal("2026-08-12"),
+    approved_scope: z.literal("POL-008-R02 bounded add and merge decisions"),
+    final_pol_008_approval: z.literal(false),
+  }).strict(),
+}).strict().superRefine((publication, context) => {
+  if (JSON.stringify(publication.artifact) !==
+      JSON.stringify(CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2)) {
+    context.addIssue({ code: "custom",
+      message: "Accepted data-protection publication must preserve the reviewed artifact" });
+  }
+  if (publication.artifact.taxonomy.lifecycle !== "candidate" ||
+      publication.artifact.taxonomy.policies.some(({ lifecycle, approval }) =>
+        lifecycle !== "candidate" || approval.status !== "proposed") ||
+      publication.artifact.decisions.some(({ status }) => status !== "proposed")) {
+    context.addIssue({ code: "custom",
+      message: "POL-008-R02 publication cannot claim final POL-008 authority" });
+  }
+});
+
+const acceptedDataProtectionDecisionValue = {
+  publication_id: "ces-policy-taxonomy.data-protection-decision.accepted-v1",
+  publication_status: "accepted", artifact: CES_POLICY_DATA_PROTECTION_TAXONOMY_V1_2,
+  approval: { terminal_outcome: "ACCEPTED",
+    reviewed_implementation_commit: "270e59af09d2fce82e7346f90c9700742c19b741",
+    reviewed_closure_commit: "10aed9f2d629ec096580ace6d86309ab29ff3926",
+    reviewer_evidence_id: "CES-GF-POL-008-R02-H01",
+    reviewer_evidence_path: "project's goal/feedback/CES_POLICIES_REVIEW_10aed9f.md",
+    review_class: "REVIEW_GATE", review_round: 2,
+    evidence_type: "human_semantic_review", recorded_on: "2026-08-12",
+    approved_scope: "POL-008-R02 bounded add and merge decisions",
+    final_pol_008_approval: false },
+} as const;
+
+export function publishAcceptedDataProtectionDecision(
+  value: unknown = acceptedDataProtectionDecisionValue,
+) {
+  return AcceptedDataProtectionDecisionPublicationSchema.parse(value);
+}
+
+export const CES_POLICY_ACCEPTED_DATA_PROTECTION_DECISION_V1 =
+  publishAcceptedDataProtectionDecision();
