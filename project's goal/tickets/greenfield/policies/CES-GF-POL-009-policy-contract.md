@@ -101,3 +101,19 @@ receives an accepting terminal outcome. It cannot modify approved taxonomy
   separate field.
 - The registry remains lifecycle `candidate`; this implementation does not
   accept POL-009 or authorize POL-010 and must return through REVIEW_GATE.
+
+## Round 1 remediation
+
+- `REQUIRED-01` fixed: every Policy-level publication ID and hash is compared
+  directly with final POL-008, in addition to the top-level authority and exact
+  Policy semantic projection.
+- `REQUIRED-02` fixed: relationships retain unique IDs and now also reject
+  duplicate canonical keys derived from relationship kind plus endpoints.
+- `REQUIRED-03` fixed: a centralized categorized terminology control covers
+  project names, vendors, frameworks, stacks, architecture patterns, storage,
+  transport, and implementation mechanisms across Concern, Capability-Need,
+  and relationship text.
+- Every semantic negative fixture recomputes the outer content hash before
+  validation; a separate test independently proves stale-hash rejection.
+- Registry lifecycle remains candidate, POL-009 remains unapproved, and POL-010
+  remains blocked.

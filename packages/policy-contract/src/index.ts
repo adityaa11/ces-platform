@@ -8,6 +8,20 @@ const Revision = z.string().regex(/^[1-9][0-9]*\.[0-9]+\.[0-9]+$/u);
 const Hash = z.string().regex(/^[0-9a-f]{64}$/u);
 const Text = z.string().trim().min(1);
 const CandidateLifecycle = z.literal("candidate");
+export const PROHIBITED_POLICY_CONTRACT_TERMS = {
+  project: ["safara", "atlas", "pilgrim", "jamaah"],
+  vendor: ["aws", "azure", "google cloud", "oracle"],
+  framework: ["angular", "django", "express", "laravel", "react", "spring", "vue"],
+  stack: ["docker", "kafka", "kubernetes", "mongodb", "mysql", "postgresql", "redis"],
+  architecture: ["microservice", "event bus", "message broker", "load balancer", "api gateway"],
+  mechanism: ["database", "sql", "http", "oauth", "jwt", "ui component", "encryption algorithm"],
+} as const;
+export function findProhibitedPolicyContractTerms(value: string) {
+  const normalized = value.toLowerCase();
+  return Object.entries(PROHIBITED_POLICY_CONTRACT_TERMS).flatMap(([category, terms]) => terms
+    .filter((term) => new RegExp(`(?:^|[^a-z0-9])${escapeRegex(term)}(?:$|[^a-z0-9])`, "u").test(normalized))
+    .map((term) => ({ category, term })));
+}
 
 export const PolicyContractReferenceSchema = z.object({
   policy_id: Id, policy_version: Revision, title: Text, obligation: Text,
@@ -47,6 +61,7 @@ export const PolicyContractRegistrySchema = z.object({ schema_version: z.literal
   unique(value.concerns.map(({ concern_id }) => concern_id), "Concern", context);
   unique(value.capability_needs.map(({ capability_need_id }) => capability_need_id), "Capability Need", context);
   unique(value.relationships.map(({ relationship_id }) => relationship_id), "Relationship", context);
+  unique(value.relationships.map(relationshipSemanticKey), "Relationship semantic link", context);
   const policies = new Set(value.policies.map(({ policy_id }) => policy_id));
   const concerns = new Set(value.concerns.map(({ concern_id }) => concern_id));
   const capabilities = new Set(value.capability_needs.map(({ capability_need_id }) => capability_need_id));
@@ -57,10 +72,13 @@ export const PolicyContractRegistrySchema = z.object({ schema_version: z.literal
     if (relationship.relationship_kind === "concern_requires_capability" &&
         !capabilities.has(relationship.capability_need_id)) issue(context, "Relationship has unknown Capability endpoint");
   }
-  const serialized = JSON.stringify({ concerns: value.concerns, capability_needs: value.capability_needs,
-    relationships: value.relationships }).toLowerCase();
-  if (["safara", "atlas", "react", "laravel", "postgresql", "database", "framework", "ui component"]
-    .some((term) => serialized.includes(term))) issue(context, "Registry contains project or implementation terminology");
+  const semanticText = [
+    ...value.concerns.flatMap(({ title, definition }) => [title, definition]),
+    ...value.capability_needs.flatMap(({ title, required_outcome }) => [title, required_outcome]),
+    ...value.relationships.map(({ rationale }) => rationale),
+  ].join("\n");
+  if (findProhibitedPolicyContractTerms(semanticText).length > 0)
+    issue(context, "Registry contains project or implementation terminology");
 });
 
 export const ApplicabilitySchema = z.enum(["APPLICABLE", "NOT_APPLICABLE", "UNDETERMINED"]);
@@ -83,6 +101,8 @@ export function validatePolicyContractRegistry(value: unknown) {
   const publication = CES_POLICY_APPROVED_TAXONOMY_V1_3;
   if (registry.approved_taxonomy.publication_hash !== publication.publication_hash ||
       registry.approved_taxonomy.publication_id !== publication.publication_id ||
+      registry.policies.some(({ final_publication_id, final_publication_hash }) =>
+        final_publication_id !== publication.publication_id || final_publication_hash !== publication.publication_hash) ||
       JSON.stringify(registry.policies.map(({ taxonomy_id: _taxonomyId, taxonomy_revision: _taxonomyRevision,
         final_publication_id: _publicationId, final_publication_hash: _publicationHash, ...policy }) => policy)) !==
       JSON.stringify(publication.artifact.policies.map(({ approval: _approval,
@@ -112,6 +132,12 @@ function stableHash(value: unknown) { return createHash("sha256").update(JSON.st
 function unique(values: readonly string[], label: string, context: z.RefinementCtx) {
   if (new Set(values).size !== values.length) issue(context, `${label} identities must be unique`); }
 function issue(context: z.RefinementCtx, message: string) { context.addIssue({ code: "custom", message }); }
+function relationshipSemanticKey(value: z.infer<typeof PolicyKnowledgeRelationshipSchema>) {
+  return value.relationship_kind === "policy_addresses_concern" ?
+    `${value.relationship_kind}:${value.policy_id}:${value.concern_id}` :
+    `${value.relationship_kind}:${value.concern_id}:${value.capability_need_id}`;
+}
+function escapeRegex(value: string) { return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&"); }
 
 export type PolicyContractRegistry = z.infer<typeof PolicyContractRegistrySchema>;
 export type PolicyResolution = z.infer<typeof PolicyResolutionSchema>;
