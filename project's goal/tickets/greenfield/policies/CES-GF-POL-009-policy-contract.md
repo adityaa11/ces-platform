@@ -1,8 +1,9 @@
 # CES-GF-POL-009 - Policy Contract
 
-**Status:** Proposed
+**Status:** Ready for REVIEW_GATE implementation
 **Review class:** REVIEW_GATE
-**Depends on:** Accepted POL-008 after an accepting POL-008-V01 result
+**Depends on:** Accepted POL-008 final taxonomy revision 1.3.0 and accepted
+POL-008-V01 Coverage V4 publication (satisfied)
 
 ## Outcome
 

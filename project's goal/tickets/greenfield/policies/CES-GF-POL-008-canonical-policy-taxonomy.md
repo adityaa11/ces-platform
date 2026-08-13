@@ -1,11 +1,11 @@
 # CES-GF-POL-008 - Canonical Policy Taxonomy
 
-**Status:** Ready for final REVIEW_GATE implementation
+**Status:** Accepted; final authority published
 **Review class:** REVIEW_GATE
 **Depends on:** Accepted POL-007-R02 canonical vocabulary revision 1.5.0;
 accepted bounded POL-008-R01 and POL-008-R02 decision publications; accepted
 POL-008-V01 Coverage V4 publication; accepted AGB-014
-**Blocks:** POL-009
+**Unblocks:** POL-009
 
 ## Outcome
 
@@ -168,3 +168,17 @@ ticket cannot self-approve it.
   proves that neither a candidate nor handoff constructor is publicly exposed.
 - POL-008 remains unapproved, taxonomy `1.3.0` remains unpublished, and POL-009
   remains blocked.
+
+## Final acceptance publication
+
+- Terminal outcome: `ACCEPTED` for reviewed candidate commit `692d37c`.
+- Human review evidence: `CES-GF-POL-008-H01`, stored at
+  `project's goal/feedback/CES_POL_008_FINAL_GATE_CLOSURE_REVIEW_692d37c.md`.
+- `CES_POLICY_APPROVED_TAXONOMY_V1_3` publishes immutable taxonomy revision
+  `1.3.0` with exact predecessor `1.2.0`, all six reviewed Policy meanings
+  unchanged, and taxonomy/Policy lifecycle promoted to approved.
+- The publication binds the accepted review commit and SHA-256 of the committed
+  review artifact, identifies itself as final POL-008 authority, and is the
+  durable condition that makes POL-009 eligible to begin.
+- This closes POL-008. It does not pre-approve any POL-009 contract or semantic
+  decision; POL-009 proceeds under its own `REVIEW_GATE`.
