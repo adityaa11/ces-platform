@@ -35,7 +35,7 @@ explicit change proposal.
 | P07 | [POL-007](CES-GF-POL-007-canonical-vocabulary.md) | Versioned CES canonical concepts | POL-006 |
 | P08 | [POL-008](CES-GF-POL-008-canonical-policy-taxonomy.md) | Accepted six-Policy taxonomy revision 1.3.0 | Accepted POL-007-R02, POL-008-R01, POL-008-R02, POL-008-V01, and AGB-014 |
 | P08A | [POL-008-V01](CES-GF-POL-008-V01-safara-policy-knowledge-bootstrap.md) | Safara demand-side bootstrap of candidate Policy knowledge | Accepted POL-016-V01-I01; implemented POL-016-V01-I02; candidate POL-008 |
-| P09 | [POL-009](CES-GF-POL-009-policy-contract.md) | Canonical policy, concern, and capability contract; ready to begin | Accepted POL-008 revision 1.3.0 and POL-008-V01 |
+| P09 | [POL-009](CES-GF-POL-009-policy-contract.md) | Accepted canonical policy, concern, and capability contract | Accepted POL-008 revision 1.3.0 and POL-008-V01 |
 | P10 | [POL-010](CES-GF-POL-010-atlas-fact-input-contract.md) | Revision-pinned Atlas input boundary | POL-009, ATLAS-V2-007 |
 | P11 | [POL-011](CES-GF-POL-011-context-binding-contract.md) | Fact-grounded policy bindings | POL-009, POL-010 |
 | P12 | [POL-012](CES-GF-POL-012-deterministic-validator.md) | Fail-closed candidate validation | POL-011 |
@@ -63,7 +63,9 @@ bootstrap gate and the resulting POL-008 taxonomy are accepted.
 The additional Agents Bridge evolution gate closed with accepted AGB-014 at
 `d19166f`. Final POL-008 subsequently received an accepting terminal outcome
 for `692d37c` and published approved taxonomy revision `1.3.0`. POL-009 is now
-eligible to begin under its own REVIEW_GATE; no POL-009 semantics are pre-approved.
+accepted and published from reviewed candidate `93e6c8c`; POL-010 is now
+eligible to begin under its own REVIEW_GATE, but no POL-010 semantics are
+pre-approved.
 
 POL-000 is a permanent governance layer established after the v1 source-rights
 blocker was discovered; its `G01` label does not rewrite the historical P01-P05

@@ -1,6 +1,6 @@
 # CES-GF-POL-009 - Policy Contract
 
-**Status:** Ready for REVIEW_GATE implementation
+**Status:** Accepted and published
 **Review class:** REVIEW_GATE
 **Depends on:** Accepted POL-008 final taxonomy revision 1.3.0 and accepted
 POL-008-V01 Coverage V4 publication (satisfied)
@@ -102,7 +102,7 @@ receives an accepting terminal outcome. It cannot modify approved taxonomy
 - The registry remains lifecycle `candidate`; this implementation does not
   accept POL-009 or authorize POL-010 and must return through REVIEW_GATE.
 
-## Round 1 remediation
+## Round 1 remediation candidate state
 
 - `REQUIRED-01` fixed: every Policy-level publication ID and hash is compared
   directly with final POL-008, in addition to the top-level authority and exact
@@ -115,5 +115,17 @@ receives an accepting terminal outcome. It cannot modify approved taxonomy
   and relationship text.
 - Every semantic negative fixture recomputes the outer content hash before
   validation; a separate test independently proves stale-hash rejection.
-- Registry lifecycle remains candidate, POL-009 remains unapproved, and POL-010
-  remains blocked.
+- At the reviewed candidate boundary, the registry lifecycle remained
+  `candidate`, POL-009 remained unapproved, and POL-010 remained blocked.
+
+## Accepted publication
+
+- Closure review `CES-GF-POL-009-H01` returned terminal outcome `ACCEPTED` for
+  reviewed candidate commit `93e6c8c5fcebb41cc0f7765635bc150905f732b4`.
+- Publication `ces-policy-contract.final-pol-009.accepted-v1` binds that commit,
+  the review artifact and its SHA-256 digest, and the exact reviewed registry.
+- The registry remains lifecycle `candidate`: acceptance is represented by the
+  external publication authority and does not rewrite reviewed semantics.
+- Final POL-009 approval is now explicit, and POL-010 is authorized to begin
+  under its own REVIEW_GATE. No project applicability or downstream design is
+  approved by this publication.
