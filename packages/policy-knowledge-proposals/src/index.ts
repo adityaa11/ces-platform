@@ -68,12 +68,15 @@ export const PolicyKnowledgeRequestBodySchema = z.discriminatedUnion("layer", [
   RawRequestSchema, CanonicalRequestSchema, PolicyRequestSchema,
 ]);
 
-export const PolicyKnowledgeAgentRequestSchema = z.object({
+const PolicyKnowledgeAgentRequestContentSchema = z.object({
   schema_version: z.literal(POLICY_KNOWLEDGE_PROPOSAL_SCHEMA_VERSION),
   request_id: Id,
   lifecycle: z.literal("proposed"),
   governed_context: GovernedContextSchema,
   request: PolicyKnowledgeRequestBodySchema,
+}).strict();
+
+export const PolicyKnowledgeAgentRequestSchema = PolicyKnowledgeAgentRequestContentSchema.extend({
   request_hash: Hash,
 }).strict().superRefine((value, context) => {
   if (value.request.layer !== routeLayer(value.request.gap_route)) {
@@ -229,7 +232,8 @@ export function createPolicyKnowledgeProposal(input: Omit<
 export function createPolicyKnowledgeAgentRequest(input: Omit<
   z.input<typeof PolicyKnowledgeAgentRequestSchema>, "request_hash"
 >) {
-  const value = { ...input, request_hash: stableHash(input) };
+  const normalizedInput = PolicyKnowledgeAgentRequestContentSchema.parse(input);
+  const value = { ...normalizedInput, request_hash: stableHash(normalizedInput) };
   return PolicyKnowledgeAgentRequestSchema.parse(value);
 }
 

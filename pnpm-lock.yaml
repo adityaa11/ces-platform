@@ -59,6 +59,12 @@ importers:
       '@company/ces-policy-knowledge-validation':
         specifier: workspace:*
         version: link:../../packages/policy-knowledge-validation
+      '@company/ces-policy-manual-demand-adapter':
+        specifier: workspace:*
+        version: link:../../packages/policy-manual-demand-adapter
+      '@company/ces-policy-safara-bootstrap':
+        specifier: workspace:*
+        version: link:../../packages/policy-safara-bootstrap
       '@company/ces-policy-source-glossary':
         specifier: workspace:*
         version: link:../../packages/policy-source-glossary

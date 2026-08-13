@@ -1,15 +1,15 @@
 import { createHash } from "node:crypto";
-import { CES_POLICY_APPROVED_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_5 } from
+import { CES_POLICY_APPROVED_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_5,
+  CES_POLICY_APPROVED_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_3 } from
   "@company/ces-policy-canonical-vocabulary/representative-catalog";
 import { GovernedPolicyValidationInputSchema } from "@company/ces-policy-knowledge-validation";
 import { CES_POLICY_ACCEPTED_TARGETED_EXTRACTION_CORPUS_V1_2 } from
   "@company/ces-policy-source-vocabulary/representative-corpus";
-import { CES_POLICY_ACCEPTED_SEQUENTIAL_FLOW_DECISION_V1 } from
+import { CES_POLICY_ACCEPTED_SEQUENTIAL_FLOW_DECISION_V1,
+  CES_POLICY_REPRESENTATIVE_TAXONOMY_V1 } from
   "@company/ces-policy-taxonomy/representative-taxonomy";
 import type { PolicyTaxonomyKnowledgeResolver } from "./agent.js";
 
-const canonical = CES_POLICY_APPROVED_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_5;
-const predecessor = CES_POLICY_ACCEPTED_SEQUENTIAL_FLOW_DECISION_V1.artifact.taxonomy;
 const rawConcepts = CES_POLICY_ACCEPTED_TARGETED_EXTRACTION_CORPUS_V1_2.corpus.vocabularies
   .flatMap(({ concepts }) => concepts);
 const hash = (value: unknown) => createHash("sha256")
@@ -19,6 +19,13 @@ const hash = (value: unknown) => createHash("sha256")
 export const resolveAcceptedPolicyTaxonomyKnowledge: PolicyTaxonomyKnowledgeResolver =
   (request) => {
     const context = request.governed_context;
+    const tuple = context.canonical_vocabulary_revision === "1.3.0" &&
+      context.policy_taxonomy_revision === "1.0.0" ? { canonical:
+        CES_POLICY_APPROVED_SEQUENTIAL_FLOW_CANONICAL_VOCABULARY_V1_3,
+        predecessor: CES_POLICY_REPRESENTATIVE_TAXONOMY_V1 } : { canonical:
+        CES_POLICY_APPROVED_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_5,
+        predecessor: CES_POLICY_ACCEPTED_SEQUENTIAL_FLOW_DECISION_V1.artifact.taxonomy };
+    const { canonical, predecessor } = tuple;
     if (context.source_glossary_revision !== "1.1.0" ||
         context.raw_vocabulary_revision !== "1.2.0" ||
         context.canonical_vocabulary_revision !== canonical.vocabulary_revision ||

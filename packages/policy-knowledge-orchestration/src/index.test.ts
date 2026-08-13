@@ -36,10 +36,10 @@ describe("AGB-014 Safara governed replay", () => {
     const replay = await runGovernedKnowledgeReplay({ initial_coverage: initial, max_cycles: 20,
       execute_registered_agent: async (route) => ({ agent_id: route.agent_id, agent_version: "1.0.0",
         support_evidence_hash: route.support_evidence_hash, proposal_hash: route.support_evidence_hash }),
-      consume_external_publication: async (route, proposalHash) => {
+      consume_external_publication: async (route, execution) => {
         publication++; const support: any = route.support_branch.support[0];
         const common = { publication_id: `publication.replay.${publication}`, authority_evidence_id: `authority.replay.${publication}`,
-          proposal_hash: proposalHash, agent_id: route.agent_id, layer: route.earliest_incomplete_layer };
+          proposal_hash: execution.proposal_hash, agent_id: route.agent_id, layer: route.earliest_incomplete_layer };
         if (route.earliest_incomplete_layer === "raw_source_vocabulary") { const source: any = support.evidence;
           return { ...common, source_locator: source.source_locator, raw_concept_id:
             source.source_locator.endsWith("V14.2.6") ? "raw.asvs.v14-2-6" : "raw.asvs.v14-1-1" }; }

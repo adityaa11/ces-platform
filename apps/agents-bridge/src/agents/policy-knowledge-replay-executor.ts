@@ -14,7 +14,8 @@ export function createPolicyKnowledgeReplayExecutor(options: {
   if (!output || typeof output.proposal_hash !== "string")
     throw new Error("Registered knowledge agent did not return a content-addressed proposal");
   return { agent_id: route.agent_id, agent_version: "1.0.0",
-    support_evidence_hash: route.support_evidence_hash, proposal_hash: output.proposal_hash };
+    support_evidence_hash: route.support_evidence_hash, proposal_hash: output.proposal_hash,
+    proposal: output };
 }; }
 export type ReplayRegistries = { agents: AgentRegistry; providers: ProviderRegistry;
   models: ModelRegistry; tools: ToolRegistry };

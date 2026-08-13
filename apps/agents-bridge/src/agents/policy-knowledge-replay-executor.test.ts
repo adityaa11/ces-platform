@@ -35,6 +35,7 @@ describe("AGB-014 canonical registered replay adapter", () => {
       earliest_incomplete_layer: "raw_source_vocabulary", agent_id: "ces.source-knowledge-agent",
       support_branch: support as any, support_evidence_hash: supportHash, workflow: {} } as any);
     expect(result).toEqual({ agent_id: "ces.source-knowledge-agent", agent_version: "1.0.0",
-      support_evidence_hash: supportHash, proposal_hash: "b".repeat(64) });
+      support_evidence_hash: supportHash, proposal_hash: "b".repeat(64),
+      proposal: { proposal_hash: "b".repeat(64) } });
   });
 });

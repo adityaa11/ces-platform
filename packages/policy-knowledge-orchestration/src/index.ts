@@ -188,8 +188,9 @@ export function applyAcceptedKnowledgePublication(coverageValue: any, publicatio
 }
 export async function runGovernedKnowledgeReplay(input: { initial_coverage: any;
   execute_registered_agent: (route: Route) => Promise<{ agent_id: Route["agent_id"];
-    agent_version: string; support_evidence_hash: string; proposal_hash: string }>;
-  consume_external_publication: (route: Route, proposalHash: string) => Promise<unknown>;
+    agent_version: string; support_evidence_hash: string; proposal_hash: string; proposal?: unknown }>;
+  consume_external_publication: (route: Route, execution: { proposal_hash: string;
+    proposal?: unknown }) => Promise<unknown>;
   max_cycles: number }) {
   let coverage = structuredClone(input.initial_coverage); const executions: { agent_id: string; fact_id: string }[] = [];
   for (let cycle = 0; cycle < input.max_cycles; cycle++) {
@@ -208,7 +209,7 @@ export async function runGovernedKnowledgeReplay(input: { initial_coverage: any;
         result.support_evidence_hash !== route.support_evidence_hash)
       throw new Error("Registered execution evidence does not bind the routed agent and support");
     executions.push({ agent_id: route.agent_id, fact_id: route.fact_id });
-    const publication = await input.consume_external_publication(route, result.proposal_hash);
+    const publication = await input.consume_external_publication(route, result);
     coverage = applyAcceptedKnowledgePublication(coverage, publication);
   }
   throw new Error("Governed replay attempt budget exhausted");
