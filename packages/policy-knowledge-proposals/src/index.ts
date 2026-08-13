@@ -93,6 +93,17 @@ const RawProposalSchema = z.object({
   source_release_id: Id,
   source_locator: NonEmpty,
   semantic_rationale: NonEmpty,
+  extraction_evidence: z.object({ schema_version: z.literal("1.1.0"),
+    governed_source_artifact_id: Id, governed_source_content_hash: z.string()
+      .regex(/^sha256:[0-9a-f]{64}$/u), exact_source_term: NonEmpty,
+    exact_source_excerpt_hash: Hash, semantic_role: z.enum(["objective", "control", "requirement",
+      "risk_concern", "verification_context", "evidence_expectation"]),
+    scope_disposition: z.enum(["software_relevant", "out_of_scope_organizational", "review_required"]),
+    extraction_method: z.literal("agent_assisted"), extractor_id: Id,
+    extractor_version: Revision, extraction_input_hash: z.string().regex(/^sha256:[0-9a-f]{64}$/u),
+    predecessor_artifact_id: Id,
+    predecessor_artifact_hash: Hash, rights_evidence_id: Id,
+    authorization_evidence_id: Id }).strict().optional(),
 }).strict();
 
 const CanonicalProposalSchema = z.object({

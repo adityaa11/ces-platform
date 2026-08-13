@@ -50,4 +50,13 @@ project independence, and POL-006 authority separation.
   `REJECT`; fabricated, missing, blocked, or over-broad material fails closed.
 - Golden replays cover ASVS V14.1.1 and V14.2.6 through the AGB-006 proposed
   raw-concept envelope. Output cannot accept or publish POL-006 authority.
+- Runtime extraction now consumes committed bounded rows from the authorized
+  pinned ASVS CSV plus the exact raw-v1.1 predecessor identity/hash. Accepted
+  raw v1.2 is test-oracle-only, and replay runs through `executeRegisteredAgent`.
+- Duplicate decisions are derived semantically from the server-resolved v1.1
+  predecessor, independent of caller hints or proposed identifiers.
+- The backward-compatible AGB-006 evidence successor preserves source artifact
+  ID/hash, exact source-term and excerpt identity, role, scope, agent provenance,
+  predecessor identity, rights evidence, and processing authorization evidence
+  through bridge serialization for independent Policies validation.
 - Focused agent and architecture tests pass with Agents Bridge typechecking.

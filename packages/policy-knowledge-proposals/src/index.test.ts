@@ -117,7 +117,16 @@ describe("AGB-006 Policy knowledge proposal contracts", () => {
         proposed_raw_concept_id: "raw.asvs.v14.2.6",
         bounded_meaning: "Limit sensitive data returned or displayed.",
         source_release_id: "source.asvs.v5", source_locator: "v5.0.0-V14.2.6",
-        semantic_rationale: "The governed source directly supports the bounded meaning." } });
+        semantic_rationale: "The governed source directly supports the bounded meaning.",
+        extraction_evidence: { schema_version: "1.1.0", governed_source_artifact_id: "artifact.asvs.v5",
+          governed_source_content_hash: `sha256:${"a".repeat(64)}`,
+          exact_source_term: "General Data Protection", exact_source_excerpt_hash: "b".repeat(64),
+          semantic_role: "requirement", scope_disposition: "software_relevant",
+          extraction_method: "agent_assisted", extractor_id: "ces.source-knowledge-agent",
+          extractor_version: "1.0.0", extraction_input_hash: `sha256:${"a".repeat(64)}`,
+          predecessor_artifact_id: "raw.corpus.v1.1",
+          predecessor_artifact_hash: "c".repeat(64), rights_evidence_id: "rights.asvs.v5",
+          authorization_evidence_id: "authorization.asvs.v5" } } });
     const canonical = createPolicyKnowledgeProposal({ schema_version: "1.0.0",
       proposal_id: "proposal.canonical.disclosure.v1", lifecycle: "proposed",
       governed_context: context, proposal: { layer: "canonical_vocabulary",
@@ -129,6 +138,9 @@ describe("AGB-006 Policy knowledge proposal contracts", () => {
           source_locator: "v5.0.0-V14.2.6", raw_concept_id: "raw.asvs.v14.2.6" }],
         semantic_rationale: "The raw concept supports a reusable obligation." } });
     expect(raw.proposal.layer).toBe("raw_source_vocabulary");
+    if (raw.proposal.layer === "raw_source_vocabulary")
+      expect(raw.proposal.extraction_evidence).toMatchObject({ semantic_role: "requirement",
+        extractor_id: "ces.source-knowledge-agent", predecessor_artifact_id: "raw.corpus.v1.1" });
     expect(canonical.proposal.layer).toBe("canonical_vocabulary");
   });
 

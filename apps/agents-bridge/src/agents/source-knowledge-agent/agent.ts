@@ -1,5 +1,6 @@
 import { PolicyKnowledgeAgentRequestSchema, PolicyKnowledgeProposalSchema,
   createPolicyKnowledgeProposal } from "@company/ces-policy-knowledge-proposals";
+import { createHash } from "node:crypto";
 import { z } from "zod";
 import type { StructuredGenerationPolicy, StructuredGenerationRequest } from "../../core/contracts.js";
 import type { StructuredGenerationAgentDefinition } from "../../core/registry.js";
@@ -14,8 +15,11 @@ const Intermediate = z.object({ decision: z.enum(["ADD", "REJECT"]),
   source_locator: Text, semantic_rationale: Text }).strict();
 type Input = z.infer<typeof SourceKnowledgeAgentInputSchema>;
 export interface GovernedSourceCandidate { source_release_id: string; source_locator: string;
-  raw_concept_id: string; source_term: string; exact_meaning: string; rights_notice: string;
-  existing_equivalent: boolean }
+  source_term: string; exact_source_excerpt: string; semantic_role: "objective" | "control" | "requirement" |
+  "risk_concern" | "verification_context" | "evidence_expectation"; scope_disposition: "software_relevant" |
+  "out_of_scope_organizational" | "review_required"; governed_source_artifact_id: string;
+  governed_source_content_hash: string; predecessor_artifact_id: string; predecessor_artifact_hash: string;
+  rights_evidence_id: string; authorization_evidence_id: string; equivalent_predecessor_concept_id: string | null }
 export type GovernedSourceResolver = (request: Input["request"]) => GovernedSourceCandidate;
 export function createSourceKnowledgeAgent(options: { model_alias: string; provider_id: string;
   resolve_governed_source: GovernedSourceResolver; policy: Partial<Pick<StructuredGenerationPolicy,
@@ -35,14 +39,26 @@ export function createSourceKnowledgeAgent(options: { model_alias: string; provi
       options.resolve_governed_source(input.request), options.model_alias, policy),
     transformResult: async (result, input) => {
       const source = options.resolve_governed_source(input.request);
-      const expectedDecision = source.existing_equivalent ? "REJECT" : "ADD";
-      if (result.decision !== expectedDecision || result.proposed_raw_concept_id !== source.raw_concept_id ||
+      const expectedDecision = source.equivalent_predecessor_concept_id ? "REJECT" : "ADD";
+      if (result.decision !== expectedDecision ||
           result.source_release_id !== source.source_release_id || result.source_locator !== source.source_locator ||
-          result.bounded_meaning !== source.exact_meaning) throw new Error("Source proposal is not exactly governed");
+          normalize(result.bounded_meaning) !== normalize(source.exact_source_excerpt)) throw new Error("Source proposal is not governed-equivalent");
       return createPolicyKnowledgeProposal({ schema_version: "1.0.0",
         proposal_id: `proposal.${input.request.request_id}`, lifecycle: "proposed",
         governed_context: input.request.governed_context,
-        proposal: { layer: "raw_source_vocabulary", gap_route: "EXTRACTION_GAP", ...result } });
+        proposal: { layer: "raw_source_vocabulary", gap_route: "EXTRACTION_GAP", ...result,
+          extraction_evidence: { schema_version: "1.1.0",
+            governed_source_artifact_id: source.governed_source_artifact_id,
+            governed_source_content_hash: source.governed_source_content_hash,
+            exact_source_term: source.source_term,
+            exact_source_excerpt_hash: digest(source.exact_source_excerpt), semantic_role: source.semantic_role,
+            scope_disposition: source.scope_disposition, extraction_method: "agent_assisted",
+            extractor_id: SOURCE_KNOWLEDGE_AGENT_ID, extractor_version: "1.0.0",
+            extraction_input_hash: source.governed_source_content_hash,
+            predecessor_artifact_id: source.predecessor_artifact_id,
+            predecessor_artifact_hash: source.predecessor_artifact_hash,
+            rights_evidence_id: source.rights_evidence_id,
+            authorization_evidence_id: source.authorization_evidence_id } } });
     } };
 }
 function request(input: Input, source: GovernedSourceCandidate, alias: string,
@@ -52,3 +68,5 @@ function request(input: Input, source: GovernedSourceCandidate, alias: string,
     input.request.request.layer === "raw_source_vocabulary" ? input.request.request.bounded_task : "",
     governed_source: source }) }], response_json_schema: z.toJSONSchema(Intermediate),
   model_alias: alias, max_output_tokens: policy.max_output_tokens }; }
+function normalize(value: string) { return value.normalize("NFKC").toLowerCase().replace(/[^a-z0-9]+/gu, " ").trim(); }
+function digest(value: string) { return createHash("sha256").update(value).digest("hex"); }
