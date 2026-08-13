@@ -411,6 +411,25 @@ importers:
         specifier: 24.13.3
         version: 24.13.3
 
+  packages/policy-knowledge-orchestration:
+    dependencies:
+      '@company/ces-policy-knowledge-workflow':
+        specifier: workspace:*
+        version: link:../policy-knowledge-workflow
+      '@company/ces-policy-manual-demand-adapter':
+        specifier: workspace:*
+        version: link:../policy-manual-demand-adapter
+      '@company/ces-policy-safara-bootstrap':
+        specifier: workspace:*
+        version: link:../policy-safara-bootstrap
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
+
   packages/policy-knowledge-proposals:
     dependencies:
       zod:

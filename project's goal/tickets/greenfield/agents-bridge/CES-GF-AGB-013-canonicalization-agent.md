@@ -1,6 +1,6 @@
 # CES-GF-AGB-013 - Canonicalization Agent
 
-**Status:** Implemented candidate; pending REVIEW_GATE
+**Status:** Accepted
 **Review class:** REVIEW_GATE
 **Depends on:** Accepted AGB-006, AGB-011, and AGB-012
 **Blocks:** AGB-014
@@ -40,6 +40,9 @@ Semantic distinction, decision completeness, lineage, project independence,
 predecessor integrity, and POL-007 authority separation.
 
 ## Implementation evidence
+
+- REVIEW_GATE accepted commit `e57218c` in
+  `CES_AGENTS_BRIDGE_CLOSURE_REVIEW_e57218c.md`; all stable findings closed.
 
 - Registered `ces.canonicalization-agent@1.0.0` through the existing structured
   bridge with no tools and mandatory human review.

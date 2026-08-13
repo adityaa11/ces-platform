@@ -23,6 +23,8 @@ const ALLOWED_WORKSPACE_DEPENDENCIES: Readonly<Record<string, readonly string[]>
   "@company/ces-policy-knowledge-proposals": [],
   "@company/ces-policy-knowledge-validation": ["@company/ces-policy-canonical-vocabulary", "@company/ces-policy-knowledge-proposals", "@company/ces-policy-taxonomy"],
   "@company/ces-policy-knowledge-workflow": [],
+  "@company/ces-policy-knowledge-orchestration": ["@company/ces-policy-knowledge-workflow",
+    "@company/ces-policy-manual-demand-adapter", "@company/ces-policy-safara-bootstrap"],
   "@company/ces-policy-manual-demand-adapter": [],
   "@company/ces-policy-safara-bootstrap": ["@company/ces-policy-canonical-vocabulary", "@company/ces-policy-manual-demand-adapter", "@company/ces-policy-source-vocabulary", "@company/ces-policy-taxonomy"],
   "@company/ces-project-schema": [],
