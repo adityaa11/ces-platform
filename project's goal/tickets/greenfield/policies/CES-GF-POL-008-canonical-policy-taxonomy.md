@@ -117,3 +117,22 @@ ticket cannot self-approve it.
   closure commit.
 - No approved `1.3.0` artifact exists in this implementation candidate;
   POL-008 remains unapproved and POL-009 remains blocked.
+
+## Round 1 remediation
+
+- `REQUIRED-01` fixed: Coverage V4 and AGB-014 now bind exact publication
+  identities, terminal outcomes, reviewed commits, artifact/publication hashes,
+  committed evidence paths, and SHA-256 hashes of the actual review artifacts.
+  Resolution uses a closed accepted-evidence registry and fails for altered,
+  missing, mismatched, or merely self-consistent invented evidence.
+- The prerequisite review artifacts are committed with this remediation so the
+  recorded paths and content hashes resolve durably from the repository.
+- `REQUIRED-02` fixed: all three semantic review questions are exact schema
+  literals. Changed wording fails even when a producer recomputes the handoff
+  hash.
+- Negative coverage exercises altered publication content, artifact hash,
+  nonexistent evidence, reviewed commit, terminal outcome, invented metadata,
+  and recomputed-question hashes.
+- Taxonomy and Policy lifecycle remain candidate/proposed; no `1.3.0`
+  publication exists, final POL-008 authority remains false, and POL-009 stays
+  blocked.
