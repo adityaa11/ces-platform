@@ -1,6 +1,6 @@
 # CES Central Agents Bridge Ticket Plan
 
-**Status:** Generic infrastructure implemented; Policy knowledge-evolution tickets proposed
+**Status:** AGB-006 through AGB-014 accepted; AGB-015 deferred
 
 The bridge provides provider-neutral execution for registered agents. The
 [generic architecture](../../../CES_AGENTS_BRIDGE_ARCHITECTURE.md) is its
@@ -31,7 +31,7 @@ blocked throughout this sequence.
 | 6 | [AGB-011](CES-GF-AGB-011-non-convergence-controls.md) | Duplicate/no-progress/attempt controls | AGB-009, AGB-010 | REVIEW_GATE |
 | 7 | [AGB-012](CES-GF-AGB-012-source-knowledge-extraction-agent.md) | Governed raw extraction proposals | AGB-006, AGB-011 | REVIEW_GATE |
 | 8 | [AGB-013](CES-GF-AGB-013-canonicalization-agent.md) | Canonicalization proposals | AGB-006, AGB-011, AGB-012 | REVIEW_GATE |
-| 9 | [AGB-014](CES-GF-AGB-014-coverage-gap-routing-and-safara-replay.md) | End-to-end Safara golden replay | AGB-007..013 as declared | REVIEW_GATE |
+| 9 | [AGB-014](CES-GF-AGB-014-coverage-gap-routing-and-safara-replay.md) | End-to-end Safara golden replay | AGB-007..013 as declared | ACCEPTED REVIEW_GATE |
 | 10 | [AGB-015](CES-GF-AGB-015-knowledge-agent-provider-conformance.md) | Cross-provider conformance | AGB-014; approved provider | BATCHABLE |
 
 Recommended review transport:
@@ -40,11 +40,15 @@ Recommended review transport:
   outcomes and topological review.
 - Batch 2: AGB-009, then AGB-010, then AGB-011.
 - Batch 3: AGB-012, then AGB-013.
-- Gate: AGB-014 independently.
+- Gate: AGB-014 independently (accepted at `d19166f`; final closure review
+  recorded in `CES_AGENTS_BRIDGE_FINAL_CLOSURE_REVIEW_d19166f.md`).
 - Deferred batchable follow-up: AGB-015.
 
 No Bridge ticket may define Atlas semantic facts, graph selection, hierarchy,
 artifacts, approval, or a legacy Atlas compatibility route.
+
+AGB-014 acceptance removes the procedural block on resuming final POL-008
+taxonomy review. It does not itself approve POL-008 or authorize POL-009.
 
 Policy knowledge proposal schemas, validators, workflow state, review handoff,
 and publications remain owned by CES Policies. Agents Bridge owns bounded,

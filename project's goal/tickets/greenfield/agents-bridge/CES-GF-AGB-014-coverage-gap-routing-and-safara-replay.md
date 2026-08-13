@@ -1,9 +1,10 @@
 # CES-GF-AGB-014 - Coverage-Gap Routing and Safara End-to-End Replay
 
-**Status:** Implemented candidate; pending REVIEW_GATE
+**Status:** Accepted
 **Review class:** REVIEW_GATE
 **Depends on:** Accepted AGB-007, AGB-008, AGB-010, AGB-011, AGB-012, and AGB-013
-**Blocks:** Resume of final POL-008 taxonomy approval
+**Blocks:** AGB-015, together with an approved provider/runtime
+**Unblocks:** Resume of final POL-008 taxonomy approval
 
 ## Outcome
 
@@ -85,3 +86,17 @@ non-convergence, fact-level lineage, golden equivalence, and terminal counts.
   canonical `executeRegisteredAgent` path for the route-selected agent; it
   returns content-addressed proposal evidence bound to the exact fact-support
   hash. Policies orchestration never imports or impersonates the Bridge runtime.
+
+## Acceptance publication
+
+- Terminal outcome: `ACCEPTED`.
+- Accepted implementation commit: `d19166fcf718bb9d16c15e975f4367c60db344b3`.
+- Final closure evidence:
+  `project's goal/feedback/CES_AGENTS_BRIDGE_FINAL_CLOSURE_REVIEW_d19166f.md`.
+- `REQUIRED-01`, the sole finding remaining after `dc399fb`, is closed by the
+  integrated replay through `createPolicyKnowledgeReplayExecutor()`, the
+  canonical `executeRegisteredAgent()` path, and all three accepted knowledge
+  agent implementations.
+- The AGB-014 `REVIEW_GATE` is closed. Final POL-008 taxonomy review may resume,
+  but POL-008 remains unapproved and POL-009 remains blocked until that separate
+  terminal acceptance occurs.

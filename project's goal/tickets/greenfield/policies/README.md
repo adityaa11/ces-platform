@@ -60,6 +60,11 @@ POL-008-V01 uses those artifacts to qualify and evolve candidate Policy
 knowledge before final POL-008 approval. POL-009 remains blocked until that
 bootstrap gate and the resulting POL-008 taxonomy are accepted.
 
+The additional Agents Bridge evolution gate closed with accepted AGB-014 at
+`d19166f`. Final POL-008 taxonomy review may now resume; this readiness statement
+does not grant POL-008 authority, and POL-009 remains blocked pending a separate
+accepted POL-008 terminal outcome.
+
 POL-000 is a permanent governance layer established after the v1 source-rights
 blocker was discovered; its `G01` label does not rewrite the historical P01-P05
 execution order. Concrete source-set changes use `POL-000-Rxx` revision tickets.
