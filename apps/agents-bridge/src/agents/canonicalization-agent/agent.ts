@@ -16,7 +16,9 @@ const Intermediate = z.object({ decision: z.enum(["ADD", "MERGE", "ALIAS", "REJE
   predecessor_comparisons: z.array(Comparison),
   raw_distinction_justifications: z.array(z.object({ first_raw_concept_id: Id,
     second_raw_concept_id: Id, relationship: z.enum(["distinct", "compatible_combination"]),
-    rationale: Text }).strict()) }).strict();
+    rationale: Text }).strict()),
+  proposed_raw_mappings: z.array(z.object({ raw_concept_id: Id,
+    relationship: z.enum(["supports", "related", "alias"]), rationale: Text }).strict()) }).strict();
 export const CANONICALIZATION_AGENT_ID = "ces.canonicalization-agent";
 export const CanonicalizationAgentInputSchema = z.object({ request: PolicyKnowledgeAgentRequestSchema }).strict()
   .superRefine((value, context) => { if (value.request.request.layer !== "canonical_vocabulary")
@@ -56,6 +58,10 @@ export function createCanonicalizationAgent(options: { model_alias: string; prov
           compared.some((id) => !expected.has(id))) throw new Error("Canonical predecessor comparison is incomplete");
       validateDecision(result, expected);
       validateRawDistinctions(result, governed);
+      const mapped = result.proposed_raw_mappings.map(({ raw_concept_id }) => raw_concept_id);
+      const supported = governed.raw_support.map(({ raw_concept_id }) => raw_concept_id);
+      if (mapped.length !== supported.length || new Set(mapped).size !== mapped.length ||
+          mapped.some((id) => !supported.includes(id))) throw new Error("Proposed raw mappings lose or invent support");
       const shared = JSON.stringify(result).toLowerCase();
       if (["safara", "pilgrim", "passport", "package", "payment", "framework", "database"]
         .some((term) => shared.includes(term))) throw new Error("Canonical proposal contains project or implementation wording");

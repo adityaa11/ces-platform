@@ -57,3 +57,7 @@ predecessor integrity, and POL-007 authority separation.
 - Golden expectations resolve directly from accepted POL-007 v1.3/v1.5
   successors used only as test oracles; runtime resolution remains pinned to
   accepted raw support and the earlier approved canonical predecessor.
+- Oracle-derived replay expectations now bind the bridge decision, target,
+  predecessor relationship, canonical identity and wording, raw mapping
+  relationship/rationale, and decision rationale. Decision or mapping mutations
+  fail the golden expectation before execution can be treated as equivalent.

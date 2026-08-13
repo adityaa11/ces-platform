@@ -11,6 +11,17 @@ import { AgentRegistry, ModelRegistry, ProviderRegistry, ToolRegistry, type Agen
 import { createCanonicalizationAgent } from "./agent.js";
 import { canonicalPredecessorHash, resolveAcceptedCanonicalizationKnowledge } from "./governed-knowledge.js";
 type Decision = "ADD" | "MERGE" | "ALIAS" | "REJECT";
+function expectationFromOracle(value: { mapping: { relationship: string; rationale: string };
+  decision: { decision_kind: string; rationale: string } }) {
+  const decision = ({ addition: "ADD", merge: "MERGE", alias: "ALIAS", rejection: "REJECT" } as
+    Record<string, Decision>)[value.decision.decision_kind];
+  if (!decision) throw new Error(`Unsupported oracle decision: ${value.decision.decision_kind}`);
+  if (value.mapping.relationship !== "supports") throw new Error(`Unsupported oracle mapping: ${value.mapping.relationship}`);
+  if (decision !== "ADD") throw new Error("Oracle requires a target that is absent from this accepted decision artifact");
+  return { decision, target: null, predecessorRelationship: "distinct" as const,
+    mappingRelationship: value.mapping.relationship as "supports",
+    mappingRationale: value.mapping.rationale, decisionRationale: value.decision.rationale };
+}
 const oracleCases = [
   { raw: "raw.asvs.v2-3-1", locator: "v5.0.0-V2.3.1",
     predecessor: CES_POLICY_APPROVED_CANONICAL_VOCABULARY_V1_1,
@@ -36,7 +47,9 @@ function envelope(value: typeof oracleCases[number]) { return createPolicyKnowle
       source_locator: value.locator, raw_concept_id: value.raw }], existing_canonical_concept_ids: [] } }); }
 async function execute(value: typeof oracleCases[number], decision: Decision = "ADD", target: string | null = null,
   targetRelationship: "distinct" | "overlaps" | "subsumes" | "equivalent" | "unsupported" = "distinct",
-  omitComparison = false, requestOverride?: ReturnType<typeof envelope>, distinctions: any[] = []) {
+  omitComparison = false, requestOverride?: ReturnType<typeof envelope>, distinctions: any[] = [],
+  mappingRelationship: "supports" | "related" | "alias" = "supports",
+  mappingRationale = value.mapping.rationale) {
   const request = requestOverride ?? envelope(value); const knowledge = resolveAcceptedCanonicalizationKnowledge(request);
   const agents = new AgentRegistry(); agents.register(createCanonicalizationAgent({ model_alias: "policy-default",
     provider_id: "fixture", resolve_knowledge: resolveAcceptedCanonicalizationKnowledge, policy: {} }));
@@ -46,6 +59,8 @@ async function execute(value: typeof oracleCases[number], decision: Decision = "
       preferred_term: value.concept.preferred_term, definition: value.concept.definition,
       raw_support: knowledge.raw_support, semantic_rationale: value.decision.rationale,
       raw_distinction_justifications: distinctions,
+      proposed_raw_mappings: knowledge.raw_support.map(({ raw_concept_id }) => ({ raw_concept_id,
+        relationship: mappingRelationship, rationale: mappingRationale })),
       predecessor_comparisons: knowledge.predecessor_concepts.slice(omitComparison ? 1 : 0).map(({ concept_id }, index) =>
         ({ target_canonical_concept_id: concept_id,
           relationship: concept_id === target || (!target && index === 0) ? targetRelationship : "distinct",
@@ -63,11 +78,24 @@ async function execute(value: typeof oracleCases[number], decision: Decision = "
 }
 describe("AGB-013 governed canonicalization", () => {
   it.each(oracleCases)("replays accepted oracle for $raw without runtime successor input", async (value) => {
-    const output: any = await execute(value); expect(output.proposal).toMatchObject({ decision: "ADD",
+    const expected = expectationFromOracle(value);
+    const output: any = await execute(value, expected.decision, expected.target,
+      expected.predecessorRelationship, false, undefined, [], expected.mappingRelationship,
+      expected.mappingRationale);
+    expect(output.proposal).toMatchObject({ decision: expected.decision,
+      target_canonical_concept_id: expected.target, semantic_rationale: expected.decisionRationale,
       proposed_canonical_concept_id: value.concept.concept_id, preferred_term: value.concept.preferred_term,
       definition: value.concept.definition, raw_support: [{ raw_concept_id: value.mapping.raw_concept_id }],
+      proposed_raw_mappings: [{ raw_concept_id: value.mapping.raw_concept_id,
+        relationship: expected.mappingRelationship, rationale: expected.mappingRationale }],
       raw_semantic_evidence: [{ raw_concept_id: value.raw, semantic_role: "requirement",
         extraction_input_hash: expect.stringMatching(/^sha256:/u) }] });
+  });
+  it("fails golden expectation when oracle decision or mapping semantics mutate", () => {
+    expect(() => expectationFromOracle({ ...oracleCases[0]!,
+      decision: { ...oracleCases[0]!.decision, decision_kind: "merge" } })).toThrow(/target/u);
+    expect(() => expectationFromOracle({ ...oracleCases[0]!,
+      mapping: { ...oracleCases[0]!.mapping, relationship: "alias" } })).toThrow(/mapping/u);
   });
   it.each([["ADD", null, "distinct"], ["MERGE", null, "overlaps"], ["ALIAS", null, "equivalent"],
     ["REJECT", null, "equivalent"]] as const)("accepts consistent %s and rejects contradiction", async (decision, _unused, relation) => {

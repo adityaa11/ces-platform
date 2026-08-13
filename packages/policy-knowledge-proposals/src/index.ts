@@ -131,6 +131,8 @@ const CanonicalProposalSchema = z.object({
   raw_distinction_justifications: z.array(z.object({ first_raw_concept_id: Id,
     second_raw_concept_id: Id, relationship: z.enum(["distinct", "compatible_combination"]),
     rationale: NonEmpty }).strict()).optional(),
+  proposed_raw_mappings: z.array(z.object({ raw_concept_id: Id,
+    relationship: z.enum(["supports", "related", "alias"]), rationale: NonEmpty }).strict()).optional(),
 }).strict();
 export const CanonicalKnowledgeProposalSchema = CanonicalProposalSchema;
 
