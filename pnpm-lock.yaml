@@ -395,6 +395,19 @@ importers:
         specifier: 4.4.3
         version: 4.4.3
 
+  packages/policy-contract:
+    dependencies:
+      '@company/ces-policy-taxonomy':
+        specifier: workspace:*
+        version: link:../policy-taxonomy
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
+
   packages/policy-engine:
     dependencies:
       '@company/ces-capability-resolver':

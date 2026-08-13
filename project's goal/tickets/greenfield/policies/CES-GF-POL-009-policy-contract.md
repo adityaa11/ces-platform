@@ -82,3 +82,22 @@ capability needs, and resolution semantics.
 The implementation remains non-authoritative until this POL-009 REVIEW_GATE
 receives an accepting terminal outcome. It cannot modify approved taxonomy
 `1.3.0`, start POL-010, or grant downstream project applicability.
+
+## Implementation candidate
+
+- `@company/ces-policy-contract` defines strict renderer-neutral schemas for
+  exact approved Policy references, reusable Concerns and Capability Needs,
+  typed relationships, independent applicability, and the three frozen
+  resolution variants.
+- The representative candidate registry contains all six approved Policies,
+  one canonical object-authorization concern, and one technology-independent
+  authorization capability need. It contains no project applicability or
+  implementation mechanism.
+- Deterministic validation compares Policy records and publication hash against
+  `CES_POLICY_APPROVED_TAXONOMY_V1_3`, rejects dangling/duplicate relationships,
+  prohibited terminology, stale authority, and content mutation.
+- Resolution validation requires state-specific evidence, rejects legacy
+  workflow-state aliases and invented answers, and keeps applicability a
+  separate field.
+- The registry remains lifecycle `candidate`; this implementation does not
+  accept POL-009 or authorize POL-010 and must return through REVIEW_GATE.

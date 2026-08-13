@@ -20,6 +20,7 @@ const ALLOWED_WORKSPACE_DEPENDENCIES: Readonly<Record<string, readonly string[]>
   "@company/ces-policy-source-vocabulary": ["@company/ces-policy-source-glossary"],
   "@company/ces-policy-canonical-vocabulary": ["@company/ces-policy-source-vocabulary"],
   "@company/ces-policy-taxonomy": ["@company/ces-policy-canonical-vocabulary"],
+  "@company/ces-policy-contract": ["@company/ces-policy-taxonomy"],
   "@company/ces-policy-knowledge-proposals": [],
   "@company/ces-policy-knowledge-validation": ["@company/ces-policy-canonical-vocabulary", "@company/ces-policy-knowledge-proposals", "@company/ces-policy-taxonomy"],
   "@company/ces-policy-knowledge-workflow": [],
