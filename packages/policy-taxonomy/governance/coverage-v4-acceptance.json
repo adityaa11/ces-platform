@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0.0",
+  "publication_id": "ces-policies.safara-bootstrap.coverage-v4.accepted-v1",
+  "publication_status": "accepted",
+  "terminal_outcome": "ACCEPTED",
+  "evidence_id": "CES-GF-POL-008-V01-H01",
+  "evidence_path": "project's goal/feedback/CES_POLICIES_REVIEW_94b50d8.md",
+  "evidence_content_hash": "81ad082f2c63a47d900e49e29b54528434214153aa0c5dcc04338d99415dd53f",
+  "reviewed_commit": "94b50d84fb2fa693d1dc78d58353ea0585755626",
+  "artifact_hash": "3e0e7253279437cd5c76780d11acccacd81290d80b74c7e135bc3cdb7591b3a3",
+  "final_pol_008_approval": false
+}

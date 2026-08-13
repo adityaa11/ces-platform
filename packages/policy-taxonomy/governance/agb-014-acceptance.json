@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0.0",
+  "publication_id": "ces-agents-bridge.agb-014.accepted-v1",
+  "publication_status": "accepted",
+  "terminal_outcome": "ACCEPTED",
+  "evidence_id": "CES-GF-AGB-014-H01",
+  "evidence_path": "project's goal/feedback/CES_AGENTS_BRIDGE_FINAL_CLOSURE_REVIEW_d19166f.md",
+  "evidence_content_hash": "6aaa37d5708972dd0e59bc17b1f7f53dba52fdd7b37169ac5859c248b244c9c8",
+  "reviewed_commit": "d19166fcf718bb9d16c15e975f4367c60db344b3",
+  "artifact_hash": "6aaa37d5708972dd0e59bc17b1f7f53dba52fdd7b37169ac5859c248b244c9c8",
+  "final_pol_008_approval": false
+}

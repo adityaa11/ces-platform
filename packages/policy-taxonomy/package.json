@@ -6,7 +6,8 @@
   "exports": {
     ".": "./dist/index.js",
     "./representative-taxonomy": "./dist/representative-taxonomy.js",
-    "./final-approval": "./dist/final-approval.js"
+    "./final-approval": "./dist/final-approval.js",
+    "./final-approval-loader": "./dist/final-approval-loader.js"
   },
   "types": "./dist/index.d.ts",
   "dependencies": {

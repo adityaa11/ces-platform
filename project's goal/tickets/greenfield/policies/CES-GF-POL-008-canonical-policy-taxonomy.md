@@ -136,3 +136,21 @@ ticket cannot self-approve it.
 - Taxonomy and Policy lifecycle remain candidate/proposed; no `1.3.0`
   publication exists, final POL-008 authority remains false, and POL-009 stays
   blocked.
+
+## Round 2 evidence-resolution remediation
+
+- The two prerequisite acceptances are now durable, schema-validated JSON
+  artifacts under `packages/policy-taxonomy/governance/`, rather than inline
+  publication metadata constructed by the candidate implementation.
+- `final-approval-loader.ts` is the build-time filesystem boundary. It reads and
+  validates both publication artifacts, resolves each committed review path,
+  hashes the actual publication and evidence bytes, and only then creates the
+  non-authoritative candidate and handoff.
+- Runtime candidate and handoff schemas remain filesystem-independent and
+  consume only evidence marked `resolved` by the loader.
+- Temporary-fixture tests fail for absent or modified evidence, absent or
+  changed publications, and internally consistent unregistered publication
+  metadata. The repository test proves the real committed artifacts resolve.
+- The earlier frozen-question correction remains intact. POL-008 authority is
+  still false, taxonomy `1.3.0` is still unpublished, and POL-009 remains
+  blocked.
