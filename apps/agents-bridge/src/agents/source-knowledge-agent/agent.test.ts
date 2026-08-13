@@ -2,12 +2,15 @@ import { describe, expect, it } from "vitest";
 import { createPolicyKnowledgeAgentRequest } from "@company/ces-policy-knowledge-proposals";
 import { CES_POLICY_ACCEPTED_TARGETED_EXTRACTION_CORPUS_V1_2 } from
   "@company/ces-policy-source-vocabulary/representative-corpus";
+import { CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1 } from
+  "@company/ces-policy-source-vocabulary/representative-corpus";
+import { resolveSourceGovernanceEvidence } from "@company/ces-policy-source-glossary/core-sources";
 import { executeRegisteredAgent } from "../../core/executor.js";
 import { AgentRegistry, ModelRegistry, ProviderRegistry, ToolRegistry,
   type AgentProvider } from "../../core/registry.js";
 import { createSourceKnowledgeAgent } from "./agent.js";
 import { RAW_V1_1_ARTIFACT_HASH, RAW_V1_1_ARTIFACT_ID,
-  resolveAcceptedGovernedSource } from "./governed-source.js";
+  resolveAcceptedGovernedSource, resolveGovernedSource } from "./governed-source.js";
 function request(locator: string, hints: string[] = []) { return createPolicyKnowledgeAgentRequest({
   schema_version: "1.0.0", request_id: `request.extract.${locator.endsWith("1.1") ? "classification" : "disclosure"}`,
   lifecycle: "proposed", governed_context: { gap_id: "gap.extraction", gap_fingerprint: "a".repeat(64),
@@ -51,6 +54,13 @@ describe("AGB-012 governed extraction production path", () => {
       bounded_meaning: oracle.bounded_description, extraction_evidence: { semantic_role: oracle.semantic_role,
         scope_disposition: oracle.scope_disposition, predecessor_artifact_id: RAW_V1_1_ARTIFACT_ID } });
     expect(output.proposal.extraction_evidence.governed_source_content_hash).toMatch(/^sha256:/u);
+    const rights = resolveSourceGovernanceEvidence(output.proposal.extraction_evidence.rights_evidence_id);
+    const authorization = resolveSourceGovernanceEvidence(
+      output.proposal.extraction_evidence.authorization_evidence_id);
+    expect(rights).toMatchObject({ release_id: "owasp.asvs.5-0-0", evidence_kind: "rights" });
+    expect(authorization).toMatchObject({ release_id: "owasp.asvs.5-0-0",
+      evidence_kind: "processing_authorization", record: { corpus_activation: "ACTIVE",
+        processing: { structured_extraction: "AUTHORIZED", ai_assisted_analysis: "AUTHORIZED" } } });
   });
   it("ignores caller duplicate hints and detects predecessor meaning", () => {
     const fresh = resolveAcceptedGovernedSource(request("v5.0.0-V14.1.1", ["raw.fake"]));
@@ -65,5 +75,13 @@ describe("AGB-012 governed extraction production path", () => {
     const output: any = await execute("v5.0.0-V14.2.1", "raw.alternate.same-meaning", "REJECT");
     expect(output.proposal).toMatchObject({ decision: "REJECT",
       proposed_raw_concept_id: "raw.alternate.same-meaning" });
+  });
+  it("detects a governed equivalent when predecessor wording is paraphrased", () => {
+    const predecessor: any = structuredClone(CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1);
+    const concept = predecessor.vocabularies.flatMap(({ concepts }: any) => concepts)
+      .find(({ concept_id }: any) => concept_id === "raw.asvs.v14-2-1");
+    concept.bounded_description = "Keep confidential values out of URL paths and query parameters; transmit them in suitable HTTP message fields.";
+    expect(resolveGovernedSource(request("v5.0.0-V14.2.1"), undefined, predecessor)
+      .equivalent_predecessor_concept_id).toBe("raw.asvs.v14-2-1");
   });
 });

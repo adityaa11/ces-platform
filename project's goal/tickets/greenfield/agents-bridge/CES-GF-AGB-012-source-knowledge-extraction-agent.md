@@ -42,12 +42,11 @@ project independence, and POL-006 authority separation.
 - Registered `ces.source-knowledge-agent@1.0.0` in the existing stateless
   Agents Bridge with structured output, no tools, and mandatory human review.
 - A server-controlled resolver accepts only active releases explicitly
-  authorized for structured extraction and AI-assisted analysis, requires one
-  exact governed locator, and supplies rights conditions plus committed source
-  material from the accepted raw v1.2 corpus.
-- Provider output must exactly preserve governed release, locator, raw identity,
-  and bounded meaning. Existing equivalent raw IDs deterministically require
-  `REJECT`; fabricated, missing, blocked, or over-broad material fails closed.
+  authorized for structured extraction and AI-assisted analysis and requires
+  one exact governed locator from a hash-validated row artifact.
+- Provider output must preserve the governed release, locator, and bounded
+  meaning. Governed semantic atoms resolve equivalent predecessor meanings;
+  fabricated, missing, blocked, or over-broad material fails closed.
 - Golden replays cover ASVS V14.1.1 and V14.2.6 through the AGB-006 proposed
   raw-concept envelope. Output cannot accept or publish POL-006 authority.
 - Runtime extraction now consumes committed bounded rows from the authorized
@@ -59,4 +58,7 @@ project independence, and POL-006 authority separation.
   ID/hash, exact source-term and excerpt identity, role, scope, agent provenance,
   predecessor identity, rights evidence, and processing authorization evidence
   through bridge serialization for independent Policies validation.
+- Row locator, term, excerpt, and semantic atoms are bound to committed content
+  evidence and mutation-tested. Rights and processing-decision references
+  resolve deterministically to the exact governed release records.
 - Focused agent and architecture tests pass with Agents Bridge typechecking.

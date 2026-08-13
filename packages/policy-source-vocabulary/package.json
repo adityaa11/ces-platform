@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./dist/index.js",
-    "./representative-corpus": "./dist/representative-corpus.js"
+    "./representative-corpus": "./dist/representative-corpus.js",
+    "./governed-source-rows": "./dist/governed-source-rows.js"
   },
   "types": "./dist/index.d.ts",
   "dependencies": {

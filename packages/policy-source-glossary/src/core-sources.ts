@@ -398,3 +398,24 @@ export const CES_POLICY_GOVERNED_SOURCE_GLOSSARY_V1_1 =
     "ces-policies.source-glossary.v1",
     CES_POLICY_SOURCE_GOVERNANCE_V1_1,
   );
+
+export function sourceGovernanceRightsEvidenceId(releaseId: string): string {
+  return `source-governance.${releaseId}.rights`;
+}
+
+export function sourceGovernanceDecisionEvidenceId(releaseId: string, revisionId: string): string {
+  return `source-governance.${releaseId}.decision.${revisionId}`;
+}
+
+export function resolveSourceGovernanceEvidence(evidenceId: string) {
+  for (const record of CES_POLICY_GOVERNED_SOURCE_GLOSSARY_V1_1.governance) {
+    if (evidenceId === sourceGovernanceRightsEvidenceId(record.release_id))
+      return { evidence_id: evidenceId, release_id: record.release_id, evidence_kind: "rights" as const,
+        record: record.rights };
+    if (evidenceId === sourceGovernanceDecisionEvidenceId(record.release_id, record.decision.revision_id))
+      return { evidence_id: evidenceId, release_id: record.release_id, evidence_kind: "processing_authorization" as const,
+        record: { processing: record.processing, corpus_activation: record.corpus_activation,
+          decision: record.decision } };
+  }
+  throw new Error(`Unknown source-governance evidence: ${evidenceId}`);
+}

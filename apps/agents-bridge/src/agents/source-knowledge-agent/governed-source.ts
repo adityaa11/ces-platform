@@ -1,24 +1,19 @@
 import { createHash } from "node:crypto";
-import { CES_POLICY_GOVERNED_SOURCE_GLOSSARY_V1_1 } from "@company/ces-policy-source-glossary/core-sources";
+import { CES_POLICY_GOVERNED_SOURCE_GLOSSARY_V1_1, sourceGovernanceDecisionEvidenceId,
+  sourceGovernanceRightsEvidenceId } from "@company/ces-policy-source-glossary/core-sources";
+import { CES_POLICY_ASVS_GOVERNED_SOURCE_ROWS_V1, GovernedSourceRowArtifactSchema,
+  type GovernedSourceRowArtifact } from "@company/ces-policy-source-vocabulary/governed-source-rows";
 import { CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1 } from
   "@company/ces-policy-source-vocabulary/representative-corpus";
 import type { GovernedSourceResolver } from "./agent.js";
 const hash = (value: unknown) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
-const surface = (value: string) => value.normalize("NFKC").toLowerCase().replace(/[^a-z0-9]+/gu, " ").trim();
-// Committed bounded rows from the authorized pinned ASVS CSV artifact. This is source input,
-// independent from the accepted v1.2 extraction successor used only by golden tests.
-const SOURCE_ROWS = [{ locator: "v5.0.0-V14.1.1", source_term: "Data Protection Documentation",
-  excerpt: "Verify that all sensitive data created and processed by the application is identified and classified into protection levels that account for applicable data-protection and privacy requirements, including easily decoded data.",
-  semantic_role: "requirement" as const, scope_disposition: "software_relevant" as const },
-{ locator: "v5.0.0-V14.2.6", source_term: "General Data Protection",
-  excerpt: "Verify that the application returns only the minimum sensitive data required for its functionality and, when complete data is required, masks it in the user interface unless the user specifically views it.",
-  semantic_role: "requirement" as const, scope_disposition: "software_relevant" as const },
-{ locator: "v5.0.0-V14.2.1", source_term: "General Data Protection",
-  excerpt: "Verify that sensitive data is not placed in URLs or query strings and is sent only in appropriate HTTP message locations.",
-  semantic_role: "requirement" as const, scope_disposition: "software_relevant" as const }];
 export const RAW_V1_1_ARTIFACT_ID = CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1.corpus_id;
 export const RAW_V1_1_ARTIFACT_HASH = hash(CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1);
-export const resolveAcceptedGovernedSource: GovernedSourceResolver = (envelope) => {
+type Predecessor = typeof CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1;
+export function resolveGovernedSource(envelope: Parameters<GovernedSourceResolver>[0],
+  rowInput: GovernedSourceRowArtifact = CES_POLICY_ASVS_GOVERNED_SOURCE_ROWS_V1,
+  predecessor: Predecessor = CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1) {
+  const rowArtifact = GovernedSourceRowArtifactSchema.parse(rowInput);
   if (envelope.request.layer !== "raw_source_vocabulary" || envelope.governed_context.source_glossary_revision !== "1.1.0" ||
       envelope.governed_context.predecessor_artifact_id !== RAW_V1_1_ARTIFACT_ID ||
       envelope.governed_context.predecessor_artifact_hash !== RAW_V1_1_ARTIFACT_HASH)
@@ -30,16 +25,23 @@ export const resolveAcceptedGovernedSource: GovernedSourceResolver = (envelope) 
   const governance = CES_POLICY_GOVERNED_SOURCE_GLOSSARY_V1_1.governance.find(({ release_id }) => release_id === releaseId);
   if (!governance || governance.corpus_activation !== "ACTIVE" || governance.processing.structured_extraction !== "AUTHORIZED" ||
       governance.processing.ai_assisted_analysis !== "AUTHORIZED") throw new Error("Source release is not authorized for agent-assisted extraction");
-  const artifact = CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1.artifacts.find(({ release_id }) => release_id === releaseId);
-  const row = SOURCE_ROWS.find((item) => item.locator === locator);
-  if (!artifact || !row) throw new Error("Exact governed source material is unavailable");
-  const predecessors = CES_POLICY_REPRESENTATIVE_EXTRACTION_CORPUS_V1_1.vocabularies.flatMap(({ concepts }) => concepts);
-  const equivalent = predecessors.find((concept) => surface(concept.bounded_description) === surface(row.excerpt));
+  const artifact = predecessor.artifacts.find(({ release_id }) => release_id === releaseId);
+  const row = rowArtifact.release_id === releaseId ? rowArtifact.rows.find((item) => item.locator === locator) : undefined;
+  if (!artifact || !row || artifact.sha256 !== rowArtifact.upstream_artifact_hash)
+    throw new Error("Exact governed source material is unavailable or unbound");
+  const predecessors = predecessor.vocabularies.flatMap(({ concepts }) => concepts);
+  const signature = JSON.stringify(row.semantic_atoms);
+  const governedEquivalent = rowArtifact.predecessor_meanings.find(({ semantic_atoms }) =>
+    JSON.stringify(semantic_atoms) === signature);
+  const equivalent = governedEquivalent && predecessors.find(({ concept_id }) =>
+    concept_id === governedEquivalent.concept_id);
   return { source_release_id: releaseId, source_locator: locator, source_term: row.source_term,
-    exact_source_excerpt: row.excerpt, semantic_role: row.semantic_role,
-    scope_disposition: row.scope_disposition, governed_source_artifact_id: `artifact.${releaseId}.csv`,
-    governed_source_content_hash: artifact.sha256, predecessor_artifact_id: RAW_V1_1_ARTIFACT_ID,
-    predecessor_artifact_hash: RAW_V1_1_ARTIFACT_HASH, rights_evidence_id: `rights.${releaseId}.cc-by-sa-4-0`,
-    authorization_evidence_id: `authorization.${releaseId}.pol-000-r01`,
+    exact_source_excerpt: row.exact_excerpt, semantic_role: row.semantic_role,
+    scope_disposition: row.scope_disposition, governed_source_artifact_id: rowArtifact.artifact_id,
+    governed_source_content_hash: rowArtifact.content_hash, predecessor_artifact_id: RAW_V1_1_ARTIFACT_ID,
+    predecessor_artifact_hash: RAW_V1_1_ARTIFACT_HASH,
+    rights_evidence_id: sourceGovernanceRightsEvidenceId(releaseId),
+    authorization_evidence_id: sourceGovernanceDecisionEvidenceId(releaseId, governance.decision.revision_id),
     equivalent_predecessor_concept_id: equivalent?.concept_id ?? null };
-};
+}
+export const resolveAcceptedGovernedSource: GovernedSourceResolver = (envelope) => resolveGovernedSource(envelope);
