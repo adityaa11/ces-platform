@@ -50,6 +50,9 @@ importers:
       '@company/ces-policy-canonical-vocabulary':
         specifier: workspace:*
         version: link:../../packages/policy-canonical-vocabulary
+      '@company/ces-policy-knowledge-orchestration':
+        specifier: workspace:*
+        version: link:../../packages/policy-knowledge-orchestration
       '@company/ces-policy-knowledge-proposals':
         specifier: workspace:*
         version: link:../../packages/policy-knowledge-proposals
@@ -413,6 +416,9 @@ importers:
 
   packages/policy-knowledge-orchestration:
     dependencies:
+      '@company/ces-policy-canonical-vocabulary':
+        specifier: workspace:*
+        version: link:../policy-canonical-vocabulary
       '@company/ces-policy-knowledge-workflow':
         specifier: workspace:*
         version: link:../policy-knowledge-workflow
@@ -422,6 +428,12 @@ importers:
       '@company/ces-policy-safara-bootstrap':
         specifier: workspace:*
         version: link:../policy-safara-bootstrap
+      '@company/ces-policy-source-vocabulary':
+        specifier: workspace:*
+        version: link:../policy-source-vocabulary
+      '@company/ces-policy-taxonomy':
+        specifier: workspace:*
+        version: link:../policy-taxonomy
       zod:
         specifier: 4.4.3
         version: 4.4.3

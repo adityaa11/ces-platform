@@ -72,3 +72,16 @@ non-convergence, fact-level lineage, golden equivalence, and terminal counts.
   and mutated lineage fail even when aggregate totals remain unchanged.
 - Replay-specific duplicate-proposal and unchanged-gap fixtures invoke AGB-011
   and terminate with `DUPLICATE_PROPOSAL` or `NO_PROGRESS` without execution.
+- The replay now begins only from Coverage V1 and applies accepted publications
+  emitted after each registered execution to materialize the next coverage
+  state; it never selects V2/V3/V4 as a successor evaluator. Registered
+  execution evidence must bind agent identity/version and the exact routed
+  support hash.
+- Source, raw, and canonical route evidence is resolved from the accepted
+  Safara entry plus governed raw/canonical registries, with per-record hashes.
+  The independently materialized final projection is compared with V4 only as
+  the test oracle.
+- The cross-boundary executor adapter lives in Agents Bridge and invokes the
+  canonical `executeRegisteredAgent` path for the route-selected agent; it
+  returns content-addressed proposal evidence bound to the exact fact-support
+  hash. Policies orchestration never imports or impersonates the Bridge runtime.

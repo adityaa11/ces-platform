@@ -6,7 +6,10 @@ import { evaluateSafaraBootstrapCoverage, evaluateSafaraBootstrapCoverageV2,
   evaluateSafaraBootstrapCoverageV3, evaluateSafaraBootstrapCoverageV4 } from
   "@company/ces-policy-safara-bootstrap";
 import { consumeAcceptedAuthority, executeGapToReviewSuspension, routeCompleteCoverage,
-  retainMaterialFactSupport, safaraSemanticFingerprint, semanticCoverageFingerprint } from "./index.js";
+  acceptedPolicySupport, governedSafaraFactSupport, retainMaterialFactSupport, runGovernedKnowledgeReplay,
+  safaraSemanticFingerprint, safaraSemanticProjection, semanticCoverageFingerprint } from "./index.js";
+import { CES_POLICY_APPROVED_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_5 } from
+  "@company/ces-policy-canonical-vocabulary/representative-catalog";
 import { recordAcceptedPublication, recordKnowledgeReview } from "@company/ces-policy-knowledge-workflow";
 import { createGovernedNormalizedMeaningArtifact, createNonConvergenceLedger,
   evaluatePostPublicationRerun, governedSurfaceHash, recordReplayAttempt } from "./index.js";
@@ -25,19 +28,43 @@ function workflowCoverage(result: any) { return {
       earliest_incomplete_layer: disposition !== "SOURCE_OR_POLICY_GAP" ? null : gap_route === "EXTRACTION_GAP"
         ? "raw_source_vocabulary" as const : gap_route === "CANONICALIZATION_GAP"
           ? "canonical_vocabulary" as const : "policy_taxonomy" as const })) }; }
-function routingEvidence(coverage: any) { return { occurred_at: "2026-08-13T00:00:00+00:00",
-  expected_fact_count: 111, fact_support: coverage.entries.filter((entry: any) =>
-    entry.disposition === "SOURCE_OR_POLICY_GAP").map((entry: any) => ({ fact_id: entry.fact_id,
-      support: [{ support_id: `support.${entry.fact_id}`,
-        kind: entry.earliest_incomplete_layer === "raw_source_vocabulary" ? "source_candidate" :
-          entry.earliest_incomplete_layer === "canonical_vocabulary" ? "raw_concept" : "canonical_concept",
-        evidence_hash: "a".repeat(64) }] })) }; }
+function routingEvidence(workflow: any, sourceCoverage?: any) { return { occurred_at: "2026-08-13T00:00:00+00:00",
+  expected_fact_count: 111, fact_support: governedSafaraFactSupport(sourceCoverage ?? workflow) }; }
 describe("AGB-014 Safara governed replay", () => {
+  it("produces an independent final coverage state from accepted registered-agent publications", async () => {
+    const input = facts(); const initial = evaluateSafaraBootstrapCoverage(input); let publication = 0;
+    const replay = await runGovernedKnowledgeReplay({ initial_coverage: initial, max_cycles: 20,
+      execute_registered_agent: async (route) => ({ agent_id: route.agent_id, agent_version: "1.0.0",
+        support_evidence_hash: route.support_evidence_hash, proposal_hash: route.support_evidence_hash }),
+      consume_external_publication: async (route, proposalHash) => {
+        publication++; const support: any = route.support_branch.support[0];
+        const common = { publication_id: `publication.replay.${publication}`, authority_evidence_id: `authority.replay.${publication}`,
+          proposal_hash: proposalHash, agent_id: route.agent_id, layer: route.earliest_incomplete_layer };
+        if (route.earliest_incomplete_layer === "raw_source_vocabulary") { const source: any = support.evidence;
+          return { ...common, source_locator: source.source_locator, raw_concept_id:
+            source.source_locator.endsWith("V14.2.6") ? "raw.asvs.v14-2-6" : "raw.asvs.v14-1-1" }; }
+        if (route.earliest_incomplete_layer === "canonical_vocabulary") { const raw: any = support.evidence;
+          const mapping = CES_POLICY_APPROVED_DATA_PROTECTION_CANONICAL_VOCABULARY_V1_5.mappings.find(({ raw_concept_id }) =>
+            raw_concept_id === raw.concept_id)!; return { ...common, raw_concept_id: raw.concept_id,
+            canonical_concept_id: mapping.canonical_concept_id }; }
+        const canonical: any = support.evidence.concept; return { ...common,
+          policy_support: acceptedPolicySupport(canonical.concept_id) };
+      } });
+    const oracle = evaluateSafaraBootstrapCoverageV4(input);
+    expect(replay.executions.length).toBeGreaterThan(0);
+    expect(new Set(replay.executions.map(({ agent_id }) => agent_id))).toEqual(new Set([
+      "ces.source-knowledge-agent", "ces.canonicalization-agent", "ces.policy-taxonomy-agent"]));
+    expect(safaraSemanticProjection(replay.coverage)).toEqual(safaraSemanticProjection(oracle));
+    await expect(runGovernedKnowledgeReplay({ initial_coverage: initial, max_cycles: 1,
+      execute_registered_agent: async (route) => ({ agent_id: route.agent_id, agent_version: "1.0.0",
+        support_evidence_hash: "f".repeat(64), proposal_hash: route.support_evidence_hash }),
+      consume_external_publication: async () => ({}) })).rejects.toThrow(/execution evidence/u);
+  });
   it("routes each historical gap by earliest incomplete layer and converges to v4 semantics", () => {
     const input = facts(); const versions = [evaluateSafaraBootstrapCoverage(input), evaluateSafaraBootstrapCoverageV2(input),
       evaluateSafaraBootstrapCoverageV3(input), evaluateSafaraBootstrapCoverageV4(input)];
     const routed = versions.map((version) => { const coverage = workflowCoverage(version); return routeCompleteCoverage(
-      coverage as any, routingEvidence(coverage)); });
+      coverage as any, routingEvidence(coverage, version)); });
     expect(new Set(routed.flat().map(({ agent_id }) => agent_id))).toEqual(new Set([
       "ces.source-knowledge-agent", "ces.canonicalization-agent", "ces.policy-taxonomy-agent"]));
     expect(routed.at(-1)).toEqual([]);
@@ -60,14 +87,15 @@ describe("AGB-014 Safara governed replay", () => {
   it("fails incomplete accounting, never routes decisions, and retains fact-local support", () => {
     const coverage = workflowCoverage(evaluateSafaraBootstrapCoverage(facts())) as any;
     expect(() => routeCompleteCoverage({ ...coverage, entries: coverage.entries.slice(1) },
-      routingEvidence(coverage))).toThrow();
+      routingEvidence(coverage, evaluateSafaraBootstrapCoverage(facts())))).toThrow();
     const decisions = { ...coverage, entries: coverage.entries.map((entry: any) => ({ ...entry,
       disposition: "DECISION_REQUIRED", earliest_incomplete_layer: null })) };
-    expect(routeCompleteCoverage(decisions, routingEvidence(decisions))).toEqual([]);
+    expect(routeCompleteCoverage(decisions, { ...routingEvidence(coverage,
+      evaluateSafaraBootstrapCoverage(facts())), fact_support: [] })).toEqual([]);
     expect(retainMaterialFactSupport("fact.1", [{ fact_id: "fact.1", support: "canonical.a" },
       { fact_id: "fact.2", support: "canonical.b" }])).toEqual([{ fact_id: "fact.1", support: "canonical.a" }]);
     const gap = coverage.entries.find((entry: any) => entry.disposition === "SOURCE_OR_POLICY_GAP");
-    const evidence = routingEvidence(coverage);
+    const evidence = routingEvidence(coverage, evaluateSafaraBootstrapCoverage(facts()));
     expect(() => routeCompleteCoverage(coverage, { ...evidence,
       fact_support: evidence.fact_support.filter((branch: any) => branch.fact_id !== gap.fact_id) })).toThrow(/support/u);
     expect(() => routeCompleteCoverage(coverage, { ...evidence,
@@ -77,7 +105,8 @@ describe("AGB-014 Safara governed replay", () => {
   });
   it("executes a bounded route, suspends for review, and resumes only from external acceptance", async () => {
     const coverage = workflowCoverage(evaluateSafaraBootstrapCoverage(facts()));
-    const routes = routeCompleteCoverage(coverage as any, routingEvidence(coverage));
+    const routes = routeCompleteCoverage(coverage as any, routingEvidence(coverage,
+      evaluateSafaraBootstrapCoverage(facts())));
     const route = routes[0]!; const hash = "a".repeat(64); const called: string[] = [];
     const suspended: any = await executeGapToReviewSuspension(route, async (agentId, factId, support) => {
       called.push(agentId); expect(factId).toBe(route.fact_id); expect(support).toEqual(route.support_branch); return {
@@ -109,7 +138,8 @@ describe("AGB-014 Safara governed replay", () => {
       lineage: [{ subject_id: "ces.data", source_release_id: "owasp.asvs.5-0-0", raw_concept_id: "raw.asvs.v14-1-1" }],
       comparisons: [{ subject_id: "ces.data", target_id: "policy.access", relationship: "distinct" }] };
     const coverage = workflowCoverage(evaluateSafaraBootstrapCoverageV3(facts()));
-    const route = routeCompleteCoverage(coverage, routingEvidence(coverage))[0]!;
+    const route = routeCompleteCoverage(coverage, routingEvidence(coverage,
+      evaluateSafaraBootstrapCoverageV3(facts())))[0]!;
     const suspended: any = await executeGapToReviewSuspension(route, async () => ({ attempt_id: "attempt.replay.1",
       proposal_id: "proposal.replay.1", proposal_hash: "b".repeat(64), validation_id: "validation.replay.1",
       validation_status: "valid" }));

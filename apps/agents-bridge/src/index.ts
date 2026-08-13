@@ -16,3 +16,4 @@ export * from "./agents/source-knowledge-agent/agent.js";
 export * from "./agents/source-knowledge-agent/governed-source.js";
 export * from "./agents/canonicalization-agent/agent.js";
 export * from "./agents/canonicalization-agent/governed-knowledge.js";
+export * from "./agents/policy-knowledge-replay-executor.js";
