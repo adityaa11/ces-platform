@@ -33,7 +33,7 @@ explicit change proposal.
 | P05 | [POL-005](CES-GF-POL-005-raw-source-vocabulary-model.md) | Source-faithful vocabulary contract | POL-002 |
 | P06 | [POL-006](CES-GF-POL-006-raw-vocabulary-extraction.md) | Traceable representative raw vocabulary corpus | Accepted POL-003-R01, POL-004-R01, POL-005-V01, and POL-006-R01 |
 | P07 | [POL-007](CES-GF-POL-007-canonical-vocabulary.md) | Versioned CES canonical concepts | POL-006 |
-| P08 | [POL-008](CES-GF-POL-008-canonical-policy-taxonomy.md) | Small enduring policy taxonomy | POL-007 |
+| P08 | [POL-008](CES-GF-POL-008-canonical-policy-taxonomy.md) | Final approval of the six-Policy enduring taxonomy | Accepted POL-007-R02, POL-008-R01, POL-008-R02, POL-008-V01, and AGB-014 |
 | P08A | [POL-008-V01](CES-GF-POL-008-V01-safara-policy-knowledge-bootstrap.md) | Safara demand-side bootstrap of candidate Policy knowledge | Accepted POL-016-V01-I01; implemented POL-016-V01-I02; candidate POL-008 |
 | P09 | [POL-009](CES-GF-POL-009-policy-contract.md) | Canonical policy, concern, and capability contract | Accepted POL-008 after accepting POL-008-V01 |
 | P10 | [POL-010](CES-GF-POL-010-atlas-fact-input-contract.md) | Revision-pinned Atlas input boundary | POL-009, ATLAS-V2-007 |
