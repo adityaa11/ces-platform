@@ -100,3 +100,20 @@ the canonical vocabulary.
 The implementation commit for items 1-3 remains non-authoritative and requires
 independent review. Item 4 belongs to a closure commit after that review; this
 ticket cannot self-approve it.
+
+## Final gate implementation candidate
+
+- `packages/policy-taxonomy/src/final-approval.ts` now defines and exports the
+  deterministic `CES_POLICY_FINAL_APPROVAL_CANDIDATE_V1` manifest and
+  `CES_POLICY_FINAL_APPROVAL_REVIEW_HANDOFF_V1` payload.
+- The manifest embeds the exact candidate taxonomy `1.2.0`, both accepted
+  bounded decision publications, accepted Coverage V4 evidence, and accepted
+  AGB-014 closure evidence under one verified content hash.
+- Validation rejects any mutation to taxonomy semantics, decisions, evidence,
+  lifecycle, downstream authority, or the content hash.
+- The handoff exposes only the three frozen terminal outcomes and asks the
+  reviewer to decide the six obligations, consolidation boundaries, and exact
+  lineage/gate evidence. It cannot publish a successor and requires a separate
+  closure commit.
+- No approved `1.3.0` artifact exists in this implementation candidate;
+  POL-008 remains unapproved and POL-009 remains blocked.
