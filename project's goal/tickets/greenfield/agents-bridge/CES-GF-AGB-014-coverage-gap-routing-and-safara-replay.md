@@ -61,3 +61,14 @@ non-convergence, fact-level lineage, golden equivalence, and terminal counts.
   and no unresolved decisions or knowledge gaps.
 - Fact support filtering retains only the materially relevant fact branch;
   accepted AGB-011 non-convergence controls remain the retry/loop boundary.
+- Orchestration no longer creates acceptance: it validates an externally
+  extended append-only workflow containing the exact accepted review and
+  publication, then performs only the authorized resume transition.
+- Every route carries a unique, layer-compatible fact-local support branch and
+  its content hash into the registered-agent callback and workflow evidence;
+  missing, cross-fact, duplicate, or invented-layer support fails closed.
+- Golden comparison hashes the complete fact-level disposition plus Policy,
+  canonical/raw, and source-candidate support projection. Swapped dispositions
+  and mutated lineage fail even when aggregate totals remain unchanged.
+- Replay-specific duplicate-proposal and unchanged-gap fixtures invoke AGB-011
+  and terminate with `DUPLICATE_PROPOSAL` or `NO_PROGRESS` without execution.
