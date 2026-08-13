@@ -4,7 +4,10 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { FinalPolicyTaxonomyReviewHandoffSchema } from "./final-approval.js";
-import { loadFinalPolicyTaxonomyGate } from "./final-approval-loader.js";
+import * as publicLoader from "./final-approval-loader.js";
+import packageJson from "../package.json" with { type: "json" };
+
+const { loadFinalPolicyTaxonomyGate } = publicLoader;
 
 const root = resolve(import.meta.dirname, "../../..");
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
@@ -66,6 +69,18 @@ describe("POL-008 final approval build-time gate", () => {
     const { handoff_hash: _ignored, ...body } = changed;
     expect(() => FinalPolicyTaxonomyReviewHandoffSchema.parse({ ...body,
       handoff_hash: digest(body) })).toThrow();
+  });
+
+  it("exposes no public bypass for caller-asserted resolved evidence", () => {
+    const fabricated = { publication_id: "ces-policies.safara-bootstrap.coverage-v4.accepted-v1",
+      evidence_id: "CES-GF-POL-008-V01-H01", evidence_path: "invented.md",
+      terminal_outcome: "ACCEPTED", reviewed_commit: "a".repeat(40), artifact_hash: "b".repeat(64),
+      publication_content_hash: "c".repeat(64), evidence_content_hash: "d".repeat(64),
+      resolution_status: "resolved" };
+    expect(fabricated.resolution_status).toBe("resolved");
+    expect(Object.keys(publicLoader)).toEqual(["loadFinalPolicyTaxonomyGate"]);
+    expect(packageJson.exports).not.toHaveProperty("./final-approval");
+    expect(packageJson.exports).toHaveProperty("./final-approval-loader");
   });
 });
 

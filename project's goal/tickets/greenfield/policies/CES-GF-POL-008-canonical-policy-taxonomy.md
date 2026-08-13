@@ -154,3 +154,17 @@ ticket cannot self-approve it.
 - The earlier frozen-question correction remains intact. POL-008 authority is
   still false, taxonomy `1.3.0` is still unpublished, and POL-009 remains
   blocked.
+
+## Round 3 loader-bypass remediation
+
+- The raw `./final-approval` subpath is removed from the package export map.
+  Its schemas and constructors are internal implementation details used only by
+  the governed loader; callers cannot import a constructor that accepts an
+  asserted `resolution_status`.
+- The only public final-gate construction API is
+  `loadFinalPolicyTaxonomyGate()`. Its prerequisite schema is also private, so
+  public callers must pass through publication-lock and actual-byte resolution.
+- An API-surface test constructs plausible fabricated `resolved` evidence and
+  proves that neither a candidate nor handoff constructor is publicly exposed.
+- POL-008 remains unapproved, taxonomy `1.3.0` remains unpublished, and POL-009
+  remains blocked.

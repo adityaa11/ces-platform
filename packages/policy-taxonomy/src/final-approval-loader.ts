@@ -5,7 +5,7 @@ import { contentHash, createFinalPolicyTaxonomyApprovalCandidate,
   createFinalPolicyTaxonomyReviewHandoff } from "./final-approval.js";
 
 const Hash = z.string().regex(/^[0-9a-f]{64}$/u);
-export const AcceptedFinalGatePrerequisiteSchema = z.object({
+const AcceptedFinalGatePrerequisiteSchema = z.object({
   schema_version: z.literal("1.0.0"), publication_id: z.enum([
     "ces-policies.safara-bootstrap.coverage-v4.accepted-v1",
     "ces-agents-bridge.agb-014.accepted-v1"]), publication_status: z.literal("accepted"),
