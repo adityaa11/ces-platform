@@ -49,3 +49,11 @@ predecessor integrity, and POL-007 authority separation.
   remain proposed, and reject project or implementation wording.
 - Golden replay coverage exercises sequential flow, sensitive-data
   classification, and disclosure minimization through the canonical executor.
+- `ADD`, `MERGE`, `ALIAS`, and `REJECT` use explicit deterministic target and
+  comparison rules, with positive and contradictory registered-execution tests.
+- Server-attached canonical evidence preserves each accepted raw concept's
+  exact source identity, role, scope, bounded meaning, and extraction provenance;
+  differently-role raw pairs require an explicit distinction justification.
+- Golden expectations resolve directly from accepted POL-007 v1.3/v1.5
+  successors used only as test oracles; runtime resolution remains pinned to
+  accepted raw support and the earlier approved canonical predecessor.

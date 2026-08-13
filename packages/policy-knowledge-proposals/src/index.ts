@@ -54,6 +54,7 @@ const CanonicalRequestSchema = z.object({
   accepted_raw_support: z.array(SourceLineageSchema).min(1),
   existing_canonical_concept_ids: z.array(Id),
 }).strict();
+export const CanonicalKnowledgeRequestSchema = CanonicalRequestSchema;
 
 const PolicyRequestSchema = z.object({
   layer: z.literal("policy_taxonomy"),
@@ -110,6 +111,7 @@ const CanonicalProposalSchema = z.object({
   layer: z.literal("canonical_vocabulary"),
   gap_route: z.literal("CANONICALIZATION_GAP"),
   decision: z.enum(["ADD", "MERGE", "ALIAS", "REJECT"]),
+  target_canonical_concept_id: Id.nullable().optional(),
   proposed_canonical_concept_id: Id,
   preferred_term: NonEmpty,
   definition: NonEmpty,
@@ -118,7 +120,19 @@ const CanonicalProposalSchema = z.object({
   predecessor_comparisons: z.array(z.object({ target_canonical_concept_id: Id,
     relationship: z.enum(["distinct", "overlaps", "subsumes", "equivalent", "unsupported"]),
     rationale: NonEmpty }).strict()).optional(),
+  raw_semantic_evidence: z.array(z.object({ raw_concept_id: Id, source_release_id: Id,
+    source_locator: NonEmpty, source_term: NonEmpty,
+    semantic_role: z.enum(["objective", "control", "requirement", "risk_concern",
+      "verification_context", "evidence_expectation"]),
+    scope_disposition: z.enum(["software_relevant", "out_of_scope_organizational", "review_required"]),
+    bounded_meaning: NonEmpty, extraction_method: z.enum(["manual", "structured_source", "agent_assisted"]),
+    extracted_at: Timestamp, extractor_id: Id, extraction_input_hash: z.string()
+      .regex(/^sha256:[0-9a-f]{64}$/u), extraction_input_hash_scope: NonEmpty }).strict()).min(1).optional(),
+  raw_distinction_justifications: z.array(z.object({ first_raw_concept_id: Id,
+    second_raw_concept_id: Id, relationship: z.enum(["distinct", "compatible_combination"]),
+    rationale: NonEmpty }).strict()).optional(),
 }).strict();
+export const CanonicalKnowledgeProposalSchema = CanonicalProposalSchema;
 
 const ComparisonSchema = z.object({
   subject_canonical_concept_id: Id,

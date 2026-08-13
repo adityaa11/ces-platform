@@ -25,8 +25,14 @@ export const resolveAcceptedCanonicalizationKnowledge: CanonicalizationResolver 
   for (const support of raw_support) { const raw = raws.find(({ concept_id }) => concept_id === support.raw_concept_id);
     if (!raw || raw.source_release_id !== support.source_release_id || raw.source_locator.locator !== support.source_locator)
       throw new Error("Raw lineage does not match accepted knowledge"); }
-  return { raw_support, raw_meanings: raws.map(({ concept_id, bounded_description }) =>
-    ({ raw_concept_id: concept_id, bounded_meaning: bounded_description })),
+  return { raw_support, raw_semantic_evidence: raws.map(({ concept_id, source_release_id,
+    source_locator, source_term, semantic_role, scope_disposition, bounded_description, provenance }) =>
+    ({ raw_concept_id: concept_id, source_release_id, source_locator: source_locator.locator.trim(),
+      source_term: source_term.trim(), semantic_role, scope_disposition,
+      bounded_meaning: bounded_description.trim(),
+      extraction_method: provenance.extraction_method, extracted_at: provenance.extracted_at,
+      extractor_id: provenance.extractor_id, extraction_input_hash: provenance.extraction_input.hash,
+      extraction_input_hash_scope: provenance.extraction_input.hash_scope.trim() })),
   predecessor_concepts: predecessor.concepts.map(({ concept_id, preferred_term, definition }) =>
     ({ concept_id, preferred_term, definition })) };
 };
