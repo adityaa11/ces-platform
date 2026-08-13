@@ -45,19 +45,20 @@ const revisions = { source_glossary_revision: "1.1.0", raw_vocabulary_revision: 
   canonical_vocabulary_revision: "1.5.0", policy_taxonomy_revision: "1.1.0" };
 const ev = (n: number) => ({ event_id: `event.retry.${n}`, evidence_id: `evidence.retry.${n}`,
   occurred_at: `2026-08-12T0${n}:00:00+00:00` });
-function rejectedWorkflow() {
+function rejectedWorkflow(attemptId = "attempt.1", proposalId = "proposal.attempt.1",
+  proposalHash = "b".repeat(64), reviewId = "review.retry.1") {
   let workflow = startPolicyKnowledgeWorkflow({ workflow_id: "workflow.retry", gap_id: "gap.1",
     coverage_result: { coverage_result_id: "coverage.retry", status: "valid",
       completeness: "complete", revisions, entries: [{ fact_id: "safara.manual.fact.0027",
         disposition: "SOURCE_OR_POLICY_GAP", earliest_incomplete_layer: "policy_taxonomy" }] }, ...ev(1) });
-  workflow = recordKnowledgeAttempt(workflow, { attempt_id: "attempt.workflow.1", ...ev(2) });
-  workflow = recordKnowledgeProposal(workflow, { attempt_id: "attempt.workflow.1",
-    proposal_id: "proposal.workflow.1", proposal_hash: "b".repeat(64), ...ev(3) });
-  workflow = recordKnowledgeValidation(workflow, { proposal_id: "proposal.workflow.1",
-    proposal_hash: "b".repeat(64), validation_id: "validation.workflow.1", status: "valid", ...ev(4) });
-  return recordKnowledgeReview(workflow, { review_id: "review.retry.1", outcome: "NOT ACCEPTED",
+  workflow = recordKnowledgeAttempt(workflow, { attempt_id: attemptId, ...ev(2) });
+  workflow = recordKnowledgeProposal(workflow, { attempt_id: attemptId,
+    proposal_id: proposalId, proposal_hash: proposalHash, ...ev(3) });
+  workflow = recordKnowledgeValidation(workflow, { proposal_id: proposalId,
+    proposal_hash: proposalHash, validation_id: "validation.workflow.1", status: "valid", ...ev(4) });
+  return recordKnowledgeReview(workflow, { review_id: reviewId, outcome: "NOT ACCEPTED",
     review_round: 1, predecessor_review_id: null, reviewed_commit: "c".repeat(40),
-    reviewed_artifact_hash: "b".repeat(64), required_finding_ids: ["required.retry.1"],
+    reviewed_artifact_hash: proposalHash, required_finding_ids: ["required.retry.1"],
     reviewed_finding_ids: [], qualifying_regression: false, ...ev(5) });
 }
 const retryAuthority = rejectedWorkflow();
@@ -65,8 +66,10 @@ const retryFingerprint = retryAuthority.gap!.gap_fingerprint;
 const remediation = () => ({ kind: "NOT_ACCEPTED_REMEDIATION" as const,
   workflow: retryAuthority, review_id: "review.retry.1" });
 function attempt(current: ReturnType<typeof ledger>, id: string, proposal: unknown,
-  authorization: typeof initial | ReturnType<typeof remediation> = initial) {
-  return recordBoundedAttempt(current, { attempt_id: id, proposal_semantics: proposal,
+  authorization: typeof initial | ReturnType<typeof remediation> = initial,
+  proposalId = `proposal.${id}`, proposalHash = id === "attempt.1" ? "b".repeat(64) : "d".repeat(64)) {
+  return recordBoundedAttempt(current, { attempt_id: id, proposal_id: proposalId,
+    proposal_hash: proposalHash, proposal_semantics: proposal,
     resolve_meaning: resolveMeaning, authorization });
 }
 describe("AGB-011 non-convergence controls", () => {
@@ -96,9 +99,17 @@ describe("AGB-011 non-convergence controls", () => {
       workflow: forged, review_id: "review.retry.1" })).toThrow();
     const second = attempt(first, "attempt.2", semantics("Sensitive disclosure must be minimized.",
       "policy.disclosure", disclosureMeaning.artifact_id), remediation());
-    const exhausted = recordBoundedAttempt(second, { attempt_id: "attempt.3",
+    expect(() => recordBoundedAttempt(second, { attempt_id: "attempt.reuse",
+      proposal_id: "proposal.reuse", proposal_hash: "e".repeat(64),
       proposal_semantics: semantics(paraphrase), resolve_meaning: resolveMeaning,
-      authorization: remediation() });
+      authorization: remediation() })).toThrow(/authoritative/u);
+    const secondReview = rejectedWorkflow("attempt.2", "proposal.attempt.2", "d".repeat(64),
+      "review.retry.2");
+    const exhausted = recordBoundedAttempt(second, { attempt_id: "attempt.3",
+      proposal_id: "proposal.attempt.3", proposal_hash: "e".repeat(64),
+      proposal_semantics: semantics(paraphrase), resolve_meaning: resolveMeaning,
+      authorization: { kind: "NOT_ACCEPTED_REMEDIATION", workflow: secondReview,
+        review_id: "review.retry.2" } });
     expect(exhausted).toMatchObject({ suspension_reason: "ATTEMPT_EXHAUSTED",
       attempts: [{ attempt_id: "attempt.1" }, { attempt_id: "attempt.2" }] });
   });

@@ -31,7 +31,8 @@ export const NormalizedProposalSemanticsSchema = z.object({ layer: z.enum([
     raw_concept_id: Id }).strict()), comparisons: z.array(z.object({ subject_id: Id,
     target_id: Id, relationship: z.enum(["distinct", "overlaps", "subsumes", "equivalent",
       "unsupported"]) }).strict()) }).strict();
-const Attempt = z.object({ attempt_id: Id, proposal_fingerprint: Hash }).strict();
+const Attempt = z.object({ attempt_id: Id, proposal_id: Id, proposal_hash: Hash,
+  proposal_fingerprint: Hash, authorization_review_id: Id.nullable() }).strict();
 export const NonConvergenceLedgerSchema = z.object({ schema_version: z.literal("1.0.0"),
   ledger_id: Id, gap_fingerprint: Hash, fact_id: Id,
   earliest_incomplete_layer: z.enum(["raw_source_vocabulary", "canonical_vocabulary",
@@ -96,19 +97,23 @@ export function createSuccessorConvergenceLedger(previousValue: unknown, input: 
 }
 
 export function recordBoundedAttempt(ledgerValue: unknown, input: { attempt_id: string;
+  proposal_id: string; proposal_hash: string;
   proposal_semantics: unknown; resolve_meaning: GovernedMeaningResolver;
   authorization: { kind: "INITIAL" } | { kind: "NOT_ACCEPTED_REMEDIATION";
     workflow: unknown; review_id: string } }) {
   const ledger = NonConvergenceLedgerSchema.parse(ledgerValue);
+  Hash.parse(input.proposal_hash);
   if (ledger.suspension_reason) throw new Error("Suspended convergence ledger cannot retry");
-  assertAttemptAuthority(ledger, input.authorization);
+  const authorizationReviewId = assertAttemptAuthority(ledger, input.authorization);
   if (ledger.attempts.length >= ledger.attempt_policy.max_attempts)
     return suspend(ledger, "ATTEMPT_EXHAUSTED");
   const fingerprint = proposalSemanticFingerprint(input.proposal_semantics, input.resolve_meaning);
   if (ledger.attempts.some(({ proposal_fingerprint }) => proposal_fingerprint === fingerprint))
     return suspend(ledger, "DUPLICATE_PROPOSAL");
   return make({ ...withoutHash(ledger), attempts: [...ledger.attempts,
-    { attempt_id: input.attempt_id, proposal_fingerprint: fingerprint }] });
+    { attempt_id: input.attempt_id, proposal_id: input.proposal_id,
+      proposal_hash: input.proposal_hash, proposal_fingerprint: fingerprint,
+      authorization_review_id: authorizationReviewId }] });
 }
 
 export function evaluateCoverageProgress(ledgerValue: unknown, input: {
@@ -146,14 +151,20 @@ function assertAttemptAuthority(ledger: NonConvergenceLedger,
     workflow: unknown; review_id: string }) {
   if (authorization.kind === "INITIAL") {
     if (ledger.attempts.length !== 0) throw new Error("Only the first attempt may use initial authority");
-    return;
+    return null;
   }
   const workflow = PolicyKnowledgeWorkflowSchema.parse(authorization.workflow);
+  const previous = ledger.attempts.at(-1);
   if (ledger.attempts.length === 0 || workflow.state !== "GOVERNED_SUSPENSION" ||
       workflow.review_id !== authorization.review_id || workflow.review_outcome !== "NOT ACCEPTED" ||
       workflow.required_finding_ids.length === 0 || !workflow.gap ||
-      workflow.gap.gap_fingerprint !== ledger.gap_fingerprint)
+      workflow.gap.gap_fingerprint !== ledger.gap_fingerprint || !previous ||
+      workflow.attempt_id !== previous.attempt_id || workflow.proposal_id !== previous.proposal_id ||
+      workflow.proposal_hash !== previous.proposal_hash ||
+      ledger.attempts.some(({ authorization_review_id }) =>
+        authorization_review_id === authorization.review_id))
     throw new Error("Retry requires authoritative bounded NOT ACCEPTED review state");
+  return authorization.review_id;
 }
 function normalizeSurface(value: string) { return value.normalize("NFKC").toLowerCase()
   .replace(/[^a-z0-9]+/gu, " ").trim().replace(/\s+/gu, " "); }

@@ -63,6 +63,10 @@ historical immutability, and false-positive/false-negative duplicate fixtures.
   parse and bind the accepted AGB-010 event-authoritative workflow in
   `NOT ACCEPTED` suspension with bounded REQUIRED findings, the exact review ID,
   and the same governed gap fingerprint.
+- Each ledger attempt now records proposal ID/hash and its consumed review ID.
+  Remediation authority must review the immediately preceding exact
+  attempt/proposal; one review authorizes only one next attempt, and another
+  retry requires a new `NOT ACCEPTED` review of the new latest attempt.
 - Authority-unavailable and governed-source-unavailable are explicit suspension
   reasons and are not silently converted into `DECISION_REQUIRED`.
 - Focused convergence, workflow architecture, and typechecking evidence passes.
