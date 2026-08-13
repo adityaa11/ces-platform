@@ -10,6 +10,7 @@
     "@company/ces-policy-canonical-vocabulary": "workspace:*",
     "@company/ces-policy-knowledge-proposals": "workspace:*",
     "@company/ces-policy-knowledge-validation": "workspace:*",
+    "@company/ces-policy-source-glossary": "workspace:*",
     "@company/ces-policy-source-vocabulary": "workspace:*",
     "@company/ces-policy-taxonomy": "workspace:*",
     "zod": "4.4.3"

@@ -18,6 +18,8 @@ import { createAtlasProjectRelationshipExtractor } from
 import { createPolicyTaxonomyAgent } from "./agents/policy-taxonomy-agent/agent.js";
 import { resolveAcceptedPolicyTaxonomyKnowledge } from
   "./agents/policy-taxonomy-agent/governed-knowledge.js";
+import { createSourceKnowledgeAgent } from "./agents/source-knowledge-agent/agent.js";
+import { resolveAcceptedGovernedSource } from "./agents/source-knowledge-agent/governed-source.js";
 import { createJsonTelemetry } from "./operations/telemetry.js";
 import { closeBridgeServer, listenBridgeServer, type BridgeRuntime } from "./server.js";
 
@@ -80,6 +82,14 @@ export function createProductionRuntime(
       max_output_bytes: config.ceilings.max_provider_response_bytes,
       max_output_tokens: config.ceilings.max_output_tokens },
   }));
+  agents.register(createSourceKnowledgeAgent({ model_alias: environment.POLICY_MODEL_ALIAS ??
+    environment.ATLAS_MODEL_ALIAS ?? "atlas-default", provider_id: provider.provider_id,
+    resolve_governed_source: resolveAcceptedGovernedSource,
+    policy: { timeout_ms: config.ceilings.max_timeout_ms,
+      max_attempts: config.ceilings.max_provider_attempts,
+      max_input_bytes: config.ceilings.max_request_bytes,
+      max_output_bytes: config.ceilings.max_provider_response_bytes,
+      max_output_tokens: config.ceilings.max_output_tokens } }));
   const providers = new ProviderRegistry();
   providers.register(provider);
   const models = new ModelRegistry();

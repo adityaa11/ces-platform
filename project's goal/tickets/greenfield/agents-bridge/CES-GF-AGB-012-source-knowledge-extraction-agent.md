@@ -1,6 +1,6 @@
 # CES-GF-AGB-012 - Source Knowledge Extraction Agent
 
-**Status:** Proposed; implementation unauthorized
+**Status:** Implemented candidate; pending REVIEW_GATE
 **Review class:** REVIEW_GATE
 **Depends on:** Accepted AGB-006 and AGB-011
 **Blocks:** AGB-013 and AGB-014
@@ -36,3 +36,18 @@ Register a source-knowledge agent that proposes bounded raw CES concepts for an
 
 Source authorization, exact provenance, bounded meaning, duplicate avoidance,
 project independence, and POL-006 authority separation.
+
+## Implementation evidence
+
+- Registered `ces.source-knowledge-agent@1.0.0` in the existing stateless
+  Agents Bridge with structured output, no tools, and mandatory human review.
+- A server-controlled resolver accepts only active releases explicitly
+  authorized for structured extraction and AI-assisted analysis, requires one
+  exact governed locator, and supplies rights conditions plus committed source
+  material from the accepted raw v1.2 corpus.
+- Provider output must exactly preserve governed release, locator, raw identity,
+  and bounded meaning. Existing equivalent raw IDs deterministically require
+  `REJECT`; fabricated, missing, blocked, or over-broad material fails closed.
+- Golden replays cover ASVS V14.1.1 and V14.2.6 through the AGB-006 proposed
+  raw-concept envelope. Output cannot accept or publish POL-006 authority.
+- Focused agent and architecture tests pass with Agents Bridge typechecking.
