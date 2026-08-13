@@ -1,6 +1,6 @@
 # CES-GF-AGB-012 - Source Knowledge Extraction Agent
 
-**Status:** Implemented candidate; pending REVIEW_GATE
+**Status:** Accepted
 **Review class:** REVIEW_GATE
 **Depends on:** Accepted AGB-006 and AGB-011
 **Blocks:** AGB-013 and AGB-014
@@ -38,6 +38,9 @@ Source authorization, exact provenance, bounded meaning, duplicate avoidance,
 project independence, and POL-006 authority separation.
 
 ## Implementation evidence
+
+- REVIEW_GATE accepted commit `b9bbb64` in
+  `CES_AGENTS_BRIDGE_CLOSURE_REVIEW_b9bbb64.md`; all three stable findings closed.
 
 - Registered `ces.source-knowledge-agent@1.0.0` in the existing stateless
   Agents Bridge with structured output, no tools, and mandatory human review.

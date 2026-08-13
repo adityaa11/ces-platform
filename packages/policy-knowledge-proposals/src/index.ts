@@ -115,6 +115,9 @@ const CanonicalProposalSchema = z.object({
   definition: NonEmpty,
   raw_support: z.array(SourceLineageSchema).min(1),
   semantic_rationale: NonEmpty,
+  predecessor_comparisons: z.array(z.object({ target_canonical_concept_id: Id,
+    relationship: z.enum(["distinct", "overlaps", "subsumes", "equivalent", "unsupported"]),
+    rationale: NonEmpty }).strict()).optional(),
 }).strict();
 
 const ComparisonSchema = z.object({
