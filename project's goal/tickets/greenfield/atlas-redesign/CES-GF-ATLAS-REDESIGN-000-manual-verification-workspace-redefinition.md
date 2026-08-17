@@ -300,7 +300,7 @@ terminal review outcomes.
 - Round 1 findings: `ATLAS-UI-R1-BLOCKER-01` through
   `ATLAS-UI-R1-BLOCKER-06`, plus `ATLAS-UI-R1-IMPORTANT-01`, recorded in
   `../../../feedback/CES_ATLAS_REDESIGN_REVIEW_efd2c54.md`
-- Remediation commit(s): pending
+- Remediation commit(s): `259ee18` (Round 1 blockers 01-06 and Important-01)
 - Round 2 closure: pending
 - Terminal outcome: pending
 - Proposed prototype content hash:
