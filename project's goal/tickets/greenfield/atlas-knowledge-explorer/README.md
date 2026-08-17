@@ -3,21 +3,20 @@
 **Status:** Semantic-depth implementation complete through ATLAS-V2-011F;
 ATLAS-V2-011G live generic PDF qualification remains
 
-## Proposed successor UI gate
+## Accepted successor UI sequence
 
 [ATLAS-REDESIGN-000](../atlas-redesign/CES-GF-ATLAS-REDESIGN-000-manual-verification-workspace-redefinition.md)
-is a proposed blocking `REVIEW_GATE` for the replacement Atlas manual
-verification workspace. V2 semantic, evidence, revision, review, API, PDF, and
-graph infrastructure may be assessed as reusable foundation, but this plan's
-existing UI shell must not be extended while the redesign gate is under review.
+received terminal outcome `ACCEPTED` and governs the replacement Atlas manual
+verification workspace through REDESIGN-001 to REDESIGN-010. V2 semantic,
+evidence, revision, review, API, PDF, and graph infrastructure remains reusable
+foundation, but this plan's existing UI shell must not be extended.
 
-The UI Gate context and prototype are proposed rails only. They do not amend
-active Atlas authority until REDESIGN-000 receives an accepting terminal
-outcome. The final renewed Atlas authority and POL-010 unblock condition will
-be the REDESIGN-009 gate defined by the accepted redesign plan.
+The pinned UI Gate context and prototype are active product rails. The final
+renewed Atlas authority and POL-010 unblock condition is REDESIGN-009; CES
+Result integration follows accepted POL-010 under REDESIGN-010.
 
 This is the active foundation sequence for the Atlas recursive Knowledge
-Explorer. The proposed redesign gate above controls whether it is succeeded by
+Explorer. The accepted redesign gate above succeeds its UI delivery model with
 the renewed workspace sequence. Older Atlas, hardening, workflow-UI, and release tickets remain as
 implementation history or reusable-foundation evidence; they do not authorize
 legacy workflow-only artifacts, fixed detail tabs, or compatibility fallbacks.

@@ -1,7 +1,7 @@
 # CES Greenfield Product Suite Ticket Plan
 
-**Status:** In progress; Atlas V2 foundation remains active while the renewed
-Atlas workspace is blocked on the proposed ATLAS-REDESIGN-000 REVIEW_GATE
+**Status:** In progress; the accepted Atlas redesign sequence governs the
+renewed workspace while Atlas V2 remains reusable foundation evidence
 
 The general product direction is documented in
 [CES Greenfield Product Suite Context](../../CES_GREENFIELD_FOUR_END_PRODUCTS_CONTEXT.md).
@@ -45,24 +45,23 @@ proceed in declared dependency order.
 ## CES Atlas
 
 The [Atlas V2 Recursive Knowledge Explorer plan](atlas-knowledge-explorer/README.md)
-remains the active semantic-foundation history. Replacement UI implementation
-is blocked on
+remains semantic-foundation history. Replacement UI implementation is governed
+by the accepted
 [ATLAS-REDESIGN-000](atlas-redesign/CES-GF-ATLAS-REDESIGN-000-manual-verification-workspace-redefinition.md),
-a proposed `REVIEW_GATE` that defines the authority changes, repository gap
-matrix, and finite renewed delivery sequence. Its UI context and prototype do
-not become accepted product authority unless that gate receives an accepting
-terminal outcome.
+a completed `REVIEW_GATE` that defines the accepted authority changes,
+repository gap matrix, and finite REDESIGN-001 through REDESIGN-010 delivery
+sequence. Its pinned UI context and prototype are active product rails.
 
-No new work may extend the existing Atlas UI shell while REDESIGN-000 is under
-review. Reusable V2 semantic, evidence, revision, review, API, PDF, and graph
-infrastructure may be evaluated through that gate.
+No new work may extend the existing Atlas UI shell. Reusable V2 semantic,
+evidence, revision, review, API, PDF, and graph infrastructure may be carried
+forward only through the accepted redesign slices.
 
 ## Atlas production gate
 
 The historical V2 production gate remains implementation evidence. Renewed
-Atlas production authority is blocked on an accepting REDESIGN-000 outcome and
-the final authority gate defined by its accepted finite plan. Until then, no
-redesign artifact is authoritative and POL-010 remains deferred.
+Atlas production authority is blocked on accepted REDESIGN-001 through
+REDESIGN-008 and the final REDESIGN-009 authority gate. POL-010 remains deferred
+until REDESIGN-009 receives an accepting terminal outcome.
 
 ## CES Architect
 

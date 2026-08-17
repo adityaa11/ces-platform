@@ -1,6 +1,6 @@
 # CES-GF-ATLAS-REDESIGN-000 - Atlas Manual Verification Workspace Redefinition
 
-**Status:** Proposed - awaiting Round 1 review
+**Status:** Accepted
 **Review class:** REVIEW_GATE
 **Depends on:** Project-owner UI direction recorded in
 `../../../UI Gate/ATLAS_UI_MANUAL_GATE_CONTEXT.md`. Planning may inspect and
@@ -29,9 +29,10 @@ needed to satisfy those rails.
 Atlas is being completed for its own product purpose. Unblocking POL-010 is a
 downstream consequence, not the definition of Atlas completion.
 
-## Product authority proposed by this gate
+## Accepted product authority
 
-Upon an accepting terminal outcome, amend `CES_ATLAS_AUTHORITY.md` to include:
+The accepting terminal outcome activates these entries in
+`CES_ATLAS_AUTHORITY.md`:
 
 1. `../../../UI Gate/ATLAS_UI_MANUAL_GATE_CONTEXT.md` (content hash
    `sha256:af45501722121e340e90a3a104983b640949f3d81127e9ae78ccdfe8389e8d47`)
@@ -295,15 +296,17 @@ terminal review outcomes.
 ## Review ledger
 
 - Candidate commit: `efd2c54d16c0aa14113238b0167dc384d150c444`
-- Required gap matrix: populated in this ticket; pending Round 2 closure
-- Required vertical-slice plan: populated in this ticket; pending Round 2 closure
+- Required gap matrix: accepted by Round 2
+- Required vertical-slice plan: accepted by Round 2
 - Round 1 findings: `ATLAS-UI-R1-BLOCKER-01` through
   `ATLAS-UI-R1-BLOCKER-06`, plus `ATLAS-UI-R1-IMPORTANT-01`, recorded in
   `../../../feedback/CES_ATLAS_REDESIGN_REVIEW_efd2c54.md`
 - Remediation commit(s): `259ee18` (Round 1 blockers 01-06 and Important-01)
-- Round 2 closure: pending
-- Terminal outcome: pending
-- Proposed prototype content hash:
+- Round 2 closure: `ACCEPTED` for remediation commit `259ee18` and
+  remediation-record commit `29a2b70`, recorded in
+  `../../../feedback/CES_ATLAS_REDESIGN_ROUND2_REVIEW_29a2b70.md`
+- Terminal outcome: `ACCEPTED`
+- Accepted prototype content hash:
   `sha256:ec5e25ea3f2a98fd8ec1130af59e59371f0b410c1a51f059560772043cc13505`
 
 ## Stopping condition

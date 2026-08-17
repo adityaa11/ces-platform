@@ -10,10 +10,20 @@ Atlas implementation and review must use only:
 4. [ATLAS-V2 ticket sequence](tickets/greenfield/atlas-knowledge-explorer/README.md)
 5. [HARD-027 golden qualification](tickets/greenfield/atlas-hardening/CES-GF-ATLAS-HARD-027-golden-model-profile-safara-workflow-qualification.md)
 6. [`golden-main-workflow.json`](../tests/fixtures/safara/golden-main-workflow.json)
+7. [Atlas UI Manual Gate Context](UI%20Gate/ATLAS_UI_MANUAL_GATE_CONTEXT.md),
+   accepted at content hash
+   `sha256:af45501722121e340e90a3a104983b640949f3d81127e9ae78ccdfe8389e8d47`
+8. [Atlas renewed UI prototype](UI%20Gate/atlas-incremental-prd-ux%282%29.html),
+   accepted as the golden behavioral and layout example at content hash
+   `sha256:ec5e25ea3f2a98fd8ec1130af59e59371f0b410c1a51f059560772043cc13505`
+9. [Accepted Atlas redesign plan](tickets/greenfield/atlas-redesign/CES-GF-ATLAS-REDESIGN-000-manual-verification-workspace-redefinition.md)
 
-The three context documents define product behavior. Tickets define implementation
-order and acceptance. HARD-027 and its fixture qualify behavior without
-becoming production extraction templates.
+The graph and semantic context documents define Atlas knowledge behavior. The
+UI Manual Gate Context defines workspace information architecture, section
+intent, and manual verification behavior; its pinned prototype is the golden
+behavioral and layout example, not a production data schema or template.
+Tickets define implementation order and acceptance. HARD-027 and its fixture
+qualify behavior without becoming production extraction templates.
 
 ## Non-authority
 
@@ -26,14 +36,14 @@ Generic foundation and Agents Bridge documents may supply infrastructure only.
 They cannot define Atlas semantics, graph types, topology, hierarchy, artifacts,
 approval subjects, or UI navigation.
 
-## Proposed authority change under review
+## Accepted redesign authority
 
 [`ATLAS-REDESIGN-000`](tickets/greenfield/atlas-redesign/CES-GF-ATLAS-REDESIGN-000-manual-verification-workspace-redefinition.md)
-is a proposed `REVIEW_GATE` for replacing the Atlas workspace and defining the
-renewed manual-verification delivery sequence. The files under `UI Gate/` are
-committed review inputs but are not active product authority unless that gate
-receives an accepting terminal outcome. Until then, the active authority list
-above remains unchanged and POL-010 remains deferred.
+received terminal outcome `ACCEPTED` after remediation commits `259ee18` and
+`29a2b70`. The pinned UI Gate sources and finite REDESIGN-001 through
+REDESIGN-010 sequence are active authority. This acceptance authorizes the
+bounded implementation plan; it does not accept future implementation, make
+the current Atlas UI authoritative, or resume POL-010 before REDESIGN-009.
 
 ## Clean-state rule
 
