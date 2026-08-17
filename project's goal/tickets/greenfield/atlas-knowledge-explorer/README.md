@@ -7,7 +7,8 @@ ATLAS-V2-011G live generic PDF qualification remains
 
 [ATLAS-REDESIGN-000](../atlas-redesign/CES-GF-ATLAS-REDESIGN-000-manual-verification-workspace-redefinition.md)
 received terminal outcome `ACCEPTED` and governs the replacement Atlas manual
-verification workspace through REDESIGN-001 to REDESIGN-010. V2 semantic,
+verification workspace through the
+[REDESIGN-001 to REDESIGN-010 delivery plan](../atlas-redesign/README.md). V2 semantic,
 evidence, revision, review, API, PDF, and graph infrastructure remains reusable
 foundation, but this plan's existing UI shell must not be extended.
 

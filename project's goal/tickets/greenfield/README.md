@@ -50,7 +50,8 @@ by the accepted
 [ATLAS-REDESIGN-000](atlas-redesign/CES-GF-ATLAS-REDESIGN-000-manual-verification-workspace-redefinition.md),
 a completed `REVIEW_GATE` that defines the accepted authority changes,
 repository gap matrix, and finite REDESIGN-001 through REDESIGN-010 delivery
-sequence. Its pinned UI context and prototype are active product rails.
+[sequence](atlas-redesign/README.md). Its pinned UI context and prototype are
+active product rails.
 
 No new work may extend the existing Atlas UI shell. Reusable V2 semantic,
 evidence, revision, review, API, PDF, and graph infrastructure may be carried
