@@ -1,6 +1,7 @@
 # CES Greenfield Product Suite Ticket Plan
 
-**Status:** In progress; Atlas delivery is governed by the clean v2 sequence
+**Status:** In progress; Atlas V2 foundation remains active while the renewed
+Atlas workspace is blocked on the proposed ATLAS-REDESIGN-000 REVIEW_GATE
 
 The general product direction is documented in
 [CES Greenfield Product Suite Context](../../CES_GREENFIELD_FOUR_END_PRODUCTS_CONTEXT.md).
@@ -43,17 +44,25 @@ proceed in declared dependency order.
 
 ## CES Atlas
 
-The sole active Atlas delivery order is the
-[Atlas V2 Recursive Knowledge Explorer plan](atlas-knowledge-explorer/README.md).
-It replaces the deleted workflow-only extraction, hardening, and fixed-detail
-UI ticket sequences. HARD-027 remains only as the recursive golden acceptance
-oracle.
+The [Atlas V2 Recursive Knowledge Explorer plan](atlas-knowledge-explorer/README.md)
+remains the active semantic-foundation history. Replacement UI implementation
+is blocked on
+[ATLAS-REDESIGN-000](atlas-redesign/CES-GF-ATLAS-REDESIGN-000-manual-verification-workspace-redefinition.md),
+a proposed `REVIEW_GATE` that defines the authority changes, repository gap
+matrix, and finite renewed delivery sequence. Its UI context and prototype do
+not become accepted product authority unless that gate receives an accepting
+terminal outcome.
+
+No new work may extend the existing Atlas UI shell while REDESIGN-000 is under
+review. Reusable V2 semantic, evidence, revision, review, API, PDF, and graph
+infrastructure may be evaluated through that gate.
 
 ## Atlas production gate
 
-Atlas production release is blocked until ATLAS-V2-009 proves the real
-provider, CLI, artifact, API, review, and interactive UI path and confirms that
-no legacy Atlas runtime remains active.
+The historical V2 production gate remains implementation evidence. Renewed
+Atlas production authority is blocked on an accepting REDESIGN-000 outcome and
+the final authority gate defined by its accepted finite plan. Until then, no
+redesign artifact is authoritative and POL-010 remains deferred.
 
 ## CES Architect
 

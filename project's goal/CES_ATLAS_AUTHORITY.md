@@ -26,6 +26,15 @@ Generic foundation and Agents Bridge documents may supply infrastructure only.
 They cannot define Atlas semantics, graph types, topology, hierarchy, artifacts,
 approval subjects, or UI navigation.
 
+## Proposed authority change under review
+
+[`ATLAS-REDESIGN-000`](tickets/greenfield/atlas-redesign/CES-GF-ATLAS-REDESIGN-000-manual-verification-workspace-redefinition.md)
+is a proposed `REVIEW_GATE` for replacing the Atlas workspace and defining the
+renewed manual-verification delivery sequence. The files under `UI Gate/` are
+committed review inputs but are not active product authority unless that gate
+receives an accepting terminal outcome. Until then, the active authority list
+above remains unchanged and POL-010 remains deferred.
+
 ## Clean-state rule
 
 If a proposed change needs an old Atlas contract or compatibility branch, stop.
