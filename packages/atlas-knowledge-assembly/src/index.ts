@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { GraphSelectionOutputSchema } from "@company/ces-atlas-graph-selection";
-import { AtlasDocumentSchema, AtlasKnowledgeBundleSchema } from
+import { AtlasDocumentSchema, AtlasKnowledgeBundleSchema, AtlasProjectContextSchema,
+  type AtlasContributionRole, type AtlasKnowledgeBundle, type AtlasProjectContext } from
   "@company/ces-atlas-knowledge-contracts";
 import { SemanticFactExtractionOutputSchema } from "@company/ces-atlas-semantic-facts";
 import { z } from "zod";
@@ -141,6 +142,116 @@ export function assembleAtlasKnowledge(inputValue: unknown) {
       unresolved_relationships: semanticRelationships.unresolved },
     knowledge_nodes: [root, ...moduleNodes, ...conceptNodes, ...visualizations] });
 }
+
+export function assembleAtlasProjectContext(input: {
+  bundle: unknown;
+  predecessor?: AtlasProjectContext;
+  contribution_roles?: Array<{ increment_id: string; destination_kind: "knowledge" | "relationship";
+    destination_id: string; role: AtlasContributionRole }>;
+}): AtlasProjectContext {
+  const bundle = AtlasKnowledgeBundleSchema.parse(input.bundle);
+  const predecessor = input.predecessor
+    ? AtlasProjectContextSchema.parse(input.predecessor) : undefined;
+  if (predecessor && predecessor.project_id !== bundle.project_id) {
+    throw new Error("Atlas project context predecessor belongs to another project");
+  }
+  if (predecessor && predecessor.displayed_revision >= bundle.revision) {
+    throw new Error("Atlas successor revision must advance its predecessor");
+  }
+  const previousIncrements = predecessor?.increments ?? [];
+  const previousByDocument = new Set(previousIncrements.map(({ document_id, document_revision }) =>
+    `${document_id}\u0000${document_revision}`));
+  const additions = bundle.documents.filter(({ document_id, revision }) =>
+    !previousByDocument.has(`${document_id}\u0000${revision}`)).map((document, index) => ({
+      increment_id: `${document.document_id}.increment.${document.revision}`,
+      sequence: previousIncrements.length + index + 1,
+      document_id: document.document_id,
+      document_revision: document.revision,
+      content_hash: document.content_hash,
+      title: document.original_name,
+    }));
+  const increments = [...previousIncrements, ...additions];
+  if (!increments.length) throw new Error("Atlas project context requires a PRD increment");
+  const incrementByDocument = new Map(increments.map((increment) =>
+    [`${increment.document_id}\u0000${increment.document_revision}`, increment.increment_id]));
+  const evidence = new Map(bundle.evidence.map((item) => [item.evidence_id, item]));
+  const roleOverrides = new Map((input.contribution_roles ?? []).map((item) =>
+    [`${item.increment_id}\u0000${item.destination_kind}\u0000${item.destination_id}`, item.role]));
+  const previousIncrementIds = new Set(previousIncrements.map(({ increment_id }) => increment_id));
+  const previousDestinations = new Set((predecessor?.contributions ?? []).map((item) =>
+    `${item.destination_kind}\u0000${item.destination_id}`));
+  const contributions = [
+    ...bundle.knowledge_nodes.flatMap((node) => contributionRecords(bundle, incrementByDocument,
+      evidence, roleOverrides, previousIncrementIds, previousDestinations,
+      "knowledge", node.knowledge_id, node.evidence_ids)),
+    ...bundle.semantic_model.relationships.flatMap((relationship) => contributionRecords(bundle,
+      incrementByDocument, evidence, roleOverrides, previousIncrementIds, previousDestinations,
+      "relationship", relationship.relationship_id,
+      relationship.evidence_ids)),
+  ];
+  const predecessorRevisions = predecessor?.revisions.map((revision) =>
+    revision.lifecycle === "approved" ? { ...revision, lifecycle: "superseded" as const } : revision) ?? [];
+  return AtlasProjectContextSchema.parse({
+    schema_version: "1.0.0", project_id: bundle.project_id,
+    displayed_revision: bundle.revision, authority: bundle.authority,
+    revisions: [...predecessorRevisions, {
+      revision: bundle.revision,
+      predecessor_revision: predecessor?.displayed_revision ?? null,
+      lifecycle: bundle.authority.lifecycle,
+      included_increment_ids: increments.map(({ increment_id }) => increment_id),
+      knowledge_bundle_hash: projectDigest(canonicalJson(bundle)),
+    }],
+    increments,
+    contributions,
+  });
+}
+
+export function approveAtlasProjectContext(contextValue: unknown,
+  approvedBundleValue: unknown): AtlasProjectContext {
+  const context = AtlasProjectContextSchema.parse(contextValue);
+  const bundle = AtlasKnowledgeBundleSchema.parse(approvedBundleValue);
+  if (bundle.authority.lifecycle !== "approved" || bundle.project_id !== context.project_id
+      || bundle.revision !== context.displayed_revision) {
+    throw new Error("Approved Atlas context must match the approved knowledge revision");
+  }
+  return AtlasProjectContextSchema.parse({ ...context, authority: bundle.authority,
+    revisions: context.revisions.map((revision) => revision.revision === bundle.revision
+      ? { ...revision, lifecycle: "approved" } : revision) });
+}
+
+function contributionRecords(bundle: AtlasKnowledgeBundle,
+  incrementByDocument: Map<string, string>, evidence: Map<string, AtlasKnowledgeBundle["evidence"][number]>,
+  roleOverrides: Map<string, AtlasContributionRole>, previousIncrementIds: Set<string>,
+  previousDestinations: Set<string>,
+  destinationKind: "knowledge" | "relationship", destinationId: string, evidenceIds: string[]) {
+  const groups = new Map<string, string[]>();
+  for (const evidenceId of evidenceIds) {
+    const location = evidence.get(evidenceId)?.location;
+    if (!location) continue;
+    const incrementId = incrementByDocument.get(`${location.document_id}\u0000${location.document_revision}`);
+    if (!incrementId) throw new Error(`Evidence ${evidenceId} has no PRD increment`);
+    const group = groups.get(incrementId) ?? []; group.push(evidenceId); groups.set(incrementId, group);
+  }
+  return [...groups].map(([incrementId, ids]) => {
+    const override = roleOverrides.get(`${incrementId}\u0000${destinationKind}\u0000${destinationId}`);
+    if (!previousIncrementIds.has(incrementId)
+        && previousDestinations.has(`${destinationKind}\u0000${destinationId}`) && !override) {
+      throw new Error(`Existing Atlas destination ${destinationId} requires an explicit contribution role`);
+    }
+    return { contribution_id: `${bundle.project_id}.contribution.${projectDigest(
+      `${incrementId}\u0000${destinationKind}\u0000${destinationId}`).slice(7, 23)}`,
+      increment_id: incrementId, destination_kind: destinationKind,
+      destination_id: destinationId, role: override ?? "established" as const,
+      evidence_ids: unique(ids) };
+  });
+}
+
+function canonicalJson(value: unknown): string {
+  return JSON.stringify(value, (_key, child) => child !== null && typeof child === "object"
+    && !Array.isArray(child) ? Object.fromEntries(Object.entries(child)
+      .sort(([left], [right]) => left.localeCompare(right))) : child);
+}
+function projectDigest(value: string) { return `sha256:${digest(value)}`; }
 
 type Fact = z.infer<typeof SemanticFactExtractionOutputSchema>["facts"][number];
 type ModuleItem = { fact: Fact; knowledgeId: string };

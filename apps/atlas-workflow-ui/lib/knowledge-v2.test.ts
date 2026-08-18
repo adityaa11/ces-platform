@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { authorizeAtlasRequest, parseByteRange, readKnowledgeNode,
-  resolveAtlasConfiguredPath, resolvePdfDocument } from "./knowledge-v2";
+  readKnowledgeOverview, readProjectContext, resolveAtlasConfiguredPath, resolvePdfDocument } from "./knowledge-v2";
 
 function fixture() {
   const evidence = { evidence_id: "sample.evidence.one", exact_text: "Orders", language: "en",
@@ -57,6 +57,20 @@ function fixture() {
           label_origin: "original_document", evidence_ids: [evidence.evidence_id] }] } },
       module, concept, representation] };
 }
+function projectContext() {
+  return { schema_version: "1.0.0", project_id: "sample", displayed_revision: 1,
+    authority: { lifecycle: "proposed", authority: "non_authoritative" },
+    revisions: [{ revision: 1, predecessor_revision: null, lifecycle: "proposed",
+      included_increment_ids: ["sample.document.increment.1"],
+      knowledge_bundle_hash: `sha256:${"b".repeat(64)}` }],
+    increments: [{ increment_id: "sample.document.increment.1", sequence: 1,
+      document_id: "sample.document", document_revision: 1,
+      content_hash: `sha256:${"a".repeat(64)}`, title: "sample.pdf" }],
+    contributions: [{ contribution_id: "sample.contribution.one",
+      increment_id: "sample.document.increment.1", destination_kind: "knowledge",
+      destination_id: "sample.knowledge.module.orders", role: "established",
+      evidence_ids: ["sample.evidence.one"] }] };
+}
 describe("Atlas V2 knowledge API backing", () => {
   it("resolves env-file paths from the pnpm invocation root", () => {
     expect(resolveAtlasConfiguredPath(".ces/generated", "C:/repo/apps/atlas-workflow-ui",
@@ -68,6 +82,7 @@ describe("Atlas V2 knowledge API backing", () => {
     const root = await mkdtemp(join(tmpdir(), "atlas-api-"));
     try { await mkdir(join(root, "sample"));
       await writeFile(join(root, "sample", "atlas-knowledge.json"), JSON.stringify(fixture()));
+      await writeFile(join(root, "sample", "atlas-project-context.json"), JSON.stringify(projectContext()));
       const result = await readKnowledgeNode({ root, projectId: "sample", revision: 1,
         knowledgeId: "sample.knowledge.module.orders" });
       expect(result.breadcrumb.map(({ display_name }) => display_name)).toEqual(["Main Workflow", "Orders"]);
@@ -76,6 +91,10 @@ describe("Atlas V2 knowledge API backing", () => {
       expect(result.children).toEqual([expect.objectContaining({ display_name: "Create Order",
         semantic_kind: "action", depth: 1 })]);
       expect(result.representations).toEqual([expect.objectContaining({ display_name: "Workflow" })]);
+      expect((await readProjectContext({ root, projectId: "sample", revision: 1 }))
+        .increments).toHaveLength(1);
+      expect((await readKnowledgeOverview({ root, projectId: "sample", revision: 1 }))
+        .project_context.revisions[0]).toEqual(expect.objectContaining({ predecessor_revision: null }));
       await expect(readKnowledgeNode({ root, projectId: "sample", revision: 2,
         knowledgeId: "sample.knowledge.module.orders" })).rejects.toThrow(/stale/u);
     } finally { await rm(root, { recursive: true, force: true }); }
@@ -85,6 +104,8 @@ describe("Atlas V2 knowledge API backing", () => {
     try { await mkdir(join(root, "artifacts", "sample"), { recursive: true });
       await mkdir(join(pdfRoot, "sample"), { recursive: true });
       await writeFile(join(root, "artifacts", "sample", "atlas-knowledge.json"), JSON.stringify(fixture()));
+      await writeFile(join(root, "artifacts", "sample", "atlas-project-context.json"),
+        JSON.stringify(projectContext()));
       await writeFile(join(pdfRoot, "sample", "sample.pdf"), "%PDF-test");
       expect((await resolvePdfDocument({ artifactRoot: join(root, "artifacts"), pdfRoot,
         projectId: "sample", documentId: "sample.document", revision: 1 })).size).toBe(9);

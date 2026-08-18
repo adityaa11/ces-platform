@@ -1,6 +1,6 @@
 # CES-GF-ATLAS-REDESIGN-001 - Accumulated Project and PRD Contribution Contract
 
-**Status:** Ready for implementation
+**Status:** Implemented; pending Round 1 implementation review
 **Review class:** REVIEW_GATE
 **Depends on:** Accepted ATLAS-REDESIGN-000
 **Owner:** Atlas semantic model
@@ -55,6 +55,44 @@ Record candidate commit, schemas, fixtures, commands/results, screenshots or
 production-shaped capture, Round 1 findings, remediation, Round 2 closure, and
 one terminal outcome. Stop after the accepted contract and projection work;
 statement accounting belongs to REDESIGN-002.
+
+## Implementation evidence
+
+- Added canonical `AtlasProjectContext`, project revision, PRD increment,
+  contribution, and shared contribution-role schemas to
+  `@company/ces-atlas-knowledge-contracts`.
+- Added deterministic project-context assembly, immutable successor checks,
+  explicit roles for new contributions to existing destinations, and exact
+  proposed-to-approved context promotion.
+- CLI publication now emits `atlas-project-context.json` and
+  `atlas-approved-project-context.json` beside the canonical knowledge bundle.
+- The revision-pinned overview API returns project context and fails closed for
+  stale project/revision/lifecycle identity.
+- The production UI exposes displayed revision, predecessor, and ordered
+  included PRD increments.
+- Safara-shaped workflow fixtures and the structurally different entity model
+  remain covered; accumulated successor tests exercise multiple document
+  increments, immutable predecessor state, role governance, and project
+  isolation.
+
+### Verification
+
+```text
+15 focused contract/assembly/API/CLI tests passed
+atlas-knowledge-contracts typecheck passed
+atlas-knowledge-assembly typecheck passed
+CLI typecheck passed
+Atlas workflow UI typecheck passed
+Atlas workflow UI production build passed
+```
+
+### Implementation review ledger
+
+- Primary implementation commit: pending
+- Round 1 implementation findings: pending
+- Remediation commit(s): pending
+- Round 2 closure: pending
+- Terminal implementation outcome: pending
 
 ## Ticket-definition readiness ledger
 

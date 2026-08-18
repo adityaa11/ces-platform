@@ -237,6 +237,73 @@ export const AtlasKnowledgeAuthoritySchema = z.discriminatedUnion("lifecycle", [
     approval_decision_ids: z.array(Id).min(1) }).strict(),
 ]);
 
+export const AtlasContributionRoleSchema = z.enum([
+  "established", "clarified", "expanded", "changed", "contradicted",
+  "unresolved", "superseded",
+]);
+
+export const AtlasPrdIncrementSchema = z.object({
+  increment_id: Id,
+  sequence: z.number().int().positive(),
+  document_id: Id,
+  document_revision: z.number().int().positive(),
+  content_hash: Hash,
+  title: ExactText,
+}).strict();
+
+export const AtlasProjectRevisionSchema = z.object({
+  revision: z.number().int().positive(),
+  predecessor_revision: z.number().int().positive().nullable(),
+  lifecycle: z.enum(["proposed", "approved", "superseded"]),
+  included_increment_ids: z.array(Id).min(1),
+  knowledge_bundle_hash: Hash,
+}).strict();
+
+export const AtlasKnowledgeContributionSchema = z.object({
+  contribution_id: Id,
+  increment_id: Id,
+  destination_kind: z.enum(["knowledge", "relationship"]),
+  destination_id: Id,
+  role: AtlasContributionRoleSchema,
+  evidence_ids: z.array(Id).min(1),
+}).strict();
+
+export const AtlasProjectContextSchema = z.object({
+  schema_version: z.literal("1.0.0"),
+  project_id: Id,
+  displayed_revision: z.number().int().positive(),
+  authority: AtlasKnowledgeAuthoritySchema,
+  revisions: z.array(AtlasProjectRevisionSchema).min(1),
+  increments: z.array(AtlasPrdIncrementSchema).min(1),
+  contributions: z.array(AtlasKnowledgeContributionSchema),
+}).strict().superRefine((context, refinement) => {
+  const issue = (message: string): void => refinement.addIssue({ code: "custom", message });
+  const revisions = new Map(context.revisions.map((item) => [item.revision, item]));
+  const increments = new Map(context.increments.map((item) => [item.increment_id, item]));
+  if (revisions.size !== context.revisions.length) issue("Project revisions must be unique");
+  if (increments.size !== context.increments.length) issue("PRD increments must be unique");
+  const displayed = revisions.get(context.displayed_revision);
+  if (!displayed) issue("Displayed project revision is unavailable");
+  if (displayed && displayed.lifecycle !== context.authority.lifecycle) {
+    issue("Displayed revision lifecycle must match project authority");
+  }
+  for (const revision of context.revisions) {
+    if (revision.predecessor_revision !== null) {
+      if (revision.predecessor_revision >= revision.revision || !revisions.has(revision.predecessor_revision)) {
+        issue(`Project revision ${revision.revision} has an invalid predecessor`);
+      }
+    }
+    for (const incrementId of revision.included_increment_ids) {
+      if (!increments.has(incrementId)) issue(`Project revision references unknown increment ${incrementId}`);
+    }
+  }
+  for (const contribution of context.contributions) {
+    if (!increments.has(contribution.increment_id)) {
+      issue(`Contribution references unknown increment ${contribution.increment_id}`);
+    }
+  }
+});
+
 export const AtlasKnowledgeBundleSchema = z.object({
   schema_version: z.literal(ATLAS_KNOWLEDGE_CONTRACT_VERSION),
   project_id: Id,
@@ -370,3 +437,6 @@ export type AtlasSemanticConcept = z.infer<typeof AtlasSemanticConceptSchema>;
 export type AtlasSemanticRelationship = z.infer<typeof AtlasSemanticRelationshipSchema>;
 export type AtlasUnresolvedSemanticRelationship = z.infer<typeof AtlasUnresolvedSemanticRelationshipSchema>;
 export type AtlasSemanticModel = z.infer<typeof AtlasSemanticModelSchema>;
+export type AtlasProjectContext = z.infer<typeof AtlasProjectContextSchema>;
+export type AtlasKnowledgeContribution = z.infer<typeof AtlasKnowledgeContributionSchema>;
+export type AtlasContributionRole = z.infer<typeof AtlasContributionRoleSchema>;

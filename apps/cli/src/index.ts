@@ -4,9 +4,11 @@ import { createHash, randomUUID } from "node:crypto";
 import { access, copyFile, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { basename, dirname, extname, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { assembleAtlasKnowledge } from "@company/ces-atlas-knowledge-assembly";
+import { approveAtlasProjectContext, assembleAtlasKnowledge, assembleAtlasProjectContext } from
+  "@company/ces-atlas-knowledge-assembly";
 import { selectAtlasGraphTypes } from "@company/ces-atlas-graph-selection";
-import { AtlasKnowledgeBundleSchema } from "@company/ces-atlas-knowledge-contracts";
+import { AtlasKnowledgeBundleSchema, AtlasProjectContextSchema } from
+  "@company/ces-atlas-knowledge-contracts";
 import { approveAtlasKnowledge, atlasProposalHash, AtlasReviewDecisionSchema } from
   "@company/ces-atlas-knowledge-review";
 import {
@@ -421,13 +423,18 @@ async function approveAtlasV2(options: Readonly<Record<string, string>>, io: Cli
     throw new CliInputError("Atlas approval decisions reference a stale proposal");
   }
   const result = approveAtlasKnowledge({ proposal, decisions: decisionFile.decisions });
+  const projectContext = AtlasProjectContextSchema.parse(
+    await readJsonValue(resolve(outputDirectory, "atlas-project-context.json")),
+  );
+  const approvedProjectContext = approveAtlasProjectContext(projectContext, result.approved_bundle);
   const retained = await Promise.all([
     "atlas-knowledge.json", "atlas-evidence.json", "atlas-extraction.json", "atlas-diagnostics.json",
-    "source-manifest.json", "run-manifest.json",
+    "atlas-project-context.json", "source-manifest.json", "run-manifest.json",
   ].map(async (name) => [name, await readFile(resolve(outputDirectory, name), "utf8")] as const));
   await publishAtlasArtifacts(outputDirectory, {
     ...Object.fromEntries(retained),
     "atlas-approved-knowledge.json": collectionCanonicalJson(result.approved_bundle),
+    "atlas-approved-project-context.json": collectionCanonicalJson(approvedProjectContext),
     "atlas-approval-audit.json": collectionCanonicalJson({ schema_version: "2.0.0",
       proposal_hash: result.proposal_hash, decisions: result.audit_history }),
   });
@@ -499,6 +506,7 @@ async function runAtlasV2(
   }
   const bundle = assembleAtlasKnowledge({ project_id: projectId, revision: 1,
     documents, extraction, selection });
+  const projectContext = assembleAtlasProjectContext({ bundle });
   const coverage = assessAtlasCoverage({ extraction, selection,
     scopes: extractionRun.scopes, bundle });
   if (coverage.status !== "awaiting_human_review") {
@@ -515,6 +523,7 @@ async function runAtlasV2(
   await publishAtlasArtifacts(outputDirectory, {
     "atlas-extraction.json": collectionCanonicalJson(extraction),
     "atlas-knowledge.json": collectionCanonicalJson(bundle),
+    "atlas-project-context.json": collectionCanonicalJson(projectContext),
     "atlas-evidence.json": collectionCanonicalJson({ schema_version: "2.0.0",
       project_id: projectId, revision: 1, evidence: extraction.evidence }),
     "atlas-diagnostics.json": collectionCanonicalJson({ schema_version: "2.0.0",

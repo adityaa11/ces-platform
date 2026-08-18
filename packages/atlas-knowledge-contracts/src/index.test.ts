@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { AtlasKnowledgeBundleSchema, AtlasSemanticModelSchema, knowledgeBreadcrumb } from "./index.js";
+import { AtlasKnowledgeBundleSchema, AtlasProjectContextSchema, AtlasSemanticModelSchema,
+  knowledgeBreadcrumb } from "./index.js";
 
 const hash = `sha256:${"a".repeat(64)}`;
 const evidence = {
@@ -98,5 +99,31 @@ describe("Atlas recursive knowledge contract", () => {
       { ...concepts[0], parent_concept_id: concepts[1]!.concept_id },
       { ...concepts[1], child_concept_ids: [concepts[0]!.concept_id] }], relationships: [] }))
       .toThrow(/cycle/u);
+  });
+
+  it("validates accumulated revisions, PRD increments, and contributions", () => {
+    const context = { schema_version: "1.0.0", project_id: "project", displayed_revision: 2,
+      authority: { lifecycle: "proposed", authority: "non_authoritative" },
+      revisions: [
+        { revision: 1, predecessor_revision: null, lifecycle: "superseded",
+          included_increment_ids: ["project.document.prd.increment.1"], knowledge_bundle_hash: hash },
+        { revision: 2, predecessor_revision: 1, lifecycle: "proposed",
+          included_increment_ids: ["project.document.prd.increment.1", "project.document.change.increment.1"],
+          knowledge_bundle_hash: hash }],
+      increments: [
+        { increment_id: "project.document.prd.increment.1", sequence: 1,
+          document_id: "project.document.prd", document_revision: 1, content_hash: hash, title: "PRD.pdf" },
+        { increment_id: "project.document.change.increment.1", sequence: 2,
+          document_id: "project.document.change", document_revision: 1, content_hash: hash, title: "Change.pdf" }],
+      contributions: [{ contribution_id: "project.contribution.one",
+        increment_id: "project.document.change.increment.1", destination_kind: "knowledge",
+        destination_id: "project.module.fulfillment", role: "clarified",
+        evidence_ids: [evidence.evidence_id] }] };
+    expect(AtlasProjectContextSchema.parse(context).revisions).toHaveLength(2);
+    expect(() => AtlasProjectContextSchema.parse({ ...context, revisions: [
+      { ...context.revisions[1], predecessor_revision: 2 }] })).toThrow(/predecessor/u);
+    expect(() => AtlasProjectContextSchema.parse({ ...context, contributions: [
+      { ...context.contributions[0], increment_id: "project.increment.missing" }] }))
+      .toThrow(/unknown increment/u);
   });
 });

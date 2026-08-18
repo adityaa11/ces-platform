@@ -24,6 +24,10 @@ type Detail = { project_id: string; revision: number; authority: { lifecycle: st
   representations: Knowledge[]; source_coverage: { page_numbers: number[]; source_unit_count: number;
     evidence_count: number; overview_text: string[] } };
 type Overview = { project_id: string; revision: number; authority: { lifecycle: string; authority: string };
+  project_context: { displayed_revision: number;
+    revisions: Array<{ revision: number; predecessor_revision: number | null; lifecycle: string }>;
+    increments: Array<{ increment_id: string; sequence: number; title: string;
+      document_revision: number }> };
   root: Knowledge; children: Summary[] };
 
 export function KnowledgeWorkspace({ overview }: { overview: Overview }) {
@@ -59,6 +63,15 @@ export function KnowledgeWorkspace({ overview }: { overview: Overview }) {
     <dl><div><dt>Lifecycle</dt><dd>{overview.authority.lifecycle}</dd></div>
       <div><dt>Authority</dt><dd>{overview.authority.authority}</dd></div>
       <div><dt>Revision</dt><dd>{overview.revision}</dd></div></dl></header>
+    <section className="project-context" aria-label="Accumulated project context">
+      <div><p className="eyebrow">Revision chain</p><strong>Revision {overview.revision}</strong>
+        <span>Predecessor {overview.project_context.revisions.find(({ revision }) =>
+          revision === overview.revision)?.predecessor_revision ?? "None"}</span></div>
+      <div><p className="eyebrow">Included PRD increments</p>
+        <ul>{overview.project_context.increments.map((increment) => <li key={increment.increment_id}>
+          <strong>{increment.sequence}. {increment.title}</strong>
+          <span>Document revision {increment.document_revision}</span></li>)}</ul></div>
+    </section>
     <div className="knowledge-workspace"><nav aria-label="Knowledge navigation"><h2>Explore</h2>
       <ul>{expanded.map((item) => <li key={item.knowledge_id}><button
         style={{ paddingLeft: `${.75 + item.depth * 1.1}rem` }} onClick={() => void select(item.knowledge_id)}>

@@ -1,6 +1,7 @@
 import { readFile, stat } from "node:fs/promises";
 import { basename, isAbsolute, relative, resolve } from "node:path";
-import { AtlasKnowledgeBundleSchema, knowledgeBreadcrumb } from "@company/ces-atlas-knowledge-contracts";
+import { AtlasKnowledgeBundleSchema, AtlasProjectContextSchema, knowledgeBreadcrumb } from
+  "@company/ces-atlas-knowledge-contracts";
 
 const Id = /^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u;
 export function atlasArtifactRoot(): string {
@@ -34,10 +35,23 @@ export async function readKnowledgeBundle(input: { root: string; projectId: stri
 }
 export async function readKnowledgeOverview(input: Parameters<typeof readKnowledgeBundle>[0]) {
   const bundle = await readKnowledgeBundle(input);
+  const projectContext = await readProjectContext(input);
   const root = bundle.knowledge_nodes.find(({ knowledge_id }) => knowledge_id === bundle.root_knowledge_id)!;
   return { schema_version: bundle.schema_version, project_id: bundle.project_id,
-    revision: bundle.revision, authority: bundle.authority, root,
+    revision: bundle.revision, authority: bundle.authority, project_context: projectContext, root,
     children: root.child_ids.map((id) => summarize(bundle, id)) };
+}
+export async function readProjectContext(input: Parameters<typeof readKnowledgeBundle>[0]) {
+  const project = v2ProjectRoot(input.root, input.projectId);
+  const lifecycle = input.lifecycle ?? "proposed";
+  const file = lifecycle === "approved" ? "atlas-approved-project-context.json"
+    : "atlas-project-context.json";
+  const context = AtlasProjectContextSchema.parse(JSON.parse(await readFile(resolve(project, file), "utf8")));
+  if (context.project_id !== input.projectId || context.displayed_revision !== input.revision
+      || context.authority.lifecycle !== lifecycle) {
+    throw new Error("Atlas project context is stale");
+  }
+  return context;
 }
 export async function readKnowledgeNode(input: Parameters<typeof readKnowledgeBundle>[0] & { knowledgeId: string }) {
   assertAtlasId(input.knowledgeId, "knowledge identifier");

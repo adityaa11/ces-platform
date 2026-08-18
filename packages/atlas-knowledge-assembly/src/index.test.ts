@@ -1,7 +1,7 @@
 import { selectAtlasGraphTypes } from "@company/ces-atlas-graph-selection";
 import { knowledgeBreadcrumb } from "@company/ces-atlas-knowledge-contracts";
 import { describe, expect, it } from "vitest";
-import { assembleAtlasKnowledge } from "./index.js";
+import { assembleAtlasKnowledge, assembleAtlasProjectContext } from "./index.js";
 
 const hash = `sha256:${"a".repeat(64)}`;
 function evidence(id: string, text: string) {
@@ -138,5 +138,43 @@ describe("recursive Atlas knowledge assembly", () => {
     expect(root.visualization.edges).toHaveLength(1);
     expect(root.visualization.nodes.map(({ label }) => label).sort())
       .toEqual(["1. Registration", "2. Payment"]);
+  });
+
+  it("creates an immutable accumulated successor with per-document contributions", () => {
+    const firstBundle = bundle([fact("orders", "module", "Orders", "Orders")]);
+    const first = assembleAtlasProjectContext({ bundle: firstBundle });
+    const approvedFirst = { ...first,
+      authority: { lifecycle: "approved" as const, authority: "authoritative" as const,
+        approval_decision_ids: ["sample.decision.one"] },
+      revisions: first.revisions.map((revision) => ({ ...revision, lifecycle: "approved" as const })) };
+    const changedEvidence = { ...firstBundle.evidence[0]!, evidence_id: "sample.evidence.change",
+      exact_text: "Orders require approval", location: { ...firstBundle.evidence[0]!.location,
+        document_id: "sample.document.change", source_unit_id: "sample.source.change",
+        text_span: { start: 0, end: 23 } } };
+    const target = firstBundle.knowledge_nodes.find((node) => node.kind === "module")!;
+    const secondBundle = { ...firstBundle, revision: 2,
+      documents: [...firstBundle.documents, { document_id: "sample.document.change", revision: 1,
+        content_hash: `sha256:${"b".repeat(64)}`, media_type: "application/pdf",
+        original_name: "change.pdf" }], evidence: [...firstBundle.evidence, changedEvidence],
+      knowledge_nodes: firstBundle.knowledge_nodes.map((node) => node.knowledge_id === target.knowledge_id
+        ? { ...node, evidence_ids: [...node.evidence_ids, changedEvidence.evidence_id] } : node) };
+    expect(() => assembleAtlasProjectContext({ bundle: secondBundle, predecessor: approvedFirst }))
+      .toThrow(/explicit contribution role/u);
+    const second = assembleAtlasProjectContext({ bundle: secondBundle, predecessor: approvedFirst,
+      contribution_roles: [{ increment_id: "sample.document.change.increment.1",
+        destination_kind: "knowledge", destination_id: target.knowledge_id, role: "clarified" }] });
+    expect(first).toEqual(assembleAtlasProjectContext({ bundle: firstBundle }));
+    expect(second.revisions).toEqual([
+      expect.objectContaining({ revision: 1, lifecycle: "superseded" }),
+      expect.objectContaining({ revision: 2, predecessor_revision: 1, lifecycle: "proposed" })]);
+    expect(second.increments.map(({ sequence }) => sequence)).toEqual([1, 2]);
+    expect(second.contributions).toContainEqual(expect.objectContaining({
+      increment_id: "sample.document.increment.1", role: "established",
+      destination_kind: "knowledge" }));
+    expect(second.contributions).toContainEqual(expect.objectContaining({
+      increment_id: "sample.document.change.increment.1", role: "clarified",
+      destination_id: target.knowledge_id }));
+    expect(() => assembleAtlasProjectContext({ bundle: { ...secondBundle, project_id: "other" },
+      predecessor: approvedFirst })).toThrow(/another project/u);
   });
 });
