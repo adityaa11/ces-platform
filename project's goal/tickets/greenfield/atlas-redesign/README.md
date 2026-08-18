@@ -1,6 +1,7 @@
 # CES Atlas Redesign Delivery Plan
 
-**Status:** Authorized by accepted ATLAS-REDESIGN-000
+**Status:** REDESIGN-001 through REDESIGN-009 definitions ready; REDESIGN-010
+and REDESIGN-010A pending scoped regression closure
 
 This is the active finite delivery sequence for the renewed Atlas manual
 verification workspace. Product rails, gap evidence, supersession timing, and
@@ -21,6 +22,7 @@ the bounded review protocol are governed by
 | 8 | [REDESIGN-008](CES-GF-ATLAS-REDESIGN-008-replacement-production-workspace.md) | BATCHABLE | Replacement UI Gate production workspace |
 | 9 | [REDESIGN-009](CES-GF-ATLAS-REDESIGN-009-atlas-qualification-authority-publication.md) | REVIEW_GATE | Final trusted Atlas authority and POL-010 unblock gate |
 | 10 | [REDESIGN-010](CES-GF-ATLAS-REDESIGN-010-ces-result-integration.md) | REVIEW_GATE | POL-010 consumed-authority view and honest result unavailability |
+| 10A | [REDESIGN-010A](CES-GF-ATLAS-REDESIGN-010A-policy-result-projection.md) | REVIEW_GATE | Actual policy bindings/results traced through Atlas to evidence |
 
 Tickets execute in dependency order. Each ticket owns one primary bounded
 implementation commit, any scoped remediation commits, review evidence, and
@@ -28,7 +30,7 @@ one terminal outcome. `Implemented` and `Completed` are not acceptance.
 
 ## Inherited per-slice evidence contract
 
-REDESIGN-001 through REDESIGN-010 explicitly inherit this contract. Each slice
+REDESIGN-001 through REDESIGN-010A explicitly inherit this contract. Each slice
 must record or link:
 
 - the semantic contract it creates or the exact accepted semantic contract it
@@ -53,3 +55,14 @@ REDESIGN-009, not REDESIGN-000, authorizes POL-010's dependency check.
 REDESIGN-010 follows accepted POL-010 so Atlas completion does not depend
 circularly on CES Policies. Actual policy-result projection begins in the named
 REDESIGN-010A successor only after accepted POL-011 and POL-012.
+
+## Ticket-definition readiness ledger
+
+- Candidate ticket set: `e47bc8b5aa027073c11ea11b5bd9fadcdd250f93`
+- Remediation: `1a60893c1341a8c479d254978b4f78776868362f`
+- Remediation record: `b1b027616e57721c8b2b8423e9bbe069fdc7b81c`
+- Round 2 result: REDESIGN-001 through REDESIGN-009 definitions ready for
+  implementation in dependency order, recorded in
+  `../../../feedback/CES_ATLAS_REDESIGN_TICKETS_ROUND2_REVIEW_b1b0276.md`.
+- Remaining finding: `ATLAS-REDESIGN-R2-REGRESSION-01`, limited to
+  REDESIGN-010/010A authority alignment.

@@ -1,6 +1,7 @@
 # CES-GF-ATLAS-REDESIGN-009 - Atlas Qualification and Authority Publication
 
-**Status:** Blocked on REDESIGN-001 through REDESIGN-008
+**Status:** Definition ready; implementation blocked on REDESIGN-001 through
+REDESIGN-008
 **Review class:** REVIEW_GATE
 **Depends on:** Accepting terminal outcomes for REDESIGN-001 through
 REDESIGN-008; ATLAS-V2-011G resolved or explicitly superseded and satisfied here

@@ -165,7 +165,7 @@ implementation at Round 1 remediation time.
 | Exact evidence inspection | Evidence contract at `0cf1b372`; PDF API/viewer and evidence selection at `5e5d3a2` | Strong reusable foundation; missing navigation from every renewed projection and multi-document contribution history | Atlas API projection / Atlas UI | REDESIGN-006 |
 | Review subjects and exact proposal approval | `packages/atlas-knowledge-review/src/index.ts` at `d3f7d1a` binds decisions to proposal hash/revision and rejects incomplete subjects | No API/UI for blockers, eligibility, questions, corrections, rounds, or terminal outcome | Atlas review governance | REDESIGN-007 |
 | Replacement workspace shell | `apps/atlas-workflow-ui/app/knowledge-workspace.tsx` and `globals.css` at `5e5d3a2` implement the conflicting three-column explorer | Existing layout/navigation must be removed; useful PDF and graph adapters may be retained | Atlas UI | REDESIGN-008 |
-| CES Result shell and availability | POL-010 ticket and Policies plan defer production Atlas input | No revision-bound CES projection; UI must show honest unavailable/stale states before POL-010 | CES Policies / cross-product integration | REDESIGN-008, REDESIGN-010 |
+| CES Result shell and availability | POL-010 ticket and Policies plan defer production Atlas input | No revision-bound CES projection; UI must show honest unavailable/stale states before POL-010, then trace actual results only when binding/result contracts exist | CES Policies / cross-product integration | REDESIGN-008, REDESIGN-010, REDESIGN-010A |
 | Final cross-domain/manual qualification | V2-011G at `a599428` records Safara and synthetic qualification but remains in progress for unrelated live PDFs | Need production-shaped manual checklist, unrelated live projects, legacy removal, and terminal authority publication | Cross-product integration | REDESIGN-009 |
 
 Owners must distinguish Atlas semantic model, Atlas review governance, Atlas
@@ -190,12 +190,25 @@ Round 1 establishes this finite sequence:
 | 7 | ATLAS-REDESIGN-007 Exact-Revision Review and Approval Workspace | Atlas review governance | REVIEW_GATE | Accepted REDESIGN-002, REDESIGN-005, REDESIGN-006 | Eligibility, blockers, decisions, hash, rounds, history, and promotion fail closed | The owner can review and approve only one eligible exact proposal |
 | 8 | ATLAS-REDESIGN-008 Replacement Production Workspace | Atlas UI | BATCHABLE | Accepted REDESIGN-003 through REDESIGN-007 | Old shell is removed; accepted projections drive the UI Gate layout; CES availability is honest | Complete replacement layout works with evidence and preserved navigation state |
 | 9 | ATLAS-REDESIGN-009 Atlas Qualification and Authority Publication | Cross-product integration | REVIEW_GATE | Accepting outcomes for REDESIGN-001 through REDESIGN-008; V2-011G resolved or explicitly superseded here | Safara and unrelated live projects pass automated and manual gates; legacy authority is reconciled | Owner completes the manual checklist and sees the exact approved current Atlas revision |
-| 10 | ATLAS-REDESIGN-010 CES Result Integration | CES Policies / cross-product integration | REVIEW_GATE | Accepted REDESIGN-009 and accepted POL-010 input contract | Policy results bind to the exact approved Atlas authority without rereading PRDs | CES Result traces conclusions through Atlas knowledge to exact source evidence |
+| 10 | ATLAS-REDESIGN-010 Consumed Atlas Authority Integration | CES Policies / cross-product integration | REVIEW_GATE | Accepted REDESIGN-009 and accepted POL-010 input contract | Consumed Atlas authority, revision, facts, and provenance render while policy results remain honestly unavailable | Owner traces every consumed fact to its Atlas destination, contributing PRD, and exact evidence |
+| 10A | ATLAS-REDESIGN-010A Policy Result Projection | CES Policies / cross-product integration | REVIEW_GATE | Accepted REDESIGN-010, accepted POL-011, and accepted POL-012 | Actual governed policy bindings and result states bind to the exact approved Atlas authority without rereading PRDs | Owner traces an actual result through its binding and approved Atlas trigger to exact source evidence |
 
 REDESIGN-009 is the exact renewed Atlas authority gate that permits POL-010 to
 perform its dependency check. REDESIGN-010 is deliberately downstream so Atlas
 acceptance does not depend circularly on POL-010; REDESIGN-008 must show an
-honest unavailable CES state until that integration exists.
+honest unavailable CES state until that integration exists. REDESIGN-010A is a
+scoped authority amendment authorized to add actual result behavior only after
+accepted POL-011 and POL-012.
+
+### Proposed scoped authority amendment: ATLAS-REDESIGN-R2-REGRESSION-01
+
+The ticket-set Round 2 review found that POL-010 cannot supply the actual policy
+result originally assigned to REDESIGN-010. Option A is proposed explicitly:
+REDESIGN-010 owns the independently closable consumed-authority view, and the
+new bounded REDESIGN-010A owns actual binding/result projection. This amendment
+changes no Atlas semantic authority, no REDESIGN-001 through REDESIGN-009
+dependency, and no POL-010 unblock condition. It activates only after the
+remaining regression-closure review accepts this amendment.
 
 Each slice receives its own ticket, primary implementation commit, acceptance
 contract, review evidence, and terminal outcome. A slice creating or changing

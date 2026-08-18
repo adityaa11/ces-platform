@@ -1,6 +1,7 @@
 # CES-GF-ATLAS-REDESIGN-007 - Exact-Revision Review and Approval Workspace
 
-**Status:** Blocked on REDESIGN-002, REDESIGN-005, and REDESIGN-006
+**Status:** Definition ready; implementation blocked on REDESIGN-002,
+REDESIGN-005, and REDESIGN-006
 **Review class:** REVIEW_GATE
 **Depends on:** Accepted REDESIGN-002, REDESIGN-005, and REDESIGN-006
 **Owner:** Atlas review governance

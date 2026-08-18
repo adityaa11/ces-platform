@@ -1,6 +1,7 @@
 # CES-GF-ATLAS-REDESIGN-005 - Changes Done Semantic Ledger
 
-**Status:** Blocked on REDESIGN-001, REDESIGN-003, and REDESIGN-004
+**Status:** Definition ready; implementation blocked on REDESIGN-001,
+REDESIGN-003, and REDESIGN-004
 **Review class:** REVIEW_GATE
 **Depends on:** Accepted REDESIGN-001, REDESIGN-003, and REDESIGN-004
 **Owner:** Atlas review governance and Atlas API projection

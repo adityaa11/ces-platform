@@ -1,6 +1,7 @@
 # CES-GF-ATLAS-REDESIGN-010 - CES Result Integration
 
-**Status:** Blocked on REDESIGN-009 and POL-010
+**Status:** Ticket definition remediation pending regression closure;
+implementation blocked on REDESIGN-009 and POL-010
 **Review class:** REVIEW_GATE
 **Depends on:** Accepted REDESIGN-009 and accepted POL-010 Atlas Fact Input
 Contract; subsequent POL tickets only for the capabilities they actually supply
@@ -55,14 +56,13 @@ consumed Atlas authority -> approved Atlas knowledge
 The UI identifies the consumed Atlas revision and clearly states that policy
 results remain unavailable pending accepted binding and result contracts.
 
-## Named successor slice
+## Authorized successor slice
 
-`ATLAS-REDESIGN-010A - Policy Result Projection` may begin only after accepted
-POL-011 supplies bindings/applicability and accepted POL-012 supplies governed
-result states. REDESIGN-010A will require the owner to open an actual result and
-trace it through its policy binding and approved Atlas trigger to exact source
-evidence. POL-013 and later capabilities may enrich that successor only after
-their own accepting outcomes.
+`ATLAS-REDESIGN-010A - Policy Result Projection` is authorized by the scoped
+REDESIGN-000 amendment and may begin only after REDESIGN-010 is accepted,
+POL-011 supplies accepted bindings/applicability, and POL-012 supplies accepted
+governed result states. POL-013 and later capabilities may enrich that successor
+only after their own accepting outcomes.
 
 ## Review evidence and stopping condition
 

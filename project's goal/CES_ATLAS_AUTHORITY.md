@@ -41,7 +41,9 @@ approval subjects, or UI navigation.
 [`ATLAS-REDESIGN-000`](tickets/greenfield/atlas-redesign/CES-GF-ATLAS-REDESIGN-000-manual-verification-workspace-redefinition.md)
 received terminal outcome `ACCEPTED` after remediation commits `259ee18` and
 `29a2b70`. The pinned UI Gate sources and finite REDESIGN-001 through
-REDESIGN-010 sequence are active authority. This acceptance authorizes the
+REDESIGN-010 sequence are active authority. A scoped REDESIGN-010A amendment is
+proposed to close `ATLAS-REDESIGN-R2-REGRESSION-01` and is not active until its
+closure review accepts it. REDESIGN-000 acceptance authorizes the
 bounded implementation plan; it does not accept future implementation, make
 the current Atlas UI authoritative, or resume POL-010 before REDESIGN-009.
 

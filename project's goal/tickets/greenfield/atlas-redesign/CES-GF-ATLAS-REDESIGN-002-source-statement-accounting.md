@@ -1,6 +1,6 @@
 # CES-GF-ATLAS-REDESIGN-002 - Source Statement Accounting
 
-**Status:** Blocked on REDESIGN-001
+**Status:** Definition ready; implementation blocked on REDESIGN-001
 **Review class:** REVIEW_GATE
 **Depends on:** Accepted ATLAS-REDESIGN-001
 **Owner:** Atlas semantic model

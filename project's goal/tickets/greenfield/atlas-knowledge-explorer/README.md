@@ -8,13 +8,16 @@ ATLAS-V2-011G live generic PDF qualification remains
 [ATLAS-REDESIGN-000](../atlas-redesign/CES-GF-ATLAS-REDESIGN-000-manual-verification-workspace-redefinition.md)
 received terminal outcome `ACCEPTED` and governs the replacement Atlas manual
 verification workspace through the
-[REDESIGN-001 to REDESIGN-010 delivery plan](../atlas-redesign/README.md). V2 semantic,
+[REDESIGN-001 to REDESIGN-010 delivery plan](../atlas-redesign/README.md), with
+REDESIGN-010A proposed as a scoped amendment pending closure review. V2 semantic,
 evidence, revision, review, API, PDF, and graph infrastructure remains reusable
 foundation, but this plan's existing UI shell must not be extended.
 
 The pinned UI Gate context and prototype are active product rails. The final
 renewed Atlas authority and POL-010 unblock condition is REDESIGN-009; CES
-Result integration follows accepted POL-010 under REDESIGN-010.
+Consumed-authority integration follows accepted POL-010 under REDESIGN-010.
+If the scoped amendment is accepted, actual policy results follow accepted
+POL-011/POL-012 under REDESIGN-010A.
 
 This is the active foundation sequence for the Atlas recursive Knowledge
 Explorer. The accepted redesign gate above succeeds its UI delivery model with

@@ -1,6 +1,6 @@
 # CES-GF-ATLAS-REDESIGN-004 - Project Facts Projection
 
-**Status:** Blocked on REDESIGN-001 and REDESIGN-002
+**Status:** Definition ready; implementation blocked on REDESIGN-001 and REDESIGN-002
 **Review class:** BATCHABLE
 **Depends on:** Accepted ATLAS-REDESIGN-001 and REDESIGN-002
 **Owner:** Atlas API projection

@@ -1,6 +1,7 @@
 # CES-GF-ATLAS-REDESIGN-006 - Global PRD Lens and Cross-Section Navigation
 
-**Status:** Blocked on REDESIGN-003, REDESIGN-004, and REDESIGN-005
+**Status:** Definition ready; implementation blocked on REDESIGN-003,
+REDESIGN-004, and REDESIGN-005
 **Review class:** REVIEW_GATE
 **Depends on:** Accepted REDESIGN-003, REDESIGN-004, and REDESIGN-005
 **Owner:** Atlas API projection and Atlas UI

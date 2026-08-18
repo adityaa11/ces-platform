@@ -1,6 +1,6 @@
 # CES-GF-ATLAS-REDESIGN-001 - Accumulated Project and PRD Contribution Contract
 
-**Status:** Ticket definition remediation pending Round 2 readiness review
+**Status:** Ready for implementation
 **Review class:** REVIEW_GATE
 **Depends on:** Accepted ATLAS-REDESIGN-000
 **Owner:** Atlas semantic model
@@ -65,5 +65,7 @@ statement accounting belongs to REDESIGN-002.
   `ATLAS-REDESIGN-R1-IMPORTANT-02`, recorded in
   `../../../feedback/CES_ATLAS_REDESIGN_TICKETS_REVIEW_e47bc8b.md`
 - Remediation commit: `1a60893`
-- Round 2 closure: pending
-- Implementation-readiness result: pending
+- Round 2 closure: accepted for REDESIGN-001 against remediation `1a60893` and
+  remediation record `b1b0276`, recorded in
+  `../../../feedback/CES_ATLAS_REDESIGN_TICKETS_ROUND2_REVIEW_b1b0276.md`
+- Implementation-readiness result: `READY FOR IMPLEMENTATION`

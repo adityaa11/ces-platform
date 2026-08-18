@@ -51,7 +51,8 @@ by the accepted
 a completed `REVIEW_GATE` that defines the accepted authority changes,
 repository gap matrix, and finite REDESIGN-001 through REDESIGN-010 delivery
 [sequence](atlas-redesign/README.md). Its pinned UI context and prototype are
-active product rails.
+active product rails. REDESIGN-010A is a proposed scoped amendment pending
+regression-closure review.
 
 No new work may extend the existing Atlas UI shell. Reusable V2 semantic,
 evidence, revision, review, API, PDF, and graph infrastructure may be carried

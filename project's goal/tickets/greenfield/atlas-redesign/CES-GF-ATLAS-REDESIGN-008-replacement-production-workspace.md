@@ -1,6 +1,7 @@
 # CES-GF-ATLAS-REDESIGN-008 - Replacement Production Workspace
 
-**Status:** Blocked on REDESIGN-003 through REDESIGN-007
+**Status:** Definition ready; implementation blocked on REDESIGN-003 through
+REDESIGN-007
 **Review class:** BATCHABLE
 **Depends on:** Accepted REDESIGN-003, REDESIGN-004, REDESIGN-005,
 REDESIGN-006, and REDESIGN-007
