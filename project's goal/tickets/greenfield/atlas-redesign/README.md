@@ -66,3 +66,4 @@ REDESIGN-010A successor only after accepted POL-011 and POL-012.
   `../../../feedback/CES_ATLAS_REDESIGN_TICKETS_ROUND2_REVIEW_b1b0276.md`.
 - Remaining finding: `ATLAS-REDESIGN-R2-REGRESSION-01`, limited to
   REDESIGN-010/010A authority alignment.
+- Regression remediation commit: `baaee33`; closure review pending.
