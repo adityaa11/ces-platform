@@ -1,7 +1,7 @@
 # CES Atlas Redesign Delivery Plan
 
-**Status:** REDESIGN-001 through REDESIGN-009 definitions ready; REDESIGN-010
-and REDESIGN-010A pending scoped regression closure
+**Status:** REDESIGN-001 through REDESIGN-010A definitions accepted; execution
+remains governed by each ticket's dependencies
 
 This is the active finite delivery sequence for the renewed Atlas manual
 verification workspace. Product rails, gap evidence, supersession timing, and
@@ -64,6 +64,8 @@ REDESIGN-010A successor only after accepted POL-011 and POL-012.
 - Round 2 result: REDESIGN-001 through REDESIGN-009 definitions ready for
   implementation in dependency order, recorded in
   `../../../feedback/CES_ATLAS_REDESIGN_TICKETS_ROUND2_REVIEW_b1b0276.md`.
-- Remaining finding: `ATLAS-REDESIGN-R2-REGRESSION-01`, limited to
-  REDESIGN-010/010A authority alignment.
-- Regression remediation commit: `baaee33`; closure review pending.
+- Regression finding: `ATLAS-REDESIGN-R2-REGRESSION-01` closed.
+- Reviewed regression remediation range: `baaee33` through `0aa1bc7`.
+- Closure review:
+  `../../../feedback/CES_ATLAS_RESULT_SPLIT_CLOSURE_REVIEW_0aa1bc7.md`
+- Ticket-definition terminal outcome: `ACCEPTED`.

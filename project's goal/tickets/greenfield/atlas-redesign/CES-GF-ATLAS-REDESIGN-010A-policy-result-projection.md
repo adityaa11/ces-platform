@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-REDESIGN-010A - Policy Result Projection
 
-**Status:** Ticket definition pending regression-closure review; implementation
-blocked on REDESIGN-010, POL-011, and POL-012
+**Status:** Definition accepted; implementation blocked on REDESIGN-010,
+POL-011, and POL-012
 **Review class:** REVIEW_GATE
 **Depends on:** Accepted REDESIGN-010, accepted POL-011 Context Binding, and
 accepted POL-012 Deterministic Validator

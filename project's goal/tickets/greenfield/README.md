@@ -49,10 +49,10 @@ remains semantic-foundation history. Replacement UI implementation is governed
 by the accepted
 [ATLAS-REDESIGN-000](atlas-redesign/CES-GF-ATLAS-REDESIGN-000-manual-verification-workspace-redefinition.md),
 a completed `REVIEW_GATE` that defines the accepted authority changes,
-repository gap matrix, and finite REDESIGN-001 through REDESIGN-010 delivery
+repository gap matrix, and finite REDESIGN-001 through REDESIGN-010 plus scoped
+REDESIGN-010A delivery
 [sequence](atlas-redesign/README.md). Its pinned UI context and prototype are
-active product rails. REDESIGN-010A is a proposed scoped amendment pending
-regression-closure review.
+active product rails. The REDESIGN-010A scoped amendment is accepted.
 
 No new work may extend the existing Atlas UI shell. Reusable V2 semantic,
 evidence, revision, review, API, PDF, and graph infrastructure may be carried

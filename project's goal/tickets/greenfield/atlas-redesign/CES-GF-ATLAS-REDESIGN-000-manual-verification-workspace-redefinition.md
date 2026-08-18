@@ -200,15 +200,15 @@ honest unavailable CES state until that integration exists. REDESIGN-010A is a
 scoped authority amendment authorized to add actual result behavior only after
 accepted POL-011 and POL-012.
 
-### Proposed scoped authority amendment: ATLAS-REDESIGN-R2-REGRESSION-01
+### Accepted scoped authority amendment: ATLAS-REDESIGN-R2-REGRESSION-01
 
 The ticket-set Round 2 review found that POL-010 cannot supply the actual policy
-result originally assigned to REDESIGN-010. Option A is proposed explicitly:
+result originally assigned to REDESIGN-010. Option A is accepted explicitly:
 REDESIGN-010 owns the independently closable consumed-authority view, and the
 new bounded REDESIGN-010A owns actual binding/result projection. This amendment
 changes no Atlas semantic authority, no REDESIGN-001 through REDESIGN-009
-dependency, and no POL-010 unblock condition. It activates only after the
-remaining regression-closure review accepts this amendment.
+dependency, and no POL-010 unblock condition. The amendment was accepted after
+reviewing remediation `baaee33` and remediation record `0aa1bc7`.
 
 Each slice receives its own ticket, primary implementation commit, acceptance
 contract, review evidence, and terminal outcome. A slice creating or changing

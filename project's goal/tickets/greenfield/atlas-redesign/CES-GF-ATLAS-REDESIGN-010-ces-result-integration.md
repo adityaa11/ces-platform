@@ -1,7 +1,7 @@
 # CES-GF-ATLAS-REDESIGN-010 - CES Result Integration
 
-**Status:** Ticket definition remediation pending regression closure;
-implementation blocked on REDESIGN-009 and POL-010
+**Status:** Definition accepted; implementation blocked on REDESIGN-009 and
+POL-010
 **Review class:** REVIEW_GATE
 **Depends on:** Accepted REDESIGN-009 and accepted POL-010 Atlas Fact Input
 Contract; subsequent POL tickets only for the capabilities they actually supply
