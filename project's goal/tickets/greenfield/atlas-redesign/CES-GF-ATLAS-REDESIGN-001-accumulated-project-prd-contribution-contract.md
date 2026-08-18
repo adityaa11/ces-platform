@@ -88,7 +88,7 @@ Atlas workflow UI production build passed
 
 ### Implementation review ledger
 
-- Primary implementation commit: pending
+- Primary implementation commit: `0283462`
 - Round 1 implementation findings: pending
 - Remediation commit(s): pending
 - Round 2 closure: pending
