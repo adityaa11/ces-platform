@@ -64,6 +64,6 @@ statement accounting belongs to REDESIGN-002.
   `ATLAS-REDESIGN-R1-BLOCKER-03` and `ATLAS-REDESIGN-R1-IMPORTANT-01` through
   `ATLAS-REDESIGN-R1-IMPORTANT-02`, recorded in
   `../../../feedback/CES_ATLAS_REDESIGN_TICKETS_REVIEW_e47bc8b.md`
-- Remediation commit: pending
+- Remediation commit: `1a60893`
 - Round 2 closure: pending
 - Implementation-readiness result: pending
