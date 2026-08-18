@@ -20,12 +20,36 @@ the bounded review protocol are governed by
 | 7 | [REDESIGN-007](CES-GF-ATLAS-REDESIGN-007-exact-revision-review-approval.md) | REVIEW_GATE | Manual review and exact-proposal approval gate |
 | 8 | [REDESIGN-008](CES-GF-ATLAS-REDESIGN-008-replacement-production-workspace.md) | BATCHABLE | Replacement UI Gate production workspace |
 | 9 | [REDESIGN-009](CES-GF-ATLAS-REDESIGN-009-atlas-qualification-authority-publication.md) | REVIEW_GATE | Final trusted Atlas authority and POL-010 unblock gate |
-| 10 | [REDESIGN-010](CES-GF-ATLAS-REDESIGN-010-ces-result-integration.md) | REVIEW_GATE | Revision-bound CES results inside Atlas |
+| 10 | [REDESIGN-010](CES-GF-ATLAS-REDESIGN-010-ces-result-integration.md) | REVIEW_GATE | POL-010 consumed-authority view and honest result unavailability |
 
 Tickets execute in dependency order. Each ticket owns one primary bounded
 implementation commit, any scoped remediation commits, review evidence, and
 one terminal outcome. `Implemented` and `Completed` are not acceptance.
 
+## Inherited per-slice evidence contract
+
+REDESIGN-001 through REDESIGN-010 explicitly inherit this contract. Each slice
+must record or link:
+
+- the semantic contract it creates or the exact accepted semantic contract it
+  implements;
+- its API or projection contract;
+- production UI behavior that is manually verifiable;
+- Safara evidence without production hardcoding;
+- structurally different non-Safara evidence whenever the accepted ticket
+  requires generic or cross-domain qualification;
+- automated unit, contract, integration, and browser tests proportional to the
+  slice;
+- typecheck and production build evidence for every affected application;
+- manual verification steps and observed result;
+- candidate, remediation, and acceptance-bookkeeping commits; and
+- Round 1 findings, Round 2 closure, and one terminal outcome.
+
+A `BATCHABLE` slice consumes rather than creates semantic authority and must
+name the accepted contract it implements. Discovery of missing or changed
+authority triggers the established stop-and-promote rule.
+
 REDESIGN-009, not REDESIGN-000, authorizes POL-010's dependency check.
 REDESIGN-010 follows accepted POL-010 so Atlas completion does not depend
-circularly on CES Policies.
+circularly on CES Policies. Actual policy-result projection begins in the named
+REDESIGN-010A successor only after accepted POL-011 and POL-012.

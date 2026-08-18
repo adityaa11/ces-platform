@@ -36,6 +36,9 @@ opens each fact's sources and permanent semantic destination.
 
 ## Review evidence and stopping condition
 
+This ticket inherits the per-slice evidence contract in `README.md` and
+implements the accepted REDESIGN-001 accumulated-project contract and
+REDESIGN-002 source-accounting contract.
 As `BATCHABLE`, this ticket implements accepted authority only. Stop and split
 to a new `REVIEW_GATE` if implementation requires new classification authority.
 Record one terminal outcome.

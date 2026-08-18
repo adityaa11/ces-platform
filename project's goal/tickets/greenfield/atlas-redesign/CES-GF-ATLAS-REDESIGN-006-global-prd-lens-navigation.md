@@ -41,5 +41,6 @@ same contributions highlighted or isolated with understandable context.
 
 ## Review evidence and stopping condition
 
+This ticket inherits the per-slice evidence contract in `README.md`.
 Use bounded Round 1/2 review and one terminal outcome. Stop after accepted lens
 semantics, navigation projection, production UI slice, and qualification.

@@ -41,6 +41,8 @@ eligibility, and approve exactly the proposal revision/hash shown on screen.
 
 ## Review evidence and stopping condition
 
+This ticket inherits the per-slice evidence contract in `README.md`, including
+Safara and structurally different non-Safara qualification.
 Use one primary commit, bounded remediation, Round 2 closure, and one terminal
 outcome. Stop after exact-proposal review and approval are accepted; authority
 publication remains REDESIGN-009.

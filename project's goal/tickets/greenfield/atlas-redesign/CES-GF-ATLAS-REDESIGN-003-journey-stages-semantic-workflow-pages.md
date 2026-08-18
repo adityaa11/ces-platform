@@ -44,5 +44,7 @@ without returning to a permanent giant graph.
 
 ## Review evidence and stopping condition
 
+This ticket inherits the per-slice evidence contract in `README.md`, including
+automated test and production-build evidence.
 Use one primary commit and bounded two-round review. Stop after accepted
 workflow semantics and production-shaped page navigation.

@@ -54,6 +54,7 @@ project correctly, exposed uncertainty, and approved one exact trusted revision.
 
 ## Review evidence and stopping condition
 
+This ticket inherits the per-slice evidence contract in `README.md`.
 Use the established two-round `REVIEW_GATE`. Terminal outcomes are only
 `ACCEPTED`, `NOT ACCEPTED`, or `ACCEPTED WITH DEFERRED ITEMS`. POL-010 remains
 blocked unless this ticket has an accepting outcome whose deferred items do not

@@ -44,6 +44,9 @@ before accepted POL-010.
 
 ## Review evidence and stopping condition
 
+This ticket inherits the per-slice evidence contract in `README.md`, implements
+the accepted REDESIGN-003 through REDESIGN-007 contracts, and requires Safara
+plus structurally different non-Safara production UI evidence.
 This `BATCHABLE` ticket implements accepted semantics only. Any missing semantic
 authority must stop or split into a gate. Record production captures, test/build
 results, manual steps, candidate/remediation commits, and one terminal outcome.
