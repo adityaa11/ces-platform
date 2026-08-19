@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { createWriteStream, existsSync, readFileSync } from "node:fs";
+import { closeSync, existsSync, openSync, readFileSync } from "node:fs";
 import { mkdir, readFile } from "node:fs/promises";
 import { basename, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -84,9 +84,13 @@ export async function executeAtlasCycle(config, dependencies) {
 }
 
 function run(command, args, options) {
-  const executable = process.platform === "win32" && command === "corepack" ? "corepack.cmd" : command;
+  const isWindowsCorepack = process.platform === "win32" && command === "corepack";
+  const executable = isWindowsCorepack ? process.execPath : command;
+  const commandArgs = isWindowsCorepack
+    ? [resolve(dirname(process.execPath), "node_modules/corepack/dist/corepack.js"), ...args] : args;
   return new Promise((fulfill, reject) => {
-    const child = spawn(executable, args, { cwd: repositoryRoot, env: options.env, stdio: "inherit" });
+    const child = spawn(executable, commandArgs,
+      { cwd: repositoryRoot, env: options.env, stdio: "inherit" });
     child.once("error", reject);
     child.once("close", (code, signal) => fulfill(code ?? (signal ? 130 : 1)));
   });
@@ -125,11 +129,15 @@ async function main() {
   await executeAtlasCycle({ ...options, prd: resolve(repositoryRoot, options.prd),
     projectIntent: resolve(repositoryRoot, options.projectIntent), output, env }, {
     run,
-    startBridge: (bridgeEnv) => spawn(process.execPath, ["apps/agents-bridge/dist/main.js"], {
-      cwd: repositoryRoot, env: bridgeEnv,
-      stdio: ["ignore", createWriteStream(resolve(runtime, "agents-bridge.stdout.log")),
-        createWriteStream(resolve(runtime, "agents-bridge.stderr.log"))],
-    }),
+    startBridge: (bridgeEnv) => {
+      const stdout = openSync(resolve(runtime, "agents-bridge.stdout.log"), "a");
+      const stderr = openSync(resolve(runtime, "agents-bridge.stderr.log"), "a");
+      try {
+        return spawn(process.execPath, ["apps/agents-bridge/dist/main.js"], {
+          cwd: repositoryRoot, env: bridgeEnv, stdio: ["ignore", stdout, stderr],
+        });
+      } finally { closeSync(stdout); closeSync(stderr); }
+    },
     waitUntilReady, stopBridge,
     readManifest: async (directory) => JSON.parse(await readFile(resolve(directory, "run-manifest.json"), "utf8")),
     log: console.log,

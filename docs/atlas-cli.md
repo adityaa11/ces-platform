@@ -30,6 +30,19 @@ pnpm atlas:run -- --prd docs/prd/other.pdf --project-intent docs/prd/other.json 
 
 Use `--no-ui` when only artifact generation is wanted.
 
+### Local workflow verification record
+
+On 2026-08-19, `pnpm test:atlas-local` passed all four orchestration tests. A
+production-shaped `pnpm atlas:run -- --no-ui` run from the repository root then
+confirmed that the runtime packages built, the bridge became ready, extraction
+returned review-pending exit code `7`, and the generated manifest identified
+`safara-buyer` revision `1`. Artifacts were written beneath
+`.ces/generated/safara-buyer`, the source PDF was staged beneath
+`.ces/runtime/atlas-pdfs/safara-buyer`, and port `8787` was no longer listening
+after extraction. The normal `pnpm test` path also contains this runner suite;
+the repository-wide Vitest phase subsequently reported 503 passes and two
+pre-existing bootstrap process-timeout test failures.
+
 ## 1. Prepare Project Intent
 
 Create `project-intent.json`:
