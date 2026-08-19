@@ -9,7 +9,7 @@
     "pnpm": "11.15.1"
   },
   "scripts": {
-    "atlas:run": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run-local-atlas.ps1 -StartUi",
+    "atlas:run": "node scripts/run-local-atlas.mjs",
     "dev": "corepack pnpm --filter @company/ces-atlas-workflow-ui dev",
     "build": "corepack pnpm --recursive --if-present run build",
     "typecheck": "corepack pnpm --recursive --if-present run typecheck",

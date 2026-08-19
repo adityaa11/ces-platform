@@ -4,6 +4,32 @@ Atlas accepts Markdown or native-text PDF PRDs, pauses for explicit human
 review, and resumes into approved Requirement Packages, core handoff artifacts,
 and JSON, Markdown, and Mermaid system-intent graphs.
 
+## One-command local workflow
+
+From the repository root, a configured `agent.env` and installed workspace
+dependencies are the only prerequisites:
+
+```text
+pnpm atlas:run
+```
+
+The cross-platform Node runner builds the CLI and Agents Bridge, waits for the
+bridge, runs extraction, accepts only exit code `7` (review pending), stops the
+bridge, and starts the UI. Generated artifacts default to
+`.ces/generated/safara-buyer`, staged PDFs to `.ces/runtime/atlas-pdfs`, and
+bridge logs to `.ces/runtime/agents-bridge.*.log`. The printed URL is derived
+from the generated manifest. `Ctrl+C` stops the UI; the bridge has already
+stopped and the UI continues to read the generated files.
+
+Custom projects use an output directory whose final segment is the generated
+project ID:
+
+```text
+pnpm atlas:run -- --prd docs/prd/other.pdf --project-intent docs/prd/other.json --output .ces/generated/other-project
+```
+
+Use `--no-ui` when only artifact generation is wanted.
+
 ## 1. Prepare Project Intent
 
 Create `project-intent.json`:
