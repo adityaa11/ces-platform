@@ -1,11 +1,13 @@
 param(
   [string]$Prd = "docs/prd/Safara_Buyer_Business_PRD.pdf",
   [string]$ProjectIntent = "docs/prd/safara-project-intent.json",
-  [string]$Output = ".ces/generated/safara-atlas"
+  [string]$Output = ".ces/generated/safara-buyer",
+  [switch]$StartUi
 )
 
 $ErrorActionPreference = "Stop"
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
+$pdfRoot = Join-Path $repositoryRoot ".ces/runtime/atlas-pdfs"
 $environmentFile = Join-Path $repositoryRoot "agent.env"
 if (-not (Test-Path -LiteralPath $environmentFile)) {
   throw "Missing local agent.env"
@@ -28,11 +30,17 @@ if (-not $env:AGENTS_BRIDGE_API_KEY -or $env:AGENTS_BRIDGE_API_KEY.StartsWith("r
 $env:HOST = "127.0.0.1"
 $env:PORT = "8787"
 $env:CES_ATLAS_API_KEY = $env:AGENTS_BRIDGE_API_KEY
+$env:CES_ATLAS_PDF_ROOT = $pdfRoot
 if (-not $env:GEMINI_MODEL) { $env:GEMINI_MODEL = "gemini-3.5-flash-lite" }
 $logDirectory = Join-Path $repositoryRoot ".ces/runtime"
 New-Item -ItemType Directory -Force -Path $logDirectory | Out-Null
 $stdoutLog = Join-Path $logDirectory "agents-bridge.stdout.log"
 $stderrLog = Join-Path $logDirectory "agents-bridge.stderr.log"
+
+& corepack pnpm --filter @company/ces-cli --filter @company/ces-agents-bridge build
+if ($LASTEXITCODE -ne 0) {
+  throw "Atlas runtime build failed with code $LASTEXITCODE"
+}
 
 $bridge = Start-Process -FilePath "node" `
   -ArgumentList "apps/agents-bridge/dist/main.js" `
@@ -71,5 +79,13 @@ try {
   if (-not $bridge.HasExited) {
     Stop-Process -Id $bridge.Id
     $bridge.WaitForExit()
+  }
+}
+
+if ($StartUi) {
+  Write-Output "Starting Atlas UI at http://localhost:3000/?project=safara-buyer&revision=1"
+  & corepack pnpm dev
+  if ($LASTEXITCODE -ne 0) {
+    throw "Atlas UI exited with code $LASTEXITCODE"
   }
 }
