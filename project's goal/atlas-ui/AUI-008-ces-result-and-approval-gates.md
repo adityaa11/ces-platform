@@ -1,0 +1,30 @@
+# AUI-008: CES Result and approval gates
+
+- **State:** planned
+- **Review batch:** BATCH-07
+- **Depends on:** AUI-006, AUI-007
+- **Baseline:** UI/UX Prototype PRD 5.3, 6, 9.1, 9.4
+
+## Outcome
+
+Present a traceable CES baseline-awareness result and make Atlas-understanding and CES-baseline approvals clear, deliberate user actions.
+
+## Scope
+
+- Implement representative Policies, obligations, linked facts, Concerns, Capability Needs, coverage states, and unresolved decisions.
+- Link CES content to source evidence and relevant workflow/fact surfaces.
+- Implement awaiting-approval and approved states for Atlas understanding and CES baseline.
+- Use language that identifies what must be accounted for without prescribing solutions.
+
+## Acceptance criteria
+
+- The user can distinguish source facts, Atlas interpretation, and CES knowledge.
+- Coverage states clearly include covered, needs review, out of scope, and unresolved decision.
+- CES results answer what matters and what must be handled, not how to implement it.
+- Approval actions are distinct, confirmed where consequential, and clearly reflected in the UI.
+
+## Validation
+
+- Exercise all coverage, decision, and approval fixture states.
+- Verify cross-links to workflow, fact, and evidence surfaces.
+
