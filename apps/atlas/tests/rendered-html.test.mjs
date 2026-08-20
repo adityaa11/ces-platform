@@ -75,4 +75,7 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.doesNotMatch(demoHtml, /Main Workflow|Project Facts|CES Result|Changes Done|Signed in as/);
   assert.match(demoHtml, /Nadia Hartono/);
   assert.match(demoHtml, /aria-controls="profile-menu"/);
+  const appShell = await readFile(new URL("../components/AppShell.tsx", import.meta.url), "utf8");
+  assert.match(appShell, /import \{ TopBar \} from "\.\/TopBar"/);
+  assert.match(appShell, /<TopBar className="app-header">/);
 });

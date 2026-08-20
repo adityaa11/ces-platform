@@ -44,7 +44,7 @@ button {
 .auth-card input:focus, .profile-control:focus-visible, .navigation a:focus-visible { outline: 3px solid #f6c969; outline-offset: 2px; }
 .text-link { color: var(--forest); font-weight: 700; text-decoration: underline; text-underline-offset: .15rem; }
 .app-shell { display: grid; grid-template-columns: 15rem minmax(0, 1fr); grid-template-rows: auto 1fr; min-height: 100vh; }
-.app-header { align-items: center; background: #fff; border-bottom: 1px solid var(--line); display: flex; grid-column: 1 / -1; justify-content: space-between; padding: .85rem clamp(1.25rem, 3vw, 2.25rem); position: relative; }
+.app-header { grid-column: 1 / -1; position: relative; }
 .navigation { background: #fff; border-right: 1px solid var(--line); padding: 1.25rem; }
 .navigation nav { display: grid; gap: .35rem; }
 .navigation a { border-radius: .5rem; color: var(--ink); font-weight: 700; padding: .72rem .8rem; text-decoration: none; }
