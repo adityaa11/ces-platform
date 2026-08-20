@@ -1,6 +1,6 @@
 export type AccessRole = "owner" | "editor" | "viewer";
 export type ProjectStatus = "ready" | "processing" | "needs-attention";
-export type ProcessingStage = "uploading" | "extracting" | "modeling" | "ready" | "failed";
+export type ProcessingStage = "uploading" | "extracting" | "modeling" | "ready" | "needs-attention" | "failed";
 export type ApprovalState = "awaiting-approval" | "approved";
 export type CesCoverageState = "covered" | "needs-review" | "out-of-scope" | "unresolved";
 export type ChangeKind = "established" | "clarified" | "expanded" | "superseded" | "unresolved";
@@ -16,7 +16,7 @@ export type CesItemFixture = { id: string; policy: string; obligation: string; l
 export type ProcessingJobFixture = { id: string; projectId: string; stage: ProcessingStage; message: string; progress: number };
 
 export type ProjectWorkspaceFixture = { project: ProjectFixture; prds: PrdFixture[]; memberships: MembershipFixture[]; workflows: WorkflowFixture[]; facts: FactFixture[]; changes: ChangeFixture[]; cesItems: CesItemFixture[]; atlasApproval: ApprovalState; cesApproval: ApprovalState };
-export type FixtureScenario = { id: "empty-library" | "owner-ready" | "editor-ready" | "viewer-ready" | "processing" | "approved-result" | "needs-attention"; label: string; session: { name: string; email: string; role: AccessRole }; projects: ProjectFixture[]; workspace?: ProjectWorkspaceFixture; processingJob?: ProcessingJobFixture; lens: { selectedPrdIds: string[]; mode: "highlight" | "isolate" } };
+export type FixtureScenario = { id: "empty-library" | "owner-ready" | "editor-ready" | "viewer-ready" | "processing-uploading" | "processing-extracting" | "processing-modeling" | "processing-ready" | "processing-needs-attention" | "processing-failed" | "approved-result"; label: string; session: { name: string; email: string; role: AccessRole }; projects: ProjectFixture[]; workspace?: ProjectWorkspaceFixture; processingJob?: ProcessingJobFixture; lens: { selectedPrdIds: string[]; mode: "highlight" | "isolate" } };
 
 const evidence: SourceEvidence = { id: "evidence-booking-review", understood: "A booking change is checked before it is confirmed.", quote: "Operations reviews the requested change before confirming the revised booking.", documentId: "safara-increment-01", documentName: "Safara Buyer Business PRD — Initial release", page: 12 };
 const project: ProjectFixture = { id: "safara", name: "Safara operations platform", status: "ready", prdCount: 3, collaborators: 4, lastActivity: "Atlas understanding is ready to review", isShared: false };
@@ -43,15 +43,27 @@ const workspace: ProjectWorkspaceFixture = {
 const processingProject: ProjectFixture = { id: "member-portal", name: "Member portal refresh", status: "processing", prdCount: 2, collaborators: 2, lastActivity: "Extracting project facts", isShared: true };
 const attentionProject: ProjectFixture = { id: "supplier-access", name: "Supplier access update", status: "needs-attention", prdCount: 1, collaborators: 1, lastActivity: "One PDF needs another upload", isShared: false };
 const owner = { name: "Nadia Hartono", email: "nadia@example.com", role: "owner" } as const;
+const processingJobs = {
+  uploading: { id: "job-member-portal", projectId: "member-portal", stage: "uploading", message: "Uploading documents", progress: 18 },
+  extracting: { id: "job-member-portal", projectId: "member-portal", stage: "extracting", message: "Extracting text and structure", progress: 42 },
+  modeling: { id: "job-member-portal", projectId: "member-portal", stage: "modeling", message: "Building the accumulated project model", progress: 76 },
+  ready: { id: "job-member-portal", projectId: "member-portal", stage: "ready", message: "Ready to review", progress: 100 },
+  "needs-attention": { id: "job-supplier-access", projectId: "supplier-access", stage: "needs-attention", message: "Needs attention: re-upload the protected PDF", progress: 68 },
+  failed: { id: "job-supplier-access", projectId: "supplier-access", stage: "failed", message: "Processing failed: try the upload again", progress: 68 },
+} satisfies Record<ProcessingStage, ProcessingJobFixture>;
 
 export const fixtureScenarios: Record<FixtureScenario["id"], FixtureScenario> = {
   "empty-library": { id: "empty-library", label: "Empty library", session: owner, projects: [], lens: { selectedPrdIds: [], mode: "highlight" } },
   "owner-ready": { id: "owner-ready", label: "Owner reviewing Atlas understanding", session: owner, projects: [project, processingProject], workspace, lens: { selectedPrdIds: [], mode: "highlight" } },
   "editor-ready": { id: "editor-ready", label: "Editor on a shared project", session: { name: "Raka Pratama", email: "raka@example.com", role: "editor" }, projects: [{ ...project, isShared: true }], workspace, lens: { selectedPrdIds: ["safara-increment-02"], mode: "highlight" } },
   "viewer-ready": { id: "viewer-ready", label: "Viewer inspecting a shared project", session: { name: "Sari Utami", email: "sari@example.com", role: "viewer" }, projects: [{ ...project, isShared: true }], workspace, lens: { selectedPrdIds: ["safara-increment-01"], mode: "isolate" } },
-  processing: { id: "processing", label: "Extraction in progress", session: owner, projects: [project, processingProject], processingJob: { id: "job-member-portal", projectId: "member-portal", stage: "extracting", message: "Extracting text and structure", progress: 42 }, lens: { selectedPrdIds: [], mode: "highlight" } },
+  "processing-uploading": { id: "processing-uploading", label: "Uploading documents", session: owner, projects: [project, processingProject], processingJob: processingJobs.uploading, lens: { selectedPrdIds: [], mode: "highlight" } },
+  "processing-extracting": { id: "processing-extracting", label: "Extracting text and structure", session: owner, projects: [project, processingProject], processingJob: processingJobs.extracting, lens: { selectedPrdIds: [], mode: "highlight" } },
+  "processing-modeling": { id: "processing-modeling", label: "Building the accumulated project model", session: owner, projects: [project, processingProject], processingJob: processingJobs.modeling, lens: { selectedPrdIds: [], mode: "highlight" } },
+  "processing-ready": { id: "processing-ready", label: "Ready to review", session: owner, projects: [project, processingProject], processingJob: processingJobs.ready, lens: { selectedPrdIds: [], mode: "highlight" } },
+  "processing-needs-attention": { id: "processing-needs-attention", label: "Processing needs attention", session: owner, projects: [attentionProject], processingJob: processingJobs["needs-attention"], lens: { selectedPrdIds: [], mode: "highlight" } },
+  "processing-failed": { id: "processing-failed", label: "Processing failed", session: owner, projects: [attentionProject], processingJob: processingJobs.failed, lens: { selectedPrdIds: [], mode: "highlight" } },
   "approved-result": { id: "approved-result", label: "Approved Atlas and CES result", session: owner, projects: [project], workspace: { ...workspace, atlasApproval: "approved", cesApproval: "approved", cesItems: workspace.cesItems.map((item) => ({ ...item, coverage: "covered" })) }, lens: { selectedPrdIds: [], mode: "highlight" } },
-  "needs-attention": { id: "needs-attention", label: "Processing needs attention", session: owner, projects: [attentionProject], processingJob: { id: "job-supplier-access", projectId: "supplier-access", stage: "failed", message: "Needs attention: re-upload the protected PDF", progress: 68 }, lens: { selectedPrdIds: [], mode: "highlight" } },
 };
 
 export function getFixtureScenario(id: FixtureScenario["id"] = "owner-ready") {

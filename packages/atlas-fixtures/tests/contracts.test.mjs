@@ -7,8 +7,9 @@ test("fixture scenarios cover each required role and major prototype state", () 
   assert.equal(fixtureScenarios["owner-ready"].session.role, "owner");
   assert.equal(fixtureScenarios["editor-ready"].session.role, "editor");
   assert.equal(fixtureScenarios["viewer-ready"].session.role, "viewer");
-  assert.equal(fixtureScenarios.processing.processingJob.stage, "extracting");
-  assert.equal(fixtureScenarios["needs-attention"].processingJob.stage, "failed");
+  for (const stage of ["uploading", "extracting", "modeling", "ready", "needs-attention", "failed"]) {
+    assert.ok(Object.values(fixtureScenarios).some((scenario) => scenario.processingJob?.stage === stage), `${stage} is selectable`);
+  }
   assert.equal(fixtureScenarios["approved-result"].workspace.atlasApproval, "approved");
   assert.equal(fixtureScenarios["approved-result"].workspace.cesApproval, "approved");
 });
