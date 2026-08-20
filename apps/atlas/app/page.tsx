@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PublicHeader } from "../components/PublicHeader";
 
 export const metadata: Metadata = {
   title: "Atlas workspace",
@@ -9,16 +10,7 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <main className="landing">
-      <header className="topbar">
-        <Link className="brand" href="/" aria-label="Atlas home">
-          <span aria-hidden="true">A</span>
-          Atlas
-        </Link>
-        <nav className="landing-nav" aria-label="Account actions">
-          <Link href="/sign-in">Sign in</Link>
-          <Link className="button-link" href="/sign-up">Sign up</Link>
-        </nav>
-      </header>
+      <PublicHeader />
 
       <section className="hero" aria-labelledby="landing-title">
         <h1 id="landing-title">Project understanding, made visible.</h1>

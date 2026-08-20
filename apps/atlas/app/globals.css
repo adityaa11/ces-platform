@@ -32,8 +32,8 @@ button {
 .button-primary { background: var(--forest); color: #fff; }
 .button-secondary { background: #fff; border: 1px solid var(--forest); color: var(--forest); }
 .button-quiet { background: transparent; color: var(--forest); }
-.auth-page { align-items: center; box-sizing: border-box; display: grid; gap: 2rem; grid-template-columns: 1fr minmax(18rem, 27rem) 1fr; min-height: 100vh; padding: clamp(1.25rem, 5vw, 4rem); }
-.auth-page > .brand { align-self: start; grid-column: 1 / -1; }
+.auth-page { align-items: center; box-sizing: border-box; display: grid; grid-template-columns: 1fr minmax(18rem, 27rem) 1fr; min-height: 100vh; }
+.auth-page > .topbar { grid-column: 1 / -1; grid-row: 1; }
 .auth-card { background: #fff; border: 1px solid var(--line); border-radius: 1rem; grid-column: 2; padding: clamp(1.5rem, 4vw, 2.5rem); }
 .auth-card h1 { font-size: clamp(2rem, 4vw, 2.6rem); max-width: none; }
 .auth-card > p, .workspace-heading > p { color: var(--muted); line-height: 1.5; }
@@ -104,8 +104,8 @@ h1 { font-size: clamp(2.35rem, 6vw, 5rem); letter-spacing: -.055em; line-height:
   .landing-nav > a:first-child { display: none; }
   .project-grid { grid-template-columns: 1fr; }
   .project-card footer { flex-wrap: wrap; }
-  .auth-page { display: flex; flex-direction: column; justify-content: center; }
-  .auth-page > .brand { align-self: start; width: 100%; }
+  .auth-page { display: grid; grid-template-columns: 1fr; }
+  .auth-page > .topbar { width: 100%; }
   .auth-card { box-sizing: border-box; width: 100%; }
   .app-shell { display: block; }
   .app-header { gap: .6rem; }

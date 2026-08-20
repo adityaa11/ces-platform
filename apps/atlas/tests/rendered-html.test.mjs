@@ -62,11 +62,17 @@ test("renders each account entry state and the accessible signed-in shell", asyn
     render("/demo"),
   ]);
   for (const response of [signIn, signUp, reset, demo]) assert.equal(response.status, 200);
-  assert.match(await signIn.text(), /Welcome back|Forgot password/);
-  assert.match(await signUp.text(), /Create your Atlas account/);
+  const signInHtml = await signIn.text();
+  const signUpHtml = await signUp.text();
+  assert.match(signInHtml, /Welcome back|Forgot password/);
+  assert.match(signInHtml, /Account actions/);
+  assert.match(signInHtml, /href="\/"/);
+  assert.match(signUpHtml, /Create your Atlas account/);
+  assert.match(signUpHtml, /Account actions/);
   assert.match(await reset.text(), /Reset your password/);
   const demoHtml = await demo.text();
-  assert.match(demoHtml, /Project navigation/);
+  assert.match(demoHtml, /Workspace navigation/);
+  assert.doesNotMatch(demoHtml, /Main Workflow|Project Facts|CES Result|Changes Done|Signed in as/);
   assert.match(demoHtml, /Nadia Hartono/);
   assert.match(demoHtml, /aria-controls="profile-menu"/);
 });
