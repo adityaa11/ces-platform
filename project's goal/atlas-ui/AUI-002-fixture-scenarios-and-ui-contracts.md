@@ -1,6 +1,6 @@
 # AUI-002: Fixture scenarios and UI contracts
 
-- **State:** planned
+- **State:** awaiting_review
 - **Review batch:** BATCH-02
 - **Depends on:** AUI-001
 - **Baseline:** UI/UX Prototype PRD 9.1, 9.3-9.4
@@ -26,4 +26,3 @@ Provide realistic, stable fixture scenarios and UI-facing contracts for every pr
 
 - Validate fixture contracts and scenario integrity with focused tests.
 - Render at least one owner, editor, viewer, processing, and approved-result scenario.
-
