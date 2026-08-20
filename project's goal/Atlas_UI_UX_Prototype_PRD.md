@@ -225,6 +225,15 @@ Components must receive data and callbacks through UI-facing contracts rather th
 
 Avoid premature abstractions: create a shared component when a pattern is repeated or when it represents a stable product concept. Keep business/data orchestration at the page or feature boundary and keep presentational components focused on rendering and accessible interaction.
 
+### 9.4.1 Global component consistency
+
+For every new or changed page-level UI pattern, the prototype owner must first determine whether it is a stable, global component or layout pattern. A pattern is global when it appears, or is expected to appear, across more than one route, state, or screen size—for example headers, navigation rails, profile controls, buttons, panels, dialogs, and status indicators.
+
+- Global patterns must use one reusable component or shared layout primitive rather than copied markup or route-specific styling.
+- The component must define its visual contract: relevant size, spacing, alignment, position, interaction behavior, and responsive behavior.
+- Every use of that component must remain consistent with that contract across its routes and breakpoints. A difference is allowed only when it is an intentional, named variant with an explicit input and is validated across all uses.
+- Before a checkpoint is presented for review, the prototype owner must compare every affected use of a changed global component in the rendered UI; passing a single route or a source-level check is insufficient.
+
 ### 9.5 Future-service simulation
 
 Where the UI represents a future service, it must label and simulate the result rather than claim the service is live:
@@ -258,3 +267,4 @@ The prototype is ready for review when a user can:
 14. demonstrate that the only planned replacement for production wiring is the fixture data boundary, not the Atlas UI application.
 15. reuse stable visual and interaction patterns through data-agnostic components without coupling them to fixture records.
 16. allow a user to complete core flows using plain language, visible navigation, clear feedback, and progressive disclosure rather than specialist knowledge or hidden controls.
+17. maintain global UI consistency by using shared components with declared visual and responsive contracts across every relevant route and state.

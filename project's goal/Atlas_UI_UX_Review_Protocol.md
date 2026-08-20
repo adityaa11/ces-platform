@@ -55,6 +55,10 @@ Example:
 > **Priority:** Important.  
 > **Requested outcome:** The project library and notification bar must show that processing continues in the background.
 
+### Global component consistency gate
+
+For each review checkpoint, the prototype owner must identify any global component or layout primitive affected by the change. The reviewer evaluates its rendered behavior across every relevant route, state, and breakpoint—not only on the screen where the change was made. A reused component must keep its declared size, position, spacing, hierarchy, and responsive behavior unless an intentional named variant is documented and accepted.
+
 ## 6. Feedback classification
 
 | Classification | Definition | Handling |
@@ -107,6 +111,6 @@ Final sign-off requires confirmation that:
 - Important items are resolved or explicitly deferred;
 - Optional items are logged separately;
 - all accepted feedback appears in the change log;
+- each changed global component has been compared across all of its relevant rendered uses; and
 - the UX PRD acceptance criteria have been reviewed; and
 - the final prototype is approved for handoff or implementation planning.
-

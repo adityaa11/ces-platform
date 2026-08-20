@@ -21,6 +21,7 @@ Create the reusable, responsive Atlas shell and account states that make sign-in
 - Avatar, name, email, settings, and Logout are reachable from the shell.
 - The shell works on desktop, tablet, and mobile without hidden essential controls.
 - Reusable components receive data and events through explicit inputs rather than importing fixtures.
+- Any global shell component changed in this batch has one declared visual and responsive contract, verified across each route that uses it.
 
 ## Validation
 
