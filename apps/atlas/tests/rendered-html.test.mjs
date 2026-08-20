@@ -65,10 +65,10 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   const signInHtml = await signIn.text();
   const signUpHtml = await signUp.text();
   assert.match(signInHtml, /Welcome back|Forgot password/);
-  assert.match(signInHtml, /Account actions/);
   assert.match(signInHtml, /href="\/"/);
   assert.match(signUpHtml, /Create your Atlas account/);
-  assert.match(signUpHtml, /Account actions/);
+  assert.doesNotMatch(signInHtml, /Account actions/);
+  assert.doesNotMatch(signUpHtml, /Account actions/);
   assert.match(await reset.text(), /Reset your password/);
   const demoHtml = await demo.text();
   assert.match(demoHtml, /Workspace navigation/);
