@@ -1,6 +1,6 @@
 # AUI-003: Account shell and reusable UI primitives
 
-- **State:** planned
+- **State:** awaiting_review
 - **Review batch:** BATCH-03
 - **Depends on:** AUI-001, AUI-002
 - **Baseline:** UI/UX Prototype PRD 2.1, 3, 4.1, 7, 9.3
@@ -26,4 +26,3 @@ Create the reusable, responsive Atlas shell and account states that make sign-in
 
 - Check keyboard navigation and focus for menus and dialogs.
 - Check desktop and mobile shell layouts using the representative fixture sessions.
-

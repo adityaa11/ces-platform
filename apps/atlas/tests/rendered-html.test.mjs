@@ -53,3 +53,20 @@ test("keeps Atlas source data outside the app components", async () => {
   assert.doesNotMatch(page, /react-loading-skeleton|SkeletonPreview|codex-preview/);
   assert.doesNotMatch(layout, /next\/font\/google/);
 });
+
+test("renders each account entry state and the accessible signed-in shell", async () => {
+  const [signIn, signUp, reset, demo] = await Promise.all([
+    render("/sign-in"),
+    render("/sign-up"),
+    render("/reset-password"),
+    render("/demo"),
+  ]);
+  for (const response of [signIn, signUp, reset, demo]) assert.equal(response.status, 200);
+  assert.match(await signIn.text(), /Welcome back|Forgot password/);
+  assert.match(await signUp.text(), /Create your Atlas account/);
+  assert.match(await reset.text(), /Reset your password/);
+  const demoHtml = await demo.text();
+  assert.match(demoHtml, /Project navigation/);
+  assert.match(demoHtml, /Nadia Hartono/);
+  assert.match(demoHtml, /aria-controls="profile-menu"/);
+});

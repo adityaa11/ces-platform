@@ -13,8 +13,8 @@
 | Order | Ticket / batch | State | Depends on | Review question |
 |---:|---|---|---|---|
 | 1 | AUI-001 / BATCH-01 | approved | - | Is the future-facing app and fixture-only boundary ready for UI work? |
-| 2 | AUI-002 / BATCH-02 | awaiting_review | AUI-001 | Can fixtures faithfully drive every required prototype state and traceability view? |
-| 3 | AUI-003 / BATCH-03 | planned | AUI-001, AUI-002 | Is the account shell clear, responsive, and reusable? |
+| 2 | AUI-002 / BATCH-02 | approved | AUI-001 | Can fixtures faithfully drive every required prototype state and traceability view? |
+| 3 | AUI-003 / BATCH-03 | awaiting_review | AUI-001, AUI-002 | Is the account shell clear, responsive, and reusable? |
 | 4 | AUI-004 + AUI-005 / BATCH-04 | planned | AUI-003 | Can an owner create, monitor, and safely share a private project? |
 | 5 | AUI-006 / BATCH-05 | planned | AUI-003, AUI-004 | Does Main Workflow make accumulated PRD understanding and evidence easy to inspect? |
 | 6 | AUI-007 / BATCH-06 | planned | AUI-003, AUI-004 | Are non-workflow facts and incremental changes visible and traceable? |

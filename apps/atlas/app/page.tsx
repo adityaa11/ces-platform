@@ -15,8 +15,8 @@ export default function Home() {
           Atlas
         </Link>
         <nav className="landing-nav" aria-label="Account actions">
-          <a href="#signin">Sign in</a>
-          <a className="button-link" href="#signup">Sign up</a>
+          <Link href="/sign-in">Sign in</Link>
+          <Link className="button-link" href="/sign-up">Sign up</Link>
         </nav>
       </header>
 
@@ -27,8 +27,8 @@ export default function Home() {
           baseline awareness - without losing the original wording.
         </p>
         <div className="hero-actions">
-          <a className="button-link" href="#signup">Sign up</a>
-          <a className="button-link button-secondary" href="/demo">Explore demo</a>
+          <Link className="button-link" href="/sign-up">Sign up</Link>
+          <Link className="button-link button-secondary" href="/demo">Explore demo</Link>
         </div>
       </section>
     </main>

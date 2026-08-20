@@ -1,0 +1,2 @@
+import type { ReactNode } from "react";
+export function Dialog({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) { return <div aria-modal="true" className="dialog-backdrop" role="dialog" aria-labelledby="dialog-title"><section className="dialog-panel"><div className="dialog-heading"><h2 id="dialog-title">{title}</h2><button aria-label="Close dialog" className="icon-button" onClick={onClose} type="button">×</button></div>{children}</section></div>; }

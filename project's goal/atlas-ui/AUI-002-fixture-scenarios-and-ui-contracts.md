@@ -1,6 +1,6 @@
 # AUI-002: Fixture scenarios and UI contracts
 
-- **State:** awaiting_review
+- **State:** approved
 - **Review batch:** BATCH-02
 - **Depends on:** AUI-001
 - **Baseline:** UI/UX Prototype PRD 9.1, 9.3-9.4
