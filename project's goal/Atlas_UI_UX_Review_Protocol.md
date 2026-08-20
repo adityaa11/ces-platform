@@ -63,6 +63,29 @@ For each review checkpoint, the prototype owner must identify any global compone
 
 Before a checkpoint can be presented as review-ready, the prototype owner must compare the rendered surface with the approved design-quality baseline. The review asks whether the hierarchy, density, navigation, whitespace, and control placement express a deliberate, product-appropriate workspace pattern. A generic dashboard scaffold, copied default component arrangement, or implementation that has only been source-checked fails this gate. When a new pattern is not already approved, its researched references and intended behavior must be documented before implementation.
 
+### Reference-led composition gate
+
+For every new screen or material redesign, the prototype owner must record a short visual direction before implementation: the product-interface references or approved pattern, intended hierarchy, density, surface system, navigation behavior, primary action, and responsive composition. Review the screen as one complete composition—not a set of individually working controls. A checkpoint fails this gate when it relies on default-looking controls, local visual patches, or disconnected component styling rather than one coherent system.
+
+### Mandatory visual-validation gate
+
+Before a UI checkpoint is committed or presented for `ck`, the prototype owner must inspect the rendered browser surface—not only source code, lint output, or build output. The validation record must name the affected component and the states actually checked.
+
+For every changed component, validate the applicable entries below:
+
+| Dimension | Required checks when applicable |
+|---|---|
+| Shared impact | Every route and feature state that uses the changed component or layout primitive |
+| Interaction | Default, hover/focus, open/closed, selected/unselected, and dismissed states |
+| Theme | Dark and Light, including text contrast, elevation, borders, status colors, and focus treatment |
+| Layout | Desktop, tablet, and mobile widths; expanded and collapsed navigation where present |
+| Text rhythm | Heading-to-eyebrow and heading-to-body spacing, line-height, wrapping, paragraph measure, and alignment at each relevant width |
+| Accessibility behavior | Keyboard focus, Escape, outside-click dismissal, and any changed ARIA state |
+
+The reviewer must evaluate the exact state affected by the change. A screenshot or browser check where an overlay hides the affected element does not satisfy the gate. Any missed visual defect must be recorded with the untested state that allowed it to escape, and that state becomes mandatory validation for future changes to the component.
+
+Text spacing is a first-class visual requirement, not incidental browser-default behavior. Components that contain labels, headings, supporting copy, or metadata must declare their intended margins and line-height in the shared style system. The reviewer must reject inherited/default spacing that produces cramped hierarchy, accidental gaps, or poor wrapping at a target breakpoint.
+
 ## 6. Feedback classification
 
 | Classification | Definition | Handling |
@@ -117,5 +140,6 @@ Final sign-off requires confirmation that:
 - all accepted feedback appears in the change log;
 - each changed global component has been compared across all of its relevant rendered uses; and
 - every reviewed surface has passed the design-quality gate through visual inspection at its relevant breakpoints.
+- the mandatory visual-validation record identifies each changed component and every applicable route, interaction, theme, layout, text-rhythm, and accessibility state checked; and
 - the UX PRD acceptance criteria have been reviewed; and
 - the final prototype is approved for handoff or implementation planning.

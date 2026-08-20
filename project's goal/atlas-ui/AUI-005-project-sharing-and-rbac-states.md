@@ -1,6 +1,6 @@
 # AUI-005: Project sharing and RBAC states
 
-- **State:** planned
+- **State:** in_progress
 - **Review batch:** BATCH-04
 - **Depends on:** AUI-003
 - **Baseline:** UI/UX Prototype PRD 3, 4.4, 8, 9.1, 9.4
@@ -26,4 +26,3 @@ Make private-project ownership, sharing by email, and Owner/Editor/Viewer permis
 
 - Exercise fixture scenarios for each role and membership state.
 - Check keyboard and mobile interaction with the Share panel.
-

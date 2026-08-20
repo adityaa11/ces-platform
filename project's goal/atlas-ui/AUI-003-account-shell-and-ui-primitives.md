@@ -1,6 +1,6 @@
 # AUI-003: Account shell and reusable UI primitives
 
-- **State:** awaiting_review
+- **State:** approved
 - **Review batch:** BATCH-03
 - **Depends on:** AUI-001, AUI-002
 - **Baseline:** UI/UX Prototype PRD 2.1, 3, 4.1, 7, 9.3

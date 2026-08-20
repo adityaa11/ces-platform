@@ -39,6 +39,17 @@ Atlas must feel like a considered, modern professional workspace—not a generic
 - Prototype review requires visual inspection of the rendered experience at relevant desktop, tablet, and mobile sizes. Passing build, lint, or source-level checks alone is not evidence of acceptable UI/UX quality.
 - When the team lacks a validated direction for a new surface, research and document the preferred pattern before implementation rather than filling the gap with an improvised UI.
 
+### 2.3 Prototype design mode: reference-led, composition-first
+
+Atlas UI/UX prototype work uses a v0-inspired delivery mode. The prototype owner starts from a coherent, product-quality visual composition rather than assembling isolated controls and correcting them afterward.
+
+- Establish a brief visual direction for each screen or flow: hierarchy, density, surface system, navigation pattern, primary action, and responsive behavior.
+- Research and name appropriate product-interface references when a pattern is not already approved; adapt their interaction logic and visual hierarchy rather than copying isolated decoration.
+- Compose the complete visible state before declaring a screen ready: header, navigation, content hierarchy, cards, empty/loading states, overlays, and primary actions must read as one system.
+- Use shared semantic tokens and reusable components for all recurring UI. A local shortcut that creates visual drift is not acceptable.
+- Treat the rendered browser result as the design artifact. Source code, lint, and tests support it but never substitute for visual judgment.
+- Prefer calm, immediately understandable controls and concise content over novel interaction or dashboard clutter, consistent with the Gen X preference.
+
 ## 3. Users and access states
 
 The prototype must represent these user-facing roles:

@@ -1,6 +1,6 @@
 # AUI-004: Project library, upload, and processing experience
 
-- **State:** planned
+- **State:** in_progress
 - **Review batch:** BATCH-04
 - **Depends on:** AUI-003
 - **Baseline:** UI/UX Prototype PRD 4.2-4.3, 9.1, 9.4
@@ -27,4 +27,3 @@ Let a user find projects, create a named project, select PRD PDFs, and understan
 
 - Exercise empty, populated, successful, failed, and needs-attention scenarios.
 - Check the notification and upload flow at desktop and mobile widths.
-
