@@ -29,6 +29,16 @@ The prototype must therefore:
 - ask for confirmation only for consequential actions such as deleting a project, removing access, or approving a result; and
 - keep each flow focused on one decision at a time, with clear ways to go back or cancel.
 
+### 2.2 Design-quality baseline
+
+Atlas must feel like a considered, modern professional workspace—not a generic dashboard, tutorial exercise, or collection of default cards and controls. Before designing or materially changing a product surface, the prototype owner must identify relevant, current UI/UX patterns from credible products or design-system guidance and apply a deliberate direction appropriate to Atlas’s job.
+
+- Workspace and navigation patterns should take cues from established collaborative-product interfaces such as Figma and Linear, while retaining Atlas’s own domain-neutral visual language.
+- The design must prioritize a clear hierarchy, purposeful density, restrained visual noise, meaningful empty space, and obvious primary actions; decorative borders, oversized empty regions, arbitrary pills, and disconnected controls are not substitutes for hierarchy.
+- Components and layout decisions must have a documented purpose. A control may not be introduced merely because a generic dashboard pattern includes one.
+- Prototype review requires visual inspection of the rendered experience at relevant desktop, tablet, and mobile sizes. Passing build, lint, or source-level checks alone is not evidence of acceptable UI/UX quality.
+- When the team lacks a validated direction for a new surface, research and document the preferred pattern before implementation rather than filling the gap with an improvised UI.
+
 ## 3. Users and access states
 
 The prototype must represent these user-facing roles:
@@ -268,3 +278,4 @@ The prototype is ready for review when a user can:
 15. reuse stable visual and interaction patterns through data-agnostic components without coupling them to fixture records.
 16. allow a user to complete core flows using plain language, visible navigation, clear feedback, and progressive disclosure rather than specialist knowledge or hidden controls.
 17. maintain global UI consistency by using shared components with declared visual and responsive contracts across every relevant route and state.
+18. meet the design-quality baseline through researched, deliberate, and visually reviewed workspace patterns rather than generic scaffold UI.

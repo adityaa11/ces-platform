@@ -59,6 +59,10 @@ Example:
 
 For each review checkpoint, the prototype owner must identify any global component or layout primitive affected by the change. The reviewer evaluates its rendered behavior across every relevant route, state, and breakpoint—not only on the screen where the change was made. A reused component must keep its declared size, position, spacing, hierarchy, and responsive behavior unless an intentional named variant is documented and accepted.
 
+### Design-quality gate
+
+Before a checkpoint can be presented as review-ready, the prototype owner must compare the rendered surface with the approved design-quality baseline. The review asks whether the hierarchy, density, navigation, whitespace, and control placement express a deliberate, product-appropriate workspace pattern. A generic dashboard scaffold, copied default component arrangement, or implementation that has only been source-checked fails this gate. When a new pattern is not already approved, its researched references and intended behavior must be documented before implementation.
+
 ## 6. Feedback classification
 
 | Classification | Definition | Handling |
@@ -112,5 +116,6 @@ Final sign-off requires confirmation that:
 - Optional items are logged separately;
 - all accepted feedback appears in the change log;
 - each changed global component has been compared across all of its relevant rendered uses; and
+- every reviewed surface has passed the design-quality gate through visual inspection at its relevant breakpoints.
 - the UX PRD acceptance criteria have been reviewed; and
 - the final prototype is approved for handoff or implementation planning.
