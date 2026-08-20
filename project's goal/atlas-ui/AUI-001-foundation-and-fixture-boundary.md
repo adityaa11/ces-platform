@@ -1,6 +1,6 @@
 # AUI-001: Foundation and fixture boundary
 
-- **State:** ready
+- **State:** awaiting_review
 - **Review batch:** BATCH-01
 - **Depends on:** None
 - **Baseline:** UI/UX Prototype PRD 9.1-9.2

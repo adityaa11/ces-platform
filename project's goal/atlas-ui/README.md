@@ -12,7 +12,7 @@
 
 | Order | Ticket / batch | State | Depends on | Review question |
 |---:|---|---|---|---|
-| 1 | AUI-001 / BATCH-01 | ready | - | Is the future-facing app and fixture-only boundary ready for UI work? |
+| 1 | AUI-001 / BATCH-01 | awaiting_review | - | Is the future-facing app and fixture-only boundary ready for UI work? |
 | 2 | AUI-002 / BATCH-02 | planned | AUI-001 | Can fixtures faithfully drive every required prototype state and traceability view? |
 | 3 | AUI-003 / BATCH-03 | planned | AUI-001, AUI-002 | Is the account shell clear, responsive, and reusable? |
 | 4 | AUI-004 + AUI-005 / BATCH-04 | planned | AUI-003 | Can an owner create, monitor, and safely share a private project? |
