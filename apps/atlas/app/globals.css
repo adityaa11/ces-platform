@@ -145,10 +145,28 @@ h1 { font-size: clamp(2.35rem, 6vw, 5rem); letter-spacing: -.055em; line-height:
 .project-card h2 { font-size: 1rem; letter-spacing: -.015em; margin: 1.1rem 0 .35rem; }
 .project-card p { color: var(--muted); font-size: .92rem; line-height: 1.45; margin: 0; min-height: 2.4rem; }
 .project-card footer { border-top: 1px solid var(--line); color: var(--muted); display: flex; font-size: .78rem; gap: .8rem; margin-top: .9rem; padding-top: .7rem; }
+.card-share { align-self: flex-start; font-size: .78rem; margin-top: .8rem; padding: .45rem .65rem; }
 .status-badge { border-radius: 999px; font-size: .7rem; font-weight: 800; padding: .38rem .58rem; }
 .status-ready { background: #16382a; color: #8be0ad; }
 .status-processing { background: var(--sun); color: #f2d27b; }
 .status-needs-attention { background: #482522; color: #ffaaa0; }
+.share-panel { display: grid; gap: 1rem; }
+.share-panel > p, .access-confirmation > p { color: var(--muted); line-height: 1.5; margin: 0; }
+.invite-form { align-items: end; border-bottom: 1px solid var(--line); display: grid; gap: .75rem; grid-template-columns: minmax(0, 1fr) minmax(10rem, .75fr) auto; padding-bottom: 1rem; }
+.invite-form label { color: var(--muted); display: grid; font-size: .8rem; font-weight: 700; gap: .35rem; }
+.invite-form input, .invite-form select, .collaborator select { background: #151519; border: 1px solid #3b3b43; border-radius: .5rem; color: var(--ink); font: inherit; padding: .6rem; }
+.invite-form .button { padding: .64rem .8rem; }
+.collaborator-list { display: grid; gap: .4rem; }
+.collaborator-list h3 { font-size: .9rem; margin: 0 0 .2rem; }
+.collaborator { align-items: center; border: 1px solid var(--line); border-radius: .6rem; display: grid; gap: .45rem; grid-template-columns: minmax(0, 1fr) auto auto auto; padding: .7rem; }
+.collaborator > div { display: grid; gap: .13rem; min-width: 0; }
+.collaborator strong { font-size: .86rem; }
+.collaborator span { color: var(--muted); font-size: .76rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.collaborator select { font-size: .76rem; padding: .42rem; }
+.collaborator em { color: var(--muted); font-size: .72rem; font-style: normal; white-space: nowrap; }
+.collaborator-removed { background: #252128; opacity: .68; }
+.remove-access { font-size: .73rem; padding: .35rem .2rem; }
+.access-confirmation { display: grid; gap: 1.2rem; }
 
 :root[data-theme="light"] .auth-card input { background: #fff; border-color: #cbd3df; }
 :root[data-theme="light"] .sidebar-toggle { background: #fff; border-color: #cdd4df; color: #4f46c8; }
@@ -160,6 +178,8 @@ h1 { font-size: clamp(2.35rem, 6vw, 5rem); letter-spacing: -.055em; line-height:
 :root[data-theme="light"] .theme-selector { border-color: #e1e5ec; }
 :root[data-theme="light"] .theme-selector .theme-active { background: #edeeff; border-color: #d6d7ff; color: #4745bb; }
 :root[data-theme="light"] .create-project-form input { background: #fff; border-color: #cbd3df; color: var(--ink); }
+:root[data-theme="light"] .invite-form input, :root[data-theme="light"] .invite-form select, :root[data-theme="light"] .collaborator select { background: #fff; border-color: #cbd3df; }
+:root[data-theme="light"] .collaborator-removed { background: #f7f4f6; }
 :root[data-theme="light"] .dialog-backdrop { background: #20242e40; }
 :root[data-theme="light"] .dialog-panel { border-color: #dbe1ea; }
 :root[data-theme="light"] .status-ready { background: #e7f7ec; color: #16703d; }
@@ -174,6 +194,10 @@ h1 { font-size: clamp(2.35rem, 6vw, 5rem); letter-spacing: -.055em; line-height:
   .landing-nav > a:first-child { display: none; }
   .project-grid { grid-template-columns: 1fr; }
   .project-card footer { flex-wrap: wrap; }
+  .invite-form { align-items: stretch; grid-template-columns: 1fr; }
+  .collaborator { align-items: start; grid-template-columns: minmax(0, 1fr) auto; }
+  .collaborator select, .remove-access { grid-row: 2; }
+  .collaborator em { grid-column: 2; }
   .auth-page { display: grid; grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
   .auth-page > .topbar { width: 100%; }
   .auth-card { box-sizing: border-box; width: 100%; }

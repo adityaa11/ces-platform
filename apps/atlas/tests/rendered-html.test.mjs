@@ -55,13 +55,15 @@ test("keeps Atlas source data outside the app components", async () => {
 });
 
 test("renders each account entry state and the accessible signed-in shell", async () => {
-  const [signIn, signUp, reset, demo] = await Promise.all([
+  const [signIn, signUp, reset, demo, editorDemo, viewerDemo] = await Promise.all([
     render("/sign-in"),
     render("/sign-up"),
     render("/reset-password"),
     render("/demo"),
+    render("/demo?scenario=editor-ready"),
+    render("/demo?scenario=viewer-ready"),
   ]);
-  for (const response of [signIn, signUp, reset, demo]) assert.equal(response.status, 200);
+  for (const response of [signIn, signUp, reset, demo, editorDemo, viewerDemo]) assert.equal(response.status, 200);
   const signInHtml = await signIn.text();
   const signUpHtml = await signUp.text();
   assert.match(signInHtml, /Welcome back|Forgot password/);
@@ -76,6 +78,17 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(demoHtml, /Nadia Hartono/);
   assert.match(demoHtml, /aria-controls="profile-menu"/);
   const appShell = await readFile(new URL("../components/AppShell.tsx", import.meta.url), "utf8");
+  const projectLibrary = await readFile(new URL("../components/ProjectLibrary.tsx", import.meta.url), "utf8");
   assert.match(appShell, /import \{ TopBar \} from "\.\/TopBar"/);
   assert.match(appShell, /<TopBar className="app-header" variant="workspace">/);
+  assert.match(projectLibrary, /Only people invited by email can access this private project/);
+  assert.match(projectLibrary, /Invite/);
+  assert.match(projectLibrary, /Confirm change/);
+  assert.match(projectLibrary, /Access removed/);
+  const editorHtml = await editorDemo.text();
+  const viewerHtml = await viewerDemo.text();
+  assert.match(editorHtml, /Raka Pratama/);
+  assert.doesNotMatch(editorHtml, />Share</);
+  assert.match(viewerHtml, /Sari Utami/);
+  assert.doesNotMatch(viewerHtml, /\+ New project|>Share</);
 });

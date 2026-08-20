@@ -15,7 +15,7 @@
 | 1 | AUI-001 / BATCH-01 | approved | - | Is the future-facing app and fixture-only boundary ready for UI work? |
 | 2 | AUI-002 / BATCH-02 | approved | AUI-001 | Can fixtures faithfully drive every required prototype state and traceability view? |
 | 3 | AUI-003 / BATCH-03 | approved | AUI-001, AUI-002 | Is the account shell clear, responsive, and reusable? |
-| 4 | AUI-004 + AUI-005 / BATCH-04 | in_progress | AUI-003 | Can an owner create, monitor, and safely share a private project? |
+| 4 | AUI-004 + AUI-005 / BATCH-04 | awaiting_review | AUI-003 | Can an owner create, monitor, and safely share a private project? |
 | 5 | AUI-006 / BATCH-05 | planned | AUI-003, AUI-004 | Does Main Workflow make accumulated PRD understanding and evidence easy to inspect? |
 | 6 | AUI-007 / BATCH-06 | planned | AUI-003, AUI-004 | Are non-workflow facts and incremental changes visible and traceable? |
 | 7 | AUI-008 / BATCH-07 | planned | AUI-006, AUI-007 | Does CES Result make baseline awareness, coverage, and open decisions clear without prescribing solutions? |
