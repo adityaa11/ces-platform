@@ -28,5 +28,5 @@ export function Dialog({ title, children, onClose }: { title: string; children: 
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [onClose]);
 
-  return <div className="dialog-backdrop"><section aria-modal="true" aria-labelledby="dialog-title" className="dialog-panel" ref={panelRef} role="dialog" tabIndex={-1}><div className="dialog-heading"><h2 id="dialog-title">{title}</h2><button aria-label="Close dialog" className="icon-button" onClick={onClose} type="button">×</button></div>{children}</section></div>;
+  return <div className="dialog-backdrop" onPointerDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><section aria-modal="true" aria-labelledby="dialog-title" className="dialog-panel" ref={panelRef} role="dialog" tabIndex={-1}><div className="dialog-heading"><h2 id="dialog-title">{title}</h2><button aria-label="Close dialog" className="icon-button" onClick={onClose} type="button">×</button></div>{children}</section></div>;
 }
