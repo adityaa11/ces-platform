@@ -76,7 +76,7 @@ button {
 .sidebar-edge-toggle { background: transparent; border: 0; border-radius: 0; bottom: 0; cursor: col-resize; padding: 0; position: absolute; right: -.5rem; top: 0; transition: background-color .18s ease; width: 1rem; z-index: 3; }
 .sidebar-edge-toggle:hover { background: color-mix(in srgb, var(--forest) 45%, transparent); }
 .sidebar-edge-toggle:focus-visible { background: color-mix(in srgb, var(--forest) 62%, transparent); outline: 2px solid var(--forest); outline-offset: -2px; }
-.navigation { align-self: start; background: var(--surface); border-right: 1px solid var(--line); box-sizing: border-box; display: flex; flex-direction: column; gap: .9rem; height: calc(100vh - 3.5rem); overflow-y: auto; padding: 1rem; position: sticky; top: 3.5rem; transition: padding .24s cubic-bezier(.2, .8, .2, 1); }
+.navigation { align-self: start; background: var(--surface); border-right: 1px solid var(--line); box-sizing: border-box; display: flex; flex-direction: column; gap: .9rem; height: calc(100vh - 3.5rem); overflow: visible; padding: 1rem; position: sticky; top: 3.5rem; transition: padding .24s cubic-bezier(.2, .8, .2, 1); }
 .navigation > .profile-wrap { margin-top: auto; }
 .sidebar-collapsed .navigation { align-items: center; overflow: visible; padding-inline: .5rem; }
 .sidebar-collapsed .sidebar-toggle { transform: rotate(180deg); }
