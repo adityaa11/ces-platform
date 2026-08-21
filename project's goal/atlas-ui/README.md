@@ -27,8 +27,8 @@ The required backend-wiring semantics are defined in [Fixture Data-Intent Contra
 | 3 | AUI-003 / BATCH-03 | approved | AUI-001, AUI-002 | Is the account shell clear, responsive, and reusable? |
 | 4 | AUI-004 + AUI-005 / BATCH-04 | approved | AUI-003 | Can an owner create, monitor, and safely share a private project? |
 | 5 | AUI-006 / BATCH-05-00 then BATCH-05 | approved | AUI-003, AUI-004 | Does the shared shell foundation, then Main Workflow, make accumulated PRD understanding and evidence easy to inspect? |
-| 6 | AUI-007 / BATCH-06 | in_progress | AUI-003, AUI-004 | Are non-workflow facts and incremental changes visible and traceable? |
-| 7 | AUI-008 / BATCH-07 | planned | AUI-006, AUI-007 | Does CES Result make baseline awareness, coverage, and open decisions clear without prescribing solutions? |
+| 6 | AUI-007 / BATCH-06 | approved | AUI-003, AUI-004 | Are non-workflow facts and incremental changes visible and traceable? |
+| 7 | AUI-008 / BATCH-07 | in_progress | AUI-006, AUI-007 | Does CES Result make baseline awareness, coverage, and open decisions clear without prescribing solutions? |
 | 8 | AUI-009 / BATCH-08 | planned | AUI-004 through AUI-008 | Does the complete experience remain clear and accessible across screen sizes? |
 | 9 | AUI-010 / BATCH-09 | planned | AUI-009 | Is the fixture-driven prototype coherent, navigable, and ready for handoff? |
 
