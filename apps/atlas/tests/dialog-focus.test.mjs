@@ -13,3 +13,9 @@ test("Dialog defines modal focus entry, containment, and every required dismissa
   assert.match(source, /last\.focus\(\)/);
   assert.match(source, /first\.focus\(\)/);
 });
+
+test("ProfileMenu restores and persists the selected theme across navigation", async () => {
+  const source = await readFile(new URL("../components/ProfileMenu.tsx", import.meta.url), "utf8");
+  assert.match(source, /localStorage\.getItem\("atlas-theme"\)/);
+  assert.match(source, /localStorage\.setItem\("atlas-theme", theme\)/);
+});

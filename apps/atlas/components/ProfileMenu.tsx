@@ -9,10 +9,10 @@ type User = { name: string; email: string; role: "owner" | "editor" | "viewer" }
 
 export function ProfileMenu({ user }: { user: User }) {
   const [open, setOpen] = useState(false);
-  const [theme, setTheme] = useState<"light" | "dark">("dark");
+  const [theme, setTheme] = useState<"light" | "dark">(() => typeof window !== "undefined" && window.localStorage.getItem("atlas-theme") === "light" ? "light" : "dark");
   const [mobile, setMobile] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => { document.documentElement.dataset.theme = theme; }, [theme]);
+  useEffect(() => { document.documentElement.dataset.theme = theme; window.localStorage.setItem("atlas-theme", theme); }, [theme]);
   useEffect(() => { const query = window.matchMedia("(max-width: 640px)"); const update = () => setMobile(query.matches); update(); query.addEventListener("change", update); return () => query.removeEventListener("change", update); }, []);
   useEffect(() => {
     if (!open) return;
