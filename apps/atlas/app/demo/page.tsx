@@ -9,6 +9,6 @@ export default async function DemoPage({ searchParams }: { searchParams?: Promis
   const requestedView = (await searchParams)?.view;
   const requestedProjectId = (await searchParams)?.projectId;
   const scenario = getFixtureScenario(scenarioIds.includes(requestedScenario as FixtureScenario["id"]) ? requestedScenario as FixtureScenario["id"] : "owner-ready");
-  if (requestedView === "workflow" && requestedProjectId === scenario.workspace?.project.id) return <WorkflowWorkspace initialLens={scenario.lens} user={scenario.session} workspace={scenario.workspace} />;
+  if (requestedView === "workflow" && requestedProjectId === scenario.workspace?.project.id) return <WorkflowWorkspace initialLens={scenario.lens} projects={scenario.projects} user={scenario.session} workspace={scenario.workspace} />;
   return <ProjectLibrary projects={scenario.projects} user={scenario.session} workspace={scenario.workspace} />;
 }

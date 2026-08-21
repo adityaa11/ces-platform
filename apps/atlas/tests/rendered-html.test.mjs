@@ -2,9 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+let renderId = 0;
 async function render(pathname = "/") {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
-  workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
+  workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}-${renderId++}`);
   const { default: worker } = await import(workerUrl.href);
 
   return worker.fetch(
@@ -55,15 +56,14 @@ test("keeps Atlas source data outside the app components", async () => {
 });
 
 test("renders each account entry state and the accessible signed-in shell", async () => {
-  const [signIn, signUp, reset, demo, editorDemo, viewerDemo] = await Promise.all([
-    render("/sign-in"),
-    render("/sign-up"),
-    render("/reset-password"),
-    render("/demo"),
-    render("/demo?scenario=editor-ready"),
-    render("/demo?scenario=viewer-ready"),
-  ]);
-  for (const response of [signIn, signUp, reset, demo, editorDemo, viewerDemo]) assert.equal(response.status, 200);
+  const signIn = await render("/sign-in");
+  const signUp = await render("/sign-up");
+  const reset = await render("/reset-password");
+  const demo = await render("/demo");
+  const workflow = await render("/demo?projectId=safara&view=workflow");
+  const editorDemo = await render("/demo?scenario=editor-ready");
+  const viewerDemo = await render("/demo?scenario=viewer-ready");
+  for (const response of [signIn, signUp, reset, demo, workflow, editorDemo, viewerDemo]) assert.equal(response.status, 200);
   const signInHtml = await signIn.text();
   const signUpHtml = await signUp.text();
   assert.match(signInHtml, /Welcome back|Forgot password/);
@@ -73,18 +73,25 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.doesNotMatch(signUpHtml, /Account actions/);
   assert.match(await reset.text(), /Reset your password/);
   const demoHtml = await demo.text();
-  assert.match(demoHtml, /Workspace navigation/);
+  assert.match(demoHtml, /Select a project/);
   assert.doesNotMatch(demoHtml, /Main Workflow|Project Facts|CES Result|Changes Done|Signed in as/);
   assert.match(demoHtml, /Nadia Hartono/);
-  assert.match(demoHtml, /aria-controls="profile-menu"/);
+  assert.match(demoHtml, /aria-expanded="false"/);
   const appShell = await readFile(new URL("../components/AppShell.tsx", import.meta.url), "utf8");
   const projectLibrary = await readFile(new URL("../components/ProjectLibrary.tsx", import.meta.url), "utf8");
   assert.match(appShell, /import \{ TopBar \} from "\.\/TopBar"/);
   assert.match(appShell, /<TopBar className="app-header" variant="workspace">/);
+  assert.match(appShell, /import \{ ProfileMenu \} from "\.\/ProfileMenu"/);
+  assert.doesNotMatch(appShell, /libraryProjects|id:"selected"/);
   assert.match(projectLibrary, /Only people invited by email can access this private project/);
   assert.match(projectLibrary, /Invite/);
   assert.match(projectLibrary, /Confirm change/);
   assert.match(projectLibrary, /Access removed/);
+  assert.match(projectLibrary, /`\/demo\?projectId=\$\{project\.id\}&view=workflow`/);
+  assert.match(demoHtml, /href="\/demo\?projectId=safara&amp;view=workflow"/);
+  const workflowHtml = await workflow.text();
+  assert.match(workflowHtml, /Current project/);
+  assert.match(workflowHtml, /Safara operations platform/);
   const editorHtml = await editorDemo.text();
   const viewerHtml = await viewerDemo.text();
   assert.match(editorHtml, /Raka Pratama/);
