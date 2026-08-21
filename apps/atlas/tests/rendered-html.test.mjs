@@ -61,9 +61,11 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   const reset = await render("/reset-password");
   const demo = await render("/demo");
   const workflow = await render("/demo?projectId=safara&view=workflow");
+  const facts = await render("/demo?projectId=safara&view=facts&prd=safara-increment-02&lens=isolate");
+  const changes = await render("/demo?projectId=safara&view=changes&prd=safara-increment-02&lens=isolate");
   const editorDemo = await render("/demo?scenario=editor-ready");
   const viewerDemo = await render("/demo?scenario=viewer-ready");
-  for (const response of [signIn, signUp, reset, demo, workflow, editorDemo, viewerDemo]) assert.equal(response.status, 200);
+  for (const response of [signIn, signUp, reset, demo, workflow, facts, changes, editorDemo, viewerDemo]) assert.equal(response.status, 200);
   const signInHtml = await signIn.text();
   const signUpHtml = await signUp.text();
   assert.match(signInHtml, /Welcome back|Forgot password/);
@@ -74,7 +76,7 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(await reset.text(), /Reset your password/);
   const demoHtml = await demo.text();
   assert.match(demoHtml, /Select a project/);
-  assert.doesNotMatch(demoHtml, /Main Workflow|Project Facts|CES Result|Changes Done|Signed in as/);
+  assert.doesNotMatch(demoHtml, /<nav aria-label="Project navigation">/);
   assert.match(demoHtml, /Nadia Hartono/);
   assert.match(demoHtml, /aria-expanded="false"/);
   const appShell = await readFile(new URL("../components/AppShell.tsx", import.meta.url), "utf8");
@@ -84,7 +86,10 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(appShell, /<TopBar className="app-header" variant="workspace">/);
   assert.match(appShell, /import \{ ProfileMenu \} from "\.\/ProfileMenu"/);
   assert.doesNotMatch(appShell, /libraryProjects|id:"selected"/);
-  assert.match(appShell, /`\/demo\?projectId=\$\{current\.id\}&view=workflow`/);
+  assert.match(appShell, /new URLSearchParams\(window\.location\.search\)/);
+  assert.match(appShell, /params\.set\("view", view\)/);
+  assert.match(appShell, /aria-controls="app-navigation"/);
+  assert.match(appShell, /navigation \$\{collapsed \? "navigation-open" : ""\}/);
   assert.match(projectLibrary, /Only people invited by email can access this private project/);
   assert.match(projectLibrary, /Invite/);
   assert.match(projectLibrary, /Confirm change/);
@@ -96,6 +101,11 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(workflowHtml, /Safara operations platform/);
   assert.match(workflowHtml, /Main Workflow/);
   assert.match(workflowHtml, /14 May 2026/);
+  const factsHtml = await facts.text();
+  const changesHtml = await changes.text();
+  assert.match(factsHtml, /Project Facts|People and responsibilities/);
+  assert.match(changesHtml, /Changes Done|Finance review responsibility/);
+  assert.match(changesHtml, /href="\/demo\?projectId=safara&amp;view=workflow&amp;prd=safara-increment-02&amp;lens=isolate"/);
   assert.match(workflowWorkspace, /Previous affected workflow page/);
   assert.match(workflowWorkspace, /No selected contribution on this page/);
   const editorHtml = await editorDemo.text();
