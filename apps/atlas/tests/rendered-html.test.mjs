@@ -65,7 +65,9 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   const changes = await render("/demo?projectId=safara&view=changes&prd=safara-increment-02&lens=isolate");
   const editorDemo = await render("/demo?scenario=editor-ready");
   const viewerDemo = await render("/demo?scenario=viewer-ready");
-  for (const response of [signIn, signUp, reset, demo, workflow, facts, changes, editorDemo, viewerDemo]) assert.equal(response.status, 200);
+  const processingStates = await Promise.all(["uploading", "extracting", "modeling", "ready", "needs-attention", "failed"].map((stage) => render(`/demo?scenario=processing-${stage}`)));
+  const approvedDemo = await render("/demo?scenario=approved-result&projectId=safara&view=ces");
+  for (const response of [signIn, signUp, reset, demo, workflow, facts, changes, editorDemo, viewerDemo, approvedDemo, ...processingStates]) assert.equal(response.status, 200);
   const signInHtml = await signIn.text();
   const signUpHtml = await signUp.text();
   assert.match(signInHtml, /Welcome back|Forgot password/);
@@ -116,4 +118,6 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.doesNotMatch(editorHtml, />Share</);
   assert.match(viewerHtml, /Sari Utami/);
   assert.doesNotMatch(viewerHtml, /\+ New project|>Share</);
+  for (const response of processingStates) assert.match(await response.text(), /Processing|Ready to review|Needs attention|Unable to process/);
+  assert.match(await approvedDemo.text(), /Atlas understanding[\s\S]*Approved/);
 });
