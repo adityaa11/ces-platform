@@ -274,6 +274,9 @@ h1 { font-size: clamp(2.35rem, 6vw, 5rem); letter-spacing: -.055em; line-height:
   .sidebar-collapsed .sidebar-action { border-color: var(--line); max-height: 5rem; opacity: 1; padding-top: .9rem; pointer-events: auto; }
   .navigation-open { display: flex; }
   .profile-menu { bottom: auto; box-shadow: 0 12px 30px #0008; top: calc(100% + .5rem); transform-origin: top right; }
+  .profile-wrap .dialog-backdrop { align-items: end; padding: 0; }
+  .profile-wrap .dialog-panel { border-bottom: 0; border-radius: 1.1rem 1.1rem 0 0; box-sizing: border-box; max-width: none; padding: 1.1rem 1.25rem calc(1.1rem + env(safe-area-inset-bottom)); }
+  .profile-sheet { display: grid; gap: .5rem; padding-top: .75rem; }.profile-sheet > p { color: var(--muted); font-size: .8rem; margin: 0 .25rem .35rem; text-transform: capitalize; }.profile-sheet > a { border-radius: .55rem; color: var(--ink); padding: .85rem .65rem; text-decoration: none; }.profile-sheet > a:hover { background: #292932; }.profile-sheet .theme-selector { margin: 0; }
   .navigation nav { grid-template-columns: 1fr 1fr; }
   .role-note { margin-top: .75rem; }
   .app-content { box-sizing: border-box; padding: 1.5rem 1.25rem; }
