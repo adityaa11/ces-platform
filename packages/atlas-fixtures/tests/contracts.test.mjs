@@ -34,7 +34,7 @@ test("source-grounded fixture records keep quote, document, page, and relationsh
 
 test("every fixture cross-link and source-accounting destination resolves in the shared workspace", () => {
   const workspace = fixtureScenarios["owner-ready"].workspace;
-  const destinations = [...workspace.changes, ...workspace.sourceAccounting].map((item) => item.destination);
+  const destinations = [...workspace.changes, ...workspace.sourceAccounting, ...workspace.cesItems].map((item) => item.destination);
   for (const destination of destinations) {
     if (destination.type === "unresolved" || destination.type === "project") continue;
     const records = destination.type === "workflow" ? workspace.workflows : destination.type === "fact" ? workspace.facts : workspace.cesItems;
@@ -46,6 +46,11 @@ test("every fixture cross-link and source-accounting destination resolves in the
     }
   }
   for (const fact of workspace.facts) for (const row of fact.rows) assert.ok(row.evidence.every((source) => workspace.prds.some((prd) => prd.id === source.documentId)), `${fact.id}/${row.id} evidence resolves to a PRD`);
+  for (const item of workspace.cesItems) {
+    assert.ok(item.sourcePrdIds.every((id) => workspace.prds.some((prd) => prd.id === id)), `${item.id} source PRDs resolve`);
+    assert.ok(item.linkedFactIds.every((id) => workspace.facts.some((fact) => fact.id === id)), `${item.id} linked facts resolve`);
+    assert.ok(item.evidence.every((source) => workspace.prds.some((prd) => prd.id === source.documentId)), `${item.id} evidence resolves to a PRD`);
+  }
 });
 
 test("main workflow fixtures preserve ordered groups, semantic pages, and node provenance", () => {

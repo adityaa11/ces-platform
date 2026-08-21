@@ -8,15 +8,15 @@
 
 | Journey / state | Rendered states inspected | Result / evidence |
 |---|---|---|
-| Owner workspace | Main Workflow, Project Facts with PRD 2 isolate lens, CES Result, and Changes Done using the Safara project. | Pass — each destination retained the shared project context and exposed fixture-derived workflow, fact, CES, change, source, and approval information. |
-| PRD lens and source accounting | Opened the global PRD lens from Project Facts, then Source accounting for PRD 1. | Pass — accounting displayed 1 found / 1 placed / 0 needs-answer statement and its resolvable Main Workflow destination; the modal offered the global-lens action. |
-| Role scenarios | Editor-ready and viewer-ready libraries. | Pass — both rendered the shared Safara project; owner-only project-management actions were absent from the viewer state. |
-| Processing scenarios | Extracting state, backed by the six fixture processing stages in automated coverage. | Pass — the project library presented a processing project and fixture-provided status feedback without a live service. |
+| Desktop owner workspace (1280 px) | Main Workflow, Project Facts, CES Result, and Changes Done using Safara; PRD 2 contextual highlight, PRD 2 isolate, Source accounting, and an accounting cross-destination return. | Pass — the highlight retained six fact groups; isolate reduced the rendered result to relevant contributions; accounting displayed its statement arithmetic and a resolvable Main Workflow return while retaining the project/lens URL context. |
+| Tablet CES workspace (768 px) | CES coverage summary, four policy cards, evidence/destination links, and Atlas/CES approval gates. | Pass — all coverage states, source links, and separate approval gates remained rendered with the persistent workspace navigation. |
+| Compact mobile changes workspace (573 px) | Changes by PRD increment; open mobile navigation; Account menu modal sheet with theme/account controls and explicit close. | Pass — the drawer exposed all four workspace destinations and the profile action opened its focused modal sheet without losing the changes timeline context. BATCH-08 separately validates Escape, backdrop dismissal, focus containment, and focus restoration. |
+| Role and processing scenarios | Editor-ready and viewer-ready libraries; extracting state; all six fixture processing stages in automated coverage. | Pass — both roles rendered the shared Safara project and viewer omitted owner-only project-management actions; processing feedback remained fixture-driven with no live service. |
 | Approval scenario | Approved-result CES Result. | Pass — rendered coverage became 4 Covered / 0 Needs Review and the fixture approval state was available without changing UI composition. |
 
 ## Relationship and regression validation
 
-- `pnpm test` passed: fixture contract tests cover roles, all processing stages, approval states, source provenance, every cross-link/source-accounting destination, and fact-row evidence relationships; rendered app tests cover account entry, owner/editor/viewer, processing states, lens routes, and approved results.
+- `pnpm test` passed: fixture contract tests cover roles, all processing stages, approval states, source provenance, every cross-link/source-accounting destination, CES destinations/source PRDs/linked facts/evidence, and fact-row evidence relationships; rendered app tests cover account entry, owner/editor/viewer, processing states, lens routes, and approved results.
 - `pnpm lint` passed.
 - The end-to-end walkthrough used the rendered fixture prototype. No network-backed production dependency was introduced.
 
