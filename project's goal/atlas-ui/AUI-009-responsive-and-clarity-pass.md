@@ -13,6 +13,7 @@ Ensure the complete Atlas prototype is intentionally responsive, accessible, and
 
 - Refine desktop, tablet, and mobile layouts for all completed surfaces.
 - Ensure navigation, PRD lens, evidence, sharing, profile, processing, and approval controls remain accessible on smaller screens.
+- Use a modal bottom sheet for the profile-action overlay at compact mobile widths; retain the anchored profile popover on wider layouts.
 - Apply plain-language, visible-label, progressive-disclosure, status-feedback, touch-target, and confirmation requirements.
 - Verify CSP-compatible component and asset patterns.
 - Validate shared lens and source-accounting states across all workspace destinations rather than treating each screen as isolated.
@@ -23,9 +24,11 @@ Ensure the complete Atlas prototype is intentionally responsive, accessible, and
 - Essential information may stack or move into focused drawers but is not removed.
 - Users can identify the next action, status, and way back without specialist knowledge.
 - Interactive controls remain keyboard-accessible with visible focus.
+- The mobile profile sheet dims and blocks the underlying surface, offers an explicit close action plus Escape/outside dismissal, contains focus while open, and restores focus to its trigger when closed.
 - Expanded fact groups, change timelines, CES cards, source-accounting modal, and cross-destination returns preserve context at each target width.
 
 ## Validation
 
 - Perform visual and interaction checks at representative desktop, tablet, and mobile sizes.
+- Verify the desktop profile popover and compact-mobile profile bottom sheet separately, including open/closed, light/dark, focus, dismissal, and clipping states.
 - Run accessibility checks appropriate to the chosen UI stack.
