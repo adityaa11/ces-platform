@@ -25,10 +25,12 @@ The card, project switcher, processing notice, PRD lens, workflow view, facts, c
 | Project card and switcher item | `scenario.projects[]` by `project.id` |
 | Project workspace | `workspace.project.id === selectedProjectId` |
 | Processing state | `processingJob.projectId === project.id` |
-| PRD lens | `workspace.prds[].id` referenced by workflow groups, workflows, nodes, facts, changes, and CES evidence |
+| PRD lens | One workspace-owned selection and mode, using `workspace.prds[].id` referenced by workflow groups, workflows, nodes, fact groups/rows, changes, CES evidence, and source-accounting statements |
 | Workflow overview | `workflowGroup.workflowIds[]` resolves to `workflows[].id`; group order defines the overview sequence |
 | Evidence | evidence `documentId` resolves to a workspace PRD; page is within that PRD's page count |
-| Change and CES result | referenced workflow/fact IDs resolve within the same workspace |
+| Fact display | fact groups own ordered fact rows; each row and group resolves its PRD provenance within the same workspace |
+| Change and CES result | every typed destination resolves to a workflow, fact group/row, CES item, `project`, or explicit `unresolved` state within the same workspace |
+| Source accounting | statement evidence resolves to its PRD and typed destination; counts are derived from those statements |
 | Collaboration | membership belongs to the same selected workspace project |
 
 ## Backend replacement boundary
@@ -40,4 +42,4 @@ Future services replace fixture queries, not UI-owned records. The backend must 
 - project workspace by ID, including related PRDs, workflow graph, facts, changes, CES results, memberships, approvals, and processing jobs; and
 - capability/state information that tells the UI which destination or recovery action is available.
 
-No component may invent a project, current selection, count, route, PRD, workflow, or status not present in this relationship graph.
+No component may invent a project, current selection, count, route, PRD, workflow, status, fact grouping, change destination, or source-accounting result not present in this relationship graph. A PRD lens is workspace state, never a screen-local filter; navigation and cross-links retain it.

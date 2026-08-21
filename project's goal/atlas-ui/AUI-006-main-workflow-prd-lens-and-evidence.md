@@ -1,6 +1,6 @@
 # AUI-006: Main Workflow, PRD lens, and evidence
 
-- **State:** awaiting_review
+- **State:** approved
 - **Review batch:** BATCH-05
 - **Depends on:** AUI-003, AUI-004
 - **Baseline:** UI/UX Prototype PRD 5.1, 6, 9.1, 9.3
