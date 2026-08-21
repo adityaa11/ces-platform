@@ -21,6 +21,7 @@ Provide realistic, stable fixture scenarios and UI-facing contracts for every pr
 - Evidence fixtures retain exact quote, source document, and page fields.
 - A fixture scenario or role can change without rewriting a screen component.
 - Fixture data accurately represents relationships among project surfaces.
+- Before a screen uses a fixture, its identity, scenario ownership, related records, selection state, and destination (or intentional absence of one) are documented and verified. UI components must not create local substitute fixture data.
 
 ## Validation
 

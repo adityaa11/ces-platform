@@ -28,3 +28,21 @@ test("source-grounded fixture records keep quote, document, page, and relationsh
   assert.ok(change.affectedIds.includes(workflow.id));
   assert.ok(workspace.prds.some((prd) => prd.id === source.documentId));
 });
+
+test("main workflow fixtures preserve ordered groups, semantic pages, and node provenance", () => {
+  const workspace = fixtureScenarios["owner-ready"].workspace;
+  const primaryGroups = workspace.workflowGroups.filter((group) => !group.support);
+  assert.deepEqual(primaryGroups.map((group) => group.order), ["01", "02", "03", "04", "05"]);
+  assert.ok(workspace.workflowGroups.some((group) => group.support));
+  assert.ok(primaryGroups.every((group) => group.workflowIds.length > 0));
+  for (const workflow of workspace.workflows) {
+    assert.ok(workspace.workflowGroups.some((group) => group.id === workflow.groupId));
+    assert.ok(workflow.nodes.length >= 2);
+    for (const node of workflow.nodes) {
+      assert.ok(node.prdIds.length > 0);
+      assert.ok(node.evidence.understood.length > 0);
+      assert.ok(node.evidence.quote.length > 0);
+      assert.ok(node.evidence.page > 0);
+    }
+  }
+});
