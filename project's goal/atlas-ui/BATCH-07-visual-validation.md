@@ -11,7 +11,7 @@
 
 | Component / screen | Interaction states checked | Themes checked | Breakpoints checked | Text rhythm checked | Accessibility behavior checked | Result / evidence |
 |---|---|---|---|---|---|---|
-| CES Result | All four coverage cards; evidence disclosure; workflow/fact/unresolved destinations; independent Atlas and CES approval gates | Dark | Desktop; mobile (573 px) | Heading, count, summary, policy-card and approval-gate hierarchy | Native disclosures; labelled links; confirmed Dialog focus entry | Pass — browser inspection showed 1 each of covered, needs review, out-of-scope, and unresolved. |
+| CES Result | All four coverage cards; evidence disclosure; workflow/fact/unresolved destinations; independent Atlas and CES approval gates | Dark, Light | Desktop; mobile (573 px) | Heading, count, summary, policy-card and approval-gate hierarchy | Native disclosures; labelled links; confirmed Dialog focus entry | Pass — browser inspection showed 1 each of covered, needs review, out-of-scope, and unresolved in both themes. |
 | Selected PRD CES lens | PRD 2 selection; derived one-item count; preserved destination lens | Dark | Mobile (573 px) | Lens label and filtered summary remain legible | Lens trigger reports selected state; workflow link retained `projectId` and `prd` | Pass — browser inspection showed CES-ACC-01 only and its approval dialog. |
 | Role and approved fixtures | Owner actions, editor/viewer read-only treatment, approved result state | Dark | Desktop | Approval copy and action placement | Non-owner action is not rendered; approved fixture supplies both approved states | Pass — fixture scenario contracts and rendered route validation. |
 
