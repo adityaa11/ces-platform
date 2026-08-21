@@ -35,6 +35,7 @@ test("main workflow fixtures preserve ordered groups, semantic pages, and node p
   assert.deepEqual(primaryGroups.map((group) => group.order), ["01", "02", "03", "04", "05"]);
   assert.ok(workspace.workflowGroups.some((group) => group.support));
   assert.ok(primaryGroups.every((group) => group.workflowIds.length > 0));
+  assert.ok(workspace.prds.every((prd) => /^\d{2} \w+ \d{4}$/.test(prd.publishedAt)));
   for (const workflow of workspace.workflows) {
     assert.ok(workspace.workflowGroups.some((group) => group.id === workflow.groupId));
     assert.ok(workflow.nodes.length >= 2);

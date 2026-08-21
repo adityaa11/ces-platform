@@ -79,10 +79,12 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(demoHtml, /aria-expanded="false"/);
   const appShell = await readFile(new URL("../components/AppShell.tsx", import.meta.url), "utf8");
   const projectLibrary = await readFile(new URL("../components/ProjectLibrary.tsx", import.meta.url), "utf8");
+  const workflowWorkspace = await readFile(new URL("../components/WorkflowWorkspace.tsx", import.meta.url), "utf8");
   assert.match(appShell, /import \{ TopBar \} from "\.\/TopBar"/);
   assert.match(appShell, /<TopBar className="app-header" variant="workspace">/);
   assert.match(appShell, /import \{ ProfileMenu \} from "\.\/ProfileMenu"/);
   assert.doesNotMatch(appShell, /libraryProjects|id:"selected"/);
+  assert.match(appShell, /`\/demo\?projectId=\$\{current\.id\}&view=workflow`/);
   assert.match(projectLibrary, /Only people invited by email can access this private project/);
   assert.match(projectLibrary, /Invite/);
   assert.match(projectLibrary, /Confirm change/);
@@ -92,6 +94,10 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   const workflowHtml = await workflow.text();
   assert.match(workflowHtml, /Current project/);
   assert.match(workflowHtml, /Safara operations platform/);
+  assert.match(workflowHtml, /Main Workflow/);
+  assert.match(workflowHtml, /14 May 2026/);
+  assert.match(workflowWorkspace, /Previous affected workflow page/);
+  assert.match(workflowWorkspace, /No selected contribution on this page/);
   const editorHtml = await editorDemo.text();
   const viewerHtml = await viewerDemo.text();
   assert.match(editorHtml, /Raka Pratama/);

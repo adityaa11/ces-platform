@@ -6,7 +6,7 @@ export type CesCoverageState = "covered" | "needs-review" | "out-of-scope" | "un
 export type ChangeKind = "established" | "clarified" | "expanded" | "superseded" | "unresolved";
 
 export type SourceEvidence = { id: string; understood: string; quote: string; documentId: string; documentName: string; page: number };
-export type PrdFixture = { id: string; name: string; increment: string; pageCount: number; selectedByDefault?: boolean };
+export type PrdFixture = { id: string; name: string; increment: string; publishedAt: string; pageCount: number; selectedByDefault?: boolean };
 export type ProjectFixture = { id: string; name: string; status: ProjectStatus; prdCount: number; collaborators: number; lastActivity: string; isShared: boolean };
 export type MembershipFixture = { id: string; name: string; email: string; role: AccessRole; status: "active" | "invited" | "removed" };
 export type WorkflowNodeFixture = { id: string; title: string; note: string; kind: "activity" | "decision" | "outcome" | "warning"; prdIds: string[]; evidence: SourceEvidence };
@@ -27,9 +27,9 @@ const project: ProjectFixture = { id: "safara", name: "Safara operations platfor
 const workspace: ProjectWorkspaceFixture = {
   project,
   prds: [
-    { id: "safara-increment-01", name: "Initial release", increment: "PRD 1", pageCount: 28, selectedByDefault: true },
-    { id: "safara-increment-02", name: "Finance clarification", increment: "PRD 2", pageCount: 9 },
-    { id: "safara-increment-03", name: "Operations expansion", increment: "PRD 3", pageCount: 14 },
+    { id: "safara-increment-01", name: "Initial release", increment: "PRD 1", publishedAt: "14 May 2026", pageCount: 28, selectedByDefault: true },
+    { id: "safara-increment-02", name: "Finance clarification", increment: "PRD 2", publishedAt: "02 June 2026", pageCount: 9 },
+    { id: "safara-increment-03", name: "Operations expansion", increment: "PRD 3", publishedAt: "19 June 2026", pageCount: 14 },
   ],
   memberships: [
     { id: "nadia", name: "Nadia Hartono", email: "nadia@example.com", role: "owner", status: "active" },

@@ -15,6 +15,9 @@ node-level evidence.
 
 Before continuing the workflow surface, refactor the shared shell into reusable sidebar, project-switcher, and profile-menu components. Use typed fixture project IDs for selection and route availability; remove UI-local project records. Restore outside-click, Escape, focus, and upward-popover behavior, then validate expanded/collapsed, open/closed, light/dark, desktop/mobile, and selected/unselected states.
 
+- **BATCH-05-00 state:** approved — passing review at `50b0151`; this prerequisite is frozen.
+- **BATCH-05 state:** awaiting_review — Main Workflow model, lens, navigation, and evidence.
+
 ## Reference-derived Main Workflow model
 
 The implementation must follow the functional model in
