@@ -80,6 +80,7 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(demoHtml, /Nadia Hartono/);
   assert.match(demoHtml, /aria-expanded="false"/);
   const appShell = await readFile(new URL("../components/AppShell.tsx", import.meta.url), "utf8");
+  const globals = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
   const projectLibrary = await readFile(new URL("../components/ProjectLibrary.tsx", import.meta.url), "utf8");
   const workflowWorkspace = await readFile(new URL("../components/WorkflowWorkspace.tsx", import.meta.url), "utf8");
   assert.match(appShell, /import \{ TopBar \} from "\.\/TopBar"/);
@@ -90,6 +91,7 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(appShell, /params\.set\("view", view\)/);
   assert.match(appShell, /aria-controls="app-navigation"/);
   assert.match(appShell, /navigation \$\{collapsed \? "navigation-open" : ""\}/);
+  assert.match(globals, /\.navigation-open \{ display: flex; \}/);
   assert.match(projectLibrary, /Only people invited by email can access this private project/);
   assert.match(projectLibrary, /Invite/);
   assert.match(projectLibrary, /Confirm change/);
