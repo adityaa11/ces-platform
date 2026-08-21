@@ -65,7 +65,7 @@ button {
 .text-link { color: var(--forest); font-weight: 700; text-decoration: underline; text-underline-offset: .15rem; }
 .app-shell { display: grid; grid-template-columns: 16rem minmax(0, 1fr); grid-template-rows: auto 1fr; min-height: 100vh; transition: grid-template-columns .24s cubic-bezier(.2, .8, .2, 1); }
 .sidebar-collapsed { grid-template-columns: 4.25rem minmax(0, 1fr); }
-.topbar.app-header { grid-column: 1 / -1; position: relative; }
+.topbar.app-header { grid-column: 1 / -1; position: sticky; top: 0; z-index: 20; }
 .topbar-workspace { justify-content: flex-start; }
 .topbar-workspace .topbar-actions { margin-left: auto; }
 .topbar-home { align-items: center; background: var(--surface-raised); border: 1px solid var(--line); border-radius: .6rem; color: var(--muted); display: inline-flex; height: 2.6rem; justify-content: center; margin-left: .5rem; text-decoration: none; transition: background-color .18s ease, border-color .18s ease, color .18s ease; width: 2.6rem; }
@@ -76,7 +76,7 @@ button {
 .sidebar-edge-toggle { background: transparent; border: 0; border-radius: 0; bottom: 0; cursor: col-resize; padding: 0; position: absolute; right: -.5rem; top: 0; transition: background-color .18s ease; width: 1rem; z-index: 3; }
 .sidebar-edge-toggle:hover { background: color-mix(in srgb, var(--forest) 45%, transparent); }
 .sidebar-edge-toggle:focus-visible { background: color-mix(in srgb, var(--forest) 62%, transparent); outline: 2px solid var(--forest); outline-offset: -2px; }
-.navigation { align-self: start; background: var(--surface); border-right: 1px solid var(--line); box-sizing: border-box; display: flex; flex-direction: column; gap: .9rem; height: calc(100vh - 3.5rem); overflow: visible; padding: 1rem; position: sticky; top: 3.5rem; transition: padding .24s cubic-bezier(.2, .8, .2, 1); }
+.navigation { align-self: start; background: var(--surface); border-right: 1px solid var(--line); box-sizing: border-box; display: flex; flex-direction: column; gap: .9rem; height: calc(100vh - 4rem); overflow: visible; padding: 1rem; position: sticky; top: 4rem; transition: padding .24s cubic-bezier(.2, .8, .2, 1); }
 .navigation > .profile-wrap { margin-top: auto; }
 .sidebar-collapsed .navigation { align-items: center; overflow: visible; padding-inline: .5rem; }
 .sidebar-collapsed .sidebar-toggle { transform: rotate(180deg); }
