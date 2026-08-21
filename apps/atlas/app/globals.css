@@ -268,6 +268,9 @@ h1 { font-size: clamp(2.35rem, 6vw, 5rem); letter-spacing: -.055em; line-height:
   .sidebar-toggle { display: none; }
   .sidebar-edge-toggle { display: none; }
   .profile-control > span:last-child { display: none; }
+  .profile-wrap { border-top: 0; margin-top: .2rem; padding-top: 0; width: fit-content; }
+  .profile-control { justify-content: center; width: 2.5rem; }
+  .profile-control::after { display: none; }
   .navigation { border-bottom: 1px solid var(--line); border-right: 0; display: none; padding: .75rem 1.25rem; }
   .sidebar-collapsed .navigation { align-items: stretch; padding-inline: 1.25rem; }
   .sidebar-collapsed .navigation nav { display: grid; }
