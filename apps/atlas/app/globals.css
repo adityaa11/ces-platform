@@ -166,6 +166,7 @@ button {
 .brand { align-items: center; color: var(--ink); display: inline-flex; font-size: 1.15rem; font-weight: 800; gap: .55rem; text-decoration: none; }
 .brand > span, .project-mark { align-items: center; background: var(--forest); border-radius: .5rem; color: #fff; display: inline-flex; font-size: .8rem; font-weight: 800; height: 1.8rem; justify-content: center; width: 1.8rem; }
 .landing-nav { align-items: center; display: flex; gap: 1rem; }
+.landing-theme-selector { border-bottom: 0; border-right: 1px solid var(--line); margin: 0; padding: .15rem .8rem .15rem 0; }
 .landing-nav > a:not(.button-link), .demo .topbar > a:last-child { color: var(--ink); font-weight: 700; text-decoration: none; }
 .hero, .projects { margin: 0 auto; max-width: 72rem; padding-inline: clamp(1.25rem, 5vw, 5rem); }
 .hero { padding-bottom: 3.5rem; padding-top: clamp(6rem, 16vw, 12rem); }
@@ -252,7 +253,8 @@ h1 { font-size: clamp(2.35rem, 6vw, 5rem); letter-spacing: -.055em; line-height:
 }
 
 @media (max-width: 640px) {
-  .landing-nav > a:first-child { display: none; }
+  .landing-nav > a:first-child, .landing-theme-selector > span { display: none; }
+  .landing-theme-selector { border-right: 0; padding-right: 0; }
   .project-grid { grid-template-columns: 1fr; }
   .project-card footer { flex-wrap: wrap; }
   .prd-lens { align-items: stretch; flex-direction: column; }.workflow-layout { grid-template-columns: 1fr; }

@@ -48,6 +48,8 @@ test("keeps Atlas source data outside the app components", async () => {
   ]);
 
   assert.match(page, /Explore demo/);
+  assert.match(layout, /localStorage\.getItem\('atlas-theme'\)/);
+  assert.match(layout, /suppressHydrationWarning/);
   assert.match(demo, /from "@atlas\/fixtures"/);
   assert.match(fixturePackage, /Safara operations platform/);
   assert.match(packageJson, /"@atlas\/fixtures": "workspace:\*"/);
