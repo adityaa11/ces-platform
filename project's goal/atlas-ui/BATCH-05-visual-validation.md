@@ -20,6 +20,7 @@
 | PRD lens | Closed/open; PRD 2 selected; contextual and isolated modes; impact statement | Dark | Desktop | Popover header, item metadata, impact copy, and action placement | Trigger exposes state; selectable PRD controls and checkbox label inspected | Pass — selected lens reports affected pages; isolation retains relevant stages |
 | Focused semantic page | Open stage; grouped page picker; affected previous/next controls; breadcrumb; source dates; select a node; paired evidence and close state | Dark | Desktop | Breadcrumb, heading, role/result, source-history, node sequence, and provenance rhythm | Semantic navigation, evidence buttons, and labelled affected-page controls inspected | Pass — selected PRD state survives page entry and evidence shows Atlas reading plus exact wording |
 | Narrow workflow | Overview at 390 × 844 | Dark | Mobile | Ordered stage cards stack without losing hierarchy or controls | Main Workflow remains available in the narrow shell | Pass — title and ordered-workflow region remain usable at mobile width |
+| Light focused workflow | PRD lens open; PRD 2 selected; contextual impact; first affected page; breadcrumb, pager, source history, node selection, and paired evidence | Light | Desktop, then 390 × 844 mobile | Lens metadata, focused-page heading, source date, node sequence, and provenance stack remained legible | Popover, selected state, labelled affected-page controls, semantic node button, and evidence reading inspected | Pass — Light theme remained applied at mobile width; source date, pager, lens, node, and evidence reading all remained available |
 
 ## Design-quality check
 
@@ -32,4 +33,4 @@
 
 - **Any visual defect found after an earlier check:** The shell previously exposed project labels whose routes did not preserve the selected project; the workflow link now retains `projectId`.
 - **Previously missed state:** Contextual lens navigation needed explicit affected-page previous/next controls rather than only an affected-page count.
-- **New mandatory state for this component:** Validate isolated source filtering from overview through focused page and node evidence, including the empty-state explanation when a selected source does not contribute.
+- **New mandatory state for this component:** Validate Light-theme mobile focused-page behavior from lens selection through pager, source history, node evidence, and the isolated-source empty-state explanation.
