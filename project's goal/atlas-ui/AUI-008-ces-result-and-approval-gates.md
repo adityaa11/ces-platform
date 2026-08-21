@@ -1,6 +1,6 @@
 # AUI-008: CES Result and approval gates
 
-- **State:** in_progress
+- **State:** awaiting_review
 - **Review batch:** BATCH-07
 - **Depends on:** AUI-006, AUI-007
 - **Baseline:** UI/UX Prototype PRD 5.3, 6, 9.1, 9.4; [AUI-007–AUI-010 reference-system analysis](AUI-007-010-reference-system-analysis.md)
