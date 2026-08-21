@@ -1,6 +1,6 @@
 # AUI-007: Project Facts and Changes Done
 
-- **State:** in_progress
+- **State:** awaiting_review
 - **Review batch:** BATCH-06
 - **Depends on:** AUI-003, AUI-004
 - **Baseline:** UI/UX Prototype PRD 5.2, 5.4, 6, 9.1, 9.3; [AUI-007–AUI-010 reference-system analysis](AUI-007-010-reference-system-analysis.md)
