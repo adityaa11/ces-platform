@@ -1,6 +1,6 @@
 # AUI-009: Responsive and clarity pass
 
-- **State:** in_progress
+- **State:** awaiting_review
 - **Review batch:** BATCH-08
 - **Depends on:** AUI-004, AUI-005, AUI-006, AUI-007, AUI-008
 - **Baseline:** UI/UX Prototype PRD 2.1, 7, 8, 9.3; [AUI-007–AUI-010 reference-system analysis](AUI-007-010-reference-system-analysis.md)
