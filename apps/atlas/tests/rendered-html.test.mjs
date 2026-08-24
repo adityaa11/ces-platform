@@ -94,6 +94,7 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(appShell, /import \{ ProfileMenu \} from "\.\/ProfileMenu"/);
   assert.doesNotMatch(appShell, /libraryProjects|id:"selected"/);
   assert.match(appShell, /new URLSearchParams\(window\.location\.search\)/);
+  assert.match(appShell, /params\.set\("projectId", current\.id\)/);
   assert.match(appShell, /params\.set\("view", view\)/);
   assert.doesNotMatch(appShell, /MutationObserver|data\.fullLabel/);
   assert.match(appShell, /aria-controls="app-navigation"/);
