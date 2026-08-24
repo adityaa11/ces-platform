@@ -62,7 +62,7 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   const signUp = await render("/sign-up");
   const reset = await render("/reset-password");
   const demo = await render("/demo");
-  const workflow = await render("/demo?projectId=safara&view=workflow");
+  const workflow = await render("/demo?projectId=safara&view=workflow&prd=safara-increment-02&lens=isolate");
   const facts = await render("/demo?projectId=safara&view=facts&prd=safara-increment-02&lens=isolate");
   const changes = await render("/demo?projectId=safara&view=changes&prd=safara-increment-02&lens=isolate");
   const editorDemo = await render("/demo?scenario=editor-ready");
@@ -93,6 +93,7 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.doesNotMatch(appShell, /libraryProjects|id:"selected"/);
   assert.match(appShell, /new URLSearchParams\(window\.location\.search\)/);
   assert.match(appShell, /params\.set\("view", view\)/);
+  assert.doesNotMatch(appShell, /MutationObserver|data\.fullLabel/);
   assert.match(appShell, /aria-controls="app-navigation"/);
   assert.match(appShell, /navigation \$\{collapsed \? "navigation-open" : ""\}/);
   assert.match(globals, /\.navigation-open \{ transform: translateX\(0\); \}/);
@@ -116,6 +117,7 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(factsHtml, /Project Facts|People and responsibilities/);
   assert.match(changesHtml, /Changes Done|Finance review responsibility/);
   assert.match(changesHtml, /href="\/demo\?projectId=safara&amp;view=workflow&amp;prd=safara-increment-02&amp;lens=isolate"/);
+  for (const html of [workflowHtml, factsHtml, changesHtml]) assert.match(html, /href="\/demo\?projectId=safara&amp;prd=safara-increment-02&amp;lens=isolate&amp;view=(workflow|facts|ces|changes)"/);
   assert.match(workflowWorkspace, /Previous affected workflow page/);
   assert.match(workflowWorkspace, /No selected contribution on this page/);
   const editorHtml = await editorDemo.text();
