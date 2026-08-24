@@ -315,3 +315,23 @@ h1 { font-size: clamp(2.35rem, 6vw, 5rem); letter-spacing: -.055em; line-height:
 .ces-card footer { align-items: start; display: flex; flex-wrap: wrap; gap: .75rem; }.ces-card details { color: var(--muted); font-size: .75rem; line-height: 1.5; width: 100%; }.ces-card details p, .ces-card blockquote { margin: .6rem 0; }.ces-card footer > a { color: var(--forest); font-size: .75rem; font-weight: 700; text-decoration: none; }
 .approval-gates { display: grid; gap: 1rem; grid-template-columns: 1fr 1fr; }.approval-gates article { background: color-mix(in srgb, var(--surface-raised) 92%, var(--mint)); border: 1px solid var(--line); border-radius: .9rem; display: grid; gap: .45rem; padding: 1rem; }.approval-gates strong { font-size: 1rem; }.approval-gates p { color: var(--muted); font-size: .78rem; line-height: 1.5; margin: 0; }.approval-gates button { justify-self: start; margin-top: .35rem; }
 @media (max-width: 640px) { .ces-summary { grid-template-columns: 1fr 1fr; }.ces-cards, .approval-gates { grid-template-columns: 1fr; } }
+
+/* AUI-012: shared reference-led sidebar composition. */
+.sidebar-project-links { display: grid; gap: .45rem; order: 3; }
+.sidebar-workspace-region { order: 4; }
+.navigation nav { gap: .22rem; }
+.navigation :is(a, .nav-placeholder) { align-items: center; background: transparent; border: 1px solid transparent; border-left: 2px solid transparent; border-radius: .5rem; box-sizing: border-box; color: var(--muted); display: grid; font-size: .84rem; font-weight: 700; gap: .7rem; grid-template-columns: 1rem 1fr; min-height: 2.4rem; padding: .55rem .65rem; text-align: left; text-decoration: none; transition: background-color .16s ease, border-color .16s ease, color .16s ease; width: 100%; }
+.navigation :is(a, .nav-placeholder) > span { color: currentColor; font-size: .9rem; text-align: center; }
+.navigation a:hover, .navigation .nav-active { background: var(--mint); border-left-color: var(--forest); color: var(--ink); }
+.navigation .nav-placeholder { cursor: default; opacity: .82; }
+.nav-section-label { border-top: 1px solid var(--line); margin: .55rem 0 .1rem; padding-top: .95rem; }
+.sidebar-project-links .nav-section-label { border-top: 0; margin-top: .15rem; }
+.project-switcher > button { border-radius: .7rem; min-height: 3.45rem; padding: .55rem; }
+.project-switcher > button > span { height: 2.1rem; width: 2.1rem; }
+.profile-wrap { border-top: 1px solid var(--line); padding-top: .85rem; }
+.profile-control { border-radius: .55rem; min-height: 3.05rem; padding: .4rem; }
+.profile-control:hover { background: var(--mint); }
+.profile-control small { text-transform: capitalize; }
+.library-heading-row { align-items: end; display: flex; gap: 1rem; justify-content: space-between; }.library-heading-row > div > p { color: var(--muted); line-height: 1.5; margin: .45rem 0 0; }.library-heading-row > button { flex: 0 0 auto; }
+@media (min-width: 641px) { .navigation { gap: .5rem; padding: 1rem .85rem .9rem; }.sidebar-collapsed .sidebar-project-links, .sidebar-collapsed .sidebar-workspace-region { display: none; } }
+@media (max-width: 640px) { .sidebar-collapsed .sidebar-project-links, .sidebar-collapsed .sidebar-workspace-region { display: grid; }.library-heading-row { align-items: start; flex-direction: column; }.library-heading-row > button { width: 100%; } }
