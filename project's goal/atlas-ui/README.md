@@ -31,7 +31,7 @@ The required backend-wiring semantics are defined in [Fixture Data-Intent Contra
 | 7 | AUI-008 / BATCH-07 | approved | AUI-006, AUI-007 | Does CES Result make baseline awareness, coverage, and open decisions clear without prescribing solutions? |
 | 8 | AUI-009 / BATCH-08 | approved | AUI-004 through AUI-008 | Does the complete experience remain clear and accessible across screen sizes? |
 | 9 | AUI-010 / BATCH-09 | in_progress | AUI-009 | Is the fixture-driven prototype coherent, navigable, and ready for handoff? |
-| 10 | AUI-011 / BATCH-10 | planned | AUI-003, AUI-009, AUI-010 | Does the shared shell improve navigation clarity across desktop and mobile without changing route or fixture behavior? |
+| 10 | AUI-011 / BATCH-10 | awaiting_review | AUI-003, AUI-009, AUI-010 | Does the shared shell improve navigation clarity across desktop and mobile without changing route or fixture behavior? |
 
 ## Batch rationale
 

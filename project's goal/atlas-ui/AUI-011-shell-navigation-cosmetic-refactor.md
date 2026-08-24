@@ -28,6 +28,10 @@ The submitted browser annotations establish the following cosmetic direction:
    icon, retaining an accessible name.
 7. On compact widths, open the shared sidebar as the navigation drawer from
    that hamburger trigger, rather than providing a separate or incomplete menu.
+8. On compact widths, replace the Atlas wordmark with the hamburger, place the
+   project-home control beside it, keep project search centered, and place the
+   PRD-lens multi-selector at the far right. This changes only the responsive
+   composition, not navigation, search, or lens behavior.
 
 ## Scope
 
@@ -70,6 +74,9 @@ The submitted browser annotations establish the following cosmetic direction:
 - At compact mobile width, the header exposes an icon-only hamburger button
   with an accessible name, `aria-expanded`, and an explicit relationship to the
   navigation drawer. It replaces the existing visible textual Menu trigger.
+- At compact mobile width, the header order is hamburger, project home,
+  project search, then PRD-lens multi-selector; the Atlas wordmark is not
+  shown. Every compact control remains keyboard-accessible and usable.
 - Activating the hamburger opens the same complete sidebar content: project
   switcher, Project group, Workspace group, and profile control. Closing via
   the button, explicit close control, Escape, or backdrop restores focus to the
@@ -122,7 +129,8 @@ The submitted browser annotations establish the following cosmetic direction:
 | Component / screen | Interaction states checked | Themes checked | Breakpoints checked | Text rhythm checked | Accessibility behavior checked | Result / evidence |
 |---|---|---|---|---|---|---|
 | Desktop shell: Main Workflow, Project Facts, CES Result, Changes Done | Default and active destination links; current project control; profile menu open. | Dark and Light. | 1280 px desktop. | Project and Workspace labels, project metadata, navigation rows, and anchored profile spacing. | Semantic complementary/navigation labels; `aria-current`; visible focus styling. | Pass — rendered browser checks confirmed the expected H1 and active destination on all four routes. |
-| Compact navigation drawer | Closed and open hamburger states; current project; all workspace links; profile region; Escape dismissal. | Dark. | 564 px compact mobile. | One-column hierarchy and readable labels. | Accessible hamburger name and expanded state; drawer close control; focus moved to close and restored to the trigger after Escape. | Pass — rendered browser check confirmed complete sidebar content, backdrop dimming, and focus restoration. |
+| Tablet shell | Persistent navigation, search, PRD lens, active destination links, and profile placement. | Dark. | 800 px tablet. | Persistent workspace rail and readable header controls. | Navigation and search remain available without compact-only controls. | Pass — rendered browser check confirmed the rail, search control, and all workspace links remain visible at tablet width. |
+| Compact navigation drawer and header | Closed and open hamburger states; current project; all workspace links; profile region; Escape dismissal; compact header order. | Dark and Light styling reviewed. | 531 px compact mobile. | Hamburger, home, centered search, and PRD lens fit as one accessible header row; drawer keeps readable labels. | Accessible hamburger name and expanded state; drawer close control; focus moved to close; Shift+Tab wraps to the final visible drawer control; dismissal restores focus to the trigger. | Pass — rendered browser check confirmed complete sidebar content, the requested compact header order, visible focus containment, backdrop dimming, and focus restoration. |
 | Route and fixture regression | Owner desktop; owner compact; editor and viewer scenarios; all processing states. | Existing test coverage. | Desktop and compact routes. | Not applicable. | Existing role-aware and route rendering coverage retained. | Pass — `pnpm --filter @atlas/app test` passed; it server-rendered `/demo`, each workspace route, editor/viewer, approved-result, and all six processing scenarios. |
 
 ### Design-quality check
@@ -130,7 +138,7 @@ The submitted browser annotations establish the following cosmetic direction:
 - **Reference or approved pattern used:** PRD-approved persistent workspace rail with a compact mobile drawer.
 - **Visual direction:** Calm, restrained project workspace; compact project context; grouped navigation; one active destination; anchored account control; mobile drawer that preserves context instead of squeezing desktop navigation.
 - **Hierarchy, density, navigation, whitespace, and control-placement result:** Project context is separated from workspace destinations; active state is distinct without relying only on color; desktop keeps the profile region anchored; compact mode contains the complete sidebar behind a single familiar hamburger trigger.
-- **Known limitations or intentional omissions:** The fixture prototype has no implemented project-search feature in `AppShell`; this cosmetic shell ticket does not introduce an inert search field or new search behavior. Existing route href/query construction, including PRD-lens parameters, remains unchanged and is covered by the rendered-route test suite.
+- **Known limitations or intentional omissions:** Project search remains a presentation-only prototype control, matching the approved reference and without introducing search results or a data contract. Existing route href/query construction, including PRD-lens parameters, remains unchanged and is covered by the rendered-route test suite.
 
 ### Regression learning
 
