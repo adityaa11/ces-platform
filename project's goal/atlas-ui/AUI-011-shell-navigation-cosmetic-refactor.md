@@ -1,6 +1,6 @@
 # AUI-011: Shell navigation cosmetic refactor
 
-- **State:** awaiting_review
+- **State:** approved
 - **Review batch:** BATCH-10
 - **Depends on:** AUI-003, AUI-009, AUI-010
 - **Baseline:** [Atlas UI/UX Prototype PRD](../Atlas_UI_UX_Prototype_PRD.md) 2.1, 2.2, 4.1, 7, 9.4, 9.4.1; [AUI-003](AUI-003-account-shell-and-ui-primitives.md); [AUI-009](AUI-009-responsive-and-clarity-pass.md)
