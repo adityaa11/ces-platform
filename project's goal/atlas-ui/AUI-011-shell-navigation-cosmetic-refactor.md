@@ -32,6 +32,9 @@ The submitted browser annotations establish the following cosmetic direction:
    project-home control beside it, keep project search centered, and place the
    PRD-lens multi-selector at the far right. This changes only the responsive
    composition, not navigation, search, or lens behavior.
+9. On compact widths, retain the PRD-lens icon, count, and chevron in the
+   selector; display `1 PRD`, `2 PRDs`, and so on, without the redundant
+   `selected` suffix.
 
 ## Scope
 
