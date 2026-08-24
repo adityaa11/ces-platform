@@ -79,9 +79,10 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.doesNotMatch(signUpHtml, /Account actions/);
   assert.match(await reset.text(), /Reset your password/);
   const demoHtml = await demo.text();
-  assert.match(demoHtml, /Safara operations platform/);
+  assert.match(demoHtml, /No project selected/);
   assert.match(demoHtml, /<nav aria-label="Project navigation">/);
   assert.match(demoHtml, /Sources|Members|Settings/);
+  assert.match(demoHtml, /class="nav-disabled"/);
   assert.match(demoHtml, /Nadia Hartono/);
   assert.match(demoHtml, /aria-expanded="false"/);
   const appShell = await readFile(new URL("../components/AppShell.tsx", import.meta.url), "utf8");
