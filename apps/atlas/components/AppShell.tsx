@@ -24,6 +24,20 @@ export function AppShell({ user, children, projects, selectedProjectId, workspac
   const href = (view: WorkspaceView) => { const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams(current?.status === "ready" ? { projectId: current.id } : {}); if (routeContext?.prd) params.set("prd", routeContext.prd); if (routeContext?.lens) params.set("lens", routeContext.lens); params.set("view", view); return params.size ? `/demo?${params.toString()}` : "/demo"; };
   const closeNavigation = () => { setCollapsed(false); menuTriggerRef.current?.focus(); };
   useEffect(() => { const query = window.matchMedia("(max-width: 640px)"); const update = () => setCompact(query.matches); update(); query.addEventListener("change", update); return () => query.removeEventListener("change", update); }, []);
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 640px)");
+    const syncCompactLensLabels = () => document.querySelectorAll<HTMLElement>(".topbar-prd-trigger strong").forEach((label) => {
+      const fullLabel = label.dataset.fullLabel ?? label.textContent ?? "";
+      label.dataset.fullLabel = fullLabel;
+      const visibleLabel = query.matches ? fullLabel.replace(/ selected$/, "") : fullLabel;
+      if (label.textContent !== visibleLabel) label.textContent = visibleLabel;
+    });
+    const observer = new MutationObserver(syncCompactLensLabels);
+    syncCompactLensLabels();
+    observer.observe(document.body, { characterData: true, childList: true, subtree: true });
+    query.addEventListener("change", syncCompactLensLabels);
+    return () => { observer.disconnect(); query.removeEventListener("change", syncCompactLensLabels); };
+  }, []);
   useEffect(() => { const close = (event: KeyboardEvent) => { if (event.key === "Escape") { setMenu(false); if (compact && collapsed) closeNavigation(); } }; document.addEventListener("keydown", close); return () => document.removeEventListener("keydown", close); }, [collapsed, compact]);
   useEffect(() => { if (!menu) return; const close = (event: PointerEvent) => { if (!ref.current?.contains(event.target as Node)) setMenu(false); }; document.addEventListener("pointerdown", close); return () => document.removeEventListener("pointerdown", close); }, [menu]);
   useEffect(() => {
