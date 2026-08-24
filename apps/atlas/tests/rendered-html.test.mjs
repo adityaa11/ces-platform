@@ -95,7 +95,11 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(appShell, /params\.set\("view", view\)/);
   assert.match(appShell, /aria-controls="app-navigation"/);
   assert.match(appShell, /navigation \$\{collapsed \? "navigation-open" : ""\}/);
-  assert.match(globals, /\.navigation-open \{ display: flex; \}/);
+  assert.match(globals, /\.navigation-open \{ transform: translateX\(0\); \}/);
+  assert.match(appShell, /nav-section-label/);
+  assert.match(appShell, /Open navigation menu/);
+  assert.match(appShell, /Close navigation menu/);
+  assert.match(appShell, /drawer-backdrop/);
   assert.match(projectLibrary, /Only people invited by email can access this private project/);
   assert.match(projectLibrary, /Invite/);
   assert.match(projectLibrary, /Confirm change/);

@@ -1,6 +1,6 @@
 # AUI-011: Shell navigation cosmetic refactor
 
-- **State:** planned
+- **State:** awaiting_review
 - **Review batch:** BATCH-10
 - **Depends on:** AUI-003, AUI-009, AUI-010
 - **Baseline:** [Atlas UI/UX Prototype PRD](../Atlas_UI_UX_Prototype_PRD.md) 2.1, 2.2, 4.1, 7, 9.4, 9.4.1; [AUI-003](AUI-003-account-shell-and-ui-primitives.md); [AUI-009](AUI-009-responsive-and-clarity-pass.md)
@@ -107,3 +107,33 @@ The submitted browser annotations establish the following cosmetic direction:
   attention to equivalent navigation availability, accessible compact drawer
   behavior, and stable route/lens context.
 - **Commit range:** The single implementation checkpoint for AUI-011.
+
+## Visual-validation record
+
+### Changed shared components and primitives
+
+| Component / primitive | Why changed | Routes and features using it | Intentional variants |
+|---|---|---|---|
+| `AppShell` | Clarify project context and workspace navigation; expose the compact drawer through the shared shell. | Project library and all project workspace destinations. | Persistent desktop rail; off-canvas compact drawer. |
+| Shell navigation styles | Establish meaningful group labels, active-link treatment, focus styling, drawer layering, and responsive account treatment. | Every `AppShell` use. | Collapsed desktop rail; full compact drawer. |
+
+### Rendered-state inspection
+
+| Component / screen | Interaction states checked | Themes checked | Breakpoints checked | Text rhythm checked | Accessibility behavior checked | Result / evidence |
+|---|---|---|---|---|---|---|
+| Desktop shell: Main Workflow, Project Facts, CES Result, Changes Done | Default and active destination links; current project control; profile menu open. | Dark and Light. | 1280 px desktop. | Project and Workspace labels, project metadata, navigation rows, and anchored profile spacing. | Semantic complementary/navigation labels; `aria-current`; visible focus styling. | Pass — rendered browser checks confirmed the expected H1 and active destination on all four routes. |
+| Compact navigation drawer | Closed and open hamburger states; current project; all workspace links; profile region; Escape dismissal. | Dark. | 564 px compact mobile. | One-column hierarchy and readable labels. | Accessible hamburger name and expanded state; drawer close control; focus moved to close and restored to the trigger after Escape. | Pass — rendered browser check confirmed complete sidebar content, backdrop dimming, and focus restoration. |
+| Route and fixture regression | Owner desktop; owner compact; editor and viewer scenarios; all processing states. | Existing test coverage. | Desktop and compact routes. | Not applicable. | Existing role-aware and route rendering coverage retained. | Pass — `pnpm --filter @atlas/app test` passed; it server-rendered `/demo`, each workspace route, editor/viewer, approved-result, and all six processing scenarios. |
+
+### Design-quality check
+
+- **Reference or approved pattern used:** PRD-approved persistent workspace rail with a compact mobile drawer.
+- **Visual direction:** Calm, restrained project workspace; compact project context; grouped navigation; one active destination; anchored account control; mobile drawer that preserves context instead of squeezing desktop navigation.
+- **Hierarchy, density, navigation, whitespace, and control-placement result:** Project context is separated from workspace destinations; active state is distinct without relying only on color; desktop keeps the profile region anchored; compact mode contains the complete sidebar behind a single familiar hamburger trigger.
+- **Known limitations or intentional omissions:** The fixture prototype has no implemented project-search feature in `AppShell`; this cosmetic shell ticket does not introduce an inert search field or new search behavior. Existing route href/query construction, including PRD-lens parameters, remains unchanged and is covered by the rendered-route test suite.
+
+### Regression learning
+
+- **Any visual defect found after an earlier check:** The first compact render retained desktop collapse rules, hiding the project switcher and profile text in the drawer.
+- **Previously missed state:** Full compact drawer content after opening from the hamburger trigger.
+- **New mandatory state for this component:** Every future shell change must inspect the open compact drawer with project context, workspace links, and profile information all visible.
