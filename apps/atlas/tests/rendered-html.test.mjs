@@ -133,11 +133,11 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(appShell, /project-switcher-chevron/);
   assert.match(workflowHtml, /Safara operations platform/);
   assert.match(workflowHtml, /Main Workflow/);
-  assert.match(workflowHtml, /14 May 2026/);
+  assert.match(workflowHtml, /27 July 2026/);
   const factsHtml = await facts.text();
   const changesHtml = await changes.text();
   assert.match(factsHtml, /Project Facts|People and responsibilities/);
-  assert.match(changesHtml, /Changes Done|Finance review responsibility/);
+  assert.match(changesHtml, /Changes Done|Tanggung jawab Finance dan Operations/);
   assert.match(changesHtml, /href="\/demo\?projectId=safara&amp;view=workflow&amp;prd=safara-increment-02&amp;lens=isolate"/);
   for (const html of [workflowHtml, factsHtml, changesHtml]) assert.match(html, /href="\/demo\?projectId=safara&amp;prd=safara-increment-02&amp;lens=isolate&amp;view=(workflow|facts|ces|changes)"/);
   assert.match(workflowWorkspace, /Previous affected workflow page/);

@@ -71,3 +71,21 @@ test("main workflow fixtures preserve ordered groups, semantic pages, and node p
     }
   }
 });
+
+test("golden Safara fixture uses the verified incremental PRD metadata and reciprocal reading links", () => {
+  const workspace = fixtureScenarios["owner-ready"].workspace;
+  assert.deepEqual(workspace.prds.map((prd) => [prd.id, prd.pageCount, prd.publishedAt]), [
+    ["safara-increment-01", 3, "27 July 2026"],
+    ["safara-increment-02", 4, "27 July 2026"],
+    ["safara-increment-03", 4, "27 July 2026"],
+  ]);
+  const factRows = workspace.facts.flatMap((fact) => fact.rows);
+  for (const row of factRows) {
+    assert.ok(row.relatedWorkflowIds.every((id) => workspace.workflows.some((workflow) => workflow.id === id)), `${row.id} workflows resolve`);
+    assert.ok(row.cesItemIds.every((id) => workspace.cesItems.some((item) => item.id === id)), `${row.id} CES items resolve`);
+  }
+  for (const item of workspace.cesItems) {
+    assert.ok(item.linkedFactRowIds.every((id) => factRows.some((row) => row.id === id)), `${item.id} fact rows resolve`);
+    assert.ok(item.relatedWorkflowIds.every((id) => workspace.workflows.some((workflow) => workflow.id === id)), `${item.id} workflows resolve`);
+  }
+});

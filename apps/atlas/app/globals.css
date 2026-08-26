@@ -243,6 +243,16 @@ h1 { font-size: clamp(2.35rem, 6vw, 5rem); letter-spacing: -.055em; line-height:
 :root[data-theme="dark"] .prd-lens-popover footer { background: #1d1d25; border-top: 1px solid #353542; color: #c5c7d3; font-size: .66rem; line-height: 1.4; padding: .78rem 1rem; }
 :root[data-theme="dark"] .prd-lens-popover footer button { background: var(--forest); color: #fff; font-size: .7rem; padding: .48rem .75rem; }
 
+/* Main Workflow: compact operational reading sequence */
+.workflow-approval-bar { align-items: center; background: var(--sun); border: 1px solid #ead5a4; border-radius: .55rem; display: flex; gap: 1rem; justify-content: space-between; margin-bottom: 1.25rem; padding: .75rem 1rem; }
+.workflow-approval-bar.is-approved { background: color-mix(in srgb, var(--surface-raised) 80%, var(--mint)); border-color: color-mix(in srgb, var(--forest) 34%, var(--line)); }
+.workflow-approval-bar strong { display: block; font-size: .78rem; }.workflow-approval-bar p { color: var(--muted); font-size: .66rem; margin: .2rem 0 0; }.workflow-approval-bar > div:last-child { display: flex; flex: 0 0 auto; gap: .5rem; }.workflow-approval-bar button { background: var(--surface-raised); border: 1px solid var(--line); font-size: .7rem; padding: .5rem .75rem; }.workflow-approval-bar button.is-primary { background: var(--forest); border-color: var(--forest); color: #fff; }
+.workspace-page-heading { margin: 0 0 1.25rem; }.workspace-page-heading > div { max-width: 46rem; }.workspace-page-heading h1 { font-size: clamp(1.65rem, 2.5vw, 2.25rem); letter-spacing: -.04em; line-height: 1.04; margin: .25rem 0 .5rem; max-width: none; white-space: normal; }.workspace-page-heading > div > p:not(.workflow-kicker) { color: var(--muted); font-size: .86rem; line-height: 1.55; margin: 0; max-width: 46rem; }
+.workflow-refactor-lens-note { align-items: center; background: color-mix(in srgb, var(--surface-raised) 82%, var(--mint)); border-left: 3px solid var(--forest); color: var(--ink); display: flex; font-size: .72rem; gap: .65rem; margin: 0 0 1rem; padding: .65rem .8rem; }.workflow-refactor-lens-note span { color: var(--muted); }
+.workflow-refactor-layout { align-items: start; display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr) minmax(15rem, .34fr); }.workflow-refactor-sequence { background: var(--surface-raised); border: 1px solid var(--line); border-radius: .85rem; overflow: hidden; }.workflow-refactor-sequence > article { align-items: center; border-bottom: 1px solid var(--line); display: grid; gap: 1rem; grid-template-columns: 3rem minmax(0, 1fr) minmax(11.5rem, .34fr); min-height: 7.25rem; padding: 1rem; transition: opacity .16s ease; }.workflow-refactor-sequence > article:last-child { border-bottom: 0; }.workflow-refactor-sequence > article > span { color: var(--muted); font-size: 1.4rem; font-weight: 800; letter-spacing: -.06em; }.workflow-refactor-sequence h2, .workflow-refactor-rail h2 { font-size: .88rem; margin: 0; }.workflow-refactor-sequence p, .workflow-refactor-rail p { color: var(--muted); font-size: .7rem; line-height: 1.45; margin: .32rem 0 0; }.workflow-refactor-pages { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .65rem; }.workflow-refactor-pages button { background: color-mix(in srgb, var(--surface) 82%, var(--mint)); border: 0; color: var(--ink); font-size: .61rem; padding: .26rem .4rem; }.workflow-refactor-sequence aside { border-left: 1px solid var(--line); display: grid; gap: .3rem; padding-left: .9rem; }.workflow-refactor-sequence aside small { color: var(--muted); font-size: .56rem; letter-spacing: .08em; text-transform: uppercase; }.workflow-refactor-sequence aside strong { font-size: .69rem; line-height: 1.35; }.workflow-refactor-sequence aside button, .workflow-support-model button { background: transparent; border: 0; color: var(--forest); font-size: .64rem; font-weight: 750; padding: .15rem 0; text-align: left; }.workflow-refactor-sequence .is-muted { opacity: .45; }
+.workflow-refactor-rail { display: grid; gap: .75rem; }.workflow-operational-model, .workflow-support-model { background: var(--surface-raised); border: 1px solid var(--line); border-radius: .85rem; padding: .9rem; }.workflow-operational-model dl { display: grid; gap: .45rem; grid-template-columns: repeat(3, 1fr); margin: .8rem 0 0; }.workflow-operational-model dl div { background: var(--surface); border-radius: .5rem; padding: .55rem; }.workflow-operational-model dt { font-size: 1rem; font-weight: 800; }.workflow-operational-model dd { color: var(--muted); font-size: .54rem; margin: .1rem 0 0; }.workflow-support-model { border-style: dashed; }.workflow-support-model .workflow-kicker { margin: 0 0 .3rem; }.workflow-support-model > div { display: grid; gap: .35rem; margin-top: .65rem; }
+.workflow-detail-topline { align-items: center; display: flex; gap: .75rem; justify-content: space-between; margin-bottom: 1rem; }.workflow-detail-topline button { background: transparent; border: 0; color: var(--forest); font-size: .75rem; padding: .35rem 0; }.workflow-detail-topline span { color: var(--muted); font-size: .68rem; }.workflow-detail-heading { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr) minmax(13rem, .38fr); margin-bottom: 1rem; }.workflow-detail-heading h1 { font-size: 1.8rem; letter-spacing: -.035em; margin: .25rem 0; }.workflow-detail-heading p { color: var(--muted); font-size: .8rem; margin: 0; }.workflow-detail-heading dl { display: grid; gap: .5rem; margin: 0; }.workflow-detail-heading dl div { background: var(--surface-raised); border: 1px solid var(--line); padding: .7rem; }.workflow-detail-heading dt { color: var(--muted); font-size: .58rem; text-transform: uppercase; }.workflow-detail-heading dd { font-size: .7rem; line-height: 1.4; margin: .3rem 0 0; }.workflow-source-history { align-items: center; display: flex; flex-wrap: wrap; gap: .45rem; margin-bottom: 1rem; }.workflow-source-history strong, .workflow-source-history span { background: var(--surface-raised); border: 1px solid var(--line); font-size: .64rem; padding: .4rem .55rem; }.workflow-source-history span.is-selected { border-color: var(--forest); color: var(--forest); }.workflow-detail-grid { align-items: start; display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr) minmax(17rem, .38fr); }.workflow-detail-flow, .workflow-detail-evidence { background: var(--surface-raised); border: 1px solid var(--line); border-radius: .85rem; padding: 1rem; }.workflow-detail-flow header { align-items: start; display: flex; justify-content: space-between; gap: 1rem; }.workflow-detail-flow h2 { font-size: .95rem; margin: .25rem 0 0; }.workflow-detail-flow header > p { color: var(--muted); font-size: .64rem; margin: 0; }.workflow-detail-flow > div { display: grid; gap: .5rem; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); margin-top: 1rem; }.workflow-detail-flow button { background: var(--surface); border: 1px solid var(--line); min-height: 7.5rem; padding: .75rem; text-align: left; }.workflow-detail-flow button.is-selected { border-color: var(--forest); box-shadow: inset 3px 0 var(--forest); }.workflow-detail-flow button span { color: var(--muted); display: block; font-size: .6rem; }.workflow-detail-flow button strong { display: block; font-size: .75rem; margin-top: .75rem; }.workflow-detail-flow button p { color: var(--muted); font-size: .64rem; line-height: 1.4; margin: .3rem 0 0; }.workflow-detail-evidence { min-height: 13rem; position: sticky; top: 5rem; }.workflow-detail-evidence h2 { font-size: .9rem; margin: .3rem 0; }.workflow-detail-evidence p { color: var(--muted); font-size: .72rem; line-height: 1.5; }.workflow-detail-evidence blockquote { font-size: .76rem; line-height: 1.5; margin: .5rem 0; }.workflow-detail-evidence small { color: var(--muted); font-size: .63rem; }.workflow-bottom-pager { align-items: center; display: flex; justify-content: space-between; margin-top: 1rem; }.workflow-bottom-pager button { background: var(--surface-raised); border: 1px solid var(--line); font-size: .7rem; padding: .55rem .75rem; }.workflow-bottom-pager span { color: var(--muted); font-size: .68rem; }
+
 @media (max-width: 1050px) {
   .major-workflow-sequence { grid-template-columns: repeat(3, minmax(12rem, 1fr)); }
   .major-workflow-sequence article > i { display: none; }
@@ -476,4 +486,78 @@ h1 { font-size: clamp(2.35rem, 6vw, 5rem); letter-spacing: -.055em; line-height:
   .hero-actions { align-items: stretch; flex-direction: column; }
   .hero-actions .button-link { justify-content: center; width: 100%; }
   .ces-summary { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 900px) {
+  .workflow-refactor-layout, .workflow-detail-grid, .workflow-detail-heading { grid-template-columns: 1fr; }
+  .workflow-refactor-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .workflow-detail-evidence { position: static; }
+}
+@media (max-width: 620px) {
+  .workflow-approval-bar, .workspace-page-heading { align-items: stretch; flex-direction: column; }
+  .workflow-approval-bar > div:last-child button { flex: 1; }
+  .workflow-refactor-rail { grid-template-columns: 1fr; }
+  .workflow-refactor-sequence > article { align-items: start; grid-template-columns: 2.25rem minmax(0, 1fr); }
+  .workflow-refactor-sequence aside { border-left: 0; border-top: 1px solid var(--line); grid-column: 2; padding: .7rem 0 0; }
+  .workflow-bottom-pager span { display: none; }
+}
+
+.workflow-approval-bar button { color: var(--ink); }
+.workflow-approval-bar button.is-primary { color: #fff; }
+.workflow-operational-model h2 { font-size: .88rem; margin: 0; }
+.workflow-operational-model > p { color: var(--muted); font-size: .7rem; line-height: 1.45; margin: .32rem 0 0; }
+
+/* Project Facts: source-grounded knowledge list with operational context. */
+.facts-refactor-layout { align-items: start; display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr) minmax(15rem, .34fr); }
+.knowledge-list { background: var(--surface-raised); border: 1px solid var(--line); border-radius: .85rem; overflow: hidden; }
+.knowledge-list > article { border-bottom: 1px solid var(--line); transition: opacity .16s ease; }
+.knowledge-list > article:last-child { border-bottom: 0; }
+.knowledge-list > article.is-muted { opacity: .45; }
+.knowledge-list > article > header { align-items: start; display: grid; gap: 1rem; grid-template-columns: 2.25rem minmax(0, 1fr) auto; padding: 1rem; }
+.knowledge-list > article > header > span { color: var(--muted); font-size: 1rem; font-weight: 800; letter-spacing: -.04em; }
+.knowledge-list h2 { font-size: .9rem; margin: 0; }
+.knowledge-list header p { color: var(--muted); font-size: .69rem; line-height: 1.45; margin: .32rem 0 0; }
+.knowledge-list > article > header > small { color: var(--muted); display: grid; font-size: .58rem; gap: .16rem; text-align: right; }
+.knowledge-list > article > header > small b { color: var(--ink); font-size: .66rem; }
+.knowledge-list-body { border-top: 1px solid var(--line); }
+.knowledge-list-body > article { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr) 12.5rem; padding: .9rem 1rem; }
+.knowledge-list-body > article + article { border-top: 1px solid var(--line); }
+.knowledge-list-body > article.is-matched { background: color-mix(in srgb, var(--surface-raised) 87%, var(--mint)); }
+.knowledge-list-body small { color: var(--muted); display: block; font-size: .55rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.knowledge-list-body blockquote { font-size: .72rem; line-height: 1.45; margin: .38rem 0 .55rem; }
+.knowledge-list-body > article > div > p { background: var(--mint); border-left: 2px solid var(--forest); font-size: .66rem; line-height: 1.45; margin: 0; padding: .42rem .5rem; }
+.knowledge-list-body details { color: var(--forest); font-size: .62rem; margin-top: .5rem; }
+.knowledge-list-body details blockquote { color: var(--ink); }
+.knowledge-list-body aside { align-content: start; display: grid; gap: .42rem; }
+.knowledge-list-body aside a { background: color-mix(in srgb, var(--surface) 82%, var(--mint)); border: 1px solid var(--line); border-radius: .45rem; color: var(--ink); display: grid; font-size: .6rem; gap: .18rem; padding: .48rem; text-decoration: none; }
+.knowledge-list-body aside a:hover { border-color: var(--forest); }
+.knowledge-list-body aside a strong { font-size: .6rem; }
+.knowledge-list-body aside a span { color: var(--forest); }
+.facts-operational-rail { display: grid; gap: .75rem; }
+
+/* Collapsed fact groups keep the summary readable; the evidence expands in place. */
+.knowledge-list { background: transparent; border: 0; border-radius: 0; display: grid; gap: .5rem; overflow: visible; }
+.knowledge-list > details { background: var(--surface-raised); border: 1px solid var(--line); border-radius: .65rem; overflow: hidden; transition: opacity .16s ease, border-color .16s ease; }
+.knowledge-list > details.is-muted { opacity: .45; }
+.knowledge-list > details[open] { border-color: color-mix(in srgb, var(--line) 65%, var(--forest)); }
+.knowledge-list > details > summary { align-items: start; cursor: pointer; display: grid; gap: 1rem; grid-template-columns: 2.25rem minmax(0, 1fr) auto; list-style: none; padding: 1rem; }
+.knowledge-list > details > summary::-webkit-details-marker { display: none; }
+.knowledge-list > details > summary:focus-visible { outline: 3px solid var(--forest); outline-offset: -3px; }
+.knowledge-list > details > summary > span { color: var(--muted); font-size: 1rem; font-weight: 800; letter-spacing: -.04em; }
+.knowledge-list > details > summary h2 { font-size: .9rem; margin: 0; }
+.knowledge-list > details > summary p { color: var(--muted); font-size: .69rem; line-height: 1.45; margin: .32rem 0 0; }
+.knowledge-list > details > summary > small { color: var(--muted); display: grid; font-size: .58rem; gap: .16rem; text-align: right; }
+.knowledge-list > details > summary > small b { color: var(--ink); font-size: .66rem; }
+
+@media (max-width: 900px) {
+  .facts-refactor-layout { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 620px) {
+  .knowledge-list > article > header { grid-template-columns: 2rem minmax(0, 1fr); }
+  .knowledge-list > article > header > small { grid-column: 2; text-align: left; }
+  .knowledge-list-body > article { grid-template-columns: 1fr; }
+  .knowledge-list-body aside { grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); }
+  .knowledge-list > details > summary { grid-template-columns: 2rem minmax(0, 1fr); }
+  .knowledge-list > details > summary > small { grid-column: 2; text-align: left; }
 }
