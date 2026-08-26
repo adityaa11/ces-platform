@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Projects - Atlas</title>
+<style>
+:root{
+  --bg:#f6f7fb;
+  --surface:#ffffff;
+  --surface-2:#f3f4f8;
+  --text:#171927;
+  --muted:#7b8294;
+  --line:#e2e5ec;
+  --accent:#6b5cff;
+  --accent-2:#806fff;
+  --green:#15965b;
+  --green-bg:#e9f7ef;
+  --amber:#c77b05;
+  --amber-bg:#fff3dc;
+  --sidebar:clamp(210px,16.25vw,234px);
+  --topbar:64px;
+  --workspace-gutter:clamp(28px,2.4vw,52px);
+  --card-min:320px;
+  --card-max:420px;
+  --card-gap:16px;
+}
+html[data-theme="dark"]{
+  --bg:#11131a;
+  --surface:#181b24;
+  --surface-2:#20232d;
+  --text:#f3f5fb;
+  --muted:#9ca4b7;
+  --line:#2c3140;
+  --green-bg:#163426;
+  --amber-bg:#3b2b13;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+body.drawer-open,body.modal-open{overflow:hidden}
+button,input,select{font:inherit}
+button{color:inherit}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid rgba(107,92,255,.22);outline-offset:2px}
+.app{min-height:100vh;display:grid;grid-template-columns:var(--sidebar) minmax(0,1fr)}
+.sidebar{position:sticky;top:0;height:100dvh;overflow-y:auto;display:flex;flex-direction:column;background:var(--surface);border-right:1px solid var(--line);z-index:20}
+.brand{min-height:68px;display:flex;align-items:center;gap:11px;padding:0 24px;font-size:18px;font-weight:800}
+.brand-mark{color:var(--accent);font-size:20px}
+.sidebar-close{display:none;margin-left:auto;width:44px;height:44px;border:0;border-radius:9px;background:transparent;font-size:22px;cursor:pointer}
+.project-switcher{margin:7px 18px 20px;min-height:52px;display:grid;grid-template-columns:31px 1fr auto;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:11px;background:var(--surface);text-align:left;cursor:pointer;box-shadow:0 1px 2px rgba(20,27,45,.03)}
+.project-switcher>span:nth-child(2){display:flex;min-width:0;flex-direction:column}
+.project-switcher strong{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.project-switcher small{margin-top:3px;color:var(--muted);font-size:11px}
+.project-badge{width:29px;height:29px;display:grid;place-items:center;border-radius:8px;background:linear-gradient(135deg,#6254ff,#8c7dff);color:#fff;font-weight:800;font-size:10px}
+.nav-label{padding:0 27px 8px;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.15em;text-transform:uppercase}
+.nav{display:grid;gap:2px;padding:0 14px 16px}
+.nav button{min-height:44px;display:flex;align-items:center;gap:11px;padding:0 13px;border:0;border-radius:8px;background:transparent;color:var(--muted);text-align:left;font-size:13px;font-weight:700;cursor:pointer}
+.nav button:hover,.nav button.active{background:var(--surface-2);color:var(--text)}
+.ico{width:18px;text-align:center;color:var(--muted)}
+.sidebar-note{margin:auto 14px 14px;padding:13px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2)}
+.sidebar-note strong{font-size:12px}.sidebar-note p{margin:7px 0 10px;color:var(--muted);font-size:11px;line-height:1.45}.progress{height:4px;overflow:hidden;border-radius:999px;background:var(--line)}.progress span{display:block;width:72%;height:100%;background:linear-gradient(90deg,var(--accent),#9c8fff)}
+.account{min-height:62px;display:grid;grid-template-columns:31px 1fr auto;gap:10px;align-items:center;padding:10px 18px;border-top:1px solid var(--line)}
+.account>span:nth-child(2){display:flex;flex-direction:column}.account strong{font-size:12px}.account small{margin-top:2px;color:var(--muted);font-size:10px}.avatar{width:30px;height:30px;display:grid;place-items:center;border-radius:50%;background:#6668ad;color:white;font-size:10px;font-weight:800}
+.main{min-width:0;min-height:100vh;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:15;height:var(--topbar);display:flex;align-items:center;justify-content:space-between;gap:24px;padding:0 28px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--surface) 96%,transparent);backdrop-filter:blur(12px)}
+.mobile-menu{display:none;width:44px;height:44px;border:0;border-radius:9px;background:transparent;font-size:20px;cursor:pointer}
+.breadcrumb{min-width:0;display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px}.breadcrumb strong{color:var(--text)}
+.topbar-actions{display:flex;align-items:center;gap:10px}
+.lens-btn,.theme-btn{height:44px;border:1px solid var(--line);border-radius:9px;background:var(--surface);font-size:12px;font-weight:700;cursor:pointer}.lens-btn{padding:0 13px}.theme-btn{width:44px}
+.search input{width:210px;height:44px;padding:0 13px 0 34px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--text);font-size:12px;background-image:radial-gradient(circle at 15px 50%,transparent 4px,#9097a7 4.5px,#9097a7 5px,transparent 5.5px),linear-gradient(45deg,transparent 47%,#9097a7 48%,#9097a7 54%,transparent 55%);background-size:20px 20px,6px 6px;background-position:4px 12px,19px 25px;background-repeat:no-repeat}
+.route-content{
+  width:100%;
+  margin:0;
+  padding:38px var(--workspace-gutter) 72px;
+}
+.page-intro{
+  width:100%;
+  display:grid;
+  grid-template-columns:minmax(0,760px) auto;
+  justify-content:space-between;
+  align-items:end;
+  gap:36px;
+  margin:0 0 26px;
+}
+.eyebrow{display:block;margin-bottom:9px;color:var(--accent);font-size:10px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}
+.page-intro h1{margin:0;font-size:30px;line-height:1.05;letter-spacing:-.035em}
+.page-intro p{max-width:690px;margin:11px 0 0;color:var(--muted);font-size:14px;line-height:1.5}
+.primary-btn,.secondary-btn{border-radius:9px;font-weight:750;cursor:pointer}.primary-btn{min-height:44px;padding:0 16px;border:0;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:white;font-size:13px}.secondary-btn{min-height:40px;padding:0 13px;border:1px solid var(--line);background:var(--surface);font-size:12px}
+.project-grid-new{
+  width:100%;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(min(100%,var(--card-min)),1fr));
+  justify-content:start;
+  align-items:stretch;
+  gap:var(--card-gap);
+}
+.project-card-new{width:100%;max-width:var(--card-max);min-width:0;min-height:270px;display:flex;flex-direction:column;padding:18px;border:1px solid var(--line);border-radius:13px;background:var(--surface);box-shadow:0 2px 4px rgba(25,31,48,.03)}
+.project-card-top{display:flex;align-items:center;justify-content:space-between;gap:10px}.project-icon{width:40px;height:40px;display:grid;place-items:center;border-radius:10px;background:linear-gradient(135deg,#6254ff,#8c7dff);color:#fff;font-size:14px;font-weight:800}.status,.flow-status{padding:5px 8px;border-radius:999px;font-size:10px;font-weight:800}.status{background:var(--green-bg);color:var(--green)}.flow-status.review{background:var(--amber-bg);color:var(--amber)}
+.project-card-new h2{margin:20px 0 0;font-size:17px;letter-spacing:-.02em}.project-card-new>p{min-height:42px;margin:8px 0 0;color:var(--muted);font-size:13px;line-height:1.5}.project-card-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:17px;color:var(--muted);font-size:11px}.card-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:auto;padding-top:18px}.open-link{color:var(--accent);font-size:12px;font-weight:800;text-decoration:none}
+.processing-strip{width:100%;min-height:68px;display:flex;align-items:center;gap:12px;margin-top:16px;padding:13px 15px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}.pulse{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 5px rgba(107,92,255,.10)}.processing-strip>div{display:flex;flex-direction:column}.processing-strip strong{font-size:12px}.processing-strip small{margin-top:4px;color:var(--muted);font-size:11px}
+.dialog-backdrop{position:fixed;inset:0;z-index:200;display:none;place-items:center;overflow-y:auto;padding:24px;background:rgba(20,23,32,.48);backdrop-filter:blur(3px)}.dialog-backdrop.open{display:grid}.dialog-card{width:min(460px,100%);max-height:calc(100dvh - 48px);overflow-y:auto;padding:22px;border:1px solid var(--line);border-radius:14px;background:var(--surface);box-shadow:0 24px 80px rgba(10,13,22,.22)}.dialog-card h2{margin:0;font-size:20px}.dialog-card>p{margin:8px 0 18px;color:var(--muted);font-size:14px;line-height:1.5}.form-stack{display:grid;gap:14px}.form-stack label{display:grid;gap:6px;font-size:12px;font-weight:800}.form-stack input,.form-stack select{width:100%;min-height:44px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--text)}.dialog-actions-new{display:flex;justify-content:flex-end;gap:9px;margin-top:20px}
+.sidebar-backdrop{position:fixed;inset:0;z-index:19;display:none;border:0;background:rgba(20,23,32,.38)}
+
+/* Scalable workspace rules:
+   - the workspace is left-anchored and consumes the full available viewport
+   - only individual content types are constrained; the workspace itself is not
+   - cards keep a bounded width, so extra viewport space becomes future grid capacity
+   - the page action and processing state align to the full workspace edge */
+.main,.route-content,.page-intro,.project-grid-new,.processing-strip{max-width:none}
+.page-intro .primary-btn{justify-self:end}
+@media (min-width:1700px){
+  :root{--workspace-gutter:clamp(36px,2.2vw,56px);--card-min:330px;--card-max:360px}
+  .route-content{padding-top:42px}
+}
+@media (min-width:2300px){
+  :root{--workspace-gutter:clamp(44px,2vw,64px);--card-min:340px;--card-max:360px}
+}
+@media (max-width:1150px){
+  :root{--workspace-gutter:28px;--card-min:300px;--card-max:420px}
+  .page-intro{grid-template-columns:1fr auto}
+  .search input{width:170px}
+}
+@media (max-width:960px){
+  :root{--sidebar:0px;--workspace-gutter:20px}
+  .app{display:block}
+  .sidebar{position:fixed;left:0;top:0;width:min(284px,86vw);transform:translateX(-100%);transition:transform .2s ease;box-shadow:18px 0 50px rgba(12,18,32,.18);z-index:101}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-close{display:grid;place-items:center}
+  .sidebar-backdrop.open{display:block}
+  .mobile-menu{display:block}
+  .topbar{padding:0 18px}
+  .breadcrumb{margin-right:auto}
+  .lens-btn{display:none}
+}
+@media (max-width:680px){
+  :root{--workspace-gutter:16px}
+  .topbar{gap:10px}.search{display:none}
+  .route-content{padding-top:26px}
+  .page-intro{grid-template-columns:1fr;align-items:start;gap:18px}
+  .page-intro .primary-btn{width:max-content}
+  .page-intro h1{font-size:27px}
+  .project-grid-new{grid-template-columns:1fr}
+  .project-card-new{max-width:none;min-height:250px}
+  .processing-strip{align-items:flex-start}
+}
+@media (max-width:480px){
+  .breadcrumb span{display:none}
+  .page-intro .primary-btn{width:100%}
+  .dialog-backdrop{padding:16px}
+  .dialog-card{max-height:calc(100dvh - 32px);padding:20px}
+}
+@media (prefers-reduced-motion:reduce){
+  .sidebar{transition:none}
+}
+</style>
+</head>
+<body><div class="app">
+<aside class="sidebar" id="sidebar">
+  <div class="brand"><span class="brand-mark">&#10022;</span>Atlas<button class="sidebar-close" id="sidebarClose" aria-label="Close navigation">&times;</button></div>
+  <button class="project-switcher"><span class="project-badge">S</span><span><strong>Safara System</strong><small>4 PRDs - Active</small></span><span>v</span></button>
+  <div class="nav-label">Project</div>
+  <nav class="nav" aria-label="Project sections">
+    <button class="active" data-href="project-library.html"><span class="ico">&#9638;</span>Projects</button>
+    <button data-href="main-workflow.html"><span class="ico">&#8767;</span>Main Workflow</button>
+    <button data-href="project-facts.html"><span class="ico">&#9636;</span>Project Facts</button>
+    <button data-href="ces-result.html"><span class="ico">&#9635;</span>CES Result</button>
+    <button data-href="changes-done.html"><span class="ico">&#8635;</span>Changes Done</button>
+  </nav>
+  <div class="nav-label">Workspace</div>
+  <nav class="nav"><button><span class="ico">&#9675;</span>Sources</button><button><span class="ico">&#9817;</span>Members</button><button><span class="ico">&#9881;</span>Settings</button></nav>
+  <div class="sidebar-note"><strong>Atlas processing</strong><p>4 PRDs analyzed - knowledge model synchronized.</p><div class="progress"><span></span></div></div>
+  <div class="account"><span class="avatar">AA</span><span><strong>Aditya Aulia</strong><small>Owner</small></span><span>v</span></div>
+</aside>
+<button class="sidebar-backdrop" id="sidebarBackdrop" aria-label="Close navigation" tabindex="-1"></button>
+<main class="main">
+<header class="topbar">
+  <button class="mobile-menu" id="mobileMenu" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">&#9776;</button>
+  <div class="breadcrumb"><span>Projects</span><span>&rsaquo;</span><strong>Safara System</strong></div>
+  <div class="topbar-actions">
+    <button class="lens-btn">PRD Lens&nbsp;&nbsp;All PRDs&nbsp;&nbsp;v</button>
+    <div class="search"><input placeholder="Search..." aria-label="Search project"></div>
+    <button class="theme-btn" id="themeBtn" aria-label="Toggle theme">&#9680;</button>
+  </div>
+</header>
+<div class="route-content">
+<section class="page-intro">
+  <div><span class="eyebrow">Your workspace</span><h1>Projects</h1><p>Projects are private unless you explicitly share them. Open a ready project or create a new one from PRD PDFs.</p></div>
+  <button class="primary-btn" data-dialog-open="createDialog">+ New project</button>
+</section>
+<section class="project-grid-new">
+  <article class="project-card-new"><div class="project-card-top"><span class="project-icon">S</span><span class="status">Ready</span></div><h2>Safara System</h2><p>Updated from PRD-04 with document and visa readiness changes.</p><div class="project-card-meta"><span>4 PRDs</span><span>3 collaborators</span><span>Updated 2 min ago</span></div><div class="card-actions"><a class="open-link" href="main-workflow.html">Open project -&gt;</a><button class="secondary-btn" data-dialog-open="shareDialog">Share</button></div></article>
+  <article class="project-card-new"><div class="project-card-top"><span class="project-icon" style="background:linear-gradient(135deg,#2f6fed,#63a0ff)">O</span><span class="flow-status review">Processing</span></div><h2>Order Operations</h2><p>Atlas is currently extracting workflow and structured knowledge from uploaded PRDs.</p><div class="project-card-meta"><span>2 PRDs</span><span>1 collaborator</span></div><div class="card-actions"><span style="color:var(--muted);font-size:11px">Available after processing</span><button class="secondary-btn">Share</button></div></article>
+  <article class="project-card-new"><div class="project-card-top"><span class="project-icon" style="background:linear-gradient(135deg,#158a55,#54c693)">H</span><span class="status">Ready</span></div><h2>HRIS Application</h2><p>Web-first employee operations and attendance knowledge workspace.</p><div class="project-card-meta"><span>3 PRDs</span><span>2 collaborators</span><span>Shared</span></div><div class="card-actions"><a class="open-link" href="#">Open project -&gt;</a><button class="secondary-btn">Share</button></div></article>
+</section>
+<div class="processing-strip" role="status" aria-live="polite"><span class="pulse"></span><div><strong>Atlas is processing Order Operations</strong><small>Extracting text and structure - source files remain private.</small></div></div>
+<div class="dialog-backdrop" id="createDialog"><section class="dialog-card" role="dialog" aria-modal="true" aria-labelledby="createDialogTitle"><h2 id="createDialogTitle">Create a project</h2><p>Start a private project and upload the PRDs Atlas should understand.</p><div class="form-stack"><label>Project name<input placeholder="Project name"></label><label>PRD PDFs<input type="file" multiple></label></div><div class="dialog-actions-new"><button class="secondary-btn" data-dialog-close>Cancel</button><button class="primary-btn">Create and process</button></div></section></div>
+<div class="dialog-backdrop" id="shareDialog"><section class="dialog-card" role="dialog" aria-modal="true" aria-labelledby="shareDialogTitle"><h2 id="shareDialogTitle">Share Safara System</h2><p>Only invited people can access this private project.</p><div class="form-stack"><label>Email<input placeholder="person@example.com"></label><label>Role<select><option>Viewer - can inspect</option><option>Editor - can contribute</option></select></label></div><div class="dialog-actions-new"><button class="secondary-btn" data-dialog-close>Cancel</button><button class="primary-btn">Invite</button></div></section></div>
+</div></main></div>
+<script>
+document.querySelectorAll("[data-href]").forEach(function(el){el.addEventListener("click",function(){location.href=el.dataset.href})});
+var theme=document.getElementById("themeBtn"); if(theme)theme.addEventListener("click",function(){document.documentElement.dataset.theme=document.documentElement.dataset.theme==="dark"?"light":"dark"});
+var menu=document.getElementById("mobileMenu"),side=document.getElementById("sidebar"),sideClose=document.getElementById("sidebarClose"),sideBackdrop=document.getElementById("sidebarBackdrop");
+function setDrawer(open,restoreFocus){
+  if(!menu||!side||!sideBackdrop)return;
+  side.inert=!open;
+  side.setAttribute("aria-hidden",String(!open));
+  side.classList.toggle("open",open);
+  sideBackdrop.classList.toggle("open",open);
+  menu.setAttribute("aria-expanded",String(open));
+  menu.setAttribute("aria-label",open?"Close navigation":"Open navigation");
+  document.body.classList.toggle("drawer-open",open);
+  if(open)sideClose.focus();else if(restoreFocus!==false)menu.focus();
+}
+if(menu)menu.addEventListener("click",function(){setDrawer(!side.classList.contains("open"))});
+if(sideClose)sideClose.addEventListener("click",function(){setDrawer(false)});
+if(sideBackdrop)sideBackdrop.addEventListener("click",function(){setDrawer(false)});
+function syncDrawerMode(){
+  if(!side)return;
+  if(window.innerWidth>960){
+    side.inert=false;
+    side.removeAttribute("aria-hidden");
+    side.classList.remove("open");
+    sideBackdrop.classList.remove("open");
+    document.body.classList.remove("drawer-open");
+    menu.setAttribute("aria-expanded","false");
+  }else if(!side.classList.contains("open"))setDrawer(false,false);
+}
+window.addEventListener("resize",syncDrawerMode);
+syncDrawerMode();
+
+var lastDialogTrigger=null;
+function setDialog(dialog,open){
+  if(!dialog)return;
+  dialog.classList.toggle("open",open);
+  document.body.classList.toggle("modal-open",open);
+  if(open){
+    var first=dialog.querySelector("input,select,button,[href],[tabindex]:not([tabindex='-1'])");
+    if(first)first.focus();
+  }else if(lastDialogTrigger){lastDialogTrigger.focus();lastDialogTrigger=null}
+}
+document.querySelectorAll("[data-dialog-open]").forEach(function(b){b.addEventListener("click",function(){lastDialogTrigger=b;setDialog(document.getElementById(b.dataset.dialogOpen),true)})});
+document.querySelectorAll("[data-dialog-close]").forEach(function(b){b.addEventListener("click",function(){setDialog(b.closest(".dialog-backdrop"),false)})});
+document.querySelectorAll(".dialog-backdrop").forEach(function(d){d.addEventListener("click",function(e){if(e.target===d)setDialog(d,false)})});
+document.addEventListener("keydown",function(e){
+  if(e.key==="Escape"){
+    var openDialog=document.querySelector(".dialog-backdrop.open");
+    if(openDialog)setDialog(openDialog,false);else if(side&&side.classList.contains("open"))setDrawer(false);
+  }
+  if(e.key==="Tab"){
+    var dialog=document.querySelector(".dialog-backdrop.open .dialog-card");
+    if(!dialog)return;
+    var focusable=Array.prototype.slice.call(dialog.querySelectorAll("input,select,button,[href],[tabindex]:not([tabindex='-1'])")).filter(function(el){return !el.disabled&&el.offsetParent!==null});
+    if(!focusable.length)return;
+    var first=focusable[0],last=focusable[focusable.length-1];
+    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}
+    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
+  }
+});
+</script>
+</body></html>

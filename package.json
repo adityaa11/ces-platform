@@ -3,7 +3,7 @@
   "private": true,
   "packageManager": "pnpm@11.19.0",
   "scripts": {
-    "dev": "pnpm --filter @atlas/app dev",
+    "dev": "corepack pnpm --filter @atlas/app dev",
     "build": "pnpm --filter @atlas/app build",
     "test": "pnpm --filter @atlas/fixtures test && pnpm --filter @atlas/app test",
     "lint": "pnpm --filter @atlas/app lint"

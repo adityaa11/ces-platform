@@ -1,6 +1,6 @@
 # AUI-010: Prototype integration and handoff
 
-- **State:** awaiting_review
+- **State:** approved
 - **Review batch:** BATCH-09
 - **Depends on:** AUI-009
 - **Baseline:** UI/UX Prototype PRD 1, 9, 10; [AUI-007–AUI-010 reference-system analysis](AUI-007-010-reference-system-analysis.md)
