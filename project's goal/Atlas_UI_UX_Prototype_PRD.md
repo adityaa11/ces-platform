@@ -115,40 +115,251 @@ The project workspace must provide four primary navigation destinations:
 3. **CES Result**
 4. **Changes Done**
 
+All four destinations must read from the same accumulated project model. They are
+different reading views over the same source-grounded relationships, not four
+independent lists. The workspace must keep three kinds of text visibly distinct:
+
+- **Original PRD wording:** the exact source text written in the selected PRD,
+  including the source document and page. This is authoritative for displayed
+  source statements, workflow steps, fact rows, change evidence, and CES
+  grounding.
+- **Atlas interpretation:** a clearly labelled explanation of how Atlas grouped
+  or understood the source wording. It must never be presented as if it were a
+  quotation from the PRD.
+- **CES knowledge:** the policy, obligation, concern, capability need, coverage
+  state, or unresolved decision produced from approved project facts. It must be
+  visibly separate from both the source fact and Atlas interpretation.
+
+The visual composition must use compact scope cards, expandable detail, readable
+rows, and direct links. It must not turn the accumulated model into a wall of
+paragraphs or a grid of unrelated generic cards.
+
 ### 5.1 Main Workflow
 
-- Start with a compact journey overview.
-- Lead users to focused semantic workflow pages rather than one large process graph.
-- Each workflow page shows a business question, roles, expected result, source history, a focused sequence of workflow nodes, and an evidence panel.
+**Goal:** answer “How does this project operate today?” through the major
+workflow scope and the detailed workflows that make up each scope. The overview
+is a compact operational map, not a full-project narrative or an all-in-one
+process graph.
+
+The hierarchy is:
+
+```text
+Main Workflow
+  -> Major workflow
+       -> Detailed workflow
+            -> Ordered workflow steps
+```
+
+#### Major workflow overview
+
+The opening view must show the current accumulated operational model in business
+order. Each major workflow is a scope card or sequence entry that makes the size
+and boundary of the work scannable before the user opens detail. It must show:
+
+- a stable business-order number and source-grounded title;
+- a concise scope statement using the original PRD wording where available;
+- the detailed workflows included in that scope, so the user can see what the
+  card covers;
+- the expected business result of completing the scope;
+- the roles or ownership involved when the PRD states them;
+- contributing PRDs, increments, and dates;
+- the number of detailed workflow pages as a model fact; and
+- a clear action to open the first detailed workflow in that scope.
+
+The card must communicate the scope of the work without requiring the user to
+read every source paragraph. A short Atlas summary may orient the user, but the
+expanded or linked detail must expose the original PRD statements and evidence.
+Cross-workflow support such as reporting or activity history may be shown as a
+separate supporting layer; it must not be misrepresented as a chronological
+major workflow when the PRD treats it as support.
+
+#### Detailed workflow
+
+Opening a major workflow leads to focused semantic workflow pages. Each page
+answers one business question and shows:
+
+- the major workflow and page position in the accumulated model;
+- the business question, using the PRD’s wording where it exists;
+- the people or roles involved;
+- the expected business result;
+- a short, ordered sequence of meaningful workflow steps or decisions;
+- the contributing PRD history and active PRD-lens state;
+- links to the related Project Facts and the workflow’s CES baseline awareness;
+- a selected-step evidence reading with Atlas interpretation and exact PRD
+  wording, source document, and source page; and
+- previous, next, and grouped-page navigation without losing the PRD Lens.
+
+The detailed page is the bridge between “what happens” and “what must be
+accounted for.” It may show a compact summary of linked fact groups and CES
+coverage, but the full fact and CES reading remains in its dedicated destination.
 
 ### 5.2 Project Facts
 
-- Present non-workflow knowledge as first-class, source-grounded fact groups.
-- Include representative groups such as scope, people and responsibilities, constraints, information protection, outputs, and commitments.
+**Goal:** display non-workflow knowledge as grouped, source-grounded facts that
+can be referenced from the related workflow. Project Facts is a knowledge list,
+not a flat source-note feed.
+
+The hierarchy is:
+
+```text
+Project Facts
+  -> Fact group
+       -> Fact statement or row
+            -> Related Main Workflow
+                 -> Major workflow -> Detailed workflow
+```
+
+Each fact group is a durable reading unit and must show:
+
+- a stable group number and source-grounded title;
+- the scope of the group in a concise summary;
+- its accumulated fact rows, with the original PRD wording as the displayed
+  source statement where available;
+- contributing PRDs, increments, dates, and source evidence;
+- one or more related Main Workflow paths; and
+- an expandable detail state so source wording and provenance are available
+  without making the initial view a sea of text.
+
+Representative groups include scope, people and responsibilities, constraints,
+information protection, outputs, and commitments. The set must remain
+data-driven so other projects can produce different groups.
+
+Every fact row must retain a stable identity and be linkable to the major and/or
+detailed workflow it informs. A fact may support multiple workflows, and a
+workflow may reference multiple fact groups; links must resolve to the actual
+fixture relationship rather than a display-only label. The row may include an
+Atlas interpretation, but the exact source statement, source PRD, and page must
+remain directly reachable.
 
 ### 5.3 CES Result
 
-- Show representative applicable Policies, obligations, linked facts, Concerns, Capability Needs, coverage states, and unresolved decisions.
-- Clearly distinguish CES knowledge from source facts.
-- Provide direct paths to supporting workflow, fact, and source evidence.
-- Do not present CES as prescribing technologies or implementation choices.
+**Goal:** display the grouped project facts together with the CES output that was
+derived from each approved fact. CES Result must have the same fact-grouped
+reading shape as Project Facts, enriched with baseline-awareness output. It must
+not become a separate, flat policy catalogue.
+
+The hierarchy is:
+
+```text
+CES Result
+  -> Project Fact group
+       -> Project Fact statement or row
+            -> Related Main Workflow
+                 -> Major workflow -> Detailed workflow
+            -> CES Result item(s)
+```
+
+The canonical relationship is:
+
+```text
+Main Workflow -> Detailed workflow -> Project Fact -> CES Result
+```
+
+The required cross-view links are:
+
+- **Project Facts -> Main Workflow:** open the major and detailed workflow
+  paths that use the fact;
+- **Project Facts -> CES Result:** open the CES items evaluated against the
+  fact; and
+- **CES Result -> Project Facts -> Main Workflow:** show the fact grounding
+  first, then the workflow context that gives the result its operational scope.
+
+This relationship makes CES baseline awareness deterministic per workflow. A
+detailed workflow owns or references its project facts; each fact owns the CES
+items evaluated against it; the major workflow inherits the combined awareness
+of its detailed workflows. If a fact is related to multiple workflows, the same
+CES item may be surfaced in each workflow’s baseline summary, but it keeps one
+stable identity and one source-grounded result in CES Result.
+
+Each CES fact group or row must retain the Project Facts reading and add:
+
+- the approved fact statement that grounds the result;
+- the related major and detailed workflow path;
+- applicable Policy identity and rule;
+- the Policy obligation;
+- CES conclusion;
+- related Concern;
+- Capability Need, expressed as what the solution must be able to account for;
+- coverage state: covered, needs-review, out-of-scope, or unresolved;
+- any unresolved decision;
+- source PRD revisions and direct evidence; and
+- links back to the fact, workflow, and source reading.
+
+Source facts, Atlas interpretations, and CES knowledge must be visually
+separable. CES must explain what matters, what is covered, what needs review,
+and what remains unresolved. It must not prescribe technologies, architecture,
+vendors, or implementation methods.
 
 ### 5.4 Changes Done
 
-- Group representative changes by PRD increment.
-- Show established, clarified, expanded, superseded, and unresolved items.
-- Allow navigation from a change to its affected workflow, fact, CES item, or project-level destination.
+**Goal:** show how the accumulated project model evolved as each PRD increment
+was added. Changes Done is a history of model changes, not a second current-state
+workflow or a flat activity feed.
+
+The hierarchy is:
+
+```text
+Changes Done
+  -> PRD increment
+       -> Change item
+            -> Affected Main Workflow, Project Fact, CES Result, or project-level item
+```
+
+The increment is the primary reading unit. Each increment group must show its
+identity, date, source document, number of changes, and a compact timeline of
+items that were:
+
+- established;
+- clarified;
+- expanded;
+- superseded; or
+- left unresolved.
+
+Each change item must show the original PRD statement or exact supporting quote,
+the source page, a clearly labelled Atlas change interpretation, and its real
+destination in the accumulated model. Destinations must resolve to the affected
+major or detailed workflow, fact group or row, CES item, project-level
+destination, or an explicit unresolved-decision state. A user must be able to
+move from a change to its destination and understand how that destination
+changed without losing the active PRD Lens.
+
+The change view must preserve the connection among increment, source wording,
+affected fact, affected workflow, and affected CES result. It must not invent a
+change summary that cannot be traced to a PRD increment.
 
 ## 6. Cross-workspace interactions
 
 ### Global PRD lens
 
-The prototype must include a global PRD lens that allows a user to select one or more PRDs. It must visually support:
+The PRD Lens is the single workspace-level controller for what data is shown in
+Main Workflow, Project Facts, CES Result, and Changes Done. It must be shared by
+all four destinations; no destination may create its own PRD filter, independent
+record set, or invented count. Changing the destination, opening detail, or
+following a relationship must preserve the active lens.
 
-- highlighting selected-document contributions in their accumulated context;
-- optionally isolating selected-document contributions while preserving necessary structural context;
-- identifying affected workflow pages, facts, CES items, and changes; and
-- clearly communicating whether all PRDs or a selected PRD view is active.
+The lens supports one or more selected PRDs and two display modes:
+
+| Lens state | Display contract |
+|---|---|
+| **All PRDs** | Show the complete accumulated project model. This is the default state. |
+| **Highlight selected PRDs** | Keep the complete accumulated model readable, while marking and visually prioritizing records that contain a contribution from a selected PRD. Unaffected context remains available but is subordinate. |
+| **Isolate selected PRDs** | Show records with a selected contribution and retain only the structural context needed to understand their place in the model. Context anchors must be labelled; unrelated source-derived text is not shown. |
+
+Lens matching must be deterministic:
+
+| Destination | A record is affected when | Required result |
+|---|---|---|
+| **Main Workflow** | A major workflow, detailed workflow, or workflow step has a source contribution from a selected PRD. A parent remains in context when a visible child is affected. | Mark affected major workflows, pages, and steps; show affected-page counts; keep the major-to-detailed reading order and links to related facts and CES. |
+| **Project Facts** | A fact group or fact row has a source contribution from a selected PRD. | Mark contributing groups and rows; retain each row’s related Main Workflow path; in isolation, keep the fact-group heading when one or more rows remain visible. |
+| **CES Result** | A CES item has a direct source-PRD contribution or is grounded in a fact row that is affected by a selected PRD. | Keep the item under its owning fact group; show whether the match comes from the CES source or the linked fact; retain links to the fact, Main Workflow, and evidence. |
+| **Changes Done** | The change belongs to a selected PRD increment. | Show the selected increment and its change items; retain each item’s destination to the affected workflow, fact, CES item, or unresolved decision. |
+
+In highlight mode, visible counts and emphasis must be derived from the affected
+records while the accumulated context remains readable. In isolate mode, visible
+counts must be derived from the isolated result set; structural anchors do not
+count as selected contributions. If no contribution exists, show an intentional
+empty state explaining how to change the lens or restore all PRDs. Isolation must
+never produce a blank canvas or change the underlying relationships.
 
 ### Source evidence
 
@@ -158,6 +369,13 @@ For representative workflow nodes, project facts, CES items, and changes, the us
 - the exact supporting PRD wording;
 - the source document; and
 - the source page.
+
+When the interface uses a normalized UI language, a translation or concise
+navigation label may be provided for orientation, but it must not replace the
+original source wording. Source text remains the authoritative displayed value
+for a fact statement, workflow step, change evidence, and the fact grounding a
+CES result. Any paraphrase must be labelled as Atlas interpretation or CES
+conclusion, never as source text.
 
 ### Approval states
 
@@ -289,4 +507,10 @@ The prototype is ready for review when a user can:
 15. reuse stable visual and interaction patterns through data-agnostic components without coupling them to fixture records.
 16. allow a user to complete core flows using plain language, visible navigation, clear feedback, and progressive disclosure rather than specialist knowledge or hidden controls.
 17. maintain global UI consistency by using shared components with declared visual and responsive contracts across every relevant route and state.
-18. meet the design-quality baseline through researched, deliberate, and visually reviewed workspace patterns rather than generic scaffold UI.
+18. meet the design-quality baseline through researched, deliberate, and visually reviewed workspace patterns rather than generic scaffold UI;
+19. understand the current operating model from compact major-workflow scope cards and open each card into its detailed workflows;
+20. navigate from a Project Fact group or row to its related major and detailed workflow;
+21. inspect CES Result in the same fact-grouped structure, including the fact grounding, related workflow, CES output, coverage state, and unresolved decision where applicable;
+22. see the same fact-to-workflow-to-CES relationship represented in the detailed workflow’s baseline-awareness context;
+23. move between workflow, fact, CES, and change destinations without losing the selected PRD Lens or source context; and
+24. verify that source-derived displayed text is traceable to the original PRD wording, with Atlas interpretation and CES knowledge clearly labelled as separate layers.
