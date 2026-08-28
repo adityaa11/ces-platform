@@ -24,15 +24,30 @@ Secondary information must be visually subordinate.
 
 ---
 
-# 2. Typography
+# 2. Typography and theme parity
 
-Typography must provide clear levels.
+Typography must provide clear, repeatable levels. Treat font size, font style,
+font spacing, font thickness, and line height as one type role rather than
+isolated polish.
 
-Do not solve density problems by repeatedly shrinking text.
+Define and reuse project roles for page titles, section titles, body copy,
+compact copy, metadata, labels, ordinals or metrics, and controls. The project
+contract determines the actual values, but repeated roles should resolve to
+the same rules across related screens.
 
-Primary content must remain comfortably readable.
+Do not solve density problems by repeatedly shrinking text, compressing line
+height, or adding tracking to copy that should wrap.
 
-Metadata may be smaller but must remain legible.
+Primary content must remain comfortably readable. Metadata may be smaller but
+must remain legible and must not be the only carrier of important meaning.
+
+When light and dark themes are supported, preserve the same hierarchy,
+semantic meaning, and interaction states in both themes. Map surfaces, text,
+borders, actions, statuses, focus, and overlays through semantic tokens. Do
+not use hard-coded theme-specific component colors or rely on color alone for
+state.
+
+Use references/theme-typography.md for the detailed theme and type contract.
 
 ---
 

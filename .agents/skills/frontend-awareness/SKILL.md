@@ -47,6 +47,7 @@ Before implementation, read:
 - references/visual-language-derivation.md
 - references/project-visual-contract.md
 - references/visual-baseline.md
+- references/theme-typography.md
 
 Create or update a project visual contract.
 
@@ -90,6 +91,9 @@ Read:
 - relevant sections of references/information-patterns.md
 - references/review-gate.md
 
+When the product supports light/dark themes or the task changes typography,
+also read references/theme-typography.md.
+
 Also read the project visual contract when one exists.
 
 Do not silently change product semantics.
@@ -113,6 +117,9 @@ Then read:
 - relevant sections of references/information-patterns.md
 - references/review-gate.md
 - the project visual contract
+
+When the product supports light/dark themes or the task changes typography,
+also read references/theme-typography.md.
 
 Do not invent a separate visual language per screen.
 
@@ -222,9 +229,11 @@ Before creating new styles or components:
 
 1. inspect the project visual contract
 2. inspect design tokens
-3. inspect shared UI components
-4. inspect reliable visual ancestors
-5. reuse established information patterns
+3. inspect theme tokens and theme switching behavior
+4. inspect typography roles and type tokens
+5. inspect shared UI components
+6. inspect reliable visual ancestors
+7. reuse established information patterns
 
 Prefer:
 
@@ -234,6 +243,29 @@ existing component
 > local one-off control
 
 A new component should represent a reusable semantic or interaction concept.
+
+---
+
+# 6A. Theme and typography are system-level
+
+When light and dark themes are supported, treat them as one product with two
+readable presentations. Use semantic theme tokens for surfaces, text, borders,
+actions, statuses, focus, and overlays. Preserve the same information
+hierarchy and interaction meaning in both themes.
+
+When refining typography, define roles rather than scattered declarations.
+Each role should account for font size, styling, spacing, thickness, line
+height, case, and wrapping. At minimum, distinguish page titles, section
+titles, body copy, compact body copy, metadata, labels, ordinals or metrics,
+and controls.
+
+Metadata may be subordinate, but it must remain legible. Repeated numbers,
+dates, and steps should use a consistent role and aligned numerals when
+comparison matters. Do not shrink text or add tracking to hide a composition
+problem.
+
+Read references/theme-typography.md for the detailed contract and verification
+checklist.
 
 ---
 
@@ -265,6 +297,8 @@ Do NOT introduce without project-specific justification:
 - random spacing
 - random radii
 - random font sizes
+- one-off theme overrides
+- inconsistent type roles across related screens
 - nested card stacks
 - decorative gradients
 - glassmorphism
@@ -325,6 +359,10 @@ Mobile may use:
 - sheets
 - stacked supporting context
 
+Preserve readable type roles during transformation. Allow headings and body
+copy to wrap before reducing their size, weight, or spacing below the project
+minimum.
+
 The project visual contract may override these defaults when platform needs differ.
 
 ---
@@ -366,6 +404,7 @@ When browser or screenshot tooling is available:
 - inspect responsive behavior
 - inspect interaction states
 - inspect light/dark modes when applicable
+- inspect the resolved type roles and theme tokens when applicable
 
 The first rendered result is a draft.
 

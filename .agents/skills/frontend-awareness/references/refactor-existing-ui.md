@@ -69,6 +69,8 @@ Look for:
 - random colors
 - random radii
 - tiny text
+- theme drift between light and dark modes
+- inconsistent font size, style, spacing, weight, or line height
 - duplicated controls
 - inconsistent interaction
 - unclear active state
@@ -110,6 +112,10 @@ Order of improvement:
 8. fix interaction states
 9. add only necessary visual treatment
 
+If themes or typography are in scope, use references/theme-typography.md while
+auditing shared tokens and related screens. Apply the refinement across the
+affected role family, not only the annotated element.
+
 ---
 
 # Step 7 - Migrate toward the project contract
@@ -138,5 +144,6 @@ Also inspect:
 - error
 - loading
 - dark/light when supported
+- type roles, resolved computed styles, and theme parity when supported
 
 Do not approve based only on source code.

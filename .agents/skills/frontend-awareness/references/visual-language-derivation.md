@@ -263,6 +263,13 @@ Define:
 - metadata minimum
 - weight hierarchy
 - tracking behavior
+- line-height hierarchy
+- meaningful font-style usage
+- ordinal and metric treatment
+
+If the product supports light and dark themes, define these roles once for
+the product and verify that both themes preserve their hierarchy. Use
+references/theme-typography.md for the detailed type and theme checklist.
 
 Typography should reflect personality and density.
 
@@ -331,6 +338,10 @@ At minimum:
 - warning
 - danger
 - info
+
+If light and dark themes are supported, define the mapping for every semantic
+role in each theme, including focus, overlay, hover, active, and disabled
+states. Do not derive a second visual language for dark mode.
 
 Define what the primary accent MEANS.
 

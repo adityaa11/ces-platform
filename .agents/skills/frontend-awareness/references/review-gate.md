@@ -69,6 +69,11 @@ Is metadata subordinate but legible?
 
 Does typography match project density?
 
+Do repeated type roles use consistent font size, font styling, font spacing,
+font thickness, and line height?
+
+Do long labels and body copy wrap without clipping or accidental truncation?
+
 ---
 
 ## VIS-007 Action hierarchy
@@ -153,6 +158,23 @@ Does it improve:
 - project personality
 
 If none apply, remove it.
+
+---
+
+## VIS-015 Theme parity
+
+When light and dark themes are supported:
+
+- do both themes preserve the same hierarchy and semantic meaning?
+- are surfaces, text, borders, actions, statuses, focus, and overlays driven by
+  semantic tokens?
+- are primary, muted, and status colors readable in both themes?
+- do hover, focus-visible, active, selected, disabled, loading, success, error,
+  and open states remain clear?
+- is no important state communicated by color alone?
+
+FAIL if a supported theme requires local hard-coded overrides, loses contrast,
+or changes the type and spacing hierarchy without a documented reason.
 
 ---
 

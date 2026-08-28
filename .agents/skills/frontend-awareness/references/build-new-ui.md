@@ -76,6 +76,12 @@ Use the project contract for:
 - motion
 - responsive behavior
 
+When the product supports light and dark themes, also define semantic token
+mappings and verify that both themes preserve the same hierarchy and states.
+For typography, define size, style, spacing, thickness, and line height for
+each shared role before styling individual screens. Use
+references/theme-typography.md for the detailed contract.
+
 Do not invent visual personality at the screen level.
 
 ---
@@ -133,5 +139,6 @@ Inspect:
 - density
 - interaction states
 - responsiveness
+- light/dark theme parity and resolved typography roles when supported
 
 Correct visible problems before completion.

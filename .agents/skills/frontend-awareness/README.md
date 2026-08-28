@@ -68,4 +68,10 @@ Preserve product semantics and behavior.
 Render and visually inspect the result before completion.
 ```
 
+For theme or typography refinement, also read:
+
+```text
+.agents/skills/frontend-awareness/references/theme-typography.md
+```
+
 All Markdown files in this package are ASCII-only.
