@@ -22,7 +22,7 @@ export function ProfileMenu({ user }: { user: User }) {
     document.addEventListener("keydown", close);
     return () => { document.removeEventListener("pointerdown", close); document.removeEventListener("keydown", close); };
   }, [open]);
-  const actions = <><p><strong>{user.role}</strong> access</p><ThemeSelector /><Link href="/demo" onClick={() => setOpen(false)}>Account settings</Link><Link href="/sign-in" onClick={() => setOpen(false)}>Logout</Link></>;
+  const actions = <><p><strong>{user.role}</strong> access</p><ThemeSelector /><span aria-disabled="true" className="profile-unavailable">Account settings <small>Unavailable in prototype</small></span><Link href="/sign-in" onClick={() => setOpen(false)}>Logout</Link></>;
   return <div className="profile-wrap" ref={ref}>
     <button aria-expanded={open} aria-label={`${user.name}, ${user.role}, ${user.email}`} className="profile-control" onClick={() => setOpen((value) => !value)} type="button">
       <Avatar name={user.name} size="small" />

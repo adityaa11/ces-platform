@@ -597,6 +597,7 @@ h1 { font-size: clamp(2.35rem, 6vw, 5rem); letter-spacing: -.055em; line-height:
 .ces-layer > .workflow-kicker span { background: var(--mint); border-radius: 999px; color: var(--forest); font-size: var(--type-label); font-weight: var(--weight-bold); letter-spacing: 0; padding: .1rem .35rem; text-transform: none; }
 .ces-item { background: var(--surface-raised); border: 1px solid var(--line); border-radius: .45rem; overflow: hidden; }
 .ces-item[open] { border-color: var(--forest); }
+.ces-item.is-matched { border-color: var(--forest); box-shadow: 0 0 0 2px var(--mint); }
 .ces-item > summary { align-items: center; cursor: pointer; display: grid; gap: .45rem; grid-template-columns: 4.75rem minmax(0, 1fr) auto; list-style: none; padding: .45rem .55rem; }
 .ces-item > summary::-webkit-details-marker { display: none; }
 .ces-item > summary:focus-visible { outline: 3px solid var(--forest); outline-offset: -3px; }

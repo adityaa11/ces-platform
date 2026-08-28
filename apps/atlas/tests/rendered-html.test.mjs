@@ -125,7 +125,9 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(projectLibrary, /Invite/);
   assert.match(projectLibrary, /Confirm change/);
   assert.match(projectLibrary, /Access removed/);
-  assert.match(projectLibrary, /`\/demo\?projectId=\$\{project\.id\}&view=workflow`/);
+  assert.match(projectLibrary, /demoHref\(\{ projectId: project\.id, view: "workflow" \}\)/);
+  assert.match(projectLibrary, /selectedFiles/);
+  assert.match(projectLibrary, /membersByProject/);
   assert.match(demoHtml, /href="\/demo\?projectId=safara&amp;view=workflow"/);
   const workflowHtml = await workflow.text();
   assert.match(workflowHtml, /3 PRDs · Active/);
@@ -138,7 +140,7 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   const changesHtml = await changes.text();
   assert.match(factsHtml, /Project Facts|People and responsibilities/);
   assert.match(changesHtml, /Changes Done|Tanggung jawab Finance dan Operations/);
-  assert.match(changesHtml, /href="\/demo\?projectId=safara&amp;view=workflow&amp;prd=safara-increment-02&amp;lens=isolate"/);
+  assert.match(changesHtml, /href="\/demo\?projectId=safara&amp;view=workflow&amp;prd=safara-increment-02&amp;lens=isolate/);
   for (const html of [workflowHtml, factsHtml, changesHtml]) assert.match(html, /href="\/demo\?projectId=safara&amp;prd=safara-increment-02&amp;lens=isolate&amp;view=(workflow|facts|ces|changes)"/);
   assert.match(workflowWorkspace, /Previous affected workflow page/);
   assert.match(workflowWorkspace, /No selected contribution on this page/);
@@ -149,5 +151,5 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(viewerHtml, /Sari Utami/);
   assert.doesNotMatch(viewerHtml, /\+ New project|>Share</);
   for (const response of processingStates) assert.match(await response.text(), /Processing|Ready to review|Needs attention|Unable to process/);
-  assert.match(await approvedDemo.text(), /Atlas understanding[\s\S]*Approved/);
+  assert.match(await approvedDemo.text(), /CES baseline[\s\S]*Approved|Approved[\s\S]*CES baseline/);
 });

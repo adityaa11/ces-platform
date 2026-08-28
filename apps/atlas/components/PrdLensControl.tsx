@@ -9,9 +9,10 @@ type Props = {
   prds: ProjectWorkspaceFixture["prds"];
   set: (lens: WorkspaceLens) => void;
   toggle: (id: string) => void;
+  onAccounting?: (prdId: string) => void;
 };
 
-export function PrdLensControl({ lens, prds, set, toggle }: Props) {
+export function PrdLensControl({ lens, prds, set, toggle, onAccounting }: Props) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const popoverId = useId();
@@ -42,7 +43,7 @@ export function PrdLensControl({ lens, prds, set, toggle }: Props) {
       <button className={!active ? "is-selected" : ""} onClick={() => set({ selectedPrdIds: [], mode: "highlight" })} type="button"><span>{!active ? "✓" : ""}</span><div><strong>All PRDs</strong><small>Complete accumulated project</small></div></button>
       {prds.map((prd) => <button className={lens.selectedPrdIds.includes(prd.id) ? "is-selected" : ""} key={prd.id} onClick={() => toggle(prd.id)} type="button"><span>{lens.selectedPrdIds.includes(prd.id) ? "✓" : ""}</span><div><strong>{prd.increment}</strong><small>{prd.name} · {prd.pageCount} pages</small></div></button>)}
       <label aria-label="Hide unselected PRD data" className={!active ? "is-disabled" : ""}><input checked={lens.mode === "isolate" && active} disabled={!active} onChange={(event) => set({ ...lens, mode: event.target.checked ? "isolate" : "highlight" })} type="checkbox" /><i /><div><strong>Hide unselected PRD data</strong><small>{lens.mode === "isolate" && active ? "Isolation mode" : "Contextual highlight mode"}</small></div></label>
-      <footer><span>{active ? lens.mode === "isolate" ? "Showing selected contributions and structural context." : "Showing accumulated context with selected contributions." : "Showing the complete accumulated project."}</span><button onClick={() => setOpen(false)} type="button">Done</button></footer>
+      <footer><span>{active ? lens.mode === "isolate" ? "Showing selected contributions and structural context." : "Showing accumulated context with selected contributions." : "Showing the complete accumulated project."}</span>{onAccounting && <button onClick={() => onAccounting(active ? lens.selectedPrdIds[0] : prds[0]?.id)} type="button">Source accounting</button>}<button onClick={() => setOpen(false)} type="button">Done</button></footer>
     </div>}
   </div>;
 }

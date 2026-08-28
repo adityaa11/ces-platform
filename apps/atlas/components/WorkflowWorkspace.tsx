@@ -5,16 +5,16 @@ import type { ProjectFixture, ProjectWorkspaceFixture, WorkflowFixture, Workflow
 import { AppShell } from "./AppShell";
 import { OperationalModel } from "./OperationalModel";
 import { PrdLensControl } from "./PrdLensControl";
-import { useWorkspaceLens, type WorkspaceLens } from "./WorkspaceLens";
+import { useWorkspaceApprovals, useWorkspaceLens, type WorkspaceLens } from "./WorkspaceLens";
 
 type User = { name: string; email: string; role: "owner" | "editor" | "viewer" };
 const matches = (ids: string[], selected: string[]) => !selected.length || ids.some((id) => selected.includes(id));
 
-export function WorkflowWorkspace({ user, projects, workspace, initialLens }: { user: User; projects: ProjectFixture[]; workspace: ProjectWorkspaceFixture; initialLens: WorkspaceLens }) {
+export function WorkflowWorkspace({ user, projects, workspace, initialLens, initialWorkflowId, scenario }: { user: User; projects: ProjectFixture[]; workspace: ProjectWorkspaceFixture; initialLens: WorkspaceLens; initialWorkflowId?: string; scenario?: string }) {
   const { lens, set, toggle } = useWorkspaceLens(initialLens);
-  const [pageId, setPageId] = useState<string | null>(null);
+  const [pageId, setPageId] = useState<string | null>(() => workspace.workflows.some((item) => item.id === initialWorkflowId) ? initialWorkflowId ?? null : null);
   const [nodeId, setNodeId] = useState<string | null>(null);
-  const [approval, setApproval] = useState(workspace.atlasApproval);
+  const { approvals, approve } = useWorkspaceApprovals(workspace.project.id, { atlas: workspace.atlasApproval, ces: workspace.cesApproval });
   const active = lens.selectedPrdIds.length > 0;
   const isolate = active && lens.mode === "isolate";
   const affectedPages = useMemo(() => workspace.workflows.filter((page) => matches(page.prdIds, lens.selectedPrdIds)), [lens.selectedPrdIds, workspace.workflows]);
@@ -25,9 +25,9 @@ export function WorkflowWorkspace({ user, projects, workspace, initialLens }: { 
   const index = page ? pages.findIndex((item) => item.id === page.id) : -1;
   const open = (id: string) => { setPageId(id); setNodeId(null); };
   const move = (direction: -1 | 1) => { if (pages.length) open(pages[(index + direction + pages.length) % pages.length].id); };
-  const moveAffected = (direction: -1 | 1) => { const affectedIndex = affectedPages.findIndex((item) => item.id === page?.id); if (affectedPages.length) open(affectedPages[(Math.max(affectedIndex, 0) + direction + affectedPages.length) % affectedPages.length].id); };
-  return <AppShell active="workflow" projectNavigation projects={projects} routeContext={{ prd: active ? lens.selectedPrdIds.join(",") : undefined, lens: isolate ? "isolate" : undefined }} selectedProjectId={workspace.project.id} topbarAction={<PrdLensControl lens={lens} prds={workspace.prds} set={set} toggle={toggle} />} user={user} workspace={workspace}>
-    <section className="workflow-page">{page ? isolate && active && !matches(page.prdIds, lens.selectedPrdIds) ? <IsolationEmpty onBack={() => { setPageId(null); setNodeId(null); }} /> : <Detail affectedCount={affectedPages.length} currentIndex={index} group={group?.title ?? "Workflow"} groups={workspace.workflowGroups} isolate={isolate} lensActive={active} onBack={() => { setPageId(null); setNodeId(null); }} onMove={move} onMoveAffected={moveAffected} onOpen={open} onSelectNode={setNodeId} page={page} pages={pages} prds={workspace.prds} projectName={workspace.project.name} selected={lens.selectedPrdIds} selectedNode={selectedNode} /> : <Overview active={active} approval={approval} isolate={isolate} lens={lens} onApprove={() => setApproval("approved")} onOpen={open} user={user} workspace={workspace} />}</section>
+  const moveAffected = (direction: -1 | 1) => { const affectedIndex = affectedPages.findIndex((item) => item.id === page?.id); if (!affectedPages.length) return; if (affectedIndex === -1) return open(affectedPages[direction === 1 ? 0 : affectedPages.length - 1].id); open(affectedPages[(affectedIndex + direction + affectedPages.length) % affectedPages.length].id); };
+  return <AppShell active="workflow" projectNavigation projects={projects} routeContext={{ scenario, prd: active ? lens.selectedPrdIds.join(",") : undefined, lens: isolate ? "isolate" : undefined }} selectedProjectId={workspace.project.id} topbarAction={<PrdLensControl lens={lens} prds={workspace.prds} set={set} toggle={toggle} />} user={user} workspace={workspace}>
+    <section className="workflow-page">{page ? isolate && active && !matches(page.prdIds, lens.selectedPrdIds) ? <IsolationEmpty onBack={() => { setPageId(null); setNodeId(null); }} /> : <Detail affectedCount={affectedPages.length} currentIndex={index} group={group?.title ?? "Workflow"} groups={workspace.workflowGroups} isolate={isolate} lensActive={active} onBack={() => { setPageId(null); setNodeId(null); }} onMove={move} onMoveAffected={moveAffected} onOpen={open} onSelectNode={setNodeId} page={page} pages={pages} prds={workspace.prds} projectName={workspace.project.name} selected={lens.selectedPrdIds} selectedNode={selectedNode} /> : <Overview active={active} approval={approvals.atlas} isolate={isolate} lens={lens} onApprove={() => approve("atlas")} onOpen={open} user={user} workspace={workspace} />}</section>
   </AppShell>;
 }
 
