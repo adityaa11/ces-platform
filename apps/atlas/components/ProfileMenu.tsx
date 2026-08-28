@@ -26,7 +26,7 @@ export function ProfileMenu({ user }: { user: User }) {
   return <div className="profile-wrap" ref={ref}>
     <button aria-expanded={open} aria-label={`${user.name}, ${user.role}, ${user.email}`} className="profile-control" onClick={() => setOpen((value) => !value)} type="button">
       <Avatar name={user.name} size="small" />
-      <span className="profile-copy"><strong>{user.name}</strong><small>{user.role}</small></span>
+      <span className="profile-copy"><strong>{user.name}</strong><small>{user.email}</small></span>
       <svg aria-hidden="true" className="profile-chevron" fill="none" viewBox="0 0 16 16"><path d="m5 6 3 3 3-3" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" /></svg>
     </button>
     {open && (mobile ? <Dialog onClose={() => setOpen(false)} title="Account menu"><div className="profile-sheet">{actions}</div></Dialog> : <div className="profile-menu">{actions}</div>)}

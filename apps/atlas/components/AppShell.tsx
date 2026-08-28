@@ -13,6 +13,10 @@ type Props = { user: User; children: ReactNode; projects: ProjectFixture[]; sele
 const destinationLabel: Record<Destination, string> = { projects: "Projects", workflow: "Main Workflow", facts: "Project Facts", ces: "CES Result", changes: "Changes Done" };
 const destinationIcon: Record<Destination, string> = { projects: "▦", workflow: "∿", facts: "▤", ces: "▣", changes: "↻" };
 
+function AtlasBrand() {
+  return <Link className="brand" href="/demo"><span>A</span>Atlas</Link>;
+}
+
 export function AppShell({ user, children, projects, selectedProjectId, active = "projects", projectNavigation = false, sidebarAction, topbarAction, contentClassName = "", routeContext }: Props) {
   const [menu, setMenu] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -46,11 +50,11 @@ export function AppShell({ user, children, projects, selectedProjectId, active =
     return () => { document.removeEventListener("keydown", trapFocus); document.body.style.overflow = previousOverflow; };
   }, [collapsed, compact]);
   return <div className={`app-shell ${collapsed ? "sidebar-collapsed" : ""}`}>
-    <TopBar className="app-header" variant="workspace"><Link className="brand" href="/demo"><span>A</span>Atlas</Link><div className="topbar-actions"><label className="project-search"><svg aria-hidden="true" fill="none" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="5.8" stroke="currentColor" strokeWidth="1.8" /><path d="m15.2 15.2 4 4" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" /></svg><span>Search projects</span><input aria-label="Search projects" placeholder="Search projects" type="search" /></label>{topbarAction}<button aria-controls="app-navigation" aria-expanded={compact && collapsed} aria-label={collapsed ? "Close navigation menu" : "Open navigation menu"} className="mobile-menu" onClick={() => setCollapsed(!collapsed)} ref={menuTriggerRef} type="button"><svg aria-hidden="true" fill="none" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeLinecap="round" strokeWidth="2" /></svg></button></div></TopBar>
+    <TopBar className="app-header" variant="workspace"><AtlasBrand /><div className="topbar-actions"><label className="project-search"><svg aria-hidden="true" fill="none" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="5.8" stroke="currentColor" strokeWidth="1.8" /><path d="m15.2 15.2 4 4" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" /></svg><span>Search projects</span><input aria-label="Search projects" placeholder="Search projects" type="search" /></label>{topbarAction}<button aria-controls="app-navigation" aria-expanded={compact && collapsed} aria-label={collapsed ? "Close navigation menu" : "Open navigation menu"} className="mobile-menu" onClick={() => setCollapsed(!collapsed)} ref={menuTriggerRef} type="button"><svg aria-hidden="true" fill="none" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeLinecap="round" strokeWidth="2" /></svg></button></div></TopBar>
     {compact && collapsed && <button aria-label="Close navigation menu" className="drawer-backdrop" onClick={closeNavigation} type="button" />}
     <aside aria-hidden={compact && !collapsed ? true : undefined} aria-label="Workspace navigation" className={`navigation ${collapsed ? "navigation-open" : ""}`} id="app-navigation" inert={compact && !collapsed ? true : undefined} ref={navigationRef}>
       <button aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} className="sidebar-toggle" onClick={() => setCollapsed(!collapsed)} type="button"><svg aria-hidden="true" fill="none" viewBox="0 0 24 24"><rect height="18" rx="2.5" stroke="currentColor" strokeWidth="1.7" width="18" x="3" y="3" /><path d="M9 3v18" stroke="currentColor" strokeWidth="1.7" /><path d={collapsed ? "m13 9 3 3-3 3" : "m16 9-3 3 3 3"} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" /></svg></button>
-      <button aria-label="Close navigation menu" className="drawer-close" onClick={closeNavigation} ref={closeTriggerRef} type="button">×</button>
+      <div className="drawer-heading"><AtlasBrand /><button aria-label="Close navigation menu" className="drawer-close" onClick={closeNavigation} ref={closeTriggerRef} type="button">×</button></div>
       <section className="sidebar-project-region"><div className="project-switcher" ref={ref}>
         <button aria-expanded={menu} onClick={() => setMenu(!menu)} type="button">
           <span className="project-switcher-badge">{current ? current.name[0] : "⌁"}</span>

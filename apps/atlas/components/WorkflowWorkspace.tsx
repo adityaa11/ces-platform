@@ -42,13 +42,13 @@ function Overview({ active, approval, isolate, lens, onApprove, onOpen, user, wo
     </section>
     <header className="workspace-page-heading"><div><p className="workflow-kicker">Current accumulated understanding</p><h1>How Safara operates today</h1><p>A compact map of the major operational scopes. Open a scope to inspect detailed workflow pages, source wording, related facts, and CES baseline awareness.</p></div></header>
     {active && <section className="workflow-refactor-lens-note"><strong>{isolate ? "Isolating selected PRD contributions" : "Selected PRDs in accumulated context"}</strong><span>{workspace.workflows.filter((item) => matches(item.prdIds, lens.selectedPrdIds)).length} workflow pages contain a selected contribution.</span></section>}
-    <div className="workflow-refactor-layout">
-      <section className="workflow-refactor-main"><div className="workflow-refactor-sequence" aria-label="Ordered major workflows">{groups.map((group) => {
+    <div className="workflow-refactor-layout mobile-context-layout">
+      <section className="workflow-refactor-main mobile-context-main mobile-context-main-after-support"><div className="workflow-refactor-sequence" aria-label="Ordered major workflows">{groups.map((group) => {
         const flows = group.workflowIds.map((id) => workspace.workflows.find((item) => item.id === id)).filter((item): item is WorkflowFixture => Boolean(item));
         return <article className={active && !matches(group.prdIds, lens.selectedPrdIds) ? "is-muted" : ""} key={group.id}><span>{group.order}</span><div><h2>{group.title}</h2><p>{group.summary}</p><section className="workflow-refactor-pages">{flows.map((flow) => <button key={flow.id} onClick={() => onOpen(flow.id)} type="button">{flow.title}</button>)}</section></div><aside><small>Business result</small><strong>{group.expectedResult}</strong><button onClick={() => onOpen(group.workflowIds[0])} type="button">Open first detailed workflow →</button></aside></article>;
       })}</div></section>
-      <aside className="workflow-refactor-rail">
-        <OperationalModel workspace={workspace} />
+      <aside className="workflow-refactor-rail mobile-context-rail">
+        <OperationalModel className="mobile-context-primary" workspace={workspace} />
         {support && <section className="workflow-support-model"><p className="workflow-kicker">Cross-workflow support</p><h2>{support.title}</h2><p>{support.summary}</p><div>{support.workflowIds.map((id) => <button key={id} onClick={() => onOpen(id)} type="button">{workspace.workflows.find((item) => item.id === id)?.title} →</button>)}</div></section>}
       </aside>
     </div>
