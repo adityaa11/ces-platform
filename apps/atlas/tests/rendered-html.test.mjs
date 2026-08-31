@@ -77,6 +77,10 @@ test("adds a fresh CSP nonce before Vinext renders and prevents HTML caching", a
   assert.match(notFoundResponse.headers.get("content-type") ?? "", /^text\/html\b/i);
   assert.match(notFoundResponse.headers.get("cache-control") ?? "", /no-store/i);
   assert.ok(getNonce(notFoundResponse.headers.get("content-security-policy") ?? ""));
+  const notFoundHtml = await notFoundResponse.text();
+  assert.match(notFoundHtml, /<h1 id="not-found-title">Page not found<\/h1>/);
+  assert.doesNotMatch(notFoundHtml, /<style\b/i);
+  assert.doesNotMatch(notFoundHtml, /\sstyle="/i);
 
   const rscResponse = await render("/demo", { accept: "text/x-component", rsc: "1" });
   assert.ok(getNonce(rscResponse.headers.get("content-security-policy") ?? ""));

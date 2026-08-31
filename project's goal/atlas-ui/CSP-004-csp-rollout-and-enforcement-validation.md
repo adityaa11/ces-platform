@@ -72,6 +72,11 @@ surface has zero unexplained violations.
   project-library, every workspace view, the source viewer, and the rendered
   not-found response. Each returned `Content-Security-Policy`, no report-only
   policy or prohibited unsafe token, and `Cache-Control: no-store`.
+- 2026-08-31: BATCH-16 F-001 remediation replaces the framework default
+  not-found output with an Atlas-owned accessible 404 page. Worker-bound
+  inspection confirms 404 status, `no-store`, the enforced policy, zero inline
+  `<style>` blocks, and zero `style` attributes; a regression assertion covers
+  that markup contract.
 
 ## Review batch: BATCH-16
 
