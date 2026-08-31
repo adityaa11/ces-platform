@@ -36,8 +36,7 @@ export function AppShell({ user, children, projects, selectedProjectId, active =
   useEffect(() => { if (!menu) return; const close = (event: PointerEvent) => { if (!ref.current?.contains(event.target as Node)) setMenu(false); }; document.addEventListener("pointerdown", close); return () => document.removeEventListener("pointerdown", close); }, [menu]);
   useEffect(() => {
     if (!compact || !collapsed) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    document.body.classList.add("navigation-locked");
     closeTriggerRef.current?.focus();
     const trapFocus = (event: KeyboardEvent) => {
       if (event.key !== "Tab" || !navigationRef.current) return;
@@ -49,7 +48,7 @@ export function AppShell({ user, children, projects, selectedProjectId, active =
       if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     };
     document.addEventListener("keydown", trapFocus);
-    return () => { document.removeEventListener("keydown", trapFocus); document.body.style.overflow = previousOverflow; };
+    return () => { document.removeEventListener("keydown", trapFocus); document.body.classList.remove("navigation-locked"); };
   }, [collapsed, compact]);
   return <div className={`app-shell ${collapsed ? "sidebar-collapsed" : ""}`}>
     <TopBar className={`app-header ${fullWidthSearch ? "app-header-full-search" : ""}`.trim()} variant="workspace"><AtlasBrand /><div className="topbar-actions"><label className="project-search"><svg aria-hidden="true" fill="none" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="5.8" stroke="currentColor" strokeWidth="1.8" /><path d="m15.2 15.2 4 4" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" /></svg><span>Search projects</span><input aria-label="Search projects" placeholder="Search projects" type="search" /></label>{topbarAction}<button aria-controls="app-navigation" aria-expanded={compact && collapsed} aria-label={collapsed ? "Close navigation menu" : "Open navigation menu"} className="mobile-menu" onClick={() => setCollapsed(!collapsed)} ref={menuTriggerRef} type="button"><svg aria-hidden="true" fill="none" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeLinecap="round" strokeWidth="2" /></svg></button></div></TopBar>

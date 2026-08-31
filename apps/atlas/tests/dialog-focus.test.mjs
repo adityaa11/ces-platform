@@ -23,6 +23,7 @@ test("ThemeSelector restores and persists the selected theme across public and w
   assert.match(selector, /localStorage\.getItem\("atlas-theme"\)/);
   assert.match(selector, /localStorage\.setItem\("atlas-theme", theme\)/);
   assert.match(selector, /document\.documentElement\.dataset\.theme = theme/);
+  assert.match(selector, /prefers-color-scheme: light/);
   assert.match(publicHeader, /ThemeSelector/);
   assert.match(profileMenu, /ThemeSelector/);
 });

@@ -1,6 +1,6 @@
 # CSP-001: Centralized Worker nonce filter
 
-- **State:** awaiting_review
+- **State:** approved
 - **Review batch:** BATCH-13
 - **Depends on:** AUI-012, AUI-013
 - **Baseline:** [CSP refactor ticket set](CSP-README.md); [Atlas Full Product Context](../Atlas_Full_Product_Context.md) strict CSP requirement; [Atlas UI/UX Prototype PRD](../Atlas_UI_UX_Prototype_PRD.md) section 8; [AUI-001](AUI-001-foundation-and-fixture-boundary.md); [AUI-009](AUI-009-responsive-and-clarity-pass.md)

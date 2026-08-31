@@ -5,7 +5,10 @@ import { useEffect, useState } from "react";
 type Theme = "light" | "dark";
 
 function storedTheme(): Theme {
-  return typeof window !== "undefined" && window.localStorage.getItem("atlas-theme") === "light" ? "light" : "dark";
+  if (typeof window === "undefined") return "dark";
+  const stored = window.localStorage.getItem("atlas-theme");
+  if (stored === "light" || stored === "dark") return stored;
+  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
 }
 
 export function ThemeSelector({ className = "" }: { className?: string }) {

@@ -78,7 +78,7 @@ test("adds a fresh CSP nonce before Vinext renders and prevents HTML caching", a
   assert.ok(getNonce(reportOnlyResponse.headers.get("content-security-policy-report-only") ?? ""));
 });
 
-test("keeps Atlas source data outside the app components", async () => {
+test("keeps Atlas source data outside the app components and CSP-safe", async () => {
   const [page, demo, layout, packageJson, fixturePackage] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/demo/page.tsx", import.meta.url), "utf8"),
@@ -88,8 +88,7 @@ test("keeps Atlas source data outside the app components", async () => {
   ]);
 
   assert.match(page, /Explore demo/);
-  assert.match(layout, /localStorage\.getItem\('atlas-theme'\)/);
-  assert.match(layout, /suppressHydrationWarning/);
+  assert.doesNotMatch(layout, /dangerouslySetInnerHTML|suppressHydrationWarning|<script/);
   assert.match(demo, /from "@atlas\/fixtures"/);
   assert.match(fixturePackage, /Safara operations platform/);
   assert.match(packageJson, /"@atlas\/fixtures": "workspace:\*"/);
@@ -131,6 +130,7 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   const projectLibrary = await readFile(new URL("../components/ProjectLibrary.tsx", import.meta.url), "utf8");
   const profileMenu = await readFile(new URL("../components/ProfileMenu.tsx", import.meta.url), "utf8");
   const workflowWorkspace = await readFile(new URL("../components/WorkflowWorkspace.tsx", import.meta.url), "utf8");
+  const sourcesWorkspace = await readFile(new URL("../components/SourcesWorkspace.tsx", import.meta.url), "utf8");
   assert.match(appShell, /import \{ TopBar \} from "\.\/TopBar"/);
   assert.match(appShell, /<TopBar className=\{`app-header \$\{fullWidthSearch \? "app-header-full-search" : ""\}`\.trim\(\)\} variant="workspace">/);
   assert.match(appShell, /import \{ ProfileMenu \} from "\.\/ProfileMenu"/);
@@ -149,7 +149,15 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(appShell, /drawer-backdrop/);
   assert.match(appShell, /matchMedia\("\(max-width: 960px\)"\)/);
   assert.match(appShell, /inert=\{compact && !collapsed/);
-  assert.match(appShell, /document\.body\.style\.overflow = "hidden"/);
+  assert.match(appShell, /document\.body\.classList\.add\("navigation-locked"\)/);
+  assert.match(appShell, /document\.body\.classList\.remove\("navigation-locked"\)/);
+  assert.doesNotMatch(appShell, /document\.body\.style\.|\.style\.(?:width|height)/);
+  assert.match(globals, /body\.navigation-locked \{ overflow: hidden; \}/);
+  assert.match(globals, /@media \(prefers-color-scheme: light\)/);
+  assert.match(globals, /:root:not\(\[data-theme\]\)/);
+  assert.doesNotMatch(sourcesWorkspace, /\.style\.(?:width|height)/);
+  assert.match(sourcesWorkspace, /element\.width = Math\.floor\(viewport\.width\)/);
+  assert.match(sourcesWorkspace, /element\.height = Math\.floor\(viewport\.height\)/);
   assert.match(profileMenu, /matchMedia\("\(max-width: 960px\)"\)/);
   assert.match(profileMenu, /className="profile-copy"/);
   assert.match(profileMenu, /className="profile-chevron"/);

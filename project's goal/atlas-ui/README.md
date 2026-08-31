@@ -42,13 +42,13 @@ it crosses the Worker boundary, framework rendering, shared UI patterns, and the
 PDF viewer. The UI/UX Prototype PRD and review protocol are currently marked
 `Draft`; the Full Product Context has no explicit `Approved` status. The user has
 explicitly directed closure of the UI ticket set and commencement of the strict
-CSP refactor. CSP-001 is therefore `awaiting_review`; later CSP tickets remain `planned`
+CSP refactor. CSP-001 is therefore `approved`; CSP-002 is `awaiting_review`; later CSP tickets remain `planned`
 until their dependencies are implemented and reviewed.
 
 | Order | Ticket / batch | State | Depends on | Review question |
 |---:|---|---|---|---|
-| 1 | CSP-001 / BATCH-13 | awaiting_review | AUI-012, AUI-013 | Does the Worker centrally generate, propagate, and enforce one nonce per response without stale HTML caching? |
-| 2 | CSP-002 / BATCH-14 | planned | CSP-001 | Does the application remain behaviorally and visually equivalent without Atlas-owned inline scripts or runtime inline styles? |
+| 1 | CSP-001 / BATCH-13 | approved | AUI-012, AUI-013 | Does the Worker centrally generate, propagate, and enforce one nonce per response without stale HTML caching? |
+| 2 | CSP-002 / BATCH-14 | awaiting_review | CSP-001 | Does the application remain behaviorally and visually equivalent without Atlas-owned inline scripts or runtime inline styles? |
 | 3 | CSP-003 / BATCH-15 | planned | CSP-001 | Does the PDF viewer work under the narrowest strict-CSP-compatible worker and WebAssembly configuration? |
 | 4 | CSP-004 / BATCH-16 | planned | CSP-001, CSP-002, CSP-003 | Can strict CSP be enforced across every route and interaction with no browser violations? |
 

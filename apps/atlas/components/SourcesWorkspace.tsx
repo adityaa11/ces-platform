@@ -82,15 +82,12 @@ export function SourcesWorkspace({ user, projects, workspace, scenario, initialL
         const page = await pdfDocument.getPage(pageNumber);
         const baseViewport = page.getViewport({ scale: 1 });
         const effectiveZoom = fitWidth ? Math.min(1.35, Math.max(0.5, (canvasWidth - 96) / baseViewport.width)) : zoom;
-        const pixelRatio = window.devicePixelRatio || 1;
-        const viewport = page.getViewport({ scale: effectiveZoom * pixelRatio });
+        const viewport = page.getViewport({ scale: effectiveZoom });
         const element = canvas.current;
         const context = element.getContext("2d", { alpha: false });
         if (!context || cancelled) return;
         element.width = Math.floor(viewport.width);
         element.height = Math.floor(viewport.height);
-        element.style.width = `${Math.floor(viewport.width / pixelRatio)}px`;
-        element.style.height = `${Math.floor(viewport.height / pixelRatio)}px`;
         renderTask = page.render({ canvasContext: context, viewport });
         await renderTask.promise;
         if (!cancelled) {

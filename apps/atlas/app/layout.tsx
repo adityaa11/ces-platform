@@ -16,10 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: "try { document.documentElement.dataset.theme = localStorage.getItem('atlas-theme') === 'light' ? 'light' : 'dark'; } catch {}" }} />
-      </head>
+    <html lang="en">
       <body>{children}</body>
     </html>
   );
