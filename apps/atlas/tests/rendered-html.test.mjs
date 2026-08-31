@@ -3,25 +3,28 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 let renderId = 0;
-async function render(pathname = "/") {
+async function render(pathname = "/", headers = { accept: "text/html" }, envOverrides = {}) {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
   workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}-${renderId++}`);
   const { default: worker } = await import(workerUrl.href);
 
   return worker.fetch(
-    new Request(`http://localhost${pathname}`, {
-      headers: { accept: "text/html" },
-    }),
+    new Request(`http://localhost${pathname}`, { headers }),
     {
       ASSETS: {
         fetch: async () => new Response("Not found", { status: 404 }),
       },
+      ...envOverrides,
     },
     {
       waitUntil() {},
       passThroughOnException() {},
     },
   );
+}
+
+function getNonce(policy) {
+  return policy.match(/script-src[^;]*'nonce-([^']+)'/)?.[1];
 }
 
 test("server-renders the public Atlas landing page", async () => {
@@ -36,6 +39,37 @@ test("server-renders the public Atlas landing page", async () => {
   assert.match(html, /Sign up/);
   assert.match(html, /Explore demo/);
   assert.doesNotMatch(html, /Fixture-powered prototype|Nadia Hartono/);
+});
+
+test("adds a fresh CSP nonce before Vinext renders and prevents HTML caching", async () => {
+  const firstResponse = await render();
+  const secondResponse = await render();
+  const firstPolicy = firstResponse.headers.get("content-security-policy");
+  const secondPolicy = secondResponse.headers.get("content-security-policy");
+  const firstNonce = getNonce(firstPolicy ?? "");
+  const secondNonce = getNonce(secondPolicy ?? "");
+
+  assert.ok(firstNonce);
+  assert.ok(secondNonce);
+  assert.notEqual(firstNonce, secondNonce);
+  assert.match(firstPolicy ?? "", /^default-src 'self'; script-src 'self' 'nonce-[^']+' 'strict-dynamic';/);
+  assert.doesNotMatch(firstPolicy ?? "", /'unsafe-(?:inline|eval)'/);
+  assert.match(firstResponse.headers.get("cache-control") ?? "", /no-store/i);
+
+  const firstHtml = await firstResponse.text();
+  const scripts = [...firstHtml.matchAll(/<script\b([^>]*)>/gi)];
+  assert.ok(scripts.length > 0);
+  const vinextScripts = scripts.filter(([, attributes]) => /\bsrc=|\bid="_R_"/.test(attributes));
+  assert.ok(vinextScripts.length > 0);
+  for (const [, attributes] of vinextScripts) assert.match(attributes, new RegExp(`\\bnonce="${firstNonce}"`));
+
+  const rscResponse = await render("/demo", { accept: "text/x-component", rsc: "1" });
+  assert.ok(getNonce(rscResponse.headers.get("content-security-policy") ?? ""));
+  assert.equal(rscResponse.headers.get("content-security-policy-report-only"), null);
+
+  const reportOnlyResponse = await render("/", { accept: "text/html" }, { CSP_REPORT_ONLY: "true" });
+  assert.equal(reportOnlyResponse.headers.get("content-security-policy"), null);
+  assert.ok(getNonce(reportOnlyResponse.headers.get("content-security-policy-report-only") ?? ""));
 });
 
 test("keeps Atlas source data outside the app components", async () => {

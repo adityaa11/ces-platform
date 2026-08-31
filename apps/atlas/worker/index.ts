@@ -1,6 +1,7 @@
 /** Cloudflare Worker entry point for the vinext-starter template. */
 import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
+import { createNonce, createPolicy, type CspMode, withCspRequest, withCspResponse } from "./csp";
 
 interface Env {
   ASSETS: Fetcher;
@@ -12,6 +13,7 @@ interface Env {
       };
     };
   };
+  CSP_REPORT_ONLY?: string;
 }
 
 interface ExecutionContext {
@@ -40,7 +42,12 @@ const worker = {
       }, allowedWidths);
     }
 
-    return handler.fetch(request, env, ctx);
+    const mode: CspMode = env.CSP_REPORT_ONLY === "true" ? "report-only" : "enforce";
+    const policy = createPolicy(createNonce());
+    const requestWithCsp = withCspRequest(request, policy, mode);
+    const response = await handler.fetch(requestWithCsp, env, ctx);
+
+    return withCspResponse(response, policy, mode);
   },
 };
 
