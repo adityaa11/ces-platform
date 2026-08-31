@@ -1,6 +1,6 @@
 # CSP-004: CSP rollout and enforcement validation
 
-- **State:** awaiting_review
+- **State:** approved
 - **Review batch:** BATCH-16
 - **Depends on:** CSP-001, CSP-002, CSP-003
 - **Baseline:** [CSP refactor ticket set](CSP-README.md); [Atlas UI/UX Prototype PRD](../Atlas_UI_UX_Prototype_PRD.md) section 8; [Atlas UI/UX Prototype Review Protocol](../Atlas_UI_UX_Review_Protocol.md)
