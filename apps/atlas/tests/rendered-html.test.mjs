@@ -167,6 +167,9 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.doesNotMatch(sourcesWorkspace, /\.style\.(?:width|height)/);
   assert.match(sourcesWorkspace, /element\.width = Math\.floor\(viewport\.width\)/);
   assert.match(sourcesWorkspace, /element\.height = Math\.floor\(viewport\.height\)/);
+  assert.match(sourcesWorkspace, /GlobalWorkerOptions\.workerSrc = new URL\("\/pdfjs\/pdf\.worker\.mjs", window\.location\.origin\)\.href/);
+  assert.match(sourcesWorkspace, /pdfjs\.getDocument\(\{ url: selected\.url, useWasm: false \}\)/);
+  assert.doesNotMatch(sourcesWorkspace, /wasm-unsafe-eval|unsafe-eval/);
   assert.match(profileMenu, /matchMedia\("\(max-width: 960px\)"\)/);
   assert.match(profileMenu, /className="profile-copy"/);
   assert.match(profileMenu, /className="profile-chevron"/);

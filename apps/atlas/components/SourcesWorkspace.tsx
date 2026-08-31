@@ -77,7 +77,7 @@ export function SourcesWorkspace({ user, projects, workspace, scenario, initialL
       try {
         const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs") as PdfJsModule;
         pdfjs.GlobalWorkerOptions.workerSrc = new URL("/pdfjs/pdf.worker.mjs", window.location.origin).href;
-        loadingTask = pdfjs.getDocument({ url: selected.url });
+        loadingTask = pdfjs.getDocument({ url: selected.url, useWasm: false });
         const pdfDocument = await loadingTask.promise;
         const page = await pdfDocument.getPage(pageNumber);
         const baseViewport = page.getViewport({ scale: 1 });

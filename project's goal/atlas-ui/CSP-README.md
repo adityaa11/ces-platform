@@ -4,8 +4,8 @@
 - **Purpose:** Align the fixture-driven Atlas prototype with a strict Content
   Security Policy without introducing a new product capability or weakening the
   existing UI/UX direction.
-- **Implementation status:** Planning only. No implementation is authorized by
-  creating this ticket set.
+- **Implementation status:** CSP-001 and CSP-002 are complete; CSP-003 is
+  awaiting review.
 
 ## Baseline
 
@@ -23,9 +23,9 @@ The UI/UX Prototype PRD and the UI/UX Prototype Review Protocol are currently
 marked `Draft`. The Full Product Context has a descriptive status of
 `Product context and future-state operating model`, but it does not contain an
 explicit `Approved` status. The user has explicitly directed closure of the UI
-ticket set and commencement of the strict-CSP refactor. CSP-001 is now `approved`;
-CSP-002 is `awaiting_review`, while later CSP tickets remain `planned` until their dependencies are implemented
-and reviewed.
+ticket set and commencement of the strict-CSP refactor. CSP-001 and CSP-002 are
+now `approved`; CSP-003 is `awaiting_review`, while CSP-004 remains `planned` until
+its dependencies are implemented and reviewed.
 
 ## Intended outcome
 
@@ -42,8 +42,8 @@ and reviewed.
 | Order | Ticket / batch | State | Depends on | Review question |
 |---:|---|---|---|---|
 | 1 | CSP-001 / BATCH-13 | approved | AUI-012, AUI-013 | Does the Worker centrally generate, propagate, and enforce one nonce per response without stale HTML caching? |
-| 2 | CSP-002 / BATCH-14 | awaiting_review | CSP-001 | Does the application remain behaviorally and visually equivalent without Atlas-owned inline scripts or runtime inline styles? |
-| 3 | CSP-003 / BATCH-15 | planned | CSP-001 | Does the PDF viewer work under the narrowest strict-CSP-compatible worker and WebAssembly configuration? |
+| 2 | CSP-002 / BATCH-14 | approved | CSP-001 | Does the application remain behaviorally and visually equivalent without Atlas-owned inline scripts or runtime inline styles? |
+| 3 | CSP-003 / BATCH-15 | awaiting_review | CSP-001 | Does the PDF viewer work under the narrowest strict-CSP-compatible worker and WebAssembly configuration? |
 | 4 | CSP-004 / BATCH-16 | planned | CSP-001, CSP-002, CSP-003 | Can strict CSP be enforced across every route and interaction with no browser violations? |
 
 ## Ticket records

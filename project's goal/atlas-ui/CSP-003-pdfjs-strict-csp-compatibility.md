@@ -1,6 +1,6 @@
 # CSP-003: PDF.js strict-CSP compatibility
 
-- **State:** planned
+- **State:** awaiting_review
 - **Review batch:** BATCH-15
 - **Depends on:** CSP-001
 - **Baseline:** [CSP refactor ticket set](CSP-README.md); [Atlas UI/UX Prototype PRD](../Atlas_UI_UX_Prototype_PRD.md) section 8; [AUI-009](AUI-009-responsive-and-clarity-pass.md)
@@ -52,6 +52,26 @@ with an explicit same-origin worker and no broad evaluation allowance.
 - Check browser console output for CSP violations and PDF.js warnings.
 - Run application tests and record the rendered source-viewer states before
   review.
+
+## Validation record
+
+- 2026-08-31: `pnpm test` passed (fixture tests, production build, and all
+  seven application tests); `pnpm lint` passed.
+- 2026-08-31: The local source-viewer route returned the enforced policy with
+  `connect-src 'self'` and `worker-src 'self'`, with neither `'unsafe-inline'`
+  nor `'unsafe-eval'`.
+- 2026-08-31: Browser checks rendered PRD 1 page 1, PRD 2 page 2, and PRD 3
+  page 1, then navigated to another page in each document. Each canvas had a
+  non-zero rendered size and no loading status remained.
+- 2026-08-31: Zoom in, Fit width, 531px compact layout, and fullscreen entry
+  and exit were exercised successfully. The compact layout retained the
+  source list, back-to-Sources control, toolbar, and readable rendered page.
+- 2026-08-31: Observed assets were limited to the same-origin worker at
+  `/pdfjs/pdf.worker.mjs` and the three same-origin `/source-pdfs/` fixture
+  URLs; no WebAssembly asset was requested. The vendored worker contains the
+  PDF.js `Function('return this')` fallback, but supported browsers expose
+  `globalThis` before that fallback and the exercised worker startup produced
+  no CSP or PDF.js console warnings.
 
 ## Review batch: BATCH-15
 

@@ -1,6 +1,6 @@
 # CSP-002: CSP-safe application patterns
 
-- **State:** awaiting_review
+- **State:** approved
 - **Review batch:** BATCH-14
 - **Depends on:** CSP-001
 - **Baseline:** [CSP refactor ticket set](CSP-README.md); [Atlas UI/UX Prototype PRD](../Atlas_UI_UX_Prototype_PRD.md) section 8; [AUI-001](AUI-001-foundation-and-fixture-boundary.md); [AUI-009](AUI-009-responsive-and-clarity-pass.md)
