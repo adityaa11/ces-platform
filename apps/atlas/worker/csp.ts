@@ -41,6 +41,7 @@ export function withCspResponse(response: Response, policy: string, mode: CspMod
   const headers = new Headers(response.headers);
   headers.delete(mode === "enforce" ? CSP_REPORT_ONLY_HEADER : CSP_HEADER);
   headers.set(mode === "enforce" ? CSP_HEADER : CSP_REPORT_ONLY_HEADER, policy);
+  if (/^text\/html\b/i.test(headers.get("content-type") ?? "")) headers.set("cache-control", "no-store");
 
   return new Response(response.body, {
     headers,

@@ -1,6 +1,6 @@
 # CSP refactor ticket set
 
-- **State:** ready
+- **State:** awaiting_review
 - **Purpose:** Align the fixture-driven Atlas prototype with a strict Content
   Security Policy without introducing a new product capability or weakening the
   existing UI/UX direction.
@@ -23,7 +23,7 @@ The UI/UX Prototype PRD and the UI/UX Prototype Review Protocol are currently
 marked `Draft`. The Full Product Context has a descriptive status of
 `Product context and future-state operating model`, but it does not contain an
 explicit `Approved` status. The user has explicitly directed closure of the UI
-ticket set and commencement of the strict-CSP refactor. CSP-001 is now `ready`;
+ticket set and commencement of the strict-CSP refactor. CSP-001 is now `awaiting_review`;
 the later CSP tickets remain `planned` until their dependencies are implemented
 and reviewed.
 
@@ -41,7 +41,7 @@ and reviewed.
 
 | Order | Ticket / batch | State | Depends on | Review question |
 |---:|---|---|---|---|
-| 1 | CSP-001 / BATCH-13 | ready | AUI-012, AUI-013 | Does the Worker centrally generate, propagate, and enforce one nonce per response without stale HTML caching? |
+| 1 | CSP-001 / BATCH-13 | awaiting_review | AUI-012, AUI-013 | Does the Worker centrally generate, propagate, and enforce one nonce per response without stale HTML caching? |
 | 2 | CSP-002 / BATCH-14 | planned | CSP-001 | Does the application remain behaviorally and visually equivalent without Atlas-owned inline scripts or runtime inline styles? |
 | 3 | CSP-003 / BATCH-15 | planned | CSP-001 | Does the PDF viewer work under the narrowest strict-CSP-compatible worker and WebAssembly configuration? |
 | 4 | CSP-004 / BATCH-16 | planned | CSP-001, CSP-002, CSP-003 | Can strict CSP be enforced across every route and interaction with no browser violations? |

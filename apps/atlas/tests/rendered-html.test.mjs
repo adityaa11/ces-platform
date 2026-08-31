@@ -61,7 +61,13 @@ test("adds a fresh CSP nonce before Vinext renders and prevents HTML caching", a
   assert.ok(scripts.length > 0);
   const vinextScripts = scripts.filter(([, attributes]) => /\bsrc=|\bid="_R_"/.test(attributes));
   assert.ok(vinextScripts.length > 0);
-  for (const [, attributes] of vinextScripts) assert.match(attributes, new RegExp(`\\bnonce="${firstNonce}"`));
+  for (const [, attributes] of vinextScripts) assert.ok(attributes.includes(`nonce="${firstNonce}"`));
+
+  const notFoundResponse = await render("/does-not-exist");
+  assert.equal(notFoundResponse.status, 404);
+  assert.match(notFoundResponse.headers.get("content-type") ?? "", /^text\/html\b/i);
+  assert.match(notFoundResponse.headers.get("cache-control") ?? "", /no-store/i);
+  assert.ok(getNonce(notFoundResponse.headers.get("content-security-policy") ?? ""));
 
   const rscResponse = await render("/demo", { accept: "text/x-component", rsc: "1" });
   assert.ok(getNonce(rscResponse.headers.get("content-security-policy") ?? ""));
