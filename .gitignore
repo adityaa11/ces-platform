@@ -4,3 +4,6 @@ dist/
 .wrangler/
 coverage/
 .env*
+apps/atlas/generated/
+apps/atlas/public/source-pdfs/
+apps/atlas/public/pdfjs/

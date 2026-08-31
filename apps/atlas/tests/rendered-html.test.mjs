@@ -65,11 +65,12 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   const workflow = await render("/demo?projectId=safara&view=workflow&prd=safara-increment-02&lens=isolate");
   const facts = await render("/demo?projectId=safara&view=facts&prd=safara-increment-02&lens=isolate");
   const changes = await render("/demo?projectId=safara&view=changes&prd=safara-increment-02&lens=isolate");
+  const sources = await render("/demo?projectId=safara&view=sources");
   const editorDemo = await render("/demo?scenario=editor-ready");
   const viewerDemo = await render("/demo?scenario=viewer-ready");
   const processingStates = await Promise.all(["uploading", "extracting", "modeling", "ready", "needs-attention", "failed"].map((stage) => render(`/demo?scenario=processing-${stage}`)));
   const approvedDemo = await render("/demo?scenario=approved-result&projectId=safara&view=ces");
-  for (const response of [signIn, signUp, reset, demo, workflow, facts, changes, editorDemo, viewerDemo, approvedDemo, ...processingStates]) assert.equal(response.status, 200);
+  for (const response of [signIn, signUp, reset, demo, workflow, facts, changes, sources, editorDemo, viewerDemo, approvedDemo, ...processingStates]) assert.equal(response.status, 200);
   const signInHtml = await signIn.text();
   const signUpHtml = await signUp.text();
   assert.match(signInHtml, /Welcome back|Forgot password/);
@@ -91,7 +92,7 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   const profileMenu = await readFile(new URL("../components/ProfileMenu.tsx", import.meta.url), "utf8");
   const workflowWorkspace = await readFile(new URL("../components/WorkflowWorkspace.tsx", import.meta.url), "utf8");
   assert.match(appShell, /import \{ TopBar \} from "\.\/TopBar"/);
-  assert.match(appShell, /<TopBar className="app-header" variant="workspace">/);
+  assert.match(appShell, /<TopBar className=\{`app-header \$\{fullWidthSearch \? "app-header-full-search" : ""\}`\.trim\(\)\} variant="workspace">/);
   assert.match(appShell, /import \{ ProfileMenu \} from "\.\/ProfileMenu"/);
   assert.doesNotMatch(appShell, /libraryProjects|id:"selected"/);
   assert.match(appShell, /new URLSearchParams\(window\.location\.search\)/);
@@ -138,8 +139,13 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(workflowHtml, /27 July 2026/);
   const factsHtml = await facts.text();
   const changesHtml = await changes.text();
+  const sourcesHtml = await sources.text();
   assert.match(factsHtml, /Project Facts|People and responsibilities/);
   assert.match(changesHtml, /Changes Done|Tanggung jawab Finance dan Operations/);
+  assert.match(sourcesHtml, /Workspace library|Sources|Search PDFs|PDF controls|Open original/);
+  assert.match(sourcesHtml, /Pembayaran, Dokumen, dan Kesiapan Keberangkatan/);
+  assert.match(sourcesHtml, /source-pdfs\/Safara\/Safara_Incremental_PRD_02_Payment_Documents_Readiness\.pdf/);
+  assert.match(sourcesHtml, /href="\/demo\?projectId=safara&amp;view=sources"/);
   assert.match(changesHtml, /href="\/demo\?projectId=safara&amp;view=workflow&amp;prd=safara-increment-02&amp;lens=isolate/);
   for (const html of [workflowHtml, factsHtml, changesHtml]) assert.match(html, /href="\/demo\?projectId=safara&amp;prd=safara-increment-02&amp;lens=isolate&amp;view=(workflow|facts|ces|changes)"/);
   assert.match(workflowWorkspace, /Previous affected workflow page/);

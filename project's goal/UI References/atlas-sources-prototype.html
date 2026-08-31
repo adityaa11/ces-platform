@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Atlas — Sources Prototype</title>
+<style>
+:root {
+  --ink: #f4f4f5;
+  --muted: #a1a1aa;
+  --paper: #111113;
+  --surface: #18181b;
+  --surface-raised: #202024;
+  --line: #303036;
+  --forest: #8b8af8;
+  --mint: #29283e;
+  --surface-inset: #18181b;
+  --surface-hover: #26262d;
+  --danger: #f87171;
+  --font-sans: Arial, Helvetica, sans-serif;
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  --ink: #20242e;
+  --muted: #687386;
+  --paper: #f6f7f9;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --line: #e2e6ed;
+  --forest: #5c5bd6;
+  --mint: #efefff;
+  --surface-inset: #f7f8fb;
+  --surface-hover: #f4f5fb;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+button, input { font: inherit; }
+button { cursor: pointer; }
+a { color: inherit; }
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+/* Repo shell geometry */
+.app-shell {
+  display: grid;
+  grid-template-columns: 16rem minmax(0, 1fr);
+  grid-template-rows: 4rem 1fr;
+  min-height: 100vh;
+  transition: grid-template-columns .24s cubic-bezier(.2,.8,.2,1);
+}
+.app-shell.sidebar-collapsed { grid-template-columns: 4.25rem minmax(0, 1fr); }
+
+.topbar {
+  align-items: center;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  grid-column: 1 / -1;
+  height: 4rem;
+  padding-inline: clamp(1rem, 3vw, 2.25rem);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+.brand {
+  align-items: center;
+  display: inline-flex;
+  gap: .5rem;
+  font-size: 1rem;
+  font-weight: 800;
+  text-decoration: none;
+  letter-spacing: -.02em;
+}
+.brand > span {
+  align-items: center;
+  background: var(--forest);
+  border-radius: .45rem;
+  color: white;
+  display: inline-flex;
+  font-size: .72rem;
+  height: 1.85rem;
+  justify-content: center;
+  width: 1.85rem;
+}
+.topbar-actions { align-items: center; display: flex; gap: .65rem; margin-left: auto; }
+.project-search {
+  align-items: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: .6rem;
+  color: var(--muted);
+  display: flex;
+  gap: .45rem;
+  height: 2.6rem;
+  padding: 0 .7rem;
+  width: min(18rem, 26vw);
+}
+.project-search svg { height: 1rem; width: 1rem; flex: 0 0 auto; }
+.project-search input {
+  background: transparent;
+  border: 0;
+  color: var(--ink);
+  min-width: 0;
+  outline: 0;
+  width: 100%;
+}
+.project-search:focus-within {
+  border-color: var(--forest);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--forest) 24%, transparent);
+}
+.theme-button {
+  align-items: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: .6rem;
+  color: var(--muted);
+  display: inline-flex;
+  height: 2.6rem;
+  justify-content: center;
+  width: 2.6rem;
+}
+.theme-button:hover { color: var(--ink); border-color: var(--forest); }
+
+.navigation {
+  align-self: start;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  height: calc(100vh - 4rem);
+  overflow: visible;
+  padding: 1.1rem 1rem 1rem;
+  position: sticky;
+  top: 4rem;
+}
+.sidebar-toggle {
+  align-items: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: .55rem;
+  color: var(--muted);
+  display: inline-flex;
+  height: 2.35rem;
+  justify-content: center;
+  padding: 0;
+  width: 2.35rem;
+}
+.sidebar-toggle:hover { background: var(--mint); border-color: var(--forest); color: var(--forest); }
+.sidebar-toggle svg { height: 1.05rem; width: 1.05rem; }
+
+.sidebar-project-region { display: grid; gap: .45rem; }
+.project-switcher { position: relative; }
+.project-switcher > button {
+  align-items: center;
+  background: color-mix(in srgb, var(--surface-raised) 84%, var(--mint));
+  border: 1px solid var(--line);
+  border-radius: .7rem;
+  color: var(--ink);
+  display: grid;
+  gap: .55rem;
+  grid-template-columns: 2.1rem 1fr .75rem;
+  min-height: 3.45rem;
+  padding: .55rem;
+  text-align: left;
+  width: 100%;
+}
+.project-switcher-badge {
+  align-items: center;
+  background: var(--mint);
+  border-radius: .45rem;
+  color: var(--forest);
+  display: grid;
+  font-size: .76rem;
+  font-weight: 800;
+  height: 2.1rem;
+  place-items: center;
+  width: 2.1rem;
+}
+.project-switcher-copy { display: grid; gap: .12rem; min-width: 0; }
+.project-switcher-copy strong {
+  font-size: .85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.project-switcher-copy small {
+  color: var(--muted); font-size: .54rem; letter-spacing: .08em; text-transform: uppercase;
+}
+.chev { color: var(--muted); font-size: .75rem; }
+
+.nav-section-label {
+  color: var(--muted);
+  font-size: .61rem;
+  font-weight: 800;
+  letter-spacing: .11em;
+  margin: .55rem 0 .1rem;
+  padding-top: .95rem;
+  text-transform: uppercase;
+  border-top: 1px solid var(--line);
+}
+.sidebar-project-links .nav-section-label { border-top: 0; margin-top: .15rem; }
+.navigation nav { display: grid; gap: .16rem; }
+.nav-item {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-left: 2px solid transparent;
+  border-radius: .45rem;
+  color: #b5b5be;
+  display: grid;
+  font-size: .84rem;
+  font-weight: 650;
+  gap: .65rem;
+  grid-template-columns: 1.05rem 1fr;
+  padding: .62rem .7rem;
+  text-align: left;
+  text-decoration: none;
+  width: 100%;
+}
+.nav-item:hover { background: #24242b; color: #efeff5; }
+.nav-item.nav-active {
+  background: color-mix(in srgb, var(--mint) 62%, var(--surface-raised));
+  border-left-color: var(--forest);
+  color: var(--ink);
+}
+.nav-item.nav-placeholder { cursor: default; opacity: .82; }
+.nav-item span:first-child { text-align: center; }
+
+.profile-wrap {
+  border-top: 1px solid var(--line);
+  margin-top: auto;
+  padding-top: .75rem;
+}
+.profile-control {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--ink);
+  display: grid;
+  gap: .625rem;
+  grid-template-columns: 1.9rem minmax(0, 1fr) 1rem;
+  min-height: 3.875rem;
+  padding: .55rem .45rem;
+  text-align: left;
+  width: 100%;
+}
+.avatar {
+  align-items: center;
+  background: #292932;
+  border-radius: 50%;
+  color: #d7d6ff;
+  display: inline-flex;
+  font-size: .7rem;
+  font-weight: 800;
+  height: 2rem;
+  justify-content: center;
+  width: 2rem;
+}
+.profile-copy { display: flex; flex-direction: column; gap: .15rem; min-width: 0; }
+.profile-copy strong { font-size: .75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.profile-copy small { color: var(--muted); font-size: .625rem; }
+
+/* Collapsed state */
+.sidebar-collapsed .navigation { align-items: center; padding-inline: .5rem; }
+.sidebar-collapsed .project-switcher,
+.sidebar-collapsed .sidebar-project-region,
+.sidebar-collapsed .sidebar-workspace-region,
+.sidebar-collapsed .sidebar-project-links { display: none; }
+.sidebar-collapsed .profile-control {
+  grid-template-columns: 1.9rem; height: 2.5rem; min-height: 2.5rem; padding: .3rem; width: 2.5rem;
+}
+.sidebar-collapsed .profile-copy, .sidebar-collapsed .profile-chevron { display: none; }
+
+/* Sources page: intentionally wider than standard app-content */
+.sources-content {
+  min-width: 0;
+  height: calc(100vh - 4rem);
+  overflow: hidden;
+}
+.sources-page {
+  display: grid;
+  grid-template-columns: 20rem minmax(0, 1fr);
+  height: 100%;
+  min-width: 0;
+}
+.source-library {
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+.source-library-header {
+  border-bottom: 1px solid var(--line);
+  padding: 1.35rem 1rem 1rem;
+}
+.source-library-title {
+  align-items: end;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: .9rem;
+}
+.source-library-title div { display: grid; gap: .18rem; }
+.source-library-title .eyebrow {
+  color: var(--forest);
+  font-size: .64rem;
+  font-weight: 800;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+.source-library-title h1 {
+  font-size: 1.5rem;
+  letter-spacing: -.04em;
+  margin: 0;
+}
+.source-library-title b {
+  background: var(--mint);
+  border-radius: 999px;
+  color: var(--forest);
+  font-size: .65rem;
+  padding: .3rem .48rem;
+}
+.source-search {
+  align-items: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: .55rem;
+  color: var(--muted);
+  display: flex;
+  gap: .45rem;
+  height: 2.35rem;
+  padding: 0 .65rem;
+}
+.source-search svg { height: .95rem; width: .95rem; }
+.source-search input {
+  background: transparent;
+  border: 0;
+  color: var(--ink);
+  min-width: 0;
+  outline: 0;
+  width: 100%;
+}
+.source-list {
+  overflow: auto;
+  padding: .85rem .7rem 1rem;
+}
+.source-group + .source-group { margin-top: 1rem; }
+.source-group-title {
+  color: var(--muted);
+  font-size: .61rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+  margin: .35rem .35rem .45rem;
+  text-transform: uppercase;
+}
+.source-row {
+  align-items: start;
+  background: transparent;
+  border: 1px solid transparent;
+  border-left: 2px solid transparent;
+  border-radius: .55rem;
+  color: var(--ink);
+  display: grid;
+  gap: .65rem;
+  grid-template-columns: 2.1rem minmax(0, 1fr);
+  margin: .15rem 0;
+  padding: .68rem .65rem;
+  text-align: left;
+  width: 100%;
+}
+.source-row:hover { background: var(--surface-hover); }
+.source-row.is-active {
+  background: color-mix(in srgb, var(--mint) 70%, var(--surface-raised));
+  border-color: color-mix(in srgb, var(--forest) 25%, transparent);
+  border-left-color: var(--forest);
+}
+.source-file-icon {
+  align-items: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: .45rem;
+  color: var(--forest);
+  display: grid;
+  font-size: .55rem;
+  font-weight: 900;
+  height: 2.1rem;
+  place-items: center;
+  width: 2.1rem;
+}
+.source-row.is-active .source-file-icon { background: var(--mint); border-color: color-mix(in srgb,var(--forest) 45%,var(--line)); }
+.source-row-copy { display: grid; gap: .22rem; min-width: 0; }
+.source-row-copy strong {
+  font-size: .76rem;
+  line-height: 1.35;
+}
+.source-row-copy span {
+  color: var(--forest);
+  font-size: .62rem;
+  font-weight: 800;
+}
+.source-row-copy small {
+  color: var(--muted);
+  font-size: .6rem;
+  line-height: 1.35;
+}
+.no-results {
+  color: var(--muted);
+  display: none;
+  font-size: .74rem;
+  padding: 1rem .4rem;
+}
+
+/* Viewer */
+.viewer {
+  background: #111115;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  min-width: 0;
+  overflow: hidden;
+}
+:root[data-theme="light"] .viewer { background: #eceef2; }
+.viewer-doc-header {
+  align-items: center;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  min-height: 4.6rem;
+  padding: .95rem 1.25rem;
+}
+.viewer-doc-copy { min-width: 0; }
+.viewer-doc-copy .eyebrow {
+  color: var(--forest);
+  font-size: .62rem;
+  font-weight: 800;
+  letter-spacing: .09em;
+  margin: 0 0 .2rem;
+  text-transform: uppercase;
+}
+.viewer-doc-copy h2 {
+  font-size: .98rem;
+  line-height: 1.25;
+  margin: 0;
+  max-width: 54rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.viewer-doc-copy p {
+  color: var(--muted);
+  font-size: .65rem;
+  margin: .3rem 0 0;
+}
+.open-external {
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: .5rem;
+  color: var(--muted);
+  display: inline-flex;
+  font-size: .68rem;
+  font-weight: 700;
+  gap: .35rem;
+  padding: .5rem .65rem;
+}
+.open-external:hover { border-color: var(--forest); color: var(--forest); }
+
+.viewer-toolbar {
+  align-items: center;
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: .4rem;
+  min-height: 3rem;
+  padding: .45rem .7rem;
+}
+.tool-group { align-items: center; display: inline-flex; gap: .25rem; }
+.tool-group + .tool-group { border-left: 1px solid var(--line); margin-left: .2rem; padding-left: .45rem; }
+.tool-spacer { flex: 1; }
+.icon-tool, .text-tool {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: .4rem;
+  color: var(--muted);
+  display: inline-flex;
+  font-size: .7rem;
+  height: 2rem;
+  justify-content: center;
+  min-width: 2rem;
+  padding: 0 .48rem;
+}
+.icon-tool:hover, .text-tool:hover { background: var(--surface-hover); color: var(--ink); }
+.text-tool.is-active {
+  background: var(--mint);
+  border-color: color-mix(in srgb, var(--forest) 35%, var(--line));
+  color: var(--forest);
+}
+.page-counter {
+  align-items: center;
+  color: var(--muted);
+  display: inline-flex;
+  font-size: .68rem;
+  gap: .3rem;
+}
+.page-counter input {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: .35rem;
+  color: var(--ink);
+  height: 1.8rem;
+  text-align: center;
+  width: 2.6rem;
+}
+.zoom-label {
+  color: var(--muted);
+  font-size: .68rem;
+  min-width: 3.3rem;
+  text-align: center;
+}
+
+.viewer-canvas {
+  align-items: flex-start;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(139,138,248,.06), transparent 31rem),
+    #111115;
+  display: flex;
+  justify-content: center;
+  min-height: 0;
+  overflow: auto;
+  padding: 2rem 3rem 5rem;
+}
+:root[data-theme="light"] .viewer-canvas {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(92,91,214,.05), transparent 31rem),
+    #eceef2;
+}
+.pdf-page {
+  background: white;
+  box-shadow: 0 22px 48px rgba(0,0,0,.38);
+  color: #1e2430;
+  flex: 0 0 auto;
+  min-height: 842px;
+  padding: 62px 68px 64px;
+  position: relative;
+  transform-origin: top center;
+  width: 595px;
+}
+.pdf-logo {
+  color: #5c5bd6;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: .18em;
+}
+.pdf-kicker {
+  color: #7b8190;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  margin-top: 38px;
+  text-transform: uppercase;
+}
+.pdf-page h3 {
+  color: #1c2130;
+  font-size: 27px;
+  letter-spacing: -.04em;
+  line-height: 1.05;
+  margin: 11px 0 13px;
+}
+.pdf-subtitle {
+  color: #626a7a;
+  font-size: 11px;
+  line-height: 1.6;
+  margin: 0 0 28px;
+}
+.pdf-rule { border-top: 1px solid #d9dce3; margin: 22px 0; }
+.pdf-section-title {
+  color: #252a36;
+  font-size: 13px;
+  font-weight: 800;
+  margin: 0 0 10px;
+}
+.pdf-page p, .pdf-page li {
+  color: #4f5666;
+  font-size: 10.5px;
+  line-height: 1.65;
+}
+.pdf-page ul { margin: 7px 0 17px; padding-left: 17px; }
+.pdf-note {
+  background: #f3f3ff;
+  border-left: 3px solid #6c6be0;
+  border-radius: 2px;
+  color: #444b5c;
+  font-size: 10px;
+  line-height: 1.55;
+  margin-top: 18px;
+  padding: 11px 13px;
+}
+.pdf-footer {
+  align-items: center;
+  bottom: 28px;
+  color: #9297a3;
+  display: flex;
+  font-size: 8.5px;
+  justify-content: space-between;
+  left: 68px;
+  position: absolute;
+  right: 68px;
+}
+.viewer-empty {
+  align-items: center;
+  color: var(--muted);
+  display: none;
+  flex-direction: column;
+  gap: .5rem;
+  height: 100%;
+  justify-content: center;
+  text-align: center;
+}
+
+/* Mobile */
+.mobile-source-back { display: none; }
+.mobile-menu { display: none; }
+
+@media (max-width: 960px) {
+  .app-shell, .app-shell.sidebar-collapsed { display: block; }
+  .topbar { position: sticky; top: 0; }
+  .topbar .brand { display: none; }
+  .project-search { flex: 1; width: auto; }
+  .mobile-menu {
+    align-items: center;
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    border-radius: .6rem;
+    color: var(--ink);
+    display: inline-flex;
+    height: 2.6rem;
+    justify-content: center;
+    padding: 0;
+    width: 2.6rem;
+  }
+  .navigation {
+    box-shadow: 18px 0 42px #0006;
+    height: 100dvh;
+    left: 0;
+    max-width: 21rem;
+    overflow-y: auto;
+    position: fixed;
+    top: 0;
+    transform: translateX(-104%);
+    transition: transform .22s cubic-bezier(.2,.8,.2,1);
+    width: min(86vw,21rem);
+    z-index: 31;
+  }
+  .navigation.navigation-open { transform: translateX(0); }
+  .sidebar-toggle { display: none; }
+  .sidebar-collapsed .sidebar-project-region,
+  .sidebar-collapsed .sidebar-workspace-region,
+  .sidebar-collapsed .sidebar-project-links,
+  .sidebar-collapsed .project-switcher { display: grid; }
+  .sidebar-collapsed .profile-control {
+    grid-template-columns: 1.9rem minmax(0,1fr) 1rem;
+    height: auto; min-height: 3.875rem; padding: .55rem .45rem; width: 100%;
+  }
+  .sidebar-collapsed .profile-copy, .sidebar-collapsed .profile-chevron { display: flex; }
+  .sources-content { height: calc(100dvh - 4rem); }
+}
+@media (max-width: 760px) {
+  .topbar { padding-inline: .75rem; gap: .5rem; }
+  .theme-button { display: none; }
+  .sources-page { display: block; position: relative; }
+  .source-library {
+    height: 100%;
+    width: 100%;
+  }
+  .viewer {
+    height: 100%;
+    inset: 0;
+    position: absolute;
+    transform: translateX(100%);
+    transition: transform .22s ease;
+    width: 100%;
+    z-index: 4;
+  }
+  .sources-page.mobile-viewer-open .viewer { transform: translateX(0); }
+  .mobile-source-back {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    color: var(--forest);
+    display: inline-flex;
+    font-size: .7rem;
+    font-weight: 800;
+    gap: .25rem;
+    padding: 0;
+  }
+  .viewer-doc-header { align-items: flex-start; flex-direction: column; gap: .6rem; padding: .8rem 1rem; }
+  .viewer-doc-copy h2 { white-space: normal; }
+  .open-external { display: none; }
+  .viewer-toolbar { overflow-x: auto; }
+  .viewer-canvas { justify-content: flex-start; padding: 1.25rem; }
+  .pdf-page { transform-origin: top left; }
+}
+</style>
+</head>
+<body>
+<div class="app-shell" id="appShell">
+  <header class="topbar">
+    <a class="brand" href="#"><span>A</span>Atlas</a>
+    <div class="topbar-actions">
+      <button class="mobile-menu" id="mobileMenu" aria-label="Open navigation">☰</button>
+      <label class="project-search">
+        <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
+          <circle cx="10.8" cy="10.8" r="5.8" stroke="currentColor" stroke-width="1.8"/>
+          <path d="m15.2 15.2 4 4" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/>
+        </svg>
+        <span class="visually-hidden">Search projects</span>
+        <input type="search" placeholder="Search projects" aria-label="Search projects">
+      </label>
+      <button class="theme-button" id="themeButton" title="Toggle theme" aria-label="Toggle theme">◐</button>
+    </div>
+  </header>
+
+  <aside class="navigation" id="navigation" aria-label="Workspace navigation">
+    <button class="sidebar-toggle" id="sidebarToggle" aria-label="Collapse sidebar">
+      <svg fill="none" viewBox="0 0 24 24">
+        <rect height="18" rx="2.5" stroke="currentColor" stroke-width="1.7" width="18" x="3" y="3"/>
+        <path d="M9 3v18" stroke="currentColor" stroke-width="1.7"/>
+        <path d="m16 9-3 3 3 3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"/>
+      </svg>
+    </button>
+
+    <section class="sidebar-project-region">
+      <div class="project-switcher">
+        <button type="button">
+          <span class="project-switcher-badge">S</span>
+          <div class="project-switcher-copy">
+            <strong>Safara operations platform</strong>
+            <small>3 PRDs · Active</small>
+          </div>
+          <span class="chev">⌄</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="sidebar-project-links">
+      <p class="nav-section-label">Project</p>
+      <nav aria-label="Project navigation">
+        <a class="nav-item" href="#"><span>▦</span><span>Projects</span></a>
+        <a class="nav-item" href="#"><span>∿</span><span>Main Workflow</span></a>
+        <a class="nav-item" href="#"><span>▤</span><span>Project Facts</span></a>
+        <a class="nav-item" href="#"><span>▣</span><span>CES Result</span></a>
+        <a class="nav-item" href="#"><span>↻</span><span>Changes Done</span></a>
+      </nav>
+    </section>
+
+    <section class="sidebar-workspace-region">
+      <p class="nav-section-label">Workspace</p>
+      <nav aria-label="Workspace tools">
+        <button class="nav-item nav-active" type="button"><span>○</span><span>Sources</span></button>
+        <button class="nav-item nav-placeholder" type="button"><span>♙</span><span>Members</span></button>
+        <button class="nav-item nav-placeholder" type="button"><span>⚙</span><span>Settings</span></button>
+      </nav>
+    </section>
+
+    <div class="profile-wrap">
+      <button class="profile-control" type="button">
+        <span class="avatar">AH</span>
+        <span class="profile-copy">
+          <strong>Aditya</strong>
+          <small>Owner</small>
+        </span>
+        <span class="profile-chevron">⌃</span>
+      </button>
+    </div>
+  </aside>
+
+  <main class="sources-content">
+    <div class="sources-page" id="sourcesPage">
+      <aside class="source-library" aria-label="Source documents">
+        <header class="source-library-header">
+          <div class="source-library-title">
+            <div>
+              <span class="eyebrow">Workspace library</span>
+              <h1>Sources</h1>
+            </div>
+            <b id="sourceCount">3 PDFs</b>
+          </div>
+          <label class="source-search">
+            <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
+              <circle cx="10.8" cy="10.8" r="5.8" stroke="currentColor" stroke-width="1.8"/>
+              <path d="m15.2 15.2 4 4" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/>
+            </svg>
+            <input id="sourceSearch" type="search" placeholder="Search PDFs..." aria-label="Search PDFs">
+          </label>
+        </header>
+
+        <div class="source-list" id="sourceList">
+          <section class="source-group">
+            <p class="source-group-title">Safara operations platform</p>
+
+            <button class="source-row" data-source="prd1" data-search="prd 1 fondasi data dan pendaftaran jemaah safara operations platform" type="button">
+              <span class="source-file-icon">PDF</span>
+              <span class="source-row-copy">
+                <span>PRD 1</span>
+                <strong>Fondasi Data dan Pendaftaran Jemaah</strong>
+                <small>27 Jul 2026 · 3 pages</small>
+              </span>
+            </button>
+
+            <button class="source-row is-active" data-source="prd2" data-search="prd 2 pembayaran dokumen dan kesiapan keberangkatan safara operations platform" type="button">
+              <span class="source-file-icon">PDF</span>
+              <span class="source-row-copy">
+                <span>PRD 2</span>
+                <strong>Pembayaran, Dokumen, dan Kesiapan Keberangkatan</strong>
+                <small>27 Jul 2026 · 4 pages</small>
+              </span>
+            </button>
+
+            <button class="source-row" data-source="prd3" data-search="prd 3 manifest dashboard laporan dan riwayat aktivitas safara operations platform" type="button">
+              <span class="source-file-icon">PDF</span>
+              <span class="source-row-copy">
+                <span>PRD 3</span>
+                <strong>Manifest, Dashboard, Laporan, dan Riwayat Aktivitas</strong>
+                <small>27 Jul 2026 · 4 pages</small>
+              </span>
+            </button>
+
+            <p class="no-results" id="noResults">No PDFs match your search.</p>
+          </section>
+        </div>
+      </aside>
+
+      <section class="viewer" aria-label="PDF viewer">
+        <header class="viewer-doc-header">
+          <div class="viewer-doc-copy">
+            <button class="mobile-source-back" id="mobileBack" type="button">← Sources</button>
+            <p class="eyebrow" id="docIncrement">PRD 2</p>
+            <h2 id="docTitle">Pembayaran, Dokumen, dan Kesiapan Keberangkatan</h2>
+            <p><span id="docProject">Safara operations platform</span> · <span id="docMeta">27 Jul 2026 · 4 pages</span></p>
+          </div>
+          <button class="open-external" type="button" title="Prototype only">↗ Open original</button>
+        </header>
+
+        <div class="viewer-toolbar" role="toolbar" aria-label="PDF controls">
+          <div class="tool-group">
+            <button class="icon-tool" id="prevPage" type="button" aria-label="Previous page">‹</button>
+            <span class="page-counter">
+              <input id="pageInput" value="2" inputmode="numeric" aria-label="Current page">
+              <span>/ <span id="totalPages">4</span></span>
+            </span>
+            <button class="icon-tool" id="nextPage" type="button" aria-label="Next page">›</button>
+          </div>
+          <div class="tool-group">
+            <button class="icon-tool" id="zoomOut" type="button" aria-label="Zoom out">−</button>
+            <span class="zoom-label" id="zoomLabel">100%</span>
+            <button class="icon-tool" id="zoomIn" type="button" aria-label="Zoom in">+</button>
+          </div>
+          <div class="tool-group">
+            <button class="text-tool is-active" id="fitWidth" type="button">Fit width</button>
+            <button class="text-tool" id="actualSize" type="button">100%</button>
+          </div>
+          <span class="tool-spacer"></span>
+          <div class="tool-group">
+            <button class="icon-tool" id="fullscreenButton" type="button" title="Fullscreen viewer" aria-label="Fullscreen viewer">⤢</button>
+          </div>
+        </div>
+
+        <div class="viewer-canvas" id="viewerCanvas">
+          <article class="pdf-page" id="pdfPage">
+            <div class="pdf-logo">SAFARA</div>
+            <div class="pdf-kicker" id="pdfKicker">Business PRD / Project Request</div>
+            <h3 id="pdfTitle">Pembayaran, Dokumen, dan Kesiapan Keberangkatan</h3>
+            <p class="pdf-subtitle" id="pdfSubtitle">Safara — Sistem Administrasi Travel Umrah · 27 Juli 2026</p>
+            <div class="pdf-rule"></div>
+            <section id="pdfContent"></section>
+            <footer class="pdf-footer">
+              <span>SAFARA · Internal Project Document</span>
+              <span id="pdfPageNumber">Page 2 of 4</span>
+            </footer>
+          </article>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script>
+const docs = {
+  prd1: {
+    increment: "PRD 1",
+    title: "Fondasi Data dan Pendaftaran Jemaah",
+    date: "27 Jul 2026",
+    pages: 3,
+    initialPage: 1,
+    pageContent: [
+      `
+      <h4 class="pdf-section-title">Konteks</h4>
+      <p>Aplikasi menyediakan fondasi data untuk mengelola paket umrah, jadwal keberangkatan, data jemaah, dan proses pendaftaran.</p>
+      <h4 class="pdf-section-title">Tujuan</h4>
+      <ul>
+        <li>Menjaga data jemaah dalam satu sumber kerja bersama.</li>
+        <li>Memastikan pendaftaran hanya dilakukan pada jadwal yang masih terbuka.</li>
+        <li>Menampilkan jumlah jemaah terdaftar dan sisa kuota.</li>
+      </ul>
+      <div class="pdf-note">Atlas treats this source as the foundation for package, schedule, pilgrim-data, and registration workflows.</div>`,
+      `
+      <h4 class="pdf-section-title">Paket dan Jadwal</h4>
+      <p>Admin dapat membuat, melihat, mengubah, dan menonaktifkan paket umrah. Setiap paket dapat memiliki satu atau lebih jadwal keberangkatan.</p>
+      <h4 class="pdf-section-title">Pendaftaran Jemaah</h4>
+      <p>Admin dapat memilih jemaah dan mendaftarkannya ke jadwal keberangkatan yang masih terbuka.</p>
+      <ul>
+        <li>Pendaftaran tidak dapat dilakukan jika kuota sudah penuh.</li>
+        <li>Satu jemaah tidak boleh memiliki dua pendaftaran aktif pada keberangkatan yang sama.</li>
+        <li>Harga yang berlaku saat pendaftaran disimpan sebagai harga yang disepakati.</li>
+      </ul>`,
+      `
+      <h4 class="pdf-section-title">Identitas dan Riwayat</h4>
+      <p>Aplikasi memberikan peringatan apabila NIK atau nomor paspor sudah digunakan oleh jemaah lain.</p>
+      <p>Pendaftaran dapat dibatalkan dengan alasan yang tercatat, tetapi riwayatnya tetap dapat dilihat.</p>
+      <div class="pdf-note">Source wording remains authoritative; Atlas interpretations must stay traceable to the relevant page.</div>`
+    ]
+  },
+  prd2: {
+    increment: "PRD 2",
+    title: "Pembayaran, Dokumen, dan Kesiapan Keberangkatan",
+    date: "27 Jul 2026",
+    pages: 4,
+    initialPage: 2,
+    pageContent: [
+      `
+      <h4 class="pdf-section-title">Konteks</h4>
+      <p>Increment ini memperluas administrasi jemaah setelah pendaftaran dengan pengelolaan pembayaran, dokumen, status perjalanan, dan kesiapan keberangkatan.</p>
+      <h4 class="pdf-section-title">Tujuan</h4>
+      <ul>
+        <li>Mengetahui siapa yang sudah atau belum melunasi pembayaran.</li>
+        <li>Mengetahui dokumen yang belum lengkap atau perlu diperbaiki.</li>
+        <li>Mengetahui status paspor, visa, asuransi, dan tiket.</li>
+      </ul>`,
+      `
+      <h4 class="pdf-section-title">Pembayaran</h4>
+      <p>Finance dapat mencatat pembayaran dengan informasi tanggal, nominal, cara pembayaran, nomor referensi, catatan, dan bukti pembayaran.</p>
+      <p>Finance dapat mengubah status pembayaran menjadi <strong>Diterima</strong> atau <strong>Ditolak</strong>.</p>
+      <div class="pdf-note">Hanya pembayaran berstatus Diterima yang mengurangi sisa pembayaran.</div>
+      <h4 class="pdf-section-title" style="margin-top:20px">Perhitungan</h4>
+      <p><strong>Sisa Pembayaran = Total Tagihan - Total Pembayaran Diterima</strong></p>
+      <p>Pembayaran yang ditolak tidak mengubah sisa pembayaran dan wajib tetap terlihat pada riwayat.</p>`,
+      `
+      <h4 class="pdf-section-title">Dokumen Jemaah</h4>
+      <p>Daftar awal mencakup KTP, KK, paspor, pas foto, dan dokumen vaksin atau kesehatan.</p>
+      <ul>
+        <li>Operations dapat memeriksa kelengkapan dan validitas dokumen.</li>
+        <li>Dokumen yang ditolak wajib memiliki alasan.</li>
+        <li>Riwayat perubahan status dokumen tetap dapat ditelusuri.</li>
+      </ul>
+      <h4 class="pdf-section-title">Status Perjalanan</h4>
+      <p>Status paspor, visa, asuransi, dan tiket menjadi bagian dari penilaian kesiapan keberangkatan.</p>`,
+      `
+      <h4 class="pdf-section-title">Kesiapan Keberangkatan</h4>
+      <p>Jemaah dinyatakan siap hanya ketika seluruh persyaratan yang diwajibkan telah terpenuhi.</p>
+      <ul>
+        <li>Sisa pembayaran = 0.</li>
+        <li>Semua dokumen wajib berstatus Valid.</li>
+        <li>Paspor tersedia dan masih berlaku.</li>
+        <li>Visa berstatus Approved.</li>
+      </ul>
+      <div class="pdf-note">Jika satu atau lebih kondisi belum terpenuhi, status kesiapan harus menjelaskan blocker yang masih aktif.</div>`
+    ]
+  },
+  prd3: {
+    increment: "PRD 3",
+    title: "Manifest, Dashboard, Laporan, dan Riwayat Aktivitas",
+    date: "27 Jul 2026",
+    pages: 4,
+    initialPage: 1,
+    pageContent: [
+      `
+      <h4 class="pdf-section-title">Tujuan Increment</h4>
+      <p>Increment ini memfinalisasi proses keberangkatan dan memberi Owner, Finance, dan Operations visibilitas terhadap kondisi operasional.</p>
+      <ul>
+        <li>Membentuk manifest final dari jemaah yang siap.</li>
+        <li>Menyediakan dashboard operasional.</li>
+        <li>Menyediakan laporan dan riwayat aktivitas.</li>
+      </ul>`,
+      `
+      <h4 class="pdf-section-title">Manifest Final</h4>
+      <p>Hanya jemaah dengan status siap yang dapat masuk ke manifest final.</p>
+      <p>Setelah manifest difinalisasi, perubahan berikutnya pada data sumber tidak boleh mengubah manifest secara otomatis.</p>
+      <div class="pdf-note">Manifest final diperlakukan sebagai snapshot operasional yang stabil dan dapat diekspor.</div>`,
+      `
+      <h4 class="pdf-section-title">Dashboard dan Laporan</h4>
+      <p>Dashboard membantu tim melihat status keberangkatan, kuota, pembayaran, kelengkapan dokumen, dan kesiapan jemaah.</p>
+      <p>Laporan harus menggunakan informasi yang sama dengan tampilan operasional agar tim tidak melakukan pengecekan ulang secara manual.</p>`,
+      `
+      <h4 class="pdf-section-title">Riwayat Aktivitas</h4>
+      <p>Perubahan penting pada data dan status perlu dapat ditelusuri kembali.</p>
+      <ul>
+        <li>Siapa yang melakukan perubahan.</li>
+        <li>Kapan perubahan dilakukan.</li>
+        <li>Informasi apa yang berubah.</li>
+      </ul>
+      <div class="pdf-note">Auditability supports Atlas's source-to-understanding traceability model.</div>`
+    ]
+  }
+};
+
+let currentDoc = "prd2";
+let currentPage = docs[currentDoc].initialPage;
+let zoom = 1;
+let fitMode = true;
+
+const $ = (id) => document.getElementById(id);
+const shell = $("appShell");
+const navigation = $("navigation");
+const sourcesPage = $("sourcesPage");
+const pdfPage = $("pdfPage");
+const canvas = $("viewerCanvas");
+
+function renderDoc() {
+  const doc = docs[currentDoc];
+  currentPage = Math.min(Math.max(currentPage, 1), doc.pages);
+  $("docIncrement").textContent = doc.increment;
+  $("docTitle").textContent = doc.title;
+  $("docMeta").textContent = `${doc.date} · ${doc.pages} pages`;
+  $("totalPages").textContent = doc.pages;
+  $("pageInput").value = currentPage;
+  $("pdfTitle").textContent = doc.title;
+  $("pdfContent").innerHTML = doc.pageContent[currentPage - 1];
+  $("pdfPageNumber").textContent = `Page ${currentPage} of ${doc.pages}`;
+  document.querySelectorAll(".source-row").forEach(row => {
+    row.classList.toggle("is-active", row.dataset.source === currentDoc);
+  });
+  canvas.scrollTop = 0;
+  applyZoom();
+}
+
+function applyZoom() {
+  let scale = zoom;
+  if (fitMode) {
+    const available = Math.max(280, canvas.clientWidth - 56);
+    scale = Math.min(1.35, available / 595);
+  }
+  pdfPage.style.transform = `scale(${scale})`;
+  pdfPage.style.marginBottom = `${(842 * scale) - 842}px`;
+  pdfPage.style.marginRight = `${(595 * scale) - 595}px`;
+  $("zoomLabel").textContent = `${Math.round(scale * 100)}%`;
+  $("fitWidth").classList.toggle("is-active", fitMode);
+  $("actualSize").classList.toggle("is-active", !fitMode && Math.abs(scale - 1) < .01);
+}
+
+document.querySelectorAll(".source-row").forEach(row => {
+  row.addEventListener("click", () => {
+    currentDoc = row.dataset.source;
+    currentPage = docs[currentDoc].initialPage;
+    fitMode = true;
+    renderDoc();
+    sourcesPage.classList.add("mobile-viewer-open");
+  });
+});
+
+$("sourceSearch").addEventListener("input", e => {
+  const query = e.target.value.trim().toLowerCase();
+  let visible = 0;
+  document.querySelectorAll(".source-row").forEach(row => {
+    const show = row.dataset.search.includes(query);
+    row.style.display = show ? "grid" : "none";
+    if (show) visible++;
+  });
+  $("sourceCount").textContent = `${visible} PDF${visible === 1 ? "" : "s"}`;
+  $("noResults").style.display = visible ? "none" : "block";
+});
+
+$("prevPage").addEventListener("click", () => {
+  if (currentPage > 1) { currentPage--; renderDoc(); }
+});
+$("nextPage").addEventListener("click", () => {
+  if (currentPage < docs[currentDoc].pages) { currentPage++; renderDoc(); }
+});
+$("pageInput").addEventListener("change", e => {
+  const value = parseInt(e.target.value, 10);
+  if (!Number.isNaN(value)) currentPage = value;
+  renderDoc();
+});
+$("zoomOut").addEventListener("click", () => {
+  fitMode = false; zoom = Math.max(.5, zoom - .1); applyZoom();
+});
+$("zoomIn").addEventListener("click", () => {
+  fitMode = false; zoom = Math.min(2, zoom + .1); applyZoom();
+});
+$("fitWidth").addEventListener("click", () => {
+  fitMode = true; applyZoom();
+});
+$("actualSize").addEventListener("click", () => {
+  fitMode = false; zoom = 1; applyZoom();
+});
+$("fullscreenButton").addEventListener("click", () => {
+  const viewer = document.querySelector(".viewer");
+  if (!document.fullscreenElement) viewer.requestFullscreen?.();
+  else document.exitFullscreen?.();
+});
+$("sidebarToggle").addEventListener("click", () => {
+  shell.classList.toggle("sidebar-collapsed");
+  setTimeout(applyZoom, 260);
+});
+$("themeButton").addEventListener("click", () => {
+  const root = document.documentElement;
+  root.dataset.theme = root.dataset.theme === "light" ? "dark" : "light";
+});
+$("mobileMenu").addEventListener("click", () => navigation.classList.toggle("navigation-open"));
+$("mobileBack").addEventListener("click", () => sourcesPage.classList.remove("mobile-viewer-open"));
+
+window.addEventListener("resize", () => { if (fitMode) applyZoom(); });
+renderDoc();
+setTimeout(applyZoom, 10);
+</script>
+</body>
+</html>

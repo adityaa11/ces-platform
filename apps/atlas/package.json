@@ -6,6 +6,10 @@
     "node": ">=22.13.0"
   },
   "scripts": {
+    "sources:sync": "node ../../scripts/sync-safara-pdfs.mjs",
+    "predev": "pnpm run sources:sync",
+    "prebuild": "pnpm run sources:sync",
+    "prelint": "pnpm run sources:sync",
     "dev": "vinext dev --port 3001",
     "build": "vinext build",
     "start": "vinext start",
@@ -14,6 +18,7 @@
   },
   "dependencies": {
     "@atlas/fixtures": "workspace:*",
+    "pdfjs-dist": "^6.3.289",
     "react": "19.2.6",
     "react-dom": "19.2.6"
   },
