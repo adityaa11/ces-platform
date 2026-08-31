@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
+import { ThemeProvider } from "../components/ThemeProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -10,14 +12,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const theme = (await cookies()).get("atlas-theme")?.value;
+  const initialTheme = theme === "light" || theme === "dark" ? theme : undefined;
+
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html data-theme={initialTheme} lang="en">
+      <body><ThemeProvider initialTheme={initialTheme}>{children}</ThemeProvider></body>
     </html>
   );
 }

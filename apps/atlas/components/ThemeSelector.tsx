@@ -1,23 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-type Theme = "light" | "dark";
-
-function storedTheme(): Theme {
-  if (typeof window === "undefined") return "dark";
-  const stored = window.localStorage.getItem("atlas-theme");
-  if (stored === "light" || stored === "dark") return stored;
-  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
-}
+import { useTheme } from "./ThemeProvider";
 
 export function ThemeSelector({ className = "" }: { className?: string }) {
-  const [theme, setTheme] = useState<Theme>(storedTheme);
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    window.localStorage.setItem("atlas-theme", theme);
-  }, [theme]);
+  const { theme, setTheme } = useTheme();
 
   return <div aria-label="Theme" className={`theme-selector ${className}`.trim()} role="group">
     <span>Theme</span>

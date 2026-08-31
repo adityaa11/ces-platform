@@ -41,6 +41,15 @@ test("server-renders the public Atlas landing page", async () => {
   assert.doesNotMatch(html, /Fixture-powered prototype|Nadia Hartono/);
 });
 
+test("renders a persisted theme preference across public, authentication, and workspace routes", async () => {
+  const headers = { accept: "text/html", cookie: "atlas-theme=light" };
+  const [landing, signIn, workspace] = await Promise.all([render("/", headers), render("/sign-in", headers), render("/demo?projectId=safara&view=sources", headers)]);
+  for (const response of [landing, signIn, workspace]) {
+    assert.equal(response.status, 200);
+    assert.match(await response.text(), /<html data-theme="light" lang="en">/);
+  }
+});
+
 test("adds a fresh CSP nonce before Vinext renders and prevents HTML caching", async () => {
   const firstResponse = await render();
   const secondResponse = await render();
