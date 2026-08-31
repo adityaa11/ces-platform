@@ -1,6 +1,6 @@
 # CSP-004: CSP rollout and enforcement validation
 
-- **State:** planned
+- **State:** awaiting_review
 - **Review batch:** BATCH-16
 - **Depends on:** CSP-001, CSP-002, CSP-003
 - **Baseline:** [CSP refactor ticket set](CSP-README.md); [Atlas UI/UX Prototype PRD](../Atlas_UI_UX_Prototype_PRD.md) section 8; [Atlas UI/UX Prototype Review Protocol](../Atlas_UI_UX_Review_Protocol.md)
@@ -53,6 +53,25 @@ surface has zero unexplained violations.
 - Verify two independent document requests receive distinct nonces and that
   cached HTML cannot reuse a previous nonce.
 - Complete the required rendered validation record before requesting review.
+
+## Validation record
+
+- 2026-08-31: Automated coverage exercises every defined HTML route, the
+  source-viewer route, a not-found error response, and an RSC navigation
+  response under enforced CSP. Each response must contain the enforced header
+  and a fresh nonce, omit the report-only header and both prohibited unsafe
+  tokens, and preserve `no-store` on rendered HTML.
+- 2026-08-31: Cloudflare Worker development validation rendered the source
+  viewer, changed PDF page and zoom state, rendered a non-zero canvas, and
+  navigated client-side to Main Workflow with no browser errors or warnings.
+  The 531px compact view preserved a readable rendered PDF canvas and had no
+  horizontal overflow. The standalone `vinext start` adapter produced an RSC
+  prefetch error, but the Worker-bound surface used by this ticket did not;
+  no Atlas or CSP violation was observed.
+- 2026-08-31: Direct enforced-policy checks covered public, authentication,
+  project-library, every workspace view, the source viewer, and the rendered
+  not-found response. Each returned `Content-Security-Policy`, no report-only
+  policy or prohibited unsafe token, and `Cache-Control: no-store`.
 
 ## Review batch: BATCH-16
 

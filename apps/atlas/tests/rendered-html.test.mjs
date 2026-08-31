@@ -87,6 +87,40 @@ test("adds a fresh CSP nonce before Vinext renders and prevents HTML caching", a
   assert.ok(getNonce(reportOnlyResponse.headers.get("content-security-policy-report-only") ?? ""));
 });
 
+test("enforces strict CSP on every rendered route, including errors and RSC updates", async () => {
+  const htmlRoutes = [
+    "/",
+    "/sign-in",
+    "/sign-up",
+    "/reset-password",
+    "/demo",
+    "/demo?projectId=safara&view=workflow&prd=safara-increment-02&lens=isolate",
+    "/demo?projectId=safara&view=facts&prd=safara-increment-02&lens=isolate",
+    "/demo?projectId=safara&view=changes&prd=safara-increment-02&lens=isolate",
+    "/demo?projectId=safara&view=ces&prd=safara-increment-02&lens=isolate",
+    "/demo?projectId=safara&view=sources",
+    "/does-not-exist",
+  ];
+  const responses = await Promise.all([
+    ...htmlRoutes.map((pathname) => render(pathname)),
+    render("/demo?projectId=safara&view=workflow", { accept: "text/x-component", rsc: "1" }),
+  ]);
+
+  for (const response of responses) {
+    const policy = response.headers.get("content-security-policy") ?? "";
+    assert.ok(getNonce(policy), `missing nonce for ${response.url}`);
+    assert.match(policy, /default-src 'self'/);
+    assert.match(policy, /connect-src 'self'/);
+    assert.match(policy, /worker-src 'self'/);
+    assert.doesNotMatch(policy, /'unsafe-(?:inline|eval)'/);
+    assert.equal(response.headers.get("content-security-policy-report-only"), null);
+  }
+
+  for (const response of responses.slice(0, htmlRoutes.length)) {
+    assert.match(response.headers.get("cache-control") ?? "", /no-store/i);
+  }
+});
+
 test("keeps Atlas source data outside the app components and CSP-safe", async () => {
   const [page, demo, layout, packageJson, fixturePackage] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
