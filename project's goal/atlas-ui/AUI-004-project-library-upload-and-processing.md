@@ -1,6 +1,6 @@
 # AUI-004: Project library, upload, and processing experience
 
-- **State:** awaiting_review
+- **State:** approved
 - **Review batch:** BATCH-04
 - **Depends on:** AUI-003
 - **Baseline:** UI/UX Prototype PRD 4.2-4.3, 9.1, 9.4

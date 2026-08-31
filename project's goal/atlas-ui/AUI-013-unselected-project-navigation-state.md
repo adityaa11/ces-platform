@@ -1,6 +1,6 @@
 # AUI-013: Unselected project navigation state
 
-- **State:** awaiting_review
+- **State:** approved
 - **Review batch:** BATCH-12
 - **Depends on:** AUI-012
 - **Baseline:** [Atlas UI/UX Prototype PRD](../Atlas_UI_UX_Prototype_PRD.md) 2.1, 4.1, 7, 9.1, and 9.4; user-approved project-selection behavior (25 August 2026)

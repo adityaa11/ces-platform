@@ -1,6 +1,6 @@
 # AUI-012: Reference sidebar composition
 
-- **State:** awaiting_review
+- **State:** approved
 - **Review batch:** BATCH-11
 - **Depends on:** AUI-003, AUI-009, AUI-011
 - **Baseline:** [Atlas UI/UX Prototype PRD](../Atlas_UI_UX_Prototype_PRD.md) 2.1, 2.2, 4.1, 7, 9.4, and 9.4.1; user-supplied annotated project-library sidebar reference (25 August 2026)

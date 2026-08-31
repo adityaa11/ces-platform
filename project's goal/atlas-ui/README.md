@@ -31,7 +31,26 @@ The required backend-wiring semantics are defined in [Fixture Data-Intent Contra
 | 7 | AUI-008 / BATCH-07 | approved | AUI-006, AUI-007 | Does CES Result make baseline awareness, coverage, and open decisions clear without prescribing solutions? |
 | 8 | AUI-009 / BATCH-08 | approved | AUI-004 through AUI-008 | Does the complete experience remain clear and accessible across screen sizes? |
 | 9 | AUI-010 / BATCH-09 | approved | AUI-009 | Is the fixture-driven prototype coherent, navigable, and ready for handoff? |
-| 10 | AUI-011 / BATCH-10 | awaiting_review | AUI-003, AUI-009, AUI-010 | Does the shared shell improve navigation clarity across desktop and mobile without changing route or fixture behavior? |
+| 10 | AUI-011 / BATCH-10 | approved | AUI-003, AUI-009, AUI-010 | Does the shared shell improve navigation clarity across desktop and mobile without changing route or fixture behavior? |
+| 11 | AUI-012 / BATCH-11 | approved | AUI-003, AUI-009, AUI-011 | Does the shared navigation rail match the approved reference composition while preserving all existing destinations and responsive behavior? |
+| 12 | AUI-013 / BATCH-12 | approved | AUI-012 | Does the shell clearly represent no-project-selected state and restore project navigation after selection? |
+
+### CSP security hardening set
+
+The CSP work is tracked separately from the AUI screen-delivery sequence because
+it crosses the Worker boundary, framework rendering, shared UI patterns, and the
+PDF viewer. The UI/UX Prototype PRD and review protocol are currently marked
+`Draft`; the Full Product Context has no explicit `Approved` status. The user has
+explicitly directed closure of the UI ticket set and commencement of the strict
+CSP refactor. CSP-001 is therefore `ready`; later CSP tickets remain `planned`
+until their dependencies are implemented and reviewed.
+
+| Order | Ticket / batch | State | Depends on | Review question |
+|---:|---|---|---|---|
+| 1 | CSP-001 / BATCH-13 | ready | AUI-012, AUI-013 | Does the Worker centrally generate, propagate, and enforce one nonce per response without stale HTML caching? |
+| 2 | CSP-002 / BATCH-14 | planned | CSP-001 | Does the application remain behaviorally and visually equivalent without Atlas-owned inline scripts or runtime inline styles? |
+| 3 | CSP-003 / BATCH-15 | planned | CSP-001 | Does the PDF viewer work under the narrowest strict-CSP-compatible worker and WebAssembly configuration? |
+| 4 | CSP-004 / BATCH-16 | planned | CSP-001, CSP-002, CSP-003 | Can strict CSP be enforced across every route and interaction with no browser violations? |
 
 ## Batch rationale
 
@@ -68,3 +87,13 @@ When changing a UI surface, validate the complete connected surface before reque
 - [AUI-009 Responsive and clarity pass](AUI-009-responsive-and-clarity-pass.md)
 - [AUI-010 Prototype integration and handoff](AUI-010-prototype-integration-and-handoff.md)
 - [AUI-011 Shell navigation cosmetic refactor](AUI-011-shell-navigation-cosmetic-refactor.md)
+- [AUI-012 Reference sidebar composition](AUI-012-reference-sidebar-composition.md)
+- [AUI-013 Unselected project navigation state](AUI-013-unselected-project-navigation-state.md)
+
+### CSP ticket records
+
+- [CSP refactor ticket set](CSP-README.md)
+- [CSP-001 Centralized Worker nonce filter](CSP-001-centralized-worker-nonce-filter.md)
+- [CSP-002 CSP-safe application patterns](CSP-002-csp-safe-application-patterns.md)
+- [CSP-003 PDF.js strict-CSP compatibility](CSP-003-pdfjs-strict-csp-compatibility.md)
+- [CSP-004 CSP rollout and enforcement validation](CSP-004-csp-rollout-and-enforcement-validation.md)
