@@ -1,0 +1,450 @@
+{
+  "bundleVersion": "1.0",
+  "generatedAt": "2026-09-05T00:00:00.000Z",
+  "executionMode": "codex",
+  "pipeline": [
+    {
+      "stage": "extract",
+      "input": {
+        "sourceDirectory": "docs/PRD"
+      },
+      "output": {
+        "artifactCount": 3
+      },
+      "executionProvenance": {
+        "skillId": "atlas.prd-extraction",
+        "skillVersion": "1.1.0",
+        "mode": "codex"
+      }
+    },
+    {
+      "stage": "repository",
+      "input": {
+        "artifactCount": 3
+      },
+      "output": {
+        "revisionCount": 2
+      },
+      "executionProvenance": {
+        "skillId": "atlas.fixture-repository",
+        "skillVersion": "1.1.0",
+        "mode": "codex"
+      }
+    },
+    {
+      "stage": "changes",
+      "input": {
+        "branchId": "branch-increment-003"
+      },
+      "output": {
+        "proposalId": "proposal-manifest-staged-correction"
+      },
+      "executionProvenance": {
+        "skillId": "atlas.fixture-changes",
+        "skillVersion": "1.1.0",
+        "mode": "codex"
+      }
+    },
+    {
+      "stage": "projections",
+      "input": {
+        "branches": [
+          "branch-master",
+          "branch-increment-003"
+        ]
+      },
+      "output": {
+        "projectionCount": 2
+      },
+      "executionProvenance": {
+        "skillId": "atlas.fixture-projections",
+        "skillVersion": "1.1.0",
+        "mode": "codex"
+      }
+    },
+    {
+      "stage": "verification",
+      "input": {
+        "repository": "safara"
+      },
+      "output": {
+        "status": "pass"
+      },
+      "executionProvenance": {
+        "skillId": "atlas.fixture-verification",
+        "skillVersion": "1.1.0",
+        "mode": "codex"
+      }
+    }
+  ],
+  "repository": {
+    "projectId": "safara",
+    "schemaVersion": "1.0",
+    "artifacts": [
+      {
+        "artifactId": "artifact-safara-01",
+        "type": "prd",
+        "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+        "relativePath": "Safara/Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+        "sha256": "75a6bf6c7411c909f9a94dd763cfb540656717c5ecac789dad57e7de4e6740bc",
+        "pageCount": 3
+      },
+      {
+        "artifactId": "artifact-safara-02",
+        "type": "prd",
+        "name": "Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf",
+        "relativePath": "Safara/Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf",
+        "sha256": "d4c17ac5e54555837dedece4a8b32b8e50780931fe3db9ed3fbd549627d8e8ca",
+        "pageCount": 4
+      },
+      {
+        "artifactId": "artifact-safara-03",
+        "type": "prd",
+        "name": "Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf",
+        "relativePath": "Safara/Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf",
+        "sha256": "02f98474e2e17a8fa6da879055e40e6ca6de862cb71211f9d4b23e259e4094af",
+        "pageCount": 4
+      }
+    ],
+    "assertions": [
+      {
+        "assertionId": "ast-manifest-out-of-scope",
+        "semanticKey": "manifest.eligibility",
+        "value": {
+          "status": "out_of_scope"
+        },
+        "evidence": {
+          "artifactId": "artifact-safara-01",
+          "page": 1,
+          "quote": "manifest, dan laporan belum menjadi ruang lingkup increment ini."
+        },
+        "status": "accepted"
+      },
+      {
+        "assertionId": "ast-readiness-blockers",
+        "semanticKey": "readiness.blocker-display",
+        "value": {
+          "mode": "all_blockers"
+        },
+        "evidence": {
+          "artifactId": "artifact-safara-02",
+          "page": 3,
+          "quote": "Semua alasan yang menghambat kesiapan harus ditampilkan bersamaan."
+        },
+        "status": "accepted"
+      },
+      {
+        "assertionId": "ast-manifest-ready-only",
+        "semanticKey": "manifest.eligibility",
+        "value": {
+          "allowedReadiness": "Siap"
+        },
+        "evidence": {
+          "artifactId": "artifact-safara-03",
+          "page": 2,
+          "quote": "Hanya jemaah berstatus Siap yang dapat dimasukkan ke manifest final."
+        },
+        "status": "accepted",
+        "supersedesAssertionId": "ast-manifest-out-of-scope"
+      },
+      {
+        "assertionId": "ast-manifest-snapshot",
+        "semanticKey": "manifest.finalization",
+        "value": {
+          "snapshot": true
+        },
+        "evidence": {
+          "artifactId": "artifact-safara-03",
+          "page": 2,
+          "quote": "Setelah difinalisasi, isi manifest tidak berubah otomatis walaupun data jemaah kemudian diperbarui."
+        },
+        "status": "accepted"
+      }
+    ],
+    "revisions": [
+      {
+        "revisionId": "rev-safara-master-001",
+        "parentRevisionIds": [],
+        "acceptedAssertionIds": [
+          "ast-manifest-out-of-scope",
+          "ast-readiness-blockers"
+        ],
+        "executionProvenance": {
+          "skillId": "atlas.fixture-repository",
+          "skillVersion": "1.1.0",
+          "mode": "codex"
+        }
+      },
+      {
+        "revisionId": "rev-safara-increment-003",
+        "parentRevisionIds": [
+          "rev-safara-master-001"
+        ],
+        "acceptedAssertionIds": [
+          "ast-manifest-ready-only",
+          "ast-manifest-snapshot"
+        ],
+        "executionProvenance": {
+          "skillId": "atlas.fixture-repository",
+          "skillVersion": "1.1.0",
+          "mode": "codex"
+        }
+      }
+    ],
+    "branches": [
+      {
+        "branchId": "branch-master",
+        "label": "Master",
+        "headRevisionId": "rev-safara-master-001"
+      },
+      {
+        "branchId": "branch-increment-003",
+        "label": "Increment 03",
+        "headRevisionId": "rev-safara-increment-003"
+      }
+    ],
+    "materializedStates": [
+      {
+        "branchId": "branch-master",
+        "headRevisionId": "rev-safara-master-001",
+        "state": {
+          "assertionIds": [
+            "ast-manifest-out-of-scope",
+            "ast-readiness-blockers"
+          ],
+          "resolvedFacts": [
+            {
+              "semanticKey": "manifest.eligibility",
+              "assertionId": "ast-manifest-out-of-scope",
+              "value": {
+                "status": "out_of_scope"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "branchId": "branch-increment-003",
+        "headRevisionId": "rev-safara-increment-003",
+        "state": {
+          "assertionIds": [
+            "ast-manifest-ready-only",
+            "ast-manifest-snapshot",
+            "ast-readiness-blockers"
+          ],
+          "resolvedFacts": [
+            {
+              "semanticKey": "manifest.eligibility",
+              "assertionId": "ast-manifest-ready-only",
+              "value": {
+                "allowedReadiness": "Siap"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "changeProposals": [
+      {
+        "proposalId": "proposal-manifest-staged-correction",
+        "branchId": "branch-increment-003",
+        "baseRevisionId": "rev-safara-increment-003",
+        "targetSemanticKey": "manifest.eligibility",
+        "beforeValue": {
+          "allowedReadiness": "Siap"
+        },
+        "proposedValue": {
+          "allowedReadiness": "Siap",
+          "exception": "manual_override"
+        },
+        "provenance": {
+          "artifactId": "artifact-safara-03",
+          "page": 2,
+          "quote": "Hanya jemaah berstatus Siap yang dapat dimasukkan ke manifest final."
+        },
+        "status": "staged",
+        "resolution": null
+      }
+    ],
+    "dependencies": [
+      {
+        "fromId": "ast-manifest-ready-only",
+        "toId": "workflow-manifest"
+      },
+      {
+        "fromId": "ast-manifest-ready-only",
+        "toId": "ces-manifest"
+      },
+      {
+        "fromId": "ast-manifest-ready-only",
+        "toId": "chatbot-manifest"
+      }
+    ]
+  },
+  "projections": [
+    {
+      "branchId": "branch-master",
+      "headRevisionId": "rev-safara-master-001",
+      "surfaces": [
+        {
+          "surface": "workflow",
+          "branchId": "branch-master",
+          "headRevisionId": "rev-safara-master-001",
+          "records": [
+            {
+              "recordId": "workflow-manifest",
+              "assertionIds": [
+                "ast-manifest-out-of-scope"
+              ],
+              "dependencyIds": [],
+              "resolvedValue": {
+                "status": "out_of_scope"
+              }
+            }
+          ]
+        },
+        {
+          "surface": "facts",
+          "branchId": "branch-master",
+          "headRevisionId": "rev-safara-master-001",
+          "records": [
+            {
+              "recordId": "facts-manifest",
+              "assertionIds": [
+                "ast-manifest-out-of-scope"
+              ],
+              "dependencyIds": [],
+              "resolvedValue": {
+                "status": "out_of_scope"
+              }
+            }
+          ]
+        },
+        {
+          "surface": "ces",
+          "branchId": "branch-master",
+          "headRevisionId": "rev-safara-master-001",
+          "records": [
+            {
+              "recordId": "ces-manifest",
+              "assertionIds": [
+                "ast-manifest-out-of-scope"
+              ],
+              "dependencyIds": [],
+              "resolvedValue": {
+                "status": "out_of_scope"
+              }
+            }
+          ]
+        },
+        {
+          "surface": "chatbot_context",
+          "branchId": "branch-master",
+          "headRevisionId": "rev-safara-master-001",
+          "records": [
+            {
+              "recordId": "chatbot_context-manifest",
+              "assertionIds": [
+                "ast-manifest-out-of-scope"
+              ],
+              "dependencyIds": [],
+              "resolvedValue": {
+                "status": "out_of_scope"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "branchId": "branch-increment-003",
+      "headRevisionId": "rev-safara-increment-003",
+      "surfaces": [
+        {
+          "surface": "workflow",
+          "branchId": "branch-increment-003",
+          "headRevisionId": "rev-safara-increment-003",
+          "records": [
+            {
+              "recordId": "workflow-manifest",
+              "assertionIds": [
+                "ast-manifest-ready-only"
+              ],
+              "dependencyIds": [
+                "workflow-manifest",
+                "ces-manifest",
+                "chatbot-manifest"
+              ],
+              "resolvedValue": {
+                "allowedReadiness": "Siap"
+              }
+            }
+          ]
+        },
+        {
+          "surface": "facts",
+          "branchId": "branch-increment-003",
+          "headRevisionId": "rev-safara-increment-003",
+          "records": [
+            {
+              "recordId": "facts-manifest",
+              "assertionIds": [
+                "ast-manifest-ready-only"
+              ],
+              "dependencyIds": [
+                "workflow-manifest",
+                "ces-manifest",
+                "chatbot-manifest"
+              ],
+              "resolvedValue": {
+                "allowedReadiness": "Siap"
+              }
+            }
+          ]
+        },
+        {
+          "surface": "ces",
+          "branchId": "branch-increment-003",
+          "headRevisionId": "rev-safara-increment-003",
+          "records": [
+            {
+              "recordId": "ces-manifest",
+              "assertionIds": [
+                "ast-manifest-ready-only"
+              ],
+              "dependencyIds": [
+                "workflow-manifest",
+                "ces-manifest",
+                "chatbot-manifest"
+              ],
+              "resolvedValue": {
+                "allowedReadiness": "Siap"
+              }
+            }
+          ]
+        },
+        {
+          "surface": "chatbot_context",
+          "branchId": "branch-increment-003",
+          "headRevisionId": "rev-safara-increment-003",
+          "records": [
+            {
+              "recordId": "chatbot_context-manifest",
+              "assertionIds": [
+                "ast-manifest-ready-only"
+              ],
+              "dependencyIds": [
+                "workflow-manifest",
+                "ces-manifest",
+                "chatbot-manifest"
+              ],
+              "resolvedValue": {
+                "allowedReadiness": "Siap"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

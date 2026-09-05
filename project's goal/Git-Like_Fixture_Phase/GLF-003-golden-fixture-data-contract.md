@@ -1,6 +1,6 @@
 # GLF-003: Golden fixture data contract
 
-- **State:** planned
+- **State:** awaiting_review
 - **Review batch:** BATCH-19
 - **Depends on:** GLF-002
 - **Baseline:** Architecture Checkpoint sections 2, 4–12, 16–20, 22–24; UI/UX Prototype PRD 9.1, 9.4; Fixture Data-Intent Contract

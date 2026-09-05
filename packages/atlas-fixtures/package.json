@@ -7,7 +7,8 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "test": "node --test tests/*.test.mjs"
+    "generate": "pnpm --filter @atlas/app run fixtures:generate",
+    "test": "pnpm run generate && node --test tests/*.test.mjs"
   },
   "devDependencies": {
     "ajv": "8.20.0"
