@@ -91,7 +91,9 @@ function validate(bundle, artifacts) {
   for (const stage of expectedWorkflowStages) if (!stages.includes(stage)) fail("Missing workflow stage: " + stage);
 }
 function report(bundle) {
-  const lines = ["# Safara GLF-003-02 reconciliation", "", "- Source pages: 11", "- Inventory statements: " + bundle.sourceStatementInventory.length, "- Candidate assertions: " + bundle.repository.assertions.length, "- Non-fact classifications: " + bundle.sourceStatementInventory.filter((entry) => entry.destination.type === "non_fact").length, "- Duplicate links: " + bundle.sourceStatementInventory.filter((entry) => entry.destination.duplicateOf).length, "- Unresolved questions: 0", "", "| PDF | Page | Candidates | Non-facts |", "|---|---:|---:|---:|"];
+  const sourcePageCount = bundle.repository.artifacts.reduce((total, artifact) => total + artifact.pageCount, 0);
+  const unresolvedQuestionCount = bundle.sourceStatementInventory.filter((entry) => entry.normalizedInterpretation && entry.normalizedInterpretation.kind === "unresolved_question").length;
+  const lines = ["# Safara GLF-003-02 reconciliation", "", "- Source pages: " + sourcePageCount, "- Inventory statements: " + bundle.sourceStatementInventory.length, "- Candidate assertions: " + bundle.repository.assertions.length, "- Non-fact classifications: " + bundle.sourceStatementInventory.filter((entry) => entry.destination.type === "non_fact").length, "- Duplicate links: " + bundle.sourceStatementInventory.filter((entry) => entry.destination.duplicateOf).length, "- Unresolved questions: " + unresolvedQuestionCount, "", "| PDF | Page | Candidates | Non-facts |", "|---|---:|---:|---:|"];
   for (const artifact of bundle.repository.artifacts) for (let page = 1; page <= artifact.pageCount; page += 1) {
     const entries = bundle.sourceStatementInventory.filter((entry) => entry.artifactName === artifact.name && entry.page === page);
     lines.push("| " + artifact.name + " | " + page + " | " + entries.filter((entry) => entry.destination.type === "candidate_assertion").length + " | " + entries.filter((entry) => entry.destination.type === "non_fact").length + " |");
@@ -102,6 +104,10 @@ function report(bundle) {
 }
 async function main() {
   if ((process.env.SKILLS_MODE || "codex") !== "codex") fail("The deterministic reference executor supports codex only.");
+  if (process.env.GOLDEN_FIXTURE_TEST_MUTATION === "add-unresolved-question") {
+    const primary = sourceStatementInventory.find((entry) => entry.destination.type === "candidate_assertion");
+    sourceStatementInventory.push({ ...primary, inventoryId: "INV-TEST-QUESTION-001", semanticKey: "test.unresolved-question", value: { question: "Fixture-only unresolved question" }, normalizedInterpretation: { kind: "unresolved_question", question: "Fixture-only unresolved question" }, destination: { type: "candidate_assertion", candidateId: "candidate-inv-test-question-001" } });
+  }
   const artifacts = await Promise.all(sourceArtifacts.map(loadArtifact));
   const all = assertions(artifacts);
   const master = current(all, ["base"]);

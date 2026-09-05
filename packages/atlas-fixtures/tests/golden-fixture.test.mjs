@@ -6,6 +6,7 @@ import test from "node:test";
 import { resolveGoldenFixtureBranch } from "../src/index.ts";
 
 const output = path.resolve(import.meta.dirname, "../generated/safara-golden-bundle.json");
+const reconciliation = path.resolve(import.meta.dirname, "../generated/safara-reconciliation.md");
 const script = path.resolve(import.meta.dirname, "../../../apps/atlas/scripts/generate-golden-fixture.mjs");
 const cwd = path.resolve(import.meta.dirname, "../../../apps/atlas");
 const bundle = JSON.parse(await readFile(output, "utf8"));
@@ -61,4 +62,16 @@ test("negative publication cases preserve the last valid bundle", async () => {
     assert.throws(() => execFileSync(process.execPath, [script], { cwd, env: { ...process.env, GOLDEN_FIXTURE_TEST_MUTATION: mutation }, stdio: "pipe" }));
     assert.equal(await readFile(output, "utf8"), before);
   }
+});
+
+test("reconciliation counts are derived from fixture data", async () => {
+  const normalReport = await readFile(reconciliation, "utf8");
+  const sourcePages = bundle.repository.artifacts.reduce((total, artifact) => total + artifact.pageCount, 0);
+  const unresolved = bundle.sourceStatementInventory.filter((entry) => entry.normalizedInterpretation && entry.normalizedInterpretation.kind === "unresolved_question").length;
+  assert.ok(normalReport.includes("- Source pages: " + sourcePages));
+  assert.ok(normalReport.includes("- Unresolved questions: " + unresolved));
+  execFileSync(process.execPath, [script], { cwd, env: { ...process.env, GOLDEN_FIXTURE_TEST_MUTATION: "add-unresolved-question" }, stdio: "pipe" });
+  const questionReport = await readFile(reconciliation, "utf8");
+  assert.ok(questionReport.includes("- Unresolved questions: 1"));
+  execFileSync(process.execPath, [script], { cwd, env: process.env, stdio: "pipe" });
 });
