@@ -74,14 +74,15 @@ test("skill contracts reject malformed evidence, modes, branches, proposals, pro
   assert.equal(validator("atlas.fixture-changes", "input")(changesInput), false);
   const changesOutput = sample("atlas.fixture-changes", "output");
   changesOutput.changeProposal = validValue(byId["atlas.fixture-changes"].outputSchema.properties.changeProposal);
-  delete changesOutput.changeProposal.baseRevisionId;
+  delete changesOutput.changeProposal.provenance;
   assert.equal(validator("atlas.fixture-changes", "output")(changesOutput), false);
 
   const projectionsInput = sample("atlas.fixture-projections", "input");
   projectionsInput.branch = { headRevisionId: "rev-1" };
   assert.equal(validator("atlas.fixture-projections", "input")(projectionsInput), false);
   const projectionsOutput = sample("atlas.fixture-projections", "output");
-  delete projectionsOutput.projectionCandidate.surfaces[0].records;
+  projectionsOutput.projectionCandidate.surfaces[0].records = [validValue(byId["atlas.fixture-projections"].outputSchema.properties.projectionCandidate.properties.surfaces.items.properties.records.items)];
+  delete projectionsOutput.projectionCandidate.surfaces[0].records[0].assertionIds;
   assert.equal(validator("atlas.fixture-projections", "output")(projectionsOutput), false);
 
   const repositoryInput = sample("atlas.fixture-repository", "input");
@@ -96,7 +97,7 @@ test("skill contracts reject malformed evidence, modes, branches, proposals, pro
   delete verificationInput.repository.branches;
   assert.equal(validator("atlas.fixture-verification", "input")(verificationInput), false);
   const verificationOutput = sample("atlas.fixture-verification", "output");
-  delete verificationOutput.checks[0].status;
+  delete verificationOutput.checks[0].evidence;
   assert.equal(validator("atlas.fixture-verification", "output")(verificationOutput), false);
 });
 

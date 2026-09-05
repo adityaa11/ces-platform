@@ -37,12 +37,16 @@
       "status": { "enum": ["complete", "needs_resolution", "conflict"] },
       "changeProposal": {
         "type": ["object", "null"],
-        "required": ["proposalId", "branchId", "baseRevisionId", "targetSemanticKey", "status"],
+        "required": ["proposalId", "branchId", "baseRevisionId", "targetSemanticKey", "beforeValue", "proposedValue", "provenance", "resolution", "status"],
         "properties": {
           "proposalId": { "type": "string", "minLength": 1 },
           "branchId": { "type": "string", "minLength": 1 },
           "baseRevisionId": { "type": "string", "minLength": 1 },
           "targetSemanticKey": { "type": "string", "minLength": 1 },
+          "beforeValue": {},
+          "proposedValue": {},
+          "provenance": { "type": "object", "required": ["artifactId", "page", "quote"], "properties": { "artifactId": { "type": "string", "minLength": 1 }, "page": { "type": "integer", "minimum": 1 }, "quote": { "type": "string", "minLength": 1 } } },
+          "resolution": { "type": ["object", "null"] },
           "status": { "enum": ["staged", "needs_resolution", "conflict"] }
         }
       },

@@ -50,7 +50,18 @@
                 "surface": { "enum": ["workflow", "facts", "ces", "chatbot_context"] },
                 "branchId": { "type": "string", "minLength": 1 },
                 "headRevisionId": { "type": "string", "minLength": 1 },
-                "records": { "type": "array" }
+                "records": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["recordId", "assertionIds", "dependencyIds"],
+                    "properties": {
+                      "recordId": { "type": "string", "minLength": 1 },
+                      "assertionIds": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+                      "dependencyIds": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+                    }
+                  }
+                }
               }
             }
           }
