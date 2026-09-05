@@ -1,22 +1,30 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
+import Ajv from "ajv";
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
+import { resolveFixtureAuthoringExecutor } from "@atlas/fixtures";
 
 const root = path.resolve(import.meta.dirname, "../../..");
 const prdDirectory = path.join(root, "docs", "PRD");
 const outputDirectory = path.join(root, "packages", "atlas-fixtures", "generated");
 const outputFile = path.join(outputDirectory, "safara-golden-bundle.json");
-const files = [
-  ["artifact-safara-01", "Safara/Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf"],
-  ["artifact-safara-02", "Safara/Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf"],
-  ["artifact-safara-03", "Safara/Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf"],
-];
+const skillDirectory = path.join(root, ".agents", "skills");
 
-const provenance = (skillId) => ({ skillId, skillVersion: "1.1.0", mode: process.env.SKILLS_MODE ?? "codex" });
-const execution = (stage, input, output) => ({ stage, input, output, executionProvenance: provenance(stage === "extract" ? "atlas.prd-extraction" : `atlas.fixture-${stage}`) });
+const provenance = (skillId, mode) => ({ skillId, skillVersion: "1.1.0", mode });
 
-async function extractArtifact([artifactId, relativePath]) {
+async function discoverPdfs(directory, prefix = "") {
+  const entries = await readdir(directory, { withFileTypes: true });
+  const discovered = await Promise.all(entries.map(async (entry) => {
+    const relativePath = path.join(prefix, entry.name);
+    if (entry.isDirectory()) return discoverPdfs(path.join(directory, entry.name), relativePath);
+    return entry.isFile() && entry.name.toLowerCase().endsWith(".pdf") ? [relativePath] : [];
+  }));
+  return discovered.flat().sort((left, right) => left.localeCompare(right));
+}
+
+async function extractArtifact(relativePath) {
+  const artifactId = `artifact-${relativePath.replace(/[^a-z0-9]+/gi, "-").replace(/(^-|-$)/g, "").toLowerCase()}`;
   const filePath = path.join(prdDirectory, relativePath);
   const bytes = new Uint8Array(await readFile(filePath));
   const sha256 = createHash("sha256").update(bytes).digest("hex");
@@ -28,6 +36,23 @@ async function extractArtifact([artifactId, relativePath]) {
     pages.push({ page: pageNumber, text: content.items.map((item) => item.str).join(" ") });
   }
   return { artifactId, type: "prd", name: path.basename(relativePath), relativePath, sha256, pages };
+}
+
+async function loadSkill(skillId) {
+  const folder = skillId.replace("atlas.", "atlas-").replaceAll(".", "-");
+  return JSON.parse(await readFile(path.join(skillDirectory, folder, "atlas-skill.json"), "utf8"));
+}
+
+async function invokeSkill(skillId, input, execute, context) {
+  const manifest = await loadSkill(skillId);
+  const validateInput = context.ajv.compile(manifest.inputSchema);
+  if (!validateInput(input)) throw new Error(`${skillId} rejected input: ${context.ajv.errorsText(validateInput.errors)}`);
+  const response = execute(manifest);
+  if (process.env.GOLDEN_FIXTURE_TEST_FAIL_SCHEMA === skillId) delete response.skillId;
+  const validateOutput = context.ajv.compile(manifest.outputSchema);
+  if (!validateOutput(response)) throw new Error(`${skillId} rejected output: ${context.ajv.errorsText(validateOutput.errors)}`);
+  context.pipeline.push({ skillId, input, response });
+  return response;
 }
 
 const evidence = (artifacts, artifactId, page, quote) => {
@@ -63,11 +88,14 @@ function validate(bundle) {
 
 const compactArtifact = ({ pages, ...artifact }) => ({ ...artifact, pageCount: pages.length });
 const main = async () => {
-  const artifacts = await Promise.all(files.map(extractArtifact));
-  const p1 = evidence(artifacts, "artifact-safara-01", 1, "manifest, dan laporan belum menjadi ruang lingkup increment ini.");
-  const p2 = evidence(artifacts, "artifact-safara-02", 3, "Semua alasan yang menghambat kesiapan harus ditampilkan bersamaan.");
-  const p3 = evidence(artifacts, "artifact-safara-03", 2, "Hanya jemaah berstatus Siap yang dapat dimasukkan ke manifest final.");
-  const p3Snapshot = evidence(artifacts, "artifact-safara-03", 2, "Setelah difinalisasi, isi manifest tidak berubah otomatis walaupun data jemaah kemudian diperbarui.");
+  const mode = resolveFixtureAuthoringExecutor(process.env);
+  const context = { ajv: new Ajv({ strict: false }), pipeline: [] };
+  const artifacts = await Promise.all((await discoverPdfs(prdDirectory)).map(extractArtifact));
+  const artifactId = (name) => artifacts.find((artifact) => artifact.name === name)?.artifactId ?? (() => { throw new Error(`Missing discovered PRD ${name}`); })();
+  const p1 = evidence(artifacts, artifactId("Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf"), 1, "manifest, dan laporan belum menjadi ruang lingkup increment ini.");
+  const p2 = evidence(artifacts, artifactId("Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf"), 3, "Semua alasan yang menghambat kesiapan harus ditampilkan bersamaan.");
+  const p3 = evidence(artifacts, artifactId("Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf"), 2, "Hanya jemaah berstatus Siap yang dapat dimasukkan ke manifest final.");
+  const p3Snapshot = evidence(artifacts, artifactId("Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf"), 2, "Setelah difinalisasi, isi manifest tidak berubah otomatis walaupun data jemaah kemudian diperbarui.");
   const assertions = [
     { assertionId: "ast-manifest-out-of-scope", semanticKey: "manifest.eligibility", value: { status: "out_of_scope" }, evidence: p1, status: "accepted" },
     { assertionId: "ast-readiness-blockers", semanticKey: "readiness.blocker-display", value: { mode: "all_blockers" }, evidence: p2, status: "accepted" },
@@ -77,8 +105,8 @@ const main = async () => {
   const repository = {
     projectId: "safara", schemaVersion: "1.0", artifacts: artifacts.map(compactArtifact), assertions,
     revisions: [
-      { revisionId: "rev-safara-master-001", parentRevisionIds: [], acceptedAssertionIds: ["ast-manifest-out-of-scope", "ast-readiness-blockers"], executionProvenance: provenance("atlas.fixture-repository") },
-      { revisionId: "rev-safara-increment-003", parentRevisionIds: ["rev-safara-master-001"], acceptedAssertionIds: ["ast-manifest-ready-only", "ast-manifest-snapshot"], executionProvenance: provenance("atlas.fixture-repository") },
+      { revisionId: "rev-safara-master-001", parentRevisionIds: [], acceptedAssertionIds: ["ast-manifest-out-of-scope", "ast-readiness-blockers"], executionProvenance: provenance("atlas.fixture-repository", mode) },
+      { revisionId: "rev-safara-increment-003", parentRevisionIds: ["rev-safara-master-001"], acceptedAssertionIds: ["ast-manifest-ready-only", "ast-manifest-snapshot"], executionProvenance: provenance("atlas.fixture-repository", mode) },
     ],
     branches: [
       { branchId: "branch-master", label: "Master", headRevisionId: "rev-safara-master-001" },
@@ -97,7 +125,14 @@ const main = async () => {
     return { branchId, headRevisionId: state.headRevisionId, surfaces: ["workflow", "facts", "ces", "chatbot_context"].map((surface) => ({ surface, branchId, headRevisionId: state.headRevisionId, records: [{ recordId: `${surface}-manifest`, assertionIds: [eligibility.assertionId], dependencyIds: repository.dependencies.filter((entry) => entry.fromId === eligibility.assertionId).map((entry) => entry.toId), resolvedValue: eligibility.value }] })) };
   };
   const projections = repository.branches.map((branch) => projectionFor(branch.branchId));
-  const bundle = { bundleVersion: "1.0", generatedAt: "2026-09-05T00:00:00.000Z", executionMode: process.env.SKILLS_MODE ?? "codex", pipeline: [execution("extract", { sourceDirectory: "docs/PRD" }, { artifactCount: artifacts.length }), execution("repository", { artifactCount: artifacts.length }, { revisionCount: repository.revisions.length }), execution("changes", { branchId: "branch-increment-003" }, { proposalId: repository.changeProposals[0].proposalId }), execution("projections", { branches: repository.branches.map((entry) => entry.branchId) }, { projectionCount: projections.length }), execution("verification", { repository: "safara" }, { status: "pass" })], repository, projections };
+  const extractionResponses = await Promise.all(artifacts.map((artifact) => invokeSkill("atlas.prd-extraction", { artifact: { artifactId: artifact.artifactId, type: "prd", name: artifact.name }, pages: artifact.pages }, () => ({ skillId: "atlas.prd-extraction", skillVersion: "1.1.0", executionProvenance: provenance("atlas.prd-extraction", mode), status: "complete", candidateAssertions: assertions.filter((assertion) => assertion.evidence.artifactId === artifact.artifactId).map((assertion) => ({ candidateId: `candidate-${assertion.assertionId}`, kind: "constraint", semanticKey: assertion.semanticKey, payload: assertion.value, possibleAffectedSemanticKey: assertion.semanticKey, evidence: assertion.evidence })), unaccountedStatements: [], questions: [] }), context)));
+  const repositoryResponse = await invokeSkill("atlas.fixture-repository", { projectId: "safara", sourceArtifacts: artifacts.map(compactArtifact), requestedScenario: "Master and Increment 03 manifest truth" }, () => ({ skillId: "atlas.fixture-repository", skillVersion: "1.1.0", executionProvenance: provenance("atlas.fixture-repository", mode), status: "complete", repositoryCandidate: repository, issues: [] }), context);
+  const proposal = repository.changeProposals[0];
+  const changesResponse = await invokeSkill("atlas.fixture-changes", { inputKind: "user_correction", branch: { branchId: proposal.branchId, headRevisionId: proposal.baseRevisionId }, baseRevision: { revisionId: proposal.baseRevisionId }, currentState: repository.materializedStates.find((state) => state.branchId === proposal.branchId), incomingInformation: proposal.proposedValue, sourceArtifacts: artifacts.map(compactArtifact) }, () => ({ skillId: "atlas.fixture-changes", skillVersion: "1.1.0", executionProvenance: provenance("atlas.fixture-changes", mode), status: "complete", changeProposal: proposal, questions: [] }), context);
+  const projectionResponses = await Promise.all(projections.map((projection) => invokeSkill("atlas.fixture-projections", { branch: { branchId: projection.branchId, headRevisionId: projection.headRevisionId }, headRevision: { revisionId: projection.headRevisionId }, resolvedFacts: repository.materializedStates.find((state) => state.branchId === projection.branchId).state.resolvedFacts, dependencies: repository.dependencies, requestedSurfaces: ["workflow", "facts", "ces", "chatbot_context"] }, () => ({ skillId: "atlas.fixture-projections", skillVersion: "1.1.0", executionProvenance: provenance("atlas.fixture-projections", mode), status: "complete", projectionCandidate: projection, issues: [] }), context)));
+  validate({ repository, projections });
+  await invokeSkill("atlas.fixture-verification", { repository, projections: projections[0], checks: ["topology", "provenance", "branch-isolation"] }, () => ({ skillId: "atlas.fixture-verification", skillVersion: "1.1.0", executionProvenance: provenance("atlas.fixture-verification", mode), status: "pass", checks: [{ checkId: "deterministic-gates", status: "pass", detail: "Evidence, topology, provenance, and branch isolation resolve.", evidence: [{ kind: "deterministic-validation", reference: "validate(bundle)" }] }] }), context);
+  const bundle = { bundleVersion: "1.0", generatedAt: "2026-09-05T00:00:00.000Z", executionMode: mode, pipeline: context.pipeline, skillResponses: { extractionResponses, repositoryResponse, changesResponse, projectionResponses }, repository, projections };
   validate(bundle);
   await mkdir(outputDirectory, { recursive: true });
   const temporaryFile = `${outputFile}.tmp`;

@@ -29,8 +29,8 @@ comparison contract.
 
 | Order | Ticket / batch | State | Depends on | Review question |
 |---:|---|---|---|---|
-| 1 | GLF-001 / BATCH-17 | planned | — | Is the repository-local `SKILLS_MODE` configuration explicit, safe, and defaulted to `codex`? |
-| 2 | GLF-002 / BATCH-18 | planned | GLF-001 | Are the shared skill definitions, purposes, responsibilities, and review checks complete and non-authoritative? |
+| 1 | GLF-001 / BATCH-17 | approved | — | Is the repository-local `SKILLS_MODE` configuration explicit, safe, and defaulted to `codex`? |
+| 2 | GLF-002 / BATCH-18 | approved | GLF-001 | Are the shared skill definitions, purposes, responsibilities, and review checks complete and non-authoritative? |
 | 3 | GLF-003 / BATCH-19 | awaiting_review | GLF-002 | Does the golden-fixture data contract supply every relationship and branch/HEAD field required by the shared skills and future UI? |
 | 4 | GLF-004 / BATCH-20 | planned | GLF-003 | Can a user select a workspace/branch and understand its selected HEAD without confusing it with the PRD lens? |
 | 5 | GLF-005 / BATCH-21 | planned | GLF-003, GLF-004 | Do all existing knowledge surfaces resolve one coherent current truth from the selected branch HEAD? |
