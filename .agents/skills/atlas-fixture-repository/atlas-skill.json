@@ -77,7 +77,7 @@
               "properties": {
                 "branchId": { "type": "string", "minLength": 1 },
                 "headRevisionId": { "type": "string", "minLength": 1 },
-                "state": { "type": "object" }
+                "state": { "type": "object", "required": ["assertionIds"], "properties": { "assertionIds": { "type": "array", "items": { "type": "string", "minLength": 1 } } } }
               }
             }
           }

@@ -41,12 +41,63 @@ test("every Atlas skill manifest parses and validates representative valid and i
   for (const { manifest } of manifests) {
     const validateInput = ajv.compile(manifest.inputSchema);
     const validateOutput = ajv.compile(manifest.outputSchema);
-    assert.equal(validateInput(validValue(manifest.inputSchema)), true, `${manifest.id} accepts its valid input`);
+    const validInput = validValue(manifest.inputSchema);
+    assert.equal(validateInput(validInput), true, `${manifest.id} accepts its valid input`);
+    delete validInput[manifest.inputSchema.required[0]];
+    assert.equal(validateInput(validInput), false, `${manifest.id} rejects input without a required field`);
     const validOutput = validValue(manifest.outputSchema);
     assert.equal(validateOutput(validOutput), true, `${manifest.id} accepts its valid output`);
     delete validOutput.skillId;
     assert.equal(validateOutput(validOutput), false, `${manifest.id} rejects output without its declared skill identity`);
+    const missingProvenance = validValue(manifest.outputSchema);
+    delete missingProvenance.executionProvenance.mode;
+    assert.equal(validateOutput(missingProvenance), false, `${manifest.id} rejects missing execution mode provenance`);
   }
+});
+
+test("skill contracts reject malformed evidence, modes, branches, proposals, projections, and checks", () => {
+  const ajv = new Ajv({ strict: false });
+  const byId = Object.fromEntries(manifests.map(({ manifest }) => [manifest.id, manifest]));
+  const validator = (id, kind) => ajv.compile(byId[id][`${kind}Schema`]);
+  const sample = (id, kind) => structuredClone(validValue(byId[id][`${kind}Schema`]));
+
+  const extractionInput = sample("atlas.prd-extraction", "input");
+  extractionInput.artifact.type = "memo";
+  assert.equal(validator("atlas.prd-extraction", "input")(extractionInput), false);
+  const extractionOutput = sample("atlas.prd-extraction", "output");
+  extractionOutput.candidateAssertions = [validValue(byId["atlas.prd-extraction"].outputSchema.properties.candidateAssertions.items)];
+  delete extractionOutput.candidateAssertions[0].evidence;
+  assert.equal(validator("atlas.prd-extraction", "output")(extractionOutput), false);
+
+  const changesInput = sample("atlas.fixture-changes", "input");
+  changesInput.inputKind = "unknown";
+  assert.equal(validator("atlas.fixture-changes", "input")(changesInput), false);
+  const changesOutput = sample("atlas.fixture-changes", "output");
+  changesOutput.changeProposal = validValue(byId["atlas.fixture-changes"].outputSchema.properties.changeProposal);
+  delete changesOutput.changeProposal.baseRevisionId;
+  assert.equal(validator("atlas.fixture-changes", "output")(changesOutput), false);
+
+  const projectionsInput = sample("atlas.fixture-projections", "input");
+  projectionsInput.branch = { headRevisionId: "rev-1" };
+  assert.equal(validator("atlas.fixture-projections", "input")(projectionsInput), false);
+  const projectionsOutput = sample("atlas.fixture-projections", "output");
+  delete projectionsOutput.projectionCandidate.surfaces[0].records;
+  assert.equal(validator("atlas.fixture-projections", "output")(projectionsOutput), false);
+
+  const repositoryInput = sample("atlas.fixture-repository", "input");
+  repositoryInput.projectId = 42;
+  assert.equal(validator("atlas.fixture-repository", "input")(repositoryInput), false);
+  const repositoryOutput = sample("atlas.fixture-repository", "output");
+  repositoryOutput.repositoryCandidate.materializedStates = [validValue(byId["atlas.fixture-repository"].outputSchema.properties.repositoryCandidate.properties.materializedStates.items)];
+  delete repositoryOutput.repositoryCandidate.materializedStates[0].state.assertionIds;
+  assert.equal(validator("atlas.fixture-repository", "output")(repositoryOutput), false);
+
+  const verificationInput = sample("atlas.fixture-verification", "input");
+  delete verificationInput.repository.branches;
+  assert.equal(validator("atlas.fixture-verification", "input")(verificationInput), false);
+  const verificationOutput = sample("atlas.fixture-verification", "output");
+  delete verificationOutput.checks[0].status;
+  assert.equal(validator("atlas.fixture-verification", "output")(verificationOutput), false);
 });
 
 test("every shared skill is candidate or advisory only and carries execution provenance", () => {

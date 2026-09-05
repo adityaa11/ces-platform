@@ -10,9 +10,9 @@
     "required": ["inputKind", "branch", "baseRevision", "currentState"],
     "properties": {
       "inputKind": { "enum": ["extracted_candidate", "user_correction", "merge_context"] },
-      "branch": { "type": "object" },
-      "baseRevision": { "type": "object" },
-      "currentState": { "type": "object" },
+      "branch": { "type": "object", "required": ["branchId", "headRevisionId"], "properties": { "branchId": { "type": "string", "minLength": 1 }, "headRevisionId": { "type": "string", "minLength": 1 } } },
+      "baseRevision": { "type": "object", "required": ["revisionId"], "properties": { "revisionId": { "type": "string", "minLength": 1 } } },
+      "currentState": { "type": "object", "required": ["branchId", "headRevisionId", "state"], "properties": { "branchId": { "type": "string", "minLength": 1 }, "headRevisionId": { "type": "string", "minLength": 1 }, "state": { "type": "object" } } },
       "incomingInformation": { "type": "object" },
       "sourceArtifacts": { "type": "array", "items": { "type": "object" } }
     }
@@ -35,7 +35,17 @@
         }
       },
       "status": { "enum": ["complete", "needs_resolution", "conflict"] },
-      "changeProposal": { "type": ["object", "null"] },
+      "changeProposal": {
+        "type": ["object", "null"],
+        "required": ["proposalId", "branchId", "baseRevisionId", "targetSemanticKey", "status"],
+        "properties": {
+          "proposalId": { "type": "string", "minLength": 1 },
+          "branchId": { "type": "string", "minLength": 1 },
+          "baseRevisionId": { "type": "string", "minLength": 1 },
+          "targetSemanticKey": { "type": "string", "minLength": 1 },
+          "status": { "enum": ["staged", "needs_resolution", "conflict"] }
+        }
+      },
       "questions": { "type": "array", "items": { "type": "object" } }
     }
   }
