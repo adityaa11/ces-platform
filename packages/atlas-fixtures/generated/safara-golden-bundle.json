@@ -7,6 +7,124 @@
       "skillId": "atlas.prd-extraction",
       "input": {
         "artifact": {
+          "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+          "type": "prd",
+          "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf"
+        },
+        "pages": [
+          {
+            "page": 1,
+            "text": "C   S A F A R A   BUSINESS PRD / INCREMENTAL PROJECT REQUEST  I N C R E M E N TA L   P R O J E C T   R E Q U E S T  SAFARA - Increment 01  Fondasi Data dan Pendaftaran Jemaah  T U J U A N  Menyatukan data paket, jadwal keberangkatan, jemaah, dan pendaftaran dalam satu aplikasi operasional.  R U A N G L I N G K U P  Satu perusahaan dan satu cabang; paket, keberangkatan, data jemaah, pendaftaran, dan kuota.  P E N G G U N A  Owner/Admin  TA N G G A L D O K U M E N  27 Juli 2026  Dokumen ini menetapkan fondasi operasional pertama Safara. Pembayaran, dokumen perjalanan, kesiapan, manifest, dan laporan belum menjadi ruang lingkup increment ini.  Konteks  Kami membutuhkan aplikasi web internal untuk mengelola data dasar administrasi jemaah umrah pada tahap pendaftaran. Saat ini informasi paket, jadwal keberangkatan, data jemaah, dan pendaftaran sering tersebar di spreadsheet, chat, dan catatan yang berbeda. Hal ini menyulitkan tim untuk mengetahui: Jemaah terdaftar pada keberangkatan yang mana. Jumlah jemaah yang sudah terdaftar pada setiap keberangkatan. Sisa kuota setiap keberangkatan. Harga pendaftaran yang telah disepakati dengan jemaah. Aplikasi pada increment ini diharapkan menjadi satu sumber data untuk proses pendaftaran dan pengelolaan kuota sebelum kebutuhan operasional berikutnya ditambahkan.  Tujuan Bisnis  Mengurangi kesalahan pencatatan data jemaah dan pendaftaran. Mempermudah pemantauan kuota keberangkatan. Menjaga riwayat pendaftaran jemaah agar tidak hilang ketika data dibatalkan atau dinonaktifkan. Memastikan harga pendaftaran yang sudah disepakati tidak berubah ketika harga paket diperbarui.  Pengguna  Owner/Admin  Dapat melihat dan mengelola paket, jadwal keberangkatan, data jemaah, dan pendaftaran pada increment ini. Pengguna yang sudah dinonaktifkan tidak boleh masuk ke aplikasi. • • • • • • • •  Safara - Sistem Administrasi Travel Umrah   Dokumen Bisnis | 27 Juli 2026 |"
+          },
+          {
+            "page": 2,
+            "text": "Alur Utama  Admin membuat paket umrah. Admin membuat jadwal keberangkatan untuk paket yang dipilih. Admin mencatat data jemaah. Admin memilih jemaah dan mendaftarkannya ke jadwal keberangkatan yang masih terbuka. Sistem menyimpan harga pendaftaran yang berlaku saat pendaftaran. Sistem menampilkan jumlah jemaah terdaftar dan sisa kuota setiap keberangkatan.  Kebutuhan  1. Paket dan Jadwal Keberangkatan  Admin dapat membuat, melihat, mengubah, dan menonaktifkan paket umrah. Informasi paket minimal mencakup nama paket, durasi, harga dasar, deskripsi, dan status aktif. Setiap paket dapat memiliki satu atau lebih jadwal keberangkatan. Informasi jadwal minimal mencakup kode keberangkatan, tanggal berangkat, tanggal pulang, kota asal, kuota, harga, maskapai, nomor penerbangan, hotel Makkah, hotel Madinah, dan status keberangkatan. Aplikasi menampilkan jumlah jemaah terdaftar dan sisa kuota. Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh.  2. Data Jemaah  Admin dapat menambah, melihat, mengubah, mencari, dan menonaktifkan data jemaah. Informasi minimum jemaah: nama sesuai paspor, NIK, jenis kelamin, tempat dan tanggal lahir, nomor telepon, alamat, nomor dan masa berlaku paspor, serta nama dan nomor kontak darurat. NIK harus terdiri dari 16 angka apabila diisi. Aplikasi harus memberikan peringatan apabila NIK atau nomor paspor sudah digunakan oleh jemaah lain. Pada halaman daftar, NIK dan nomor paspor tidak perlu ditampilkan secara penuh.  3. Pendaftaran Jemaah  Admin dapat memilih jemaah dan mendaftarkannya ke jadwal keberangkatan yang masih terbuka. Setiap pendaftaran memiliki nomor pendaftaran yang berbeda. Harga yang berlaku saat pendaftaran disimpan sebagai harga pendaftaran yang disepakati dan menjadi nilai acuan tetap untuk pendaftaran tersebut. Perubahan harga paket setelah pendaftaran tidak boleh mengubah harga pendaftaran yang sudah disepakati. Jemaah yang sama tidak boleh memiliki dua pendaftaran aktif pada jadwal keberangkatan yang sama. Pendaftaran dapat dibatalkan dengan alasan yang tercatat, tetapi riwayatnya tetap dapat dilihat.  Aturan Bisnis Utama  Satu jemaah dapat memiliki beberapa riwayat pendaftaran, tetapi tidak boleh memiliki dua pendaftaran aktif pada keberangkatan yang sama. Jumlah pendaftaran aktif tidak boleh melebihi kuota keberangkatan. Harga pendaftaran yang sudah disepakati tidak berubah ketika harga paket diperbarui. Pembatalan atau penonaktifan data tidak boleh menghilangkan riwayat sebelumnya. Informasi jemaah hanya boleh dilihat oleh pengguna yang berkepentingan.  1. 2. 3. 4. 5. 6.  • • • • • • • • • • • • • • • • • • • • • •  Safara - Sistem Administrasi Travel Umrah   Dokumen Bisnis | 27 Juli 2026 |"
+          },
+          {
+            "page": 3,
+            "text": "Skenario Pemeriksaan Hasil  Sebelum increment ini dinyatakan selesai, kami akan mencoba minimal skenario berikut: Membuat paket dan jadwal keberangkatan, lalu melihat sisa kuota. Mendaftarkan jemaah sampai kuota penuh dan memastikan pendaftaran berikutnya ditolak. Mencoba mendaftarkan jemaah yang sama dua kali pada keberangkatan yang sama. Memperbarui harga paket setelah pendaftaran dan memastikan harga pendaftaran yang sudah disepakati tidak berubah. Membatalkan pendaftaran dan memastikan riwayatnya tetap dapat dilihat.  Hasil yang Harus Diserahkan  Aplikasi web increment pertama yang dapat digunakan untuk pengelolaan paket, jadwal keberangkatan, data jemaah, pendaftaran, dan kuota. Alamat aplikasi yang dapat diakses oleh pengguna yang ditentukan. Akun awal untuk Owner/Admin. Panduan penggunaan singkat untuk fungsi pada increment ini.  Kriteria Penerimaan Increment 01  Owner/Admin dapat masuk dan menjalankan fungsi yang ditetapkan pada increment ini. Alur dari pembuatan paket sampai pendaftaran jemaah dapat dijalankan menggunakan contoh data yang disepakati. Kuota dan sisa kuota dihitung dengan benar. Pendaftaran ditolak ketika jadwal ditutup, kuota penuh, atau jemaah yang sama sudah memiliki pendaftaran aktif pada keberangkatan yang sama. Harga pendaftaran yang sudah disepakati tetap tersimpan ketika harga paket berubah. Riwayat pendaftaran tetap dapat dilihat setelah pembatalan atau penonaktifan data.  1. 2. 3. 4. 5.  • • • • • • • • • •  Safara - Sistem Administrasi Travel Umrah   Dokumen Bisnis | 27 Juli 2026 |"
+          }
+        ]
+      },
+      "response": {
+        "skillId": "atlas.prd-extraction",
+        "skillVersion": "1.1.0",
+        "executionProvenance": {
+          "skillId": "atlas.prd-extraction",
+          "skillVersion": "1.1.0",
+          "mode": "codex"
+        },
+        "status": "complete",
+        "candidateAssertions": [
+          {
+            "candidateId": "candidate-ast-manifest-out-of-scope",
+            "kind": "constraint",
+            "semanticKey": "manifest.eligibility",
+            "payload": {
+              "status": "out_of_scope"
+            },
+            "possibleAffectedSemanticKey": "manifest.eligibility",
+            "evidence": {
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "page": 1,
+              "quote": "manifest, dan laporan belum menjadi ruang lingkup increment ini."
+            }
+          }
+        ],
+        "unaccountedStatements": [],
+        "questions": []
+      },
+      "executionProvenance": {
+        "skillId": "atlas.prd-extraction",
+        "skillVersion": "1.1.0",
+        "mode": "codex"
+      }
+    },
+    {
+      "skillId": "atlas.prd-extraction",
+      "input": {
+        "artifact": {
+          "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+          "type": "prd",
+          "name": "Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf"
+        },
+        "pages": [
+          {
+            "page": 1,
+            "text": "C   S A F A R A   BUSINESS PRD / INCREMENTAL PROJECT REQUEST  I N C R E M E N TA L   P R O J E C T   R E Q U E S T  SAFARA - Increment 02  Pembayaran, Dokumen, dan Kesiapan Keberangkatan  T U J U A N  Memperluas data pendaftaran menjadi proses pembayaran, pemeriksaan dokumen, dan penentuan kesiapan jemaah.  R U A N G L I N G K U P  Menambahkan tagihan dan pembayaran, dokumen jemaah, status perjalanan, serta kesiapan keberangkatan.  P E N G G U N A  Owner/Admin, Finance, dan Operations  TA N G G A L D O K U M E N  27 Juli 2026  Dokumen ini merupakan penambahan terhadap Increment 01. Ketentuan paket, keberangkatan, data jemaah, pendaftaran, harga pendaftaran, dan kuota tetap berlaku dan tidak diulang kecuali diperlukan sebagai konteks.  Konteks Increment  Fondasi yang sudah ada:   paket umrah, jadwal keberangkatan, data jemaah, pendaftaran jemaah, harga pendaftaran yang disepakati, dan pengendalian kuota. Setelah pendaftaran dapat dikelola di aplikasi, informasi berikut masih sering tersebar di bukti transfer, chat, dan folder dokumen yang berbeda: Siapa yang sudah atau belum melunasi pembayaran. Dokumen apa saja yang belum lengkap atau perlu diperbaiki. Status paspor, visa, asuransi, dan tiket. Alasan jemaah belum siap berangkat. Increment ini menambahkan proses keuangan dan pemeriksaan kesiapan sehingga Finance dan Operations dapat bekerja dari data pendaftaran yang sama.  Tujuan Bisnis  Mengurangi kesalahan pencatatan pembayaran. Mempercepat pemeriksaan kelengkapan dokumen. Mengetahui seluruh alasan jemaah belum siap berangkat. Memastikan perubahan pembayaran, dokumen, dan status perjalanan langsung tercermin pada status kesiapan. • • • • • • • •  Safara - Sistem Administrasi Travel Umrah   Dokumen Bisnis | 27 Juli 2026 |"
+          },
+          {
+            "page": 2,
+            "text": "Pengguna  Owner/Admin  Dapat melihat dan mengelola seluruh data yang telah tersedia sampai increment ini, termasuk pendaftaran, pembayaran, dokumen, dan kesiapan.  Finance  Dapat melihat tagihan jemaah, mencatat pembayaran, memeriksa bukti pembayaran, menerima atau menolak pembayaran, serta melihat informasi pembayaran.  Operations  Dapat melihat data jemaah, memeriksa dokumen, memperbarui status paspor, visa, asuransi, dan tiket, serta memantau kesiapan. Setiap pengguna hanya boleh melihat dan menjalankan pekerjaan yang sesuai dengan tanggung jawabnya. Pengguna yang sudah dinonaktifkan tidak boleh masuk ke aplikasi.  Alur Utama  Sistem menggunakan harga pendaftaran yang telah disepakati sebagai total tagihan jemaah. Finance mencatat cicilan dan memeriksa bukti pembayaran. Finance menerima atau menolak pembayaran. Admin atau Operations mengunggah dan memeriksa dokumen jemaah. Operations memperbarui status paspor, visa, asuransi, dan tiket. Aplikasi menampilkan apakah jemaah sudah   Siap   atau masih   Terhambat , beserta seluruh alasan penghambat.  Kebutuhan Baru  4. Tagihan dan Pembayaran  Setiap pendaftaran menampilkan total tagihan, total pembayaran yang sudah diterima, dan sisa pembayaran. Finance dapat mencatat pembayaran dengan informasi tanggal, nominal, cara pembayaran, nomor referensi, catatan, dan bukti pembayaran. Bukti pembayaran dapat berupa PDF atau gambar. Pembayaran baru berstatus   Menunggu Pemeriksaan . Finance dapat mengubahnya menjadi   Diterima   atau   Ditolak . Pembayaran yang ditolak wajib memiliki alasan. Hanya pembayaran berstatus   Diterima   yang mengurangi sisa pembayaran. Nomor referensi yang sama tidak boleh digunakan untuk menerima pembayaran dua kali. Status pembayaran jemaah ditampilkan sebagai   Belum Bayar ,   Sebagian , atau   Lunas .  Sisa   Pembayaran   = Total   Tagihan   -   Total Pembayaran Diterima  5. Dokumen Jemaah  Setiap jemaah memiliki daftar dokumen yang perlu dilengkapi.  1. 2. 3. 4. 5. 6.  • • • • • • • • • •  Safara - Sistem Administrasi Travel Umrah   Dokumen Bisnis | 27 Juli 2026 |"
+          },
+          {
+            "page": 3,
+            "text": "Daftar awal mencakup KTP, KK, paspor, pas foto, dan dokumen vaksin atau kesehatan. Dokumen pernikahan atau mahram dapat diwajibkan hanya untuk jemaah tertentu. Admin atau Operations dapat menambahkan, melihat, mengganti, dan memeriksa dokumen. Status dokumen:   Belum Ada ,   Menunggu Pemeriksaan ,   Valid ,   Ditolak , dan   Kedaluwarsa . Dokumen yang ditolak wajib memiliki alasan agar dapat diperbaiki. Dokumen lama dan hasil pemeriksaan sebelumnya tetap dapat dilihat sebagai riwayat. Dokumen jemaah bersifat rahasia dan hanya dapat dilihat oleh pengguna yang memiliki kewenangan.  6. Status Perjalanan dan Kesiapan  Kesiapan jemaah ditentukan dari enam bagian: Pembayaran. Dokumen wajib. Paspor. Visa. Asuransi. Tiket.  Jemaah berstatus Siap hanya apabila:  Sisa pembayaran sudah nol. Seluruh dokumen wajib berstatus Valid. Paspor tersedia dan masih memenuhi ketentuan perjalanan. Visa berstatus Disetujui. Asuransi berstatus Terbit. Tiket berstatus Terbit. Apabila salah satu syarat belum terpenuhi, status jemaah menjadi   Terhambat . Aplikasi harus menampilkan seluruh alasan penghambat, bukan hanya satu alasan. Setiap perubahan pembayaran, dokumen, paspor, visa, asuransi, atau tiket harus langsung memengaruhi status kesiapan yang ditampilkan.  Aturan Bisnis Utama  Pembayaran Menunggu Pemeriksaan atau Ditolak tidak mengurangi sisa pembayaran. Pembayaran atau dokumen yang ditolak wajib memiliki alasan. Dokumen wajib yang Belum Ada, Ditolak, atau Kedaluwarsa menyebabkan jemaah berstatus Terhambat. Semua alasan yang menghambat kesiapan harus ditampilkan bersamaan. Informasi jemaah dan dokumen hanya boleh dilihat oleh pengguna yang berkepentingan. Riwayat dokumen dan transaksi yang sudah pernah digunakan tidak boleh hilang hanya karena data kemudian diganti, dinonaktifkan, atau dibatalkan.  Skenario Pemeriksaan Hasil  Sebelum increment ini dinyatakan selesai, kami akan mencoba minimal skenario berikut: Mencatat pembayaran Menunggu Pemeriksaan dan memastikan sisa pembayaran belum berubah. Menerima pembayaran dan memastikan sisa pembayaran berkurang dengan benar. • • • • • • • • • • • • • • • • • • • • • • • • •  1. 2.  Safara - Sistem Administrasi Travel Umrah   Dokumen Bisnis | 27 Juli 2026 |"
+          },
+          {
+            "page": 4,
+            "text": "Menolak pembayaran atau dokumen dan memastikan alasan wajib dicatat. Membuat satu dokumen wajib tidak valid dan memastikan jemaah berstatus Terhambat. Membuat lebih dari satu kondisi penghambat dan memastikan seluruh alasannya ditampilkan bersamaan. Masuk sebagai Finance atau Operations dan memastikan masing-masing hanya dapat menjalankan tugas yang sesuai kewenangannya.  Hasil yang Harus Diserahkan  Fungsi tagihan dan pembayaran yang terhubung dengan pendaftaran jemaah. Fungsi unggah, pemeriksaan, dan riwayat dokumen jemaah. Fungsi pembaruan status paspor, visa, asuransi, dan tiket. Status Siap atau Terhambat yang diperbarui berdasarkan seluruh syarat kesiapan. Akun awal untuk Finance dan Operations sesuai kewenangannya. Panduan penggunaan singkat untuk fungsi baru pada increment ini.  Kriteria Penerimaan Increment 02  Owner/Admin, Finance, dan Operations dapat menjalankan tugas sesuai kewenangannya. Total tagihan menggunakan nilai pendaftaran yang telah disepakati pada Increment 01. Pembayaran Diterima mengurangi sisa pembayaran dengan benar; Menunggu Pemeriksaan atau Ditolak tidak menguranginya. Dokumen jemaah tidak dapat dilihat oleh pengguna yang tidak berwenang. Status Siap atau Terhambat sesuai dengan kondisi pembayaran, dokumen wajib, paspor, visa, asuransi, dan tiket. Semua alasan penghambat dapat dilihat dengan jelas.  3. 4. 5. 6.  • • • • • • • • • • • •  Safara - Sistem Administrasi Travel Umrah   Dokumen Bisnis | 27 Juli 2026 |"
+          }
+        ]
+      },
+      "response": {
+        "skillId": "atlas.prd-extraction",
+        "skillVersion": "1.1.0",
+        "executionProvenance": {
+          "skillId": "atlas.prd-extraction",
+          "skillVersion": "1.1.0",
+          "mode": "codex"
+        },
+        "status": "complete",
+        "candidateAssertions": [
+          {
+            "candidateId": "candidate-ast-readiness-blockers",
+            "kind": "constraint",
+            "semanticKey": "readiness.blocker-display",
+            "payload": {
+              "mode": "all_blockers"
+            },
+            "possibleAffectedSemanticKey": "readiness.blocker-display",
+            "evidence": {
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "page": 3,
+              "quote": "Semua alasan yang menghambat kesiapan harus ditampilkan bersamaan."
+            }
+          }
+        ],
+        "unaccountedStatements": [],
+        "questions": []
+      },
+      "executionProvenance": {
+        "skillId": "atlas.prd-extraction",
+        "skillVersion": "1.1.0",
+        "mode": "codex"
+      }
+    },
+    {
+      "skillId": "atlas.prd-extraction",
+      "input": {
+        "artifact": {
           "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
           "type": "prd",
           "name": "Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf"
@@ -71,114 +189,11 @@
         ],
         "unaccountedStatements": [],
         "questions": []
-      }
-    },
-    {
-      "skillId": "atlas.prd-extraction",
-      "input": {
-        "artifact": {
-          "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
-          "type": "prd",
-          "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf"
-        },
-        "pages": [
-          {
-            "page": 1,
-            "text": "C   S A F A R A   BUSINESS PRD / INCREMENTAL PROJECT REQUEST  I N C R E M E N TA L   P R O J E C T   R E Q U E S T  SAFARA - Increment 01  Fondasi Data dan Pendaftaran Jemaah  T U J U A N  Menyatukan data paket, jadwal keberangkatan, jemaah, dan pendaftaran dalam satu aplikasi operasional.  R U A N G L I N G K U P  Satu perusahaan dan satu cabang; paket, keberangkatan, data jemaah, pendaftaran, dan kuota.  P E N G G U N A  Owner/Admin  TA N G G A L D O K U M E N  27 Juli 2026  Dokumen ini menetapkan fondasi operasional pertama Safara. Pembayaran, dokumen perjalanan, kesiapan, manifest, dan laporan belum menjadi ruang lingkup increment ini.  Konteks  Kami membutuhkan aplikasi web internal untuk mengelola data dasar administrasi jemaah umrah pada tahap pendaftaran. Saat ini informasi paket, jadwal keberangkatan, data jemaah, dan pendaftaran sering tersebar di spreadsheet, chat, dan catatan yang berbeda. Hal ini menyulitkan tim untuk mengetahui: Jemaah terdaftar pada keberangkatan yang mana. Jumlah jemaah yang sudah terdaftar pada setiap keberangkatan. Sisa kuota setiap keberangkatan. Harga pendaftaran yang telah disepakati dengan jemaah. Aplikasi pada increment ini diharapkan menjadi satu sumber data untuk proses pendaftaran dan pengelolaan kuota sebelum kebutuhan operasional berikutnya ditambahkan.  Tujuan Bisnis  Mengurangi kesalahan pencatatan data jemaah dan pendaftaran. Mempermudah pemantauan kuota keberangkatan. Menjaga riwayat pendaftaran jemaah agar tidak hilang ketika data dibatalkan atau dinonaktifkan. Memastikan harga pendaftaran yang sudah disepakati tidak berubah ketika harga paket diperbarui.  Pengguna  Owner/Admin  Dapat melihat dan mengelola paket, jadwal keberangkatan, data jemaah, dan pendaftaran pada increment ini. Pengguna yang sudah dinonaktifkan tidak boleh masuk ke aplikasi. • • • • • • • •  Safara - Sistem Administrasi Travel Umrah   Dokumen Bisnis | 27 Juli 2026 |"
-          },
-          {
-            "page": 2,
-            "text": "Alur Utama  Admin membuat paket umrah. Admin membuat jadwal keberangkatan untuk paket yang dipilih. Admin mencatat data jemaah. Admin memilih jemaah dan mendaftarkannya ke jadwal keberangkatan yang masih terbuka. Sistem menyimpan harga pendaftaran yang berlaku saat pendaftaran. Sistem menampilkan jumlah jemaah terdaftar dan sisa kuota setiap keberangkatan.  Kebutuhan  1. Paket dan Jadwal Keberangkatan  Admin dapat membuat, melihat, mengubah, dan menonaktifkan paket umrah. Informasi paket minimal mencakup nama paket, durasi, harga dasar, deskripsi, dan status aktif. Setiap paket dapat memiliki satu atau lebih jadwal keberangkatan. Informasi jadwal minimal mencakup kode keberangkatan, tanggal berangkat, tanggal pulang, kota asal, kuota, harga, maskapai, nomor penerbangan, hotel Makkah, hotel Madinah, dan status keberangkatan. Aplikasi menampilkan jumlah jemaah terdaftar dan sisa kuota. Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh.  2. Data Jemaah  Admin dapat menambah, melihat, mengubah, mencari, dan menonaktifkan data jemaah. Informasi minimum jemaah: nama sesuai paspor, NIK, jenis kelamin, tempat dan tanggal lahir, nomor telepon, alamat, nomor dan masa berlaku paspor, serta nama dan nomor kontak darurat. NIK harus terdiri dari 16 angka apabila diisi. Aplikasi harus memberikan peringatan apabila NIK atau nomor paspor sudah digunakan oleh jemaah lain. Pada halaman daftar, NIK dan nomor paspor tidak perlu ditampilkan secara penuh.  3. Pendaftaran Jemaah  Admin dapat memilih jemaah dan mendaftarkannya ke jadwal keberangkatan yang masih terbuka. Setiap pendaftaran memiliki nomor pendaftaran yang berbeda. Harga yang berlaku saat pendaftaran disimpan sebagai harga pendaftaran yang disepakati dan menjadi nilai acuan tetap untuk pendaftaran tersebut. Perubahan harga paket setelah pendaftaran tidak boleh mengubah harga pendaftaran yang sudah disepakati. Jemaah yang sama tidak boleh memiliki dua pendaftaran aktif pada jadwal keberangkatan yang sama. Pendaftaran dapat dibatalkan dengan alasan yang tercatat, tetapi riwayatnya tetap dapat dilihat.  Aturan Bisnis Utama  Satu jemaah dapat memiliki beberapa riwayat pendaftaran, tetapi tidak boleh memiliki dua pendaftaran aktif pada keberangkatan yang sama. Jumlah pendaftaran aktif tidak boleh melebihi kuota keberangkatan. Harga pendaftaran yang sudah disepakati tidak berubah ketika harga paket diperbarui. Pembatalan atau penonaktifan data tidak boleh menghilangkan riwayat sebelumnya. Informasi jemaah hanya boleh dilihat oleh pengguna yang berkepentingan.  1. 2. 3. 4. 5. 6.  • • • • • • • • • • • • • • • • • • • • • •  Safara - Sistem Administrasi Travel Umrah   Dokumen Bisnis | 27 Juli 2026 |"
-          },
-          {
-            "page": 3,
-            "text": "Skenario Pemeriksaan Hasil  Sebelum increment ini dinyatakan selesai, kami akan mencoba minimal skenario berikut: Membuat paket dan jadwal keberangkatan, lalu melihat sisa kuota. Mendaftarkan jemaah sampai kuota penuh dan memastikan pendaftaran berikutnya ditolak. Mencoba mendaftarkan jemaah yang sama dua kali pada keberangkatan yang sama. Memperbarui harga paket setelah pendaftaran dan memastikan harga pendaftaran yang sudah disepakati tidak berubah. Membatalkan pendaftaran dan memastikan riwayatnya tetap dapat dilihat.  Hasil yang Harus Diserahkan  Aplikasi web increment pertama yang dapat digunakan untuk pengelolaan paket, jadwal keberangkatan, data jemaah, pendaftaran, dan kuota. Alamat aplikasi yang dapat diakses oleh pengguna yang ditentukan. Akun awal untuk Owner/Admin. Panduan penggunaan singkat untuk fungsi pada increment ini.  Kriteria Penerimaan Increment 01  Owner/Admin dapat masuk dan menjalankan fungsi yang ditetapkan pada increment ini. Alur dari pembuatan paket sampai pendaftaran jemaah dapat dijalankan menggunakan contoh data yang disepakati. Kuota dan sisa kuota dihitung dengan benar. Pendaftaran ditolak ketika jadwal ditutup, kuota penuh, atau jemaah yang sama sudah memiliki pendaftaran aktif pada keberangkatan yang sama. Harga pendaftaran yang sudah disepakati tetap tersimpan ketika harga paket berubah. Riwayat pendaftaran tetap dapat dilihat setelah pembatalan atau penonaktifan data.  1. 2. 3. 4. 5.  • • • • • • • • • •  Safara - Sistem Administrasi Travel Umrah   Dokumen Bisnis | 27 Juli 2026 |"
-          }
-        ]
       },
-      "response": {
+      "executionProvenance": {
         "skillId": "atlas.prd-extraction",
         "skillVersion": "1.1.0",
-        "executionProvenance": {
-          "skillId": "atlas.prd-extraction",
-          "skillVersion": "1.1.0",
-          "mode": "codex"
-        },
-        "status": "complete",
-        "candidateAssertions": [
-          {
-            "candidateId": "candidate-ast-manifest-out-of-scope",
-            "kind": "constraint",
-            "semanticKey": "manifest.eligibility",
-            "payload": {
-              "status": "out_of_scope"
-            },
-            "possibleAffectedSemanticKey": "manifest.eligibility",
-            "evidence": {
-              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
-              "page": 1,
-              "quote": "manifest, dan laporan belum menjadi ruang lingkup increment ini."
-            }
-          }
-        ],
-        "unaccountedStatements": [],
-        "questions": []
-      }
-    },
-    {
-      "skillId": "atlas.prd-extraction",
-      "input": {
-        "artifact": {
-          "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
-          "type": "prd",
-          "name": "Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf"
-        },
-        "pages": [
-          {
-            "page": 1,
-            "text": "C   S A F A R A   BUSINESS PRD / INCREMENTAL PROJECT REQUEST  I N C R E M E N TA L   P R O J E C T   R E Q U E S T  SAFARA - Increment 02  Pembayaran, Dokumen, dan Kesiapan Keberangkatan  T U J U A N  Memperluas data pendaftaran menjadi proses pembayaran, pemeriksaan dokumen, dan penentuan kesiapan jemaah.  R U A N G L I N G K U P  Menambahkan tagihan dan pembayaran, dokumen jemaah, status perjalanan, serta kesiapan keberangkatan.  P E N G G U N A  Owner/Admin, Finance, dan Operations  TA N G G A L D O K U M E N  27 Juli 2026  Dokumen ini merupakan penambahan terhadap Increment 01. Ketentuan paket, keberangkatan, data jemaah, pendaftaran, harga pendaftaran, dan kuota tetap berlaku dan tidak diulang kecuali diperlukan sebagai konteks.  Konteks Increment  Fondasi yang sudah ada:   paket umrah, jadwal keberangkatan, data jemaah, pendaftaran jemaah, harga pendaftaran yang disepakati, dan pengendalian kuota. Setelah pendaftaran dapat dikelola di aplikasi, informasi berikut masih sering tersebar di bukti transfer, chat, dan folder dokumen yang berbeda: Siapa yang sudah atau belum melunasi pembayaran. Dokumen apa saja yang belum lengkap atau perlu diperbaiki. Status paspor, visa, asuransi, dan tiket. Alasan jemaah belum siap berangkat. Increment ini menambahkan proses keuangan dan pemeriksaan kesiapan sehingga Finance dan Operations dapat bekerja dari data pendaftaran yang sama.  Tujuan Bisnis  Mengurangi kesalahan pencatatan pembayaran. Mempercepat pemeriksaan kelengkapan dokumen. Mengetahui seluruh alasan jemaah belum siap berangkat. Memastikan perubahan pembayaran, dokumen, dan status perjalanan langsung tercermin pada status kesiapan. • • • • • • • •  Safara - Sistem Administrasi Travel Umrah   Dokumen Bisnis | 27 Juli 2026 |"
-          },
-          {
-            "page": 2,
-            "text": "Pengguna  Owner/Admin  Dapat melihat dan mengelola seluruh data yang telah tersedia sampai increment ini, termasuk pendaftaran, pembayaran, dokumen, dan kesiapan.  Finance  Dapat melihat tagihan jemaah, mencatat pembayaran, memeriksa bukti pembayaran, menerima atau menolak pembayaran, serta melihat informasi pembayaran.  Operations  Dapat melihat data jemaah, memeriksa dokumen, memperbarui status paspor, visa, asuransi, dan tiket, serta memantau kesiapan. Setiap pengguna hanya boleh melihat dan menjalankan pekerjaan yang sesuai dengan tanggung jawabnya. Pengguna yang sudah dinonaktifkan tidak boleh masuk ke aplikasi.  Alur Utama  Sistem menggunakan harga pendaftaran yang telah disepakati sebagai total tagihan jemaah. Finance mencatat cicilan dan memeriksa bukti pembayaran. Finance menerima atau menolak pembayaran. Admin atau Operations mengunggah dan memeriksa dokumen jemaah. Operations memperbarui status paspor, visa, asuransi, dan tiket. Aplikasi menampilkan apakah jemaah sudah   Siap   atau masih   Terhambat , beserta seluruh alasan penghambat.  Kebutuhan Baru  4. Tagihan dan Pembayaran  Setiap pendaftaran menampilkan total tagihan, total pembayaran yang sudah diterima, dan sisa pembayaran. Finance dapat mencatat pembayaran dengan informasi tanggal, nominal, cara pembayaran, nomor referensi, catatan, dan bukti pembayaran. Bukti pembayaran dapat berupa PDF atau gambar. Pembayaran baru berstatus   Menunggu Pemeriksaan . Finance dapat mengubahnya menjadi   Diterima   atau   Ditolak . Pembayaran yang ditolak wajib memiliki alasan. Hanya pembayaran berstatus   Diterima   yang mengurangi sisa pembayaran. Nomor referensi yang sama tidak boleh digunakan untuk menerima pembayaran dua kali. Status pembayaran jemaah ditampilkan sebagai   Belum Bayar ,   Sebagian , atau   Lunas .  Sisa   Pembayaran   = Total   Tagihan   -   Total Pembayaran Diterima  5. Dokumen Jemaah  Setiap jemaah memiliki daftar dokumen yang perlu dilengkapi.  1. 2. 3. 4. 5. 6.  • • • • • • • • • •  Safara - Sistem Administrasi Travel Umrah   Dokumen Bisnis | 27 Juli 2026 |"
-          },
-          {
-            "page": 3,
-            "text": "Daftar awal mencakup KTP, KK, paspor, pas foto, dan dokumen vaksin atau kesehatan. Dokumen pernikahan atau mahram dapat diwajibkan hanya untuk jemaah tertentu. Admin atau Operations dapat menambahkan, melihat, mengganti, dan memeriksa dokumen. Status dokumen:   Belum Ada ,   Menunggu Pemeriksaan ,   Valid ,   Ditolak , dan   Kedaluwarsa . Dokumen yang ditolak wajib memiliki alasan agar dapat diperbaiki. Dokumen lama dan hasil pemeriksaan sebelumnya tetap dapat dilihat sebagai riwayat. Dokumen jemaah bersifat rahasia dan hanya dapat dilihat oleh pengguna yang memiliki kewenangan.  6. Status Perjalanan dan Kesiapan  Kesiapan jemaah ditentukan dari enam bagian: Pembayaran. Dokumen wajib. Paspor. Visa. Asuransi. Tiket.  Jemaah berstatus Siap hanya apabila:  Sisa pembayaran sudah nol. Seluruh dokumen wajib berstatus Valid. Paspor tersedia dan masih memenuhi ketentuan perjalanan. Visa berstatus Disetujui. Asuransi berstatus Terbit. Tiket berstatus Terbit. Apabila salah satu syarat belum terpenuhi, status jemaah menjadi   Terhambat . Aplikasi harus menampilkan seluruh alasan penghambat, bukan hanya satu alasan. Setiap perubahan pembayaran, dokumen, paspor, visa, asuransi, atau tiket harus langsung memengaruhi status kesiapan yang ditampilkan.  Aturan Bisnis Utama  Pembayaran Menunggu Pemeriksaan atau Ditolak tidak mengurangi sisa pembayaran. Pembayaran atau dokumen yang ditolak wajib memiliki alasan. Dokumen wajib yang Belum Ada, Ditolak, atau Kedaluwarsa menyebabkan jemaah berstatus Terhambat. Semua alasan yang menghambat kesiapan harus ditampilkan bersamaan. Informasi jemaah dan dokumen hanya boleh dilihat oleh pengguna yang berkepentingan. Riwayat dokumen dan transaksi yang sudah pernah digunakan tidak boleh hilang hanya karena data kemudian diganti, dinonaktifkan, atau dibatalkan.  Skenario Pemeriksaan Hasil  Sebelum increment ini dinyatakan selesai, kami akan mencoba minimal skenario berikut: Mencatat pembayaran Menunggu Pemeriksaan dan memastikan sisa pembayaran belum berubah. Menerima pembayaran dan memastikan sisa pembayaran berkurang dengan benar. • • • • • • • • • • • • • • • • • • • • • • • • •  1. 2.  Safara - Sistem Administrasi Travel Umrah   Dokumen Bisnis | 27 Juli 2026 |"
-          },
-          {
-            "page": 4,
-            "text": "Menolak pembayaran atau dokumen dan memastikan alasan wajib dicatat. Membuat satu dokumen wajib tidak valid dan memastikan jemaah berstatus Terhambat. Membuat lebih dari satu kondisi penghambat dan memastikan seluruh alasannya ditampilkan bersamaan. Masuk sebagai Finance atau Operations dan memastikan masing-masing hanya dapat menjalankan tugas yang sesuai kewenangannya.  Hasil yang Harus Diserahkan  Fungsi tagihan dan pembayaran yang terhubung dengan pendaftaran jemaah. Fungsi unggah, pemeriksaan, dan riwayat dokumen jemaah. Fungsi pembaruan status paspor, visa, asuransi, dan tiket. Status Siap atau Terhambat yang diperbarui berdasarkan seluruh syarat kesiapan. Akun awal untuk Finance dan Operations sesuai kewenangannya. Panduan penggunaan singkat untuk fungsi baru pada increment ini.  Kriteria Penerimaan Increment 02  Owner/Admin, Finance, dan Operations dapat menjalankan tugas sesuai kewenangannya. Total tagihan menggunakan nilai pendaftaran yang telah disepakati pada Increment 01. Pembayaran Diterima mengurangi sisa pembayaran dengan benar; Menunggu Pemeriksaan atau Ditolak tidak menguranginya. Dokumen jemaah tidak dapat dilihat oleh pengguna yang tidak berwenang. Status Siap atau Terhambat sesuai dengan kondisi pembayaran, dokumen wajib, paspor, visa, asuransi, dan tiket. Semua alasan penghambat dapat dilihat dengan jelas.  3. 4. 5. 6.  • • • • • • • • • • • •  Safara - Sistem Administrasi Travel Umrah   Dokumen Bisnis | 27 Juli 2026 |"
-          }
-        ]
-      },
-      "response": {
-        "skillId": "atlas.prd-extraction",
-        "skillVersion": "1.1.0",
-        "executionProvenance": {
-          "skillId": "atlas.prd-extraction",
-          "skillVersion": "1.1.0",
-          "mode": "codex"
-        },
-        "status": "complete",
-        "candidateAssertions": [
-          {
-            "candidateId": "candidate-ast-readiness-blockers",
-            "kind": "constraint",
-            "semanticKey": "readiness.blocker-display",
-            "payload": {
-              "mode": "all_blockers"
-            },
-            "possibleAffectedSemanticKey": "readiness.blocker-display",
-            "evidence": {
-              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
-              "page": 3,
-              "quote": "Semua alasan yang menghambat kesiapan harus ditampilkan bersamaan."
-            }
-          }
-        ],
-        "unaccountedStatements": [],
-        "questions": []
+        "mode": "codex"
       }
     },
     {
@@ -422,11 +437,16 @@
             },
             {
               "fromId": "ast-manifest-ready-only",
-              "toId": "chatbot-manifest"
+              "toId": "chatbot_context-manifest"
             }
           ]
         },
         "issues": []
+      },
+      "executionProvenance": {
+        "skillId": "atlas.fixture-repository",
+        "skillVersion": "1.1.0",
+        "mode": "codex"
       }
     },
     {
@@ -521,6 +541,11 @@
           "resolution": null
         },
         "questions": []
+      },
+      "executionProvenance": {
+        "skillId": "atlas.fixture-changes",
+        "skillVersion": "1.1.0",
+        "mode": "codex"
       }
     },
     {
@@ -553,7 +578,7 @@
           },
           {
             "fromId": "ast-manifest-ready-only",
-            "toId": "chatbot-manifest"
+            "toId": "chatbot_context-manifest"
           }
         ],
         "requestedSurfaces": [
@@ -647,6 +672,11 @@
           ]
         },
         "issues": []
+      },
+      "executionProvenance": {
+        "skillId": "atlas.fixture-projections",
+        "skillVersion": "1.1.0",
+        "mode": "codex"
       }
     },
     {
@@ -679,7 +709,7 @@
           },
           {
             "fromId": "ast-manifest-ready-only",
-            "toId": "chatbot-manifest"
+            "toId": "chatbot_context-manifest"
           }
         ],
         "requestedSurfaces": [
@@ -715,7 +745,7 @@
                   "dependencyIds": [
                     "workflow-manifest",
                     "ces-manifest",
-                    "chatbot-manifest"
+                    "chatbot_context-manifest"
                   ],
                   "resolvedValue": {
                     "allowedReadiness": "Siap"
@@ -736,7 +766,7 @@
                   "dependencyIds": [
                     "workflow-manifest",
                     "ces-manifest",
-                    "chatbot-manifest"
+                    "chatbot_context-manifest"
                   ],
                   "resolvedValue": {
                     "allowedReadiness": "Siap"
@@ -757,7 +787,7 @@
                   "dependencyIds": [
                     "workflow-manifest",
                     "ces-manifest",
-                    "chatbot-manifest"
+                    "chatbot_context-manifest"
                   ],
                   "resolvedValue": {
                     "allowedReadiness": "Siap"
@@ -778,7 +808,7 @@
                   "dependencyIds": [
                     "workflow-manifest",
                     "ces-manifest",
-                    "chatbot-manifest"
+                    "chatbot_context-manifest"
                   ],
                   "resolvedValue": {
                     "allowedReadiness": "Siap"
@@ -789,6 +819,11 @@
           ]
         },
         "issues": []
+      },
+      "executionProvenance": {
+        "skillId": "atlas.fixture-projections",
+        "skillVersion": "1.1.0",
+        "mode": "codex"
       }
     },
     {
@@ -994,13 +1029,13 @@
             },
             {
               "fromId": "ast-manifest-ready-only",
-              "toId": "chatbot-manifest"
+              "toId": "chatbot_context-manifest"
             }
           ]
         },
         "projections": {
-          "branchId": "branch-master",
-          "headRevisionId": "rev-safara-master-001",
+          "branchId": "all-branches",
+          "headRevisionId": "all-heads",
           "surfaces": [
             {
               "surface": "workflow",
@@ -1069,12 +1104,98 @@
                   }
                 }
               ]
+            },
+            {
+              "surface": "workflow",
+              "branchId": "branch-increment-003",
+              "headRevisionId": "rev-safara-increment-003",
+              "records": [
+                {
+                  "recordId": "workflow-manifest",
+                  "assertionIds": [
+                    "ast-manifest-ready-only"
+                  ],
+                  "dependencyIds": [
+                    "workflow-manifest",
+                    "ces-manifest",
+                    "chatbot_context-manifest"
+                  ],
+                  "resolvedValue": {
+                    "allowedReadiness": "Siap"
+                  }
+                }
+              ]
+            },
+            {
+              "surface": "facts",
+              "branchId": "branch-increment-003",
+              "headRevisionId": "rev-safara-increment-003",
+              "records": [
+                {
+                  "recordId": "facts-manifest",
+                  "assertionIds": [
+                    "ast-manifest-ready-only"
+                  ],
+                  "dependencyIds": [
+                    "workflow-manifest",
+                    "ces-manifest",
+                    "chatbot_context-manifest"
+                  ],
+                  "resolvedValue": {
+                    "allowedReadiness": "Siap"
+                  }
+                }
+              ]
+            },
+            {
+              "surface": "ces",
+              "branchId": "branch-increment-003",
+              "headRevisionId": "rev-safara-increment-003",
+              "records": [
+                {
+                  "recordId": "ces-manifest",
+                  "assertionIds": [
+                    "ast-manifest-ready-only"
+                  ],
+                  "dependencyIds": [
+                    "workflow-manifest",
+                    "ces-manifest",
+                    "chatbot_context-manifest"
+                  ],
+                  "resolvedValue": {
+                    "allowedReadiness": "Siap"
+                  }
+                }
+              ]
+            },
+            {
+              "surface": "chatbot_context",
+              "branchId": "branch-increment-003",
+              "headRevisionId": "rev-safara-increment-003",
+              "records": [
+                {
+                  "recordId": "chatbot_context-manifest",
+                  "assertionIds": [
+                    "ast-manifest-ready-only"
+                  ],
+                  "dependencyIds": [
+                    "workflow-manifest",
+                    "ces-manifest",
+                    "chatbot_context-manifest"
+                  ],
+                  "resolvedValue": {
+                    "allowedReadiness": "Siap"
+                  }
+                }
+              ]
             }
           ]
         },
         "checks": [
           "topology",
           "provenance",
+          "evidence",
+          "dependencies",
           "branch-isolation"
         ]
       },
@@ -1089,17 +1210,66 @@
         "status": "pass",
         "checks": [
           {
-            "checkId": "deterministic-gates",
+            "checkId": "topology",
             "status": "pass",
-            "detail": "Evidence, topology, provenance, and branch isolation resolve.",
+            "detail": "topology deterministic gate passed.",
             "evidence": [
               {
                 "kind": "deterministic-validation",
-                "reference": "validate(bundle)"
+                "reference": "validate(generated bundle)"
+              }
+            ]
+          },
+          {
+            "checkId": "provenance",
+            "status": "pass",
+            "detail": "provenance deterministic gate passed.",
+            "evidence": [
+              {
+                "kind": "deterministic-validation",
+                "reference": "validate(generated bundle)"
+              }
+            ]
+          },
+          {
+            "checkId": "evidence",
+            "status": "pass",
+            "detail": "evidence deterministic gate passed.",
+            "evidence": [
+              {
+                "kind": "deterministic-validation",
+                "reference": "validate(generated bundle)"
+              }
+            ]
+          },
+          {
+            "checkId": "dependencies",
+            "status": "pass",
+            "detail": "dependencies deterministic gate passed.",
+            "evidence": [
+              {
+                "kind": "deterministic-validation",
+                "reference": "validate(generated bundle)"
+              }
+            ]
+          },
+          {
+            "checkId": "branch-isolation",
+            "status": "pass",
+            "detail": "branch-isolation deterministic gate passed.",
+            "evidence": [
+              {
+                "kind": "deterministic-validation",
+                "reference": "validate(generated bundle)"
               }
             ]
           }
         ]
+      },
+      "executionProvenance": {
+        "skillId": "atlas.fixture-verification",
+        "skillVersion": "1.1.0",
+        "mode": "codex"
       }
     }
   ],
@@ -1413,7 +1583,7 @@
           },
           {
             "fromId": "ast-manifest-ready-only",
-            "toId": "chatbot-manifest"
+            "toId": "chatbot_context-manifest"
           }
         ]
       },
@@ -1562,7 +1732,7 @@
                   "dependencyIds": [
                     "workflow-manifest",
                     "ces-manifest",
-                    "chatbot-manifest"
+                    "chatbot_context-manifest"
                   ],
                   "resolvedValue": {
                     "allowedReadiness": "Siap"
@@ -1583,7 +1753,7 @@
                   "dependencyIds": [
                     "workflow-manifest",
                     "ces-manifest",
-                    "chatbot-manifest"
+                    "chatbot_context-manifest"
                   ],
                   "resolvedValue": {
                     "allowedReadiness": "Siap"
@@ -1604,7 +1774,7 @@
                   "dependencyIds": [
                     "workflow-manifest",
                     "ces-manifest",
-                    "chatbot-manifest"
+                    "chatbot_context-manifest"
                   ],
                   "resolvedValue": {
                     "allowedReadiness": "Siap"
@@ -1625,7 +1795,7 @@
                   "dependencyIds": [
                     "workflow-manifest",
                     "ces-manifest",
-                    "chatbot-manifest"
+                    "chatbot_context-manifest"
                   ],
                   "resolvedValue": {
                     "allowedReadiness": "Siap"
@@ -1637,7 +1807,74 @@
         },
         "issues": []
       }
-    ]
+    ],
+    "verificationResponse": {
+      "skillId": "atlas.fixture-verification",
+      "skillVersion": "1.1.0",
+      "executionProvenance": {
+        "skillId": "atlas.fixture-verification",
+        "skillVersion": "1.1.0",
+        "mode": "codex"
+      },
+      "status": "pass",
+      "checks": [
+        {
+          "checkId": "topology",
+          "status": "pass",
+          "detail": "topology deterministic gate passed.",
+          "evidence": [
+            {
+              "kind": "deterministic-validation",
+              "reference": "validate(generated bundle)"
+            }
+          ]
+        },
+        {
+          "checkId": "provenance",
+          "status": "pass",
+          "detail": "provenance deterministic gate passed.",
+          "evidence": [
+            {
+              "kind": "deterministic-validation",
+              "reference": "validate(generated bundle)"
+            }
+          ]
+        },
+        {
+          "checkId": "evidence",
+          "status": "pass",
+          "detail": "evidence deterministic gate passed.",
+          "evidence": [
+            {
+              "kind": "deterministic-validation",
+              "reference": "validate(generated bundle)"
+            }
+          ]
+        },
+        {
+          "checkId": "dependencies",
+          "status": "pass",
+          "detail": "dependencies deterministic gate passed.",
+          "evidence": [
+            {
+              "kind": "deterministic-validation",
+              "reference": "validate(generated bundle)"
+            }
+          ]
+        },
+        {
+          "checkId": "branch-isolation",
+          "status": "pass",
+          "detail": "branch-isolation deterministic gate passed.",
+          "evidence": [
+            {
+              "kind": "deterministic-validation",
+              "reference": "validate(generated bundle)"
+            }
+          ]
+        }
+      ]
+    }
   },
   "repository": {
     "projectId": "safara",
@@ -1839,7 +2076,7 @@
       },
       {
         "fromId": "ast-manifest-ready-only",
-        "toId": "chatbot-manifest"
+        "toId": "chatbot_context-manifest"
       }
     ]
   },
@@ -1935,7 +2172,7 @@
               "dependencyIds": [
                 "workflow-manifest",
                 "ces-manifest",
-                "chatbot-manifest"
+                "chatbot_context-manifest"
               ],
               "resolvedValue": {
                 "allowedReadiness": "Siap"
@@ -1956,7 +2193,7 @@
               "dependencyIds": [
                 "workflow-manifest",
                 "ces-manifest",
-                "chatbot-manifest"
+                "chatbot_context-manifest"
               ],
               "resolvedValue": {
                 "allowedReadiness": "Siap"
@@ -1977,7 +2214,7 @@
               "dependencyIds": [
                 "workflow-manifest",
                 "ces-manifest",
-                "chatbot-manifest"
+                "chatbot_context-manifest"
               ],
               "resolvedValue": {
                 "allowedReadiness": "Siap"
@@ -1998,7 +2235,7 @@
               "dependencyIds": [
                 "workflow-manifest",
                 "ces-manifest",
-                "chatbot-manifest"
+                "chatbot_context-manifest"
               ],
               "resolvedValue": {
                 "allowedReadiness": "Siap"

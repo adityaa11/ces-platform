@@ -43,15 +43,23 @@ async function loadSkill(skillId) {
   return JSON.parse(await readFile(path.join(skillDirectory, folder, "atlas-skill.json"), "utf8"));
 }
 
-async function invokeSkill(skillId, input, execute, context) {
+function createFixtureExecutor(mode) {
+  const adapters = {
+    codex: { kind: "codex", execute: ({ buildResponse }) => buildResponse() },
+    agents_bridge: { kind: "agents_bridge", execute: ({ buildResponse }) => buildResponse() },
+  };
+  return adapters[mode];
+}
+
+async function invokeSkill(skillId, input, buildResponse, context) {
   const manifest = await loadSkill(skillId);
   const validateInput = context.ajv.compile(manifest.inputSchema);
   if (!validateInput(input)) throw new Error(`${skillId} rejected input: ${context.ajv.errorsText(validateInput.errors)}`);
-  const response = execute(manifest);
+  const response = await context.executor.execute({ skillId, input, manifest, buildResponse });
   if (process.env.GOLDEN_FIXTURE_TEST_FAIL_SCHEMA === skillId) delete response.skillId;
   const validateOutput = context.ajv.compile(manifest.outputSchema);
   if (!validateOutput(response)) throw new Error(`${skillId} rejected output: ${context.ajv.errorsText(validateOutput.errors)}`);
-  context.pipeline.push({ skillId, input, response });
+  context.pipeline.push({ skillId, input, response, executionProvenance: response.executionProvenance });
   return response;
 }
 
@@ -63,33 +71,56 @@ const evidence = (artifacts, artifactId, page, quote) => {
   return { artifactId, page, quote };
 };
 
-function validate(bundle) {
+function validate(bundle, sourceArtifacts) {
   const { repository, projections } = bundle;
   const revisions = new Map(repository.revisions.map((entry) => [entry.revisionId, entry]));
   const assertions = new Map(repository.assertions.map((entry) => [entry.assertionId, entry]));
+  const artifacts = new Map(repository.artifacts.map((entry) => [entry.artifactId, entry]));
+  if (artifacts.size !== repository.artifacts.length) throw new Error("Artifact IDs must be unique");
+  for (const assertion of repository.assertions) {
+    const artifact = artifacts.get(assertion.evidence.artifactId);
+    if (!artifact || assertion.evidence.page < 1 || assertion.evidence.page > artifact.pageCount) throw new Error(`Invalid evidence for ${assertion.assertionId}`);
+    const source = sourceArtifacts.find((entry) => entry.artifactId === assertion.evidence.artifactId);
+    if (!source?.pages.find((page) => page.page === assertion.evidence.page)?.text.includes(assertion.evidence.quote)) throw new Error(`Unresolved evidence quote for ${assertion.assertionId}`);
+    if (assertion.supersedesAssertionId && !assertions.has(assertion.supersedesAssertionId)) throw new Error(`Unresolved supersession for ${assertion.assertionId}`);
+  }
   for (const branch of repository.branches) {
     if (!revisions.has(branch.headRevisionId)) throw new Error(`${branch.branchId} HEAD is unresolved`);
     const state = repository.materializedStates.find((entry) => entry.branchId === branch.branchId && entry.headRevisionId === branch.headRevisionId);
     if (!state) throw new Error(`${branch.branchId} has no HEAD-keyed materialized state`);
     for (const assertionId of state.state.assertionIds) if (!assertions.has(assertionId)) throw new Error(`Unresolved assertion ${assertionId}`);
   }
-  for (const revision of repository.revisions) for (const parentId of revision.parentRevisionIds) if (!revisions.has(parentId)) throw new Error(`Unresolved parent ${parentId}`);
+  for (const revision of repository.revisions) {
+    for (const parentId of revision.parentRevisionIds) if (!revisions.has(parentId)) throw new Error(`Unresolved parent ${parentId}`);
+    for (const assertionId of revision.acceptedAssertionIds) if (!assertions.has(assertionId)) throw new Error(`Unresolved accepted assertion ${assertionId}`);
+    if (!revision.executionProvenance?.skillId || !revision.executionProvenance?.skillVersion || !["codex", "agents_bridge"].includes(revision.executionProvenance?.mode)) throw new Error(`Invalid revision provenance ${revision.revisionId}`);
+  }
   for (const proposal of repository.changeProposals) {
     if (!revisions.has(proposal.baseRevisionId)) throw new Error(`Unresolved proposal base ${proposal.baseRevisionId}`);
     const branch = repository.branches.find((entry) => entry.branchId === proposal.branchId);
     if (proposal.status === "staged" && branch.headRevisionId !== proposal.baseRevisionId) throw new Error("Staged proposal silently changed HEAD");
   }
+  const recordIds = new Set(projections.flatMap((projection) => projection.surfaces.flatMap((surface) => surface.records.map((record) => record.recordId))));
+  for (const dependency of repository.dependencies) if (!assertions.has(dependency.fromId) || !recordIds.has(dependency.toId)) throw new Error(`Invalid dependency ${dependency.fromId} -> ${dependency.toId}`);
   for (const projection of projections) {
     const branch = repository.branches.find((entry) => entry.branchId === projection.branchId);
     if (!branch || branch.headRevisionId !== projection.headRevisionId) throw new Error(`Projection ${projection.branchId} is not keyed to its HEAD`);
-    for (const surface of projection.surfaces) if (surface.branchId !== projection.branchId || surface.headRevisionId !== projection.headRevisionId) throw new Error(`Surface ${surface.surface} cross-contaminates branch state`);
+    const state = repository.materializedStates.find((entry) => entry.branchId === projection.branchId && entry.headRevisionId === projection.headRevisionId);
+    for (const surface of projection.surfaces) {
+      if (surface.branchId !== projection.branchId || surface.headRevisionId !== projection.headRevisionId) throw new Error(`Surface ${surface.surface} cross-contaminates branch state`);
+      for (const record of surface.records) for (const assertionId of record.assertionIds) {
+        const fact = state.state.resolvedFacts.find((entry) => entry.assertionId === assertionId);
+        if (!fact || JSON.stringify(fact.value) !== JSON.stringify(record.resolvedValue)) throw new Error(`Projection ${record.recordId} disagrees with materialized state`);
+      }
+    }
   }
 }
 
 const compactArtifact = ({ pages, ...artifact }) => ({ ...artifact, pageCount: pages.length });
 const main = async () => {
-  const mode = resolveFixtureAuthoringExecutor(process.env);
-  const context = { ajv: new Ajv({ strict: false }), pipeline: [] };
+  const requestedMode = process.env.SKILLS_MODE ?? "codex";
+  const mode = resolveFixtureAuthoringExecutor(process.env, requestedMode === "agents_bridge" ? { kind: "agents_bridge" } : undefined);
+  const context = { ajv: new Ajv({ strict: false }), pipeline: [], executor: createFixtureExecutor(mode) };
   const artifacts = await Promise.all((await discoverPdfs(prdDirectory)).map(extractArtifact));
   const artifactId = (name) => artifacts.find((artifact) => artifact.name === name)?.artifactId ?? (() => { throw new Error(`Missing discovered PRD ${name}`); })();
   const p1 = evidence(artifacts, artifactId("Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf"), 1, "manifest, dan laporan belum menjadi ruang lingkup increment ini.");
@@ -117,7 +148,7 @@ const main = async () => {
       { branchId: "branch-increment-003", headRevisionId: "rev-safara-increment-003", state: { assertionIds: ["ast-manifest-ready-only", "ast-manifest-snapshot", "ast-readiness-blockers"], resolvedFacts: [{ semanticKey: "manifest.eligibility", assertionId: "ast-manifest-ready-only", value: { allowedReadiness: "Siap" } }] } },
     ],
     changeProposals: [{ proposalId: "proposal-manifest-staged-correction", branchId: "branch-increment-003", baseRevisionId: "rev-safara-increment-003", targetSemanticKey: "manifest.eligibility", beforeValue: { allowedReadiness: "Siap" }, proposedValue: { allowedReadiness: "Siap", exception: "manual_override" }, provenance: p3, status: "staged", resolution: null }],
-    dependencies: [{ fromId: "ast-manifest-ready-only", toId: "workflow-manifest" }, { fromId: "ast-manifest-ready-only", toId: "ces-manifest" }, { fromId: "ast-manifest-ready-only", toId: "chatbot-manifest" }],
+    dependencies: [{ fromId: "ast-manifest-ready-only", toId: "workflow-manifest" }, { fromId: "ast-manifest-ready-only", toId: "ces-manifest" }, { fromId: "ast-manifest-ready-only", toId: "chatbot_context-manifest" }],
   };
   const projectionFor = (branchId) => {
     const state = repository.materializedStates.find((entry) => entry.branchId === branchId);
@@ -130,10 +161,13 @@ const main = async () => {
   const proposal = repository.changeProposals[0];
   const changesResponse = await invokeSkill("atlas.fixture-changes", { inputKind: "user_correction", branch: { branchId: proposal.branchId, headRevisionId: proposal.baseRevisionId }, baseRevision: { revisionId: proposal.baseRevisionId }, currentState: repository.materializedStates.find((state) => state.branchId === proposal.branchId), incomingInformation: proposal.proposedValue, sourceArtifacts: artifacts.map(compactArtifact) }, () => ({ skillId: "atlas.fixture-changes", skillVersion: "1.1.0", executionProvenance: provenance("atlas.fixture-changes", mode), status: "complete", changeProposal: proposal, questions: [] }), context);
   const projectionResponses = await Promise.all(projections.map((projection) => invokeSkill("atlas.fixture-projections", { branch: { branchId: projection.branchId, headRevisionId: projection.headRevisionId }, headRevision: { revisionId: projection.headRevisionId }, resolvedFacts: repository.materializedStates.find((state) => state.branchId === projection.branchId).state.resolvedFacts, dependencies: repository.dependencies, requestedSurfaces: ["workflow", "facts", "ces", "chatbot_context"] }, () => ({ skillId: "atlas.fixture-projections", skillVersion: "1.1.0", executionProvenance: provenance("atlas.fixture-projections", mode), status: "complete", projectionCandidate: projection, issues: [] }), context)));
-  validate({ repository, projections });
-  await invokeSkill("atlas.fixture-verification", { repository, projections: projections[0], checks: ["topology", "provenance", "branch-isolation"] }, () => ({ skillId: "atlas.fixture-verification", skillVersion: "1.1.0", executionProvenance: provenance("atlas.fixture-verification", mode), status: "pass", checks: [{ checkId: "deterministic-gates", status: "pass", detail: "Evidence, topology, provenance, and branch isolation resolve.", evidence: [{ kind: "deterministic-validation", reference: "validate(bundle)" }] }] }), context);
-  const bundle = { bundleVersion: "1.0", generatedAt: "2026-09-05T00:00:00.000Z", executionMode: mode, pipeline: context.pipeline, skillResponses: { extractionResponses, repositoryResponse, changesResponse, projectionResponses }, repository, projections };
-  validate(bundle);
+  const generatedRepository = repositoryResponse.repositoryCandidate;
+  const generatedProjections = projectionResponses.map((response) => response.projectionCandidate);
+  validate({ repository: generatedRepository, projections: generatedProjections }, artifacts);
+  const verificationResponse = await invokeSkill("atlas.fixture-verification", { repository: generatedRepository, projections: { branchId: "all-branches", headRevisionId: "all-heads", surfaces: generatedProjections.flatMap((projection) => projection.surfaces) }, checks: ["topology", "provenance", "evidence", "dependencies", "branch-isolation"] }, () => ({ skillId: "atlas.fixture-verification", skillVersion: "1.1.0", executionProvenance: provenance("atlas.fixture-verification", mode), status: "pass", checks: ["topology", "provenance", "evidence", "dependencies", "branch-isolation"].map((checkId) => ({ checkId, status: "pass", detail: `${checkId} deterministic gate passed.`, evidence: [{ kind: "deterministic-validation", reference: "validate(generated bundle)" }] })) }), context);
+  if (verificationResponse.status !== "pass" || verificationResponse.checks.some((check) => check.status !== "pass")) throw new Error("Fixture verification did not pass; refusing publication");
+  const bundle = { bundleVersion: "1.0", generatedAt: "2026-09-05T00:00:00.000Z", executionMode: mode, pipeline: context.pipeline, skillResponses: { extractionResponses, repositoryResponse, changesResponse, projectionResponses, verificationResponse }, repository: generatedRepository, projections: generatedProjections };
+  validate(bundle, artifacts);
   await mkdir(outputDirectory, { recursive: true });
   const temporaryFile = `${outputFile}.tmp`;
   await writeFile(temporaryFile, `${JSON.stringify(bundle, null, 2)}\n`);
