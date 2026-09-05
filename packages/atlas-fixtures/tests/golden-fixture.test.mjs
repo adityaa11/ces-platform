@@ -25,6 +25,21 @@ test("workspace branches have distinct current truth and a staged proposal canno
   assert.equal(branches(bundle).get(proposal.branchId).headRevisionId, proposal.baseRevisionId);
 });
 
+test("GLF-003-01 accounts for every Safara source and projects the complete operational workflow", () => {
+  assert.equal(bundle.sourceCoverage.expectedArtifactCount, 3);
+  assert.equal(bundle.repository.artifacts.length, 3);
+  assert.equal(bundle.repository.assertions.length, bundle.sourceCoverage.candidateAssertionCount);
+  assert.equal(bundle.skillResponses.extractionResponses.length, 3);
+  assert.ok(bundle.skillResponses.extractionResponses.every(({ response }) => response.candidateAssertions.length > 0 && response.unaccountedStatements.length === 0));
+  const increment = resolveGoldenFixtureBranch(bundle, "branch-increment-003");
+  const workflowStages = increment.projection.surfaces.find((surface) => surface.surface === "workflow").records.map((record) => record.recordId.replace("workflow-", ""));
+  assert.deepEqual(workflowStages, bundle.sourceCoverage.expectedWorkflowStages);
+  assert.ok(increment.materializedState.state.resolvedFacts.some((fact) => fact.semanticKey === "payment.accepted-balance"));
+  assert.ok(increment.materializedState.state.resolvedFacts.some((fact) => fact.semanticKey === "document.review-statuses"));
+  assert.ok(increment.materializedState.state.resolvedFacts.some((fact) => fact.semanticKey === "dashboard.metrics"));
+  assert.ok(increment.materializedState.state.resolvedFacts.some((fact) => fact.semanticKey === "activity-history.coverage"));
+});
+
 function branches(bundle) { return new Map(bundle.repository.branches.map((branch) => [branch.branchId, branch])); }
 
 test("invalid mode or schema response cannot replace the last valid bundle", async () => {
