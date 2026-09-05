@@ -1,0 +1,90 @@
+{
+  "contractVersion": "1.0",
+  "id": "atlas.prd-extraction",
+  "version": "1.1.0",
+  "instructionFile": "SKILL.md",
+  "execution": {
+    "kind": "reasoning",
+    "resultDisposition": "candidate-only",
+    "requiresDeterministicValidation": true
+  },
+  "inputSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["artifact", "pages"],
+    "properties": {
+      "artifact": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["artifactId", "type", "name"],
+        "properties": {
+          "artifactId": { "type": "string", "minLength": 1 },
+          "type": { "enum": ["prd", "addendum"] },
+          "name": { "type": "string", "minLength": 1 }
+        }
+      },
+      "pages": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["page", "text"],
+          "properties": {
+            "page": { "type": "integer", "minimum": 1 },
+            "text": { "type": "string", "minLength": 1 }
+          }
+        }
+      },
+      "targetedCurrentState": { "type": "array", "items": { "type": "object" } },
+      "extractionVersion": { "type": "string", "minLength": 1 }
+    }
+  },
+  "outputSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["skillId", "skillVersion", "executionProvenance", "status", "candidateAssertions", "unaccountedStatements", "questions"],
+    "properties": {
+      "skillId": { "const": "atlas.prd-extraction" },
+      "skillVersion": { "const": "1.1.0" },
+      "executionProvenance": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["skillId", "skillVersion", "mode"],
+        "properties": {
+          "skillId": { "const": "atlas.prd-extraction" },
+          "skillVersion": { "const": "1.1.0" },
+          "mode": { "enum": ["codex", "agents_bridge"] }
+        }
+      },
+      "status": { "enum": ["complete", "needs_resolution"] },
+      "candidateAssertions": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["candidateId", "kind", "semanticKey", "payload", "evidence"],
+          "properties": {
+            "candidateId": { "type": "string", "minLength": 1 },
+            "kind": { "type": "string", "minLength": 1 },
+            "semanticKey": { "type": "string", "minLength": 1 },
+            "payload": { "type": "object" },
+            "possibleAffectedSemanticKey": { "type": ["string", "null"] },
+            "evidence": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["artifactId", "page", "quote"],
+              "properties": {
+                "artifactId": { "type": "string", "minLength": 1 },
+                "page": { "type": "integer", "minimum": 1 },
+                "quote": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        }
+      },
+      "unaccountedStatements": { "type": "array", "items": { "type": "object" } },
+      "questions": { "type": "array", "items": { "type": "object" } }
+    }
+  }
+}

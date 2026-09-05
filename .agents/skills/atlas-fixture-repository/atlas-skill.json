@@ -1,0 +1,89 @@
+{
+  "contractVersion": "1.0",
+  "id": "atlas.fixture-repository",
+  "version": "1.1.0",
+  "instructionFile": "SKILL.md",
+  "execution": { "kind": "reasoning", "resultDisposition": "candidate-only", "requiresDeterministicValidation": true },
+  "inputSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["projectId", "sourceArtifacts", "requestedScenario"],
+    "properties": {
+      "projectId": { "type": "string", "minLength": 1 },
+      "sourceArtifacts": { "type": "array", "items": { "type": "object" } },
+      "baseRepository": { "type": "object" },
+      "requestedScenario": { "type": "string", "minLength": 1 }
+    }
+  },
+  "outputSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["skillId", "skillVersion", "executionProvenance", "status", "repositoryCandidate", "issues"],
+    "properties": {
+      "skillId": { "const": "atlas.fixture-repository" },
+      "skillVersion": { "const": "1.1.0" },
+      "executionProvenance": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["skillId", "skillVersion", "mode"],
+        "properties": {
+          "skillId": { "const": "atlas.fixture-repository" },
+          "skillVersion": { "const": "1.1.0" },
+          "mode": { "enum": ["codex", "agents_bridge"] }
+        }
+      },
+      "status": { "enum": ["complete", "needs_resolution"] },
+      "repositoryCandidate": {
+        "type": "object",
+        "required": ["branches", "revisions", "materializedStates"],
+        "properties": {
+          "branches": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["branchId", "label", "headRevisionId"],
+              "properties": {
+                "branchId": { "type": "string", "minLength": 1 },
+                "label": { "type": "string", "minLength": 1 },
+                "headRevisionId": { "type": "string", "minLength": 1 }
+              }
+            }
+          },
+          "revisions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["revisionId", "parentRevisionIds", "executionProvenance"],
+              "properties": {
+                "revisionId": { "type": "string", "minLength": 1 },
+                "parentRevisionIds": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+                "executionProvenance": {
+                  "type": "object",
+                  "required": ["skillId", "skillVersion", "mode"],
+                  "properties": {
+                    "skillId": { "type": "string", "minLength": 1 },
+                    "skillVersion": { "type": "string", "minLength": 1 },
+                    "mode": { "enum": ["codex", "agents_bridge"] }
+                  }
+                }
+              }
+            }
+          },
+          "materializedStates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["branchId", "headRevisionId", "state"],
+              "properties": {
+                "branchId": { "type": "string", "minLength": 1 },
+                "headRevisionId": { "type": "string", "minLength": 1 },
+                "state": { "type": "object" }
+              }
+            }
+          }
+        }
+      },
+      "issues": { "type": "array", "items": { "type": "object" } }
+    }
+  }
+}

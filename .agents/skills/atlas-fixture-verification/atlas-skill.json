@@ -1,0 +1,38 @@
+{
+  "contractVersion": "1.0",
+  "id": "atlas.fixture-verification",
+  "version": "1.1.0",
+  "instructionFile": "SKILL.md",
+  "execution": { "kind": "verification", "resultDisposition": "advisory-only", "requiresDeterministicValidation": true },
+  "inputSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["repository", "projections"],
+    "properties": {
+      "repository": { "type": "object" },
+      "projections": { "type": "object" },
+      "checks": { "type": "array", "items": { "type": "string" } }
+    }
+  },
+  "outputSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["skillId", "skillVersion", "executionProvenance", "status", "checks"],
+    "properties": {
+      "skillId": { "const": "atlas.fixture-verification" },
+      "skillVersion": { "const": "1.1.0" },
+      "executionProvenance": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["skillId", "skillVersion", "mode"],
+        "properties": {
+          "skillId": { "const": "atlas.fixture-verification" },
+          "skillVersion": { "const": "1.1.0" },
+          "mode": { "enum": ["codex", "agents_bridge"] }
+        }
+      },
+      "status": { "enum": ["pass", "fail", "inconclusive"] },
+      "checks": { "type": "array", "items": { "type": "object" } }
+    }
+  }
+}

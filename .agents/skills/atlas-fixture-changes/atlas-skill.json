@@ -1,0 +1,42 @@
+{
+  "contractVersion": "1.0",
+  "id": "atlas.fixture-changes",
+  "version": "1.1.0",
+  "instructionFile": "SKILL.md",
+  "execution": { "kind": "reasoning", "resultDisposition": "candidate-only", "requiresDeterministicValidation": true },
+  "inputSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["inputKind", "branch", "baseRevision", "currentState"],
+    "properties": {
+      "inputKind": { "enum": ["extracted_candidate", "user_correction", "merge_context"] },
+      "branch": { "type": "object" },
+      "baseRevision": { "type": "object" },
+      "currentState": { "type": "object" },
+      "incomingInformation": { "type": "object" },
+      "sourceArtifacts": { "type": "array", "items": { "type": "object" } }
+    }
+  },
+  "outputSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["skillId", "skillVersion", "executionProvenance", "status", "changeProposal", "questions"],
+    "properties": {
+      "skillId": { "const": "atlas.fixture-changes" },
+      "skillVersion": { "const": "1.1.0" },
+      "executionProvenance": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["skillId", "skillVersion", "mode"],
+        "properties": {
+          "skillId": { "const": "atlas.fixture-changes" },
+          "skillVersion": { "const": "1.1.0" },
+          "mode": { "enum": ["codex", "agents_bridge"] }
+        }
+      },
+      "status": { "enum": ["complete", "needs_resolution", "conflict"] },
+      "changeProposal": { "type": ["object", "null"] },
+      "questions": { "type": "array", "items": { "type": "object" } }
+    }
+  }
+}
