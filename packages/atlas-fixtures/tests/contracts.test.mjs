@@ -1,6 +1,26 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { fixtureScenarios, getFixtureScenario } from "../src/index.ts";
+import { fixtureScenarios, getFixtureScenario, resolveFixtureAuthoringExecutor, resolveSkillsMode } from "../src/index.ts";
+
+test("skills mode defaults to codex and accepts only documented repository-wide values", () => {
+  assert.equal(resolveSkillsMode(), "codex");
+  assert.equal(resolveSkillsMode({ SKILLS_MODE: "codex" }), "codex");
+  assert.equal(resolveSkillsMode({ SKILLS_MODE: "agents_bridge" }), "agents_bridge");
+  assert.throws(() => resolveSkillsMode({ SKILLS_MODE: "" }), /Invalid SKILLS_MODE/);
+  assert.throws(() => resolveSkillsMode({ SKILLS_MODE: "provider-x" }), /Invalid SKILLS_MODE/);
+});
+
+test("skills mode cannot silently enable an unconfigured Agents Bridge", () => {
+  assert.equal(resolveFixtureAuthoringExecutor(), "codex");
+  assert.throws(
+    () => resolveFixtureAuthoringExecutor({ SKILLS_MODE: "agents_bridge" }),
+    /requires a configured Agents Bridge executor/,
+  );
+  assert.equal(
+    resolveFixtureAuthoringExecutor({ SKILLS_MODE: "agents_bridge" }, { kind: "agents_bridge" }),
+    "agents_bridge",
+  );
+});
 
 test("fixture scenarios cover each required role and major prototype state", () => {
   assert.equal(getFixtureScenario().id, "owner-ready");
