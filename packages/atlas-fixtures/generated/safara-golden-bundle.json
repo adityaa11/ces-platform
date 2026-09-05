@@ -24,7 +24,7 @@
       "skillId": "atlas.prd-extraction",
       "input": {
         "artifact": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
           "type": "prd",
           "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf"
         },
@@ -63,7 +63,7 @@
             },
             "possibleAffectedSemanticKey": "manifest.eligibility",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 1,
               "quote": "manifest, dan laporan belum menjadi ruang lingkup increment ini."
             }
@@ -77,7 +77,7 @@
             },
             "possibleAffectedSemanticKey": "access.inactive-user",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 1,
               "quote": "Pengguna yang sudah dinonaktifkan tidak boleh masuk ke aplikasi."
             }
@@ -96,7 +96,7 @@
             },
             "possibleAffectedSemanticKey": "package.lifecycle",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 2,
               "quote": "Admin dapat membuat, melihat, mengubah, dan menonaktifkan paket umrah."
             }
@@ -116,7 +116,7 @@
             },
             "possibleAffectedSemanticKey": "package.required-fields",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 2,
               "quote": "Informasi paket minimal mencakup nama paket, durasi, harga dasar, deskripsi, dan status aktif."
             }
@@ -142,7 +142,7 @@
             },
             "possibleAffectedSemanticKey": "departure.required-fields",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 2,
               "quote": "Informasi jadwal minimal mencakup kode keberangkatan"
             }
@@ -157,7 +157,7 @@
             },
             "possibleAffectedSemanticKey": "departure.quota-display",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 2,
               "quote": "Aplikasi menampilkan jumlah jemaah terdaftar dan sisa kuota."
             }
@@ -172,7 +172,7 @@
             },
             "possibleAffectedSemanticKey": "registration.availability",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 2,
               "quote": "Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh."
             }
@@ -192,7 +192,7 @@
             },
             "possibleAffectedSemanticKey": "pilgrim.lifecycle",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 2,
               "quote": "Admin dapat menambah, melihat, mengubah, mencari, dan menonaktifkan data jemaah."
             }
@@ -215,7 +215,7 @@
             },
             "possibleAffectedSemanticKey": "pilgrim.required-fields",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 2,
               "quote": "Informasi minimum jemaah:"
             }
@@ -230,7 +230,7 @@
             },
             "possibleAffectedSemanticKey": "pilgrim.nik-validation",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 2,
               "quote": "NIK harus terdiri dari 16 angka apabila diisi."
             }
@@ -245,7 +245,7 @@
             },
             "possibleAffectedSemanticKey": "pilgrim.identity-duplicate-warning",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 2,
               "quote": "peringatan apabila NIK atau nomor paspor sudah digunakan oleh jemaah lain."
             }
@@ -259,7 +259,7 @@
             },
             "possibleAffectedSemanticKey": "pilgrim.identity-masking",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 2,
               "quote": "NIK dan nomor paspor tidak perlu ditampilkan secara penuh."
             }
@@ -273,7 +273,7 @@
             },
             "possibleAffectedSemanticKey": "registration.identifier",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 2,
               "quote": "Setiap pendaftaran memiliki nomor pendaftaran yang berbeda."
             }
@@ -288,7 +288,7 @@
             },
             "possibleAffectedSemanticKey": "registration.agreed-price",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 2,
               "quote": "Harga yang berlaku saat pendaftaran disimpan sebagai harga pendaftaran yang disepakati"
             }
@@ -302,7 +302,7 @@
             },
             "possibleAffectedSemanticKey": "registration.active-duplicate",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 2,
               "quote": "Jemaah yang sama tidak boleh memiliki dua pendaftaran aktif pada jadwal keberangkatan yang sama."
             }
@@ -317,7 +317,7 @@
             },
             "possibleAffectedSemanticKey": "registration.cancellation-history",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 2,
               "quote": "Pendaftaran dapat dibatalkan dengan alasan yang tercatat, tetapi riwayatnya tetap dapat dilihat."
             }
@@ -336,7 +336,7 @@
       "skillId": "atlas.prd-extraction",
       "input": {
         "artifact": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
           "type": "prd",
           "name": "Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf"
         },
@@ -387,7 +387,7 @@
             },
             "possibleAffectedSemanticKey": "payment.finance-workflow",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "page": 2,
               "quote": "Finance mencatat cicilan dan memeriksa bukti pembayaran."
             }
@@ -408,7 +408,7 @@
             },
             "possibleAffectedSemanticKey": "payment.required-fields",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "page": 2,
               "quote": "Finance dapat mencatat pembayaran dengan informasi tanggal, nominal, cara pembayaran, nomor referensi, catatan, dan bukti pembayaran."
             }
@@ -431,7 +431,7 @@
             },
             "possibleAffectedSemanticKey": "payment.review-statuses",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "page": 2,
               "quote": "Pembayaran baru berstatus"
             }
@@ -445,7 +445,7 @@
             },
             "possibleAffectedSemanticKey": "payment.rejection-reason",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "page": 2,
               "quote": "Pembayaran yang ditolak wajib memiliki alasan."
             }
@@ -460,7 +460,7 @@
             },
             "possibleAffectedSemanticKey": "payment.accepted-balance",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "page": 2,
               "quote": "Hanya pembayaran berstatus"
             }
@@ -474,7 +474,7 @@
             },
             "possibleAffectedSemanticKey": "payment.reference-uniqueness",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "page": 2,
               "quote": "Nomor referensi yang sama tidak boleh digunakan untuk menerima pembayaran dua kali."
             }
@@ -494,7 +494,7 @@
             },
             "possibleAffectedSemanticKey": "document.required-initial-set",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "page": 3,
               "quote": "Daftar awal mencakup KTP, KK, paspor, pas foto, dan dokumen vaksin atau kesehatan."
             }
@@ -508,7 +508,7 @@
             },
             "possibleAffectedSemanticKey": "document.conditional-requirements",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "page": 3,
               "quote": "Dokumen pernikahan atau mahram dapat diwajibkan hanya untuk jemaah tertentu."
             }
@@ -530,7 +530,7 @@
             },
             "possibleAffectedSemanticKey": "document.review-statuses",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "page": 3,
               "quote": "Status dokumen:"
             }
@@ -544,7 +544,7 @@
             },
             "possibleAffectedSemanticKey": "document.confidentiality",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "page": 3,
               "quote": "Dokumen jemaah bersifat rahasia"
             }
@@ -565,7 +565,7 @@
             },
             "possibleAffectedSemanticKey": "readiness.conditions",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "page": 3,
               "quote": "Kesiapan jemaah ditentukan dari enam bagian:"
             }
@@ -584,7 +584,7 @@
             },
             "possibleAffectedSemanticKey": "readiness.ready-criteria",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "page": 3,
               "quote": "Jemaah berstatus Siap hanya apabila:"
             }
@@ -598,7 +598,7 @@
             },
             "possibleAffectedSemanticKey": "readiness.blocker-display",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "page": 3,
               "quote": "Semua alasan yang menghambat kesiapan harus ditampilkan bersamaan."
             }
@@ -612,7 +612,7 @@
             },
             "possibleAffectedSemanticKey": "readiness.recalculation",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "page": 3,
               "quote": "setiap perubahan pembayaran, dokumen, paspor, visa, asuransi, atau tiket harus langsung memengaruhi status kesiapan"
             }
@@ -631,7 +631,7 @@
       "skillId": "atlas.prd-extraction",
       "input": {
         "artifact": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
           "type": "prd",
           "name": "Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf"
         },
@@ -674,7 +674,7 @@
             },
             "possibleAffectedSemanticKey": "manifest.eligibility",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "page": 2,
               "quote": "Hanya jemaah berstatus Siap yang dapat dimasukkan ke manifest final."
             }
@@ -688,7 +688,7 @@
             },
             "possibleAffectedSemanticKey": "manifest.preview",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "page": 2,
               "quote": "Operations dapat melihat preview manifest sebelum difinalisasi."
             }
@@ -702,7 +702,7 @@
             },
             "possibleAffectedSemanticKey": "manifest.finalization",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "page": 2,
               "quote": "Setelah difinalisasi, isi manifest tidak berubah otomatis"
             }
@@ -716,7 +716,7 @@
             },
             "possibleAffectedSemanticKey": "manifest.finalization-audit",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "page": 2,
               "quote": "Aplikasi mencatat siapa yang memfinalisasi manifest dan kapan dilakukan."
             }
@@ -733,7 +733,7 @@
             },
             "possibleAffectedSemanticKey": "manifest.export",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "page": 2,
               "quote": "Manifest dapat diunduh dalam format PDF dan Excel."
             }
@@ -755,7 +755,7 @@
             },
             "possibleAffectedSemanticKey": "dashboard.metrics",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "page": 2,
               "quote": "Dashboard minimum menampilkan:"
             }
@@ -780,7 +780,7 @@
             },
             "possibleAffectedSemanticKey": "reporting.filters-and-export",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "page": 2,
               "quote": "Laporan dapat disaring berdasarkan periode, paket, keberangkatan, status pembayaran, dan status kesiapan."
             }
@@ -800,7 +800,7 @@
             },
             "possibleAffectedSemanticKey": "reporting.required-reports",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "page": 2,
               "quote": "Laporan minimum:"
             }
@@ -821,7 +821,7 @@
             },
             "possibleAffectedSemanticKey": "activity-history.coverage",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "page": 3,
               "quote": "Riwayat minimum mencakup perubahan data jemaah, pendaftaran, pemeriksaan pembayaran, pemeriksaan dokumen, perubahan status perjalanan, dan finalisasi manifest."
             }
@@ -840,7 +840,7 @@
             },
             "possibleAffectedSemanticKey": "activity-history.entry-fields",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "page": 3,
               "quote": "Riwayat menampilkan pengguna yang melakukan tindakan, waktu, data yang diubah, dan ringkasan perubahan."
             }
@@ -854,7 +854,7 @@
             },
             "possibleAffectedSemanticKey": "history.retention",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "page": 3,
               "quote": "Data transaksi dan riwayat yang sudah pernah digunakan tidak boleh hilang"
             }
@@ -870,7 +870,7 @@
             },
             "possibleAffectedSemanticKey": "delivery.operational-application",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "page": 3,
               "quote": "Aplikasi web yang siap digunakan untuk operasional satu perusahaan dan satu cabang."
             }
@@ -887,7 +887,7 @@
             },
             "possibleAffectedSemanticKey": "acceptance.handover",
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "page": 4,
               "quote": "Panduan penggunaan, akun awal, pelatihan, dan serah terima sudah diterima."
             }
@@ -908,27 +908,27 @@
         "projectId": "safara",
         "sourceArtifacts": [
           {
-            "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+            "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
             "type": "prd",
             "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
-            "relativePath": "docs\\PRD\\Safara\\Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
-            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "relativePath": "docs/PRD/Safara/Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+            "sha256": "75a6bf6c7411c909f9a94dd763cfb540656717c5ecac789dad57e7de4e6740bc",
             "pageCount": 3
           },
           {
-            "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+            "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
             "type": "prd",
             "name": "Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf",
-            "relativePath": "docs\\PRD\\Safara\\Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf",
-            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "relativePath": "docs/PRD/Safara/Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf",
+            "sha256": "d4c17ac5e54555837dedece4a8b32b8e50780931fe3db9ed3fbd549627d8e8ca",
             "pageCount": 4
           },
           {
-            "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+            "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
             "type": "prd",
             "name": "Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf",
-            "relativePath": "docs\\PRD\\Safara\\Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf",
-            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "relativePath": "docs/PRD/Safara/Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf",
+            "sha256": "02f98474e2e17a8fa6da879055e40e6ca6de862cb71211f9d4b23e259e4094af",
             "pageCount": 4
           }
         ],
@@ -948,27 +948,27 @@
           "schemaVersion": "1.1",
           "artifacts": [
             {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "type": "prd",
               "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
-              "relativePath": "docs\\PRD\\Safara\\Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
-              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "relativePath": "docs/PRD/Safara/Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+              "sha256": "75a6bf6c7411c909f9a94dd763cfb540656717c5ecac789dad57e7de4e6740bc",
               "pageCount": 3
             },
             {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "type": "prd",
               "name": "Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf",
-              "relativePath": "docs\\PRD\\Safara\\Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf",
-              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "relativePath": "docs/PRD/Safara/Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf",
+              "sha256": "d4c17ac5e54555837dedece4a8b32b8e50780931fe3db9ed3fbd549627d8e8ca",
               "pageCount": 4
             },
             {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "type": "prd",
               "name": "Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf",
-              "relativePath": "docs\\PRD\\Safara\\Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf",
-              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "relativePath": "docs/PRD/Safara/Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf",
+              "sha256": "02f98474e2e17a8fa6da879055e40e6ca6de862cb71211f9d4b23e259e4094af",
               "pageCount": 4
             }
           ],
@@ -980,7 +980,7 @@
                 "status": "out_of_scope"
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 1,
                 "quote": "manifest, dan laporan belum menjadi ruang lingkup increment ini."
               },
@@ -995,7 +995,7 @@
                 "loginAllowed": false
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 1,
                 "quote": "Pengguna yang sudah dinonaktifkan tidak boleh masuk ke aplikasi."
               },
@@ -1015,7 +1015,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Admin dapat membuat, melihat, mengubah, dan menonaktifkan paket umrah."
               },
@@ -1036,7 +1036,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Informasi paket minimal mencakup nama paket, durasi, harga dasar, deskripsi, dan status aktif."
               },
@@ -1063,7 +1063,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Informasi jadwal minimal mencakup kode keberangkatan"
               },
@@ -1079,7 +1079,7 @@
                 "remainingQuota": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Aplikasi menampilkan jumlah jemaah terdaftar dan sisa kuota."
               },
@@ -1095,7 +1095,7 @@
                 "requiresAvailableQuota": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh."
               },
@@ -1116,7 +1116,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Admin dapat menambah, melihat, mengubah, mencari, dan menonaktifkan data jemaah."
               },
@@ -1140,7 +1140,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Informasi minimum jemaah:"
               },
@@ -1156,7 +1156,7 @@
                 "optional": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "NIK harus terdiri dari 16 angka apabila diisi."
               },
@@ -1172,7 +1172,7 @@
                 "passport": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "peringatan apabila NIK atau nomor paspor sudah digunakan oleh jemaah lain."
               },
@@ -1187,7 +1187,7 @@
                 "listView": "masked"
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "NIK dan nomor paspor tidak perlu ditampilkan secara penuh."
               },
@@ -1202,7 +1202,7 @@
                 "unique": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Setiap pendaftaran memiliki nomor pendaftaran yang berbeda."
               },
@@ -1218,7 +1218,7 @@
                 "immutableAfterPackageChange": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Harga yang berlaku saat pendaftaran disimpan sebagai harga pendaftaran yang disepakati"
               },
@@ -1233,7 +1233,7 @@
                 "prohibited": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Jemaah yang sama tidak boleh memiliki dua pendaftaran aktif pada jadwal keberangkatan yang sama."
               },
@@ -1249,7 +1249,7 @@
                 "historyRetained": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Pendaftaran dapat dibatalkan dengan alasan yang tercatat, tetapi riwayatnya tetap dapat dilihat."
               },
@@ -1272,7 +1272,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 2,
                 "quote": "Finance mencatat cicilan dan memeriksa bukti pembayaran."
               },
@@ -1294,7 +1294,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 2,
                 "quote": "Finance dapat mencatat pembayaran dengan informasi tanggal, nominal, cara pembayaran, nomor referensi, catatan, dan bukti pembayaran."
               },
@@ -1318,7 +1318,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 2,
                 "quote": "Pembayaran baru berstatus"
               },
@@ -1333,7 +1333,7 @@
                 "required": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 2,
                 "quote": "Pembayaran yang ditolak wajib memiliki alasan."
               },
@@ -1349,7 +1349,7 @@
                 "formula": "remaining = agreedTotal - acceptedPayments"
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 2,
                 "quote": "Hanya pembayaran berstatus"
               },
@@ -1364,7 +1364,7 @@
                 "acceptedPaymentReferenceUnique": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 2,
                 "quote": "Nomor referensi yang sama tidak boleh digunakan untuk menerima pembayaran dua kali."
               },
@@ -1385,7 +1385,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "Daftar awal mencakup KTP, KK, paspor, pas foto, dan dokumen vaksin atau kesehatan."
               },
@@ -1400,7 +1400,7 @@
                 "marriageOrMahram": "conditional"
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "Dokumen pernikahan atau mahram dapat diwajibkan hanya untuk jemaah tertentu."
               },
@@ -1423,7 +1423,7 @@
                 "historyRetained": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "Status dokumen:"
               },
@@ -1438,7 +1438,7 @@
                 "authorizedUsersOnly": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "Dokumen jemaah bersifat rahasia"
               },
@@ -1460,7 +1460,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "Kesiapan jemaah ditentukan dari enam bagian:"
               },
@@ -1480,7 +1480,7 @@
                 "ticket": "Terbit"
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "Jemaah berstatus Siap hanya apabila:"
               },
@@ -1495,7 +1495,7 @@
                 "mode": "all_blockers"
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "Semua alasan yang menghambat kesiapan harus ditampilkan bersamaan."
               },
@@ -1510,7 +1510,7 @@
                 "immediate": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "setiap perubahan pembayaran, dokumen, paspor, visa, asuransi, atau tiket harus langsung memengaruhi status kesiapan"
               },
@@ -1525,7 +1525,7 @@
                 "allowedReadiness": "Siap"
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Hanya jemaah berstatus Siap yang dapat dimasukkan ke manifest final."
               },
@@ -1541,7 +1541,7 @@
                 "required": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Operations dapat melihat preview manifest sebelum difinalisasi."
               },
@@ -1556,7 +1556,7 @@
                 "snapshot": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Setelah difinalisasi, isi manifest tidak berubah otomatis"
               },
@@ -1571,7 +1571,7 @@
                 "actorAndTimeRecorded": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Aplikasi mencatat siapa yang memfinalisasi manifest dan kapan dilakukan."
               },
@@ -1589,7 +1589,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Manifest dapat diunduh dalam format PDF dan Excel."
               },
@@ -1612,7 +1612,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Dashboard minimum menampilkan:"
               },
@@ -1638,7 +1638,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Laporan dapat disaring berdasarkan periode, paket, keberangkatan, status pembayaran, dan status kesiapan."
               },
@@ -1659,7 +1659,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Laporan minimum:"
               },
@@ -1681,7 +1681,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 3,
                 "quote": "Riwayat minimum mencakup perubahan data jemaah, pendaftaran, pemeriksaan pembayaran, pemeriksaan dokumen, perubahan status perjalanan, dan finalisasi manifest."
               },
@@ -1701,7 +1701,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 3,
                 "quote": "Riwayat menampilkan pengguna yang melakukan tindakan, waktu, data yang diubah, dan ringkasan perubahan."
               },
@@ -1716,7 +1716,7 @@
                 "retainAfterDeactivateOrCancel": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 3,
                 "quote": "Data transaksi dan riwayat yang sudah pernah digunakan tidak boleh hilang"
               },
@@ -1733,7 +1733,7 @@
                 "readyForOperations": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 3,
                 "quote": "Aplikasi web yang siap digunakan untuk operasional satu perusahaan dan satu cabang."
               },
@@ -1751,7 +1751,7 @@
                 "handover": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 4,
                 "quote": "Panduan penggunaan, akun awal, pelatihan, dan serah terima sudah diterima."
               },
@@ -2688,7 +2688,7 @@
                 "exception": "manual_override"
               },
               "provenance": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Hanya jemaah berstatus Siap yang dapat dimasukkan ke manifest final."
               },
@@ -3209,27 +3209,27 @@
         },
         "sourceArtifacts": [
           {
-            "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+            "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
             "type": "prd",
             "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
-            "relativePath": "docs\\PRD\\Safara\\Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
-            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "relativePath": "docs/PRD/Safara/Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+            "sha256": "75a6bf6c7411c909f9a94dd763cfb540656717c5ecac789dad57e7de4e6740bc",
             "pageCount": 3
           },
           {
-            "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+            "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
             "type": "prd",
             "name": "Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf",
-            "relativePath": "docs\\PRD\\Safara\\Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf",
-            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "relativePath": "docs/PRD/Safara/Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf",
+            "sha256": "d4c17ac5e54555837dedece4a8b32b8e50780931fe3db9ed3fbd549627d8e8ca",
             "pageCount": 4
           },
           {
-            "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+            "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
             "type": "prd",
             "name": "Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf",
-            "relativePath": "docs\\PRD\\Safara\\Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf",
-            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "relativePath": "docs/PRD/Safara/Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf",
+            "sha256": "02f98474e2e17a8fa6da879055e40e6ca6de862cb71211f9d4b23e259e4094af",
             "pageCount": 4
           }
         ]
@@ -3256,7 +3256,7 @@
             "exception": "manual_override"
           },
           "provenance": {
-            "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+            "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
             "page": 2,
             "quote": "Hanya jemaah berstatus Siap yang dapat dimasukkan ke manifest final."
           },
@@ -8223,27 +8223,27 @@
           "schemaVersion": "1.1",
           "artifacts": [
             {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "type": "prd",
               "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
-              "relativePath": "docs\\PRD\\Safara\\Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
-              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "relativePath": "docs/PRD/Safara/Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+              "sha256": "75a6bf6c7411c909f9a94dd763cfb540656717c5ecac789dad57e7de4e6740bc",
               "pageCount": 3
             },
             {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "type": "prd",
               "name": "Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf",
-              "relativePath": "docs\\PRD\\Safara\\Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf",
-              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "relativePath": "docs/PRD/Safara/Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf",
+              "sha256": "d4c17ac5e54555837dedece4a8b32b8e50780931fe3db9ed3fbd549627d8e8ca",
               "pageCount": 4
             },
             {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "type": "prd",
               "name": "Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf",
-              "relativePath": "docs\\PRD\\Safara\\Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf",
-              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "relativePath": "docs/PRD/Safara/Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf",
+              "sha256": "02f98474e2e17a8fa6da879055e40e6ca6de862cb71211f9d4b23e259e4094af",
               "pageCount": 4
             }
           ],
@@ -8255,7 +8255,7 @@
                 "status": "out_of_scope"
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 1,
                 "quote": "manifest, dan laporan belum menjadi ruang lingkup increment ini."
               },
@@ -8270,7 +8270,7 @@
                 "loginAllowed": false
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 1,
                 "quote": "Pengguna yang sudah dinonaktifkan tidak boleh masuk ke aplikasi."
               },
@@ -8290,7 +8290,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Admin dapat membuat, melihat, mengubah, dan menonaktifkan paket umrah."
               },
@@ -8311,7 +8311,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Informasi paket minimal mencakup nama paket, durasi, harga dasar, deskripsi, dan status aktif."
               },
@@ -8338,7 +8338,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Informasi jadwal minimal mencakup kode keberangkatan"
               },
@@ -8354,7 +8354,7 @@
                 "remainingQuota": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Aplikasi menampilkan jumlah jemaah terdaftar dan sisa kuota."
               },
@@ -8370,7 +8370,7 @@
                 "requiresAvailableQuota": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh."
               },
@@ -8391,7 +8391,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Admin dapat menambah, melihat, mengubah, mencari, dan menonaktifkan data jemaah."
               },
@@ -8415,7 +8415,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Informasi minimum jemaah:"
               },
@@ -8431,7 +8431,7 @@
                 "optional": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "NIK harus terdiri dari 16 angka apabila diisi."
               },
@@ -8447,7 +8447,7 @@
                 "passport": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "peringatan apabila NIK atau nomor paspor sudah digunakan oleh jemaah lain."
               },
@@ -8462,7 +8462,7 @@
                 "listView": "masked"
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "NIK dan nomor paspor tidak perlu ditampilkan secara penuh."
               },
@@ -8477,7 +8477,7 @@
                 "unique": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Setiap pendaftaran memiliki nomor pendaftaran yang berbeda."
               },
@@ -8493,7 +8493,7 @@
                 "immutableAfterPackageChange": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Harga yang berlaku saat pendaftaran disimpan sebagai harga pendaftaran yang disepakati"
               },
@@ -8508,7 +8508,7 @@
                 "prohibited": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Jemaah yang sama tidak boleh memiliki dua pendaftaran aktif pada jadwal keberangkatan yang sama."
               },
@@ -8524,7 +8524,7 @@
                 "historyRetained": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Pendaftaran dapat dibatalkan dengan alasan yang tercatat, tetapi riwayatnya tetap dapat dilihat."
               },
@@ -8547,7 +8547,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 2,
                 "quote": "Finance mencatat cicilan dan memeriksa bukti pembayaran."
               },
@@ -8569,7 +8569,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 2,
                 "quote": "Finance dapat mencatat pembayaran dengan informasi tanggal, nominal, cara pembayaran, nomor referensi, catatan, dan bukti pembayaran."
               },
@@ -8593,7 +8593,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 2,
                 "quote": "Pembayaran baru berstatus"
               },
@@ -8608,7 +8608,7 @@
                 "required": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 2,
                 "quote": "Pembayaran yang ditolak wajib memiliki alasan."
               },
@@ -8624,7 +8624,7 @@
                 "formula": "remaining = agreedTotal - acceptedPayments"
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 2,
                 "quote": "Hanya pembayaran berstatus"
               },
@@ -8639,7 +8639,7 @@
                 "acceptedPaymentReferenceUnique": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 2,
                 "quote": "Nomor referensi yang sama tidak boleh digunakan untuk menerima pembayaran dua kali."
               },
@@ -8660,7 +8660,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "Daftar awal mencakup KTP, KK, paspor, pas foto, dan dokumen vaksin atau kesehatan."
               },
@@ -8675,7 +8675,7 @@
                 "marriageOrMahram": "conditional"
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "Dokumen pernikahan atau mahram dapat diwajibkan hanya untuk jemaah tertentu."
               },
@@ -8698,7 +8698,7 @@
                 "historyRetained": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "Status dokumen:"
               },
@@ -8713,7 +8713,7 @@
                 "authorizedUsersOnly": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "Dokumen jemaah bersifat rahasia"
               },
@@ -8735,7 +8735,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "Kesiapan jemaah ditentukan dari enam bagian:"
               },
@@ -8755,7 +8755,7 @@
                 "ticket": "Terbit"
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "Jemaah berstatus Siap hanya apabila:"
               },
@@ -8770,7 +8770,7 @@
                 "mode": "all_blockers"
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "Semua alasan yang menghambat kesiapan harus ditampilkan bersamaan."
               },
@@ -8785,7 +8785,7 @@
                 "immediate": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "setiap perubahan pembayaran, dokumen, paspor, visa, asuransi, atau tiket harus langsung memengaruhi status kesiapan"
               },
@@ -8800,7 +8800,7 @@
                 "allowedReadiness": "Siap"
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Hanya jemaah berstatus Siap yang dapat dimasukkan ke manifest final."
               },
@@ -8816,7 +8816,7 @@
                 "required": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Operations dapat melihat preview manifest sebelum difinalisasi."
               },
@@ -8831,7 +8831,7 @@
                 "snapshot": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Setelah difinalisasi, isi manifest tidak berubah otomatis"
               },
@@ -8846,7 +8846,7 @@
                 "actorAndTimeRecorded": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Aplikasi mencatat siapa yang memfinalisasi manifest dan kapan dilakukan."
               },
@@ -8864,7 +8864,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Manifest dapat diunduh dalam format PDF dan Excel."
               },
@@ -8887,7 +8887,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Dashboard minimum menampilkan:"
               },
@@ -8913,7 +8913,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Laporan dapat disaring berdasarkan periode, paket, keberangkatan, status pembayaran, dan status kesiapan."
               },
@@ -8934,7 +8934,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Laporan minimum:"
               },
@@ -8956,7 +8956,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 3,
                 "quote": "Riwayat minimum mencakup perubahan data jemaah, pendaftaran, pemeriksaan pembayaran, pemeriksaan dokumen, perubahan status perjalanan, dan finalisasi manifest."
               },
@@ -8976,7 +8976,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 3,
                 "quote": "Riwayat menampilkan pengguna yang melakukan tindakan, waktu, data yang diubah, dan ringkasan perubahan."
               },
@@ -8991,7 +8991,7 @@
                 "retainAfterDeactivateOrCancel": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 3,
                 "quote": "Data transaksi dan riwayat yang sudah pernah digunakan tidak boleh hilang"
               },
@@ -9008,7 +9008,7 @@
                 "readyForOperations": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 3,
                 "quote": "Aplikasi web yang siap digunakan untuk operasional satu perusahaan dan satu cabang."
               },
@@ -9026,7 +9026,7 @@
                 "handover": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 4,
                 "quote": "Panduan penggunaan, akun awal, pelatihan, dan serah terima sudah diterima."
               },
@@ -9963,7 +9963,7 @@
                 "exception": "manual_override"
               },
               "provenance": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Hanya jemaah berstatus Siap yang dapat dimasukkan ke manifest final."
               },
@@ -11790,27 +11790,27 @@
           "schemaVersion": "1.1",
           "artifacts": [
             {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "type": "prd",
               "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
-              "relativePath": "docs\\PRD\\Safara\\Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
-              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "relativePath": "docs/PRD/Safara/Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+              "sha256": "75a6bf6c7411c909f9a94dd763cfb540656717c5ecac789dad57e7de4e6740bc",
               "pageCount": 3
             },
             {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "type": "prd",
               "name": "Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf",
-              "relativePath": "docs\\PRD\\Safara\\Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf",
-              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "relativePath": "docs/PRD/Safara/Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf",
+              "sha256": "d4c17ac5e54555837dedece4a8b32b8e50780931fe3db9ed3fbd549627d8e8ca",
               "pageCount": 4
             },
             {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "type": "prd",
               "name": "Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf",
-              "relativePath": "docs\\PRD\\Safara\\Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf",
-              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "relativePath": "docs/PRD/Safara/Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf",
+              "sha256": "02f98474e2e17a8fa6da879055e40e6ca6de862cb71211f9d4b23e259e4094af",
               "pageCount": 4
             }
           ],
@@ -11822,7 +11822,7 @@
                 "status": "out_of_scope"
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 1,
                 "quote": "manifest, dan laporan belum menjadi ruang lingkup increment ini."
               },
@@ -11837,7 +11837,7 @@
                 "loginAllowed": false
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 1,
                 "quote": "Pengguna yang sudah dinonaktifkan tidak boleh masuk ke aplikasi."
               },
@@ -11857,7 +11857,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Admin dapat membuat, melihat, mengubah, dan menonaktifkan paket umrah."
               },
@@ -11878,7 +11878,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Informasi paket minimal mencakup nama paket, durasi, harga dasar, deskripsi, dan status aktif."
               },
@@ -11905,7 +11905,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Informasi jadwal minimal mencakup kode keberangkatan"
               },
@@ -11921,7 +11921,7 @@
                 "remainingQuota": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Aplikasi menampilkan jumlah jemaah terdaftar dan sisa kuota."
               },
@@ -11937,7 +11937,7 @@
                 "requiresAvailableQuota": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh."
               },
@@ -11958,7 +11958,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Admin dapat menambah, melihat, mengubah, mencari, dan menonaktifkan data jemaah."
               },
@@ -11982,7 +11982,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Informasi minimum jemaah:"
               },
@@ -11998,7 +11998,7 @@
                 "optional": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "NIK harus terdiri dari 16 angka apabila diisi."
               },
@@ -12014,7 +12014,7 @@
                 "passport": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "peringatan apabila NIK atau nomor paspor sudah digunakan oleh jemaah lain."
               },
@@ -12029,7 +12029,7 @@
                 "listView": "masked"
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "NIK dan nomor paspor tidak perlu ditampilkan secara penuh."
               },
@@ -12044,7 +12044,7 @@
                 "unique": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Setiap pendaftaran memiliki nomor pendaftaran yang berbeda."
               },
@@ -12060,7 +12060,7 @@
                 "immutableAfterPackageChange": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Harga yang berlaku saat pendaftaran disimpan sebagai harga pendaftaran yang disepakati"
               },
@@ -12075,7 +12075,7 @@
                 "prohibited": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Jemaah yang sama tidak boleh memiliki dua pendaftaran aktif pada jadwal keberangkatan yang sama."
               },
@@ -12091,7 +12091,7 @@
                 "historyRetained": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Pendaftaran dapat dibatalkan dengan alasan yang tercatat, tetapi riwayatnya tetap dapat dilihat."
               },
@@ -12114,7 +12114,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 2,
                 "quote": "Finance mencatat cicilan dan memeriksa bukti pembayaran."
               },
@@ -12136,7 +12136,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 2,
                 "quote": "Finance dapat mencatat pembayaran dengan informasi tanggal, nominal, cara pembayaran, nomor referensi, catatan, dan bukti pembayaran."
               },
@@ -12160,7 +12160,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 2,
                 "quote": "Pembayaran baru berstatus"
               },
@@ -12175,7 +12175,7 @@
                 "required": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 2,
                 "quote": "Pembayaran yang ditolak wajib memiliki alasan."
               },
@@ -12191,7 +12191,7 @@
                 "formula": "remaining = agreedTotal - acceptedPayments"
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 2,
                 "quote": "Hanya pembayaran berstatus"
               },
@@ -12206,7 +12206,7 @@
                 "acceptedPaymentReferenceUnique": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 2,
                 "quote": "Nomor referensi yang sama tidak boleh digunakan untuk menerima pembayaran dua kali."
               },
@@ -12227,7 +12227,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "Daftar awal mencakup KTP, KK, paspor, pas foto, dan dokumen vaksin atau kesehatan."
               },
@@ -12242,7 +12242,7 @@
                 "marriageOrMahram": "conditional"
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "Dokumen pernikahan atau mahram dapat diwajibkan hanya untuk jemaah tertentu."
               },
@@ -12265,7 +12265,7 @@
                 "historyRetained": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "Status dokumen:"
               },
@@ -12280,7 +12280,7 @@
                 "authorizedUsersOnly": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "Dokumen jemaah bersifat rahasia"
               },
@@ -12302,7 +12302,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "Kesiapan jemaah ditentukan dari enam bagian:"
               },
@@ -12322,7 +12322,7 @@
                 "ticket": "Terbit"
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "Jemaah berstatus Siap hanya apabila:"
               },
@@ -12337,7 +12337,7 @@
                 "mode": "all_blockers"
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "Semua alasan yang menghambat kesiapan harus ditampilkan bersamaan."
               },
@@ -12352,7 +12352,7 @@
                 "immediate": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "setiap perubahan pembayaran, dokumen, paspor, visa, asuransi, atau tiket harus langsung memengaruhi status kesiapan"
               },
@@ -12367,7 +12367,7 @@
                 "allowedReadiness": "Siap"
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Hanya jemaah berstatus Siap yang dapat dimasukkan ke manifest final."
               },
@@ -12383,7 +12383,7 @@
                 "required": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Operations dapat melihat preview manifest sebelum difinalisasi."
               },
@@ -12398,7 +12398,7 @@
                 "snapshot": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Setelah difinalisasi, isi manifest tidak berubah otomatis"
               },
@@ -12413,7 +12413,7 @@
                 "actorAndTimeRecorded": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Aplikasi mencatat siapa yang memfinalisasi manifest dan kapan dilakukan."
               },
@@ -12431,7 +12431,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Manifest dapat diunduh dalam format PDF dan Excel."
               },
@@ -12454,7 +12454,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Dashboard minimum menampilkan:"
               },
@@ -12480,7 +12480,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Laporan dapat disaring berdasarkan periode, paket, keberangkatan, status pembayaran, dan status kesiapan."
               },
@@ -12501,7 +12501,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Laporan minimum:"
               },
@@ -12523,7 +12523,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 3,
                 "quote": "Riwayat minimum mencakup perubahan data jemaah, pendaftaran, pemeriksaan pembayaran, pemeriksaan dokumen, perubahan status perjalanan, dan finalisasi manifest."
               },
@@ -12543,7 +12543,7 @@
                 ]
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 3,
                 "quote": "Riwayat menampilkan pengguna yang melakukan tindakan, waktu, data yang diubah, dan ringkasan perubahan."
               },
@@ -12558,7 +12558,7 @@
                 "retainAfterDeactivateOrCancel": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 3,
                 "quote": "Data transaksi dan riwayat yang sudah pernah digunakan tidak boleh hilang"
               },
@@ -12575,7 +12575,7 @@
                 "readyForOperations": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 3,
                 "quote": "Aplikasi web yang siap digunakan untuk operasional satu perusahaan dan satu cabang."
               },
@@ -12593,7 +12593,7 @@
                 "handover": true
               },
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 4,
                 "quote": "Panduan penggunaan, akun awal, pelatihan, dan serah terima sudah diterima."
               },
@@ -13530,7 +13530,7 @@
                 "exception": "manual_override"
               },
               "provenance": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Hanya jemaah berstatus Siap yang dapat dimasukkan ke manifest final."
               },
@@ -16054,7 +16054,7 @@
       {
         "input": {
           "artifact": {
-            "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+            "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
             "type": "prd",
             "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf"
           },
@@ -16093,7 +16093,7 @@
               },
               "possibleAffectedSemanticKey": "manifest.eligibility",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 1,
                 "quote": "manifest, dan laporan belum menjadi ruang lingkup increment ini."
               }
@@ -16107,7 +16107,7 @@
               },
               "possibleAffectedSemanticKey": "access.inactive-user",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 1,
                 "quote": "Pengguna yang sudah dinonaktifkan tidak boleh masuk ke aplikasi."
               }
@@ -16126,7 +16126,7 @@
               },
               "possibleAffectedSemanticKey": "package.lifecycle",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Admin dapat membuat, melihat, mengubah, dan menonaktifkan paket umrah."
               }
@@ -16146,7 +16146,7 @@
               },
               "possibleAffectedSemanticKey": "package.required-fields",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Informasi paket minimal mencakup nama paket, durasi, harga dasar, deskripsi, dan status aktif."
               }
@@ -16172,7 +16172,7 @@
               },
               "possibleAffectedSemanticKey": "departure.required-fields",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Informasi jadwal minimal mencakup kode keberangkatan"
               }
@@ -16187,7 +16187,7 @@
               },
               "possibleAffectedSemanticKey": "departure.quota-display",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Aplikasi menampilkan jumlah jemaah terdaftar dan sisa kuota."
               }
@@ -16202,7 +16202,7 @@
               },
               "possibleAffectedSemanticKey": "registration.availability",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh."
               }
@@ -16222,7 +16222,7 @@
               },
               "possibleAffectedSemanticKey": "pilgrim.lifecycle",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Admin dapat menambah, melihat, mengubah, mencari, dan menonaktifkan data jemaah."
               }
@@ -16245,7 +16245,7 @@
               },
               "possibleAffectedSemanticKey": "pilgrim.required-fields",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Informasi minimum jemaah:"
               }
@@ -16260,7 +16260,7 @@
               },
               "possibleAffectedSemanticKey": "pilgrim.nik-validation",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "NIK harus terdiri dari 16 angka apabila diisi."
               }
@@ -16275,7 +16275,7 @@
               },
               "possibleAffectedSemanticKey": "pilgrim.identity-duplicate-warning",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "peringatan apabila NIK atau nomor paspor sudah digunakan oleh jemaah lain."
               }
@@ -16289,7 +16289,7 @@
               },
               "possibleAffectedSemanticKey": "pilgrim.identity-masking",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "NIK dan nomor paspor tidak perlu ditampilkan secara penuh."
               }
@@ -16303,7 +16303,7 @@
               },
               "possibleAffectedSemanticKey": "registration.identifier",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Setiap pendaftaran memiliki nomor pendaftaran yang berbeda."
               }
@@ -16318,7 +16318,7 @@
               },
               "possibleAffectedSemanticKey": "registration.agreed-price",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Harga yang berlaku saat pendaftaran disimpan sebagai harga pendaftaran yang disepakati"
               }
@@ -16332,7 +16332,7 @@
               },
               "possibleAffectedSemanticKey": "registration.active-duplicate",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Jemaah yang sama tidak boleh memiliki dua pendaftaran aktif pada jadwal keberangkatan yang sama."
               }
@@ -16347,7 +16347,7 @@
               },
               "possibleAffectedSemanticKey": "registration.cancellation-history",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
                 "page": 2,
                 "quote": "Pendaftaran dapat dibatalkan dengan alasan yang tercatat, tetapi riwayatnya tetap dapat dilihat."
               }
@@ -16360,7 +16360,7 @@
       {
         "input": {
           "artifact": {
-            "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+            "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
             "type": "prd",
             "name": "Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf"
           },
@@ -16411,7 +16411,7 @@
               },
               "possibleAffectedSemanticKey": "payment.finance-workflow",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 2,
                 "quote": "Finance mencatat cicilan dan memeriksa bukti pembayaran."
               }
@@ -16432,7 +16432,7 @@
               },
               "possibleAffectedSemanticKey": "payment.required-fields",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 2,
                 "quote": "Finance dapat mencatat pembayaran dengan informasi tanggal, nominal, cara pembayaran, nomor referensi, catatan, dan bukti pembayaran."
               }
@@ -16455,7 +16455,7 @@
               },
               "possibleAffectedSemanticKey": "payment.review-statuses",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 2,
                 "quote": "Pembayaran baru berstatus"
               }
@@ -16469,7 +16469,7 @@
               },
               "possibleAffectedSemanticKey": "payment.rejection-reason",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 2,
                 "quote": "Pembayaran yang ditolak wajib memiliki alasan."
               }
@@ -16484,7 +16484,7 @@
               },
               "possibleAffectedSemanticKey": "payment.accepted-balance",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 2,
                 "quote": "Hanya pembayaran berstatus"
               }
@@ -16498,7 +16498,7 @@
               },
               "possibleAffectedSemanticKey": "payment.reference-uniqueness",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 2,
                 "quote": "Nomor referensi yang sama tidak boleh digunakan untuk menerima pembayaran dua kali."
               }
@@ -16518,7 +16518,7 @@
               },
               "possibleAffectedSemanticKey": "document.required-initial-set",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "Daftar awal mencakup KTP, KK, paspor, pas foto, dan dokumen vaksin atau kesehatan."
               }
@@ -16532,7 +16532,7 @@
               },
               "possibleAffectedSemanticKey": "document.conditional-requirements",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "Dokumen pernikahan atau mahram dapat diwajibkan hanya untuk jemaah tertentu."
               }
@@ -16554,7 +16554,7 @@
               },
               "possibleAffectedSemanticKey": "document.review-statuses",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "Status dokumen:"
               }
@@ -16568,7 +16568,7 @@
               },
               "possibleAffectedSemanticKey": "document.confidentiality",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "Dokumen jemaah bersifat rahasia"
               }
@@ -16589,7 +16589,7 @@
               },
               "possibleAffectedSemanticKey": "readiness.conditions",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "Kesiapan jemaah ditentukan dari enam bagian:"
               }
@@ -16608,7 +16608,7 @@
               },
               "possibleAffectedSemanticKey": "readiness.ready-criteria",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "Jemaah berstatus Siap hanya apabila:"
               }
@@ -16622,7 +16622,7 @@
               },
               "possibleAffectedSemanticKey": "readiness.blocker-display",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "Semua alasan yang menghambat kesiapan harus ditampilkan bersamaan."
               }
@@ -16636,7 +16636,7 @@
               },
               "possibleAffectedSemanticKey": "readiness.recalculation",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
                 "page": 3,
                 "quote": "setiap perubahan pembayaran, dokumen, paspor, visa, asuransi, atau tiket harus langsung memengaruhi status kesiapan"
               }
@@ -16649,7 +16649,7 @@
       {
         "input": {
           "artifact": {
-            "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+            "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
             "type": "prd",
             "name": "Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf"
           },
@@ -16692,7 +16692,7 @@
               },
               "possibleAffectedSemanticKey": "manifest.eligibility",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Hanya jemaah berstatus Siap yang dapat dimasukkan ke manifest final."
               }
@@ -16706,7 +16706,7 @@
               },
               "possibleAffectedSemanticKey": "manifest.preview",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Operations dapat melihat preview manifest sebelum difinalisasi."
               }
@@ -16720,7 +16720,7 @@
               },
               "possibleAffectedSemanticKey": "manifest.finalization",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Setelah difinalisasi, isi manifest tidak berubah otomatis"
               }
@@ -16734,7 +16734,7 @@
               },
               "possibleAffectedSemanticKey": "manifest.finalization-audit",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Aplikasi mencatat siapa yang memfinalisasi manifest dan kapan dilakukan."
               }
@@ -16751,7 +16751,7 @@
               },
               "possibleAffectedSemanticKey": "manifest.export",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Manifest dapat diunduh dalam format PDF dan Excel."
               }
@@ -16773,7 +16773,7 @@
               },
               "possibleAffectedSemanticKey": "dashboard.metrics",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Dashboard minimum menampilkan:"
               }
@@ -16798,7 +16798,7 @@
               },
               "possibleAffectedSemanticKey": "reporting.filters-and-export",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Laporan dapat disaring berdasarkan periode, paket, keberangkatan, status pembayaran, dan status kesiapan."
               }
@@ -16818,7 +16818,7 @@
               },
               "possibleAffectedSemanticKey": "reporting.required-reports",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 2,
                 "quote": "Laporan minimum:"
               }
@@ -16839,7 +16839,7 @@
               },
               "possibleAffectedSemanticKey": "activity-history.coverage",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 3,
                 "quote": "Riwayat minimum mencakup perubahan data jemaah, pendaftaran, pemeriksaan pembayaran, pemeriksaan dokumen, perubahan status perjalanan, dan finalisasi manifest."
               }
@@ -16858,7 +16858,7 @@
               },
               "possibleAffectedSemanticKey": "activity-history.entry-fields",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 3,
                 "quote": "Riwayat menampilkan pengguna yang melakukan tindakan, waktu, data yang diubah, dan ringkasan perubahan."
               }
@@ -16872,7 +16872,7 @@
               },
               "possibleAffectedSemanticKey": "history.retention",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 3,
                 "quote": "Data transaksi dan riwayat yang sudah pernah digunakan tidak boleh hilang"
               }
@@ -16888,7 +16888,7 @@
               },
               "possibleAffectedSemanticKey": "delivery.operational-application",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 3,
                 "quote": "Aplikasi web yang siap digunakan untuk operasional satu perusahaan dan satu cabang."
               }
@@ -16905,7 +16905,7 @@
               },
               "possibleAffectedSemanticKey": "acceptance.handover",
               "evidence": {
-                "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
                 "page": 4,
                 "quote": "Panduan penggunaan, akun awal, pelatihan, dan serah terima sudah diterima."
               }
@@ -16930,27 +16930,27 @@
         "schemaVersion": "1.1",
         "artifacts": [
           {
-            "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+            "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
             "type": "prd",
             "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
-            "relativePath": "docs\\PRD\\Safara\\Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
-            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "relativePath": "docs/PRD/Safara/Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+            "sha256": "75a6bf6c7411c909f9a94dd763cfb540656717c5ecac789dad57e7de4e6740bc",
             "pageCount": 3
           },
           {
-            "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+            "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
             "type": "prd",
             "name": "Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf",
-            "relativePath": "docs\\PRD\\Safara\\Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf",
-            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "relativePath": "docs/PRD/Safara/Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf",
+            "sha256": "d4c17ac5e54555837dedece4a8b32b8e50780931fe3db9ed3fbd549627d8e8ca",
             "pageCount": 4
           },
           {
-            "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+            "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
             "type": "prd",
             "name": "Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf",
-            "relativePath": "docs\\PRD\\Safara\\Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf",
-            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "relativePath": "docs/PRD/Safara/Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf",
+            "sha256": "02f98474e2e17a8fa6da879055e40e6ca6de862cb71211f9d4b23e259e4094af",
             "pageCount": 4
           }
         ],
@@ -16962,7 +16962,7 @@
               "status": "out_of_scope"
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 1,
               "quote": "manifest, dan laporan belum menjadi ruang lingkup increment ini."
             },
@@ -16977,7 +16977,7 @@
               "loginAllowed": false
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 1,
               "quote": "Pengguna yang sudah dinonaktifkan tidak boleh masuk ke aplikasi."
             },
@@ -16997,7 +16997,7 @@
               ]
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 2,
               "quote": "Admin dapat membuat, melihat, mengubah, dan menonaktifkan paket umrah."
             },
@@ -17018,7 +17018,7 @@
               ]
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 2,
               "quote": "Informasi paket minimal mencakup nama paket, durasi, harga dasar, deskripsi, dan status aktif."
             },
@@ -17045,7 +17045,7 @@
               ]
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 2,
               "quote": "Informasi jadwal minimal mencakup kode keberangkatan"
             },
@@ -17061,7 +17061,7 @@
               "remainingQuota": true
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 2,
               "quote": "Aplikasi menampilkan jumlah jemaah terdaftar dan sisa kuota."
             },
@@ -17077,7 +17077,7 @@
               "requiresAvailableQuota": true
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 2,
               "quote": "Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh."
             },
@@ -17098,7 +17098,7 @@
               ]
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 2,
               "quote": "Admin dapat menambah, melihat, mengubah, mencari, dan menonaktifkan data jemaah."
             },
@@ -17122,7 +17122,7 @@
               ]
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 2,
               "quote": "Informasi minimum jemaah:"
             },
@@ -17138,7 +17138,7 @@
               "optional": true
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 2,
               "quote": "NIK harus terdiri dari 16 angka apabila diisi."
             },
@@ -17154,7 +17154,7 @@
               "passport": true
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 2,
               "quote": "peringatan apabila NIK atau nomor paspor sudah digunakan oleh jemaah lain."
             },
@@ -17169,7 +17169,7 @@
               "listView": "masked"
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 2,
               "quote": "NIK dan nomor paspor tidak perlu ditampilkan secara penuh."
             },
@@ -17184,7 +17184,7 @@
               "unique": true
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 2,
               "quote": "Setiap pendaftaran memiliki nomor pendaftaran yang berbeda."
             },
@@ -17200,7 +17200,7 @@
               "immutableAfterPackageChange": true
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 2,
               "quote": "Harga yang berlaku saat pendaftaran disimpan sebagai harga pendaftaran yang disepakati"
             },
@@ -17215,7 +17215,7 @@
               "prohibited": true
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 2,
               "quote": "Jemaah yang sama tidak boleh memiliki dua pendaftaran aktif pada jadwal keberangkatan yang sama."
             },
@@ -17231,7 +17231,7 @@
               "historyRetained": true
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
               "page": 2,
               "quote": "Pendaftaran dapat dibatalkan dengan alasan yang tercatat, tetapi riwayatnya tetap dapat dilihat."
             },
@@ -17254,7 +17254,7 @@
               ]
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "page": 2,
               "quote": "Finance mencatat cicilan dan memeriksa bukti pembayaran."
             },
@@ -17276,7 +17276,7 @@
               ]
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "page": 2,
               "quote": "Finance dapat mencatat pembayaran dengan informasi tanggal, nominal, cara pembayaran, nomor referensi, catatan, dan bukti pembayaran."
             },
@@ -17300,7 +17300,7 @@
               ]
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "page": 2,
               "quote": "Pembayaran baru berstatus"
             },
@@ -17315,7 +17315,7 @@
               "required": true
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "page": 2,
               "quote": "Pembayaran yang ditolak wajib memiliki alasan."
             },
@@ -17331,7 +17331,7 @@
               "formula": "remaining = agreedTotal - acceptedPayments"
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "page": 2,
               "quote": "Hanya pembayaran berstatus"
             },
@@ -17346,7 +17346,7 @@
               "acceptedPaymentReferenceUnique": true
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "page": 2,
               "quote": "Nomor referensi yang sama tidak boleh digunakan untuk menerima pembayaran dua kali."
             },
@@ -17367,7 +17367,7 @@
               ]
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "page": 3,
               "quote": "Daftar awal mencakup KTP, KK, paspor, pas foto, dan dokumen vaksin atau kesehatan."
             },
@@ -17382,7 +17382,7 @@
               "marriageOrMahram": "conditional"
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "page": 3,
               "quote": "Dokumen pernikahan atau mahram dapat diwajibkan hanya untuk jemaah tertentu."
             },
@@ -17405,7 +17405,7 @@
               "historyRetained": true
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "page": 3,
               "quote": "Status dokumen:"
             },
@@ -17420,7 +17420,7 @@
               "authorizedUsersOnly": true
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "page": 3,
               "quote": "Dokumen jemaah bersifat rahasia"
             },
@@ -17442,7 +17442,7 @@
               ]
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "page": 3,
               "quote": "Kesiapan jemaah ditentukan dari enam bagian:"
             },
@@ -17462,7 +17462,7 @@
               "ticket": "Terbit"
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "page": 3,
               "quote": "Jemaah berstatus Siap hanya apabila:"
             },
@@ -17477,7 +17477,7 @@
               "mode": "all_blockers"
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "page": 3,
               "quote": "Semua alasan yang menghambat kesiapan harus ditampilkan bersamaan."
             },
@@ -17492,7 +17492,7 @@
               "immediate": true
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
               "page": 3,
               "quote": "setiap perubahan pembayaran, dokumen, paspor, visa, asuransi, atau tiket harus langsung memengaruhi status kesiapan"
             },
@@ -17507,7 +17507,7 @@
               "allowedReadiness": "Siap"
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "page": 2,
               "quote": "Hanya jemaah berstatus Siap yang dapat dimasukkan ke manifest final."
             },
@@ -17523,7 +17523,7 @@
               "required": true
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "page": 2,
               "quote": "Operations dapat melihat preview manifest sebelum difinalisasi."
             },
@@ -17538,7 +17538,7 @@
               "snapshot": true
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "page": 2,
               "quote": "Setelah difinalisasi, isi manifest tidak berubah otomatis"
             },
@@ -17553,7 +17553,7 @@
               "actorAndTimeRecorded": true
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "page": 2,
               "quote": "Aplikasi mencatat siapa yang memfinalisasi manifest dan kapan dilakukan."
             },
@@ -17571,7 +17571,7 @@
               ]
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "page": 2,
               "quote": "Manifest dapat diunduh dalam format PDF dan Excel."
             },
@@ -17594,7 +17594,7 @@
               ]
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "page": 2,
               "quote": "Dashboard minimum menampilkan:"
             },
@@ -17620,7 +17620,7 @@
               ]
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "page": 2,
               "quote": "Laporan dapat disaring berdasarkan periode, paket, keberangkatan, status pembayaran, dan status kesiapan."
             },
@@ -17641,7 +17641,7 @@
               ]
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "page": 2,
               "quote": "Laporan minimum:"
             },
@@ -17663,7 +17663,7 @@
               ]
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "page": 3,
               "quote": "Riwayat minimum mencakup perubahan data jemaah, pendaftaran, pemeriksaan pembayaran, pemeriksaan dokumen, perubahan status perjalanan, dan finalisasi manifest."
             },
@@ -17683,7 +17683,7 @@
               ]
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "page": 3,
               "quote": "Riwayat menampilkan pengguna yang melakukan tindakan, waktu, data yang diubah, dan ringkasan perubahan."
             },
@@ -17698,7 +17698,7 @@
               "retainAfterDeactivateOrCancel": true
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "page": 3,
               "quote": "Data transaksi dan riwayat yang sudah pernah digunakan tidak boleh hilang"
             },
@@ -17715,7 +17715,7 @@
               "readyForOperations": true
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "page": 3,
               "quote": "Aplikasi web yang siap digunakan untuk operasional satu perusahaan dan satu cabang."
             },
@@ -17733,7 +17733,7 @@
               "handover": true
             },
             "evidence": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "page": 4,
               "quote": "Panduan penggunaan, akun awal, pelatihan, dan serah terima sudah diterima."
             },
@@ -18670,7 +18670,7 @@
               "exception": "manual_override"
             },
             "provenance": {
-              "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
               "page": 2,
               "quote": "Hanya jemaah berstatus Siap yang dapat dimasukkan ke manifest final."
             },
@@ -18704,7 +18704,7 @@
           "exception": "manual_override"
         },
         "provenance": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
           "page": 2,
           "quote": "Hanya jemaah berstatus Siap yang dapat dimasukkan ke manifest final."
         },
@@ -23032,27 +23032,27 @@
     "schemaVersion": "1.1",
     "artifacts": [
       {
-        "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+        "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
         "type": "prd",
         "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
-        "relativePath": "docs\\PRD\\Safara\\Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
-        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "relativePath": "docs/PRD/Safara/Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+        "sha256": "75a6bf6c7411c909f9a94dd763cfb540656717c5ecac789dad57e7de4e6740bc",
         "pageCount": 3
       },
       {
-        "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+        "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
         "type": "prd",
         "name": "Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf",
-        "relativePath": "docs\\PRD\\Safara\\Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf",
-        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "relativePath": "docs/PRD/Safara/Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf",
+        "sha256": "d4c17ac5e54555837dedece4a8b32b8e50780931fe3db9ed3fbd549627d8e8ca",
         "pageCount": 4
       },
       {
-        "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+        "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
         "type": "prd",
         "name": "Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf",
-        "relativePath": "docs\\PRD\\Safara\\Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf",
-        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "relativePath": "docs/PRD/Safara/Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf",
+        "sha256": "02f98474e2e17a8fa6da879055e40e6ca6de862cb71211f9d4b23e259e4094af",
         "pageCount": 4
       }
     ],
@@ -23064,7 +23064,7 @@
           "status": "out_of_scope"
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
           "page": 1,
           "quote": "manifest, dan laporan belum menjadi ruang lingkup increment ini."
         },
@@ -23079,7 +23079,7 @@
           "loginAllowed": false
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
           "page": 1,
           "quote": "Pengguna yang sudah dinonaktifkan tidak boleh masuk ke aplikasi."
         },
@@ -23099,7 +23099,7 @@
           ]
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
           "page": 2,
           "quote": "Admin dapat membuat, melihat, mengubah, dan menonaktifkan paket umrah."
         },
@@ -23120,7 +23120,7 @@
           ]
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
           "page": 2,
           "quote": "Informasi paket minimal mencakup nama paket, durasi, harga dasar, deskripsi, dan status aktif."
         },
@@ -23147,7 +23147,7 @@
           ]
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
           "page": 2,
           "quote": "Informasi jadwal minimal mencakup kode keberangkatan"
         },
@@ -23163,7 +23163,7 @@
           "remainingQuota": true
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
           "page": 2,
           "quote": "Aplikasi menampilkan jumlah jemaah terdaftar dan sisa kuota."
         },
@@ -23179,7 +23179,7 @@
           "requiresAvailableQuota": true
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
           "page": 2,
           "quote": "Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh."
         },
@@ -23200,7 +23200,7 @@
           ]
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
           "page": 2,
           "quote": "Admin dapat menambah, melihat, mengubah, mencari, dan menonaktifkan data jemaah."
         },
@@ -23224,7 +23224,7 @@
           ]
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
           "page": 2,
           "quote": "Informasi minimum jemaah:"
         },
@@ -23240,7 +23240,7 @@
           "optional": true
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
           "page": 2,
           "quote": "NIK harus terdiri dari 16 angka apabila diisi."
         },
@@ -23256,7 +23256,7 @@
           "passport": true
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
           "page": 2,
           "quote": "peringatan apabila NIK atau nomor paspor sudah digunakan oleh jemaah lain."
         },
@@ -23271,7 +23271,7 @@
           "listView": "masked"
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
           "page": 2,
           "quote": "NIK dan nomor paspor tidak perlu ditampilkan secara penuh."
         },
@@ -23286,7 +23286,7 @@
           "unique": true
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
           "page": 2,
           "quote": "Setiap pendaftaran memiliki nomor pendaftaran yang berbeda."
         },
@@ -23302,7 +23302,7 @@
           "immutableAfterPackageChange": true
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
           "page": 2,
           "quote": "Harga yang berlaku saat pendaftaran disimpan sebagai harga pendaftaran yang disepakati"
         },
@@ -23317,7 +23317,7 @@
           "prohibited": true
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
           "page": 2,
           "quote": "Jemaah yang sama tidak boleh memiliki dua pendaftaran aktif pada jadwal keberangkatan yang sama."
         },
@@ -23333,7 +23333,7 @@
           "historyRetained": true
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
           "page": 2,
           "quote": "Pendaftaran dapat dibatalkan dengan alasan yang tercatat, tetapi riwayatnya tetap dapat dilihat."
         },
@@ -23356,7 +23356,7 @@
           ]
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
           "page": 2,
           "quote": "Finance mencatat cicilan dan memeriksa bukti pembayaran."
         },
@@ -23378,7 +23378,7 @@
           ]
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
           "page": 2,
           "quote": "Finance dapat mencatat pembayaran dengan informasi tanggal, nominal, cara pembayaran, nomor referensi, catatan, dan bukti pembayaran."
         },
@@ -23402,7 +23402,7 @@
           ]
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
           "page": 2,
           "quote": "Pembayaran baru berstatus"
         },
@@ -23417,7 +23417,7 @@
           "required": true
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
           "page": 2,
           "quote": "Pembayaran yang ditolak wajib memiliki alasan."
         },
@@ -23433,7 +23433,7 @@
           "formula": "remaining = agreedTotal - acceptedPayments"
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
           "page": 2,
           "quote": "Hanya pembayaran berstatus"
         },
@@ -23448,7 +23448,7 @@
           "acceptedPaymentReferenceUnique": true
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
           "page": 2,
           "quote": "Nomor referensi yang sama tidak boleh digunakan untuk menerima pembayaran dua kali."
         },
@@ -23469,7 +23469,7 @@
           ]
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
           "page": 3,
           "quote": "Daftar awal mencakup KTP, KK, paspor, pas foto, dan dokumen vaksin atau kesehatan."
         },
@@ -23484,7 +23484,7 @@
           "marriageOrMahram": "conditional"
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
           "page": 3,
           "quote": "Dokumen pernikahan atau mahram dapat diwajibkan hanya untuk jemaah tertentu."
         },
@@ -23507,7 +23507,7 @@
           "historyRetained": true
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
           "page": 3,
           "quote": "Status dokumen:"
         },
@@ -23522,7 +23522,7 @@
           "authorizedUsersOnly": true
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
           "page": 3,
           "quote": "Dokumen jemaah bersifat rahasia"
         },
@@ -23544,7 +23544,7 @@
           ]
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
           "page": 3,
           "quote": "Kesiapan jemaah ditentukan dari enam bagian:"
         },
@@ -23564,7 +23564,7 @@
           "ticket": "Terbit"
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
           "page": 3,
           "quote": "Jemaah berstatus Siap hanya apabila:"
         },
@@ -23579,7 +23579,7 @@
           "mode": "all_blockers"
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
           "page": 3,
           "quote": "Semua alasan yang menghambat kesiapan harus ditampilkan bersamaan."
         },
@@ -23594,7 +23594,7 @@
           "immediate": true
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
           "page": 3,
           "quote": "setiap perubahan pembayaran, dokumen, paspor, visa, asuransi, atau tiket harus langsung memengaruhi status kesiapan"
         },
@@ -23609,7 +23609,7 @@
           "allowedReadiness": "Siap"
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
           "page": 2,
           "quote": "Hanya jemaah berstatus Siap yang dapat dimasukkan ke manifest final."
         },
@@ -23625,7 +23625,7 @@
           "required": true
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
           "page": 2,
           "quote": "Operations dapat melihat preview manifest sebelum difinalisasi."
         },
@@ -23640,7 +23640,7 @@
           "snapshot": true
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
           "page": 2,
           "quote": "Setelah difinalisasi, isi manifest tidak berubah otomatis"
         },
@@ -23655,7 +23655,7 @@
           "actorAndTimeRecorded": true
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
           "page": 2,
           "quote": "Aplikasi mencatat siapa yang memfinalisasi manifest dan kapan dilakukan."
         },
@@ -23673,7 +23673,7 @@
           ]
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
           "page": 2,
           "quote": "Manifest dapat diunduh dalam format PDF dan Excel."
         },
@@ -23696,7 +23696,7 @@
           ]
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
           "page": 2,
           "quote": "Dashboard minimum menampilkan:"
         },
@@ -23722,7 +23722,7 @@
           ]
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
           "page": 2,
           "quote": "Laporan dapat disaring berdasarkan periode, paket, keberangkatan, status pembayaran, dan status kesiapan."
         },
@@ -23743,7 +23743,7 @@
           ]
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
           "page": 2,
           "quote": "Laporan minimum:"
         },
@@ -23765,7 +23765,7 @@
           ]
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
           "page": 3,
           "quote": "Riwayat minimum mencakup perubahan data jemaah, pendaftaran, pemeriksaan pembayaran, pemeriksaan dokumen, perubahan status perjalanan, dan finalisasi manifest."
         },
@@ -23785,7 +23785,7 @@
           ]
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
           "page": 3,
           "quote": "Riwayat menampilkan pengguna yang melakukan tindakan, waktu, data yang diubah, dan ringkasan perubahan."
         },
@@ -23800,7 +23800,7 @@
           "retainAfterDeactivateOrCancel": true
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
           "page": 3,
           "quote": "Data transaksi dan riwayat yang sudah pernah digunakan tidak boleh hilang"
         },
@@ -23817,7 +23817,7 @@
           "readyForOperations": true
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
           "page": 3,
           "quote": "Aplikasi web yang siap digunakan untuk operasional satu perusahaan dan satu cabang."
         },
@@ -23835,7 +23835,7 @@
           "handover": true
         },
         "evidence": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
           "page": 4,
           "quote": "Panduan penggunaan, akun awal, pelatihan, dan serah terima sudah diterima."
         },
@@ -24772,7 +24772,7 @@
           "exception": "manual_override"
         },
         "provenance": {
-          "artifactId": "artifact-safara-docs-prd-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+          "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
           "page": 2,
           "quote": "Hanya jemaah berstatus Siap yang dapat dimasukkan ke manifest final."
         },

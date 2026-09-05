@@ -26,10 +26,18 @@ test("workspace branches have distinct current truth and a staged proposal canno
 });
 
 test("GLF-003-01 accounts for every Safara source and projects the complete operational workflow", () => {
+  const expectedSources = [
+    ["Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf", "75a6bf6c7411c909f9a94dd763cfb540656717c5ecac789dad57e7de4e6740bc", 16],
+    ["Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf", "d4c17ac5e54555837dedece4a8b32b8e50780931fe3db9ed3fbd549627d8e8ca", 14],
+    ["Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf", "02f98474e2e17a8fa6da879055e40e6ca6de862cb71211f9d4b23e259e4094af", 13],
+  ];
   assert.equal(bundle.sourceCoverage.expectedArtifactCount, 3);
   assert.equal(bundle.repository.artifacts.length, 3);
-  assert.equal(bundle.repository.assertions.length, bundle.sourceCoverage.candidateAssertionCount);
+  assert.equal(bundle.repository.assertions.length, 43);
+  assert.equal(bundle.sourceCoverage.candidateAssertionCount, 43);
+  assert.deepEqual(bundle.repository.artifacts.map(({ name, sha256 }) => [name, sha256]), expectedSources.map(([name, sha256]) => [name, sha256]));
   assert.equal(bundle.skillResponses.extractionResponses.length, 3);
+  assert.deepEqual(bundle.skillResponses.extractionResponses.map(({ input, response }) => [input.artifact.name, response.candidateAssertions.length]), expectedSources.map(([name, , count]) => [name, count]));
   assert.ok(bundle.skillResponses.extractionResponses.every(({ response }) => response.candidateAssertions.length > 0 && response.unaccountedStatements.length === 0));
   const increment = resolveGoldenFixtureBranch(bundle, "branch-increment-003");
   const workflowStages = increment.projection.surfaces.find((surface) => surface.surface === "workflow").records.map((record) => record.recordId.replace("workflow-", ""));

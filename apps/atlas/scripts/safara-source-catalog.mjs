@@ -1,4 +1,11 @@
 // Deterministic, source-grounded reference output for GLF-003-01.
+// This closed catalog intentionally excludes the consolidated Buyer PRD.
+export const sourceArtifacts = [
+  { relativePath: "docs/PRD/Safara/Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf", name: "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf", sha256: "75a6bf6c7411c909f9a94dd763cfb540656717c5ecac789dad57e7de4e6740bc" },
+  { relativePath: "docs/PRD/Safara/Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf", name: "Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf", sha256: "d4c17ac5e54555837dedece4a8b32b8e50780931fe3db9ed3fbd549627d8e8ca" },
+  { relativePath: "docs/PRD/Safara/Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf", name: "Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf", sha256: "02f98474e2e17a8fa6da879055e40e6ca6de862cb71211f9d4b23e259e4094af" },
+];
+
 // Each entry is one independently meaningful project fact or workflow rule.
 export const sourceAssertions = [
   ["Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf", 1, "manifest, dan laporan belum menjadi ruang lingkup increment ini.", "manifest.eligibility", { status: "out_of_scope" }, "manifest", "base"],

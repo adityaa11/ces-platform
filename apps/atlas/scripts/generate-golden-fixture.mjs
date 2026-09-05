@@ -1,39 +1,32 @@
 import { createHash } from "node:crypto";
-import { mkdir, readdir, readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import Ajv from "ajv";
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
 import { resolveFixtureAuthoringExecutor } from "@atlas/fixtures";
-import { expectedWorkflowStages, sourceAssertions } from "./safara-source-catalog.mjs";
+import { expectedWorkflowStages, sourceArtifacts, sourceAssertions } from "./safara-source-catalog.mjs";
 
 const root = path.resolve(import.meta.dirname, "../../..");
-const sourceRoot = path.join(root, "docs", "PRD");
 const output = path.join(root, "packages", "atlas-fixtures", "generated", "safara-golden-bundle.json");
 const skillRoot = path.join(root, ".agents", "skills");
 const surfaces = ["workflow", "facts", "ces", "chatbot_context"];
 const provenance = (skillId, mode) => ({ skillId, skillVersion: "1.1.0", mode });
 
-async function findPdfs(directory, prefix = "") {
-  const entries = await readdir(directory, { withFileTypes: true });
-  return (await Promise.all(entries.map(async (entry) => {
-    const relative = path.join(prefix, entry.name);
-    if (entry.isDirectory()) return findPdfs(path.join(directory, entry.name), relative);
-    return entry.isFile() && entry.name.toLowerCase().endsWith(".pdf") ? [relative] : [];
-  }))).flat().sort((a, b) => a.localeCompare(b));
-}
-async function extract(filePath, relativePath) {
+async function extract(source) {
+  const filePath = path.join(root, source.relativePath);
   const bytes = new Uint8Array(await readFile(filePath));
+  const sha256 = createHash("sha256").update(bytes).digest("hex");
+  if (sha256 !== source.sha256) throw new Error(`Source checksum mismatch: ${source.relativePath}`);
   const pdf = await pdfjs.getDocument({ data: bytes, useWorker: false }).promise;
   const pages = [];
   for (let page = 1; page <= pdf.numPages; page += 1) {
     const content = await (await pdf.getPage(page)).getTextContent();
     pages.push({ page, text: content.items.map((item) => item.str).join(" ") });
   }
-  return { artifactId: `artifact-safara-${relativePath.replace(/[^a-z0-9]+/gi, "-").replace(/(^|-)$|^-|-$ /g, "").toLowerCase()}`.replace(/-+$/g, ""), type: "prd", name: path.basename(filePath), relativePath, sha256: createHash("sha256").update(bytes).digest("hex"), pages };
+  return { artifactId: `artifact-safara-${source.name.replace(/[^a-z0-9]+/gi, "-").replace(/-+$/g, "").toLowerCase()}`, type: "prd", name: source.name, relativePath: source.relativePath, sha256, pages };
 }
 async function discoverSources() {
-  const increments = await Promise.all((await findPdfs(sourceRoot)).map((relative) => extract(path.join(sourceRoot, relative), path.join("docs", "PRD", relative))));
-  return increments.sort((a, b) => a.name.localeCompare(b.name));
+  return Promise.all(sourceArtifacts.map(extract));
 }
 async function manifest(skillId) {
   const folder = skillId.replace("atlas.", "atlas-").replaceAll(".", "-");
