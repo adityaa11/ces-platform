@@ -1034,8 +1034,8 @@
           ]
         },
         "projections": {
-          "branchId": "all-branches",
-          "headRevisionId": "all-heads",
+          "branchId": "branch-master",
+          "headRevisionId": "rev-safara-master-001",
           "surfaces": [
             {
               "surface": "workflow",
@@ -1104,7 +1104,301 @@
                   }
                 }
               ]
+            }
+          ]
+        },
+        "checks": [
+          "topology",
+          "provenance",
+          "evidence",
+          "dependencies",
+          "branch-isolation"
+        ]
+      },
+      "response": {
+        "skillId": "atlas.fixture-verification",
+        "skillVersion": "1.1.0",
+        "executionProvenance": {
+          "skillId": "atlas.fixture-verification",
+          "skillVersion": "1.1.0",
+          "mode": "codex"
+        },
+        "status": "pass",
+        "checks": [
+          {
+            "checkId": "topology",
+            "status": "pass",
+            "detail": "topology passed for branch-master@rev-safara-master-001.",
+            "evidence": [
+              {
+                "kind": "deterministic-validation",
+                "reference": "validate(generated bundle)"
+              }
+            ]
+          },
+          {
+            "checkId": "provenance",
+            "status": "pass",
+            "detail": "provenance passed for branch-master@rev-safara-master-001.",
+            "evidence": [
+              {
+                "kind": "deterministic-validation",
+                "reference": "validate(generated bundle)"
+              }
+            ]
+          },
+          {
+            "checkId": "evidence",
+            "status": "pass",
+            "detail": "evidence passed for branch-master@rev-safara-master-001.",
+            "evidence": [
+              {
+                "kind": "deterministic-validation",
+                "reference": "validate(generated bundle)"
+              }
+            ]
+          },
+          {
+            "checkId": "dependencies",
+            "status": "pass",
+            "detail": "dependencies passed for branch-master@rev-safara-master-001.",
+            "evidence": [
+              {
+                "kind": "deterministic-validation",
+                "reference": "validate(generated bundle)"
+              }
+            ]
+          },
+          {
+            "checkId": "branch-isolation",
+            "status": "pass",
+            "detail": "branch-isolation passed for branch-master@rev-safara-master-001.",
+            "evidence": [
+              {
+                "kind": "deterministic-validation",
+                "reference": "validate(generated bundle)"
+              }
+            ]
+          }
+        ]
+      },
+      "executionProvenance": {
+        "skillId": "atlas.fixture-verification",
+        "skillVersion": "1.1.0",
+        "mode": "codex"
+      }
+    },
+    {
+      "skillId": "atlas.fixture-verification",
+      "input": {
+        "repository": {
+          "projectId": "safara",
+          "schemaVersion": "1.0",
+          "artifacts": [
+            {
+              "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+              "type": "prd",
+              "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+              "relativePath": "Safara\\Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+              "sha256": "75a6bf6c7411c909f9a94dd763cfb540656717c5ecac789dad57e7de4e6740bc",
+              "pageCount": 3
             },
+            {
+              "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+              "type": "prd",
+              "name": "Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf",
+              "relativePath": "Safara\\Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf",
+              "sha256": "d4c17ac5e54555837dedece4a8b32b8e50780931fe3db9ed3fbd549627d8e8ca",
+              "pageCount": 4
+            },
+            {
+              "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+              "type": "prd",
+              "name": "Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf",
+              "relativePath": "Safara\\Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf",
+              "sha256": "02f98474e2e17a8fa6da879055e40e6ca6de862cb71211f9d4b23e259e4094af",
+              "pageCount": 4
+            }
+          ],
+          "assertions": [
+            {
+              "assertionId": "ast-manifest-out-of-scope",
+              "semanticKey": "manifest.eligibility",
+              "value": {
+                "status": "out_of_scope"
+              },
+              "evidence": {
+                "artifactId": "artifact-safara-safara-incremental-prd-01-foundation-enrollment-1-pdf",
+                "page": 1,
+                "quote": "manifest, dan laporan belum menjadi ruang lingkup increment ini."
+              },
+              "status": "accepted"
+            },
+            {
+              "assertionId": "ast-readiness-blockers",
+              "semanticKey": "readiness.blocker-display",
+              "value": {
+                "mode": "all_blockers"
+              },
+              "evidence": {
+                "artifactId": "artifact-safara-safara-incremental-prd-02-payment-documents-readiness-pdf",
+                "page": 3,
+                "quote": "Semua alasan yang menghambat kesiapan harus ditampilkan bersamaan."
+              },
+              "status": "accepted"
+            },
+            {
+              "assertionId": "ast-manifest-ready-only",
+              "semanticKey": "manifest.eligibility",
+              "value": {
+                "allowedReadiness": "Siap"
+              },
+              "evidence": {
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "page": 2,
+                "quote": "Hanya jemaah berstatus Siap yang dapat dimasukkan ke manifest final."
+              },
+              "status": "accepted",
+              "supersedesAssertionId": "ast-manifest-out-of-scope"
+            },
+            {
+              "assertionId": "ast-manifest-snapshot",
+              "semanticKey": "manifest.finalization",
+              "value": {
+                "snapshot": true
+              },
+              "evidence": {
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "page": 2,
+                "quote": "Setelah difinalisasi, isi manifest tidak berubah otomatis walaupun data jemaah kemudian diperbarui."
+              },
+              "status": "accepted"
+            }
+          ],
+          "revisions": [
+            {
+              "revisionId": "rev-safara-master-001",
+              "parentRevisionIds": [],
+              "acceptedAssertionIds": [
+                "ast-manifest-out-of-scope",
+                "ast-readiness-blockers"
+              ],
+              "executionProvenance": {
+                "skillId": "atlas.fixture-repository",
+                "skillVersion": "1.1.0",
+                "mode": "codex"
+              }
+            },
+            {
+              "revisionId": "rev-safara-increment-003",
+              "parentRevisionIds": [
+                "rev-safara-master-001"
+              ],
+              "acceptedAssertionIds": [
+                "ast-manifest-ready-only",
+                "ast-manifest-snapshot"
+              ],
+              "executionProvenance": {
+                "skillId": "atlas.fixture-repository",
+                "skillVersion": "1.1.0",
+                "mode": "codex"
+              }
+            }
+          ],
+          "branches": [
+            {
+              "branchId": "branch-master",
+              "label": "Master",
+              "headRevisionId": "rev-safara-master-001"
+            },
+            {
+              "branchId": "branch-increment-003",
+              "label": "Increment 03",
+              "headRevisionId": "rev-safara-increment-003"
+            }
+          ],
+          "materializedStates": [
+            {
+              "branchId": "branch-master",
+              "headRevisionId": "rev-safara-master-001",
+              "state": {
+                "assertionIds": [
+                  "ast-manifest-out-of-scope",
+                  "ast-readiness-blockers"
+                ],
+                "resolvedFacts": [
+                  {
+                    "semanticKey": "manifest.eligibility",
+                    "assertionId": "ast-manifest-out-of-scope",
+                    "value": {
+                      "status": "out_of_scope"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "branchId": "branch-increment-003",
+              "headRevisionId": "rev-safara-increment-003",
+              "state": {
+                "assertionIds": [
+                  "ast-manifest-ready-only",
+                  "ast-manifest-snapshot",
+                  "ast-readiness-blockers"
+                ],
+                "resolvedFacts": [
+                  {
+                    "semanticKey": "manifest.eligibility",
+                    "assertionId": "ast-manifest-ready-only",
+                    "value": {
+                      "allowedReadiness": "Siap"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "changeProposals": [
+            {
+              "proposalId": "proposal-manifest-staged-correction",
+              "branchId": "branch-increment-003",
+              "baseRevisionId": "rev-safara-increment-003",
+              "targetSemanticKey": "manifest.eligibility",
+              "beforeValue": {
+                "allowedReadiness": "Siap"
+              },
+              "proposedValue": {
+                "allowedReadiness": "Siap",
+                "exception": "manual_override"
+              },
+              "provenance": {
+                "artifactId": "artifact-safara-safara-incremental-prd-03-manifest-reporting-audit-pdf",
+                "page": 2,
+                "quote": "Hanya jemaah berstatus Siap yang dapat dimasukkan ke manifest final."
+              },
+              "status": "staged",
+              "resolution": null
+            }
+          ],
+          "dependencies": [
+            {
+              "fromId": "ast-manifest-ready-only",
+              "toId": "workflow-manifest"
+            },
+            {
+              "fromId": "ast-manifest-ready-only",
+              "toId": "ces-manifest"
+            },
+            {
+              "fromId": "ast-manifest-ready-only",
+              "toId": "chatbot_context-manifest"
+            }
+          ]
+        },
+        "projections": {
+          "branchId": "branch-increment-003",
+          "headRevisionId": "rev-safara-increment-003",
+          "surfaces": [
             {
               "surface": "workflow",
               "branchId": "branch-increment-003",
@@ -1212,7 +1506,7 @@
           {
             "checkId": "topology",
             "status": "pass",
-            "detail": "topology deterministic gate passed.",
+            "detail": "topology passed for branch-increment-003@rev-safara-increment-003.",
             "evidence": [
               {
                 "kind": "deterministic-validation",
@@ -1223,7 +1517,7 @@
           {
             "checkId": "provenance",
             "status": "pass",
-            "detail": "provenance deterministic gate passed.",
+            "detail": "provenance passed for branch-increment-003@rev-safara-increment-003.",
             "evidence": [
               {
                 "kind": "deterministic-validation",
@@ -1234,7 +1528,7 @@
           {
             "checkId": "evidence",
             "status": "pass",
-            "detail": "evidence deterministic gate passed.",
+            "detail": "evidence passed for branch-increment-003@rev-safara-increment-003.",
             "evidence": [
               {
                 "kind": "deterministic-validation",
@@ -1245,7 +1539,7 @@
           {
             "checkId": "dependencies",
             "status": "pass",
-            "detail": "dependencies deterministic gate passed.",
+            "detail": "dependencies passed for branch-increment-003@rev-safara-increment-003.",
             "evidence": [
               {
                 "kind": "deterministic-validation",
@@ -1256,7 +1550,7 @@
           {
             "checkId": "branch-isolation",
             "status": "pass",
-            "detail": "branch-isolation deterministic gate passed.",
+            "detail": "branch-isolation passed for branch-increment-003@rev-safara-increment-003.",
             "evidence": [
               {
                 "kind": "deterministic-validation",
@@ -1808,73 +2102,142 @@
         "issues": []
       }
     ],
-    "verificationResponse": {
-      "skillId": "atlas.fixture-verification",
-      "skillVersion": "1.1.0",
-      "executionProvenance": {
+    "verificationResponses": [
+      {
         "skillId": "atlas.fixture-verification",
         "skillVersion": "1.1.0",
-        "mode": "codex"
+        "executionProvenance": {
+          "skillId": "atlas.fixture-verification",
+          "skillVersion": "1.1.0",
+          "mode": "codex"
+        },
+        "status": "pass",
+        "checks": [
+          {
+            "checkId": "topology",
+            "status": "pass",
+            "detail": "topology passed for branch-master@rev-safara-master-001.",
+            "evidence": [
+              {
+                "kind": "deterministic-validation",
+                "reference": "validate(generated bundle)"
+              }
+            ]
+          },
+          {
+            "checkId": "provenance",
+            "status": "pass",
+            "detail": "provenance passed for branch-master@rev-safara-master-001.",
+            "evidence": [
+              {
+                "kind": "deterministic-validation",
+                "reference": "validate(generated bundle)"
+              }
+            ]
+          },
+          {
+            "checkId": "evidence",
+            "status": "pass",
+            "detail": "evidence passed for branch-master@rev-safara-master-001.",
+            "evidence": [
+              {
+                "kind": "deterministic-validation",
+                "reference": "validate(generated bundle)"
+              }
+            ]
+          },
+          {
+            "checkId": "dependencies",
+            "status": "pass",
+            "detail": "dependencies passed for branch-master@rev-safara-master-001.",
+            "evidence": [
+              {
+                "kind": "deterministic-validation",
+                "reference": "validate(generated bundle)"
+              }
+            ]
+          },
+          {
+            "checkId": "branch-isolation",
+            "status": "pass",
+            "detail": "branch-isolation passed for branch-master@rev-safara-master-001.",
+            "evidence": [
+              {
+                "kind": "deterministic-validation",
+                "reference": "validate(generated bundle)"
+              }
+            ]
+          }
+        ]
       },
-      "status": "pass",
-      "checks": [
-        {
-          "checkId": "topology",
-          "status": "pass",
-          "detail": "topology deterministic gate passed.",
-          "evidence": [
-            {
-              "kind": "deterministic-validation",
-              "reference": "validate(generated bundle)"
-            }
-          ]
+      {
+        "skillId": "atlas.fixture-verification",
+        "skillVersion": "1.1.0",
+        "executionProvenance": {
+          "skillId": "atlas.fixture-verification",
+          "skillVersion": "1.1.0",
+          "mode": "codex"
         },
-        {
-          "checkId": "provenance",
-          "status": "pass",
-          "detail": "provenance deterministic gate passed.",
-          "evidence": [
-            {
-              "kind": "deterministic-validation",
-              "reference": "validate(generated bundle)"
-            }
-          ]
-        },
-        {
-          "checkId": "evidence",
-          "status": "pass",
-          "detail": "evidence deterministic gate passed.",
-          "evidence": [
-            {
-              "kind": "deterministic-validation",
-              "reference": "validate(generated bundle)"
-            }
-          ]
-        },
-        {
-          "checkId": "dependencies",
-          "status": "pass",
-          "detail": "dependencies deterministic gate passed.",
-          "evidence": [
-            {
-              "kind": "deterministic-validation",
-              "reference": "validate(generated bundle)"
-            }
-          ]
-        },
-        {
-          "checkId": "branch-isolation",
-          "status": "pass",
-          "detail": "branch-isolation deterministic gate passed.",
-          "evidence": [
-            {
-              "kind": "deterministic-validation",
-              "reference": "validate(generated bundle)"
-            }
-          ]
-        }
-      ]
-    }
+        "status": "pass",
+        "checks": [
+          {
+            "checkId": "topology",
+            "status": "pass",
+            "detail": "topology passed for branch-increment-003@rev-safara-increment-003.",
+            "evidence": [
+              {
+                "kind": "deterministic-validation",
+                "reference": "validate(generated bundle)"
+              }
+            ]
+          },
+          {
+            "checkId": "provenance",
+            "status": "pass",
+            "detail": "provenance passed for branch-increment-003@rev-safara-increment-003.",
+            "evidence": [
+              {
+                "kind": "deterministic-validation",
+                "reference": "validate(generated bundle)"
+              }
+            ]
+          },
+          {
+            "checkId": "evidence",
+            "status": "pass",
+            "detail": "evidence passed for branch-increment-003@rev-safara-increment-003.",
+            "evidence": [
+              {
+                "kind": "deterministic-validation",
+                "reference": "validate(generated bundle)"
+              }
+            ]
+          },
+          {
+            "checkId": "dependencies",
+            "status": "pass",
+            "detail": "dependencies passed for branch-increment-003@rev-safara-increment-003.",
+            "evidence": [
+              {
+                "kind": "deterministic-validation",
+                "reference": "validate(generated bundle)"
+              }
+            ]
+          },
+          {
+            "checkId": "branch-isolation",
+            "status": "pass",
+            "detail": "branch-isolation passed for branch-increment-003@rev-safara-increment-003.",
+            "evidence": [
+              {
+                "kind": "deterministic-validation",
+                "reference": "validate(generated bundle)"
+              }
+            ]
+          }
+        ]
+      }
+    ]
   },
   "repository": {
     "projectId": "safara",

@@ -46,8 +46,8 @@ async function loadSkill(skillId) {
 function createFixtureExecutor(mode) {
   const adapters = {
     codex: { kind: "codex", execute: ({ buildResponse }) => buildResponse() },
-    agents_bridge: { kind: "agents_bridge", execute: ({ buildResponse }) => buildResponse() },
   };
+  if (!adapters[mode]) throw new Error(`No configured fixture executor for ${JSON.stringify(mode)}.`);
   return adapters[mode];
 }
 
@@ -118,8 +118,7 @@ function validate(bundle, sourceArtifacts) {
 
 const compactArtifact = ({ pages, ...artifact }) => ({ ...artifact, pageCount: pages.length });
 const main = async () => {
-  const requestedMode = process.env.SKILLS_MODE ?? "codex";
-  const mode = resolveFixtureAuthoringExecutor(process.env, requestedMode === "agents_bridge" ? { kind: "agents_bridge" } : undefined);
+  const mode = resolveFixtureAuthoringExecutor(process.env);
   const context = { ajv: new Ajv({ strict: false }), pipeline: [], executor: createFixtureExecutor(mode) };
   const artifacts = await Promise.all((await discoverPdfs(prdDirectory)).map(extractArtifact));
   const artifactId = (name) => artifacts.find((artifact) => artifact.name === name)?.artifactId ?? (() => { throw new Error(`Missing discovered PRD ${name}`); })();
@@ -156,17 +155,20 @@ const main = async () => {
     return { branchId, headRevisionId: state.headRevisionId, surfaces: ["workflow", "facts", "ces", "chatbot_context"].map((surface) => ({ surface, branchId, headRevisionId: state.headRevisionId, records: [{ recordId: `${surface}-manifest`, assertionIds: [eligibility.assertionId], dependencyIds: repository.dependencies.filter((entry) => entry.fromId === eligibility.assertionId).map((entry) => entry.toId), resolvedValue: eligibility.value }] })) };
   };
   const projections = repository.branches.map((branch) => projectionFor(branch.branchId));
-  const extractionResponses = await Promise.all(artifacts.map((artifact) => invokeSkill("atlas.prd-extraction", { artifact: { artifactId: artifact.artifactId, type: "prd", name: artifact.name }, pages: artifact.pages }, () => ({ skillId: "atlas.prd-extraction", skillVersion: "1.1.0", executionProvenance: provenance("atlas.prd-extraction", mode), status: "complete", candidateAssertions: assertions.filter((assertion) => assertion.evidence.artifactId === artifact.artifactId).map((assertion) => ({ candidateId: `candidate-${assertion.assertionId}`, kind: "constraint", semanticKey: assertion.semanticKey, payload: assertion.value, possibleAffectedSemanticKey: assertion.semanticKey, evidence: assertion.evidence })), unaccountedStatements: [], questions: [] }), context)));
+  const extractionResponses = [];
+  for (const artifact of artifacts) extractionResponses.push(await invokeSkill("atlas.prd-extraction", { artifact: { artifactId: artifact.artifactId, type: "prd", name: artifact.name }, pages: artifact.pages }, () => ({ skillId: "atlas.prd-extraction", skillVersion: "1.1.0", executionProvenance: provenance("atlas.prd-extraction", mode), status: "complete", candidateAssertions: assertions.filter((assertion) => assertion.evidence.artifactId === artifact.artifactId).map((assertion) => ({ candidateId: `candidate-${assertion.assertionId}`, kind: "constraint", semanticKey: assertion.semanticKey, payload: assertion.value, possibleAffectedSemanticKey: assertion.semanticKey, evidence: assertion.evidence })), unaccountedStatements: [], questions: [] }), context));
   const repositoryResponse = await invokeSkill("atlas.fixture-repository", { projectId: "safara", sourceArtifacts: artifacts.map(compactArtifact), requestedScenario: "Master and Increment 03 manifest truth" }, () => ({ skillId: "atlas.fixture-repository", skillVersion: "1.1.0", executionProvenance: provenance("atlas.fixture-repository", mode), status: "complete", repositoryCandidate: repository, issues: [] }), context);
   const proposal = repository.changeProposals[0];
   const changesResponse = await invokeSkill("atlas.fixture-changes", { inputKind: "user_correction", branch: { branchId: proposal.branchId, headRevisionId: proposal.baseRevisionId }, baseRevision: { revisionId: proposal.baseRevisionId }, currentState: repository.materializedStates.find((state) => state.branchId === proposal.branchId), incomingInformation: proposal.proposedValue, sourceArtifacts: artifacts.map(compactArtifact) }, () => ({ skillId: "atlas.fixture-changes", skillVersion: "1.1.0", executionProvenance: provenance("atlas.fixture-changes", mode), status: "complete", changeProposal: proposal, questions: [] }), context);
-  const projectionResponses = await Promise.all(projections.map((projection) => invokeSkill("atlas.fixture-projections", { branch: { branchId: projection.branchId, headRevisionId: projection.headRevisionId }, headRevision: { revisionId: projection.headRevisionId }, resolvedFacts: repository.materializedStates.find((state) => state.branchId === projection.branchId).state.resolvedFacts, dependencies: repository.dependencies, requestedSurfaces: ["workflow", "facts", "ces", "chatbot_context"] }, () => ({ skillId: "atlas.fixture-projections", skillVersion: "1.1.0", executionProvenance: provenance("atlas.fixture-projections", mode), status: "complete", projectionCandidate: projection, issues: [] }), context)));
+  const projectionResponses = [];
+  for (const projection of projections) projectionResponses.push(await invokeSkill("atlas.fixture-projections", { branch: { branchId: projection.branchId, headRevisionId: projection.headRevisionId }, headRevision: { revisionId: projection.headRevisionId }, resolvedFacts: repository.materializedStates.find((state) => state.branchId === projection.branchId).state.resolvedFacts, dependencies: repository.dependencies, requestedSurfaces: ["workflow", "facts", "ces", "chatbot_context"] }, () => ({ skillId: "atlas.fixture-projections", skillVersion: "1.1.0", executionProvenance: provenance("atlas.fixture-projections", mode), status: "complete", projectionCandidate: projection, issues: [] }), context));
   const generatedRepository = repositoryResponse.repositoryCandidate;
   const generatedProjections = projectionResponses.map((response) => response.projectionCandidate);
   validate({ repository: generatedRepository, projections: generatedProjections }, artifacts);
-  const verificationResponse = await invokeSkill("atlas.fixture-verification", { repository: generatedRepository, projections: { branchId: "all-branches", headRevisionId: "all-heads", surfaces: generatedProjections.flatMap((projection) => projection.surfaces) }, checks: ["topology", "provenance", "evidence", "dependencies", "branch-isolation"] }, () => ({ skillId: "atlas.fixture-verification", skillVersion: "1.1.0", executionProvenance: provenance("atlas.fixture-verification", mode), status: "pass", checks: ["topology", "provenance", "evidence", "dependencies", "branch-isolation"].map((checkId) => ({ checkId, status: "pass", detail: `${checkId} deterministic gate passed.`, evidence: [{ kind: "deterministic-validation", reference: "validate(generated bundle)" }] })) }), context);
-  if (verificationResponse.status !== "pass" || verificationResponse.checks.some((check) => check.status !== "pass")) throw new Error("Fixture verification did not pass; refusing publication");
-  const bundle = { bundleVersion: "1.0", generatedAt: "2026-09-05T00:00:00.000Z", executionMode: mode, pipeline: context.pipeline, skillResponses: { extractionResponses, repositoryResponse, changesResponse, projectionResponses, verificationResponse }, repository: generatedRepository, projections: generatedProjections };
+  const verificationResponses = [];
+  for (const projection of generatedProjections) verificationResponses.push(await invokeSkill("atlas.fixture-verification", { repository: generatedRepository, projections: projection, checks: ["topology", "provenance", "evidence", "dependencies", "branch-isolation"] }, () => ({ skillId: "atlas.fixture-verification", skillVersion: "1.1.0", executionProvenance: provenance("atlas.fixture-verification", mode), status: "pass", checks: ["topology", "provenance", "evidence", "dependencies", "branch-isolation"].map((checkId) => ({ checkId, status: "pass", detail: `${checkId} passed for ${projection.branchId}@${projection.headRevisionId}.`, evidence: [{ kind: "deterministic-validation", reference: "validate(generated bundle)" }] })) }), context));
+  if (verificationResponses.some((response) => response.status !== "pass" || response.checks.some((check) => check.status !== "pass"))) throw new Error("Fixture verification did not pass; refusing publication");
+  const bundle = { bundleVersion: "1.0", generatedAt: "2026-09-05T00:00:00.000Z", executionMode: mode, pipeline: context.pipeline, skillResponses: { extractionResponses, repositoryResponse, changesResponse, projectionResponses, verificationResponses }, repository: generatedRepository, projections: generatedProjections };
   validate(bundle, artifacts);
   await mkdir(outputDirectory, { recursive: true });
   const temporaryFile = `${outputFile}.tmp`;
