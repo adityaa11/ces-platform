@@ -33,6 +33,7 @@ comparison contract.
 | 2 | GLF-002 / BATCH-18 | approved | GLF-001 | Are the shared skill definitions, purposes, responsibilities, and review checks complete and non-authoritative? |
 | 3 | GLF-003 / BATCH-19 | awaiting_review | GLF-002 | Does the golden-fixture data contract supply every relationship and branch/HEAD field required by the shared skills and future UI? |
 | 3.1 | GLF-003-01 / BATCH-19.1 | awaiting_review | GLF-003 | Do deterministic skill outputs account for all Safara source PDFs and project the complete operational workflow? |
+| 3.2 | GLF-003-02 / BATCH-19.2 | planned | GLF-003-01 | Can every material statement in Increment 01-03 be reconciled to an atomic extraction result or a justified non-fact classification? |
 | 4 | GLF-004 / BATCH-20 | planned | GLF-003 | Can a user select a workspace/branch and understand its selected HEAD without confusing it with the PRD lens? |
 | 5 | GLF-005 / BATCH-21 | planned | GLF-003, GLF-004 | Do all existing knowledge surfaces resolve one coherent current truth from the selected branch HEAD? |
 | 6 | GLF-006 / BATCH-22 | blocked | GLF-005, user research | Is the correction and approval/chatbot interaction grounded in approved interaction research and unable to mutate truth silently? |
@@ -60,6 +61,7 @@ individually; they are not combined for convenience.
 - [GLF-002 Skill definitions and review contract](GLF-002-skill-definitions-and-review-contract.md)
 - [GLF-003 Golden fixture data contract](GLF-003-golden-fixture-data-contract.md)
 - [GLF-003-01 Complete Safara source accounting and deterministic skill outputs](GLF-003-01-complete-safara-source-accounting.md)
+- [GLF-003-02 Exhaustive Safara fact extraction and source accounting](GLF-003-02-exhaustive-safara-fact-accounting.md)
 - [GLF-004 Workspace selector](GLF-004-workspace-selector.md)
 - [GLF-005 Branch-aware UI fixture integration](GLF-005-branch-aware-ui-fixture-integration.md)
 - [GLF-006 Correction and approval interaction design](GLF-006-correction-and-approval-interaction-design.md)
