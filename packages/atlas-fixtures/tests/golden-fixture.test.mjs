@@ -104,8 +104,10 @@ test("reconciliation counts are derived from fixture data", async () => {
   const normalReport = await readFile(reconciliation, "utf8");
   const sourcePages = bundle.repository.artifacts.reduce((total, artifact) => total + artifact.pageCount, 0);
   const unresolved = bundle.sourceStatementInventory.filter((entry) => entry.normalizedInterpretation && entry.normalizedInterpretation.kind === "unresolved_question").length;
+  const projectedRecords = bundle.projections.reduce((total, projection) => total + projection.surfaces.reduce((sum, surface) => sum + surface.records.length, 0), 0);
   assert.ok(normalReport.includes("- Source pages: " + sourcePages));
   assert.ok(normalReport.includes("- Unresolved questions: " + unresolved));
+  assert.ok(normalReport.includes("- Projected records: " + projectedRecords));
   execFileSync(process.execPath, [script], { cwd, env: { ...process.env, GOLDEN_FIXTURE_TEST_MUTATION: "add-unresolved-question" }, stdio: "pipe" });
   const questionReport = await readFile(reconciliation, "utf8");
   assert.ok(questionReport.includes("- Unresolved questions: 1"));

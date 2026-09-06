@@ -24,4 +24,4 @@ This report proves traceability and internal consistency of the authored source 
 | Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf | 4 | 9 | 0 |
 
 - Current materialized facts: 219
-- Projected records: [object Object]413
+- Projected records: 677
