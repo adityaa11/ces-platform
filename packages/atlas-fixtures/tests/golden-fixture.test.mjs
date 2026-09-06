@@ -47,6 +47,14 @@ test("semantic identity, supersession, dependencies, and staged changes remain e
   for (const projection of bundle.projections) for (const surface of projection.surfaces) for (const record of surface.records) assert.deepEqual(record.dependencyIds, record.assertionIds);
 });
 
+test("verification proves every required architectural invariant before publication", () => {
+  const required = ["branch-heads-resolve", "revision-parents-resolve", "proposal-base-resolves", "assertion-source-provenance", "supersession-integrity", "staged-proposal-isolation", "approved-proposal-branch-movement", "projection-heads-match", "projection-provenance", "cross-surface-semantic-consistency", "branch-isolation", "unresolved-conflict-integrity"];
+  for (const stage of bundle.skillResponses.verificationResponses) {
+    assert.deepEqual(stage.response.checks.map((check) => check.checkId), required);
+    assert.ok(stage.response.checks.every((check) => check.status === "pass"));
+  }
+});
+
 test("GLF-003-02 accounts for exactly the eleven authoritative Safara pages", () => {
   assert.equal(bundle.repository.artifacts.length, 3);
   assert.equal(bundle.sourceCoverage.expectedPageCount, 11);
@@ -94,7 +102,7 @@ test("all branch facts and projections resolve to inventory-backed candidates", 
 
 test("negative publication cases preserve the last valid bundle", async () => {
   const before = await readFile(output, "utf8");
-  for (const mutation of ["remove-fact", "corrupt-page", "buyer-artifact", "duplicate-assertion", "corrupt-fact-provenance", "corrupt-projection-provenance", "material-non-fact", "corrupt-skill-output"]) {
+  for (const mutation of ["remove-fact", "corrupt-page", "buyer-artifact", "duplicate-assertion", "corrupt-fact-provenance", "corrupt-projection-provenance", "material-non-fact", "corrupt-skill-output", "corrupt-verification-checks"]) {
     assert.throws(() => execFileSync(process.execPath, [script], { cwd, env: { ...process.env, GOLDEN_FIXTURE_TEST_MUTATION: mutation }, stdio: "pipe" }));
     assert.equal(await readFile(output, "utf8"), before);
   }

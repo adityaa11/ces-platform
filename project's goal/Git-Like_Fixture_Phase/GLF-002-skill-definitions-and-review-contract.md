@@ -1,6 +1,6 @@
 # GLF-002: Skill definitions, responsibilities, and review contract
 
-- **State:** awaiting_review
+- **State:** approved
 - **Review batch:** BATCH-18
 - **Depends on:** GLF-001
 - **Baseline:** Architecture Checkpoint sections 1, 3, 7–9, 15, 18, 21–24; UI/UX Prototype PRD 9.1, 9.4

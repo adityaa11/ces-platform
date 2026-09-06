@@ -62286,24 +62286,675 @@
               ]
             },
             {
+              "checkId": "revision-parents-resolve",
+              "status": "pass",
+              "detail": "Every revision parent resolves in the repository.",
+              "evidence": [
+                {
+                  "kind": "revision",
+                  "reference": "rev-safara-master-002"
+                },
+                {
+                  "kind": "revision",
+                  "reference": "rev-safara-increment-003"
+                }
+              ]
+            },
+            {
+              "checkId": "proposal-base-resolves",
+              "status": "pass",
+              "detail": "Every proposal base revision resolves in the repository.",
+              "evidence": [
+                {
+                  "kind": "proposal",
+                  "reference": "proposal-manifest-staged-correction"
+                }
+              ]
+            },
+            {
+              "checkId": "assertion-source-provenance",
+              "status": "pass",
+              "detail": "Every accepted assertion retains resolvable artifact and page provenance.",
+              "evidence": [
+                {
+                  "kind": "assertion",
+                  "reference": "ast-001-inc01-objective"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-002-inc01-scope"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-003-inc01-exclusions"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-004-access-inactive-user"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-005-history-registration-retention"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-006-registration-price-immutability"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-007-workflow-package-create"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-008-workflow-departure-create"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-009-workflow-pilgrim-record"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-010-workflow-registration-create"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-011-registration-agreed-price-snapshot"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-012-departure-quota-display"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-013-package-lifecycle"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-014-package-required-fields"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-015-package-departure-cardinality"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-016-departure-required-fields"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-017-registration-availability"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-018-pilgrim-lifecycle"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-019-pilgrim-nik-validation"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-020-pilgrim-identity-duplicate-warning"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-021-pilgrim-identity-masking"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-022-registration-identifier"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-023-registration-active-duplicate"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-024-registration-cancellation-history"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-025-registration-quota-cap"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-026-pilgrim-authorized-access"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-027-inc01-check-full-quota"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-028-inc01-check-price-snapshot"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-029-inc01-delivery-application"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-030-delivery-application-address"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-031-delivery-initial-admin-account"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-032-delivery-inc01-guide"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-033-inc01-acceptance-quota-calculation"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-034-inc02-objective"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-035-inc02-scope"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-036-inc02-addendum"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-037-inc02-prior-rules-retained"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-038-readiness-blocker-visibility"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-039-readiness-immediate-reflection"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-040-access-role-responsibility"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-041-payment-billing-total"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-042-payment-finance-workflow"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-043-payment-finance-decision"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-044-document-review-workflow"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-045-travel-status-operations-update"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-046-readiness-status-and-blockers"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-047-payment-registration-balances"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-048-payment-required-fields"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-049-payment-proof-formats"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-050-payment-initial-status"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-051-payment-review-transitions"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-052-payment-rejection-reason"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-053-payment-accepted-balance"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-054-payment-reference-uniqueness"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-055-payment-display-statuses"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-056-payment-remaining-formula"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-057-document-required-initial-set"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-058-document-conditional-requirements"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-059-document-lifecycle"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-060-document-review-statuses"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-061-document-rejection-reason"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-062-document-history-retention"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-063-document-confidentiality"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-064-readiness-conditions"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-065-readiness-payment-condition"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-066-readiness-documents-condition"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-067-readiness-passport-condition"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-068-readiness-visa-condition"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-069-readiness-insurance-condition"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-070-readiness-ticket-condition"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-071-readiness-blocked-condition"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-072-readiness-all-blockers"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-073-readiness-recalculation"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-074-readiness-document-blockers"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-075-history-document-transaction-retention"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-076-inc02-check-rejection-reason"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-077-inc02-check-invalid-document"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-078-inc02-check-all-blockers"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-079-inc02-check-role-access"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-080-inc02-delivery-payments"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-081-inc02-delivery-documents"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-082-inc02-delivery-travel-status"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-083-inc02-delivery-readiness"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-084-inc02-delivery-accounts"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-085-inc02-delivery-guide"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-086-inc03-objective"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-087-inc03-scope"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-088-inc03-final-addendum"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-089-inc03-prior-rules-retained"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-090-manifest-readiness-gate"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-091-manifest-eligibility"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-092-reporting-business-goal"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-093-activity-history-business-goal"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-094-finance-inc03-responsibilities"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-095-operations-inc03-responsibilities"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-096-manifest-candidate-list"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-097-manifest-ready-only-selection"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-098-manifest-preview"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-099-workflow-manifest-finalize"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-100-workflow-owner-reports"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-101-activity-history-workflow-coverage"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-102-manifest-finalization"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-103-manifest-finalization-audit"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-104-manifest-export"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-105-dashboard-metrics"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-106-reporting-required-reports"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-107-reporting-filters"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-108-reporting-export-formats"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-109-activity-history-enabled"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-110-activity-history-coverage"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-111-activity-history-entry-fields"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-112-history-retention"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-113-manifest-blocked-prohibited"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-114-manifest-snapshot-rule"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-115-history-deactivate-retention"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-116-inc03-authorized-access"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-117-inc03-check-manifest-download"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-118-delivery-operational-application"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-119-delivery-complete-flow"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-120-delivery-initial-accounts"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-121-delivery-user-guides"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-122-delivery-training-handover"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-123-delivery-exports"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-124-delivery-access-handover"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-125-delivery-warranty"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-126-acceptance-end-to-end-manifest"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-127-acceptance-calculations"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-128-acceptance-readiness"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-129-acceptance-blockers"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-130-acceptance-manifest-gate"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-131-acceptance-exports-match-data"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-132-acceptance-document-access"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-133-acceptance-history-visible"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-134-acceptance-handover"
+                }
+              ]
+            },
+            {
+              "checkId": "supersession-integrity",
+              "status": "pass",
+              "detail": "Every supersession is explicit and resolves to a different assertion.",
+              "evidence": [
+                {
+                  "kind": "scenario",
+                  "reference": "safara"
+                }
+              ]
+            },
+            {
+              "checkId": "staged-proposal-isolation",
+              "status": "pass",
+              "detail": "Staged proposals leave their branch HEAD at the declared base revision.",
+              "evidence": [
+                {
+                  "kind": "proposal",
+                  "reference": "proposal-manifest-staged-correction"
+                }
+              ]
+            },
+            {
+              "checkId": "approved-proposal-branch-movement",
+              "status": "pass",
+              "detail": "An approved proposal must move its branch beyond the base revision; no approved proposal exists in this staged scenario.",
+              "evidence": [
+                {
+                  "kind": "scenario",
+                  "reference": "safara"
+                }
+              ]
+            },
+            {
               "checkId": "projection-heads-match",
               "status": "pass",
-              "detail": "Each projection is keyed by its selected branch HEAD.",
+              "detail": "Each projection and materialized state is keyed by its selected branch HEAD.",
               "evidence": [
                 {
                   "kind": "projection",
                   "reference": "branch-master:rev-safara-master-002"
+                },
+                {
+                  "kind": "projection",
+                  "reference": "branch-increment-003:rev-safara-increment-003"
                 }
               ]
             },
             {
               "checkId": "projection-provenance",
               "status": "pass",
-              "detail": "Projected records retain one dependency and provenance path per assertion.",
+              "detail": "Projected records retain one resolvable dependency and provenance path per assertion.",
               "evidence": [
                 {
                   "kind": "projection",
                   "reference": "branch-master"
+                },
+                {
+                  "kind": "projection",
+                  "reference": "branch-increment-003"
+                }
+              ]
+            },
+            {
+              "checkId": "cross-surface-semantic-consistency",
+              "status": "pass",
+              "detail": "Workflow, facts, CES, and chatbot records resolve the same assertion values.",
+              "evidence": [
+                {
+                  "kind": "projection",
+                  "reference": "branch-master"
+                },
+                {
+                  "kind": "projection",
+                  "reference": "branch-increment-003"
+                }
+              ]
+            },
+            {
+              "checkId": "branch-isolation",
+              "status": "pass",
+              "detail": "Distinct branch HEADs retain distinct materialized current truth without cross-contamination.",
+              "evidence": [
+                {
+                  "kind": "branch",
+                  "reference": "branch-master"
+                },
+                {
+                  "kind": "branch",
+                  "reference": "branch-increment-003"
+                }
+              ]
+            },
+            {
+              "checkId": "unresolved-conflict-integrity",
+              "status": "pass",
+              "detail": "An unresolved conflict leaves its branch HEAD at the base revision; no conflict exists in this scenario.",
+              "evidence": [
+                {
+                  "kind": "scenario",
+                  "reference": "safara"
                 }
               ]
             }
@@ -76148,10 +76799,616 @@
               ]
             },
             {
+              "checkId": "revision-parents-resolve",
+              "status": "pass",
+              "detail": "Every revision parent resolves in the repository.",
+              "evidence": [
+                {
+                  "kind": "revision",
+                  "reference": "rev-safara-master-002"
+                },
+                {
+                  "kind": "revision",
+                  "reference": "rev-safara-increment-003"
+                }
+              ]
+            },
+            {
+              "checkId": "proposal-base-resolves",
+              "status": "pass",
+              "detail": "Every proposal base revision resolves in the repository.",
+              "evidence": [
+                {
+                  "kind": "proposal",
+                  "reference": "proposal-manifest-staged-correction"
+                }
+              ]
+            },
+            {
+              "checkId": "assertion-source-provenance",
+              "status": "pass",
+              "detail": "Every accepted assertion retains resolvable artifact and page provenance.",
+              "evidence": [
+                {
+                  "kind": "assertion",
+                  "reference": "ast-001-inc01-objective"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-002-inc01-scope"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-003-inc01-exclusions"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-004-access-inactive-user"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-005-history-registration-retention"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-006-registration-price-immutability"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-007-workflow-package-create"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-008-workflow-departure-create"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-009-workflow-pilgrim-record"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-010-workflow-registration-create"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-011-registration-agreed-price-snapshot"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-012-departure-quota-display"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-013-package-lifecycle"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-014-package-required-fields"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-015-package-departure-cardinality"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-016-departure-required-fields"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-017-registration-availability"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-018-pilgrim-lifecycle"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-019-pilgrim-nik-validation"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-020-pilgrim-identity-duplicate-warning"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-021-pilgrim-identity-masking"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-022-registration-identifier"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-023-registration-active-duplicate"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-024-registration-cancellation-history"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-025-registration-quota-cap"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-026-pilgrim-authorized-access"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-027-inc01-check-full-quota"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-028-inc01-check-price-snapshot"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-029-inc01-delivery-application"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-030-delivery-application-address"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-031-delivery-initial-admin-account"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-032-delivery-inc01-guide"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-033-inc01-acceptance-quota-calculation"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-034-inc02-objective"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-035-inc02-scope"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-036-inc02-addendum"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-037-inc02-prior-rules-retained"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-038-readiness-blocker-visibility"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-039-readiness-immediate-reflection"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-040-access-role-responsibility"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-041-payment-billing-total"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-042-payment-finance-workflow"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-043-payment-finance-decision"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-044-document-review-workflow"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-045-travel-status-operations-update"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-046-readiness-status-and-blockers"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-047-payment-registration-balances"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-048-payment-required-fields"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-049-payment-proof-formats"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-050-payment-initial-status"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-051-payment-review-transitions"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-052-payment-rejection-reason"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-053-payment-accepted-balance"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-054-payment-reference-uniqueness"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-055-payment-display-statuses"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-056-payment-remaining-formula"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-057-document-required-initial-set"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-058-document-conditional-requirements"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-059-document-lifecycle"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-060-document-review-statuses"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-061-document-rejection-reason"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-062-document-history-retention"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-063-document-confidentiality"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-064-readiness-conditions"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-065-readiness-payment-condition"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-066-readiness-documents-condition"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-067-readiness-passport-condition"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-068-readiness-visa-condition"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-069-readiness-insurance-condition"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-070-readiness-ticket-condition"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-071-readiness-blocked-condition"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-072-readiness-all-blockers"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-073-readiness-recalculation"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-074-readiness-document-blockers"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-075-history-document-transaction-retention"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-076-inc02-check-rejection-reason"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-077-inc02-check-invalid-document"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-078-inc02-check-all-blockers"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-079-inc02-check-role-access"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-080-inc02-delivery-payments"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-081-inc02-delivery-documents"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-082-inc02-delivery-travel-status"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-083-inc02-delivery-readiness"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-084-inc02-delivery-accounts"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-085-inc02-delivery-guide"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-086-inc03-objective"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-087-inc03-scope"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-088-inc03-final-addendum"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-089-inc03-prior-rules-retained"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-090-manifest-readiness-gate"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-091-manifest-eligibility"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-092-reporting-business-goal"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-093-activity-history-business-goal"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-094-finance-inc03-responsibilities"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-095-operations-inc03-responsibilities"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-096-manifest-candidate-list"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-097-manifest-ready-only-selection"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-098-manifest-preview"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-099-workflow-manifest-finalize"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-100-workflow-owner-reports"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-101-activity-history-workflow-coverage"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-102-manifest-finalization"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-103-manifest-finalization-audit"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-104-manifest-export"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-105-dashboard-metrics"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-106-reporting-required-reports"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-107-reporting-filters"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-108-reporting-export-formats"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-109-activity-history-enabled"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-110-activity-history-coverage"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-111-activity-history-entry-fields"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-112-history-retention"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-113-manifest-blocked-prohibited"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-114-manifest-snapshot-rule"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-115-history-deactivate-retention"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-116-inc03-authorized-access"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-117-inc03-check-manifest-download"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-118-delivery-operational-application"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-119-delivery-complete-flow"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-120-delivery-initial-accounts"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-121-delivery-user-guides"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-122-delivery-training-handover"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-123-delivery-exports"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-124-delivery-access-handover"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-125-delivery-warranty"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-126-acceptance-end-to-end-manifest"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-127-acceptance-calculations"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-128-acceptance-readiness"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-129-acceptance-blockers"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-130-acceptance-manifest-gate"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-131-acceptance-exports-match-data"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-132-acceptance-document-access"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-133-acceptance-history-visible"
+                },
+                {
+                  "kind": "assertion",
+                  "reference": "ast-134-acceptance-handover"
+                }
+              ]
+            },
+            {
+              "checkId": "supersession-integrity",
+              "status": "pass",
+              "detail": "Every supersession is explicit and resolves to a different assertion.",
+              "evidence": [
+                {
+                  "kind": "scenario",
+                  "reference": "safara"
+                }
+              ]
+            },
+            {
+              "checkId": "staged-proposal-isolation",
+              "status": "pass",
+              "detail": "Staged proposals leave their branch HEAD at the declared base revision.",
+              "evidence": [
+                {
+                  "kind": "proposal",
+                  "reference": "proposal-manifest-staged-correction"
+                }
+              ]
+            },
+            {
+              "checkId": "approved-proposal-branch-movement",
+              "status": "pass",
+              "detail": "An approved proposal must move its branch beyond the base revision; no approved proposal exists in this staged scenario.",
+              "evidence": [
+                {
+                  "kind": "scenario",
+                  "reference": "safara"
+                }
+              ]
+            },
+            {
               "checkId": "projection-heads-match",
               "status": "pass",
-              "detail": "Each projection is keyed by its selected branch HEAD.",
+              "detail": "Each projection and materialized state is keyed by its selected branch HEAD.",
               "evidence": [
+                {
+                  "kind": "projection",
+                  "reference": "branch-master:rev-safara-master-002"
+                },
                 {
                   "kind": "projection",
                   "reference": "branch-increment-003:rev-safara-increment-003"
@@ -76161,11 +77418,56 @@
             {
               "checkId": "projection-provenance",
               "status": "pass",
-              "detail": "Projected records retain one dependency and provenance path per assertion.",
+              "detail": "Projected records retain one resolvable dependency and provenance path per assertion.",
               "evidence": [
                 {
                   "kind": "projection",
+                  "reference": "branch-master"
+                },
+                {
+                  "kind": "projection",
                   "reference": "branch-increment-003"
+                }
+              ]
+            },
+            {
+              "checkId": "cross-surface-semantic-consistency",
+              "status": "pass",
+              "detail": "Workflow, facts, CES, and chatbot records resolve the same assertion values.",
+              "evidence": [
+                {
+                  "kind": "projection",
+                  "reference": "branch-master"
+                },
+                {
+                  "kind": "projection",
+                  "reference": "branch-increment-003"
+                }
+              ]
+            },
+            {
+              "checkId": "branch-isolation",
+              "status": "pass",
+              "detail": "Distinct branch HEADs retain distinct materialized current truth without cross-contamination.",
+              "evidence": [
+                {
+                  "kind": "branch",
+                  "reference": "branch-master"
+                },
+                {
+                  "kind": "branch",
+                  "reference": "branch-increment-003"
+                }
+              ]
+            },
+            {
+              "checkId": "unresolved-conflict-integrity",
+              "status": "pass",
+              "detail": "An unresolved conflict leaves its branch HEAD at the base revision; no conflict exists in this scenario.",
+              "evidence": [
+                {
+                  "kind": "scenario",
+                  "reference": "safara"
                 }
               ]
             }

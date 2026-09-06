@@ -1,6 +1,6 @@
 # GLF-003-01: Complete Safara source accounting and deterministic skill outputs
 
-- **State:** awaiting_review
+- **State:** approved
 - **Review batch:** BATCH-19.1
 - **Depends on:** GLF-003
 - **Baseline:** GLF-003; Safara Increment 01-03 PRDs; Atlas skill contracts
