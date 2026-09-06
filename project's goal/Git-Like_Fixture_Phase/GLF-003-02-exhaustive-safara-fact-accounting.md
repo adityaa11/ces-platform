@@ -60,6 +60,10 @@ deliberately non-fact classification with a precise reason?
   PDF/page, candidate/non-fact destinations, duplicate links, unresolved
   questions, and the resulting canonical/projected record counts. Counts are
   outputs of the inventory, never a preselected target such as 43 or 45.
+- The reconciliation report states its audit boundary: it proves traceability
+  and internal consistency of the authored inventory; a human reviewer remains
+  responsible for confirming that the inventory contains every material source
+  statement.
 
 ## Validation
 

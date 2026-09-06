@@ -1,7 +1,7 @@
 export type GoldenFixtureBundle = {
   repository: {
     branches: Array<{ branchId: string; label: string; headRevisionId: string }>;
-    materializedStates: Array<{ branchId: string; headRevisionId: string; state: { assertionIds: string[]; resolvedFacts: Array<{ semanticKey: string; assertionId: string; value: unknown }> } }>;
+    materializedStates: Array<{ branchId: string; headRevisionId: string; state: { assertionIds: string[]; resolvedFacts: Array<{ semanticKey: string; assertionId: string; candidateId: string; inventoryId: string; value: unknown }> } }>;
   };
   projections: Array<{ branchId: string; headRevisionId: string; surfaces: Array<{ surface: string; branchId: string; headRevisionId: string; records: unknown[] }> }>;
 };

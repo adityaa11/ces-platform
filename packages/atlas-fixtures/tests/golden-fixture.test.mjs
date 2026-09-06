@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import test from "node:test";
+import Ajv from "ajv";
 import { resolveGoldenFixtureBranch } from "../src/index.ts";
 
 const output = path.resolve(import.meta.dirname, "../generated/safara-golden-bundle.json");
@@ -10,6 +11,41 @@ const reconciliation = path.resolve(import.meta.dirname, "../generated/safara-re
 const script = path.resolve(import.meta.dirname, "../../../apps/atlas/scripts/generate-golden-fixture.mjs");
 const cwd = path.resolve(import.meta.dirname, "../../../apps/atlas");
 const bundle = JSON.parse(await readFile(output, "utf8"));
+const skillsRoot = path.resolve(import.meta.dirname, "../../../.agents/skills");
+
+async function contract(id) {
+  return JSON.parse(await readFile(path.join(skillsRoot, id.replace("atlas.", "atlas-"), "atlas-skill.json"), "utf8"));
+}
+
+test("the generated bundle records schema-valid envelopes for every shared skill stage", async () => {
+  const stages = [
+    ...bundle.skillResponses.extractionResponses,
+    bundle.skillResponses.repositoryResponse,
+    bundle.skillResponses.changeResponse,
+    ...bundle.skillResponses.projectionResponses,
+    ...bundle.skillResponses.verificationResponses,
+  ];
+  assert.equal(stages.length, 9);
+  const ajv = new Ajv({ strict: false });
+  for (const stage of stages) {
+    const definition = await contract(stage.skillId);
+    assert.equal(ajv.compile(definition.inputSchema)(stage.input), true, `${stage.skillId} input is contract-valid`);
+    assert.equal(ajv.compile(definition.outputSchema)(stage.response), true, `${stage.skillId} output is contract-valid`);
+    assert.equal(stage.response.executionProvenance.mode, "codex");
+  }
+});
+
+test("semantic identity, supersession, dependencies, and staged changes remain explicit", () => {
+  const exclusions = bundle.repository.assertions.find((item) => item.semanticKey === "inc01.exclusions");
+  const eligibility = bundle.repository.assertions.find((item) => item.semanticKey === "manifest.eligibility");
+  assert.ok(exclusions && eligibility);
+  assert.notEqual(exclusions.assertionId, eligibility.assertionId);
+  assert.equal(eligibility.supersedesAssertionId, undefined);
+  assert.ok(bundle.repository.revisions.every((revision) => revision.executionProvenance));
+  const proposal = bundle.repository.changeProposals[0];
+  for (const key of ["beforeValue", "proposedValue", "provenance", "resolution"]) assert.ok(Object.hasOwn(proposal, key));
+  for (const projection of bundle.projections) for (const surface of projection.surfaces) for (const record of surface.records) assert.deepEqual(record.dependencyIds, record.assertionIds);
+});
 
 test("GLF-003-02 accounts for exactly the eleven authoritative Safara pages", () => {
   assert.equal(bundle.repository.artifacts.length, 3);
@@ -58,7 +94,7 @@ test("all branch facts and projections resolve to inventory-backed candidates", 
 
 test("negative publication cases preserve the last valid bundle", async () => {
   const before = await readFile(output, "utf8");
-  for (const mutation of ["remove-fact", "corrupt-page", "buyer-artifact", "duplicate-assertion", "corrupt-fact-provenance", "corrupt-projection-provenance", "material-non-fact"]) {
+  for (const mutation of ["remove-fact", "corrupt-page", "buyer-artifact", "duplicate-assertion", "corrupt-fact-provenance", "corrupt-projection-provenance", "material-non-fact", "corrupt-skill-output"]) {
     assert.throws(() => execFileSync(process.execPath, [script], { cwd, env: { ...process.env, GOLDEN_FIXTURE_TEST_MUTATION: mutation }, stdio: "pipe" }));
     assert.equal(await readFile(output, "utf8"), before);
   }

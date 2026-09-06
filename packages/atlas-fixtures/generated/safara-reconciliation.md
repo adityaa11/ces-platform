@@ -1,5 +1,7 @@
 # Safara GLF-003-02 reconciliation
 
+This report proves traceability and internal consistency of the authored source inventory. Human review remains responsible for confirming that the inventory contains every material source statement.
+
 - Source pages: 11
 - Inventory statements: 138
 - Candidate assertions: 134
@@ -21,5 +23,5 @@
 | Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf | 3 | 17 | 0 |
 | Safara_Incremental_PRD_03_Manifest_Reporting_Audit.pdf | 4 | 9 | 0 |
 
-- Current materialized facts: 218
-- Projected records: 674
+- Current materialized facts: 219
+- Projected records: [object Object]413

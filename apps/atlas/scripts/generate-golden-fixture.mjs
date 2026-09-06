@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
+import Ajv from "ajv";
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
 import { expectedWorkflowStages, sourceArtifacts, sourceStatementInventory } from "./safara-source-catalog.mjs";
 
@@ -8,9 +9,10 @@ const root = path.resolve(import.meta.dirname, "../../..");
 const output = path.join(root, "packages", "atlas-fixtures", "generated", "safara-golden-bundle.json");
 const reportOutput = path.join(root, "packages", "atlas-fixtures", "generated", "safara-reconciliation.md");
 const surfaces = ["workflow", "facts", "ces", "chatbot_context"];
-
+const mode = "codex";
 function fail(message) { throw new Error(message); }
 function normalize(value) { return value.replace(/\s+/g, " ").replace(/\s+([.,:;])/g, "$1").toLocaleLowerCase(); }
+function provenance(skillId, skillVersion) { return { skillId, skillVersion, mode }; }
 async function loadArtifact(source) {
   const bytes = new Uint8Array(await readFile(path.join(root, source.relativePath)));
   const sha256 = createHash("sha256").update(bytes).digest("hex");
@@ -18,122 +20,93 @@ async function loadArtifact(source) {
   const pdf = await pdfjs.getDocument({ data: bytes, useWorker: false }).promise;
   if (pdf.numPages !== source.pageCount) fail("Unexpected source page count: " + source.name);
   const pages = [];
-  for (let page = 1; page <= pdf.numPages; page += 1) {
-    const content = await (await pdf.getPage(page)).getTextContent();
-    pages.push({ page, text: content.items.map((item) => item.str).join(" ") });
-  }
+  for (let page = 1; page <= pdf.numPages; page += 1) { const content = await (await pdf.getPage(page)).getTextContent(); pages.push({ page, text: content.items.map((item) => item.str).join(" ") }); }
   return { artifactId: "artifact-safara-" + source.name.replace(/[^a-z0-9]+/gi, "-").replace(/-+$/g, "").toLowerCase(), type: "prd", name: source.name, relativePath: source.relativePath, sha256, pages };
 }
 function evidence(artifacts, entry) {
-  const artifact = artifacts.find((item) => item.name === entry.artifactName);
-  const text = artifact && artifact.pages.find((item) => item.page === entry.page);
+  const artifact = artifacts.find((item) => item.name === entry.artifactName); const text = artifact && artifact.pages.find((item) => item.page === entry.page);
   if (!text || !normalize(text.text).includes(normalize(entry.quote))) fail("Evidence quote not found: " + entry.inventoryId);
-  return { artifactId: artifact.artifactId, page: entry.page, quote: entry.quote, inventoryId: entry.inventoryId };
+  return { artifactId: artifact.artifactId, page: entry.page, quote: entry.quote };
 }
-function assertions(artifacts) {
-  const latest = new Map();
+async function loadContracts() {
+  const ids = ["atlas.prd-extraction", "atlas.fixture-repository", "atlas.fixture-changes", "atlas.fixture-projections", "atlas.fixture-verification"];
+  return new Map(await Promise.all(ids.map(async (id) => [id, JSON.parse(await readFile(path.join(root, ".agents", "skills", id.replace("atlas.", "atlas-"), "atlas-skill.json"), "utf8"))])));
+}
+function contractGate(contracts, stage) {
+  const contract = contracts.get(stage.skillId); if (!contract) fail("Unknown skill contract: " + stage.skillId);
+  const ajv = new Ajv({ strict: false }), validateInput = ajv.compile(contract.inputSchema), validateOutput = ajv.compile(contract.outputSchema);
+  if (!validateInput(stage.input)) fail(stage.skillId + " input schema failed: " + ajv.errorsText(validateInput.errors));
+  if (!validateOutput(stage.response)) fail(stage.skillId + " output schema failed: " + ajv.errorsText(validateOutput.errors));
+  if (stage.response.skillId !== stage.skillId || stage.response.skillVersion !== contract.version || stage.response.executionProvenance.mode !== mode) fail("Skill identity or mode drift: " + stage.skillId);
+  if (["fail", "inconclusive", "needs_resolution", "conflict"].includes(stage.response.status)) fail("Skill stage did not complete: " + stage.skillId);
+}
+function extractionStage(artifacts, artifact, contracts) {
+  const contract = contracts.get("atlas.prd-extraction"), entries = sourceStatementInventory.filter((entry) => entry.artifactName === artifact.name);
+  return { skillId: contract.id, input: { artifact: { artifactId: artifact.artifactId, type: artifact.type, name: artifact.name }, pages: artifact.pages }, response: { skillId: contract.id, skillVersion: contract.version, executionProvenance: provenance(contract.id, contract.version), status: "complete", candidateAssertions: entries.filter((entry) => entry.destination.type === "candidate_assertion").map((entry) => ({ candidateId: entry.destination.candidateId, kind: "requirement", semanticKey: entry.semanticKey, payload: entry.value, evidence: evidence(artifacts, entry) })), unaccountedStatements: entries.filter((entry) => entry.destination.type === "non_fact").map((entry) => ({ inventoryId: entry.inventoryId, reason: entry.destination.reason })), questions: [] } };
+}
+function assertions(extractionStages) {
+  const candidates = new Map(extractionStages.flatMap((stage) => stage.response.candidateAssertions.map((candidate) => [candidate.candidateId, candidate])));
   return sourceStatementInventory.filter((entry) => entry.destination.type === "candidate_assertion").map((entry, index) => {
-    const semanticKey = entry.semanticKey === "inc01.exclusions" ? "manifest.eligibility" : entry.semanticKey;
-    const value = entry.semanticKey === "inc01.exclusions" ? { status: "out_of_scope" } : entry.value;
-    const assertion = { assertionId: "ast-" + String(index + 1).padStart(3, "0") + "-" + semanticKey.replace(/[^a-z0-9]+/gi, "-"), candidateId: entry.destination.candidateId, inventoryId: entry.inventoryId, semanticKey, value, evidence: evidence(artifacts, entry), status: "accepted", workflowStage: entry.workflowStage, phase: entry.phase };
-    if (latest.has(semanticKey)) assertion.supersedesAssertionId = latest.get(semanticKey);
-    latest.set(semanticKey, assertion.assertionId);
+    const candidate = candidates.get(entry.destination.candidateId); if (!candidate) fail("Missing extracted candidate: " + entry.inventoryId);
+    const assertion = { assertionId: "ast-" + String(index + 1).padStart(3, "0") + "-" + entry.semanticKey.replace(/[^a-z0-9]+/gi, "-"), candidateId: candidate.candidateId, inventoryId: entry.inventoryId, semanticKey: candidate.semanticKey, value: candidate.payload, evidence: { ...candidate.evidence, inventoryId: entry.inventoryId }, status: "accepted", workflowStage: entry.workflowStage, phase: entry.phase };
+    if (entry.relationship?.type === "supersedes") assertion.supersedesAssertionId = entry.relationship.targetAssertionId;
     return assertion;
   });
 }
-function current(all, phases) {
-  const active = all.filter((item) => phases.includes(item.phase));
-  const superseded = new Set(active.map((item) => item.supersedesAssertionId).filter(Boolean));
-  return active.filter((item) => !superseded.has(item.assertionId));
-}
+function current(all, phases) { const active = all.filter((item) => phases.includes(item.phase)); const superseded = new Set(active.map((item) => item.supersedesAssertionId).filter(Boolean)); return active.filter((item) => !superseded.has(item.assertionId)); }
 function records(surface, all) {
-  if (surface === "workflow") return expectedWorkflowStages.map((stage) => {
-    const items = all.filter((item) => item.workflowStage === stage);
-    return { recordId: "workflow-" + stage, assertionIds: items.map((item) => item.assertionId), candidateIds: items.map((item) => item.candidateId), inventoryIds: items.map((item) => item.inventoryId), resolvedValue: Object.fromEntries(items.map((item) => [item.semanticKey, item.value])) };
-  }).filter((item) => item.assertionIds.length);
-  return all.map((item) => ({ recordId: surface + "-" + item.semanticKey, assertionIds: [item.assertionId], candidateIds: [item.candidateId], inventoryIds: [item.inventoryId], resolvedValue: item.value }));
+  const record = (recordId, items, resolvedValue) => ({ recordId, assertionIds: items.map((item) => item.assertionId), dependencyIds: items.map((item) => item.assertionId), candidateIds: items.map((item) => item.candidateId), inventoryIds: items.map((item) => item.inventoryId), resolvedValue });
+  if (surface === "workflow") return expectedWorkflowStages.map((stage) => { const items = all.filter((item) => item.workflowStage === stage); return record("workflow-" + stage, items, Object.fromEntries(items.map((item) => [item.semanticKey, item.value]))); }).filter((item) => item.assertionIds.length);
+  return all.map((item) => record(surface + "-" + item.semanticKey, [item], item.value));
 }
-function projection(branchId, headRevisionId, all) {
-  return { branchId, headRevisionId, surfaces: surfaces.map((surface) => ({ surface, branchId, headRevisionId, records: records(surface, all) })) };
+function projection(branchId, headRevisionId, all) { return { branchId, headRevisionId, surfaces: surfaces.map((surface) => ({ surface, branchId, headRevisionId, records: records(surface, all) })) }; }
+function verificationResponse(repository, projections, contract) {
+  const checks = [
+    { checkId: "branch-heads-resolve", status: repository.branches.every((branch) => repository.revisions.some((revision) => revision.revisionId === branch.headRevisionId)) ? "pass" : "fail", detail: "Each branch HEAD resolves to a repository revision.", evidence: repository.branches.map((branch) => ({ kind: "branch", reference: branch.branchId })) },
+    { checkId: "projection-heads-match", status: projections.every((item) => repository.branches.some((branch) => branch.branchId === item.branchId && branch.headRevisionId === item.headRevisionId)) ? "pass" : "fail", detail: "Each projection is keyed by its selected branch HEAD.", evidence: projections.map((item) => ({ kind: "projection", reference: item.branchId + ":" + item.headRevisionId })) },
+    { checkId: "projection-provenance", status: projections.every((item) => item.surfaces.every((surface) => surface.records.every((record) => record.assertionIds.length === record.dependencyIds.length && record.assertionIds.length === record.candidateIds.length && record.assertionIds.length === record.inventoryIds.length))) ? "pass" : "fail", detail: "Projected records retain one dependency and provenance path per assertion.", evidence: projections.map((item) => ({ kind: "projection", reference: item.branchId })) },
+  ];
+  return { skillId: contract.id, skillVersion: contract.version, executionProvenance: provenance(contract.id, contract.version), status: checks.every((check) => check.status === "pass") ? "pass" : "fail", checks };
 }
 function validate(bundle, artifacts) {
   if (artifacts.length !== 3 || artifacts.reduce((total, item) => total + item.pages.length, 0) !== 11) fail("Authoritative source set must be exactly three artifacts and eleven pages");
   if (bundle.repository.artifacts.some((item) => /buyer/i.test(item.name + " " + item.relativePath))) fail("Disallowed source artifact");
-  const inventory = bundle.sourceStatementInventory;
-  if (inventory.length !== new Set(inventory.map((entry) => entry.inventoryId)).size) fail("Duplicate inventory ID");
+  const inventory = bundle.sourceStatementInventory; if (inventory.length !== new Set(inventory.map((entry) => entry.inventoryId)).size) fail("Duplicate inventory ID");
   for (const artifact of artifacts) for (let page = 1; page <= artifact.pages.length; page += 1) if (!inventory.some((entry) => entry.artifactName === artifact.name && entry.page === page)) fail("Inventory omitted page: " + artifact.name + " p." + page);
-  for (const entry of inventory) {
-    if (!entry.destination || !["candidate_assertion", "non_fact"].includes(entry.destination.type)) fail("Unresolved inventory destination: " + entry.inventoryId);
-    if (entry.destination.type === "non_fact" && (entry.statementClass !== "non_fact" || entry.destination.reason !== "Heading only; it has no independently meaningful requirement.")) fail("Disallowed non-fact classification: " + entry.inventoryId);
-  }
-  const byAssertion = new Map(bundle.repository.assertions.map((item) => [item.assertionId, item]));
-  const candidates = inventory.filter((item) => item.destination.type === "candidate_assertion");
+  for (const entry of inventory) { if (!entry.destination || !["candidate_assertion", "non_fact"].includes(entry.destination.type)) fail("Unresolved inventory destination: " + entry.inventoryId); if (entry.destination.type === "non_fact" && (entry.statementClass !== "non_fact" || entry.destination.reason !== "Heading only; it has no independently meaningful requirement.")) fail("Disallowed non-fact classification: " + entry.inventoryId); }
+  const byAssertion = new Map(bundle.repository.assertions.map((item) => [item.assertionId, item])), candidates = inventory.filter((item) => item.destination.type === "candidate_assertion");
   if (byAssertion.size !== bundle.repository.assertions.length || candidates.length !== bundle.repository.assertions.length) fail("Assertions do not map one-to-one with inventory candidates");
   if (new Set(bundle.repository.assertions.map((item) => item.candidateId)).size !== bundle.repository.assertions.length) fail("Duplicate assertion candidate");
-  for (const entry of inventory.filter((item) => item.destination.type === "candidate_assertion")) {
-    const matches = bundle.repository.assertions.filter((item) => item.inventoryId === entry.inventoryId);
-    const assertion = matches[0];
-    if (matches.length !== 1 || !assertion || assertion.candidateId !== entry.destination.candidateId || assertion.evidence.artifactId !== artifacts.find((item) => item.name === entry.artifactName).artifactId || assertion.evidence.page !== entry.page || assertion.evidence.quote !== entry.quote) fail("Candidate provenance failed: " + entry.inventoryId);
-  }
-  for (const state of bundle.repository.materializedStates) for (const fact of state.state.resolvedFacts) {
-    const assertion = byAssertion.get(fact.assertionId);
-    if (!assertion || fact.inventoryId !== assertion.inventoryId || fact.candidateId !== assertion.candidateId) fail("Materialized fact provenance failed: " + fact.assertionId);
-  }
-  for (const item of bundle.projections) for (const surface of item.surfaces) for (const record of surface.records) {
-    if (record.assertionIds.length !== record.inventoryIds.length || record.assertionIds.length !== record.candidateIds.length) fail("Projection provenance cardinality failed: " + record.recordId);
-    for (let index = 0; index < record.assertionIds.length; index += 1) {
-      const assertion = byAssertion.get(record.assertionIds[index]);
-      if (!assertion || record.inventoryIds[index] !== assertion.inventoryId || record.candidateIds[index] !== assertion.candidateId) fail("Projection provenance failed: " + record.recordId);
-    }
-  }
-  const increment = bundle.projections.find((item) => item.branchId === "branch-increment-003");
-  const stages = increment.surfaces.find((item) => item.surface === "workflow").records.map((item) => item.recordId.replace("workflow-", ""));
-  for (const stage of expectedWorkflowStages) if (!stages.includes(stage)) fail("Missing workflow stage: " + stage);
+  for (const entry of candidates) { const matches = bundle.repository.assertions.filter((item) => item.inventoryId === entry.inventoryId), assertion = matches[0]; if (matches.length !== 1 || assertion.candidateId !== entry.destination.candidateId || assertion.semanticKey !== entry.semanticKey || assertion.evidence.artifactId !== artifacts.find((item) => item.name === entry.artifactName).artifactId || assertion.evidence.page !== entry.page || assertion.evidence.quote !== entry.quote) fail("Candidate provenance failed: " + entry.inventoryId); }
+  for (const assertion of bundle.repository.assertions) if (assertion.supersedesAssertionId && !byAssertion.has(assertion.supersedesAssertionId)) fail("Invalid explicit supersession: " + assertion.assertionId);
+  for (const revision of bundle.repository.revisions) if (!revision.executionProvenance) fail("Revision provenance missing: " + revision.revisionId);
+  for (const state of bundle.repository.materializedStates) for (const fact of state.state.resolvedFacts) { const assertion = byAssertion.get(fact.assertionId); if (!assertion || fact.inventoryId !== assertion.inventoryId || fact.candidateId !== assertion.candidateId) fail("Materialized fact provenance failed: " + fact.assertionId); }
+  for (const item of bundle.projections) for (const surface of item.surfaces) for (const record of surface.records) { if (record.assertionIds.length !== record.dependencyIds.length || record.assertionIds.length !== record.inventoryIds.length || record.assertionIds.length !== record.candidateIds.length) fail("Projection provenance cardinality failed: " + record.recordId); for (let index = 0; index < record.assertionIds.length; index += 1) { const assertion = byAssertion.get(record.assertionIds[index]); if (!assertion || record.dependencyIds[index] !== assertion.assertionId || record.inventoryIds[index] !== assertion.inventoryId || record.candidateIds[index] !== assertion.candidateId) fail("Projection provenance failed: " + record.recordId); } }
+  const increment = bundle.projections.find((item) => item.branchId === "branch-increment-003"), stages = increment.surfaces.find((item) => item.surface === "workflow").records.map((item) => item.recordId.replace("workflow-", "")); for (const stage of expectedWorkflowStages) if (!stages.includes(stage)) fail("Missing workflow stage: " + stage);
 }
 function report(bundle) {
-  const sourcePageCount = bundle.repository.artifacts.reduce((total, artifact) => total + artifact.pageCount, 0);
-  const unresolvedQuestionCount = bundle.sourceStatementInventory.filter((entry) => entry.normalizedInterpretation && entry.normalizedInterpretation.kind === "unresolved_question").length;
-  const lines = ["# Safara GLF-003-02 reconciliation", "", "- Source pages: " + sourcePageCount, "- Inventory statements: " + bundle.sourceStatementInventory.length, "- Candidate assertions: " + bundle.repository.assertions.length, "- Non-fact classifications: " + bundle.sourceStatementInventory.filter((entry) => entry.destination.type === "non_fact").length, "- Duplicate links: " + bundle.sourceStatementInventory.filter((entry) => entry.destination.duplicateOf).length, "- Unresolved questions: " + unresolvedQuestionCount, "", "| PDF | Page | Candidates | Non-facts |", "|---|---:|---:|---:|"];
-  for (const artifact of bundle.repository.artifacts) for (let page = 1; page <= artifact.pageCount; page += 1) {
-    const entries = bundle.sourceStatementInventory.filter((entry) => entry.artifactName === artifact.name && entry.page === page);
-    lines.push("| " + artifact.name + " | " + page + " | " + entries.filter((entry) => entry.destination.type === "candidate_assertion").length + " | " + entries.filter((entry) => entry.destination.type === "non_fact").length + " |");
-  }
-  lines.push("", "- Current materialized facts: " + bundle.repository.materializedStates.reduce((n, state) => n + state.state.resolvedFacts.length, 0));
-  lines.push("- Projected records: " + bundle.projections.reduce((n, item) => n + item.surfaces.reduce((sum, surface) => sum + surface.records.length, 0), 0));
-  return lines.join("\n") + "\n";
+  const sourcePageCount = bundle.repository.artifacts.reduce((total, artifact) => total + artifact.pageCount, 0), unresolvedQuestionCount = bundle.sourceStatementInventory.filter((entry) => entry.normalizedInterpretation?.kind === "unresolved_question").length;
+  const lines = ["# Safara GLF-003-02 reconciliation", "", "This report proves traceability and internal consistency of the authored source inventory. Human review remains responsible for confirming that the inventory contains every material source statement.", "", "- Source pages: " + sourcePageCount, "- Inventory statements: " + bundle.sourceStatementInventory.length, "- Candidate assertions: " + bundle.repository.assertions.length, "- Non-fact classifications: " + bundle.sourceStatementInventory.filter((entry) => entry.destination.type === "non_fact").length, "- Duplicate links: " + bundle.sourceStatementInventory.filter((entry) => entry.destination.duplicateOf).length, "- Unresolved questions: " + unresolvedQuestionCount, "", "| PDF | Page | Candidates | Non-facts |", "|---|---:|---:|---:|"];
+  for (const artifact of bundle.repository.artifacts) for (let page = 1; page <= artifact.pageCount; page += 1) { const entries = bundle.sourceStatementInventory.filter((entry) => entry.artifactName === artifact.name && entry.page === page); lines.push("| " + artifact.name + " | " + page + " | " + entries.filter((entry) => entry.destination.type === "candidate_assertion").length + " | " + entries.filter((entry) => entry.destination.type === "non_fact").length + " |"); }
+  lines.push("", "- Current materialized facts: " + bundle.repository.materializedStates.reduce((n, state) => n + state.state.resolvedFacts.length, 0), "- Projected records: " + bundle.projections.reduce((n, item) => n + item.surfaces.reduce((sum, surface) => sum + surface.records.length, 0))); return lines.join("\n") + "\n";
 }
 async function main() {
-  if ((process.env.SKILLS_MODE || "codex") !== "codex") fail("The deterministic reference executor supports codex only.");
-  if (process.env.GOLDEN_FIXTURE_TEST_MUTATION === "add-unresolved-question") {
-    const primary = sourceStatementInventory.find((entry) => entry.destination.type === "candidate_assertion");
-    sourceStatementInventory.push({ ...primary, inventoryId: "INV-TEST-QUESTION-001", semanticKey: "test.unresolved-question", value: { question: "Fixture-only unresolved question" }, normalizedInterpretation: { kind: "unresolved_question", question: "Fixture-only unresolved question" }, destination: { type: "candidate_assertion", candidateId: "candidate-inv-test-question-001" } });
-  }
-  const artifacts = await Promise.all(sourceArtifacts.map(loadArtifact));
-  const all = assertions(artifacts);
-  const master = current(all, ["base"]);
-  const increment = current(all, ["base", "increment-03"]);
-  const repository = { projectId: "safara", schemaVersion: "1.2", artifacts: artifacts.map(({ pages, ...artifact }) => ({ ...artifact, pageCount: pages.length })), assertions: all, revisions: [{ revisionId: "rev-safara-master-002", parentRevisionIds: [], acceptedAssertionIds: master.map((item) => item.assertionId) }, { revisionId: "rev-safara-increment-003", parentRevisionIds: ["rev-safara-master-002"], acceptedAssertionIds: increment.filter((item) => item.phase === "increment-03").map((item) => item.assertionId) }], branches: [{ branchId: "branch-master", label: "Master - Increment 02", headRevisionId: "rev-safara-master-002" }, { branchId: "branch-increment-003", label: "Increment 03", headRevisionId: "rev-safara-increment-003" }], materializedStates: [], changeProposals: [] };
+  if ((process.env.SKILLS_MODE || mode) !== mode) fail("The deterministic reference executor supports codex only.");
+  if (process.env.GOLDEN_FIXTURE_TEST_MUTATION === "add-unresolved-question") { const primary = sourceStatementInventory.find((entry) => entry.destination.type === "candidate_assertion"); sourceStatementInventory.push({ ...primary, inventoryId: "INV-TEST-QUESTION-001", semanticKey: "test.unresolved-question", value: { question: "Fixture-only unresolved question" }, normalizedInterpretation: { kind: "unresolved_question", question: "Fixture-only unresolved question" }, destination: { type: "candidate_assertion", candidateId: "candidate-inv-test-question-001" } }); }
+  const contracts = await loadContracts(), artifacts = await Promise.all(sourceArtifacts.map(loadArtifact)), extractionResponses = artifacts.map((artifact) => extractionStage(artifacts, artifact, contracts)); extractionResponses.forEach((stage) => contractGate(contracts, stage));
+  const all = assertions(extractionResponses), master = current(all, ["base"]), increment = current(all, ["base", "increment-03"]), repository = { projectId: "safara", schemaVersion: "1.2", artifacts: artifacts.map(({ pages, ...artifact }) => ({ ...artifact, pageCount: pages.length })), assertions: all, revisions: [], branches: [{ branchId: "branch-master", label: "Master - Increment 02", headRevisionId: "rev-safara-master-002" }, { branchId: "branch-increment-003", label: "Increment 03", headRevisionId: "rev-safara-increment-003" }], materializedStates: [], changeProposals: [] };
+  const repositoryContract = contracts.get("atlas.fixture-repository"), repositoryProvenance = provenance(repositoryContract.id, repositoryContract.version);
+  repository.revisions = [{ revisionId: "rev-safara-master-002", parentRevisionIds: [], acceptedAssertionIds: master.map((item) => item.assertionId), executionProvenance: repositoryProvenance }, { revisionId: "rev-safara-increment-003", parentRevisionIds: ["rev-safara-master-002"], acceptedAssertionIds: increment.filter((item) => item.phase === "increment-03").map((item) => item.assertionId), executionProvenance: repositoryProvenance }];
   repository.materializedStates = [{ branchId: "branch-master", headRevisionId: "rev-safara-master-002", state: { assertionIds: master.map((item) => item.assertionId), resolvedFacts: master.map((item) => ({ semanticKey: item.semanticKey, assertionId: item.assertionId, candidateId: item.candidateId, inventoryId: item.inventoryId, value: item.value })) } }, { branchId: "branch-increment-003", headRevisionId: "rev-safara-increment-003", state: { assertionIds: increment.map((item) => item.assertionId), resolvedFacts: increment.map((item) => ({ semanticKey: item.semanticKey, assertionId: item.assertionId, candidateId: item.candidateId, inventoryId: item.inventoryId, value: item.value })) } }];
-  const proposal = { proposalId: "proposal-manifest-staged-correction", branchId: "branch-increment-003", baseRevisionId: "rev-safara-increment-003", targetSemanticKey: "manifest.eligibility", status: "staged" };
-  repository.changeProposals.push(proposal);
-  if (process.env.GOLDEN_FIXTURE_TEST_MUTATION === "remove-fact") repository.assertions.pop();
-  if (process.env.GOLDEN_FIXTURE_TEST_MUTATION === "corrupt-page") repository.assertions[0].evidence.page = 99;
-  if (process.env.GOLDEN_FIXTURE_TEST_MUTATION === "buyer-artifact") repository.artifacts.push({ name: "Buyer PRD.pdf", relativePath: "docs/PRD/Safara/Buyer.pdf", pageCount: 1 });
-  if (process.env.GOLDEN_FIXTURE_TEST_MUTATION === "duplicate-assertion") repository.assertions.push({ ...repository.assertions[0], assertionId: "ast-duplicate" });
-  if (process.env.GOLDEN_FIXTURE_TEST_MUTATION === "corrupt-fact-provenance") repository.materializedStates[0].state.resolvedFacts[0].candidateId = "candidate-corrupt";
-  if (process.env.GOLDEN_FIXTURE_TEST_MUTATION === "material-non-fact") {
-    const entry = sourceStatementInventory.find((item) => item.statementClass === "material");
-    entry.destination = { type: "non_fact", reason: "arbitrary classification" };
-  }
-  const projections = [projection("branch-master", "rev-safara-master-002", master), projection("branch-increment-003", "rev-safara-increment-003", increment)];
-  if (process.env.GOLDEN_FIXTURE_TEST_MUTATION === "corrupt-projection-provenance") projections[0].surfaces[0].records[0].inventoryIds[0] = "INV-corrupt";
-  const bundle = { bundleVersion: "1.2", generatedAt: "2026-09-05T00:00:00.000Z", executionMode: "codex", sourceCoverage: { expectedArtifactCount: 3, expectedPageCount: 11, candidateAssertionCount: all.length, expectedWorkflowStages }, sourceStatementInventory, repository, projections, skillResponses: { extractionResponses: artifacts.map((artifact) => ({ input: { artifact: { artifactId: artifact.artifactId, name: artifact.name } }, response: { candidateAssertions: all.filter((item) => item.evidence.artifactId === artifact.artifactId).map((item) => ({ candidateId: item.candidateId, inventoryId: item.inventoryId, evidence: item.evidence })), unaccountedStatements: [] } })) } };
-  validate(bundle, artifacts);
-  await mkdir(path.dirname(output), { recursive: true });
-  await writeFile(output + ".tmp", JSON.stringify(bundle, null, 2) + "\n");
-  await writeFile(reportOutput + ".tmp", report(bundle));
-  await rename(output + ".tmp", output);
-  await rename(reportOutput + ".tmp", reportOutput);
-  console.log("Generated and validated " + path.relative(root, output));
+  const repositoryResponse = { skillId: repositoryContract.id, input: { projectId: "safara", sourceArtifacts: repository.artifacts, requestedScenario: "Safara incremental branch materialization" }, response: { skillId: repositoryContract.id, skillVersion: repositoryContract.version, executionProvenance: repositoryProvenance, status: "complete", repositoryCandidate: repository, issues: [] } }; contractGate(contracts, repositoryResponse);
+  const manifestAssertion = all.find((item) => item.semanticKey === "manifest.eligibility"), changesContract = contracts.get("atlas.fixture-changes"), proposal = { proposalId: "proposal-manifest-staged-correction", branchId: "branch-increment-003", baseRevisionId: "rev-safara-increment-003", targetSemanticKey: "manifest.eligibility", beforeValue: manifestAssertion.value, proposedValue: { ...manifestAssertion.value, reviewState: "pending-human-confirmation" }, provenance: manifestAssertion.evidence, resolution: null, status: "staged" }; repository.changeProposals.push(proposal);
+  const changeResponse = { skillId: changesContract.id, input: { inputKind: "user_correction", branch: repository.branches[1], baseRevision: { revisionId: "rev-safara-increment-003" }, currentState: repository.materializedStates[1], incomingInformation: { proposalId: proposal.proposalId }, sourceArtifacts: repository.artifacts }, response: { skillId: changesContract.id, skillVersion: changesContract.version, executionProvenance: provenance(changesContract.id, changesContract.version), status: "complete", changeProposal: proposal, questions: [] } }; contractGate(contracts, changeResponse);
+  if (process.env.GOLDEN_FIXTURE_TEST_MUTATION === "remove-fact") repository.assertions.pop(); if (process.env.GOLDEN_FIXTURE_TEST_MUTATION === "corrupt-page") repository.assertions[0].evidence.page = 99; if (process.env.GOLDEN_FIXTURE_TEST_MUTATION === "buyer-artifact") repository.artifacts.push({ name: "Buyer PRD.pdf", relativePath: "docs/PRD/Safara/Buyer.pdf", pageCount: 1 }); if (process.env.GOLDEN_FIXTURE_TEST_MUTATION === "duplicate-assertion") repository.assertions.push({ ...repository.assertions[0], assertionId: "ast-duplicate" }); if (process.env.GOLDEN_FIXTURE_TEST_MUTATION === "corrupt-fact-provenance") repository.materializedStates[0].state.resolvedFacts[0].candidateId = "candidate-corrupt"; if (process.env.GOLDEN_FIXTURE_TEST_MUTATION === "material-non-fact") sourceStatementInventory.find((item) => item.statementClass === "material").destination = { type: "non_fact", reason: "arbitrary classification" };
+  const projections = [projection("branch-master", "rev-safara-master-002", master), projection("branch-increment-003", "rev-safara-increment-003", increment)], projectionsContract = contracts.get("atlas.fixture-projections");
+  const projectionResponses = projections.map((item) => ({ skillId: projectionsContract.id, input: { branch: { branchId: item.branchId, headRevisionId: item.headRevisionId }, headRevision: { revisionId: item.headRevisionId }, resolvedFacts: repository.materializedStates.find((state) => state.branchId === item.branchId).state.resolvedFacts, dependencies: item.surfaces.flatMap((surface) => surface.records.flatMap((record) => record.assertionIds.map((assertionId) => ({ fromId: record.recordId, toId: assertionId })))), requestedSurfaces: surfaces }, response: { skillId: projectionsContract.id, skillVersion: projectionsContract.version, executionProvenance: provenance(projectionsContract.id, projectionsContract.version), status: "complete", projectionCandidate: item, issues: [] } }));
+  if (process.env.GOLDEN_FIXTURE_TEST_MUTATION === "corrupt-projection-provenance") projections[0].surfaces[0].records[0].inventoryIds[0] = "INV-corrupt"; if (process.env.GOLDEN_FIXTURE_TEST_MUTATION === "corrupt-skill-output") delete projectionResponses[0].response.projectionCandidate.surfaces[0].records[0].dependencyIds; projectionResponses.forEach((stage) => contractGate(contracts, stage));
+  const verificationContract = contracts.get("atlas.fixture-verification"), verificationResponses = projections.map((item) => ({ skillId: verificationContract.id, input: { repository, projections: item }, response: verificationResponse(repository, [item], verificationContract) })); verificationResponses.forEach((stage) => contractGate(contracts, stage));
+  const bundle = { bundleVersion: "1.3", generatedAt: "2026-09-05T00:00:00.000Z", executionMode: mode, sourceCoverage: { expectedArtifactCount: 3, expectedPageCount: 11, candidateAssertionCount: all.length, expectedWorkflowStages }, sourceStatementInventory, repository, projections, skillResponses: { extractionResponses, repositoryResponse, changeResponse, projectionResponses, verificationResponses } };
+  validate(bundle, artifacts); await mkdir(path.dirname(output), { recursive: true }); await writeFile(output + ".tmp", JSON.stringify(bundle, null, 2) + "\n"); await writeFile(reportOutput + ".tmp", report(bundle)); await rename(output + ".tmp", output); await rename(reportOutput + ".tmp", reportOutput); console.log("Generated and validated " + path.relative(root, output));
 }
 main().catch((error) => { console.error(error); process.exitCode = 1; });
