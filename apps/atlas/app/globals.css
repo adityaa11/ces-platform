@@ -1166,11 +1166,12 @@ h1 { font-size: clamp(2.35rem, 6vw, 5rem); letter-spacing: -.055em; line-height:
    states without stretching Master truth to imitate draft work. */
 .project-library-page .project-grid { grid-template-columns: repeat(3, minmax(17.5rem, 1fr)); }
 .repository-card { border-radius: 1rem; container-type: inline-size; min-height: 30.75rem; padding: 1.125rem; }
-.repository-card-header { gap: .55rem; grid-template-columns: 2.75rem minmax(0, 1fr) fit-content(7.5rem); min-height: 4.5rem; }
-.repository-identity { overflow: hidden; }
-.repository-identity h2 { font-size: .94rem; overflow-wrap: break-word; word-break: normal; }
+.repository-card-header { gap: .3rem .55rem; grid-template-columns: 2.75rem minmax(0, 1fr) fit-content(7.5rem); min-height: 5.25rem; }
+.repository-identity { min-width: 0; }
+.repository-identity h2 { -webkit-box-orient: vertical; -webkit-line-clamp: 2; display: -webkit-box; font-size: .94rem; line-height: var(--leading-tight); overflow: hidden; overflow-wrap: anywhere; word-break: normal; }
+.repository-project-id { color: var(--muted); font-size: var(--type-label); grid-column: 2 / -1; line-height: var(--leading-body); min-width: 0; overflow-wrap: anywhere; white-space: normal; }
 .repository-status { font-size: .625rem; justify-self: end; max-width: 7.5rem; overflow: hidden; padding: .35rem .45rem; text-overflow: ellipsis; }
-.repository-summary { min-height: 4rem; }
+.repository-summary { -webkit-box-orient: vertical; -webkit-line-clamp: 3; display: -webkit-box; min-height: 4rem; overflow: hidden; overflow-wrap: anywhere; word-break: break-word; }
 .repository-state-stack { align-content: start; min-height: 0; }
 .repository-master-state { min-height: 5.625rem; }
 .repository-card-footer { padding-top: .9rem; }
@@ -1179,6 +1180,6 @@ h1 { font-size: clamp(2.35rem, 6vw, 5rem); letter-spacing: -.055em; line-height:
 .repository-state-icon svg { height: 1.05rem; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; width: 1.05rem; }
 .repository-share-action:disabled { background: var(--line); border-color: var(--line); color: var(--muted); cursor: not-allowed; }
 .repository-primary-action { min-height: 3rem; }
-@container (max-width: 18rem) { .repository-card-header { grid-template-columns: 2.75rem minmax(0, 1fr); min-height: 5.75rem; }.repository-project-mark { grid-row: span 2; }.repository-status { grid-column: 2; grid-row: 2; justify-self: start; } }
+@container (max-width: 18rem) { .repository-card-header { grid-template-columns: 2.75rem minmax(0, 1fr); min-height: 7rem; }.repository-project-mark { grid-row: span 2; }.repository-status { grid-column: 2; grid-row: 2; justify-self: start; }.repository-project-id { grid-column: 2; grid-row: 3; } }
 @media (max-width: 1100px) { .project-library-page .project-grid { grid-template-columns: repeat(2, minmax(17.5rem, 1fr)); } }
 @media (max-width: 640px) { .project-library-page .project-grid { grid-template-columns: 1fr; }.repository-card { min-height: 0; }.repository-summary { min-height: 0; } }

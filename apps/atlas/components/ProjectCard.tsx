@@ -44,10 +44,11 @@ export function ProjectCard({ canShare, href, onShare, project }: Props) {
   return <article aria-labelledby={`${project.id}-title`} className="repository-card">
     <header className="repository-card-header">
       <span aria-hidden="true" className="repository-project-mark">{project.name[0]}</span>
-      <div className="repository-identity"><h2 id={`${project.id}-title`}>{project.name}</h2><code>project-id: {project.id}</code></div>
+      <div className="repository-identity"><h2 id={`${project.id}-title`} title={project.name}>{project.name}</h2></div>
       <span className={`repository-status repository-status-${state}`}>{lifecycleLabels[state]}</span>
+      <code className="repository-project-id" title={`project-id: ${project.id}`}>project-id: {project.id}</code>
     </header>
-    <p className="repository-summary">{summary}</p>
+    <p className="repository-summary" title={summary}>{summary}</p>
     <div className="repository-state-stack"><MasterState project={project} /><InitialDraftState project={project} /></div>
     <footer className="repository-card-footer">
       <dl className="repository-metrics">{metrics.map((metric) => <div key={metric.label}><dd>{metric.value}</dd><dt>{metric.label}</dt></div>)}</dl>

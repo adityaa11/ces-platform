@@ -237,8 +237,15 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(projectCard, /action\.enabled/);
   assert.match(projectCard, /disabled=\{!action\.enabled\}/);
   assert.match(projectCard, /repository-state-icon"><svg/);
+  assert.match(projectCard, /className="repository-project-id"/);
+  assert.match(projectCard, /title=\{project\.name\}/);
+  assert.match(projectCard, /title=\{summary\}/);
   assert.match(projectCard, />Share</);
   assert.match(fixtures, /RepositoryLifecycleState="published"\|"extracting"\|"ready-for-review"/);
+  assert.match(fixtures, /projectCardStressFixtures/);
+  assert.match(globals, /\.repository-project-id \{[^}]*grid-column: 2 \/ -1/);
+  assert.match(globals, /\.repository-identity h2 \{[^}]*-webkit-line-clamp: 2/);
+  assert.match(globals, /\.repository-summary \{[^}]*-webkit-line-clamp: 3/);
   assert.match(fixtures, /project,processingProject,reviewProject/);
   assert.match(demoHtml, /Published/);
   assert.match(demoHtml, /Extracting/);

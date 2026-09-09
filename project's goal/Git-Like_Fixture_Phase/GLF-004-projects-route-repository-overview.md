@@ -1,6 +1,6 @@
 # GLF-004: Projects Route repository overview
 
-- **State:** feedback_remediation
+- **State:** awaiting_review
 - **Review batch:** BATCH-20
 - **Depends on:** GLF-003
 - **Baseline:** Architecture Checkpoint sections 12–17, 22.5–22.8, 24; UI/UX Prototype PRD sections 4.2–4.3, 5–6, 9.1, 9.4; Fixture Data-Intent Contract; AUI-002; AUI-004; AUI-013
@@ -84,3 +84,8 @@ workspace prematurely.
   the golden Safara bundle. It supplies 48-character valid IDs plus
   80-character names and 280-character descriptions in lowercase, uppercase,
   and mixed case for the responsive-card remediation.
+- 9 September 2026: BATCH-20 remediation separates the project ID onto its
+  own header row, retains complete content in the accessible DOM, and limits
+  only visual title and description presentation. A temporary stress render
+  confirmed that the three maximum-length records remain contained within
+  their cards before the accepted demo scenario was restored.
