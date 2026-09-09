@@ -1,6 +1,6 @@
 # GLF-004: Projects Route repository overview
 
-- **State:** awaiting_review
+- **State:** feedback_remediation
 - **Review batch:** BATCH-20
 - **Depends on:** GLF-003
 - **Baseline:** Architecture Checkpoint sections 12–17, 22.5–22.8, 24; UI/UX Prototype PRD sections 4.2–4.3, 5–6, 9.1, 9.4; Fixture Data-Intent Contract; AUI-002; AUI-004; AUI-013
@@ -74,3 +74,8 @@ workspace prematurely.
   must expose enabled Open project and Share actions; while extraction is still
   in progress, both actions remain visibly disabled. This supersedes the
   temporary disabled-ready-action remediation recorded for BATCH-20.
+- 9 September 2026: the maximum-length lowercase, uppercase, and mixed-case
+  fixture stress render demonstrated that Project Card text can overflow its
+  compact frame. This is accepted BATCH-20 remediation work: constrain and
+  format valid input, reserve a full-width identity row, and contain title and
+  description rendering without changing the underlying project identity.
