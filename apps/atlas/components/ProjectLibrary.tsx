@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import Link from "next/link";
 import type { AccessRole, MembershipFixture, ProjectFixture, ProjectWorkspaceFixture } from "@atlas/fixtures";
 import { AppShell } from "./AppShell";
 import { Button } from "./Button";
 import { Dialog } from "./Dialog";
 import { EmptyState } from "./EmptyState";
-import { StatusBadge } from "./StatusBadge";
+import { ProjectCard } from "./ProjectCard";
 import { demoHref } from "./WorkspaceLens";
 
 type User = { name: string; email: string; role: "owner" | "editor" | "viewer" };
@@ -25,7 +24,6 @@ export function ProjectLibrary({ user, projects, workspace, scenario }: { user: 
   const [inviteRole, setInviteRole] = useState<AccessRole>("viewer");
   const [pendingAccessChange, setPendingAccessChange] = useState<PendingAccessChange | null>(null);
   const canCreate = user.role === "owner" || user.role === "editor";
-  const canShare = user.role === "owner";
   const members = shareProject ? (membersByProject[shareProject.id] ?? []) : [];
   function createProject() { setCreateOpen(false); setProcessing(true); setProjectName(""); setSelectedFiles([]); }
   function inviteMember(event: FormEvent<HTMLFormElement>) {
@@ -49,28 +47,20 @@ export function ProjectLibrary({ user, projects, workspace, scenario }: { user: 
         <div className="library-heading-row">
           <div>
             <h1>Projects</h1>
-            <p>Projects are private unless you explicitly share them. Open a ready project or create a new one from PRD PDFs.</p>
+            <p>See what each project is, whether it has accepted Master work, and what to do next.</p>
           </div>
           {canCreate && <Button onClick={() => setCreateOpen(true)} type="button">+ New project</Button>}
         </div>
       </section>
 
-      <section aria-label="Projects" className="project-grid">
+      <section aria-labelledby="project-lifecycle-title" className="project-lifecycle-guide"><div><span aria-hidden="true" className="project-lifecycle-icon"><svg fill="none" viewBox="0 0 24 24"><path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H19v16H7.5A2.5 2.5 0 0 0 5 21V5.5Z"/><path d="M5 5.5V21"/><path d="M19 3v16"/></svg></span><div><h2 id="project-lifecycle-title">Quick guide</h2><p>Get from PRDs to a published project in four simple steps.</p></div></div><ol><li><strong>Create</strong><span>Start a project and upload PRDs.</span></li><li><strong>Extract</strong><span>Atlas builds Initial Draft work.</span></li><li><strong>Review</strong><span>Check the draft before publication.</span></li><li><strong>Publish</strong><span>Accept the first Master version.</span></li></ol></section>
+
+      <section aria-labelledby="project-list-title" className="repository-projects"><header><h2 id="project-list-title">Your projects</h2><span>{projects.length} repositories</span></header><div aria-label="Projects" className="project-grid">
         {projects.map((project) => {
-          const isReady = project.status === "ready";
           const href = typeof window === "undefined" ? `/demo?${new URLSearchParams({ ...(scenario ? { scenario } : {}), projectId: project.id, view: "workflow" }).toString()}` : demoHref({ projectId: project.id, view: "workflow" });
-          return <article className="project-card" key={project.id}>
-            <div className="card-topline"><span className="project-mark">{project.name[0]}</span><StatusBadge status={project.status} /></div>
-            <h2>{isReady ? <Link href={href}>{project.name}</Link> : <span>{project.name}</span>}</h2>
-            <p>{project.lastActivity}</p>
-            <footer><span>{project.prdCount} PRDs</span><span>{project.collaborators} collaborators</span>{project.isShared && <span>Shared with you</span>}</footer>
-            <div className="project-card-actions">
-              {isReady ? <Link className="project-open" href={href}>Open project →</Link> : <span className="project-unavailable">{project.status === "needs-attention" ? "Review required before opening" : "Available after processing"}</span>}
-              {canShare && <Button className="card-share" onClick={() => setShareProject(project)} tone="secondary" type="button">Share</Button>}
-            </div>
-          </article>;
+          return <ProjectCard href={href} key={project.id} project={project} />;
         })}
-      </section>
+      </div></section>
 
       {projects.length === 0 && <EmptyState title="No projects yet" description="Create a project to begin reviewing your PRDs." />}
       {processing && <aside aria-live="polite" className="processing-notice"><strong>Atlas is processing your project</strong><span>Extracting text and structure</span><button onClick={() => setProcessing(false)} type="button">Dismiss</button></aside>}
