@@ -43,6 +43,9 @@ test("repository lifecycle counts describe the same fixture-owned PRD records", 
     assert.equal(Number(uploaded?.value), project.prdCount, `${project.id} uploaded metric matches project PRDs`);
     if (draft.progress === 100) assert.equal(draft.processedPrds, project.prdCount, `${project.id} completed draft includes every project PRD`);
   }
+  const projects = fixtureScenarios["owner-ready"].projects;
+  assert.equal(projects.find((project) => project.repository.state === "extracting")?.repository.action.enabled, false);
+  assert.equal(projects.find((project) => project.repository.state === "ready-for-review")?.repository.action.enabled, true);
 });
 
 test("source-grounded fixture records keep quote, document, page, and relationships", () => {

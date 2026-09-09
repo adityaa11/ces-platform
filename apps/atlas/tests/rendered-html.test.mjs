@@ -235,7 +235,8 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(projectCard, /Initial draft/);
   assert.match(projectCard, /<progress/);
   assert.match(projectCard, /action\.enabled/);
-  assert.match(projectCard, /unavailableReason/);
+  assert.match(projectCard, /disabled=\{!action\.enabled\}/);
+  assert.match(projectCard, /repository-state-icon"><svg/);
   assert.match(projectCard, />Share</);
   assert.match(fixtures, /RepositoryLifecycleState="published"\|"extracting"\|"ready-for-review"/);
   assert.match(fixtures, /project,processingProject,reviewProject/);

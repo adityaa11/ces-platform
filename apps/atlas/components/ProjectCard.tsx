@@ -18,7 +18,7 @@ const lifecycleLabels = {
 function MasterState({ project }: Pick<Props, "project">) {
   const { master } = project.repository;
   return <section className="repository-master-state" aria-label={`Master: ${master.summary}`}>
-    <span aria-hidden="true" className="repository-state-icon">▣</span>
+    <span aria-hidden="true" className="repository-state-icon"><svg fill="none" viewBox="0 0 24 24"><path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H19v16H7.5A2.5 2.5 0 0 0 5 21V5.5Z"/><path d="M5 5.5V21"/><path d="M19 3v16"/></svg></span>
     <div>
       <strong>Master</strong>
       <span>{master.summary}</span>
@@ -53,7 +53,7 @@ export function ProjectCard({ canShare, href, onShare, project }: Props) {
       <dl className="repository-metrics">{metrics.map((metric) => <div key={metric.label}><dd>{metric.value}</dd><dt>{metric.label}</dt></div>)}</dl>
       <div className={`repository-card-actions${canShare ? "" : " repository-card-actions-single"}`}>
         {action.enabled ? <Link className="repository-primary-action" href={href}>{action.label} <span aria-hidden="true">→</span></Link> : <><Button aria-describedby={`${project.id}-action-hint`} className="repository-primary-action" disabled type="button">{action.label} <span aria-hidden="true">→</span></Button><span className="sr-only" id={`${project.id}-action-hint`}>{actionHint}</span></>}
-        {canShare && <Button className="repository-share-action" onClick={() => onShare(project)} tone="secondary" type="button">Share</Button>}
+        {canShare && <Button className="repository-share-action" disabled={!action.enabled} onClick={() => onShare(project)} tone="secondary" type="button">Share</Button>}
       </div>
     </footer>
   </article>;

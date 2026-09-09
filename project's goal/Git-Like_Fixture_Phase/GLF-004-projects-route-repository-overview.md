@@ -67,3 +67,10 @@ workspace prematurely.
   text or duplicated in a card-specific implementation.
 - Run fixture relationship, route, accessibility, and visual checks, then
   apply the frontend review gate before review.
+
+## Decision log
+
+- 9 September 2026: user confirmed that a completed Ready for review project
+  must expose enabled Open project and Share actions; while extraction is still
+  in progress, both actions remain visibly disabled. This supersedes the
+  temporary disabled-ready-action remediation recorded for BATCH-20.

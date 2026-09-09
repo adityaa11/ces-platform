@@ -16,7 +16,7 @@
 ## Interaction and accessibility checks
 
 - Published Master is presented as accepted truth; Extracting and Ready for review present an empty Master plus Initial Draft state.
-- Extracting is disabled with an accessible explanation. Ready for review is explicitly unavailable until GLF-004-01 provides the stable project-route adapter.
-- Owner-only Share opens the existing project-scoped sharing dialog; editor and viewer card compositions do not render Share.
+- Extracting is disabled with an accessible explanation, including its Share action. Ready for review has completed processing and exposes enabled Open project and Share actions.
+- Owner-only Share opens the existing project-scoped sharing dialog when the project is actionable; editor and viewer card compositions do not render Share.
 - Primary actions, Share, and status badges retain visible focus treatment and readable names.
 - The no-project-selected library shell remains in place; card identity and generated links use `project.id`, not the display label.
