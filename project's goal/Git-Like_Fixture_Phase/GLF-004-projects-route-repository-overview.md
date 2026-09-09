@@ -79,3 +79,8 @@ workspace prematurely.
   compact frame. This is accepted BATCH-20 remediation work: constrain and
   format valid input, reserve a full-width identity row, and contain title and
   description rendering without changing the underlying project identity.
+- 9 September 2026: the regression input now lives separately as
+  `projectCardStressFixtures`, rather than in an accepted fixture scenario or
+  the golden Safara bundle. It supplies 48-character valid IDs plus
+  80-character names and 280-character descriptions in lowercase, uppercase,
+  and mixed case for the responsive-card remediation.

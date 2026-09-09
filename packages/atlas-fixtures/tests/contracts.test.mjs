@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { fixtureScenarios, getFixtureScenario, resolveFixtureAuthoringExecutor, resolveSkillsMode } from "../src/index.ts";
+import { fixtureScenarios, getFixtureScenario, projectCardStressFixtures, projectCardStressLimits, resolveFixtureAuthoringExecutor, resolveSkillsMode } from "../src/index.ts";
 
 test("skills mode defaults to codex and accepts only documented repository-wide values", () => {
   assert.equal(resolveSkillsMode(), "codex");
@@ -46,6 +46,21 @@ test("repository lifecycle counts describe the same fixture-owned PRD records", 
   const projects = fixtureScenarios["owner-ready"].projects;
   assert.equal(projects.find((project) => project.repository.state === "extracting")?.repository.action.enabled, false);
   assert.equal(projects.find((project) => project.repository.state === "ready-for-review")?.repository.action.enabled, true);
+});
+
+test("project-card stress inputs stay isolated from accepted scenarios and cover each planned field limit", () => {
+  assert.equal(Object.values(fixtureScenarios).some((scenario) => scenario.projects === projectCardStressFixtures), false);
+  assert.equal(projectCardStressFixtures.length, 3);
+  for (const project of projectCardStressFixtures) {
+    assert.equal(project.id.length, projectCardStressLimits.id);
+    assert.equal(project.name.length, projectCardStressLimits.name);
+    assert.equal(project.repository.summary.length, projectCardStressLimits.description);
+    assert.match(project.id, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+  }
+  assert.match(projectCardStressFixtures[0].name, /^[a-z]+$/);
+  assert.match(projectCardStressFixtures[1].name, /^[A-Z]+$/);
+  assert.match(projectCardStressFixtures[2].name, /[A-Z]/);
+  assert.match(projectCardStressFixtures[2].name, /[a-z]/);
 });
 
 test("source-grounded fixture records keep quote, document, page, and relationships", () => {
