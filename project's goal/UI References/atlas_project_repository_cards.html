@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Atlas Project Cards</title>
+  <style>
+    :root {
+      --canvas: #f7f8fc;
+      --surface: #ffffff;
+      --soft: #f6f6ff;
+      --line: #e4e6ef;
+      --text: #111735;
+      --muted: #727a99;
+      --purple: #6048ee;
+      --purple-strong: #4d38d2;
+      --purple-soft: #efedff;
+      --green: #15965b;
+      --green-soft: #e6f7ee;
+      --blue: #2e6ddd;
+      --blue-soft: #eaf2ff;
+      --violet: #765ce9;
+      --violet-soft: #f0edff;
+      --sidebar: 242px;
+      --topbar: 78px;
+      --radius-sm: 9px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --shadow: 0 10px 28px rgba(38, 46, 93, .06);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      background: var(--canvas);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: 14px;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible { outline: 3px solid rgba(96, 72, 238, .28); outline-offset: 2px; }
+
+    .app { min-height: 100vh; display: grid; grid-template-columns: var(--sidebar) minmax(0, 1fr); }
+    .sidebar { display: flex; flex-direction: column; min-height: 100vh; background: var(--surface); border-right: 1px solid var(--line); }
+    .brand { min-height: var(--topbar); display: flex; align-items: center; gap: 11px; padding: 0 24px; border-bottom: 1px solid var(--line); font-size: 18px; font-weight: 800; }
+    .brand-mark, .project-mark, .account-avatar { display: grid; place-items: center; color: #fff; font-weight: 800; }
+    .brand-mark { width: 32px; height: 32px; border-radius: 9px; background: var(--purple); }
+    .project-picker { margin: 16px 13px 27px; display: grid; grid-template-columns: 31px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 9px 10px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); text-align: left; }
+    .project-picker:hover { background: var(--soft); border-color: #c9c8e8; }
+    .project-picker strong, .project-picker small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .project-picker strong { font-size: 12px; }
+    .project-picker small { margin-top: 3px; color: var(--muted); font-size: 10px; }
+    .project-mark { width: 31px; height: 31px; border-radius: 9px; background: var(--purple); }
+    .mark-member { background: #2f6fed; }
+    .mark-vendor { background: #7259e9; }
+    .chevron { color: var(--muted); }
+    .nav-label { padding: 0 28px 9px; color: var(--muted); font-size: 10px; font-weight: 900; letter-spacing: .16em; text-transform: uppercase; }
+    .nav { display: grid; gap: 4px; padding: 0 13px; }
+    .nav button { min-height: 44px; display: flex; align-items: center; gap: 12px; padding: 0 14px; border: 0; border-radius: 9px; background: transparent; color: #66708f; text-align: left; font-size: 13px; font-weight: 700; }
+    .nav button:hover, .nav button.active { background: var(--purple-soft); color: var(--purple); }
+    .nav-icon { width: 17px; color: currentColor; text-align: center; font-size: 15px; }
+    .account { margin-top: auto; display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 10px; align-items: center; min-height: 67px; padding: 10px 18px; border-top: 1px solid var(--line); }
+    .account-avatar { width: 32px; height: 32px; border-radius: 50%; background: #6c6aac; font-size: 10px; }
+    .account strong, .account small { display: block; }
+    .account strong { font-size: 11px; }
+    .account small { margin-top: 2px; color: var(--muted); font-size: 10px; }
+
+    .main { min-width: 0; }
+    .topbar { height: var(--topbar); display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 0 28px; border-bottom: 1px solid var(--line); background: rgba(255, 255, 255, .94); }
+    .search { width: min(390px, 55vw); height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--muted); }
+    .search input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--text); font-size: 12px; }
+    .search input::placeholder { color: var(--muted); }
+    .top-actions { display: flex; align-items: center; gap: 10px; }
+    .icon-button { width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--muted); }
+    .icon-button svg, .guide-icon svg, .state-icon svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+    .guide-icon svg { width: 25px; height: 25px; stroke-width: 1.7; }
+    .icon-button:hover { background: var(--soft); color: var(--text); }
+
+    .content { max-width: 1270px; margin: 0 auto; padding: 42px clamp(24px, 3vw, 50px) 70px; }
+    .intro { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+    .intro h1 { margin: 0; font-size: clamp(34px, 4vw, 47px); line-height: 1; letter-spacing: -.055em; }
+    .intro p { margin: 14px 0 0; color: var(--muted); font-size: 16px; line-height: 1.4; }
+    .primary-button { min-height: 47px; padding: 0 18px; border: 0; border-radius: 10px; background: var(--purple); color: #fff; font-size: 13px; font-weight: 800; box-shadow: 0 7px 16px rgba(96, 72, 238, .18); }
+    .primary-button:hover { background: var(--purple-strong); }
+
+    .quick-guide { margin-top: 24px; display: grid; grid-template-columns: minmax(260px, 1fr) minmax(0, 2.2fr); align-items: center; gap: 22px; padding: 18px 20px; border: 1px solid #dcd9ff; border-radius: var(--radius-lg); background: var(--purple-soft); }
+    .guide-intro { display: flex; align-items: flex-start; gap: 14px; }
+    .guide-icon { width: 44px; height: 44px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 50%; background: #e5e0ff; color: var(--purple); font-size: 23px; }
+    .guide-intro h2 { margin: 1px 0 0; font-size: 17px; letter-spacing: -.025em; }
+    .guide-intro p { max-width: 235px; margin: 7px 0 0; color: var(--muted); line-height: 1.4; }
+    .guide-steps { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr; align-items: center; gap: 10px; }
+    .guide-step { min-width: 0; }
+    .step-number { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: #e7e4ff; color: var(--purple); font-size: 14px; font-weight: 800; }
+    .guide-step strong, .guide-step > span:not(.step-number) { display: block; }
+    .guide-step .step-number { display: grid; place-items: center; }
+    .guide-step strong { margin-top: 8px; font-size: 12px; }
+    .guide-step span { margin-top: 4px; color: var(--muted); font-size: 11px; line-height: 1.35; }
+    .guide-arrow { color: #8983bd; font-size: 21px; }
+
+    .cards-heading { margin-top: 30px; display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+    .cards-heading h2 { margin: 0; font-size: 17px; letter-spacing: -.02em; }
+    .cards-heading span { color: var(--muted); font-size: 12px; }
+    .project-grid { display: grid; grid-template-columns: repeat(3, minmax(270px, 1fr)); gap: 16px; margin-top: 14px; }
+    .project-card { min-width: 0; display: flex; flex-direction: column; min-height: 0; padding: 18px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow); }
+    .project-card-body { min-width: 0; }
+    .project-card-footer { display: grid; gap: 15px; margin-top: auto; }
+    .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; min-height: 72px; }
+    .identity { min-width: 0; display: flex; align-items: center; gap: 12px; }
+    .identity .project-mark { width: 48px; height: 48px; border-radius: 11px; font-size: 17px; }
+    .identity-copy { min-width: 0; }
+    .identity-copy strong, .identity-copy small { display: block; }
+    .identity-copy strong { font-size: 15px; line-height: 1.2; letter-spacing: -.02em; overflow-wrap: anywhere; }
+    .identity-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .identity-copy small { margin-top: 5px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 10px; }
+    .status-slot { min-height: 30px; display: flex; align-items: flex-start; justify-content: flex-end; }
+    .status { min-height: 30px; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; padding: 0 10px; border-radius: 999px; font-size: 10px; font-weight: 800; white-space: nowrap; }
+    .status.published { background: var(--green-soft); color: var(--green); }
+    .status.extracting { background: var(--blue-soft); color: var(--blue); }
+    .status.review { background: var(--violet-soft); color: var(--violet); }
+    .card-description { min-height: 64px; margin: 19px 0 0; color: var(--muted); line-height: 1.45; }
+
+    .state-stack { display: grid; gap: 11px; margin-top: 17px; }
+    .state-block { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 11px; align-items: start; min-height: 78px; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius-md); background: #fcfcfe; }
+    .state-block.master { min-height: 90px; }
+    .state-block.draft { display: block; min-height: 0; padding: 10px 0 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; }
+    .draft-progress-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+    .draft-progress-label { min-width: 0; color: var(--muted); font-size: 11px; line-height: 1.3; }
+    .draft-progress-label strong { color: var(--text); font-size: 12px; }
+    .draft-separator { margin: 0 4px; }
+    .state-icon { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 9px; background: #f0efff; color: var(--purple); font-size: 19px; }
+    .state-copy { min-width: 0; }
+    .state-copy strong, .state-copy span { display: block; }
+    .state-copy strong { font-size: 12px; line-height: 1.25; }
+    .state-copy span { margin-top: 4px; color: var(--muted); font-size: 11px; line-height: 1.3; overflow-wrap: anywhere; }
+    .state-value { align-self: start; color: var(--muted); font-size: 11px; font-weight: 800; text-align: right; white-space: nowrap; }
+    .state-progress { height: 6px; overflow: hidden; margin-top: 7px; border-radius: 999px; background: #e5e6f0; }
+    .state-progress span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #5c45ed, #876ffb); }
+    .state-block.draft .state-progress { height: 5px; margin-bottom: 8px; }
+    .progress-40 span { width: 40%; }
+    .progress-100 span { width: 100%; }
+
+    .metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .metric { min-width: 0; min-height: 65px; padding: 11px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+    .metric strong, .metric span { display: block; }
+    .metric strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 16px; letter-spacing: -.03em; }
+    .metric span { margin-top: 5px; color: var(--muted); font-size: 10px; line-height: 1.2; }
+    .card-action { width: 100%; min-height: 49px; margin-top: 0; padding: 0 14px; border: 0; border-radius: 10px; background: var(--purple); color: #fff; font-size: 14px; font-weight: 800; box-shadow: 0 6px 15px rgba(96, 72, 238, .16); }
+    .card-action:hover { background: var(--purple-strong); }
+    .card-action:disabled { background: #e7e8f1; color: #9299ae; box-shadow: none; cursor: not-allowed; }
+    .card-action span { margin-left: 8px; font-size: 18px; vertical-align: -1px; }
+
+    @media (max-width: 1120px) {
+      :root { --sidebar: 210px; }
+      .project-grid { grid-template-columns: repeat(2, minmax(280px, 1fr)); }
+      .project-card:last-child { grid-column: 1 / -1; }
+    }
+    @media (max-width: 780px) {
+      .app { display: block; }
+      .sidebar { min-height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+      .brand { min-height: 58px; }
+      .project-picker { margin: 10px 13px; }
+      .sidebar .nav-label, .sidebar .nav, .account { display: none; }
+      .topbar { height: auto; padding: 12px 18px; }
+      .search { width: 100%; }
+      .top-actions { display: none; }
+      .content { padding: 30px 18px 54px; }
+      .intro { display: block; }
+      .intro p { font-size: 14px; }
+      .intro .primary-button { margin-top: 18px; }
+      .quick-guide { grid-template-columns: 1fr; gap: 20px; padding: 20px; }
+      .guide-intro { align-items: center; }
+      .guide-intro p { max-width: none; }
+      .guide-steps { display: grid; grid-template-columns: 1fr; gap: 0; }
+      .guide-step { display: grid; grid-template-columns: 38px minmax(0, 1fr); column-gap: 12px; align-items: start; padding: 12px 0; }
+      .guide-step strong, .guide-step > span:not(.step-number) { grid-column: 2; }
+      .guide-step .step-number { grid-column: 1; grid-row: 1 / span 2; }
+      .guide-arrow { display: block; justify-self: start; height: 12px; margin-left: 14px; transform: rotate(90deg); font-size: 18px; line-height: 1; }
+      .project-grid { grid-template-columns: 1fr; }
+      .project-card:last-child { grid-column: auto; }
+    }
+    @media (max-width: 460px) {
+      .quick-guide { padding: 18px; }
+      .guide-steps { display: block; }
+      .guide-step { display: grid; grid-template-columns: 38px 1fr; column-gap: 10px; margin-top: 14px; }
+      .guide-step strong, .guide-step > span:not(.step-number) { grid-column: 2; }
+      .guide-step .step-number { grid-column: 1; grid-row: 1 / span 2; display: grid; place-items: center; }
+      .guide-arrow { display: none; }
+      .card-top { align-items: flex-start; }
+      .identity .project-mark { width: 42px; height: 42px; }
+      .identity-copy strong { font-size: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" aria-label="Atlas navigation">
+      <div class="brand"><span class="brand-mark">A</span><span>Atlas</span></div>
+      <button class="project-picker" type="button" aria-label="Choose a project"><span class="project-mark">–</span><span><strong>No project selected</strong><small>Choose a ready project</small></span><span class="chevron">⌄</span></button>
+      <div class="nav-label">Project</div>
+      <nav class="nav" aria-label="Project navigation">
+        <button class="active" type="button"><span class="nav-icon">▦</span>Projects</button>
+        <button type="button"><span class="nav-icon">↪</span>Main Workflow</button>
+        <button type="button"><span class="nav-icon">▤</span>Project Facts</button>
+        <button type="button"><span class="nav-icon">▣</span>CES Result</button>
+        <button type="button"><span class="nav-icon">↻</span>Changes Done</button>
+      </nav>
+      <div class="nav-label" style="margin-top: 24px;">Workspace</div>
+      <nav class="nav" aria-label="Workspace navigation"><button type="button"><span class="nav-icon">○</span>Sources</button><button type="button"><span class="nav-icon">♟</span>Members</button><button type="button"><span class="nav-icon">⚙</span>Settings</button></nav>
+      <div class="account"><span class="account-avatar">NH</span><span><strong>Nadia Hartono</strong><small>nadia@example.com</small></span><span class="chevron">⌄</span></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar"><label class="search"><span aria-hidden="true">⌕</span><input type="search" placeholder="Search projects..." aria-label="Search projects"></label><div class="top-actions"><button class="icon-button" type="button" aria-label="Notifications"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg></button></div></header>
+      <div class="content">
+        <section class="intro" aria-labelledby="page-title"><div><h1 id="page-title">Projects</h1><p>See what each project is, whether it already has published work, and what to do next.</p></div><button class="primary-button" type="button">＋ New project</button></section>
+
+        <section class="quick-guide" aria-labelledby="guide-title">
+          <div class="guide-intro"><span class="guide-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H19v16H7.5A2.5 2.5 0 0 0 5 21V5.5Z"/><path d="M5 5.5V21"/><path d="M19 3v16"/></svg></span><div><h2 id="guide-title">Quick guide</h2><p>Get from PRDs to a published project in four simple steps.</p></div></div>
+          <div class="guide-steps" aria-label="Project lifecycle">
+            <div class="guide-step"><span class="step-number">1</span><strong>Create</strong><span>Start a new project and upload PRDs.</span></div><span class="guide-arrow" aria-hidden="true">→</span>
+            <div class="guide-step"><span class="step-number">2</span><strong>Extract</strong><span>Atlas reads the files and builds draft work.</span></div><span class="guide-arrow" aria-hidden="true">→</span>
+            <div class="guide-step"><span class="step-number">3</span><strong>Review</strong><span>Check the extracted work before publishing.</span></div><span class="guide-arrow" aria-hidden="true">→</span>
+            <div class="guide-step"><span class="step-number">4</span><strong>Publish</strong><span>Make the first accepted master version.</span></div>
+          </div>
+        </section>
+
+        <section aria-labelledby="cards-title"><div class="cards-heading"><h2 id="cards-title">Your projects</h2><span id="project-count">3 repositories</span></div><div class="project-grid" id="project-grid" data-component="project-card-list"></div></section>
+      </div>
+    </main>
+  </div>
+  <script>
+    const projectCardFixture = [
+      {
+        id: "safara",
+        initials: "S",
+        name: "Safara operations platform",
+        projectId: "safara",
+        status: { label: "Published", tone: "published" },
+        description: "Operational workspace for registrations, payments, documents, and readiness.",
+        sections: { master: { secondary: "Published work", detail: "Current accepted project source of truth." }, draft: null },
+        metrics: [
+          { value: "85", label: "resolved facts" },
+          { value: "3", label: "PRDs" },
+          { value: "1", label: "published version" }
+        ],
+        action: { label: "Open Project", disabled: false }
+      },
+      {
+        id: "member-portal",
+        initials: "M",
+        markClass: "mark-member",
+        name: "Member portal refresh",
+        projectId: "member-portal",
+        status: { label: "Extracting", tone: "extracting" },
+        description: "Updating the member portal from newly uploaded PRDs.",
+        sections: { master: { secondary: "No published work", detail: "Nothing has been published yet." }, draft: { processed: "2 of 5 PRDs processed", progress: 40 } },
+        metrics: [
+          { value: "0", label: "published facts" },
+          { value: "5", label: "PRDs uploaded" },
+          { value: "Waiting", label: "for extraction" }
+        ],
+        action: { label: "Open Project", disabled: true }
+      },
+      {
+        id: "vendor-onboarding",
+        initials: "V",
+        markClass: "mark-vendor",
+        name: "Vendor onboarding revamp",
+        projectId: "vendor-onboarding",
+        status: { label: "Ready for review", tone: "review" },
+        description: "New onboarding workflow prepared from uploaded PRDs and ready to check.",
+        sections: { master: { secondary: "No published work", detail: "Nothing has been published yet." }, draft: { processed: "5 of 5 PRDs processed", progress: 100 } },
+        metrics: [
+          { value: "46", label: "extracted facts" },
+          { value: "2", label: "PRDs uploaded" },
+          { value: "Ready", label: "to review" }
+        ],
+        action: { label: "Open Project", disabled: false }
+      }
+    ];
+
+    const masterIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H19v16H7.5A2.5 2.5 0 0 0 5 21V5.5Z"/><path d="M5 5.5V21"/><path d="M19 3v16"/></svg>';
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (character) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[character]);
+    }
+
+    function renderProjectCardHeader(project) {
+      const markClass = project.markClass ? ` ${escapeHtml(project.markClass)}` : "";
+      return `<div class="card-top project-card-header"><div class="identity"><span class="project-mark${markClass}">${escapeHtml(project.initials)}</span><span class="identity-copy"><strong id="${escapeHtml(project.id)}-title">${escapeHtml(project.name)}</strong><small>project-id: ${escapeHtml(project.projectId)}</small></span></div><span class="status-slot"><span class="status ${escapeHtml(project.status.tone)}">${escapeHtml(project.status.label)}</span></span></div>`;
+    }
+
+    function renderMasterState(master) {
+      return `<div class="state-block master"><span class="state-icon">${masterIcon}</span><span class="state-copy"><strong>Master</strong><span>${escapeHtml(master.secondary)}</span><span>${escapeHtml(master.detail)}</span></span></div>`;
+    }
+
+    function renderDraftState(draft) {
+      if (!draft) return "";
+      const progress = Math.max(0, Math.min(100, Number(draft.progress)));
+      return `<div class="state-block draft"><div class="draft-progress-head"><span class="draft-progress-label"><strong>Initial draft</strong><span class="draft-separator" aria-hidden="true">·</span><span>${escapeHtml(draft.processed)}</span></span><strong class="state-value">${progress}%</strong></div><div class="state-progress" role="progressbar" aria-label="Extraction progress: ${escapeHtml(draft.processed)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}"><span style="width: ${progress}%"></span></div></div>`;
+    }
+
+    function renderProjectCardBody(project) {
+      return `<div class="project-card-body"><p class="card-description">${escapeHtml(project.description)}</p><div class="state-stack">${renderMasterState(project.sections.master)}${renderDraftState(project.sections.draft)}</div></div>`;
+    }
+
+    function renderMetrics(metrics) {
+      return `<div class="metrics">${metrics.map((metric) => `<div class="metric"><strong>${escapeHtml(metric.value)}</strong><span>${escapeHtml(metric.label)}</span></div>`).join("")}</div>`;
+    }
+
+    function renderProjectCardFooter(project) {
+      const disabled = project.action.disabled ? " disabled aria-disabled=\"true\"" : "";
+      return `<div class="project-card-footer">${renderMetrics(project.metrics)}<button class="card-action" type="button"${disabled}>${escapeHtml(project.action.label)} <span aria-hidden="true">→</span></button></div>`;
+    }
+
+    function renderProjectCard(project) {
+      return `<article class="project-card" data-component="project-card" data-project-id="${escapeHtml(project.id)}" aria-labelledby="${escapeHtml(project.id)}-title">${renderProjectCardHeader(project)}${renderProjectCardBody(project)}${renderProjectCardFooter(project)}</article>`;
+    }
+
+    const projectGrid = document.getElementById("project-grid");
+    projectGrid.innerHTML = projectCardFixture.map(renderProjectCard).join("");
+    document.getElementById("project-count").textContent = `${projectCardFixture.length} repositories`;
+  </script>
+</body>
+</html>

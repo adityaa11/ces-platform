@@ -1,0 +1,1444 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Atlas Workspace Switcher Prototype</title>
+  <style>
+    :root {
+      --ink: #f4f4f5;
+      --muted: #a1a1aa;
+      --paper: #111113;
+      --surface: #18181b;
+      --surface-raised: #202024;
+      --surface-hover: #26262d;
+      --line: #303036;
+      --forest: #8b8af8;
+      --forest-strong: #a7a6ff;
+      --mint: #29283e;
+      --warning-bg: #332b16;
+      --warning-border: #6b5a31;
+      --warning-ink: #f3d178;
+      --success-bg: #16281f;
+      --success-border: #315b45;
+      --success-ink: #9fe4b6;
+      --danger-bg: #301b1f;
+      --danger-border: #6f363f;
+      --danger-ink: #ffb3bd;
+      --info-bg: #192433;
+      --info-border: #324e70;
+      --info-ink: #aacdf7;
+      --sidebar: 264px;
+      --topbar: 64px;
+      --font: Arial, Helvetica, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--font);
+    }
+
+    button, input { font: inherit; }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    .app-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: var(--sidebar) 1fr;
+      grid-template-rows: var(--topbar) 1fr;
+    }
+
+    .topbar {
+      grid-column: 1 / -1;
+      grid-row: 1;
+      display: grid;
+      grid-template-columns: var(--sidebar) 1fr auto;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      background: rgba(24, 24, 27, .96);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      min-height: var(--topbar);
+    }
+
+    .brand {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 0 20px;
+      font-size: 18px;
+      font-weight: 800;
+      border-right: 1px solid var(--line);
+    }
+
+    .brand-mark {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: var(--forest);
+      color: #fff;
+      font-size: 13px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+    }
+
+    .search {
+      margin-left: 18px;
+      max-width: 520px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 12px;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: var(--surface);
+    }
+
+    .search svg { width: 16px; height: 16px; }
+    .search input {
+      width: 100%;
+      background: transparent;
+      border: 0;
+      outline: 0;
+      color: var(--ink);
+      font-size: 13px;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-right: 18px;
+    }
+
+    .top-icon, .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      display: grid;
+      place-items: center;
+      background: var(--surface-raised);
+      color: var(--muted);
+      border: 1px solid var(--line);
+    }
+
+    .avatar {
+      border-radius: 50%;
+      color: var(--forest-strong);
+      background: var(--mint);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .sidebar {
+      grid-column: 1;
+      grid-row: 2;
+      position: sticky;
+      top: var(--topbar);
+      height: calc(100vh - var(--topbar));
+      border-right: 1px solid var(--line);
+      background: var(--surface);
+      padding: 16px 14px;
+      overflow: visible;
+      z-index: 12;
+    }
+
+    .sidebar-inner {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .switch-stack {
+      display: grid;
+      gap: 8px;
+      position: relative;
+    }
+
+    .switch-label {
+      margin: 2px 2px 0;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .11em;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .switcher {
+      position: relative;
+    }
+
+    .switcher-trigger {
+      width: 100%;
+      min-height: 56px;
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr) 18px;
+      gap: 9px;
+      align-items: center;
+      text-align: left;
+      color: var(--ink);
+      padding: 8px 9px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: var(--surface-raised);
+      transition: .16s ease;
+    }
+
+    .switcher-trigger:hover,
+    .switcher-trigger[aria-expanded="true"] {
+      border-color: color-mix(in srgb, var(--forest) 58%, var(--line));
+      background: color-mix(in srgb, var(--surface-raised) 76%, var(--mint));
+    }
+
+    .switch-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: var(--forest);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .switch-icon.branch {
+      background: var(--mint);
+      color: var(--forest-strong);
+      border: 1px solid #484768;
+    }
+
+    .trigger-copy {
+      min-width: 0;
+      display: grid;
+      gap: 3px;
+    }
+
+    .trigger-copy strong {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    .trigger-copy small {
+      color: var(--muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 10.5px;
+      line-height: 1.25;
+    }
+
+    .chevron {
+      width: 16px;
+      height: 16px;
+      color: var(--muted);
+      transition: transform .16s ease;
+    }
+
+    .switcher-trigger[aria-expanded="true"] .chevron { transform: rotate(180deg); }
+
+    .workspace-trigger {
+      border-left: 3px solid var(--forest);
+      padding-left: 7px;
+    }
+
+    .workspace-trigger .trigger-meta-row {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .tiny-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border-radius: 999px;
+      padding: 2px 6px;
+      font-size: 9px;
+      line-height: 1.3;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .chip-published {
+      color: var(--success-ink);
+      background: var(--success-bg);
+      border: 1px solid var(--success-border);
+    }
+
+    .chip-review {
+      color: var(--warning-ink);
+      background: var(--warning-bg);
+      border: 1px solid var(--warning-border);
+    }
+
+    .chip-processing {
+      color: var(--info-ink);
+      background: var(--info-bg);
+      border: 1px solid var(--info-border);
+    }
+
+    .chip-draft {
+      color: #c7c8cf;
+      background: #25262b;
+      border: 1px solid #41434a;
+    }
+
+    .chip-staged {
+      color: #d5c3ff;
+      background: #2c2241;
+      border: 1px solid #5c4780;
+    }
+
+    .menu {
+      position: absolute;
+      left: 0;
+      top: calc(100% + 8px);
+      width: 540px;
+      max-width: min(540px, calc(100vw - 32px));
+      border-radius: 14px;
+      border: 1px solid #3b3b43;
+      background: #1d1d21;
+      box-shadow: 0 24px 60px rgba(0,0,0,.48);
+      overflow: hidden;
+      display: none;
+      z-index: 50;
+    }
+
+    .menu.open { display: block; }
+
+    .menu-head {
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      gap: 10px;
+    }
+
+    .menu-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .menu-title strong { font-size: 14px; }
+    .menu-title small { color: var(--muted); font-size: 10.5px; }
+
+    .workspace-search {
+      height: 38px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      color: var(--muted);
+      background: #17171a;
+    }
+
+    .workspace-search input {
+      width: 100%;
+      border: 0;
+      outline: 0;
+      color: var(--ink);
+      background: transparent;
+      font-size: 12px;
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .filter-btn {
+      color: var(--muted);
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      padding: 5px 8px;
+      font-size: 10.5px;
+      font-weight: 700;
+    }
+
+    .filter-btn.active {
+      color: var(--ink);
+      background: var(--mint);
+      border-color: #464564;
+    }
+
+    .workspace-groups {
+      max-height: 510px;
+      overflow: auto;
+      padding: 8px;
+    }
+
+    .group-label {
+      padding: 8px 8px 5px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    .workspace-row {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 38px minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: start;
+      padding: 10px;
+      color: var(--ink);
+      text-align: left;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      background: transparent;
+      transition: .14s ease;
+    }
+
+    .workspace-row:hover {
+      background: var(--surface-hover);
+      border-color: #3b3b43;
+    }
+
+    .workspace-row.current {
+      background: color-mix(in srgb, var(--mint) 56%, #1d1d21);
+      border-color: #4c4b6b;
+    }
+
+    .workspace-row.hidden-row { display: none; }
+
+    .branch-glyph {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      background: #242428;
+      color: var(--forest-strong);
+    }
+
+    .branch-glyph svg { width: 18px; height: 18px; }
+
+    .workspace-row-copy {
+      min-width: 0;
+      display: grid;
+      gap: 5px;
+    }
+
+    .row-title {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+
+    .row-title strong {
+      font-size: 12.5px;
+      line-height: 1.2;
+    }
+
+    .workspace-row p {
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.45;
+      margin: 0;
+    }
+
+    .row-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 9.5px;
+    }
+
+    .row-meta code {
+      color: #c6c6d3;
+      background: #161619;
+      border: 1px solid #303038;
+      border-radius: 5px;
+      padding: 2px 5px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 9px;
+    }
+
+    .owner {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .owner-dot {
+      width: 16px;
+      height: 16px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: #30303a;
+      color: #c8c7ff;
+      font-size: 7px;
+      font-weight: 800;
+    }
+
+    .row-side {
+      min-width: 74px;
+      display: grid;
+      justify-items: end;
+      gap: 6px;
+      padding-top: 1px;
+    }
+
+    .row-side span {
+      color: var(--muted);
+      font-size: 9px;
+      white-space: nowrap;
+    }
+
+    .workspace-menu-foot {
+      border-top: 1px solid var(--line);
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      background: #19191d;
+    }
+
+    .workspace-menu-foot p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 9.5px;
+      line-height: 1.35;
+    }
+
+    .create-branch {
+      flex: 0 0 auto;
+      border-radius: 8px;
+      padding: 7px 9px;
+      color: var(--ink);
+      background: var(--mint);
+      border: 1px solid #4d4c6d;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .nav-section {
+      display: grid;
+      gap: 6px;
+      margin-top: 5px;
+    }
+
+    .nav-label {
+      padding-top: 11px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+    }
+
+    .nav-section:first-of-type .nav-label { border-top: 0; }
+
+    .nav-item {
+      display: grid;
+      grid-template-columns: 20px 1fr;
+      align-items: center;
+      gap: 7px;
+      min-height: 36px;
+      padding: 7px 9px;
+      border-left: 2px solid transparent;
+      border-radius: 7px;
+      color: #b5b5be;
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .nav-item.active {
+      color: var(--ink);
+      background: var(--mint);
+      border-left-color: var(--forest);
+    }
+
+    .nav-item svg { width: 15px; height: 15px; }
+
+    .profile {
+      margin-top: auto;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      display: grid;
+      grid-template-columns: 32px 1fr;
+      gap: 9px;
+      align-items: center;
+    }
+
+    .profile-copy { display: grid; gap: 2px; min-width: 0; }
+    .profile-copy strong { font-size: 11px; }
+    .profile-copy small { color: var(--muted); font-size: 9.5px; }
+
+    main {
+      grid-column: 2;
+      grid-row: 2;
+      min-width: 0;
+      padding: 26px clamp(24px, 4vw, 54px) 60px;
+    }
+
+    .page-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 22px;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--forest);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 4vw, 48px);
+      letter-spacing: -.045em;
+      line-height: 1.02;
+    }
+
+    .page-head p {
+      max-width: 680px;
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .head-status {
+      min-width: 242px;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--surface-raised);
+      display: grid;
+      gap: 8px;
+    }
+
+    .head-status > span {
+      color: var(--muted);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      font-weight: 800;
+    }
+
+    .head-status strong {
+      font-size: 13px;
+      line-height: 1.3;
+    }
+
+    .head-status code {
+      color: var(--muted);
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 9.5px;
+    }
+
+    .truth-banner {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 20px;
+      align-items: center;
+      margin-bottom: 18px;
+      padding: 14px 16px;
+      border: 1px solid #464564;
+      border-left: 3px solid var(--forest);
+      border-radius: 11px;
+      background: color-mix(in srgb, var(--mint) 48%, var(--surface-raised));
+    }
+
+    .truth-copy { display: grid; gap: 4px; }
+    .truth-copy strong { font-size: 12px; }
+    .truth-copy p { margin: 0; color: var(--muted); font-size: 10.5px; line-height: 1.45; }
+
+    .truth-stats {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .truth-stat {
+      display: grid;
+      gap: 2px;
+      text-align: right;
+    }
+
+    .truth-stat b { font-size: 17px; }
+    .truth-stat span { color: var(--muted); font-size: 8.5px; text-transform: uppercase; letter-spacing: .08em; }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+      gap: 16px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: var(--surface-raised);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      min-height: 52px;
+      padding: 13px 15px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .panel-head strong { font-size: 12px; }
+    .panel-head small { color: var(--muted); font-size: 9.5px; }
+
+    .workflow-list {
+      padding: 14px;
+      display: grid;
+      gap: 9px;
+    }
+
+    .workflow-step {
+      display: grid;
+      grid-template-columns: 30px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #1c1c20;
+    }
+
+    .step-num {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: var(--mint);
+      color: var(--forest);
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .step-copy { display: grid; gap: 3px; }
+    .step-copy strong { font-size: 11px; }
+    .step-copy small { color: var(--muted); font-size: 9px; }
+
+    .step-source {
+      color: var(--muted);
+      font-size: 9px;
+      white-space: nowrap;
+    }
+
+    .side-stack {
+      display: grid;
+      gap: 16px;
+      align-content: start;
+    }
+
+    .detail-list {
+      display: grid;
+    }
+
+    .detail-row {
+      display: grid;
+      grid-template-columns: 108px 1fr;
+      gap: 12px;
+      align-items: start;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .detail-row:last-child { border-bottom: 0; }
+    .detail-row > span { color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .06em; }
+    .detail-row > div { min-width: 0; display: grid; gap: 4px; }
+    .detail-row strong { font-size: 10.5px; line-height: 1.35; }
+    .detail-row code {
+      color: #c6c6d3;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 9px;
+      overflow-wrap: anywhere;
+    }
+
+    .proposal-card {
+      margin: 13px;
+      padding: 12px;
+      border: 1px solid #5c4780;
+      border-radius: 10px;
+      background: #251d35;
+      display: grid;
+      gap: 7px;
+    }
+
+    .proposal-card strong { font-size: 11px; }
+    .proposal-card p { margin: 0; color: #b9afc9; font-size: 9.5px; line-height: 1.45; }
+    .proposal-card code { color: #d5c3ff; font-size: 9px; }
+
+    .prototype-note {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.55;
+    }
+
+    .kbd {
+      display: inline-block;
+      padding: 1px 5px;
+      border: 1px solid #44444b;
+      border-bottom-width: 2px;
+      border-radius: 5px;
+      background: #242428;
+      color: #d5d5dc;
+      font-size: 9px;
+    }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      max-width: 320px;
+      display: none;
+      gap: 5px;
+      padding: 12px 14px;
+      border: 1px solid #464564;
+      border-radius: 10px;
+      background: #242336;
+      box-shadow: 0 16px 44px rgba(0,0,0,.45);
+      z-index: 80;
+    }
+
+    .toast.show { display: grid; }
+    .toast strong { font-size: 11px; }
+    .toast span { color: var(--muted); font-size: 9.5px; line-height: 1.4; }
+
+    @media (max-width: 980px) {
+      :root { --sidebar: 230px; }
+      .content-grid { grid-template-columns: 1fr; }
+      .head-status { display: none; }
+      .menu { width: 500px; }
+    }
+
+    @media (max-width: 760px) {
+      .app-shell {
+        display: block;
+      }
+
+      .topbar {
+        position: sticky;
+        display: flex;
+        height: 58px;
+      }
+
+      .brand { border-right: 0; }
+      .search { display: none; }
+      .top-actions { margin-left: auto; }
+
+      .sidebar {
+        position: static;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .nav-section, .profile { display: none; }
+
+      main { padding: 20px 16px 40px; }
+      .page-head { align-items: start; }
+      .truth-banner { grid-template-columns: 1fr; }
+      .truth-stats { justify-content: flex-start; }
+      .truth-stat { text-align: left; }
+
+      .menu {
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        top: 76px;
+        width: auto;
+        max-width: none;
+      }
+
+      .workspace-groups { max-height: calc(100vh - 260px); }
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">A</span>Atlas</div>
+    <label class="search">
+      <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
+        <circle cx="10.8" cy="10.8" r="5.8" stroke="currentColor" stroke-width="1.8"></circle>
+        <path d="m15.2 15.2 4 4" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"></path>
+      </svg>
+      <input aria-label="Search projects" placeholder="Search projects" type="search">
+    </label>
+    <div class="top-actions">
+      <button class="top-icon" aria-label="Notifications" type="button">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M6.5 9a5.5 5.5 0 0 1 11 0c0 5 2 5.5 2 7H4.5c0-1.5 2-2 2-7Z" stroke="currentColor" stroke-width="1.6"/><path d="M10 19h4" stroke="currentColor" stroke-linecap="round" stroke-width="1.6"/></svg>
+      </button>
+      <span class="avatar" aria-label="Aditya">AI</span>
+    </div>
+  </header>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+      <div class="switch-stack">
+        <div class="switch-label">Project</div>
+        <div class="switcher">
+          <button class="switcher-trigger" type="button" aria-expanded="false">
+            <span class="switch-icon">S</span>
+            <span class="trigger-copy">
+              <strong>Safara</strong>
+              <small>3 PRDs - Active</small>
+            </span>
+            <svg class="chevron" fill="none" viewBox="0 0 16 16"><path d="m5 6 3 3 3-3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/></svg>
+          </button>
+        </div>
+
+        <div class="switch-label">Workspace</div>
+        <div class="switcher" id="workspaceSwitcher">
+          <button class="switcher-trigger workspace-trigger" id="workspaceTrigger" type="button" aria-expanded="false" aria-controls="workspaceMenu">
+            <span class="switch-icon branch">
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><circle cx="7" cy="5" r="2" stroke="currentColor" stroke-width="1.7"/><circle cx="17" cy="19" r="2" stroke="currentColor" stroke-width="1.7"/><path d="M7 7v5c0 3 2 5 5 5h3M17 17V8" stroke="currentColor" stroke-linecap="round" stroke-width="1.7"/></svg>
+            </span>
+            <span class="trigger-copy">
+              <span class="trigger-meta-row">
+                <strong id="triggerName">Increment 03</strong>
+                <span class="tiny-chip chip-review" id="triggerStatus">Review</span>
+              </span>
+              <small id="triggerMeta">HEAD rev-safara-increment-003 - 1 staged change</small>
+            </span>
+            <svg class="chevron" fill="none" viewBox="0 0 16 16"><path d="m5 6 3 3 3-3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/></svg>
+          </button>
+
+          <section class="menu" id="workspaceMenu" aria-label="Workspace switcher">
+            <div class="menu-head">
+              <div class="menu-title">
+                <div>
+                  <strong>Switch workspace</strong>
+                  <small>Safara / branch-relative truth</small>
+                </div>
+                <small><span class="kbd">Esc</span> to close</small>
+              </div>
+
+              <label class="workspace-search">
+                <svg width="15" height="15" aria-hidden="true" fill="none" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="5.8" stroke="currentColor" stroke-width="1.8"/><path d="m15.2 15.2 4 4" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/></svg>
+                <input id="workspaceSearch" placeholder="Search workspace, owner, HEAD, or PRD..." type="search" autocomplete="off">
+              </label>
+
+              <div class="filter-row" role="tablist" aria-label="Workspace filters">
+                <button class="filter-btn active" type="button" data-filter="all">All</button>
+                <button class="filter-btn" type="button" data-filter="mine">Mine</button>
+                <button class="filter-btn" type="button" data-filter="review">Needs review</button>
+                <button class="filter-btn" type="button" data-filter="published">Published</button>
+              </div>
+            </div>
+
+            <div class="workspace-groups">
+              <div class="group-label">Published truth</div>
+
+              <button class="workspace-row"
+                      type="button"
+                      data-id="master"
+                      data-name="Master - Increment 02"
+                      data-owner="Atlas"
+                      data-filter-tags="published"
+                      data-status="Published"
+                      data-head="rev-safara-master-002"
+                      data-facts="85"
+                      data-prds="2"
+                      data-staged="0"
+                      data-description="Accepted current truth through Increment 02. Stable base for new workspaces.">
+                <span class="branch-glyph">
+                  <svg fill="none" viewBox="0 0 24 24"><circle cx="7" cy="5" r="2" stroke="currentColor" stroke-width="1.7"/><circle cx="17" cy="19" r="2" stroke="currentColor" stroke-width="1.7"/><path d="M7 7v5c0 3 2 5 5 5h3M17 17V8" stroke="currentColor" stroke-linecap="round" stroke-width="1.7"/></svg>
+                </span>
+                <span class="workspace-row-copy">
+                  <span class="row-title">
+                    <strong>Master - Increment 02</strong>
+                    <span class="tiny-chip chip-published">Published</span>
+                  </span>
+                  <p>Accepted current truth through Increment 02. Stable base for new workspaces.</p>
+                  <span class="row-meta">
+                    <span class="owner"><span class="owner-dot">A</span>Atlas</span>
+                    <code>rev-safara-master-002</code>
+                    <span>85 current facts</span>
+                  </span>
+                </span>
+                <span class="row-side">
+                  <span>2 PRDs</span>
+                  <span>Base</span>
+                </span>
+              </button>
+
+              <div class="group-label">Active workspaces</div>
+
+              <button class="workspace-row current"
+                      type="button"
+                      data-id="increment03"
+                      data-name="Increment 03"
+                      data-owner="Aditya"
+                      data-filter-tags="mine review"
+                      data-status="Review"
+                      data-head="rev-safara-increment-003"
+                      data-facts="133"
+                      data-prds="3"
+                      data-staged="1"
+                      data-description="PRD 03 adds manifest, reporting, audit, and delivery acceptance to the accepted base.">
+                <span class="branch-glyph">
+                  <svg fill="none" viewBox="0 0 24 24"><circle cx="7" cy="5" r="2" stroke="currentColor" stroke-width="1.7"/><circle cx="17" cy="19" r="2" stroke="currentColor" stroke-width="1.7"/><path d="M7 7v5c0 3 2 5 5 5h3M17 17V8" stroke="currentColor" stroke-linecap="round" stroke-width="1.7"/></svg>
+                </span>
+                <span class="workspace-row-copy">
+                  <span class="row-title">
+                    <strong>Increment 03</strong>
+                    <span class="tiny-chip chip-review">Review</span>
+                    <span class="tiny-chip chip-staged">1 staged</span>
+                  </span>
+                  <p>PRD 03 adds manifest, reporting, audit, and delivery acceptance to the accepted base.</p>
+                  <span class="row-meta">
+                    <span class="owner"><span class="owner-dot">AI</span>Aditya</span>
+                    <code>rev-safara-increment-003</code>
+                    <span>133 current facts</span>
+                  </span>
+                </span>
+                <span class="row-side">
+                  <span>3 PRDs</span>
+                  <span>Current</span>
+                </span>
+              </button>
+
+              <div class="group-label">Concurrency examples - UI demo only</div>
+
+              <button class="workspace-row"
+                      type="button"
+                      data-id="paymentCorrection"
+                      data-name="Payment reconciliation correction"
+                      data-owner="Dimas"
+                      data-filter-tags="review"
+                      data-status="Review"
+                      data-head="draft-head-104"
+                      data-facts="-"
+                      data-prds="1"
+                      data-staged="3"
+                      data-description="Example of another user's isolated correction branch based on Master.">
+                <span class="branch-glyph">
+                  <svg fill="none" viewBox="0 0 24 24"><circle cx="7" cy="5" r="2" stroke="currentColor" stroke-width="1.7"/><circle cx="17" cy="19" r="2" stroke="currentColor" stroke-width="1.7"/><path d="M7 7v5c0 3 2 5 5 5h3M17 17V8" stroke="currentColor" stroke-linecap="round" stroke-width="1.7"/></svg>
+                </span>
+                <span class="workspace-row-copy">
+                  <span class="row-title">
+                    <strong>Payment reconciliation correction</strong>
+                    <span class="tiny-chip chip-review">Needs review</span>
+                    <span class="tiny-chip chip-staged">3 staged</span>
+                  </span>
+                  <p>Example of another user's isolated correction branch based on Master.</p>
+                  <span class="row-meta">
+                    <span class="owner"><span class="owner-dot">DM</span>Dimas</span>
+                    <code>draft-head-104</code>
+                    <span>Base: Master</span>
+                  </span>
+                </span>
+                <span class="row-side">
+                  <span>1 PRD</span>
+                  <span>14m ago</span>
+                </span>
+              </button>
+
+              <button class="workspace-row"
+                      type="button"
+                      data-id="documentReadiness"
+                      data-name="Document readiness addendum"
+                      data-owner="Sari"
+                      data-filter-tags=""
+                      data-status="Draft"
+                      data-head="draft-head-087"
+                      data-facts="-"
+                      data-prds="2"
+                      data-staged="0"
+                      data-description="Example branch still being prepared; no accepted revision has been proposed yet.">
+                <span class="branch-glyph">
+                  <svg fill="none" viewBox="0 0 24 24"><circle cx="7" cy="5" r="2" stroke="currentColor" stroke-width="1.7"/><circle cx="17" cy="19" r="2" stroke="currentColor" stroke-width="1.7"/><path d="M7 7v5c0 3 2 5 5 5h3M17 17V8" stroke="currentColor" stroke-linecap="round" stroke-width="1.7"/></svg>
+                </span>
+                <span class="workspace-row-copy">
+                  <span class="row-title">
+                    <strong>Document readiness addendum</strong>
+                    <span class="tiny-chip chip-draft">Draft</span>
+                  </span>
+                  <p>Example branch still being prepared; no accepted revision has been proposed yet.</p>
+                  <span class="row-meta">
+                    <span class="owner"><span class="owner-dot">SR</span>Sari</span>
+                    <code>draft-head-087</code>
+                    <span>Base: Master</span>
+                  </span>
+                </span>
+                <span class="row-side">
+                  <span>2 PRDs</span>
+                  <span>1h ago</span>
+                </span>
+              </button>
+
+              <button class="workspace-row"
+                      type="button"
+                      data-id="refundRules"
+                      data-name="Refund rules PRD-04"
+                      data-owner="Aditya"
+                      data-filter-tags="mine"
+                      data-status="Processing"
+                      data-head="pending"
+                      data-facts="-"
+                      data-prds="1"
+                      data-staged="0"
+                      data-description="Example newly uploaded PRD branch while Atlas is still building candidate facts.">
+                <span class="branch-glyph">
+                  <svg fill="none" viewBox="0 0 24 24"><circle cx="7" cy="5" r="2" stroke="currentColor" stroke-width="1.7"/><circle cx="17" cy="19" r="2" stroke="currentColor" stroke-width="1.7"/><path d="M7 7v5c0 3 2 5 5 5h3M17 17V8" stroke="currentColor" stroke-linecap="round" stroke-width="1.7"/></svg>
+                </span>
+                <span class="workspace-row-copy">
+                  <span class="row-title">
+                    <strong>Refund rules PRD-04</strong>
+                    <span class="tiny-chip chip-processing">Processing</span>
+                  </span>
+                  <p>Example newly uploaded PRD branch while Atlas is still building candidate facts.</p>
+                  <span class="row-meta">
+                    <span class="owner"><span class="owner-dot">AI</span>Aditya</span>
+                    <code>HEAD pending</code>
+                    <span>Base: Master</span>
+                  </span>
+                </span>
+                <span class="row-side">
+                  <span>1 PRD</span>
+                  <span>Now</span>
+                </span>
+              </button>
+            </div>
+
+            <footer class="workspace-menu-foot">
+              <p>Workspace identity is the audit boundary. Switching changes the branch-relative current truth shown by Atlas.</p>
+              <button class="create-branch" id="createBranch" type="button">+ New workspace</button>
+            </footer>
+          </section>
+        </div>
+      </div>
+
+      <section class="nav-section">
+        <div class="nav-label">Project</div>
+        <div class="nav-item active">
+          <svg fill="none" viewBox="0 0 24 24"><path d="M4 12h4l2-5 4 10 2-5h4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"/></svg>
+          Main Workflow
+        </div>
+        <div class="nav-item">
+          <svg fill="none" viewBox="0 0 24 24"><path d="M6 5h12M6 10h12M6 15h8M6 19h6" stroke="currentColor" stroke-linecap="round" stroke-width="1.7"/></svg>
+          Project Facts
+        </div>
+        <div class="nav-item">
+          <svg fill="none" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M9 9h6v6H9z" stroke="currentColor" stroke-width="1.5"/></svg>
+          CES Result
+        </div>
+        <div class="nav-item">
+          <svg fill="none" viewBox="0 0 24 24"><path d="M6 8h12M6 12h8M6 16h10" stroke="currentColor" stroke-linecap="round" stroke-width="1.7"/></svg>
+          Changes Done
+        </div>
+      </section>
+
+      <section class="nav-section">
+        <div class="nav-label">Workspace</div>
+        <div class="nav-item">
+          <svg fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="1.7"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-linecap="round" stroke-width="1.7"/></svg>
+          Sources
+        </div>
+        <div class="nav-item">
+          <svg fill="none" viewBox="0 0 24 24"><circle cx="9" cy="9" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M4 18c.6-3 2.2-4.5 5-4.5S13.4 15 14 18M16 8.5c2 0 3 1.1 3 2.5s-1 2.5-3 2.5" stroke="currentColor" stroke-linecap="round" stroke-width="1.7"/></svg>
+          Members
+        </div>
+        <div class="nav-item">
+          <svg fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M12 4v2M12 18v2M4 12h2M18 12h2" stroke="currentColor" stroke-linecap="round" stroke-width="1.7"/></svg>
+          Settings
+        </div>
+      </section>
+
+      <div class="profile">
+        <span class="avatar">AI</span>
+        <span class="profile-copy"><strong>Aditya</strong><small>Owner</small></span>
+      </div>
+    </div>
+  </aside>
+
+  <main>
+    <header class="page-head">
+      <div>
+        <p class="eyebrow">Main Workflow</p>
+        <h1>Safara operational model</h1>
+        <p>The content below is deliberately branch-relative. The workspace selector changes which accepted HEAD Atlas treats as current truth without replaying every source PRD.</p>
+      </div>
+      <aside class="head-status">
+        <span>Current workspace</span>
+        <strong id="headWorkspace">Increment 03</strong>
+        <code id="headRevision">HEAD rev-safara-increment-003</code>
+      </aside>
+    </header>
+
+    <section class="truth-banner">
+      <div class="truth-copy">
+        <strong id="truthTitle">You are viewing Increment 03 current truth</strong>
+        <p id="truthDescription">PRD 03 adds manifest, reporting, audit, and delivery acceptance to the accepted base.</p>
+      </div>
+      <div class="truth-stats">
+        <span class="truth-stat"><b id="factCount">133</b><span>Current facts</span></span>
+        <span class="truth-stat"><b id="prdCount">3</b><span>PRDs in history</span></span>
+        <span class="truth-stat"><b id="stagedCount">1</b><span>Staged changes</span></span>
+      </div>
+    </section>
+
+    <div class="content-grid">
+      <section class="panel">
+        <header class="panel-head">
+          <div>
+            <strong>Workflow stages</strong>
+            <small>Branch-relative projection</small>
+          </div>
+          <small id="workflowScope">11 stages at this HEAD</small>
+        </header>
+        <div class="workflow-list">
+          <article class="workflow-step">
+            <span class="step-num">01</span>
+            <span class="step-copy"><strong>Access control</strong><small>Inactive users cannot access the application.</small></span>
+            <span class="step-source">Increment 01</span>
+          </article>
+          <article class="workflow-step">
+            <span class="step-num">02</span>
+            <span class="step-copy"><strong>Packages and departures</strong><small>Admin creates packages and scheduled departures.</small></span>
+            <span class="step-source">Increment 01</span>
+          </article>
+          <article class="workflow-step">
+            <span class="step-num">03</span>
+            <span class="step-copy"><strong>Registration</strong><small>Pilgrims are registered to an open departure with an agreed price snapshot.</small></span>
+            <span class="step-source">Increment 01</span>
+          </article>
+          <article class="workflow-step">
+            <span class="step-num">04</span>
+            <span class="step-copy"><strong>Payments, documents, readiness</strong><small>Operational requirements introduced in Increment 02.</small></span>
+            <span class="step-source">Increment 02</span>
+          </article>
+          <article class="workflow-step" id="increment03Stage">
+            <span class="step-num">05</span>
+            <span class="step-copy"><strong>Manifest, reporting, audit</strong><small>Only current when the selected workspace includes Increment 03.</small></span>
+            <span class="step-source">Increment 03</span>
+          </article>
+        </div>
+      </section>
+
+      <aside class="side-stack">
+        <section class="panel">
+          <header class="panel-head"><strong>Workspace identity</strong><small>Audit boundary</small></header>
+          <div class="detail-list">
+            <div class="detail-row"><span>Project</span><div><strong>Safara</strong><code>projectId: safara</code></div></div>
+            <div class="detail-row"><span>Workspace</span><div><strong id="detailWorkspace">Increment 03</strong><code id="detailWorkspaceId">branch-increment-003</code></div></div>
+            <div class="detail-row"><span>HEAD</span><div><code id="detailHead">rev-safara-increment-003</code></div></div>
+            <div class="detail-row"><span>Owner</span><div><strong id="detailOwner">Aditya</strong></div></div>
+            <div class="detail-row"><span>Status</span><div><strong id="detailStatus">Review</strong></div></div>
+          </div>
+        </section>
+
+        <section class="panel" id="proposalPanel">
+          <header class="panel-head"><strong>Change state</strong><small>Before publish</small></header>
+          <div class="proposal-card">
+            <span class="tiny-chip chip-staged" style="justify-self:start">Staged proposal</span>
+            <strong>Manifest eligibility correction</strong>
+            <p>This proposal is attached to the Increment 03 workspace and does not mutate Master until reviewed and accepted.</p>
+            <code>proposal-manifest-staged-correction</code>
+          </div>
+        </section>
+      </aside>
+    </div>
+
+    <p class="prototype-note">
+      Fixture-backed rows are <strong>Master - Increment 02</strong> and <strong>Increment 03</strong>.
+      The other rows are explicitly demo-only concurrency examples so the selector can be evaluated under the multi-user branch pressure you described.
+    </p>
+  </main>
+</div>
+
+<div class="toast" id="toast">
+  <strong id="toastTitle">Workspace switched</strong>
+  <span id="toastBody"></span>
+</div>
+
+<script>
+(function () {
+  const trigger = document.getElementById("workspaceTrigger");
+  const menu = document.getElementById("workspaceMenu");
+  const switcher = document.getElementById("workspaceSwitcher");
+  const search = document.getElementById("workspaceSearch");
+  const rows = Array.from(document.querySelectorAll(".workspace-row"));
+  const filters = Array.from(document.querySelectorAll(".filter-btn"));
+  const toast = document.getElementById("toast");
+
+  let activeFilter = "all";
+  let toastTimer;
+
+  function openMenu() {
+    menu.classList.add("open");
+    trigger.setAttribute("aria-expanded", "true");
+    setTimeout(function () { search.focus(); }, 0);
+  }
+
+  function closeMenu() {
+    menu.classList.remove("open");
+    trigger.setAttribute("aria-expanded", "false");
+  }
+
+  trigger.addEventListener("click", function () {
+    menu.classList.contains("open") ? closeMenu() : openMenu();
+  });
+
+  document.addEventListener("pointerdown", function (event) {
+    if (!switcher.contains(event.target)) closeMenu();
+  });
+
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+      closeMenu();
+      trigger.focus();
+    }
+  });
+
+  function applyFilters() {
+    const q = search.value.trim().toLowerCase();
+
+    rows.forEach(function (row) {
+      const haystack = [
+        row.dataset.name,
+        row.dataset.owner,
+        row.dataset.head,
+        row.dataset.status,
+        row.dataset.description
+      ].join(" ").toLowerCase();
+
+      const tags = (row.dataset.filterTags || "").split(/\s+/).filter(Boolean);
+      const filterMatch =
+        activeFilter === "all" ||
+        (activeFilter === "published" && tags.includes("published")) ||
+        (activeFilter === "mine" && tags.includes("mine")) ||
+        (activeFilter === "review" && tags.includes("review"));
+
+      row.classList.toggle("hidden-row", !(filterMatch && haystack.includes(q)));
+    });
+  }
+
+  search.addEventListener("input", applyFilters);
+
+  filters.forEach(function (button) {
+    button.addEventListener("click", function () {
+      activeFilter = button.dataset.filter;
+      filters.forEach(function (item) { item.classList.toggle("active", item === button); });
+      applyFilters();
+    });
+  });
+
+  function statusClass(status) {
+    if (status === "Published") return "chip-published";
+    if (status === "Review") return "chip-review";
+    if (status === "Processing") return "chip-processing";
+    return "chip-draft";
+  }
+
+  function workspaceId(id) {
+    if (id === "master") return "branch-master";
+    if (id === "increment03") return "branch-increment-003";
+    return "demo-" + id;
+  }
+
+  function switchWorkspace(row) {
+    rows.forEach(function (item) { item.classList.toggle("current", item === row); });
+
+    const data = row.dataset;
+    const isFixtureMaster = data.id === "master";
+    const isFixtureIncrement = data.id === "increment03";
+    const factValue = data.facts === "-" ? "--" : data.facts;
+
+    document.getElementById("triggerName").textContent = data.name;
+    const triggerStatus = document.getElementById("triggerStatus");
+    triggerStatus.textContent = data.status;
+    triggerStatus.className = "tiny-chip " + statusClass(data.status);
+    document.getElementById("triggerMeta").textContent =
+      "HEAD " + data.head + (Number(data.staged) ? " - " + data.staged + " staged change" + (Number(data.staged) > 1 ? "s" : "") : "");
+
+    document.getElementById("headWorkspace").textContent = data.name;
+    document.getElementById("headRevision").textContent = "HEAD " + data.head;
+
+    document.getElementById("truthTitle").textContent = "You are viewing " + data.name + " current truth";
+    document.getElementById("truthDescription").textContent = data.description;
+    document.getElementById("factCount").textContent = factValue;
+    document.getElementById("prdCount").textContent = data.prds;
+    document.getElementById("stagedCount").textContent = data.staged;
+
+    document.getElementById("detailWorkspace").textContent = data.name;
+    document.getElementById("detailWorkspaceId").textContent = workspaceId(data.id);
+    document.getElementById("detailHead").textContent = data.head;
+    document.getElementById("detailOwner").textContent = data.owner;
+    document.getElementById("detailStatus").textContent = data.status;
+
+    document.getElementById("proposalPanel").style.display = Number(data.staged) ? "" : "none";
+    document.getElementById("increment03Stage").style.opacity = isFixtureMaster ? ".28" : "1";
+    document.getElementById("workflowScope").textContent =
+      isFixtureMaster ? "Base truth through Increment 02" :
+      isFixtureIncrement ? "11 stages at this HEAD" :
+      "Demo-only workspace state";
+
+    closeMenu();
+
+    document.getElementById("toastTitle").textContent = "Workspace switched";
+    document.getElementById("toastBody").textContent =
+      data.name + " is now the selected branch context. Project navigation would resolve against this HEAD.";
+    toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.classList.remove("show"); }, 2800);
+  }
+
+  rows.forEach(function (row) {
+    row.addEventListener("click", function () { switchWorkspace(row); });
+  });
+
+  document.getElementById("createBranch").addEventListener("click", function () {
+    document.getElementById("toastTitle").textContent = "Prototype action";
+    document.getElementById("toastBody").textContent =
+      "In Atlas, this would start a new isolated workspace from the selected accepted base rather than editing Master directly.";
+    toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.classList.remove("show"); }, 3200);
+  });
+})();
+</script>
+</body>
+</html>

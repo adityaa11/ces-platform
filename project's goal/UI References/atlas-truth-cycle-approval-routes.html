@@ -1,0 +1,702 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Approval routes · Atlas</title>
+  <script>
+    (() => {
+      try {
+        const savedTheme = localStorage.getItem('atlas-theme');
+        if (savedTheme === 'dark' || savedTheme === 'light') document.documentElement.dataset.theme = savedTheme;
+      } catch (_) {}
+    })();
+  </script>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f7f9;
+      --surface: #ffffff;
+      --surface-subtle: #f2f3f6;
+      --surface-hover: #f7f7fa;
+      --surface-inset: #fafafd;
+      --text: #18181b;
+      --text-soft: #3f3f46;
+      --muted: #71717a;
+      --muted-2: #a1a1aa;
+      --line: #e4e4e7;
+      --line-strong: #d4d4d8;
+      --accent: #665cf4;
+      --accent-dark: #5147df;
+      --accent-soft: #efedff;
+      --green: #178653;
+      --green-soft: #eaf7f0;
+      --amber: #a85d00;
+      --amber-soft: #fff4df;
+      --red: #b43737;
+      --red-soft: #fff0f0;
+      --blue: #3266c7;
+      --blue-soft: #eef4ff;
+      --shadow: 0 1px 2px rgb(18 24 40 / .04), 0 8px 24px rgb(18 24 40 / .035);
+      --sidebar: 242px;
+      --topbar: 64px;
+      --gutter: clamp(22px, 3vw, 54px);
+      --radius-sm: 8px;
+      --radius-md: 11px;
+      --radius-lg: 13px;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #17171d;
+      --surface: #202027;
+      --surface-subtle: #292932;
+      --surface-hover: #2d2d37;
+      --surface-inset: #1b1b22;
+      --text: #f4f4f5;
+      --text-soft: #d4d4d8;
+      --muted: #a1a1aa;
+      --muted-2: #71717a;
+      --line: #373740;
+      --line-strong: #4a4a55;
+      --accent: #8b83ff;
+      --accent-dark: #afa9ff;
+      --accent-soft: #302d52;
+      --green: #54c88b;
+      --green-soft: #1d3b2d;
+      --amber: #efb45c;
+      --amber-soft: #45351f;
+      --red: #f08383;
+      --red-soft: #422626;
+      --blue: #8fb4ff;
+      --blue-soft: #253650;
+      --shadow: 0 12px 32px rgb(0 0 0 / .2);
+    }
+    * { box-sizing: border-box; }
+    html { background: var(--bg); color: var(--text); font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+    body { margin: 0; min-width: 320px; min-height: 100vh; background: var(--bg); color: var(--text); }
+    body.no-scroll { overflow: hidden; }
+    a { color: inherit; }
+    button, input, select, textarea { font: inherit; color: inherit; }
+    button, a, input, select, textarea { outline: none; }
+    button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--accent) 28%, transparent);
+      outline-offset: 2px;
+    }
+    button { cursor: pointer; }
+    .shell { display: grid; grid-template-columns: var(--sidebar) minmax(0, 1fr); min-height: 100vh; }
+    .sidebar { position: sticky; top: 0; z-index: 40; display: flex; flex-direction: column; height: 100dvh; overflow: auto; border-right: 1px solid var(--line); background: var(--surface); }
+    .brand { display: flex; align-items: center; gap: 10px; min-height: 68px; padding: 0 22px; font-size: 15px; font-weight: 800; letter-spacing: -.02em; text-decoration: none; }
+    .brand-mark { display: grid; width: 29px; height: 29px; place-items: center; border-radius: 9px; background: var(--accent); color: #fff; font-size: 14px; }
+    .project-switcher { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; align-items: center; margin: 5px 14px 18px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); text-align: left; }
+    .project-switcher:hover { background: var(--surface-hover); }
+    .project-avatar { display: grid; width: 32px; height: 32px; place-items: center; border-radius: 8px; background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 850; }
+    .project-switcher strong, .project-switcher small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .project-switcher strong { font-size: 12px; }
+    .project-switcher small { margin-top: 2px; color: var(--muted); font-size: 10px; }
+    .chevron { color: var(--muted); font-size: 14px; }
+    .nav-group { padding: 0 10px 14px; }
+    .nav-label { padding: 0 10px 7px; color: var(--muted-2); font-size: 10px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+    .nav { display: grid; gap: 2px; }
+    .nav a { display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 0 11px; border-radius: var(--radius-sm); color: var(--muted); font-size: 12px; font-weight: 650; text-decoration: none; }
+    .nav a:hover { background: var(--surface-subtle); color: var(--text); }
+    .nav a.active { background: var(--accent-soft); color: var(--accent-dark); }
+    .nav-ico { width: 18px; color: currentColor; font-size: 15px; text-align: center; }
+    .sidebar-spacer { flex: 1; min-height: 18px; }
+    .account { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 9px; align-items: center; min-height: 66px; padding: 10px 14px; border-top: 1px solid var(--line); }
+    .avatar { display: grid; width: 32px; height: 32px; place-items: center; border-radius: 50%; background: #5b647a; color: #fff; font-size: 10px; font-weight: 800; }
+    .account strong, .account small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .account strong { font-size: 11px; }
+    .account small { margin-top: 2px; color: var(--muted); font-size: 9px; }
+    .account > span:last-child { color: var(--muted); font-size: 15px; }
+    .main { min-width: 0; min-height: 100vh; }
+    .topbar { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 16px; height: var(--topbar); padding: 0 clamp(18px, 2vw, 30px); border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 95%, transparent); backdrop-filter: blur(14px); }
+    .mobile-menu { display: none; width: 42px; height: 42px; border: 0; border-radius: var(--radius-sm); background: transparent; font-size: 18px; }
+    .mobile-menu:hover { background: var(--surface-subtle); }
+    .breadcrumb { display: flex; min-width: 0; align-items: center; gap: 7px; color: var(--muted); font-size: 11px; }
+    .breadcrumb span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .breadcrumb strong { overflow: hidden; color: var(--text); font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+    .crumb-sep { color: var(--muted-2); }
+    .top-actions { display: flex; align-items: center; gap: 8px; }
+    .theme-toggle, .top-icon { display: inline-flex; min-height: 38px; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); color: var(--muted); font-size: 11px; font-weight: 700; }
+    .theme-toggle { gap: 6px; padding: 0 10px; }
+    .theme-toggle:hover, .top-icon:hover { background: var(--surface-subtle); color: var(--text); }
+    .top-icon { width: 38px; font-size: 15px; }
+    .route { width: 100%; padding: 28px var(--gutter) 70px; }
+    .approval-bar { display: flex; align-items: center; justify-content: space-between; gap: 22px; margin-bottom: 25px; padding: 14px 16px; border: 1px solid #ead9b9; border-radius: var(--radius-md); background: var(--amber-soft); }
+    .approval-bar.is-approved { border-color: color-mix(in srgb, var(--green) 34%, var(--line)); background: var(--green-soft); }
+    .approval-bar.is-rejected { border-color: color-mix(in srgb, var(--red) 34%, var(--line)); background: var(--red-soft); }
+    .approval-copy { min-width: 0; }
+    .approval-copy strong { display: block; font-size: 12px; line-height: 1.25; }
+    .approval-copy p { margin: 4px 0 0; color: var(--text-soft); font-size: 10px; line-height: 1.45; }
+    .approval-actions { display: flex; flex: 0 0 auto; gap: 7px; }
+    .secondary-btn, .primary-btn, .quiet-btn, .danger-btn { min-height: 40px; border-radius: var(--radius-sm); font-size: 11px; font-weight: 750; }
+    .secondary-btn { padding: 0 13px; border: 1px solid var(--line); background: var(--surface); }
+    .secondary-btn:hover { background: var(--surface-subtle); }
+    .primary-btn { padding: 0 14px; border: 1px solid var(--accent); background: var(--accent); color: #fff; }
+    .primary-btn:hover { background: var(--accent-dark); }
+    .primary-btn:disabled, .secondary-btn:disabled { cursor: not-allowed; opacity: .48; }
+    .danger-btn { padding: 0 13px; border: 1px solid color-mix(in srgb, var(--red) 38%, var(--line)); background: var(--surface); color: var(--red); }
+    .danger-btn:hover { background: var(--red-soft); }
+    .quiet-btn { padding: 0 10px; border: 0; background: transparent; color: var(--muted); }
+    .quiet-btn:hover { color: var(--text); }
+    .page-header { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 30px; align-items: end; margin-bottom: 24px; }
+    .page-header .copy { max-width: 820px; }
+    .eyebrow, .section-kicker { display: block; margin-bottom: 8px; color: var(--accent); font-size: 10px; font-weight: 850; letter-spacing: .13em; line-height: 1.2; text-transform: uppercase; }
+    .page-header h1 { margin: 0; font-size: clamp(27px, 3vw, 34px); letter-spacing: -.04em; line-height: 1.08; }
+    .page-header p { max-width: 760px; margin: 9px 0 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .header-meta { display: grid; justify-items: end; gap: 8px; }
+    .status { display: inline-flex; min-height: 26px; align-items: center; gap: 6px; padding: 0 9px; border-radius: 999px; font-size: 10px; font-weight: 800; }
+    .status.awaiting { background: var(--amber-soft); color: var(--amber); }
+    .status.approved { background: var(--green-soft); color: var(--green); }
+    .status.rejected { background: var(--red-soft); color: var(--red); }
+    .status.locked { background: var(--surface-subtle); color: var(--muted); }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .version-chip { padding: 0; border: 0; background: transparent; color: var(--muted); font-size: 10px; }
+    .version-chip strong { color: var(--text); font-variant-numeric: tabular-nums; }
+    .panel { border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow); }
+    .panel-header { display: flex; align-items: start; justify-content: space-between; gap: 18px; padding: 17px 18px 15px; border-bottom: 1px solid var(--line); }
+    .panel-header h2 { margin: 0; font-size: 14px; letter-spacing: -.015em; line-height: 1.25; }
+    .panel-header p { max-width: 620px; margin: 5px 0 0; color: var(--muted); font-size: 10px; line-height: 1.45; }
+    .atlas-section-map { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-bottom: 1px solid var(--line); background: var(--surface-inset); }
+    .atlas-section-link { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; min-width: 0; padding: 12px 13px; border-right: 1px solid var(--line); color: var(--muted); text-decoration: none; }
+    .atlas-section-link:last-child { border-right: 0; }
+    .atlas-section-link:hover { background: var(--surface-hover); color: var(--text); }
+    .atlas-section-link.is-current { background: var(--surface); box-shadow: inset 0 -3px 0 var(--accent); color: var(--text); }
+    .atlas-section-index { color: var(--muted-2); font-size: 9px; font-weight: 850; line-height: 1.35; }
+    .atlas-section-link.is-current .atlas-section-index { color: var(--accent-dark); }
+    .atlas-section-link strong, .atlas-section-link small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .atlas-section-link strong { font-size: 9px; line-height: 1.35; }
+    .atlas-section-link small { margin-top: 3px; color: var(--muted); font-size: 8px; line-height: 1.3; }
+    .main-grid { display: block; max-width: 1120px; }
+    .routes-panel { overflow: hidden; }
+    .review-board { display: grid; grid-template-columns: minmax(0, 1.18fr) minmax(320px, .82fr); align-items: stretch; }
+    .interpretation-pane { min-width: 0; padding: 19px 20px 18px; }
+    .interpretation-head, .decision-pane-head { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
+    .interpretation-head h3, .decision-pane-head h3 { margin: 0; font-size: 17px; letter-spacing: -.02em; line-height: 1.25; }
+    .interpretation-head .section-kicker, .decision-pane-head .section-kicker { margin-bottom: 6px; }
+    .interpretation-head .version-chip { padding-top: 3px; text-align: right; white-space: nowrap; }
+    .interpretation-lead { margin: 10px 0 0; color: var(--text-soft); font-size: 11px; line-height: 1.55; }
+    .knowledge-list { display: grid; margin-top: 17px; border-top: 1px solid var(--line); }
+    .knowledge-row { display: grid; grid-template-columns: 27px minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 12px 0; border-bottom: 1px solid var(--line); }
+    .knowledge-order { color: var(--muted-2); font-size: 10px; font-weight: 850; line-height: 1.4; }
+    .knowledge-row strong { display: block; font-size: 10px; line-height: 1.3; }
+    .knowledge-row p { margin: 4px 0 0; color: var(--muted); font-size: 9px; line-height: 1.5; }
+    .knowledge-row em { color: var(--text-soft); font-style: normal; font-weight: 750; }
+    .knowledge-row > small { color: var(--muted); font-size: 8px; line-height: 1.35; text-align: right; white-space: nowrap; }
+    .interpretation-target { margin-top: 14px; }
+    .decision-pane { min-width: 0; border-left: 1px solid var(--line); background: var(--surface-inset); }
+    .decision-pane-head { display: block; padding: 19px 18px 14px; border-bottom: 1px solid var(--line); }
+    .decision-pane-head p { margin: 6px 0 0; color: var(--muted); font-size: 10px; line-height: 1.45; }
+    .route-list { background: var(--surface-inset); }
+    .decision-pane .route-option { padding: 13px 15px; }
+    .decision-pane .route-option h3 { margin-top: 9px; }
+    .decision-pane .route-option p { margin-top: 5px; }
+    .decision-pane .route-option footer { margin-top: 9px; }
+    .route-option { display: block; width: 100%; padding: 15px 16px; border: 0; border-bottom: 1px solid var(--line); background: transparent; text-align: left; }
+    .route-option:hover { background: var(--surface-hover); }
+    .route-option.is-selected { position: relative; background: var(--surface); box-shadow: inset 3px 0 0 var(--accent); }
+    .route-option:last-child { border-bottom: 0; }
+    .route-option-top { display: flex; align-items: center; justify-content: space-between; gap: 9px; }
+    .route-index { color: var(--muted-2); font-size: 10px; font-weight: 850; letter-spacing: .05em; }
+    .route-badge { padding: 4px 6px; border-radius: 5px; background: var(--accent-soft); color: var(--accent-dark); font-size: 8px; font-weight: 800; }
+    .route-option-copy { min-width: 0; }
+    .route-option h3 { margin: 12px 0 0; font-size: 13px; letter-spacing: -.01em; line-height: 1.3; }
+    .route-option p { margin: 6px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+    .route-option footer { display: flex; align-items: center; gap: 6px; margin-top: 12px; color: var(--text-soft); font-size: 9px; line-height: 1.3; }
+    .route-option footer span { color: var(--muted-2); }
+    .route-detail { padding: 19px 20px 18px; }
+    .detail-top { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
+    .detail-top h3 { margin: 0; font-size: 18px; letter-spacing: -.025em; line-height: 1.2; }
+    .detail-top p { margin: 6px 0 0; color: var(--muted); font-size: 10px; line-height: 1.45; }
+    .detail-flow { display: grid; grid-template-columns: 1fr 18px 1fr 18px 1fr; gap: 4px; align-items: stretch; margin-top: 19px; }
+    .flow-arrow { display: grid; place-items: center; color: var(--muted-2); font-size: 15px; }
+    .flow-node { min-width: 0; padding: 10px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-inset); }
+    .flow-node.is-result { border-color: color-mix(in srgb, var(--accent) 30%, var(--line)); background: var(--accent-soft); }
+    .flow-node small { display: block; color: var(--muted); font-size: 8px; font-weight: 800; letter-spacing: .06em; line-height: 1.2; text-transform: uppercase; }
+    .flow-node strong { display: block; margin-top: 7px; font-size: 10px; line-height: 1.35; }
+    .flow-node span { display: block; margin-top: 4px; color: var(--muted); font-size: 9px; line-height: 1.35; }
+    .detail-sections { display: grid; gap: 13px; margin-top: 19px; }
+    .detail-section { padding-top: 13px; border-top: 1px solid var(--line); }
+    .detail-section > small { display: block; color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .07em; line-height: 1.2; text-transform: uppercase; }
+    .detail-section ul { display: grid; gap: 7px; margin: 9px 0 0; padding: 0; list-style: none; }
+    .detail-section li { position: relative; padding-left: 17px; color: var(--text-soft); font-size: 10px; line-height: 1.45; }
+    .detail-section li::before { position: absolute; top: 0; left: 0; color: var(--green); content: "✓"; font-weight: 850; }
+    .detail-section li.is-warn::before { color: var(--amber); content: "!"; }
+    .detail-callout { display: flex; gap: 9px; align-items: start; margin-top: 15px; padding: 10px 11px; border-left: 3px solid var(--accent); background: var(--accent-soft); }
+    .callout-icon { color: var(--accent-dark); font-size: 13px; line-height: 1; }
+    .detail-callout p { margin: 0; color: var(--text-soft); font-size: 9px; line-height: 1.5; }
+    .detail-callout strong { color: var(--text); }
+    .detail-callout.is-warn { border-left-color: var(--amber); background: var(--amber-soft); }
+    .detail-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 17px; padding-top: 14px; border-top: 1px solid var(--line); }
+    .annotation-target { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 14px; margin-top: 12px; padding: 11px 12px; border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--line)); border-radius: var(--radius-sm); background: var(--accent-soft); color: var(--text-soft); text-align: left; }
+    .annotation-target:hover, .annotation-target.is-annotated { border-color: var(--accent); background: color-mix(in srgb, var(--accent-soft) 78%, var(--surface)); }
+    .annotation-target strong { display: block; color: var(--text); font-size: 10px; line-height: 1.35; }
+    .annotation-target small { display: block; margin-top: 4px; color: var(--muted); font-size: 8px; line-height: 1.3; }
+    .annotation-target span { flex: 0 0 auto; color: var(--accent-dark); font-size: 9px; font-weight: 800; }
+    .assistant-thread { display: grid; gap: 9px; padding: 14px 18px 0; }
+    .chat-message { max-width: 94%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-inset); }
+    .chat-message.user { justify-self: end; border-color: color-mix(in srgb, var(--accent) 24%, var(--line)); background: var(--accent-soft); }
+    .chat-message small { display: block; color: var(--muted); font-size: 8px; font-weight: 800; letter-spacing: .07em; line-height: 1.2; text-transform: uppercase; }
+    .chat-message p { margin: 5px 0 0; color: var(--text-soft); font-size: 10px; line-height: 1.45; }
+    .chat-message .source-ref { margin-top: 7px; color: var(--accent-dark); font-size: 8px; font-weight: 700; line-height: 1.35; }
+    .assistant-input { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 7px; margin: 13px 18px 0; }
+    .assistant-input input { width: 100%; min-height: 36px; padding: 0 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); font-size: 10px; }
+    .assistant-input input:focus { border-color: var(--accent); }
+    .assistant-input button { min-height: 36px; padding: 0 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--text-soft); font-size: 9px; font-weight: 750; }
+    .assistant-input button:hover { background: var(--surface-subtle); }
+    .annotation-source { display: block; margin-top: 7px; color: var(--muted); font-size: 8px; line-height: 1.3; }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+    .assistant-backdrop { position: fixed; inset: 0; z-index: 110; display: none; justify-content: flex-end; background: rgb(18 19 26 / .42); backdrop-filter: blur(3px); }
+    .assistant-backdrop.open { display: flex; }
+    .assistant-drawer { display: flex; width: min(440px, 100%); height: 100%; flex-direction: column; overflow: auto; padding: 22px; border-left: 1px solid var(--line); background: var(--surface); box-shadow: -18px 0 55px rgb(0 0 0 / .18); }
+    .assistant-drawer-head { display: flex; align-items: start; justify-content: space-between; gap: 15px; }
+    .assistant-drawer-head h2 { margin: 0; font-size: 19px; letter-spacing: -.025em; line-height: 1.2; }
+    .assistant-drawer-head p { margin: 6px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+    .assistant-close { display: grid; width: 34px; height: 34px; flex: 0 0 auto; place-items: center; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--muted); font-size: 18px; }
+    .assistant-close:hover { background: var(--surface-subtle); color: var(--text); }
+    .assistant-drawer .assistant-thread { max-height: 330px; overflow: auto; margin-top: 18px; padding: 0; }
+    .assistant-selection { margin-top: 17px; padding: 13px; border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line)); border-radius: var(--radius-md); background: var(--accent-soft); }
+    .assistant-selection[hidden] { display: none; }
+    .assistant-selection > small { color: var(--accent-dark); font-size: 8px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+    .assistant-selection blockquote { margin: 8px 0 0; color: var(--text); font-size: 12px; font-weight: 700; line-height: 1.45; }
+    .assistant-selection .annotation-source { margin-top: 8px; }
+    .vocabulary-choices { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 13px; }
+    .vocab-choice { min-height: 31px; padding: 0 9px; border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line)); border-radius: 6px; background: var(--surface); color: var(--accent-dark); font-size: 9px; font-weight: 750; }
+    .vocab-choice:hover, .vocab-choice.is-selected { border-color: var(--accent); background: var(--accent); color: #fff; }
+    .annotation-note { display: grid; gap: 6px; margin-top: 13px; color: var(--text-soft); font-size: 9px; font-weight: 750; }
+    .annotation-note textarea { min-height: 67px; resize: vertical; padding: 8px 9px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); font-size: 10px; line-height: 1.45; }
+    .annotation-note textarea:focus { border-color: var(--accent); }
+    .annotation-save { width: 100%; margin-top: 12px; }
+    .assistant-drawer .assistant-input { margin: auto 0 0; padding-top: 18px; }
+    .assistant-drawer-note { margin: 10px 0 0; color: var(--muted); font-size: 8px; line-height: 1.45; }
+    .page-footer { margin-top: 28px; padding-top: 15px; border-top: 1px solid var(--line); color: var(--muted); font-size: 9px; line-height: 1.5; }
+    .backdrop { position: fixed; inset: 0; z-index: 100; display: none; place-items: center; padding: 20px; background: rgb(18 19 26 / .46); backdrop-filter: blur(3px); }
+    .backdrop.open { display: grid; }
+    .dialog { width: min(520px, 100%); max-height: calc(100dvh - 40px); overflow: auto; padding: 20px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); box-shadow: 0 22px 80px rgb(0 0 0 / .23); }
+    .dialog-head { display: flex; align-items: start; justify-content: space-between; gap: 16px; }
+    .dialog h2 { margin: 0; font-size: 18px; letter-spacing: -.025em; line-height: 1.2; }
+    .dialog .lead { margin: 7px 0 17px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+    .icon-btn { display: grid; width: 36px; height: 36px; place-items: center; border: 0; border-radius: 7px; background: transparent; color: var(--muted); font-size: 18px; }
+    .icon-btn:hover { background: var(--surface-subtle); color: var(--text); }
+    .dialog-summary { display: grid; gap: 8px; margin-top: 13px; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-inset); }
+    .dialog-summary div { display: flex; justify-content: space-between; gap: 15px; font-size: 10px; line-height: 1.35; }
+    .dialog-summary span { color: var(--muted); }
+    .dialog-summary strong { text-align: right; }
+    .dialog label { display: grid; gap: 6px; margin-top: 14px; color: var(--text-soft); font-size: 10px; font-weight: 750; }
+    .dialog textarea { min-height: 82px; resize: vertical; padding: 9px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); font-size: 11px; line-height: 1.45; }
+    .dialog-note { margin: 14px 0 0; padding: 9px 10px; border-left: 3px solid var(--accent); background: var(--accent-soft); color: var(--text-soft); font-size: 9px; line-height: 1.5; }
+    .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 19px; }
+    .toast { position: fixed; right: 22px; bottom: 22px; z-index: 120; display: none; width: min(350px, calc(100vw - 44px)); padding: 13px 14px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); box-shadow: var(--shadow); }
+    .toast.show { display: block; }
+    .toast strong, .toast span { display: block; }
+    .toast strong { font-size: 11px; }
+    .toast span { margin-top: 4px; color: var(--muted); font-size: 10px; line-height: 1.4; }
+    .drawer-backdrop { position: fixed; inset: 0; z-index: 35; display: none; background: rgb(18 19 26 / .38); }
+    .drawer-backdrop.open { display: block; }
+    @media (max-width: 1120px) {
+      :root { --sidebar: 220px; }
+      .main-grid { max-width: none; }
+    }
+    @media (max-width: 820px) {
+      .page-header { grid-template-columns: 1fr; align-items: start; gap: 13px; }
+      .header-meta { justify-items: start; }
+      .review-board { grid-template-columns: 1fr; }
+      .decision-pane { border-top: 1px solid var(--line); border-left: 0; }
+      .route-list { border-bottom: 1px solid var(--line); }
+      .atlas-section-map { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(165px, 1fr); overflow-x: auto; }
+      .route-option { display: grid; grid-template-columns: 35px minmax(0, 1fr); column-gap: 10px; align-items: start; }
+      .route-option-top { display: contents; }
+      .route-index { grid-row: 1 / span 4; padding-top: 1px; }
+      .route-badge { justify-self: start; }
+      .route-option h3 { margin-top: 9px; }
+      .route-option-copy, .route-option footer { grid-column: 2; }
+    }
+    @media (max-width: 700px) {
+      .shell { display: block; }
+      .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: min(282px, 86vw); height: 100dvh; transform: translateX(-102%); transition: transform .2s ease; box-shadow: var(--shadow); }
+      .sidebar.open { transform: translateX(0); }
+      .mobile-menu { display: inline-grid; place-items: center; }
+      .topbar { gap: 10px; padding: 0 15px; }
+      .breadcrumb { flex: 1; }
+      .top-icon { display: none; }
+      .route { padding: 22px 15px 54px; }
+      .approval-bar { align-items: stretch; flex-direction: column; gap: 13px; }
+      .approval-actions { flex-wrap: wrap; }
+      .approval-actions button { flex: 1; }
+      .detail-flow { grid-template-columns: 1fr; gap: 5px; }
+      .flow-arrow { min-height: 13px; transform: rotate(90deg); }
+      .detail-actions { flex-wrap: wrap; }
+      .detail-actions button { flex: 1; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .001ms !important; animation-duration: .001ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="drawer-backdrop" data-drawer-close></div>
+  <div class="shell">
+    <aside class="sidebar" aria-label="Workspace navigation">
+      <a class="brand" href="atlas-ui-refactor-standalone/main-workflow.html"><span class="brand-mark">A</span><span>Atlas</span></a>
+      <button class="project-switcher" type="button" aria-label="Current project: Safara operations platform">
+        <span class="project-avatar">S</span>
+        <span><strong>Safara operations platform</strong><small>Ready to review</small></span>
+        <span class="chevron">⌄</span>
+      </button>
+      <div class="nav-group">
+        <div class="nav-label">Workspace</div>
+        <nav class="nav" aria-label="Primary navigation">
+          <a href="atlas-ui-refactor-standalone/project-library.html"><span class="nav-ico">▦</span>Projects</a>
+          <a class="active" href="atlas-ui-refactor-standalone/main-workflow.html" aria-current="page"><span class="nav-ico">∿</span>Main Workflow</a>
+          <a href="atlas-ui-refactor-standalone/project-facts.html"><span class="nav-ico">≡</span>Project Facts</a>
+          <a href="atlas-ui-refactor-standalone/ces-result.html"><span class="nav-ico">◌</span>CES Result</a>
+          <a href="atlas-ui-refactor-standalone/changes-done.html"><span class="nav-ico">↗</span>Changes Done</a>
+          <a href="atlas-sources-prototype.html"><span class="nav-ico">▤</span>Sources</a>
+        </nav>
+      </div>
+      <div class="sidebar-spacer"></div>
+      <div class="account"><span class="avatar">NH</span><span><strong>Nadia Hartono</strong><small>Owner · nadia@example.com</small></span><span>⌄</span></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div style="display:flex;align-items:center;gap:9px;min-width:0">
+          <button class="mobile-menu" type="button" aria-label="Open workspace navigation" data-drawer-toggle>☰</button>
+          <nav class="breadcrumb" aria-label="Breadcrumb"><span>Safara operations platform</span><i class="crumb-sep">/</i><span>Main Workflow</span><i class="crumb-sep">/</i><strong>Approval routes</strong></nav>
+        </div>
+        <div class="top-actions"><button class="top-icon" type="button" aria-label="Search">⌕</button><button class="theme-toggle" type="button" data-theme-toggle><span>◐</span><span data-theme-label>Light</span></button></div>
+      </header>
+
+      <div class="route">
+        <section class="approval-bar" aria-label="Atlas understanding approval status" data-approval-bar>
+          <div class="approval-copy"><strong data-approval-title>Atlas understanding · Awaiting approval</strong><p data-approval-copy>Review Main Workflow, Project Facts, Changes Done, and source grounding before confirming the accumulated understanding.</p></div>
+          <div class="approval-actions"><button class="secondary-btn" type="button" data-open-assistant>Ask Atlas Assistant</button><button class="secondary-btn" type="button" data-scroll-to="decision-routes">See approval routes</button><button class="primary-btn" type="button" data-open-route="approve">Approve understanding</button></div>
+        </section>
+
+        <header class="page-header">
+          <div class="copy"><span class="eyebrow">Approval routing</span><h1>Review before Atlas Truth changes</h1><p>This is the human decision point between draft knowledge and the authoritative project model. Choose a route to see exactly what Atlas will record, preserve, or send back.</p></div>
+          <div class="header-meta"><span class="status awaiting" data-page-status><i class="status-dot"></i><span>Awaiting approval</span></span><span class="version-chip">Candidate cycle 03 · base Truth <strong>v5</strong></span></div>
+        </header>
+
+        <div class="main-grid">
+          <section class="panel routes-panel" id="decision-routes" aria-labelledby="routes-title">
+            <div class="panel-header"><div><span class="section-kicker">Current Atlas interpretation</span><h2 id="routes-title">What Atlas extracted from the Safara PRDs</h2><p>This is the candidate knowledge a reviewer is being asked to confirm, correct, or reject. The approval route comes after the interpretation.</p></div><span class="status awaiting">Draft · review required</span></div>
+            <nav class="atlas-section-map" aria-label="Atlas review sections">
+              <a class="atlas-section-link is-current" href="atlas-ui-refactor-standalone/main-workflow.html" aria-current="page"><span class="atlas-section-index">01</span><span><strong>Main Workflow</strong><small>5 scopes · current review</small></span></a>
+              <a class="atlas-section-link" href="atlas-ui-refactor-standalone/project-facts.html"><span class="atlas-section-index">02</span><span><strong>Project Facts</strong><small>6 groups · 8 facts</small></span></a>
+              <a class="atlas-section-link" href="atlas-ui-refactor-standalone/changes-done.html"><span class="atlas-section-index">03</span><span><strong>Changes Done</strong><small>3 increments · 6 changes</small></span></a>
+              <a class="atlas-section-link" href="atlas-sources-prototype.html"><span class="atlas-section-index">04</span><span><strong>Sources</strong><small>3 PRDs · evidence trail</small></span></a>
+              <a class="atlas-section-link" href="atlas-ui-refactor-standalone/ces-result.html"><span class="atlas-section-index">05</span><span><strong>CES Result</strong><small>Opens after truth approval</small></span></a>
+            </nav>
+            <div class="review-board">
+              <section class="interpretation-pane" aria-labelledby="interpretation-title">
+                <div class="interpretation-head"><div><span class="section-kicker">Candidate cycle 03</span><h3 id="interpretation-title">Safara operating model</h3></div><span class="version-chip">3 source PRDs · base Truth <strong>v5</strong></span></div>
+                <p class="interpretation-lead">Atlas currently reads the project as one connected journey: prepare a departure, register a pilgrim, complete requirements, confirm readiness, then finalize a stable manifest.</p>
+                <div class="knowledge-list">
+                  <article class="knowledge-row"><span class="knowledge-order">01</span><div><strong>Departure and registration</strong><p>Registration requires an open departure with remaining capacity. A pilgrim cannot have two active registrations for the same departure, and the registration price becomes the agreed price.</p></div><small>PRD 1 · pp. 2–3</small></article>
+                  <article class="knowledge-row"><span class="knowledge-order">02</span><div><strong>Payment verification</strong><p>Only payments marked <em>Received</em> reduce the remaining balance. Rejected payments stay visible in the history and do not change the balance.</p></div><small>PRD 2 · p. 2</small></article>
+                  <article class="knowledge-row"><span class="knowledge-order">03</span><div><strong>Readiness is a gated decision</strong><p>A pilgrim is ready only when remaining payment is zero, required documents are Valid, the passport is available and valid, and the visa is Approved.</p></div><small>PRD 2 · p. 4</small></article>
+                  <article class="knowledge-row"><span class="knowledge-order">04</span><div><strong>Blockers and final manifest</strong><p>If a condition is unmet, readiness must show the active blocker. Only ready pilgrims enter the final manifest, which remains a stable snapshot after finalization.</p></div><small>PRD 2 · p. 4<br>PRD 3 · p. 2</small></article>
+                </div>
+                <button class="annotation-target interpretation-target" type="button" data-open-assistant data-annotation-label="Atlas now includes Visa Approved in the readiness gate and requires any unmet condition to remain visible as an active blocker." data-annotation-source="Safara Increment 02 · page 4"><span><strong>Candidate change to review</strong><small>Visa Approved is part of the readiness gate; unmet conditions remain visible as active blockers.</small></span><span data-annotation-target-state>Annotate</span></button>
+              </section>
+              <section class="decision-pane" aria-labelledby="decision-title">
+                <div class="decision-pane-head"><span class="section-kicker">Approval decision routes</span><h3 id="decision-title">What should happen next?</h3><p>Select a route to see the exact record Atlas will create.</p></div>
+                <div class="route-list" role="tablist" aria-label="Approval decision routes">
+                  <button class="route-option is-selected" type="button" role="tab" aria-controls="route-detail" aria-selected="true" data-route-option="approve"><span class="route-index">01</span><div class="route-option-top"><span class="route-badge">When review is complete</span></div><div class="route-option-copy"><h3>Approve &amp; create addendum</h3><p>Publish this reviewed candidate as the next Atlas Truth version.</p></div><footer><span>Result</span> Truth v5 → Truth v6</footer></button>
+                  <button class="route-option" type="button" role="tab" aria-controls="route-detail" aria-selected="false" data-route-option="request"><span class="route-index">02</span><div class="route-option-top"></div><div class="route-option-copy"><h3>Request changes</h3><p>Keep the candidate open while Atlas revises the interpretation.</p></div><footer><span>Result</span> Review task stays open</footer></button>
+                  <button class="route-option" type="button" role="tab" aria-controls="route-detail" aria-selected="false" data-route-option="reject"><span class="route-index">03</span><div class="route-option-top"></div><div class="route-option-copy"><h3>Reject candidate</h3><p>Close this extraction candidate without changing current truth.</p></div><footer><span>Result</span> Candidate is closed</footer></button>
+                </div>
+                <div class="route-detail" id="route-detail" role="tabpanel" aria-live="polite" data-route-detail></div>
+              </section>
+            </div>
+          </section>
+        </div>
+
+        <footer class="page-footer">Prototype route for the Main Workflow approval bar · Human approval creates a new truth version; it never overwrites the original source document.</footer>
+      </div>
+    </main>
+  </div>
+
+  <div class="backdrop" data-dialog-backdrop>
+    <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title" aria-describedby="dialog-lead">
+      <div class="dialog-head"><div><h2 id="dialog-title">Approve &amp; create addendum</h2><p class="lead" id="dialog-lead">Confirm the reviewed candidate and create the next Atlas Truth version.</p></div><button class="icon-btn" type="button" aria-label="Close dialog" data-dialog-close>×</button></div>
+      <div class="dialog-summary"><div><span>Current truth</span><strong data-dialog-current>Atlas Truth v5</strong></div><div><span>After approval</span><strong data-dialog-result>Atlas Truth v6 + Addendum 001</strong></div><div><span>Source documents</span><strong>Preserved unchanged</strong></div></div>
+      <label data-reason-field hidden>Decision note<textarea data-reason placeholder="Describe what needs clarification or why this candidate is not authoritative."></textarea></label>
+      <p class="dialog-note" data-dialog-note>Atlas will record your decision and create a new truth version from the reviewed candidate. Another user's newer truth version will stop this approval and require reconciliation.</p>
+      <div class="dialog-actions"><button class="secondary-btn" type="button" data-dialog-close>Cancel</button><button class="primary-btn" type="button" data-dialog-confirm>Confirm approval</button></div>
+    </section>
+  </div>
+  <div class="assistant-backdrop" data-assistant-backdrop>
+    <aside class="assistant-drawer" role="dialog" aria-modal="true" aria-labelledby="assistant-title" aria-describedby="assistant-copy">
+      <div class="assistant-drawer-head">
+        <div><span class="section-kicker">Atlas Assistant</span><h2 id="assistant-title">Ask about this review</h2><p id="assistant-copy">Click a highlighted change to give Atlas a plain-language note. The structured output stays behind the interface.</p></div>
+        <button class="assistant-close" type="button" aria-label="Close Atlas Assistant" data-assistant-close>×</button>
+      </div>
+      <div class="assistant-thread" data-assistant-thread aria-live="polite">
+        <div class="chat-message assistant"><small>Atlas Assistant</small><p>Select a highlighted change to ask about its evidence or attach an annotation for review.</p><div class="source-ref">Grounded in the current source trail · candidate cycle 03</div></div>
+      </div>
+      <div class="assistant-selection" data-assistant-selection hidden>
+        <small>Selected change</small>
+        <blockquote data-assistant-selection-text></blockquote>
+        <span class="annotation-source" data-assistant-selection-source></span>
+        <div class="vocabulary-choices" role="group" aria-label="Annotation meaning">
+          <button class="vocab-choice is-selected" type="button" data-annotation-type="rule">Rule</button>
+          <button class="vocab-choice" type="button" data-annotation-type="requirement">Requirement</button>
+          <button class="vocab-choice" type="button" data-annotation-type="decision">Decision</button>
+          <button class="vocab-choice" type="button" data-annotation-type="question">Question</button>
+        </div>
+        <label class="annotation-note" for="annotation-note">Note <span class="sr-only">(optional)</span><textarea id="annotation-note" data-annotation-note placeholder="Add context for the review, if helpful."></textarea></label>
+        <button class="primary-btn annotation-save" type="button" data-save-annotation>Save annotation</button>
+      </div>
+      <div class="assistant-input"><label class="sr-only" for="assistant-question">Ask Atlas Assistant</label><input id="assistant-question" data-chat-input type="text" placeholder="Ask why this change exists…" autocomplete="off"><button type="button" data-ask>Ask</button></div>
+      <p class="assistant-drawer-note">Your note guides the review proposal. Only the approval route can create a new Atlas Truth version.</p>
+    </aside>
+  </div>
+  <div class="toast" role="status" aria-live="polite" data-toast><strong data-toast-title>Decision recorded</strong><span data-toast-copy></span></div>
+
+  <script>
+    (() => {
+      const qs = (selector, parent = document) => parent.querySelector(selector);
+      const qsa = (selector, parent = document) => [...parent.querySelectorAll(selector)];
+      const routes = {
+        approve: {
+          badge: 'Recommended when review is complete',
+          title: 'Approve & create addendum',
+          intro: 'Use this route when the workflows, facts, changes, and evidence represent the project understanding you want Atlas to use going forward.',
+          nodes: [['Reviewed candidate', 'Human decision', 'Cycle 03 is accepted as reviewed knowledge'], ['Addendum 001', 'Immutable record', 'The approved delta is stored beside the source history'], ['Atlas Truth v6', 'New authority', 'Future Atlas answers use the approved version']],
+          label: 'Approve & create addendum',
+          result: 'Truth v5 → Truth v6',
+          bullets: ['Creates a new Atlas Truth version from the reviewed candidate.', 'Attaches an addendum instead of modifying the original PRDs.', 'Records the reviewer, decision, source grounding, and new version.'],
+          callout: '<strong>Concurrency check:</strong> approval is held if the current truth is no longer v5. Reconcile the candidate before publishing it.',
+          note: 'Atlas will record your decision and create a new truth version from the reviewed candidate. Another user\'s newer truth version will stop this approval and require reconciliation.'
+        },
+        request: {
+          badge: 'Keep the review open',
+          title: 'Request changes',
+          intro: 'Use this route when the candidate is useful but a statement, relationship, or source interpretation needs clarification before approval.',
+          nodes: [['Review candidate', 'Open task', 'The candidate remains available for correction'], ['Change request', 'Human direction', 'Your note becomes part of the review history'], ['New review pass', 'Awaiting approval', 'Atlas updates the proposal for another decision']],
+          label: 'Request changes',
+          result: 'No truth version change',
+          bullets: ['Creates a traceable change request with your explanation.', 'Keeps the current Atlas Truth v5 authoritative.', 'Returns the candidate to review after the proposal is updated.'],
+          callout: '<strong>Good for uncertainty:</strong> use this when the source evidence is incomplete, conflicting, or not yet interpreted with enough precision.',
+          note: 'Your note will be attached to the review task. Atlas Truth v5 remains authoritative while the candidate is revised.'
+        },
+        reject: {
+          badge: 'Close without publishing',
+          title: 'Reject candidate',
+          intro: 'Use this route when the extraction cycle should not become project knowledge. Rejection closes this candidate without changing the current truth.',
+          nodes: [['Review candidate', 'Open task', 'Cycle 03 is still only a proposal'], ['Rejected record', 'Decision history', 'The reason is retained for traceability'], ['Atlas Truth v5', 'Unchanged authority', 'The last approved truth remains in force']],
+          label: 'Reject candidate',
+          result: 'Candidate closed',
+          bullets: ['Closes this extraction candidate as not authoritative.', 'Preserves the current Atlas Truth v5 and all original documents.', 'Records the rejection reason so the decision is explainable later.'],
+          callout: '<strong>Safe boundary:</strong> rejection is a decision about this candidate, not deletion of the uploaded source documents or prior truth versions.',
+          note: 'Your reason will be retained with the rejected candidate. Atlas Truth v5 and the original source documents remain unchanged.'
+        }
+      };
+      let selectedRoute = 'approve';
+      let lastFocused = null;
+      let assistantLastFocused = null;
+      let assistantTarget = null;
+      let selectedAnnotationType = 'rule';
+
+      const annotationTargets = {
+        approve: ['Show every blocker before marking a pilgrim ready.', 'Safara Increment 02 · page 4'],
+        request: ['Clarify how this readiness condition should be interpreted.', 'Current review task · candidate cycle 03'],
+        reject: ['This extraction candidate should not become project knowledge.', 'Current review task · candidate cycle 03']
+      };
+
+      const detailMarkup = (key) => {
+        const route = routes[key];
+        const flow = route.nodes.map((node, index) => `<div class="flow-node ${index === 2 ? 'is-result' : ''}"><small>${node[1]}</small><strong>${node[0]}</strong><span>${node[2]}</span></div>${index < route.nodes.length - 1 ? '<span class="flow-arrow">→</span>' : ''}`).join('');
+        const bullets = route.bullets.map(item => `<li>${item}</li>`).join('');
+        const [annotationLabel, annotationSource] = annotationTargets[key];
+        return `<div class="detail-top"><div><span class="section-kicker">Selected route</span><h3>${route.title}</h3><p>${route.intro}</p></div><span class="status ${key === 'approve' ? 'approved' : key === 'reject' ? 'rejected' : 'awaiting'}"><i class="status-dot"></i>${route.badge}</span></div><div class="detail-flow">${flow}</div><div class="detail-sections"><div class="detail-section"><small>What this route changes</small><ul>${bullets}</ul><button class="annotation-target" type="button" data-open-assistant data-annotation-label="${annotationLabel}" data-annotation-source="${annotationSource}"><span><strong>${annotationLabel}</strong><small>${annotationSource} · Click to annotate or ask Atlas</small></span><span data-annotation-target-state>Annotate</span></button></div></div><div class="detail-callout"><span class="callout-icon">i</span><p>${route.callout}</p></div><div class="detail-actions"><button class="secondary-btn" type="button" data-open-assistant data-annotation-label="${annotationLabel}" data-annotation-source="${annotationSource}">Ask about this route</button><button class="${key === 'reject' ? 'danger-btn' : 'primary-btn'}" type="button" data-open-route="${key}">${route.label}</button></div>`;
+      };
+
+      const renderRoute = (key) => {
+        selectedRoute = key;
+        qsa('[data-route-option]').forEach(option => {
+          const isSelected = option.dataset.routeOption === key;
+          option.classList.toggle('is-selected', isSelected);
+          option.setAttribute('aria-selected', String(isSelected));
+        });
+        const detail = qs('[data-route-detail]');
+        if (detail) detail.innerHTML = detailMarkup(key);
+      };
+      const scrollToId = (id) => qs('#' + id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const showToast = (title, copy) => {
+        const toast = qs('[data-toast]');
+        qs('[data-toast-title]').textContent = title;
+        qs('[data-toast-copy]').textContent = copy;
+        toast.classList.add('show');
+        window.clearTimeout(showToast.timer);
+        showToast.timer = window.setTimeout(() => toast.classList.remove('show'), 4200);
+      };
+      const appendMessage = (kind, label, copy, citation) => {
+        const message = document.createElement('div');
+        message.className = `chat-message ${kind}`;
+        const name = document.createElement('small');
+        name.textContent = label;
+        const text = document.createElement('p');
+        text.textContent = copy;
+        message.append(name, text);
+        if (citation) {
+          const source = document.createElement('div');
+          source.className = 'source-ref';
+          source.textContent = citation;
+          message.append(source);
+        }
+        qs('[data-assistant-thread]').append(message);
+        qs('[data-assistant-thread]').scrollTop = qs('[data-assistant-thread]').scrollHeight;
+      };
+      const askAssistant = () => {
+        const input = qs('[data-chat-input]');
+        const question = input.value.trim();
+        if (!question) return;
+        appendMessage('user', 'You', question);
+        const answer = /why|evidence|source|grounded/i.test(question)
+          ? 'This change is grounded in the source trail attached to the selected review item. I can carry your note forward for a human decision without changing Atlas Truth.'
+          : 'I can explain the selected change and carry a plain-language note into the review proposal. The approval route remains the only way to publish it.';
+        appendMessage('assistant', 'Atlas Assistant', answer, 'Grounded in the current source trail · candidate cycle 03');
+        input.value = '';
+      };
+      const openAssistant = (target) => {
+        const backdrop = qs('[data-assistant-backdrop]');
+        assistantLastFocused = document.activeElement;
+        assistantTarget = target?.matches('.annotation-target') ? target : null;
+        const selection = qs('[data-assistant-selection]');
+        selection.hidden = !assistantTarget;
+        if (assistantTarget) {
+          qs('[data-assistant-selection-text]').textContent = assistantTarget.dataset.annotationLabel;
+          qs('[data-assistant-selection-source]').textContent = assistantTarget.dataset.annotationSource;
+          qs('[data-annotation-note]').value = '';
+        }
+        selectedAnnotationType = 'rule';
+        qsa('[data-annotation-type]').forEach(choice => choice.classList.toggle('is-selected', choice.dataset.annotationType === selectedAnnotationType));
+        backdrop.classList.add('open');
+        document.body.classList.add('no-scroll');
+        (assistantTarget ? qs('[data-annotation-note]') : qs('[data-chat-input]')).focus();
+      };
+      const closeAssistant = () => {
+        qs('[data-assistant-backdrop]').classList.remove('open');
+        if (!qs('[data-dialog-backdrop]').classList.contains('open')) document.body.classList.remove('no-scroll');
+        assistantTarget = null;
+        assistantLastFocused?.focus?.();
+      };
+      const saveAnnotation = () => {
+        if (!assistantTarget) return;
+        const typeLabel = qs(`[data-annotation-type="${selectedAnnotationType}"]`).textContent;
+        const note = qs('[data-annotation-note]').value.trim();
+        assistantTarget.classList.add('is-annotated');
+        assistantTarget.dataset.annotationType = selectedAnnotationType;
+        assistantTarget.dataset.annotationNote = note;
+        qs('[data-annotation-target-state]', assistantTarget).textContent = 'Annotated';
+        showToast('Annotation saved', `${typeLabel} note attached to this change${note ? ' with your review context' : ''}.`);
+        closeAssistant();
+      };
+      const openDialog = (key) => {
+        selectedRoute = key || selectedRoute;
+        const route = routes[selectedRoute];
+        const backdrop = qs('[data-dialog-backdrop]');
+        lastFocused = document.activeElement;
+        qs('[data-dialog-title]')?.focus();
+        qs('#dialog-title').textContent = route.title;
+        qs('#dialog-lead').textContent = selectedRoute === 'approve' ? 'Confirm the reviewed candidate and create the next Atlas Truth version.' : route.intro;
+        qs('[data-dialog-result]').textContent = selectedRoute === 'approve' ? 'Atlas Truth v6 + Addendum 001' : route.result;
+        qs('[data-dialog-note]').innerHTML = route.note;
+        qs('[data-reason-field]').hidden = selectedRoute === 'approve';
+        qs('[data-reason]').required = selectedRoute !== 'approve';
+        qs('[data-dialog-confirm]').textContent = selectedRoute === 'approve' ? 'Confirm approval' : route.label;
+        qs('[data-dialog-confirm]').className = selectedRoute === 'reject' ? 'danger-btn' : 'primary-btn';
+        backdrop.classList.add('open');
+        document.body.classList.add('no-scroll');
+        (selectedRoute === 'approve' ? qs('[data-dialog-confirm]') : qs('[data-reason]')).focus();
+      };
+      const closeDialog = () => {
+        qs('[data-dialog-backdrop]').classList.remove('open');
+        document.body.classList.remove('no-scroll');
+        lastFocused?.focus?.();
+      };
+      const commitDecision = () => {
+        const route = routes[selectedRoute];
+        const bar = qs('[data-approval-bar]');
+        const pageStatus = qs('[data-page-status]');
+        const barTitle = qs('[data-approval-title]');
+        const barCopy = qs('[data-approval-copy]');
+        if (selectedRoute === 'approve') {
+          bar.className = 'approval-bar is-approved';
+          barTitle.textContent = 'Atlas understanding · Approved';
+          barCopy.textContent = 'Atlas Truth v6 was created from the reviewed candidate. The original source documents remain unchanged.';
+          pageStatus.className = 'status approved';
+          pageStatus.innerHTML = '<i class="status-dot"></i><span>Approved · Truth v6</span>';
+          showToast('Atlas Truth v6 created', 'Addendum 001 and the human approval decision are now part of the source-grounded history.');
+        } else if (selectedRoute === 'request') {
+          bar.className = 'approval-bar';
+          barTitle.textContent = 'Atlas understanding · Changes requested';
+          barCopy.textContent = 'The review task remains open. Atlas Truth v5 is still the authoritative project model.';
+          pageStatus.className = 'status awaiting';
+          pageStatus.innerHTML = '<i class="status-dot"></i><span>Changes requested</span>';
+          showToast('Change request recorded', 'The candidate stays open for correction and another human review.');
+        } else {
+          bar.className = 'approval-bar is-rejected';
+          barTitle.textContent = 'Atlas understanding · Candidate rejected';
+          barCopy.textContent = 'This candidate was closed without changing the current Atlas Truth v5.';
+          pageStatus.className = 'status rejected';
+          pageStatus.innerHTML = '<i class="status-dot"></i><span>Candidate rejected</span>';
+          showToast('Candidate rejected', 'The rejected candidate and its reason remain traceable; Atlas Truth v5 is unchanged.');
+        }
+        closeDialog();
+      };
+
+      qsa('[data-route-option]').forEach(option => option.addEventListener('click', () => renderRoute(option.dataset.routeOption)));
+      document.addEventListener('click', event => {
+        const assistantTrigger = event.target.closest('[data-open-assistant]');
+        if (assistantTrigger) {
+          event.preventDefault();
+          openAssistant(assistantTrigger);
+          return;
+        }
+        const target = event.target.closest('[data-open-route], [data-scroll-to]');
+        if (!target || target.disabled) return;
+        if (target.dataset.openRoute) openDialog(target.dataset.openRoute);
+        if (target.dataset.scrollTo) scrollToId(target.dataset.scrollTo);
+      });
+      qsa('[data-dialog-close]').forEach(button => button.addEventListener('click', closeDialog));
+      qs('[data-dialog-confirm]').addEventListener('click', () => {
+        if (selectedRoute !== 'approve' && !qs('[data-reason]').value.trim()) { qs('[data-reason]').focus(); return; }
+        commitDecision();
+      });
+      qsa('[data-assistant-close]').forEach(button => button.addEventListener('click', closeAssistant));
+      qsa('[data-annotation-type]').forEach(choice => choice.addEventListener('click', () => {
+        selectedAnnotationType = choice.dataset.annotationType;
+        qsa('[data-annotation-type]').forEach(item => item.classList.toggle('is-selected', item === choice));
+      }));
+      qs('[data-save-annotation]').addEventListener('click', saveAnnotation);
+      qs('[data-ask]').addEventListener('click', askAssistant);
+      qs('[data-chat-input]').addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); askAssistant(); } });
+      qs('[data-dialog-backdrop]').addEventListener('click', event => { if (event.target === event.currentTarget) closeDialog(); });
+      qs('[data-assistant-backdrop]').addEventListener('click', event => { if (event.target === event.currentTarget) closeAssistant(); });
+      document.addEventListener('keydown', event => {
+        if (event.key !== 'Escape') return;
+        if (qs('[data-assistant-backdrop]').classList.contains('open')) closeAssistant();
+        else if (qs('[data-dialog-backdrop]').classList.contains('open')) closeDialog();
+      });
+      qs('[data-theme-toggle]').addEventListener('click', () => {
+        const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+        document.documentElement.dataset.theme = next;
+        qs('[data-theme-label]').textContent = next === 'dark' ? 'Dark' : 'Light';
+        try { localStorage.setItem('atlas-theme', next); } catch (_) {}
+      });
+      qs('[data-theme-label]').textContent = document.documentElement.dataset.theme === 'dark' ? 'Dark' : 'Light';
+      const sidebar = qs('.sidebar');
+      const drawerBackdrop = qs('.drawer-backdrop');
+      const closeDrawer = () => { sidebar.classList.remove('open'); drawerBackdrop.classList.remove('open'); };
+      qs('[data-drawer-toggle]').addEventListener('click', () => { sidebar.classList.add('open'); drawerBackdrop.classList.add('open'); });
+      drawerBackdrop.addEventListener('click', closeDrawer);
+      qsa('.sidebar a').forEach(link => link.addEventListener('click', closeDrawer));
+      renderRoute('approve');
+    })();
+  </script>
+</body>
+</html>

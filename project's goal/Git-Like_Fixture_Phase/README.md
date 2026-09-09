@@ -12,9 +12,11 @@
 ## Outcome
 
 Replace the fixture-only accumulated workspace model with reviewed, Git-like
-golden fixtures and make the existing Atlas UI read branch-relative current
-truth through a workspace selector. The later correction/approval experience is
-designed only after the branch-aware read path has passed review.
+golden fixtures, establish a repository-style Projects Route for project
+selection and lifecycle state, and make the existing Atlas UI read
+branch-relative current truth through a workspace selector. The later
+correction/approval experience is designed only after the branch-aware read
+path has passed review.
 
 ## Scope boundary
 
@@ -34,10 +36,12 @@ comparison contract.
 | 3 | GLF-003 / BATCH-19 | awaiting_review | GLF-002 | Does the golden-fixture data contract supply every relationship and branch/HEAD field required by the shared skills and future UI? |
 | 3.1 | GLF-003-01 / BATCH-19.1 | approved | GLF-003 | Do deterministic skill outputs account for all Safara source PDFs and project the complete operational workflow? |
 | 3.2 | GLF-003-02 / BATCH-19.2 | awaiting_review | GLF-003-01 | Can every material statement in Increment 01-03 be reconciled to an atomic extraction result or a justified non-fact classification? |
-| 4 | GLF-004 / BATCH-20 | planned | GLF-003 | Can a user select a workspace/branch and understand its selected HEAD without confusing it with the PRD lens? |
-| 5 | GLF-005 / BATCH-21 | planned | GLF-003, GLF-004 | Do all existing knowledge surfaces resolve one coherent current truth from the selected branch HEAD? |
-| 6 | GLF-006 / BATCH-22 | blocked | GLF-005, user research | Is the correction and approval/chatbot interaction grounded in approved interaction research and unable to mutate truth silently? |
-| 7 | GLF-007 / BATCH-23 | blocked | Agents Bridge pipeline, GLF-001–GLF-003 | Is the eventual `codex` versus `agents_bridge` comparison contract reproducible and authority-safe? |
+| 4 | GLF-004 / BATCH-20 | planned | GLF-003 | Does the Projects route explain each project's repository-like state and available next action without confusing draft work with published Master truth? |
+| 4.1 | GLF-004-01 / BATCH-20.1 | planned | GLF-003-02 approved, GLF-004 | Do the Projects library, project switcher, and project routes resolve one fixture-owned repository record by stable project identity without migrating downstream knowledge surfaces? |
+| 5 | GLF-005 / BATCH-21 | planned | GLF-003, GLF-004-01 | Can a user select a workspace/branch and understand its selected HEAD without confusing it with the PRD lens? |
+| 6 | GLF-006 / BATCH-22 | planned | GLF-003-02 approved, GLF-005 | Do all existing knowledge surfaces resolve one coherent, inventory-provenanced current truth from the selected branch HEAD? |
+| 7 | GLF-007 / BATCH-23 | blocked | GLF-006, user research | Is the correction and approval/chatbot interaction grounded in approved interaction research and unable to mutate truth silently? |
+| 8 | GLF-008 / BATCH-24 | blocked | Agents Bridge pipeline, GLF-001–GLF-003-02 approved | Is the eventual `codex` versus `agents_bridge` comparison contract reproducible, source-accounted, and authority-safe? |
 
 Each batch has one ticket because every acceptance decision changes the data or
 interaction contract required by the next checkpoint. Batches must be reviewed
@@ -62,7 +66,9 @@ individually; they are not combined for convenience.
 - [GLF-003 Golden fixture data contract](GLF-003-golden-fixture-data-contract.md)
 - [GLF-003-01 Complete Safara source accounting and deterministic skill outputs](GLF-003-01-complete-safara-source-accounting.md)
 - [GLF-003-02 Exhaustive Safara fact extraction and source accounting](GLF-003-02-exhaustive-safara-fact-accounting.md)
-- [GLF-004 Workspace selector](GLF-004-workspace-selector.md)
-- [GLF-005 Branch-aware UI fixture integration](GLF-005-branch-aware-ui-fixture-integration.md)
-- [GLF-006 Correction and approval interaction design](GLF-006-correction-and-approval-interaction-design.md)
-- [GLF-007 Skill execution comparison contract](GLF-007-skill-execution-comparison-contract.md)
+- [GLF-004 Projects Route repository overview](GLF-004-projects-route-repository-overview.md)
+- [GLF-004-01 Project-route fixture recalibration](GLF-004-01-project-route-fixture-recalibration.md)
+- [GLF-005 Workspace selector](GLF-005-workspace-selector.md)
+- [GLF-006 Branch-aware UI fixture integration](GLF-006-branch-aware-ui-fixture-integration.md)
+- [GLF-007 Correction and approval interaction design](GLF-007-correction-and-approval-interaction-design.md)
+- [GLF-008 Skill execution comparison contract](GLF-008-skill-execution-comparison-contract.md)
