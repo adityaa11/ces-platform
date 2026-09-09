@@ -24,6 +24,7 @@ export function ProjectLibrary({ user, projects, workspace, scenario }: { user: 
   const [inviteRole, setInviteRole] = useState<AccessRole>("viewer");
   const [pendingAccessChange, setPendingAccessChange] = useState<PendingAccessChange | null>(null);
   const canCreate = user.role === "owner" || user.role === "editor";
+  const canShare = user.role === "owner";
   const members = shareProject ? (membersByProject[shareProject.id] ?? []) : [];
   function createProject() { setCreateOpen(false); setProcessing(true); setProjectName(""); setSelectedFiles([]); }
   function inviteMember(event: FormEvent<HTMLFormElement>) {
@@ -58,7 +59,7 @@ export function ProjectLibrary({ user, projects, workspace, scenario }: { user: 
       <section aria-labelledby="project-list-title" className="repository-projects"><header><h2 id="project-list-title">Your projects</h2><span>{projects.length} repositories</span></header><div aria-label="Projects" className="project-grid">
         {projects.map((project) => {
           const href = typeof window === "undefined" ? `/demo?${new URLSearchParams({ ...(scenario ? { scenario } : {}), projectId: project.id, view: "workflow" }).toString()}` : demoHref({ projectId: project.id, view: "workflow" });
-          return <ProjectCard href={href} key={project.id} project={project} />;
+          return <ProjectCard canShare={canShare} href={href} key={project.id} onShare={setShareProject} project={project} />;
         })}
       </div></section>
 

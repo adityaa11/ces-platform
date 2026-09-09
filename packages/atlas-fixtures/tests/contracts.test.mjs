@@ -34,6 +34,17 @@ test("fixture scenarios cover each required role and major prototype state", () 
   assert.equal(fixtureScenarios["approved-result"].workspace.cesApproval, "approved");
 });
 
+test("repository lifecycle counts describe the same fixture-owned PRD records", () => {
+  for (const project of fixtureScenarios["owner-ready"].projects) {
+    const draft = project.repository.initialDraft;
+    if (!draft) continue;
+    const uploaded = project.repository.metrics.find((metric) => metric.label === "PRDs uploaded");
+    assert.equal(draft.totalPrds, project.prdCount, `${project.id} draft total matches project PRDs`);
+    assert.equal(Number(uploaded?.value), project.prdCount, `${project.id} uploaded metric matches project PRDs`);
+    if (draft.progress === 100) assert.equal(draft.processedPrds, project.prdCount, `${project.id} completed draft includes every project PRD`);
+  }
+});
+
 test("source-grounded fixture records keep quote, document, page, and relationships", () => {
   const workspace = fixtureScenarios["owner-ready"].workspace;
   const [workflow] = workspace.workflows;

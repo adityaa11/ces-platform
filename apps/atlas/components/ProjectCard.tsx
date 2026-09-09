@@ -3,7 +3,9 @@ import type { ProjectFixture } from "@atlas/fixtures";
 import { Button } from "./Button";
 
 type Props = {
+  canShare: boolean;
   href: string;
+  onShare: (project: ProjectFixture) => void;
   project: ProjectFixture;
 };
 
@@ -36,9 +38,9 @@ function InitialDraftState({ project }: Pick<Props, "project">) {
   </section>;
 }
 
-export function ProjectCard({ href, project }: Props) {
+export function ProjectCard({ canShare, href, onShare, project }: Props) {
   const { action, metrics, state, summary } = project.repository;
-  const actionHint = state === "extracting" ? "Extraction is in progress. This project cannot be opened yet." : "";
+  const actionHint = action.unavailableReason ?? (state === "extracting" ? "Extraction is in progress. This project cannot be opened yet." : "");
   return <article aria-labelledby={`${project.id}-title`} className="repository-card">
     <header className="repository-card-header">
       <span aria-hidden="true" className="repository-project-mark">{project.name[0]}</span>
@@ -49,8 +51,9 @@ export function ProjectCard({ href, project }: Props) {
     <div className="repository-state-stack"><MasterState project={project} /><InitialDraftState project={project} /></div>
     <footer className="repository-card-footer">
       <dl className="repository-metrics">{metrics.map((metric) => <div key={metric.label}><dd>{metric.value}</dd><dt>{metric.label}</dt></div>)}</dl>
-      <div className="repository-card-actions">
+      <div className={`repository-card-actions${canShare ? "" : " repository-card-actions-single"}`}>
         {action.enabled ? <Link className="repository-primary-action" href={href}>{action.label} <span aria-hidden="true">→</span></Link> : <><Button aria-describedby={`${project.id}-action-hint`} className="repository-primary-action" disabled type="button">{action.label} <span aria-hidden="true">→</span></Button><span className="sr-only" id={`${project.id}-action-hint`}>{actionHint}</span></>}
+        {canShare && <Button className="repository-share-action" onClick={() => onShare(project)} tone="secondary" type="button">Share</Button>}
       </div>
     </footer>
   </article>;

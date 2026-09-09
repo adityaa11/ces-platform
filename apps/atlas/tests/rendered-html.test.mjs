@@ -235,11 +235,14 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(projectCard, /Initial draft/);
   assert.match(projectCard, /<progress/);
   assert.match(projectCard, /action\.enabled/);
+  assert.match(projectCard, /unavailableReason/);
+  assert.match(projectCard, />Share</);
   assert.match(fixtures, /RepositoryLifecycleState="published"\|"extracting"\|"ready-for-review"/);
   assert.match(fixtures, /project,processingProject,reviewProject/);
   assert.match(demoHtml, /Published/);
   assert.match(demoHtml, /Extracting/);
   assert.match(demoHtml, /Ready for review/);
+  assert.match(demoHtml, />Share</);
   assert.match(demoHtml, /Current accepted project source of truth/);
   assert.match(demoHtml, /href="\/demo\?projectId=safara&amp;view=workflow"/);
   const workflowHtml = await workflow.text();
