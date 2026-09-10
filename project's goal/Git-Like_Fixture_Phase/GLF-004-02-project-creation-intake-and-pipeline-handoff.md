@@ -107,3 +107,7 @@ processing job, repository candidate, card, and project route.
   and validation, each invalid field provides the specified visible error
   message, and valid submission displays a non-blocking accessible success
   notification before the Extracting state is presented.
+- 10 September 2026: user refined the form hierarchy. Character counts remain
+  directly below each text field; labels no longer repeat those limits. The
+  Project ID label carries its lowercase-kebab-case rule, and its example is
+  the input placeholder rather than a second helper paragraph.
