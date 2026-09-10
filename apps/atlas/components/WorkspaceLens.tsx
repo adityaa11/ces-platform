@@ -5,10 +5,18 @@ import { useCallback, useState } from "react";
 export type WorkspaceLens = { selectedPrdIds: string[]; mode: "highlight" | "isolate" };
 export type WorkspaceApprovals = { atlas: "awaiting-approval" | "approved"; ces: "awaiting-approval" | "approved" };
 
+const demoParameterOrder = ["projectId", "scenario", "prd", "lens", "workflowId", "factId", "cesItemId", "view"];
+
+export function demoHrefFromParams(params: URLSearchParams) {
+  const order = (key: string) => { const index = demoParameterOrder.indexOf(key); return index === -1 ? demoParameterOrder.length : index; };
+  const entries = [...params.entries()].sort(([leftKey, leftValue], [rightKey, rightValue]) => order(leftKey) - order(rightKey) || leftKey.localeCompare(rightKey) || leftValue.localeCompare(rightValue));
+  return `/demo?${new URLSearchParams(entries).toString()}`;
+}
+
 export function demoHref(values: Record<string, string | undefined>) {
   const params = new URLSearchParams(typeof window === "undefined" ? "" : window.location.search);
   Object.entries(values).forEach(([key, value]) => value ? params.set(key, value) : params.delete(key));
-  return `/demo?${params.toString()}`;
+  return demoHrefFromParams(params);
 }
 
 export function useWorkspaceLens(initial: WorkspaceLens) {

@@ -9,7 +9,7 @@
 | Check | Result |
 |---|---|
 | `corepack pnpm --filter @atlas/fixtures test` | Pass — 21/21, including stable-ID route resolution for published, extracting, ready-for-review, and unknown records. |
-| `corepack pnpm --filter @atlas/app test` | Pass — 8/8, including editor scenario preservation and unavailable-project fallback. |
+| `corepack pnpm --filter @atlas/app test` | Pass — 8/8, including deterministic editor/viewer navigation URLs and unavailable-project fallback. |
 | `corepack pnpm --filter @atlas/app lint` | Pass |
 | `git diff --check` | Pass |
 
@@ -18,7 +18,10 @@
 | Route | Observed state | Result |
 |---|---|---|
 | `/demo?scenario=editor-ready&projectId=safara&view=workflow` | The selected workspace is Safara by its stable ID, retains the editor scenario and PRD-lens context in navigation links, and shows editor Raka Pratama without owner-only sharing controls. | Pass |
+| `/demo?scenario=viewer-ready&projectId=safara&view=workflow` | The selected workspace retains the viewer scenario and isolate PRD lens in its canonical project-navigation URLs, and shows viewer Sari Utami without owner-only controls. | Pass |
 | `/demo?projectId=vendor-onboarding&view=workflow` | The fixture-owned ready-for-review record has no workspace adapter, so the route returns to the valid no-project-selected library state. Workspace links stay disabled, while the visible card explains the unavailable review workspace. | Pass |
+
+The shared route helper now serializes project-navigation parameters in a stable order for server and client rendering. The browser's accessible route trees for both role-specific pages match those canonical URLs after hydration.
 
 ## Frontend review gate
 

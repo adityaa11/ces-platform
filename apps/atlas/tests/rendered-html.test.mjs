@@ -150,6 +150,7 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   const demo = await render("/demo");
   const workflow = await render("/demo?projectId=safara&view=workflow&prd=safara-increment-02&lens=isolate");
   const editorWorkflow = await render("/demo?scenario=editor-ready&projectId=safara&view=workflow");
+  const viewerWorkflow = await render("/demo?scenario=viewer-ready&projectId=safara&view=workflow");
   const unavailableProjectRoute = await render("/demo?projectId=vendor-onboarding&view=workflow");
   const facts = await render("/demo?projectId=safara&view=facts&prd=safara-increment-02&lens=isolate");
   const changes = await render("/demo?projectId=safara&view=changes&prd=safara-increment-02&lens=isolate");
@@ -159,7 +160,7 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   const projectCardStressDemo = await render("/demo?stress=project-cards");
   const processingStates = await Promise.all(["uploading", "extracting", "modeling", "ready", "needs-attention", "failed"].map((stage) => render(`/demo?scenario=processing-${stage}`)));
   const approvedDemo = await render("/demo?scenario=approved-result&projectId=safara&view=ces");
-  for (const response of [signIn, signUp, reset, demo, workflow, editorWorkflow, unavailableProjectRoute, facts, changes, sources, editorDemo, viewerDemo, projectCardStressDemo, approvedDemo, ...processingStates]) assert.equal(response.status, 200);
+  for (const response of [signIn, signUp, reset, demo, workflow, editorWorkflow, viewerWorkflow, unavailableProjectRoute, facts, changes, sources, editorDemo, viewerDemo, projectCardStressDemo, approvedDemo, ...processingStates]) assert.equal(response.status, 200);
   const signInHtml = await signIn.text();
   const signUpHtml = await signUp.text();
   assert.match(signInHtml, /Welcome back|Forgot password/);
@@ -190,6 +191,7 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(appShell, /new URLSearchParams\(window\.location\.search\)/);
   assert.match(appShell, /params\.set\("projectId", current\.id\)/);
   assert.match(appShell, /params\.set\("view", view\)/);
+  assert.match(appShell, /demoHrefFromParams\(params\)/);
   assert.match(appShell, /demoHref\(\{ projectId, scenario: routeContext\?\.scenario, view: "workflow" \}\)/);
   assert.doesNotMatch(appShell, /MutationObserver|data\.fullLabel/);
   assert.match(appShell, /aria-controls="app-navigation"/);
@@ -232,7 +234,7 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(projectLibrary, /Invite/);
   assert.match(projectLibrary, /Confirm change/);
   assert.match(projectLibrary, /Access removed/);
-  assert.match(projectLibrary, /demoHref\(\{ projectId: project\.id, view: "workflow" \}\)/);
+  assert.match(projectLibrary, /demoHref\(\{ projectId: project\.id, scenario, view: "workflow" \}\)/);
   assert.match(projectLibrary, /selectedFiles/);
   assert.match(projectLibrary, /membersByProject/);
   assert.match(projectLibrary, /ResizeObserver/);
@@ -276,6 +278,7 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.doesNotMatch(stressHtml, /line-clamp|text-overflow:ellipsis/);
   const workflowHtml = await workflow.text();
   const editorWorkflowHtml = await editorWorkflow.text();
+  const viewerWorkflowHtml = await viewerWorkflow.text();
   const unavailableProjectRouteHtml = await unavailableProjectRoute.text();
   assert.match(workflowHtml, /3 PRDs · Active/);
   assert.match(appShell, /project-switcher-copy/);
@@ -285,6 +288,8 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(workflowHtml, /27 July 2026/);
   assert.match(editorWorkflowHtml, /Raka Pratama/);
   assert.match(editorWorkflowHtml, /href="\/demo\?projectId=safara&amp;scenario=editor-ready&amp;prd=safara-increment-02&amp;view=workflow"/);
+  assert.match(viewerWorkflowHtml, /Sari Utami/);
+  assert.match(viewerWorkflowHtml, /href="\/demo\?projectId=safara&amp;scenario=viewer-ready&amp;prd=safara-increment-01&amp;lens=isolate&amp;view=workflow"/);
   assert.match(unavailableProjectRouteHtml, /No project selected/);
   assert.match(unavailableProjectRouteHtml, /<span aria-disabled="true" class="nav-disabled"><span aria-hidden="true">∿<\/span>Main Workflow<\/span>/);
   const factsHtml = await facts.text();
@@ -296,7 +301,7 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(sourcesHtml, /Pembayaran, Dokumen, dan Kesiapan Keberangkatan/);
   assert.match(sourcesHtml, /source-pdfs\/Safara\/Safara_Incremental_PRD_02_Payment_Documents_Readiness\.pdf/);
   assert.match(sourcesHtml, /href="\/demo\?projectId=safara&amp;view=sources"/);
-  assert.match(changesHtml, /href="\/demo\?projectId=safara&amp;view=workflow&amp;prd=safara-increment-02&amp;lens=isolate/);
+  assert.match(changesHtml, /href="\/demo\?projectId=safara&amp;prd=safara-increment-02&amp;lens=isolate&amp;view=workflow/);
   for (const html of [workflowHtml, factsHtml, changesHtml]) assert.match(html, /href="\/demo\?projectId=safara&amp;prd=safara-increment-02&amp;lens=isolate&amp;view=(workflow|facts|ces|changes)"/);
   assert.match(workflowWorkspace, /Previous affected workflow page/);
   assert.match(workflowWorkspace, /No selected contribution on this page/);

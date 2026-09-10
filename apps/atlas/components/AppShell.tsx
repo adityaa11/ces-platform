@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ProfileMenu } from "./ProfileMenu";
 import { TopBar } from "./TopBar";
-import { demoHref } from "./WorkspaceLens";
+import { demoHref, demoHrefFromParams } from "./WorkspaceLens";
 import type { ProjectFixture, ProjectWorkspaceFixture } from "@atlas/fixtures";
 
 type User = { name: string; email: string; role: "owner" | "editor" | "viewer" };
@@ -28,7 +28,7 @@ export function AppShell({ user, children, projects, selectedProjectId, active =
   const [compact, setCompact] = useState(false);
   const current = projects.find((project) => project.id === selectedProjectId);
   const workspaceNavigationEnabled = projectNavigation && current?.status === "ready";
-  const href = (view: WorkspaceView) => { const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams(); if (current?.status === "ready") params.set("projectId", current.id); if (routeContext?.scenario) params.set("scenario", routeContext.scenario); if (routeContext?.prd) params.set("prd", routeContext.prd); if (routeContext?.lens) params.set("lens", routeContext.lens); params.set("view", view); return params.size ? `/demo?${params.toString()}` : "/demo"; };
+  const href = (view: WorkspaceView) => { const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams(); if (current?.status === "ready") params.set("projectId", current.id); if (routeContext?.scenario) params.set("scenario", routeContext.scenario); if (routeContext?.prd) params.set("prd", routeContext.prd); if (routeContext?.lens) params.set("lens", routeContext.lens); params.set("view", view); return params.size ? demoHrefFromParams(params) : "/demo"; };
   const projectHref = (projectId: string) => demoHref({ projectId, scenario: routeContext?.scenario, view: "workflow" });
   const closeNavigation = () => { setCollapsed(false); menuTriggerRef.current?.focus(); };
   useEffect(() => { const query = window.matchMedia("(max-width: 960px)"); const update = () => setCompact(query.matches); update(); query.addEventListener("change", update); return () => query.removeEventListener("change", update); }, []);

@@ -89,7 +89,7 @@ export function ProjectLibrary({ user, projects, workspace, scenario }: { user: 
 
       <section aria-labelledby="project-list-title" className="repository-projects"><header><h2 id="project-list-title">Your projects</h2><span>{projects.length} repositories</span></header><div aria-label="Projects" className="project-grid" ref={projectGridRef}>
         {projects.map((project) => {
-          const href = typeof window === "undefined" ? `/demo?${new URLSearchParams({ ...(scenario ? { scenario } : {}), projectId: project.id, view: "workflow" }).toString()}` : demoHref({ projectId: project.id, view: "workflow" });
+          const href = demoHref({ projectId: project.id, scenario, view: "workflow" });
           return <ProjectCard canShare={canShare} href={href} key={project.id} onShare={setShareProject} project={project} />;
         })}
       </div></section>
