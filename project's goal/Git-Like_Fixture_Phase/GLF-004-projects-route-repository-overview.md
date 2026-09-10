@@ -88,9 +88,10 @@ workspace prematurely.
 ## Decision log
 
 - 9 September 2026: user confirmed that a completed Ready for review project
-  must expose enabled Open project and Share actions; while extraction is still
-  in progress, both actions remain visibly disabled. This supersedes the
-  temporary disabled-ready-action remediation recorded for BATCH-20.
+  should expose enabled Open project and Share actions when a review workspace
+  exists; while extraction is still in progress, both actions remain visibly
+  disabled. The later display-only-fixture decision below supersedes this
+  action requirement for `vendor-onboarding`.
 - 10 September 2026: the formula reference
   `atlas_project_cards_formula_responsive_v5_grouped_spaces.html` is the
   visual correctness baseline for this remediation. The project grid measures
@@ -110,7 +111,10 @@ workspace prematurely.
   visible card layout. A temporary stress render confirms that the three
   maximum-length records remain contained through responsive reflow before the
   accepted demo scenario is restored.
-- 10 September 2026: the Ready for review fixture represents a completed
-  Initial Draft but does not own a workspace/read model. Its primary action is
-  therefore disabled with an explicit prototype-boundary explanation; only
-  published fixture records expose an enabled workspace destination.
+- 10 September 2026: the user explicitly authorized the Ready for review
+  fixture to remain display-only because it does not own a workspace/read
+  model. Its primary action is therefore disabled with an explicit
+  prototype-boundary explanation; only published fixture records expose an
+  enabled workspace destination. This supersedes the earlier enabled-action
+  requirement for `vendor-onboarding` without changing the distinction between
+  completed Initial Draft and published Master truth.

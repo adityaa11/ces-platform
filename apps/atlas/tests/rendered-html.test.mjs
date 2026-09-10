@@ -154,9 +154,10 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   const sources = await render("/demo?projectId=safara&view=sources");
   const editorDemo = await render("/demo?scenario=editor-ready");
   const viewerDemo = await render("/demo?scenario=viewer-ready");
+  const projectCardStressDemo = await render("/demo?stress=project-cards");
   const processingStates = await Promise.all(["uploading", "extracting", "modeling", "ready", "needs-attention", "failed"].map((stage) => render(`/demo?scenario=processing-${stage}`)));
   const approvedDemo = await render("/demo?scenario=approved-result&projectId=safara&view=ces");
-  for (const response of [signIn, signUp, reset, demo, workflow, facts, changes, sources, editorDemo, viewerDemo, approvedDemo, ...processingStates]) assert.equal(response.status, 200);
+  for (const response of [signIn, signUp, reset, demo, workflow, facts, changes, sources, editorDemo, viewerDemo, projectCardStressDemo, approvedDemo, ...processingStates]) assert.equal(response.status, 200);
   const signInHtml = await signIn.text();
   const signUpHtml = await signUp.text();
   assert.match(signInHtml, /Welcome back|Forgot password/);
@@ -241,6 +242,7 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(projectCard, /<progress/);
   assert.match(projectCard, /action\.enabled/);
   assert.match(projectCard, /disabled=\{state === "extracting"\}/);
+  assert.match(projectCard, /aria-describedby=\{state === "extracting"/);
   assert.match(projectCard, /repository-state-icon"><svg/);
   assert.match(projectCard, /className="repository-project-id"/);
   assert.match(projectCard, /title=\{project\.name\}/);
@@ -263,6 +265,12 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(demoHtml, /Review workspace unavailable/);
   assert.match(demoHtml, /This fixture demonstrates a completed Initial Draft\. A review workspace is not available in this prototype\./);
   assert.doesNotMatch(demoHtml, /href="\/demo\?projectId=vendor-onboarding/);
+  const stressHtml = await projectCardStressDemo.text();
+  assert.match(stressHtml, /lowercase-lowercase-lowercase-lowercase-fixturex/);
+  assert.match(stressHtml, /uppercase-uppercase-uppercase-uppercase-fixturex/);
+  assert.match(stressHtml, /mixedcase-mixedcase-mixedcase-mixedcase-fixturex/);
+  assert.match(stressHtml, /A AA AAA AAAA/);
+  assert.doesNotMatch(stressHtml, /line-clamp|text-overflow:ellipsis/);
   const workflowHtml = await workflow.text();
   assert.match(workflowHtml, /3 PRDs · Active/);
   assert.match(appShell, /project-switcher-copy/);

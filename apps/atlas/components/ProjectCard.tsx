@@ -54,7 +54,7 @@ export function ProjectCard({ canShare, href, onShare, project }: Props) {
       <dl className="repository-metrics">{metrics.map((metric) => <div key={metric.label}><dd>{metric.value}</dd><dt>{metric.label}</dt></div>)}</dl>
       <div className={`repository-card-actions${canShare ? "" : " repository-card-actions-single"}`}>
         {action.enabled ? <Link className="repository-primary-action" href={href}>{action.label} <span aria-hidden="true">→</span></Link> : <><Button aria-describedby={`${project.id}-action-hint`} className="repository-primary-action" disabled type="button">{action.label} <span aria-hidden="true">→</span></Button><span className="sr-only" id={`${project.id}-action-hint`}>{actionHint}</span></>}
-        {canShare && <Button className="repository-share-action" disabled={state === "extracting"} onClick={() => onShare(project)} tone="secondary" type="button">Share</Button>}
+        {canShare && <Button aria-describedby={state === "extracting" ? `${project.id}-action-hint` : undefined} className="repository-share-action" disabled={state === "extracting"} onClick={() => onShare(project)} tone="secondary" type="button">Share</Button>}
       </div>
     </footer>
   </article>;
