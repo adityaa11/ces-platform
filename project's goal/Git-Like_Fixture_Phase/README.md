@@ -35,9 +35,9 @@ comparison contract.
 | 2 | GLF-002 / BATCH-18 | approved | GLF-001 | Are the shared skill definitions, purposes, responsibilities, and review checks complete and non-authoritative? |
 | 3 | GLF-003 / BATCH-19 | approved | GLF-002 | Does the golden-fixture data contract supply every relationship and branch/HEAD field required by the shared skills and future UI? |
 | 3.1 | GLF-003-01 / BATCH-19.1 | approved | GLF-003 | Do deterministic skill outputs account for all Safara source PDFs and project the complete operational workflow? |
-| 3.2 | GLF-003-02 / BATCH-19.2 | awaiting_review | GLF-003-01 | Can every material statement in Increment 01-03 be reconciled to an atomic extraction result or a justified non-fact classification? |
+| 3.2 | GLF-003-02 / BATCH-19.2 | approved | GLF-003-01 | Can every material statement in Increment 01-03 be reconciled to an atomic extraction result or a justified non-fact classification? |
 | 4 | GLF-004 / BATCH-20 | approved | GLF-003 | Does the Projects route explain each project's repository-like state and available next action without confusing draft work with published Master truth? |
-| 4.1 | GLF-004-01 / BATCH-20.1 | planned | GLF-003-02 approved, GLF-004 | Do the Projects library, project switcher, and project routes resolve one fixture-owned repository record by stable project identity without migrating downstream knowledge surfaces? |
+| 4.1 | GLF-004-01 / BATCH-20.1 | awaiting_review | GLF-003-02 approved, GLF-004 | Do the Projects library, project switcher, and project routes resolve one fixture-owned repository record by stable project identity without migrating downstream knowledge surfaces? |
 | 4.2 | GLF-004-02 / BATCH-20.2 | planned | GLF-003-02 approved, GLF-004 approved, GLF-004-01 approved | Does the Create and process intake produce one validated fixture-owned project request, Extracting card, and processing job with the same stable project ID? |
 | 5 | GLF-005 / BATCH-21 | planned | GLF-003, GLF-004-01 | Can a user select a workspace/branch and understand its selected HEAD without confusing it with the PRD lens? |
 | 6 | GLF-006 / BATCH-22 | planned | GLF-003-02 approved, GLF-005 | Do all existing knowledge surfaces resolve one coherent, inventory-provenanced current truth from the selected branch HEAD? |

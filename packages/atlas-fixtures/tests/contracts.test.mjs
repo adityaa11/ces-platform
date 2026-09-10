@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { fixtureScenarios, getFixtureScenario, projectCardStressFixtures, projectCardStressLimits, resolveFixtureAuthoringExecutor, resolveSkillsMode } from "../src/index.ts";
+import { fixtureScenarios, getFixtureScenario, projectCardStressFixtures, projectCardStressLimits, resolveFixtureAuthoringExecutor, resolveFixtureProjectRoute, resolveSkillsMode } from "../src/index.ts";
 
 test("skills mode defaults to codex and accepts only documented repository-wide values", () => {
   assert.equal(resolveSkillsMode(), "codex");
@@ -48,6 +48,26 @@ test("repository lifecycle counts describe the same fixture-owned PRD records", 
   const readyForReview = projects.find((project) => project.repository.state === "ready-for-review")?.repository.action;
   assert.equal(readyForReview?.enabled, false);
   assert.match(readyForReview?.unavailableReason ?? "", /completed Initial Draft.*review workspace is not available/i);
+});
+
+test("project routes resolve fixture-owned projects and workspaces only by stable ID", () => {
+  const scenario = fixtureScenarios["owner-ready"];
+  const published = resolveFixtureProjectRoute(scenario, "safara");
+  const extracting = resolveFixtureProjectRoute(scenario, "member-portal");
+  const review = resolveFixtureProjectRoute(scenario, "vendor-onboarding");
+  const missing = resolveFixtureProjectRoute(scenario, "not-a-project");
+  assert.equal(published.project?.id, "safara");
+  assert.equal(published.workspace?.project.id, "safara");
+  assert.equal(published.canOpenWorkspace, true);
+  assert.equal(extracting.project?.id, "member-portal");
+  assert.equal(extracting.workspace, undefined);
+  assert.equal(extracting.canOpenWorkspace, false);
+  assert.equal(review.project?.id, "vendor-onboarding");
+  assert.equal(review.workspace, undefined);
+  assert.equal(review.canOpenWorkspace, false);
+  assert.equal(missing.project, undefined);
+  assert.equal(missing.workspace, undefined);
+  assert.equal(missing.canOpenWorkspace, false);
 });
 
 test("project-card stress inputs stay isolated from accepted scenarios and cover each planned field limit", () => {

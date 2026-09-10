@@ -1,4 +1,4 @@
-import { getFixtureScenario, projectCardStressFixtures, type FixtureScenario } from "@atlas/fixtures";
+import { getFixtureScenario, projectCardStressFixtures, resolveFixtureProjectRoute, type FixtureScenario } from "@atlas/fixtures";
 import { ProjectLibrary } from "../../components/ProjectLibrary";
 import { WorkflowWorkspace } from "../../components/WorkflowWorkspace";
 import { ProjectKnowledge } from "../../components/ProjectKnowledge";
@@ -18,10 +18,11 @@ export default async function DemoPage({ searchParams }: { searchParams?: Promis
   const projectCardStress = params?.stress === "project-cards";
   const scenario = getFixtureScenario(scenarioIds.includes(requestedScenario as FixtureScenario["id"]) ? requestedScenario as FixtureScenario["id"] : "owner-ready");
   const scenarioId = scenarioIds.includes(requestedScenario as FixtureScenario["id"]) ? requestedScenario : undefined;
+  const projectRoute = resolveFixtureProjectRoute(scenario, requestedProjectId);
   const initialLens = lensFromSearch(scenario.lens, prd, lensMode);
-  if (requestedView === "workflow" && requestedProjectId === scenario.workspace?.project.id) return <WorkflowWorkspace initialLens={initialLens} initialWorkflowId={params?.workflowId} projects={scenario.projects} scenario={scenarioId} user={scenario.session} workspace={scenario.workspace} />;
-  if ((requestedView === "facts" || requestedView === "changes") && requestedProjectId === scenario.workspace?.project.id) return <ProjectKnowledge initialFactId={params?.factId} initialLens={initialLens} projects={scenario.projects} scenario={scenarioId} user={scenario.session} view={requestedView} workspace={scenario.workspace} />;
-  if (requestedView === "ces" && requestedProjectId === scenario.workspace?.project.id) return <CesResult initialCesItemId={params?.cesItemId} initialLens={initialLens} projects={scenario.projects} scenario={scenarioId} user={scenario.session} workspace={scenario.workspace} />;
-  if (requestedView === "sources" && requestedProjectId === scenario.workspace?.project.id) return <SourcesWorkspace initialLens={initialLens} projects={scenario.projects} scenario={scenarioId} user={scenario.session} workspace={scenario.workspace} />;
+  if (projectRoute.canOpenWorkspace && requestedView === "workflow") return <WorkflowWorkspace initialLens={initialLens} initialWorkflowId={params?.workflowId} projects={scenario.projects} scenario={scenarioId} user={scenario.session} workspace={projectRoute.workspace!} />;
+  if (projectRoute.canOpenWorkspace && (requestedView === "facts" || requestedView === "changes")) return <ProjectKnowledge initialFactId={params?.factId} initialLens={initialLens} projects={scenario.projects} scenario={scenarioId} user={scenario.session} view={requestedView} workspace={projectRoute.workspace!} />;
+  if (projectRoute.canOpenWorkspace && requestedView === "ces") return <CesResult initialCesItemId={params?.cesItemId} initialLens={initialLens} projects={scenario.projects} scenario={scenarioId} user={scenario.session} workspace={projectRoute.workspace!} />;
+  if (projectRoute.canOpenWorkspace && requestedView === "sources") return <SourcesWorkspace initialLens={initialLens} projects={scenario.projects} scenario={scenarioId} user={scenario.session} workspace={projectRoute.workspace!} />;
   return <ProjectLibrary projects={projectCardStress ? projectCardStressFixtures : scenario.projects} scenario={scenarioId} user={scenario.session} workspace={projectCardStress ? undefined : scenario.workspace} />;
 }

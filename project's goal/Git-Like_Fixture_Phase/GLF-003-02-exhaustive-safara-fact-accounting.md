@@ -1,6 +1,6 @@
 # GLF-003-02: Exhaustive Safara fact extraction and source accounting
 
-- **State:** awaiting_review
+- **State:** approved
 - **Review batch:** BATCH-19.2
 - **Depends on:** GLF-003-01 approved
 - **Baseline:** GLF-003; GLF-003-01; Safara Increment 01-03 PRDs; Atlas PRD extraction and verification contracts
