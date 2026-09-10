@@ -367,6 +367,82 @@ The project visual contract may override these defaults when platform needs diff
 
 ---
 
+# 10A. Responsive Fit Contract
+
+For any repeated or bounded component whose usable width changes with the
+application shell—such as cards, table regions, navigation groups, forms,
+metric tiles, timelines, or panels—derive the layout from available space.
+Do not rely only on generic viewport breakpoints or allow a small item count to
+stretch component interiors indefinitely.
+
+First determine the current usable width:
+
+```text
+available width
+= viewport width
+− visible persistent shell or chrome width
+− container inline padding
+− surrounding layout gaps
+```
+
+Then define the component's project-specific bounds:
+
+- minimum usable inline size
+- maximum comfortable inline size
+- gap between siblings
+- current item count
+- required compact-mode transformation
+
+For a repeated grid, calculate the candidate column count from the minimum
+usable size, and never create more columns than there are items:
+
+```text
+columns
+= min(item count, floor((available width + gap) / (minimum width + gap)))
+
+item width
+= min(maximum comfortable width, (available width − total gaps) / columns)
+```
+
+This is a reasoning model, not a mandate to hard-code these equations in every
+component. CSS grid, container queries, measured layout, or an established
+design-system primitive may implement the same contract. The result must:
+
+- account for the active shell state, including expanded, collapsed, hidden,
+  or overlay navigation;
+- keep items within their readable minimum and comfortable maximum;
+- leave surplus space in the parent layout once the item maximum is reached,
+  rather than stretching sparse component interiors;
+- cap columns by real item count; and
+- transform composition before reducing readable type, control targets, or
+  semantic spacing below the project minimum.
+
+Pair spatial fit with a content-fit contract. Character limits alone do not
+predict rendered width: uppercase, lowercase, mixed case, long unbroken text,
+localized copy, and the selected typeface all differ. For every declared
+maximum input, verify representative stress cases using the actual component
+type roles:
+
+- lowercase, uppercase, and mixed-case values;
+- normal multi-word and long unbroken values;
+- maximum-length identifiers, labels, and descriptions;
+- optional or absent content; and
+- every relevant state, permission, and action combination.
+
+Choose containment deliberately by information type. Important identity and
+controls must remain fully reachable and usable; use meaningful wrapping,
+grouping, progressive disclosure, or a changed composition before using visual
+truncation. Do not make ellipsis the default response to valid data. If visual
+line limits are necessary, preserve the complete semantic value in an
+accessible, discoverable form and make the limit part of the component's
+contract.
+
+Record the chosen spatial bounds, content limits, containment strategy, and
+shell states in the project visual contract or the component's implementation
+notes. Render and inspect the result at representative shell states and widths.
+
+---
+
 # 11. Accessibility baseline
 
 Target WCAG 2.2 AA.
