@@ -27,6 +27,8 @@ processing job, repository candidate, card, and project route.
 - Provide accessible labels, visible maximum-character notes and live
   character counts for every text field, inline format guidance, field-level
   error messages, and disabled/loading/error submit states.
+- Display this helper note directly below the Project ID input in the modal:
+  `3–48 lowercase letters, numbers, and hyphens. Example: customer-portal-v2.`
 - After a valid submission, show an accessible success notification confirming
   that the project was created and extraction has started; it must identify the
   submitted project name or ID without implying that work is published.
@@ -65,8 +67,9 @@ processing job, repository candidate, card, and project route.
   | PRD PDFs | Yes | Select one or more PDF files | Missing: `Select at least one PRD PDF.` Invalid type: `Only PDF files can be added.` |
 
   Each text-field label includes its maximum-character note and a live
-  character count; errors are associated with their fields and announced to
-  assistive technology.
+  character count. The Project ID helper note is displayed directly below its
+  input; errors are associated with their fields and announced to assistive
+  technology.
 - Project ID is unique within the fixture-backed project store, is normalized
   as lowercase kebab case, and remains the sole identity key after submit.
 - Name and description preserve their original human-readable casing; file
