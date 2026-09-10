@@ -18,7 +18,8 @@ processing job, repository candidate, card, and project route.
 - Add the Create a project modal fields: Project ID, Project Name, Project
   Description, and PRD PDFs.
 - Make Project ID initially derive from Project Name, allow deliberate editing
-  before submission, and validate it as a stable lowercase kebab-case key.
+  before submission, and validate it as a stable lowercase kebab-case key
+  (for example, `customer-portal-v2`).
 - Apply input limits: Project ID 3–48 characters, Project Name 1–80
   characters, Project Description 0–280 characters, and at least one PDF.
 - Mark Project ID, Project Name, and PRD PDFs with `*` as required; Project
@@ -58,7 +59,7 @@ processing job, repository candidate, card, and project route.
 
   | Field | Required | Limit / guidance | Visible validation message |
   |---|---|---|---|
-  | Project ID | Yes | 3–48 characters; lowercase kebab-case | Required: `Enter a project ID.` Invalid format: `Use 3–48 lowercase letters, numbers, and hyphens.` Duplicate: `That project ID is already in use.` |
+  | Project ID | Yes | 3–48 characters; lowercase kebab-case, for example `customer-portal-v2` | Required: `Enter a project ID.` Invalid format: `Use 3–48 lowercase letters, numbers, and hyphens, for example customer-portal-v2.` Duplicate: `That project ID is already in use.` |
   | Project Name | Yes | 1–80 characters | Required: `Enter a project name.` Too long: `Project name must be 80 characters or fewer.` |
   | Project Description | No | 0–280 characters | Too long: `Project description must be 280 characters or fewer.` |
   | PRD PDFs | Yes | Select one or more PDF files | Missing: `Select at least one PRD PDF.` Invalid type: `Only PDF files can be added.` |
