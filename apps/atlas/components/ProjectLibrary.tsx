@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import type { AccessRole, MembershipFixture, ProjectFixture, ProjectWorkspaceFixture } from "@atlas/fixtures";
+import { createFixtureProject, projectCardStressLimits, projectIdPattern, type AccessRole, type MembershipFixture, type PrdFileMetadata, type ProjectCreateRequest, type ProjectFixture, type ProjectWorkspaceFixture } from "@atlas/fixtures";
 import { AppShell } from "./AppShell";
 import { Button } from "./Button";
 import { Dialog } from "./Dialog";
@@ -11,13 +11,20 @@ import { demoHref } from "./WorkspaceLens";
 
 type User = { name: string; email: string; role: "owner" | "editor" | "viewer" };
 type PendingAccessChange = { memberId: string; nextRole?: AccessRole; type: "role" | "remove" };
+type FieldErrors = Partial<Record<"projectId" | "projectName" | "projectDescription" | "prdFiles", string>>;
 const roleLabels: Record<AccessRole, string> = { owner: "Owner", editor: "Editor", viewer: "Viewer" };
 
 export function ProjectLibrary({ user, projects, workspace, scenario }: { user: User; projects: ProjectFixture[]; workspace?: ProjectWorkspaceFixture; scenario?: string }) {
   const projectGridRef = useRef<HTMLDivElement>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [libraryProjects, setLibraryProjects] = useState(projects);
+  const [projectId, setProjectId] = useState("");
   const [projectName, setProjectName] = useState("");
+  const [projectDescription, setProjectDescription] = useState("");
   const [processing, setProcessing] = useState(false);
+  const [processingJob, setProcessingJob] = useState<string | null>(null);
+  const [submitState, setSubmitState] = useState<"idle" | "loading" | "error">("idle");
+  const [errors, setErrors] = useState<FieldErrors>({});
   const [shareProject, setShareProject] = useState<ProjectFixture | null>(null);
   const [membersByProject, setMembersByProject] = useState<Record<string, MembershipFixture[]>>(() => Object.fromEntries(projects.map((project) => [project.id, project.id === workspace?.project.id ? workspace.memberships : []])));
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -39,7 +46,7 @@ export function ProjectLibrary({ user, projects, workspace, scenario }: { user: 
     const updateGridFormula = () => {
       const availableWidth = grid.clientWidth;
       const candidateColumns = Math.floor((availableWidth + gap) / (minimumCardWidth + gap));
-      const columns = Math.max(1, Math.min(projects.length || 1, candidateColumns));
+      const columns = Math.max(1, Math.min(libraryProjects.length || 1, candidateColumns));
       const fluidWidth = (availableWidth - gap * (columns - 1)) / columns;
       const cardWidth = Math.min(maximumCardWidth, Math.max(0, fluidWidth));
       const formula = `${columns}:${cardWidth}`;
@@ -56,8 +63,22 @@ export function ProjectLibrary({ user, projects, workspace, scenario }: { user: 
     observer.observe(container);
     scheduleFormula();
     return () => { cancelAnimationFrame(frame); observer.disconnect(); };
-  }, [projects.length]);
-  function createProject() { setCreateOpen(false); setProcessing(true); setProjectName(""); setSelectedFiles([]); }
+  }, [libraryProjects.length]);
+  function resetCreateForm() { setProjectId(""); setProjectName(""); setProjectDescription(""); setSelectedFiles([]); setErrors({}); setSubmitState("idle"); }
+  function deriveProjectId(name: string) { return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, projectCardStressLimits.id); }
+  function validateCreateRequest(): FieldErrors {
+    const next: FieldErrors = {};
+    if (!projectId.trim()) next.projectId = "Enter a project ID.";
+    else if (projectId.length < 3 || projectId.length > projectCardStressLimits.id || !projectIdPattern.test(projectId)) next.projectId = "Use 3–48 lowercase letters, numbers, and hyphens, for example customer-portal-v2.";
+    else if (libraryProjects.some((project) => project.id === projectId)) next.projectId = "That project ID is already in use.";
+    if (!projectName.trim()) next.projectName = "Enter a project name.";
+    else if (projectName.length > projectCardStressLimits.name) next.projectName = "Project name must be 80 characters or fewer.";
+    if (projectDescription.length > projectCardStressLimits.description) next.projectDescription = "Project description must be 280 characters or fewer.";
+    if (!selectedFiles.length) next.prdFiles = "Select at least one PRD PDF.";
+    else if (selectedFiles.some((file) => file.type !== "application/pdf")) next.prdFiles = "Only PDF files can be added.";
+    return next;
+  }
+  function createProject(event: FormEvent<HTMLFormElement>) { event.preventDefault(); const nextErrors = validateCreateRequest(); setErrors(nextErrors); if (Object.keys(nextErrors).length) { setSubmitState("error"); return; } setSubmitState("loading"); const request: ProjectCreateRequest = { projectId, projectName: projectName.trim(), projectDescription: projectDescription.trim(), prdFiles: selectedFiles.map((file): PrdFileMetadata => ({ name: file.name, type: "application/pdf", size: file.size })) }; const created = createFixtureProject(request); setLibraryProjects((current) => [...current, created.project]); setProcessingJob(created.processingJob.message); setProcessing(true); setCreateOpen(false); resetCreateForm(); }
   function inviteMember(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const email = inviteEmail.trim().toLowerCase();
@@ -72,7 +93,7 @@ export function ProjectLibrary({ user, projects, workspace, scenario }: { user: 
     setPendingAccessChange(null);
   }
   const changingMember = members.find((member) => member.id === pendingAccessChange?.memberId);
-  return <AppShell contentClassName="project-library-content" projectNavigation={Boolean(workspace)} projects={projects} user={user} workspace={workspace}>
+  return <AppShell contentClassName="project-library-content" projectNavigation={Boolean(workspace)} projects={libraryProjects} user={user} workspace={workspace}>
     <div className="project-library-page">
       <section className="workspace-heading">
         <p className="eyebrow">Your workspace</p>
@@ -81,22 +102,27 @@ export function ProjectLibrary({ user, projects, workspace, scenario }: { user: 
             <h1>Projects</h1>
             <p>See what each project is, whether it has accepted Master work, and what to do next.</p>
           </div>
-          {canCreate && <Button onClick={() => setCreateOpen(true)} type="button">+ New project</Button>}
+          {canCreate && <Button onClick={() => { resetCreateForm(); setCreateOpen(true); }} type="button">+ New project</Button>}
         </div>
       </section>
 
       <section aria-labelledby="project-lifecycle-title" className="project-lifecycle-guide"><div><span aria-hidden="true" className="project-lifecycle-icon"><svg fill="none" viewBox="0 0 24 24"><path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H19v16H7.5A2.5 2.5 0 0 0 5 21V5.5Z"/><path d="M5 5.5V21"/><path d="M19 3v16"/></svg></span><div><h2 id="project-lifecycle-title">Quick guide</h2><p>Get from PRDs to a published project in four simple steps.</p></div></div><ol><li><strong>Create</strong><span>Start a project and upload PRDs.</span></li><li><strong>Extract</strong><span>Atlas builds Initial Draft work.</span></li><li><strong>Review</strong><span>Check the draft before publication.</span></li><li><strong>Publish</strong><span>Accept the first Master version.</span></li></ol></section>
 
-      <section aria-labelledby="project-list-title" className="repository-projects"><header><h2 id="project-list-title">Your projects</h2><span>{projects.length} repositories</span></header><div aria-label="Projects" className="project-grid" ref={projectGridRef}>
-        {projects.map((project) => {
+      <section aria-labelledby="project-list-title" className="repository-projects"><header><h2 id="project-list-title">Your projects</h2><span>{libraryProjects.length} repositories</span></header><div aria-label="Projects" className="project-grid" ref={projectGridRef}>
+        {libraryProjects.map((project) => {
           const href = demoHref({ projectId: project.id, scenario, view: "workflow" });
           return <ProjectCard canShare={canShare} href={href} key={project.id} onShare={setShareProject} project={project} />;
         })}
       </div></section>
 
-      {projects.length === 0 && <EmptyState title="No projects yet" description="Create a project to begin reviewing your PRDs." />}
-      {processing && <aside aria-live="polite" className="processing-notice"><strong>Atlas is processing your project</strong><span>Extracting text and structure</span><button onClick={() => setProcessing(false)} type="button">Dismiss</button></aside>}
-      {createOpen && <Dialog onClose={() => setCreateOpen(false)} title="Create a project"><form className="create-project-form" onSubmit={(event) => { event.preventDefault(); createProject(); }}><label>Project name<input onChange={(event) => setProjectName(event.target.value)} required value={projectName} /></label><label>PRD PDFs<input accept="application/pdf" multiple onChange={(event) => setSelectedFiles(Array.from(event.target.files ?? []))} required type="file" /></label><p>{selectedFiles.length ? `${selectedFiles.length} PDF${selectedFiles.length > 1 ? "s" : ""} selected. Files and processing are simulated in this prototype.` : "Select at least one PDF to create a project."}</p><div className="dialog-actions"><Button tone="secondary" onClick={() => setCreateOpen(false)} type="button">Cancel</Button><Button disabled={!projectName.trim() || !selectedFiles.length} type="submit">Create and process</Button></div></form></Dialog>}
+      {libraryProjects.length === 0 && <EmptyState title="No projects yet" description="Create a project to begin reviewing your PRDs." />}
+      {processing && <aside aria-live="polite" className="processing-notice"><strong>{processingJob ? `Project ${libraryProjects.at(-1)?.name ?? ""} created. Extraction has started.` : "Atlas is processing your project"}</strong><span>{processingJob ?? "Extracting text and structure"}</span><button onClick={() => setProcessing(false)} type="button">Dismiss</button></aside>}
+      {createOpen && <Dialog onClose={() => { setCreateOpen(false); resetCreateForm(); }} title="Create a project"><form className="create-project-form" noValidate onSubmit={createProject}>
+        <label htmlFor="project-id">Project ID <span>* Required · 48 characters maximum</span><input aria-describedby="project-id-help project-id-count project-id-error" aria-invalid={Boolean(errors.projectId)} id="project-id" maxLength={projectCardStressLimits.id} onChange={(event) => setProjectId(event.target.value)} required value={projectId} /></label><p className="field-help" id="project-id-help">3–48 lowercase letters, numbers, and hyphens. Example: customer-portal-v2.</p><p className="field-count" id="project-id-count">{projectId.length}/48 characters</p>{errors.projectId && <p className="field-error" id="project-id-error" role="alert">{errors.projectId}</p>}
+        <label htmlFor="project-name">Project Name <span>* Required · 80 characters maximum</span><input aria-describedby="project-name-count project-name-error" id="project-name" maxLength={projectCardStressLimits.name} onChange={(event) => { const value = event.target.value; setProjectName(value); if (!projectId) setProjectId(deriveProjectId(value)); }} required value={projectName} /></label><p className="field-count" id="project-name-count">{projectName.length}/80 characters</p>{errors.projectName && <p className="field-error" id="project-name-error" role="alert">{errors.projectName}</p>}
+        <label htmlFor="project-description">Project Description <span>· Optional · 280 characters maximum</span><textarea aria-describedby="project-description-count project-description-error" id="project-description" maxLength={projectCardStressLimits.description} onChange={(event) => setProjectDescription(event.target.value)} value={projectDescription} /></label><p className="field-count" id="project-description-count">{projectDescription.length}/280 characters</p>{errors.projectDescription && <p className="field-error" id="project-description-error" role="alert">{errors.projectDescription}</p>}
+        <label htmlFor="project-prds">PRD PDFs <span>* Required</span><input accept="application/pdf,.pdf" aria-describedby="project-prds-help project-prds-error" id="project-prds" multiple onChange={(event) => setSelectedFiles(Array.from(event.target.files ?? []))} required type="file" /></label><p className="field-help" id="project-prds-help">{selectedFiles.length ? `${selectedFiles.length} PDF${selectedFiles.length === 1 ? "" : "s"} selected. Files and processing are simulated in this prototype.` : "Select one or more PDF files."}</p>{errors.prdFiles && <p className="field-error" id="project-prds-error" role="alert">{errors.prdFiles}</p>}
+        <div className="dialog-actions"><Button tone="secondary" onClick={() => { setCreateOpen(false); resetCreateForm(); }} type="button">Cancel</Button><Button disabled={submitState === "loading"} type="submit">{submitState === "loading" ? "Creating…" : "Create and process"}</Button></div></form></Dialog>}
       {shareProject && !pendingAccessChange && <Dialog onClose={() => setShareProject(null)} title={`Share ${shareProject.name}`}><div className="share-panel"><p>Only people invited by email can access this private project.</p><form className="invite-form" onSubmit={inviteMember}><label>Email<input onChange={(event) => setInviteEmail(event.target.value)} placeholder="person@example.com" required type="email" value={inviteEmail} /></label><label>Role<select onChange={(event) => setInviteRole(event.target.value as AccessRole)} value={inviteRole}><option value="viewer">Viewer — can inspect</option><option value="editor">Editor — can contribute</option></select></label><Button type="submit">Invite</Button></form><section aria-label="Collaborators" className="collaborator-list"><h3>People with access</h3>{members.map((member) => <div className={`collaborator ${member.status === "removed" ? "collaborator-removed" : ""}`} key={member.id}><div><strong>{member.name}</strong><span>{member.email}</span></div>{member.status === "removed" ? <em>Access removed</em> : member.role === "owner" ? <em>Owner</em> : <><select aria-label={`Role for ${member.name}`} onChange={(event) => setPendingAccessChange({ memberId: member.id, nextRole: event.target.value as AccessRole, type: "role" })} value={member.role}><option value="editor">Editor</option><option value="viewer">Viewer</option></select><Button className="remove-access" onClick={() => setPendingAccessChange({ memberId: member.id, type: "remove" })} tone="quiet" type="button">Remove</Button><em>{member.status === "invited" ? "Invite sent" : "Active"}</em></>}</div>)}</section></div></Dialog>}
       {pendingAccessChange && changingMember && <Dialog onClose={() => setPendingAccessChange(null)} title={pendingAccessChange.type === "remove" ? "Remove project access?" : "Change project access?"}><div className="access-confirmation"><p>{pendingAccessChange.type === "remove" ? `${changingMember.name} will no longer be able to open this project.` : `${changingMember.name} will become a ${roleLabels[pendingAccessChange.nextRole ?? changingMember.role]}.`}</p><div className="dialog-actions"><Button onClick={() => setPendingAccessChange(null)} tone="secondary" type="button">Cancel</Button><Button onClick={confirmAccessChange} type="button">Confirm change</Button></div></div></Dialog>}
     </div>

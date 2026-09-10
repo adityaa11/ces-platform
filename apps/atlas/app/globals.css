@@ -317,6 +317,7 @@ button {
 .create-project-form label { display: grid; font-weight: 700; gap: .4rem; }
 .create-project-form input { border: 1px solid #bbc8bf; border-radius: .55rem; font: inherit; padding: .65rem; }
 .create-project-form p { color: var(--muted); font-size: .9rem; margin: 0; }
+.create-project-form label > span, .create-project-form .field-count { color: var(--muted); font-size: var(--type-meta); font-weight: var(--weight-regular); }.create-project-form textarea { background: var(--surface); border: 1px solid #bbc8bf; border-radius: .55rem; color: var(--ink); font: inherit; min-height: 5rem; padding: .65rem; resize: vertical; }.create-project-form .field-help { margin-top: -.65rem; }.create-project-form .field-count { margin-top: -.8rem; text-align: right; }.create-project-form .field-error { color: var(--warning-ink); font-weight: var(--weight-semibold); margin-top: -.55rem; }.create-project-form :is(input, textarea):focus-visible { outline: 3px solid color-mix(in srgb, var(--forest) 65%, transparent); outline-offset: 2px; }.create-project-form :is(input, textarea)[aria-invalid="true"] { border-color: var(--warning-ink); }
 .dialog-actions { display: flex; gap: .75rem; justify-content: flex-end; }
 .empty-state { border: 1px dashed #a6b6aa; border-radius: 1rem; margin-top: 1rem; padding: 2rem; text-align: center; }
 .empty-state h2 { margin: 0; }
@@ -401,6 +402,7 @@ h1 { font-size: clamp(2.35rem, 6vw, 5rem); letter-spacing: -.055em; line-height:
 :root[data-theme="light"] .theme-selector { border-color: #e1e5ec; }
 :root[data-theme="light"] .theme-selector .theme-active { background: #edeeff; border-color: #d6d7ff; color: #4745bb; }
 :root[data-theme="light"] .create-project-form input { background: #fff; border-color: #cbd3df; color: var(--ink); }
+:root[data-theme="light"] .create-project-form textarea { background: #fff; border-color: #cbd3df; }
 :root[data-theme="light"] .invite-form input, :root[data-theme="light"] .invite-form select, :root[data-theme="light"] .collaborator select { background: #fff; border-color: #cbd3df; }
 :root[data-theme="light"] .collaborator-removed { background: #f7f4f6; }
 :root[data-theme="light"] .dialog-backdrop { background: #20242e40; }

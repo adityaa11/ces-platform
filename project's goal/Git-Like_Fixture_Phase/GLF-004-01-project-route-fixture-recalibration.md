@@ -1,6 +1,6 @@
 # GLF-004-01: Project-route fixture recalibration
 
-- **State:** awaiting_review
+- **State:** approved
 - **Review batch:** BATCH-20.1
 - **Depends on:** GLF-003-02 approved, GLF-004
 - **Baseline:** Architecture Checkpoint sections 12–17, 22.5–22.8, 24; UI/UX Prototype PRD sections 4.2–4.3, 5–6, 9.1, 9.4; Fixture Data-Intent Contract; GLF-003; GLF-004; AUI-002; AUI-004; AUI-013

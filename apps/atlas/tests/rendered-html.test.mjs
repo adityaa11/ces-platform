@@ -240,7 +240,7 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(projectLibrary, /ResizeObserver/);
   assert.match(projectLibrary, /minimumCardWidth = 304/);
   assert.match(projectLibrary, /maximumCardWidth = 400/);
-  assert.match(projectLibrary, /Math\.min\(projects\.length \|\| 1, candidateColumns\)/);
+  assert.match(projectLibrary, /Math\.min\(libraryProjects\.length \|\| 1, candidateColumns\)/);
   assert.match(projectLibrary, /--project-column-count/);
   assert.match(projectCard, /Master/);
   assert.match(projectCard, /Initial draft/);

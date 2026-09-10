@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { fixtureScenarios, getFixtureScenario, projectCardStressFixtures, projectCardStressLimits, resolveFixtureAuthoringExecutor, resolveFixtureProjectRoute, resolveSkillsMode } from "../src/index.ts";
+import { createFixtureProject, fixtureScenarios, getFixtureScenario, projectCardStressFixtures, projectCardStressLimits, resolveFixtureAuthoringExecutor, resolveFixtureProjectRoute, resolveSkillsMode } from "../src/index.ts";
 
 test("skills mode defaults to codex and accepts only documented repository-wide values", () => {
   assert.equal(resolveSkillsMode(), "codex");
@@ -68,6 +68,22 @@ test("project routes resolve fixture-owned projects and workspaces only by stabl
   assert.equal(missing.project, undefined);
   assert.equal(missing.workspace, undefined);
   assert.equal(missing.canOpenWorkspace, false);
+});
+
+test("project creation request produces one extracting fixture record and matching job by stable ID", () => {
+  const created = createFixtureProject({ projectId: "Customer-Portal-V2", projectName: "Customer Portal V2", projectDescription: "Keep the supplied casing.", prdFiles: [{ name: "customer-portal.pdf", type: "application/pdf", size: 4200 }] });
+  assert.equal(created.request.projectId, "customer-portal-v2");
+  assert.equal(created.project.id, "customer-portal-v2");
+  assert.equal(created.processingJob.projectId, "customer-portal-v2");
+  assert.equal(created.project.status, "processing");
+  assert.equal(created.project.repository.state, "extracting");
+  assert.equal(created.project.repository.initialDraft.totalPrds, 1);
+  assert.equal(created.project.repository.action.enabled, false);
+  assert.equal(created.request.projectName, "Customer Portal V2");
+  assert.equal(created.request.projectDescription, "Keep the supplied casing.");
+  const route = resolveFixtureProjectRoute({ ...fixtureScenarios["owner-ready"], projects: [...fixtureScenarios["owner-ready"].projects, created.project] }, created.project.id);
+  assert.equal(route.project?.id, created.processingJob.projectId);
+  assert.equal(route.canOpenWorkspace, false);
 });
 
 test("project-card stress inputs stay isolated from accepted scenarios and cover each planned field limit", () => {
