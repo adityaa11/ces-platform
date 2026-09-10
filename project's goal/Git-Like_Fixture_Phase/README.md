@@ -33,7 +33,7 @@ comparison contract.
 |---:|---|---|---|---|
 | 1 | GLF-001 / BATCH-17 | approved | — | Is the repository-local `SKILLS_MODE` configuration explicit, safe, and defaulted to `codex`? |
 | 2 | GLF-002 / BATCH-18 | approved | GLF-001 | Are the shared skill definitions, purposes, responsibilities, and review checks complete and non-authoritative? |
-| 3 | GLF-003 / BATCH-19 | awaiting_review | GLF-002 | Does the golden-fixture data contract supply every relationship and branch/HEAD field required by the shared skills and future UI? |
+| 3 | GLF-003 / BATCH-19 | approved | GLF-002 | Does the golden-fixture data contract supply every relationship and branch/HEAD field required by the shared skills and future UI? |
 | 3.1 | GLF-003-01 / BATCH-19.1 | approved | GLF-003 | Do deterministic skill outputs account for all Safara source PDFs and project the complete operational workflow? |
 | 3.2 | GLF-003-02 / BATCH-19.2 | awaiting_review | GLF-003-01 | Can every material statement in Increment 01-03 be reconciled to an atomic extraction result or a justified non-fact classification? |
 | 4 | GLF-004 / BATCH-20 | awaiting_review | GLF-003 | Does the Projects route explain each project's repository-like state and available next action without confusing draft work with published Master truth? |
