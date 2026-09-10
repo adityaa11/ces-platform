@@ -1,7 +1,7 @@
 # GLF-004 responsive validation record
 
 - **Checkpoint:** BATCH-20
-- **Validated commit:** `734aa39` (ready-state remediation)
+- **Validated commit:** `9d0818cdc72059d7c5258db4c24cc1eeff90da6e` (final remediation)
 - **Theme:** default dark theme; the existing semantic theme tokens also retain the same state/action hierarchy in light theme.
 - **Routes:** `/demo` using `owner-ready`; `/demo?stress=project-cards` for the isolated maximum-content render
 
