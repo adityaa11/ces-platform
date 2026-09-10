@@ -57,10 +57,13 @@ test("project-card stress inputs stay isolated from accepted scenarios and cover
     assert.equal(project.repository.summary.length, projectCardStressLimits.description);
     assert.match(project.id, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
   }
-  assert.match(projectCardStressFixtures[0].name, /^[a-z]+$/);
-  assert.match(projectCardStressFixtures[1].name, /^[A-Z]+$/);
+  assert.match(projectCardStressFixtures[0].name, /^[a-z ]+$/);
+  assert.match(projectCardStressFixtures[1].name, /^[A-Z ]+$/);
   assert.match(projectCardStressFixtures[2].name, /[A-Z]/);
   assert.match(projectCardStressFixtures[2].name, /[a-z]/);
+  assert.match(projectCardStressFixtures[0].repository.summary, / /);
+  assert.match(projectCardStressFixtures[1].repository.summary, / /);
+  assert.match(projectCardStressFixtures[2].repository.summary, / /);
 });
 
 test("source-grounded fixture records keep quote, document, page, and relationships", () => {

@@ -231,6 +231,11 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(projectLibrary, /demoHref\(\{ projectId: project\.id, view: "workflow" \}\)/);
   assert.match(projectLibrary, /selectedFiles/);
   assert.match(projectLibrary, /membersByProject/);
+  assert.match(projectLibrary, /ResizeObserver/);
+  assert.match(projectLibrary, /minimumCardWidth = 304/);
+  assert.match(projectLibrary, /maximumCardWidth = 400/);
+  assert.match(projectLibrary, /Math\.min\(projects\.length \|\| 1, candidateColumns\)/);
+  assert.match(projectLibrary, /--project-column-count/);
   assert.match(projectCard, /Master/);
   assert.match(projectCard, /Initial draft/);
   assert.match(projectCard, /<progress/);
@@ -244,8 +249,10 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(fixtures, /RepositoryLifecycleState="published"\|"extracting"\|"ready-for-review"/);
   assert.match(fixtures, /projectCardStressFixtures/);
   assert.match(globals, /\.repository-project-id \{[^}]*grid-column: 2 \/ -1/);
-  assert.match(globals, /\.repository-identity h2 \{[^}]*-webkit-line-clamp: 2/);
-  assert.match(globals, /\.repository-summary \{[^}]*-webkit-line-clamp: 3/);
+  assert.match(globals, /\.project-library-page \.project-grid \{[^}]*--project-card-min: 19rem/);
+  assert.match(globals, /\.project-library-page \.project-grid \{[^}]*--project-card-max: 25rem/);
+  assert.doesNotMatch(globals, /\.repository-identity h2 \{[^}]*line-clamp/);
+  assert.doesNotMatch(globals, /\.repository-summary \{[^}]*line-clamp/);
   assert.match(fixtures, /project,processingProject,reviewProject/);
   assert.match(demoHtml, /Published/);
   assert.match(demoHtml, /Extracting/);

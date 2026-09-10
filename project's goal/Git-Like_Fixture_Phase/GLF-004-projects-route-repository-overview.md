@@ -34,6 +34,13 @@ workspace prematurely.
 - Reserve stable layout space for shared card sections so text wrapping in one
   project cannot shift the Master, draft progress, metrics, or action sections
   relative to the other cards.
+- Apply the Responsive Fit Contract: derive the grid from the available shell
+  width, use a 304–400px card-width range with 16px gaps, and cap columns only
+  by the number of projects actually present. Do not keep a fixed three-card
+  ceiling on wider screens.
+- Preserve valid project identity and repository text in the visible card
+  layout. Fit by responsive reflow and deliberate wrapping rather than visual
+  ellipses or line clamps.
 - Preserve project identity by stable `project.id`; display labels must not
   determine routing or state.
 
@@ -51,10 +58,17 @@ workspace prematurely.
 - Card sections align consistently across the fixture states at desktop,
   tablet, and mobile widths, including wrapped names, descriptions, badges,
   progress bars, metrics, and actions.
+- Grid columns and card width are recalculated when the available route width
+  changes (including the shell sidebar state), respecting the 304px minimum,
+  400px maximum, 16px gap, and actual project count.
+- Maximum-length lower-, upper-, and mixed-case test content remains fully
+  visible through wrapping at each responsive card width; it does not rely on
+  ellipses or clipping to appear contained.
 - The route preserves the existing no-project-selected shell behavior and
   routes only by stable project identity.
-- The standalone UI reference may demonstrate the states, but this ticket does
-  not authorize changing application code until the checkpoint is approved.
+- The standalone formula reference demonstrates responsive-fit behavior; the
+  application implementation must preserve fixture ownership and use it only
+  as a visual/layout correctness baseline.
 
 ## Validation
 
@@ -74,18 +88,22 @@ workspace prematurely.
   must expose enabled Open project and Share actions; while extraction is still
   in progress, both actions remain visibly disabled. This supersedes the
   temporary disabled-ready-action remediation recorded for BATCH-20.
-- 9 September 2026: the maximum-length lowercase, uppercase, and mixed-case
-  fixture stress render demonstrated that Project Card text can overflow its
-  compact frame. This is accepted BATCH-20 remediation work: constrain and
-  format valid input, reserve a full-width identity row, and contain title and
-  description rendering without changing the underlying project identity.
+- 10 September 2026: the formula reference
+  `atlas_project_cards_formula_responsive_v5_grouped_spaces.html` is the
+  visual correctness baseline for this remediation. The project grid measures
+  its available shell width and derives columns/card width from a 304–400px
+  range and 16px gap, capped only by the project count.
+- 10 September 2026: maximum-length lower-, upper-, and mixed-case content is
+  tested as progressively grouped text at the planned limits. The route must
+  retain and wrap valid content rather than conceal it with ellipses or line
+  clamps.
 - 9 September 2026: the regression input now lives separately as
   `projectCardStressFixtures`, rather than in an accepted fixture scenario or
   the golden Safara bundle. It supplies 48-character valid IDs plus
   80-character names and 280-character descriptions in lowercase, uppercase,
   and mixed case for the responsive-card remediation.
-- 9 September 2026: BATCH-20 remediation separates the project ID onto its
-  own header row, retains complete content in the accessible DOM, and limits
-  only visual title and description presentation. A temporary stress render
-  confirmed that the three maximum-length records remain contained within
-  their cards before the accepted demo scenario was restored.
+- 10 September 2026: BATCH-20 remediation separates the project ID onto its
+  own header row and retains complete title and description content in the
+  visible card layout. A temporary stress render confirms that the three
+  maximum-length records remain contained through responsive reflow before the
+  accepted demo scenario is restored.

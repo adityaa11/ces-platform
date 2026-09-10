@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { AccessRole, MembershipFixture, ProjectFixture, ProjectWorkspaceFixture } from "@atlas/fixtures";
 import { AppShell } from "./AppShell";
 import { Button } from "./Button";
@@ -14,6 +14,7 @@ type PendingAccessChange = { memberId: string; nextRole?: AccessRole; type: "rol
 const roleLabels: Record<AccessRole, string> = { owner: "Owner", editor: "Editor", viewer: "Viewer" };
 
 export function ProjectLibrary({ user, projects, workspace, scenario }: { user: User; projects: ProjectFixture[]; workspace?: ProjectWorkspaceFixture; scenario?: string }) {
+  const projectGridRef = useRef<HTMLDivElement>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [projectName, setProjectName] = useState("");
   const [processing, setProcessing] = useState(false);
@@ -26,6 +27,36 @@ export function ProjectLibrary({ user, projects, workspace, scenario }: { user: 
   const canCreate = user.role === "owner" || user.role === "editor";
   const canShare = user.role === "owner";
   const members = shareProject ? (membersByProject[shareProject.id] ?? []) : [];
+  useEffect(() => {
+    const grid = projectGridRef.current;
+    if (!grid) return;
+    const container = grid.parentElement ?? grid;
+    const minimumCardWidth = 304;
+    const maximumCardWidth = 400;
+    const gap = 16;
+    let previousFormula = "";
+    let frame = 0;
+    const updateGridFormula = () => {
+      const availableWidth = grid.clientWidth;
+      const candidateColumns = Math.floor((availableWidth + gap) / (minimumCardWidth + gap));
+      const columns = Math.max(1, Math.min(projects.length || 1, candidateColumns));
+      const fluidWidth = (availableWidth - gap * (columns - 1)) / columns;
+      const cardWidth = Math.min(maximumCardWidth, Math.max(0, fluidWidth));
+      const formula = `${columns}:${cardWidth}`;
+      if (formula === previousFormula) return;
+      previousFormula = formula;
+      grid.style.setProperty("--project-column-count", String(columns));
+      grid.style.setProperty("--project-card-width", `${cardWidth}px`);
+    };
+    const scheduleFormula = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(updateGridFormula);
+    };
+    const observer = new ResizeObserver(scheduleFormula);
+    observer.observe(container);
+    scheduleFormula();
+    return () => { cancelAnimationFrame(frame); observer.disconnect(); };
+  }, [projects.length]);
   function createProject() { setCreateOpen(false); setProcessing(true); setProjectName(""); setSelectedFiles([]); }
   function inviteMember(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -56,7 +87,7 @@ export function ProjectLibrary({ user, projects, workspace, scenario }: { user: 
 
       <section aria-labelledby="project-lifecycle-title" className="project-lifecycle-guide"><div><span aria-hidden="true" className="project-lifecycle-icon"><svg fill="none" viewBox="0 0 24 24"><path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H19v16H7.5A2.5 2.5 0 0 0 5 21V5.5Z"/><path d="M5 5.5V21"/><path d="M19 3v16"/></svg></span><div><h2 id="project-lifecycle-title">Quick guide</h2><p>Get from PRDs to a published project in four simple steps.</p></div></div><ol><li><strong>Create</strong><span>Start a project and upload PRDs.</span></li><li><strong>Extract</strong><span>Atlas builds Initial Draft work.</span></li><li><strong>Review</strong><span>Check the draft before publication.</span></li><li><strong>Publish</strong><span>Accept the first Master version.</span></li></ol></section>
 
-      <section aria-labelledby="project-list-title" className="repository-projects"><header><h2 id="project-list-title">Your projects</h2><span>{projects.length} repositories</span></header><div aria-label="Projects" className="project-grid">
+      <section aria-labelledby="project-list-title" className="repository-projects"><header><h2 id="project-list-title">Your projects</h2><span>{projects.length} repositories</span></header><div aria-label="Projects" className="project-grid" ref={projectGridRef}>
         {projects.map((project) => {
           const href = typeof window === "undefined" ? `/demo?${new URLSearchParams({ ...(scenario ? { scenario } : {}), projectId: project.id, view: "workflow" }).toString()}` : demoHref({ projectId: project.id, view: "workflow" });
           return <ProjectCard canShare={canShare} href={href} key={project.id} onShare={setShareProject} project={project} />;
