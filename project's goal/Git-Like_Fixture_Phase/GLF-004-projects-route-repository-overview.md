@@ -25,8 +25,9 @@ workspace prematurely.
   - **Extracting:** Master is still empty while the Initial Draft is being
     built; show processed PRD progress and keep the project action disabled.
   - **Ready for review:** Master is still empty while the Initial Draft is
-    complete; show the completed extraction state and allow the user to open
-    the project for review and publication.
+    complete; show the completed extraction state. This display-only fixture
+    must state clearly when its review workspace is unavailable in the
+    prototype rather than exposing a dead route.
 - Keep Master truth distinct from Initial Draft candidate work. Do not imply
   that extracted draft material is already published or accepted.
 - Include the route-level Create action and the concise Create → Extract →
@@ -54,7 +55,8 @@ workspace prematurely.
 - An extracting project cannot be opened into the workspace; its disabled action
   communicates that extraction is still in progress.
 - A completed Initial Draft is visibly ready for review and does not appear to
-  be published Master truth.
+  be published Master truth. When no fixture-owned workspace exists, its
+  disabled primary action explains that the review workspace is unavailable.
 - Card sections align consistently across the fixture states at desktop,
   tablet, and mobile widths, including wrapped names, descriptions, badges,
   progress bars, metrics, and actions.
@@ -75,8 +77,9 @@ workspace prematurely.
 - Render the Projects route with the three initial fixture states and verify
   the Master, Initial Draft, metrics, and action boundaries at desktop,
   tablet/narrow, and mobile widths.
-- Verify the extracting action is disabled and the ready-for-review action is
-  enabled, with accessible names and visible focus states.
+- Verify extracting and display-only ready-for-review actions are disabled with
+  accessible explanations, while the published project action remains enabled
+  and routes by stable project identity.
 - Verify the card list is fixture-driven and no state is inferred from display
   text or duplicated in a card-specific implementation.
 - Run fixture relationship, route, accessibility, and visual checks, then
@@ -107,3 +110,7 @@ workspace prematurely.
   visible card layout. A temporary stress render confirms that the three
   maximum-length records remain contained through responsive reflow before the
   accepted demo scenario is restored.
+- 10 September 2026: the Ready for review fixture represents a completed
+  Initial Draft but does not own a workspace/read model. Its primary action is
+  therefore disabled with an explicit prototype-boundary explanation; only
+  published fixture records expose an enabled workspace destination.

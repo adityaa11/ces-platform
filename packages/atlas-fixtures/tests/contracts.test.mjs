@@ -45,7 +45,9 @@ test("repository lifecycle counts describe the same fixture-owned PRD records", 
   }
   const projects = fixtureScenarios["owner-ready"].projects;
   assert.equal(projects.find((project) => project.repository.state === "extracting")?.repository.action.enabled, false);
-  assert.equal(projects.find((project) => project.repository.state === "ready-for-review")?.repository.action.enabled, true);
+  const readyForReview = projects.find((project) => project.repository.state === "ready-for-review")?.repository.action;
+  assert.equal(readyForReview?.enabled, false);
+  assert.match(readyForReview?.unavailableReason ?? "", /completed Initial Draft.*review workspace is not available/i);
 });
 
 test("project-card stress inputs stay isolated from accepted scenarios and cover each planned field limit", () => {

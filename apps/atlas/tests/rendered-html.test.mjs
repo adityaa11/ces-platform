@@ -240,7 +240,7 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(projectCard, /Initial draft/);
   assert.match(projectCard, /<progress/);
   assert.match(projectCard, /action\.enabled/);
-  assert.match(projectCard, /disabled=\{!action\.enabled\}/);
+  assert.match(projectCard, /disabled=\{state === "extracting"\}/);
   assert.match(projectCard, /repository-state-icon"><svg/);
   assert.match(projectCard, /className="repository-project-id"/);
   assert.match(projectCard, /title=\{project\.name\}/);
@@ -260,6 +260,9 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(demoHtml, />Share</);
   assert.match(demoHtml, /Current accepted project source of truth/);
   assert.match(demoHtml, /href="\/demo\?projectId=safara&amp;view=workflow"/);
+  assert.match(demoHtml, /Review workspace unavailable/);
+  assert.match(demoHtml, /This fixture demonstrates a completed Initial Draft\. A review workspace is not available in this prototype\./);
+  assert.doesNotMatch(demoHtml, /href="\/demo\?projectId=vendor-onboarding/);
   const workflowHtml = await workflow.text();
   assert.match(workflowHtml, /3 PRDs · Active/);
   assert.match(appShell, /project-switcher-copy/);
