@@ -7,7 +7,9 @@ test("Dialog defines modal focus entry, containment, and every required dismissa
   assert.match(source, /panelRef\.current\?\.focus\(\)/);
   assert.match(source, /returnFocusRef\.current\?\.focus\(\)/);
   assert.match(source, /event\.key === "Escape"/);
+  assert.match(source, /closeOnEscape/);
   assert.match(source, /onPointerDown=/);
+  assert.match(source, /closeOnBackdrop/);
   assert.match(source, /event\.target === event\.currentTarget/);
   assert.match(source, /event\.key !== "Tab"/);
   assert.match(source, /last\.focus\(\)/);

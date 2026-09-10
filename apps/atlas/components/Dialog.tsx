@@ -4,7 +4,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 
 const focusableSelector = "a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])";
 
-export function Dialog({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) {
+export function Dialog({ title, children, onClose, closeOnBackdrop = true, closeOnEscape = true }: { title: string; children: ReactNode; onClose: () => void; closeOnBackdrop?: boolean; closeOnEscape?: boolean }) {
   const panelRef = useRef<HTMLElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
 
@@ -16,7 +16,7 @@ export function Dialog({ title, children, onClose }: { title: string; children: 
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") { event.preventDefault(); onClose(); return; }
+      if (event.key === "Escape" && closeOnEscape) { event.preventDefault(); onClose(); return; }
       if (event.key !== "Tab") return;
       const focusable = Array.from(panelRef.current?.querySelectorAll<HTMLElement>(focusableSelector) ?? []).filter((element) => !element.hasAttribute("disabled"));
       if (focusable.length === 0) { event.preventDefault(); panelRef.current?.focus(); return; }
@@ -26,7 +26,7 @@ export function Dialog({ title, children, onClose }: { title: string; children: 
     }
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
+  }, [closeOnEscape, onClose]);
 
-  return <div className="dialog-backdrop" onPointerDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><section aria-modal="true" aria-labelledby="dialog-title" className="dialog-panel" ref={panelRef} role="dialog" tabIndex={-1}><div className="dialog-heading"><h2 id="dialog-title">{title}</h2><button aria-label="Close dialog" className="icon-button" onClick={onClose} type="button">×</button></div>{children}</section></div>;
+  return <div className="dialog-backdrop" onPointerDown={(event) => { if (closeOnBackdrop && event.target === event.currentTarget) onClose(); }}><section aria-modal="true" aria-labelledby="dialog-title" className="dialog-panel" ref={panelRef} role="dialog" tabIndex={-1}><div className="dialog-heading"><h2 id="dialog-title">{title}</h2><button aria-label="Close dialog" className="icon-button" onClick={onClose} type="button">×</button></div>{children}</section></div>;
 }
