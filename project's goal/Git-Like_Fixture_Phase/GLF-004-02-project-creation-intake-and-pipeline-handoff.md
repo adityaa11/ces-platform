@@ -100,6 +100,8 @@ processing job, repository candidate, card, and project route.
 - Run fixture relationship, form interaction, route, accessibility, and
   focused visual checks, then apply the frontend review gate before review.
 
+See [BATCH-20.2 validation](GLF-004-02-validation.md).
+
 ## Decision log
 
 - 10 September 2026: user clarified the intake contract. All fields except
