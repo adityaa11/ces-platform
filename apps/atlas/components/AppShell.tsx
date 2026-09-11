@@ -26,12 +26,14 @@ export function AppShell({ user, children, projects, selectedProjectId, active =
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const closeTriggerRef = useRef<HTMLButtonElement>(null);
   const [compact, setCompact] = useState(false);
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState(routeContext?.workspaceId);
   const current = projects.find((project) => project.id === selectedProjectId);
   const workspaceNavigationEnabled = projectNavigation && current?.status === "ready";
-  const href = (view: WorkspaceView) => { const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams(); if (current?.status === "ready") params.set("projectId", current.id); if (routeContext?.scenario) params.set("scenario", routeContext.scenario); if (routeContext?.workspaceId) params.set("workspaceId", routeContext.workspaceId); if (routeContext?.prd) params.set("prd", routeContext.prd); if (routeContext?.lens) params.set("lens", routeContext.lens); params.set("view", view); return params.size ? demoHrefFromParams(params) : "/demo"; };
+  const href = (view: WorkspaceView) => { const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams(); if (current?.status === "ready") params.set("projectId", current.id); if (routeContext?.scenario) params.set("scenario", routeContext.scenario); if (selectedWorkspaceId) params.set("workspaceId", selectedWorkspaceId); if (routeContext?.prd) params.set("prd", routeContext.prd); if (routeContext?.lens) params.set("lens", routeContext.lens); params.set("view", view); return params.size ? demoHrefFromParams(params) : "/demo"; };
   const projectHref = (projectId: string) => demoHref({ projectId, scenario: routeContext?.scenario, view: "workflow" });
   const closeNavigation = () => { setCollapsed(false); menuTriggerRef.current?.focus(); };
   useEffect(() => { const query = window.matchMedia("(max-width: 960px)"); const update = () => setCompact(query.matches); update(); query.addEventListener("change", update); return () => query.removeEventListener("change", update); }, []);
+  useEffect(() => { const syncWorkspace = () => setSelectedWorkspaceId(new URLSearchParams(window.location.search).get("workspaceId") ?? routeContext?.workspaceId); window.addEventListener("atlas-workspace-selection", syncWorkspace); return () => window.removeEventListener("atlas-workspace-selection", syncWorkspace); }, [routeContext?.workspaceId]);
   useEffect(() => { const close = (event: KeyboardEvent) => { if (event.key === "Escape") { setMenu(false); if (compact && collapsed) closeNavigation(); } }; document.addEventListener("keydown", close); return () => document.removeEventListener("keydown", close); }, [collapsed, compact]);
   useEffect(() => { if (!menu) return; const close = (event: PointerEvent) => { if (!ref.current?.contains(event.target as Node)) setMenu(false); }; document.addEventListener("pointerdown", close); return () => document.removeEventListener("pointerdown", close); }, [menu]);
   useEffect(() => {

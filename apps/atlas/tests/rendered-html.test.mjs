@@ -190,6 +190,9 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.doesNotMatch(appShell, /libraryProjects|id:"selected"/);
   assert.match(appShell, /new URLSearchParams\(window\.location\.search\)/);
   assert.match(appShell, /params\.set\("projectId", current\.id\)/);
+  assert.match(appShell, /const \[selectedWorkspaceId, setSelectedWorkspaceId\] = useState\(routeContext\?\.workspaceId\)/);
+  assert.match(appShell, /params\.set\("workspaceId", selectedWorkspaceId\)/);
+  assert.match(appShell, /atlas-workspace-selection/);
   assert.match(appShell, /params\.set\("view", view\)/);
   assert.match(appShell, /demoHrefFromParams\(params\)/);
   assert.match(appShell, /demoHref\(\{ projectId, scenario: routeContext\?\.scenario, view: "workflow" \}\)/);
