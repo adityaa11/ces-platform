@@ -41,8 +41,9 @@ comparison contract.
 | 4.2 | GLF-004-02 / BATCH-20.2 | awaiting_review | GLF-003-02 approved, GLF-004 approved, GLF-004-01 approved | Does the Create and process intake produce one validated fixture-owned project request, Extracting card, and processing job with the same stable project ID? |
 | 5 | GLF-005 / BATCH-21 | planned | GLF-003, GLF-004-01 | Does the reusable workspace-switcher UI clearly present the current selected workspace and the available workspace inventory without creating independent UI truth? |
 | 5.1 | GLF-005-01 / BATCH-21.1 | planned | GLF-005 | Does the switcher resolve its inventory and availability from the golden fixture, preserve project/route context, and keep selected workspace separate from the PRD lens? |
-| 5.2 | GLF-005-02 / BATCH-21.2 | planned | GLF-005-01 | Does the New workspace modal create one fixture-owned Extracting workspace request from an existing base workspace and uploaded PRD PDFs, without exposing revision internals to the user? |
-| 6 | GLF-006 / BATCH-22 | planned | GLF-003-02 approved, GLF-005-01 | Do all existing knowledge surfaces resolve one coherent, inventory-provenanced current truth from the selected branch HEAD? |
+| 5.1.1 | GLF-003-03 / BATCH-19.3 | planned | GLF-003-02 approved, GLF-004-01 | Does the fixture contract safely represent a newly requested Extracting workspace, its selected-base snapshot, and uploaded-PDF metadata without changing immutable Safara truth? |
+| 5.2 | GLF-005-02 / BATCH-21.2 | planned | GLF-005-01, GLF-003-03 | Does the New workspace modal create one fixture-owned Extracting workspace request from an existing base workspace and uploaded PRD PDFs, without exposing revision internals to the user? |
+| 6 | GLF-006 / BATCH-22 | planned | GLF-003-02 approved, GLF-005-02 | Do all existing knowledge surfaces resolve one coherent, inventory-provenanced current truth from the selected branch HEAD? |
 | 7 | GLF-007 / BATCH-23 | blocked | GLF-006, user research | Is the correction and approval/chatbot interaction grounded in approved interaction research and unable to mutate truth silently? |
 | 8 | GLF-008 / BATCH-24 | blocked | Agents Bridge pipeline, GLF-001–GLF-003-02 approved | Is the eventual `codex` versus `agents_bridge` comparison contract reproducible, source-accounted, and authority-safe? |
 
@@ -69,6 +70,7 @@ individually; they are not combined for convenience.
 - [GLF-003 Golden fixture data contract](GLF-003-golden-fixture-data-contract.md)
 - [GLF-003-01 Complete Safara source accounting and deterministic skill outputs](GLF-003-01-complete-safara-source-accounting.md)
 - [GLF-003-02 Exhaustive Safara fact extraction and source accounting](GLF-003-02-exhaustive-safara-fact-accounting.md)
+- [GLF-003-03 Workspace-creation fixture contract](GLF-003-03-workspace-creation-fixture-contract.md)
 - [GLF-004 Projects Route repository overview](GLF-004-projects-route-repository-overview.md)
 - [GLF-004-01 Project-route fixture recalibration](GLF-004-01-project-route-fixture-recalibration.md)
 - [GLF-004-02 Project creation intake and pipeline handoff](GLF-004-02-project-creation-intake-and-pipeline-handoff.md)

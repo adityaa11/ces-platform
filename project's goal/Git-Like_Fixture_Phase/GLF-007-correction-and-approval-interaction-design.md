@@ -21,6 +21,8 @@ components before that research is available.
 - Research and approve the component/information-pattern direction first.
 - Specify read versus correction paths, selected-branch context, and visible
   distinction between current truth, staged proposal, ambiguity, and history.
+  An Extracting workspace is not correction context: it stays unavailable until
+  Ready for review and cannot supply a mutable or current-truth branch view.
 - Specify targeted ambiguity questions, stale-base behavior, merge-conflict
   handoff, approval requirements, and sealed Addendum relationship.
 - Specify the provenance shown for a correction: the affected current fact,
@@ -32,6 +34,8 @@ components before that research is available.
 ## Acceptance criteria
 
 - The approved design never permits chatbot output to silently mutate a fact.
+- The approved design never treats an Extracting workspace as selectable
+  current truth or as a valid correction base.
 - Every correction produces or revises a ChangeProposal with base revision,
   before/after meaning, evidence, and status.
 - Ambiguous and conflicting changes visibly stop before commit.

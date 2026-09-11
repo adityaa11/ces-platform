@@ -2,8 +2,8 @@
 
 - **State:** planned
 - **Review batch:** BATCH-21.2
-- **Depends on:** GLF-005-01
-- **Baseline:** Architecture Checkpoint sections 5, 10, 12, 17, 22.1-22.6, 24; UI/UX Prototype PRD sections 5-6, 9.1, 9.4; Fixture Data-Intent Contract; GLF-003; GLF-005; GLF-005-01
+- **Depends on:** GLF-005-01, GLF-003-03
+- **Baseline:** Architecture Checkpoint sections 5, 10, 12, 17, 22.1-22.6, 24; UI/UX Prototype PRD sections 5-6, 9.1, 9.4; Fixture Data-Intent Contract; GLF-003; GLF-003-03; GLF-005; GLF-005-01
 
 ## Outcome
 
@@ -25,9 +25,10 @@ revision internals; Atlas generates identity and snapshots the base HEAD.
 - Capture the selected base workspace's current HEAD internally for the
   fixture-owned request. Do not expose the base HEAD as a form field or require
   users to understand revision identifiers.
-- Create an Extracting fixture workspace record and an extraction/reconciliation
-  request using the generated stable workspace ID, selected base workspace,
-  internally captured base HEAD, and uploaded-PDF metadata.
+- Call the GLF-003-03 fixture contract to create the Extracting workspace
+  record and extraction/reconciliation request using the generated stable
+  workspace ID, selected base workspace, internally captured base HEAD, and
+  uploaded-PDF metadata.
 - After success, show the new workspace in the switcher with Extracting status.
   It remains unavailable for selection/opening until its fixture-owned status
   becomes Ready for review.

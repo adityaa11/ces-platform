@@ -2,7 +2,7 @@
 
 - **State:** planned
 - **Review batch:** BATCH-22
-- **Depends on:** GLF-003-02 approved, GLF-005-01
+- **Depends on:** GLF-003-02 approved, GLF-005-02
 - **Baseline:** Architecture Checkpoint sections 12–17, 22.6–22.8, 24; UI/UX Prototype PRD sections 5–6, 9.1, 9.4; Fixture Data-Intent Contract; GLF-003-01; GLF-003-02
 
 ## Outcome
@@ -14,6 +14,9 @@ rather than one accumulated workspace object, drives all fixture data reads.
 
 - Adapt Main Workflow, Project Facts, Changes, CES, Sources context, and
   chatbot-read fixture context to selected branch/head state.
+- Treat an Extracting workspace as unavailable context: it remains visible in
+  the selector but cannot resolve downstream branch/HEAD reads until the
+  fixture state is Ready for review.
 - Render only materialized current state for normal reads.
 - Preserve atomic candidate, source-inventory, assertion-history, and
   source-accounting relationships, with the selected branch/head and PRD-lens
@@ -26,6 +29,8 @@ rather than one accumulated workspace object, drives all fixture data reads.
 
 - Switching Master versus the incremental workspace changes every affected
   surface coherently from selected HEAD state.
+- An Extracting workspace never becomes a downstream current-truth context;
+  its unavailable message remains visible and no branch/HEAD surface is opened.
 - Unaffected facts and workflow topology remain stable when their referenced
   canonical facts did not change.
 - Current reads never replay historical PRDs or use a model to reconstruct truth.
