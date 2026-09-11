@@ -1,6 +1,6 @@
 # GLF-003-03: Workspace-creation fixture contract
 
-- **State:** planned
+- **State:** in_progress
 - **Review batch:** BATCH-19.3
 - **Depends on:** GLF-003-02 approved, GLF-004-01
 - **Baseline:** Architecture Checkpoint sections 5, 10, 12, 17, 22.1-22.6, 24; UI/UX Prototype PRD sections 3, 4.3, 9.1, 9.2, 9.5; Fixture Data-Intent Contract; GLF-003; GLF-003-02; GLF-005-02
