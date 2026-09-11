@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createFixtureProject, fixtureScenarios, getFixtureScenario, projectCardStressFixtures, projectCardStressLimits, resolveFixtureAuthoringExecutor, resolveFixtureProjectRoute, resolveSkillsMode } from "../src/index.ts";
+import { createFixtureProject, createFixtureWorkspace, fixtureScenarios, getFixtureScenario, projectCardStressFixtures, projectCardStressLimits, resolveFixtureAuthoringExecutor, resolveFixtureProjectRoute, resolveSkillsMode, workspaceIdPattern } from "../src/index.ts";
 
 test("skills mode defaults to codex and accepts only documented repository-wide values", () => {
   assert.equal(resolveSkillsMode(), "codex");
@@ -84,6 +84,15 @@ test("project creation request produces one extracting fixture record and matchi
   const route = resolveFixtureProjectRoute({ ...fixtureScenarios["owner-ready"], projects: [...fixtureScenarios["owner-ready"].projects, created.project] }, created.project.id);
   assert.equal(route.project?.id, created.processingJob.projectId);
   assert.equal(route.canOpenWorkspace, false);
+});
+
+test("workspace creation is transient, Master-rooted, collision-safe, and unavailable while extracting", () => {
+  const bases=[{workspaceId:"master",headRevisionId:"rev-master"},{workspaceId:"inc-03",baseWorkspaceId:"master",headRevisionId:"rev-inc-03"}];
+  const created=createFixtureWorkspace({projectId:"safara",workspaceName:"Refund correction",baseWorkspaceId:"inc-03",prdFiles:[{name:"refund.pdf",type:"application/pdf",size:42}]},bases,["aaaaaaaaaaaa","b2c3d4e5f6g7"]);
+  assert.match(created.workspace.workspaceId,workspaceIdPattern); assert.equal(created.workspace.workspaceId,created.extractionRequest.workspaceId); assert.equal(created.workspace.baseWorkspaceId,"inc-03"); assert.equal(created.workspace.baseHeadRevisionId,"rev-inc-03"); assert.equal(created.workspace.available,false); assert.match(created.workspace.unavailableReason,/still in progress/i);
+  assert.throws(()=>createFixtureWorkspace({projectId:"safara",workspaceName:"x",baseWorkspaceId:"missing",prdFiles:[{name:"a.pdf",type:"application/pdf",size:1}]},bases),/Unknown base/);
+  assert.throws(()=>createFixtureWorkspace({projectId:"safara",workspaceName:"x",baseWorkspaceId:"master",prdFiles:[]},bases),/PDF/);
+  assert.throws(()=>createFixtureWorkspace({projectId:"safara",workspaceName:"x",baseWorkspaceId:"master",prdFiles:[{name:"a.txt",type:"text/plain",size:1}]},bases),/PDF/);
 });
 
 test("project-card stress inputs stay isolated from accepted scenarios and cover each planned field limit", () => {

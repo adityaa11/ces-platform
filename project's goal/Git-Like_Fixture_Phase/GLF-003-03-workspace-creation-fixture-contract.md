@@ -1,6 +1,6 @@
 # GLF-003-03: Workspace-creation fixture contract
 
-- **State:** in_progress
+- **State:** awaiting_review
 - **Review batch:** BATCH-19.3
 - **Depends on:** GLF-003-02 approved, GLF-004-01
 - **Baseline:** Architecture Checkpoint sections 5, 10, 12, 17, 22.1-22.6, 24; UI/UX Prototype PRD sections 3, 4.3, 9.1, 9.2, 9.5; Fixture Data-Intent Contract; GLF-003; GLF-003-02; GLF-005-02
@@ -67,3 +67,12 @@ or representing extraction output as accepted truth.
 - 11 September 2026: The previously approved GLF-003 contract is frozen. This
   extension is a separate checkpoint because workspace creation introduces new
   fixture relationships not owned by the accepted Safara golden bundle.
+
+## Validation record
+
+- `pnpm --filter @atlas/fixtures test` — PASS (23 tests).
+- Contract coverage exercises Master and incremental bases, captured base HEAD,
+  collision retry, missing/non-PDF rejection, stable-ID equality, and the
+  unavailable Extracting lifecycle state.
+- Regeneration completed during the fixture suite with no diff to the Safara
+  golden bundle or reconciliation output.
