@@ -5,6 +5,7 @@ import type { ProjectFixture, ProjectWorkspaceFixture } from "@atlas/fixtures";
 import { safaraSourceDocuments, type SafaraSourceDocument } from "../generated/safaraDocuments";
 import { AppShell } from "./AppShell";
 import type { WorkspaceLens } from "./WorkspaceLens";
+import { WorkspaceSwitcherDemoHost } from "./WorkspaceSwitcherPreview";
 
 type User = { name: string; email: string; role: "owner" | "editor" | "viewer" };
 type PdfJsModule = typeof import("pdfjs-dist/legacy/build/pdf.mjs");
@@ -136,7 +137,7 @@ export function SourcesWorkspace({ user, projects, workspace, scenario, initialL
     else void viewer.current?.requestFullscreen();
   };
 
-  return <AppShell active="sources" contentClassName="sources-content" fullWidthSearch projectNavigation projects={projects} routeContext={{ scenario, prd: initialLens.selectedPrdIds.length ? initialLens.selectedPrdIds.join(",") : undefined, lens: initialLens.mode === "isolate" ? "isolate" : undefined }} selectedProjectId={workspace.project.id} sidebarCollapsible={false} user={user} workspace={workspace}>
+  return <AppShell active="sources" contentClassName="sources-content" fullWidthSearch projectNavigation projects={projects} routeContext={{ scenario, prd: initialLens.selectedPrdIds.length ? initialLens.selectedPrdIds.join(",") : undefined, lens: initialLens.mode === "isolate" ? "isolate" : undefined }} selectedProjectId={workspace.project.id} sidebarCollapsible={false} user={user} workspace={workspace} workspaceSwitcher={<WorkspaceSwitcherDemoHost projectName={workspace.project.name} />}>
     <div className={`sources-page ${viewerOpen ? "mobile-viewer-open" : ""} ${libraryCollapsed ? "source-library-collapsed" : ""}`}>
       <aside aria-label="Source documents" className="source-library">
         <header className="source-library-header">

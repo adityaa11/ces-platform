@@ -6,6 +6,7 @@ import { AppShell } from "./AppShell";
 import { OperationalModel } from "./OperationalModel";
 import { PrdLensControl } from "./PrdLensControl";
 import { useWorkspaceApprovals, useWorkspaceLens, type WorkspaceLens } from "./WorkspaceLens";
+import { WorkspaceSwitcherDemoHost } from "./WorkspaceSwitcherPreview";
 
 type User = { name: string; email: string; role: "owner" | "editor" | "viewer" };
 const matches = (ids: string[], selected: string[]) => !selected.length || ids.some((id) => selected.includes(id));
@@ -26,7 +27,7 @@ export function WorkflowWorkspace({ user, projects, workspace, initialLens, init
   const open = (id: string) => { setPageId(id); setNodeId(null); };
   const move = (direction: -1 | 1) => { if (pages.length) open(pages[(index + direction + pages.length) % pages.length].id); };
   const moveAffected = (direction: -1 | 1) => { const affectedIndex = affectedPages.findIndex((item) => item.id === page?.id); if (!affectedPages.length) return; if (affectedIndex === -1) return open(affectedPages[direction === 1 ? 0 : affectedPages.length - 1].id); open(affectedPages[(affectedIndex + direction + affectedPages.length) % affectedPages.length].id); };
-  return <AppShell active="workflow" projectNavigation projects={projects} routeContext={{ scenario, prd: active ? lens.selectedPrdIds.join(",") : undefined, lens: isolate ? "isolate" : undefined }} selectedProjectId={workspace.project.id} topbarAction={<PrdLensControl lens={lens} prds={workspace.prds} set={set} toggle={toggle} />} user={user} workspace={workspace}>
+  return <AppShell active="workflow" projectNavigation projects={projects} routeContext={{ scenario, prd: active ? lens.selectedPrdIds.join(",") : undefined, lens: isolate ? "isolate" : undefined }} selectedProjectId={workspace.project.id} topbarAction={<PrdLensControl lens={lens} prds={workspace.prds} set={set} toggle={toggle} />} user={user} workspace={workspace} workspaceSwitcher={<WorkspaceSwitcherDemoHost projectName={workspace.project.name} />}>
     <section className="workflow-page">{page ? isolate && active && !matches(page.prdIds, lens.selectedPrdIds) ? <IsolationEmpty onBack={() => { setPageId(null); setNodeId(null); }} /> : <Detail affectedCount={affectedPages.length} currentIndex={index} group={group?.title ?? "Workflow"} groups={workspace.workflowGroups} isolate={isolate} lensActive={active} onBack={() => { setPageId(null); setNodeId(null); }} onMove={move} onMoveAffected={moveAffected} onOpen={open} onSelectNode={setNodeId} page={page} pages={pages} prds={workspace.prds} projectName={workspace.project.name} selected={lens.selectedPrdIds} selectedNode={selectedNode} /> : <Overview active={active} approval={approvals.atlas} isolate={isolate} lens={lens} onApprove={() => approve("atlas")} onOpen={open} user={user} workspace={workspace} />}</section>
   </AppShell>;
 }

@@ -16,8 +16,10 @@
 - Rows include stable injected IDs, base workspace, PRD count, creator, and
   modifier audit metadata. An Extracting-equivalent Processing row remains
   visible and announces why it cannot open.
-- The implementation has no fixture import, route write, persistence, or PRD
-  lens control; GLF-005-01 retains those integration concerns.
+- The selector is mounted in the normal Main Workflow, Project Facts/Changes,
+  and Sources workspace shells. Its current presentation adapter does not
+  perform fixture inventory reads, route writes, persistence, or PRD-lens
+  control; GLF-005-01 retains those integration concerns.
 
 ## Checks
 
