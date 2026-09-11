@@ -1,6 +1,6 @@
 # GLF-005-01: Workspace selector golden-fixture integration
 
-- **State:** planned
+- **State:** awaiting_review
 - **Review batch:** BATCH-21.1
 - **Depends on:** GLF-005, GLF-003-03
 - **Baseline:** Architecture Checkpoint sections 17, 22.5-22.6, 24; UI/UX Prototype PRD sections 5-6, 9.1, 9.4; Fixture Data-Intent Contract; GLF-003; GLF-004-01; GLF-005
@@ -62,3 +62,27 @@ its selected HEAD/provenance, while the PRD lens remains a distinct control.
 - 11 September 2026: A workspace in Extracting state is visible in the
   switcher but cannot be selected or opened. It becomes selectable/openable
   only after its fixture-owned status is Ready for review.
+
+## Validation record
+
+- `pnpm --filter @atlas/fixtures test` — PASS (25 tests), including stable-ID
+  inventory resolution, selected Master route resolution, and Extracting
+  fallback/availability behavior.
+- `pnpm --filter @atlas/app lint` — PASS.
+- `pnpm --filter @atlas/app test` — PASS (8 tests): rendered routes verify
+  canonical `workspaceId` propagation through workflow, facts, changes, CES,
+  and Sources; Master selection; and the Extracting route explanation/fallback.
+- Rendered browser inspection — PASS. At 1280 × 900, the selected Master
+  shows its fixture-supplied HEAD and provenance, and all workspace navigation
+  links retain `workspaceId=branch-master`. The opened inventory exposes
+  Master, Increment 03, and the Extracting refund workspace with their stable
+  identities, bases, audit metadata, status, HEAD, and execution provenance.
+  Attempting the Extracting row leaves Master selected and announces the
+  fixture-owned unavailable reason.
+- Responsive/theme inspection — PASS. At 390 × 844, the shared navigation
+  opens the selector as a readable, scrollable sheet with keyboard-operable
+  search/filter controls and no clipping. Light and Dark inspections preserve
+  the same selected, unavailable, provenance, and route-context hierarchy.
+- Frontend review gate VIS-001–015 — PASS. The change reuses the approved
+  workspace-switcher's semantic token, type, status, focus, and responsive
+  system; it adds no local visual treatment or duplicate workspace truth.

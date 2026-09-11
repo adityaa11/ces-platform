@@ -22,7 +22,7 @@ function sourceTitle(document: SafaraSourceDocument, workspace: ProjectWorkspace
   return prd?.name ?? fileTitle(document.fileName);
 }
 
-export function SourcesWorkspace({ user, projects, workspace, scenario, initialLens }: { user: User; projects: ProjectFixture[]; workspace: ProjectWorkspaceFixture; scenario?: string; initialLens: WorkspaceLens }) {
+export function SourcesWorkspace({ user, projects, workspace, scenario, initialLens, initialWorkspaceId, unavailableWorkspaceName }: { user: User; projects: ProjectFixture[]; workspace: ProjectWorkspaceFixture; scenario?: string; initialLens: WorkspaceLens; initialWorkspaceId?: string; unavailableWorkspaceName?: string }) {
   const documents = safaraSourceDocuments;
   const initialDocument = documents.find((document) => documentIncrement(document.fileName) === "PRD 2") ?? documents[0];
   const [selected, setSelected] = useState(initialDocument);
@@ -137,7 +137,7 @@ export function SourcesWorkspace({ user, projects, workspace, scenario, initialL
     else void viewer.current?.requestFullscreen();
   };
 
-  return <AppShell active="sources" contentClassName="sources-content" fullWidthSearch projectNavigation projects={projects} routeContext={{ scenario, prd: initialLens.selectedPrdIds.length ? initialLens.selectedPrdIds.join(",") : undefined, lens: initialLens.mode === "isolate" ? "isolate" : undefined }} selectedProjectId={workspace.project.id} sidebarCollapsible={false} user={user} workspace={workspace} workspaceSwitcher={<WorkspaceSwitcherDemoHost projectName={workspace.project.name} />}>
+  return <AppShell active="sources" contentClassName="sources-content" fullWidthSearch projectNavigation projects={projects} routeContext={{ scenario, workspaceId: initialWorkspaceId, prd: initialLens.selectedPrdIds.length ? initialLens.selectedPrdIds.join(",") : undefined, lens: initialLens.mode === "isolate" ? "isolate" : undefined }} selectedProjectId={workspace.project.id} sidebarCollapsible={false} user={user} workspace={workspace} workspaceSwitcher={<WorkspaceSwitcherDemoHost initialWorkspaceId={initialWorkspaceId} projectName={workspace.project.name} unavailableWorkspaceName={unavailableWorkspaceName} />}>
     <div className={`sources-page ${viewerOpen ? "mobile-viewer-open" : ""} ${libraryCollapsed ? "source-library-collapsed" : ""}`}>
       <aside aria-label="Source documents" className="source-library">
         <header className="source-library-header">

@@ -5,7 +5,7 @@ import { useCallback, useState } from "react";
 export type WorkspaceLens = { selectedPrdIds: string[]; mode: "highlight" | "isolate" };
 export type WorkspaceApprovals = { atlas: "awaiting-approval" | "approved"; ces: "awaiting-approval" | "approved" };
 
-const demoParameterOrder = ["projectId", "scenario", "prd", "lens", "workflowId", "factId", "cesItemId", "view"];
+const demoParameterOrder = ["projectId", "scenario", "workspaceId", "prd", "lens", "workflowId", "factId", "cesItemId", "view"];
 
 export function demoHrefFromParams(params: URLSearchParams) {
   const order = (key: string) => { const index = demoParameterOrder.indexOf(key); return index === -1 ? demoParameterOrder.length : index; };

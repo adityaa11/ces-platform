@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createFixtureProject, createFixtureWorkspace, fixtureScenarios, getFixtureScenario, markFixtureWorkspaceReadyForReview, projectCardStressFixtures, projectCardStressLimits, resolveFixtureAuthoringExecutor, resolveFixtureProjectRoute, resolveSkillsMode, workspaceIdPattern } from "../src/index.ts";
+import { createFixtureProject, createFixtureWorkspace, fixtureScenarios, getFixtureScenario, markFixtureWorkspaceReadyForReview, projectCardStressFixtures, projectCardStressLimits, resolveFixtureAuthoringExecutor, resolveFixtureProjectRoute, resolveFixtureWorkspaceInventory, resolveFixtureWorkspaceRoute, resolveSkillsMode, workspaceIdPattern } from "../src/index.ts";
 
 test("skills mode defaults to codex and accepts only documented repository-wide values", () => {
   assert.equal(resolveSkillsMode(), "codex");
@@ -103,6 +103,17 @@ test("a supplied Ready-for-review fixture workspace becomes selectable and opena
   const created=createFixtureWorkspace({projectId:"safara",workspaceName:"Refund correction",baseWorkspaceId:"master",prdFiles:[{name:"refund.pdf",type:"application/pdf",size:42}]},bases,["b2c3d4e5f6h7"]);
   const ready=markFixtureWorkspaceReadyForReview(created.workspace);
   assert.equal(created.workspace.status,"extracting"); assert.equal(created.workspace.available,false); assert.equal(ready.status,"ready-for-review"); assert.equal(ready.available,true); assert.equal(ready.unavailableReason,undefined);
+});
+
+test("workspace selector inventory is fixture-owned, stable-ID keyed, and exposes availability", () => {
+  const inventory = resolveFixtureWorkspaceInventory("safara");
+  assert.deepEqual(inventory.map((workspace) => workspace.workspaceId), ["branch-master", "branch-increment-003", "saf-a2b3c4d5e6f7"]);
+  assert.equal(inventory.find((workspace) => workspace.workspaceId === "branch-increment-003")?.headRevisionId, "rev-safara-increment-003");
+  assert.equal(inventory.find((workspace) => workspace.workspaceId === "saf-a2b3c4d5e6f7")?.available, false);
+  assert.equal(resolveFixtureWorkspaceInventory("unknown").length, 0);
+  assert.equal(resolveFixtureWorkspaceRoute("safara", "branch-master").selectedWorkspace?.workspaceId, "branch-master");
+  assert.equal(resolveFixtureWorkspaceRoute("safara", "saf-a2b3c4d5e6f7").selectedWorkspace?.workspaceId, "branch-increment-003");
+  assert.match(resolveFixtureWorkspaceRoute("safara", "saf-a2b3c4d5e6f7").unavailableWorkspace?.unavailableReason ?? "", /cannot be opened/i);
 });
 
 test("project-card stress inputs stay isolated from accepted scenarios and cover each planned field limit", () => {

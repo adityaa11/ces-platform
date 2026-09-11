@@ -10,7 +10,7 @@ import type { ProjectFixture, ProjectWorkspaceFixture } from "@atlas/fixtures";
 type User = { name: string; email: string; role: "owner" | "editor" | "viewer" };
 type Destination = "projects" | "workflow" | "facts" | "ces" | "changes" | "sources";
 type WorkspaceView = Exclude<Destination, "projects">;
-type Props = { user: User; children: ReactNode; projects: ProjectFixture[]; selectedProjectId?: string; workspace?: ProjectWorkspaceFixture; active?: Destination; projectNavigation?: boolean; sidebarAction?: ReactNode; topbarAction?: ReactNode; workspaceSwitcher?: ReactNode; contentClassName?: string; sidebarCollapsible?: boolean; fullWidthSearch?: boolean; routeContext?: { scenario?: string; prd?: string; lens?: "isolate" } };
+type Props = { user: User; children: ReactNode; projects: ProjectFixture[]; selectedProjectId?: string; workspace?: ProjectWorkspaceFixture; active?: Destination; projectNavigation?: boolean; sidebarAction?: ReactNode; topbarAction?: ReactNode; workspaceSwitcher?: ReactNode; contentClassName?: string; sidebarCollapsible?: boolean; fullWidthSearch?: boolean; routeContext?: { scenario?: string; workspaceId?: string; prd?: string; lens?: "isolate" } };
 const destinationLabel: Record<Destination, string> = { projects: "Projects", workflow: "Main Workflow", facts: "Project Facts", ces: "CES Result", changes: "Changes Done", sources: "Sources" };
 const destinationIcon: Record<Destination, string> = { projects: "▦", workflow: "∿", facts: "▤", ces: "▣", changes: "↻", sources: "○" };
 
@@ -28,7 +28,7 @@ export function AppShell({ user, children, projects, selectedProjectId, active =
   const [compact, setCompact] = useState(false);
   const current = projects.find((project) => project.id === selectedProjectId);
   const workspaceNavigationEnabled = projectNavigation && current?.status === "ready";
-  const href = (view: WorkspaceView) => { const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams(); if (current?.status === "ready") params.set("projectId", current.id); if (routeContext?.scenario) params.set("scenario", routeContext.scenario); if (routeContext?.prd) params.set("prd", routeContext.prd); if (routeContext?.lens) params.set("lens", routeContext.lens); params.set("view", view); return params.size ? demoHrefFromParams(params) : "/demo"; };
+  const href = (view: WorkspaceView) => { const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams(); if (current?.status === "ready") params.set("projectId", current.id); if (routeContext?.scenario) params.set("scenario", routeContext.scenario); if (routeContext?.workspaceId) params.set("workspaceId", routeContext.workspaceId); if (routeContext?.prd) params.set("prd", routeContext.prd); if (routeContext?.lens) params.set("lens", routeContext.lens); params.set("view", view); return params.size ? demoHrefFromParams(params) : "/demo"; };
   const projectHref = (projectId: string) => demoHref({ projectId, scenario: routeContext?.scenario, view: "workflow" });
   const closeNavigation = () => { setCollapsed(false); menuTriggerRef.current?.focus(); };
   useEffect(() => { const query = window.matchMedia("(max-width: 960px)"); const update = () => setCompact(query.matches); update(); query.addEventListener("change", update); return () => query.removeEventListener("change", update); }, []);
