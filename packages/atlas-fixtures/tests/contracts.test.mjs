@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createFixtureProject, createFixtureWorkspace, fixtureScenarios, getFixtureScenario, projectCardStressFixtures, projectCardStressLimits, resolveFixtureAuthoringExecutor, resolveFixtureProjectRoute, resolveSkillsMode, workspaceIdPattern } from "../src/index.ts";
+import { createFixtureProject, createFixtureWorkspace, fixtureScenarios, getFixtureScenario, markFixtureWorkspaceReadyForReview, projectCardStressFixtures, projectCardStressLimits, resolveFixtureAuthoringExecutor, resolveFixtureProjectRoute, resolveSkillsMode, workspaceIdPattern } from "../src/index.ts";
 
 test("skills mode defaults to codex and accepts only documented repository-wide values", () => {
   assert.equal(resolveSkillsMode(), "codex");
@@ -100,8 +100,9 @@ test("workspace creation is transient, Master-rooted, collision-safe, and unavai
 
 test("a supplied Ready-for-review fixture workspace becomes selectable and openable", () => {
   const bases=[{workspaceId:"master",projectId:"safara",headRevisionId:"rev-master"}];
-  const created=createFixtureWorkspace({projectId:"safara",workspaceName:"Refund correction",baseWorkspaceId:"master",prdFiles:[{name:"refund.pdf",type:"application/pdf",size:42}]},bases,["b2c3d4e5f6h7"],"ready-for-review");
-  assert.equal(created.workspace.status,"ready-for-review"); assert.equal(created.workspace.available,true); assert.equal(created.workspace.unavailableReason,undefined);
+  const created=createFixtureWorkspace({projectId:"safara",workspaceName:"Refund correction",baseWorkspaceId:"master",prdFiles:[{name:"refund.pdf",type:"application/pdf",size:42}]},bases,["b2c3d4e5f6h7"]);
+  const ready=markFixtureWorkspaceReadyForReview(created.workspace);
+  assert.equal(created.workspace.status,"extracting"); assert.equal(created.workspace.available,false); assert.equal(ready.status,"ready-for-review"); assert.equal(ready.available,true); assert.equal(ready.unavailableReason,undefined);
 });
 
 test("project-card stress inputs stay isolated from accepted scenarios and cover each planned field limit", () => {
