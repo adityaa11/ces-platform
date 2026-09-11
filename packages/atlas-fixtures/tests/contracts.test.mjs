@@ -87,12 +87,21 @@ test("project creation request produces one extracting fixture record and matchi
 });
 
 test("workspace creation is transient, Master-rooted, collision-safe, and unavailable while extracting", () => {
-  const bases=[{workspaceId:"master",headRevisionId:"rev-master"},{workspaceId:"inc-03",baseWorkspaceId:"master",headRevisionId:"rev-inc-03"}];
-  const created=createFixtureWorkspace({projectId:"safara",workspaceName:"Refund correction",baseWorkspaceId:"inc-03",prdFiles:[{name:"refund.pdf",type:"application/pdf",size:42}]},bases,["aaaaaaaaaaaa","b2c3d4e5f6g7"]);
+  const bases=[{workspaceId:"master",projectId:"safara",headRevisionId:"rev-master"},{workspaceId:"inc-03",projectId:"safara",baseWorkspaceId:"master",headRevisionId:"rev-inc-03"},{workspaceId:"saf-aaaaaaaaaaaa",projectId:"safara",baseWorkspaceId:"master",headRevisionId:"rev-collision"}];
+  const created=createFixtureWorkspace({projectId:"safara",workspaceName:"Refund correction",baseWorkspaceId:"inc-03",prdFiles:[{name:"refund.pdf",type:"application/pdf",size:42}]},bases,["aaaaaaaaaaaa","b2c3d4e5f6h7"]);
   assert.match(created.workspace.workspaceId,workspaceIdPattern); assert.equal(created.workspace.workspaceId,created.extractionRequest.workspaceId); assert.equal(created.workspace.baseWorkspaceId,"inc-03"); assert.equal(created.workspace.baseHeadRevisionId,"rev-inc-03"); assert.equal(created.workspace.available,false); assert.match(created.workspace.unavailableReason,/still in progress/i);
+  assert.equal(created.workspace.workspaceId,"saf-b2c3d4e5f6h7");
+  assert.throws(()=>createFixtureWorkspace({projectId:"unknown",workspaceName:"x",baseWorkspaceId:"master",prdFiles:[{name:"a.pdf",type:"application/pdf",size:1}]},bases),/Unknown project/);
+  assert.throws(()=>createFixtureWorkspace({projectId:"safara",workspaceName:"   ",baseWorkspaceId:"master",prdFiles:[{name:"a.pdf",type:"application/pdf",size:1}]},bases),/Workspace name/);
   assert.throws(()=>createFixtureWorkspace({projectId:"safara",workspaceName:"x",baseWorkspaceId:"missing",prdFiles:[{name:"a.pdf",type:"application/pdf",size:1}]},bases),/Unknown base/);
   assert.throws(()=>createFixtureWorkspace({projectId:"safara",workspaceName:"x",baseWorkspaceId:"master",prdFiles:[]},bases),/PDF/);
   assert.throws(()=>createFixtureWorkspace({projectId:"safara",workspaceName:"x",baseWorkspaceId:"master",prdFiles:[{name:"a.txt",type:"text/plain",size:1}]},bases),/PDF/);
+});
+
+test("a supplied Ready-for-review fixture workspace becomes selectable and openable", () => {
+  const bases=[{workspaceId:"master",projectId:"safara",headRevisionId:"rev-master"}];
+  const created=createFixtureWorkspace({projectId:"safara",workspaceName:"Refund correction",baseWorkspaceId:"master",prdFiles:[{name:"refund.pdf",type:"application/pdf",size:42}]},bases,["b2c3d4e5f6h7"],"ready-for-review");
+  assert.equal(created.workspace.status,"ready-for-review"); assert.equal(created.workspace.available,true); assert.equal(created.workspace.unavailableReason,undefined);
 });
 
 test("project-card stress inputs stay isolated from accepted scenarios and cover each planned field limit", () => {

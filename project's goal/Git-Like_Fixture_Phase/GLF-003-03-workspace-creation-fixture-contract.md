@@ -70,9 +70,10 @@ or representing extraction output as accepted truth.
 
 ## Validation record
 
-- `pnpm --filter @atlas/fixtures test` — PASS (23 tests).
-- Contract coverage exercises Master and incremental bases, captured base HEAD,
-  collision retry, missing/non-PDF rejection, stable-ID equality, and the
-  unavailable Extracting lifecycle state.
+- `pnpm --filter @atlas/fixtures test` — PASS (24 tests).
+- Contract coverage exercises fixture-owned project/base validation, Master and
+  incremental bases, deterministic collision retry, captured base HEAD,
+  missing/non-PDF rejection, stable-ID equality, unavailable Extracting state,
+  and a supplied Ready-for-review availability transition.
 - Regeneration completed during the fixture suite with no diff to the Safara
   golden bundle or reconciliation output.
