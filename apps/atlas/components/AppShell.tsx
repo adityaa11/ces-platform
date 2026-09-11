@@ -10,7 +10,7 @@ import type { ProjectFixture, ProjectWorkspaceFixture } from "@atlas/fixtures";
 type User = { name: string; email: string; role: "owner" | "editor" | "viewer" };
 type Destination = "projects" | "workflow" | "facts" | "ces" | "changes" | "sources";
 type WorkspaceView = Exclude<Destination, "projects">;
-type Props = { user: User; children: ReactNode; projects: ProjectFixture[]; selectedProjectId?: string; workspace?: ProjectWorkspaceFixture; active?: Destination; projectNavigation?: boolean; sidebarAction?: ReactNode; topbarAction?: ReactNode; workspaceSwitcher?: ReactNode; contentClassName?: string; sidebarCollapsible?: boolean; fullWidthSearch?: boolean; routeContext?: { scenario?: string; prd?: string; lens?: "isolate" } };
+type Props = { user: User; children: ReactNode; projects: ProjectFixture[]; selectedProjectId?: string; workspace?: ProjectWorkspaceFixture; active?: Destination; projectNavigation?: boolean; sidebarAction?: ReactNode; topbarAction?: ReactNode; contentClassName?: string; sidebarCollapsible?: boolean; fullWidthSearch?: boolean; routeContext?: { scenario?: string; prd?: string; lens?: "isolate" } };
 const destinationLabel: Record<Destination, string> = { projects: "Projects", workflow: "Main Workflow", facts: "Project Facts", ces: "CES Result", changes: "Changes Done", sources: "Sources" };
 const destinationIcon: Record<Destination, string> = { projects: "▦", workflow: "∿", facts: "▤", ces: "▣", changes: "↻", sources: "○" };
 
@@ -18,7 +18,7 @@ function AtlasBrand() {
   return <Link className="brand" href="/demo"><span>A</span>Atlas</Link>;
 }
 
-export function AppShell({ user, children, projects, selectedProjectId, active = "projects", projectNavigation = false, sidebarAction, topbarAction, workspaceSwitcher, contentClassName = "", sidebarCollapsible = true, fullWidthSearch = false, routeContext }: Props) {
+export function AppShell({ user, children, projects, selectedProjectId, active = "projects", projectNavigation = false, sidebarAction, topbarAction, contentClassName = "", sidebarCollapsible = true, fullWidthSearch = false, routeContext }: Props) {
   const [menu, setMenu] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -63,7 +63,7 @@ export function AppShell({ user, children, projects, selectedProjectId, active =
           <svg aria-hidden="true" className="project-switcher-chevron" fill="none" viewBox="0 0 16 16"><path d="m5 6 3 3 3-3" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" /></svg>
         </button>
         {menu && <div className="project-switcher-menu"><header><strong>All projects</strong><small>{projects.length} projects</small></header>{projects.map((project) => { const isCurrent = current?.id === project.id; const detail = <><span>{project.name[0]}</span><div><strong>{project.name}</strong><small>{project.prdCount} PRDs · {project.status === "ready" ? "ready to review" : project.status}</small></div>{isCurrent && <em>Current</em>}</>; return project.status === "ready" ? <Link className={isCurrent ? "is-current" : ""} href={projectHref(project.id)} key={project.id} onClick={() => { setMenu(false); if (compact) setCollapsed(false); }}>{detail}</Link> : <span className="is-unavailable" key={project.id}>{detail}</span>; })}<p>Select a ready project to inspect its workflow.</p></div>}
-      </div>{workspaceSwitcher}</section>
+      </div></section>
       <div className="sidebar-action">{sidebarAction}</div><section className="sidebar-project-links"><p className="nav-section-label">Project</p><nav aria-label="Project navigation"><Link aria-current={active === "projects" ? "page" : undefined} className={active === "projects" ? "nav-active" : ""} href="/demo"><span aria-hidden="true">{destinationIcon.projects}</span>{destinationLabel.projects}</Link>{projectNavigation && (["workflow", "facts", "ces", "changes"] as const).map((view) => workspaceNavigationEnabled ? <Link aria-current={active === view ? "page" : undefined} className={active === view ? "nav-active" : ""} href={href(view)} key={view} onClick={() => { if (compact) setCollapsed(false); }}><span aria-hidden="true">{destinationIcon[view]}</span>{destinationLabel[view]}</Link> : <span aria-disabled="true" className="nav-disabled" key={view}><span aria-hidden="true">{destinationIcon[view]}</span>{destinationLabel[view]}</span>)}</nav></section><section className="sidebar-workspace-region"><p className="nav-section-label">Workspace</p><nav aria-label="Workspace tools">{workspaceNavigationEnabled ? <Link aria-current={active === "sources" ? "page" : undefined} className={active === "sources" ? "nav-active" : ""} href={href("sources")} onClick={() => { if (compact) setCollapsed(false); }}><span aria-hidden="true">{destinationIcon.sources}</span>{destinationLabel.sources}</Link> : <span aria-disabled="true" className="nav-disabled"><span aria-hidden="true">{destinationIcon.sources}</span>{destinationLabel.sources}</span>}{[["♙", "Members"], ["⚙", "Settings"]].map(([icon, label]) => <button aria-disabled="true" className="nav-placeholder" key={label} type="button"><span aria-hidden="true">{icon}</span>{label}</button>)}</nav></section><ProfileMenu user={user} /></aside><main className={`app-content ${contentClassName}`.trim()}>{children}</main>
   </div>;
 }

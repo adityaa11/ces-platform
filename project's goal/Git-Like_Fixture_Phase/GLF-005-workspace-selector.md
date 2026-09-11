@@ -1,6 +1,6 @@
 # GLF-005: Workspace selector
 
-- **State:** awaiting_review
+- **State:** planned
 - **Review batch:** BATCH-21
 - **Depends on:** GLF-003, GLF-004-01
 - **Baseline:** Architecture Checkpoint sections 17, 22.5–22.6, 24; UI/UX Prototype PRD sections 5–6, 9.1, 9.4; Fixture Data-Intent Contract
@@ -61,7 +61,3 @@ not own fixture data, routing, persistence, or branch truth.
   be reviewed before golden-fixture wiring. The current selected workspace is
   represented as selection state; it is not an `active workspace` lifecycle
   category.
-- 11 September 2026: The implementation exposes an injected view-model and
-  callback boundary. Its local preview exists only to validate presentation and
-  interaction; GLF-005-01 remains responsible for fixture inventory, route,
-  persistence, and provenance integration.

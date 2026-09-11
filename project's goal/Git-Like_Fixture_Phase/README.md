@@ -38,8 +38,8 @@ comparison contract.
 | 3.2 | GLF-003-02 / BATCH-19.2 | approved | GLF-003-01 | Can every material statement in Increment 01-03 be reconciled to an atomic extraction result or a justified non-fact classification? |
 | 4 | GLF-004 / BATCH-20 | approved | GLF-003 | Does the Projects route explain each project's repository-like state and available next action without confusing draft work with published Master truth? |
 | 4.1 | GLF-004-01 / BATCH-20.1 | approved | GLF-003-02 approved, GLF-004 | Do the Projects library, project switcher, and project routes resolve one fixture-owned repository record by stable project identity without migrating downstream knowledge surfaces? |
-| 4.2 | GLF-004-02 / BATCH-20.2 | approved | GLF-003-02 approved, GLF-004 approved, GLF-004-01 approved | Does the Create and process intake produce one validated fixture-owned project request, Extracting card, and processing job with the same stable project ID? |
-| 5 | GLF-005 / BATCH-21 | awaiting_review | GLF-003, GLF-004-01 | Does the reusable workspace-switcher UI clearly present the current selected workspace and the available workspace inventory without creating independent UI truth? |
+| 4.2 | GLF-004-02 / BATCH-20.2 | awaiting_review | GLF-003-02 approved, GLF-004 approved, GLF-004-01 approved | Does the Create and process intake produce one validated fixture-owned project request, Extracting card, and processing job with the same stable project ID? |
+| 5 | GLF-005 / BATCH-21 | planned | GLF-003, GLF-004-01 | Does the reusable workspace-switcher UI clearly present the current selected workspace and the available workspace inventory without creating independent UI truth? |
 | 5.1 | GLF-005-01 / BATCH-21.1 | planned | GLF-005 | Does the switcher resolve its inventory and availability from the golden fixture, preserve project/route context, and keep selected workspace separate from the PRD lens? |
 | 5.1.1 | GLF-003-03 / BATCH-19.3 | planned | GLF-003-02 approved, GLF-004-01 | Does the fixture contract safely represent a newly requested Extracting workspace, its selected-base snapshot, and uploaded-PDF metadata without changing immutable Safara truth? |
 | 5.2 | GLF-005-02 / BATCH-21.2 | planned | GLF-005-01, GLF-003-03 | Does the New workspace modal create one fixture-owned Extracting workspace request from an existing base workspace and uploaded PRD PDFs, without exposing revision internals to the user? |
@@ -75,7 +75,6 @@ individually; they are not combined for convenience.
 - [GLF-004-01 Project-route fixture recalibration](GLF-004-01-project-route-fixture-recalibration.md)
 - [GLF-004-02 Project creation intake and pipeline handoff](GLF-004-02-project-creation-intake-and-pipeline-handoff.md)
 - [GLF-005 Workspace selector](GLF-005-workspace-selector.md)
-- [GLF-005 validation](GLF-005-validation.md)
 - [GLF-005-01 Workspace selector golden-fixture integration](GLF-005-01-workspace-selector-golden-fixture-integration.md)
 - [GLF-005-02 New workspace modal and fixture handoff](GLF-005-02-new-workspace-modal-and-fixture-handoff.md)
 - [GLF-006 Branch-aware UI fixture integration](GLF-006-branch-aware-ui-fixture-integration.md)
