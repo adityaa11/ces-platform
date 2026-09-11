@@ -4,11 +4,12 @@ import { WorkflowWorkspace } from "../../components/WorkflowWorkspace";
 import { ProjectKnowledge } from "../../components/ProjectKnowledge";
 import { CesResult } from "../../components/CesResult";
 import { SourcesWorkspace } from "../../components/SourcesWorkspace";
+import { WorkspaceSwitcherPreview } from "../../components/WorkspaceSwitcherPreview";
 
 const scenarioIds: FixtureScenario["id"][] = ["owner-ready", "editor-ready", "viewer-ready", "empty-library", "processing-uploading", "processing-extracting", "processing-modeling", "processing-ready", "processing-needs-attention", "processing-failed", "approved-result"];
 const lensFromSearch = (initial: FixtureScenario["lens"], prd?: string, mode?: string) => ({ selectedPrdIds: prd ? prd.split(",").filter(Boolean) : initial.selectedPrdIds, mode: mode === "isolate" ? "isolate" as const : initial.mode });
 
-export default async function DemoPage({ searchParams }: { searchParams?: Promise<{ scenario?: string; stress?: string; view?: string; projectId?: string; prd?: string; lens?: string; workflowId?: string; factId?: string; cesItemId?: string }> }) {
+export default async function DemoPage({ searchParams }: { searchParams?: Promise<{ scenario?: string; stress?: string; preview?: string; view?: string; projectId?: string; prd?: string; lens?: string; workflowId?: string; factId?: string; cesItemId?: string }> }) {
   const params = await searchParams;
   const requestedScenario = params?.scenario;
   const requestedView = params?.view;
@@ -16,6 +17,7 @@ export default async function DemoPage({ searchParams }: { searchParams?: Promis
   const prd = params?.prd;
   const lensMode = params?.lens;
   const projectCardStress = params?.stress === "project-cards";
+  if (params?.preview === "workspace-switcher") return <WorkspaceSwitcherPreview />;
   const scenario = getFixtureScenario(scenarioIds.includes(requestedScenario as FixtureScenario["id"]) ? requestedScenario as FixtureScenario["id"] : "owner-ready");
   const scenarioId = scenarioIds.includes(requestedScenario as FixtureScenario["id"]) ? requestedScenario : undefined;
   const projectRoute = resolveFixtureProjectRoute(scenario, requestedProjectId);
