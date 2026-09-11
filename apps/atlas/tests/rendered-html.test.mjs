@@ -184,6 +184,7 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   const profileMenu = await readFile(new URL("../components/ProfileMenu.tsx", import.meta.url), "utf8");
   const workflowWorkspace = await readFile(new URL("../components/WorkflowWorkspace.tsx", import.meta.url), "utf8");
   const sourcesWorkspace = await readFile(new URL("../components/SourcesWorkspace.tsx", import.meta.url), "utf8");
+  const workspaceSwitcherPreview = await readFile(new URL("../components/WorkspaceSwitcherPreview.tsx", import.meta.url), "utf8");
   assert.match(appShell, /import \{ TopBar \} from "\.\/TopBar"/);
   assert.match(appShell, /<TopBar className=\{`app-header \$\{fullWidthSearch \? "app-header-full-search" : ""\}`\.trim\(\)\} variant="workspace">/);
   assert.match(appShell, /import \{ ProfileMenu \} from "\.\/ProfileMenu"/);
@@ -196,6 +197,12 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(appShell, /params\.set\("view", view\)/);
   assert.match(appShell, /demoHrefFromParams\(params\)/);
   assert.match(appShell, /demoHref\(\{ projectId, scenario: routeContext\?\.scenario, view: "workflow" \}\)/);
+  assert.match(workspaceSwitcherPreview, /createFixtureWorkspace/);
+  assert.match(workspaceSwitcherPreview, /title="New workspace"/);
+  assert.match(workspaceSwitcherPreview, /Workspace name <span>\* Required<\/span>/);
+  assert.match(workspaceSwitcherPreview, /Base workspace <span>\* Required<\/span>/);
+  assert.match(workspaceSwitcherPreview, /PRD PDFs <span>\* Required<\/span>/);
+  assert.doesNotMatch(workspaceSwitcherPreview, /Base HEAD/);
   assert.doesNotMatch(appShell, /MutationObserver|data\.fullLabel/);
   assert.match(appShell, /aria-controls="app-navigation"/);
   assert.match(appShell, /navigation \$\{collapsed \? "navigation-open" : ""\}/);

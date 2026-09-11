@@ -1,6 +1,6 @@
 # GLF-005-01: Workspace selector golden-fixture integration
 
-- **State:** awaiting_review
+- **State:** approved
 - **Review batch:** BATCH-21.1
 - **Depends on:** GLF-005, GLF-003-03
 - **Baseline:** Architecture Checkpoint sections 17, 22.5-22.6, 24; UI/UX Prototype PRD sections 5-6, 9.1, 9.4; Fixture Data-Intent Contract; GLF-003; GLF-004-01; GLF-005

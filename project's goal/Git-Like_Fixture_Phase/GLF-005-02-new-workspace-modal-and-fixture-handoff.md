@@ -1,6 +1,6 @@
 # GLF-005-02: New workspace modal and fixture handoff
 
-- **State:** planned
+- **State:** awaiting_review
 - **Review batch:** BATCH-21.2
 - **Depends on:** GLF-005-01, GLF-003-03
 - **Baseline:** Architecture Checkpoint sections 5, 10, 12, 17, 22.1-22.6, 24; UI/UX Prototype PRD sections 5-6, 9.1, 9.4; Fixture Data-Intent Contract; GLF-003; GLF-003-03; GLF-005; GLF-005-01
@@ -83,3 +83,7 @@ revision internals; Atlas generates identity and snapshots the base HEAD.
 - 11 September 2026: On successful handoff, the new workspace appears in the
   switcher as Extracting. It cannot be selected or opened until it is Ready for
   review.
+
+## Validation record
+
+See [GLF-005-02 validation](GLF-005-02-validation.md).

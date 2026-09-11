@@ -98,6 +98,12 @@ test("workspace creation is transient, Master-rooted, collision-safe, and unavai
   assert.throws(()=>createFixtureWorkspace({projectId:"safara",workspaceName:"x",baseWorkspaceId:"master",prdFiles:[{name:"a.txt",type:"text/plain",size:1}]},bases),/PDF/);
 });
 
+test("workspace creation accepts the fixture inventory's stable Master branch ID", () => {
+  const bases=[{workspaceId:"branch-master",projectId:"safara",headRevisionId:"rev-master"},{workspaceId:"branch-increment-003",projectId:"safara",baseWorkspaceId:"branch-master",headRevisionId:"rev-inc-03"}];
+  const created=createFixtureWorkspace({projectId:"safara",workspaceName:"Refund correction",baseWorkspaceId:"branch-increment-003",prdFiles:[{name:"refund.pdf",type:"application/pdf",size:42}]},bases,["b2c3d4e5f6h7"]);
+  assert.equal(created.workspace.baseWorkspaceId,"branch-increment-003"); assert.equal(created.workspace.baseHeadRevisionId,"rev-inc-03");
+});
+
 test("a supplied Ready-for-review fixture workspace becomes selectable and openable", () => {
   const bases=[{workspaceId:"master",projectId:"safara",headRevisionId:"rev-master"}];
   const created=createFixtureWorkspace({projectId:"safara",workspaceName:"Refund correction",baseWorkspaceId:"master",prdFiles:[{name:"refund.pdf",type:"application/pdf",size:42}]},bases,["b2c3d4e5f6h7"]);
