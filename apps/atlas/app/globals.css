@@ -900,6 +900,9 @@ h1 { font-size: clamp(2.35rem, 6vw, 5rem); letter-spacing: -.055em; line-height:
 
 .sidebar-project-region > .workspace-switcher { order: 2; }
 
+/* Use the same semantic Published state as the repository cards in both themes. */
+.workspace-status.published { background: var(--repository-published-bg); border-color: color-mix(in srgb, var(--repository-published-ink) 42%, var(--line)); color: var(--repository-published-ink); }
+
 .navigation :is(a:not(.brand), .nav-placeholder, .nav-disabled) {
   font-size: var(--type-body-compact);
   font-weight: var(--weight-medium);
