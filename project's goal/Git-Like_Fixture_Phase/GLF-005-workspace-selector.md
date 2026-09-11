@@ -1,6 +1,6 @@
 # GLF-005: Workspace selector
 
-- **State:** planned
+- **State:** awaiting_review
 - **Review batch:** BATCH-21
 - **Depends on:** GLF-003, GLF-004-01
 - **Baseline:** Architecture Checkpoint sections 17, 22.5–22.6, 24; UI/UX Prototype PRD sections 5–6, 9.1, 9.4; Fixture Data-Intent Contract
@@ -61,3 +61,6 @@ not own fixture data, routing, persistence, or branch truth.
   be reviewed before golden-fixture wiring. The current selected workspace is
   represented as selection state; it is not an `active workspace` lifecycle
   category.
+- 11 September 2026: The reference-led UI is explicitly two adjacent controls:
+  Project first and Workspace second. The Workspace menu is an injected-model
+  audit inventory; it does not read fixtures, routes, or PRD-lens state.
