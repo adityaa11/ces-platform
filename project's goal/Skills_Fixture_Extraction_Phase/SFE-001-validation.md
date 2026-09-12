@@ -1,7 +1,7 @@
 # SFE-001 validation evidence
 
 - **Ticket / batch:** SFE-001 / BATCH-26
-- **Implementation state:** awaiting review
+- **Implementation state:** awaiting review after persistence remediation
 - **Run date:** 13 September 2026
 
 ## Submitted fixture
@@ -10,12 +10,12 @@ The user created `safara-project-01` through the project modal with `Safara Init
 
 | Check | Observed result |
 |---|---|
-| Initial Draft identity | `saf-a2b3c4d5e6f7`, shared exactly by the request, Initial Draft record, project-scoped processing job, and stored PRD record |
+| Initial Draft identity | `saf-24aysgyw4su6`, shared exactly by the request, Initial Draft record, project-scoped processing job, and stored PRD record |
 | Master | Generated as `master`, empty, with no published work |
 | Initial Draft | Generated as `Initial Draft`, `extracting`, unavailable, with zero processed PRDs |
-| Source PDF | `docs/PRD/safara-project-01/saf-a2b3c4d5e6f7/Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf` |
+| Source PDF | `docs/PRD/safara-project-01/saf-24aysgyw4su6/Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf` |
 | Stored hash | `75a6bf6c7411c909f9a94dd763cfb540656717c5ecac789dad57e7de4e6740bc`; independently matched against the stored PDF bytes |
-| Registry safety | The local fixture record has source metadata and hash only; it does not retain browser-upload Base64 bytes |
+| Shared registry | `packages/atlas-fixtures/generated/project-card-fixtures.json` owns both the three baseline cards and the modal-created fixture. The record has source metadata and hash only; it does not retain browser-upload Base64 bytes. |
 
 ## Failure-path checks
 
@@ -29,7 +29,7 @@ The user created `safara-project-01` through the project modal with `Safara Init
 
 ## Rendered UI checks
 
-- Reloading `/demo` displays the persisted `Safara Initial Draft` Extracting card with its submitted description, one uploaded PRD, empty Master, zero-percent Initial Draft, and `Waiting for extraction` state.
+- Reloading `/demo` displays four cards, including the persisted `Safara Initial Draft` Extracting card with its submitted description, one uploaded PRD, empty Master, zero-percent Initial Draft, and `Waiting for extraction` state.
 - Desktop, 768px tablet, and 390px mobile snapshots retained the card labels, progress semantics, and disabled open action. The narrow widths expose the navigation menu instead of the desktop sidebar.
 - The Create a project dialog and Extracting card were checked at the same widths in both supported light and dark themes; labels, progress semantics, focus visibility, and disabled state remained legible.
 - The Create a project dialog is named, its fields have visible labels and constraints, focus moves to Close dialog on keyboard entry, and the Close dialog button works with Enter.

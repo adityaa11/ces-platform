@@ -1,0 +1,274 @@
+{
+  "version": 1,
+  "cards": [
+    {
+      "id": "safara",
+      "name": "Safara operations platform",
+      "status": "ready",
+      "prdCount": 3,
+      "collaborators": 4,
+      "lastActivity": "Current accepted project source of truth",
+      "isShared": false,
+      "repository": {
+        "state": "published",
+        "summary": "Operational workspace for registrations, payments, documents, and readiness.",
+        "master": {
+          "state": "published",
+          "summary": "Published work",
+          "detail": "Current accepted project source of truth."
+        },
+        "metrics": [
+          {
+            "value": "85",
+            "label": "resolved facts"
+          },
+          {
+            "value": "3",
+            "label": "PRDs"
+          },
+          {
+            "value": "1",
+            "label": "published version"
+          }
+        ],
+        "action": {
+          "label": "Open project",
+          "enabled": true
+        }
+      }
+    },
+    {
+      "id": "member-portal",
+      "name": "Member portal refresh",
+      "status": "processing",
+      "prdCount": 5,
+      "collaborators": 2,
+      "lastActivity": "Extracting project facts",
+      "isShared": true,
+      "repository": {
+        "state": "extracting",
+        "summary": "Updating the member portal from newly uploaded PRDs.",
+        "master": {
+          "state": "empty",
+          "summary": "No published work",
+          "detail": "Nothing has been published yet."
+        },
+        "initialDraft": {
+          "processedPrds": 2,
+          "totalPrds": 5,
+          "progress": 40
+        },
+        "metrics": [
+          {
+            "value": "0",
+            "label": "published facts"
+          },
+          {
+            "value": "5",
+            "label": "PRDs uploaded"
+          },
+          {
+            "value": "Waiting",
+            "label": "for extraction"
+          }
+        ],
+        "action": {
+          "label": "Open project",
+          "enabled": false
+        }
+      }
+    },
+    {
+      "id": "vendor-onboarding",
+      "name": "Vendor onboarding revamp",
+      "status": "ready",
+      "prdCount": 2,
+      "collaborators": 3,
+      "lastActivity": "Initial draft is ready for review",
+      "isShared": false,
+      "repository": {
+        "state": "ready-for-review",
+        "summary": "New onboarding workflow prepared from uploaded PRDs and ready to check.",
+        "master": {
+          "state": "empty",
+          "summary": "No published work",
+          "detail": "Nothing has been published yet."
+        },
+        "initialDraft": {
+          "processedPrds": 2,
+          "totalPrds": 2,
+          "progress": 100
+        },
+        "metrics": [
+          {
+            "value": "46",
+            "label": "extracted facts"
+          },
+          {
+            "value": "2",
+            "label": "PRDs uploaded"
+          },
+          {
+            "value": "Ready",
+            "label": "to review"
+          }
+        ],
+        "action": {
+          "label": "Review workspace unavailable",
+          "enabled": false,
+          "unavailableReason": "This fixture demonstrates a completed Initial Draft. A review workspace is not available in this prototype."
+        }
+      }
+    },
+    {
+      "id": "safara-project-01",
+      "name": "Safara Initial Draft",
+      "status": "processing",
+      "prdCount": 1,
+      "collaborators": 1,
+      "lastActivity": "Extraction has started",
+      "isShared": false,
+      "repository": {
+        "state": "extracting",
+        "summary": "testing",
+        "master": {
+          "state": "empty",
+          "summary": "No published work",
+          "detail": "Nothing has been published yet."
+        },
+        "initialDraft": {
+          "processedPrds": 0,
+          "totalPrds": 1,
+          "progress": 0
+        },
+        "metrics": [
+          {
+            "value": "0",
+            "label": "published facts"
+          },
+          {
+            "value": "1",
+            "label": "PRD uploaded"
+          },
+          {
+            "value": "Waiting",
+            "label": "for extraction"
+          }
+        ],
+        "action": {
+          "label": "Open project",
+          "enabled": false,
+          "unavailableReason": "Extraction is in progress. This project cannot be opened yet."
+        }
+      }
+    }
+  ],
+  "modalProjects": [
+    {
+      "request": {
+        "projectId": "safara-project-01",
+        "projectName": "Safara Initial Draft",
+        "projectDescription": "testing",
+        "prdFiles": [
+          {
+            "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+            "type": "application/pdf",
+            "size": 25548
+          }
+        ]
+      },
+      "project": {
+        "id": "safara-project-01",
+        "name": "Safara Initial Draft",
+        "status": "processing",
+        "prdCount": 1,
+        "collaborators": 1,
+        "lastActivity": "Extraction has started",
+        "isShared": false,
+        "repository": {
+          "state": "extracting",
+          "summary": "testing",
+          "master": {
+            "state": "empty",
+            "summary": "No published work",
+            "detail": "Nothing has been published yet."
+          },
+          "initialDraft": {
+            "processedPrds": 0,
+            "totalPrds": 1,
+            "progress": 0
+          },
+          "metrics": [
+            {
+              "value": "0",
+              "label": "published facts"
+            },
+            {
+              "value": "1",
+              "label": "PRD uploaded"
+            },
+            {
+              "value": "Waiting",
+              "label": "for extraction"
+            }
+          ],
+          "action": {
+            "label": "Open project",
+            "enabled": false,
+            "unavailableReason": "Extraction is in progress. This project cannot be opened yet."
+          }
+        }
+      },
+      "processingJob": {
+        "id": "job-safara-project-01",
+        "projectId": "safara-project-01",
+        "workspaceId": "saf-24aysgyw4su6",
+        "stage": "extracting",
+        "message": "Extracting text and structure",
+        "progress": 0
+      },
+      "masterWorkspace": {
+        "workspaceId": "master",
+        "projectId": "safara-project-01",
+        "workspaceName": "Master",
+        "status": "empty",
+        "prdFiles": []
+      },
+      "initialDraftWorkspace": {
+        "workspaceId": "saf-24aysgyw4su6",
+        "projectId": "safara-project-01",
+        "workspaceName": "Initial Draft",
+        "status": "extracting",
+        "available": false,
+        "unavailableReason": "Extraction is in progress. This workspace cannot be opened yet.",
+        "prdFiles": [
+          {
+            "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+            "type": "application/pdf",
+            "size": 25548
+          }
+        ]
+      },
+      "prdRecord": {
+        "projectId": "safara-project-01",
+        "workspaceId": "saf-24aysgyw4su6",
+        "prdFiles": [
+          {
+            "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+            "type": "application/pdf",
+            "size": 25548
+          }
+        ]
+      },
+      "sourceFiles": [
+        {
+          "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+          "type": "application/pdf",
+          "size": 25548,
+          "relativePath": "docs/PRD/safara-project-01/saf-24aysgyw4su6/Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+          "sha256": "75a6bf6c7411c909f9a94dd763cfb540656717c5ecac789dad57e7de4e6740bc"
+        }
+      ]
+    }
+  ]
+}

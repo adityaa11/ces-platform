@@ -32,12 +32,12 @@ The UI/UX PRD remains marked Draft and the product-context document has no globa
 
 SFE-000 is the concrete adjustment map for the skill-to-UI handoffs across this scenario. Once reviewed, each SFE ticket applies only the SFE-M entries listed in its ticket header and the SFE-000 ticket lookup; the map is shared context, not a source of implementation changes to cherry-pick.
 
-All project cards and workspaces are created through the existing UI components. The user manually submits the Create a project modal for each project. SFE-001 creates project 01 in Extracting, generates its Initial Draft workspace ID, and saves the selected PDF under that workspace; SFE-002 extracts from that stored file into the same workspace; SFE-003 wires the resulting fixture to the existing route and switcher. SFE-004 repeats the same first-draft path for project 02 and compares its independently produced extraction output with project 01.
+All project cards and workspaces are created through the existing UI components. The user manually submits the Create a project modal for each project. The labels “project 01” and “project 02” identify the first and second independent scenario submissions only; they are never runtime IDs, paths, fixture keys, or seeded implementation data. Every ticket resolves the actual project, workspace, file, and provenance identity from its preceding modal or workspace-modal record. SFE-001 creates the first scenario project in Extracting, SFE-002 extracts its stored file into that same workspace, SFE-003 wires that resulting fixture, and SFE-004 repeats the path for a distinct second scenario project.
 
 | Ticket | Project and user action | Resulting fixture state |
 |---|---|---|
 | SFE-001 | Submit Create a project with a valid, unique ID and Foundation Enrollment PDF 01. | Project card is Extracting; an empty Master and generated Extracting Initial Draft workspace exist; PDF 01 is already stored under the Initial Draft workspace ID. No extraction has run. |
-| SFE-002 | Process project 01's existing Initial Draft request and stored PDF. | Extraction finishes; the same workspace receives the extracted fixture; card badge becomes Ready to review; Master remains empty. |
+| SFE-002 | Process the preceding modal-created project's existing Initial Draft request and stored PDF. | Extraction finishes; the same workspace receives the extracted fixture; card badge becomes Ready to review; Master remains empty. |
 | SFE-003 | Connect that new bundle to the existing project route and switcher. | The route opens the Initial Draft; the switcher shows exactly Master (empty) and Initial Draft (extraction). |
 | SFE-004 | Submit a new project with a distinct valid ID and PDF 01, then repeat SFE-001 through SFE-003. | A separate extraction and workspace are produced; normalized output and source grounding match SFE-002. |
 | SFE-005 | Treat project 02's Initial Draft as approved and publish it. | Project 02's card is Published; its Initial Draft fixture is promoted to Master. Project 01 remains unchanged. |
@@ -67,7 +67,7 @@ Each ticket has its own review batch because each checkpoint changes a data or i
 |---:|---|---|---|---|
 | 0 | [SFE-000 / BATCH-25](SFE-000-skills-to-sfe-integration-map.md) | approved | Completed GLF skill and integration decisions | Does the map connect the five shared skill contracts to SFE without changing their authority or bypassing a gate? |
 | 1 | [SFE-001 / BATCH-26](SFE-001-project-intake-and-initial-workspace.md) | awaiting_review | SFE-000 approved; GLF-004-02 approval; GLF-004-01; GLF-003-03; AUI-004 | Does the project modal create the Extracting card, workspace ID, empty Master, Initial Draft workspace, and workspace-scoped PDF path without extracting? |
-| 2 | [SFE-002 / BATCH-27](SFE-002-initial-draft-extraction.md) | planned | SFE-000 approved; SFE-001; GLF-003-02 | Does processing use that exact workspace ID and file to extract PDF 01 and transition the project card to Ready to review? |
+| 2 | [SFE-002 / BATCH-27](SFE-002-initial-draft-extraction.md) | blocked | SFE-000 approved; SFE-001; GLF-003-02 | Does processing use that exact workspace ID and file to extract PDF 01 and transition the project card to Ready to review? |
 | 3 | [SFE-003 / BATCH-28](SFE-003-route-and-switcher-initial-draft-wiring.md) | planned | SFE-000 approved; SFE-002; GLF-004-01; GLF-005-01 | Do the existing project route and selector expose the empty Master and populated Initial Draft from the same generated fixture? |
 | 4 | [SFE-004 / BATCH-29](SFE-004-repeat-initial-draft-cycle-for-project-two.md) | planned | SFE-000 approved; SFE-003; GLF-003-02 | Does creating project 02 through the same components independently reproduce the project 01 extraction output? |
 | 5 | [SFE-005 / BATCH-30](SFE-005-publish-project-two-initial-draft.md) | planned | SFE-000 approved; SFE-004; fixture changes and repository contracts | Does publishing project 02's Initial Draft promote its accepted fixtures to Master and update the card to Published without changing project 01? |
@@ -80,7 +80,7 @@ The completed GLF delivery record at `d45e869` marks GLF-004-02 and its other SF
 
 ## Review controls
 
-- SFE-000 is `approved`; SFE-001 is `awaiting_review`; SFE-002 through SFE-007 remain `planned`. This ticket set does not authorize a later implementation batch until its dependencies and review controls allow it.
+- SFE-000 is `approved`. SFE-001 is `awaiting_review` after remediation moved modal records into the shared project-card fixture registry; SFE-002 remains `blocked` until that checkpoint passes review. SFE-003 through SFE-007 remain `planned`. This ticket set does not authorize a later implementation batch until its dependencies and review controls allow it.
 - Implement only the currently authorized ticket or review batch. Do not start the next batch until the current batch has a PASS review and the user says `go`.
 - UI batches require rendered browser validation for the connected component flow, supported responsive widths and themes, and keyboard/focus behavior.
 - Fixture batches validate source provenance, stable project/workspace IDs, branch/workspace relationships, and proposal-versus-accepted-truth boundaries.
