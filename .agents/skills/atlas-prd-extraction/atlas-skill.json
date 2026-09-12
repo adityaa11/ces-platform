@@ -1,7 +1,7 @@
 {
   "contractVersion": "1.0",
   "id": "atlas.prd-extraction",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "instructionFile": "SKILL.md",
   "execution": {
     "kind": "reasoning",
@@ -43,17 +43,17 @@
   "outputSchema": {
     "type": "object",
     "additionalProperties": false,
-    "required": ["skillId", "skillVersion", "executionProvenance", "status", "candidateAssertions", "unaccountedStatements", "questions"],
+    "required": ["skillId", "skillVersion", "executionProvenance", "status", "candidateAssertions", "sourceStatementInventory", "unaccountedStatements", "questions"],
     "properties": {
       "skillId": { "const": "atlas.prd-extraction" },
-      "skillVersion": { "const": "1.1.0" },
+      "skillVersion": { "const": "1.2.0" },
       "executionProvenance": {
         "type": "object",
         "additionalProperties": false,
         "required": ["skillId", "skillVersion", "mode"],
         "properties": {
           "skillId": { "const": "atlas.prd-extraction" },
-          "skillVersion": { "const": "1.1.0" },
+          "skillVersion": { "const": "1.2.0" },
           "mode": { "enum": ["codex", "agents_bridge"] }
         }
       },
@@ -78,6 +78,33 @@
                 "artifactId": { "type": "string", "minLength": 1 },
                 "page": { "type": "integer", "minimum": 1 },
                 "quote": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        }
+      },
+      "sourceStatementInventory": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["inventoryId", "artifactId", "page", "quote", "statementClass", "normalizedInterpretation", "destination"],
+          "properties": {
+            "inventoryId": { "type": "string", "minLength": 1 },
+            "artifactId": { "type": "string", "minLength": 1 },
+            "page": { "type": "integer", "minimum": 1 },
+            "quote": { "type": "string", "minLength": 1 },
+            "statementClass": { "enum": ["material", "non_fact"] },
+            "normalizedInterpretation": { "type": "object" },
+            "destination": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["type"],
+              "properties": {
+                "type": { "enum": ["candidate_assertion", "non_fact"] },
+                "candidateId": { "type": "string", "minLength": 1 },
+                "reason": { "type": "string", "minLength": 1 },
+                "duplicateOf": { "type": "string", "minLength": 1 }
               }
             }
           }

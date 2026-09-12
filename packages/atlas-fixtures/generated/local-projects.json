@@ -1,0 +1,2705 @@
+[
+  {
+    "request": {
+      "projectId": "safara-project-01",
+      "projectName": "Safara Initial Draft",
+      "projectDescription": "Safara Initial Draft Extraction testing",
+      "prdFiles": [
+        {
+          "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+          "type": "application/pdf",
+          "size": 25548
+        }
+      ]
+    },
+    "project": {
+      "id": "safara-project-01",
+      "name": "Safara Initial Draft",
+      "status": "ready",
+      "prdCount": 1,
+      "collaborators": 1,
+      "lastActivity": "Initial Draft extraction is ready for review",
+      "isShared": false,
+      "repository": {
+        "state": "ready-for-review",
+        "summary": "Safara Initial Draft Extraction testing",
+        "master": {
+          "state": "empty",
+          "summary": "No published work",
+          "detail": "Nothing has been published yet."
+        },
+        "initialDraft": {
+          "processedPrds": 1,
+          "totalPrds": 1,
+          "progress": 100
+        },
+        "metrics": [
+          {
+            "value": "0",
+            "label": "published facts"
+          },
+          {
+            "value": "1",
+            "label": "PRD uploaded"
+          },
+          {
+            "value": "Ready",
+            "label": "to review"
+          }
+        ],
+        "action": {
+          "label": "Review workspace unavailable",
+          "enabled": false,
+          "unavailableReason": "Initial Draft is ready, but route and workspace selection are not wired yet."
+        }
+      }
+    },
+    "processingJob": {
+      "id": "job-safara-project-01",
+      "projectId": "safara-project-01",
+      "stage": "ready",
+      "message": "Ready to review",
+      "progress": 100,
+      "workspaceId": "saf-a2b3c4d5e6f7"
+    },
+    "masterWorkspace": {
+      "workspaceId": "master",
+      "projectId": "safara-project-01",
+      "workspaceName": "Master",
+      "status": "empty",
+      "prdFiles": []
+    },
+    "initialDraftWorkspace": {
+      "workspaceId": "saf-a2b3c4d5e6f7",
+      "projectId": "safara-project-01",
+      "workspaceName": "Initial Draft",
+      "status": "ready-for-review",
+      "available": false,
+      "unavailableReason": "Initial Draft is ready, but route and workspace selection are not wired yet.",
+      "prdFiles": [
+        {
+          "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+          "type": "application/pdf",
+          "size": 25548
+        }
+      ]
+    },
+    "sourceFiles": [
+      {
+        "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+        "type": "application/pdf",
+        "size": 25548,
+        "relativePath": "docs/PRD/safara-project-01/saf-a2b3c4d5e6f7/Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+        "sha256": "75a6bf6c7411c909f9a94dd763cfb540656717c5ecac789dad57e7de4e6740bc"
+      }
+    ],
+    "prdRecord": {
+      "projectId": "safara-project-01",
+      "workspaceId": "saf-a2b3c4d5e6f7",
+      "prdFiles": [
+        {
+          "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+          "type": "application/pdf",
+          "size": 25548
+        }
+      ]
+    },
+    "extraction": {
+      "workspaceId": "saf-a2b3c4d5e6f7",
+      "proposalState": "candidate-only",
+      "artifact": {
+        "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+        "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+        "type": "application/pdf",
+        "size": 25548,
+        "relativePath": "docs/PRD/safara-project-01/saf-a2b3c4d5e6f7/Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+        "sha256": "75a6bf6c7411c909f9a94dd763cfb540656717c5ecac789dad57e7de4e6740bc",
+        "pageCount": 3
+      },
+      "executionProvenance": {
+        "skillId": "atlas.prd-extraction",
+        "skillVersion": "1.2.0",
+        "mode": "codex"
+      },
+      "candidateAssertions": [
+        {
+          "candidateId": "candidate-safara-project-01-001",
+          "kind": "requirement",
+          "semanticKey": "objective.unified-registration-operations",
+          "payload": {
+            "outcome": "one operational application",
+            "entities": [
+              "packages",
+              "departures",
+              "pilgrims",
+              "registrations"
+            ],
+            "workflowStage": "foundation"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 1,
+            "quote": "Menyatukan data paket, jadwal keberangkatan, jemaah, dan pendaftaran dalam satu aplikasi operasional."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-002",
+          "kind": "requirement",
+          "semanticKey": "scope.increment-01-exclusions",
+          "payload": {
+            "excluded": [
+              "payments",
+              "travel-documents",
+              "readiness",
+              "manifest",
+              "reports"
+            ],
+            "workflowStage": "scope"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 1,
+            "quote": "Pembayaran, dokumen perjalanan, kesiapan, manifest, dan laporan belum menjadi ruang lingkup increment ini."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-003",
+          "kind": "requirement",
+          "semanticKey": "access.inactive-user-denied",
+          "payload": {
+            "actor": "inactive user",
+            "loginAllowed": false,
+            "workflowStage": "access-control"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 1,
+            "quote": "Pengguna yang sudah dinonaktifkan tidak boleh masuk ke aplikasi."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-004",
+          "kind": "requirement",
+          "semanticKey": "history.registration-retention",
+          "payload": {
+            "historyRetained": true,
+            "conditions": [
+              "cancellation",
+              "deactivation"
+            ],
+            "workflowStage": "registration"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 1,
+            "quote": "Menjaga riwayat pendaftaran jemaah agar tidak hilang ketika data dibatalkan atau dinonaktifkan."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-005",
+          "kind": "requirement",
+          "semanticKey": "registration.agreed-price-immutable",
+          "payload": {
+            "immutableAfter": "package price update",
+            "workflowStage": "registration"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 1,
+            "quote": "Memastikan harga pendaftaran yang sudah disepakati tidak berubah ketika harga paket diperbarui."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-006",
+          "kind": "requirement",
+          "semanticKey": "workflow.package-create",
+          "payload": {
+            "actor": "Admin",
+            "step": 1,
+            "workflowStage": "packages-and-departures"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 2,
+            "quote": "Admin membuat paket umrah."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-007",
+          "kind": "requirement",
+          "semanticKey": "workflow.departure-create",
+          "payload": {
+            "actor": "Admin",
+            "step": 2,
+            "input": "selected package",
+            "workflowStage": "packages-and-departures"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 2,
+            "quote": "Admin membuat jadwal keberangkatan untuk paket yang dipilih."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-008",
+          "kind": "requirement",
+          "semanticKey": "workflow.pilgrim-record",
+          "payload": {
+            "actor": "Admin",
+            "step": 3,
+            "workflowStage": "pilgrim-data"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 2,
+            "quote": "Admin mencatat data jemaah."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-009",
+          "kind": "requirement",
+          "semanticKey": "workflow.open-departure-registration",
+          "payload": {
+            "actor": "Admin",
+            "step": 4,
+            "condition": "departure is open",
+            "workflowStage": "registration"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 2,
+            "quote": "Admin memilih jemaah dan mendaftarkannya ke jadwal keberangkatan yang masih terbuka."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-010",
+          "kind": "requirement",
+          "semanticKey": "registration.price-snapshot",
+          "payload": {
+            "actor": "System",
+            "trigger": "registration",
+            "output": "agreed registration price",
+            "workflowStage": "registration"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 2,
+            "quote": "Sistem menyimpan harga pendaftaran yang berlaku saat pendaftaran."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-011",
+          "kind": "requirement",
+          "semanticKey": "departure.capacity-visibility",
+          "payload": {
+            "actor": "System",
+            "outputs": [
+              "registered pilgrim count",
+              "remaining quota"
+            ],
+            "workflowStage": "packages-and-departures"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 2,
+            "quote": "Sistem menampilkan jumlah jemaah terdaftar dan sisa kuota setiap keberangkatan."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-012",
+          "kind": "requirement",
+          "semanticKey": "package.lifecycle",
+          "payload": {
+            "actor": "Admin",
+            "operations": [
+              "create",
+              "read",
+              "update",
+              "deactivate"
+            ],
+            "workflowStage": "packages-and-departures"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 2,
+            "quote": "Admin dapat membuat, melihat, mengubah, dan menonaktifkan paket umrah."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-013",
+          "kind": "requirement",
+          "semanticKey": "package.required-fields",
+          "payload": {
+            "fields": [
+              "name",
+              "duration",
+              "base price",
+              "description",
+              "active status"
+            ],
+            "workflowStage": "packages-and-departures"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 2,
+            "quote": "Informasi paket minimal mencakup nama paket, durasi, harga dasar, deskripsi, dan status aktif."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-014",
+          "kind": "requirement",
+          "semanticKey": "package.departure-cardinality",
+          "payload": {
+            "relationship": "package has one-or-more departures",
+            "workflowStage": "packages-and-departures"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 2,
+            "quote": "Setiap paket dapat memiliki satu atau lebih jadwal keberangkatan."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-015",
+          "kind": "requirement",
+          "semanticKey": "registration.availability-guard",
+          "payload": {
+            "prohibitedWhen": [
+              "departure closed",
+              "quota full"
+            ],
+            "workflowStage": "registration"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 2,
+            "quote": "Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-016",
+          "kind": "requirement",
+          "semanticKey": "pilgrim.lifecycle",
+          "payload": {
+            "actor": "Admin",
+            "operations": [
+              "create",
+              "read",
+              "update",
+              "search",
+              "deactivate"
+            ],
+            "workflowStage": "pilgrim-data"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 2,
+            "quote": "Admin dapat menambah, melihat, mengubah, mencari, dan menonaktifkan data jemaah."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-017",
+          "kind": "requirement",
+          "semanticKey": "pilgrim.nik-validation",
+          "payload": {
+            "field": "NIK",
+            "digits": 16,
+            "when": "provided",
+            "workflowStage": "pilgrim-data"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 2,
+            "quote": "NIK harus terdiri dari 16 angka apabila diisi."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-018",
+          "kind": "requirement",
+          "semanticKey": "pilgrim.identity-duplicate-warning",
+          "payload": {
+            "fields": [
+              "NIK",
+              "passport number"
+            ],
+            "outcome": "warn",
+            "workflowStage": "pilgrim-data"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 2,
+            "quote": "Aplikasi harus memberikan peringatan apabila NIK atau nomor paspor sudah digunakan oleh jemaah lain."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-019",
+          "kind": "requirement",
+          "semanticKey": "pilgrim.identity-list-masking",
+          "payload": {
+            "fields": [
+              "NIK",
+              "passport number"
+            ],
+            "presentation": "not full",
+            "workflowStage": "pilgrim-data"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 2,
+            "quote": "Pada halaman daftar, NIK dan nomor paspor tidak perlu ditampilkan secara penuh."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-020",
+          "kind": "requirement",
+          "semanticKey": "registration.unique-identifier",
+          "payload": {
+            "field": "registration number",
+            "unique": true,
+            "workflowStage": "registration"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 2,
+            "quote": "Setiap pendaftaran memiliki nomor pendaftaran yang berbeda."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-021",
+          "kind": "requirement",
+          "semanticKey": "registration.active-duplicate-prohibited",
+          "payload": {
+            "prohibited": "two active registrations for same pilgrim and departure",
+            "workflowStage": "registration"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 2,
+            "quote": "Jemaah yang sama tidak boleh memiliki dua pendaftaran aktif pada jadwal keberangkatan yang sama."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-022",
+          "kind": "requirement",
+          "semanticKey": "registration.cancellation-audit",
+          "payload": {
+            "cancellationReason": "required",
+            "historyRetained": true,
+            "workflowStage": "registration"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 2,
+            "quote": "Pendaftaran dapat dibatalkan dengan alasan yang tercatat, tetapi riwayatnya tetap dapat dilihat."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-023",
+          "kind": "requirement",
+          "semanticKey": "registration.quota-cap",
+          "payload": {
+            "activeRegistrations": "at most departure quota",
+            "workflowStage": "registration"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 2,
+            "quote": "Jumlah pendaftaran aktif tidak boleh melebihi kuota keberangkatan."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-024",
+          "kind": "requirement",
+          "semanticKey": "pilgrim.authorized-access",
+          "payload": {
+            "access": "authorized users only",
+            "workflowStage": "access-control"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 2,
+            "quote": "Informasi jemaah hanya boleh dilihat oleh pengguna yang berkepentingan."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-025",
+          "kind": "requirement",
+          "semanticKey": "acceptance.full-quota-rejection",
+          "payload": {
+            "scenario": "fill quota then reject next registration",
+            "workflowStage": "acceptance"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 3,
+            "quote": "Mendaftarkan jemaah sampai kuota penuh dan memastikan pendaftaran berikutnya ditolak."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-026",
+          "kind": "requirement",
+          "semanticKey": "acceptance.duplicate-active-registration",
+          "payload": {
+            "scenario": "attempt duplicate active registration",
+            "workflowStage": "acceptance"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 3,
+            "quote": "Mencoba mendaftarkan jemaah yang sama dua kali pada keberangkatan yang sama."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-027",
+          "kind": "requirement",
+          "semanticKey": "acceptance.price-snapshot",
+          "payload": {
+            "scenario": "update package price without changing agreed registration price",
+            "workflowStage": "acceptance"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 3,
+            "quote": "Memperbarui harga paket setelah pendaftaran dan memastikan harga pendaftaran yang sudah disepakati tidak berubah."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-028",
+          "kind": "requirement",
+          "semanticKey": "acceptance.cancellation-history",
+          "payload": {
+            "scenario": "cancel registration while retaining history",
+            "workflowStage": "acceptance"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 3,
+            "quote": "Membatalkan pendaftaran dan memastikan riwayatnya tetap dapat dilihat."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-029",
+          "kind": "requirement",
+          "semanticKey": "delivery.increment-01-application",
+          "payload": {
+            "deliverable": "usable web application",
+            "scope": [
+              "packages",
+              "departures",
+              "pilgrims",
+              "registrations",
+              "quota"
+            ],
+            "workflowStage": "delivery"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 3,
+            "quote": "Aplikasi web increment pertama yang dapat digunakan untuk pengelolaan paket, jadwal keberangkatan, data jemaah, pendaftaran, dan kuota."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-030",
+          "kind": "requirement",
+          "semanticKey": "delivery.application-address",
+          "payload": {
+            "deliverable": "application address",
+            "audience": "specified users",
+            "workflowStage": "delivery"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 3,
+            "quote": "Alamat aplikasi yang dapat diakses oleh pengguna yang ditentukan."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-031",
+          "kind": "requirement",
+          "semanticKey": "delivery.initial-owner-admin-account",
+          "payload": {
+            "deliverable": "initial Owner/Admin account",
+            "workflowStage": "delivery"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 3,
+            "quote": "Akun awal untuk Owner/Admin."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-032",
+          "kind": "requirement",
+          "semanticKey": "delivery.increment-guide",
+          "payload": {
+            "deliverable": "brief user guide",
+            "workflowStage": "delivery"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 3,
+            "quote": "Panduan penggunaan singkat untuk fungsi pada increment ini."
+          }
+        },
+        {
+          "candidateId": "candidate-safara-project-01-033",
+          "kind": "requirement",
+          "semanticKey": "acceptance.quota-calculation",
+          "payload": {
+            "requirement": "quota and remaining quota calculate correctly",
+            "workflowStage": "acceptance"
+          },
+          "possibleAffectedSemanticKey": null,
+          "evidence": {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "page": 3,
+            "quote": "Kuota dan sisa kuota dihitung dengan benar."
+          }
+        }
+      ],
+      "sourceStatementInventory": [
+        {
+          "inventoryId": "inventory-safara-project-01-001",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 1,
+          "quote": "Menyatukan data paket, jadwal keberangkatan, jemaah, dan pendaftaran dalam satu aplikasi operasional.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "objective.unified-registration-operations",
+            "payload": {
+              "outcome": "one operational application",
+              "entities": [
+                "packages",
+                "departures",
+                "pilgrims",
+                "registrations"
+              ],
+              "workflowStage": "foundation"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-001"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-002",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 1,
+          "quote": "Pembayaran, dokumen perjalanan, kesiapan, manifest, dan laporan belum menjadi ruang lingkup increment ini.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "scope.increment-01-exclusions",
+            "payload": {
+              "excluded": [
+                "payments",
+                "travel-documents",
+                "readiness",
+                "manifest",
+                "reports"
+              ],
+              "workflowStage": "scope"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-002"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-003",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 1,
+          "quote": "Pengguna yang sudah dinonaktifkan tidak boleh masuk ke aplikasi.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "access.inactive-user-denied",
+            "payload": {
+              "actor": "inactive user",
+              "loginAllowed": false,
+              "workflowStage": "access-control"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-003"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-004",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 1,
+          "quote": "Menjaga riwayat pendaftaran jemaah agar tidak hilang ketika data dibatalkan atau dinonaktifkan.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "history.registration-retention",
+            "payload": {
+              "historyRetained": true,
+              "conditions": [
+                "cancellation",
+                "deactivation"
+              ],
+              "workflowStage": "registration"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-004"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-005",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 1,
+          "quote": "Memastikan harga pendaftaran yang sudah disepakati tidak berubah ketika harga paket diperbarui.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "registration.agreed-price-immutable",
+            "payload": {
+              "immutableAfter": "package price update",
+              "workflowStage": "registration"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-005"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-006",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 2,
+          "quote": "Admin membuat paket umrah.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "workflow.package-create",
+            "payload": {
+              "actor": "Admin",
+              "step": 1,
+              "workflowStage": "packages-and-departures"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-006"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-007",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 2,
+          "quote": "Admin membuat jadwal keberangkatan untuk paket yang dipilih.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "workflow.departure-create",
+            "payload": {
+              "actor": "Admin",
+              "step": 2,
+              "input": "selected package",
+              "workflowStage": "packages-and-departures"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-007"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-008",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 2,
+          "quote": "Admin mencatat data jemaah.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "workflow.pilgrim-record",
+            "payload": {
+              "actor": "Admin",
+              "step": 3,
+              "workflowStage": "pilgrim-data"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-008"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-009",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 2,
+          "quote": "Admin memilih jemaah dan mendaftarkannya ke jadwal keberangkatan yang masih terbuka.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "workflow.open-departure-registration",
+            "payload": {
+              "actor": "Admin",
+              "step": 4,
+              "condition": "departure is open",
+              "workflowStage": "registration"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-009"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-010",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 2,
+          "quote": "Sistem menyimpan harga pendaftaran yang berlaku saat pendaftaran.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "registration.price-snapshot",
+            "payload": {
+              "actor": "System",
+              "trigger": "registration",
+              "output": "agreed registration price",
+              "workflowStage": "registration"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-010"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-011",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 2,
+          "quote": "Sistem menampilkan jumlah jemaah terdaftar dan sisa kuota setiap keberangkatan.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "departure.capacity-visibility",
+            "payload": {
+              "actor": "System",
+              "outputs": [
+                "registered pilgrim count",
+                "remaining quota"
+              ],
+              "workflowStage": "packages-and-departures"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-011"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-012",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 2,
+          "quote": "Admin dapat membuat, melihat, mengubah, dan menonaktifkan paket umrah.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "package.lifecycle",
+            "payload": {
+              "actor": "Admin",
+              "operations": [
+                "create",
+                "read",
+                "update",
+                "deactivate"
+              ],
+              "workflowStage": "packages-and-departures"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-012"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-013",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 2,
+          "quote": "Informasi paket minimal mencakup nama paket, durasi, harga dasar, deskripsi, dan status aktif.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "package.required-fields",
+            "payload": {
+              "fields": [
+                "name",
+                "duration",
+                "base price",
+                "description",
+                "active status"
+              ],
+              "workflowStage": "packages-and-departures"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-013"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-014",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 2,
+          "quote": "Setiap paket dapat memiliki satu atau lebih jadwal keberangkatan.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "package.departure-cardinality",
+            "payload": {
+              "relationship": "package has one-or-more departures",
+              "workflowStage": "packages-and-departures"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-014"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-015",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 2,
+          "quote": "Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "registration.availability-guard",
+            "payload": {
+              "prohibitedWhen": [
+                "departure closed",
+                "quota full"
+              ],
+              "workflowStage": "registration"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-015"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-016",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 2,
+          "quote": "Admin dapat menambah, melihat, mengubah, mencari, dan menonaktifkan data jemaah.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "pilgrim.lifecycle",
+            "payload": {
+              "actor": "Admin",
+              "operations": [
+                "create",
+                "read",
+                "update",
+                "search",
+                "deactivate"
+              ],
+              "workflowStage": "pilgrim-data"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-016"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-017",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 2,
+          "quote": "NIK harus terdiri dari 16 angka apabila diisi.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "pilgrim.nik-validation",
+            "payload": {
+              "field": "NIK",
+              "digits": 16,
+              "when": "provided",
+              "workflowStage": "pilgrim-data"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-017"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-018",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 2,
+          "quote": "Aplikasi harus memberikan peringatan apabila NIK atau nomor paspor sudah digunakan oleh jemaah lain.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "pilgrim.identity-duplicate-warning",
+            "payload": {
+              "fields": [
+                "NIK",
+                "passport number"
+              ],
+              "outcome": "warn",
+              "workflowStage": "pilgrim-data"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-018"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-019",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 2,
+          "quote": "Pada halaman daftar, NIK dan nomor paspor tidak perlu ditampilkan secara penuh.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "pilgrim.identity-list-masking",
+            "payload": {
+              "fields": [
+                "NIK",
+                "passport number"
+              ],
+              "presentation": "not full",
+              "workflowStage": "pilgrim-data"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-019"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-020",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 2,
+          "quote": "Setiap pendaftaran memiliki nomor pendaftaran yang berbeda.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "registration.unique-identifier",
+            "payload": {
+              "field": "registration number",
+              "unique": true,
+              "workflowStage": "registration"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-020"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-021",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 2,
+          "quote": "Jemaah yang sama tidak boleh memiliki dua pendaftaran aktif pada jadwal keberangkatan yang sama.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "registration.active-duplicate-prohibited",
+            "payload": {
+              "prohibited": "two active registrations for same pilgrim and departure",
+              "workflowStage": "registration"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-021"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-022",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 2,
+          "quote": "Pendaftaran dapat dibatalkan dengan alasan yang tercatat, tetapi riwayatnya tetap dapat dilihat.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "registration.cancellation-audit",
+            "payload": {
+              "cancellationReason": "required",
+              "historyRetained": true,
+              "workflowStage": "registration"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-022"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-023",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 2,
+          "quote": "Jumlah pendaftaran aktif tidak boleh melebihi kuota keberangkatan.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "registration.quota-cap",
+            "payload": {
+              "activeRegistrations": "at most departure quota",
+              "workflowStage": "registration"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-023"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-024",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 2,
+          "quote": "Informasi jemaah hanya boleh dilihat oleh pengguna yang berkepentingan.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "pilgrim.authorized-access",
+            "payload": {
+              "access": "authorized users only",
+              "workflowStage": "access-control"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-024"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-025",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 3,
+          "quote": "Mendaftarkan jemaah sampai kuota penuh dan memastikan pendaftaran berikutnya ditolak.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "acceptance.full-quota-rejection",
+            "payload": {
+              "scenario": "fill quota then reject next registration",
+              "workflowStage": "acceptance"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-025"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-026",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 3,
+          "quote": "Mencoba mendaftarkan jemaah yang sama dua kali pada keberangkatan yang sama.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "acceptance.duplicate-active-registration",
+            "payload": {
+              "scenario": "attempt duplicate active registration",
+              "workflowStage": "acceptance"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-026"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-027",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 3,
+          "quote": "Memperbarui harga paket setelah pendaftaran dan memastikan harga pendaftaran yang sudah disepakati tidak berubah.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "acceptance.price-snapshot",
+            "payload": {
+              "scenario": "update package price without changing agreed registration price",
+              "workflowStage": "acceptance"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-027"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-028",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 3,
+          "quote": "Membatalkan pendaftaran dan memastikan riwayatnya tetap dapat dilihat.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "acceptance.cancellation-history",
+            "payload": {
+              "scenario": "cancel registration while retaining history",
+              "workflowStage": "acceptance"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-028"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-029",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 3,
+          "quote": "Aplikasi web increment pertama yang dapat digunakan untuk pengelolaan paket, jadwal keberangkatan, data jemaah, pendaftaran, dan kuota.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "delivery.increment-01-application",
+            "payload": {
+              "deliverable": "usable web application",
+              "scope": [
+                "packages",
+                "departures",
+                "pilgrims",
+                "registrations",
+                "quota"
+              ],
+              "workflowStage": "delivery"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-029"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-030",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 3,
+          "quote": "Alamat aplikasi yang dapat diakses oleh pengguna yang ditentukan.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "delivery.application-address",
+            "payload": {
+              "deliverable": "application address",
+              "audience": "specified users",
+              "workflowStage": "delivery"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-030"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-031",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 3,
+          "quote": "Akun awal untuk Owner/Admin.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "delivery.initial-owner-admin-account",
+            "payload": {
+              "deliverable": "initial Owner/Admin account",
+              "workflowStage": "delivery"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-031"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-032",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 3,
+          "quote": "Panduan penggunaan singkat untuk fungsi pada increment ini.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "delivery.increment-guide",
+            "payload": {
+              "deliverable": "brief user guide",
+              "workflowStage": "delivery"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-032"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-033",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 3,
+          "quote": "Kuota dan sisa kuota dihitung dengan benar.",
+          "statementClass": "material",
+          "normalizedInterpretation": {
+            "semanticKey": "acceptance.quota-calculation",
+            "payload": {
+              "requirement": "quota and remaining quota calculate correctly",
+              "workflowStage": "acceptance"
+            }
+          },
+          "destination": {
+            "type": "candidate_assertion",
+            "candidateId": "candidate-safara-project-01-033"
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-heading-1",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 1,
+          "quote": "SAFARA - Increment 01",
+          "statementClass": "non_fact",
+          "normalizedInterpretation": {
+            "kind": "heading"
+          },
+          "destination": {
+            "type": "non_fact",
+            "reason": "Heading only; it has no independently meaningful requirement."
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-heading-2",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 2,
+          "quote": "Alur Utama",
+          "statementClass": "non_fact",
+          "normalizedInterpretation": {
+            "kind": "heading"
+          },
+          "destination": {
+            "type": "non_fact",
+            "reason": "Heading only; it has no independently meaningful requirement."
+          }
+        },
+        {
+          "inventoryId": "inventory-safara-project-01-heading-3",
+          "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+          "page": 3,
+          "quote": "Skenario Pemeriksaan Hasil",
+          "statementClass": "non_fact",
+          "normalizedInterpretation": {
+            "kind": "heading"
+          },
+          "destination": {
+            "type": "non_fact",
+            "reason": "Heading only; it has no independently meaningful requirement."
+          }
+        }
+      ],
+      "questions": [],
+      "repositoryInput": {
+        "projectId": "safara-project-01",
+        "sourceArtifacts": [
+          {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+            "sha256": "75a6bf6c7411c909f9a94dd763cfb540656717c5ecac789dad57e7de4e6740bc",
+            "relativePath": "docs/PRD/safara-project-01/saf-a2b3c4d5e6f7/Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+            "pageCount": 3
+          }
+        ],
+        "baseRepository": {
+          "branchId": "master",
+          "headRevisionId": null,
+          "assertionIds": []
+        },
+        "requestedScenario": "Initial Draft extraction proposal",
+        "scenarioKind": "extraction_backed",
+        "extractionResults": [
+          {
+            "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+            "candidateAssertions": [
+              {
+                "candidateId": "candidate-safara-project-01-001",
+                "kind": "requirement",
+                "semanticKey": "objective.unified-registration-operations",
+                "payload": {
+                  "outcome": "one operational application",
+                  "entities": [
+                    "packages",
+                    "departures",
+                    "pilgrims",
+                    "registrations"
+                  ],
+                  "workflowStage": "foundation"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 1,
+                  "quote": "Menyatukan data paket, jadwal keberangkatan, jemaah, dan pendaftaran dalam satu aplikasi operasional."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-002",
+                "kind": "requirement",
+                "semanticKey": "scope.increment-01-exclusions",
+                "payload": {
+                  "excluded": [
+                    "payments",
+                    "travel-documents",
+                    "readiness",
+                    "manifest",
+                    "reports"
+                  ],
+                  "workflowStage": "scope"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 1,
+                  "quote": "Pembayaran, dokumen perjalanan, kesiapan, manifest, dan laporan belum menjadi ruang lingkup increment ini."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-003",
+                "kind": "requirement",
+                "semanticKey": "access.inactive-user-denied",
+                "payload": {
+                  "actor": "inactive user",
+                  "loginAllowed": false,
+                  "workflowStage": "access-control"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 1,
+                  "quote": "Pengguna yang sudah dinonaktifkan tidak boleh masuk ke aplikasi."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-004",
+                "kind": "requirement",
+                "semanticKey": "history.registration-retention",
+                "payload": {
+                  "historyRetained": true,
+                  "conditions": [
+                    "cancellation",
+                    "deactivation"
+                  ],
+                  "workflowStage": "registration"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 1,
+                  "quote": "Menjaga riwayat pendaftaran jemaah agar tidak hilang ketika data dibatalkan atau dinonaktifkan."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-005",
+                "kind": "requirement",
+                "semanticKey": "registration.agreed-price-immutable",
+                "payload": {
+                  "immutableAfter": "package price update",
+                  "workflowStage": "registration"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 1,
+                  "quote": "Memastikan harga pendaftaran yang sudah disepakati tidak berubah ketika harga paket diperbarui."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-006",
+                "kind": "requirement",
+                "semanticKey": "workflow.package-create",
+                "payload": {
+                  "actor": "Admin",
+                  "step": 1,
+                  "workflowStage": "packages-and-departures"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 2,
+                  "quote": "Admin membuat paket umrah."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-007",
+                "kind": "requirement",
+                "semanticKey": "workflow.departure-create",
+                "payload": {
+                  "actor": "Admin",
+                  "step": 2,
+                  "input": "selected package",
+                  "workflowStage": "packages-and-departures"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 2,
+                  "quote": "Admin membuat jadwal keberangkatan untuk paket yang dipilih."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-008",
+                "kind": "requirement",
+                "semanticKey": "workflow.pilgrim-record",
+                "payload": {
+                  "actor": "Admin",
+                  "step": 3,
+                  "workflowStage": "pilgrim-data"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 2,
+                  "quote": "Admin mencatat data jemaah."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-009",
+                "kind": "requirement",
+                "semanticKey": "workflow.open-departure-registration",
+                "payload": {
+                  "actor": "Admin",
+                  "step": 4,
+                  "condition": "departure is open",
+                  "workflowStage": "registration"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 2,
+                  "quote": "Admin memilih jemaah dan mendaftarkannya ke jadwal keberangkatan yang masih terbuka."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-010",
+                "kind": "requirement",
+                "semanticKey": "registration.price-snapshot",
+                "payload": {
+                  "actor": "System",
+                  "trigger": "registration",
+                  "output": "agreed registration price",
+                  "workflowStage": "registration"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 2,
+                  "quote": "Sistem menyimpan harga pendaftaran yang berlaku saat pendaftaran."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-011",
+                "kind": "requirement",
+                "semanticKey": "departure.capacity-visibility",
+                "payload": {
+                  "actor": "System",
+                  "outputs": [
+                    "registered pilgrim count",
+                    "remaining quota"
+                  ],
+                  "workflowStage": "packages-and-departures"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 2,
+                  "quote": "Sistem menampilkan jumlah jemaah terdaftar dan sisa kuota setiap keberangkatan."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-012",
+                "kind": "requirement",
+                "semanticKey": "package.lifecycle",
+                "payload": {
+                  "actor": "Admin",
+                  "operations": [
+                    "create",
+                    "read",
+                    "update",
+                    "deactivate"
+                  ],
+                  "workflowStage": "packages-and-departures"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 2,
+                  "quote": "Admin dapat membuat, melihat, mengubah, dan menonaktifkan paket umrah."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-013",
+                "kind": "requirement",
+                "semanticKey": "package.required-fields",
+                "payload": {
+                  "fields": [
+                    "name",
+                    "duration",
+                    "base price",
+                    "description",
+                    "active status"
+                  ],
+                  "workflowStage": "packages-and-departures"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 2,
+                  "quote": "Informasi paket minimal mencakup nama paket, durasi, harga dasar, deskripsi, dan status aktif."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-014",
+                "kind": "requirement",
+                "semanticKey": "package.departure-cardinality",
+                "payload": {
+                  "relationship": "package has one-or-more departures",
+                  "workflowStage": "packages-and-departures"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 2,
+                  "quote": "Setiap paket dapat memiliki satu atau lebih jadwal keberangkatan."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-015",
+                "kind": "requirement",
+                "semanticKey": "registration.availability-guard",
+                "payload": {
+                  "prohibitedWhen": [
+                    "departure closed",
+                    "quota full"
+                  ],
+                  "workflowStage": "registration"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 2,
+                  "quote": "Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-016",
+                "kind": "requirement",
+                "semanticKey": "pilgrim.lifecycle",
+                "payload": {
+                  "actor": "Admin",
+                  "operations": [
+                    "create",
+                    "read",
+                    "update",
+                    "search",
+                    "deactivate"
+                  ],
+                  "workflowStage": "pilgrim-data"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 2,
+                  "quote": "Admin dapat menambah, melihat, mengubah, mencari, dan menonaktifkan data jemaah."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-017",
+                "kind": "requirement",
+                "semanticKey": "pilgrim.nik-validation",
+                "payload": {
+                  "field": "NIK",
+                  "digits": 16,
+                  "when": "provided",
+                  "workflowStage": "pilgrim-data"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 2,
+                  "quote": "NIK harus terdiri dari 16 angka apabila diisi."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-018",
+                "kind": "requirement",
+                "semanticKey": "pilgrim.identity-duplicate-warning",
+                "payload": {
+                  "fields": [
+                    "NIK",
+                    "passport number"
+                  ],
+                  "outcome": "warn",
+                  "workflowStage": "pilgrim-data"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 2,
+                  "quote": "Aplikasi harus memberikan peringatan apabila NIK atau nomor paspor sudah digunakan oleh jemaah lain."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-019",
+                "kind": "requirement",
+                "semanticKey": "pilgrim.identity-list-masking",
+                "payload": {
+                  "fields": [
+                    "NIK",
+                    "passport number"
+                  ],
+                  "presentation": "not full",
+                  "workflowStage": "pilgrim-data"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 2,
+                  "quote": "Pada halaman daftar, NIK dan nomor paspor tidak perlu ditampilkan secara penuh."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-020",
+                "kind": "requirement",
+                "semanticKey": "registration.unique-identifier",
+                "payload": {
+                  "field": "registration number",
+                  "unique": true,
+                  "workflowStage": "registration"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 2,
+                  "quote": "Setiap pendaftaran memiliki nomor pendaftaran yang berbeda."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-021",
+                "kind": "requirement",
+                "semanticKey": "registration.active-duplicate-prohibited",
+                "payload": {
+                  "prohibited": "two active registrations for same pilgrim and departure",
+                  "workflowStage": "registration"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 2,
+                  "quote": "Jemaah yang sama tidak boleh memiliki dua pendaftaran aktif pada jadwal keberangkatan yang sama."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-022",
+                "kind": "requirement",
+                "semanticKey": "registration.cancellation-audit",
+                "payload": {
+                  "cancellationReason": "required",
+                  "historyRetained": true,
+                  "workflowStage": "registration"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 2,
+                  "quote": "Pendaftaran dapat dibatalkan dengan alasan yang tercatat, tetapi riwayatnya tetap dapat dilihat."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-023",
+                "kind": "requirement",
+                "semanticKey": "registration.quota-cap",
+                "payload": {
+                  "activeRegistrations": "at most departure quota",
+                  "workflowStage": "registration"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 2,
+                  "quote": "Jumlah pendaftaran aktif tidak boleh melebihi kuota keberangkatan."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-024",
+                "kind": "requirement",
+                "semanticKey": "pilgrim.authorized-access",
+                "payload": {
+                  "access": "authorized users only",
+                  "workflowStage": "access-control"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 2,
+                  "quote": "Informasi jemaah hanya boleh dilihat oleh pengguna yang berkepentingan."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-025",
+                "kind": "requirement",
+                "semanticKey": "acceptance.full-quota-rejection",
+                "payload": {
+                  "scenario": "fill quota then reject next registration",
+                  "workflowStage": "acceptance"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 3,
+                  "quote": "Mendaftarkan jemaah sampai kuota penuh dan memastikan pendaftaran berikutnya ditolak."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-026",
+                "kind": "requirement",
+                "semanticKey": "acceptance.duplicate-active-registration",
+                "payload": {
+                  "scenario": "attempt duplicate active registration",
+                  "workflowStage": "acceptance"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 3,
+                  "quote": "Mencoba mendaftarkan jemaah yang sama dua kali pada keberangkatan yang sama."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-027",
+                "kind": "requirement",
+                "semanticKey": "acceptance.price-snapshot",
+                "payload": {
+                  "scenario": "update package price without changing agreed registration price",
+                  "workflowStage": "acceptance"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 3,
+                  "quote": "Memperbarui harga paket setelah pendaftaran dan memastikan harga pendaftaran yang sudah disepakati tidak berubah."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-028",
+                "kind": "requirement",
+                "semanticKey": "acceptance.cancellation-history",
+                "payload": {
+                  "scenario": "cancel registration while retaining history",
+                  "workflowStage": "acceptance"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 3,
+                  "quote": "Membatalkan pendaftaran dan memastikan riwayatnya tetap dapat dilihat."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-029",
+                "kind": "requirement",
+                "semanticKey": "delivery.increment-01-application",
+                "payload": {
+                  "deliverable": "usable web application",
+                  "scope": [
+                    "packages",
+                    "departures",
+                    "pilgrims",
+                    "registrations",
+                    "quota"
+                  ],
+                  "workflowStage": "delivery"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 3,
+                  "quote": "Aplikasi web increment pertama yang dapat digunakan untuk pengelolaan paket, jadwal keberangkatan, data jemaah, pendaftaran, dan kuota."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-030",
+                "kind": "requirement",
+                "semanticKey": "delivery.application-address",
+                "payload": {
+                  "deliverable": "application address",
+                  "audience": "specified users",
+                  "workflowStage": "delivery"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 3,
+                  "quote": "Alamat aplikasi yang dapat diakses oleh pengguna yang ditentukan."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-031",
+                "kind": "requirement",
+                "semanticKey": "delivery.initial-owner-admin-account",
+                "payload": {
+                  "deliverable": "initial Owner/Admin account",
+                  "workflowStage": "delivery"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 3,
+                  "quote": "Akun awal untuk Owner/Admin."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-032",
+                "kind": "requirement",
+                "semanticKey": "delivery.increment-guide",
+                "payload": {
+                  "deliverable": "brief user guide",
+                  "workflowStage": "delivery"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 3,
+                  "quote": "Panduan penggunaan singkat untuk fungsi pada increment ini."
+                }
+              },
+              {
+                "candidateId": "candidate-safara-project-01-033",
+                "kind": "requirement",
+                "semanticKey": "acceptance.quota-calculation",
+                "payload": {
+                  "requirement": "quota and remaining quota calculate correctly",
+                  "workflowStage": "acceptance"
+                },
+                "possibleAffectedSemanticKey": null,
+                "evidence": {
+                  "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                  "page": 3,
+                  "quote": "Kuota dan sisa kuota dihitung dengan benar."
+                }
+              }
+            ],
+            "sourceStatementInventory": [
+              {
+                "inventoryId": "inventory-safara-project-01-001",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 1,
+                "quote": "Menyatukan data paket, jadwal keberangkatan, jemaah, dan pendaftaran dalam satu aplikasi operasional.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "objective.unified-registration-operations",
+                  "payload": {
+                    "outcome": "one operational application",
+                    "entities": [
+                      "packages",
+                      "departures",
+                      "pilgrims",
+                      "registrations"
+                    ],
+                    "workflowStage": "foundation"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-001"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-002",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 1,
+                "quote": "Pembayaran, dokumen perjalanan, kesiapan, manifest, dan laporan belum menjadi ruang lingkup increment ini.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "scope.increment-01-exclusions",
+                  "payload": {
+                    "excluded": [
+                      "payments",
+                      "travel-documents",
+                      "readiness",
+                      "manifest",
+                      "reports"
+                    ],
+                    "workflowStage": "scope"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-002"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-003",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 1,
+                "quote": "Pengguna yang sudah dinonaktifkan tidak boleh masuk ke aplikasi.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "access.inactive-user-denied",
+                  "payload": {
+                    "actor": "inactive user",
+                    "loginAllowed": false,
+                    "workflowStage": "access-control"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-003"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-004",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 1,
+                "quote": "Menjaga riwayat pendaftaran jemaah agar tidak hilang ketika data dibatalkan atau dinonaktifkan.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "history.registration-retention",
+                  "payload": {
+                    "historyRetained": true,
+                    "conditions": [
+                      "cancellation",
+                      "deactivation"
+                    ],
+                    "workflowStage": "registration"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-004"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-005",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 1,
+                "quote": "Memastikan harga pendaftaran yang sudah disepakati tidak berubah ketika harga paket diperbarui.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "registration.agreed-price-immutable",
+                  "payload": {
+                    "immutableAfter": "package price update",
+                    "workflowStage": "registration"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-005"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-006",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 2,
+                "quote": "Admin membuat paket umrah.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "workflow.package-create",
+                  "payload": {
+                    "actor": "Admin",
+                    "step": 1,
+                    "workflowStage": "packages-and-departures"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-006"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-007",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 2,
+                "quote": "Admin membuat jadwal keberangkatan untuk paket yang dipilih.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "workflow.departure-create",
+                  "payload": {
+                    "actor": "Admin",
+                    "step": 2,
+                    "input": "selected package",
+                    "workflowStage": "packages-and-departures"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-007"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-008",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 2,
+                "quote": "Admin mencatat data jemaah.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "workflow.pilgrim-record",
+                  "payload": {
+                    "actor": "Admin",
+                    "step": 3,
+                    "workflowStage": "pilgrim-data"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-008"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-009",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 2,
+                "quote": "Admin memilih jemaah dan mendaftarkannya ke jadwal keberangkatan yang masih terbuka.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "workflow.open-departure-registration",
+                  "payload": {
+                    "actor": "Admin",
+                    "step": 4,
+                    "condition": "departure is open",
+                    "workflowStage": "registration"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-009"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-010",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 2,
+                "quote": "Sistem menyimpan harga pendaftaran yang berlaku saat pendaftaran.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "registration.price-snapshot",
+                  "payload": {
+                    "actor": "System",
+                    "trigger": "registration",
+                    "output": "agreed registration price",
+                    "workflowStage": "registration"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-010"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-011",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 2,
+                "quote": "Sistem menampilkan jumlah jemaah terdaftar dan sisa kuota setiap keberangkatan.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "departure.capacity-visibility",
+                  "payload": {
+                    "actor": "System",
+                    "outputs": [
+                      "registered pilgrim count",
+                      "remaining quota"
+                    ],
+                    "workflowStage": "packages-and-departures"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-011"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-012",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 2,
+                "quote": "Admin dapat membuat, melihat, mengubah, dan menonaktifkan paket umrah.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "package.lifecycle",
+                  "payload": {
+                    "actor": "Admin",
+                    "operations": [
+                      "create",
+                      "read",
+                      "update",
+                      "deactivate"
+                    ],
+                    "workflowStage": "packages-and-departures"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-012"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-013",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 2,
+                "quote": "Informasi paket minimal mencakup nama paket, durasi, harga dasar, deskripsi, dan status aktif.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "package.required-fields",
+                  "payload": {
+                    "fields": [
+                      "name",
+                      "duration",
+                      "base price",
+                      "description",
+                      "active status"
+                    ],
+                    "workflowStage": "packages-and-departures"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-013"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-014",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 2,
+                "quote": "Setiap paket dapat memiliki satu atau lebih jadwal keberangkatan.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "package.departure-cardinality",
+                  "payload": {
+                    "relationship": "package has one-or-more departures",
+                    "workflowStage": "packages-and-departures"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-014"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-015",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 2,
+                "quote": "Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "registration.availability-guard",
+                  "payload": {
+                    "prohibitedWhen": [
+                      "departure closed",
+                      "quota full"
+                    ],
+                    "workflowStage": "registration"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-015"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-016",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 2,
+                "quote": "Admin dapat menambah, melihat, mengubah, mencari, dan menonaktifkan data jemaah.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "pilgrim.lifecycle",
+                  "payload": {
+                    "actor": "Admin",
+                    "operations": [
+                      "create",
+                      "read",
+                      "update",
+                      "search",
+                      "deactivate"
+                    ],
+                    "workflowStage": "pilgrim-data"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-016"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-017",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 2,
+                "quote": "NIK harus terdiri dari 16 angka apabila diisi.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "pilgrim.nik-validation",
+                  "payload": {
+                    "field": "NIK",
+                    "digits": 16,
+                    "when": "provided",
+                    "workflowStage": "pilgrim-data"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-017"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-018",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 2,
+                "quote": "Aplikasi harus memberikan peringatan apabila NIK atau nomor paspor sudah digunakan oleh jemaah lain.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "pilgrim.identity-duplicate-warning",
+                  "payload": {
+                    "fields": [
+                      "NIK",
+                      "passport number"
+                    ],
+                    "outcome": "warn",
+                    "workflowStage": "pilgrim-data"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-018"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-019",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 2,
+                "quote": "Pada halaman daftar, NIK dan nomor paspor tidak perlu ditampilkan secara penuh.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "pilgrim.identity-list-masking",
+                  "payload": {
+                    "fields": [
+                      "NIK",
+                      "passport number"
+                    ],
+                    "presentation": "not full",
+                    "workflowStage": "pilgrim-data"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-019"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-020",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 2,
+                "quote": "Setiap pendaftaran memiliki nomor pendaftaran yang berbeda.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "registration.unique-identifier",
+                  "payload": {
+                    "field": "registration number",
+                    "unique": true,
+                    "workflowStage": "registration"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-020"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-021",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 2,
+                "quote": "Jemaah yang sama tidak boleh memiliki dua pendaftaran aktif pada jadwal keberangkatan yang sama.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "registration.active-duplicate-prohibited",
+                  "payload": {
+                    "prohibited": "two active registrations for same pilgrim and departure",
+                    "workflowStage": "registration"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-021"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-022",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 2,
+                "quote": "Pendaftaran dapat dibatalkan dengan alasan yang tercatat, tetapi riwayatnya tetap dapat dilihat.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "registration.cancellation-audit",
+                  "payload": {
+                    "cancellationReason": "required",
+                    "historyRetained": true,
+                    "workflowStage": "registration"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-022"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-023",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 2,
+                "quote": "Jumlah pendaftaran aktif tidak boleh melebihi kuota keberangkatan.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "registration.quota-cap",
+                  "payload": {
+                    "activeRegistrations": "at most departure quota",
+                    "workflowStage": "registration"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-023"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-024",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 2,
+                "quote": "Informasi jemaah hanya boleh dilihat oleh pengguna yang berkepentingan.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "pilgrim.authorized-access",
+                  "payload": {
+                    "access": "authorized users only",
+                    "workflowStage": "access-control"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-024"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-025",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 3,
+                "quote": "Mendaftarkan jemaah sampai kuota penuh dan memastikan pendaftaran berikutnya ditolak.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "acceptance.full-quota-rejection",
+                  "payload": {
+                    "scenario": "fill quota then reject next registration",
+                    "workflowStage": "acceptance"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-025"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-026",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 3,
+                "quote": "Mencoba mendaftarkan jemaah yang sama dua kali pada keberangkatan yang sama.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "acceptance.duplicate-active-registration",
+                  "payload": {
+                    "scenario": "attempt duplicate active registration",
+                    "workflowStage": "acceptance"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-026"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-027",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 3,
+                "quote": "Memperbarui harga paket setelah pendaftaran dan memastikan harga pendaftaran yang sudah disepakati tidak berubah.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "acceptance.price-snapshot",
+                  "payload": {
+                    "scenario": "update package price without changing agreed registration price",
+                    "workflowStage": "acceptance"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-027"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-028",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 3,
+                "quote": "Membatalkan pendaftaran dan memastikan riwayatnya tetap dapat dilihat.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "acceptance.cancellation-history",
+                  "payload": {
+                    "scenario": "cancel registration while retaining history",
+                    "workflowStage": "acceptance"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-028"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-029",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 3,
+                "quote": "Aplikasi web increment pertama yang dapat digunakan untuk pengelolaan paket, jadwal keberangkatan, data jemaah, pendaftaran, dan kuota.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "delivery.increment-01-application",
+                  "payload": {
+                    "deliverable": "usable web application",
+                    "scope": [
+                      "packages",
+                      "departures",
+                      "pilgrims",
+                      "registrations",
+                      "quota"
+                    ],
+                    "workflowStage": "delivery"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-029"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-030",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 3,
+                "quote": "Alamat aplikasi yang dapat diakses oleh pengguna yang ditentukan.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "delivery.application-address",
+                  "payload": {
+                    "deliverable": "application address",
+                    "audience": "specified users",
+                    "workflowStage": "delivery"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-030"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-031",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 3,
+                "quote": "Akun awal untuk Owner/Admin.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "delivery.initial-owner-admin-account",
+                  "payload": {
+                    "deliverable": "initial Owner/Admin account",
+                    "workflowStage": "delivery"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-031"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-032",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 3,
+                "quote": "Panduan penggunaan singkat untuk fungsi pada increment ini.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "delivery.increment-guide",
+                  "payload": {
+                    "deliverable": "brief user guide",
+                    "workflowStage": "delivery"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-032"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-033",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 3,
+                "quote": "Kuota dan sisa kuota dihitung dengan benar.",
+                "statementClass": "material",
+                "normalizedInterpretation": {
+                  "semanticKey": "acceptance.quota-calculation",
+                  "payload": {
+                    "requirement": "quota and remaining quota calculate correctly",
+                    "workflowStage": "acceptance"
+                  }
+                },
+                "destination": {
+                  "type": "candidate_assertion",
+                  "candidateId": "candidate-safara-project-01-033"
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-heading-1",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 1,
+                "quote": "SAFARA - Increment 01",
+                "statementClass": "non_fact",
+                "normalizedInterpretation": {
+                  "kind": "heading"
+                },
+                "destination": {
+                  "type": "non_fact",
+                  "reason": "Heading only; it has no independently meaningful requirement."
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-heading-2",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 2,
+                "quote": "Alur Utama",
+                "statementClass": "non_fact",
+                "normalizedInterpretation": {
+                  "kind": "heading"
+                },
+                "destination": {
+                  "type": "non_fact",
+                  "reason": "Heading only; it has no independently meaningful requirement."
+                }
+              },
+              {
+                "inventoryId": "inventory-safara-project-01-heading-3",
+                "artifactId": "artifact-safara-project-01-saf-a2b3c4d5e6f7",
+                "page": 3,
+                "quote": "Skenario Pemeriksaan Hasil",
+                "statementClass": "non_fact",
+                "normalizedInterpretation": {
+                  "kind": "heading"
+                },
+                "destination": {
+                  "type": "non_fact",
+                  "reason": "Heading only; it has no independently meaningful requirement."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+]
