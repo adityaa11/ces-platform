@@ -37,7 +37,7 @@ export function ProjectLibrary({ user, projects, workspace, scenario }: { user: 
   const canCreate = user.role === "owner" || user.role === "editor";
   const canShare = user.role === "owner";
   const members = shareProject ? (membersByProject[shareProject.id] ?? []) : [];
-  useEffect(() => { fetch("/api/local-fixtures").then(async (response) => response.ok ? response.json() : null).then((registry: { cards: ProjectFixture[]; modalProjects: Array<{ initialDraftWorkspace: { workspaceId: string } }> } | null) => { if (!registry) return; setLibraryProjects(registry.cards); setKnownWorkspaceIds(registry.modalProjects.map((record) => record.initialDraftWorkspace.workspaceId)); }).catch(() => {}); }, []);
+  useEffect(() => { if (scenario && scenario !== "owner-ready") return; fetch("/api/local-fixtures").then(async (response) => response.ok ? response.json() : null).then((registry: { cards: ProjectFixture[]; modalProjects: Array<{ initialDraftWorkspace: { workspaceId: string } }> } | null) => { if (!registry) return; setLibraryProjects(registry.cards); setKnownWorkspaceIds(registry.modalProjects.map((record) => record.initialDraftWorkspace.workspaceId)); }).catch(() => {}); }, [scenario]);
   useEffect(() => {
     const grid = projectGridRef.current;
     if (!grid) return;

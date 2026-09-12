@@ -30,6 +30,7 @@ The user created `safara-project-01` through the project modal with `Safara Init
 ## Rendered UI checks
 
 - Reloading `/demo` displays four cards, including the persisted `Safara Initial Draft` Extracting card with its submitted description, one uploaded PRD, empty Master, zero-percent Initial Draft, and `Waiting for extraction` state.
+- The shared-registry hydration is limited to the default owner-ready library. After hydration, `/demo?scenario=empty-library` remains empty and `/demo?scenario=editor-ready` retains its single editor-owned Safara card; neither scenario receives the modal-created card.
 - Desktop, 768px tablet, and 390px mobile snapshots retained the card labels, progress semantics, and disabled open action. The narrow widths expose the navigation menu instead of the desktop sidebar.
 - The Create a project dialog and Extracting card were checked at the same widths in both supported light and dark themes; labels, progress semantics, focus visibility, and disabled state remained legible.
 - The Create a project dialog is named, its fields have visible labels and constraints, focus moves to Close dialog on keyboard entry, and the Close dialog button works with Enter.
