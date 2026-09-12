@@ -13,11 +13,14 @@ type User = { name: string; email: string; role: "owner" | "editor" | "viewer" }
 type PendingAccessChange = { memberId: string; nextRole?: AccessRole; type: "role" | "remove" };
 type FieldErrors = Partial<Record<"projectId" | "projectName" | "projectDescription" | "prdFiles", string>>;
 const roleLabels: Record<AccessRole, string> = { owner: "Owner", editor: "Editor", viewer: "Viewer" };
+const encodeFile = async (file: File) => { const bytes = new Uint8Array(await file.arrayBuffer()); let binary = ""; for (let offset = 0; offset < bytes.length; offset += 0x8000) binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000)); return { name: file.name, base64: btoa(binary) }; };
+const workspaceTokenCandidates = () => Array.from({ length: 3 }, () => Array.from(crypto.randomUUID().replaceAll("-", "").slice(0, 12), (character) => "abcdefghijklmnopqrstuvwxyz234567"[Number.parseInt(character, 16) * 2]).join(""));
 
 export function ProjectLibrary({ user, projects, workspace, scenario }: { user: User; projects: ProjectFixture[]; workspace?: ProjectWorkspaceFixture; scenario?: string }) {
   const projectGridRef = useRef<HTMLDivElement>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [libraryProjects, setLibraryProjects] = useState(projects);
+  const [knownWorkspaceIds, setKnownWorkspaceIds] = useState<string[]>([]);
   const [projectId, setProjectId] = useState("");
   const [projectName, setProjectName] = useState("");
   const [projectDescription, setProjectDescription] = useState("");
@@ -34,6 +37,7 @@ export function ProjectLibrary({ user, projects, workspace, scenario }: { user: 
   const canCreate = user.role === "owner" || user.role === "editor";
   const canShare = user.role === "owner";
   const members = shareProject ? (membersByProject[shareProject.id] ?? []) : [];
+  useEffect(() => { fetch("/api/local-fixtures").then(async (response) => response.ok ? response.json() : []).then((records: Array<{ project: ProjectFixture; initialDraftWorkspace: { workspaceId: string } }>) => { setLibraryProjects((current) => [...current, ...records.map((record) => record.project).filter((project) => !current.some((item) => item.id === project.id))]); setKnownWorkspaceIds(records.map((record) => record.initialDraftWorkspace.workspaceId)); }).catch(() => {}); }, []);
   useEffect(() => {
     const grid = projectGridRef.current;
     if (!grid) return;
@@ -78,7 +82,7 @@ export function ProjectLibrary({ user, projects, workspace, scenario }: { user: 
     else if (selectedFiles.some((file) => file.type !== "application/pdf")) next.prdFiles = "Only PDF files can be added.";
     return next;
   }
-  function createProject(event: FormEvent<HTMLFormElement>) { event.preventDefault(); const nextErrors = validateCreateRequest(); setErrors(nextErrors); if (Object.keys(nextErrors).length) { setSubmitState("error"); return; } setSubmitState("loading"); const request: ProjectCreateRequest = { projectId, projectName: projectName.trim(), projectDescription: projectDescription.trim(), prdFiles: selectedFiles.map((file): PrdFileMetadata => ({ name: file.name, type: "application/pdf", size: file.size })) }; const created = createFixtureProject(request); setLibraryProjects((current) => [...current, created.project]); setProcessingJob(created.processingJob.message); setProcessing(true); setCreateOpen(false); resetCreateForm(); }
+  async function createProject(event: FormEvent<HTMLFormElement>) { event.preventDefault(); const nextErrors = validateCreateRequest(); setErrors(nextErrors); if (Object.keys(nextErrors).length) { setSubmitState("error"); return; } setSubmitState("loading"); const request: ProjectCreateRequest = { projectId, projectName: projectName.trim(), projectDescription: projectDescription.trim(), prdFiles: selectedFiles.map((file): PrdFileMetadata => ({ name: file.name, type: "application/pdf", size: file.size })) }; const created = createFixtureProject(request, workspaceTokenCandidates(), knownWorkspaceIds); try { const response = await fetch("/api/local-fixtures", { body: JSON.stringify({ ...created, files: await Promise.all(selectedFiles.map(encodeFile)) }), headers: { "content-type": "application/json" }, method: "POST" }); const saved = await response.json(); if (!response.ok) throw new Error(saved.error); setLibraryProjects((current) => [...current, saved.project]); setKnownWorkspaceIds((current) => [...current, saved.initialDraftWorkspace.workspaceId]); setProcessingJob(saved.processingJob.message); setProcessing(true); setCreateOpen(false); resetCreateForm(); } catch (error) { setSubmitState("error"); setErrors({ prdFiles: error instanceof Error ? error.message : "Project could not be saved." }); } }
   function inviteMember(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const email = inviteEmail.trim().toLowerCase();

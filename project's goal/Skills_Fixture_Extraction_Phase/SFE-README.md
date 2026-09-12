@@ -1,6 +1,6 @@
 # Skills Fixture Extraction Phase Ticket Set
 
-- **State:** planned
+- **State:** in_progress
 - **Purpose:** Build a user-driven Safara fixture cycle from project creation through initial extraction, publication, and a second workspace extraction.
 - **Baseline approval:** On 12 September 2026, the user approved the current Full Product Context and UI/UX Prototype PRD as written for this bounded ticket set. The source documents remain unchanged; this approval does not authorize implementation.
 
@@ -61,8 +61,8 @@ Each ticket has its own review batch because each checkpoint changes a data or i
 
 | Order | Ticket / batch | State | Depends on | Review question |
 |---:|---|---|---|---|
-| 0 | [SFE-000 / BATCH-25](SFE-000-skills-to-sfe-integration-map.md) | awaiting_review | Completed GLF skill and integration decisions | Does the map connect the five shared skill contracts to SFE without changing their authority or bypassing a gate? |
-| 1 | [SFE-001 / BATCH-26](SFE-001-project-intake-and-initial-workspace.md) | planned | SFE-000 approved; GLF-004-02 approval; GLF-004-01; GLF-003-03; AUI-004 | Does the project modal create the Extracting card, workspace ID, empty Master, Initial Draft workspace, and workspace-scoped PDF path without extracting? |
+| 0 | [SFE-000 / BATCH-25](SFE-000-skills-to-sfe-integration-map.md) | approved | Completed GLF skill and integration decisions | Does the map connect the five shared skill contracts to SFE without changing their authority or bypassing a gate? |
+| 1 | [SFE-001 / BATCH-26](SFE-001-project-intake-and-initial-workspace.md) | awaiting_review | SFE-000 approved; GLF-004-02 approval; GLF-004-01; GLF-003-03; AUI-004 | Does the project modal create the Extracting card, workspace ID, empty Master, Initial Draft workspace, and workspace-scoped PDF path without extracting? |
 | 2 | [SFE-002 / BATCH-27](SFE-002-initial-draft-extraction.md) | planned | SFE-000 approved; SFE-001; GLF-003-02 | Does processing use that exact workspace ID and file to extract PDF 01 and transition the project card to Ready to review? |
 | 3 | [SFE-003 / BATCH-28](SFE-003-route-and-switcher-initial-draft-wiring.md) | planned | SFE-000 approved; SFE-002; GLF-004-01; GLF-005-01 | Do the existing project route and selector expose the empty Master and populated Initial Draft from the same generated fixture? |
 | 4 | [SFE-004 / BATCH-29](SFE-004-repeat-initial-draft-cycle-for-project-two.md) | planned | SFE-000 approved; SFE-003; GLF-003-02 | Does creating project 02 through the same components independently reproduce the project 01 extraction output? |
@@ -76,7 +76,7 @@ The completed GLF delivery record at `d45e869` marks GLF-004-02 and its other SF
 
 ## Review controls
 
-- SFE-000 is `awaiting_review`; SFE-001 through SFE-007 remain `planned`. This ticket set does not authorize a later implementation batch until its dependencies and review controls allow it.
+- SFE-000 is `approved`; SFE-001 is `awaiting_review`; SFE-002 through SFE-007 remain `planned`. This ticket set does not authorize a later implementation batch until its dependencies and review controls allow it.
 - Implement only the currently authorized ticket or review batch. Do not start the next batch until the current batch has a PASS review and the user says `go`.
 - UI batches require rendered browser validation for the connected component flow, supported responsive widths and themes, and keyboard/focus behavior.
 - Fixture batches validate source provenance, stable project/workspace IDs, branch/workspace relationships, and proposal-versus-accepted-truth boundaries.

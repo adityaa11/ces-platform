@@ -75,6 +75,12 @@ test("project creation request produces one extracting fixture record and matchi
   assert.equal(created.request.projectId, "customer-portal-v2");
   assert.equal(created.project.id, "customer-portal-v2");
   assert.equal(created.processingJob.projectId, "customer-portal-v2");
+  assert.equal(created.masterWorkspace.workspaceName, "Master");
+  assert.equal(created.masterWorkspace.status, "empty");
+  assert.equal(created.initialDraftWorkspace.workspaceName, "Initial Draft");
+  assert.equal(created.initialDraftWorkspace.projectId, created.project.id);
+  assert.match(created.initialDraftWorkspace.workspaceId, workspaceIdPattern);
+  assert.equal(created.initialDraftWorkspace.available, false);
   assert.equal(created.project.status, "processing");
   assert.equal(created.project.repository.state, "extracting");
   assert.equal(created.project.repository.initialDraft.totalPrds, 1);
@@ -84,6 +90,13 @@ test("project creation request produces one extracting fixture record and matchi
   const route = resolveFixtureProjectRoute({ ...fixtureScenarios["owner-ready"], projects: [...fixtureScenarios["owner-ready"].projects, created.project] }, created.project.id);
   assert.equal(route.project?.id, created.processingJob.projectId);
   assert.equal(route.canOpenWorkspace, false);
+});
+
+test("project intake retries a colliding Initial Draft ID and fails without a usable token", () => {
+  const request = { projectId: "customer-portal-v2", projectName: "Customer Portal V2", projectDescription: "", prdFiles: [{ name: "customer-portal.pdf", type: "application/pdf", size: 4200 }] };
+  const created = createFixtureProject(request, ["aaaaaaaaaaaa", "b2c3d4e5f6h7"], ["cus-aaaaaaaaaaaa"]);
+  assert.equal(created.initialDraftWorkspace.workspaceId, "cus-b2c3d4e5f6h7");
+  assert.throws(() => createFixtureProject(request, ["aaaaaaaaaaaa"], ["cus-aaaaaaaaaaaa"]), /Unable to allocate a unique workspace ID/);
 });
 
 test("workspace creation is transient, Master-rooted, collision-safe, and unavailable while extracting", () => {

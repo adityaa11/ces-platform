@@ -1,6 +1,6 @@
 # SFE-001: Project intake creates an Extracting card and Initial Draft workspace
 
-- **State:** planned
+- **State:** awaiting_review
 - **Review batch:** BATCH-26
 - **Depends on:** SFE-000 approved; GLF-004-02 approved; GLF-004-01 approved; GLF-003-03 approved; AUI-004 approved
 - **Baseline:** [SFE phase scope](SFE-README.md); [SFE-000 integration map](SFE-000-skills-to-sfe-integration-map.md); [Atlas UI/UX Prototype PRD](../Atlas_UI_UX_Prototype_PRD.md) sections 4.2–4.3, 5, 9.1, 9.4; [Fixture Data-Intent Contract](../atlas-ui/FIXTURE_DATA_INTENT_CONTRACT.md); [GLF-003-03](../Git-Like_Fixture_Phase/GLF-003-03-workspace-creation-fixture-contract.md); [GLF-004-02](../Git-Like_Fixture_Phase/GLF-004-02-project-creation-intake-and-pipeline-handoff.md); [AUI-004](../atlas-ui/AUI-004-project-library-upload-and-processing.md)
@@ -12,7 +12,7 @@ Submitting the existing Create a project modal creates a fixture-backed project,
 
 ## Scope
 
-- Use the existing modal and Create and process action; the user manually creates `project-safara-01` through this component.
+- Use the existing modal and Create and process action; the user manually creates `safara-project-01` through this component.
 - Preserve the submitted Project ID, Project Name, optional Description, and selected PDF metadata in the local project fixture and processing request.
 - Generate the Initial Draft workspace ID during submission using `<first-three-project-id-characters>-<12-character-lowercase-base32 UUID-derived token>`. Collision-check it and propagate that exact ID to the Initial Draft workspace, processing job, and PRD record.
 - Generate the workspace name `Initial Draft` through the pipeline; do not add a workspace-name field to the project creation modal.
@@ -38,7 +38,9 @@ Submitting the existing Create a project modal creates a fixture-backed project,
 
 ## Validation
 
-- With an empty `docs/PRD/` destination, manually submit the Create a project modal for `project-safara-01` with PDF 01. Confirm the Extracting card, empty Master, generated Initial Draft workspace ID, matching job/workspace/PRD IDs, final file path, and content hash.
+- With an empty `docs/PRD/` destination, manually submit the Create a project modal for `safara-project-01` with PDF 01. Confirm the Extracting card, empty Master, generated Initial Draft workspace ID, matching job/workspace/PRD IDs, final file path, and content hash.
 - Confirm the staged Initial Draft has no extracted fixture, candidate assertions, or accepted truth before SFE-002.
 - Exercise duplicate Project ID, generated-ID collision, invalid file type, unsafe path, submit failure, and reload behavior. Confirm failed submissions leave no partial card, workspace, job, or file.
 - Run intake relationship, route, accessibility, and focused UI checks. Record visual observations of the annotated modal and Extracting card.
+
+The BATCH-26 implementation evidence is recorded in [SFE-001 validation](SFE-001-validation.md).

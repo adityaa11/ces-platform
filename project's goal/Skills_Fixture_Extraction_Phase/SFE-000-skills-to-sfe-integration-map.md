@@ -1,6 +1,6 @@
 # SFE-000: SFE handoff adjustment map
 
-- **State:** awaiting_review
+- **State:** approved
 - **Review batch:** BATCH-25
 - **Depends on:** SFE phase scope approved; completed GLF skill and integration decisions for GLF-002, GLF-003, GLF-004, and GLF-005
 - **Baseline:** [SFE phase scope](SFE-README.md); [GLF ticket set](../Git-Like_Fixture_Phase/README.md); [GLF-003-02 exhaustive source accounting](../Git-Like_Fixture_Phase/GLF-003-02-exhaustive-safara-fact-accounting.md); [GLF-003-03 workspace boundary](../Git-Like_Fixture_Phase/GLF-003-03-workspace-creation-fixture-contract.md); [GLF-003 repository and branch-isolation contract](../Git-Like_Fixture_Phase/GLF-003-golden-fixture-data-contract.md); the five skill contracts linked in the adjustment map
