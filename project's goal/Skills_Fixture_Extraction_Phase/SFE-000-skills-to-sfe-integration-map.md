@@ -1,8 +1,8 @@
 # SFE-000: SFE handoff adjustment map
 
-- **State:** planned
+- **State:** awaiting_review
 - **Review batch:** BATCH-25
-- **Depends on:** SFE phase scope approved; reviewed GLF skill and integration decisions for GLF-002, GLF-003, GLF-004, and GLF-005
+- **Depends on:** SFE phase scope approved; completed GLF skill and integration decisions for GLF-002, GLF-003, GLF-004, and GLF-005
 - **Baseline:** [SFE phase scope](SFE-README.md); [GLF ticket set](../Git-Like_Fixture_Phase/README.md); [GLF-003-02 exhaustive source accounting](../Git-Like_Fixture_Phase/GLF-003-02-exhaustive-safara-fact-accounting.md); [GLF-003-03 workspace boundary](../Git-Like_Fixture_Phase/GLF-003-03-workspace-creation-fixture-contract.md); [GLF-003 repository and branch-isolation contract](../Git-Like_Fixture_Phase/GLF-003-golden-fixture-data-contract.md); the five skill contracts linked in the adjustment map
 
 ## Outcome
@@ -89,7 +89,7 @@ Make checks scenario-aware. An unapproved draft must leave current accepted valu
 
 - The five skills remain candidate-producing or advisory within their contracts. SFE-002 owns the SFE-M1 accounting handoff and the SFE-M2 provider-neutral repository-contract update; later SFE tickets reuse and validate them in both codex and future agents_bridge execution modes.
 - Extraction completeness must not be achieved by reducing the skill to a statement checklist. Candidates retain detailed facts, workflow structure, relationships, and source meaning; the accounting artifact only proves that each material statement has a destination.
-- The map preserves the GLF approval gate: GLF-004-02 is still awaiting explicit go. SFE-001 cannot start implementation until that dependency is approved.
+- The map preserves the completed GLF authorization boundary. The GLF phase closeout at `d45e869` records GLF-004-02 as approved after its passing BATCH-20.2 reviews (`3c4c354` and `39add96`); SFE-001 cannot start implementation until SFE-000 is approved and receives its own explicit `go`.
 - SFE-000 assigns adjustments to downstream tickets; it does not itself edit skill contracts, implement app behavior, generate a fixture, or change GLF approval state.
 - No changes to the changes, projections, or verification schemas are required by this map. SFE calls the changes skill per semantic key, supplies accepted HEAD/facts to projections, and implements scenario-specific deterministic checks around the generic verifier. Any additional skill-contract change beyond SFE-M1/M2 needs a separately reviewed scope update.
 
@@ -101,7 +101,7 @@ Make checks scenario-aware. An unapproved draft must leave current accepted valu
 - Extraction accounting is exhaustive without flattening facts, workflows, or their relationships into lossy or incomplete candidate data; source review still checks semantic coverage.
 - Extraction accounting, repository handoff, atomic proposal staging, accepted-HEAD projections, and two-layer scenario verification preserve the GLF source, provenance, branch, and acceptance boundaries.
 - Codex-mode semi-pipeline behavior, future agents_bridge compatibility, SFE-005 automatic scenario completion, and chatbot UI/UX exclusion remain explicit.
-- GLF-004-02 remains awaiting explicit go, and no implementation authorization is implied.
+- GLF-004-02 is satisfied through the completed GLF phase record; no SFE-001 implementation authorization is implied until BATCH-25 passes and receives an explicit `go`.
 
 ## Validation
 
