@@ -75,10 +75,13 @@ test("project creation request produces one extracting fixture record and matchi
   assert.equal(created.request.projectId, "customer-portal-v2");
   assert.equal(created.project.id, "customer-portal-v2");
   assert.equal(created.processingJob.projectId, "customer-portal-v2");
+  assert.equal(created.processingJob.workspaceId, created.initialDraftWorkspace.workspaceId);
   assert.equal(created.masterWorkspace.workspaceName, "Master");
   assert.equal(created.masterWorkspace.status, "empty");
   assert.equal(created.initialDraftWorkspace.workspaceName, "Initial Draft");
   assert.equal(created.initialDraftWorkspace.projectId, created.project.id);
+  assert.equal(created.prdRecord.workspaceId, created.initialDraftWorkspace.workspaceId);
+  assert.equal(created.prdRecord.workspaceId, created.processingJob.workspaceId);
   assert.match(created.initialDraftWorkspace.workspaceId, workspaceIdPattern);
   assert.equal(created.initialDraftWorkspace.available, false);
   assert.equal(created.project.status, "processing");

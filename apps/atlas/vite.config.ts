@@ -2,7 +2,7 @@ import { sites } from "@openai/sites-vite-plugin";
 import vinext from "vinext";
 import { defineConfig, type Plugin } from "vite";
 import hostingConfig from "./.openai/hosting.json";
-import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { createHash } from "node:crypto";
 
@@ -22,7 +22,7 @@ const localFixtureStore: Plugin = {
   configureServer(server) {
     server.middlewares.use(async (request, response, next) => {
       if (request.url !== "/api/local-fixtures") return next();
-      let createdSourceDir: string | undefined;
+      let stagingSourceDir: string | undefined;
       try {
         if (request.method === "GET") {
           const records = JSON.parse(await readFile(localFixturePath, "utf8"));
@@ -43,20 +43,23 @@ const localFixtureStore: Plugin = {
         if (records.some((item: { project: { id: string } }) => item.project.id === body.project.id)) throw new Error("That project ID is already in use.");
         const sourceDir = resolve(workspaceRoot, "docs/PRD", body.project.id, body.initialDraftWorkspace.workspaceId);
         if (!sourceDir.startsWith(resolve(workspaceRoot, "docs/PRD"))) throw new Error("Invalid source path.");
-        createdSourceDir = sourceDir;
+        try { await access(sourceDir); throw new Error("That workspace destination already exists."); } catch (error) { if (error instanceof Error && error.message === "That workspace destination already exists.") throw error; }
         if (!Array.isArray(body.files) || body.files.length !== body.project.prdCount) throw new Error("PDF bytes are required for every selected file.");
+        if (new Set(body.files.map((file: { name?: unknown }) => file.name)).size !== body.files.length) throw new Error("PDF filenames must be unique.");
         const sourceFiles = [];
-        await mkdir(sourceDir, { recursive: true });
+        stagingSourceDir = `${sourceDir}.staging-${crypto.randomUUID()}`;
+        await mkdir(stagingSourceDir, { recursive: true });
         for (const file of body.files) {
           if (typeof file.name !== "string" || !/^[^\\/:*?"<>|]+\.pdf$/i.test(file.name) || typeof file.base64 !== "string") throw new Error("Invalid PDF file.");
           const bytes = Buffer.from(file.base64, "base64"); const metadata = body.project.prdFiles.find((item: { name: string }) => item.name === file.name); if (!metadata || metadata.size !== bytes.length) throw new Error("PDF metadata does not match its selected bytes.");
-          const target = resolve(sourceDir, file.name); const temporary = `${target}.tmp`; await writeFile(temporary, bytes); await rename(temporary, target); sourceFiles.push({ ...metadata, relativePath: `docs/PRD/${body.project.id}/${body.initialDraftWorkspace.workspaceId}/${file.name}`, sha256: createHash("sha256").update(bytes).digest("hex") });
+          const target = resolve(stagingSourceDir, file.name); const temporary = `${target}.tmp`; await writeFile(temporary, bytes); await rename(temporary, target); sourceFiles.push({ ...metadata, relativePath: `docs/PRD/${body.project.id}/${body.initialDraftWorkspace.workspaceId}/${file.name}`, sha256: createHash("sha256").update(bytes).digest("hex") });
         }
+        await rename(stagingSourceDir, sourceDir); stagingSourceDir = undefined;
         await mkdir(dirname(localFixturePath), { recursive: true });
         const { files: _files, ...record } = body; record.sourceFiles = sourceFiles;
         const tempPath = `${localFixturePath}.tmp`; await writeFile(tempPath, JSON.stringify([...records, record], null, 2)); await rename(tempPath, localFixturePath);
         response.setHeader("content-type", "application/json"); response.statusCode = 201; response.end(JSON.stringify(record));
-      } catch (error) { if (createdSourceDir) await rm(createdSourceDir, { force: true, recursive: true }); response.statusCode = 400; response.setHeader("content-type", "application/json"); response.end(JSON.stringify({ error: error instanceof Error ? error.message : "Fixture could not be saved." })); }
+      } catch (error) { if (stagingSourceDir) await rm(stagingSourceDir, { force: true, recursive: true }); response.statusCode = 400; response.setHeader("content-type", "application/json"); response.end(JSON.stringify({ error: error instanceof Error ? error.message : "Fixture could not be saved." })); }
     });
   },
 };

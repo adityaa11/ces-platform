@@ -36,10 +36,10 @@ All project cards and workspaces are created through the existing UI components.
 
 | Ticket | Project and user action | Resulting fixture state |
 |---|---|---|
-| SFE-001 | Submit Create a project for `project-safara-01` with Foundation Enrollment PDF 01. | Project card is Extracting; an empty Master and generated Extracting Initial Draft workspace exist; PDF 01 is already stored under the Initial Draft workspace ID. No extraction has run. |
+| SFE-001 | Submit Create a project with a valid, unique ID and Foundation Enrollment PDF 01. | Project card is Extracting; an empty Master and generated Extracting Initial Draft workspace exist; PDF 01 is already stored under the Initial Draft workspace ID. No extraction has run. |
 | SFE-002 | Process project 01's existing Initial Draft request and stored PDF. | Extraction finishes; the same workspace receives the extracted fixture; card badge becomes Ready to review; Master remains empty. |
 | SFE-003 | Connect that new bundle to the existing project route and switcher. | The route opens the Initial Draft; the switcher shows exactly Master (empty) and Initial Draft (extraction). |
-| SFE-004 | Submit a new project, `project-safara-02`, with PDF 01 and repeat SFE-001 through SFE-003. | A separate extraction and workspace are produced; normalized output and source grounding match SFE-002. |
+| SFE-004 | Submit a new project with a distinct valid ID and PDF 01, then repeat SFE-001 through SFE-003. | A separate extraction and workspace are produced; normalized output and source grounding match SFE-002. |
 | SFE-005 | Treat project 02's Initial Draft as approved and publish it. | Project 02's card is Published; its Initial Draft fixture is promoted to Master. Project 01 remains unchanged. |
 | SFE-006 | Use + New workspace in project 02's workspace switcher and submit PDF 02 with the selected base. | A separate workspace is created in Extracting state, with its own generated workspace ID and source directory. |
 | SFE-007 | Extract and reconcile PDF 02 against the selected base workspace. | The new workspace reaches Ready for review with a reconciliation candidate; the published Master remains the accepted baseline. |
@@ -48,7 +48,7 @@ The expected PDFs are `Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf` an
 
 ## Workspace and source-file identity
 
-- Project IDs are `project-safara-01` and `project-safara-02`; they are independent fixture projects, not one project changing identity.
+- Project IDs are supplied through the modal and accepted when valid and unique; the two scenario projects must use distinct IDs and remain independent fixture projects.
 - The auto-generated initial workspace is named `Initial Draft`. Each project also has a `Master` workspace, which starts empty and has no accepted published work.
 - SFE-001 generates the Initial Draft workspace ID using the agreed form: the first three characters of the project ID, a hyphen, and a compact UUID-derived token using the approved lowercase base32 format (12 characters).
 - Uploaded PRD files are stored by workspace immediately: `docs/PRD/<project-id>/<workspace-id>/<uploaded-filename.pdf>`. SFE-002 consumes the same workspace ID and stored file; it does not generate a replacement ID or move the source file.

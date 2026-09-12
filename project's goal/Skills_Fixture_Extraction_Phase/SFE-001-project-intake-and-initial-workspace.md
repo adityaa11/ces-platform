@@ -12,7 +12,7 @@ Submitting the existing Create a project modal creates a fixture-backed project,
 
 ## Scope
 
-- Use the existing modal and Create and process action; the user manually creates `safara-project-01` through this component.
+- Use the existing modal and Create and process action; the user manually creates a valid, unique project ID through this component.
 - Preserve the submitted Project ID, Project Name, optional Description, and selected PDF metadata in the local project fixture and processing request.
 - Generate the Initial Draft workspace ID during submission using `<first-three-project-id-characters>-<12-character-lowercase-base32 UUID-derived token>`. Collision-check it and propagate that exact ID to the Initial Draft workspace, processing job, and PRD record.
 - Generate the workspace name `Initial Draft` through the pipeline; do not add a workspace-name field to the project creation modal.
@@ -34,11 +34,11 @@ Submitting the existing Create a project modal creates a fixture-backed project,
 - The selected PDF is copied immediately to `docs/PRD/<project-id>/<workspace-id>/<uploaded-filename.pdf>`; its hash matches the uploaded bytes. The original selected file is unchanged.
 - The project card displays an Extracting badge, real uploaded-file count, processing state, and no published Master work. No extraction result or accepted assertion is present yet.
 - Duplicate Project IDs, workspace-ID collisions after bounded retries, invalid PDF/path input, and write failures cannot create duplicate cards, overwrite another project/workspace's file, or leave partial records.
-- Both target project cards originate from modal submissions; neither is pre-seeded or generated from hard-coded display text.
+- Every project card in this phase originates from a modal submission; none is pre-seeded or generated from hard-coded display text. Project 02 is verified in SFE-004 / BATCH-29.
 
 ## Validation
 
-- With an empty `docs/PRD/` destination, manually submit the Create a project modal for `safara-project-01` with PDF 01. Confirm the Extracting card, empty Master, generated Initial Draft workspace ID, matching job/workspace/PRD IDs, final file path, and content hash.
+- With an empty `docs/PRD/` destination, manually submit the Create a project modal with a valid, unique project ID and PDF 01. Confirm the Extracting card, empty Master, generated Initial Draft workspace ID, matching job/workspace/PRD IDs, final file path, and content hash.
 - Confirm the staged Initial Draft has no extracted fixture, candidate assertions, or accepted truth before SFE-002.
 - Exercise duplicate Project ID, generated-ID collision, invalid file type, unsafe path, submit failure, and reload behavior. Confirm failed submissions leave no partial card, workspace, job, or file.
 - Run intake relationship, route, accessibility, and focused UI checks. Record visual observations of the annotated modal and Extracting card.
