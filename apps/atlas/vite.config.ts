@@ -23,6 +23,7 @@ const localFixtureStore: Plugin = {
     server.middlewares.use(async (request, response, next) => {
       if (request.url !== "/api/local-fixtures") return next();
       let stagingSourceDir: string | undefined;
+      let publishedSourceDir: string | undefined;
       try {
         if (request.method === "GET") {
           const records = JSON.parse(await readFile(localFixturePath, "utf8"));
@@ -54,12 +55,13 @@ const localFixtureStore: Plugin = {
           const bytes = Buffer.from(file.base64, "base64"); const metadata = body.project.prdFiles.find((item: { name: string }) => item.name === file.name); if (!metadata || metadata.size !== bytes.length) throw new Error("PDF metadata does not match its selected bytes.");
           const target = resolve(stagingSourceDir, file.name); const temporary = `${target}.tmp`; await writeFile(temporary, bytes); await rename(temporary, target); sourceFiles.push({ ...metadata, relativePath: `docs/PRD/${body.project.id}/${body.initialDraftWorkspace.workspaceId}/${file.name}`, sha256: createHash("sha256").update(bytes).digest("hex") });
         }
-        await rename(stagingSourceDir, sourceDir); stagingSourceDir = undefined;
+        await rename(stagingSourceDir, sourceDir); stagingSourceDir = undefined; publishedSourceDir = sourceDir;
+        if (body.injectRegistryWriteFailure === true) throw new Error("Injected registry write failure.");
         await mkdir(dirname(localFixturePath), { recursive: true });
         const { files: _files, ...record } = body; record.sourceFiles = sourceFiles;
         const tempPath = `${localFixturePath}.tmp`; await writeFile(tempPath, JSON.stringify([...records, record], null, 2)); await rename(tempPath, localFixturePath);
-        response.setHeader("content-type", "application/json"); response.statusCode = 201; response.end(JSON.stringify(record));
-      } catch (error) { if (stagingSourceDir) await rm(stagingSourceDir, { force: true, recursive: true }); response.statusCode = 400; response.setHeader("content-type", "application/json"); response.end(JSON.stringify({ error: error instanceof Error ? error.message : "Fixture could not be saved." })); }
+        publishedSourceDir = undefined; response.setHeader("content-type", "application/json"); response.statusCode = 201; response.end(JSON.stringify(record));
+      } catch (error) { if (stagingSourceDir) await rm(stagingSourceDir, { force: true, recursive: true }); if (publishedSourceDir) await rm(publishedSourceDir, { force: true, recursive: true }); response.statusCode = 400; response.setHeader("content-type", "application/json"); response.end(JSON.stringify({ error: error instanceof Error ? error.message : "Fixture could not be saved." })); }
     });
   },
 };

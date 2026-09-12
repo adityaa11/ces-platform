@@ -46,6 +46,10 @@ All project cards and workspaces are created through the existing UI components.
 
 The expected PDFs are `Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf` and `Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf`. The user plans to empty `docs/PRD/` before the manual run, so the app must use the bytes actually selected in the browser rather than relying on either file remaining at its former repository path.
 
+### Approved scenario adjustment
+
+On 13 September 2026, the user explicitly approved accepting whatever valid, unique project ID is entered through the Create a project modal. This replaces the earlier fixed-ID examples for SFE-001 and SFE-004; the example IDs remain useful test data only.
+
 ## Workspace and source-file identity
 
 - Project IDs are supplied through the modal and accepted when valid and unique; the two scenario projects must use distinct IDs and remain independent fixture projects.

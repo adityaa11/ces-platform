@@ -22,6 +22,7 @@ The user created `safara-project-01` through the project modal with `Safara Init
 - A second POST for `safara-project-01` was rejected with `That project ID is already in use.`
 - An unsafe filename `../unsafe.pdf` was rejected with `Invalid PDF file.` The attempted `docs/PRD/sfe-unsafe-path/sfe-a2b3c4d5e6f7` directory did not remain.
 - A pre-existing destination is rejected before any write. A forced failure cleans up only its request staging directory, leaving the pre-existing directory and its hashes unchanged and adding no fixture record.
+- A registry-write failure injected after source publication removed only that request's newly created final directory and added no registry record; the tested destination was absent afterward, so the same identity remains available for retry.
 - Bounded workspace-ID allocation exhaustion returns the modal to an actionable state with an announced error; it creates no card, file, or record.
 - The modal reports all three required-field messages before it makes a request.
 - Fixture contracts verify workspace-ID collision retry and the bounded-retry failure state.

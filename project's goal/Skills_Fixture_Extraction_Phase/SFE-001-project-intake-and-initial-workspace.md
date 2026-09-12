@@ -5,6 +5,7 @@
 - **Depends on:** SFE-000 approved; GLF-004-02 approved; GLF-004-01 approved; GLF-003-03 approved; AUI-004 approved
 - **Baseline:** [SFE phase scope](SFE-README.md); [SFE-000 integration map](SFE-000-skills-to-sfe-integration-map.md); [Atlas UI/UX Prototype PRD](../Atlas_UI_UX_Prototype_PRD.md) sections 4.2–4.3, 5, 9.1, 9.4; [Fixture Data-Intent Contract](../atlas-ui/FIXTURE_DATA_INTENT_CONTRACT.md); [GLF-003-03](../Git-Like_Fixture_Phase/GLF-003-03-workspace-creation-fixture-contract.md); [GLF-004-02](../Git-Like_Fixture_Phase/GLF-004-02-project-creation-intake-and-pipeline-handoff.md); [AUI-004](../atlas-ui/AUI-004-project-library-upload-and-processing.md)
 - **SFE-000 map entries:** SFE-M1 upload capture only; SFE-M5 file-record, path, hash, and ID checks
+- **Approved adjustment:** On 13 September 2026, the user approved accepting any valid, unique project ID supplied through the Create a project modal; earlier fixed-ID examples are test data, not a requirement.
 
 ## Outcome
 
