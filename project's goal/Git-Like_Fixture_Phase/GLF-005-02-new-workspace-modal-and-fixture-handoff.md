@@ -1,6 +1,6 @@
 # GLF-005-02: New workspace modal and fixture handoff
 
-- **State:** awaiting_review
+- **State:** approved
 - **Review batch:** BATCH-21.2
 - **Depends on:** GLF-005-01, GLF-003-03
 - **Baseline:** Architecture Checkpoint sections 5, 10, 12, 17, 22.1-22.6, 24; UI/UX Prototype PRD sections 5-6, 9.1, 9.4; Fixture Data-Intent Contract; GLF-003; GLF-003-03; GLF-005; GLF-005-01
@@ -76,6 +76,8 @@ revision internals; Atlas generates identity and snapshots the base HEAD.
 
 ## Decision log
 
+- 12 September 2026: BATCH-21.2 is approved after the final PASS review of
+  remediation commit `10f7a92`; GLF-005 closes this ticket set.
 - 11 September 2026: Users may choose any existing workspace as the base; the
   workspace model must retain its Master-rooted lineage.
 - 11 September 2026: At least one PDF is required because a new workspace

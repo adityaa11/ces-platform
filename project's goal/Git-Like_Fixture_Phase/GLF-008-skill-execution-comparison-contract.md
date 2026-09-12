@@ -5,6 +5,13 @@
 - **Depends on:** Agents Bridge pipeline; GLF-001, GLF-002, GLF-003-02 approved
 - **Baseline:** Architecture Checkpoint sections 3, 9, 21–24; GLF-001–GLF-003-02
 
+## Retirement record
+
+This ticket was never started and is intentionally retired from the completed
+GLF-001–GLF-005 ticket set on 12 September 2026. It is historical planning
+context only and must not be resumed here. Any execution-comparison work must
+be proposed and approved in a separate re-extraction lifecycle bundle.
+
 ## Outcome
 
 After a provider-neutral Agents Bridge pipeline exists, compare normalized

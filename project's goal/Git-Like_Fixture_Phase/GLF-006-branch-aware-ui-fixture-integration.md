@@ -5,6 +5,13 @@
 - **Depends on:** GLF-003-02 approved, GLF-005-02
 - **Baseline:** Architecture Checkpoint sections 12–17, 22.6–22.8, 24; UI/UX Prototype PRD sections 5–6, 9.1, 9.4; Fixture Data-Intent Contract; GLF-003-01; GLF-003-02
 
+## Retirement record
+
+This ticket was never started and is intentionally retired from the completed
+GLF-001–GLF-005 ticket set on 12 September 2026. It is historical planning
+context only and must not be resumed here. Any branch-aware UI work must be
+proposed and approved in a separate re-extraction lifecycle bundle.
+
 ## Outcome
 
 Refactor existing Atlas knowledge surfaces so the selected workspace HEAD,

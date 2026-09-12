@@ -1,6 +1,6 @@
 # Git-Like Fixture Phase Ticket Set
 
-**State:** awaiting_review
+**State:** complete
 
 ## Baseline
 
@@ -42,14 +42,31 @@ comparison contract.
 | 5 | GLF-005 / BATCH-21 | approved | GLF-003, GLF-004-01 | Does the reusable workspace-switcher UI clearly present the current selected workspace and the available workspace inventory without creating independent UI truth? |
 | 5.1 | GLF-005-01 / BATCH-21.1 | approved | GLF-005, GLF-003-03 | Does the switcher resolve its inventory and availability from the golden fixture, preserve project/route context, and keep selected workspace separate from the PRD lens? |
 | 5.1.1 | GLF-003-03 / BATCH-19.3 | approved | GLF-003-02 approved, GLF-004-01 | Does the fixture contract safely represent a newly requested Extracting workspace, its selected-base snapshot, and uploaded-PDF metadata without changing immutable Safara truth? |
-| 5.2 | GLF-005-02 / BATCH-21.2 | awaiting_review | GLF-005-01, GLF-003-03 | Does the New workspace modal create one fixture-owned Extracting workspace request from an existing base workspace and uploaded PRD PDFs, without exposing revision internals to the user? |
-| 6 | GLF-006 / BATCH-22 | planned | GLF-003-02 approved, GLF-005-02 | Do all existing knowledge surfaces resolve one coherent, inventory-provenanced current truth from the selected branch HEAD? |
-| 7 | GLF-007 / BATCH-23 | blocked | GLF-006, user research | Is the correction and approval/chatbot interaction grounded in approved interaction research and unable to mutate truth silently? |
-| 8 | GLF-008 / BATCH-24 | blocked | Agents Bridge pipeline, GLF-001–GLF-003-02 approved | Is the eventual `codex` versus `agents_bridge` comparison contract reproducible, source-accounted, and authority-safe? |
+| 5.2 | GLF-005-02 / BATCH-21.2 | approved | GLF-005-01, GLF-003-03 | Does the New workspace modal create one fixture-owned Extracting workspace request from an existing base workspace and uploaded PRD PDFs, without exposing revision internals to the user? |
 
 Each batch has one ticket because every acceptance decision changes the data or
 interaction contract required by the next checkpoint. Batches must be reviewed
 individually; they are not combined for convenience.
+
+## Completion boundary
+
+This ticket set is complete through GLF-005 / BATCH-21.2. The final checkpoint
+is `10f7a92` with the PASS review recorded in
+`feedback/BATCH-21.2-10f7a92-review.md`. No further ticket in this set is
+authorized to begin.
+
+## Retired future work
+
+The following unstarted tickets are retained only as historical planning
+context. They are intentionally retired from this completed ticket set, are
+not active delivery work, and must not be resumed here. Any related work must
+be proposed and approved in a separate re-extraction lifecycle bundle.
+
+| Historical ticket / batch | Disposition | Original subject |
+|---|---|---|
+| GLF-006 / BATCH-22 | Retired without implementation | Branch-aware UI fixture integration |
+| GLF-007 / BATCH-23 | Retired without implementation | Correction and approval interaction design |
+| GLF-008 / BATCH-24 | Retired without implementation | Skill execution comparison contract |
 
 ## Review controls
 
@@ -78,6 +95,6 @@ individually; they are not combined for convenience.
 - [GLF-005 validation](GLF-005-validation.md)
 - [GLF-005-01 Workspace selector golden-fixture integration](GLF-005-01-workspace-selector-golden-fixture-integration.md)
 - [GLF-005-02 New workspace modal and fixture handoff](GLF-005-02-new-workspace-modal-and-fixture-handoff.md)
-- [GLF-006 Branch-aware UI fixture integration](GLF-006-branch-aware-ui-fixture-integration.md)
-- [GLF-007 Correction and approval interaction design](GLF-007-correction-and-approval-interaction-design.md)
-- [GLF-008 Skill execution comparison contract](GLF-008-skill-execution-comparison-contract.md)
+- [GLF-006 Branch-aware UI fixture integration — retired history](GLF-006-branch-aware-ui-fixture-integration.md)
+- [GLF-007 Correction and approval interaction design — retired history](GLF-007-correction-and-approval-interaction-design.md)
+- [GLF-008 Skill execution comparison contract — retired history](GLF-008-skill-execution-comparison-contract.md)

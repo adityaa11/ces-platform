@@ -5,6 +5,13 @@
 - **Depends on:** GLF-006, user research
 - **Baseline:** Architecture Checkpoint sections 7–11, 17–19, 22.3–22.13, 24; UI/UX Prototype PRD sections 5–6, 9.1, 9.4; GLF-003-02 provenance and source-accounting contract
 
+## Retirement record
+
+This ticket was never started and is intentionally retired from the completed
+GLF-001–GLF-005 ticket set on 12 September 2026. It is historical planning
+context only and must not be resumed here. Any correction or approval work
+must be proposed and approved in a separate re-extraction lifecycle bundle.
+
 ## Outcome
 
 Design the fixture-backed correction, approval, and chatbot components after
