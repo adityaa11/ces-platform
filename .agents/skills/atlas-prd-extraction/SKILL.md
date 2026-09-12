@@ -31,16 +31,8 @@ proposal and validation; it is not accepted Atlas truth.
   rewrite or supersede accepted truth.
 - Return `needs_resolution` with a targeted question when wording does not
   safely determine a value, scope, actor, condition, or relationship.
-- Return a source-statement inventory for every supplied page. Each inventory
-  row has a stable ID, artifact ID, page, exact quote, statement class,
-  normalized interpretation, and exactly one destination: an atomic candidate
-  ID or an explicitly permitted non-fact reason (and duplicate target when
-  applicable). A material statement may not be classified as a non-fact.
-- Preserve workflow reconstruction data in candidate payloads and
-  relationships: actors, triggers, ordered steps, conditions, branches,
-  inputs, outputs, dependencies, state transitions, exceptions, and open
-  questions. The inventory is a coverage index, never a replacement for this
-  structured extraction.
+- Account for each material statement by returning either a candidate assertion
+  or an explicitly unaccounted statement with a reason.
 - Preserve distinctions in scope, condition, actor, timing, modality, and
   status. Do not merge separate rules only because their wording is similar.
 

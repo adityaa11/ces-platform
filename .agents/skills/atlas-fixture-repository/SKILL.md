@@ -20,11 +20,6 @@ mutable UI-shaped project object.
 
 Treat supplied source artifacts and accepted base state as authoritative context.
 
-For an extraction-backed scenario, require an explicit validated
-`extractionResults` handoff. Source-file metadata alone is not extraction
-knowledge and must fail closed. Retain links from repository candidates to the
-extraction artifact, source-statement inventory, and candidate assertions.
-
 ## Canonical boundary
 
 Keep these as the canonical fixture layer:
