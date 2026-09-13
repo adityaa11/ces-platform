@@ -213,6 +213,11 @@ test("SFE-003 resolves the completed Initial Draft route from its stable fixture
   assert.equal(draft?.cesItems.some((item) => item.policy.includes("safara.") || item.policyId.includes("cand-") || item.rule.includes("{\"")), false);
   assert.equal(draft?.workflows[0]?.nodes[0]?.title, "Membuat paket umrah");
   assert.equal(draft?.workflows[0]?.nodes[0]?.evidence.quote, "Admin membuat paket umrah.");
+  assert.equal(draft?.facts.some((fact) => ["Scope", "Constraints"].includes(fact.title)), false);
+  assert.equal(draft?.workflows.flatMap((workflow) => workflow.roles).includes("System"), false);
+  assert.equal(draft?.cesItems.some((item) => /user must not log in to the application/i.test(item.obligation)), false);
+  const factEvidence = draft?.facts.flatMap((fact) => fact.rows).flatMap((row) => row.evidence) ?? [];
+  assert.ok(factEvidence.every((evidence) => evidence.understood.startsWith("Atlas memahami pernyataan ini sebagai:")));
 });
 
 test("SFE-003 resolves any completed modal record and keeps Master empty", () => {
