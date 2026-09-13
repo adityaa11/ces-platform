@@ -6,11 +6,13 @@ import Ajv from "ajv";
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(scriptDirectory, "../../..");
-const projectId = "safara-project-01";
-const workspaceId = "saf-24aysgyw4su6";
-const fileName = "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf";
+const argument = (name) => { const index = process.argv.indexOf(`--${name}`); return index >= 0 ? process.argv[index + 1] : undefined; };
+const projectId = argument("project-id");
+const workspaceId = argument("workspace-id");
+const fileName = argument("file-name");
+if (![projectId, workspaceId, fileName].every((value) => typeof value === "string" && value.length)) throw new Error("Usage: extract-sfe-002.mjs --project-id <id> --workspace-id <id> --file-name <uploaded.pdf>");
 const sourcePath = path.join(root, "docs", "PRD", projectId, workspaceId, fileName);
-const outputPath = path.join(root, "packages", "atlas-fixtures", "generated", "sfe-002-saf-24aysgyw4su6.json");
+const outputPath = argument("output") ? path.resolve(root, argument("output")) : path.join(root, "packages", "atlas-fixtures", "generated", `sfe-002-${workspaceId}.json`);
 const { getDocument } = await import(pathToFileURL(path.join(root, "apps", "atlas", "node_modules", "pdfjs-dist", "legacy", "build", "pdf.mjs")).href);
 
 const bytes = new Uint8Array(await readFile(sourcePath));
