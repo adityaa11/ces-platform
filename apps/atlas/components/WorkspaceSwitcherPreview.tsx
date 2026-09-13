@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
-import { createFixtureWorkspace, resolveFixtureWorkspaceInventory, type PrdFileMetadata } from "@atlas/fixtures";
+import { createFixtureWorkspace, resolveFixtureWorkspaceInventory, type FixtureRouteProjectRecord, type PrdFileMetadata } from "@atlas/fixtures";
 import { AppShell } from "./AppShell";
 import { Button } from "./Button";
 import { Dialog } from "./Dialog";
@@ -13,8 +13,8 @@ const defaultWorkspaceId = "branch-increment-003";
 const workspaceItem = (workspace: typeof inventory[number]): WorkspaceSwitcherModel["workspaces"][number] => ({ id: workspace.workspaceId, name: workspace.name, status: workspace.status, prdCount: workspace.prdCount, base: workspace.baseWorkspaceId ? inventory.find((item) => item.workspaceId === workspace.baseWorkspaceId)?.name : undefined, createdBy: workspace.createdBy, createdAt: workspace.createdAt, modifiedBy: workspace.modifiedBy, modifiedAt: workspace.modifiedAt, relative: workspace.relative, displayedHead: workspace.headRevisionId, executionProvenance: workspace.executionProvenance, unavailableReason: workspace.unavailableReason });
 export const workspaceSwitcherPreviewModel: WorkspaceSwitcherModel = { projectName: "Safara", selectedId: defaultWorkspaceId, workspaces: inventory.map(workspaceItem) };
 const previewProject = { id: "safara", name: "Safara", status: "ready" as const, prdCount: 3, collaborators: 4, lastActivity: "Active", isShared: false, repository: { state: "published" as const, summary: "", master: { state: "published" as const, summary: "", detail: "" }, metrics: [{ value: "", label: "" }, { value: "", label: "" }, { value: "", label: "" }] as [{ value: string; label: string }, { value: string; label: string }, { value: string; label: string }], action: { label: "Open project", enabled: true } } };
-export function WorkspaceSwitcherDemoHost({ initialWorkspaceId = workspaceSwitcherPreviewModel.selectedId, projectId = "safara", projectName, unavailableWorkspaceName }: { initialWorkspaceId?: string; projectId?: string; projectName: string; unavailableWorkspaceName?: string }) {
-  const routeInventory = resolveFixtureWorkspaceInventory(projectId);
+export function WorkspaceSwitcherDemoHost({ initialWorkspaceId = workspaceSwitcherPreviewModel.selectedId, projectId = "safara", projectName, unavailableWorkspaceName, fixtureRecords = [], onWorkspaceSelect }: { initialWorkspaceId?: string; projectId?: string; projectName: string; unavailableWorkspaceName?: string; fixtureRecords?: readonly FixtureRouteProjectRecord[]; onWorkspaceSelect?: (workspaceId: string) => void }) {
+  const routeInventory = resolveFixtureWorkspaceInventory(projectId, fixtureRecords);
   const routeItems = routeInventory.map((workspace) => ({ id: workspace.workspaceId, name: workspace.name, status: workspace.status, prdCount: workspace.prdCount, base: workspace.baseWorkspaceId ? routeInventory.find((item) => item.workspaceId === workspace.baseWorkspaceId)?.name : undefined, createdBy: workspace.createdBy, createdAt: workspace.createdAt, modifiedBy: workspace.modifiedBy, modifiedAt: workspace.modifiedAt, relative: workspace.relative, displayedHead: workspace.headRevisionId, executionProvenance: workspace.executionProvenance, unavailableReason: workspace.unavailableReason }));
   const [selectedId, setSelectedId] = useState(initialWorkspaceId);
   const [routeNotice, setRouteNotice] = useState(unavailableWorkspaceName ? `${unavailableWorkspaceName} is still extracting and cannot be opened.` : "");
@@ -26,7 +26,7 @@ export function WorkspaceSwitcherDemoHost({ initialWorkspaceId = workspaceSwitch
   const [submitState, setSubmitState] = useState<"idle" | "loading" | "error">("idle");
   const [errors, setErrors] = useState<Partial<Record<"workspaceName" | "prdFiles" | "request", string>>>({});
   useEffect(() => { const sync = () => { const requested = new URLSearchParams(window.location.search).get("workspaceId"); if (requested && routeItems.some((workspace) => workspace.id === requested && !workspace.unavailableReason)) setSelectedId(requested); }; window.addEventListener("popstate", sync); return () => window.removeEventListener("popstate", sync); }, [routeItems]);
-  const select = (workspaceId: string) => { setSelectedId(workspaceId); const url = new URL(window.location.href); url.searchParams.set("workspaceId", workspaceId); window.history.replaceState(null, "", url); window.dispatchEvent(new Event("atlas-workspace-selection")); setRouteNotice(""); };
+  const select = (workspaceId: string) => { setSelectedId(workspaceId); const url = new URL(window.location.href); url.searchParams.set("workspaceId", workspaceId); window.history.replaceState(null, "", url); onWorkspaceSelect?.(workspaceId); window.dispatchEvent(new Event("atlas-workspace-selection")); setRouteNotice(""); };
   const resetCreateForm = () => { setWorkspaceName(""); setBaseWorkspaceId(selectedId); setPrdFiles([]); setErrors({}); setSubmitState("idle"); };
   const closeCreate = () => { setCreateOpen(false); resetCreateForm(); };
   const createTokens = () => Array.from({ length: 2 }, () => { let value = BigInt(`0x${crypto.randomUUID().replace(/-/g, "")}`); let token = ""; for (let index = 0; index < 12; index += 1) { token = "abcdefghijklmnopqrstuvwxyz234567"[Number(value & 31n)] + token; value >>= 5n; } return token; });

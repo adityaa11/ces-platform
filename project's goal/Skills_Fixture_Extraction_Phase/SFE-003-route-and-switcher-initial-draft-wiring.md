@@ -50,3 +50,9 @@ Wire the preceding modal-created project's newly generated fixture into the exis
 - The route client reads `/api/local-fixtures` and passes its modal-created records into stable project, inventory, and workspace-content resolution; unknown or incomplete records remain unavailable.
 - `node --test packages/atlas-fixtures/tests/contracts.test.mjs` passes 22/22, including checks that the persisted Initial Draft projects its extraction candidate count and exact first-candidate source quote, while Master is an empty `Draft` state.
 - `corepack pnpm --filter @atlas/app build` passes. `git diff --check` passes. The focused app lint still reports two pre-existing unused `_files` bindings in `apps/atlas/vite.config.ts`; the remediation’s unused selector base record was removed.
+
+## Remediation validation — BATCH-28 / review round 3
+
+- Runtime modal records now flow through both route resolution and `WorkspaceSwitcherDemoHost` inventory resolution.
+- Selector changes update the runtime route workspace state immediately while retaining the project ID and URL context; the selected content is re-resolved from the same fixture record.
+- `corepack pnpm --filter @atlas/app build` and `git diff --check` pass.
