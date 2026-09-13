@@ -8,7 +8,7 @@ export type ReviewAnnotation = { annotationId: string; candidateId: string; grou
 
 const roleFor = (surface: ReviewSurface): ReviewAnnotation["role"] => surface === "workflow" ? "workflow_step" : surface === "facts" ? "fact_row" : "ces_assessment";
 const sourceCopy = (quote: string) => quote.replace(/\s+/g, " ").trim();
-const factKinds = new Set(["system_requirement", "role_permission", "capability", "data_schema_requirement", "relationship_rule", "display_requirement", "information_requirement"]);
+const factKinds = new Set(["system_requirement", "role_permission", "capability", "data_schema_requirement", "relationship_rule", "display_requirement", "information_requirement", "quota_constraint"]);
 const surfaceCandidate = (surface: ReviewSurface, candidates: readonly SfeExtractionResult["candidateAssertions"][number][]) => candidates.find((candidate) => surface === "workflow" ? candidate.kind === "workflow_step" : surface === "facts" ? factKinds.has(candidate.kind) : candidate.kind === "acceptance_criterion");
 
 /** Produces a review-only graph without adding presentation copy or reading another workspace. */
@@ -29,6 +29,20 @@ export function projectWorkspaceReview(input: WorkspaceReviewInput): WorkspaceRe
   if (danglingRelationshipIds.length) issues.push({ candidateIds: danglingRelationshipIds, question: "Every candidate relationship must resolve within the selected workspace." });
   const directGroups = candidates.map((candidate, index) => {
     const memberIds = new Set([candidate.candidateId, ...candidate.relationships]);
+    const hasDirectWorkflow = [...memberIds].some((candidateId) => candidatesById.get(candidateId)?.kind === "workflow_step");
+    if (candidate.kind === "acceptance_criterion" && !hasDirectWorkflow) {
+      let frontier = [...memberIds];
+      for (let depth = 0; depth < 2; depth += 1) {
+        const next = new Set<string>();
+        for (const candidateId of frontier) {
+          for (const relatedId of candidatesById.get(candidateId)?.relationships ?? []) if (!memberIds.has(relatedId)) next.add(relatedId);
+          for (const related of candidates) if (related.relationships.includes(candidateId) && !memberIds.has(related.candidateId)) next.add(related.candidateId);
+        }
+        if (!next.size) break;
+        next.forEach((candidateId) => memberIds.add(candidateId));
+        frontier = [...next];
+      }
+    }
     const members = candidates.filter((item) => memberIds.has(item.candidateId));
     return { groupId: `review-group-${String(index + 1).padStart(3, "0")}`, order: index + 1, members };
   });

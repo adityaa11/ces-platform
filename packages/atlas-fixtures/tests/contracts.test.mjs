@@ -186,6 +186,8 @@ test("workspace review projections are isolated, source-language, and candidate-
   const cesGroupIds = new Set(review.reviewModel.annotations.filter((annotation) => annotation.surface === "ces").map((annotation) => annotation.groupId));
   assert.ok(review.reviewModel.annotations.some((annotation) => annotation.surface === "workflow" && cesGroupIds.has(annotation.groupId)), "a CES assessment shares a direct-evidence group with its workflow");
   assert.ok(review.reviewModel.annotations.some((annotation) => annotation.surface === "facts" && cesGroupIds.has(annotation.groupId)), "a CES assessment shares a direct-evidence group with its facts");
+  const quotaGroupIds = new Set(review.reviewModel.annotations.filter((annotation) => ["cand-016", "cand-021", "cand-032", "cand-046"].includes(annotation.candidateId)).map((annotation) => annotation.groupId));
+  assert.deepEqual([...quotaGroupIds], [review.reviewModel.annotations.find((annotation) => annotation.candidateId === "cand-046")?.groupId], "the quota CES criterion, workflow, and facts share one bounded evidence group");
   const missingInventory = projectWorkspaceReview({ workspaceId: extraction.artifact.workspaceId, projectId: "safara-project-01", status: "ready-for-review", sourceLanguage: "id", extraction: { ...extraction, sourceStatementInventory: [] }, requestedSurfaces: ["facts"] });
   assert.equal(missingInventory.status, "needs_resolution");
   const alteredEvidence = structuredClone(extraction);
