@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
-import { createFixtureWorkspace, resolveFixtureWorkspaceInventory, type PrdFileMetadata, type WorkspaceCreationBase } from "@atlas/fixtures";
+import { createFixtureWorkspace, resolveFixtureWorkspaceInventory, type PrdFileMetadata } from "@atlas/fixtures";
 import { AppShell } from "./AppShell";
 import { Button } from "./Button";
 import { Dialog } from "./Dialog";
@@ -10,7 +10,6 @@ import { WorkspaceSwitcher, type WorkspaceSwitcherModel } from "./WorkspaceSwitc
 
 const inventory = resolveFixtureWorkspaceInventory("safara");
 const defaultWorkspaceId = "branch-increment-003";
-const baseRecords: WorkspaceCreationBase[] = inventory.map((workspace) => ({ workspaceId: workspace.workspaceId, projectId: workspace.projectId, baseWorkspaceId: workspace.baseWorkspaceId, headRevisionId: workspace.headRevisionId }));
 const workspaceItem = (workspace: typeof inventory[number]): WorkspaceSwitcherModel["workspaces"][number] => ({ id: workspace.workspaceId, name: workspace.name, status: workspace.status, prdCount: workspace.prdCount, base: workspace.baseWorkspaceId ? inventory.find((item) => item.workspaceId === workspace.baseWorkspaceId)?.name : undefined, createdBy: workspace.createdBy, createdAt: workspace.createdAt, modifiedBy: workspace.modifiedBy, modifiedAt: workspace.modifiedAt, relative: workspace.relative, displayedHead: workspace.headRevisionId, executionProvenance: workspace.executionProvenance, unavailableReason: workspace.unavailableReason });
 export const workspaceSwitcherPreviewModel: WorkspaceSwitcherModel = { projectName: "Safara", selectedId: defaultWorkspaceId, workspaces: inventory.map(workspaceItem) };
 const previewProject = { id: "safara", name: "Safara", status: "ready" as const, prdCount: 3, collaborators: 4, lastActivity: "Active", isShared: false, repository: { state: "published" as const, summary: "", master: { state: "published" as const, summary: "", detail: "" }, metrics: [{ value: "", label: "" }, { value: "", label: "" }, { value: "", label: "" }] as [{ value: string; label: string }, { value: string; label: string }, { value: string; label: string }], action: { label: "Open project", enabled: true } } };

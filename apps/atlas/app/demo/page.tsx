@@ -4,6 +4,7 @@ import { WorkflowWorkspace } from "../../components/WorkflowWorkspace";
 import { ProjectKnowledge } from "../../components/ProjectKnowledge";
 import { CesResult } from "../../components/CesResult";
 import { SourcesWorkspace } from "../../components/SourcesWorkspace";
+import { RuntimeFixtureRoute } from "../../components/RuntimeFixtureRoute";
 
 const scenarioIds: FixtureScenario["id"][] = ["owner-ready", "editor-ready", "viewer-ready", "empty-library", "processing-uploading", "processing-extracting", "processing-modeling", "processing-ready", "processing-needs-attention", "processing-failed", "approved-result"];
 const lensFromSearch = (initial: FixtureScenario["lens"], prd?: string, mode?: string) => ({ selectedPrdIds: prd ? prd.split(",").filter(Boolean) : initial.selectedPrdIds, mode: mode === "isolate" ? "isolate" as const : initial.mode });
@@ -19,6 +20,7 @@ export default async function DemoPage({ searchParams }: { searchParams?: Promis
   const projectCardStress = params?.stress === "project-cards";
   const scenario = getFixtureScenario(scenarioIds.includes(requestedScenario as FixtureScenario["id"]) ? requestedScenario as FixtureScenario["id"] : "owner-ready");
   const scenarioId = scenarioIds.includes(requestedScenario as FixtureScenario["id"]) ? requestedScenario : undefined;
+  if (requestedProjectId && (requestedView === "workflow" || requestedView === "facts" || requestedView === "changes" || requestedView === "ces" || requestedView === "sources")) return <RuntimeFixtureRoute cesItemId={params?.cesItemId} factId={params?.factId} lens={lensMode} prd={prd} projectId={requestedProjectId} scenario={scenario} scenarioId={scenarioId} view={requestedView} workflowId={params?.workflowId} workspaceId={requestedWorkspaceId} />;
   const projectRoute = resolveFixtureProjectRoute(scenario, requestedProjectId);
   const workspaceRoute = projectRoute.workspace ? resolveFixtureWorkspaceRoute(projectRoute.workspace.project.id, requestedWorkspaceId) : undefined;
   const selectedWorkspace = resolveFixtureWorkspaceContent(scenario, projectRoute, workspaceRoute?.selectedWorkspace?.workspaceId);

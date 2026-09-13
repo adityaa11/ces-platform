@@ -201,6 +201,11 @@ test("SFE-003 resolves the completed Initial Draft route from its stable fixture
   assert.deepEqual(inventory.map((workspace) => workspace.name), ["Master", "Initial Draft"]);
   assert.deepEqual(inventory.map((workspace) => workspace.workspaceId), ["master", "saf-24aysgyw4su6"]);
   assert.equal(resolveFixtureWorkspaceRoute("safara-project-01", "saf-24aysgyw4su6").selectedWorkspace?.name, "Initial Draft");
+  assert.equal(inventory.find((workspace) => workspace.name === "Master")?.status, "Draft");
+  const draft = resolveFixtureWorkspaceContent(scenario, route, "saf-24aysgyw4su6");
+  assert.equal(draft?.prds[0]?.name, "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf");
+  assert.equal(draft?.workflows.length, route.fixtureRecord?.extraction?.candidateAssertions.length);
+  assert.equal(draft?.workflows[0]?.nodes[0]?.evidence.quote, route.fixtureRecord?.extraction?.candidateAssertions[0]?.evidence.quote);
 });
 
 test("SFE-003 resolves any completed modal record and keeps Master empty", () => {

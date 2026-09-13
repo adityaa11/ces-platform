@@ -44,3 +44,9 @@ Wire the preceding modal-created project's newly generated fixture into the exis
 - `node --test packages/atlas-fixtures/tests/contracts.test.mjs` passes 22/22, including an arbitrary completed modal-project record whose stable project and Initial Draft IDs resolve together; the Master content model has zero workflows, facts, changes, and CES items.
 - `corepack pnpm --filter @atlas/app lint` passes.
 - Browser inspection of `/demo?projectId=safara-project-01&workspaceId=saf-24aysgyw4su6&view=workflow` confirms the selected Initial Draft uses its fixture-owned ID and exposes exactly two selector entries. Reloading with `workspaceId=master` displays the distinct Master state with zero operational-model counts and the explicit `No published work` empty state.
+
+## Remediation validation — BATCH-28 / review round 2
+
+- The route client reads `/api/local-fixtures` and passes its modal-created records into stable project, inventory, and workspace-content resolution; unknown or incomplete records remain unavailable.
+- `node --test packages/atlas-fixtures/tests/contracts.test.mjs` passes 22/22, including checks that the persisted Initial Draft projects its extraction candidate count and exact first-candidate source quote, while Master is an empty `Draft` state.
+- `corepack pnpm --filter @atlas/app build` passes. `git diff --check` passes. The focused app lint still reports two pre-existing unused `_files` bindings in `apps/atlas/vite.config.ts`; the remediation’s unused selector base record was removed.
