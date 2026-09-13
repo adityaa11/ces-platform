@@ -147,7 +147,17 @@ test("workspace review contract accepts the persisted complete extraction", asyn
   const byId = Object.fromEntries(manifests.map(({ manifest }) => [manifest.id, manifest]));
   const extraction = JSON.parse(await readFile(path.resolve(import.meta.dirname, "../generated/sfe-002-saf-24aysgyw4su6.json"), "utf8"));
   const reviewInput = { workspace: { workspaceId: extraction.artifact.workspaceId, projectId: "safara-project-01", status: "ready-for-review", sourceLanguage: "id" }, extraction, requestedSurfaces: ["workflow", "facts", "ces"] };
-  assert.equal(ajv.compile(byId["atlas.workspace-review-projections"].inputSchema)(reviewInput), true, "workspace review accepts the complete persisted extraction result");
+  const validate = ajv.compile(byId["atlas.workspace-review-projections"].inputSchema);
+  assert.equal(validate(reviewInput), true, "workspace review accepts the complete persisted extraction result");
+  const invalidMode = structuredClone(reviewInput);
+  invalidMode.extraction.mode = "unconfigured";
+  assert.equal(validate(invalidMode), false, "workspace review rejects an unconfigured extraction mode");
+  const invalidProvenance = structuredClone(reviewInput);
+  invalidProvenance.extraction.executionProvenance = null;
+  assert.equal(validate(invalidProvenance), false, "workspace review rejects missing extraction provenance");
+  const invalidInventory = structuredClone(reviewInput);
+  invalidInventory.extraction.sourceStatementInventory = [null];
+  assert.equal(validate(invalidInventory), false, "workspace review rejects malformed source accounting");
 });
 
 test("SFE-002 repository candidate and verification preserve an empty Master", async () => {

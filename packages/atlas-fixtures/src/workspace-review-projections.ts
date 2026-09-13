@@ -3,11 +3,13 @@ import type { ExtractionMode, SfeExtractionResult } from "./sfe-extraction.ts";
 export type ReviewSurface = "workflow" | "facts" | "ces";
 export type WorkspaceReviewInput = { workspaceId: string; projectId: string; status: "ready-for-review" | "needs-attention"; sourceLanguage: string; baseWorkspaceId?: string; baseHeadRevisionId?: string; extraction: SfeExtractionResult; requestedSurfaces: readonly ReviewSurface[]; mode?: ExtractionMode };
 export type WorkspaceReviewOutput = { skillId: "atlas.workspace-review-projections"; skillVersion: "1.0.0"; executionProvenance: { skillId: "atlas.workspace-review-projections"; skillVersion: "1.0.0"; mode: ExtractionMode }; status: "complete" | "needs_resolution"; reviewModel: { workspaceId: string; baseWorkspaceId?: string; baseHeadRevisionId?: string; status: "review-only"; sourceLanguage: string; groups: readonly ReviewGroup[]; annotations: readonly ReviewAnnotation[] }; issues: readonly { candidateIds: readonly string[]; question: string }[] };
-export type ReviewGroup = { groupId: string; order: number; label: string; summary: string; outcome: string; supportingCandidateIds: readonly string[] };
-export type ReviewAnnotation = { annotationId: string; candidateId: string; groupId: string; surface: ReviewSurface; role: "workflow_page" | "workflow_step" | "fact_row" | "ces_assessment"; order: number; sourceLanguage: string; label: string; summary: string; outcome: string; supportingCandidateIds: readonly string[] };
+export type ReviewGroup = { groupId: string; order: number; label: string; supportingCandidateIds: readonly string[] };
+export type ReviewAnnotation = { annotationId: string; candidateId: string; groupId: string; surface: ReviewSurface; role: "workflow_page" | "workflow_step" | "fact_row" | "ces_assessment"; order: number; sourceLanguage: string; label: string; supportingCandidateIds: readonly string[] };
 
 const roleFor = (surface: ReviewSurface): ReviewAnnotation["role"] => surface === "workflow" ? "workflow_step" : surface === "facts" ? "fact_row" : "ces_assessment";
 const sourceCopy = (quote: string) => quote.replace(/\s+/g, " ").trim();
+const factKinds = new Set(["system_requirement", "role_permission", "capability", "data_schema_requirement", "relationship_rule", "display_requirement", "information_requirement"]);
+const surfaceCandidate = (surface: ReviewSurface, candidates: readonly SfeExtractionResult["candidateAssertions"][number][]) => candidates.find((candidate) => surface === "workflow" ? candidate.kind === "workflow_step" : surface === "facts" ? factKinds.has(candidate.kind) : candidate.kind === "acceptance_criterion");
 
 /** Produces a review-only graph without adding presentation copy or reading another workspace. */
 export function projectWorkspaceReview(input: WorkspaceReviewInput): WorkspaceReviewOutput {
@@ -22,8 +24,26 @@ export function projectWorkspaceReview(input: WorkspaceReviewInput): WorkspaceRe
   const candidates = input.extraction.candidateAssertions.filter(hasSourceEvidence);
   const unsupportedCandidateIds = input.extraction.candidateAssertions.filter((candidate) => !hasSourceEvidence(candidate)).map((candidate) => candidate.candidateId);
   if (unsupportedCandidateIds.length) issues.push({ candidateIds: unsupportedCandidateIds, question: "Every review annotation needs evidence from the selected workspace artifact." });
-  const groups = candidates.map((candidate, index): ReviewGroup => { const quote = sourceCopy(candidate.evidence.quote); return { groupId: `review-group-${String(index + 1).padStart(3, "0")}`, order: index + 1, label: quote, summary: quote, outcome: quote, supportingCandidateIds: [candidate.candidateId] }; });
-  const annotations = groups.flatMap((group, index) => input.requestedSurfaces.filter((surface) => surface === "facts" || surface === "workflow" && candidates[index].kind === "workflow_step" || surface === "ces" && /rule|constraint|requirement|criterion|gate/.test(candidates[index].kind)).map((surface): ReviewAnnotation => ({ annotationId: `review-${surface}-${String(index + 1).padStart(3, "0")}`, candidateId: group.supportingCandidateIds[0], groupId: group.groupId, surface, role: roleFor(surface), order: index + 1, sourceLanguage: input.sourceLanguage, label: group.label, summary: group.summary, outcome: group.outcome, supportingCandidateIds: group.supportingCandidateIds })));
+  const candidatesById = new Map(candidates.map((candidate) => [candidate.candidateId, candidate]));
+  const remaining = new Set(candidates.map((candidate) => candidate.candidateId));
+  const groupedCandidates: SfeExtractionResult["candidateAssertions"][] = [];
+  for (const candidate of candidates) {
+    if (!remaining.delete(candidate.candidateId)) continue;
+    const memberIds = new Set([candidate.candidateId]);
+    const queue = [candidate.candidateId];
+    while (queue.length) {
+      const current = candidatesById.get(queue.shift()!);
+      if (!current) continue;
+      for (const relatedId of current.relationships) if (remaining.delete(relatedId)) { memberIds.add(relatedId); queue.push(relatedId); }
+      for (const related of candidates) if (related.relationships.includes(current.candidateId) && remaining.delete(related.candidateId)) { memberIds.add(related.candidateId); queue.push(related.candidateId); }
+    }
+    groupedCandidates.push(candidates.filter((item) => memberIds.has(item.candidateId)));
+  }
+  const groups = groupedCandidates.map((members, index): ReviewGroup => ({ groupId: `review-group-${String(index + 1).padStart(3, "0")}`, order: index + 1, label: sourceCopy(members[0].evidence.quote), supportingCandidateIds: members.map((member) => member.candidateId) }));
+  const annotations = groups.flatMap((group, index) => input.requestedSurfaces.flatMap((surface) => {
+    const candidate = surfaceCandidate(surface, groupedCandidates[index]);
+    return candidate ? [{ annotationId: `review-${surface}-${String(index + 1).padStart(3, "0")}`, candidateId: candidate.candidateId, groupId: group.groupId, surface, role: roleFor(surface), order: index + 1, sourceLanguage: input.sourceLanguage, label: sourceCopy(candidate.evidence.quote), supportingCandidateIds: group.supportingCandidateIds } satisfies ReviewAnnotation] : [];
+  }));
   if (input.requestedSurfaces.some((surface) => !annotations.some((annotation) => annotation.surface === surface))) issues.push({ candidateIds: [], question: "The selected evidence cannot support every requested review surface." });
   return { skillId: "atlas.workspace-review-projections", skillVersion: "1.0.0", executionProvenance: { skillId: "atlas.workspace-review-projections", skillVersion: "1.0.0", mode }, status: issues.length ? "needs_resolution" : "complete", reviewModel: { workspaceId: input.workspaceId, ...(input.baseWorkspaceId ? { baseWorkspaceId: input.baseWorkspaceId } : {}), ...(input.baseHeadRevisionId ? { baseHeadRevisionId: input.baseHeadRevisionId } : {}), status: "review-only", sourceLanguage: input.sourceLanguage, groups, annotations }, issues };
 }
