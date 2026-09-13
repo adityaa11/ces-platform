@@ -1,27 +1,28 @@
-# SFE-003-01: Restore established Initial Draft route representations
+# SFE-003-01: Restore established non-Master route representations
 
-- **State:** awaiting_review
+- **State:** feedback_remediation
 - **Review batch:** BATCH-33
-- **Depends on:** SFE-003 route/switcher wiring checkpoint; user `go`
+- **Depends on:** SFE-003 approved; SFE-002-01 approved; user `go`
 - **Blocks:** SFE-004 through SFE-007
 - **Baseline:** [SFE-003](SFE-003-route-and-switcher-initial-draft-wiring.md); [SFE phase scope](SFE-README.md); [Atlas UI/UX Prototype PRD](../Atlas_UI_UX_Prototype_PRD.md), sections 4.2–4.3, 5–6, 9.1, and 9.4; [Fixture Data-Intent Contract](../atlas-ui/FIXTURE_DATA_INTENT_CONTRACT.md); the existing `WorkflowWorkspace` layout and interaction model.
-- **SFE-000 map entries:** SFE-M1 rich workflow extraction; SFE-M4 route/switcher reads and projection boundary; SFE-M5 candidate/Master isolation checks
+- **SFE-000 map entries:** SFE-M0 source isolation; SFE-M4 route/switcher reads and projection boundary; SFE-M5 candidate/Master isolation checks; SFE-M6 workspace review projection consumption
 - **Source authority:** The projection reads only the selected SFE fixture record, its extraction candidate, and source provenance. It must not fall back to a checked-in scenario or hand-authored project data.
 
 ## Corrective outcome
 
-Render a selected Ready-to-review Initial Draft through Atlas’s established, human-readable route representations: **Main Workflow**, **Project Facts**, and **CES Result**. Each view must retain its existing hierarchy and information pattern while reading only the selected fixture’s unapproved candidate data. The data remains visibly Initial Draft / unapproved; Master remains empty.
+Render any selected Ready-to-review non-Master workspace through Atlas’s established, human-readable route representations: **Main Workflow**, **Project Facts**, and **CES Result**. Each view must retain its existing hierarchy and information pattern while reading only the selected workspace’s `atlas-workspace-review-projections` review model. The data remains visibly unapproved; Master remains empty.
 
-This corrective ticket addresses the direct-candidate adapter introduced during SFE-003 remediation, which rendered atomic semantic keys and serialized candidate payloads as the primary workflow UI. That adapter satisfies fixture ownership but does not preserve the established workflow presentation.
+This corrective ticket replaces the direct-candidate and quote-pattern adapters introduced during SFE-003 remediation. Those adapters satisfy fixture ownership but make the UI infer grouping and wording. The UI must instead consume the workspace review model produced by SFE-002-01.
 
 ## Scope
 
-- Replace the one-atomic-candidate-per-workflow adapter with route-specific semantic Initial Draft projections derived from rich candidate relationships and payload fields.
+- Remove all direct-candidate, normalized-field, and quote-pattern projection logic from route/UI adapters.
+- Consume the selected workspace’s validated `atlas-workspace-review-projections` output as the single display model.
 - **Main Workflow:** group related candidate assertions into meaningful operational scopes and workflows; preserve source ordering, dependencies, conditions, branches, roles, outputs, and unresolved items where provided. Supply readable titles, summaries, ordered step labels, and business outcomes to the existing `WorkflowWorkspace` layout.
 - **Project Facts:** derive readable, meaning-grouped facts from the same candidate data and render them through the existing `ProjectKnowledge` / facts layout, including links to related workflows and source evidence.
 - **CES Result:** derive candidate-aware CES assessments only where the selected fixture supplies the required source-grounded basis; render them through the existing `CesResult` layout and keep their review/unapproved status explicit. If the fixture lacks a valid CES assessment basis, retain the established meaningful empty/review state rather than fabricating an assessment.
-- Do not display semantic keys, candidate IDs, or serialized JSON as primary content in any of these three routes.
-- Derive all user-visible Initial Draft copy from the selected source language and source-grounded semantic projection. Never title-case normalized extraction fields such as `workflowId` or `action` for a user-facing title, label, question, summary, outcome, or evidence interpretation. If a concise source-language projection is unavailable, display the minimally edited source wording rather than translate or invent English UI copy.
+- Do not display semantic keys, candidate IDs, or serialized JSON in any content or evidence surface in these three routes.
+- Render only source-language annotations supplied by the review model. The UI never title-cases normalized fields, translates, shortens source wording, creates labels, forms groups, or uses project-specific fallback patterns.
 - Keep candidate status visible in the route and maintain direct, claim-level access to source quote, document, and page evidence.
 - Retain the SFE-003 runtime contract: exact modal-created project/workspace identity, URL/switcher synchronization, PRD-lens preservation, no fallback to unrelated scenario data, and empty Master behavior.
 - Add a bounded evidence/detail affordance for source document, page, exact quote, and plain-language interpretation. Candidate IDs and raw structured payloads remain internal fixture/provenance data and are never rendered in the end-user routes.
@@ -34,7 +35,7 @@ This corrective ticket addresses the direct-candidate adapter introduced during 
 
 ## Acceptance criteria
 
-- Initial Draft renders the same established information patterns and visual hierarchy as the existing Safara routes: a workflow sequence in **Main Workflow**, a meaning-grouped knowledge list in **Project Facts**, and contextual fact-linked assessments in **CES Result**.
+- A selected non-Master workspace renders the same established information patterns and visual hierarchy as the existing Safara routes: a workflow sequence in **Main Workflow**, a meaning-grouped knowledge list in **Project Facts**, and contextual fact-linked assessments in **CES Result**.
 - The persisted `safara-project-01` extraction produces readable content for each applicable route from its candidate relationships and payloads. Primary content contains no raw semantic-key identifiers (for example `safara.main_flow.*`) and no JSON payload serialization.
 - The persisted `safara-project-01` Initial Draft uses its Indonesian PRD language throughout Main Workflow. In particular, it projects the package/departure scope as `Menyiapkan paket dan keberangkatan` and the first source step as `Membuat paket umrah`; normalized labels such as `Main Registration Flow` and `Creates An Umrah Package` must not render.
 - Every displayed operational scope, workflow, step, outcome, fact, and CES assessment is derived from the selected fixture’s candidate data; no value is copied from the prior checked-in scenario merely to make a route look complete.

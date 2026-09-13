@@ -3,7 +3,7 @@
 - **State:** approved
 - **Review batch:** BATCH-25
 - **Depends on:** SFE phase scope approved; [GLF-001](../Git-Like_Fixture_Phase/GLF-001-shared-skill-contracts-and-execution-mode.md) and [GLF-002](../Git-Like_Fixture_Phase/GLF-002-skill-definitions-and-review-contract.md) approved
-- **Baseline:** [SFE phase scope](SFE-README.md); [GLF-001 shared skill contracts and execution mode](../Git-Like_Fixture_Phase/GLF-001-shared-skill-contracts-and-execution-mode.md); [GLF-002 skill definitions and review contract](../Git-Like_Fixture_Phase/GLF-002-skill-definitions-and-review-contract.md); [Atlas Git-Like Knowledge Architecture Checkpoint](../ATLAS_GIT_LIKE_KNOWLEDGE_ARCHITECTURE_CHECKPOINT.md); the five skill contracts linked in the adjustment map
+- **Baseline:** [SFE phase scope](SFE-README.md); [GLF-001 shared skill contracts and execution mode](../Git-Like_Fixture_Phase/GLF-001-shared-skill-contracts-and-execution-mode.md); [GLF-002 skill definitions and review contract](../Git-Like_Fixture_Phase/GLF-002-skill-definitions-and-review-contract.md); [Atlas Git-Like Knowledge Architecture Checkpoint](../ATLAS_GIT_LIKE_KNOWLEDGE_ARCHITECTURE_CHECKPOINT.md); the six skill contracts linked in the adjustment map
 
 ## Outcome
 
@@ -11,7 +11,7 @@ Provide a concrete index of the SFE-specific handoff adjustments for the shared 
 
 ## Shared-skill intent and executor context
 
-GLF-001/002 establish the five bounded, candidate-producing skills for
+GLF-001/002 establish the shared bounded skills for
 source-grounded extraction, repository assembly, staged changes, branch-aware
 projections, and verification. SFE consumes those contracts and their
 execution/review boundaries only; it creates the scenario-owned inputs and
@@ -87,13 +87,39 @@ Make checks scenario-aware. An unapproved draft must leave current accepted valu
 
 **Tickets that consume this entry:** SFE-001 through SFE-007, scoped to each ticket's lifecycle stage and listed checks.
 
+### SFE-M6 — Workspace review projections for unapproved knowledge
+
+**Contract references:** [Workspace review projections skill instructions](../../.agents/skills/atlas-workspace-review-projections/SKILL.md); [workspace review projections JSON contract](../../.agents/skills/atlas-workspace-review-projections/atlas-skill.json).
+
+The accepted-HEAD projection skill remains the authority for Master reads. A
+non-Master workspace instead needs a candidate-only review model that can be
+shown without promoting its candidates or making the UI interpret raw
+extraction. `atlas-workspace-review-projections` takes only the selected
+workspace's complete extraction result, source accounting, and explicit base
+context. It returns shared semantic groups and source-language annotations for
+Main Workflow, Project Facts, and CES Result, with candidate and source
+references retained internally for provenance and validation.
+
+The review-projection skill is generic: it must not depend on a project ID,
+workspace label, legacy fixture, translation table, or source-quote pattern.
+The UI consumes its annotations as supplied; it must never expose candidate
+IDs, semantic keys, raw payloads, or inferred display copy. Unsupported
+grouping, wording, links, or CES basis remains `needs_resolution` rather than
+becoming invented UI content.
+
+**Tickets that consume this entry:** SFE-002-01 implements and validates the
+contract. SFE-003-01 consumes a validated result in the three established read
+routes. SFE-004 and SFE-007 reuse it for later non-Master review workspaces.
+
 ## Ticket lookup
 
 | SFE ticket | Map entries to apply |
 |---|---|
 | [SFE-001](SFE-001-project-intake-and-initial-workspace.md) | SFE-M0 source isolation; SFE-M1 upload capture only; SFE-M5 file record, path, hash, and generated-ID checks |
 | [SFE-002](SFE-002-initial-draft-extraction.md) | SFE-M0 source isolation; SFE-M1 extraction/accounting plus complete facts and workflows; SFE-M2 shared repository-contract update and extraction-results handoff; SFE-M4 candidate review versus accepted reads; SFE-M5 lifecycle, rich-coverage, and candidate/Master checks |
+| [SFE-002-01](SFE-002-01-workspace-review-projections.md) | SFE-M0 selected-workspace authority; SFE-M1 complete extraction input; SFE-M4 separation from accepted projections; SFE-M5 review-model validation; SFE-M6 generic candidate-only review projection |
 | [SFE-003](SFE-003-route-and-switcher-initial-draft-wiring.md) | SFE-M0 source isolation; SFE-M4 route/switcher reads; SFE-M5 project/workspace isolation checks |
+| [SFE-003-01](SFE-003-01-semantic-initial-draft-workflow-projection.md) | SFE-M0 selected-workspace authority; SFE-M4 route/switcher accepted-read boundary; SFE-M5 route and isolation checks; SFE-M6 validated review-model consumption |
 | [SFE-004](SFE-004-repeat-initial-draft-cycle-for-project-two.md) | SFE-M0 source isolation; SFE-M1 independent rich extraction and normalized comparison; SFE-M2 extraction-results handoff; SFE-M5 distinct IDs, project isolation, and comparison checks |
 | [SFE-005](SFE-005-publish-project-two-initial-draft.md) | SFE-M0 source isolation; SFE-M3 deterministic project-02 acceptance; SFE-M4 projections from accepted Master HEAD; SFE-M5 publication, project isolation, and branch checks |
 | [SFE-006](SFE-006-new-workspace-intake-from-switcher.md) | SFE-M0 source isolation; SFE-M1 upload capture only; SFE-M5 request/workspace ID, file path, hash, and base-HEAD checks |
@@ -101,15 +127,15 @@ Make checks scenario-aware. An unapproved draft must leave current accepted valu
 
 ## Boundaries
 
-- The five skills remain candidate-producing or advisory within their contracts. SFE-002 owns the SFE-M1 accounting handoff and the SFE-M2 provider-neutral repository-contract update; later SFE tickets reuse and validate them in both codex and future agents_bridge execution modes.
+- The shared skills remain candidate-producing or advisory within their contracts. SFE-002 owns the SFE-M1 accounting handoff and the SFE-M2 provider-neutral repository-contract update; SFE-002-01 owns the generic non-Master review-projection contract; later SFE tickets reuse and validate them in both codex and future agents_bridge execution modes.
 - Extraction completeness must not be achieved by reducing the skill to a statement checklist. Candidates retain detailed facts, workflow structure, relationships, and source meaning; the accounting artifact only proves that each material statement has a destination.
 - SFE-000 assigns adjustments to downstream tickets; it does not itself edit skill contracts, implement app behavior, generate a fixture, or change another ticket's approval state.
-- No changes to the changes, projections, or verification schemas are required by this map. SFE calls the changes skill per semantic key, supplies accepted HEAD/facts to projections, and implements scenario-specific deterministic checks around the generic verifier. Any additional skill-contract change beyond SFE-M1/M2 needs a separately reviewed scope update.
+- The accepted-HEAD changes, projections, and verification schemas remain unchanged. SFE-002-01 introduces the separate non-Master review-projection contract. SFE calls the changes skill per semantic key, supplies accepted HEAD/facts to accepted projections, and implements scenario-specific deterministic checks around the generic verifier. Any additional skill-contract change beyond SFE-M1/M2/M6 needs a separately reviewed scope update.
 
 ## Acceptance criteria
 
-- The five concrete adjustments identify the contract gap or boundary, the required SFE handling, and the consuming tickets.
-- Every SFE-001 through SFE-007 ticket identifies its assigned map entries.
+- The six concrete adjustments identify the contract gap or boundary, the required SFE handling, and the consuming tickets.
+- Every SFE-001 through SFE-007 and their approved follow-up tickets identifies its assigned map entries.
 - SFE-002 is explicitly responsible for the bounded extraction and repository skill-contract updates or deterministic accounting handoff required by SFE-M1/M2; SFE-004 and SFE-007 reuse and validate them.
 - Extraction accounting is exhaustive without flattening facts, workflows, or their relationships into lossy or incomplete candidate data; source review still checks semantic coverage.
 - Extraction accounting, repository handoff, atomic proposal staging, accepted-HEAD projections, and two-layer scenario verification preserve source, provenance, branch, and acceptance boundaries.
@@ -120,7 +146,7 @@ Make checks scenario-aware. An unapproved draft must leave current accepted valu
 
 - Check every ticket lookup assignment against its SFE-000 map-entry reference.
 - Check local contract and ticket links, and verify that review batches remain unique and sequential.
-- Review extraction, repository, changes, projections, and verification claims against their JSON contracts and SFE-M0 through SFE-M5.
+- Review extraction, repository, accepted projections, workspace review projections, changes, and verification claims against their JSON contracts and SFE-M0 through SFE-M6.
 
 ## Review question
 

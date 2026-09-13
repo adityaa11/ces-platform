@@ -1,0 +1,38 @@
+{
+  "contractVersion": "1.0",
+  "id": "atlas.workspace-review-projections",
+  "version": "1.0.0",
+  "instructionFile": "SKILL.md",
+  "execution": { "kind": "reasoning", "resultDisposition": "candidate-only", "requiresDeterministicValidation": true },
+  "inputSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["workspace", "extraction", "requestedSurfaces"],
+    "properties": {
+      "workspace": { "type": "object", "additionalProperties": false, "required": ["workspaceId", "projectId", "status"], "properties": { "workspaceId": { "type": "string", "minLength": 1 }, "projectId": { "type": "string", "minLength": 1 }, "status": { "enum": ["ready-for-review", "needs-attention"] }, "baseWorkspaceId": { "type": "string", "minLength": 1 }, "baseHeadRevisionId": { "type": "string", "minLength": 1 } } },
+      "extraction": { "type": "object", "additionalProperties": false, "required": ["artifact", "candidateAssertions", "sourceStatementInventory"], "properties": { "artifact": { "type": "object", "required": ["artifactId", "workspaceId"], "properties": { "artifactId": { "type": "string", "minLength": 1 }, "workspaceId": { "type": "string", "minLength": 1 } } }, "candidateAssertions": { "type": "array", "minItems": 1, "items": { "type": "object", "required": ["candidateId", "kind", "relationships", "evidence"], "properties": { "candidateId": { "type": "string", "minLength": 1 }, "kind": { "type": "string", "minLength": 1 }, "relationships": { "type": "array", "items": { "type": "string", "minLength": 1 } }, "evidence": { "type": "object", "required": ["artifactId", "page", "quote"], "properties": { "artifactId": { "type": "string", "minLength": 1 }, "page": { "type": "integer", "minimum": 1 }, "quote": { "type": "string", "minLength": 1 } } } } } }, "sourceStatementInventory": { "type": "array", "minItems": 1, "items": { "type": "object" } } } },
+      "requestedSurfaces": { "type": "array", "minItems": 1, "items": { "enum": ["workflow", "facts", "ces"] } }
+    }
+  },
+  "outputSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["skillId", "skillVersion", "executionProvenance", "status", "reviewModel", "issues"],
+    "properties": {
+      "skillId": { "const": "atlas.workspace-review-projections" },
+      "skillVersion": { "const": "1.0.0" },
+      "executionProvenance": { "type": "object", "additionalProperties": false, "required": ["skillId", "skillVersion", "mode"], "properties": { "skillId": { "const": "atlas.workspace-review-projections" }, "skillVersion": { "const": "1.0.0" }, "mode": { "enum": ["codex", "agents_bridge"] } } },
+      "status": { "enum": ["complete", "needs_resolution"] },
+      "reviewModel": { "type": "object", "additionalProperties": false, "required": ["workspaceId", "status", "sourceLanguage", "groups", "annotations"], "properties": {
+        "workspaceId": { "type": "string", "minLength": 1 },
+        "baseWorkspaceId": { "type": "string", "minLength": 1 },
+        "baseHeadRevisionId": { "type": "string", "minLength": 1 },
+        "status": { "const": "review-only" },
+        "sourceLanguage": { "type": "string", "minLength": 2 },
+        "groups": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["groupId", "order", "label", "summary", "supportingCandidateIds"], "properties": { "groupId": { "type": "string", "minLength": 1 }, "order": { "type": "integer", "minimum": 1 }, "label": { "type": "string", "minLength": 1 }, "summary": { "type": "string", "minLength": 1 }, "outcome": { "type": "string", "minLength": 1 }, "supportingCandidateIds": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } } } } },
+        "annotations": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["annotationId", "candidateId", "groupId", "surface", "role", "order", "sourceLanguage", "label", "supportingCandidateIds"], "properties": { "annotationId": { "type": "string", "minLength": 1 }, "candidateId": { "type": "string", "minLength": 1 }, "groupId": { "type": "string", "minLength": 1 }, "surface": { "enum": ["workflow", "facts", "ces"] }, "role": { "enum": ["workflow_page", "workflow_step", "fact_row", "ces_assessment"] }, "order": { "type": "integer", "minimum": 1 }, "sourceLanguage": { "type": "string", "minLength": 2 }, "label": { "type": "string", "minLength": 1 }, "summary": { "type": "string", "minLength": 1 }, "outcome": { "type": "string", "minLength": 1 }, "supportingCandidateIds": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } } } } }
+      } },
+      "issues": { "type": "array", "items": { "type": "object" } }
+    }
+  }
+}

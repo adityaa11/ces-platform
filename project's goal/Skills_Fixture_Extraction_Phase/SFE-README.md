@@ -21,6 +21,7 @@
 - [Atlas fixture changes skill](../../.agents/skills/atlas-fixture-changes/SKILL.md)
 - [Atlas fixture projections skill](../../.agents/skills/atlas-fixture-projections/SKILL.md)
 - [Atlas fixture verification skill](../../.agents/skills/atlas-fixture-verification/SKILL.md)
+- [Atlas workspace review projections skill](../../.agents/skills/atlas-workspace-review-projections/SKILL.md)
 
 The UI/UX PRD remains marked Draft and the product-context document has no global approval marker. The user's approval is scoped to this ticket set; it does not change either document's status or approve unrelated requirements.
 
@@ -39,6 +40,7 @@ All project cards and workspaces are created through the existing UI components.
 |---|---|---|
 | SFE-001 | Submit Create a project with a valid, unique ID and Foundation Enrollment PDF 01. | Project card is Extracting; an empty Master and generated Extracting Initial Draft workspace exist; PDF 01 is already stored under the Initial Draft workspace ID. No extraction has run. |
 | SFE-002 | Process the preceding modal-created project's existing Initial Draft request and stored PDF. | Extraction finishes; the same workspace receives the extracted fixture; card badge becomes Ready to review; Master remains empty. |
+| SFE-002-01 | Generate a generic review model from any extracted non-Master workspace. | Main Workflow, Project Facts, and CES Result annotations are source-language, evidence-backed, and candidate-only. |
 | SFE-003 | Connect that new bundle to the existing project route and switcher. | The route opens the Initial Draft; the switcher shows exactly Master (empty) and Initial Draft (extraction). |
 | SFE-003-01 | Correct Initial Draft projections so they preserve the existing Main Workflow, Project Facts, and CES Result routes. | Fixture-owned candidate data renders as unapproved, evidence-backed workflow, fact, and CES representations; raw extraction detail is secondary. |
 | SFE-004 | Submit a new project with a distinct valid ID and PDF 01, then repeat SFE-001 through SFE-003. | A separate extraction and workspace are produced; normalized output and source grounding match SFE-002. |
@@ -78,15 +80,16 @@ Each ticket has its own review batch because each checkpoint changes a data or i
 
 | Order | Ticket / batch | State | Depends on | Review question |
 |---:|---|---|---|---|
-| 0 | [SFE-000 / BATCH-25](SFE-000-skills-to-sfe-integration-map.md) | approved | Approved shared skill contracts | Does the map connect the five shared skill contracts to SFE without changing their authority or bypassing a gate? |
+| 0 | [SFE-000 / BATCH-25](SFE-000-skills-to-sfe-integration-map.md) | approved | Approved shared skill contracts | Does the map connect the shared skill contracts to SFE without changing their authority or bypassing a gate? |
 | 1 | [SFE-001 / BATCH-26](SFE-001-project-intake-and-initial-workspace.md) | approved | SFE-000 approved; AUI-004 | Does the project modal create the Extracting card, workspace ID, empty Master, Initial Draft workspace, and workspace-scoped PDF path without extracting? |
 | 2 | [SFE-002 / BATCH-27](SFE-002-initial-draft-extraction.md) | awaiting_review | SFE-000 approved; SFE-001 | Does processing use that exact workspace ID and file to extract PDF 01 and transition the project card to Ready to review? |
-| 3 | [SFE-003 / BATCH-28](SFE-003-route-and-switcher-initial-draft-wiring.md) | approved | SFE-000 approved; SFE-002 | Do the existing project route and selector expose the empty Master and populated Initial Draft from the same generated fixture? |
-| 4 | [SFE-003-01 / BATCH-33](SFE-003-01-semantic-initial-draft-workflow-projection.md) | awaiting_review | SFE-003 approved; user `go` | Does Initial Draft preserve Main Workflow, Project Facts, and CES Result while using only fixture-owned candidate data and evidence? |
-| 5 | [SFE-004 / BATCH-29](SFE-004-repeat-initial-draft-cycle-for-project-two.md) | planned | SFE-003-01 | Does creating project 02 through the same components independently reproduce the project 01 extraction output? |
-| 6 | [SFE-005 / BATCH-30](SFE-005-publish-project-two-initial-draft.md) | planned | SFE-004; fixture changes and repository contracts | Does publishing project 02's Initial Draft promote its accepted fixtures to Master and update the card to Published without changing project 01? |
-| 7 | [SFE-006 / BATCH-31](SFE-006-new-workspace-intake-from-switcher.md) | planned | SFE-005 | Does + New workspace create an Extracting workspace from the chosen base and store PDF 02 under its generated workspace ID? |
-| 8 | [SFE-007 / BATCH-32](SFE-007-extract-and-reconcile-new-workspace-prd.md) | planned | SFE-006; PRD extraction, changes, projection, and verification contracts | Does PDF 02 produce a Ready-to-review reconciliation candidate against the selected base while preserving Master truth? |
+| 3 | [SFE-002-01 / BATCH-34](SFE-002-01-workspace-review-projections.md) | planned | SFE-002 BATCH-27 PASS; user `go` | Does any non-Master workspace produce one source-language, evidence-backed, candidate-only review model for all three read routes? |
+| 4 | [SFE-003 / BATCH-28](SFE-003-route-and-switcher-initial-draft-wiring.md) | approved | SFE-000 approved; SFE-002 | Do the existing project route and selector expose the empty Master and populated Initial Draft from the same generated fixture? |
+| 5 | [SFE-003-01 / BATCH-33](SFE-003-01-semantic-initial-draft-workflow-projection.md) | feedback_remediation | SFE-003 approved; SFE-002-01 | Do all three established routes consume only the selected workspace review model? |
+| 6 | [SFE-004 / BATCH-29](SFE-004-repeat-initial-draft-cycle-for-project-two.md) | planned | SFE-003-01 | Does creating project 02 through the same components independently reproduce the project 01 extraction output? |
+| 7 | [SFE-005 / BATCH-30](SFE-005-publish-project-two-initial-draft.md) | planned | SFE-004; fixture changes and repository contracts | Does publishing project 02's Initial Draft promote its accepted fixtures to Master and update the card to Published without changing project 01? |
+| 8 | [SFE-006 / BATCH-31](SFE-006-new-workspace-intake-from-switcher.md) | planned | SFE-005 | Does + New workspace create an Extracting workspace from the chosen base and store PDF 02 under its generated workspace ID? |
+| 9 | [SFE-007 / BATCH-32](SFE-007-extract-and-reconcile-new-workspace-prd.md) | planned | SFE-006; PRD extraction, changes, projection, and verification contracts | Does PDF 02 produce a Ready-to-review reconciliation candidate against the selected base while preserving Master truth? |
 
 ## Dependency gate
 
@@ -95,7 +98,7 @@ after its named SFE dependencies pass review and receive an explicit `go`.
 
 ## Review controls
 
-- SFE-000, SFE-001, and SFE-003 are `approved`. SFE-002 is `awaiting_review` pending BATCH-27 review; SFE-003-01 is `awaiting_review`; SFE-004 through SFE-007 remain `planned`. Do not begin a dependent ticket until SFE-002 passes BATCH-27 and the user issues `go`. This ticket set does not authorize a later implementation batch until its dependencies and review controls allow it.
+- SFE-000, SFE-001, and SFE-003 are `approved`. SFE-002 is `awaiting_review`; SFE-002-01 is `planned`; SFE-003-01 is `feedback_remediation`; SFE-004 through SFE-007 remain `planned`. SFE-002 must pass BATCH-27 and receive a user `go` before SFE-002-01 can begin; SFE-002-01 and SFE-003-01 block the later scenario tickets until the generic review model and its route consumption pass review. This ticket set does not authorize a later implementation batch until its dependencies and review controls allow it.
 - Implement only the currently authorized ticket or review batch. Do not start the next batch until the current batch has a PASS review and the user says `go`.
 - UI batches require rendered browser validation for the connected component flow, supported responsive widths and themes, and keyboard/focus behavior.
 - Fixture batches validate source provenance, stable project/workspace IDs, branch/workspace relationships, and proposal-versus-accepted-truth boundaries.
