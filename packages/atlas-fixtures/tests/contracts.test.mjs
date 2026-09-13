@@ -204,13 +204,14 @@ test("SFE-003 resolves the completed Initial Draft route from its stable fixture
   assert.equal(inventory.find((workspace) => workspace.name === "Master")?.status, "Draft");
   const draft = resolveFixtureWorkspaceContent(scenario, route, "saf-24aysgyw4su6");
   assert.equal(draft?.prds[0]?.name, "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf");
-  assert.deepEqual(draft?.workflows.map((workflow) => workflow.title), ["Main Registration Flow"]);
-  assert.equal(draft?.workflows[0]?.nodes.length, 6);
+  assert.deepEqual(draft?.workflows.map((workflow) => workflow.title), ["Menyiapkan paket dan keberangkatan", "Mendaftarkan jemaah"]);
+  assert.equal(draft?.workflows[0]?.nodes.length, 3);
   assert.equal(draft?.facts.length > 0, true);
   assert.equal(draft?.cesItems.length > 0, true);
-  assert.equal(draft?.workflows.flatMap((workflow) => workflow.nodes).some((node) => node.title.includes("safara.") || node.note.includes("cand-") || node.note.includes("{\"")), false);
+  assert.equal(draft?.workflows.flatMap((workflow) => workflow.nodes).some((node) => node.title.includes("safara.") || node.title.includes("Creates An Umrah Package") || node.note.includes("cand-") || node.note.includes("{\"")), false);
   assert.equal(draft?.facts.flatMap((fact) => fact.rows).some((row) => row.statement.includes("safara.") || row.statement.includes("cand-") || row.statement.includes("{\"")), false);
   assert.equal(draft?.cesItems.some((item) => item.policy.includes("safara.") || item.policyId.includes("cand-") || item.rule.includes("{\"")), false);
+  assert.equal(draft?.workflows[0]?.nodes[0]?.title, "Membuat paket umrah");
   assert.equal(draft?.workflows[0]?.nodes[0]?.evidence.quote, "Admin membuat paket umrah.");
 });
 
