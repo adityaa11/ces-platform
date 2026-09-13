@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createFixtureProject, createFixtureWorkspace, fixtureScenarios, getFixtureScenario, markFixtureWorkspaceReadyForReview, projectCardStressFixtures, projectCardStressLimits, resolveFixtureAuthoringExecutor, resolveFixtureProjectRoute, resolveFixtureWorkspaceInventory, resolveFixtureWorkspaceRoute, resolveSkillsMode, workspaceIdPattern } from "../src/index.ts";
+import { completeSfeExtraction, createFixtureProject, createFixtureWorkspace, fixtureScenarios, getFixtureScenario, markFixtureWorkspaceReadyForReview, projectCardStressFixtures, projectCardStressLimits, resolveFixtureAuthoringExecutor, resolveFixtureProjectRoute, resolveFixtureWorkspaceInventory, resolveFixtureWorkspaceRoute, resolveSkillsMode, workspaceIdPattern } from "../src/index.ts";
 
 test("skills mode defaults to codex and accepts only documented repository-wide values", () => {
   assert.equal(resolveSkillsMode(), "codex");
@@ -100,6 +100,19 @@ test("project intake retries a colliding Initial Draft ID and fails without a us
   const created = createFixtureProject(request, ["aaaaaaaaaaaa", "b2c3d4e5f6h7"], ["cus-aaaaaaaaaaaa"]);
   assert.equal(created.initialDraftWorkspace.workspaceId, "cus-b2c3d4e5f6h7");
   assert.throws(() => createFixtureProject(request, ["aaaaaaaaaaaa"], ["cus-aaaaaaaaaaaa"]), /Unable to allocate a unique workspace ID/);
+});
+
+test("SFE-002 completes the persisted saf-24aysgyw4su6 workspace only after page-grounded accounting", () => {
+  const created = createFixtureProject({ projectId: "safara-project-01", projectName: "Safara Initial Draft", projectDescription: "", prdFiles: [{ name: "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf", type: "application/pdf", size: 25548 }] }, ["24aysgyw4su6"]);
+  const artifact = { artifactId: "artifact-saf-24aysgyw4su6-prd-01", workspaceId: "saf-24aysgyw4su6", name: "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf", type: "application/pdf", size: 25548, relativePath: "docs/PRD/safara-project-01/saf-24aysgyw4su6/Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf", sha256: "75a6bf6c7411c909f9a94dd763cfb540656717c5ecac789dad57e7de4e6740bc", verifiedSha256: "75a6bf6c7411c909f9a94dd763cfb540656717c5ecac789dad57e7de4e6740bc" };
+  const quote = "Admin membuat paket umrah.";
+  const result = { executionId: "exec-saf-24aysgyw4su6-prd-01", mode: "codex", artifact, pages: [{ page: 1, text: "Safara scope." }, { page: 2, text: quote }, { page: 3, text: "Acceptance criteria." }], candidateAssertions: [{ candidateId: "candidate-package-create", kind: "workflow", semanticKey: "workflow.package-create", payload: { actors: ["Admin"], triggers: ["package needed"], orderedSteps: ["create package"], conditions: [], branches: [], inputs: [], outputs: ["package"], dependencies: [], stateTransitions: [], exceptions: [] }, relationships: [], evidence: { artifactId: artifact.artifactId, page: 2, quote } }], sourceStatementInventory: [{ inventoryId: "inv-01", artifactId: artifact.artifactId, page: 1, quote: "", classification: "empty_page", normalizedInterpretation: {}, destination: { type: "non_fact", reason: "No material claim in fixture excerpt." } }, { inventoryId: "inv-02", artifactId: artifact.artifactId, page: 2, quote, classification: "material", normalizedInterpretation: {}, destination: { type: "candidate_assertion", candidateId: "candidate-package-create" } }, { inventoryId: "inv-03", artifactId: artifact.artifactId, page: 3, quote: "", classification: "empty_page", normalizedInterpretation: {}, destination: { type: "non_fact", reason: "No material claim in fixture excerpt." } }], questions: [] };
+  const completed = completeSfeExtraction({ ...created, sourceFiles: [artifact] }, result);
+  assert.equal(completed.initialDraftWorkspace.workspaceId, "saf-24aysgyw4su6");
+  assert.equal(completed.processingJob.workspaceId, "saf-24aysgyw4su6");
+  assert.equal(completed.project.repository.state, "ready-for-review");
+  assert.equal(completed.masterWorkspace.prdFiles.length, 0);
+  assert.throws(() => completeSfeExtraction({ ...created, sourceFiles: [artifact] }, { ...result, artifact: { ...artifact, workspaceId: "saf-other" } }), /existing Initial Draft workspace ID/);
 });
 
 test("workspace creation is transient, Master-rooted, collision-safe, and unavailable while extracting", () => {

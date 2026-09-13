@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ProjectFixture, ProjectWorkspaceFixture } from "@atlas/fixtures";
-import { safaraSourceDocuments, type SafaraSourceDocument } from "../generated/safaraDocuments";
+import { sourceDocuments, type SourceDocument } from "../generated/sourceDocuments";
 import { AppShell } from "./AppShell";
 import type { WorkspaceLens } from "./WorkspaceLens";
 import { WorkspaceSwitcherDemoHost } from "./WorkspaceSwitcherPreview";
@@ -10,20 +10,20 @@ import { WorkspaceSwitcherDemoHost } from "./WorkspaceSwitcherPreview";
 type User = { name: string; email: string; role: "owner" | "editor" | "viewer" };
 type PdfJsModule = typeof import("pdfjs-dist/legacy/build/pdf.mjs");
 
-const fileTitle = (fileName: string) => fileName.replace(/\.pdf$/i, "").replace(/^Safara_Incremental_/, "").replace(/[_-]+/g, " ").replace(/\bprd\b/i, "PRD");
+const fileTitle = (fileName: string) => fileName.replace(/\.pdf$/i, "").replace(/[_-]+/g, " ").replace(/\bprd\b/i, "PRD");
 const documentIncrement = (fileName: string) => {
   const match = fileName.match(/PRD[_-]?(\d+)/i);
   return match ? `PRD ${Number(match[1])}` : "PDF";
 };
 const formatDate = (value: string) => new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(value));
 
-function sourceTitle(document: SafaraSourceDocument, workspace: ProjectWorkspaceFixture) {
+function sourceTitle(document: SourceDocument, workspace: ProjectWorkspaceFixture) {
   const prd = workspace.prds.find((item) => item.increment === documentIncrement(document.fileName));
   return prd?.name ?? fileTitle(document.fileName);
 }
 
 export function SourcesWorkspace({ user, projects, workspace, scenario, initialLens, initialWorkspaceId, unavailableWorkspaceName }: { user: User; projects: ProjectFixture[]; workspace: ProjectWorkspaceFixture; scenario?: string; initialLens: WorkspaceLens; initialWorkspaceId?: string; unavailableWorkspaceName?: string }) {
-  const documents = safaraSourceDocuments;
+  const documents = sourceDocuments;
   const initialDocument = documents.find((document) => documentIncrement(document.fileName) === "PRD 2") ?? documents[0];
   const [selected, setSelected] = useState(initialDocument);
   const [pageNumber, setPageNumber] = useState(initialDocument && documentIncrement(initialDocument.fileName) === "PRD 2" ? 2 : 1);
@@ -120,7 +120,7 @@ export function SourcesWorkspace({ user, projects, workspace, scenario, initialL
     const requested = Number.parseInt(pageInput, 10);
     setCurrentPage(Number.isFinite(requested) ? requested : pageNumber);
   };
-  const changeDocument = (document: SafaraSourceDocument) => {
+  const changeDocument = (document: SourceDocument) => {
     setSelected(document);
     const initialPage = documentIncrement(document.fileName) === "PRD 2" ? Math.min(2, document.pageCount) : 1;
     setPageNumber(initialPage);

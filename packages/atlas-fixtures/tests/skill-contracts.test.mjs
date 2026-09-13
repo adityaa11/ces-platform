@@ -88,6 +88,9 @@ test("skill contracts reject malformed evidence, modes, branches, proposals, pro
   const repositoryInput = sample("atlas.fixture-repository", "input");
   repositoryInput.projectId = 42;
   assert.equal(validator("atlas.fixture-repository", "input")(repositoryInput), false);
+  const extractionBackedRepositoryInput = sample("atlas.fixture-repository", "input");
+  extractionBackedRepositoryInput.scenarioKind = "extraction_backed";
+  assert.equal(validator("atlas.fixture-repository", "input")(extractionBackedRepositoryInput), false, "extraction-backed assembly rejects source metadata without extraction results");
   const repositoryOutput = sample("atlas.fixture-repository", "output");
   repositoryOutput.repositoryCandidate.materializedStates = [validValue(byId["atlas.fixture-repository"].outputSchema.properties.repositoryCandidate.properties.materializedStates.items)];
   delete repositoryOutput.repositoryCandidate.materializedStates[0].state.assertionIds;

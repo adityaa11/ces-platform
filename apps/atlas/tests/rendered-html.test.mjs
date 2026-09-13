@@ -311,8 +311,8 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(factsHtml, /Project Facts|People and responsibilities/);
   assert.match(changesHtml, /Changes Done|Tanggung jawab Finance dan Operations/);
   assert.match(sourcesHtml, /Workspace library|Sources|Search PDFs|PDF controls|Open original/);
-  assert.match(sourcesHtml, /Pembayaran, Dokumen, dan Kesiapan Keberangkatan/);
-  assert.match(sourcesHtml, /source-pdfs\/Safara\/Safara_Incremental_PRD_02_Payment_Documents_Readiness\.pdf/);
+  assert.match(sourcesHtml, /Fondasi Data dan Pendaftaran Jemaah/);
+  assert.match(sourcesHtml, /source-pdfs\/safara-project-01\/saf-24aysgyw4su6\/Safara_Incremental_PRD_01_Foundation_Enrollment-1\.pdf/);
   assert.match(sourcesHtml, /href="\/demo\?projectId=safara&amp;workspaceId=branch-increment-003&amp;view=sources"/);
   assert.match(changesHtml, /href="\/demo\?projectId=safara&amp;workspaceId=branch-increment-003&amp;prd=safara-increment-02&amp;lens=isolate&amp;view=workflow/);
   for (const html of [workflowHtml, factsHtml, changesHtml]) assert.match(html, /href="\/demo\?projectId=safara&amp;workspaceId=branch-increment-003&amp;prd=safara-increment-02&amp;lens=isolate&amp;view=(workflow|facts|ces|changes)"/);

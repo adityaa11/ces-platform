@@ -20,6 +20,11 @@ mutable UI-shaped project object.
 
 Treat supplied source artifacts and accepted base state as authoritative context.
 
+For an extraction-backed scenario, require an explicit extraction-results
+handoff containing the workspace-scoped artifact, candidate assertions, and
+complete source-statement inventory. Source-file metadata alone is insufficient
+and must return `needs_resolution`; repository-only scenarios remain valid.
+
 ## Canonical boundary
 
 Keep these as the canonical fixture layer:
@@ -44,6 +49,8 @@ truth, however: accepted documents and revisions must remain immutable.
 - Keep content in JSON-compatible structures. Use deterministic ordering where
   it makes fixture diffs and hashing inspectable.
 - Represent the base revision explicitly; never infer it from fixture order.
+- Preserve extraction artifact, inventory, and candidate IDs so source
+  provenance remains resolvable.
 - Keep UI workflow, facts, and CES records out of the canonical repository
   unless they are explicitly a materialized projection.
 

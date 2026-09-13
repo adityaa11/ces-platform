@@ -31,8 +31,14 @@ proposal and validation; it is not accepted Atlas truth.
   rewrite or supersede accepted truth.
 - Return `needs_resolution` with a targeted question when wording does not
   safely determine a value, scope, actor, condition, or relationship.
-- Account for each material statement by returning either a candidate assertion
-  or an explicitly unaccounted statement with a reason.
+- Return a source-statement inventory covering every supplied page. Each entry
+  has a stable inventory ID, exact quote (or explicit empty-page marker),
+  classification, normalized interpretation, and exactly one candidate or
+  permitted non-fact destination. Missing or dangling destinations fail
+  deterministic validation.
+- Keep workflow candidates reconstructable: preserve actors, triggers, ordered
+  steps, conditions, branches, inputs, outputs, dependencies, state
+  transitions, exceptions, and relationships to related candidates.
 - Preserve distinctions in scope, condition, actor, timing, modality, and
   status. Do not merge separate rules only because their wording is similar.
 

@@ -6,9 +6,9 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "sources:sync": "node ../../scripts/sync-safara-pdfs.mjs",
+    "sources:sync": "node ../../scripts/sync-prd-pdfs.mjs",
     "fixtures:generate": "node scripts/generate-golden-fixture.mjs",
-    "predev": "pnpm run sources:sync",
+    "predev": "corepack pnpm run sources:sync",
     "prebuild": "pnpm run sources:sync",
     "prelint": "pnpm run sources:sync",
     "dev": "vinext dev --port 3001",

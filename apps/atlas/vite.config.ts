@@ -5,7 +5,7 @@ import hostingConfig from "./.openai/hosting.json";
 import { access, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { createHash } from "node:crypto";
-import { getFixtureScenario, type ProjectFixture } from "../../packages/atlas-fixtures/src/index.ts";
+import { completeSfeExtraction, getFixtureScenario, type ProjectFixture, type SfeExtractionResult } from "../../packages/atlas-fixtures/src/index.ts";
 
 const SITE_CREATOR_PLACEHOLDER_DATABASE_ID =
   "00000000-0000-4000-8000-000000000000";
@@ -30,11 +30,13 @@ const localFixtureStore: Plugin = {
   name: "atlas-local-fixture-store",
   configureServer(server) {
     server.middlewares.use(async (request, response, next) => {
-      if (request.url !== "/api/local-fixtures") return next();
+      const isRegistryRequest = request.url === "/api/local-fixtures";
+      const isExtractionRequest = request.url === "/api/local-fixtures/extract";
+      if (!isRegistryRequest && !isExtractionRequest) return next();
       let stagingSourceDir: string | undefined;
       let publishedSourceDir: string | undefined;
       try {
-        if (request.method === "GET") {
+        if (isRegistryRequest && request.method === "GET") {
           const registry = await readProjectFixtureRegistry();
           const modalProjects = await Promise.all(registry.modalProjects.map(async ({ files: _files, ...record }) => {
             if (record.sourceFiles) return record;
@@ -48,6 +50,17 @@ const localFixtureStore: Plugin = {
         if (request.method !== "POST") { response.statusCode = 405; response.end(); return; }
         const chunks: Uint8Array[] = []; for await (const chunk of request) chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
         const body = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+        if (isExtractionRequest) {
+          if (typeof body.projectId !== "string" || !body.result || typeof body.result !== "object" || typeof body.result.executionId !== "string" || !body.result.artifact || !Array.isArray(body.result.pages) || !Array.isArray(body.result.candidateAssertions) || !Array.isArray(body.result.sourceStatementInventory) || !Array.isArray(body.result.questions)) throw new Error("A complete extraction result is required.");
+          const registry = await readProjectFixtureRegistry();
+          const modalIndex = registry.modalProjects.findIndex((record) => record.project.id === body.projectId);
+          if (modalIndex < 0) throw new Error("Unknown modal-created project.");
+          const modalProject = registry.modalProjects[modalIndex];
+          const completed = completeSfeExtraction(modalProject as never, body.result as SfeExtractionResult);
+          const modalProjects = [...registry.modalProjects]; modalProjects[modalIndex] = completed;
+          await writeProjectFixtureRegistry({ ...registry, cards: registry.cards.map((card) => card.id === completed.project.id ? completed.project : card), modalProjects });
+          response.setHeader("content-type", "application/json"); response.end(JSON.stringify(completed)); return;
+        }
         if (!safeSegment(body.project?.id) || !safeSegment(body.initialDraftWorkspace?.workspaceId)) throw new Error("Invalid fixture identity.");
         const registry = await readProjectFixtureRegistry();
         if (registry.cards.some((project) => project.id === body.project.id)) throw new Error("That project ID is already in use.");
