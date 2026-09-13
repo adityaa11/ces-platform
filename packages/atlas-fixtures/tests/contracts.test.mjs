@@ -192,6 +192,17 @@ test("workspace selector inventory is fixture-owned, stable-ID keyed, and expose
   assert.match(resolveFixtureWorkspaceRoute("safara", "saf-a2b3c4d5e6f7").unavailableWorkspace?.unavailableReason ?? "", /cannot be opened/i);
 });
 
+test("SFE-003 resolves the completed Initial Draft route from its stable fixture identities", () => {
+  const scenario = getFixtureScenario("owner-ready");
+  const route = resolveFixtureProjectRoute(scenario, "safara-project-01");
+  const inventory = resolveFixtureWorkspaceInventory("safara-project-01");
+  assert.equal(route.canOpenWorkspace, true);
+  assert.equal(route.workspace?.project.id, "safara-project-01");
+  assert.deepEqual(inventory.map((workspace) => workspace.name), ["Master", "Initial Draft"]);
+  assert.deepEqual(inventory.map((workspace) => workspace.workspaceId), ["master", "saf-24aysgyw4su6"]);
+  assert.equal(resolveFixtureWorkspaceRoute("safara-project-01", "saf-24aysgyw4su6").selectedWorkspace?.name, "Initial Draft");
+});
+
 test("project-card stress inputs stay isolated from accepted scenarios and cover each planned field limit", () => {
   assert.equal(Object.values(fixtureScenarios).some((scenario) => scenario.projects === projectCardStressFixtures), false);
   assert.equal(projectCardStressFixtures.length, 3);
