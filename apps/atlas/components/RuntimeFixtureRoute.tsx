@@ -25,7 +25,7 @@ export function RuntimeFixtureRoute({ scenario, scenarioId, projectId, workspace
   const initialLens = lensFromSearch(scenario.lens, prd, lens);
   const common = { initialLens, initialWorkspaceId: workspaceRoute?.selectedWorkspace?.workspaceId, projects, scenario: scenarioId, unavailableWorkspaceName: workspaceRoute?.unavailableWorkspace?.name, user: scenario.session, workspace };
   if (view === "workflow") return <WorkflowWorkspace {...common} fixtureRecords={records} initialWorkflowId={workflowId} onWorkspaceSelect={setSelectedWorkspaceId} />;
-  if (view === "facts" || view === "changes") return <ProjectKnowledge {...common} initialFactId={factId} view={view} />;
-  if (view === "ces") return <CesResult {...common} initialCesItemId={cesItemId} />;
+  if (view === "facts" || view === "changes") return <ProjectKnowledge {...common} fixtureRecords={records} initialFactId={factId} onWorkspaceSelect={setSelectedWorkspaceId} view={view} />;
+  if (view === "ces") return <CesResult {...common} fixtureRecords={records} initialCesItemId={cesItemId} onWorkspaceSelect={setSelectedWorkspaceId} />;
   return <SourcesWorkspace {...common} />;
 }
