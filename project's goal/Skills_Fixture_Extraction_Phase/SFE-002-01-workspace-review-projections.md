@@ -1,6 +1,6 @@
 # SFE-002-01: Generate generic workspace review projections
 
-- **State:** in_progress
+- **State:** awaiting_review
 - **Review batch:** BATCH-34
 - **Depends on:** SFE-002 BATCH-27 PASS; user `go`
 - **Blocks:** SFE-003-01, SFE-004 through SFE-007

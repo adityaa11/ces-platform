@@ -36,6 +36,7 @@ test("every Atlas skill manifest parses and validates representative valid and i
     "atlas-fixture-repository",
     "atlas-fixture-verification",
     "atlas-prd-extraction",
+    "atlas-workspace-review-projections",
   ]);
 
   for (const { manifest } of manifests) {

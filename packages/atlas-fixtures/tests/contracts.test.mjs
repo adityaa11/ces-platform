@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
-import { completeSfeExtraction, createFixtureProject, createFixtureWorkspace, fixtureScenarios, getFixtureScenario, markFixtureWorkspaceReadyForReview, projectCardStressFixtures, projectCardStressLimits, resolveFixtureAuthoringExecutor, resolveFixtureProjectRoute, resolveFixtureWorkspaceContent, resolveFixtureWorkspaceInventory, resolveFixtureWorkspaceRoute, resolveSkillsMode, workspaceIdPattern } from "../src/index.ts";
+import { completeSfeExtraction, createFixtureProject, createFixtureWorkspace, fixtureScenarios, getFixtureScenario, markFixtureWorkspaceReadyForReview, projectCardStressFixtures, projectCardStressLimits, projectWorkspaceReview, resolveFixtureAuthoringExecutor, resolveFixtureProjectRoute, resolveFixtureWorkspaceContent, resolveFixtureWorkspaceInventory, resolveFixtureWorkspaceRoute, resolveSkillsMode, workspaceIdPattern } from "../src/index.ts";
 
 test("skills mode defaults to codex and accepts only documented repository-wide values", () => {
   assert.equal(resolveSkillsMode(), "codex");
@@ -170,6 +170,29 @@ test("SFE-002 persisted extraction splits registration history, registration gat
   assert.ok(candidates.has("cand-045"));
   assert.ok(candidates.has("cand-046"));
   assert.ok(candidates.has("cand-047"));
+});
+
+test("workspace review projections are isolated, source-language, and candidate-only", async () => {
+  const extraction = JSON.parse(await readFile(path.resolve(import.meta.dirname, "../generated/sfe-002-saf-24aysgyw4su6.json"), "utf8"));
+  const review = projectWorkspaceReview({ workspaceId: extraction.artifact.workspaceId, projectId: "safara-project-01", status: "ready-for-review", extraction, requestedSurfaces: ["workflow", "facts", "ces"] });
+  assert.equal(review.status, "complete");
+  assert.equal(review.reviewModel.status, "review-only");
+  assert.equal(review.reviewModel.groups.length, extraction.candidateAssertions.length);
+  assert.equal(review.reviewModel.annotations.length, extraction.candidateAssertions.length * 3);
+  assert.ok(review.reviewModel.annotations.every((annotation) => annotation.supportingCandidateIds.includes(annotation.candidateId) && !annotation.label.includes(annotation.candidateId) && !annotation.label.includes("safara.")));
+  const crossWorkspace = projectWorkspaceReview({ workspaceId: "other-workspace", projectId: "other", status: "ready-for-review", extraction, requestedSurfaces: ["facts"] });
+  assert.equal(crossWorkspace.status, "needs_resolution");
+});
+
+test("workspace review projections retain a differently worded source without phrase rules", async () => {
+  const extraction = JSON.parse(await readFile(path.resolve(import.meta.dirname, "../generated/sfe-002-saf-24aysgyw4su6.json"), "utf8"));
+  const candidate = structuredClone(extraction.candidateAssertions[0]);
+  candidate.candidateId = "different-source-claim";
+  candidate.evidence = { ...candidate.evidence, artifactId: "artifact-other", quote: "Teams record enrollment requests before allocating capacity." };
+  const differentExtraction = { ...extraction, artifact: { ...extraction.artifact, artifactId: "artifact-other", workspaceId: "other-review" }, candidateAssertions: [candidate] };
+  const review = projectWorkspaceReview({ workspaceId: "other-review", projectId: "other", status: "ready-for-review", extraction: differentExtraction, requestedSurfaces: ["workflow", "facts", "ces"] });
+  assert.equal(review.status, "complete");
+  assert.ok(review.reviewModel.annotations.every((annotation) => annotation.label === "Teams record enrollment requests before allocating capacity."));
 });
 
 test("workspace creation is transient, Master-rooted, collision-safe, and unavailable while extracting", () => {
