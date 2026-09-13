@@ -14,12 +14,8 @@
 - [Fixture Data-Intent Contract](../atlas-ui/FIXTURE_DATA_INTENT_CONTRACT.md)
 - [AUI-002 Fixture scenarios and UI contracts](../atlas-ui/AUI-002-fixture-scenarios-and-ui-contracts.md)
 - [AUI-004 Project library, upload, and processing experience](../atlas-ui/AUI-004-project-library-upload-and-processing.md)
-- [GLF-003-02 Safara fact accounting](../Git-Like_Fixture_Phase/GLF-003-02-exhaustive-safara-fact-accounting.md)
-- [GLF-003-03 Workspace-creation fixture contract](../Git-Like_Fixture_Phase/GLF-003-03-workspace-creation-fixture-contract.md)
-- [GLF-004-01 Project-route fixture recalibration](../Git-Like_Fixture_Phase/GLF-004-01-project-route-fixture-recalibration.md)
-- [GLF-004-02 Project creation intake and pipeline handoff](../Git-Like_Fixture_Phase/GLF-004-02-project-creation-intake-and-pipeline-handoff.md)
-- [GLF-005-01 Workspace selector golden-fixture integration](../Git-Like_Fixture_Phase/GLF-005-01-workspace-selector-golden-fixture-integration.md)
-- [GLF-005-02 New workspace modal and fixture handoff](../Git-Like_Fixture_Phase/GLF-005-02-new-workspace-modal-and-fixture-handoff.md)
+- [GLF-001 Shared skill contracts and execution mode](../Git-Like_Fixture_Phase/GLF-001-shared-skill-contracts-and-execution-mode.md)
+- [GLF-002 Skill definitions and review contract](../Git-Like_Fixture_Phase/GLF-002-skill-definitions-and-review-contract.md)
 - [Atlas PRD extraction skill](../../.agents/skills/atlas-prd-extraction/SKILL.md)
 - [Atlas fixture repository skill](../../.agents/skills/atlas-fixture-repository/SKILL.md)
 - [Atlas fixture changes skill](../../.agents/skills/atlas-fixture-changes/SKILL.md)
@@ -27,6 +23,11 @@
 - [Atlas fixture verification skill](../../.agents/skills/atlas-fixture-verification/SKILL.md)
 
 The UI/UX PRD remains marked Draft and the product-context document has no global approval marker. The user's approval is scoped to this ticket set; it does not change either document's status or approve unrelated requirements.
+
+SFE consumes only the shared skill set and execution/review boundaries defined by
+GLF-001 and GLF-002. It creates its own workspace-scoped source records,
+candidate fixtures, and lifecycle transitions; it does not inherit pre-existing
+fixture data as SFE input.
 
 ## Agreed scenario
 
@@ -45,6 +46,17 @@ All project cards and workspaces are created through the existing UI components.
 | SFE-007 | Extract and reconcile PDF 02 against the selected base workspace. | The new workspace reaches Ready for review with a reconciliation candidate; the published Master remains the accepted baseline. |
 
 The expected PDFs are `Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf` and `Safara_Incremental_PRD_02_Payment_Documents_Readiness.pdf`. The user plans to empty `docs/PRD/` before the manual run, so the app must use the bytes actually selected in the browser rather than relying on either file remaining at its former repository path.
+
+## SFE workspace-source rule
+
+**User-approved scope adjustment — 13 September 2026.** An SFE skill
+invocation may receive only the file record, bytes, hash, page text, and
+accepted-base context resolved from the preceding SFE modal/workspace record.
+The workspace-scoped path is the sole source authority. Any input that cannot
+be resolved from that record is a source-authority failure: stop processing,
+leave the workspace non-reviewable, and report needs attention. This rule
+applies to SFE-001 through SFE-007 and to their validation, fixtures, scripts,
+and UI adapters.
 
 ### Approved scenario adjustment
 
@@ -65,18 +77,19 @@ Each ticket has its own review batch because each checkpoint changes a data or i
 
 | Order | Ticket / batch | State | Depends on | Review question |
 |---:|---|---|---|---|
-| 0 | [SFE-000 / BATCH-25](SFE-000-skills-to-sfe-integration-map.md) | approved | Completed GLF skill and integration decisions | Does the map connect the five shared skill contracts to SFE without changing their authority or bypassing a gate? |
-| 1 | [SFE-001 / BATCH-26](SFE-001-project-intake-and-initial-workspace.md) | approved | SFE-000 approved; GLF-004-02 approval; GLF-004-01; GLF-003-03; AUI-004 | Does the project modal create the Extracting card, workspace ID, empty Master, Initial Draft workspace, and workspace-scoped PDF path without extracting? |
-| 2 | [SFE-002 / BATCH-27](SFE-002-initial-draft-extraction.md) | awaiting_review | SFE-000 approved; SFE-001; GLF-003-02 | Does processing use that exact workspace ID and file to extract PDF 01 and transition the project card to Ready to review? |
-| 3 | [SFE-003 / BATCH-28](SFE-003-route-and-switcher-initial-draft-wiring.md) | planned | SFE-000 approved; SFE-002; GLF-004-01; GLF-005-01 | Do the existing project route and selector expose the empty Master and populated Initial Draft from the same generated fixture? |
-| 4 | [SFE-004 / BATCH-29](SFE-004-repeat-initial-draft-cycle-for-project-two.md) | planned | SFE-000 approved; SFE-003; GLF-003-02 | Does creating project 02 through the same components independently reproduce the project 01 extraction output? |
+| 0 | [SFE-000 / BATCH-25](SFE-000-skills-to-sfe-integration-map.md) | approved | Approved shared skill contracts | Does the map connect the five shared skill contracts to SFE without changing their authority or bypassing a gate? |
+| 1 | [SFE-001 / BATCH-26](SFE-001-project-intake-and-initial-workspace.md) | approved | SFE-000 approved; AUI-004 | Does the project modal create the Extracting card, workspace ID, empty Master, Initial Draft workspace, and workspace-scoped PDF path without extracting? |
+| 2 | [SFE-002 / BATCH-27](SFE-002-initial-draft-extraction.md) | awaiting_review | SFE-000 approved; SFE-001 | Does processing use that exact workspace ID and file to extract PDF 01 and transition the project card to Ready to review? |
+| 3 | [SFE-003 / BATCH-28](SFE-003-route-and-switcher-initial-draft-wiring.md) | planned | SFE-000 approved; SFE-002 | Do the existing project route and selector expose the empty Master and populated Initial Draft from the same generated fixture? |
+| 4 | [SFE-004 / BATCH-29](SFE-004-repeat-initial-draft-cycle-for-project-two.md) | planned | SFE-000 approved; SFE-003 | Does creating project 02 through the same components independently reproduce the project 01 extraction output? |
 | 5 | [SFE-005 / BATCH-30](SFE-005-publish-project-two-initial-draft.md) | planned | SFE-000 approved; SFE-004; fixture changes and repository contracts | Does publishing project 02's Initial Draft promote its accepted fixtures to Master and update the card to Published without changing project 01? |
-| 6 | [SFE-006 / BATCH-31](SFE-006-new-workspace-intake-from-switcher.md) | planned | SFE-000 approved; SFE-005; GLF-003-03; GLF-005-02 | Does + New workspace create an Extracting workspace from the chosen base and store PDF 02 under its generated workspace ID? |
+| 6 | [SFE-006 / BATCH-31](SFE-006-new-workspace-intake-from-switcher.md) | planned | SFE-000 approved; SFE-005 | Does + New workspace create an Extracting workspace from the chosen base and store PDF 02 under its generated workspace ID? |
 | 7 | [SFE-007 / BATCH-32](SFE-007-extract-and-reconcile-new-workspace-prd.md) | planned | SFE-000 approved; SFE-006; PRD extraction, changes, projection, and verification contracts | Does PDF 02 produce a Ready-to-review reconciliation candidate against the selected base while preserving Master truth? |
 
 ## Dependency gate
 
-The completed GLF delivery record at `d45e869` marks GLF-004-02 and its other SFE prerequisites approved; the BATCH-20.2 checkpoint passed at `3c4c354` and its post-pass regression check passed at `39add96`. The historical GLF-004-02 ticket header remains `awaiting_review`, but the completed GLF delivery record is the phase-level status source for this SFE dependency. SFE-001 therefore remains planned only because SFE-000 must pass BATCH-25 and receive an explicit `go`; this new ticket set neither reopens nor bypasses the completed GLF gate.
+SFE begins from its approved shared skill contracts. Each ticket starts only
+after its named SFE dependencies pass review and receive an explicit `go`.
 
 ## Review controls
 

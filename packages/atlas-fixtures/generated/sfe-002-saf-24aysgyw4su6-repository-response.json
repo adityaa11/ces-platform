@@ -1,0 +1,171 @@
+{
+  "skillId": "atlas.fixture-repository",
+  "skillVersion": "1.2.0",
+  "executionProvenance": {
+    "skillId": "atlas.fixture-repository",
+    "skillVersion": "1.2.0",
+    "mode": "codex"
+  },
+  "status": "complete",
+  "repositoryCandidate": {
+    "projectId": "safara-project-01",
+    "sourceArtifacts": [
+      {
+        "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+        "workspaceId": "saf-24aysgyw4su6",
+        "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+        "type": "application/pdf",
+        "size": 25548,
+        "relativePath": "docs/PRD/safara-project-01/saf-24aysgyw4su6/Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+        "sha256": "75A6BF6C7411C909F9A94DD763CFB540656717C5ECAC789DAD57E7DE4E6740BC",
+        "verifiedSha256": "75A6BF6C7411C909F9A94DD763CFB540656717C5ECAC789DAD57E7DE4E6740BC"
+      }
+    ],
+    "candidateWorkspace": {
+      "workspaceId": "saf-24aysgyw4su6",
+      "extractionExecutionId": "artifact-saf-24aysgyw4su6-prd-01-extraction-01",
+      "candidateAssertionIds": [
+        "cand-001",
+        "cand-002",
+        "cand-003",
+        "cand-004",
+        "cand-005",
+        "cand-006",
+        "cand-007",
+        "cand-008",
+        "cand-009",
+        "cand-010",
+        "cand-011",
+        "cand-012",
+        "cand-013",
+        "cand-014",
+        "cand-015",
+        "cand-016",
+        "cand-017",
+        "cand-018",
+        "cand-019",
+        "cand-020",
+        "cand-021",
+        "cand-022",
+        "cand-023",
+        "cand-024",
+        "cand-025",
+        "cand-026",
+        "cand-027",
+        "cand-028",
+        "cand-029",
+        "cand-030",
+        "cand-031",
+        "cand-032",
+        "cand-033",
+        "cand-034",
+        "cand-035",
+        "cand-036",
+        "cand-037"
+      ],
+      "sourceStatementInventoryIds": [
+        "inv-002",
+        "inv-003",
+        "inv-005",
+        "inv-007",
+        "inv-008",
+        "inv-009",
+        "inv-010",
+        "inv-012",
+        "inv-013",
+        "inv-014",
+        "inv-015",
+        "inv-017",
+        "inv-018",
+        "inv-021",
+        "inv-022",
+        "inv-023",
+        "inv-024",
+        "inv-025",
+        "inv-026",
+        "inv-027",
+        "inv-028",
+        "inv-029",
+        "inv-030",
+        "inv-031",
+        "inv-032",
+        "inv-033",
+        "inv-034",
+        "inv-035",
+        "inv-036",
+        "inv-037",
+        "inv-038",
+        "inv-039",
+        "inv-040",
+        "inv-041",
+        "inv-042",
+        "inv-043",
+        "inv-044",
+        "inv-045",
+        "inv-046",
+        "inv-047",
+        "inv-048",
+        "inv-051",
+        "inv-052",
+        "inv-053",
+        "inv-054",
+        "inv-055",
+        "inv-056",
+        "inv-057",
+        "inv-058",
+        "inv-059",
+        "inv-060",
+        "inv-061",
+        "inv-062",
+        "inv-063",
+        "inv-064",
+        "inv-065",
+        "inv-066",
+        "nonfact-001",
+        "nonfact-001",
+        "nonfact-001",
+        "nonfact-001",
+        "nonfact-001",
+        "nonfact-001",
+        "nonfact-001",
+        "nonfact-001",
+        "nonfact-001",
+        "nonfact-001",
+        "nonfact-001",
+        "nonfact-001",
+        "nonfact-001",
+        "nonfact-001"
+      ],
+      "status": "awaiting_review"
+    },
+    "branches": [
+      {
+        "branchId": "branch-saf-24aysgyw4su6-master",
+        "label": "Master",
+        "headRevisionId": "rev-saf-24aysgyw4su6-master-empty"
+      }
+    ],
+    "revisions": [
+      {
+        "revisionId": "rev-saf-24aysgyw4su6-master-empty",
+        "parentRevisionIds": [],
+        "acceptedAssertionIds": [],
+        "executionProvenance": {
+          "skillId": "atlas.fixture-repository",
+          "skillVersion": "1.2.0",
+          "mode": "codex"
+        }
+      }
+    ],
+    "materializedStates": [
+      {
+        "branchId": "branch-saf-24aysgyw4su6-master",
+        "headRevisionId": "rev-saf-24aysgyw4su6-master-empty",
+        "state": {
+          "assertionIds": []
+        }
+      }
+    ]
+  },
+  "issues": []
+}

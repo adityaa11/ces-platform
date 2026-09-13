@@ -1,0 +1,57 @@
+{
+  "skillId": "atlas.fixture-verification",
+  "skillVersion": "1.1.0",
+  "executionProvenance": {
+    "skillId": "atlas.fixture-verification",
+    "skillVersion": "1.1.0",
+    "mode": "codex"
+  },
+  "status": "pass",
+  "checks": [
+    {
+      "checkId": "master-head-resolves",
+      "status": "pass",
+      "detail": "The empty Master branch resolves to its explicit empty revision.",
+      "evidence": [
+        {
+          "kind": "branch",
+          "reference": "branch-saf-24aysgyw4su6-master"
+        },
+        {
+          "kind": "revision",
+          "reference": "rev-saf-24aysgyw4su6-master-empty"
+        }
+      ]
+    },
+    {
+      "checkId": "candidate-provenance",
+      "status": "pass",
+      "detail": "Every Initial Draft candidate remains linked to the workspace-scoped artifact and accounting inventory.",
+      "evidence": [
+        {
+          "kind": "artifact",
+          "reference": "artifact-saf-24aysgyw4su6-prd-01"
+        },
+        {
+          "kind": "workspace",
+          "reference": "saf-24aysgyw4su6"
+        }
+      ]
+    },
+    {
+      "checkId": "candidate-master-isolation",
+      "status": "pass",
+      "detail": "The unapproved Initial Draft does not add assertions to Master or advance its empty HEAD.",
+      "evidence": [
+        {
+          "kind": "branch",
+          "reference": "branch-saf-24aysgyw4su6-master"
+        },
+        {
+          "kind": "workspace",
+          "reference": "saf-24aysgyw4su6"
+        }
+      ]
+    }
+  ]
+}

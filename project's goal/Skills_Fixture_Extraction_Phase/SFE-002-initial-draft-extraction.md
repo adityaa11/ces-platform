@@ -2,9 +2,10 @@
 
 - **State:** awaiting_review
 - **Review batch:** BATCH-27
-- **Depends on:** SFE-000 approved; SFE-001 approved; GLF-003-02 approved
-- **Baseline:** [SFE phase scope](SFE-README.md); [SFE-000 integration map](SFE-000-skills-to-sfe-integration-map.md); [Atlas Full Product Context](../Atlas_Full_Product_Context.md) source-grounding and incremental-PRD principles; [Atlas Git-Like Knowledge Architecture Checkpoint](../ATLAS_GIT_LIKE_KNOWLEDGE_ARCHITECTURE_CHECKPOINT.md) sections 5, 17, 22.1–22.8; [GLF-003-02](../Git-Like_Fixture_Phase/GLF-003-02-exhaustive-safara-fact-accounting.md); [GLF-003-03](../Git-Like_Fixture_Phase/GLF-003-03-workspace-creation-fixture-contract.md); [Atlas PRD extraction skill](../../.agents/skills/atlas-prd-extraction/SKILL.md); [Atlas PRD extraction JSON contract](../../.agents/skills/atlas-prd-extraction/atlas-skill.json); [Atlas fixture repository skill](../../.agents/skills/atlas-fixture-repository/SKILL.md); [Atlas fixture repository JSON contract](../../.agents/skills/atlas-fixture-repository/atlas-skill.json); [Atlas fixture verification skill](../../.agents/skills/atlas-fixture-verification/SKILL.md)
-- **SFE-000 map entries:** SFE-M1 full extraction/accounting; SFE-M2 extraction-results handoff; SFE-M4 candidate review versus accepted reads; SFE-M5 lifecycle and candidate/Master checks
+- **Depends on:** SFE-000 approved; SFE-001 approved
+- **Baseline:** [SFE phase scope](SFE-README.md); [SFE-000 integration map](SFE-000-skills-to-sfe-integration-map.md); [Atlas Full Product Context](../Atlas_Full_Product_Context.md) source-grounding and incremental-PRD principles; [Atlas Git-Like Knowledge Architecture Checkpoint](../ATLAS_GIT_LIKE_KNOWLEDGE_ARCHITECTURE_CHECKPOINT.md) sections 5, 17, 22.1–22.8; [Atlas PRD extraction skill](../../.agents/skills/atlas-prd-extraction/SKILL.md); [Atlas PRD extraction JSON contract](../../.agents/skills/atlas-prd-extraction/atlas-skill.json); [Atlas fixture repository skill](../../.agents/skills/atlas-fixture-repository/SKILL.md); [Atlas fixture repository JSON contract](../../.agents/skills/atlas-fixture-repository/atlas-skill.json); [Atlas fixture verification skill](../../.agents/skills/atlas-fixture-verification/SKILL.md)
+- **SFE-000 map entries:** SFE-M0 source isolation; SFE-M1 full extraction/accounting; SFE-M2 extraction-results handoff; SFE-M4 candidate review versus accepted reads; SFE-M5 lifecycle and candidate/Master checks
+- **Source authority:** Invoke skills only with the stored file resolved from SFE-001's project/workspace record; see the [SFE workspace-source rule](SFE-README.md#sfe-workspace-source-rule).
 
 ## Outcome
 

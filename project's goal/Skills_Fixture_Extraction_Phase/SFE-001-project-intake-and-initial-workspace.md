@@ -1,10 +1,11 @@
 # SFE-001: Project intake creates an Extracting card and Initial Draft workspace
 
-- **State:** awaiting_review
+- **State:** approved
 - **Review batch:** BATCH-26
-- **Depends on:** SFE-000 approved; GLF-004-02 approved; GLF-004-01 approved; GLF-003-03 approved; AUI-004 approved
-- **Baseline:** [SFE phase scope](SFE-README.md); [SFE-000 integration map](SFE-000-skills-to-sfe-integration-map.md); [Atlas UI/UX Prototype PRD](../Atlas_UI_UX_Prototype_PRD.md) sections 4.2–4.3, 5, 9.1, 9.4; [Fixture Data-Intent Contract](../atlas-ui/FIXTURE_DATA_INTENT_CONTRACT.md); [GLF-003-03](../Git-Like_Fixture_Phase/GLF-003-03-workspace-creation-fixture-contract.md); [GLF-004-02](../Git-Like_Fixture_Phase/GLF-004-02-project-creation-intake-and-pipeline-handoff.md); [AUI-004](../atlas-ui/AUI-004-project-library-upload-and-processing.md)
-- **SFE-000 map entries:** SFE-M1 upload capture only; SFE-M5 file-record, path, hash, and ID checks
+- **Depends on:** SFE-000 approved; AUI-004 approved
+- **Baseline:** [SFE phase scope](SFE-README.md); [SFE-000 integration map](SFE-000-skills-to-sfe-integration-map.md); [Atlas UI/UX Prototype PRD](../Atlas_UI_UX_Prototype_PRD.md) sections 4.2–4.3, 5, 9.1, 9.4; [Fixture Data-Intent Contract](../atlas-ui/FIXTURE_DATA_INTENT_CONTRACT.md); [AUI-004](../atlas-ui/AUI-004-project-library-upload-and-processing.md)
+- **SFE-000 map entries:** SFE-M0 source isolation; SFE-M1 upload capture only; SFE-M5 file-record, path, hash, and ID checks
+- **Source authority:** Accept bytes only from the submitted modal file and its generated workspace path; see the [SFE workspace-source rule](SFE-README.md#sfe-workspace-source-rule).
 - **Approved adjustment:** On 13 September 2026, the user approved accepting any valid, unique project ID supplied through the Create a project modal; earlier fixed-ID examples are test data, not a requirement.
 - **Reopened:** On 13 September 2026, runtime verification found that modal-created records were stored in a separate disposable `local-projects.json` file rather than the shared fixture registry that supplies the project cards. The workspace-scoped PDF can survive while its project, workspace, job, and PRD record do not. This contradicts the fixture-backed project-card and reload acceptance criteria; SFE-001 requires remediation and re-review before SFE-002 may proceed.
 

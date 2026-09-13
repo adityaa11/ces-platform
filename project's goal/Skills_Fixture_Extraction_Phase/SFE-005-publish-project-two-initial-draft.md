@@ -3,12 +3,14 @@
 - **State:** planned
 - **Review batch:** BATCH-30
 - **Depends on:** SFE-000 approved; SFE-004 approved; Atlas fixture repository, changes, and verification contracts approved
-- **Baseline:** [SFE phase scope](SFE-README.md); [SFE-000 integration map](SFE-000-skills-to-sfe-integration-map.md); [Atlas Git-Like Knowledge Architecture Checkpoint](../ATLAS_GIT_LIKE_KNOWLEDGE_ARCHITECTURE_CHECKPOINT.md) sections 17, 18, 22.3–22.8; [GLF-003](../Git-Like_Fixture_Phase/GLF-003-golden-fixture-data-contract.md); [Atlas fixture repository skill](../../.agents/skills/atlas-fixture-repository/SKILL.md); [Atlas fixture changes skill](../../.agents/skills/atlas-fixture-changes/SKILL.md); [Atlas fixture verification skill](../../.agents/skills/atlas-fixture-verification/SKILL.md)
-- **SFE-000 map entries:** SFE-M3 deterministic project-02 acceptance; SFE-M4 projections from accepted Master HEAD; SFE-M5 publication, project isolation, and branch checks
+- **Baseline:** [SFE phase scope](SFE-README.md); [SFE-000 integration map](SFE-000-skills-to-sfe-integration-map.md); [Atlas Git-Like Knowledge Architecture Checkpoint](../ATLAS_GIT_LIKE_KNOWLEDGE_ARCHITECTURE_CHECKPOINT.md) sections 17, 18, 22.3–22.8; [Atlas fixture repository skill](../../.agents/skills/atlas-fixture-repository/SKILL.md); [Atlas fixture changes skill](../../.agents/skills/atlas-fixture-changes/SKILL.md); [Atlas fixture verification skill](../../.agents/skills/atlas-fixture-verification/SKILL.md)
+- **SFE-000 map entries:** SFE-M0 source isolation; SFE-M3 deterministic project-02 acceptance; SFE-M4 projections from accepted Master HEAD; SFE-M5 publication, project isolation, and branch checks
+- **Source authority:** Publish only the accepted SFE-004 Initial Draft candidate and provenance; see the [SFE workspace-source rule](SFE-README.md#sfe-workspace-source-rule).
+- **Runtime identity:** “Project 02” means the distinct project record returned by SFE-004's modal submission; resolve all IDs, paths, and records from that result.
 
 ## Outcome
 
-Treat project 02's SFE-004 Initial Draft as approved and publish it to Master as a completed scenario step. The project card then shows Published, and the accepted fixture state from Initial Draft is represented in Master with complete provenance.
+Treat the distinct second scenario project's SFE-004 Initial Draft as approved and publish it to Master as a completed scenario step. Resolve its identity from SFE-004; “project 02” is a scenario label only. The card then shows Published, and the accepted fixture state from Initial Draft is represented in Master with complete provenance.
 
 ## Scope
 

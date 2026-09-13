@@ -114,13 +114,50 @@ test("every shared skill is candidate or advisory only and carries execution pro
   }
 });
 
-test("SFE-002 artifact is contract-valid and supplies the extraction-backed repository handoff", async () => {
+test("SFE-002 extraction stays candidate-only and supplies a validated repository handoff", async () => {
   const ajv = new Ajv({ strict: false });
   const byId = Object.fromEntries(manifests.map(({ manifest }) => [manifest.id, manifest]));
   const extraction = JSON.parse(await readFile(path.resolve(import.meta.dirname, "../generated/sfe-002-saf-24aysgyw4su6.json"), "utf8"));
   assert.equal(ajv.compile(byId["atlas.prd-extraction"].outputSchema)(extraction), true, "persisted extraction obeys the declared PRD contract");
+  const candidates = new Map(extraction.candidateAssertions.map((candidate) => [candidate.candidateId, candidate]));
+  for (const entry of extraction.sourceStatementInventory) {
+    if (entry.destination.type !== "candidate_assertion") continue;
+    const candidate = candidates.get(entry.destination.candidateId);
+    assert.ok(candidate, `${entry.inventoryId} resolves to a candidate assertion`);
+    assert.equal(candidate.evidence.artifactId, extraction.artifact.artifactId, `${entry.inventoryId} preserves artifact provenance`);
+  }
   const repositoryInput = { projectId: "safara-project-01", sourceArtifacts: [extraction.artifact], requestedScenario: "initial-draft-extraction", scenarioKind: "extraction_backed", extractionResults: [{ workspaceId: extraction.artifact.workspaceId, artifact: extraction.artifact, candidateAssertions: extraction.candidateAssertions, sourceStatementInventory: extraction.sourceStatementInventory }] };
   assert.equal(ajv.compile(byId["atlas.fixture-repository"].inputSchema)(repositoryInput), true, "repository assembly accepts the validated extraction handoff");
-  const verifier = { skillId: "atlas.fixture-verification", skillVersion: "1.1.0", executionProvenance: { skillId: "atlas.fixture-verification", skillVersion: "1.1.0", mode: "codex" }, status: "pass", checks: [{ checkId: "sfe-002-contract-handoff", status: "pass", detail: "The extraction-backed repository input carries the validated workspace, artifact, candidates, and accounting inventory.", evidence: [{ kind: "fixture", reference: "sfe-002-saf-24aysgyw4su6.json" }] }] };
-  assert.equal(ajv.compile(byId["atlas.fixture-verification"].outputSchema)(verifier), true, "fixture-verification outcome is declared and valid");
+  const workflowSteps = extraction.candidateAssertions.filter((candidate) => candidate.kind === "workflow_step");
+  assert.equal(workflowSteps.length, 6, "the complete six-step main workflow is retained");
+  const orderedIds = workflowSteps.map((candidate) => candidate.candidateId);
+  for (const step of workflowSteps) {
+    assert.deepEqual(step.payload.orderedSteps, orderedIds, `${step.candidateId} retains the complete ordered flow`);
+    for (const field of ["actors", "triggers", "conditions", "branches", "inputs", "outputs", "dependencies", "stateTransitions", "exceptions"]) assert.ok(Array.isArray(step.payload[field]), `${step.candidateId} declares ${field}`);
+    assert.ok(Array.isArray(step.payload.unresolved), `${step.candidateId} retains unsupported workflow details as unresolved`);
+  }
+  const footerEntries = extraction.sourceStatementInventory.filter((entry) => entry.quote.includes("Sistem Administrasi Travel Umrah Dokumen Bisnis"));
+  assert.equal(footerEntries.length, 3, "each page footer is accounted for once");
+  assert.ok(footerEntries.every((entry) => entry.classification === "non_fact" && entry.destination.type === "non_fact"), "footers are never candidate assertions");
+});
+
+test("SFE-002 repository candidate and verification preserve an empty Master", async () => {
+  const ajv = new Ajv({ strict: false });
+  const byId = Object.fromEntries(manifests.map(({ manifest }) => [manifest.id, manifest]));
+  const pipeline = JSON.parse(await readFile(path.resolve(import.meta.dirname, "../generated/sfe-002-saf-24aysgyw4su6-pipeline.json"), "utf8"));
+  const repositoryResponse = JSON.parse(await readFile(path.resolve(import.meta.dirname, "../generated/sfe-002-saf-24aysgyw4su6-repository-response.json"), "utf8"));
+  const verificationResponse = JSON.parse(await readFile(path.resolve(import.meta.dirname, "../generated/sfe-002-saf-24aysgyw4su6-verification-response.json"), "utf8"));
+  assert.deepEqual(pipeline.repositoryResponse, repositoryResponse, "pipeline records the supplied repository skill response verbatim");
+  assert.deepEqual(pipeline.verification, verificationResponse, "pipeline records the supplied verification skill response verbatim");
+  assert.equal(ajv.compile(byId["atlas.fixture-repository"].inputSchema)(pipeline.repositoryInput), true, "pipeline preserves the extraction-backed handoff");
+  assert.equal(ajv.compile(byId["atlas.fixture-repository"].outputSchema)(pipeline.repositoryResponse), true, "repository stage returns a declared candidate result");
+  assert.equal(ajv.compile(byId["atlas.fixture-verification"].inputSchema)(pipeline.verificationInput), true, "verification receives the repository candidate and selected Master projection");
+  assert.equal(ajv.compile(byId["atlas.fixture-verification"].outputSchema)(pipeline.verification), true, "verification stage returns a declared advisory result");
+  const repository = pipeline.repositoryResponse.repositoryCandidate;
+  assert.equal(repository.candidateWorkspace.status, "awaiting_review");
+  assert.equal(repository.revisions.length, 1);
+  assert.deepEqual(repository.revisions[0].acceptedAssertionIds, []);
+  assert.deepEqual(repository.materializedStates[0].state.assertionIds, []);
+  assert.equal(pipeline.verification.status, "pass");
+  assert.ok(pipeline.verification.checks.every((check) => check.status === "pass"));
 });
