@@ -79,8 +79,8 @@ Each ticket has its own review batch because each checkpoint changes a data or i
 |---:|---|---|---|---|
 | 0 | [SFE-000 / BATCH-25](SFE-000-skills-to-sfe-integration-map.md) | approved | Approved shared skill contracts | Does the map connect the five shared skill contracts to SFE without changing their authority or bypassing a gate? |
 | 1 | [SFE-001 / BATCH-26](SFE-001-project-intake-and-initial-workspace.md) | approved | SFE-000 approved; AUI-004 | Does the project modal create the Extracting card, workspace ID, empty Master, Initial Draft workspace, and workspace-scoped PDF path without extracting? |
-| 2 | [SFE-002 / BATCH-27](SFE-002-initial-draft-extraction.md) | awaiting_review | SFE-000 approved; SFE-001 | Does processing use that exact workspace ID and file to extract PDF 01 and transition the project card to Ready to review? |
-| 3 | [SFE-003 / BATCH-28](SFE-003-route-and-switcher-initial-draft-wiring.md) | planned | SFE-000 approved; SFE-002 | Do the existing project route and selector expose the empty Master and populated Initial Draft from the same generated fixture? |
+| 2 | [SFE-002 / BATCH-27](SFE-002-initial-draft-extraction.md) | approved | SFE-000 approved; SFE-001 | Does processing use that exact workspace ID and file to extract PDF 01 and transition the project card to Ready to review? |
+| 3 | [SFE-003 / BATCH-28](SFE-003-route-and-switcher-initial-draft-wiring.md) | in_progress | SFE-000 approved; SFE-002 | Do the existing project route and selector expose the empty Master and populated Initial Draft from the same generated fixture? |
 | 4 | [SFE-004 / BATCH-29](SFE-004-repeat-initial-draft-cycle-for-project-two.md) | planned | SFE-000 approved; SFE-003 | Does creating project 02 through the same components independently reproduce the project 01 extraction output? |
 | 5 | [SFE-005 / BATCH-30](SFE-005-publish-project-two-initial-draft.md) | planned | SFE-000 approved; SFE-004; fixture changes and repository contracts | Does publishing project 02's Initial Draft promote its accepted fixtures to Master and update the card to Published without changing project 01? |
 | 6 | [SFE-006 / BATCH-31](SFE-006-new-workspace-intake-from-switcher.md) | planned | SFE-000 approved; SFE-005 | Does + New workspace create an Extracting workspace from the chosen base and store PDF 02 under its generated workspace ID? |
@@ -93,7 +93,7 @@ after its named SFE dependencies pass review and receive an explicit `go`.
 
 ## Review controls
 
-- SFE-000 and SFE-001 are `approved`. SFE-002 is `awaiting_review` against the persisted modal-created fixture. SFE-003 through SFE-007 remain `planned`. This ticket set does not authorize a later implementation batch until its dependencies and review controls allow it.
+- SFE-000 through SFE-002 are `approved`. SFE-003 is `in_progress`; SFE-004 through SFE-007 remain `planned`. This ticket set does not authorize a later implementation batch until its dependencies and review controls allow it.
 - Implement only the currently authorized ticket or review batch. Do not start the next batch until the current batch has a PASS review and the user says `go`.
 - UI batches require rendered browser validation for the connected component flow, supported responsive widths and themes, and keyboard/focus behavior.
 - Fixture batches validate source provenance, stable project/workspace IDs, branch/workspace relationships, and proposal-versus-accepted-truth boundaries.

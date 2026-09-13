@@ -1,6 +1,6 @@
 # SFE-003: Wire the Initial Draft fixture to the project route and switcher
 
-- **State:** planned
+- **State:** in_progress
 - **Review batch:** BATCH-28
 - **Depends on:** SFE-000 approved; SFE-002 approved
 - **Baseline:** [SFE phase scope](SFE-README.md); [SFE-000 integration map](SFE-000-skills-to-sfe-integration-map.md); [Atlas UI/UX Prototype PRD](../Atlas_UI_UX_Prototype_PRD.md) sections 4.2–4.3, 5–6, 9.1, 9.4; [Fixture Data-Intent Contract](../atlas-ui/FIXTURE_DATA_INTENT_CONTRACT.md)
