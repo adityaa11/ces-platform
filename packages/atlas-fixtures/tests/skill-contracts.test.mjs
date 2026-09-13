@@ -142,6 +142,14 @@ test("SFE-002 extraction stays candidate-only and supplies a validated repositor
   assert.ok(footerEntries.every((entry) => entry.classification === "non_fact" && entry.destination.type === "non_fact"), "footers are never candidate assertions");
 });
 
+test("workspace review contract accepts the persisted complete extraction", async () => {
+  const ajv = new Ajv({ strict: false });
+  const byId = Object.fromEntries(manifests.map(({ manifest }) => [manifest.id, manifest]));
+  const extraction = JSON.parse(await readFile(path.resolve(import.meta.dirname, "../generated/sfe-002-saf-24aysgyw4su6.json"), "utf8"));
+  const reviewInput = { workspace: { workspaceId: extraction.artifact.workspaceId, projectId: "safara-project-01", status: "ready-for-review", sourceLanguage: "id" }, extraction, requestedSurfaces: ["workflow", "facts", "ces"] };
+  assert.equal(ajv.compile(byId["atlas.workspace-review-projections"].inputSchema)(reviewInput), true, "workspace review accepts the complete persisted extraction result");
+});
+
 test("SFE-002 repository candidate and verification preserve an empty Master", async () => {
   const ajv = new Ajv({ strict: false });
   const byId = Object.fromEntries(manifests.map(({ manifest }) => [manifest.id, manifest]));

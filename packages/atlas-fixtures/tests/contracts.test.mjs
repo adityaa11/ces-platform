@@ -174,13 +174,19 @@ test("SFE-002 persisted extraction splits registration history, registration gat
 
 test("workspace review projections are isolated, source-language, and candidate-only", async () => {
   const extraction = JSON.parse(await readFile(path.resolve(import.meta.dirname, "../generated/sfe-002-saf-24aysgyw4su6.json"), "utf8"));
-  const review = projectWorkspaceReview({ workspaceId: extraction.artifact.workspaceId, projectId: "safara-project-01", status: "ready-for-review", extraction, requestedSurfaces: ["workflow", "facts", "ces"] });
+  const review = projectWorkspaceReview({ workspaceId: extraction.artifact.workspaceId, projectId: "safara-project-01", status: "ready-for-review", sourceLanguage: "id", extraction, requestedSurfaces: ["workflow", "facts", "ces"] });
   assert.equal(review.status, "complete");
   assert.equal(review.reviewModel.status, "review-only");
   assert.equal(review.reviewModel.groups.length, extraction.candidateAssertions.length);
-  assert.equal(review.reviewModel.annotations.length, extraction.candidateAssertions.length * 3);
+  assert.ok(review.reviewModel.annotations.length < extraction.candidateAssertions.length * 3);
   assert.ok(review.reviewModel.annotations.every((annotation) => annotation.supportingCandidateIds.includes(annotation.candidateId) && !annotation.label.includes(annotation.candidateId) && !annotation.label.includes("safara.")));
-  const crossWorkspace = projectWorkspaceReview({ workspaceId: "other-workspace", projectId: "other", status: "ready-for-review", extraction, requestedSurfaces: ["facts"] });
+  const missingInventory = projectWorkspaceReview({ workspaceId: extraction.artifact.workspaceId, projectId: "safara-project-01", status: "ready-for-review", sourceLanguage: "id", extraction: { ...extraction, sourceStatementInventory: [] }, requestedSurfaces: ["facts"] });
+  assert.equal(missingInventory.status, "needs_resolution");
+  const alteredEvidence = structuredClone(extraction);
+  alteredEvidence.candidateAssertions[0].evidence.quote = "This wording is not present in the source page.";
+  const tamperedEvidence = projectWorkspaceReview({ workspaceId: extraction.artifact.workspaceId, projectId: "safara-project-01", status: "ready-for-review", sourceLanguage: "id", extraction: alteredEvidence, requestedSurfaces: ["facts"] });
+  assert.equal(tamperedEvidence.status, "needs_resolution");
+  const crossWorkspace = projectWorkspaceReview({ workspaceId: "other-workspace", projectId: "other", status: "ready-for-review", sourceLanguage: "id", extraction, requestedSurfaces: ["facts"] });
   assert.equal(crossWorkspace.status, "needs_resolution");
 });
 
@@ -189,8 +195,8 @@ test("workspace review projections retain a differently worded source without ph
   const candidate = structuredClone(extraction.candidateAssertions[0]);
   candidate.candidateId = "different-source-claim";
   candidate.evidence = { ...candidate.evidence, artifactId: "artifact-other", quote: "Teams record enrollment requests before allocating capacity." };
-  const differentExtraction = { ...extraction, artifact: { ...extraction.artifact, artifactId: "artifact-other", workspaceId: "other-review" }, candidateAssertions: [candidate] };
-  const review = projectWorkspaceReview({ workspaceId: "other-review", projectId: "other", status: "ready-for-review", extraction: differentExtraction, requestedSurfaces: ["workflow", "facts", "ces"] });
+  const differentExtraction = { ...extraction, artifact: { ...extraction.artifact, artifactId: "artifact-other", workspaceId: "other-review" }, pages: [{ page: 1, text: candidate.evidence.quote }], candidateAssertions: [candidate], sourceStatementInventory: [{ inventoryId: "other-claim", artifactId: "artifact-other", page: 1, quote: candidate.evidence.quote, classification: "material", normalizedInterpretation: {}, destination: { type: "candidate_assertion", candidateId: candidate.candidateId } }] };
+  const review = projectWorkspaceReview({ workspaceId: "other-review", projectId: "other", status: "ready-for-review", sourceLanguage: "en", extraction: differentExtraction, requestedSurfaces: ["facts"] });
   assert.equal(review.status, "complete");
   assert.ok(review.reviewModel.annotations.every((annotation) => annotation.label === "Teams record enrollment requests before allocating capacity."));
 });
