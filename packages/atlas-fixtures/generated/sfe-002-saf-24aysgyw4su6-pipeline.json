@@ -643,13 +643,10 @@
       {
         "candidateId": "cand-022",
         "kind": "registration_gate",
-        "semanticKey": "safara.registration.blocked_for_closed_or_full_schedule",
+        "semanticKey": "safara.registration.blocked_for_closed_schedule",
         "payload": {
           "operation": "new registration",
-          "denyWhen": [
-            "departure schedule is closed",
-            "quota is full"
-          ]
+          "denyWhen": "departure schedule is closed"
         },
         "relationships": [
           "cand-021",
@@ -1096,6 +1093,62 @@
           "page": 3,
           "quote": "Alur dari pembuatan paket sampai pendaftaran jemaah dapat dijalankan menggunakan contoh data yang\ndisepakati."
         }
+      },
+      {
+        "candidateId": "cand-045",
+        "kind": "registration_gate",
+        "semanticKey": "safara.registration.blocked_for_full_schedule",
+        "payload": {
+          "operation": "new registration",
+          "denyWhen": "departure schedule quota is full"
+        },
+        "relationships": [
+          "cand-021",
+          "cand-032"
+        ],
+        "possibleAffectedSemanticKey": null,
+        "evidence": {
+          "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+          "page": 2,
+          "quote": "Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh."
+        }
+      },
+      {
+        "candidateId": "cand-046",
+        "kind": "acceptance_criterion",
+        "semanticKey": "safara.increment_01.acceptance.quota_and_remaining_quota_calculated_correctly",
+        "payload": {
+          "criterion": "Quota and remaining quota are calculated correctly."
+        },
+        "relationships": [
+          "cand-021",
+          "cand-032"
+        ],
+        "possibleAffectedSemanticKey": null,
+        "evidence": {
+          "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+          "page": 3,
+          "quote": "Kuota dan sisa kuota dihitung dengan benar."
+        }
+      },
+      {
+        "candidateId": "cand-047",
+        "kind": "registration_history_rule",
+        "semanticKey": "safara.registration.multiple_registration_histories_allowed",
+        "payload": {
+          "entity": "pilgrim",
+          "allowance": "may have multiple registration histories"
+        },
+        "relationships": [
+          "cand-007",
+          "cand-030"
+        ],
+        "possibleAffectedSemanticKey": null,
+        "evidence": {
+          "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+          "page": 2,
+          "quote": "Satu jemaah dapat memiliki beberapa riwayat pendaftaran, tetapi tidak boleh memiliki dua pendaftaran aktif\npada keberangkatan yang sama."
+        }
       }
     ],
     "sourceStatementInventory": [
@@ -1523,14 +1576,25 @@
         "quote": "Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh.",
         "classification": "material",
         "normalizedInterpretation": {
-          "registrationDeniedWhen": [
-            "schedule closed",
-            "quota full"
-          ]
+          "registrationDeniedWhen": "schedule closed"
         },
         "destination": {
           "type": "candidate_assertion",
           "candidateId": "cand-022"
+        }
+      },
+      {
+        "inventoryId": "inv-032a",
+        "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+        "page": 2,
+        "quote": "Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh.",
+        "classification": "material",
+        "normalizedInterpretation": {
+          "registrationDeniedWhen": "quota is full"
+        },
+        "destination": {
+          "type": "candidate_assertion",
+          "candidateId": "cand-045"
         }
       },
       {
@@ -1705,13 +1769,27 @@
         }
       },
       {
-        "inventoryId": "inv-044",
+        "inventoryId": "inv-044a",
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 2,
         "quote": "Satu jemaah dapat memiliki beberapa riwayat pendaftaran, tetapi tidak boleh memiliki dua pendaftaran aktif\npada keberangkatan yang sama.",
         "classification": "material",
         "normalizedInterpretation": {
-          "history": "Multiple registration histories allowed; active registration uniqueness per departure required."
+          "history": "Multiple registration histories are allowed."
+        },
+        "destination": {
+          "type": "candidate_assertion",
+          "candidateId": "cand-047"
+        }
+      },
+      {
+        "inventoryId": "inv-044b",
+        "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+        "page": 2,
+        "quote": "Satu jemaah dapat memiliki beberapa riwayat pendaftaran, tetapi tidak boleh memiliki dua pendaftaran aktif\npada keberangkatan yang sama.",
+        "classification": "material",
+        "normalizedInterpretation": {
+          "constraint": "No two active registrations for same pilgrim and schedule."
         },
         "destination": {
           "type": "candidate_assertion",
@@ -1817,8 +1895,8 @@
         },
         "destination": {
           "type": "candidate_assertion",
-          "candidateId": "cand-022",
-          "duplicateOf": "cand-022"
+          "candidateId": "cand-045",
+          "duplicateOf": "cand-045"
         }
       },
       {
@@ -1963,23 +2041,52 @@
         },
         "destination": {
           "type": "candidate_assertion",
-          "candidateId": "cand-021",
-          "duplicateOf": "cand-021"
+          "candidateId": "cand-046"
         }
       },
       {
-        "inventoryId": "inv-064",
+        "inventoryId": "inv-064a",
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 3,
         "quote": "Pendaftaran ditolak ketika jadwal ditutup, kuota penuh, atau jemaah yang sama sudah memiliki pendaftaran\naktif pada keberangkatan yang sama.",
         "classification": "material",
         "normalizedInterpretation": {
-          "acceptanceCriterion": "Registration rejected for closed schedule, full quota, or duplicate active pilgrim registration."
+          "acceptanceCriterion": "Registration is rejected when the schedule is closed."
         },
         "destination": {
           "type": "candidate_assertion",
           "candidateId": "cand-022",
           "duplicateOf": "cand-022"
+        }
+      },
+      {
+        "inventoryId": "inv-064b",
+        "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+        "page": 3,
+        "quote": "Pendaftaran ditolak ketika jadwal ditutup, kuota penuh, atau jemaah yang sama sudah memiliki pendaftaran\naktif pada keberangkatan yang sama.",
+        "classification": "material",
+        "normalizedInterpretation": {
+          "acceptanceCriterion": "Registration is rejected when quota is full."
+        },
+        "destination": {
+          "type": "candidate_assertion",
+          "candidateId": "cand-045",
+          "duplicateOf": "cand-045"
+        }
+      },
+      {
+        "inventoryId": "inv-064c",
+        "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+        "page": 3,
+        "quote": "Pendaftaran ditolak ketika jadwal ditutup, kuota penuh, atau jemaah yang sama sudah memiliki pendaftaran\naktif pada keberangkatan yang sama.",
+        "classification": "material",
+        "normalizedInterpretation": {
+          "acceptanceCriterion": "Registration is rejected for a duplicate active pilgrim registration on the same departure."
+        },
+        "destination": {
+          "type": "candidate_assertion",
+          "candidateId": "cand-030",
+          "duplicateOf": "cand-030"
         }
       },
       {
@@ -2849,13 +2956,10 @@
           {
             "candidateId": "cand-022",
             "kind": "registration_gate",
-            "semanticKey": "safara.registration.blocked_for_closed_or_full_schedule",
+            "semanticKey": "safara.registration.blocked_for_closed_schedule",
             "payload": {
               "operation": "new registration",
-              "denyWhen": [
-                "departure schedule is closed",
-                "quota is full"
-              ]
+              "denyWhen": "departure schedule is closed"
             },
             "relationships": [
               "cand-021",
@@ -3302,6 +3406,62 @@
               "page": 3,
               "quote": "Alur dari pembuatan paket sampai pendaftaran jemaah dapat dijalankan menggunakan contoh data yang\ndisepakati."
             }
+          },
+          {
+            "candidateId": "cand-045",
+            "kind": "registration_gate",
+            "semanticKey": "safara.registration.blocked_for_full_schedule",
+            "payload": {
+              "operation": "new registration",
+              "denyWhen": "departure schedule quota is full"
+            },
+            "relationships": [
+              "cand-021",
+              "cand-032"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+              "page": 2,
+              "quote": "Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh."
+            }
+          },
+          {
+            "candidateId": "cand-046",
+            "kind": "acceptance_criterion",
+            "semanticKey": "safara.increment_01.acceptance.quota_and_remaining_quota_calculated_correctly",
+            "payload": {
+              "criterion": "Quota and remaining quota are calculated correctly."
+            },
+            "relationships": [
+              "cand-021",
+              "cand-032"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+              "page": 3,
+              "quote": "Kuota dan sisa kuota dihitung dengan benar."
+            }
+          },
+          {
+            "candidateId": "cand-047",
+            "kind": "registration_history_rule",
+            "semanticKey": "safara.registration.multiple_registration_histories_allowed",
+            "payload": {
+              "entity": "pilgrim",
+              "allowance": "may have multiple registration histories"
+            },
+            "relationships": [
+              "cand-007",
+              "cand-030"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+              "page": 2,
+              "quote": "Satu jemaah dapat memiliki beberapa riwayat pendaftaran, tetapi tidak boleh memiliki dua pendaftaran aktif\npada keberangkatan yang sama."
+            }
           }
         ],
         "sourceStatementInventory": [
@@ -3729,14 +3889,25 @@
             "quote": "Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh.",
             "classification": "material",
             "normalizedInterpretation": {
-              "registrationDeniedWhen": [
-                "schedule closed",
-                "quota full"
-              ]
+              "registrationDeniedWhen": "schedule closed"
             },
             "destination": {
               "type": "candidate_assertion",
               "candidateId": "cand-022"
+            }
+          },
+          {
+            "inventoryId": "inv-032a",
+            "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+            "page": 2,
+            "quote": "Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "registrationDeniedWhen": "quota is full"
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-045"
             }
           },
           {
@@ -3911,13 +4082,27 @@
             }
           },
           {
-            "inventoryId": "inv-044",
+            "inventoryId": "inv-044a",
             "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
             "page": 2,
             "quote": "Satu jemaah dapat memiliki beberapa riwayat pendaftaran, tetapi tidak boleh memiliki dua pendaftaran aktif\npada keberangkatan yang sama.",
             "classification": "material",
             "normalizedInterpretation": {
-              "history": "Multiple registration histories allowed; active registration uniqueness per departure required."
+              "history": "Multiple registration histories are allowed."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-047"
+            }
+          },
+          {
+            "inventoryId": "inv-044b",
+            "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+            "page": 2,
+            "quote": "Satu jemaah dapat memiliki beberapa riwayat pendaftaran, tetapi tidak boleh memiliki dua pendaftaran aktif\npada keberangkatan yang sama.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "constraint": "No two active registrations for same pilgrim and schedule."
             },
             "destination": {
               "type": "candidate_assertion",
@@ -4023,8 +4208,8 @@
             },
             "destination": {
               "type": "candidate_assertion",
-              "candidateId": "cand-022",
-              "duplicateOf": "cand-022"
+              "candidateId": "cand-045",
+              "duplicateOf": "cand-045"
             }
           },
           {
@@ -4169,23 +4354,52 @@
             },
             "destination": {
               "type": "candidate_assertion",
-              "candidateId": "cand-021",
-              "duplicateOf": "cand-021"
+              "candidateId": "cand-046"
             }
           },
           {
-            "inventoryId": "inv-064",
+            "inventoryId": "inv-064a",
             "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
             "page": 3,
             "quote": "Pendaftaran ditolak ketika jadwal ditutup, kuota penuh, atau jemaah yang sama sudah memiliki pendaftaran\naktif pada keberangkatan yang sama.",
             "classification": "material",
             "normalizedInterpretation": {
-              "acceptanceCriterion": "Registration rejected for closed schedule, full quota, or duplicate active pilgrim registration."
+              "acceptanceCriterion": "Registration is rejected when the schedule is closed."
             },
             "destination": {
               "type": "candidate_assertion",
               "candidateId": "cand-022",
               "duplicateOf": "cand-022"
+            }
+          },
+          {
+            "inventoryId": "inv-064b",
+            "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+            "page": 3,
+            "quote": "Pendaftaran ditolak ketika jadwal ditutup, kuota penuh, atau jemaah yang sama sudah memiliki pendaftaran\naktif pada keberangkatan yang sama.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "acceptanceCriterion": "Registration is rejected when quota is full."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-045",
+              "duplicateOf": "cand-045"
+            }
+          },
+          {
+            "inventoryId": "inv-064c",
+            "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+            "page": 3,
+            "quote": "Pendaftaran ditolak ketika jadwal ditutup, kuota penuh, atau jemaah yang sama sudah memiliki pendaftaran\naktif pada keberangkatan yang sama.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "acceptanceCriterion": "Registration is rejected for a duplicate active pilgrim registration on the same departure."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-030",
+              "duplicateOf": "cand-030"
             }
           },
           {
@@ -4488,7 +4702,10 @@
           "cand-041",
           "cand-042",
           "cand-043",
-          "cand-044"
+          "cand-044",
+          "cand-045",
+          "cand-046",
+          "cand-047"
         ],
         "sourceStatementInventoryIds": [
           "inv-002",
@@ -4519,6 +4736,7 @@
           "inv-030",
           "inv-031",
           "inv-032",
+          "inv-032a",
           "inv-033",
           "inv-034",
           "inv-035",
@@ -4530,7 +4748,8 @@
           "inv-041",
           "inv-042",
           "inv-043",
-          "inv-044",
+          "inv-044a",
+          "inv-044b",
           "inv-045",
           "inv-046",
           "inv-047",
@@ -4548,7 +4767,9 @@
           "inv-061",
           "inv-062",
           "inv-063",
-          "inv-064",
+          "inv-064a",
+          "inv-064b",
+          "inv-064c",
           "inv-065",
           "inv-066",
           "nonfact-001",
@@ -4661,7 +4882,10 @@
           "cand-041",
           "cand-042",
           "cand-043",
-          "cand-044"
+          "cand-044",
+          "cand-045",
+          "cand-046",
+          "cand-047"
         ],
         "sourceStatementInventoryIds": [
           "inv-002",
@@ -4692,6 +4916,7 @@
           "inv-030",
           "inv-031",
           "inv-032",
+          "inv-032a",
           "inv-033",
           "inv-034",
           "inv-035",
@@ -4703,7 +4928,8 @@
           "inv-041",
           "inv-042",
           "inv-043",
-          "inv-044",
+          "inv-044a",
+          "inv-044b",
           "inv-045",
           "inv-046",
           "inv-047",
@@ -4721,7 +4947,9 @@
           "inv-061",
           "inv-062",
           "inv-063",
-          "inv-064",
+          "inv-064a",
+          "inv-064b",
+          "inv-064c",
           "inv-065",
           "inv-066",
           "nonfact-001",

@@ -142,6 +142,20 @@ test("SFE-002 persisted extraction keeps fragmented information and end-to-end a
   for (const id of ["cand-038", "cand-039", "cand-040", "cand-041", "cand-042", "cand-043", "cand-044"]) assert.ok(candidates.has(id), `${id} preserves its distinct source claim`);
 });
 
+test("SFE-002 persisted extraction splits registration history, registration gates, and quota calculation", async () => {
+  const result = JSON.parse(await readFile(path.resolve(import.meta.dirname, "../generated/sfe-002-saf-24aysgyw4su6.json"), "utf8"));
+  const candidates = new Map(result.candidateAssertions.map((candidate) => [candidate.candidateId, candidate]));
+  const inventory = new Map(result.sourceStatementInventory.map((entry) => [entry.inventoryId, entry]));
+  assert.deepEqual(["inv-044a", "inv-044b"].map((id) => inventory.get(id).destination.candidateId), ["cand-047", "cand-030"]);
+  assert.equal(inventory.get("inv-044b").destination.duplicateOf, "cand-030");
+  assert.equal(inventory.get("inv-063").destination.candidateId, "cand-046");
+  assert.equal(inventory.get("inv-063").destination.duplicateOf, undefined);
+  assert.deepEqual(["inv-064a", "inv-064b", "inv-064c"].map((id) => inventory.get(id).destination.candidateId), ["cand-022", "cand-045", "cand-030"]);
+  assert.ok(candidates.has("cand-045"));
+  assert.ok(candidates.has("cand-046"));
+  assert.ok(candidates.has("cand-047"));
+});
+
 test("workspace creation is transient, Master-rooted, collision-safe, and unavailable while extracting", () => {
   const bases=[{workspaceId:"master",projectId:"safara",headRevisionId:"rev-master"},{workspaceId:"inc-03",projectId:"safara",baseWorkspaceId:"master",headRevisionId:"rev-inc-03"},{workspaceId:"saf-aaaaaaaaaaaa",projectId:"safara",baseWorkspaceId:"master",headRevisionId:"rev-collision"}];
   const created=createFixtureWorkspace({projectId:"safara",workspaceName:"Refund correction",baseWorkspaceId:"inc-03",prdFiles:[{name:"refund.pdf",type:"application/pdf",size:42}]},bases,["aaaaaaaaaaaa","b2c3d4e5f6h7"]);
