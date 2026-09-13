@@ -1,6 +1,6 @@
 # SFE-002: Extract into the existing Initial Draft workspace
 
-- **State:** awaiting_review
+- **State:** approved
 - **Review batch:** BATCH-27
 - **Depends on:** SFE-000 approved; SFE-001 approved
 - **Baseline:** [SFE phase scope](SFE-README.md); [SFE-000 integration map](SFE-000-skills-to-sfe-integration-map.md); [Atlas Full Product Context](../Atlas_Full_Product_Context.md) source-grounding and incremental-PRD principles; [Atlas Git-Like Knowledge Architecture Checkpoint](../ATLAS_GIT_LIKE_KNOWLEDGE_ARCHITECTURE_CHECKPOINT.md) sections 5, 17, 22.1–22.8; [Atlas PRD extraction skill](../../.agents/skills/atlas-prd-extraction/SKILL.md); [Atlas PRD extraction JSON contract](../../.agents/skills/atlas-prd-extraction/atlas-skill.json); [Atlas fixture repository skill](../../.agents/skills/atlas-fixture-repository/SKILL.md); [Atlas fixture repository JSON contract](../../.agents/skills/atlas-fixture-repository/atlas-skill.json); [Atlas fixture verification skill](../../.agents/skills/atlas-fixture-verification/SKILL.md)
