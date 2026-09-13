@@ -129,6 +129,22 @@ test("SFE-002 persisted extraction passes the application structural gate and re
   assert.equal(completeSfeExtraction(project, result).initialDraftWorkspace.status, "ready-for-review");
 });
 
+test("SFE-002 persisted extraction has unique inventory IDs and explicit repeated candidate links", async () => {
+  const result = JSON.parse(await readFile(path.resolve(import.meta.dirname, "../generated/sfe-002-saf-24aysgyw4su6.json"), "utf8"));
+  const inventoryIds = result.sourceStatementInventory.map((entry) => entry.inventoryId);
+  assert.equal(new Set(inventoryIds).size, inventoryIds.length, "source-accounting IDs are unique");
+  const entriesByCandidate = new Map();
+  for (const entry of result.sourceStatementInventory) {
+    if (entry.destination.type !== "candidate_assertion") continue;
+    const entries = entriesByCandidate.get(entry.destination.candidateId) ?? [];
+    entries.push(entry);
+    entriesByCandidate.set(entry.destination.candidateId, entries);
+  }
+  for (const [candidateId, entries] of entriesByCandidate) {
+    for (const entry of entries.slice(1)) assert.equal(entry.destination.duplicateOf, candidateId, `${entry.inventoryId} explicitly identifies its repeated candidate destination`);
+  }
+});
+
 test("SFE-002 persisted extraction keeps fragmented information and end-to-end acceptance criteria atomic", async () => {
   const result = JSON.parse(await readFile(path.resolve(import.meta.dirname, "../generated/sfe-002-saf-24aysgyw4su6.json"), "utf8"));
   const candidates = new Map(result.candidateAssertions.map((candidate) => [candidate.candidateId, candidate]));
