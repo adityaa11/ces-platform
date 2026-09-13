@@ -1033,7 +1033,8 @@
         },
         "destination": {
           "type": "candidate_assertion",
-          "candidateId": "cand-004"
+          "candidateId": "cand-004",
+          "duplicateOf": "cand-004"
         }
       },
       {
@@ -1052,7 +1053,8 @@
         },
         "destination": {
           "type": "candidate_assertion",
-          "candidateId": "cand-004"
+          "candidateId": "cand-004",
+          "duplicateOf": "cand-004"
         }
       },
       {
@@ -1066,7 +1068,8 @@
         },
         "destination": {
           "type": "candidate_assertion",
-          "candidateId": "cand-004"
+          "candidateId": "cand-004",
+          "duplicateOf": "cand-004"
         }
       },
       {
@@ -1453,7 +1456,8 @@
         },
         "destination": {
           "type": "candidate_assertion",
-          "candidateId": "cand-014"
+          "candidateId": "cand-014",
+          "duplicateOf": "cand-014"
         }
       },
       {
@@ -1495,7 +1499,8 @@
         },
         "destination": {
           "type": "candidate_assertion",
-          "candidateId": "cand-008"
+          "candidateId": "cand-008",
+          "duplicateOf": "cand-008"
         }
       },
       {
@@ -1537,7 +1542,8 @@
         },
         "destination": {
           "type": "candidate_assertion",
-          "candidateId": "cand-030"
+          "candidateId": "cand-030",
+          "duplicateOf": "cand-030"
         }
       },
       {
@@ -1565,7 +1571,8 @@
         },
         "destination": {
           "type": "candidate_assertion",
-          "candidateId": "cand-008"
+          "candidateId": "cand-008",
+          "duplicateOf": "cand-008"
         }
       },
       {
@@ -1579,7 +1586,8 @@
         },
         "destination": {
           "type": "candidate_assertion",
-          "candidateId": "cand-007"
+          "candidateId": "cand-007",
+          "duplicateOf": "cand-007"
         }
       },
       {
@@ -1621,7 +1629,8 @@
         },
         "destination": {
           "type": "candidate_assertion",
-          "candidateId": "cand-021"
+          "candidateId": "cand-021",
+          "duplicateOf": "cand-021"
         }
       },
       {
@@ -1635,7 +1644,8 @@
         },
         "destination": {
           "type": "candidate_assertion",
-          "candidateId": "cand-022"
+          "candidateId": "cand-022",
+          "duplicateOf": "cand-022"
         }
       },
       {
@@ -1649,7 +1659,8 @@
         },
         "destination": {
           "type": "candidate_assertion",
-          "candidateId": "cand-030"
+          "candidateId": "cand-030",
+          "duplicateOf": "cand-030"
         }
       },
       {
@@ -1663,7 +1674,8 @@
         },
         "destination": {
           "type": "candidate_assertion",
-          "candidateId": "cand-008"
+          "candidateId": "cand-008",
+          "duplicateOf": "cand-008"
         }
       },
       {
@@ -1677,7 +1689,8 @@
         },
         "destination": {
           "type": "candidate_assertion",
-          "candidateId": "cand-031"
+          "candidateId": "cand-031",
+          "duplicateOf": "cand-031"
         }
       },
       {
@@ -1691,7 +1704,8 @@
         },
         "destination": {
           "type": "candidate_assertion",
-          "candidateId": "cand-034"
+          "candidateId": "cand-034",
+          "duplicateOf": "cand-034"
         }
       },
       {
@@ -1747,7 +1761,8 @@
         },
         "destination": {
           "type": "candidate_assertion",
-          "candidateId": "cand-009"
+          "candidateId": "cand-009",
+          "duplicateOf": "cand-009"
         }
       },
       {
@@ -1761,7 +1776,8 @@
         },
         "destination": {
           "type": "candidate_assertion",
-          "candidateId": "cand-014"
+          "candidateId": "cand-014",
+          "duplicateOf": "cand-014"
         }
       },
       {
@@ -1775,7 +1791,8 @@
         },
         "destination": {
           "type": "candidate_assertion",
-          "candidateId": "cand-021"
+          "candidateId": "cand-021",
+          "duplicateOf": "cand-021"
         }
       },
       {
@@ -1789,7 +1806,8 @@
         },
         "destination": {
           "type": "candidate_assertion",
-          "candidateId": "cand-022"
+          "candidateId": "cand-022",
+          "duplicateOf": "cand-022"
         }
       },
       {
@@ -1803,7 +1821,8 @@
         },
         "destination": {
           "type": "candidate_assertion",
-          "candidateId": "cand-008"
+          "candidateId": "cand-008",
+          "duplicateOf": "cand-008"
         }
       },
       {
@@ -1817,7 +1836,8 @@
         },
         "destination": {
           "type": "candidate_assertion",
-          "candidateId": "cand-007"
+          "candidateId": "cand-007",
+          "duplicateOf": "cand-007"
         }
       },
       {
@@ -1835,7 +1855,7 @@
         }
       },
       {
-        "inventoryId": "nonfact-001",
+        "inventoryId": "nonfact-002",
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 1,
         "quote": "INCREMENTAL PROJECT REQUEST",
@@ -1849,7 +1869,7 @@
         }
       },
       {
-        "inventoryId": "nonfact-001",
+        "inventoryId": "nonfact-003",
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 1,
         "quote": "Konteks",
@@ -1863,7 +1883,7 @@
         }
       },
       {
-        "inventoryId": "nonfact-001",
+        "inventoryId": "nonfact-004",
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 1,
         "quote": "Tujuan Bisnis",
@@ -1877,7 +1897,7 @@
         }
       },
       {
-        "inventoryId": "nonfact-001",
+        "inventoryId": "nonfact-005",
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 1,
         "quote": "Pengguna",
@@ -1891,7 +1911,7 @@
         }
       },
       {
-        "inventoryId": "nonfact-001",
+        "inventoryId": "nonfact-006",
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 1,
         "quote": "Safara - Sistem Administrasi Travel Umrah Dokumen Bisnis | 27 Juli 2026 |",
@@ -1905,7 +1925,7 @@
         }
       },
       {
-        "inventoryId": "nonfact-001",
+        "inventoryId": "nonfact-007",
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 2,
         "quote": "Alur Utama",
@@ -1919,7 +1939,7 @@
         }
       },
       {
-        "inventoryId": "nonfact-001",
+        "inventoryId": "nonfact-008",
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 2,
         "quote": "Kebutuhan",
@@ -1933,7 +1953,7 @@
         }
       },
       {
-        "inventoryId": "nonfact-001",
+        "inventoryId": "nonfact-009",
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 2,
         "quote": "Aturan Bisnis Utama",
@@ -1947,7 +1967,7 @@
         }
       },
       {
-        "inventoryId": "nonfact-001",
+        "inventoryId": "nonfact-010",
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 2,
         "quote": "Safara - Sistem Administrasi Travel Umrah Dokumen Bisnis | 27 Juli 2026 |",
@@ -1961,7 +1981,7 @@
         }
       },
       {
-        "inventoryId": "nonfact-001",
+        "inventoryId": "nonfact-011",
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 3,
         "quote": "Skenario Pemeriksaan Hasil",
@@ -1975,7 +1995,7 @@
         }
       },
       {
-        "inventoryId": "nonfact-001",
+        "inventoryId": "nonfact-012",
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 3,
         "quote": "Hasil yang Harus Diserahkan",
@@ -1989,7 +2009,7 @@
         }
       },
       {
-        "inventoryId": "nonfact-001",
+        "inventoryId": "nonfact-013",
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 3,
         "quote": "Kriteria Penerimaan Increment 01",
@@ -2003,7 +2023,7 @@
         }
       },
       {
-        "inventoryId": "nonfact-001",
+        "inventoryId": "nonfact-014",
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 3,
         "quote": "Safara - Sistem Administrasi Travel Umrah Dokumen Bisnis | 27 Juli 2026 |",
@@ -3047,7 +3067,8 @@
             },
             "destination": {
               "type": "candidate_assertion",
-              "candidateId": "cand-004"
+              "candidateId": "cand-004",
+              "duplicateOf": "cand-004"
             }
           },
           {
@@ -3066,7 +3087,8 @@
             },
             "destination": {
               "type": "candidate_assertion",
-              "candidateId": "cand-004"
+              "candidateId": "cand-004",
+              "duplicateOf": "cand-004"
             }
           },
           {
@@ -3080,7 +3102,8 @@
             },
             "destination": {
               "type": "candidate_assertion",
-              "candidateId": "cand-004"
+              "candidateId": "cand-004",
+              "duplicateOf": "cand-004"
             }
           },
           {
@@ -3467,7 +3490,8 @@
             },
             "destination": {
               "type": "candidate_assertion",
-              "candidateId": "cand-014"
+              "candidateId": "cand-014",
+              "duplicateOf": "cand-014"
             }
           },
           {
@@ -3509,7 +3533,8 @@
             },
             "destination": {
               "type": "candidate_assertion",
-              "candidateId": "cand-008"
+              "candidateId": "cand-008",
+              "duplicateOf": "cand-008"
             }
           },
           {
@@ -3551,7 +3576,8 @@
             },
             "destination": {
               "type": "candidate_assertion",
-              "candidateId": "cand-030"
+              "candidateId": "cand-030",
+              "duplicateOf": "cand-030"
             }
           },
           {
@@ -3579,7 +3605,8 @@
             },
             "destination": {
               "type": "candidate_assertion",
-              "candidateId": "cand-008"
+              "candidateId": "cand-008",
+              "duplicateOf": "cand-008"
             }
           },
           {
@@ -3593,7 +3620,8 @@
             },
             "destination": {
               "type": "candidate_assertion",
-              "candidateId": "cand-007"
+              "candidateId": "cand-007",
+              "duplicateOf": "cand-007"
             }
           },
           {
@@ -3635,7 +3663,8 @@
             },
             "destination": {
               "type": "candidate_assertion",
-              "candidateId": "cand-021"
+              "candidateId": "cand-021",
+              "duplicateOf": "cand-021"
             }
           },
           {
@@ -3649,7 +3678,8 @@
             },
             "destination": {
               "type": "candidate_assertion",
-              "candidateId": "cand-022"
+              "candidateId": "cand-022",
+              "duplicateOf": "cand-022"
             }
           },
           {
@@ -3663,7 +3693,8 @@
             },
             "destination": {
               "type": "candidate_assertion",
-              "candidateId": "cand-030"
+              "candidateId": "cand-030",
+              "duplicateOf": "cand-030"
             }
           },
           {
@@ -3677,7 +3708,8 @@
             },
             "destination": {
               "type": "candidate_assertion",
-              "candidateId": "cand-008"
+              "candidateId": "cand-008",
+              "duplicateOf": "cand-008"
             }
           },
           {
@@ -3691,7 +3723,8 @@
             },
             "destination": {
               "type": "candidate_assertion",
-              "candidateId": "cand-031"
+              "candidateId": "cand-031",
+              "duplicateOf": "cand-031"
             }
           },
           {
@@ -3705,7 +3738,8 @@
             },
             "destination": {
               "type": "candidate_assertion",
-              "candidateId": "cand-034"
+              "candidateId": "cand-034",
+              "duplicateOf": "cand-034"
             }
           },
           {
@@ -3761,7 +3795,8 @@
             },
             "destination": {
               "type": "candidate_assertion",
-              "candidateId": "cand-009"
+              "candidateId": "cand-009",
+              "duplicateOf": "cand-009"
             }
           },
           {
@@ -3775,7 +3810,8 @@
             },
             "destination": {
               "type": "candidate_assertion",
-              "candidateId": "cand-014"
+              "candidateId": "cand-014",
+              "duplicateOf": "cand-014"
             }
           },
           {
@@ -3789,7 +3825,8 @@
             },
             "destination": {
               "type": "candidate_assertion",
-              "candidateId": "cand-021"
+              "candidateId": "cand-021",
+              "duplicateOf": "cand-021"
             }
           },
           {
@@ -3803,7 +3840,8 @@
             },
             "destination": {
               "type": "candidate_assertion",
-              "candidateId": "cand-022"
+              "candidateId": "cand-022",
+              "duplicateOf": "cand-022"
             }
           },
           {
@@ -3817,7 +3855,8 @@
             },
             "destination": {
               "type": "candidate_assertion",
-              "candidateId": "cand-008"
+              "candidateId": "cand-008",
+              "duplicateOf": "cand-008"
             }
           },
           {
@@ -3831,7 +3870,8 @@
             },
             "destination": {
               "type": "candidate_assertion",
-              "candidateId": "cand-007"
+              "candidateId": "cand-007",
+              "duplicateOf": "cand-007"
             }
           },
           {
@@ -3849,7 +3889,7 @@
             }
           },
           {
-            "inventoryId": "nonfact-001",
+            "inventoryId": "nonfact-002",
             "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
             "page": 1,
             "quote": "INCREMENTAL PROJECT REQUEST",
@@ -3863,7 +3903,7 @@
             }
           },
           {
-            "inventoryId": "nonfact-001",
+            "inventoryId": "nonfact-003",
             "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
             "page": 1,
             "quote": "Konteks",
@@ -3877,7 +3917,7 @@
             }
           },
           {
-            "inventoryId": "nonfact-001",
+            "inventoryId": "nonfact-004",
             "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
             "page": 1,
             "quote": "Tujuan Bisnis",
@@ -3891,7 +3931,7 @@
             }
           },
           {
-            "inventoryId": "nonfact-001",
+            "inventoryId": "nonfact-005",
             "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
             "page": 1,
             "quote": "Pengguna",
@@ -3905,7 +3945,7 @@
             }
           },
           {
-            "inventoryId": "nonfact-001",
+            "inventoryId": "nonfact-006",
             "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
             "page": 1,
             "quote": "Safara - Sistem Administrasi Travel Umrah Dokumen Bisnis | 27 Juli 2026 |",
@@ -3919,7 +3959,7 @@
             }
           },
           {
-            "inventoryId": "nonfact-001",
+            "inventoryId": "nonfact-007",
             "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
             "page": 2,
             "quote": "Alur Utama",
@@ -3933,7 +3973,7 @@
             }
           },
           {
-            "inventoryId": "nonfact-001",
+            "inventoryId": "nonfact-008",
             "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
             "page": 2,
             "quote": "Kebutuhan",
@@ -3947,7 +3987,7 @@
             }
           },
           {
-            "inventoryId": "nonfact-001",
+            "inventoryId": "nonfact-009",
             "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
             "page": 2,
             "quote": "Aturan Bisnis Utama",
@@ -3961,7 +4001,7 @@
             }
           },
           {
-            "inventoryId": "nonfact-001",
+            "inventoryId": "nonfact-010",
             "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
             "page": 2,
             "quote": "Safara - Sistem Administrasi Travel Umrah Dokumen Bisnis | 27 Juli 2026 |",
@@ -3975,7 +4015,7 @@
             }
           },
           {
-            "inventoryId": "nonfact-001",
+            "inventoryId": "nonfact-011",
             "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
             "page": 3,
             "quote": "Skenario Pemeriksaan Hasil",
@@ -3989,7 +4029,7 @@
             }
           },
           {
-            "inventoryId": "nonfact-001",
+            "inventoryId": "nonfact-012",
             "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
             "page": 3,
             "quote": "Hasil yang Harus Diserahkan",
@@ -4003,7 +4043,7 @@
             }
           },
           {
-            "inventoryId": "nonfact-001",
+            "inventoryId": "nonfact-013",
             "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
             "page": 3,
             "quote": "Kriteria Penerimaan Increment 01",
@@ -4017,7 +4057,7 @@
             }
           },
           {
-            "inventoryId": "nonfact-001",
+            "inventoryId": "nonfact-014",
             "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
             "page": 3,
             "quote": "Safara - Sistem Administrasi Travel Umrah Dokumen Bisnis | 27 Juli 2026 |",
@@ -4158,19 +4198,19 @@
           "inv-065",
           "inv-066",
           "nonfact-001",
-          "nonfact-001",
-          "nonfact-001",
-          "nonfact-001",
-          "nonfact-001",
-          "nonfact-001",
-          "nonfact-001",
-          "nonfact-001",
-          "nonfact-001",
-          "nonfact-001",
-          "nonfact-001",
-          "nonfact-001",
-          "nonfact-001",
-          "nonfact-001"
+          "nonfact-002",
+          "nonfact-003",
+          "nonfact-004",
+          "nonfact-005",
+          "nonfact-006",
+          "nonfact-007",
+          "nonfact-008",
+          "nonfact-009",
+          "nonfact-010",
+          "nonfact-011",
+          "nonfact-012",
+          "nonfact-013",
+          "nonfact-014"
         ],
         "status": "awaiting_review"
       },
@@ -4321,19 +4361,19 @@
           "inv-065",
           "inv-066",
           "nonfact-001",
-          "nonfact-001",
-          "nonfact-001",
-          "nonfact-001",
-          "nonfact-001",
-          "nonfact-001",
-          "nonfact-001",
-          "nonfact-001",
-          "nonfact-001",
-          "nonfact-001",
-          "nonfact-001",
-          "nonfact-001",
-          "nonfact-001",
-          "nonfact-001"
+          "nonfact-002",
+          "nonfact-003",
+          "nonfact-004",
+          "nonfact-005",
+          "nonfact-006",
+          "nonfact-007",
+          "nonfact-008",
+          "nonfact-009",
+          "nonfact-010",
+          "nonfact-011",
+          "nonfact-012",
+          "nonfact-013",
+          "nonfact-014"
         ],
         "status": "awaiting_review"
       },

@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import test from "node:test";
 import { completeSfeExtraction, createFixtureProject, createFixtureWorkspace, fixtureScenarios, getFixtureScenario, markFixtureWorkspaceReadyForReview, projectCardStressFixtures, projectCardStressLimits, resolveFixtureAuthoringExecutor, resolveFixtureProjectRoute, resolveFixtureWorkspaceInventory, resolveFixtureWorkspaceRoute, resolveSkillsMode, workspaceIdPattern } from "../src/index.ts";
 
@@ -115,6 +117,16 @@ test("SFE-002 completes the persisted saf-24aysgyw4su6 workspace only after page
   assert.throws(() => completeSfeExtraction({ ...created, sourceFiles: [artifact] }, { ...result, artifact: { ...artifact, workspaceId: "saf-other" } }), /existing Initial Draft workspace ID/);
   assert.throws(() => completeSfeExtraction({ ...created, sourceFiles: [artifact] }, { ...result, executionProvenance: { ...result.executionProvenance, mode: "agents_bridge" } }), /declared PRD-extraction contract/);
   assert.throws(() => completeSfeExtraction({ ...created, sourceFiles: [artifact] }, { ...result, sourceStatementInventory: result.sourceStatementInventory.filter((entry) => entry.page !== 1) }), /Source accounting is incomplete/);
+});
+
+test("SFE-002 persisted extraction passes the application structural gate and rejects an unmarked duplicate", async () => {
+  const result = JSON.parse(await readFile(path.resolve(import.meta.dirname, "../generated/sfe-002-saf-24aysgyw4su6.json"), "utf8"));
+  const created = createFixtureProject({ projectId: "safara-project-01", projectName: "Safara Initial Draft", projectDescription: "", prdFiles: [result.artifact] }, ["24aysgyw4su6"]);
+  const project = { ...created, sourceFiles: [result.artifact] };
+  const repeated = structuredClone(result);
+  delete repeated.sourceStatementInventory.find((entry) => entry.inventoryId === "inv-008").destination.duplicateOf;
+  assert.throws(() => completeSfeExtraction(project, repeated), /Repeated inventory candidate destinations/);
+  assert.equal(completeSfeExtraction(project, result).initialDraftWorkspace.status, "ready-for-review");
 });
 
 test("workspace creation is transient, Master-rooted, collision-safe, and unavailable while extracting", () => {

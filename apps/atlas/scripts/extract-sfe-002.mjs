@@ -41,6 +41,7 @@ const verification = JSON.parse(await readFile(path.resolve(root, verificationRe
 const extractionContract = JSON.parse(await readFile(path.join(root, ".agents", "skills", "atlas-prd-extraction", "atlas-skill.json"), "utf8"));
 const repositoryContract = JSON.parse(await readFile(path.join(root, ".agents", "skills", "atlas-fixture-repository", "atlas-skill.json"), "utf8"));
 const verificationContract = JSON.parse(await readFile(path.join(root, ".agents", "skills", "atlas-fixture-verification", "atlas-skill.json"), "utf8"));
+const { completeSfeExtraction, createFixtureProject } = await import(pathToFileURL(path.join(root, "packages", "atlas-fixtures", "src", "index.ts")).href);
 const ajv = new Ajv({ strict: false });
 const validateExtraction = ajv.compile(extractionContract.outputSchema);
 if (!validateExtraction(response)) throw new Error(`Extraction response violates atlas.prd-extraction: ${ajv.errorsText(validateExtraction.errors)}`);
@@ -55,6 +56,13 @@ for (const record of [...response.candidateAssertions, ...response.sourceStateme
   const evidence = "evidence" in record ? record.evidence : record;
   if (evidence.quote && !pageText.get(evidence.page)?.includes(normalized(evidence.quote))) throw new Error(`Extraction response record ${record.candidateId ?? record.inventoryId} is not grounded in stored PDF page ${evidence.page}.`);
 }
+
+// Use the same structural transition gate as the application before accepting pipeline output.
+const creationToken = workspaceId.slice(workspaceId.lastIndexOf("-") + 1);
+const createdProject = createFixtureProject({ projectId, projectName: "SFE-002 pipeline validation", projectDescription: "", prdFiles: [response.artifact] }, [creationToken]);
+if (createdProject.initialDraftWorkspace.workspaceId !== workspaceId) throw new Error("Extraction response workspace ID does not match the project fixture allocation.");
+const completedExtraction = completeSfeExtraction({ ...createdProject, sourceFiles: [response.artifact] }, response);
+if (completedExtraction.initialDraftWorkspace.status !== "ready-for-review" || completedExtraction.processingJob.stage !== "ready") throw new Error("Extraction response did not reach the application Ready-to-review state.");
 
 const repositoryInput = {
   projectId,
