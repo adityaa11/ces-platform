@@ -156,9 +156,8 @@
           }
         ],
         "action": {
-          "label": "Review workspace unavailable",
-          "enabled": false,
-          "unavailableReason": "This Initial Draft is ready for review. Workspace routing is not available until SFE-003."
+          "label": "Review Initial Draft",
+          "enabled": true
         }
       }
     }
@@ -213,9 +212,8 @@
             }
           ],
           "action": {
-            "label": "Review workspace unavailable",
-            "enabled": false,
-            "unavailableReason": "This Initial Draft is ready for review. Workspace routing is not available until SFE-003."
+            "label": "Review Initial Draft",
+            "enabled": true
           }
         }
       },

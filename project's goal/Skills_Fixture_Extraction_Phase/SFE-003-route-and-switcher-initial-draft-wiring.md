@@ -1,6 +1,6 @@
 # SFE-003: Wire the Initial Draft fixture to the project route and switcher
 
-- **State:** in_progress
+- **State:** awaiting_review
 - **Review batch:** BATCH-28
 - **Depends on:** SFE-000 approved; SFE-002 approved
 - **Baseline:** [SFE phase scope](SFE-README.md); [SFE-000 integration map](SFE-000-skills-to-sfe-integration-map.md); [Atlas UI/UX Prototype PRD](../Atlas_UI_UX_Prototype_PRD.md) sections 4.2–4.3, 5–6, 9.1, 9.4; [Fixture Data-Intent Contract](../atlas-ui/FIXTURE_DATA_INTENT_CONTRACT.md)
@@ -38,3 +38,9 @@ Wire the preceding modal-created project's newly generated fixture into the exis
 - Manually follow the project creation and extraction states in the browser, then open the project card and switch between Master and Initial Draft.
 - Verify both selector entries resolve from the same fixture-owned workspace inventory and exact stable IDs; verify route context survives switching and reload.
 - Check keyboard/pointer operation, focus, status announcement, desktop/narrow layouts, supported themes, and the complete connected project-card/selector surface.
+
+## Remediation validation — BATCH-28 / review round 1
+
+- `node --test packages/atlas-fixtures/tests/contracts.test.mjs` passes 22/22, including an arbitrary completed modal-project record whose stable project and Initial Draft IDs resolve together; the Master content model has zero workflows, facts, changes, and CES items.
+- `corepack pnpm --filter @atlas/app lint` passes.
+- Browser inspection of `/demo?projectId=safara-project-01&workspaceId=saf-24aysgyw4su6&view=workflow` confirms the selected Initial Draft uses its fixture-owned ID and exposes exactly two selector entries. Reloading with `workspaceId=master` displays the distinct Master state with zero operational-model counts and the explicit `No published work` empty state.

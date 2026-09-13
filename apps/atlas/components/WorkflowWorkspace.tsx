@@ -33,6 +33,7 @@ export function WorkflowWorkspace({ user, projects, workspace, initialLens, init
 }
 
 function Overview({ active, approval, isolate, lens, onApprove, onOpen, user, workspace }: { active: boolean; approval: "awaiting-approval" | "approved"; isolate: boolean; lens: WorkspaceLens; onApprove: () => void; onOpen: (id: string) => void; user: User; workspace: ProjectWorkspaceFixture }) {
+  if (!workspace.workflows.length) return <section aria-labelledby="empty-master-title" className="workflow-isolation-empty"><span className="workflow-kicker">Master workspace</span><h1 id="empty-master-title">No published work</h1><p>This project’s Master is empty. Initial Draft candidates remain separate until they are reviewed and explicitly published.</p></section>;
   const groups = workspace.workflowGroups.filter((group) => !group.support && (!isolate || matches(group.prdIds, lens.selectedPrdIds)));
   const support = workspace.workflowGroups.find((group) => group.support);
   const first = groups[0]?.workflowIds[0] ?? workspace.workflows[0]?.id;

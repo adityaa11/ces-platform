@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
-import { completeSfeExtraction, createFixtureProject, createFixtureWorkspace, fixtureScenarios, getFixtureScenario, markFixtureWorkspaceReadyForReview, projectCardStressFixtures, projectCardStressLimits, resolveFixtureAuthoringExecutor, resolveFixtureProjectRoute, resolveFixtureWorkspaceInventory, resolveFixtureWorkspaceRoute, resolveSkillsMode, workspaceIdPattern } from "../src/index.ts";
+import { completeSfeExtraction, createFixtureProject, createFixtureWorkspace, fixtureScenarios, getFixtureScenario, markFixtureWorkspaceReadyForReview, projectCardStressFixtures, projectCardStressLimits, resolveFixtureAuthoringExecutor, resolveFixtureProjectRoute, resolveFixtureWorkspaceContent, resolveFixtureWorkspaceInventory, resolveFixtureWorkspaceRoute, resolveSkillsMode, workspaceIdPattern } from "../src/index.ts";
 
 test("skills mode defaults to codex and accepts only documented repository-wide values", () => {
   assert.equal(resolveSkillsMode(), "codex");
@@ -201,6 +201,25 @@ test("SFE-003 resolves the completed Initial Draft route from its stable fixture
   assert.deepEqual(inventory.map((workspace) => workspace.name), ["Master", "Initial Draft"]);
   assert.deepEqual(inventory.map((workspace) => workspace.workspaceId), ["master", "saf-24aysgyw4su6"]);
   assert.equal(resolveFixtureWorkspaceRoute("safara-project-01", "saf-24aysgyw4su6").selectedWorkspace?.name, "Initial Draft");
+});
+
+test("SFE-003 resolves any completed modal record and keeps Master empty", () => {
+  const scenario = getFixtureScenario("owner-ready");
+  const created = createFixtureProject({ projectId: "customer-portal-v2", projectName: "Customer Portal", projectDescription: "", prdFiles: [{ name: "portal.pdf", type: "application/pdf", size: 42 }] }, ["b2c3d4e5f6h7"]);
+  const completed = { ...created, project: { ...created.project, status: "ready", repository: { ...created.project.repository, state: "ready-for-review", action: { label: "Review Initial Draft", enabled: true } } }, initialDraftWorkspace: { ...created.initialDraftWorkspace, status: "ready-for-review", available: true, unavailableReason: undefined }, processingJob: { ...created.processingJob, stage: "ready" } };
+  const route = resolveFixtureProjectRoute(scenario, completed.project.id, [completed]);
+  const inventory = resolveFixtureWorkspaceInventory(completed.project.id, [completed]);
+  const initial = resolveFixtureWorkspaceRoute(completed.project.id, completed.initialDraftWorkspace.workspaceId, [completed]);
+  const master = resolveFixtureWorkspaceRoute(completed.project.id, completed.masterWorkspace.workspaceId, [completed]);
+  assert.equal(route.project?.id, completed.project.id);
+  assert.equal(route.fixtureRecord?.initialDraftWorkspace.workspaceId, completed.initialDraftWorkspace.workspaceId);
+  assert.deepEqual(inventory.map((workspace) => workspace.workspaceId), [completed.masterWorkspace.workspaceId, completed.initialDraftWorkspace.workspaceId]);
+  assert.equal(initial.selectedWorkspace?.workspaceId, completed.initialDraftWorkspace.workspaceId);
+  assert.equal(resolveFixtureWorkspaceContent(scenario, route, initial.selectedWorkspace?.workspaceId)?.project.id, completed.project.id);
+  assert.equal(master.selectedWorkspace?.workspaceId, completed.masterWorkspace.workspaceId);
+  const masterContent = resolveFixtureWorkspaceContent(scenario, route, master.selectedWorkspace?.workspaceId);
+  assert.deepEqual([masterContent?.workflows.length, masterContent?.facts.length, masterContent?.changes.length, masterContent?.cesItems.length], [0, 0, 0, 0]);
+  assert.equal(resolveFixtureProjectRoute(scenario, "missing-modal-project", [completed]).canOpenWorkspace, false);
 });
 
 test("project-card stress inputs stay isolated from accepted scenarios and cover each planned field limit", () => {
