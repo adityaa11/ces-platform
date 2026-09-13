@@ -35,7 +35,7 @@
           "required": ["page", "text"],
           "properties": {
             "page": { "type": "integer", "minimum": 1 },
-            "text": { "type": "string", "minLength": 1 }
+            "text": { "type": "string" }
           }
         }
       },

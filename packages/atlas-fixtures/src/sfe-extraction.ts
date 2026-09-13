@@ -46,7 +46,7 @@ export function validateSfeExtraction(project: SfeProjectInput, result: SfeExtra
 /** Failure never leaves a processing project looking reviewable or indefinitely extracting. */
 export function failSfeExtraction(project: SfeProjectInput, message: string): SfeProjectInput {
   const detail = `Needs attention: ${message}`;
-  return { ...project, project: { ...project.project, status: "needs-attention", lastActivity: detail, repository: { ...project.project.repository, state: "extracting", summary: detail, action: { label: "Open project", enabled: false, unavailableReason: detail } } }, processingJob: { ...project.processingJob, stage: "needs-attention", message: detail }, initialDraftWorkspace: { ...project.initialDraftWorkspace, status: "extracting", available: false, unavailableReason: detail } };
+  return { ...project, project: { ...project.project, status: "needs-attention", lastActivity: detail, repository: { ...project.project.repository, state: "needs-attention", summary: detail, action: { label: "Open project", enabled: false, unavailableReason: detail } } }, processingJob: { ...project.processingJob, stage: "needs-attention", message: detail }, initialDraftWorkspace: { ...project.initialDraftWorkspace, status: "extracting", available: false, unavailableReason: detail } };
 }
 
 export function completeSfeExtraction(project: SfeProjectInput, result: SfeExtractionResult): CompletedFixtureProject {

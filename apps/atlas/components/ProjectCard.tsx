@@ -12,6 +12,7 @@ type Props = {
 const lifecycleLabels = {
   published: "Published",
   extracting: "Extracting",
+  "needs-attention": "Needs attention",
   "ready-for-review": "Ready for review",
 } as const;
 

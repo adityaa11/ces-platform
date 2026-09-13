@@ -35,59 +35,18 @@
   ],
   "candidateAssertions": [
     {
-      "candidateId": "candidate-saf-24aysgyw4su6-p01-001",
+      "candidateId": "candidate-saf-24aysgyw4su6-p01-002",
       "kind": "requirement",
-      "semanticKey": "safara.increment-01.page-1.statement-1",
+      "semanticKey": "sfe.safara-project-01.p1.s2",
       "payload": {
-        "sourceStatement": "C S A F A R A BUSINESS PRD / INCREMENTAL PROJECT REQUEST I N C R E M E N TA L P R O J E C T R E Q U E S T SAFARA",
-        "assertionType": "requirement",
+        "sourceStatement": "- Increment 01 Fondasi Data dan Pendaftaran Jemaah T U J U A N Menyatukan data paket, jadwal keberangkatan, jemaah, dan pendaftaran dalam satu aplikasi operasional.",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
         "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p01-002",
-        "candidate-saf-24aysgyw4su6-p01-003",
-        "candidate-saf-24aysgyw4su6-p01-004",
-        "candidate-saf-24aysgyw4su6-p01-006",
-        "candidate-saf-24aysgyw4su6-p01-007"
-      ],
-      "evidence": {
-        "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
-        "page": 1,
-        "quote": "C S A F A R A BUSINESS PRD / INCREMENTAL PROJECT REQUEST I N C R E M E N TA L P R O J E C T R E Q U E S T SAFARA"
-      }
-    },
-    {
-      "candidateId": "candidate-saf-24aysgyw4su6-p01-002",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-1.statement-2",
-      "payload": {
-        "sourceStatement": "- Increment 01 Fondasi Data dan Pendaftaran Jemaah T U J U A N Menyatukan data paket, jadwal keberangkatan, jemaah, dan pendaftaran dalam satu aplikasi operasional.",
-        "assertionType": "workflow_step_or_constraint",
-        "actors": [],
-        "conditions": [],
-        "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "- Increment 01 Fondasi Data dan Pendaftaran Jemaah T U J U A N Menyatukan data paket, jadwal keberangkatan, jemaah, dan pendaftaran dalam satu aplikasi operasional."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
-      },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p01-003",
-        "candidate-saf-24aysgyw4su6-p01-004",
-        "candidate-saf-24aysgyw4su6-p01-006",
-        "candidate-saf-24aysgyw4su6-p01-007",
-        "candidate-saf-24aysgyw4su6-p01-008"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 1,
@@ -95,96 +54,18 @@
       }
     },
     {
-      "candidateId": "candidate-saf-24aysgyw4su6-p01-003",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-1.statement-3",
-      "payload": {
-        "sourceStatement": "R U A N G L I N G K U P Satu perusahaan dan satu cabang; paket, keberangkatan, data jemaah, pendaftaran, dan kuota.",
-        "assertionType": "workflow_step_or_constraint",
-        "actors": [],
-        "conditions": [],
-        "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "R U A N G L I N G K U P Satu perusahaan dan satu cabang; paket, keberangkatan, data jemaah, pendaftaran, dan kuota."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
-      },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p01-002",
-        "candidate-saf-24aysgyw4su6-p01-004",
-        "candidate-saf-24aysgyw4su6-p01-006",
-        "candidate-saf-24aysgyw4su6-p01-007",
-        "candidate-saf-24aysgyw4su6-p01-008"
-      ],
-      "evidence": {
-        "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
-        "page": 1,
-        "quote": "R U A N G L I N G K U P Satu perusahaan dan satu cabang; paket, keberangkatan, data jemaah, pendaftaran, dan kuota."
-      }
-    },
-    {
-      "candidateId": "candidate-saf-24aysgyw4su6-p01-004",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-1.statement-4",
-      "payload": {
-        "sourceStatement": "P E N G G U N A Owner/Admin TA N G G A L D O K U M E N 27 Juli 2026 Dokumen ini menetapkan fondasi operasional pertama Safara.",
-        "assertionType": "workflow_step_or_constraint",
-        "actors": [
-          "Admin"
-        ],
-        "conditions": [],
-        "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "P E N G G U N A Owner/Admin TA N G G A L D O K U M E N 27 Juli 2026 Dokumen ini menetapkan fondasi operasional pertama Safara."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
-      },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p01-002",
-        "candidate-saf-24aysgyw4su6-p01-003",
-        "candidate-saf-24aysgyw4su6-p01-006",
-        "candidate-saf-24aysgyw4su6-p01-007",
-        "candidate-saf-24aysgyw4su6-p01-008"
-      ],
-      "evidence": {
-        "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
-        "page": 1,
-        "quote": "P E N G G U N A Owner/Admin TA N G G A L D O K U M E N 27 Juli 2026 Dokumen ini menetapkan fondasi operasional pertama Safara."
-      }
-    },
-    {
       "candidateId": "candidate-saf-24aysgyw4su6-p01-005",
       "kind": "requirement",
-      "semanticKey": "safara.increment-01.page-1.statement-5",
+      "semanticKey": "sfe.safara-project-01.p1.s5",
       "payload": {
         "sourceStatement": "Pembayaran, dokumen perjalanan, kesiapan, manifest, dan laporan belum menjadi ruang lingkup increment ini.",
-        "assertionType": "requirement",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
         "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p01-002",
-        "candidate-saf-24aysgyw4su6-p01-003",
-        "candidate-saf-24aysgyw4su6-p01-004",
-        "candidate-saf-24aysgyw4su6-p01-006",
-        "candidate-saf-24aysgyw4su6-p01-007"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 1,
@@ -193,35 +74,19 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p01-006",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-1.statement-6",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p1.s6",
       "payload": {
         "sourceStatement": "Konteks Kami membutuhkan aplikasi web internal untuk mengelola data dasar administrasi jemaah umrah pada tahap pendaftaran.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [
           "Admin"
         ],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Konteks Kami membutuhkan aplikasi web internal untuk mengelola data dasar administrasi jemaah umrah pada tahap pendaftaran."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p01-002",
-        "candidate-saf-24aysgyw4su6-p01-003",
-        "candidate-saf-24aysgyw4su6-p01-004",
-        "candidate-saf-24aysgyw4su6-p01-007",
-        "candidate-saf-24aysgyw4su6-p01-008"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 1,
@@ -230,33 +95,17 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p01-007",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-1.statement-7",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p1.s7",
       "payload": {
         "sourceStatement": "Saat ini informasi paket, jadwal keberangkatan, data jemaah, dan pendaftaran sering tersebar di spreadsheet, chat, dan catatan yang berbeda.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Saat ini informasi paket, jadwal keberangkatan, data jemaah, dan pendaftaran sering tersebar di spreadsheet, chat, dan catatan yang berbeda."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p01-002",
-        "candidate-saf-24aysgyw4su6-p01-003",
-        "candidate-saf-24aysgyw4su6-p01-004",
-        "candidate-saf-24aysgyw4su6-p01-006",
-        "candidate-saf-24aysgyw4su6-p01-008"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 1,
@@ -265,33 +114,17 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p01-008",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-1.statement-8",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p1.s8",
       "payload": {
         "sourceStatement": "Hal ini menyulitkan tim untuk mengetahui: Jemaah terdaftar pada keberangkatan yang mana.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Hal ini menyulitkan tim untuk mengetahui: Jemaah terdaftar pada keberangkatan yang mana."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p01-002",
-        "candidate-saf-24aysgyw4su6-p01-003",
-        "candidate-saf-24aysgyw4su6-p01-004",
-        "candidate-saf-24aysgyw4su6-p01-006",
-        "candidate-saf-24aysgyw4su6-p01-007"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 1,
@@ -300,33 +133,17 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p01-009",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-1.statement-9",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p1.s9",
       "payload": {
         "sourceStatement": "Jumlah jemaah yang sudah terdaftar pada setiap keberangkatan.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Jumlah jemaah yang sudah terdaftar pada setiap keberangkatan."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p01-002",
-        "candidate-saf-24aysgyw4su6-p01-003",
-        "candidate-saf-24aysgyw4su6-p01-004",
-        "candidate-saf-24aysgyw4su6-p01-006",
-        "candidate-saf-24aysgyw4su6-p01-007"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 1,
@@ -335,33 +152,17 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p01-010",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-1.statement-10",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p1.s10",
       "payload": {
         "sourceStatement": "Sisa kuota setiap keberangkatan.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Sisa kuota setiap keberangkatan."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p01-002",
-        "candidate-saf-24aysgyw4su6-p01-003",
-        "candidate-saf-24aysgyw4su6-p01-004",
-        "candidate-saf-24aysgyw4su6-p01-006",
-        "candidate-saf-24aysgyw4su6-p01-007"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 1,
@@ -370,33 +171,17 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p01-011",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-1.statement-11",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p1.s11",
       "payload": {
         "sourceStatement": "Harga pendaftaran yang telah disepakati dengan jemaah.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Harga pendaftaran yang telah disepakati dengan jemaah."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p01-002",
-        "candidate-saf-24aysgyw4su6-p01-003",
-        "candidate-saf-24aysgyw4su6-p01-004",
-        "candidate-saf-24aysgyw4su6-p01-006",
-        "candidate-saf-24aysgyw4su6-p01-007"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 1,
@@ -405,33 +190,17 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p01-012",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-1.statement-12",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p1.s12",
       "payload": {
         "sourceStatement": "Aplikasi pada increment ini diharapkan menjadi satu sumber data untuk proses pendaftaran dan pengelolaan kuota sebelum kebutuhan operasional berikutnya ditambahkan.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Aplikasi pada increment ini diharapkan menjadi satu sumber data untuk proses pendaftaran dan pengelolaan kuota sebelum kebutuhan operasional berikutnya ditambahkan."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p01-002",
-        "candidate-saf-24aysgyw4su6-p01-003",
-        "candidate-saf-24aysgyw4su6-p01-004",
-        "candidate-saf-24aysgyw4su6-p01-006",
-        "candidate-saf-24aysgyw4su6-p01-007"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 1,
@@ -440,33 +209,17 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p01-013",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-1.statement-13",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p1.s13",
       "payload": {
         "sourceStatement": "Tujuan Bisnis Mengurangi kesalahan pencatatan data jemaah dan pendaftaran.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Tujuan Bisnis Mengurangi kesalahan pencatatan data jemaah dan pendaftaran."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p01-002",
-        "candidate-saf-24aysgyw4su6-p01-003",
-        "candidate-saf-24aysgyw4su6-p01-004",
-        "candidate-saf-24aysgyw4su6-p01-006",
-        "candidate-saf-24aysgyw4su6-p01-007"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 1,
@@ -475,33 +228,17 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p01-014",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-1.statement-14",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p1.s14",
       "payload": {
         "sourceStatement": "Mempermudah pemantauan kuota keberangkatan.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Mempermudah pemantauan kuota keberangkatan."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p01-002",
-        "candidate-saf-24aysgyw4su6-p01-003",
-        "candidate-saf-24aysgyw4su6-p01-004",
-        "candidate-saf-24aysgyw4su6-p01-006",
-        "candidate-saf-24aysgyw4su6-p01-007"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 1,
@@ -510,33 +247,17 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p01-015",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-1.statement-15",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p1.s15",
       "payload": {
         "sourceStatement": "Menjaga riwayat pendaftaran jemaah agar tidak hilang ketika data dibatalkan atau dinonaktifkan.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Menjaga riwayat pendaftaran jemaah agar tidak hilang ketika data dibatalkan atau dinonaktifkan."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p01-002",
-        "candidate-saf-24aysgyw4su6-p01-003",
-        "candidate-saf-24aysgyw4su6-p01-004",
-        "candidate-saf-24aysgyw4su6-p01-006",
-        "candidate-saf-24aysgyw4su6-p01-007"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 1,
@@ -545,33 +266,17 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p01-016",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-1.statement-16",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p1.s16",
       "payload": {
         "sourceStatement": "Memastikan harga pendaftaran yang sudah disepakati tidak berubah ketika harga paket diperbarui.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Memastikan harga pendaftaran yang sudah disepakati tidak berubah ketika harga paket diperbarui."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p01-002",
-        "candidate-saf-24aysgyw4su6-p01-003",
-        "candidate-saf-24aysgyw4su6-p01-004",
-        "candidate-saf-24aysgyw4su6-p01-006",
-        "candidate-saf-24aysgyw4su6-p01-007"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 1,
@@ -580,35 +285,19 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p01-017",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-1.statement-17",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p1.s17",
       "payload": {
         "sourceStatement": "Pengguna Owner/Admin Dapat melihat dan mengelola paket, jadwal keberangkatan, data jemaah, dan pendaftaran pada increment ini.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [
           "Admin"
         ],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Pengguna Owner/Admin Dapat melihat dan mengelola paket, jadwal keberangkatan, data jemaah, dan pendaftaran pada increment ini."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p01-002",
-        "candidate-saf-24aysgyw4su6-p01-003",
-        "candidate-saf-24aysgyw4su6-p01-004",
-        "candidate-saf-24aysgyw4su6-p01-006",
-        "candidate-saf-24aysgyw4su6-p01-007"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 1,
@@ -618,10 +307,10 @@
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p01-018",
       "kind": "requirement",
-      "semanticKey": "safara.increment-01.page-1.statement-18",
+      "semanticKey": "sfe.safara-project-01.p1.s18",
       "payload": {
         "sourceStatement": "Pengguna yang sudah dinonaktifkan tidak boleh masuk ke aplikasi.",
-        "assertionType": "requirement",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [
           "Pengguna yang sudah dinonaktifkan tidak boleh masuk ke aplikasi."
@@ -631,13 +320,7 @@
         ],
         "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p01-002",
-        "candidate-saf-24aysgyw4su6-p01-003",
-        "candidate-saf-24aysgyw4su6-p01-004",
-        "candidate-saf-24aysgyw4su6-p01-006",
-        "candidate-saf-24aysgyw4su6-p01-007"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 1,
@@ -647,22 +330,16 @@
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p01-019",
       "kind": "requirement",
-      "semanticKey": "safara.increment-01.page-1.statement-19",
+      "semanticKey": "sfe.safara-project-01.p1.s19",
       "payload": {
         "sourceStatement": "• Safara",
-        "assertionType": "requirement",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
         "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p01-002",
-        "candidate-saf-24aysgyw4su6-p01-003",
-        "candidate-saf-24aysgyw4su6-p01-004",
-        "candidate-saf-24aysgyw4su6-p01-006",
-        "candidate-saf-24aysgyw4su6-p01-007"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 1,
@@ -671,35 +348,19 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p01-020",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-1.statement-20",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p1.s20",
       "payload": {
         "sourceStatement": "- Sistem Administrasi Travel Umrah Dokumen Bisnis | 27 Juli 2026 |",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [
           "Admin"
         ],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "- Sistem Administrasi Travel Umrah Dokumen Bisnis | 27 Juli 2026 |"
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p01-002",
-        "candidate-saf-24aysgyw4su6-p01-003",
-        "candidate-saf-24aysgyw4su6-p01-004",
-        "candidate-saf-24aysgyw4su6-p01-006",
-        "candidate-saf-24aysgyw4su6-p01-007"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 1,
@@ -707,68 +368,40 @@
       }
     },
     {
-      "candidateId": "candidate-saf-24aysgyw4su6-p02-001",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-2.statement-1",
-      "payload": {
-        "sourceStatement": "Alur Utama Admin membuat paket umrah.",
-        "assertionType": "workflow_step_or_constraint",
-        "actors": [
-          "Admin"
-        ],
-        "conditions": [],
-        "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Alur Utama Admin membuat paket umrah."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
-      },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-002",
-        "candidate-saf-24aysgyw4su6-p02-003",
-        "candidate-saf-24aysgyw4su6-p02-004",
-        "candidate-saf-24aysgyw4su6-p02-005",
-        "candidate-saf-24aysgyw4su6-p02-006"
-      ],
-      "evidence": {
-        "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
-        "page": 2,
-        "quote": "Alur Utama Admin membuat paket umrah."
-      }
-    },
-    {
       "candidateId": "candidate-saf-24aysgyw4su6-p02-002",
       "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-2.statement-2",
+      "semanticKey": "sfe.safara-project-01.p2.s2",
       "payload": {
         "sourceStatement": "Admin membuat jadwal keberangkatan untuk paket yang dipilih.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "workflow_step",
         "actors": [
           "Admin"
         ],
         "conditions": [],
         "constraints": [],
         "proposalStatus": "candidate_only",
-        "triggers": [],
+        "triggers": [
+          "Admin begins operational registration work"
+        ],
         "orderedSteps": [
           "Admin membuat jadwal keberangkatan untuk paket yang dipilih."
         ],
         "branches": [],
-        "inputs": [],
+        "inputs": [
+          "package",
+          "departure schedule",
+          "pilgrim record"
+        ],
         "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
+        "dependencies": [
+          "package, departure, and pilgrim records"
+        ],
+        "stateTransitions": [
+          "unregistered pilgrim to registered pilgrim"
+        ],
         "exceptions": []
       },
       "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
         "candidate-saf-24aysgyw4su6-p02-003",
         "candidate-saf-24aysgyw4su6-p02-004",
         "candidate-saf-24aysgyw4su6-p02-005",
@@ -783,10 +416,10 @@
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p02-003",
       "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-2.statement-3",
+      "semanticKey": "sfe.safara-project-01.p2.s3",
       "payload": {
         "sourceStatement": "Admin mencatat data jemaah.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "workflow_step",
         "actors": [
           "Admin"
         ],
@@ -805,7 +438,6 @@
         "exceptions": []
       },
       "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
         "candidate-saf-24aysgyw4su6-p02-002",
         "candidate-saf-24aysgyw4su6-p02-004",
         "candidate-saf-24aysgyw4su6-p02-005",
@@ -820,10 +452,10 @@
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p02-004",
       "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-2.statement-4",
+      "semanticKey": "sfe.safara-project-01.p2.s4",
       "payload": {
         "sourceStatement": "Admin memilih jemaah dan mendaftarkannya ke jadwal keberangkatan yang masih terbuka.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "workflow_step",
         "actors": [
           "Admin"
         ],
@@ -842,7 +474,6 @@
         "exceptions": []
       },
       "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
         "candidate-saf-24aysgyw4su6-p02-002",
         "candidate-saf-24aysgyw4su6-p02-003",
         "candidate-saf-24aysgyw4su6-p02-005",
@@ -857,11 +488,13 @@
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p02-005",
       "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-2.statement-5",
+      "semanticKey": "sfe.safara-project-01.p2.s5",
       "payload": {
         "sourceStatement": "Sistem menyimpan harga pendaftaran yang berlaku saat pendaftaran.",
-        "assertionType": "workflow_step_or_constraint",
-        "actors": [],
+        "assertionType": "workflow_step",
+        "actors": [
+          "System"
+        ],
         "conditions": [],
         "constraints": [],
         "proposalStatus": "candidate_only",
@@ -871,13 +504,14 @@
         ],
         "branches": [],
         "inputs": [],
-        "outputs": [],
+        "outputs": [
+          "registration price or quota information"
+        ],
         "dependencies": [],
         "stateTransitions": [],
         "exceptions": []
       },
       "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
         "candidate-saf-24aysgyw4su6-p02-002",
         "candidate-saf-24aysgyw4su6-p02-003",
         "candidate-saf-24aysgyw4su6-p02-004",
@@ -892,11 +526,13 @@
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p02-006",
       "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-2.statement-6",
+      "semanticKey": "sfe.safara-project-01.p2.s6",
       "payload": {
         "sourceStatement": "Sistem menampilkan jumlah jemaah terdaftar dan sisa kuota setiap keberangkatan.",
-        "assertionType": "workflow_step_or_constraint",
-        "actors": [],
+        "assertionType": "workflow_step",
+        "actors": [
+          "System"
+        ],
         "conditions": [],
         "constraints": [],
         "proposalStatus": "candidate_only",
@@ -906,13 +542,14 @@
         ],
         "branches": [],
         "inputs": [],
-        "outputs": [],
+        "outputs": [
+          "registration price or quota information"
+        ],
         "dependencies": [],
         "stateTransitions": [],
         "exceptions": []
       },
       "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
         "candidate-saf-24aysgyw4su6-p02-002",
         "candidate-saf-24aysgyw4su6-p02-003",
         "candidate-saf-24aysgyw4su6-p02-004",
@@ -925,61 +562,20 @@
       }
     },
     {
-      "candidateId": "candidate-saf-24aysgyw4su6-p02-007",
-      "kind": "requirement",
-      "semanticKey": "safara.increment-01.page-2.statement-7",
-      "payload": {
-        "sourceStatement": "Kebutuhan",
-        "assertionType": "requirement",
-        "actors": [],
-        "conditions": [],
-        "constraints": [],
-        "proposalStatus": "candidate_only"
-      },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
-        "candidate-saf-24aysgyw4su6-p02-002",
-        "candidate-saf-24aysgyw4su6-p02-003",
-        "candidate-saf-24aysgyw4su6-p02-004",
-        "candidate-saf-24aysgyw4su6-p02-005"
-      ],
-      "evidence": {
-        "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
-        "page": 2,
-        "quote": "Kebutuhan"
-      }
-    },
-    {
       "candidateId": "candidate-saf-24aysgyw4su6-p02-008",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-2.statement-8",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p2.s8",
       "payload": {
         "sourceStatement": "Paket dan Jadwal Keberangkatan Admin dapat membuat, melihat, mengubah, dan menonaktifkan paket umrah.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [
           "Admin"
         ],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Paket dan Jadwal Keberangkatan Admin dapat membuat, melihat, mengubah, dan menonaktifkan paket umrah."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
-        "candidate-saf-24aysgyw4su6-p02-002",
-        "candidate-saf-24aysgyw4su6-p02-003",
-        "candidate-saf-24aysgyw4su6-p02-004",
-        "candidate-saf-24aysgyw4su6-p02-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 2,
@@ -988,33 +584,17 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p02-009",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-2.statement-9",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p2.s9",
       "payload": {
         "sourceStatement": "Informasi paket minimal mencakup nama paket, durasi, harga dasar, deskripsi, dan status aktif.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Informasi paket minimal mencakup nama paket, durasi, harga dasar, deskripsi, dan status aktif."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
-        "candidate-saf-24aysgyw4su6-p02-002",
-        "candidate-saf-24aysgyw4su6-p02-003",
-        "candidate-saf-24aysgyw4su6-p02-004",
-        "candidate-saf-24aysgyw4su6-p02-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 2,
@@ -1023,33 +603,17 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p02-010",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-2.statement-10",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p2.s10",
       "payload": {
         "sourceStatement": "Setiap paket dapat memiliki satu atau lebih jadwal keberangkatan.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Setiap paket dapat memiliki satu atau lebih jadwal keberangkatan."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
-        "candidate-saf-24aysgyw4su6-p02-002",
-        "candidate-saf-24aysgyw4su6-p02-003",
-        "candidate-saf-24aysgyw4su6-p02-004",
-        "candidate-saf-24aysgyw4su6-p02-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 2,
@@ -1058,33 +622,17 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p02-011",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-2.statement-11",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p2.s11",
       "payload": {
         "sourceStatement": "Informasi jadwal minimal mencakup kode keberangkatan, tanggal berangkat, tanggal pulang, kota asal, kuota, harga, maskapai, nomor penerbangan, hotel Makkah, hotel Madinah, dan status keberangkatan.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Informasi jadwal minimal mencakup kode keberangkatan, tanggal berangkat, tanggal pulang, kota asal, kuota, harga, maskapai, nomor penerbangan, hotel Makkah, hotel Madinah, dan status keberangkatan."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
-        "candidate-saf-24aysgyw4su6-p02-002",
-        "candidate-saf-24aysgyw4su6-p02-003",
-        "candidate-saf-24aysgyw4su6-p02-004",
-        "candidate-saf-24aysgyw4su6-p02-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 2,
@@ -1093,33 +641,17 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p02-012",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-2.statement-12",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p2.s12",
       "payload": {
         "sourceStatement": "Aplikasi menampilkan jumlah jemaah terdaftar dan sisa kuota.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Aplikasi menampilkan jumlah jemaah terdaftar dan sisa kuota."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
-        "candidate-saf-24aysgyw4su6-p02-002",
-        "candidate-saf-24aysgyw4su6-p02-003",
-        "candidate-saf-24aysgyw4su6-p02-004",
-        "candidate-saf-24aysgyw4su6-p02-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 2,
@@ -1128,35 +660,19 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p02-013",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-2.statement-13",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p2.s13",
       "payload": {
         "sourceStatement": "Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [
           "Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh."
         ],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
-        "candidate-saf-24aysgyw4su6-p02-002",
-        "candidate-saf-24aysgyw4su6-p02-003",
-        "candidate-saf-24aysgyw4su6-p02-004",
-        "candidate-saf-24aysgyw4su6-p02-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 2,
@@ -1165,35 +681,19 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p02-014",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-2.statement-14",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p2.s14",
       "payload": {
         "sourceStatement": "Data Jemaah Admin dapat menambah, melihat, mengubah, mencari, dan menonaktifkan data jemaah.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [
           "Admin"
         ],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Data Jemaah Admin dapat menambah, melihat, mengubah, mencari, dan menonaktifkan data jemaah."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
-        "candidate-saf-24aysgyw4su6-p02-002",
-        "candidate-saf-24aysgyw4su6-p02-003",
-        "candidate-saf-24aysgyw4su6-p02-004",
-        "candidate-saf-24aysgyw4su6-p02-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 2,
@@ -1202,33 +702,17 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p02-015",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-2.statement-15",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p2.s15",
       "payload": {
         "sourceStatement": "Informasi minimum jemaah: nama sesuai paspor, NIK, jenis kelamin, tempat dan tanggal lahir, nomor telepon, alamat, nomor dan masa berlaku paspor, serta nama dan nomor kontak darurat.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Informasi minimum jemaah: nama sesuai paspor, NIK, jenis kelamin, tempat dan tanggal lahir, nomor telepon, alamat, nomor dan masa berlaku paspor, serta nama dan nomor kontak darurat."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
-        "candidate-saf-24aysgyw4su6-p02-002",
-        "candidate-saf-24aysgyw4su6-p02-003",
-        "candidate-saf-24aysgyw4su6-p02-004",
-        "candidate-saf-24aysgyw4su6-p02-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 2,
@@ -1238,10 +722,10 @@
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p02-016",
       "kind": "requirement",
-      "semanticKey": "safara.increment-01.page-2.statement-16",
+      "semanticKey": "sfe.safara-project-01.p2.s16",
       "payload": {
         "sourceStatement": "NIK harus terdiri dari 16 angka apabila diisi.",
-        "assertionType": "requirement",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [
           "NIK harus terdiri dari 16 angka apabila diisi."
@@ -1251,13 +735,7 @@
         ],
         "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
-        "candidate-saf-24aysgyw4su6-p02-002",
-        "candidate-saf-24aysgyw4su6-p02-003",
-        "candidate-saf-24aysgyw4su6-p02-004",
-        "candidate-saf-24aysgyw4su6-p02-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 2,
@@ -1266,11 +744,11 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p02-017",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-2.statement-17",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p2.s17",
       "payload": {
         "sourceStatement": "Aplikasi harus memberikan peringatan apabila NIK atau nomor paspor sudah digunakan oleh jemaah lain.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [
           "Aplikasi harus memberikan peringatan apabila NIK atau nomor paspor sudah digunakan oleh jemaah lain."
@@ -1278,25 +756,9 @@
         "constraints": [
           "Aplikasi harus memberikan peringatan apabila NIK atau nomor paspor sudah digunakan oleh jemaah lain."
         ],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Aplikasi harus memberikan peringatan apabila NIK atau nomor paspor sudah digunakan oleh jemaah lain."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
-        "candidate-saf-24aysgyw4su6-p02-002",
-        "candidate-saf-24aysgyw4su6-p02-003",
-        "candidate-saf-24aysgyw4su6-p02-004",
-        "candidate-saf-24aysgyw4su6-p02-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 2,
@@ -1306,22 +768,16 @@
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p02-018",
       "kind": "requirement",
-      "semanticKey": "safara.increment-01.page-2.statement-18",
+      "semanticKey": "sfe.safara-project-01.p2.s18",
       "payload": {
         "sourceStatement": "Pada halaman daftar, NIK dan nomor paspor tidak perlu ditampilkan secara penuh.",
-        "assertionType": "requirement",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
         "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
-        "candidate-saf-24aysgyw4su6-p02-002",
-        "candidate-saf-24aysgyw4su6-p02-003",
-        "candidate-saf-24aysgyw4su6-p02-004",
-        "candidate-saf-24aysgyw4su6-p02-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 2,
@@ -1330,35 +786,19 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p02-019",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-2.statement-19",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p2.s19",
       "payload": {
         "sourceStatement": "Pendaftaran Jemaah Admin dapat memilih jemaah dan mendaftarkannya ke jadwal keberangkatan yang masih terbuka.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [
           "Admin"
         ],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Pendaftaran Jemaah Admin dapat memilih jemaah dan mendaftarkannya ke jadwal keberangkatan yang masih terbuka."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
-        "candidate-saf-24aysgyw4su6-p02-002",
-        "candidate-saf-24aysgyw4su6-p02-003",
-        "candidate-saf-24aysgyw4su6-p02-004",
-        "candidate-saf-24aysgyw4su6-p02-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 2,
@@ -1367,33 +807,17 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p02-020",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-2.statement-20",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p2.s20",
       "payload": {
         "sourceStatement": "Setiap pendaftaran memiliki nomor pendaftaran yang berbeda.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Setiap pendaftaran memiliki nomor pendaftaran yang berbeda."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
-        "candidate-saf-24aysgyw4su6-p02-002",
-        "candidate-saf-24aysgyw4su6-p02-003",
-        "candidate-saf-24aysgyw4su6-p02-004",
-        "candidate-saf-24aysgyw4su6-p02-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 2,
@@ -1402,33 +826,17 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p02-021",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-2.statement-21",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p2.s21",
       "payload": {
         "sourceStatement": "Harga yang berlaku saat pendaftaran disimpan sebagai harga pendaftaran yang disepakati dan menjadi nilai acuan tetap untuk pendaftaran tersebut.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Harga yang berlaku saat pendaftaran disimpan sebagai harga pendaftaran yang disepakati dan menjadi nilai acuan tetap untuk pendaftaran tersebut."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
-        "candidate-saf-24aysgyw4su6-p02-002",
-        "candidate-saf-24aysgyw4su6-p02-003",
-        "candidate-saf-24aysgyw4su6-p02-004",
-        "candidate-saf-24aysgyw4su6-p02-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 2,
@@ -1437,11 +845,11 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p02-022",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-2.statement-22",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p2.s22",
       "payload": {
         "sourceStatement": "Perubahan harga paket setelah pendaftaran tidak boleh mengubah harga pendaftaran yang sudah disepakati.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [
           "Perubahan harga paket setelah pendaftaran tidak boleh mengubah harga pendaftaran yang sudah disepakati."
@@ -1449,25 +857,9 @@
         "constraints": [
           "Perubahan harga paket setelah pendaftaran tidak boleh mengubah harga pendaftaran yang sudah disepakati."
         ],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Perubahan harga paket setelah pendaftaran tidak boleh mengubah harga pendaftaran yang sudah disepakati."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
-        "candidate-saf-24aysgyw4su6-p02-002",
-        "candidate-saf-24aysgyw4su6-p02-003",
-        "candidate-saf-24aysgyw4su6-p02-004",
-        "candidate-saf-24aysgyw4su6-p02-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 2,
@@ -1476,11 +868,11 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p02-023",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-2.statement-23",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p2.s23",
       "payload": {
         "sourceStatement": "Jemaah yang sama tidak boleh memiliki dua pendaftaran aktif pada jadwal keberangkatan yang sama.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [
           "Jemaah yang sama tidak boleh memiliki dua pendaftaran aktif pada jadwal keberangkatan yang sama."
@@ -1488,25 +880,9 @@
         "constraints": [
           "Jemaah yang sama tidak boleh memiliki dua pendaftaran aktif pada jadwal keberangkatan yang sama."
         ],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Jemaah yang sama tidak boleh memiliki dua pendaftaran aktif pada jadwal keberangkatan yang sama."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
-        "candidate-saf-24aysgyw4su6-p02-002",
-        "candidate-saf-24aysgyw4su6-p02-003",
-        "candidate-saf-24aysgyw4su6-p02-004",
-        "candidate-saf-24aysgyw4su6-p02-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 2,
@@ -1515,33 +891,17 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p02-024",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-2.statement-24",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p2.s24",
       "payload": {
         "sourceStatement": "Pendaftaran dapat dibatalkan dengan alasan yang tercatat, tetapi riwayatnya tetap dapat dilihat.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Pendaftaran dapat dibatalkan dengan alasan yang tercatat, tetapi riwayatnya tetap dapat dilihat."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
-        "candidate-saf-24aysgyw4su6-p02-002",
-        "candidate-saf-24aysgyw4su6-p02-003",
-        "candidate-saf-24aysgyw4su6-p02-004",
-        "candidate-saf-24aysgyw4su6-p02-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 2,
@@ -1549,51 +909,12 @@
       }
     },
     {
-      "candidateId": "candidate-saf-24aysgyw4su6-p02-025",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-2.statement-25",
-      "payload": {
-        "sourceStatement": "Aturan Bisnis Utama Satu jemaah dapat memiliki beberapa riwayat pendaftaran, tetapi tidak boleh memiliki dua pendaftaran aktif pada keberangkatan yang sama.",
-        "assertionType": "workflow_step_or_constraint",
-        "actors": [],
-        "conditions": [
-          "Aturan Bisnis Utama Satu jemaah dapat memiliki beberapa riwayat pendaftaran, tetapi tidak boleh memiliki dua pendaftaran aktif pada keberangkatan yang sama."
-        ],
-        "constraints": [
-          "Aturan Bisnis Utama Satu jemaah dapat memiliki beberapa riwayat pendaftaran, tetapi tidak boleh memiliki dua pendaftaran aktif pada keberangkatan yang sama."
-        ],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Aturan Bisnis Utama Satu jemaah dapat memiliki beberapa riwayat pendaftaran, tetapi tidak boleh memiliki dua pendaftaran aktif pada keberangkatan yang sama."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
-      },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
-        "candidate-saf-24aysgyw4su6-p02-002",
-        "candidate-saf-24aysgyw4su6-p02-003",
-        "candidate-saf-24aysgyw4su6-p02-004",
-        "candidate-saf-24aysgyw4su6-p02-005"
-      ],
-      "evidence": {
-        "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
-        "page": 2,
-        "quote": "Aturan Bisnis Utama Satu jemaah dapat memiliki beberapa riwayat pendaftaran, tetapi tidak boleh memiliki dua pendaftaran aktif pada keberangkatan yang sama."
-      }
-    },
-    {
       "candidateId": "candidate-saf-24aysgyw4su6-p02-026",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-2.statement-26",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p2.s26",
       "payload": {
         "sourceStatement": "Jumlah pendaftaran aktif tidak boleh melebihi kuota keberangkatan.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [
           "Jumlah pendaftaran aktif tidak boleh melebihi kuota keberangkatan."
@@ -1601,25 +922,9 @@
         "constraints": [
           "Jumlah pendaftaran aktif tidak boleh melebihi kuota keberangkatan."
         ],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Jumlah pendaftaran aktif tidak boleh melebihi kuota keberangkatan."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
-        "candidate-saf-24aysgyw4su6-p02-002",
-        "candidate-saf-24aysgyw4su6-p02-003",
-        "candidate-saf-24aysgyw4su6-p02-004",
-        "candidate-saf-24aysgyw4su6-p02-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 2,
@@ -1628,33 +933,17 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p02-027",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-2.statement-27",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p2.s27",
       "payload": {
         "sourceStatement": "Harga pendaftaran yang sudah disepakati tidak berubah ketika harga paket diperbarui.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Harga pendaftaran yang sudah disepakati tidak berubah ketika harga paket diperbarui."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
-        "candidate-saf-24aysgyw4su6-p02-002",
-        "candidate-saf-24aysgyw4su6-p02-003",
-        "candidate-saf-24aysgyw4su6-p02-004",
-        "candidate-saf-24aysgyw4su6-p02-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 2,
@@ -1664,10 +953,10 @@
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p02-028",
       "kind": "requirement",
-      "semanticKey": "safara.increment-01.page-2.statement-28",
+      "semanticKey": "sfe.safara-project-01.p2.s28",
       "payload": {
         "sourceStatement": "Pembatalan atau penonaktifan data tidak boleh menghilangkan riwayat sebelumnya.",
-        "assertionType": "requirement",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [
           "Pembatalan atau penonaktifan data tidak boleh menghilangkan riwayat sebelumnya."
@@ -1677,13 +966,7 @@
         ],
         "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
-        "candidate-saf-24aysgyw4su6-p02-002",
-        "candidate-saf-24aysgyw4su6-p02-003",
-        "candidate-saf-24aysgyw4su6-p02-004",
-        "candidate-saf-24aysgyw4su6-p02-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 2,
@@ -1692,35 +975,19 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p02-029",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-2.statement-29",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p2.s29",
       "payload": {
         "sourceStatement": "Informasi jemaah hanya boleh dilihat oleh pengguna yang berkepentingan.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [
           "Informasi jemaah hanya boleh dilihat oleh pengguna yang berkepentingan."
         ],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Informasi jemaah hanya boleh dilihat oleh pengguna yang berkepentingan."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
-        "candidate-saf-24aysgyw4su6-p02-002",
-        "candidate-saf-24aysgyw4su6-p02-003",
-        "candidate-saf-24aysgyw4su6-p02-004",
-        "candidate-saf-24aysgyw4su6-p02-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 2,
@@ -1730,22 +997,16 @@
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p02-030",
       "kind": "requirement",
-      "semanticKey": "safara.increment-01.page-2.statement-30",
+      "semanticKey": "sfe.safara-project-01.p2.s30",
       "payload": {
         "sourceStatement": "• Safara",
-        "assertionType": "requirement",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
         "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
-        "candidate-saf-24aysgyw4su6-p02-002",
-        "candidate-saf-24aysgyw4su6-p02-003",
-        "candidate-saf-24aysgyw4su6-p02-004",
-        "candidate-saf-24aysgyw4su6-p02-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 2,
@@ -1754,35 +1015,19 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p02-031",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-2.statement-31",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p2.s31",
       "payload": {
         "sourceStatement": "- Sistem Administrasi Travel Umrah Dokumen Bisnis | 27 Juli 2026 |",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [
           "Admin"
         ],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "- Sistem Administrasi Travel Umrah Dokumen Bisnis | 27 Juli 2026 |"
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p02-001",
-        "candidate-saf-24aysgyw4su6-p02-002",
-        "candidate-saf-24aysgyw4su6-p02-003",
-        "candidate-saf-24aysgyw4su6-p02-004",
-        "candidate-saf-24aysgyw4su6-p02-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 2,
@@ -1790,69 +1035,18 @@
       }
     },
     {
-      "candidateId": "candidate-saf-24aysgyw4su6-p03-001",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-3.statement-1",
-      "payload": {
-        "sourceStatement": "Skenario Pemeriksaan Hasil Sebelum increment ini dinyatakan selesai, kami akan mencoba minimal skenario berikut: Membuat paket dan jadwal keberangkatan, lalu melihat sisa kuota.",
-        "assertionType": "workflow_step_or_constraint",
-        "actors": [],
-        "conditions": [],
-        "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Skenario Pemeriksaan Hasil Sebelum increment ini dinyatakan selesai, kami akan mencoba minimal skenario berikut: Membuat paket dan jadwal keberangkatan, lalu melihat sisa kuota."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
-      },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p03-002",
-        "candidate-saf-24aysgyw4su6-p03-003",
-        "candidate-saf-24aysgyw4su6-p03-004",
-        "candidate-saf-24aysgyw4su6-p03-005",
-        "candidate-saf-24aysgyw4su6-p03-006"
-      ],
-      "evidence": {
-        "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
-        "page": 3,
-        "quote": "Skenario Pemeriksaan Hasil Sebelum increment ini dinyatakan selesai, kami akan mencoba minimal skenario berikut: Membuat paket dan jadwal keberangkatan, lalu melihat sisa kuota."
-      }
-    },
-    {
       "candidateId": "candidate-saf-24aysgyw4su6-p03-002",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-3.statement-2",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p3.s2",
       "payload": {
         "sourceStatement": "Mendaftarkan jemaah sampai kuota penuh dan memastikan pendaftaran berikutnya ditolak.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Mendaftarkan jemaah sampai kuota penuh dan memastikan pendaftaran berikutnya ditolak."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p03-001",
-        "candidate-saf-24aysgyw4su6-p03-003",
-        "candidate-saf-24aysgyw4su6-p03-004",
-        "candidate-saf-24aysgyw4su6-p03-005",
-        "candidate-saf-24aysgyw4su6-p03-006"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 3,
@@ -1861,33 +1055,17 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p03-003",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-3.statement-3",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p3.s3",
       "payload": {
         "sourceStatement": "Mencoba mendaftarkan jemaah yang sama dua kali pada keberangkatan yang sama.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Mencoba mendaftarkan jemaah yang sama dua kali pada keberangkatan yang sama."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p03-001",
-        "candidate-saf-24aysgyw4su6-p03-002",
-        "candidate-saf-24aysgyw4su6-p03-004",
-        "candidate-saf-24aysgyw4su6-p03-005",
-        "candidate-saf-24aysgyw4su6-p03-006"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 3,
@@ -1896,33 +1074,17 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p03-004",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-3.statement-4",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p3.s4",
       "payload": {
         "sourceStatement": "Memperbarui harga paket setelah pendaftaran dan memastikan harga pendaftaran yang sudah disepakati tidak berubah.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Memperbarui harga paket setelah pendaftaran dan memastikan harga pendaftaran yang sudah disepakati tidak berubah."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p03-001",
-        "candidate-saf-24aysgyw4su6-p03-002",
-        "candidate-saf-24aysgyw4su6-p03-003",
-        "candidate-saf-24aysgyw4su6-p03-005",
-        "candidate-saf-24aysgyw4su6-p03-006"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 3,
@@ -1931,33 +1093,17 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p03-005",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-3.statement-5",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p3.s5",
       "payload": {
         "sourceStatement": "Membatalkan pendaftaran dan memastikan riwayatnya tetap dapat dilihat.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Membatalkan pendaftaran dan memastikan riwayatnya tetap dapat dilihat."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p03-001",
-        "candidate-saf-24aysgyw4su6-p03-002",
-        "candidate-saf-24aysgyw4su6-p03-003",
-        "candidate-saf-24aysgyw4su6-p03-004",
-        "candidate-saf-24aysgyw4su6-p03-006"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 3,
@@ -1965,61 +1111,18 @@
       }
     },
     {
-      "candidateId": "candidate-saf-24aysgyw4su6-p03-006",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-3.statement-6",
-      "payload": {
-        "sourceStatement": "Hasil yang Harus Diserahkan Aplikasi web increment pertama yang dapat digunakan untuk pengelolaan paket, jadwal keberangkatan, data jemaah, pendaftaran, dan kuota.",
-        "assertionType": "workflow_step_or_constraint",
-        "actors": [],
-        "conditions": [],
-        "constraints": [
-          "Hasil yang Harus Diserahkan Aplikasi web increment pertama yang dapat digunakan untuk pengelolaan paket, jadwal keberangkatan, data jemaah, pendaftaran, dan kuota."
-        ],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Hasil yang Harus Diserahkan Aplikasi web increment pertama yang dapat digunakan untuk pengelolaan paket, jadwal keberangkatan, data jemaah, pendaftaran, dan kuota."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
-      },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p03-001",
-        "candidate-saf-24aysgyw4su6-p03-002",
-        "candidate-saf-24aysgyw4su6-p03-003",
-        "candidate-saf-24aysgyw4su6-p03-004",
-        "candidate-saf-24aysgyw4su6-p03-005"
-      ],
-      "evidence": {
-        "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
-        "page": 3,
-        "quote": "Hasil yang Harus Diserahkan Aplikasi web increment pertama yang dapat digunakan untuk pengelolaan paket, jadwal keberangkatan, data jemaah, pendaftaran, dan kuota."
-      }
-    },
-    {
       "candidateId": "candidate-saf-24aysgyw4su6-p03-007",
       "kind": "requirement",
-      "semanticKey": "safara.increment-01.page-3.statement-7",
+      "semanticKey": "sfe.safara-project-01.p3.s7",
       "payload": {
         "sourceStatement": "Alamat aplikasi yang dapat diakses oleh pengguna yang ditentukan.",
-        "assertionType": "requirement",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
         "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p03-001",
-        "candidate-saf-24aysgyw4su6-p03-002",
-        "candidate-saf-24aysgyw4su6-p03-003",
-        "candidate-saf-24aysgyw4su6-p03-004",
-        "candidate-saf-24aysgyw4su6-p03-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 3,
@@ -2028,35 +1131,19 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p03-008",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-3.statement-8",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p3.s8",
       "payload": {
         "sourceStatement": "Akun awal untuk Owner/Admin.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [
           "Admin"
         ],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Akun awal untuk Owner/Admin."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p03-001",
-        "candidate-saf-24aysgyw4su6-p03-002",
-        "candidate-saf-24aysgyw4su6-p03-003",
-        "candidate-saf-24aysgyw4su6-p03-004",
-        "candidate-saf-24aysgyw4su6-p03-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 3,
@@ -2066,22 +1153,16 @@
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p03-009",
       "kind": "requirement",
-      "semanticKey": "safara.increment-01.page-3.statement-9",
+      "semanticKey": "sfe.safara-project-01.p3.s9",
       "payload": {
         "sourceStatement": "Panduan penggunaan singkat untuk fungsi pada increment ini.",
-        "assertionType": "requirement",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
         "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p03-001",
-        "candidate-saf-24aysgyw4su6-p03-002",
-        "candidate-saf-24aysgyw4su6-p03-003",
-        "candidate-saf-24aysgyw4su6-p03-004",
-        "candidate-saf-24aysgyw4su6-p03-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 3,
@@ -2089,71 +1170,18 @@
       }
     },
     {
-      "candidateId": "candidate-saf-24aysgyw4su6-p03-010",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-3.statement-10",
-      "payload": {
-        "sourceStatement": "Kriteria Penerimaan Increment 01 Owner/Admin dapat masuk dan menjalankan fungsi yang ditetapkan pada increment ini.",
-        "assertionType": "workflow_step_or_constraint",
-        "actors": [
-          "Admin"
-        ],
-        "conditions": [],
-        "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Kriteria Penerimaan Increment 01 Owner/Admin dapat masuk dan menjalankan fungsi yang ditetapkan pada increment ini."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
-      },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p03-001",
-        "candidate-saf-24aysgyw4su6-p03-002",
-        "candidate-saf-24aysgyw4su6-p03-003",
-        "candidate-saf-24aysgyw4su6-p03-004",
-        "candidate-saf-24aysgyw4su6-p03-005"
-      ],
-      "evidence": {
-        "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
-        "page": 3,
-        "quote": "Kriteria Penerimaan Increment 01 Owner/Admin dapat masuk dan menjalankan fungsi yang ditetapkan pada increment ini."
-      }
-    },
-    {
       "candidateId": "candidate-saf-24aysgyw4su6-p03-011",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-3.statement-11",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p3.s11",
       "payload": {
         "sourceStatement": "Alur dari pembuatan paket sampai pendaftaran jemaah dapat dijalankan menggunakan contoh data yang disepakati.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Alur dari pembuatan paket sampai pendaftaran jemaah dapat dijalankan menggunakan contoh data yang disepakati."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p03-001",
-        "candidate-saf-24aysgyw4su6-p03-002",
-        "candidate-saf-24aysgyw4su6-p03-003",
-        "candidate-saf-24aysgyw4su6-p03-004",
-        "candidate-saf-24aysgyw4su6-p03-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 3,
@@ -2163,22 +1191,16 @@
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p03-012",
       "kind": "requirement",
-      "semanticKey": "safara.increment-01.page-3.statement-12",
+      "semanticKey": "sfe.safara-project-01.p3.s12",
       "payload": {
         "sourceStatement": "Kuota dan sisa kuota dihitung dengan benar.",
-        "assertionType": "requirement",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
         "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p03-001",
-        "candidate-saf-24aysgyw4su6-p03-002",
-        "candidate-saf-24aysgyw4su6-p03-003",
-        "candidate-saf-24aysgyw4su6-p03-004",
-        "candidate-saf-24aysgyw4su6-p03-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 3,
@@ -2187,33 +1209,17 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p03-013",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-3.statement-13",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p3.s13",
       "payload": {
         "sourceStatement": "Pendaftaran ditolak ketika jadwal ditutup, kuota penuh, atau jemaah yang sama sudah memiliki pendaftaran aktif pada keberangkatan yang sama.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Pendaftaran ditolak ketika jadwal ditutup, kuota penuh, atau jemaah yang sama sudah memiliki pendaftaran aktif pada keberangkatan yang sama."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p03-001",
-        "candidate-saf-24aysgyw4su6-p03-002",
-        "candidate-saf-24aysgyw4su6-p03-003",
-        "candidate-saf-24aysgyw4su6-p03-004",
-        "candidate-saf-24aysgyw4su6-p03-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 3,
@@ -2222,33 +1228,17 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p03-014",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-3.statement-14",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p3.s14",
       "payload": {
         "sourceStatement": "Harga pendaftaran yang sudah disepakati tetap tersimpan ketika harga paket berubah.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Harga pendaftaran yang sudah disepakati tetap tersimpan ketika harga paket berubah."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p03-001",
-        "candidate-saf-24aysgyw4su6-p03-002",
-        "candidate-saf-24aysgyw4su6-p03-003",
-        "candidate-saf-24aysgyw4su6-p03-004",
-        "candidate-saf-24aysgyw4su6-p03-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 3,
@@ -2257,33 +1247,17 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p03-015",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-3.statement-15",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p3.s15",
       "payload": {
         "sourceStatement": "Riwayat pendaftaran tetap dapat dilihat setelah pembatalan atau penonaktifan data.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Riwayat pendaftaran tetap dapat dilihat setelah pembatalan atau penonaktifan data."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p03-001",
-        "candidate-saf-24aysgyw4su6-p03-002",
-        "candidate-saf-24aysgyw4su6-p03-003",
-        "candidate-saf-24aysgyw4su6-p03-004",
-        "candidate-saf-24aysgyw4su6-p03-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 3,
@@ -2293,22 +1267,16 @@
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p03-016",
       "kind": "requirement",
-      "semanticKey": "safara.increment-01.page-3.statement-16",
+      "semanticKey": "sfe.safara-project-01.p3.s16",
       "payload": {
         "sourceStatement": "• Safara",
-        "assertionType": "requirement",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
         "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p03-001",
-        "candidate-saf-24aysgyw4su6-p03-002",
-        "candidate-saf-24aysgyw4su6-p03-003",
-        "candidate-saf-24aysgyw4su6-p03-004",
-        "candidate-saf-24aysgyw4su6-p03-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 3,
@@ -2317,35 +1285,19 @@
     },
     {
       "candidateId": "candidate-saf-24aysgyw4su6-p03-017",
-      "kind": "workflow",
-      "semanticKey": "safara.increment-01.page-3.statement-17",
+      "kind": "requirement",
+      "semanticKey": "sfe.safara-project-01.p3.s17",
       "payload": {
         "sourceStatement": "- Sistem Administrasi Travel Umrah Dokumen Bisnis | 27 Juli 2026 |",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [
           "Admin"
         ],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "- Sistem Administrasi Travel Umrah Dokumen Bisnis | 27 Juli 2026 |"
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
-      "relationships": [
-        "candidate-saf-24aysgyw4su6-p03-001",
-        "candidate-saf-24aysgyw4su6-p03-002",
-        "candidate-saf-24aysgyw4su6-p03-003",
-        "candidate-saf-24aysgyw4su6-p03-004",
-        "candidate-saf-24aysgyw4su6-p03-005"
-      ],
+      "relationships": [],
       "evidence": {
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 3,
@@ -2355,14 +1307,28 @@
   ],
   "sourceStatementInventory": [
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-001",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p1-001",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 1,
       "quote": "C S A F A R A BUSINESS PRD / INCREMENTAL PROJECT REQUEST I N C R E M E N TA L P R O J E C T R E Q U E S T SAFARA",
+      "classification": "non_fact",
+      "normalizedInterpretation": {
+        "kind": "heading_or_cover_text"
+      },
+      "destination": {
+        "type": "non_fact",
+        "reason": "Heading or cover text; it has no independently meaningful requirement."
+      }
+    },
+    {
+      "inventoryId": "inventory-saf-24aysgyw4su6-p1-002",
+      "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+      "page": 1,
+      "quote": "- Increment 01 Fondasi Data dan Pendaftaran Jemaah T U J U A N Menyatukan data paket, jadwal keberangkatan, jemaah, dan pendaftaran dalam satu aplikasi operasional.",
       "classification": "material",
       "normalizedInterpretation": {
-        "sourceStatement": "C S A F A R A BUSINESS PRD / INCREMENTAL PROJECT REQUEST I N C R E M E N TA L P R O J E C T R E Q U E S T SAFARA",
-        "assertionType": "requirement",
+        "sourceStatement": "- Increment 01 Fondasi Data dan Pendaftaran Jemaah T U J U A N Menyatukan data paket, jadwal keberangkatan, jemaah, dan pendaftaran dalam satu aplikasi operasional.",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
@@ -2370,107 +1336,46 @@
       },
       "destination": {
         "type": "candidate_assertion",
-        "candidateId": "candidate-saf-24aysgyw4su6-p01-001"
-      }
-    },
-    {
-      "inventoryId": "inventory-saf-24aysgyw4su6-002",
-      "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
-      "page": 1,
-      "quote": "- Increment 01 Fondasi Data dan Pendaftaran Jemaah T U J U A N Menyatukan data paket, jadwal keberangkatan, jemaah, dan pendaftaran dalam satu aplikasi operasional.",
-      "classification": "material",
-      "normalizedInterpretation": {
-        "sourceStatement": "- Increment 01 Fondasi Data dan Pendaftaran Jemaah T U J U A N Menyatukan data paket, jadwal keberangkatan, jemaah, dan pendaftaran dalam satu aplikasi operasional.",
-        "assertionType": "workflow_step_or_constraint",
-        "actors": [],
-        "conditions": [],
-        "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "- Increment 01 Fondasi Data dan Pendaftaran Jemaah T U J U A N Menyatukan data paket, jadwal keberangkatan, jemaah, dan pendaftaran dalam satu aplikasi operasional."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
-      },
-      "destination": {
-        "type": "candidate_assertion",
         "candidateId": "candidate-saf-24aysgyw4su6-p01-002"
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-003",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p1-003",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 1,
       "quote": "R U A N G L I N G K U P Satu perusahaan dan satu cabang; paket, keberangkatan, data jemaah, pendaftaran, dan kuota.",
-      "classification": "material",
+      "classification": "non_fact",
       "normalizedInterpretation": {
-        "sourceStatement": "R U A N G L I N G K U P Satu perusahaan dan satu cabang; paket, keberangkatan, data jemaah, pendaftaran, dan kuota.",
-        "assertionType": "workflow_step_or_constraint",
-        "actors": [],
-        "conditions": [],
-        "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "R U A N G L I N G K U P Satu perusahaan dan satu cabang; paket, keberangkatan, data jemaah, pendaftaran, dan kuota."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "kind": "heading_or_cover_text"
       },
       "destination": {
-        "type": "candidate_assertion",
-        "candidateId": "candidate-saf-24aysgyw4su6-p01-003"
+        "type": "non_fact",
+        "reason": "Heading or cover text; it has no independently meaningful requirement."
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-004",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p1-004",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 1,
       "quote": "P E N G G U N A Owner/Admin TA N G G A L D O K U M E N 27 Juli 2026 Dokumen ini menetapkan fondasi operasional pertama Safara.",
-      "classification": "material",
+      "classification": "non_fact",
       "normalizedInterpretation": {
-        "sourceStatement": "P E N G G U N A Owner/Admin TA N G G A L D O K U M E N 27 Juli 2026 Dokumen ini menetapkan fondasi operasional pertama Safara.",
-        "assertionType": "workflow_step_or_constraint",
-        "actors": [
-          "Admin"
-        ],
-        "conditions": [],
-        "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "P E N G G U N A Owner/Admin TA N G G A L D O K U M E N 27 Juli 2026 Dokumen ini menetapkan fondasi operasional pertama Safara."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "kind": "heading_or_cover_text"
       },
       "destination": {
-        "type": "candidate_assertion",
-        "candidateId": "candidate-saf-24aysgyw4su6-p01-004"
+        "type": "non_fact",
+        "reason": "Heading or cover text; it has no independently meaningful requirement."
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-005",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p1-005",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 1,
       "quote": "Pembayaran, dokumen perjalanan, kesiapan, manifest, dan laporan belum menjadi ruang lingkup increment ini.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Pembayaran, dokumen perjalanan, kesiapan, manifest, dan laporan belum menjadi ruang lingkup increment ini.",
-        "assertionType": "requirement",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
@@ -2482,30 +1387,20 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-006",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p1-006",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 1,
       "quote": "Konteks Kami membutuhkan aplikasi web internal untuk mengelola data dasar administrasi jemaah umrah pada tahap pendaftaran.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Konteks Kami membutuhkan aplikasi web internal untuk mengelola data dasar administrasi jemaah umrah pada tahap pendaftaran.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [
           "Admin"
         ],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Konteks Kami membutuhkan aplikasi web internal untuk mengelola data dasar administrasi jemaah umrah pada tahap pendaftaran."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -2513,28 +1408,18 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-007",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p1-007",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 1,
       "quote": "Saat ini informasi paket, jadwal keberangkatan, data jemaah, dan pendaftaran sering tersebar di spreadsheet, chat, dan catatan yang berbeda.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Saat ini informasi paket, jadwal keberangkatan, data jemaah, dan pendaftaran sering tersebar di spreadsheet, chat, dan catatan yang berbeda.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Saat ini informasi paket, jadwal keberangkatan, data jemaah, dan pendaftaran sering tersebar di spreadsheet, chat, dan catatan yang berbeda."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -2542,28 +1427,18 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-008",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p1-008",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 1,
       "quote": "Hal ini menyulitkan tim untuk mengetahui: Jemaah terdaftar pada keberangkatan yang mana.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Hal ini menyulitkan tim untuk mengetahui: Jemaah terdaftar pada keberangkatan yang mana.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Hal ini menyulitkan tim untuk mengetahui: Jemaah terdaftar pada keberangkatan yang mana."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -2571,28 +1446,18 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-009",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p1-009",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 1,
       "quote": "Jumlah jemaah yang sudah terdaftar pada setiap keberangkatan.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Jumlah jemaah yang sudah terdaftar pada setiap keberangkatan.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Jumlah jemaah yang sudah terdaftar pada setiap keberangkatan."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -2600,28 +1465,18 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-010",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p1-010",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 1,
       "quote": "Sisa kuota setiap keberangkatan.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Sisa kuota setiap keberangkatan.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Sisa kuota setiap keberangkatan."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -2629,28 +1484,18 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-011",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p1-011",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 1,
       "quote": "Harga pendaftaran yang telah disepakati dengan jemaah.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Harga pendaftaran yang telah disepakati dengan jemaah.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Harga pendaftaran yang telah disepakati dengan jemaah."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -2658,28 +1503,18 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-012",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p1-012",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 1,
       "quote": "Aplikasi pada increment ini diharapkan menjadi satu sumber data untuk proses pendaftaran dan pengelolaan kuota sebelum kebutuhan operasional berikutnya ditambahkan.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Aplikasi pada increment ini diharapkan menjadi satu sumber data untuk proses pendaftaran dan pengelolaan kuota sebelum kebutuhan operasional berikutnya ditambahkan.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Aplikasi pada increment ini diharapkan menjadi satu sumber data untuk proses pendaftaran dan pengelolaan kuota sebelum kebutuhan operasional berikutnya ditambahkan."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -2687,28 +1522,18 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-013",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p1-013",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 1,
       "quote": "Tujuan Bisnis Mengurangi kesalahan pencatatan data jemaah dan pendaftaran.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Tujuan Bisnis Mengurangi kesalahan pencatatan data jemaah dan pendaftaran.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Tujuan Bisnis Mengurangi kesalahan pencatatan data jemaah dan pendaftaran."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -2716,28 +1541,18 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-014",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p1-014",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 1,
       "quote": "Mempermudah pemantauan kuota keberangkatan.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Mempermudah pemantauan kuota keberangkatan.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Mempermudah pemantauan kuota keberangkatan."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -2745,28 +1560,18 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-015",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p1-015",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 1,
       "quote": "Menjaga riwayat pendaftaran jemaah agar tidak hilang ketika data dibatalkan atau dinonaktifkan.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Menjaga riwayat pendaftaran jemaah agar tidak hilang ketika data dibatalkan atau dinonaktifkan.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Menjaga riwayat pendaftaran jemaah agar tidak hilang ketika data dibatalkan atau dinonaktifkan."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -2774,28 +1579,18 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-016",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p1-016",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 1,
       "quote": "Memastikan harga pendaftaran yang sudah disepakati tidak berubah ketika harga paket diperbarui.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Memastikan harga pendaftaran yang sudah disepakati tidak berubah ketika harga paket diperbarui.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Memastikan harga pendaftaran yang sudah disepakati tidak berubah ketika harga paket diperbarui."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -2803,30 +1598,20 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-017",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p1-017",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 1,
       "quote": "Pengguna Owner/Admin Dapat melihat dan mengelola paket, jadwal keberangkatan, data jemaah, dan pendaftaran pada increment ini.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Pengguna Owner/Admin Dapat melihat dan mengelola paket, jadwal keberangkatan, data jemaah, dan pendaftaran pada increment ini.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [
           "Admin"
         ],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Pengguna Owner/Admin Dapat melihat dan mengelola paket, jadwal keberangkatan, data jemaah, dan pendaftaran pada increment ini."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -2834,14 +1619,14 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-018",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p1-018",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 1,
       "quote": "Pengguna yang sudah dinonaktifkan tidak boleh masuk ke aplikasi.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Pengguna yang sudah dinonaktifkan tidak boleh masuk ke aplikasi.",
-        "assertionType": "requirement",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [
           "Pengguna yang sudah dinonaktifkan tidak boleh masuk ke aplikasi."
@@ -2857,14 +1642,14 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-019",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p1-019",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 1,
       "quote": "• Safara",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "• Safara",
-        "assertionType": "requirement",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
@@ -2876,30 +1661,20 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-020",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p1-020",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 1,
       "quote": "- Sistem Administrasi Travel Umrah Dokumen Bisnis | 27 Juli 2026 |",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "- Sistem Administrasi Travel Umrah Dokumen Bisnis | 27 Juli 2026 |",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [
           "Admin"
         ],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "- Sistem Administrasi Travel Umrah Dokumen Bisnis | 27 Juli 2026 |"
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -2907,60 +1682,53 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-021",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-001",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "Alur Utama Admin membuat paket umrah.",
-      "classification": "material",
+      "classification": "non_fact",
       "normalizedInterpretation": {
-        "sourceStatement": "Alur Utama Admin membuat paket umrah.",
-        "assertionType": "workflow_step_or_constraint",
-        "actors": [
-          "Admin"
-        ],
-        "conditions": [],
-        "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Alur Utama Admin membuat paket umrah."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "kind": "heading_or_cover_text"
       },
       "destination": {
-        "type": "candidate_assertion",
-        "candidateId": "candidate-saf-24aysgyw4su6-p02-001"
+        "type": "non_fact",
+        "reason": "Heading or cover text; it has no independently meaningful requirement."
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-022",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-002",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "Admin membuat jadwal keberangkatan untuk paket yang dipilih.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Admin membuat jadwal keberangkatan untuk paket yang dipilih.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "workflow_step",
         "actors": [
           "Admin"
         ],
         "conditions": [],
         "constraints": [],
         "proposalStatus": "candidate_only",
-        "triggers": [],
+        "triggers": [
+          "Admin begins operational registration work"
+        ],
         "orderedSteps": [
           "Admin membuat jadwal keberangkatan untuk paket yang dipilih."
         ],
         "branches": [],
-        "inputs": [],
+        "inputs": [
+          "package",
+          "departure schedule",
+          "pilgrim record"
+        ],
         "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
+        "dependencies": [
+          "package, departure, and pilgrim records"
+        ],
+        "stateTransitions": [
+          "unregistered pilgrim to registered pilgrim"
+        ],
         "exceptions": []
       },
       "destination": {
@@ -2969,14 +1737,14 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-023",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-003",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "Admin mencatat data jemaah.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Admin mencatat data jemaah.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "workflow_step",
         "actors": [
           "Admin"
         ],
@@ -3000,14 +1768,14 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-024",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-004",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "Admin memilih jemaah dan mendaftarkannya ke jadwal keberangkatan yang masih terbuka.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Admin memilih jemaah dan mendaftarkannya ke jadwal keberangkatan yang masih terbuka.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "workflow_step",
         "actors": [
           "Admin"
         ],
@@ -3031,15 +1799,17 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-025",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-005",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "Sistem menyimpan harga pendaftaran yang berlaku saat pendaftaran.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Sistem menyimpan harga pendaftaran yang berlaku saat pendaftaran.",
-        "assertionType": "workflow_step_or_constraint",
-        "actors": [],
+        "assertionType": "workflow_step",
+        "actors": [
+          "System"
+        ],
         "conditions": [],
         "constraints": [],
         "proposalStatus": "candidate_only",
@@ -3049,7 +1819,9 @@
         ],
         "branches": [],
         "inputs": [],
-        "outputs": [],
+        "outputs": [
+          "registration price or quota information"
+        ],
         "dependencies": [],
         "stateTransitions": [],
         "exceptions": []
@@ -3060,15 +1832,17 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-026",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-006",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "Sistem menampilkan jumlah jemaah terdaftar dan sisa kuota setiap keberangkatan.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Sistem menampilkan jumlah jemaah terdaftar dan sisa kuota setiap keberangkatan.",
-        "assertionType": "workflow_step_or_constraint",
-        "actors": [],
+        "assertionType": "workflow_step",
+        "actors": [
+          "System"
+        ],
         "conditions": [],
         "constraints": [],
         "proposalStatus": "candidate_only",
@@ -3078,7 +1852,9 @@
         ],
         "branches": [],
         "inputs": [],
-        "outputs": [],
+        "outputs": [
+          "registration price or quota information"
+        ],
         "dependencies": [],
         "stateTransitions": [],
         "exceptions": []
@@ -3089,49 +1865,34 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-027",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-007",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "Kebutuhan",
-      "classification": "material",
+      "classification": "non_fact",
       "normalizedInterpretation": {
-        "sourceStatement": "Kebutuhan",
-        "assertionType": "requirement",
-        "actors": [],
-        "conditions": [],
-        "constraints": [],
-        "proposalStatus": "candidate_only"
+        "kind": "heading_or_cover_text"
       },
       "destination": {
-        "type": "candidate_assertion",
-        "candidateId": "candidate-saf-24aysgyw4su6-p02-007"
+        "type": "non_fact",
+        "reason": "Heading or cover text; it has no independently meaningful requirement."
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-028",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-008",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "Paket dan Jadwal Keberangkatan Admin dapat membuat, melihat, mengubah, dan menonaktifkan paket umrah.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Paket dan Jadwal Keberangkatan Admin dapat membuat, melihat, mengubah, dan menonaktifkan paket umrah.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [
           "Admin"
         ],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Paket dan Jadwal Keberangkatan Admin dapat membuat, melihat, mengubah, dan menonaktifkan paket umrah."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -3139,28 +1900,18 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-029",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-009",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "Informasi paket minimal mencakup nama paket, durasi, harga dasar, deskripsi, dan status aktif.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Informasi paket minimal mencakup nama paket, durasi, harga dasar, deskripsi, dan status aktif.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Informasi paket minimal mencakup nama paket, durasi, harga dasar, deskripsi, dan status aktif."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -3168,28 +1919,18 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-030",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-010",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "Setiap paket dapat memiliki satu atau lebih jadwal keberangkatan.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Setiap paket dapat memiliki satu atau lebih jadwal keberangkatan.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Setiap paket dapat memiliki satu atau lebih jadwal keberangkatan."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -3197,28 +1938,18 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-031",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-011",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "Informasi jadwal minimal mencakup kode keberangkatan, tanggal berangkat, tanggal pulang, kota asal, kuota, harga, maskapai, nomor penerbangan, hotel Makkah, hotel Madinah, dan status keberangkatan.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Informasi jadwal minimal mencakup kode keberangkatan, tanggal berangkat, tanggal pulang, kota asal, kuota, harga, maskapai, nomor penerbangan, hotel Makkah, hotel Madinah, dan status keberangkatan.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Informasi jadwal minimal mencakup kode keberangkatan, tanggal berangkat, tanggal pulang, kota asal, kuota, harga, maskapai, nomor penerbangan, hotel Makkah, hotel Madinah, dan status keberangkatan."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -3226,28 +1957,18 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-032",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-012",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "Aplikasi menampilkan jumlah jemaah terdaftar dan sisa kuota.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Aplikasi menampilkan jumlah jemaah terdaftar dan sisa kuota.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Aplikasi menampilkan jumlah jemaah terdaftar dan sisa kuota."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -3255,30 +1976,20 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-033",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-013",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [
           "Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh."
         ],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -3286,30 +1997,20 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-034",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-014",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "Data Jemaah Admin dapat menambah, melihat, mengubah, mencari, dan menonaktifkan data jemaah.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Data Jemaah Admin dapat menambah, melihat, mengubah, mencari, dan menonaktifkan data jemaah.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [
           "Admin"
         ],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Data Jemaah Admin dapat menambah, melihat, mengubah, mencari, dan menonaktifkan data jemaah."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -3317,28 +2018,18 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-035",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-015",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "Informasi minimum jemaah: nama sesuai paspor, NIK, jenis kelamin, tempat dan tanggal lahir, nomor telepon, alamat, nomor dan masa berlaku paspor, serta nama dan nomor kontak darurat.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Informasi minimum jemaah: nama sesuai paspor, NIK, jenis kelamin, tempat dan tanggal lahir, nomor telepon, alamat, nomor dan masa berlaku paspor, serta nama dan nomor kontak darurat.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Informasi minimum jemaah: nama sesuai paspor, NIK, jenis kelamin, tempat dan tanggal lahir, nomor telepon, alamat, nomor dan masa berlaku paspor, serta nama dan nomor kontak darurat."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -3346,14 +2037,14 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-036",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-016",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "NIK harus terdiri dari 16 angka apabila diisi.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "NIK harus terdiri dari 16 angka apabila diisi.",
-        "assertionType": "requirement",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [
           "NIK harus terdiri dari 16 angka apabila diisi."
@@ -3369,14 +2060,14 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-037",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-017",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "Aplikasi harus memberikan peringatan apabila NIK atau nomor paspor sudah digunakan oleh jemaah lain.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Aplikasi harus memberikan peringatan apabila NIK atau nomor paspor sudah digunakan oleh jemaah lain.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [
           "Aplikasi harus memberikan peringatan apabila NIK atau nomor paspor sudah digunakan oleh jemaah lain."
@@ -3384,17 +2075,7 @@
         "constraints": [
           "Aplikasi harus memberikan peringatan apabila NIK atau nomor paspor sudah digunakan oleh jemaah lain."
         ],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Aplikasi harus memberikan peringatan apabila NIK atau nomor paspor sudah digunakan oleh jemaah lain."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -3402,14 +2083,14 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-038",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-018",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "Pada halaman daftar, NIK dan nomor paspor tidak perlu ditampilkan secara penuh.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Pada halaman daftar, NIK dan nomor paspor tidak perlu ditampilkan secara penuh.",
-        "assertionType": "requirement",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
@@ -3421,30 +2102,20 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-039",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-019",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "Pendaftaran Jemaah Admin dapat memilih jemaah dan mendaftarkannya ke jadwal keberangkatan yang masih terbuka.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Pendaftaran Jemaah Admin dapat memilih jemaah dan mendaftarkannya ke jadwal keberangkatan yang masih terbuka.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [
           "Admin"
         ],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Pendaftaran Jemaah Admin dapat memilih jemaah dan mendaftarkannya ke jadwal keberangkatan yang masih terbuka."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -3452,28 +2123,18 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-040",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-020",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "Setiap pendaftaran memiliki nomor pendaftaran yang berbeda.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Setiap pendaftaran memiliki nomor pendaftaran yang berbeda.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Setiap pendaftaran memiliki nomor pendaftaran yang berbeda."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -3481,28 +2142,18 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-041",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-021",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "Harga yang berlaku saat pendaftaran disimpan sebagai harga pendaftaran yang disepakati dan menjadi nilai acuan tetap untuk pendaftaran tersebut.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Harga yang berlaku saat pendaftaran disimpan sebagai harga pendaftaran yang disepakati dan menjadi nilai acuan tetap untuk pendaftaran tersebut.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Harga yang berlaku saat pendaftaran disimpan sebagai harga pendaftaran yang disepakati dan menjadi nilai acuan tetap untuk pendaftaran tersebut."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -3510,14 +2161,14 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-042",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-022",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "Perubahan harga paket setelah pendaftaran tidak boleh mengubah harga pendaftaran yang sudah disepakati.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Perubahan harga paket setelah pendaftaran tidak boleh mengubah harga pendaftaran yang sudah disepakati.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [
           "Perubahan harga paket setelah pendaftaran tidak boleh mengubah harga pendaftaran yang sudah disepakati."
@@ -3525,17 +2176,7 @@
         "constraints": [
           "Perubahan harga paket setelah pendaftaran tidak boleh mengubah harga pendaftaran yang sudah disepakati."
         ],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Perubahan harga paket setelah pendaftaran tidak boleh mengubah harga pendaftaran yang sudah disepakati."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -3543,14 +2184,14 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-043",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-023",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "Jemaah yang sama tidak boleh memiliki dua pendaftaran aktif pada jadwal keberangkatan yang sama.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Jemaah yang sama tidak boleh memiliki dua pendaftaran aktif pada jadwal keberangkatan yang sama.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [
           "Jemaah yang sama tidak boleh memiliki dua pendaftaran aktif pada jadwal keberangkatan yang sama."
@@ -3558,17 +2199,7 @@
         "constraints": [
           "Jemaah yang sama tidak boleh memiliki dua pendaftaran aktif pada jadwal keberangkatan yang sama."
         ],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Jemaah yang sama tidak boleh memiliki dua pendaftaran aktif pada jadwal keberangkatan yang sama."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -3576,28 +2207,18 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-044",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-024",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "Pendaftaran dapat dibatalkan dengan alasan yang tercatat, tetapi riwayatnya tetap dapat dilihat.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Pendaftaran dapat dibatalkan dengan alasan yang tercatat, tetapi riwayatnya tetap dapat dilihat.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Pendaftaran dapat dibatalkan dengan alasan yang tercatat, tetapi riwayatnya tetap dapat dilihat."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -3605,47 +2226,28 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-045",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-025",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "Aturan Bisnis Utama Satu jemaah dapat memiliki beberapa riwayat pendaftaran, tetapi tidak boleh memiliki dua pendaftaran aktif pada keberangkatan yang sama.",
-      "classification": "material",
+      "classification": "non_fact",
       "normalizedInterpretation": {
-        "sourceStatement": "Aturan Bisnis Utama Satu jemaah dapat memiliki beberapa riwayat pendaftaran, tetapi tidak boleh memiliki dua pendaftaran aktif pada keberangkatan yang sama.",
-        "assertionType": "workflow_step_or_constraint",
-        "actors": [],
-        "conditions": [
-          "Aturan Bisnis Utama Satu jemaah dapat memiliki beberapa riwayat pendaftaran, tetapi tidak boleh memiliki dua pendaftaran aktif pada keberangkatan yang sama."
-        ],
-        "constraints": [
-          "Aturan Bisnis Utama Satu jemaah dapat memiliki beberapa riwayat pendaftaran, tetapi tidak boleh memiliki dua pendaftaran aktif pada keberangkatan yang sama."
-        ],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Aturan Bisnis Utama Satu jemaah dapat memiliki beberapa riwayat pendaftaran, tetapi tidak boleh memiliki dua pendaftaran aktif pada keberangkatan yang sama."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "kind": "heading_or_cover_text"
       },
       "destination": {
-        "type": "candidate_assertion",
-        "candidateId": "candidate-saf-24aysgyw4su6-p02-025"
+        "type": "non_fact",
+        "reason": "Heading or cover text; it has no independently meaningful requirement."
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-046",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-026",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "Jumlah pendaftaran aktif tidak boleh melebihi kuota keberangkatan.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Jumlah pendaftaran aktif tidak boleh melebihi kuota keberangkatan.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [
           "Jumlah pendaftaran aktif tidak boleh melebihi kuota keberangkatan."
@@ -3653,17 +2255,7 @@
         "constraints": [
           "Jumlah pendaftaran aktif tidak boleh melebihi kuota keberangkatan."
         ],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Jumlah pendaftaran aktif tidak boleh melebihi kuota keberangkatan."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -3671,28 +2263,18 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-047",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-027",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "Harga pendaftaran yang sudah disepakati tidak berubah ketika harga paket diperbarui.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Harga pendaftaran yang sudah disepakati tidak berubah ketika harga paket diperbarui.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Harga pendaftaran yang sudah disepakati tidak berubah ketika harga paket diperbarui."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -3700,14 +2282,14 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-048",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-028",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "Pembatalan atau penonaktifan data tidak boleh menghilangkan riwayat sebelumnya.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Pembatalan atau penonaktifan data tidak boleh menghilangkan riwayat sebelumnya.",
-        "assertionType": "requirement",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [
           "Pembatalan atau penonaktifan data tidak boleh menghilangkan riwayat sebelumnya."
@@ -3723,30 +2305,20 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-049",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-029",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "Informasi jemaah hanya boleh dilihat oleh pengguna yang berkepentingan.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Informasi jemaah hanya boleh dilihat oleh pengguna yang berkepentingan.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [
           "Informasi jemaah hanya boleh dilihat oleh pengguna yang berkepentingan."
         ],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Informasi jemaah hanya boleh dilihat oleh pengguna yang berkepentingan."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -3754,14 +2326,14 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-050",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-030",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "• Safara",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "• Safara",
-        "assertionType": "requirement",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
@@ -3773,30 +2345,20 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-051",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p2-031",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 2,
       "quote": "- Sistem Administrasi Travel Umrah Dokumen Bisnis | 27 Juli 2026 |",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "- Sistem Administrasi Travel Umrah Dokumen Bisnis | 27 Juli 2026 |",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [
           "Admin"
         ],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "- Sistem Administrasi Travel Umrah Dokumen Bisnis | 27 Juli 2026 |"
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -3804,57 +2366,32 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-052",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p3-001",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 3,
       "quote": "Skenario Pemeriksaan Hasil Sebelum increment ini dinyatakan selesai, kami akan mencoba minimal skenario berikut: Membuat paket dan jadwal keberangkatan, lalu melihat sisa kuota.",
-      "classification": "material",
+      "classification": "non_fact",
       "normalizedInterpretation": {
-        "sourceStatement": "Skenario Pemeriksaan Hasil Sebelum increment ini dinyatakan selesai, kami akan mencoba minimal skenario berikut: Membuat paket dan jadwal keberangkatan, lalu melihat sisa kuota.",
-        "assertionType": "workflow_step_or_constraint",
-        "actors": [],
-        "conditions": [],
-        "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Skenario Pemeriksaan Hasil Sebelum increment ini dinyatakan selesai, kami akan mencoba minimal skenario berikut: Membuat paket dan jadwal keberangkatan, lalu melihat sisa kuota."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "kind": "heading_or_cover_text"
       },
       "destination": {
-        "type": "candidate_assertion",
-        "candidateId": "candidate-saf-24aysgyw4su6-p03-001"
+        "type": "non_fact",
+        "reason": "Heading or cover text; it has no independently meaningful requirement."
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-053",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p3-002",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 3,
       "quote": "Mendaftarkan jemaah sampai kuota penuh dan memastikan pendaftaran berikutnya ditolak.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Mendaftarkan jemaah sampai kuota penuh dan memastikan pendaftaran berikutnya ditolak.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Mendaftarkan jemaah sampai kuota penuh dan memastikan pendaftaran berikutnya ditolak."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -3862,28 +2399,18 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-054",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p3-003",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 3,
       "quote": "Mencoba mendaftarkan jemaah yang sama dua kali pada keberangkatan yang sama.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Mencoba mendaftarkan jemaah yang sama dua kali pada keberangkatan yang sama.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Mencoba mendaftarkan jemaah yang sama dua kali pada keberangkatan yang sama."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -3891,28 +2418,18 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-055",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p3-004",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 3,
       "quote": "Memperbarui harga paket setelah pendaftaran dan memastikan harga pendaftaran yang sudah disepakati tidak berubah.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Memperbarui harga paket setelah pendaftaran dan memastikan harga pendaftaran yang sudah disepakati tidak berubah.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Memperbarui harga paket setelah pendaftaran dan memastikan harga pendaftaran yang sudah disepakati tidak berubah."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -3920,28 +2437,18 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-056",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p3-005",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 3,
       "quote": "Membatalkan pendaftaran dan memastikan riwayatnya tetap dapat dilihat.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Membatalkan pendaftaran dan memastikan riwayatnya tetap dapat dilihat.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Membatalkan pendaftaran dan memastikan riwayatnya tetap dapat dilihat."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -3949,45 +2456,28 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-057",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p3-006",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 3,
       "quote": "Hasil yang Harus Diserahkan Aplikasi web increment pertama yang dapat digunakan untuk pengelolaan paket, jadwal keberangkatan, data jemaah, pendaftaran, dan kuota.",
-      "classification": "material",
+      "classification": "non_fact",
       "normalizedInterpretation": {
-        "sourceStatement": "Hasil yang Harus Diserahkan Aplikasi web increment pertama yang dapat digunakan untuk pengelolaan paket, jadwal keberangkatan, data jemaah, pendaftaran, dan kuota.",
-        "assertionType": "workflow_step_or_constraint",
-        "actors": [],
-        "conditions": [],
-        "constraints": [
-          "Hasil yang Harus Diserahkan Aplikasi web increment pertama yang dapat digunakan untuk pengelolaan paket, jadwal keberangkatan, data jemaah, pendaftaran, dan kuota."
-        ],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Hasil yang Harus Diserahkan Aplikasi web increment pertama yang dapat digunakan untuk pengelolaan paket, jadwal keberangkatan, data jemaah, pendaftaran, dan kuota."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "kind": "heading_or_cover_text"
       },
       "destination": {
-        "type": "candidate_assertion",
-        "candidateId": "candidate-saf-24aysgyw4su6-p03-006"
+        "type": "non_fact",
+        "reason": "Heading or cover text; it has no independently meaningful requirement."
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-058",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p3-007",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 3,
       "quote": "Alamat aplikasi yang dapat diakses oleh pengguna yang ditentukan.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Alamat aplikasi yang dapat diakses oleh pengguna yang ditentukan.",
-        "assertionType": "requirement",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
@@ -3999,30 +2489,20 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-059",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p3-008",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 3,
       "quote": "Akun awal untuk Owner/Admin.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Akun awal untuk Owner/Admin.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [
           "Admin"
         ],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Akun awal untuk Owner/Admin."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -4030,14 +2510,14 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-060",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p3-009",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 3,
       "quote": "Panduan penggunaan singkat untuk fungsi pada increment ini.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Panduan penggunaan singkat untuk fungsi pada increment ini.",
-        "assertionType": "requirement",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
@@ -4049,59 +2529,32 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-061",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p3-010",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 3,
       "quote": "Kriteria Penerimaan Increment 01 Owner/Admin dapat masuk dan menjalankan fungsi yang ditetapkan pada increment ini.",
-      "classification": "material",
+      "classification": "non_fact",
       "normalizedInterpretation": {
-        "sourceStatement": "Kriteria Penerimaan Increment 01 Owner/Admin dapat masuk dan menjalankan fungsi yang ditetapkan pada increment ini.",
-        "assertionType": "workflow_step_or_constraint",
-        "actors": [
-          "Admin"
-        ],
-        "conditions": [],
-        "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Kriteria Penerimaan Increment 01 Owner/Admin dapat masuk dan menjalankan fungsi yang ditetapkan pada increment ini."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "kind": "heading_or_cover_text"
       },
       "destination": {
-        "type": "candidate_assertion",
-        "candidateId": "candidate-saf-24aysgyw4su6-p03-010"
+        "type": "non_fact",
+        "reason": "Heading or cover text; it has no independently meaningful requirement."
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-062",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p3-011",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 3,
       "quote": "Alur dari pembuatan paket sampai pendaftaran jemaah dapat dijalankan menggunakan contoh data yang disepakati.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Alur dari pembuatan paket sampai pendaftaran jemaah dapat dijalankan menggunakan contoh data yang disepakati.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Alur dari pembuatan paket sampai pendaftaran jemaah dapat dijalankan menggunakan contoh data yang disepakati."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -4109,14 +2562,14 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-063",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p3-012",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 3,
       "quote": "Kuota dan sisa kuota dihitung dengan benar.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Kuota dan sisa kuota dihitung dengan benar.",
-        "assertionType": "requirement",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
@@ -4128,28 +2581,18 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-064",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p3-013",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 3,
       "quote": "Pendaftaran ditolak ketika jadwal ditutup, kuota penuh, atau jemaah yang sama sudah memiliki pendaftaran aktif pada keberangkatan yang sama.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Pendaftaran ditolak ketika jadwal ditutup, kuota penuh, atau jemaah yang sama sudah memiliki pendaftaran aktif pada keberangkatan yang sama.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Pendaftaran ditolak ketika jadwal ditutup, kuota penuh, atau jemaah yang sama sudah memiliki pendaftaran aktif pada keberangkatan yang sama."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -4157,28 +2600,18 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-065",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p3-014",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 3,
       "quote": "Harga pendaftaran yang sudah disepakati tetap tersimpan ketika harga paket berubah.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Harga pendaftaran yang sudah disepakati tetap tersimpan ketika harga paket berubah.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Harga pendaftaran yang sudah disepakati tetap tersimpan ketika harga paket berubah."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -4186,28 +2619,18 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-066",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p3-015",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 3,
       "quote": "Riwayat pendaftaran tetap dapat dilihat setelah pembatalan atau penonaktifan data.",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "Riwayat pendaftaran tetap dapat dilihat setelah pembatalan atau penonaktifan data.",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "Riwayat pendaftaran tetap dapat dilihat setelah pembatalan atau penonaktifan data."
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
@@ -4215,14 +2638,14 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-067",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p3-016",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 3,
       "quote": "• Safara",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "• Safara",
-        "assertionType": "requirement",
+        "assertionType": "requirement_or_constraint",
         "actors": [],
         "conditions": [],
         "constraints": [],
@@ -4234,30 +2657,20 @@
       }
     },
     {
-      "inventoryId": "inventory-saf-24aysgyw4su6-068",
+      "inventoryId": "inventory-saf-24aysgyw4su6-p3-017",
       "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
       "page": 3,
       "quote": "- Sistem Administrasi Travel Umrah Dokumen Bisnis | 27 Juli 2026 |",
       "classification": "material",
       "normalizedInterpretation": {
         "sourceStatement": "- Sistem Administrasi Travel Umrah Dokumen Bisnis | 27 Juli 2026 |",
-        "assertionType": "workflow_step_or_constraint",
+        "assertionType": "requirement_or_constraint",
         "actors": [
           "Admin"
         ],
         "conditions": [],
         "constraints": [],
-        "proposalStatus": "candidate_only",
-        "triggers": [],
-        "orderedSteps": [
-          "- Sistem Administrasi Travel Umrah Dokumen Bisnis | 27 Juli 2026 |"
-        ],
-        "branches": [],
-        "inputs": [],
-        "outputs": [],
-        "dependencies": [],
-        "stateTransitions": [],
-        "exceptions": []
+        "proposalStatus": "candidate_only"
       },
       "destination": {
         "type": "candidate_assertion",
