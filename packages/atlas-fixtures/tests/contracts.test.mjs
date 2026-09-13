@@ -177,10 +177,11 @@ test("workspace review projections are isolated, source-language, and candidate-
   const review = projectWorkspaceReview({ workspaceId: extraction.artifact.workspaceId, projectId: "safara-project-01", status: "ready-for-review", sourceLanguage: "id", extraction, requestedSurfaces: ["workflow", "facts", "ces"] });
   assert.equal(review.status, "complete");
   assert.equal(review.reviewModel.status, "review-only");
-  assert.ok(review.reviewModel.groups.length < extraction.candidateAssertions.length, "candidate relationships produce shared semantic groups");
+  assert.ok(review.reviewModel.groups.length < extraction.candidateAssertions.length, "only candidates with a supported route membership become review groups");
   assert.ok(review.reviewModel.annotations.length < extraction.candidateAssertions.length * 2);
   assert.ok(review.reviewModel.annotations.every((annotation) => annotation.supportingCandidateIds.includes(annotation.candidateId) && !annotation.label.includes(annotation.candidateId) && !annotation.label.includes("safara.")));
   assert.ok(!review.reviewModel.annotations.some((annotation) => annotation.candidateId === "cand-001"), "a scope candidate is not inferred as a fact or CES assessment");
+  assert.deepEqual(review.reviewModel.annotations.filter((annotation) => annotation.surface === "workflow").map((annotation) => annotation.candidateId), extraction.candidateAssertions.filter((candidate) => candidate.kind === "workflow_step").map((candidate) => candidate.candidateId), "every ordered workflow step retains its own review membership");
   assert.ok(review.reviewModel.annotations.filter((annotation) => annotation.surface === "ces").every((annotation) => extraction.candidateAssertions.find((candidate) => candidate.candidateId === annotation.candidateId)?.kind === "acceptance_criterion"), "CES assessments require explicit acceptance-criterion evidence");
   const missingInventory = projectWorkspaceReview({ workspaceId: extraction.artifact.workspaceId, projectId: "safara-project-01", status: "ready-for-review", sourceLanguage: "id", extraction: { ...extraction, sourceStatementInventory: [] }, requestedSurfaces: ["facts"] });
   assert.equal(missingInventory.status, "needs_resolution");
@@ -188,6 +189,10 @@ test("workspace review projections are isolated, source-language, and candidate-
   alteredEvidence.candidateAssertions[0].evidence.quote = "This wording is not present in the source page.";
   const tamperedEvidence = projectWorkspaceReview({ workspaceId: extraction.artifact.workspaceId, projectId: "safara-project-01", status: "ready-for-review", sourceLanguage: "id", extraction: alteredEvidence, requestedSurfaces: ["facts"] });
   assert.equal(tamperedEvidence.status, "needs_resolution");
+  const danglingRelationship = structuredClone(extraction);
+  danglingRelationship.candidateAssertions[0].relationships.push("missing-candidate");
+  const invalidRelationship = projectWorkspaceReview({ workspaceId: extraction.artifact.workspaceId, projectId: "safara-project-01", status: "ready-for-review", sourceLanguage: "id", extraction: danglingRelationship, requestedSurfaces: ["facts"] });
+  assert.equal(invalidRelationship.status, "needs_resolution");
   const crossWorkspace = projectWorkspaceReview({ workspaceId: "other-workspace", projectId: "other", status: "ready-for-review", sourceLanguage: "id", extraction, requestedSurfaces: ["facts"] });
   assert.equal(crossWorkspace.status, "needs_resolution");
 });

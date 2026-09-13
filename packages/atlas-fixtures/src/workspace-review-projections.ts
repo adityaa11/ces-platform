@@ -25,20 +25,9 @@ export function projectWorkspaceReview(input: WorkspaceReviewInput): WorkspaceRe
   const unsupportedCandidateIds = input.extraction.candidateAssertions.filter((candidate) => !hasSourceEvidence(candidate)).map((candidate) => candidate.candidateId);
   if (unsupportedCandidateIds.length) issues.push({ candidateIds: unsupportedCandidateIds, question: "Every review annotation needs evidence from the selected workspace artifact." });
   const candidatesById = new Map(candidates.map((candidate) => [candidate.candidateId, candidate]));
-  const remaining = new Set(candidates.map((candidate) => candidate.candidateId));
-  const groupedCandidates: SfeExtractionResult["candidateAssertions"][] = [];
-  for (const candidate of candidates) {
-    if (!remaining.delete(candidate.candidateId)) continue;
-    const memberIds = new Set([candidate.candidateId]);
-    const queue = [candidate.candidateId];
-    while (queue.length) {
-      const current = candidatesById.get(queue.shift()!);
-      if (!current) continue;
-      for (const relatedId of current.relationships) if (remaining.delete(relatedId)) { memberIds.add(relatedId); queue.push(relatedId); }
-      for (const related of candidates) if (related.relationships.includes(current.candidateId) && remaining.delete(related.candidateId)) { memberIds.add(related.candidateId); queue.push(related.candidateId); }
-    }
-    groupedCandidates.push(candidates.filter((item) => memberIds.has(item.candidateId)));
-  }
+  const danglingRelationshipIds = candidates.flatMap((candidate) => candidate.relationships.filter((relatedId) => !candidatesById.has(relatedId)).map(() => candidate.candidateId));
+  if (danglingRelationshipIds.length) issues.push({ candidateIds: danglingRelationshipIds, question: "Every candidate relationship must resolve within the selected workspace." });
+  const groupedCandidates = candidates.filter((candidate) => input.requestedSurfaces.some((surface) => surfaceCandidate(surface, [candidate]))).map((candidate) => [candidate]);
   const groups = groupedCandidates.map((members, index): ReviewGroup => ({ groupId: `review-group-${String(index + 1).padStart(3, "0")}`, order: index + 1, label: sourceCopy(members[0].evidence.quote), supportingCandidateIds: members.map((member) => member.candidateId) }));
   const annotations = groups.flatMap((group, index) => input.requestedSurfaces.flatMap((surface) => {
     const candidate = surfaceCandidate(surface, groupedCandidates[index]);
