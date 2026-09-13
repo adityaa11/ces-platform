@@ -124,9 +124,22 @@ test("SFE-002 persisted extraction passes the application structural gate and re
   const created = createFixtureProject({ projectId: "safara-project-01", projectName: "Safara Initial Draft", projectDescription: "", prdFiles: [result.artifact] }, ["24aysgyw4su6"]);
   const project = { ...created, sourceFiles: [result.artifact] };
   const repeated = structuredClone(result);
-  delete repeated.sourceStatementInventory.find((entry) => entry.inventoryId === "inv-008").destination.duplicateOf;
+  delete repeated.sourceStatementInventory.find((entry) => entry.inventoryId === "inv-038").destination.duplicateOf;
   assert.throws(() => completeSfeExtraction(project, repeated), /Repeated inventory candidate destinations/);
   assert.equal(completeSfeExtraction(project, result).initialDraftWorkspace.status, "ready-for-review");
+});
+
+test("SFE-002 persisted extraction keeps fragmented information and end-to-end acceptance criteria atomic", async () => {
+  const result = JSON.parse(await readFile(path.resolve(import.meta.dirname, "../generated/sfe-002-saf-24aysgyw4su6.json"), "utf8"));
+  const candidates = new Map(result.candidateAssertions.map((candidate) => [candidate.candidateId, candidate]));
+  const inventory = new Map(result.sourceStatementInventory.map((entry) => [entry.inventoryId, entry]));
+  assert.equal(inventory.get("inv-008").destination.candidateId, "cand-039");
+  assert.equal(inventory.get("inv-008").destination.duplicateOf, undefined);
+  assert.deepEqual(["inv-009a", "inv-009b", "inv-009c", "inv-009d"].map((id) => inventory.get(id).destination.candidateId), ["cand-040", "cand-041", "cand-042", "cand-043"]);
+  assert.equal(new Set(["inv-009a", "inv-009b", "inv-009c", "inv-009d"].map((id) => inventory.get(id).quote)).size, 4);
+  assert.equal(inventory.get("inv-062").destination.candidateId, "cand-044");
+  assert.equal(inventory.get("inv-062").destination.duplicateOf, undefined);
+  for (const id of ["cand-038", "cand-039", "cand-040", "cand-041", "cand-042", "cand-043", "cand-044"]) assert.ok(candidates.has(id), `${id} preserves its distinct source claim`);
 });
 
 test("workspace creation is transient, Master-rooted, collision-safe, and unavailable while extracting", () => {

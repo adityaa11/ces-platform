@@ -957,6 +957,145 @@
           "page": 3,
           "quote": "Panduan penggunaan singkat untuk fungsi pada increment ini."
         }
+      },
+      {
+        "candidateId": "cand-038",
+        "kind": "business_objective",
+        "semanticKey": "safara.operations.unified_operational_data",
+        "payload": {
+          "objective": "Unify package, departure schedule, pilgrim, and registration data in one operational application."
+        },
+        "relationships": [
+          "cand-003",
+          "cand-004",
+          "cand-039",
+          "cand-040",
+          "cand-041",
+          "cand-042",
+          "cand-043"
+        ],
+        "possibleAffectedSemanticKey": null,
+        "evidence": {
+          "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+          "page": 1,
+          "quote": "Menyatukan data paket, jadwal keberangkatan,\njemaah, dan pendaftaran dalam satu aplikasi\noperasional."
+        }
+      },
+      {
+        "candidateId": "cand-039",
+        "kind": "current_state_problem",
+        "semanticKey": "safara.operations.registration_information_fragmented",
+        "payload": {
+          "problem": "Package, departure schedule, pilgrim, and registration information is fragmented across spreadsheets, chat, and notes."
+        },
+        "relationships": [
+          "cand-038",
+          "cand-004"
+        ],
+        "possibleAffectedSemanticKey": null,
+        "evidence": {
+          "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+          "page": 1,
+          "quote": "Saat ini informasi paket, jadwal keberangkatan, data jemaah, dan pendaftaran sering tersebar di spreadsheet,\nchat, dan catatan yang berbeda. Hal ini menyulitkan tim untuk mengetahui:"
+        }
+      },
+      {
+        "candidateId": "cand-040",
+        "kind": "information_requirement",
+        "semanticKey": "safara.registration.show_pilgrim_departure",
+        "payload": {
+          "informationNeed": "Identify the departure on which each pilgrim is registered."
+        },
+        "relationships": [
+          "cand-038",
+          "cand-014"
+        ],
+        "possibleAffectedSemanticKey": null,
+        "evidence": {
+          "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+          "page": 1,
+          "quote": "Jemaah terdaftar pada keberangkatan yang mana."
+        }
+      },
+      {
+        "candidateId": "cand-041",
+        "kind": "information_requirement",
+        "semanticKey": "safara.departure_schedule.show_registered_pilgrim_count",
+        "payload": {
+          "informationNeed": "Show the number of registered pilgrims for each departure."
+        },
+        "relationships": [
+          "cand-038",
+          "cand-016",
+          "cand-021"
+        ],
+        "possibleAffectedSemanticKey": null,
+        "evidence": {
+          "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+          "page": 1,
+          "quote": "Jumlah jemaah yang sudah terdaftar pada setiap keberangkatan."
+        }
+      },
+      {
+        "candidateId": "cand-042",
+        "kind": "information_requirement",
+        "semanticKey": "safara.departure_schedule.show_remaining_quota",
+        "payload": {
+          "informationNeed": "Show the remaining quota for each departure."
+        },
+        "relationships": [
+          "cand-038",
+          "cand-016",
+          "cand-021",
+          "cand-032"
+        ],
+        "possibleAffectedSemanticKey": null,
+        "evidence": {
+          "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+          "page": 1,
+          "quote": "Sisa kuota setiap keberangkatan."
+        }
+      },
+      {
+        "candidateId": "cand-043",
+        "kind": "information_requirement",
+        "semanticKey": "safara.registration.show_agreed_registration_price",
+        "payload": {
+          "informationNeed": "Show the registration price agreed with each pilgrim."
+        },
+        "relationships": [
+          "cand-038",
+          "cand-008",
+          "cand-029"
+        ],
+        "possibleAffectedSemanticKey": null,
+        "evidence": {
+          "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+          "page": 1,
+          "quote": "Harga pendaftaran yang telah disepakati dengan jemaah."
+        }
+      },
+      {
+        "candidateId": "cand-044",
+        "kind": "acceptance_criterion",
+        "semanticKey": "safara.increment_01.acceptance.package_to_registration_flow",
+        "payload": {
+          "criterion": "The package-creation-to-pilgrim-registration flow can be run using agreed sample data."
+        },
+        "relationships": [
+          "cand-011",
+          "cand-012",
+          "cand-013",
+          "cand-014",
+          "cand-015",
+          "cand-016"
+        ],
+        "possibleAffectedSemanticKey": null,
+        "evidence": {
+          "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+          "page": 3,
+          "quote": "Alur dari pembuatan paket sampai pendaftaran jemaah dapat dijalankan menggunakan contoh data yang\ndisepakati."
+        }
       }
     ],
     "sourceStatementInventory": [
@@ -971,7 +1110,7 @@
         },
         "destination": {
           "type": "candidate_assertion",
-          "candidateId": "cand-004"
+          "candidateId": "cand-038"
         }
       },
       {
@@ -1033,28 +1172,63 @@
         },
         "destination": {
           "type": "candidate_assertion",
-          "candidateId": "cand-004",
-          "duplicateOf": "cand-004"
+          "candidateId": "cand-039"
         }
       },
       {
-        "inventoryId": "inv-009",
+        "inventoryId": "inv-009a",
         "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
         "page": 1,
-        "quote": "Jemaah terdaftar pada keberangkatan yang mana.\nJumlah jemaah yang sudah terdaftar pada setiap keberangkatan.\nSisa kuota setiap keberangkatan.\nHarga pendaftaran yang telah disepakati dengan jemaah.",
+        "quote": "Jemaah terdaftar pada keberangkatan yang mana.",
         "classification": "material",
         "normalizedInterpretation": {
-          "informationNeeds": [
-            "pilgrim registered departure",
-            "registered pilgrim count per departure",
-            "remaining quota per departure",
-            "agreed registration price"
-          ]
+          "informationNeed": "Pilgrim registered departure"
         },
         "destination": {
           "type": "candidate_assertion",
-          "candidateId": "cand-004",
-          "duplicateOf": "cand-004"
+          "candidateId": "cand-040"
+        }
+      },
+      {
+        "inventoryId": "inv-009b",
+        "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+        "page": 1,
+        "quote": "Jumlah jemaah yang sudah terdaftar pada setiap keberangkatan.",
+        "classification": "material",
+        "normalizedInterpretation": {
+          "informationNeed": "Registered pilgrim count per departure"
+        },
+        "destination": {
+          "type": "candidate_assertion",
+          "candidateId": "cand-041"
+        }
+      },
+      {
+        "inventoryId": "inv-009c",
+        "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+        "page": 1,
+        "quote": "Sisa kuota setiap keberangkatan.",
+        "classification": "material",
+        "normalizedInterpretation": {
+          "informationNeed": "Remaining quota per departure"
+        },
+        "destination": {
+          "type": "candidate_assertion",
+          "candidateId": "cand-042"
+        }
+      },
+      {
+        "inventoryId": "inv-009d",
+        "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+        "page": 1,
+        "quote": "Harga pendaftaran yang telah disepakati dengan jemaah.",
+        "classification": "material",
+        "normalizedInterpretation": {
+          "informationNeed": "Agreed registration price"
+        },
+        "destination": {
+          "type": "candidate_assertion",
+          "candidateId": "cand-043"
         }
       },
       {
@@ -1068,8 +1242,7 @@
         },
         "destination": {
           "type": "candidate_assertion",
-          "candidateId": "cand-004",
-          "duplicateOf": "cand-004"
+          "candidateId": "cand-004"
         }
       },
       {
@@ -1776,8 +1949,7 @@
         },
         "destination": {
           "type": "candidate_assertion",
-          "candidateId": "cand-014",
-          "duplicateOf": "cand-014"
+          "candidateId": "cand-044"
         }
       },
       {
@@ -2991,6 +3163,145 @@
               "page": 3,
               "quote": "Panduan penggunaan singkat untuk fungsi pada increment ini."
             }
+          },
+          {
+            "candidateId": "cand-038",
+            "kind": "business_objective",
+            "semanticKey": "safara.operations.unified_operational_data",
+            "payload": {
+              "objective": "Unify package, departure schedule, pilgrim, and registration data in one operational application."
+            },
+            "relationships": [
+              "cand-003",
+              "cand-004",
+              "cand-039",
+              "cand-040",
+              "cand-041",
+              "cand-042",
+              "cand-043"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+              "page": 1,
+              "quote": "Menyatukan data paket, jadwal keberangkatan,\njemaah, dan pendaftaran dalam satu aplikasi\noperasional."
+            }
+          },
+          {
+            "candidateId": "cand-039",
+            "kind": "current_state_problem",
+            "semanticKey": "safara.operations.registration_information_fragmented",
+            "payload": {
+              "problem": "Package, departure schedule, pilgrim, and registration information is fragmented across spreadsheets, chat, and notes."
+            },
+            "relationships": [
+              "cand-038",
+              "cand-004"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+              "page": 1,
+              "quote": "Saat ini informasi paket, jadwal keberangkatan, data jemaah, dan pendaftaran sering tersebar di spreadsheet,\nchat, dan catatan yang berbeda. Hal ini menyulitkan tim untuk mengetahui:"
+            }
+          },
+          {
+            "candidateId": "cand-040",
+            "kind": "information_requirement",
+            "semanticKey": "safara.registration.show_pilgrim_departure",
+            "payload": {
+              "informationNeed": "Identify the departure on which each pilgrim is registered."
+            },
+            "relationships": [
+              "cand-038",
+              "cand-014"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+              "page": 1,
+              "quote": "Jemaah terdaftar pada keberangkatan yang mana."
+            }
+          },
+          {
+            "candidateId": "cand-041",
+            "kind": "information_requirement",
+            "semanticKey": "safara.departure_schedule.show_registered_pilgrim_count",
+            "payload": {
+              "informationNeed": "Show the number of registered pilgrims for each departure."
+            },
+            "relationships": [
+              "cand-038",
+              "cand-016",
+              "cand-021"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+              "page": 1,
+              "quote": "Jumlah jemaah yang sudah terdaftar pada setiap keberangkatan."
+            }
+          },
+          {
+            "candidateId": "cand-042",
+            "kind": "information_requirement",
+            "semanticKey": "safara.departure_schedule.show_remaining_quota",
+            "payload": {
+              "informationNeed": "Show the remaining quota for each departure."
+            },
+            "relationships": [
+              "cand-038",
+              "cand-016",
+              "cand-021",
+              "cand-032"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+              "page": 1,
+              "quote": "Sisa kuota setiap keberangkatan."
+            }
+          },
+          {
+            "candidateId": "cand-043",
+            "kind": "information_requirement",
+            "semanticKey": "safara.registration.show_agreed_registration_price",
+            "payload": {
+              "informationNeed": "Show the registration price agreed with each pilgrim."
+            },
+            "relationships": [
+              "cand-038",
+              "cand-008",
+              "cand-029"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+              "page": 1,
+              "quote": "Harga pendaftaran yang telah disepakati dengan jemaah."
+            }
+          },
+          {
+            "candidateId": "cand-044",
+            "kind": "acceptance_criterion",
+            "semanticKey": "safara.increment_01.acceptance.package_to_registration_flow",
+            "payload": {
+              "criterion": "The package-creation-to-pilgrim-registration flow can be run using agreed sample data."
+            },
+            "relationships": [
+              "cand-011",
+              "cand-012",
+              "cand-013",
+              "cand-014",
+              "cand-015",
+              "cand-016"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+              "page": 3,
+              "quote": "Alur dari pembuatan paket sampai pendaftaran jemaah dapat dijalankan menggunakan contoh data yang\ndisepakati."
+            }
           }
         ],
         "sourceStatementInventory": [
@@ -3005,7 +3316,7 @@
             },
             "destination": {
               "type": "candidate_assertion",
-              "candidateId": "cand-004"
+              "candidateId": "cand-038"
             }
           },
           {
@@ -3067,28 +3378,63 @@
             },
             "destination": {
               "type": "candidate_assertion",
-              "candidateId": "cand-004",
-              "duplicateOf": "cand-004"
+              "candidateId": "cand-039"
             }
           },
           {
-            "inventoryId": "inv-009",
+            "inventoryId": "inv-009a",
             "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
             "page": 1,
-            "quote": "Jemaah terdaftar pada keberangkatan yang mana.\nJumlah jemaah yang sudah terdaftar pada setiap keberangkatan.\nSisa kuota setiap keberangkatan.\nHarga pendaftaran yang telah disepakati dengan jemaah.",
+            "quote": "Jemaah terdaftar pada keberangkatan yang mana.",
             "classification": "material",
             "normalizedInterpretation": {
-              "informationNeeds": [
-                "pilgrim registered departure",
-                "registered pilgrim count per departure",
-                "remaining quota per departure",
-                "agreed registration price"
-              ]
+              "informationNeed": "Pilgrim registered departure"
             },
             "destination": {
               "type": "candidate_assertion",
-              "candidateId": "cand-004",
-              "duplicateOf": "cand-004"
+              "candidateId": "cand-040"
+            }
+          },
+          {
+            "inventoryId": "inv-009b",
+            "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+            "page": 1,
+            "quote": "Jumlah jemaah yang sudah terdaftar pada setiap keberangkatan.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "informationNeed": "Registered pilgrim count per departure"
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-041"
+            }
+          },
+          {
+            "inventoryId": "inv-009c",
+            "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+            "page": 1,
+            "quote": "Sisa kuota setiap keberangkatan.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "informationNeed": "Remaining quota per departure"
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-042"
+            }
+          },
+          {
+            "inventoryId": "inv-009d",
+            "artifactId": "artifact-saf-24aysgyw4su6-prd-01",
+            "page": 1,
+            "quote": "Harga pendaftaran yang telah disepakati dengan jemaah.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "informationNeed": "Agreed registration price"
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-043"
             }
           },
           {
@@ -3102,8 +3448,7 @@
             },
             "destination": {
               "type": "candidate_assertion",
-              "candidateId": "cand-004",
-              "duplicateOf": "cand-004"
+              "candidateId": "cand-004"
             }
           },
           {
@@ -3810,8 +4155,7 @@
             },
             "destination": {
               "type": "candidate_assertion",
-              "candidateId": "cand-014",
-              "duplicateOf": "cand-014"
+              "candidateId": "cand-044"
             }
           },
           {
@@ -4137,7 +4481,14 @@
           "cand-034",
           "cand-035",
           "cand-036",
-          "cand-037"
+          "cand-037",
+          "cand-038",
+          "cand-039",
+          "cand-040",
+          "cand-041",
+          "cand-042",
+          "cand-043",
+          "cand-044"
         ],
         "sourceStatementInventoryIds": [
           "inv-002",
@@ -4145,7 +4496,10 @@
           "inv-005",
           "inv-007",
           "inv-008",
-          "inv-009",
+          "inv-009a",
+          "inv-009b",
+          "inv-009c",
+          "inv-009d",
           "inv-010",
           "inv-012",
           "inv-013",
@@ -4300,7 +4654,14 @@
           "cand-034",
           "cand-035",
           "cand-036",
-          "cand-037"
+          "cand-037",
+          "cand-038",
+          "cand-039",
+          "cand-040",
+          "cand-041",
+          "cand-042",
+          "cand-043",
+          "cand-044"
         ],
         "sourceStatementInventoryIds": [
           "inv-002",
@@ -4308,7 +4669,10 @@
           "inv-005",
           "inv-007",
           "inv-008",
-          "inv-009",
+          "inv-009a",
+          "inv-009b",
+          "inv-009c",
+          "inv-009d",
           "inv-010",
           "inv-012",
           "inv-013",

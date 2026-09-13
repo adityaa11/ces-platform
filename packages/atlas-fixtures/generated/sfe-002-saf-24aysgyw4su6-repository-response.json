@@ -61,7 +61,14 @@
         "cand-034",
         "cand-035",
         "cand-036",
-        "cand-037"
+        "cand-037",
+        "cand-038",
+        "cand-039",
+        "cand-040",
+        "cand-041",
+        "cand-042",
+        "cand-043",
+        "cand-044"
       ],
       "sourceStatementInventoryIds": [
         "inv-002",
@@ -69,7 +76,10 @@
         "inv-005",
         "inv-007",
         "inv-008",
-        "inv-009",
+        "inv-009a",
+        "inv-009b",
+        "inv-009c",
+        "inv-009d",
         "inv-010",
         "inv-012",
         "inv-013",
