@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import Ajv from "ajv";
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(scriptDirectory, "../../..");
@@ -26,14 +27,26 @@ await task.destroy();
 
 const artifactId = `artifact-${workspaceId}-prd-01`;
 const artifact = { artifactId, workspaceId, name: fileName, type: "application/pdf", size, relativePath: `docs/PRD/${projectId}/${workspaceId}/${fileName}`, sha256, verifiedSha256: sha256 };
-const statements = pages.flatMap(({ page, text }) => text.split(/(?<=[.!?])\s+/).map((quote) => quote.trim()).filter(Boolean).map((quote, index) => ({ page, quote, index })));
+const splitStatements = (text) => text
+  .split(/(?=(?:^|\s)(?:\d+\.|[a-z]\)|[-•]))|(?<=[.;!?])\s+(?=[A-ZÀ-ÖØ-Þ])/u)
+  .map((quote) => quote.trim())
+  .filter((quote) => quote.length > 2 && !/^(?:\d+\.|[a-z]\)|[-•])$/iu.test(quote));
+const statements = pages.flatMap(({ page, text }) => splitStatements(text).map((quote, index) => ({ page, quote, index })));
 const candidateAssertions = statements.map(({ page, quote, index }) => {
   const candidateId = `candidate-${workspaceId}-p${String(page).padStart(2, "0")}-${String(index + 1).padStart(3, "0")}`;
-  const workflow = page === 2 && index === 0;
-  return { candidateId, kind: workflow ? "workflow" : "requirement", semanticKey: workflow ? "safara.increment-01.registration-flow" : `safara.increment-01.page-${page}.statement-${index + 1}`, payload: workflow ? { actors: ["Admin", "System"], triggers: ["Operational registration work begins"], orderedSteps: statements.filter((item) => item.page === 2).slice(0, 6).map((item) => item.quote), conditions: ["The selected departure remains open."], branches: ["Registration is unavailable when the schedule is closed or capacity is full."], inputs: ["package", "departure schedule", "pilgrim record"], outputs: ["registration", "agreed registration price", "remaining quota"], dependencies: ["package and departure maintenance", "pilgrim data"], stateTransitions: ["draft data to active registration"], exceptions: ["closed departure", "full quota"], sourceStatement: quote } : { sourceStatement: quote, interpretation: "Candidate proposal extracted from the uploaded PRD; not accepted project truth." }, relationships: workflow ? statements.filter((item) => item.page === 2).slice(1, 6).map((item) => `candidate-${workspaceId}-p02-${String(item.index + 1).padStart(3, "0")}`) : [], evidence: { artifactId, page, quote } };
+  const workflow = /admin|jemaah|pendaftaran|keberangkatan|paket/i.test(quote);
+  const related = statements.filter((item) => item.page === page && item.index !== index && /admin|jemaah|pendaftaran|keberangkatan|paket/i.test(item.quote)).slice(0, 5);
+  const normalized = { sourceStatement: quote, assertionType: workflow ? "workflow_step_or_constraint" : "requirement", actors: /admin/i.test(quote) ? ["Admin"] : [], conditions: /jika|apabila|tidak boleh|hanya/i.test(quote) ? [quote] : [], constraints: /tidak boleh|wajib|harus/i.test(quote) ? [quote] : [], proposalStatus: "candidate_only" };
+  return { candidateId, kind: workflow ? "workflow" : "requirement", semanticKey: `safara.increment-01.page-${page}.statement-${index + 1}`, payload: workflow ? { ...normalized, triggers: [], orderedSteps: [quote], branches: [], inputs: [], outputs: [], dependencies: [], stateTransitions: [], exceptions: [] } : normalized, relationships: related.map((item) => `candidate-${workspaceId}-p${String(item.page).padStart(2, "0")}-${String(item.index + 1).padStart(3, "0")}`), evidence: { artifactId, page, quote } };
 });
-const sourceStatementInventory = statements.map(({ page, quote, index }, position) => ({ inventoryId: `inventory-${workspaceId}-${String(position + 1).padStart(3, "0")}`, artifactId, page, quote, classification: "material", normalizedInterpretation: { sourceStatement: quote }, destination: { type: "candidate_assertion", candidateId: candidateAssertions[position].candidateId } }));
-const result = { executionId: `exec-${workspaceId}-prd-01`, mode: "codex", artifact, pages, candidateAssertions, sourceStatementInventory, questions: [] };
+const sourceStatementInventory = [
+  ...statements.map(({ page, quote, index }, position) => ({ inventoryId: `inventory-${workspaceId}-${String(position + 1).padStart(3, "0")}`, artifactId, page, quote, classification: "material", normalizedInterpretation: candidateAssertions[position].payload, destination: { type: "candidate_assertion", candidateId: candidateAssertions[position].candidateId } })),
+  ...pages.filter((page) => !page.text).map((page) => ({ inventoryId: `inventory-${workspaceId}-empty-${String(page.page).padStart(2, "0")}`, artifactId, page: page.page, quote: "", classification: "empty_page", normalizedInterpretation: { reason: "The source PDF page contains no extractable text." }, destination: { type: "non_fact", reason: "Empty source page." } })),
+];
+const result = { skillId: "atlas.prd-extraction", skillVersion: "1.2.0", executionProvenance: { skillId: "atlas.prd-extraction", skillVersion: "1.2.0", mode: "codex" }, status: "complete", executionId: `exec-${workspaceId}-prd-01`, mode: "codex", artifact, pages, candidateAssertions, sourceStatementInventory, questions: [] };
+const contract = JSON.parse(await readFile(path.join(root, ".agents", "skills", "atlas-prd-extraction", "atlas-skill.json"), "utf8"));
+const validate = new Ajv({ strict: false }).compile(contract.outputSchema);
+if (!validate(result)) throw new Error(`Extraction result violates atlas.prd-extraction: ${JSON.stringify(validate.errors)}`);
 await mkdir(path.dirname(outputPath), { recursive: true });
 await writeFile(outputPath, `${JSON.stringify(result, null, 2)}\n`);
 console.log(`Extracted ${candidateAssertions.length} candidate assertions from ${pages.length} pages to ${outputPath}`);

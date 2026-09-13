@@ -5,7 +5,7 @@ import hostingConfig from "./.openai/hosting.json";
 import { access, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { createHash } from "node:crypto";
-import { completeSfeExtraction, getFixtureScenario, type ProjectFixture, type SfeExtractionResult } from "../../packages/atlas-fixtures/src/index.ts";
+import { completeSfeExtraction, failSfeExtraction, getFixtureScenario, type ProjectFixture, type SfeExtractionResult } from "../../packages/atlas-fixtures/src/index.ts";
 
 const SITE_CREATOR_PLACEHOLDER_DATABASE_ID =
   "00000000-0000-4000-8000-000000000000";
@@ -35,6 +35,7 @@ const localFixtureStore: Plugin = {
       if (!isRegistryRequest && !isExtractionRequest) return next();
       let stagingSourceDir: string | undefined;
       let publishedSourceDir: string | undefined;
+      let extractionProjectId: string | undefined;
       try {
         if (isRegistryRequest && request.method === "GET") {
           const registry = await readProjectFixtureRegistry();
@@ -51,7 +52,9 @@ const localFixtureStore: Plugin = {
         const chunks: Uint8Array[] = []; for await (const chunk of request) chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
         const body = JSON.parse(Buffer.concat(chunks).toString("utf8"));
         if (isExtractionRequest) {
-          if (typeof body.projectId !== "string" || !body.result || typeof body.result !== "object" || typeof body.result.executionId !== "string" || !body.result.artifact || !Array.isArray(body.result.pages) || !Array.isArray(body.result.candidateAssertions) || !Array.isArray(body.result.sourceStatementInventory) || !Array.isArray(body.result.questions)) throw new Error("A complete extraction result is required.");
+          if (typeof body.projectId !== "string") throw new Error("An extraction project ID is required.");
+          extractionProjectId = body.projectId;
+          if (!body.result || typeof body.result !== "object" || typeof body.result.executionId !== "string" || body.result.skillId !== "atlas.prd-extraction" || body.result.skillVersion !== "1.2.0" || body.result.status !== "complete" || body.result.executionProvenance?.mode !== body.result.mode || !body.result.artifact || !Array.isArray(body.result.pages) || !Array.isArray(body.result.candidateAssertions) || !Array.isArray(body.result.sourceStatementInventory) || !Array.isArray(body.result.questions)) throw new Error("A complete contract-valid extraction result is required.");
           const registry = await readProjectFixtureRegistry();
           const modalIndex = registry.modalProjects.findIndex((record) => record.project.id === body.projectId);
           if (modalIndex < 0) throw new Error("Unknown modal-created project.");
@@ -82,7 +85,7 @@ const localFixtureStore: Plugin = {
         const { files: _files, ...record } = body; record.sourceFiles = sourceFiles;
         await writeProjectFixtureRegistry({ ...registry, cards: [...registry.cards, record.project], modalProjects: [...registry.modalProjects, record] });
         publishedSourceDir = undefined; response.setHeader("content-type", "application/json"); response.statusCode = 201; response.end(JSON.stringify(record));
-      } catch (error) { if (stagingSourceDir) await rm(stagingSourceDir, { force: true, recursive: true }); if (publishedSourceDir) await rm(publishedSourceDir, { force: true, recursive: true }); response.statusCode = 400; response.setHeader("content-type", "application/json"); response.end(JSON.stringify({ error: error instanceof Error ? error.message : "Fixture could not be saved." })); }
+      } catch (error) { if (stagingSourceDir) await rm(stagingSourceDir, { force: true, recursive: true }); if (publishedSourceDir) await rm(publishedSourceDir, { force: true, recursive: true }); const message = error instanceof Error ? error.message : "Fixture could not be saved."; if (isExtractionRequest && extractionProjectId) { try { const registry = await readProjectFixtureRegistry(); const modalIndex = registry.modalProjects.findIndex((record) => record.project.id === extractionProjectId); if (modalIndex >= 0) { const modalProjects = [...registry.modalProjects]; const failed = failSfeExtraction(modalProjects[modalIndex] as never, message); modalProjects[modalIndex] = failed; await writeProjectFixtureRegistry({ ...registry, cards: registry.cards.map((card) => card.id === extractionProjectId ? failed.project : card), modalProjects }); } } catch { /* preserve the original extraction error if failure-state persistence itself fails */ } } response.statusCode = 400; response.setHeader("content-type", "application/json"); response.end(JSON.stringify({ error: message })); }
     });
   },
 };

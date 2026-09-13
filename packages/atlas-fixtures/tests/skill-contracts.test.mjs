@@ -113,3 +113,14 @@ test("every shared skill is candidate or advisory only and carries execution pro
     assert.deepEqual(manifest.outputSchema.properties.executionProvenance.required, ["skillId", "skillVersion", "mode"]);
   }
 });
+
+test("SFE-002 artifact is contract-valid and supplies the extraction-backed repository handoff", async () => {
+  const ajv = new Ajv({ strict: false });
+  const byId = Object.fromEntries(manifests.map(({ manifest }) => [manifest.id, manifest]));
+  const extraction = JSON.parse(await readFile(path.resolve(import.meta.dirname, "../generated/sfe-002-saf-24aysgyw4su6.json"), "utf8"));
+  assert.equal(ajv.compile(byId["atlas.prd-extraction"].outputSchema)(extraction), true, "persisted extraction obeys the declared PRD contract");
+  const repositoryInput = { projectId: "safara-project-01", sourceArtifacts: [extraction.artifact], requestedScenario: "initial-draft-extraction", scenarioKind: "extraction_backed", extractionResults: [{ workspaceId: extraction.artifact.workspaceId, artifact: extraction.artifact, candidateAssertions: extraction.candidateAssertions, sourceStatementInventory: extraction.sourceStatementInventory }] };
+  assert.equal(ajv.compile(byId["atlas.fixture-repository"].inputSchema)(repositoryInput), true, "repository assembly accepts the validated extraction handoff");
+  const verifier = { skillId: "atlas.fixture-verification", skillVersion: "1.1.0", executionProvenance: { skillId: "atlas.fixture-verification", skillVersion: "1.1.0", mode: "codex" }, status: "pass", checks: [{ checkId: "sfe-002-contract-handoff", status: "pass", detail: "The extraction-backed repository input carries the validated workspace, artifact, candidates, and accounting inventory.", evidence: [{ kind: "fixture", reference: "sfe-002-saf-24aysgyw4su6.json" }] }] };
+  assert.equal(ajv.compile(byId["atlas.fixture-verification"].outputSchema)(verifier), true, "fixture-verification outcome is declared and valid");
+});
