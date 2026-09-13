@@ -183,6 +183,9 @@ test("workspace review projections are isolated, source-language, and candidate-
   assert.ok(!review.reviewModel.annotations.some((annotation) => annotation.candidateId === "cand-001"), "a scope candidate is not inferred as a fact or CES assessment");
   assert.deepEqual(review.reviewModel.annotations.filter((annotation) => annotation.surface === "workflow").map((annotation) => annotation.candidateId), extraction.candidateAssertions.filter((candidate) => candidate.kind === "workflow_step").map((candidate) => candidate.candidateId), "every ordered workflow step retains its own review membership");
   assert.ok(review.reviewModel.annotations.filter((annotation) => annotation.surface === "ces").every((annotation) => extraction.candidateAssertions.find((candidate) => candidate.candidateId === annotation.candidateId)?.kind === "acceptance_criterion"), "CES assessments require explicit acceptance-criterion evidence");
+  const cesGroupIds = new Set(review.reviewModel.annotations.filter((annotation) => annotation.surface === "ces").map((annotation) => annotation.groupId));
+  assert.ok(review.reviewModel.annotations.some((annotation) => annotation.surface === "workflow" && cesGroupIds.has(annotation.groupId)), "a CES assessment shares a direct-evidence group with its workflow");
+  assert.ok(review.reviewModel.annotations.some((annotation) => annotation.surface === "facts" && cesGroupIds.has(annotation.groupId)), "a CES assessment shares a direct-evidence group with its facts");
   const missingInventory = projectWorkspaceReview({ workspaceId: extraction.artifact.workspaceId, projectId: "safara-project-01", status: "ready-for-review", sourceLanguage: "id", extraction: { ...extraction, sourceStatementInventory: [] }, requestedSurfaces: ["facts"] });
   assert.equal(missingInventory.status, "needs_resolution");
   const alteredEvidence = structuredClone(extraction);
