@@ -83,7 +83,7 @@ Each ticket has its own review batch because each checkpoint changes a data or i
 | 0 | [SFE-000 / BATCH-25](SFE-000-skills-to-sfe-integration-map.md) | approved | Approved shared skill contracts | Does the map connect the shared skill contracts to SFE without changing their authority or bypassing a gate? |
 | 1 | [SFE-001 / BATCH-26](SFE-001-project-intake-and-initial-workspace.md) | approved | SFE-000 approved; AUI-004 | Does the project modal create the Extracting card, workspace ID, empty Master, Initial Draft workspace, and workspace-scoped PDF path without extracting? |
 | 2 | [SFE-002 / BATCH-27](SFE-002-initial-draft-extraction.md) | approved | SFE-000 approved; SFE-001 | Does processing use that exact workspace ID and file to extract PDF 01 and transition the project card to Ready to review? |
-| 3 | [SFE-002-01 / BATCH-34](SFE-002-01-workspace-review-projections.md) | awaiting_review | SFE-002 BATCH-27 PASS; user `go` | Does any non-Master workspace produce one source-language, evidence-backed, candidate-only review model for all three read routes? |
+| 3 | [SFE-002-01 / BATCH-34](SFE-002-01-workspace-review-projections.md) | approved | SFE-002 BATCH-27 PASS; BATCH-34 PASS; user `go` | Does any non-Master workspace produce one source-language, evidence-backed, candidate-only review model for all three read routes? |
 | 4 | [SFE-003 / BATCH-28](SFE-003-route-and-switcher-initial-draft-wiring.md) | approved | SFE-000 approved; SFE-002 | Do the existing project route and selector expose the empty Master and populated Initial Draft from the same generated fixture? |
 | 5 | [SFE-003-01 / BATCH-33](SFE-003-01-semantic-initial-draft-workflow-projection.md) | feedback_remediation | SFE-003 approved; SFE-002-01 | Do all three established routes consume only the selected workspace review model? |
 | 6 | [SFE-004 / BATCH-29](SFE-004-repeat-initial-draft-cycle-for-project-two.md) | planned | SFE-003-01 | Does creating project 02 through the same components independently reproduce the project 01 extraction output? |
@@ -98,7 +98,7 @@ after its named SFE dependencies pass review and receive an explicit `go`.
 
 ## Review controls
 
-- SFE-000 through SFE-003 are `approved`. SFE-002-01 is `awaiting_review`; SFE-003-01 is `feedback_remediation`; SFE-004 through SFE-007 remain `planned`. SFE-002-01 and SFE-003-01 block the later scenario tickets until the generic review model and its route consumption pass review. This ticket set does not authorize a later implementation batch until its dependencies and review controls allow it.
+- SFE-000 through SFE-003 and SFE-002-01 are `approved`. SFE-003-01 remains `feedback_remediation`; SFE-004 through SFE-007 remain `planned`. SFE-003-01 blocks the later scenario tickets until it consumes the generic review model and passes review. The user has explicitly deferred starting SFE-003-01 after approving SFE-002-01. This ticket set does not authorize a later implementation batch until its dependencies and review controls allow it.
 - Implement only the currently authorized ticket or review batch. Do not start the next batch until the current batch has a PASS review and the user says `go`.
 - UI batches require rendered browser validation for the connected component flow, supported responsive widths and themes, and keyboard/focus behavior.
 - Fixture batches validate source provenance, stable project/workspace IDs, branch/workspace relationships, and proposal-versus-accepted-truth boundaries.
