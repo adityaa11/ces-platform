@@ -77,3 +77,10 @@ rendering built-in fixture workspaces on the server.
 - **Any visual defect found after an earlier check:** The empty-state heading initially inherited the global narrow heading width; a route-specific override restored the expected full-width title. Reinspection confirmed the title wraps cleanly.
 - **Previously missed state:** Scenario-owned projects were routed through the asynchronous modal registry, the fixture generator continued to require removed source PDFs, and the Sources route had no usable empty state when no PDFs were synced.
 - **New mandatory state for this component:** Check scenario-owned and modal-created IDs separately; run fixture tests without raw source PDFs.
+
+## Review checkpoint
+
+- **Tickets included:** AUI-014 / BATCH-35
+- **Review question:** Can prototype validation run without historical source PDFs while built-in scenarios render server-side and workspace source authority remains unchanged?
+- **Combined acceptance:** The fixture suite regenerates from committed extracted text without raw PDFs; built-in project routes render their scenario content; modal-created IDs retain the registry route; and the no-PDF Sources route remains usable at desktop and mobile widths.
+- **Commit to review:** `1776682`.
