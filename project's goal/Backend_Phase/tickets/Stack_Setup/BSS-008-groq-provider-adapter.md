@@ -35,7 +35,7 @@ Implement Groq as the first model provider behind the provider-neutral Agents Br
 
 - Run the adapter and provider-contract conformance tests with mocked HTTP/SSE responses.
 - Run a separately gated live qualification test only when explicit Groq credentials and a selected model are available; verify the configured structured-output mode and usage fields against the live API.
-- Run Bridge type-check, tests, and build.
+- Run Bridge type-check, adapter/contract tests, and build; the ticket-set fixture-suite exclusion applies.
 
 ## Review checkpoint
 

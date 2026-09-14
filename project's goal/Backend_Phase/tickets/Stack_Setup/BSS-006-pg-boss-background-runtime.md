@@ -31,7 +31,7 @@ Run bounded, retryable background reasoning work through pg-boss and PostgreSQL,
 - Run queue integration tests against PostgreSQL for enqueue, transaction rollback, successful completion, retry, idempotency, and shutdown.
 - Verify database role permissions deny trusted Atlas writes from the worker process.
 - Verify concurrency and timeout settings are loaded from configuration and have bounded defaults.
-- Run workspace type-check and tests.
+- Run type-check and tests for the BSS-owned worker and queue packages and directly affected integration targets; the ticket-set fixture-suite exclusion applies.
 
 ## Review checkpoint
 

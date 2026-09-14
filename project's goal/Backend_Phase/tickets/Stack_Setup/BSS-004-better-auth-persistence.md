@@ -31,7 +31,7 @@ Use Better Auth with its Drizzle adapter to persist user identity and sessions i
 - Run migrations against an empty database and exercise the authentication lifecycle in integration tests.
 - Verify stored sessions survive an application restart and sign-out invalidates the session.
 - Test missing-secret and invalid-origin startup/configuration behavior.
-- Run workspace type-check, build, and tests.
+- Run type-check, build, and tests for the BSS-owned auth package and directly affected integration targets; the ticket-set fixture-suite exclusion applies.
 
 ## Review checkpoint
 

@@ -31,7 +31,7 @@ Keep immutable project document bytes behind a storage-neutral DocumentStore con
 
 - Run adapter conformance tests for write/read, hash verification, immutability, path traversal rejection, and root isolation.
 - Verify local stored bytes are not included in a build artifact or source-control status.
-- Run workspace type-check and tests.
+- Run type-check and tests for the document-store package and directly affected integration targets; the ticket-set fixture-suite exclusion applies.
 
 ## Review checkpoint
 

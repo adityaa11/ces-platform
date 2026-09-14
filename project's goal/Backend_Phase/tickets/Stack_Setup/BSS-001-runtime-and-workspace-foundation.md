@@ -15,7 +15,7 @@ Make the monorepo reproducible on the baseline Node.js and TypeScript toolchain 
 - Keep `pnpm` as the workspace package manager and preserve the existing lockfile as its dependency authority.
 - Establish shared TypeScript compiler defaults and scripts needed to type-check the workspace as backend packages are added.
 - Document the intended ownership boundaries for `apps/atlas`, `apps/agents-bridge`, `packages/atlas-core`, `packages/atlas-db`, `packages/atlas-contracts`, `packages/atlas-skills`, `packages/document-store`, and `packages/atlas-fixtures`.
-- Keep the existing fixture-driven UI usable; do not migrate it to live services in this ticket.
+- Limit changes to workspace/tooling setup; do not implement or validate UI and fixture scenarios in this ticket.
 
 ## Acceptance criteria
 
@@ -23,34 +23,32 @@ Make the monorepo reproducible on the baseline Node.js and TypeScript toolchain 
 - `pnpm` remains the package manager and a frozen-lockfile install succeeds.
 - Shared TypeScript configuration can be consumed by new backend packages without making Atlas Core depend on database or web frameworks.
 - The package-boundary note identifies `atlas-fixtures` as test/golden data and records the intended production package ownership from the baseline.
-- The current `apps/atlas` build and tests continue to pass under Node.js 24.
+- The current `apps/atlas` application builds under Node.js 24; fixture-suite and golden-data checks are excluded from this ticket's acceptance.
 - No production service behavior, final database schema, final skill list, or provider integration is added.
 
 ## Validation
 
 - Confirm `node --version` reports a supported Node.js 24 release.
 - Run `corepack pnpm install --frozen-lockfile`.
-- Run workspace type-check, existing app build, and existing tests.
-- Confirm the root scripts and package boundaries are documented and do not alter fixture behavior.
+- Run workspace type-check and the existing app build under Node.js 24.
+- Do not gate BSS-001 on `@atlas/fixtures` tests, golden generation, PRD/PDF catalog checks, or fixture-driven UI scenario checks; those are owned by the separate AUI/GLF/SFE ticket sets.
+- Confirm the root scripts and package boundaries document `atlas-fixtures` as test/golden material without introducing it as a production package.
 
 ## Review checkpoint
 
 - **Review question:** Is the workspace reproducible on the selected Node and TypeScript toolchain while preserving the existing prototype?
-- **Combined acceptance:** Runtime and package-manager versions are declared; a clean frozen install and workspace type-check pass; the existing UI build and tests pass; package ownership and fixture boundaries are explicit.
+- **Combined acceptance:** Runtime and package-manager versions are declared; a clean frozen install and workspace type-check pass; the existing UI can be built under Node.js 24; package ownership and the BSS fixture-suite exclusion are explicit.
 - **Commit to review:** `5c93620`.
 
 ## Implementation checkpoint
 
-The runtime declarations, shared compiler defaults, recursive package type-check command, and package ownership note are implemented. The existing prototype validation blockers were repaired under [AUI-014](../../atlas-ui/AUI-014-prototype-validation-baseline.md), with the raw PDFs excluded from the golden test command and no runtime dependency on the old source paths.
+The runtime declarations, shared compiler defaults, recursive package type-check command, and package ownership note are implemented. No backend service behavior or prototype scenario behavior is introduced.
 
 Validation was run with Node.js `24.12.0` and pnpm `11.19.0`:
 
 - Frozen-lockfile installation succeeds in an isolated workspace copy using the populated pnpm store. The active workspace install was prevented by a locked file under `node_modules`; dependency contents were not changed by the successful isolated validation.
 - The shared TypeScript config compiled a temporary consumer package, and the recursive workspace type-check command ran that package successfully.
-- The Atlas application build and all 9 Atlas app tests pass with both an empty `docs/PRD` and the current workspace-scoped PDFs.
-- All 39 fixture package tests pass with an empty `docs/PRD`, including golden regeneration, current skill-contract validation, and negative publication cases.
-- Atlas builds and its public root route returns HTTP 200 when `docs/PRD` contains no PDFs.
-- The changed TypeScript and JavaScript files pass ESLint; the full app lint command still reports existing findings in unchanged files.
+- The Atlas application build passes under Node.js 24.
 - `git diff --check` passes.
 
-The code, documentation, validation, and rendered inspection are complete. The ticket is ready for its committed review checkpoint.
+The code, documentation, and BSS-scoped validation are complete. The ticket is ready for its committed review checkpoint.

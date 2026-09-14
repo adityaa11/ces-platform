@@ -10,6 +10,13 @@ Establish the production-shaped backend workspace and infrastructure boundaries 
 
 The existing `apps/atlas` UI and its fixture-driven prototype remain in place while backend services are introduced. `@atlas/fixtures` remains test and golden-scenario material; it is not a production source of truth.
 
+## Validation boundary
+
+- BSS acceptance is limited to stack setup and the service, database, queue, storage, or provider boundary named by the individual ticket.
+- The `@atlas/fixtures` test suite, golden-bundle generation and reconciliation, PRD/PDF fixture catalog checks, and fixture-driven UI scenario checks are explicitly excluded from BSS acceptance criteria and blockers. They belong to the AUI, GLF, or SFE ticket sets.
+- References to workspace tests in BSS tickets mean tests for the BSS-owned packages and directly affected integration targets. They do not require the Atlas golden-fixture suite.
+- Build or smoke checks for `apps/atlas` may be used when a ticket needs to verify stack compatibility; they do not expand the ticket to fixture-suite validation or UI changes.
+
 ## Delivery order
 
 Each ticket is its own review batch because each establishes a distinct boundary and acceptance decision. Tickets remain planned until authorized; each implementation commit is recorded when its batch reaches review.

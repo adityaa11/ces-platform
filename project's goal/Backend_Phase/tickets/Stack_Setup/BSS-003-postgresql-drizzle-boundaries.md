@@ -31,7 +31,7 @@ Establish PostgreSQL migrations and the Drizzle adapter boundary while keeping A
 - Apply migrations to an empty database and verify migration status is clean.
 - Run permission tests using the actual Atlas and Bridge database roles, including a denied trusted-state write from the Bridge role.
 - Run package-boundary checks confirming Atlas Core does not import Drizzle or the database adapter.
-- Run the workspace type-check and tests.
+- Run type-check and tests for the BSS-owned database packages and directly affected integration targets; the ticket-set fixture-suite exclusion applies.
 
 ## Review checkpoint
 

@@ -32,7 +32,7 @@ Create the independently deployable Fastify service boundary and provider-neutra
 - Run the Bridge health/readiness integration test independently of the UI app.
 - Verify streamed headers, ordered chunks, completion behavior, and cancellation using a test executor.
 - Run contract validation against accepted and rejected test payloads.
-- Run workspace type-check and tests.
+- Run type-check and tests for Agents Bridge and its directly affected contracts; the ticket-set fixture-suite exclusion applies.
 
 ## Review checkpoint
 
