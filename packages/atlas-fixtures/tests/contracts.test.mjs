@@ -113,6 +113,7 @@ test("SFE-002 completes the persisted saf-24aysgyw4su6 workspace only after page
   assert.equal(completed.initialDraftWorkspace.workspaceId, "saf-24aysgyw4su6");
   assert.equal(completed.processingJob.workspaceId, "saf-24aysgyw4su6");
   assert.equal(completed.project.repository.state, "ready-for-review");
+  assert.deepEqual(completed.project.repository.action, { label: "Review Initial Draft", enabled: true });
   assert.equal(completed.masterWorkspace.prdFiles.length, 0);
   assert.throws(() => completeSfeExtraction({ ...created, sourceFiles: [artifact] }, { ...result, artifact: { ...artifact, workspaceId: "saf-other" } }), /existing Initial Draft workspace ID/);
   assert.throws(() => completeSfeExtraction({ ...created, sourceFiles: [artifact] }, { ...result, executionProvenance: { ...result.executionProvenance, mode: "agents_bridge" } }), /declared PRD-extraction contract/);

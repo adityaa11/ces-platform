@@ -25,6 +25,16 @@ async function readProjectFixtureRegistry(): Promise<ProjectFixtureRegistry> {
   catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; const registry = initialProjectFixtureRegistry(); await mkdir(dirname(projectFixtureRegistryPath), { recursive: true }); await writeProjectFixtureRegistry(registry); return registry; }
 }
 async function writeProjectFixtureRegistry(registry: ProjectFixtureRegistry) { const temporary = `${projectFixtureRegistryPath}.tmp`; await writeFile(temporary, JSON.stringify(registry, null, 2)); await rename(temporary, projectFixtureRegistryPath); }
+const routeEnabledRecord = (record: PersistedModalProject): PersistedModalProject => {
+  const extraction = record.extraction as SfeExtractionResult | undefined;
+  const ready = record.project.repository.state === "ready-for-review"
+    && record.initialDraftWorkspace.status === "ready-for-review"
+    && record.initialDraftWorkspace.available === true
+    && extraction?.status === "complete"
+    && extraction.artifact.workspaceId === record.initialDraftWorkspace.workspaceId;
+  if (!ready) return record;
+  return { ...record, project: { ...record.project, repository: { ...record.project.repository, action: { label: "Review Initial Draft", enabled: true } } } };
+};
 
 const localFixtureStore: Plugin = {
   name: "atlas-local-fixture-store",
@@ -44,9 +54,11 @@ const localFixtureStore: Plugin = {
             const sourceDir = resolve(workspaceRoot, "docs/PRD", record.project.id, record.initialDraftWorkspace.workspaceId);
             const sourceFiles = await Promise.all(record.initialDraftWorkspace.prdFiles.map(async (file) => { const bytes = await readFile(resolve(sourceDir, file.name)); return { ...file, relativePath: `docs/PRD/${record.project.id}/${record.initialDraftWorkspace.workspaceId}/${file.name}`, sha256: createHash("sha256").update(bytes).digest("hex") }; }));
             return { ...record, sourceFiles };
-          }));
-          if (JSON.stringify(registry.modalProjects) !== JSON.stringify(modalProjects)) await writeProjectFixtureRegistry({ ...registry, modalProjects });
-          response.setHeader("content-type", "application/json"); response.end(JSON.stringify({ cards: registry.cards, modalProjects })); return;
+          })).then((records) => records.map(routeEnabledRecord));
+          const modalProjectsById = new Map(modalProjects.map((record) => [record.project.id, record.project]));
+          const cards = registry.cards.map((card) => modalProjectsById.get(card.id) ?? card);
+          if (JSON.stringify(registry.modalProjects) !== JSON.stringify(modalProjects) || JSON.stringify(registry.cards) !== JSON.stringify(cards)) await writeProjectFixtureRegistry({ ...registry, cards, modalProjects });
+          response.setHeader("content-type", "application/json"); response.end(JSON.stringify({ cards, modalProjects })); return;
         }
         if (request.method !== "POST") { response.statusCode = 405; response.end(); return; }
         const chunks: Uint8Array[] = []; for await (const chunk of request) chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
