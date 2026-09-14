@@ -1,5 +1,6 @@
 import projectFixtureRegistry from "../generated/project-card-fixtures.json" with { type: "json" };
 import type { SfeExtractionResult } from "./sfe-extraction.ts";
+import { projectWorkspaceReview, type ReviewAnnotation, type WorkspaceReviewOutput } from "./workspace-review-projections.ts";
 export { resolveFixtureAuthoringExecutor, resolveSkillsMode, type AgentsBridgeExecutor, type SkillsMode } from "./skills-mode.ts";
 export { resolveGoldenFixtureBranch, type GoldenFixtureBundle } from "./golden-fixture.ts";
 export { completeSfeExtraction, failSfeExtraction, validateSfeExtraction, type CompletedFixtureProject, type ExtractionMode, type SfeCandidate, type SfeExtractionResult, type SfeInventoryEntry, type SfeProjectInput, type SfeSourceArtifact } from "./sfe-extraction.ts";
@@ -152,42 +153,52 @@ export function resolveFixtureProjectRoute(scenario: FixtureScenario, projectId?
   const workspace = fixtureRecord && scenario.workspace ? { ...scenario.workspace, project: fixtureRecord.project } : project && scenario.workspace?.project.id === project.id ? scenario.workspace : undefined;
   return { project, fixtureRecord, workspace, canOpenWorkspace: project?.status === "ready" && Boolean(workspace) };
 }
-const readable = (value: string) => value.replace(/[._-]+/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
-const textValue = (value: unknown) => typeof value === "string" ? value : Array.isArray(value) ? value.filter((item): item is string => typeof item === "string").join(", ") : "";
-const sourceStepLabel = (candidate: SfeCandidate) => {
-  const quote = candidate.evidence.quote.replace(/[.!?]+$/, "").trim();
-  if (/^Admin membuat paket umrah/i.test(quote)) return "Membuat paket umrah";
-  if (/^Admin membuat jadwal keberangkatan/i.test(quote)) return "Membuat jadwal keberangkatan";
-  if (/^Admin mencatat data jemaah/i.test(quote)) return "Mencatat data jemaah";
-  if (/^Admin memilih jemaah dan mendaftarkannya/i.test(quote)) return "Mendaftarkan jemaah ke keberangkatan";
-  if (/^Sistem menyimpan harga pendaftaran/i.test(quote)) return "Menyimpan harga pendaftaran";
-  if (/^Sistem menampilkan jumlah jemaah terdaftar/i.test(quote)) return "Menampilkan jumlah jemaah dan sisa kuota";
-  return quote.replace(/^(Admin|Sistem)\s+/i, "").replace(/^./, (letter) => letter.toUpperCase());
-};
-const sourceActorLabel = (value: string) => value.replace(/^System$/i, "Sistem");
-const workflowPresentation = (key: string) => key === "packages-and-departures" ? { title: "Menyiapkan paket dan keberangkatan", summary: "Paket dan jadwal keberangkatan disiapkan sebelum pendaftaran.", question: "Bagaimana paket dan jadwal keberangkatan disiapkan?", outcome: "Keberangkatan siap menerima pendaftaran." } : { title: "Mendaftarkan jemaah", summary: "Data jemaah, pendaftaran, dan harga pendaftaran dicatat secara berurutan.", question: "Bagaimana jemaah didaftarkan ke keberangkatan?", outcome: "Pendaftaran yang valid dan harga yang disepakati tercatat." };
-const candidateEvidence = (candidate: SfeCandidate, prdId: string, documentName: string): SourceEvidence => ({ id: `evidence-${candidate.candidateId}`, understood: candidate.kind === "workflow_step" ? `Atlas memahami langkah ini sebagai: ${sourceStepLabel(candidate)}.` : `Atlas memahami pernyataan ini sebagai: ${candidate.evidence.quote}`, quote: candidate.evidence.quote, documentId: prdId, documentName, page: candidate.evidence.page });
+const reviewFor = (record: FixtureRouteProjectRecord): WorkspaceReviewOutput => projectWorkspaceReview({
+  workspaceId: record.initialDraftWorkspace.workspaceId,
+  projectId: record.project.id,
+  status: record.initialDraftWorkspace.status,
+  sourceLanguage: "id",
+  extraction: record.extraction!,
+  // CES is deliberately absent unless the selected extraction carries an
+  // explicit assessment basis. The CES route then keeps its established
+  // review-empty state instead of inferring a policy assessment.
+  requestedSurfaces: ["workflow", "facts"],
+});
+
 function projectInitialDraft(record: FixtureRouteProjectRecord, workspace: ProjectWorkspaceFixture) {
   const extraction = record.extraction!;
   const prdId = `artifact-${extraction.artifact.artifactId}`;
-  const workflowCandidates = extraction.candidateAssertions.filter((candidate) => candidate.kind === "workflow_step");
-  const workflowBuckets = new Map<string, SfeCandidate[]>();
-  for (const candidate of workflowCandidates) { const workflowId = /paket umrah|^Admin membuat jadwal keberangkatan|^Sistem menampilkan jumlah jemaah terdaftar/i.test(candidate.evidence.quote) ? "packages-and-departures" : "pilgrim-registration"; workflowBuckets.set(workflowId, [...(workflowBuckets.get(workflowId) ?? []), candidate]); }
-  const workflows: WorkflowFixture[] = [...workflowBuckets.entries()].map(([workflowId, candidates], index) => {
-    const ordered = [...candidates].sort((left, right) => Number(left.payload.order ?? 0) - Number(right.payload.order ?? 0));
-    const presentation = workflowPresentation(workflowId);
-    const nodes = ordered.map((candidate) => { const condition = textValue(candidate.payload.condition); return { id: `step-${candidate.candidateId}`, title: sourceStepLabel(candidate), note: candidate.evidence.quote, kind: condition ? "decision" as const : "activity" as const, prdIds: [prdId], evidence: candidateEvidence(candidate, prdId, extraction.artifact.name) }; });
-    return { id: `workflow-${workflowId}`, groupId: `scope-${workflowId}`, title: presentation.title, summary: presentation.summary, businessQuestion: presentation.question, roles: [...new Set(ordered.map((candidate) => sourceActorLabel(textValue(candidate.payload.actor))).filter(Boolean))], expectedResult: presentation.outcome, prdIds: [prdId], relatedFactIds: [], nodes, evidence: ordered.map((candidate) => candidateEvidence(candidate, prdId, extraction.artifact.name)) };
-  });
+  const review = reviewFor(record);
+  if (review.status !== "complete") return { ...workspace, project: record.project, prds: [], workflowGroups: [], workflows: [], facts: [], changes: [], sourceAccounting: [], cesItems: [] };
+  const annotations = review.reviewModel.annotations;
+  const groups = new Map(review.reviewModel.groups.map((group) => [group.groupId, group]));
+  const candidates = new Map(extraction.candidateAssertions.map((candidate) => [candidate.candidateId, candidate]));
+  const evidenceFor = (annotation: ReviewAnnotation): SourceEvidence => {
+    const candidate = candidates.get(annotation.candidateId);
+    if (!candidate) throw new Error("Review annotation must retain selected-workspace source evidence.");
+    return { id: `evidence-${annotation.annotationId}`, understood: annotation.label, quote: candidate.evidence.quote, documentId: prdId, documentName: extraction.artifact.name, page: candidate.evidence.page };
+  };
+  const workflowAnnotations = annotations.filter((annotation) => annotation.surface === "workflow").sort((left, right) => left.order - right.order);
+  const workflowTitle = workflowAnnotations[0]?.label ?? "";
+  const workflowOutcome = workflowAnnotations.at(-1)?.label ?? workflowTitle;
+  const workflows: WorkflowFixture[] = workflowAnnotations.length ? [{ id: "review-workflow-1", groupId: "review-workflow-group-1", title: workflowTitle, summary: workflowTitle, businessQuestion: workflowTitle, roles: [], expectedResult: workflowOutcome, prdIds: [prdId], relatedFactIds: [], nodes: workflowAnnotations.map((annotation) => ({ id: `step-${annotation.annotationId}`, title: annotation.label, note: annotation.label, kind: "activity" as const, prdIds: [prdId], evidence: evidenceFor(annotation) })), evidence: workflowAnnotations.map(evidenceFor) }] : [];
   const workflowGroups: WorkflowGroupFixture[] = workflows.map((flow, index) => ({ id: flow.groupId, order: String(index + 1).padStart(2, "0"), title: flow.title, summary: flow.summary, expectedResult: flow.expectedResult, roles: flow.roles, workflowIds: [flow.id], prdIds: [prdId] }));
-  const nonWorkflow = extraction.candidateAssertions.filter((candidate) => candidate.kind !== "workflow_step");
-  const factTitle = (candidate: SfeCandidate): FactFixture["title"] => candidate.kind === "scope_constraint" || candidate.kind === "business_objective" ? "Ruang lingkup" : /role|capability/.test(candidate.kind) ? "Peran dan tanggung jawab" : /privacy|access|identifier|data_schema|information/.test(candidate.kind) ? "Perlindungan informasi" : /delivery|output|display/.test(candidate.kind) ? "Keluaran" : /commitment/.test(candidate.kind) ? "Komitmen" : "Ketentuan";
-  const factBuckets = new Map<FactFixture["title"], SfeCandidate[]>();
-  for (const candidate of nonWorkflow) { const title = factTitle(candidate); factBuckets.set(title, [...(factBuckets.get(title) ?? []), candidate]); }
-  const facts: FactFixture[] = [...factBuckets.entries()].map(([title, candidates], index) => ({ id: `fact-group-${index + 1}`, number: String(index + 1).padStart(2, "0"), title, summary: `Pengetahuan Draf Awal tentang ${title.toLowerCase()}.`, prdIds: [prdId], rows: candidates.map((candidate) => ({ id: `fact-${candidate.candidateId}`, statement: candidate.evidence.quote, prdIds: [prdId], relatedWorkflowIds: workflows.filter((flow) => candidate.relationships.some((relationship) => flow.nodes.some((node) => node.id === `step-${relationship}`))).map((flow) => flow.id), cesItemIds: [], evidence: [candidateEvidence(candidate, prdId, extraction.artifact.name)] })) }));
-  const ruleCandidates = nonWorkflow.filter((candidate) => /rule|requirement|constraint/.test(candidate.kind));
-  const cesItems: CesItemFixture[] = ruleCandidates.map((candidate, index) => { const linked = facts.flatMap((fact) => fact.rows).find((row) => row.id === `fact-${candidate.candidateId}`); return { id: `ces-${candidate.candidateId}`, policyId: `Butir tinjauan ${String(index + 1).padStart(2, "0")}`, policy: candidate.evidence.quote, rule: candidate.evidence.quote, conclusion: "Tinjau penilaian ini sebelum dipublikasikan.", obligation: candidate.evidence.quote, sourcePrdIds: [prdId], linkedFactIds: linked ? [linked.id] : [], relatedWorkflowIds: [], concern: "Penilaian ini masih berada di Draf Awal dan belum disetujui.", capabilityNeed: "Konfirmasi interpretasi dan bukti sumbernya sebelum dipublikasikan.", coverage: "needs-review", destination: { type: "ces", targetId: `ces-${candidate.candidateId}`, label: "Penilaian CES Draf Awal" }, evidence: [candidateEvidence(candidate, prdId, extraction.artifact.name)] }; });
-  const factRows = facts.flatMap((fact) => fact.rows);
+  const factAnnotations = annotations.filter((annotation) => annotation.surface === "facts").sort((left, right) => left.order - right.order);
+  // Review groups may overlap where the same source-grounded claim bridges two
+  // concepts. Merge those declared memberships so the knowledge route presents
+  // connected meaning as one group without reading candidate semantics.
+  const connectedFacts: ReviewAnnotation[][] = [];
+  const supportFor = (annotation: ReviewAnnotation) => new Set(groups.get(annotation.groupId)?.supportingCandidateIds ?? annotation.supportingCandidateIds);
+  for (const annotation of factAnnotations) {
+    const support = supportFor(annotation);
+    const matching = connectedFacts.filter((entries) => entries.some((entry) => [...support].some((id) => supportFor(entry).has(id))));
+    const merged = [annotation, ...matching.flat()];
+    for (const group of matching) connectedFacts.splice(connectedFacts.indexOf(group), 1);
+    connectedFacts.push(merged.sort((left, right) => left.order - right.order));
+  }
+  const facts: FactFixture[] = connectedFacts.map((entries, index) => ({ id: `fact-group-${index + 1}`, number: String(index + 1).padStart(2, "0"), title: entries[0].label, summary: entries[0].label, prdIds: [prdId], rows: entries.map((annotation) => ({ id: `fact-${annotation.annotationId}`, statement: annotation.label, prdIds: [prdId], relatedWorkflowIds: workflowAnnotations.some((workflow) => [...supportFor(workflow)].some((id) => supportFor(annotation).has(id))) ? ["review-workflow-1"] : [], cesItemIds: [], evidence: [evidenceFor(annotation)] })) }));
+  const cesAnnotations = annotations.filter((annotation) => annotation.surface === "ces").sort((left, right) => left.order - right.order);
+  const cesItems: CesItemFixture[] = cesAnnotations.map((annotation, index) => { const linked = facts.flatMap((fact) => fact.rows).find((row) => row.id === `fact-${annotation.annotationId}`) ?? facts.flatMap((fact) => fact.rows).find((row) => factAnnotations.find((fact) => `fact-${fact.annotationId}` === row.id)?.groupId === annotation.groupId); return { id: `ces-${annotation.annotationId}`, policyId: annotation.label, policy: annotation.label, rule: annotation.label, conclusion: annotation.label, obligation: annotation.label, sourcePrdIds: [prdId], linkedFactIds: linked ? [linked.id] : [], relatedWorkflowIds: workflowAnnotations.some((workflow) => workflow.groupId === annotation.groupId) ? ["review-workflow-1"] : [], concern: annotation.label, capabilityNeed: annotation.label, coverage: "needs-review", destination: { type: "ces", targetId: `ces-${annotation.annotationId}`, label: annotation.label }, evidence: [evidenceFor(annotation)] }; });
   for (const item of cesItems) for (const fact of facts) for (const row of fact.rows) if (item.linkedFactIds.includes(row.id)) row.cesItemIds.push(item.id);
   return { ...workspace, project: record.project, prds: [{ id: prdId, name: extraction.artifact.name, increment: "Initial Draft source", publishedAt: "Extraction record", pageCount: extraction.pages.length }], memberships: [], workflowGroups, workflows, facts, changes: [], sourceAccounting: extraction.sourceStatementInventory.map((entry) => ({ id: entry.inventoryId, prdId, statement: entry.quote || "No material claim on this source page.", destination: entry.destination.type === "candidate_assertion" ? { type: "project" as const, label: "Initial Draft review content" } : { type: "unresolved" as const, label: entry.destination.reason }, evidence: [{ id: `accounting-${entry.inventoryId}`, understood: "Source statement accounting for the Initial Draft.", quote: entry.quote || "No material claim on this source page.", documentId: prdId, documentName: extraction.artifact.name, page: entry.page }] })), cesItems, atlasApproval: "awaiting-approval" as const, cesApproval: "awaiting-approval" as const };
 }

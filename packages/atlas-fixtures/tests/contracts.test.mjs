@@ -261,20 +261,19 @@ test("SFE-003 resolves the completed Initial Draft route from its stable fixture
   assert.equal(inventory.find((workspace) => workspace.name === "Master")?.status, "Draft");
   const draft = resolveFixtureWorkspaceContent(scenario, route, "saf-24aysgyw4su6");
   assert.equal(draft?.prds[0]?.name, "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf");
-  assert.deepEqual(draft?.workflows.map((workflow) => workflow.title), ["Menyiapkan paket dan keberangkatan", "Mendaftarkan jemaah"]);
-  assert.equal(draft?.workflows[0]?.nodes.length, 3);
+  assert.deepEqual(draft?.workflows.map((workflow) => workflow.title), ["Admin membuat paket umrah."]);
+  assert.equal(draft?.workflows[0]?.nodes.length, 6);
   assert.equal(draft?.facts.length > 0, true);
-  assert.equal(draft?.cesItems.length > 0, true);
+  assert.equal(draft?.cesItems.length, 0, "CES remains a meaningful review-empty state without an explicit assessment basis");
   assert.equal(draft?.workflows.flatMap((workflow) => workflow.nodes).some((node) => node.title.includes("safara.") || node.title.includes("Creates An Umrah Package") || node.note.includes("cand-") || node.note.includes("{\"")), false);
   assert.equal(draft?.facts.flatMap((fact) => fact.rows).some((row) => row.statement.includes("safara.") || row.statement.includes("cand-") || row.statement.includes("{\"")), false);
   assert.equal(draft?.cesItems.some((item) => item.policy.includes("safara.") || item.policyId.includes("cand-") || item.rule.includes("{\"")), false);
-  assert.equal(draft?.workflows[0]?.nodes[0]?.title, "Membuat paket umrah");
+  assert.equal(draft?.workflows[0]?.nodes[0]?.title, "Admin membuat paket umrah.");
   assert.equal(draft?.workflows[0]?.nodes[0]?.evidence.quote, "Admin membuat paket umrah.");
   assert.equal(draft?.facts.some((fact) => ["Scope", "Constraints"].includes(fact.title)), false);
-  assert.equal(draft?.workflows.flatMap((workflow) => workflow.roles).includes("System"), false);
-  assert.equal(draft?.cesItems.some((item) => /user must not log in to the application/i.test(item.obligation)), false);
+  assert.deepEqual(draft?.workflows[0]?.roles, []);
   const factEvidence = draft?.facts.flatMap((fact) => fact.rows).flatMap((row) => row.evidence) ?? [];
-  assert.ok(factEvidence.every((evidence) => evidence.understood.startsWith("Atlas memahami pernyataan ini sebagai:")));
+  assert.ok(factEvidence.every((evidence) => evidence.understood === evidence.quote.replace(/\s+/g, " ").trim()));
 });
 
 test("SFE-003 resolves any completed modal record and keeps Master empty", () => {
