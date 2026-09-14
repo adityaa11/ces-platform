@@ -34,6 +34,7 @@ The required backend-wiring semantics are defined in [Fixture Data-Intent Contra
 | 10 | AUI-011 / BATCH-10 | complete | AUI-003, AUI-009, AUI-010 | Does the shared shell improve navigation clarity across desktop and mobile without changing route or fixture behavior? |
 | 11 | AUI-012 / BATCH-11 | complete | AUI-003, AUI-009, AUI-011 | Does the shared navigation rail match the approved reference composition while preserving all existing destinations and responsive behavior? |
 | 12 | AUI-013 / BATCH-12 | complete | AUI-012 | Does the shell clearly represent no-project-selected state and restore project navigation after selection? |
+| 13 | AUI-014 / BATCH-35 | awaiting_review | AUI-013, GLF golden fixture baseline | Can prototype validation run with package-local golden source data while SFE remains workspace-scoped, and do built-in scenarios render without the runtime registry fallback? |
 
 ### CSP security hardening set
 
@@ -90,6 +91,7 @@ When changing a UI surface, validate the complete connected surface before reque
 - [AUI-011 Shell navigation cosmetic refactor](AUI-011-shell-navigation-cosmetic-refactor.md)
 - [AUI-012 Reference sidebar composition](AUI-012-reference-sidebar-composition.md)
 - [AUI-013 Unselected project navigation state](AUI-013-unselected-project-navigation-state.md)
+- [AUI-014 Prototype validation baseline](AUI-014-prototype-validation-baseline.md)
 
 ### CSP ticket records
 

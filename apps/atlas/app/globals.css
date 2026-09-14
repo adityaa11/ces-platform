@@ -118,6 +118,9 @@
 /* Sources is a document-reading workspace: the library stays dense while the
    original PDF remains the dominant visual evidence. */
 .sources-content { height: calc(100vh - 4rem); max-width: none; min-width: 0; overflow: hidden; padding: 0; }
+.sources-empty-state { align-items: center; display: grid; height: 100%; justify-items: center; padding: clamp(1rem, 4vw, 3rem); }
+.sources-empty-state .workflow-isolation-empty { width: min(100%, 38rem); }
+.sources-empty-state .workflow-isolation-empty h1 { max-width: none; }
 .sources-page { display: grid; grid-template-columns: 20rem minmax(0, 1fr); height: 100%; min-width: 0; }
 .sources-page.source-library-collapsed { grid-template-columns: 3.5rem minmax(0, 1fr); }
 .source-library { background: var(--surface); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-width: 0; overflow: hidden; }

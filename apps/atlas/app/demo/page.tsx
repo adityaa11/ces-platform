@@ -20,7 +20,9 @@ export default async function DemoPage({ searchParams }: { searchParams?: Promis
   const projectCardStress = params?.stress === "project-cards";
   const scenario = getFixtureScenario(scenarioIds.includes(requestedScenario as FixtureScenario["id"]) ? requestedScenario as FixtureScenario["id"] : "owner-ready");
   const scenarioId = scenarioIds.includes(requestedScenario as FixtureScenario["id"]) ? requestedScenario : undefined;
-  if (requestedProjectId && (requestedView === "workflow" || requestedView === "facts" || requestedView === "changes" || requestedView === "ces" || requestedView === "sources")) return <RuntimeFixtureRoute cesItemId={params?.cesItemId} factId={params?.factId} lens={lensMode} prd={prd} projectId={requestedProjectId} scenario={scenario} scenarioId={scenarioId} view={requestedView} workflowId={params?.workflowId} workspaceId={requestedWorkspaceId} />;
+  const workspaceViews = requestedView === "workflow" || requestedView === "facts" || requestedView === "changes" || requestedView === "ces" || requestedView === "sources";
+  const scenarioOwnsProject = scenario.projects.some((project) => project.id === requestedProjectId);
+  if (requestedProjectId && workspaceViews && !scenarioOwnsProject) return <RuntimeFixtureRoute cesItemId={params?.cesItemId} factId={params?.factId} lens={lensMode} prd={prd} projectId={requestedProjectId} scenario={scenario} scenarioId={scenarioId} view={requestedView} workflowId={params?.workflowId} workspaceId={requestedWorkspaceId} />;
   const projectRoute = resolveFixtureProjectRoute(scenario, requestedProjectId);
   const workspaceRoute = projectRoute.workspace ? resolveFixtureWorkspaceRoute(projectRoute.workspace.project.id, requestedWorkspaceId) : undefined;
   const selectedWorkspace = resolveFixtureWorkspaceContent(scenario, projectRoute, workspaceRoute?.selectedWorkspace?.workspaceId);

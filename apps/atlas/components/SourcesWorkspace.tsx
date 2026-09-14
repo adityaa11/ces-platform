@@ -109,7 +109,20 @@ export function SourcesWorkspace({ user, projects, workspace, scenario, initialL
     };
   }, [canvasWidth, fitWidth, pageNumber, selected, zoom]);
 
-  if (!selected) return null;
+  const shellProps = {
+    active: "sources" as const,
+    contentClassName: "sources-content",
+    fullWidthSearch: true,
+    projectNavigation: true,
+    projects,
+    routeContext: { scenario, workspaceId: initialWorkspaceId, prd: initialLens.selectedPrdIds.length ? initialLens.selectedPrdIds.join(",") : undefined, lens: initialLens.mode === "isolate" ? "isolate" : undefined },
+    selectedProjectId: workspace.project.id,
+    sidebarCollapsible: false,
+    user,
+    workspace,
+    workspaceSwitcher: <WorkspaceSwitcherDemoHost initialWorkspaceId={initialWorkspaceId} projectName={workspace.project.name} unavailableWorkspaceName={unavailableWorkspaceName} />,
+  };
+  if (!selected) return <AppShell {...shellProps}><main className="sources-empty-state"><section aria-labelledby="sources-empty-title" className="workflow-isolation-empty"><span className="workflow-kicker">Workspace library</span><h1 id="sources-empty-title">No sources yet</h1><p>PDFs added to this workspace will appear here for review.</p></section></main></AppShell>;
   const title = sourceTitle(selected, workspace);
   const setCurrentPage = (requested: number) => {
     const bounded = Math.min(Math.max(requested, 1), selected.pageCount);
@@ -137,7 +150,7 @@ export function SourcesWorkspace({ user, projects, workspace, scenario, initialL
     else void viewer.current?.requestFullscreen();
   };
 
-  return <AppShell active="sources" contentClassName="sources-content" fullWidthSearch projectNavigation projects={projects} routeContext={{ scenario, workspaceId: initialWorkspaceId, prd: initialLens.selectedPrdIds.length ? initialLens.selectedPrdIds.join(",") : undefined, lens: initialLens.mode === "isolate" ? "isolate" : undefined }} selectedProjectId={workspace.project.id} sidebarCollapsible={false} user={user} workspace={workspace} workspaceSwitcher={<WorkspaceSwitcherDemoHost initialWorkspaceId={initialWorkspaceId} projectName={workspace.project.name} unavailableWorkspaceName={unavailableWorkspaceName} />}>
+  return <AppShell {...shellProps}>
     <div className={`sources-page ${viewerOpen ? "mobile-viewer-open" : ""} ${libraryCollapsed ? "source-library-collapsed" : ""}`}>
       <aside aria-label="Source documents" className="source-library">
         <header className="source-library-header">

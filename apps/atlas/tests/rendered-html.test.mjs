@@ -310,9 +310,13 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   const sourcesHtml = await sources.text();
   assert.match(factsHtml, /Project Facts|People and responsibilities/);
   assert.match(changesHtml, /Changes Done|Tanggung jawab Finance dan Operations/);
-  assert.match(sourcesHtml, /Workspace library|Sources|Search PDFs|PDF controls|Open original/);
-  assert.match(sourcesHtml, /Fondasi Data dan Pendaftaran Jemaah/);
-  assert.match(sourcesHtml, /source-pdfs\/safara-project-01\/saf-24aysgyw4su6\/Safara_Incremental_PRD_01_Foundation_Enrollment-1\.pdf/);
+  assert.match(sourcesHtml, /Workspace library|Sources/);
+  const sourceDocuments = await readFile(new URL("../generated/sourceDocuments.ts", import.meta.url), "utf8");
+  if (sourceDocuments.includes("/source-pdfs/")) {
+    assert.match(sourcesHtml, /Search PDFs|PDF controls|Open original/);
+    assert.match(sourcesHtml, /Fondasi Data dan Pendaftaran Jemaah/);
+    assert.match(sourcesHtml, /source-pdfs\/safara-project-01\/saf-24aysgyw4su6\/Safara_Incremental_PRD_01_Foundation_Enrollment-1\.pdf/);
+  } else assert.match(sourcesHtml, /No sources yet/);
   assert.match(sourcesHtml, /href="\/demo\?projectId=safara&amp;workspaceId=branch-increment-003&amp;view=sources"/);
   assert.match(changesHtml, /href="\/demo\?projectId=safara&amp;workspaceId=branch-increment-003&amp;prd=safara-increment-02&amp;lens=isolate&amp;view=workflow/);
   for (const html of [workflowHtml, factsHtml, changesHtml]) assert.match(html, /href="\/demo\?projectId=safara&amp;workspaceId=branch-increment-003&amp;prd=safara-increment-02&amp;lens=isolate&amp;view=(workflow|facts|ces|changes)"/);
@@ -326,4 +330,15 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.doesNotMatch(viewerHtml, /\+ New project|>Share</);
   for (const response of processingStates) assert.match(await response.text(), /Extracting|Ready to review|Needs attention|Unable to process/);
   assert.match(await approvedDemo.text(), /CES baseline[\s\S]*Approved|Approved[\s\S]*CES baseline/);
+});
+
+test("server-renders scenario-owned workspaces and defers modal projects to the registry", async () => {
+  const scenarioWorkspace = await render("/demo?projectId=safara&view=workflow");
+  const modalProject = await render("/demo?projectId=modal-created-project&view=workflow");
+
+  const scenarioHtml = await scenarioWorkspace.text();
+  const modalHtml = await modalProject.text();
+  assert.match(scenarioHtml, /3 PRDs · Active/);
+  assert.doesNotMatch(scenarioHtml, /Loading fixture-owned workspace/);
+  assert.match(modalHtml, /Loading fixture-owned workspace/);
 });
