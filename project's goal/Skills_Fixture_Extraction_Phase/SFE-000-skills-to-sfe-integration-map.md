@@ -1,6 +1,6 @@
 # SFE-000: SFE handoff adjustment map
 
-- **State:** approved
+- **State:** complete
 - **Review batch:** BATCH-25
 - **Depends on:** SFE phase scope approved; [GLF-001](../Git-Like_Fixture_Phase/GLF-001-shared-skill-contracts-and-execution-mode.md) and [GLF-002](../Git-Like_Fixture_Phase/GLF-002-skill-definitions-and-review-contract.md) approved
 - **Baseline:** [SFE phase scope](SFE-README.md); [GLF-001 shared skill contracts and execution mode](../Git-Like_Fixture_Phase/GLF-001-shared-skill-contracts-and-execution-mode.md); [GLF-002 skill definitions and review contract](../Git-Like_Fixture_Phase/GLF-002-skill-definitions-and-review-contract.md); [Atlas Git-Like Knowledge Architecture Checkpoint](../ATLAS_GIT_LIKE_KNOWLEDGE_ARCHITECTURE_CHECKPOINT.md); the six skill contracts linked in the adjustment map

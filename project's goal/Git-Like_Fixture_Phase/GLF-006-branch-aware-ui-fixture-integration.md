@@ -1,6 +1,6 @@
 # GLF-006: Branch-aware UI fixture integration
 
-- **State:** planned
+- **State:** deferred
 - **Review batch:** BATCH-22
 - **Depends on:** GLF-003-02 approved, GLF-005-02
 - **Baseline:** Architecture Checkpoint sections 12–17, 22.6–22.8, 24; UI/UX Prototype PRD sections 5–6, 9.1, 9.4; Fixture Data-Intent Contract; GLF-003-01; GLF-003-02

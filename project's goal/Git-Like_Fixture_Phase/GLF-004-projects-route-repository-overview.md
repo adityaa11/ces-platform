@@ -1,6 +1,6 @@
 # GLF-004: Projects Route repository overview
 
-- **State:** approved
+- **State:** complete
 - **Review batch:** BATCH-20
 - **Depends on:** GLF-003
 - **Baseline:** Architecture Checkpoint sections 12–17, 22.5–22.8, 24; UI/UX Prototype PRD sections 4.2–4.3, 5–6, 9.1, 9.4; Fixture Data-Intent Contract; AUI-002; AUI-004; AUI-013

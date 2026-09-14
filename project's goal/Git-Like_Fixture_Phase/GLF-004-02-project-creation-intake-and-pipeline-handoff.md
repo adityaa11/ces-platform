@@ -1,6 +1,6 @@
 # GLF-004-02: Project creation intake and pipeline handoff
 
-- **State:** awaiting_review
+- **State:** complete
 - **Review batch:** BATCH-20.2
 - **Depends on:** GLF-003-02 approved, GLF-004 approved, GLF-004-01 approved
 - **Baseline:** Architecture Checkpoint sections 12–17, 22.5–22.8, 24; UI/UX Prototype PRD sections 4.2–4.4, 5–6, 9.1, 9.4; Fixture Data-Intent Contract; GLF-003; GLF-004; GLF-004-01; AUI-002; AUI-004; AUI-013

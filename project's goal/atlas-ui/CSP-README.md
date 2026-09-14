@@ -1,6 +1,6 @@
 # CSP refactor ticket set
 
-- **State:** approved
+- **State:** complete
 - **Purpose:** Align the fixture-driven Atlas prototype with a strict Content
   Security Policy without introducing a new product capability or weakening the
   existing UI/UX direction.
@@ -41,10 +41,10 @@ finite remediation review passed.
 
 | Order | Ticket / batch | State | Depends on | Review question |
 |---:|---|---|---|---|
-| 1 | CSP-001 / BATCH-13 | approved | AUI-012, AUI-013 | Does the Worker centrally generate, propagate, and enforce one nonce per response without stale HTML caching? |
-| 2 | CSP-002 / BATCH-14 | approved | CSP-001 | Does the application remain behaviorally and visually equivalent without Atlas-owned inline scripts or runtime inline styles? |
-| 3 | CSP-003 / BATCH-15 | approved | CSP-001 | Does the PDF viewer work under the narrowest strict-CSP-compatible worker and WebAssembly configuration? |
-| 4 | CSP-004 / BATCH-16 | approved | CSP-001, CSP-002, CSP-003 | Can strict CSP be enforced across every route and interaction with no browser violations? |
+| 1 | CSP-001 / BATCH-13 | complete | AUI-012, AUI-013 | Does the Worker centrally generate, propagate, and enforce one nonce per response without stale HTML caching? |
+| 2 | CSP-002 / BATCH-14 | complete | CSP-001 | Does the application remain behaviorally and visually equivalent without Atlas-owned inline scripts or runtime inline styles? |
+| 3 | CSP-003 / BATCH-15 | complete | CSP-001 | Does the PDF viewer work under the narrowest strict-CSP-compatible worker and WebAssembly configuration? |
+| 4 | CSP-004 / BATCH-16 | complete | CSP-001, CSP-002, CSP-003 | Can strict CSP be enforced across every route and interaction with no browser violations? |
 
 ## Ticket records
 

@@ -22,18 +22,18 @@ The required backend-wiring semantics are defined in [Fixture Data-Intent Contra
 
 | Order | Ticket / batch | State | Depends on | Review question |
 |---:|---|---|---|---|
-| 1 | AUI-001 / BATCH-01 | approved | - | Is the future-facing app and fixture-only boundary ready for UI work? |
-| 2 | AUI-002 / BATCH-02 | approved | AUI-001 | Can fixtures faithfully drive every required prototype state and traceability view? |
-| 3 | AUI-003 / BATCH-03 | approved | AUI-001, AUI-002 | Is the account shell clear, responsive, and reusable? |
-| 4 | AUI-004 + AUI-005 / BATCH-04 | approved | AUI-003 | Can an owner create, monitor, and safely share a private project? |
-| 5 | AUI-006 / BATCH-05-00 then BATCH-05 | approved | AUI-003, AUI-004 | Does the shared shell foundation, then Main Workflow, make accumulated PRD understanding and evidence easy to inspect? |
-| 6 | AUI-007 / BATCH-06 | approved | AUI-003, AUI-004 | Are non-workflow facts and incremental changes visible and traceable? |
-| 7 | AUI-008 / BATCH-07 | approved | AUI-006, AUI-007 | Does CES Result make baseline awareness, coverage, and open decisions clear without prescribing solutions? |
-| 8 | AUI-009 / BATCH-08 | approved | AUI-004 through AUI-008 | Does the complete experience remain clear and accessible across screen sizes? |
-| 9 | AUI-010 / BATCH-09 | approved | AUI-009 | Is the fixture-driven prototype coherent, navigable, and ready for handoff? |
-| 10 | AUI-011 / BATCH-10 | approved | AUI-003, AUI-009, AUI-010 | Does the shared shell improve navigation clarity across desktop and mobile without changing route or fixture behavior? |
-| 11 | AUI-012 / BATCH-11 | approved | AUI-003, AUI-009, AUI-011 | Does the shared navigation rail match the approved reference composition while preserving all existing destinations and responsive behavior? |
-| 12 | AUI-013 / BATCH-12 | approved | AUI-012 | Does the shell clearly represent no-project-selected state and restore project navigation after selection? |
+| 1 | AUI-001 / BATCH-01 | complete | - | Is the future-facing app and fixture-only boundary ready for UI work? |
+| 2 | AUI-002 / BATCH-02 | complete | AUI-001 | Can fixtures faithfully drive every required prototype state and traceability view? |
+| 3 | AUI-003 / BATCH-03 | complete | AUI-001, AUI-002 | Is the account shell clear, responsive, and reusable? |
+| 4 | AUI-004 + AUI-005 / BATCH-04 | complete | AUI-003 | Can an owner create, monitor, and safely share a private project? |
+| 5 | AUI-006 / BATCH-05-00 then BATCH-05 | complete | AUI-003, AUI-004 | Does the shared shell foundation, then Main Workflow, make accumulated PRD understanding and evidence easy to inspect? |
+| 6 | AUI-007 / BATCH-06 | complete | AUI-003, AUI-004 | Are non-workflow facts and incremental changes visible and traceable? |
+| 7 | AUI-008 / BATCH-07 | complete | AUI-006, AUI-007 | Does CES Result make baseline awareness, coverage, and open decisions clear without prescribing solutions? |
+| 8 | AUI-009 / BATCH-08 | complete | AUI-004 through AUI-008 | Does the complete experience remain clear and accessible across screen sizes? |
+| 9 | AUI-010 / BATCH-09 | complete | AUI-009 | Is the fixture-driven prototype coherent, navigable, and ready for handoff? |
+| 10 | AUI-011 / BATCH-10 | complete | AUI-003, AUI-009, AUI-010 | Does the shared shell improve navigation clarity across desktop and mobile without changing route or fixture behavior? |
+| 11 | AUI-012 / BATCH-11 | complete | AUI-003, AUI-009, AUI-011 | Does the shared navigation rail match the approved reference composition while preserving all existing destinations and responsive behavior? |
+| 12 | AUI-013 / BATCH-12 | complete | AUI-012 | Does the shell clearly represent no-project-selected state and restore project navigation after selection? |
 
 ### CSP security hardening set
 
@@ -48,10 +48,10 @@ implemented and reviewed.
 
 | Order | Ticket / batch | State | Depends on | Review question |
 |---:|---|---|---|---|
-| 1 | CSP-001 / BATCH-13 | approved | AUI-012, AUI-013 | Does the Worker centrally generate, propagate, and enforce one nonce per response without stale HTML caching? |
-| 2 | CSP-002 / BATCH-14 | approved | CSP-001 | Does the application remain behaviorally and visually equivalent without Atlas-owned inline scripts or runtime inline styles? |
-| 3 | CSP-003 / BATCH-15 | awaiting_review | CSP-001 | Does the PDF viewer work under the narrowest strict-CSP-compatible worker and WebAssembly configuration? |
-| 4 | CSP-004 / BATCH-16 | planned | CSP-001, CSP-002, CSP-003 | Can strict CSP be enforced across every route and interaction with no browser violations? |
+| 1 | CSP-001 / BATCH-13 | complete | AUI-012, AUI-013 | Does the Worker centrally generate, propagate, and enforce one nonce per response without stale HTML caching? |
+| 2 | CSP-002 / BATCH-14 | complete | CSP-001 | Does the application remain behaviorally and visually equivalent without Atlas-owned inline scripts or runtime inline styles? |
+| 3 | CSP-003 / BATCH-15 | complete | CSP-001 | Does the PDF viewer work under the narrowest strict-CSP-compatible worker and WebAssembly configuration? |
+| 4 | CSP-004 / BATCH-16 | complete | CSP-001, CSP-002, CSP-003 | Can strict CSP be enforced across every route and interaction with no browser violations? |
 
 ## Batch rationale
 

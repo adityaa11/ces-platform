@@ -1,6 +1,6 @@
 # AUI-005: Project sharing and RBAC states
 
-- **State:** approved
+- **State:** complete
 - **Review batch:** BATCH-04
 - **Depends on:** AUI-003
 - **Baseline:** UI/UX Prototype PRD 3, 4.4, 8, 9.1, 9.4

@@ -2,7 +2,7 @@
 
 > **Runtime identity:** Resolve the target project and SFE-006 workspace from their fixture records. “Project 01” and “project 02” are scenario labels only and must never select runtime data.
 
-- **State:** planned
+- **State:** deferred
 - **Review batch:** BATCH-32
 - **Depends on:** SFE-000 approved; SFE-006 approved; Atlas PRD extraction, fixture changes, projections, and verification contracts approved
 - **Baseline:** [SFE phase scope](SFE-README.md); [SFE-000 integration map](SFE-000-skills-to-sfe-integration-map.md); [Atlas Git-Like Knowledge Architecture Checkpoint](../ATLAS_GIT_LIKE_KNOWLEDGE_ARCHITECTURE_CHECKPOINT.md) sections 5, 17–18, 22.1–22.8; [Atlas PRD extraction skill](../../.agents/skills/atlas-prd-extraction/SKILL.md); [Atlas fixture repository skill](../../.agents/skills/atlas-fixture-repository/SKILL.md); [Atlas fixture changes skill](../../.agents/skills/atlas-fixture-changes/SKILL.md); [Atlas fixture projections skill](../../.agents/skills/atlas-fixture-projections/SKILL.md); [Atlas fixture verification skill](../../.agents/skills/atlas-fixture-verification/SKILL.md)

@@ -1,6 +1,6 @@
 # GLF-007: Correction and approval interaction design
 
-- **State:** blocked
+- **State:** deferred
 - **Review batch:** BATCH-23
 - **Depends on:** GLF-006, user research
 - **Baseline:** Architecture Checkpoint sections 7–11, 17–19, 22.3–22.13, 24; UI/UX Prototype PRD sections 5–6, 9.1, 9.4; GLF-003-02 provenance and source-accounting contract

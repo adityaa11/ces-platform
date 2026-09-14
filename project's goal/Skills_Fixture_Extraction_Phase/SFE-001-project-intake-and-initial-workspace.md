@@ -1,6 +1,6 @@
 # SFE-001: Project intake creates an Extracting card and Initial Draft workspace
 
-- **State:** approved
+- **State:** complete
 - **Review batch:** BATCH-26
 - **Depends on:** SFE-000 approved; AUI-004 approved
 - **Baseline:** [SFE phase scope](SFE-README.md); [SFE-000 integration map](SFE-000-skills-to-sfe-integration-map.md); [Atlas UI/UX Prototype PRD](../Atlas_UI_UX_Prototype_PRD.md) sections 4.2–4.3, 5, 9.1, 9.4; [Fixture Data-Intent Contract](../atlas-ui/FIXTURE_DATA_INTENT_CONTRACT.md); [AUI-004](../atlas-ui/AUI-004-project-library-upload-and-processing.md)

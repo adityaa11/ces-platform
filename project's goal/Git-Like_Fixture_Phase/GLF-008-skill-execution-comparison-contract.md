@@ -1,6 +1,6 @@
 # GLF-008: Skill execution comparison contract
 
-- **State:** blocked
+- **State:** deferred
 - **Review batch:** BATCH-24
 - **Depends on:** Agents Bridge pipeline; GLF-001, GLF-002, GLF-003-02 approved
 - **Baseline:** Architecture Checkpoint sections 3, 9, 21–24; GLF-001–GLF-003-02

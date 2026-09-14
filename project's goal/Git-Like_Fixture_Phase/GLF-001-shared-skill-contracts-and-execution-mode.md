@@ -1,6 +1,6 @@
 # GLF-001: Repository skill-mode configuration
 
-- **State:** approved
+- **State:** complete
 - **Review batch:** BATCH-17
 - **Depends on:** None
 - **Baseline:** Architecture Checkpoint sections 1, 9, 21–24; UI/UX Prototype PRD 9.1, 9.3–9.4

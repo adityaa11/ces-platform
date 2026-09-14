@@ -2,7 +2,7 @@
 
 > **Runtime identity:** “Project 02” means the distinct project record returned by SFE-004/SFE-005. Resolve the project ID, selected base, workspace ID, and source path from live fixture records; never use `project-safara-02` as an implementation value.
 
-- **State:** planned
+- **State:** deferred
 - **Review batch:** BATCH-31
 - **Depends on:** SFE-000 approved; SFE-005 approved
 - **Baseline:** [SFE phase scope](SFE-README.md); [SFE-000 integration map](SFE-000-skills-to-sfe-integration-map.md); [Atlas UI/UX Prototype PRD](../Atlas_UI_UX_Prototype_PRD.md) sections 5–6, 9.1, 9.4; [Fixture Data-Intent Contract](../atlas-ui/FIXTURE_DATA_INTENT_CONTRACT.md)

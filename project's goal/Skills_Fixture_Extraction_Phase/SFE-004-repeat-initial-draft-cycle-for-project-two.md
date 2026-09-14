@@ -2,7 +2,7 @@
 
 > **Runtime identity:** “Project 01” and “project 02” label the first and second modal submissions only. The implementation must resolve both project IDs, workspace IDs, paths, and provenance from their respective fixture records.
 
-- **State:** planned
+- **State:** deferred
 - **Review batch:** BATCH-29
 - **Depends on:** SFE-000 approved; SFE-003 approved
 - **Baseline:** [SFE phase scope](SFE-README.md); [SFE-000 integration map](SFE-000-skills-to-sfe-integration-map.md); [SFE-001](SFE-001-project-intake-and-initial-workspace.md); [SFE-002](SFE-002-initial-draft-extraction.md); [SFE-003](SFE-003-route-and-switcher-initial-draft-wiring.md); [Atlas PRD extraction skill](../../.agents/skills/atlas-prd-extraction/SKILL.md); [Atlas fixture verification skill](../../.agents/skills/atlas-fixture-verification/SKILL.md)

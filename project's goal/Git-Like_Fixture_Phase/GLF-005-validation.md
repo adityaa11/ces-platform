@@ -1,7 +1,7 @@
 # GLF-005 validation: Reference-led workspace selector
 
 - **Ticket / batch:** GLF-005 / BATCH-21
-- **State:** awaiting_review
+- **State:** complete
 - **Reference:** `UI References/atlas_workspace_switcher_calibrated.html`
 
 ## Verified outcome

@@ -1,6 +1,6 @@
 # SFE-003-01: Restore established non-Master route representations
 
-- **State:** awaiting_review
+- **State:** deferred
 - **Review batch:** BATCH-33
 - **Depends on:** SFE-003 approved; SFE-002-01 approved; user `go`
 - **Blocks:** SFE-004 through SFE-007

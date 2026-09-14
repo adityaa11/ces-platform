@@ -31,18 +31,18 @@ comparison contract.
 
 | Order | Ticket / batch | State | Depends on | Review question |
 |---:|---|---|---|---|
-| 1 | GLF-001 / BATCH-17 | approved | — | Is the repository-local `SKILLS_MODE` configuration explicit, safe, and defaulted to `codex`? |
-| 2 | GLF-002 / BATCH-18 | approved | GLF-001 | Are the shared skill definitions, purposes, responsibilities, and review checks complete and non-authoritative? |
-| 3 | GLF-003 / BATCH-19 | approved | GLF-002 | Does the golden-fixture data contract supply every relationship and branch/HEAD field required by the shared skills and future UI? |
-| 3.1 | GLF-003-01 / BATCH-19.1 | approved | GLF-003 | Do deterministic skill outputs account for all Safara source PDFs and project the complete operational workflow? |
-| 3.2 | GLF-003-02 / BATCH-19.2 | approved | GLF-003-01 | Can every material statement in Increment 01-03 be reconciled to an atomic extraction result or a justified non-fact classification? |
-| 4 | GLF-004 / BATCH-20 | approved | GLF-003 | Does the Projects route explain each project's repository-like state and available next action without confusing draft work with published Master truth? |
-| 4.1 | GLF-004-01 / BATCH-20.1 | approved | GLF-003-02 approved, GLF-004 | Do the Projects library, project switcher, and project routes resolve one fixture-owned repository record by stable project identity without migrating downstream knowledge surfaces? |
-| 4.2 | GLF-004-02 / BATCH-20.2 | approved | GLF-003-02 approved, GLF-004 approved, GLF-004-01 approved | Does the Create and process intake produce one validated fixture-owned project request, Extracting card, and processing job with the same stable project ID? |
-| 5 | GLF-005 / BATCH-21 | approved | GLF-003, GLF-004-01 | Does the reusable workspace-switcher UI clearly present the current selected workspace and the available workspace inventory without creating independent UI truth? |
-| 5.1 | GLF-005-01 / BATCH-21.1 | approved | GLF-005, GLF-003-03 | Does the switcher resolve its inventory and availability from the golden fixture, preserve project/route context, and keep selected workspace separate from the PRD lens? |
-| 5.1.1 | GLF-003-03 / BATCH-19.3 | approved | GLF-003-02 approved, GLF-004-01 | Does the fixture contract safely represent a newly requested Extracting workspace, its selected-base snapshot, and uploaded-PDF metadata without changing immutable Safara truth? |
-| 5.2 | GLF-005-02 / BATCH-21.2 | approved | GLF-005-01, GLF-003-03 | Does the New workspace modal create one fixture-owned Extracting workspace request from an existing base workspace and uploaded PRD PDFs, without exposing revision internals to the user? |
+| 1 | GLF-001 / BATCH-17 | complete | — | Is the repository-local `SKILLS_MODE` configuration explicit, safe, and defaulted to `codex`? |
+| 2 | GLF-002 / BATCH-18 | complete | GLF-001 | Are the shared skill definitions, purposes, responsibilities, and review checks complete and non-authoritative? |
+| 3 | GLF-003 / BATCH-19 | complete | GLF-002 | Does the golden-fixture data contract supply every relationship and branch/HEAD field required by the shared skills and future UI? |
+| 3.1 | GLF-003-01 / BATCH-19.1 | complete | GLF-003 | Do deterministic skill outputs account for all Safara source PDFs and project the complete operational workflow? |
+| 3.2 | GLF-003-02 / BATCH-19.2 | complete | GLF-003-01 | Can every material statement in Increment 01-03 be reconciled to an atomic extraction result or a justified non-fact classification? |
+| 4 | GLF-004 / BATCH-20 | complete | GLF-003 | Does the Projects route explain each project's repository-like state and available next action without confusing draft work with published Master truth? |
+| 4.1 | GLF-004-01 / BATCH-20.1 | complete | GLF-003-02 complete, GLF-004 | Do the Projects library, project switcher, and project routes resolve one fixture-owned repository record by stable project identity without migrating downstream knowledge surfaces? |
+| 4.2 | GLF-004-02 / BATCH-20.2 | complete | GLF-003-02 complete, GLF-004 complete, GLF-004-01 complete | Does the Create and process intake produce one validated fixture-owned project request, Extracting card, and processing job with the same stable project ID? |
+| 5 | GLF-005 / BATCH-21 | complete | GLF-003, GLF-004-01 | Does the reusable workspace-switcher UI clearly present the current selected workspace and the available workspace inventory without creating independent UI truth? |
+| 5.1 | GLF-005-01 / BATCH-21.1 | complete | GLF-005, GLF-003-03 | Does the switcher resolve its inventory and availability from the golden fixture, preserve project/route context, and keep selected workspace separate from the PRD lens? |
+| 5.1.1 | GLF-003-03 / BATCH-19.3 | complete | GLF-003-02 complete, GLF-004-01 | Does the fixture contract safely represent a newly requested Extracting workspace, its selected-base snapshot, and uploaded-PDF metadata without changing immutable Safara truth? |
+| 5.2 | GLF-005-02 / BATCH-21.2 | complete | GLF-005-01, GLF-003-03 | Does the New workspace modal create one fixture-owned Extracting workspace request from an existing base workspace and uploaded PRD PDFs, without exposing revision internals to the user? |
 
 Each batch has one ticket because every acceptance decision changes the data or
 interaction contract required by the next checkpoint. Batches must be reviewed
@@ -64,9 +64,9 @@ be proposed and approved in a separate re-extraction lifecycle bundle.
 
 | Historical ticket / batch | Disposition | Original subject |
 |---|---|---|
-| GLF-006 / BATCH-22 | Retired without implementation | Branch-aware UI fixture integration |
-| GLF-007 / BATCH-23 | Retired without implementation | Correction and approval interaction design |
-| GLF-008 / BATCH-24 | Retired without implementation | Skill execution comparison contract |
+| GLF-006 / BATCH-22 | Deferred | Branch-aware UI fixture integration |
+| GLF-007 / BATCH-23 | Deferred | Correction and approval interaction design |
+| GLF-008 / BATCH-24 | Deferred | Skill execution comparison contract |
 
 ## Review controls
 

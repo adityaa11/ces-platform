@@ -1,6 +1,6 @@
 # SFE-005: Publish project 02's Initial Draft to Master
 
-- **State:** planned
+- **State:** deferred
 - **Review batch:** BATCH-30
 - **Depends on:** SFE-000 approved; SFE-004 approved; Atlas fixture repository, changes, and verification contracts approved
 - **Baseline:** [SFE phase scope](SFE-README.md); [SFE-000 integration map](SFE-000-skills-to-sfe-integration-map.md); [Atlas Git-Like Knowledge Architecture Checkpoint](../ATLAS_GIT_LIKE_KNOWLEDGE_ARCHITECTURE_CHECKPOINT.md) sections 17, 18, 22.3–22.8; [Atlas fixture repository skill](../../.agents/skills/atlas-fixture-repository/SKILL.md); [Atlas fixture changes skill](../../.agents/skills/atlas-fixture-changes/SKILL.md); [Atlas fixture verification skill](../../.agents/skills/atlas-fixture-verification/SKILL.md)

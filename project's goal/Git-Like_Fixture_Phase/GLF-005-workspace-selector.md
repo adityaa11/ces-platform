@@ -1,6 +1,6 @@
 # GLF-005: Workspace selector
 
-- **State:** approved
+- **State:** complete
 - **Review batch:** BATCH-21
 - **Depends on:** GLF-003, GLF-004-01
 - **Baseline:** Architecture Checkpoint sections 17, 22.5–22.6, 24; UI/UX Prototype PRD sections 5–6, 9.1, 9.4; Fixture Data-Intent Contract
