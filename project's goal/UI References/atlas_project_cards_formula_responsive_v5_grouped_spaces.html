@@ -1,0 +1,903 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Atlas — Project Cards Stress Responsive Draft v3</title>
+  <style>
+    :root {
+      --ink: #20242e;
+      --muted: #687386;
+      --paper: #f6f7f9;
+      --surface: #ffffff;
+      --surface-raised: #ffffff;
+      --surface-inset: #f7f8fb;
+      --line: #e2e6ed;
+      --forest: #5c5bd6;
+      --mint: #efefff;
+      --success-bg: #eaf7ef;
+      --success-ink: #2d8a51;
+      --extracting-bg: #eef2ff;
+      --extracting-ink: #5268dc;
+      --review-bg: #f1edff;
+      --review-ink: #7453e6;
+      --type-section: 1rem;
+      --type-body-compact: .78rem;
+      --type-meta: .7rem;
+      --type-label: .64rem;
+      --weight-bold: 800;
+      --leading-tight: 1.15;
+      --leading-body: 1.5;
+      --shell-sidebar: 256px;
+      --shell-pad: 52px;
+      --card-min: 304px;
+      --card-max: 400px;
+      --card-gap: 16px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 16px;
+    }
+
+    button, a { font: inherit; }
+
+    .demo-shell {
+      width: calc(100vw - var(--shell-sidebar));
+      margin-left: var(--shell-sidebar);
+      padding: var(--shell-pad);
+      transition: width .24s cubic-bezier(.2,.8,.2,1), margin-left .24s cubic-bezier(.2,.8,.2,1), padding .18s ease;
+    }
+
+    .sim-sidebar {
+      position: fixed;
+      inset: 0 auto 0 0;
+      width: var(--shell-sidebar);
+      padding: 20px 14px;
+      background: var(--surface);
+      border-right: 1px solid var(--line);
+      transition: width .24s cubic-bezier(.2,.8,.2,1);
+      z-index: 5;
+    }
+
+    .sim-sidebar button {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: var(--surface-raised);
+      color: var(--ink);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .sim-sidebar p {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .formula-panel {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 8px;
+      margin: 0 0 24px;
+      padding: 10px;
+      border: 1px solid color-mix(in srgb, var(--forest) 30%, var(--line));
+      border-radius: 12px;
+      background: color-mix(in srgb, var(--mint) 70%, var(--surface));
+    }
+
+    .formula-panel div {
+      min-width: 0;
+      padding: 8px;
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--surface) 82%, var(--mint));
+    }
+
+    .formula-panel small,
+    .formula-panel strong {
+      display: block;
+      overflow-wrap: anywhere;
+    }
+
+    .formula-panel small {
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .formula-panel strong {
+      margin-top: 3px;
+      font-size: 12px;
+    }
+
+    .formula-copy {
+      grid-column: 1 / -1;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .page-note {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.4rem;
+      color: var(--muted);
+      font-size: var(--type-meta);
+    }
+
+    .page-note strong {
+      color: var(--ink);
+      font-size: .82rem;
+    }
+
+    .repository-projects + .repository-projects {
+      margin-top: 2.25rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--line);
+    }
+
+    .repository-projects > header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: .8rem;
+    }
+
+    .repository-projects > header h1,
+    .repository-projects > header h2 {
+      margin: 0;
+      font-size: var(--type-section);
+      letter-spacing: -.025em;
+    }
+
+    .repository-projects > header span {
+      color: var(--muted);
+      font-size: var(--type-meta);
+    }
+
+    /*
+      Formula-driven grid. JavaScript resolves only two values:
+      --column-count and --resolved-card-width.
+      There is no artificial 3-card ceiling.
+    */
+    .project-grid {
+      display: grid;
+      grid-template-columns: repeat(var(--column-count, 1), minmax(0, var(--resolved-card-width, 100%)));
+      gap: var(--card-gap);
+      align-items: stretch;
+      justify-content: start;
+    }
+
+    .repository-card {
+      min-width: 0;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      container-type: inline-size;
+      padding: 1.125rem;
+      background: var(--surface-raised);
+      border: 1px solid var(--line);
+      border-radius: 1rem;
+      transition: border-color .16s ease, box-shadow .16s ease;
+    }
+
+    .repository-card:hover {
+      border-color: color-mix(in srgb, var(--forest) 52%, var(--line));
+      box-shadow: 0 .7rem 1.5rem #00000014;
+    }
+
+    /*
+      Header anatomy:
+      Mark spans title + project-id rows, so project-id follows the title instead
+      of being forced below the icon's 44px height. A small header min-height
+      aligns one-line and two-line titles by leaving spare room BELOW the id.
+    */
+    .repository-card-header {
+      display: grid;
+      grid-template-columns: 2.75rem minmax(0, 1fr) fit-content(7.5rem);
+      grid-template-rows: auto auto;
+      align-content: start;
+      align-items: start;
+      gap: .28rem .55rem;
+      min-width: 0;
+    }
+
+    .repository-project-mark {
+      grid-column: 1;
+      grid-row: 1 / span 2;
+      display: grid;
+      place-items: center;
+      width: 2.75rem;
+      height: 2.75rem;
+      border-radius: .65rem;
+      background: var(--forest);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: var(--weight-bold);
+    }
+
+    .repository-identity {
+      grid-column: 2;
+      grid-row: 1;
+      min-width: 0;
+    }
+
+    .repository-identity h3 {
+      margin: .1rem 0 0;
+      overflow-wrap: anywhere;
+      word-break: normal;
+      font-size: .94rem;
+      line-height: var(--leading-tight);
+    }
+
+    /*
+      The stress fixture's full 48-character id remains visible.
+      It may wrap; it is never ellipsized.
+    */
+    .repository-project-id {
+      grid-column: 2 / -1;
+      grid-row: 2;
+      min-width: 0;
+      display: block;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: var(--type-label);
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+
+    .repository-status {
+      grid-column: 3;
+      grid-row: 1;
+      justify-self: end;
+      padding: .35rem .45rem;
+      border-radius: 2rem;
+      font-size: .625rem;
+      font-weight: var(--weight-bold);
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .repository-status-published {
+      background: var(--success-bg);
+      color: var(--success-ink);
+    }
+
+    .repository-status-extracting {
+      background: var(--extracting-bg);
+      color: var(--extracting-ink);
+    }
+
+    .repository-status-ready-for-review {
+      background: var(--review-bg);
+      color: var(--review-ink);
+    }
+
+    /*
+      No title or description clamp exists here. The 80-character name and
+      280-character description are allowed to create the height they need.
+      overflow-wrap:anywhere is required because the stress fixture has no spaces.
+    */
+    .repository-summary-slot {
+      margin-top: .7rem;
+    }
+
+    .repository-summary {
+      width: 100%;
+      margin: 0;
+      overflow-wrap: anywhere;
+      word-break: normal;
+      color: var(--muted);
+      font-size: var(--type-body-compact);
+      line-height: var(--leading-body);
+    }
+
+    .repository-state-stack {
+      display: grid;
+      align-content: start;
+      gap: .7rem;
+      margin-top: .85rem;
+    }
+
+    .repository-master-state {
+      display: grid;
+      grid-template-columns: 2rem minmax(0, 1fr);
+      align-items: start;
+      gap: .65rem;
+      min-height: 5.25rem;
+      padding: .7rem;
+      background: color-mix(in srgb, var(--surface) 65%, var(--surface-raised));
+      border: 1px solid var(--line);
+      border-radius: .7rem;
+    }
+
+    .repository-state-icon {
+      display: grid;
+      place-items: center;
+      width: 2rem;
+      height: 2rem;
+      border-radius: .45rem;
+      background: var(--mint);
+      color: var(--forest);
+    }
+
+    .repository-state-icon svg {
+      width: 1.05rem;
+      height: 1.05rem;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .repository-master-state > div {
+      display: grid;
+      gap: .18rem;
+      min-width: 0;
+    }
+
+    .repository-master-state strong {
+      font-size: var(--type-body-compact);
+    }
+
+    .repository-master-state span,
+    .repository-master-state small {
+      color: var(--muted);
+      font-size: var(--type-meta);
+      line-height: var(--leading-body);
+      overflow-wrap: anywhere;
+    }
+
+    .repository-draft-state {
+      min-height: 2.6rem;
+      padding-top: .65rem;
+      border-top: 1px solid var(--line);
+    }
+
+    .repository-draft-heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: .5rem;
+      min-width: 0;
+      font-size: var(--type-meta);
+    }
+
+    .repository-draft-heading > span {
+      min-width: 0;
+      color: var(--muted);
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .repository-draft-heading strong {
+      color: var(--ink);
+    }
+
+    .repository-progress {
+      width: 100%;
+      height: .35rem;
+      display: block;
+      margin-top: .45rem;
+      overflow: hidden;
+      appearance: none;
+      border: 0;
+      border-radius: 2rem;
+      background: var(--line);
+      accent-color: var(--forest);
+    }
+
+    .repository-progress::-webkit-progress-bar {
+      background: var(--line);
+      border-radius: inherit;
+    }
+
+    .repository-progress::-webkit-progress-value {
+      background: var(--forest);
+      border-radius: inherit;
+    }
+
+    .repository-progress::-moz-progress-bar {
+      background: var(--forest);
+      border-radius: inherit;
+    }
+
+    /*
+      Footer is the alignment anchor. It is pushed to the bottom of the row's
+      card height. Missing draft content therefore creates only the exact
+      optional-section gap, rather than a fixed whole-card dead zone.
+    */
+    .repository-card-footer {
+      display: grid;
+      gap: .85rem;
+      margin-top: auto;
+      padding-top: 1rem;
+    }
+
+    .repository-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: .45rem;
+      margin: 0;
+    }
+
+    /*
+      Metrics use one shared minimum geometry, but their text is not truncated.
+      The current fixture's metric labels fit this at the 304px card minimum.
+    */
+    .repository-metrics > div {
+      min-width: 0;
+      min-height: 4.45rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding: .55rem;
+      border: 1px solid var(--line);
+      border-radius: .6rem;
+    }
+
+    .repository-metrics dd {
+      margin: 0;
+      font-size: var(--type-section);
+      font-weight: var(--weight-bold);
+      line-height: 1.1;
+      overflow-wrap: anywhere;
+    }
+
+    .repository-metrics dt {
+      margin-top: .32rem;
+      overflow-wrap: anywhere;
+      color: var(--muted);
+      font-size: var(--type-label);
+      line-height: 1.35;
+    }
+
+    .repository-card-actions {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: .55rem;
+    }
+
+    .repository-primary-action,
+    .repository-share-action {
+      min-height: 3rem;
+      border-radius: .55rem;
+      font-size: var(--type-body-compact);
+      font-weight: var(--weight-bold);
+    }
+
+    .repository-primary-action {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: .65rem .8rem;
+      border: 0;
+      background: var(--forest);
+      color: #fff;
+      text-decoration: none;
+    }
+
+    .repository-primary-action:disabled {
+      background: var(--line);
+      color: var(--muted);
+      cursor: not-allowed;
+    }
+
+    .repository-share-action {
+      padding: .55rem .75rem;
+      border: 1px solid var(--forest);
+      background: var(--surface);
+      color: var(--forest);
+    }
+
+    .repository-share-action:disabled {
+      border-color: var(--line);
+      background: var(--line);
+      color: var(--muted);
+      cursor: not-allowed;
+    }
+
+    /*
+      Card-level responsiveness: only transform internals when THIS card is
+      cramped. This is more robust than tying every adjustment to viewport width.
+    */
+    @container (max-width: 21.5rem) {
+      .repository-card-header {
+        grid-template-columns: 2.5rem minmax(0, 1fr);
+        grid-template-rows: auto auto auto;
+      }
+
+      .repository-project-mark {
+        grid-row: 1 / span 3;
+        width: 2.5rem;
+        height: 2.5rem;
+      }
+
+      .repository-identity {
+        grid-column: 2;
+        grid-row: 1;
+      }
+
+      .repository-status {
+        grid-column: 2;
+        grid-row: 2;
+        justify-self: start;
+        max-width: 100%;
+      }
+
+      .repository-project-id {
+        grid-column: 2;
+        grid-row: 3;
+      }
+
+      .repository-metrics {
+        gap: .38rem;
+      }
+
+      .repository-metrics > div {
+        min-height: 4.45rem;
+        padding: .48rem;
+      }
+    }
+
+    @container (max-width: 17.5rem) {
+      .repository-card-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .repository-share-action {
+        width: 100%;
+      }
+
+      .repository-metrics dd {
+        font-size: .9rem;
+      }
+    }
+
+    @media (max-width: 960px) {
+      .sim-sidebar { display: none; }
+      .demo-shell {
+        width: 100vw;
+        margin-left: 0;
+      }
+      .formula-panel { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 680px) {
+      .formula-panel { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 420px) {
+      .formula-panel { grid-template-columns: 1fr; }
+      .repository-metrics { grid-template-columns: 1fr; }
+      .repository-metrics > div { min-height: 0; }
+    }
+  </style>
+</head>
+<body>
+  <aside class="sim-sidebar" aria-label="Simulated Atlas sidebar">
+    <button id="sidebar-toggle" type="button">Collapse sidebar</button>
+    <p>Uses the repository shell widths: 256px expanded, 68px collapsed. Hidden at ≤960px.</p>
+  </aside>
+  <main class="demo-shell">
+    <div class="page-note">
+      <strong>Formula-based project card responsiveness</strong>
+      <span id="viewport-readout">Viewport</span>
+    </div>
+
+    <section class="formula-panel" aria-label="Responsive formula">
+      <div><small>Viewport</small><strong id="f-viewport"></strong></div>
+      <div><small>Sidebar</small><strong id="f-sidebar"></strong></div>
+      <div><small>Padding / side</small><strong id="f-padding"></strong></div>
+      <div><small>Grid width</small><strong id="f-available"></strong></div>
+      <div><small>Card range</small><strong>304–400 px</strong></div>
+      <div><small>Stress density</small><strong id="f-density"></strong></div>
+      <p class="formula-copy">
+        columns = floor((available + 16) / (304 + 16)); card width =
+        min(400, (available − total gaps) / columns). Column count is capped only
+        by how many project cards actually exist.
+      </p>
+    </section>
+
+    <section class="repository-projects" aria-labelledby="normal-title">
+      <header>
+        <h1 id="normal-title">Your projects</h1>
+        <span>3 repositories · cards stop growing at 400px</span>
+      </header>
+      <div class="project-grid" id="normal-grid"></div>
+    </section>
+
+    <section class="repository-projects" aria-labelledby="stress-title">
+      <header>
+        <h2 id="stress-title">Stress test — repository input limits</h2>
+        <span>48-char id · 80-char name · 280-char description · progressive groups 1, 2, 3, 4…</span>
+      </header>
+      <div class="project-grid" id="stress-grid"></div>
+    </section>
+  </main>
+
+  <script>
+    const normalProjects = [
+      {
+        id: "safara",
+        name: "Safara operations platform",
+        state: "published",
+        summary: "Operational workspace for registrations, payments, documents, and readiness.",
+        master: { summary: "Published work", detail: "Current accepted project source of truth." },
+        initialDraft: null,
+        metrics: [
+          { value: "85", label: "resolved facts" },
+          { value: "3", label: "PRDs" },
+          { value: "1", label: "published version" }
+        ],
+        action: { enabled: true }
+      },
+      {
+        id: "member-portal",
+        name: "Member portal refresh",
+        state: "extracting",
+        summary: "Updating the member portal from newly uploaded PRDs.",
+        master: { summary: "No published work", detail: "Nothing has been published yet." },
+        initialDraft: { processedPrds: 2, totalPrds: 5, progress: 40 },
+        metrics: [
+          { value: "0", label: "published facts" },
+          { value: "5", label: "PRDs uploaded" },
+          { value: "Waiting", label: "for extraction" }
+        ],
+        action: { enabled: false }
+      },
+      {
+        id: "vendor-onboarding",
+        name: "Vendor onboarding revamp",
+        state: "ready-for-review",
+        summary: "New onboarding workflow prepared from uploaded PRDs and ready to check.",
+        master: { summary: "No published work", detail: "Nothing has been published yet." },
+        initialDraft: { processedPrds: 2, totalPrds: 2, progress: 100 },
+        metrics: [
+          { value: "46", label: "extracted facts" },
+          { value: "2", label: "PRDs uploaded" },
+          { value: "Ready", label: "to review" }
+        ],
+        action: { enabled: true }
+      }
+    ];
+
+    const stressLimits = { id: 48, name: 80, description: 280 };
+
+    const groupedSequence = (limit, mode) => {
+      let result = "";
+      let groupSize = 1;
+      let mixedIndex = 0;
+
+      const nextChar = () => {
+        if (mode === "lower") return "a";
+        if (mode === "upper") return "A";
+        const character = mixedIndex % 2 === 0 ? "A" : "b";
+        mixedIndex += 1;
+        return character;
+      };
+
+      while (result.length < limit) {
+        const remaining = limit - result.length;
+
+        // Avoid ending the fixture with a trailing space.
+        if (remaining === 1) {
+          result += nextChar();
+          break;
+        }
+
+        if (result.length) result += " ";
+
+        const availableForGroup = limit - result.length;
+        const actualGroupSize = Math.min(groupSize, availableForGroup);
+
+        for (let index = 0; index < actualGroupSize; index += 1) {
+          result += nextChar();
+        }
+
+        groupSize += 1;
+      }
+
+      return result.slice(0, limit);
+    };
+
+    const stressProjects = [
+      {
+        ...normalProjects[0],
+        id: "lowercase-".repeat(4) + "fixturex",
+        name: groupedSequence(stressLimits.name, "lower"),
+        summary: groupedSequence(stressLimits.description, "lower")
+      },
+      {
+        ...normalProjects[1],
+        id: "uppercase-".repeat(4) + "fixturex",
+        name: groupedSequence(stressLimits.name, "upper"),
+        summary: groupedSequence(stressLimits.description, "upper")
+      },
+      {
+        ...normalProjects[2],
+        id: "mixedcase-".repeat(4) + "fixturex",
+        name: groupedSequence(stressLimits.name, "mixed"),
+        summary: groupedSequence(stressLimits.description, "mixed")
+      }
+    ];
+
+    const stressDensityProjects = Array.from({ length: 9 }, (_, index) => ({
+      ...stressProjects[index % stressProjects.length],
+      densityInstance: index + 1
+    }));
+
+    const labels = {
+      published: "Published",
+      extracting: "Extracting",
+      "ready-for-review": "Ready for review"
+    };
+
+    const masterIcon = `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H19v16H7.5A2.5 2.5 0 0 0 5 21V5.5Z"/>
+        <path d="M5 5.5V21"/>
+        <path d="M19 3v16"/>
+      </svg>`;
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[character]);
+    }
+
+    function renderDraft(draft) {
+      if (!draft) return "";
+      const progress = Math.max(0, Math.min(100, Number(draft.progress)));
+      const processed = `${draft.processedPrds} of ${draft.totalPrds} PRDs processed`;
+      return `
+        <section class="repository-draft-state" aria-label="Initial draft: ${escapeHtml(processed)}">
+          <div class="repository-draft-heading">
+            <span><strong>Initial draft</strong> · ${escapeHtml(processed)}</span>
+            <strong>${progress}%</strong>
+          </div>
+          <progress class="repository-progress" max="100" value="${progress}" aria-label="Extraction progress: ${escapeHtml(processed)}">${progress}%</progress>
+        </section>`;
+    }
+
+    function renderCard(project, index) {
+      const titleId = `project-${index}-${project.state}-title`;
+      const disabled = project.action.enabled ? "" : " disabled aria-disabled=\"true\"";
+      return `
+        <article class="repository-card" aria-labelledby="${titleId}">
+          <header class="repository-card-header">
+            <span class="repository-project-mark" aria-hidden="true">${escapeHtml(project.name[0] || "?")}</span>
+            <div class="repository-identity">
+              <h3 id="${titleId}">${escapeHtml(project.name)}</h3>
+            </div>
+            <span class="repository-status repository-status-${escapeHtml(project.state)}">${escapeHtml(labels[project.state])}</span>
+            <code class="repository-project-id">project-id: ${escapeHtml(project.id)}</code>
+          </header>
+
+          <div class="repository-summary-slot">
+            <p class="repository-summary">${escapeHtml(project.summary)}</p>
+          </div>
+
+          <div class="repository-state-stack">
+            <section class="repository-master-state" aria-label="Master: ${escapeHtml(project.master.summary)}">
+              <span class="repository-state-icon" aria-hidden="true">${masterIcon}</span>
+              <div>
+                <strong>Master</strong>
+                <span>${escapeHtml(project.master.summary)}</span>
+                <small>${escapeHtml(project.master.detail)}</small>
+              </div>
+            </section>
+            ${renderDraft(project.initialDraft)}
+          </div>
+
+          <footer class="repository-card-footer">
+            <dl class="repository-metrics">
+              ${project.metrics.map(metric => `
+                <div title="${escapeHtml(metric.value)} — ${escapeHtml(metric.label)}">
+                  <dd>${escapeHtml(metric.value)}</dd>
+                  <dt>${escapeHtml(metric.label)}</dt>
+                </div>`).join("")}
+            </dl>
+            <div class="repository-card-actions">
+              <button class="repository-primary-action" type="button"${disabled}>Open project <span aria-hidden="true">→</span></button>
+              <button class="repository-share-action" type="button"${disabled}>Share</button>
+            </div>
+          </footer>
+        </article>`;
+    }
+
+    function renderGrid(id, projects) {
+      document.getElementById(id).innerHTML = projects.map(renderCard).join("");
+    }
+
+    renderGrid("normal-grid", normalProjects);
+    renderGrid("stress-grid", stressDensityProjects);
+
+    const CARD_MIN = 304;
+    const CARD_MAX = 400;
+    const CARD_GAP = 16;
+    let sidebarCollapsed = false;
+
+    const clamp = (min, value, max) => Math.min(max, Math.max(min, value));
+
+    function shellFormula(viewport) {
+      if (viewport <= 680) return { sidebar: 0, padding: 16 };
+      if (viewport <= 960) return { sidebar: 0, padding: clamp(24, viewport * .04, 32) };
+      return {
+        sidebar: sidebarCollapsed ? 68 : 256,
+        padding: clamp(28, viewport * .0325, 52)
+      };
+    }
+
+    function gridFormula(available, count) {
+      let columns = Math.floor((available + CARD_GAP) / (CARD_MIN + CARD_GAP));
+      columns = Math.max(1, Math.min(count, columns));
+      const fluid = (available - CARD_GAP * (columns - 1)) / columns;
+      return { columns, width: Math.min(CARD_MAX, Math.max(0, fluid)) };
+    }
+
+    function applyGrid(id, count, available) {
+      const grid = document.getElementById(id);
+      const result = gridFormula(available, count);
+      grid.style.setProperty("--column-count", result.columns);
+      grid.style.setProperty("--resolved-card-width", `${result.width}px`);
+      return result;
+    }
+
+    function updateViewport() {
+      const viewport = window.innerWidth;
+      const shell = shellFormula(viewport);
+      const available = Math.max(0, viewport - shell.sidebar - shell.padding * 2);
+
+      document.documentElement.style.setProperty("--shell-sidebar", `${shell.sidebar}px`);
+      document.documentElement.style.setProperty("--shell-pad", `${shell.padding}px`);
+
+      const normal = applyGrid("normal-grid", normalProjects.length, available);
+      const stress = applyGrid("stress-grid", stressDensityProjects.length, available);
+
+      document.getElementById("viewport-readout").textContent =
+        `${viewport}px viewport · ${stress.columns} stress columns`;
+      document.getElementById("f-viewport").textContent = `${Math.round(viewport)} px`;
+      document.getElementById("f-sidebar").textContent = `${Math.round(shell.sidebar)} px`;
+      document.getElementById("f-padding").textContent = `${Math.round(shell.padding)} px`;
+      document.getElementById("f-available").textContent = `${Math.round(available)} px`;
+      document.getElementById("f-density").textContent =
+        `${stress.columns} × ${Math.round(stress.width)} px`;
+
+      document.getElementById("sidebar-toggle").textContent =
+        sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar";
+    }
+
+    document.getElementById("sidebar-toggle").addEventListener("click", () => {
+      sidebarCollapsed = !sidebarCollapsed;
+      const start = performance.now();
+      const tick = now => {
+        updateViewport();
+        if (now - start < 280) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+  </script>
+</body>
+</html>

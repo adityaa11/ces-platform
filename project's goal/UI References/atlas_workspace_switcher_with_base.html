@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Atlas — Workspace Switcher Prototype</title>
+<style>
+  :root{
+    --bg:#0d0d0f;
+    --surface:#151518;
+    --surface-2:#1b1b1f;
+    --surface-3:#202025;
+    --line:#2c2c32;
+    --line-soft:#24242a;
+    --text:#f3f3f6;
+    --muted:#9c9ca6;
+    --muted-2:#767680;
+    --accent:#8d8cf8;
+    --accent-soft:#24233a;
+    --success:#7bd7a4;
+    --warning:#e9c978;
+    --danger:#e18d8d;
+    --info:#9cb8ff;
+    --sidebar:264px;
+    --topbar:64px;
+    --radius:14px;
+    --shadow:0 28px 70px rgba(0,0,0,.45);
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+  body{min-height:100vh}
+  button,input{font:inherit}
+
+  .app{min-height:100vh;background:
+    radial-gradient(circle at 30% -10%, rgba(141,140,248,.08), transparent 32%),
+    var(--bg);
+  }
+
+  .topbar{
+    height:var(--topbar);
+    border-bottom:1px solid var(--line-soft);
+    display:flex;
+    align-items:center;
+    padding:0 20px;
+    position:fixed;
+    inset:0 0 auto 0;
+    z-index:40;
+    background:rgba(13,13,15,.92);
+    backdrop-filter:blur(14px);
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.02em}
+  .brand-mark{
+    width:30px;height:30px;border-radius:9px;
+    display:grid;place-items:center;
+    background:linear-gradient(145deg,#9a98ff,#706ff4);
+    color:#0d0d0f;font-weight:900;
+  }
+  .top-search{
+    margin-left:28px;width:min(430px,42vw);
+    height:36px;border:1px solid var(--line);
+    background:var(--surface);border-radius:9px;
+    display:flex;align-items:center;gap:8px;
+    color:var(--muted);padding:0 12px;font-size:13px;
+  }
+  .top-actions{margin-left:auto;display:flex;gap:10px;align-items:center}
+  .icon-btn{
+    width:36px;height:36px;border-radius:9px;border:1px solid var(--line);
+    background:var(--surface);color:var(--muted);display:grid;place-items:center;
+  }
+  .avatar{
+    width:28px;height:28px;border-radius:50%;display:grid;place-items:center;
+    font-size:11px;font-weight:700;background:#30303a;color:#ddd;
+    flex:0 0 auto;
+  }
+
+  .sidebar{
+    width:var(--sidebar);position:fixed;top:var(--topbar);bottom:0;left:0;
+    border-right:1px solid var(--line-soft);padding:18px 14px;background:#111113;
+  }
+  .eyebrow{
+    color:var(--muted-2);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    padding:0 9px 8px;
+  }
+  .project-row{
+    display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line-soft);
+  }
+  .project-dot{width:26px;height:26px;border-radius:8px;background:var(--accent-soft);color:#bdbbff;display:grid;place-items:center;font-size:11px;font-weight:800}
+  .project-row strong{display:block;font-size:13px}
+  .project-row span{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+
+  .workspace-trigger-wrap{position:relative;margin-top:14px}
+  .workspace-trigger{
+    width:100%;border:1px solid #3a394a;border-radius:12px;background:#18181c;color:var(--text);
+    padding:11px 12px;text-align:left;display:flex;align-items:center;gap:10px;cursor:pointer;
+  }
+  .workspace-trigger:hover{background:#1c1c21}
+  .workspace-trigger .copy{min-width:0;flex:1}
+  .workspace-trigger strong{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .workspace-trigger span{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+  .chev{color:var(--muted);font-size:12px}
+  .nav{margin-top:16px;display:grid;gap:4px}
+  .nav a{color:var(--muted);text-decoration:none;padding:9px 10px;border-radius:8px;font-size:13px}
+  .nav a.active{background:var(--surface-2);color:var(--text)}
+  .nav a:hover{background:#18181c;color:#ddd}
+
+  .main{margin-left:var(--sidebar);padding:calc(var(--topbar) + 34px) 34px 60px}
+  .page-head{display:flex;align-items:flex-start;gap:20px}
+  .page-head h1{font-size:26px;letter-spacing:-.03em;margin:0}
+  .page-head p{margin:7px 0 0;color:var(--muted);font-size:13px;max-width:700px}
+  .workspace-summary{
+    margin-top:26px;border:1px solid var(--line-soft);background:var(--surface);
+    border-radius:14px;padding:18px;display:grid;grid-template-columns:1.4fr repeat(3,1fr);gap:16px;
+  }
+  .metric .label{color:var(--muted-2);font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+  .metric .value{margin-top:6px;font-size:14px;font-weight:650}
+  .metric:first-child .value{font-size:16px}
+  .grid{margin-top:20px;display:grid;grid-template-columns:1.7fr 1fr;gap:20px}
+  .panel{border:1px solid var(--line-soft);background:var(--surface);border-radius:14px;padding:18px;min-height:260px}
+  .panel h2{font-size:14px;margin:0 0 14px}
+  .ghost-line{height:10px;background:#202025;border-radius:6px;margin:10px 0}
+  .ghost-line.w70{width:70%}.ghost-line.w55{width:55%}.ghost-line.w85{width:85%}
+  .identity{display:grid;gap:12px}
+  .identity-row{display:flex;justify-content:space-between;gap:20px;border-bottom:1px solid var(--line-soft);padding-bottom:10px}
+  .identity-row:last-child{border-bottom:0}
+  .identity-row span:first-child{color:var(--muted);font-size:12px}
+  .identity-row span:last-child{font-size:12px;text-align:right}
+
+  .switcher{
+    position:absolute;left:0;top:calc(100% + 8px);width:660px;max-height:74vh;
+    border:1px solid #35353c;border-radius:14px;background:#151518;box-shadow:var(--shadow);
+    z-index:80;overflow:hidden;
+  }
+  .switcher[hidden]{display:none}
+  .switcher-head{padding:14px;border-bottom:1px solid var(--line-soft)}
+  .switcher-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .switcher-title strong{font-size:13px}
+  .switcher-title span{color:var(--muted-2);font-size:11px}
+  .search{
+    height:38px;border:1px solid var(--line);border-radius:9px;background:#101012;display:flex;align-items:center;padding:0 11px;
+  }
+  .search input{width:100%;border:0;outline:0;background:transparent;color:var(--text);font-size:12px}
+  .search input::placeholder{color:#686872}
+  .filterbar{
+    display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:10px;
+  }
+  .filter-wrap{position:relative}
+  .filter-button{
+    border:1px solid var(--line);background:#18181c;color:var(--muted);
+    min-height:30px;padding:0 10px;border-radius:8px;font-size:11px;white-space:nowrap;
+    cursor:pointer;display:flex;align-items:center;gap:7px;
+  }
+  .filter-button:hover{background:#1d1d22;color:#d4d4db}
+  .filter-button.active{
+    background:var(--accent-soft);border-color:#4c4b73;color:#d6d5ff;
+  }
+  .filter-button .caret{font-size:9px;color:var(--muted-2)}
+  .filter-menu{
+    position:absolute;top:calc(100% + 7px);left:0;min-width:232px;
+    border:1px solid #393940;background:#17171a;border-radius:11px;padding:8px;
+    box-shadow:0 18px 48px rgba(0,0,0,.4);z-index:95;
+  }
+  .filter-menu[hidden]{display:none}
+  .filter-menu.date-menu{min-width:278px}
+  .filter-menu-head{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:4px 5px 8px;color:var(--muted-2);font-size:10px;font-weight:750;
+    text-transform:uppercase;letter-spacing:.07em;
+  }
+  .menu-clear{
+    border:0;background:transparent;color:#aaa9ff;font-size:10px;padding:0;cursor:pointer;
+    text-transform:none;letter-spacing:0;
+  }
+  .check-list{display:grid;gap:2px}
+  .check-row{
+    display:flex;align-items:center;gap:9px;padding:8px;border-radius:7px;
+    color:#d7d7dd;font-size:11px;cursor:pointer;
+  }
+  .check-row:hover{background:#202025}
+  .check-row input{accent-color:var(--accent);margin:0}
+  .check-row .check-copy{display:flex;align-items:center;gap:8px;min-width:0}
+  .check-row .avatar{width:22px;height:22px;font-size:8px}
+  .system-mark{
+    width:22px;height:22px;border-radius:50%;display:grid;place-items:center;
+    background:#292932;color:#b8b8c1;font-size:8px;font-weight:800;
+  }
+  .date-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .date-field{display:grid;gap:5px}
+  .date-field label{color:var(--muted-2);font-size:10px}
+  .date-field input{
+    min-width:0;width:100%;height:34px;border:1px solid var(--line);border-radius:8px;
+    background:#101012;color:#e5e5ea;padding:0 8px;font-size:11px;color-scheme:dark;
+  }
+  .clear-all{
+    border:0;background:transparent;color:#aaa9ff;font-size:11px;cursor:pointer;
+    padding:5px 4px;display:none;
+  }
+  .clear-all.show{display:inline-flex}
+  .filter-count{
+    display:inline-grid;place-items:center;min-width:16px;height:16px;padding:0 5px;
+    border-radius:999px;background:#343254;color:#d9d8ff;font-size:9px;font-weight:800;
+  }
+  .empty-results{
+    color:var(--muted);font-size:12px;padding:28px 18px;text-align:center;display:none;
+  }
+  .empty-results.show{display:block}
+
+  .switcher-body{
+    overflow:auto;
+    max-height:calc(74vh - 176px);
+    padding:8px 10px 10px;
+    background:linear-gradient(180deg,#141417 0%,#131315 100%);
+  }
+  .section{padding:9px 4px 6px}
+  .section + .section{margin-top:4px}
+  .section-title{
+    display:flex;align-items:center;gap:8px;color:var(--muted-2);
+    font-size:10px;font-weight:800;letter-spacing:.085em;text-transform:uppercase;
+    padding:7px 8px 9px;
+  }
+  .section-title:after{content:"";height:1px;background:var(--line-soft);flex:1}
+  .section.empty{display:none}
+  .section:not(:first-of-type) .section-title{
+    border-top:1px solid #25252b;
+    padding-top:12px;
+  }
+
+  .workspace-row{
+    width:100%;
+    border:1px solid #2a2a30;
+    background:#17171a;
+    color:inherit;
+    text-align:left;
+    border-radius:10px;
+    padding:13px 14px;
+    cursor:pointer;
+    margin:0 0 8px;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:14px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.015);
+    transition:background .14s ease,border-color .14s ease,box-shadow .14s ease,transform .14s ease;
+  }
+  .workspace-row:last-child{margin-bottom:2px}
+  .workspace-row:hover,.workspace-row:focus-visible{
+    background:#1d1d22;
+    border-color:#3a3a43;
+    box-shadow:0 0 0 1px rgba(255,255,255,.018), inset 0 1px 0 rgba(255,255,255,.02);
+    outline:none;
+  }
+  .workspace-row:focus-visible{
+    box-shadow:0 0 0 2px rgba(141,140,248,.22);
+  }
+  .workspace-row.active-row{
+    background:#1d1c29;
+    border-color:#56527d;
+    box-shadow:inset 3px 0 0 var(--accent), inset 0 1px 0 rgba(255,255,255,.02);
+  }
+  .row-main{min-width:0}
+  .row-title{display:flex;align-items:center;gap:8px;min-width:0}
+  .row-title strong{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .base-meta{
+    display:flex;align-items:center;gap:6px;margin-top:8px;
+    color:var(--muted);font-size:10px;
+  }
+  .base-meta .base-label{
+    color:var(--muted-2);text-transform:uppercase;letter-spacing:.06em;font-weight:750;font-size:9px;
+  }
+  .base-meta .base-name{
+    color:#c9c9d1;font-weight:650;
+  }
+  .status{
+    flex:0 0 auto;font-size:10px;font-weight:700;border-radius:999px;padding:3px 7px;border:1px solid transparent;
+  }
+  .published{color:var(--success);background:rgba(123,215,164,.08);border-color:rgba(123,215,164,.2)}
+  .review{color:#c4c2ff;background:rgba(141,140,248,.09);border-color:rgba(141,140,248,.22)}
+  .needs-review{color:var(--warning);background:rgba(233,201,120,.08);border-color:rgba(233,201,120,.2)}
+  .draft{color:var(--info);background:rgba(156,184,255,.08);border-color:rgba(156,184,255,.2)}
+  .processing{color:#d1b0ff;background:rgba(209,176,255,.08);border-color:rgba(209,176,255,.18)}
+
+  .audit-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-top:12px;
+    padding-top:11px;
+    border-top:1px solid #2b2b31;
+  }
+  .audit-block{min-width:0}
+  .audit-label{color:var(--muted-2);font-size:9px;text-transform:uppercase;letter-spacing:.07em;font-weight:750;margin-bottom:5px}
+  .person{display:flex;align-items:center;gap:7px;min-width:0}
+  .person .avatar{width:23px;height:23px;font-size:9px}
+  .person-copy{min-width:0}
+  .person-copy b{display:block;font-size:11px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .person-copy span{display:block;color:var(--muted);font-size:10px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row-side{display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;min-width:74px}
+  .prd-count{font-size:11px;color:#d5d5dc}
+  .relative{font-size:10px;color:var(--muted-2)}
+
+  .switcher-foot{
+    border-top:1px solid var(--line-soft);padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:#131316;
+  }
+  .switcher-foot span{color:var(--muted-2);font-size:10px}
+  .new-btn{
+    border:1px solid #48466d;background:#23223a;color:#d7d6ff;border-radius:9px;padding:8px 10px;font-size:11px;font-weight:700;cursor:pointer;
+  }
+
+  .prototype-note{
+    margin-top:18px;color:var(--muted-2);font-size:11px;line-height:1.55;
+  }
+
+  .toast{
+    position:fixed;right:24px;bottom:24px;background:#1a1a1f;border:1px solid var(--line);
+    color:#ddd;border-radius:10px;padding:10px 12px;font-size:12px;box-shadow:var(--shadow);
+    opacity:0;transform:translateY(8px);pointer-events:none;transition:.18s ease;z-index:120;
+  }
+  .toast.show{opacity:1;transform:translateY(0)}
+
+  @media (max-width:1080px){
+    .switcher{width:620px}
+    .workspace-summary{grid-template-columns:1fr 1fr}
+    .grid{grid-template-columns:1fr}
+  }
+  @media (max-width:760px){
+    :root{--sidebar:0px}
+    .sidebar{position:static;width:auto;padding:calc(var(--topbar) + 14px) 14px 0;border:0;background:transparent}
+    .main{margin-left:0;padding:24px 14px 50px}
+    .top-search{display:none}
+    .switcher{
+      position:fixed;left:12px;right:12px;top:78px;width:auto;max-height:calc(100vh - 96px);
+    }
+    .switcher-body{max-height:calc(100vh - 286px)}
+    .workspace-summary{grid-template-columns:1fr 1fr}
+    .audit-grid{grid-template-columns:1fr}
+    .workspace-row{padding:12px;margin-bottom:7px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand"><div class="brand-mark">A</div><span>Atlas</span></div>
+    <div class="top-search">⌕&nbsp;&nbsp; Search project knowledge</div>
+    <div class="top-actions">
+      <button class="icon-btn" aria-label="Notifications">◌</button>
+      <div class="avatar">AI</div>
+    </div>
+  </header>
+
+  <aside class="sidebar">
+    <div class="eyebrow">Project</div>
+    <div class="project-row">
+      <div class="project-dot">S</div>
+      <div><strong>Safara</strong><span>Operational model</span></div>
+    </div>
+
+    <div class="workspace-trigger-wrap">
+      <div class="eyebrow" style="padding-top:14px">Workspace</div>
+      <button id="workspaceTrigger" class="workspace-trigger" aria-expanded="true" aria-controls="workspaceSwitcher">
+        <div class="project-dot">W</div>
+        <div class="copy">
+          <strong id="triggerName">Increment 03</strong>
+          <span id="triggerMeta">Review · modified 14 min ago</span>
+        </div>
+        <div class="chev">⌄</div>
+      </button>
+
+      <div id="workspaceSwitcher" class="switcher">
+        <div class="switcher-head">
+          <div class="switcher-title">
+            <strong>Switch workspace</strong>
+            <span>Safara</span>
+          </div>
+          <label class="search" aria-label="Search workspaces">
+            <input id="workspaceSearch" type="search" placeholder="Search workspace, creator, modifier, or PRD..." />
+          </label>
+          <div class="filterbar" aria-label="Workspace filters">
+            <div class="filter-wrap">
+              <button class="filter-button" id="usersFilterBtn" type="button" aria-expanded="false" aria-controls="usersFilterMenu">
+                <span>Users</span><span id="usersFilterCount" class="filter-count" hidden>0</span><span class="caret">⌄</span>
+              </button>
+              <div class="filter-menu" id="usersFilterMenu" hidden>
+                <div class="filter-menu-head">
+                  <span>Creator or last modifier</span>
+                  <button class="menu-clear" type="button" data-clear="users">Clear</button>
+                </div>
+                <div class="check-list" id="usersFilterOptions"></div>
+              </div>
+            </div>
+
+            <div class="filter-wrap">
+              <button class="filter-button" id="statusFilterBtn" type="button" aria-expanded="false" aria-controls="statusFilterMenu">
+                <span>Status</span><span id="statusFilterCount" class="filter-count" hidden>0</span><span class="caret">⌄</span>
+              </button>
+              <div class="filter-menu" id="statusFilterMenu" hidden>
+                <div class="filter-menu-head">
+                  <span>Workspace status</span>
+                  <button class="menu-clear" type="button" data-clear="status">Clear</button>
+                </div>
+                <div class="check-list" id="statusFilterOptions"></div>
+              </div>
+            </div>
+
+            <div class="filter-wrap">
+              <button class="filter-button" id="createdFilterBtn" type="button" aria-expanded="false" aria-controls="createdFilterMenu">
+                <span>Created date</span><span id="createdFilterCount" class="filter-count" hidden>0</span><span class="caret">⌄</span>
+              </button>
+              <div class="filter-menu date-menu" id="createdFilterMenu" hidden>
+                <div class="filter-menu-head">
+                  <span>Created date</span>
+                  <button class="menu-clear" type="button" data-clear="created">Clear</button>
+                </div>
+                <div class="date-grid">
+                  <div class="date-field">
+                    <label for="createdFrom">From</label>
+                    <input id="createdFrom" type="date" />
+                  </div>
+                  <div class="date-field">
+                    <label for="createdThru">Thru</label>
+                    <input id="createdThru" type="date" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="filter-wrap">
+              <button class="filter-button" id="modifiedFilterBtn" type="button" aria-expanded="false" aria-controls="modifiedFilterMenu">
+                <span>Modified date</span><span id="modifiedFilterCount" class="filter-count" hidden>0</span><span class="caret">⌄</span>
+              </button>
+              <div class="filter-menu date-menu" id="modifiedFilterMenu" hidden>
+                <div class="filter-menu-head">
+                  <span>Modified date</span>
+                  <button class="menu-clear" type="button" data-clear="modified">Clear</button>
+                </div>
+                <div class="date-grid">
+                  <div class="date-field">
+                    <label for="modifiedFrom">From</label>
+                    <input id="modifiedFrom" type="date" />
+                  </div>
+                  <div class="date-field">
+                    <label for="modifiedThru">Thru</label>
+                    <input id="modifiedThru" type="date" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button class="clear-all" id="clearAllFilters" type="button">Clear filters</button>
+          </div>
+        </div>
+
+        <div id="workspaceBody" class="switcher-body">
+          <div id="emptyResults" class="empty-results">No workspaces match these filters.</div>
+          <section id="publishedSection" class="section">
+            <div class="section-title">Published truth</div>
+            <div id="publishedList"></div>
+          </section>
+
+          <section id="activeSection" class="section">
+            <div class="section-title">Active workspace</div>
+            <div id="activeList"></div>
+          </section>
+
+          <section id="otherSection" class="section">
+            <div class="section-title">Other workspaces</div>
+            <div id="otherList"></div>
+          </section>
+        </div>
+
+        <div class="switcher-foot">
+          <span>Workspace identity and audit metadata</span>
+          <button class="new-btn" id="newWorkspaceBtn">+ New workspace</button>
+        </div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a class="active" href="#">Overview</a>
+      <a href="#">PRDs</a>
+      <a href="#">Main workflow</a>
+      <a href="#">Project facts</a>
+      <a href="#">Changes</a>
+      <a href="#">CES result</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <h1>Safara operational model</h1>
+        <p>The selected workspace controls which project truth and review state you are working with.</p>
+      </div>
+    </div>
+
+    <div class="workspace-summary">
+      <div class="metric">
+        <div class="label">Workspace</div>
+        <div class="value" id="pageWorkspace">Increment 03</div>
+      </div>
+      <div class="metric">
+        <div class="label">Status</div>
+        <div class="value" id="pageStatus">Review</div>
+      </div>
+      <div class="metric">
+        <div class="label">PRDs</div>
+        <div class="value" id="pagePrds">3</div>
+      </div>
+      <div class="metric">
+        <div class="label">Last modified</div>
+        <div class="value" id="pageModified">14 min ago</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <section class="panel">
+        <h2>Workspace content</h2>
+        <div class="ghost-line w85"></div>
+        <div class="ghost-line w70"></div>
+        <div class="ghost-line"></div>
+        <div class="ghost-line w55"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Workspace identity</h2>
+        <div class="identity">
+          <div class="identity-row"><span>Project</span><span>Safara</span></div>
+          <div class="identity-row"><span>Workspace</span><span id="identityWorkspace">Increment 03</span></div>
+          <div class="identity-row"><span>Base workspace</span><span id="identityBase">Master</span></div>
+          <div class="identity-row"><span>Created by</span><span id="identityCreated">Aditya · 9 Sep 2026</span></div>
+          <div class="identity-row"><span>Last modified by</span><span id="identityModified">Raka · 11 Sep 2026</span></div>
+          <div class="identity-row"><span>Status</span><span id="identityStatus">Review</span></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="prototype-note">
+      Prototype note: creator/modifier names, dates, and base-workspace relationships are representative audit values used to evaluate the information hierarchy.
+      User and status filters are multi-select. Created and modified dates use inclusive From/Thru ranges. Master has no base workspace; user-created workspaces show the workspace they were branched from. The selector intentionally omits descriptions, staged counts, revision/HEAD details, and workspace IDs.
+    </div>
+  </main>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+const CURRENT_USER = "Aditya";
+let selectedId = "increment-03";
+let search = "";
+const selectedUsers = new Set();
+const selectedStatuses = new Set();
+let createdFrom = "";
+let createdThru = "";
+let modifiedFrom = "";
+let modifiedThru = "";
+
+const workspaces = [
+  {
+    id:"master",
+    base:null,
+    name:"Master",
+    status:"Published",
+    statusClass:"published",
+    createdBy:"Atlas",
+    createdDate:"27 Jul 2026, 09:14",
+    createdISO:"2026-07-27",
+    modifiedBy:"Aditya",
+    modifiedDate:"11 Sep 2026, 09:48",
+    modifiedISO:"2026-09-11",
+    relative:"54 min ago",
+    prds:5,
+    canonical:true
+  },
+  {
+    id:"increment-03",
+    base:"Master",
+    name:"Increment 03",
+    status:"Review",
+    statusClass:"review",
+    createdBy:"Aditya",
+    createdDate:"9 Sep 2026, 14:32",
+    createdISO:"2026-09-09",
+    modifiedBy:"Raka",
+    modifiedDate:"11 Sep 2026, 10:28",
+    modifiedISO:"2026-09-11",
+    relative:"14 min ago",
+    prds:3
+  },
+  {
+    id:"payment-correction",
+    base:"Master",
+    name:"Payment reconciliation correction",
+    status:"Needs review",
+    statusClass:"needs-review",
+    createdBy:"Raka",
+    createdDate:"10 Sep 2026, 16:08",
+    createdISO:"2026-09-10",
+    modifiedBy:"Sari",
+    modifiedDate:"11 Sep 2026, 10:18",
+    modifiedISO:"2026-09-11",
+    relative:"24 min ago",
+    prds:1
+  },
+  {
+    id:"document-readiness",
+    base:"Master",
+    name:"Document readiness addendum",
+    status:"Draft",
+    statusClass:"draft",
+    createdBy:"Sari",
+    createdDate:"10 Sep 2026, 11:26",
+    createdISO:"2026-09-10",
+    modifiedBy:"Sari",
+    modifiedDate:"11 Sep 2026, 09:41",
+    modifiedISO:"2026-09-11",
+    relative:"1h ago",
+    prds:2
+  },
+  {
+    id:"refund-rules",
+    base:"Increment 03",
+    name:"Refund rules PRD-04",
+    status:"Processing",
+    statusClass:"processing",
+    createdBy:"Aditya",
+    createdDate:"11 Sep 2026, 10:31",
+    createdISO:"2026-09-11",
+    modifiedBy:"Aditya",
+    modifiedDate:"11 Sep 2026, 10:41",
+    modifiedISO:"2026-09-11",
+    relative:"Now",
+    prds:1
+  }
+];
+
+const initials = n => n === "Atlas" ? "AT" : n.split(/\s+/).map(x=>x[0]).join("").slice(0,2).toUpperCase();
+
+function rowTemplate(w, isActive){
+  return `
+    <button class="workspace-row ${isActive ? "active-row" : ""}" data-id="${w.id}">
+      <div class="row-main">
+        <div class="row-title">
+          <strong>${w.name}</strong>
+          <span class="status ${w.statusClass}">${w.status}</span>
+        </div>
+        ${w.base ? `
+          <div class="base-meta">
+            <span class="base-label">Base</span>
+            <span class="base-name">${w.base}</span>
+          </div>
+        ` : ""}
+        <div class="audit-grid">
+          <div class="audit-block">
+            <div class="audit-label">Created</div>
+            <div class="person">
+              <div class="avatar">${initials(w.createdBy)}</div>
+              <div class="person-copy">
+                <b>${w.createdBy}</b>
+                <span>${w.createdDate}</span>
+              </div>
+            </div>
+          </div>
+          <div class="audit-block">
+            <div class="audit-label">Last modified</div>
+            <div class="person">
+              <div class="avatar">${initials(w.modifiedBy)}</div>
+              <div class="person-copy">
+                <b>${w.modifiedBy}</b>
+                <span>${w.modifiedDate}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row-side">
+        <span class="prd-count">${w.prds} PRD${w.prds === 1 ? "" : "s"}</span>
+        <span class="relative">${w.relative}</span>
+      </div>
+    </button>
+  `;
+}
+
+function matches(w){
+  const hay = `${w.name} ${w.status} ${w.base || ""} ${w.createdBy} ${w.modifiedBy} ${w.prds} PRD`.toLowerCase();
+  const q = search.trim().toLowerCase();
+
+  if(q && !hay.includes(q)) return false;
+
+  if(selectedUsers.size){
+    const userMatch = selectedUsers.has(w.createdBy) || selectedUsers.has(w.modifiedBy);
+    if(!userMatch) return false;
+  }
+
+  if(selectedStatuses.size && !selectedStatuses.has(w.status)) return false;
+
+  if(createdFrom && w.createdISO < createdFrom) return false;
+  if(createdThru && w.createdISO > createdThru) return false;
+  if(modifiedFrom && w.modifiedISO < modifiedFrom) return false;
+  if(modifiedThru && w.modifiedISO > modifiedThru) return false;
+
+  return true;
+}
+
+function render(){
+  const selected = workspaces.find(w=>w.id===selectedId);
+
+  const published = workspaces.filter(w=>w.canonical && matches(w));
+  const active = selected && !selected.canonical && matches(selected) ? [selected] : [];
+  const others = workspaces.filter(w=>!w.canonical && w.id!==selectedId && matches(w));
+
+  document.getElementById("publishedList").innerHTML = published.map(w=>rowTemplate(w, selectedId===w.id)).join("");
+  document.getElementById("activeList").innerHTML = active.map(w=>rowTemplate(w, true)).join("");
+  document.getElementById("otherList").innerHTML = others.map(w=>rowTemplate(w, false)).join("");
+
+  document.getElementById("publishedSection").classList.toggle("empty", published.length===0);
+  document.getElementById("activeSection").classList.toggle("empty", active.length===0);
+  document.getElementById("otherSection").classList.toggle("empty", others.length===0);
+
+  const visibleCount = published.length + active.length + others.length;
+  document.getElementById("emptyResults").classList.toggle("show", visibleCount === 0);
+
+  document.querySelectorAll(".workspace-row").forEach(btn=>{
+    btn.addEventListener("click",()=>selectWorkspace(btn.dataset.id));
+  });
+}
+
+function selectWorkspace(id){
+  selectedId = id;
+  const w = workspaces.find(x=>x.id===id);
+  updateSelected(w);
+  render();
+  showToast(`Switched to ${w.name}`);
+}
+
+function updateSelected(w){
+  document.getElementById("triggerName").textContent = w.name;
+  document.getElementById("triggerMeta").textContent = `${w.status} · modified ${w.relative}`;
+  document.getElementById("pageWorkspace").textContent = w.name;
+  document.getElementById("pageStatus").textContent = w.status;
+  document.getElementById("pagePrds").textContent = w.prds;
+  document.getElementById("pageModified").textContent = w.relative;
+  document.getElementById("identityWorkspace").textContent = w.name;
+  document.getElementById("identityBase").textContent = w.base || "—";
+  document.getElementById("identityCreated").textContent = `${w.createdBy} · ${w.createdDate}`;
+  document.getElementById("identityModified").textContent = `${w.modifiedBy} · ${w.modifiedDate}`;
+  document.getElementById("identityStatus").textContent = w.status;
+}
+
+const switcher = document.getElementById("workspaceSwitcher");
+const trigger = document.getElementById("workspaceTrigger");
+trigger.addEventListener("click",()=>{
+  const isHidden = switcher.hasAttribute("hidden");
+  if(isHidden) switcher.removeAttribute("hidden"); else switcher.setAttribute("hidden","");
+  trigger.setAttribute("aria-expanded",String(isHidden));
+});
+
+document.getElementById("workspaceSearch").addEventListener("input",e=>{
+  search = e.target.value;
+  render();
+});
+
+const uniqueUsers = [...new Set(workspaces.flatMap(w => [w.createdBy, w.modifiedBy]))]
+  .sort((a,b) => a === "Atlas" ? 1 : b === "Atlas" ? -1 : a.localeCompare(b));
+const uniqueStatuses = [...new Set(workspaces.map(w => w.status))];
+
+function optionAvatar(name){
+  if(name === "Atlas") return `<span class="system-mark">AT</span>`;
+  return `<span class="avatar">${initials(name)}</span>`;
+}
+
+document.getElementById("usersFilterOptions").innerHTML = uniqueUsers.map(name => `
+  <label class="check-row">
+    <input type="checkbox" value="${name}" data-user-option />
+    <span class="check-copy">${optionAvatar(name)}<span>${name}</span></span>
+  </label>
+`).join("");
+
+document.getElementById("statusFilterOptions").innerHTML = uniqueStatuses.map(status => {
+  const w = workspaces.find(item => item.status === status);
+  return `
+    <label class="check-row">
+      <input type="checkbox" value="${status}" data-status-option />
+      <span class="status ${w.statusClass}">${status}</span>
+    </label>
+  `;
+}).join("");
+
+function setFilterButtonState(buttonId, countId, count){
+  const button = document.getElementById(buttonId);
+  const badge = document.getElementById(countId);
+  button.classList.toggle("active", count > 0);
+  badge.hidden = count === 0;
+  badge.textContent = count;
+}
+
+function updateFilterUI(){
+  setFilterButtonState("usersFilterBtn","usersFilterCount",selectedUsers.size);
+  setFilterButtonState("statusFilterBtn","statusFilterCount",selectedStatuses.size);
+
+  const createdCount = Number(Boolean(createdFrom)) + Number(Boolean(createdThru));
+  const modifiedCount = Number(Boolean(modifiedFrom)) + Number(Boolean(modifiedThru));
+  setFilterButtonState("createdFilterBtn","createdFilterCount",createdCount);
+  setFilterButtonState("modifiedFilterBtn","modifiedFilterCount",modifiedCount);
+
+  const hasFilters = selectedUsers.size || selectedStatuses.size || createdCount || modifiedCount;
+  document.getElementById("clearAllFilters").classList.toggle("show", Boolean(hasFilters));
+}
+
+function closeFilterMenus(exceptId = null){
+  document.querySelectorAll(".filter-menu").forEach(menu => {
+    if(menu.id !== exceptId) menu.hidden = true;
+  });
+  document.querySelectorAll(".filter-button").forEach(btn => {
+    if(btn.getAttribute("aria-controls") !== exceptId) btn.setAttribute("aria-expanded","false");
+  });
+}
+
+document.querySelectorAll(".filter-button").forEach(btn => {
+  btn.addEventListener("click", e => {
+    e.stopPropagation();
+    const menuId = btn.getAttribute("aria-controls");
+    const menu = document.getElementById(menuId);
+    const willOpen = menu.hidden;
+    closeFilterMenus(willOpen ? menuId : null);
+    menu.hidden = !willOpen;
+    btn.setAttribute("aria-expanded", String(willOpen));
+  });
+});
+
+document.querySelectorAll("[data-user-option]").forEach(input => {
+  input.addEventListener("change", () => {
+    input.checked ? selectedUsers.add(input.value) : selectedUsers.delete(input.value);
+    updateFilterUI();
+    render();
+  });
+});
+
+document.querySelectorAll("[data-status-option]").forEach(input => {
+  input.addEventListener("change", () => {
+    input.checked ? selectedStatuses.add(input.value) : selectedStatuses.delete(input.value);
+    updateFilterUI();
+    render();
+  });
+});
+
+function syncDateFilters(){
+  createdFrom = document.getElementById("createdFrom").value;
+  createdThru = document.getElementById("createdThru").value;
+  modifiedFrom = document.getElementById("modifiedFrom").value;
+  modifiedThru = document.getElementById("modifiedThru").value;
+  updateFilterUI();
+  render();
+}
+
+["createdFrom","createdThru","modifiedFrom","modifiedThru"].forEach(id => {
+  document.getElementById(id).addEventListener("change", syncDateFilters);
+});
+
+document.querySelectorAll("[data-clear]").forEach(btn => {
+  btn.addEventListener("click", e => {
+    e.stopPropagation();
+    const target = btn.dataset.clear;
+
+    if(target === "users"){
+      selectedUsers.clear();
+      document.querySelectorAll("[data-user-option]").forEach(i => i.checked = false);
+    }
+    if(target === "status"){
+      selectedStatuses.clear();
+      document.querySelectorAll("[data-status-option]").forEach(i => i.checked = false);
+    }
+    if(target === "created"){
+      document.getElementById("createdFrom").value = "";
+      document.getElementById("createdThru").value = "";
+      createdFrom = "";
+      createdThru = "";
+    }
+    if(target === "modified"){
+      document.getElementById("modifiedFrom").value = "";
+      document.getElementById("modifiedThru").value = "";
+      modifiedFrom = "";
+      modifiedThru = "";
+    }
+
+    updateFilterUI();
+    render();
+  });
+});
+
+document.getElementById("clearAllFilters").addEventListener("click", () => {
+  selectedUsers.clear();
+  selectedStatuses.clear();
+  createdFrom = "";
+  createdThru = "";
+  modifiedFrom = "";
+  modifiedThru = "";
+
+  document.querySelectorAll("[data-user-option],[data-status-option]").forEach(i => i.checked = false);
+  ["createdFrom","createdThru","modifiedFrom","modifiedThru"].forEach(id => {
+    document.getElementById(id).value = "";
+  });
+
+  updateFilterUI();
+  render();
+});
+
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape" && !switcher.hasAttribute("hidden")){
+    const openMenu = [...document.querySelectorAll(".filter-menu")].find(menu => !menu.hidden);
+    if(openMenu){
+      closeFilterMenus();
+      return;
+    }
+    switcher.setAttribute("hidden","");
+    trigger.setAttribute("aria-expanded","false");
+    trigger.focus();
+  }
+});
+
+document.addEventListener("click",e=>{
+  if(!e.target.closest(".filter-wrap")) closeFilterMenus();
+  if(!switcher.contains(e.target) && !trigger.contains(e.target) && !switcher.hasAttribute("hidden")){
+    switcher.setAttribute("hidden","");
+    trigger.setAttribute("aria-expanded","false");
+  }
+});
+
+document.getElementById("newWorkspaceBtn").addEventListener("click",()=>showToast("New workspace action"));
+function showToast(text){
+  const t=document.getElementById("toast");
+  t.textContent=text;t.classList.add("show");
+  clearTimeout(window.__toast);
+  window.__toast=setTimeout(()=>t.classList.remove("show"),1500);
+}
+
+updateFilterUI();
+render();
+updateSelected(workspaces.find(w=>w.id===selectedId));
+</script>
+</body>
+</html>

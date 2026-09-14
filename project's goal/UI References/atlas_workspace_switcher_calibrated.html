@@ -343,6 +343,31 @@
     .menu-title strong { font-size: 14px; }
     .menu-title small { color: var(--muted); font-size: 10.5px; }
 
+    .menu-close {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      color: var(--muted);
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .menu-close:hover {
+      color: var(--ink);
+      background: var(--surface-hover);
+      border-color: var(--line);
+    }
+
+    .menu-close:focus-visible {
+      outline: 2px solid var(--forest-strong);
+      outline-offset: 2px;
+    }
+
     .workspace-search {
       height: 38px;
       display: flex;
@@ -457,13 +482,6 @@
     .row-title strong {
       font-size: 12.5px;
       line-height: 1.2;
-    }
-
-    .workspace-row p {
-      color: var(--muted);
-      font-size: 10.5px;
-      line-height: 1.45;
-      margin: 0;
     }
 
     .row-meta {
@@ -815,17 +833,6 @@
       line-height: 1.55;
     }
 
-    .kbd {
-      display: inline-block;
-      padding: 1px 5px;
-      border: 1px solid #44444b;
-      border-bottom-width: 2px;
-      border-radius: 5px;
-      background: #242428;
-      color: #d5d5dc;
-      font-size: 9px;
-    }
-
     .toast {
       position: fixed;
       right: 18px;
@@ -893,6 +900,460 @@
 
       .workspace-groups { max-height: calc(100vh - 260px); }
     }
+
+    /* Audit-focused workspace switcher layout */
+    #workspaceMenu {
+      width: 660px;
+      max-width: min(660px, calc(100vw - 32px));
+      max-height: 74vh;
+      border: 1px solid #35353c;
+      border-radius: 14px;
+      background: #151518;
+      box-shadow: 0 24px 60px rgba(0,0,0,.48);
+    }
+
+    #workspaceMenu.open {
+      display: flex;
+      flex-direction: column;
+    }
+
+    #workspaceMenu .switcher-head {
+      flex: 0 0 auto;
+      padding: 14px;
+      border-bottom: 1px solid #27272e;
+    }
+
+    #workspaceMenu .switcher-title {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    #workspaceMenu .switcher-title strong { font-size: 13px; }
+    #workspaceMenu .switcher-title > span { color: #7d7d88; font-size: 11px; }
+
+    #workspaceMenu .menu-close {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    #workspaceMenu .menu-close:hover {
+      color: var(--ink);
+      background: var(--surface-hover);
+      border-color: var(--line);
+    }
+
+    #workspaceMenu .menu-close:focus-visible {
+      outline: 2px solid var(--forest-strong);
+      outline-offset: 2px;
+    }
+
+    #workspaceMenu .search {
+      width: 100%;
+      max-width: none;
+      height: 38px;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      color: var(--muted);
+      background: #101012;
+    }
+
+    #workspaceMenu .search input {
+      width: 100%;
+      border: 0;
+      outline: 0;
+      color: var(--ink);
+      background: transparent;
+      font-size: 12px;
+    }
+
+    #workspaceMenu .search input::placeholder { color: #686872; }
+
+    #workspaceMenu .filterbar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    #workspaceMenu .filter-wrap { position: relative; }
+
+    #workspaceMenu .filter-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 26px;
+      padding: 5px 8px;
+      color: var(--muted);
+      background: #17171b;
+      border: 1px solid #30303a;
+      border-radius: 7px;
+      font-size: 10px;
+      cursor: pointer;
+    }
+
+    #workspaceMenu .filter-button:hover,
+    #workspaceMenu .filter-button.active {
+      color: var(--ink);
+      background: #1d1d22;
+      border-color: #4b4a6f;
+    }
+
+    #workspaceMenu .filter-button .caret { color: #7d7d88; font-size: 9px; }
+
+    #workspaceMenu .filter-menu {
+      position: absolute;
+      left: 0;
+      top: calc(100% + 6px);
+      z-index: 90;
+      min-width: 220px;
+      padding: 10px;
+      border: 1px solid #3b3b43;
+      border-radius: 10px;
+      background: #1d1d21;
+      box-shadow: 0 18px 40px rgba(0,0,0,.42);
+    }
+
+    #workspaceMenu .filter-menu[hidden] { display: none; }
+    #workspaceMenu .filter-menu.date-menu { min-width: 278px; }
+
+    #workspaceMenu .filter-menu-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-bottom: 8px;
+      color: var(--muted);
+      border-bottom: 1px solid #30303a;
+      font-size: 10px;
+    }
+
+    #workspaceMenu .menu-clear {
+      padding: 3px 5px;
+      color: var(--forest-strong);
+      background: transparent;
+      font-size: 10px;
+    }
+
+    #workspaceMenu .menu-clear:hover { color: var(--ink); }
+
+    #workspaceMenu .check-list { display: grid; gap: 2px; padding-top: 7px; }
+
+    #workspaceMenu .check-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px;
+      color: var(--ink);
+      border-radius: 6px;
+      font-size: 10px;
+    }
+
+    #workspaceMenu .check-row:hover { background: #202025; }
+    #workspaceMenu .check-row input { margin: 0; accent-color: var(--forest); }
+    #workspaceMenu .check-copy { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    #workspaceMenu .check-row .avatar,
+    #workspaceMenu .check-row .system-mark {
+      width: 22px;
+      height: 22px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: #30303b;
+      color: #d8d7ff;
+      font-size: 8px;
+      font-weight: 800;
+    }
+
+    #workspaceMenu .check-row .system-mark {
+      border-radius: 7px;
+      background: var(--mint);
+      color: var(--forest-strong);
+    }
+
+    #workspaceMenu .date-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding-top: 8px; }
+    #workspaceMenu .date-field { display: grid; gap: 5px; }
+    #workspaceMenu .date-field label { color: #7d7d88; font-size: 10px; }
+    #workspaceMenu .date-field input {
+      width: 100%;
+      min-width: 0;
+      height: 34px;
+      padding: 0 8px;
+      color: var(--ink);
+      color-scheme: dark;
+      background: #101012;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font-size: 11px;
+    }
+
+    #workspaceMenu .clear-all {
+      display: none;
+      align-items: center;
+      min-height: 26px;
+      padding: 5px 8px;
+      color: var(--warning-ink);
+      background: transparent;
+      border: 1px solid var(--warning-border);
+      border-radius: 7px;
+      font-size: 10px;
+    }
+
+    #workspaceMenu .clear-all.show { display: inline-flex; }
+
+    #workspaceMenu .filter-count {
+      min-width: 15px;
+      padding: 1px 4px;
+      border-radius: 999px;
+      color: #d8d7ff;
+      background: #35335b;
+      font-size: 9px;
+      text-align: center;
+    }
+
+    #workspaceMenu .switcher-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      max-height: none;
+      overflow: auto;
+      padding: 0 8px 8px;
+    }
+
+    #workspaceMenu .empty-results {
+      display: none;
+      padding: 28px 12px;
+      color: var(--muted);
+      font-size: 11px;
+      text-align: center;
+    }
+
+    #workspaceMenu .empty-results.show { display: block; }
+    #workspaceMenu .section { padding: 9px 4px 6px; }
+    #workspaceMenu .section + .section { margin-top: 4px; }
+
+    #workspaceMenu .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 2px 8px;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+    }
+
+    #workspaceMenu .section-title::after {
+      height: 1px;
+      flex: 1;
+      background: #27272e;
+      content: "";
+    }
+
+    #workspaceMenu .section.empty { display: none; }
+
+    #workspaceMenu .workspace-row {
+      width: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: start;
+      padding: 12px;
+      margin: 0 0 7px;
+      color: var(--ink);
+      text-align: left;
+      border: 1px solid #2f2f37;
+      border-radius: 10px;
+      background: #18181c;
+      transition: .14s ease;
+    }
+
+    #workspaceMenu .workspace-row:hover,
+    #workspaceMenu .workspace-row:focus-visible {
+      border-color: #51516a;
+      background: #1d1d22;
+    }
+
+    #workspaceMenu .workspace-row:focus-visible {
+      outline: 2px solid var(--forest);
+      outline-offset: 1px;
+    }
+
+    #workspaceMenu .workspace-row.current {
+      border-color: var(--forest);
+      background: color-mix(in srgb, var(--mint) 72%, #18181c);
+    }
+
+    #workspaceMenu .row-main { min-width: 0; }
+    #workspaceMenu .row-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
+
+    #workspaceMenu .row-title strong {
+      min-width: 0;
+      overflow: hidden;
+      color: var(--ink);
+      font-size: 13px;
+      line-height: 1.2;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    #workspaceMenu .base-meta {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 9px;
+      color: var(--muted);
+      font-size: 9px;
+    }
+
+    #workspaceMenu .base-meta .base-label,
+    #workspaceMenu .audit-label {
+      color: #777781;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
+
+    #workspaceMenu .base-meta .base-name { color: #c7c6d4; font-weight: 700; }
+
+    #workspaceMenu .status {
+      display: inline-flex;
+      align-items: center;
+      flex: 0 0 auto;
+      padding: 3px 6px;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      font-size: 9px;
+      font-weight: 800;
+      line-height: 1.1;
+      white-space: nowrap;
+    }
+
+    #workspaceMenu .status.published { color: var(--success-ink); background: var(--success-bg); border-color: var(--success-border); }
+    #workspaceMenu .status.review { color: var(--warning-ink); background: var(--warning-bg); border-color: var(--warning-border); }
+    #workspaceMenu .status.needs-review { color: var(--warning-ink); background: var(--warning-bg); border-color: var(--warning-border); }
+    #workspaceMenu .status.processing { color: var(--info-ink); background: var(--info-bg); border-color: var(--info-border); }
+    #workspaceMenu .status.draft { color: #c7c8cf; background: #25262b; border-color: #41434a; }
+
+    #workspaceMenu .audit-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 22px;
+      margin-top: 14px;
+      padding-top: 11px;
+      border-top: 1px solid #30303a;
+    }
+
+    #workspaceMenu .audit-block { min-width: 0; }
+    #workspaceMenu .audit-label { margin-bottom: 5px; }
+    #workspaceMenu .person { display: flex; align-items: center; gap: 7px; min-width: 0; }
+
+    #workspaceMenu .person .avatar {
+      width: 23px;
+      height: 23px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: #30303b;
+      color: #dedcff;
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    #workspaceMenu .person .system-mark {
+      width: 23px;
+      height: 23px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 7px;
+      background: var(--mint);
+      color: var(--forest-strong);
+      font-size: 8px;
+      font-weight: 800;
+    }
+
+    #workspaceMenu .person-copy { min-width: 0; }
+    #workspaceMenu .person-copy b { display: block; overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+    #workspaceMenu .person-copy span { display: block; overflow: hidden; margin-top: 1px; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+
+    #workspaceMenu .row-side {
+      min-width: 74px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    #workspaceMenu .prd-count { color: #d5d5dc; font-size: 11px; }
+    #workspaceMenu .relative { color: #7d7d88; font-size: 10px; }
+
+    #workspaceMenu .switcher-foot {
+      flex: 0 0 auto;
+      min-height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-top: 1px solid #27272e;
+      background: #131316;
+    }
+
+    #workspaceMenu .switcher-foot span { color: #7d7d88; font-size: 10px; }
+
+    #workspaceMenu .new-btn {
+      flex: 0 0 auto;
+      padding: 8px 10px;
+      color: #d7d6ff;
+      background: #23223a;
+      border: 1px solid #48466d;
+      border-radius: 9px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    #workspaceMenu .new-btn:hover { background: #2d2b4a; }
+
+    @media (max-width: 980px) {
+      #workspaceMenu { width: 620px; }
+    }
+
+    @media (max-width: 760px) {
+      #workspaceMenu {
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        top: 76px;
+        width: auto;
+        max-width: none;
+        max-height: none;
+      }
+
+      #workspaceMenu .switcher-body { max-height: calc(100vh - 286px); }
+      #workspaceMenu .audit-grid { grid-template-columns: 1fr; gap: 12px; }
+      #workspaceMenu .workspace-row { padding: 12px; margin-bottom: 7px; }
+    }
   </style>
 </head>
 <body>
@@ -940,212 +1401,121 @@
                 <strong id="triggerName">Increment 03</strong>
                 <span class="tiny-chip chip-review" id="triggerStatus">Review</span>
               </span>
-              <small id="triggerMeta">HEAD rev-safara-increment-003 - 1 staged change</small>
+        <small id="triggerMeta">modified 14 min ago</small>
             </span>
             <svg class="chevron" fill="none" viewBox="0 0 16 16"><path d="m5 6 3 3 3-3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/></svg>
           </button>
 
           <section class="menu" id="workspaceMenu" aria-label="Workspace switcher">
-            <div class="menu-head">
-              <div class="menu-title">
-                <div>
-                  <strong>Switch workspace</strong>
-                  <small>Safara / branch-relative truth</small>
-                </div>
-                <small><span class="kbd">Esc</span> to close</small>
+            <div class="switcher-head">
+              <div class="switcher-title">
+                <strong>Switch workspace</strong>
+                <span>Safara</span>
+                <button class="menu-close" id="workspaceMenuClose" type="button" aria-label="Close workspace switcher">&times;</button>
               </div>
 
-              <label class="workspace-search">
+              <label class="search" aria-label="Search workspaces">
                 <svg width="15" height="15" aria-hidden="true" fill="none" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="5.8" stroke="currentColor" stroke-width="1.8"/><path d="m15.2 15.2 4 4" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/></svg>
-                <input id="workspaceSearch" placeholder="Search workspace, owner, HEAD, or PRD..." type="search" autocomplete="off">
+                <input id="workspaceSearch" placeholder="Search workspace, creator, modifier, or PRD..." type="search" autocomplete="off">
               </label>
 
-              <div class="filter-row" role="tablist" aria-label="Workspace filters">
-                <button class="filter-btn active" type="button" data-filter="all">All</button>
-                <button class="filter-btn" type="button" data-filter="mine">Mine</button>
-                <button class="filter-btn" type="button" data-filter="review">Needs review</button>
-                <button class="filter-btn" type="button" data-filter="published">Published</button>
+              <div class="filterbar" aria-label="Workspace filters">
+                <div class="filter-wrap">
+                  <button class="filter-button" id="usersFilterBtn" type="button" aria-expanded="false" aria-controls="usersFilterMenu">
+                    <span>Users</span><span id="usersFilterCount" class="filter-count" hidden>0</span><span class="caret">⌄</span>
+                  </button>
+                  <div class="filter-menu" id="usersFilterMenu" hidden>
+                    <div class="filter-menu-head">
+                      <span>Creator or last modifier</span>
+                      <button class="menu-clear" type="button" data-clear="users">Clear</button>
+                    </div>
+                    <div class="check-list" id="usersFilterOptions"></div>
+                  </div>
+                </div>
+
+                <div class="filter-wrap">
+                  <button class="filter-button" id="statusFilterBtn" type="button" aria-expanded="false" aria-controls="statusFilterMenu">
+                    <span>Status</span><span id="statusFilterCount" class="filter-count" hidden>0</span><span class="caret">⌄</span>
+                  </button>
+                  <div class="filter-menu" id="statusFilterMenu" hidden>
+                    <div class="filter-menu-head">
+                      <span>Workspace status</span>
+                      <button class="menu-clear" type="button" data-clear="status">Clear</button>
+                    </div>
+                    <div class="check-list" id="statusFilterOptions"></div>
+                  </div>
+                </div>
+
+                <div class="filter-wrap">
+                  <button class="filter-button" id="createdFilterBtn" type="button" aria-expanded="false" aria-controls="createdFilterMenu">
+                    <span>Created date</span><span id="createdFilterCount" class="filter-count" hidden>0</span><span class="caret">⌄</span>
+                  </button>
+                  <div class="filter-menu date-menu" id="createdFilterMenu" hidden>
+                    <div class="filter-menu-head">
+                      <span>Created date</span>
+                      <button class="menu-clear" type="button" data-clear="created">Clear</button>
+                    </div>
+                    <div class="date-grid">
+                      <div class="date-field">
+                        <label for="createdFrom">From</label>
+                        <input id="createdFrom" type="date">
+                      </div>
+                      <div class="date-field">
+                        <label for="createdThru">Thru</label>
+                        <input id="createdThru" type="date">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="filter-wrap">
+                  <button class="filter-button" id="modifiedFilterBtn" type="button" aria-expanded="false" aria-controls="modifiedFilterMenu">
+                    <span>Modified date</span><span id="modifiedFilterCount" class="filter-count" hidden>0</span><span class="caret">⌄</span>
+                  </button>
+                  <div class="filter-menu date-menu" id="modifiedFilterMenu" hidden>
+                    <div class="filter-menu-head">
+                      <span>Modified date</span>
+                      <button class="menu-clear" type="button" data-clear="modified">Clear</button>
+                    </div>
+                    <div class="date-grid">
+                      <div class="date-field">
+                        <label for="modifiedFrom">From</label>
+                        <input id="modifiedFrom" type="date">
+                      </div>
+                      <div class="date-field">
+                        <label for="modifiedThru">Thru</label>
+                        <input id="modifiedThru" type="date">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <button class="clear-all" id="clearAllFilters" type="button">Clear filters</button>
               </div>
             </div>
 
-            <div class="workspace-groups">
-              <div class="group-label">Published truth</div>
+            <div id="workspaceBody" class="switcher-body">
+              <div id="emptyResults" class="empty-results">No workspaces match these filters.</div>
 
-              <button class="workspace-row"
-                      type="button"
-                      data-id="master"
-                      data-name="Master - Increment 02"
-                      data-owner="Atlas"
-                      data-filter-tags="published"
-                      data-status="Published"
-                      data-head="rev-safara-master-002"
-                      data-facts="85"
-                      data-prds="2"
-                      data-staged="0"
-                      data-description="Accepted current truth through Increment 02. Stable base for new workspaces.">
-                <span class="branch-glyph">
-                  <svg fill="none" viewBox="0 0 24 24"><circle cx="7" cy="5" r="2" stroke="currentColor" stroke-width="1.7"/><circle cx="17" cy="19" r="2" stroke="currentColor" stroke-width="1.7"/><path d="M7 7v5c0 3 2 5 5 5h3M17 17V8" stroke="currentColor" stroke-linecap="round" stroke-width="1.7"/></svg>
-                </span>
-                <span class="workspace-row-copy">
-                  <span class="row-title">
-                    <strong>Master - Increment 02</strong>
-                    <span class="tiny-chip chip-published">Published</span>
-                  </span>
-                  <p>Accepted current truth through Increment 02. Stable base for new workspaces.</p>
-                  <span class="row-meta">
-                    <span class="owner"><span class="owner-dot">A</span>Atlas</span>
-                    <code>rev-safara-master-002</code>
-                    <span>85 current facts</span>
-                  </span>
-                </span>
-                <span class="row-side">
-                  <span>2 PRDs</span>
-                  <span>Base</span>
-                </span>
-              </button>
+              <section id="publishedSection" class="section">
+                <div class="section-title">Published truth</div>
+                <div id="publishedList"></div>
+              </section>
 
-              <div class="group-label">Active workspaces</div>
+              <section id="activeSection" class="section">
+                <div class="section-title">Active workspace</div>
+                <div id="activeList"></div>
+              </section>
 
-              <button class="workspace-row current"
-                      type="button"
-                      data-id="increment03"
-                      data-name="Increment 03"
-                      data-owner="Aditya"
-                      data-filter-tags="mine review"
-                      data-status="Review"
-                      data-head="rev-safara-increment-003"
-                      data-facts="133"
-                      data-prds="3"
-                      data-staged="1"
-                      data-description="PRD 03 adds manifest, reporting, audit, and delivery acceptance to the accepted base.">
-                <span class="branch-glyph">
-                  <svg fill="none" viewBox="0 0 24 24"><circle cx="7" cy="5" r="2" stroke="currentColor" stroke-width="1.7"/><circle cx="17" cy="19" r="2" stroke="currentColor" stroke-width="1.7"/><path d="M7 7v5c0 3 2 5 5 5h3M17 17V8" stroke="currentColor" stroke-linecap="round" stroke-width="1.7"/></svg>
-                </span>
-                <span class="workspace-row-copy">
-                  <span class="row-title">
-                    <strong>Increment 03</strong>
-                    <span class="tiny-chip chip-review">Review</span>
-                    <span class="tiny-chip chip-staged">1 staged</span>
-                  </span>
-                  <p>PRD 03 adds manifest, reporting, audit, and delivery acceptance to the accepted base.</p>
-                  <span class="row-meta">
-                    <span class="owner"><span class="owner-dot">AI</span>Aditya</span>
-                    <code>rev-safara-increment-003</code>
-                    <span>133 current facts</span>
-                  </span>
-                </span>
-                <span class="row-side">
-                  <span>3 PRDs</span>
-                  <span>Current</span>
-                </span>
-              </button>
-
-              <div class="group-label">Concurrency examples - UI demo only</div>
-
-              <button class="workspace-row"
-                      type="button"
-                      data-id="paymentCorrection"
-                      data-name="Payment reconciliation correction"
-                      data-owner="Dimas"
-                      data-filter-tags="review"
-                      data-status="Review"
-                      data-head="draft-head-104"
-                      data-facts="-"
-                      data-prds="1"
-                      data-staged="3"
-                      data-description="Example of another user's isolated correction branch based on Master.">
-                <span class="branch-glyph">
-                  <svg fill="none" viewBox="0 0 24 24"><circle cx="7" cy="5" r="2" stroke="currentColor" stroke-width="1.7"/><circle cx="17" cy="19" r="2" stroke="currentColor" stroke-width="1.7"/><path d="M7 7v5c0 3 2 5 5 5h3M17 17V8" stroke="currentColor" stroke-linecap="round" stroke-width="1.7"/></svg>
-                </span>
-                <span class="workspace-row-copy">
-                  <span class="row-title">
-                    <strong>Payment reconciliation correction</strong>
-                    <span class="tiny-chip chip-review">Needs review</span>
-                    <span class="tiny-chip chip-staged">3 staged</span>
-                  </span>
-                  <p>Example of another user's isolated correction branch based on Master.</p>
-                  <span class="row-meta">
-                    <span class="owner"><span class="owner-dot">DM</span>Dimas</span>
-                    <code>draft-head-104</code>
-                    <span>Base: Master</span>
-                  </span>
-                </span>
-                <span class="row-side">
-                  <span>1 PRD</span>
-                  <span>14m ago</span>
-                </span>
-              </button>
-
-              <button class="workspace-row"
-                      type="button"
-                      data-id="documentReadiness"
-                      data-name="Document readiness addendum"
-                      data-owner="Sari"
-                      data-filter-tags=""
-                      data-status="Draft"
-                      data-head="draft-head-087"
-                      data-facts="-"
-                      data-prds="2"
-                      data-staged="0"
-                      data-description="Example branch still being prepared; no accepted revision has been proposed yet.">
-                <span class="branch-glyph">
-                  <svg fill="none" viewBox="0 0 24 24"><circle cx="7" cy="5" r="2" stroke="currentColor" stroke-width="1.7"/><circle cx="17" cy="19" r="2" stroke="currentColor" stroke-width="1.7"/><path d="M7 7v5c0 3 2 5 5 5h3M17 17V8" stroke="currentColor" stroke-linecap="round" stroke-width="1.7"/></svg>
-                </span>
-                <span class="workspace-row-copy">
-                  <span class="row-title">
-                    <strong>Document readiness addendum</strong>
-                    <span class="tiny-chip chip-draft">Draft</span>
-                  </span>
-                  <p>Example branch still being prepared; no accepted revision has been proposed yet.</p>
-                  <span class="row-meta">
-                    <span class="owner"><span class="owner-dot">SR</span>Sari</span>
-                    <code>draft-head-087</code>
-                    <span>Base: Master</span>
-                  </span>
-                </span>
-                <span class="row-side">
-                  <span>2 PRDs</span>
-                  <span>1h ago</span>
-                </span>
-              </button>
-
-              <button class="workspace-row"
-                      type="button"
-                      data-id="refundRules"
-                      data-name="Refund rules PRD-04"
-                      data-owner="Aditya"
-                      data-filter-tags="mine"
-                      data-status="Processing"
-                      data-head="pending"
-                      data-facts="-"
-                      data-prds="1"
-                      data-staged="0"
-                      data-description="Example newly uploaded PRD branch while Atlas is still building candidate facts.">
-                <span class="branch-glyph">
-                  <svg fill="none" viewBox="0 0 24 24"><circle cx="7" cy="5" r="2" stroke="currentColor" stroke-width="1.7"/><circle cx="17" cy="19" r="2" stroke="currentColor" stroke-width="1.7"/><path d="M7 7v5c0 3 2 5 5 5h3M17 17V8" stroke="currentColor" stroke-linecap="round" stroke-width="1.7"/></svg>
-                </span>
-                <span class="workspace-row-copy">
-                  <span class="row-title">
-                    <strong>Refund rules PRD-04</strong>
-                    <span class="tiny-chip chip-processing">Processing</span>
-                  </span>
-                  <p>Example newly uploaded PRD branch while Atlas is still building candidate facts.</p>
-                  <span class="row-meta">
-                    <span class="owner"><span class="owner-dot">AI</span>Aditya</span>
-                    <code>HEAD pending</code>
-                    <span>Base: Master</span>
-                  </span>
-                </span>
-                <span class="row-side">
-                  <span>1 PRD</span>
-                  <span>Now</span>
-                </span>
-              </button>
+              <section id="otherSection" class="section">
+                <div class="section-title">Other workspaces</div>
+                <div id="otherList"></div>
+              </section>
             </div>
 
-            <footer class="workspace-menu-foot">
-              <p>Workspace identity is the audit boundary. Switching changes the branch-relative current truth shown by Atlas.</p>
-              <button class="create-branch" id="createBranch" type="button">+ New workspace</button>
+            <footer class="switcher-foot">
+              <span>Workspace identity and audit metadata</span>
+              <button class="new-btn" id="createBranch" type="button">+ New workspace</button>
             </footer>
           </section>
         </div>
@@ -1199,7 +1569,7 @@
       <div>
         <p class="eyebrow">Main Workflow</p>
         <h1>Safara operational model</h1>
-        <p>The content below is deliberately branch-relative. The workspace selector changes which accepted HEAD Atlas treats as current truth without replaying every source PRD.</p>
+        <p>The content below is deliberately workspace-relative. The workspace selector changes which accepted HEAD Atlas treats as current truth without replaying every source PRD.</p>
       </div>
       <aside class="head-status">
         <span>Current workspace</span>
@@ -1225,7 +1595,7 @@
         <header class="panel-head">
           <div>
             <strong>Workflow stages</strong>
-            <small>Branch-relative projection</small>
+            <small>Workspace-relative projection</small>
           </div>
           <small id="workflowScope">11 stages at this HEAD</small>
         </header>
@@ -1263,7 +1633,7 @@
           <header class="panel-head"><strong>Workspace identity</strong><small>Audit boundary</small></header>
           <div class="detail-list">
             <div class="detail-row"><span>Project</span><div><strong>Safara</strong><code>projectId: safara</code></div></div>
-            <div class="detail-row"><span>Workspace</span><div><strong id="detailWorkspace">Increment 03</strong><code id="detailWorkspaceId">branch-increment-003</code></div></div>
+            <div class="detail-row"><span>Workspace</span><div><strong id="detailWorkspace">Increment 03</strong><code id="detailWorkspaceId">workspace-increment-003</code></div></div>
             <div class="detail-row"><span>HEAD</span><div><code id="detailHead">rev-safara-increment-003</code></div></div>
             <div class="detail-row"><span>Owner</span><div><strong id="detailOwner">Aditya</strong></div></div>
             <div class="detail-row"><span>Status</span><div><strong id="detailStatus">Review</strong></div></div>
@@ -1283,8 +1653,8 @@
     </div>
 
     <p class="prototype-note">
-      Fixture-backed rows are <strong>Master - Increment 02</strong> and <strong>Increment 03</strong>.
-      The other rows are explicitly demo-only concurrency examples so the selector can be evaluated under the multi-user branch pressure you described.
+      Prototype note: creator/modifier names, dates, and base-workspace relationships are representative audit values used to evaluate the information hierarchy.
+      User and status filters are multi-select. Created and modified dates use inclusive From/Thru ranges. Master has no base workspace; user-created workspaces show the workspace they were created from. The selector intentionally omits descriptions, staged counts, revision/HEAD details, and workspace IDs.
     </p>
   </main>
 </div>
@@ -1298,14 +1668,271 @@
 (function () {
   const trigger = document.getElementById("workspaceTrigger");
   const menu = document.getElementById("workspaceMenu");
+  const menuClose = document.getElementById("workspaceMenuClose");
   const switcher = document.getElementById("workspaceSwitcher");
   const search = document.getElementById("workspaceSearch");
-  const rows = Array.from(document.querySelectorAll(".workspace-row"));
-  const filters = Array.from(document.querySelectorAll(".filter-btn"));
   const toast = document.getElementById("toast");
 
+  let selectedId = "increment03";
+  let searchQuery = "";
   let activeFilter = "all";
+  const selectedUsers = new Set();
+  const selectedStatuses = new Set();
+  let createdFrom = "";
+  let createdThru = "";
+  let modifiedFrom = "";
+  let modifiedThru = "";
   let toastTimer;
+
+  const workspaces = [
+    {
+      id: "master",
+      base: null,
+      name: "Master",
+      status: "Published",
+      statusClass: "published",
+      createdBy: "Atlas",
+      createdDate: "27 Jul 2026, 09:14",
+      createdISO: "2026-07-27",
+      modifiedBy: "Aditya",
+      modifiedDate: "11 Sep 2026, 09:48",
+      modifiedISO: "2026-09-11",
+      relative: "54 min ago",
+      prds: 5,
+      facts: 85,
+      head: "rev-safara-master-002",
+      staged: 0,
+      canonical: true
+    },
+    {
+      id: "increment03",
+      base: "Master",
+      name: "Increment 03",
+      status: "Review",
+      statusClass: "review",
+      createdBy: "Aditya",
+      createdDate: "9 Sep 2026, 14:32",
+      createdISO: "2026-09-09",
+      modifiedBy: "Raka",
+      modifiedDate: "11 Sep 2026, 10:28",
+      modifiedISO: "2026-09-11",
+      relative: "14 min ago",
+      prds: 3,
+      facts: 133,
+      head: "rev-safara-increment-003",
+      staged: 1
+    },
+    {
+      id: "paymentCorrection",
+      base: "Master",
+      name: "Payment reconciliation correction",
+      status: "Needs review",
+      statusClass: "needs-review",
+      createdBy: "Raka",
+      createdDate: "10 Sep 2026, 16:08",
+      createdISO: "2026-09-10",
+      modifiedBy: "Sari",
+      modifiedDate: "11 Sep 2026, 10:18",
+      modifiedISO: "2026-09-11",
+      relative: "24 min ago",
+      prds: 1,
+      facts: null,
+      head: "draft-head-104",
+      staged: 3
+    },
+    {
+      id: "documentReadiness",
+      base: "Master",
+      name: "Document readiness addendum",
+      status: "Draft",
+      statusClass: "draft",
+      createdBy: "Sari",
+      createdDate: "10 Sep 2026, 11:26",
+      createdISO: "2026-09-10",
+      modifiedBy: "Sari",
+      modifiedDate: "11 Sep 2026, 09:41",
+      modifiedISO: "2026-09-11",
+      relative: "1h ago",
+      prds: 2,
+      facts: null,
+      head: "draft-head-087",
+      staged: 0
+    },
+    {
+      id: "refundRules",
+      base: "Increment 03",
+      name: "Refund rules PRD-04",
+      status: "Processing",
+      statusClass: "processing",
+      createdBy: "Aditya",
+      createdDate: "11 Sep 2026, 10:31",
+      createdISO: "2026-09-11",
+      modifiedBy: "Aditya",
+      modifiedDate: "11 Sep 2026, 10:41",
+      modifiedISO: "2026-09-11",
+      relative: "Now",
+      prds: 1,
+      facts: null,
+      head: "pending",
+      staged: 0
+    }
+  ];
+
+  function initials(name) {
+    return name === "Atlas"
+      ? "AT"
+      : name.split(/\s+/).map(function (part) { return part[0]; }).join("").slice(0, 2).toUpperCase();
+  }
+
+  function personTemplate(name, date) {
+    const avatar = name === "Atlas"
+      ? '<div class="system-mark">AT</div>'
+      : '<div class="avatar">' + initials(name) + '</div>';
+
+    return '<div class="person">' +
+      avatar +
+      '<div class="person-copy"><b>' + name + '</b><span>' + date + '</span></div>' +
+    '</div>';
+  }
+
+  function rowTemplate(workspace, isActive) {
+    return '<button class="workspace-row' + (isActive ? ' current' : '') + '" type="button" data-id="' + workspace.id + '">' +
+      '<div class="row-main">' +
+        '<div class="row-title">' +
+          '<strong>' + workspace.name + '</strong>' +
+          '<span class="status ' + workspace.statusClass + '">' + workspace.status + '</span>' +
+        '</div>' +
+        (workspace.base
+          ? '<div class="base-meta"><span class="base-label">Base</span><span class="base-name">' + workspace.base + '</span></div>'
+          : "") +
+        '<div class="audit-grid">' +
+          '<div class="audit-block"><div class="audit-label">Created</div>' +
+            personTemplate(workspace.createdBy, workspace.createdDate) +
+          '</div>' +
+          '<div class="audit-block"><div class="audit-label">Last modified</div>' +
+            personTemplate(workspace.modifiedBy, workspace.modifiedDate) +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="row-side"><span class="prd-count">' + workspace.prds + ' PRD' + (workspace.prds === 1 ? "" : "s") + '</span><span class="relative">' + workspace.relative + '</span></div>' +
+    '</button>';
+  }
+
+  function matches(workspace) {
+    const haystack = [
+      workspace.name,
+      workspace.status,
+      workspace.base || "",
+      workspace.createdBy,
+      workspace.modifiedBy,
+      workspace.prds + " PRD"
+    ].join(" ").toLowerCase();
+    const query = searchQuery.trim().toLowerCase();
+
+    if (query && !haystack.includes(query)) return false;
+
+    if (selectedUsers.size &&
+        !selectedUsers.has(workspace.createdBy) &&
+        !selectedUsers.has(workspace.modifiedBy)) return false;
+
+    if (selectedStatuses.size && !selectedStatuses.has(workspace.status)) return false;
+    if (createdFrom && workspace.createdISO < createdFrom) return false;
+    if (createdThru && workspace.createdISO > createdThru) return false;
+    if (modifiedFrom && workspace.modifiedISO < modifiedFrom) return false;
+    if (modifiedThru && workspace.modifiedISO > modifiedThru) return false;
+
+    return true;
+  }
+
+  function render() {
+    const selected = workspaces.find(function (workspace) { return workspace.id === selectedId; });
+    const published = workspaces.filter(function (workspace) {
+      return workspace.canonical && matches(workspace);
+    });
+    const active = selected && !selected.canonical && matches(selected) ? [selected] : [];
+    const others = workspaces.filter(function (workspace) {
+      return !workspace.canonical && workspace.id !== selectedId && matches(workspace);
+    });
+
+    document.getElementById("publishedList").innerHTML = published.map(function (workspace) {
+      return rowTemplate(workspace, selectedId === workspace.id);
+    }).join("");
+    document.getElementById("activeList").innerHTML = active.map(function (workspace) {
+      return rowTemplate(workspace, true);
+    }).join("");
+    document.getElementById("otherList").innerHTML = others.map(function (workspace) {
+      return rowTemplate(workspace, false);
+    }).join("");
+
+    document.getElementById("publishedSection").classList.toggle("empty", published.length === 0);
+    document.getElementById("activeSection").classList.toggle("empty", active.length === 0);
+    document.getElementById("otherSection").classList.toggle("empty", others.length === 0);
+    document.getElementById("emptyResults").classList.toggle(
+      "show",
+      published.length + active.length + others.length === 0
+    );
+
+    document.querySelectorAll("#workspaceMenu .workspace-row").forEach(function (row) {
+      row.addEventListener("click", function () { switchWorkspace(row.dataset.id); });
+    });
+  }
+
+  function truthDescription(workspace) {
+    if (workspace.canonical) return "The published workspace contains accepted project truth through Increment 02.";
+    if (workspace.id === "increment03") return "The active workspace contains the current review state for Increment 03.";
+    return "This workspace is an isolated workspace context with its own review state.";
+  }
+
+  function workspaceId(id) {
+    if (id === "master") return "workspace-master";
+    if (id === "increment03") return "workspace-increment-003";
+    return "workspace-" + id;
+  }
+
+  function updateSelected(workspace) {
+    const isFixtureMaster = workspace.id === "master";
+    const isFixtureIncrement = workspace.id === "increment03";
+
+    document.getElementById("triggerName").textContent = workspace.name;
+    const triggerStatus = document.getElementById("triggerStatus");
+    triggerStatus.textContent = workspace.status;
+    triggerStatus.className = "tiny-chip " + (
+      workspace.status === "Published" ? "chip-published" :
+      workspace.status === "Review" ? "chip-review" :
+      workspace.status === "Processing" ? "chip-processing" : "chip-draft"
+    );
+      document.getElementById("triggerMeta").textContent =
+        "modified " + workspace.relative;
+
+    document.getElementById("headWorkspace").textContent = workspace.name;
+    document.getElementById("headRevision").textContent = "HEAD " + workspace.head;
+    document.getElementById("truthTitle").textContent = "You are viewing " + workspace.name + " current truth";
+    document.getElementById("truthDescription").textContent = truthDescription(workspace);
+    document.getElementById("factCount").textContent = workspace.facts === null ? "--" : workspace.facts;
+    document.getElementById("prdCount").textContent = workspace.prds;
+    document.getElementById("stagedCount").textContent = workspace.staged;
+
+    document.getElementById("detailWorkspace").textContent = workspace.name;
+    document.getElementById("detailWorkspaceId").textContent = workspaceId(workspace.id);
+    document.getElementById("detailHead").textContent = workspace.head;
+    document.getElementById("detailOwner").textContent = workspace.createdBy;
+    document.getElementById("detailStatus").textContent = workspace.status;
+
+    document.getElementById("proposalPanel").style.display = workspace.staged ? "" : "none";
+    document.getElementById("increment03Stage").style.opacity = isFixtureMaster ? ".28" : "1";
+    document.getElementById("workflowScope").textContent =
+      isFixtureMaster ? "Base truth through Increment 02" :
+      isFixtureIncrement ? "11 stages at this HEAD" :
+      "Workspace state under review";
+  }
+
+  function showToast(title, body, duration) {
+    document.getElementById("toastTitle").textContent = title;
+    document.getElementById("toastBody").textContent = body;
+    toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.classList.remove("show"); }, duration || 2800);
+  }
 
   function openMenu() {
     menu.classList.add("open");
@@ -1316,10 +1943,16 @@
   function closeMenu() {
     menu.classList.remove("open");
     trigger.setAttribute("aria-expanded", "false");
+    closeFilterMenus();
   }
 
   trigger.addEventListener("click", function () {
     menu.classList.contains("open") ? closeMenu() : openMenu();
+  });
+
+  menuClose.addEventListener("click", function () {
+    closeMenu();
+    trigger.focus();
   });
 
   document.addEventListener("pointerdown", function (event) {
@@ -1328,116 +1961,200 @@
 
   document.addEventListener("keydown", function (event) {
     if (event.key === "Escape") {
+      const openFilter = Array.from(document.querySelectorAll("#workspaceMenu .filter-menu")).find(function (filterMenu) {
+        return !filterMenu.hidden;
+      });
+      if (openFilter) {
+        closeFilterMenus();
+        return;
+      }
       closeMenu();
       trigger.focus();
     }
   });
 
-  function applyFilters() {
-    const q = search.value.trim().toLowerCase();
+  function switchWorkspace(id) {
+    const workspace = workspaces.find(function (item) { return item.id === id; });
+    if (!workspace) return;
 
-    rows.forEach(function (row) {
-      const haystack = [
-        row.dataset.name,
-        row.dataset.owner,
-        row.dataset.head,
-        row.dataset.status,
-        row.dataset.description
-      ].join(" ").toLowerCase();
-
-      const tags = (row.dataset.filterTags || "").split(/\s+/).filter(Boolean);
-      const filterMatch =
-        activeFilter === "all" ||
-        (activeFilter === "published" && tags.includes("published")) ||
-        (activeFilter === "mine" && tags.includes("mine")) ||
-        (activeFilter === "review" && tags.includes("review"));
-
-      row.classList.toggle("hidden-row", !(filterMatch && haystack.includes(q)));
-    });
-  }
-
-  search.addEventListener("input", applyFilters);
-
-  filters.forEach(function (button) {
-    button.addEventListener("click", function () {
-      activeFilter = button.dataset.filter;
-      filters.forEach(function (item) { item.classList.toggle("active", item === button); });
-      applyFilters();
-    });
-  });
-
-  function statusClass(status) {
-    if (status === "Published") return "chip-published";
-    if (status === "Review") return "chip-review";
-    if (status === "Processing") return "chip-processing";
-    return "chip-draft";
-  }
-
-  function workspaceId(id) {
-    if (id === "master") return "branch-master";
-    if (id === "increment03") return "branch-increment-003";
-    return "demo-" + id;
-  }
-
-  function switchWorkspace(row) {
-    rows.forEach(function (item) { item.classList.toggle("current", item === row); });
-
-    const data = row.dataset;
-    const isFixtureMaster = data.id === "master";
-    const isFixtureIncrement = data.id === "increment03";
-    const factValue = data.facts === "-" ? "--" : data.facts;
-
-    document.getElementById("triggerName").textContent = data.name;
-    const triggerStatus = document.getElementById("triggerStatus");
-    triggerStatus.textContent = data.status;
-    triggerStatus.className = "tiny-chip " + statusClass(data.status);
-    document.getElementById("triggerMeta").textContent =
-      "HEAD " + data.head + (Number(data.staged) ? " - " + data.staged + " staged change" + (Number(data.staged) > 1 ? "s" : "") : "");
-
-    document.getElementById("headWorkspace").textContent = data.name;
-    document.getElementById("headRevision").textContent = "HEAD " + data.head;
-
-    document.getElementById("truthTitle").textContent = "You are viewing " + data.name + " current truth";
-    document.getElementById("truthDescription").textContent = data.description;
-    document.getElementById("factCount").textContent = factValue;
-    document.getElementById("prdCount").textContent = data.prds;
-    document.getElementById("stagedCount").textContent = data.staged;
-
-    document.getElementById("detailWorkspace").textContent = data.name;
-    document.getElementById("detailWorkspaceId").textContent = workspaceId(data.id);
-    document.getElementById("detailHead").textContent = data.head;
-    document.getElementById("detailOwner").textContent = data.owner;
-    document.getElementById("detailStatus").textContent = data.status;
-
-    document.getElementById("proposalPanel").style.display = Number(data.staged) ? "" : "none";
-    document.getElementById("increment03Stage").style.opacity = isFixtureMaster ? ".28" : "1";
-    document.getElementById("workflowScope").textContent =
-      isFixtureMaster ? "Base truth through Increment 02" :
-      isFixtureIncrement ? "11 stages at this HEAD" :
-      "Demo-only workspace state";
-
+    selectedId = id;
+    updateSelected(workspace);
+    render();
     closeMenu();
-
-    document.getElementById("toastTitle").textContent = "Workspace switched";
-    document.getElementById("toastBody").textContent =
-      data.name + " is now the selected branch context. Project navigation would resolve against this HEAD.";
-    toast.classList.add("show");
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { toast.classList.remove("show"); }, 2800);
+    showToast(
+      "Workspace switched",
+      workspace.name + " is now the selected workspace context. Project navigation would resolve against this HEAD."
+    );
   }
-
-  rows.forEach(function (row) {
-    row.addEventListener("click", function () { switchWorkspace(row); });
-  });
 
   document.getElementById("createBranch").addEventListener("click", function () {
-    document.getElementById("toastTitle").textContent = "Prototype action";
-    document.getElementById("toastBody").textContent =
-      "In Atlas, this would start a new isolated workspace from the selected accepted base rather than editing Master directly.";
-    toast.classList.add("show");
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { toast.classList.remove("show"); }, 3200);
+    showToast(
+      "Prototype action",
+      "In Atlas, this would start a new isolated workspace from the selected accepted base rather than editing Master directly.",
+      3200
+    );
   });
+
+  search.addEventListener("input", function (event) {
+    searchQuery = event.target.value;
+    render();
+  });
+
+  function closeFilterMenus(exceptId) {
+    document.querySelectorAll("#workspaceMenu .filter-menu").forEach(function (filterMenu) {
+      if (filterMenu.id !== exceptId) filterMenu.hidden = true;
+    });
+    document.querySelectorAll("#workspaceMenu .filter-button").forEach(function (button) {
+      if (button.getAttribute("aria-controls") !== exceptId) button.setAttribute("aria-expanded", "false");
+    });
+  }
+
+  document.querySelectorAll("#workspaceMenu .filter-button").forEach(function (button) {
+    button.addEventListener("click", function (event) {
+      event.stopPropagation();
+      const menuId = button.getAttribute("aria-controls");
+      const filterMenu = document.getElementById(menuId);
+      const willOpen = filterMenu.hidden;
+      closeFilterMenus(willOpen ? menuId : null);
+      filterMenu.hidden = !willOpen;
+      button.setAttribute("aria-expanded", String(willOpen));
+    });
+  });
+
+  const uniqueUsers = Array.from(new Set(workspaces.reduce(function (all, workspace) {
+    return all.concat([workspace.createdBy, workspace.modifiedBy]);
+  }, []))).sort(function (a, b) {
+    return a === "Atlas" ? 1 : b === "Atlas" ? -1 : a.localeCompare(b);
+  });
+  const uniqueStatuses = Array.from(new Set(workspaces.map(function (workspace) { return workspace.status; })));
+
+  function optionAvatar(name) {
+    return name === "Atlas"
+      ? '<span class="system-mark">AT</span>'
+      : '<span class="avatar">' + initials(name) + '</span>';
+  }
+
+  document.getElementById("usersFilterOptions").innerHTML = uniqueUsers.map(function (name) {
+    return '<label class="check-row"><input type="checkbox" value="' + name + '" data-user-option><span class="check-copy">' +
+      optionAvatar(name) + '<span>' + name + '</span></span></label>';
+  }).join("");
+
+  document.getElementById("statusFilterOptions").innerHTML = uniqueStatuses.map(function (status) {
+    const workspace = workspaces.find(function (item) { return item.status === status; });
+    return '<label class="check-row"><input type="checkbox" value="' + status + '" data-status-option>' +
+      '<span class="status ' + workspace.statusClass + '">' + status + '</span></label>';
+  }).join("");
+
+  function setFilterButtonState(buttonId, countId, count) {
+    const button = document.getElementById(buttonId);
+    const badge = document.getElementById(countId);
+    button.classList.toggle("active", count > 0);
+    badge.hidden = count === 0;
+    badge.textContent = count;
+  }
+
+  function updateFilterUI() {
+    const createdCount = Number(Boolean(createdFrom)) + Number(Boolean(createdThru));
+    const modifiedCount = Number(Boolean(modifiedFrom)) + Number(Boolean(modifiedThru));
+
+    setFilterButtonState("usersFilterBtn", "usersFilterCount", selectedUsers.size);
+    setFilterButtonState("statusFilterBtn", "statusFilterCount", selectedStatuses.size);
+    setFilterButtonState("createdFilterBtn", "createdFilterCount", createdCount);
+    setFilterButtonState("modifiedFilterBtn", "modifiedFilterCount", modifiedCount);
+
+    document.getElementById("clearAllFilters").classList.toggle(
+      "show",
+      Boolean(selectedUsers.size || selectedStatuses.size || createdCount || modifiedCount)
+    );
+  }
+
+  document.querySelectorAll("[data-user-option]").forEach(function (input) {
+    input.addEventListener("change", function () {
+      input.checked ? selectedUsers.add(input.value) : selectedUsers.delete(input.value);
+      updateFilterUI();
+      render();
+    });
+  });
+
+  document.querySelectorAll("[data-status-option]").forEach(function (input) {
+    input.addEventListener("change", function () {
+      input.checked ? selectedStatuses.add(input.value) : selectedStatuses.delete(input.value);
+      updateFilterUI();
+      render();
+    });
+  });
+
+  function syncDateFilters() {
+    createdFrom = document.getElementById("createdFrom").value;
+    createdThru = document.getElementById("createdThru").value;
+    modifiedFrom = document.getElementById("modifiedFrom").value;
+    modifiedThru = document.getElementById("modifiedThru").value;
+    updateFilterUI();
+    render();
+  }
+
+  ["createdFrom", "createdThru", "modifiedFrom", "modifiedThru"].forEach(function (id) {
+    document.getElementById(id).addEventListener("change", syncDateFilters);
+  });
+
+  document.querySelectorAll("#workspaceMenu [data-clear]").forEach(function (button) {
+    button.addEventListener("click", function (event) {
+      event.stopPropagation();
+      const target = button.dataset.clear;
+
+      if (target === "users") {
+        selectedUsers.clear();
+        document.querySelectorAll("[data-user-option]").forEach(function (input) { input.checked = false; });
+      }
+      if (target === "status") {
+        selectedStatuses.clear();
+        document.querySelectorAll("[data-status-option]").forEach(function (input) { input.checked = false; });
+      }
+      if (target === "created") {
+        document.getElementById("createdFrom").value = "";
+        document.getElementById("createdThru").value = "";
+        createdFrom = "";
+        createdThru = "";
+      }
+      if (target === "modified") {
+        document.getElementById("modifiedFrom").value = "";
+        document.getElementById("modifiedThru").value = "";
+        modifiedFrom = "";
+        modifiedThru = "";
+      }
+
+      updateFilterUI();
+      render();
+    });
+  });
+
+  document.getElementById("clearAllFilters").addEventListener("click", function () {
+    selectedUsers.clear();
+    selectedStatuses.clear();
+    createdFrom = "";
+    createdThru = "";
+    modifiedFrom = "";
+    modifiedThru = "";
+
+    document.querySelectorAll("[data-user-option],[data-status-option]").forEach(function (input) {
+      input.checked = false;
+    });
+    ["createdFrom", "createdThru", "modifiedFrom", "modifiedThru"].forEach(function (id) {
+      document.getElementById(id).value = "";
+    });
+
+    updateFilterUI();
+    render();
+  });
+
+  document.addEventListener("click", function (event) {
+    if (!event.target.closest("#workspaceMenu .filter-wrap")) closeFilterMenus();
+    if (!switcher.contains(event.target)) closeMenu();
+  });
+
+  updateFilterUI();
+  render();
+  updateSelected(workspaces.find(function (workspace) { return workspace.id === selectedId; }));
 })();
 </script>
 </body>

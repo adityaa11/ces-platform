@@ -160,6 +160,47 @@
           "enabled": true
         }
       }
+    },
+    {
+      "id": "safara-projection",
+      "name": "Safara Projection",
+      "status": "ready",
+      "prdCount": 1,
+      "collaborators": 1,
+      "lastActivity": "Initial Draft is ready for review",
+      "isShared": false,
+      "repository": {
+        "state": "ready-for-review",
+        "summary": "Initial Draft extraction is complete and awaiting review.",
+        "master": {
+          "state": "empty",
+          "summary": "No published work",
+          "detail": "Nothing has been published yet."
+        },
+        "initialDraft": {
+          "processedPrds": 1,
+          "totalPrds": 1,
+          "progress": 100
+        },
+        "metrics": [
+          {
+            "value": "47",
+            "label": "extracted facts"
+          },
+          {
+            "value": "1",
+            "label": "PRDs uploaded"
+          },
+          {
+            "value": "Ready",
+            "label": "to review"
+          }
+        ],
+        "action": {
+          "label": "Review Initial Draft",
+          "enabled": true
+        }
+      }
     }
   ],
   "modalProjects": [
@@ -2514,6 +2555,2429 @@
             ]
           }
         ]
+      }
+    },
+    {
+      "request": {
+        "projectId": "safara-projection",
+        "projectName": "Safara Projection",
+        "projectDescription": "Safara Projection testing",
+        "prdFiles": [
+          {
+            "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+            "type": "application/pdf",
+            "size": 25548
+          }
+        ]
+      },
+      "project": {
+        "id": "safara-projection",
+        "name": "Safara Projection",
+        "status": "ready",
+        "prdCount": 1,
+        "collaborators": 1,
+        "lastActivity": "Initial Draft is ready for review",
+        "isShared": false,
+        "repository": {
+          "state": "ready-for-review",
+          "summary": "Initial Draft extraction is complete and awaiting review.",
+          "master": {
+            "state": "empty",
+            "summary": "No published work",
+            "detail": "Nothing has been published yet."
+          },
+          "initialDraft": {
+            "processedPrds": 1,
+            "totalPrds": 1,
+            "progress": 100
+          },
+          "metrics": [
+            {
+              "value": "47",
+              "label": "extracted facts"
+            },
+            {
+              "value": "1",
+              "label": "PRDs uploaded"
+            },
+            {
+              "value": "Ready",
+              "label": "to review"
+            }
+          ],
+          "action": {
+            "label": "Review Initial Draft",
+            "enabled": true
+          }
+        }
+      },
+      "processingJob": {
+        "id": "job-safara-projection",
+        "projectId": "safara-projection",
+        "workspaceId": "saf-yw4mk2muaiuw",
+        "stage": "ready",
+        "message": "Ready to review",
+        "progress": 100
+      },
+      "masterWorkspace": {
+        "workspaceId": "master",
+        "projectId": "safara-projection",
+        "workspaceName": "Master",
+        "status": "empty",
+        "prdFiles": []
+      },
+      "initialDraftWorkspace": {
+        "workspaceId": "saf-yw4mk2muaiuw",
+        "projectId": "safara-projection",
+        "workspaceName": "Initial Draft",
+        "status": "ready-for-review",
+        "available": true,
+        "prdFiles": [
+          {
+            "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+            "type": "application/pdf",
+            "size": 25548
+          }
+        ]
+      },
+      "prdRecord": {
+        "projectId": "safara-projection",
+        "workspaceId": "saf-yw4mk2muaiuw",
+        "prdFiles": [
+          {
+            "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+            "type": "application/pdf",
+            "size": 25548
+          }
+        ]
+      },
+      "sourceFiles": [
+        {
+          "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+          "type": "application/pdf",
+          "size": 25548,
+          "relativePath": "docs/PRD/safara-projection/saf-yw4mk2muaiuw/Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+          "sha256": "75a6bf6c7411c909f9a94dd763cfb540656717c5ecac789dad57e7de4e6740bc"
+        }
+      ],
+      "extraction": {
+        "skillId": "atlas.prd-extraction",
+        "skillVersion": "1.2.0",
+        "executionProvenance": {
+          "skillId": "atlas.prd-extraction",
+          "skillVersion": "1.2.0",
+          "mode": "codex"
+        },
+        "status": "complete",
+        "executionId": "artifact-saf-yw4mk2muaiuw-prd-01-extraction-01",
+        "mode": "codex",
+        "artifact": {
+          "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+          "workspaceId": "saf-yw4mk2muaiuw",
+          "name": "Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+          "type": "application/pdf",
+          "size": 25548,
+          "relativePath": "docs/PRD/safara-projection/saf-yw4mk2muaiuw/Safara_Incremental_PRD_01_Foundation_Enrollment-1.pdf",
+          "sha256": "75A6BF6C7411C909F9A94DD763CFB540656717C5ECAC789DAD57E7DE4E6740BC",
+          "verifiedSha256": "75A6BF6C7411C909F9A94DD763CFB540656717C5ECAC789DAD57E7DE4E6740BC"
+        },
+        "pages": [
+          {
+            "page": 1,
+            "text": "C SAFARA BUSINESS PRD / INCREMENTAL PROJECT REQUEST\nINCREMENTAL PROJECT REQUEST\nSAFARA - Increment 01Fondasi Data dan Pendaftaran Jemaah\nTUJUAN\nMenyatukan data paket, jadwal keberangkatan,\njemaah, dan pendaftaran dalam satu aplikasi\noperasional.\nRUANG LINGKUP\nSatu perusahaan dan satu cabang; paket,\nkeberangkatan, data jemaah, pendaftaran, dan kuota.\nPENGGUNA\nOwner/Admin\nTANGGAL DOKUMEN\n27 Juli 2026\nDokumen ini menetapkan fondasi operasional pertama Safara. Pembayaran, dokumen perjalanan,\nkesiapan, manifest, dan laporan belum menjadi ruang lingkup increment ini.\nKonteks\nKami membutuhkan aplikasi web internal untuk mengelola data dasar administrasi jemaah umrah pada tahap\npendaftaran.\nSaat ini informasi paket, jadwal keberangkatan, data jemaah, dan pendaftaran sering tersebar di spreadsheet,\nchat, dan catatan yang berbeda. Hal ini menyulitkan tim untuk mengetahui:\nJemaah terdaftar pada keberangkatan yang mana.\nJumlah jemaah yang sudah terdaftar pada setiap keberangkatan.\nSisa kuota setiap keberangkatan.\nHarga pendaftaran yang telah disepakati dengan jemaah.\nAplikasi pada increment ini diharapkan menjadi satu sumber data untuk proses pendaftaran dan pengelolaan\nkuota sebelum kebutuhan operasional berikutnya ditambahkan.\nTujuan Bisnis\nMengurangi kesalahan pencatatan data jemaah dan pendaftaran.\nMempermudah pemantauan kuota keberangkatan.\nMenjaga riwayat pendaftaran jemaah agar tidak hilang ketika data dibatalkan atau dinonaktifkan.\nMemastikan harga pendaftaran yang sudah disepakati tidak berubah ketika harga paket diperbarui.\nPengguna\nOwner/Admin\nDapat melihat dan mengelola paket, jadwal keberangkatan, data jemaah, dan pendaftaran pada increment ini.\nPengguna yang sudah dinonaktifkan tidak boleh masuk ke aplikasi.\n� \n� \n� \n� \n� \n� \n� \n� \nSafara - Sistem Administrasi Travel Umrah Dokumen Bisnis | 27 Juli 2026 |"
+          },
+          {
+            "page": 2,
+            "text": "Alur Utama\nAdmin membuat paket umrah.\nAdmin membuat jadwal keberangkatan untuk paket yang dipilih.\nAdmin mencatat data jemaah.\nAdmin memilih jemaah dan mendaftarkannya ke jadwal keberangkatan yang masih terbuka.\nSistem menyimpan harga pendaftaran yang berlaku saat pendaftaran.\nSistem menampilkan jumlah jemaah terdaftar dan sisa kuota setiap keberangkatan.\nKebutuhan\n1. Paket dan Jadwal Keberangkatan\nAdmin dapat membuat, melihat, mengubah, dan menonaktifkan paket umrah.\nInformasi paket minimal mencakup nama paket, durasi, harga dasar, deskripsi, dan status aktif.\nSetiap paket dapat memiliki satu atau lebih jadwal keberangkatan.\nInformasi jadwal minimal mencakup kode keberangkatan, tanggal berangkat, tanggal pulang, kota asal,\nkuota, harga, maskapai, nomor penerbangan, hotel Makkah, hotel Madinah, dan status keberangkatan.\nAplikasi menampilkan jumlah jemaah terdaftar dan sisa kuota.\nPendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh.\n2. Data Jemaah\nAdmin dapat menambah, melihat, mengubah, mencari, dan menonaktifkan data jemaah.\nInformasi minimum jemaah: nama sesuai paspor, NIK, jenis kelamin, tempat dan tanggal lahir, nomor\ntelepon, alamat, nomor dan masa berlaku paspor, serta nama dan nomor kontak darurat.\nNIK harus terdiri dari 16 angka apabila diisi.\nAplikasi harus memberikan peringatan apabila NIK atau nomor paspor sudah digunakan oleh jemaah lain.\nPada halaman daftar, NIK dan nomor paspor tidak perlu ditampilkan secara penuh.\n3. Pendaftaran Jemaah\nAdmin dapat memilih jemaah dan mendaftarkannya ke jadwal keberangkatan yang masih terbuka.\nSetiap pendaftaran memiliki nomor pendaftaran yang berbeda.\nHarga yang berlaku saat pendaftaran disimpan sebagai harga pendaftaran yang disepakati dan menjadi\nnilai acuan tetap untuk pendaftaran tersebut.\nPerubahan harga paket setelah pendaftaran tidak boleh mengubah harga pendaftaran yang sudah\ndisepakati.\nJemaah yang sama tidak boleh memiliki dua pendaftaran aktif pada jadwal keberangkatan yang sama.\nPendaftaran dapat dibatalkan dengan alasan yang tercatat, tetapi riwayatnya tetap dapat dilihat.\nAturan Bisnis Utama\nSatu jemaah dapat memiliki beberapa riwayat pendaftaran, tetapi tidak boleh memiliki dua pendaftaran aktif\npada keberangkatan yang sama.\nJumlah pendaftaran aktif tidak boleh melebihi kuota keberangkatan.\nHarga pendaftaran yang sudah disepakati tidak berubah ketika harga paket diperbarui.\nPembatalan atau penonaktifan data tidak boleh menghilangkan riwayat sebelumnya.\nInformasi jemaah hanya boleh dilihat oleh pengguna yang berkepentingan.\n1. \n2. \n3. \n4. \n5. \n6. \n� \n� \n� \n� \n� \n� \n� \n� \n� \n� \n� \n� \n� \n� \n� \n� \n� \n� \n� \n� \n� \n� \nSafara - Sistem Administrasi Travel Umrah Dokumen Bisnis | 27 Juli 2026 |"
+          },
+          {
+            "page": 3,
+            "text": "Skenario Pemeriksaan Hasil\nSebelum increment ini dinyatakan selesai, kami akan mencoba minimal skenario berikut:\nMembuat paket dan jadwal keberangkatan, lalu melihat sisa kuota.\nMendaftarkan jemaah sampai kuota penuh dan memastikan pendaftaran berikutnya ditolak.\nMencoba mendaftarkan jemaah yang sama dua kali pada keberangkatan yang sama.\nMemperbarui harga paket setelah pendaftaran dan memastikan harga pendaftaran yang sudah disepakati\ntidak berubah.\nMembatalkan pendaftaran dan memastikan riwayatnya tetap dapat dilihat.\nHasil yang Harus Diserahkan\nAplikasi web increment pertama yang dapat digunakan untuk pengelolaan paket, jadwal keberangkatan,\ndata jemaah, pendaftaran, dan kuota.\nAlamat aplikasi yang dapat diakses oleh pengguna yang ditentukan.\nAkun awal untuk Owner/Admin.\nPanduan penggunaan singkat untuk fungsi pada increment ini.\nKriteria Penerimaan Increment 01\nOwner/Admin dapat masuk dan menjalankan fungsi yang ditetapkan pada increment ini.\nAlur dari pembuatan paket sampai pendaftaran jemaah dapat dijalankan menggunakan contoh data yang\ndisepakati.\nKuota dan sisa kuota dihitung dengan benar.\nPendaftaran ditolak ketika jadwal ditutup, kuota penuh, atau jemaah yang sama sudah memiliki pendaftaran\naktif pada keberangkatan yang sama.\nHarga pendaftaran yang sudah disepakati tetap tersimpan ketika harga paket berubah.\nRiwayat pendaftaran tetap dapat dilihat setelah pembatalan atau penonaktifan data.\n1. \n2. \n3. \n4. \n5. \n� \n� \n� \n� \n� \n� \n� \n� \n� \n� \nSafara - Sistem Administrasi Travel Umrah Dokumen Bisnis | 27 Juli 2026 |"
+          }
+        ],
+        "candidateAssertions": [
+          {
+            "candidateId": "cand-001",
+            "kind": "scope_constraint",
+            "semanticKey": "safara.increment_01.in_scope",
+            "payload": {
+              "companyCount": 1,
+              "branchCount": 1,
+              "entities": [
+                "package",
+                "departure_schedule",
+                "pilgrim",
+                "registration",
+                "quota"
+              ]
+            },
+            "relationships": [],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 1,
+              "quote": "Satu perusahaan dan satu cabang; paket,\nkeberangkatan, data jemaah, pendaftaran, dan kuota."
+            }
+          },
+          {
+            "candidateId": "cand-002",
+            "kind": "scope_constraint",
+            "semanticKey": "safara.increment_01.out_of_scope",
+            "payload": {
+              "excluded": [
+                "payment",
+                "travel_documents",
+                "readiness",
+                "manifest",
+                "reporting"
+              ]
+            },
+            "relationships": [],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 1,
+              "quote": "Dokumen ini menetapkan fondasi operasional pertama Safara. Pembayaran, dokumen perjalanan,\nkesiapan, manifest, dan laporan belum menjadi ruang lingkup increment ini."
+            }
+          },
+          {
+            "candidateId": "cand-003",
+            "kind": "system_requirement",
+            "semanticKey": "safara.application.internal_web_administration",
+            "payload": {
+              "applicationType": "internal web application",
+              "domain": "basic Umrah pilgrim administration",
+              "stage": "registration"
+            },
+            "relationships": [
+              "cand-001"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 1,
+              "quote": "Kami membutuhkan aplikasi web internal untuk mengelola data dasar administrasi jemaah umrah pada tahap\npendaftaran."
+            }
+          },
+          {
+            "candidateId": "cand-004",
+            "kind": "system_requirement",
+            "semanticKey": "safara.registration.single_source_of_data",
+            "payload": {
+              "purpose": "single source of data",
+              "processes": [
+                "registration",
+                "quota management"
+              ],
+              "timing": "before subsequent operational needs are added"
+            },
+            "relationships": [
+              "cand-003"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 1,
+              "quote": "Aplikasi pada increment ini diharapkan menjadi satu sumber data untuk proses pendaftaran dan pengelolaan\nkuota sebelum kebutuhan operasional berikutnya ditambahkan."
+            }
+          },
+          {
+            "candidateId": "cand-005",
+            "kind": "business_objective",
+            "semanticKey": "safara.business_objective.reduce_recording_errors",
+            "payload": {
+              "objective": "Reduce errors in recording pilgrim and registration data."
+            },
+            "relationships": [],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 1,
+              "quote": "Mengurangi kesalahan pencatatan data jemaah dan pendaftaran."
+            }
+          },
+          {
+            "candidateId": "cand-006",
+            "kind": "business_objective",
+            "semanticKey": "safara.business_objective.monitor_departure_quota",
+            "payload": {
+              "objective": "Make departure-quota monitoring easier."
+            },
+            "relationships": [],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 1,
+              "quote": "Mempermudah pemantauan kuota keberangkatan."
+            }
+          },
+          {
+            "candidateId": "cand-007",
+            "kind": "history_retention_rule",
+            "semanticKey": "safara.registration_history.retained_after_cancellation_or_deactivation",
+            "payload": {
+              "historyMustRemainVisible": true,
+              "events": [
+                "registration cancellation",
+                "data deactivation"
+              ]
+            },
+            "relationships": [],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 1,
+              "quote": "Menjaga riwayat pendaftaran jemaah agar tidak hilang ketika data dibatalkan atau dinonaktifkan."
+            }
+          },
+          {
+            "candidateId": "cand-008",
+            "kind": "immutability_rule",
+            "semanticKey": "safara.registration.agreed_price_immutable_after_package_price_update",
+            "payload": {
+              "immutableValue": "agreed registration price",
+              "trigger": "package price is updated"
+            },
+            "relationships": [],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 1,
+              "quote": "Memastikan harga pendaftaran yang sudah disepakati tidak berubah ketika harga paket diperbarui."
+            }
+          },
+          {
+            "candidateId": "cand-009",
+            "kind": "role_permission",
+            "semanticKey": "safara.owner_admin.manage_increment_01_entities",
+            "payload": {
+              "role": "Owner/Admin",
+              "permissions": [
+                "view",
+                "manage"
+              ],
+              "entities": [
+                "package",
+                "departure_schedule",
+                "pilgrim",
+                "registration"
+              ]
+            },
+            "relationships": [
+              "cand-001"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 1,
+              "quote": "Dapat melihat dan mengelola paket, jadwal keberangkatan, data jemaah, dan pendaftaran pada increment ini."
+            }
+          },
+          {
+            "candidateId": "cand-010",
+            "kind": "access_control_rule",
+            "semanticKey": "safara.deactivated_user.login_denied",
+            "payload": {
+              "condition": "user is deactivated",
+              "outcome": "user must not log in to the application"
+            },
+            "relationships": [],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 1,
+              "quote": "Pengguna yang sudah dinonaktifkan tidak boleh masuk ke aplikasi."
+            }
+          },
+          {
+            "candidateId": "cand-011",
+            "kind": "workflow_step",
+            "semanticKey": "safara.main_flow.create_umrah_package",
+            "payload": {
+              "order": 1,
+              "actor": "Admin",
+              "action": "creates an Umrah package",
+              "workflowId": "main-registration-flow",
+              "orderedSteps": [
+                "cand-011",
+                "cand-012",
+                "cand-013",
+                "cand-014",
+                "cand-015",
+                "cand-016"
+              ],
+              "actors": [
+                "Admin"
+              ],
+              "triggers": [],
+              "conditions": [],
+              "inputs": [],
+              "outputs": [
+                "Umrah package"
+              ],
+              "dependencies": [],
+              "stateTransitions": [],
+              "exceptions": [],
+              "unresolved": [
+                "The source does not state a trigger, branch, or exception for this step."
+              ],
+              "branches": []
+            },
+            "relationships": [
+              "cand-012"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 2,
+              "quote": "Admin membuat paket umrah."
+            }
+          },
+          {
+            "candidateId": "cand-012",
+            "kind": "workflow_step",
+            "semanticKey": "safara.main_flow.create_departure_schedule",
+            "payload": {
+              "order": 2,
+              "actor": "Admin",
+              "action": "creates a departure schedule",
+              "input": "selected package",
+              "workflowId": "main-registration-flow",
+              "orderedSteps": [
+                "cand-011",
+                "cand-012",
+                "cand-013",
+                "cand-014",
+                "cand-015",
+                "cand-016"
+              ],
+              "actors": [
+                "Admin"
+              ],
+              "triggers": [],
+              "conditions": [],
+              "inputs": [
+                "selected package"
+              ],
+              "outputs": [
+                "departure schedule"
+              ],
+              "dependencies": [
+                "cand-011"
+              ],
+              "stateTransitions": [],
+              "exceptions": [],
+              "unresolved": [
+                "The source does not state a trigger, branch, or exception for this step."
+              ],
+              "branches": []
+            },
+            "relationships": [
+              "cand-011",
+              "cand-013"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 2,
+              "quote": "Admin membuat jadwal keberangkatan untuk paket yang dipilih."
+            }
+          },
+          {
+            "candidateId": "cand-013",
+            "kind": "workflow_step",
+            "semanticKey": "safara.main_flow.record_pilgrim",
+            "payload": {
+              "order": 3,
+              "actor": "Admin",
+              "action": "records pilgrim data",
+              "workflowId": "main-registration-flow",
+              "orderedSteps": [
+                "cand-011",
+                "cand-012",
+                "cand-013",
+                "cand-014",
+                "cand-015",
+                "cand-016"
+              ],
+              "actors": [
+                "Admin"
+              ],
+              "triggers": [],
+              "conditions": [],
+              "inputs": [],
+              "outputs": [
+                "pilgrim data record"
+              ],
+              "dependencies": [],
+              "stateTransitions": [],
+              "exceptions": [],
+              "unresolved": [
+                "The source does not state a trigger, branch, or exception for this step."
+              ],
+              "branches": []
+            },
+            "relationships": [
+              "cand-012",
+              "cand-014"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 2,
+              "quote": "Admin mencatat data jemaah."
+            }
+          },
+          {
+            "candidateId": "cand-014",
+            "kind": "workflow_step",
+            "semanticKey": "safara.main_flow.register_pilgrim_to_open_schedule",
+            "payload": {
+              "order": 4,
+              "actor": "Admin",
+              "action": "selects and registers a pilgrim",
+              "target": "departure schedule",
+              "condition": "schedule is still open",
+              "workflowId": "main-registration-flow",
+              "orderedSteps": [
+                "cand-011",
+                "cand-012",
+                "cand-013",
+                "cand-014",
+                "cand-015",
+                "cand-016"
+              ],
+              "actors": [
+                "Admin"
+              ],
+              "triggers": [],
+              "conditions": [
+                "the departure schedule is still open"
+              ],
+              "inputs": [
+                "selected pilgrim",
+                "selected departure schedule"
+              ],
+              "outputs": [
+                "registration request"
+              ],
+              "dependencies": [
+                "cand-012",
+                "cand-013"
+              ],
+              "stateTransitions": [],
+              "exceptions": [],
+              "unresolved": [
+                "The source does not state the result of a rejected request within this workflow statement."
+              ],
+              "branches": []
+            },
+            "relationships": [
+              "cand-013",
+              "cand-015",
+              "cand-022",
+              "cand-030"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 2,
+              "quote": "Admin memilih jemaah dan mendaftarkannya ke jadwal keberangkatan yang masih terbuka."
+            }
+          },
+          {
+            "candidateId": "cand-015",
+            "kind": "workflow_step",
+            "semanticKey": "safara.main_flow.capture_registration_price",
+            "payload": {
+              "order": 5,
+              "actor": "System",
+              "action": "stores the price applicable at registration time",
+              "workflowId": "main-registration-flow",
+              "orderedSteps": [
+                "cand-011",
+                "cand-012",
+                "cand-013",
+                "cand-014",
+                "cand-015",
+                "cand-016"
+              ],
+              "actors": [
+                "System"
+              ],
+              "triggers": [
+                "registration is made"
+              ],
+              "conditions": [],
+              "inputs": [
+                "price applicable at registration"
+              ],
+              "outputs": [
+                "stored registration price"
+              ],
+              "dependencies": [
+                "cand-014"
+              ],
+              "stateTransitions": [],
+              "exceptions": [],
+              "unresolved": [
+                "The source does not state an exception for price storage."
+              ],
+              "branches": []
+            },
+            "relationships": [
+              "cand-014",
+              "cand-029"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 2,
+              "quote": "Sistem menyimpan harga pendaftaran yang berlaku saat pendaftaran."
+            }
+          },
+          {
+            "candidateId": "cand-016",
+            "kind": "workflow_step",
+            "semanticKey": "safara.main_flow.display_registration_count_and_remaining_quota",
+            "payload": {
+              "order": 6,
+              "actor": "System",
+              "action": "displays registered pilgrim count and remaining quota",
+              "scope": "each departure schedule",
+              "workflowId": "main-registration-flow",
+              "orderedSteps": [
+                "cand-011",
+                "cand-012",
+                "cand-013",
+                "cand-014",
+                "cand-015",
+                "cand-016"
+              ],
+              "actors": [
+                "System"
+              ],
+              "triggers": [],
+              "conditions": [],
+              "inputs": [],
+              "outputs": [
+                "registered-pilgrim count",
+                "remaining quota"
+              ],
+              "dependencies": [
+                "cand-015"
+              ],
+              "stateTransitions": [],
+              "exceptions": [],
+              "unresolved": [
+                "The source does not state a trigger, branch, or exception for this display step."
+              ],
+              "branches": []
+            },
+            "relationships": [
+              "cand-015",
+              "cand-021"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 2,
+              "quote": "Sistem menampilkan jumlah jemaah terdaftar dan sisa kuota setiap keberangkatan."
+            }
+          },
+          {
+            "candidateId": "cand-017",
+            "kind": "capability",
+            "semanticKey": "safara.package.admin_crud_and_deactivate",
+            "payload": {
+              "actor": "Admin",
+              "entity": "Umrah package",
+              "operations": [
+                "create",
+                "view",
+                "update",
+                "deactivate"
+              ]
+            },
+            "relationships": [],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 2,
+              "quote": "Admin dapat membuat, melihat, mengubah, dan menonaktifkan paket umrah."
+            }
+          },
+          {
+            "candidateId": "cand-018",
+            "kind": "data_schema_requirement",
+            "semanticKey": "safara.package.minimum_fields",
+            "payload": {
+              "entity": "package",
+              "minimumFields": [
+                "package_name",
+                "duration",
+                "base_price",
+                "description",
+                "active_status"
+              ]
+            },
+            "relationships": [
+              "cand-017"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 2,
+              "quote": "Informasi paket minimal mencakup nama paket, durasi, harga dasar, deskripsi, dan status aktif."
+            }
+          },
+          {
+            "candidateId": "cand-019",
+            "kind": "relationship_rule",
+            "semanticKey": "safara.package.departure_schedule_one_to_many",
+            "payload": {
+              "sourceEntity": "package",
+              "targetEntity": "departure_schedule",
+              "cardinality": "one or more departure schedules per package"
+            },
+            "relationships": [
+              "cand-017"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 2,
+              "quote": "Setiap paket dapat memiliki satu atau lebih jadwal keberangkatan."
+            }
+          },
+          {
+            "candidateId": "cand-020",
+            "kind": "data_schema_requirement",
+            "semanticKey": "safara.departure_schedule.minimum_fields",
+            "payload": {
+              "entity": "departure_schedule",
+              "minimumFields": [
+                "departure_code",
+                "departure_date",
+                "return_date",
+                "origin_city",
+                "quota",
+                "price",
+                "airline",
+                "flight_number",
+                "makkah_hotel",
+                "madinah_hotel",
+                "departure_status"
+              ]
+            },
+            "relationships": [
+              "cand-019"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 2,
+              "quote": "Informasi jadwal minimal mencakup kode keberangkatan, tanggal berangkat, tanggal pulang, kota asal,\nkuota, harga, maskapai, nomor penerbangan, hotel Makkah, hotel Madinah, dan status keberangkatan."
+            }
+          },
+          {
+            "candidateId": "cand-021",
+            "kind": "display_requirement",
+            "semanticKey": "safara.departure_schedule.display_registered_count_and_remaining_quota",
+            "payload": {
+              "entity": "departure_schedule",
+              "displayValues": [
+                "registered pilgrim count",
+                "remaining quota"
+              ]
+            },
+            "relationships": [
+              "cand-020"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 2,
+              "quote": "Aplikasi menampilkan jumlah jemaah terdaftar dan sisa kuota."
+            }
+          },
+          {
+            "candidateId": "cand-022",
+            "kind": "registration_gate",
+            "semanticKey": "safara.registration.blocked_for_closed_schedule",
+            "payload": {
+              "operation": "new registration",
+              "denyWhen": "departure schedule is closed"
+            },
+            "relationships": [
+              "cand-021",
+              "cand-032"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 2,
+              "quote": "Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh."
+            }
+          },
+          {
+            "candidateId": "cand-023",
+            "kind": "capability",
+            "semanticKey": "safara.pilgrim.admin_crud_search_and_deactivate",
+            "payload": {
+              "actor": "Admin",
+              "entity": "pilgrim",
+              "operations": [
+                "create",
+                "view",
+                "update",
+                "search",
+                "deactivate"
+              ]
+            },
+            "relationships": [],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 2,
+              "quote": "Admin dapat menambah, melihat, mengubah, mencari, dan menonaktifkan data jemaah."
+            }
+          },
+          {
+            "candidateId": "cand-024",
+            "kind": "data_schema_requirement",
+            "semanticKey": "safara.pilgrim.minimum_fields",
+            "payload": {
+              "entity": "pilgrim",
+              "minimumFields": [
+                "passport_name",
+                "national_id_number",
+                "gender",
+                "birth_place",
+                "birth_date",
+                "phone_number",
+                "address",
+                "passport_number",
+                "passport_expiry",
+                "emergency_contact_name",
+                "emergency_contact_number"
+              ]
+            },
+            "relationships": [
+              "cand-023"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 2,
+              "quote": "Informasi minimum jemaah: nama sesuai paspor, NIK, jenis kelamin, tempat dan tanggal lahir, nomor\ntelepon, alamat, nomor dan masa berlaku paspor, serta nama dan nomor kontak darurat."
+            }
+          },
+          {
+            "candidateId": "cand-025",
+            "kind": "validation_rule",
+            "semanticKey": "safara.pilgrim.national_id_number_16_digits_if_provided",
+            "payload": {
+              "field": "NIK",
+              "condition": "provided",
+              "constraint": "must consist of 16 digits"
+            },
+            "relationships": [
+              "cand-024"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 2,
+              "quote": "NIK harus terdiri dari 16 angka apabila diisi."
+            }
+          },
+          {
+            "candidateId": "cand-026",
+            "kind": "warning_requirement",
+            "semanticKey": "safara.pilgrim.warn_on_duplicate_national_id_or_passport",
+            "payload": {
+              "fields": [
+                "NIK",
+                "passport_number"
+              ],
+              "condition": "already used by another pilgrim",
+              "outcome": "application provides a warning"
+            },
+            "relationships": [
+              "cand-024"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 2,
+              "quote": "Aplikasi harus memberikan peringatan apabila NIK atau nomor paspor sudah digunakan oleh jemaah lain."
+            }
+          },
+          {
+            "candidateId": "cand-027",
+            "kind": "privacy_display_rule",
+            "semanticKey": "safara.pilgrim.list_masks_national_id_and_passport",
+            "payload": {
+              "view": "list page",
+              "fields": [
+                "NIK",
+                "passport_number"
+              ],
+              "constraint": "need not be displayed in full"
+            },
+            "relationships": [
+              "cand-024"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 2,
+              "quote": "Pada halaman daftar, NIK dan nomor paspor tidak perlu ditampilkan secara penuh."
+            }
+          },
+          {
+            "candidateId": "cand-028",
+            "kind": "identifier_rule",
+            "semanticKey": "safara.registration.unique_registration_number",
+            "payload": {
+              "entity": "registration",
+              "field": "registration_number",
+              "constraint": "each registration has a different number"
+            },
+            "relationships": [],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 2,
+              "quote": "Setiap pendaftaran memiliki nomor pendaftaran yang berbeda."
+            }
+          },
+          {
+            "candidateId": "cand-029",
+            "kind": "price_snapshot_rule",
+            "semanticKey": "safara.registration.agreed_price_captured_as_fixed_reference",
+            "payload": {
+              "captureTime": "at registration",
+              "storedValue": "agreed registration price",
+              "usage": "fixed reference value for that registration"
+            },
+            "relationships": [
+              "cand-008"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 2,
+              "quote": "Harga yang berlaku saat pendaftaran disimpan sebagai harga pendaftaran yang disepakati dan menjadi\nnilai acuan tetap untuk pendaftaran tersebut."
+            }
+          },
+          {
+            "candidateId": "cand-030",
+            "kind": "uniqueness_rule",
+            "semanticKey": "safara.registration.no_two_active_registrations_per_pilgrim_schedule",
+            "payload": {
+              "entity": "registration",
+              "constraint": "same pilgrim cannot have two active registrations for the same departure schedule"
+            },
+            "relationships": [],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 2,
+              "quote": "Jemaah yang sama tidak boleh memiliki dua pendaftaran aktif pada jadwal keberangkatan yang sama."
+            }
+          },
+          {
+            "candidateId": "cand-031",
+            "kind": "cancellation_rule",
+            "semanticKey": "safara.registration.cancellation_reason_and_visible_history",
+            "payload": {
+              "operation": "registration cancellation",
+              "requiredData": "recorded reason",
+              "history": "remains visible"
+            },
+            "relationships": [
+              "cand-007"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 2,
+              "quote": "Pendaftaran dapat dibatalkan dengan alasan yang tercatat, tetapi riwayatnya tetap dapat dilihat."
+            }
+          },
+          {
+            "candidateId": "cand-032",
+            "kind": "quota_constraint",
+            "semanticKey": "safara.departure_schedule.active_registration_count_not_over_quota",
+            "payload": {
+              "metric": "active registration count",
+              "constraint": "must not exceed departure quota"
+            },
+            "relationships": [
+              "cand-021",
+              "cand-022"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 2,
+              "quote": "Jumlah pendaftaran aktif tidak boleh melebihi kuota keberangkatan."
+            }
+          },
+          {
+            "candidateId": "cand-033",
+            "kind": "access_control_rule",
+            "semanticKey": "safara.pilgrim_information.authorized_users_only",
+            "payload": {
+              "resource": "pilgrim information",
+              "constraint": "may only be viewed by users with a legitimate interest"
+            },
+            "relationships": [],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 2,
+              "quote": "Informasi jemaah hanya boleh dilihat oleh pengguna yang berkepentingan."
+            }
+          },
+          {
+            "candidateId": "cand-034",
+            "kind": "delivery_requirement",
+            "semanticKey": "safara.increment_01.deliver_usable_web_application",
+            "payload": {
+              "deliverable": "usable first-increment web application",
+              "capabilities": [
+                "manage packages",
+                "manage departure schedules",
+                "manage pilgrim data",
+                "manage registrations",
+                "manage quotas"
+              ]
+            },
+            "relationships": [
+              "cand-003"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 3,
+              "quote": "Aplikasi web increment pertama yang dapat digunakan untuk pengelolaan paket, jadwal keberangkatan,\ndata jemaah, pendaftaran, dan kuota."
+            }
+          },
+          {
+            "candidateId": "cand-035",
+            "kind": "delivery_requirement",
+            "semanticKey": "safara.increment_01.deliver_accessible_application_address",
+            "payload": {
+              "deliverable": "application address",
+              "accessibility": "accessible by designated users"
+            },
+            "relationships": [],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 3,
+              "quote": "Alamat aplikasi yang dapat diakses oleh pengguna yang ditentukan."
+            }
+          },
+          {
+            "candidateId": "cand-036",
+            "kind": "delivery_requirement",
+            "semanticKey": "safara.increment_01.deliver_initial_owner_admin_account",
+            "payload": {
+              "deliverable": "initial account",
+              "role": "Owner/Admin"
+            },
+            "relationships": [
+              "cand-009"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 3,
+              "quote": "Akun awal untuk Owner/Admin."
+            }
+          },
+          {
+            "candidateId": "cand-037",
+            "kind": "delivery_requirement",
+            "semanticKey": "safara.increment_01.deliver_short_user_guide",
+            "payload": {
+              "deliverable": "short usage guide",
+              "scope": "functions in this increment"
+            },
+            "relationships": [],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 3,
+              "quote": "Panduan penggunaan singkat untuk fungsi pada increment ini."
+            }
+          },
+          {
+            "candidateId": "cand-038",
+            "kind": "business_objective",
+            "semanticKey": "safara.operations.unified_operational_data",
+            "payload": {
+              "objective": "Unify package, departure schedule, pilgrim, and registration data in one operational application."
+            },
+            "relationships": [
+              "cand-003",
+              "cand-004",
+              "cand-039",
+              "cand-040",
+              "cand-041",
+              "cand-042",
+              "cand-043"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 1,
+              "quote": "Menyatukan data paket, jadwal keberangkatan,\njemaah, dan pendaftaran dalam satu aplikasi\noperasional."
+            }
+          },
+          {
+            "candidateId": "cand-039",
+            "kind": "current_state_problem",
+            "semanticKey": "safara.operations.registration_information_fragmented",
+            "payload": {
+              "problem": "Package, departure schedule, pilgrim, and registration information is fragmented across spreadsheets, chat, and notes."
+            },
+            "relationships": [
+              "cand-038",
+              "cand-004"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 1,
+              "quote": "Saat ini informasi paket, jadwal keberangkatan, data jemaah, dan pendaftaran sering tersebar di spreadsheet,\nchat, dan catatan yang berbeda. Hal ini menyulitkan tim untuk mengetahui:"
+            }
+          },
+          {
+            "candidateId": "cand-040",
+            "kind": "information_requirement",
+            "semanticKey": "safara.registration.show_pilgrim_departure",
+            "payload": {
+              "informationNeed": "Identify the departure on which each pilgrim is registered."
+            },
+            "relationships": [
+              "cand-038",
+              "cand-014"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 1,
+              "quote": "Jemaah terdaftar pada keberangkatan yang mana."
+            }
+          },
+          {
+            "candidateId": "cand-041",
+            "kind": "information_requirement",
+            "semanticKey": "safara.departure_schedule.show_registered_pilgrim_count",
+            "payload": {
+              "informationNeed": "Show the number of registered pilgrims for each departure."
+            },
+            "relationships": [
+              "cand-038",
+              "cand-016",
+              "cand-021"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 1,
+              "quote": "Jumlah jemaah yang sudah terdaftar pada setiap keberangkatan."
+            }
+          },
+          {
+            "candidateId": "cand-042",
+            "kind": "information_requirement",
+            "semanticKey": "safara.departure_schedule.show_remaining_quota",
+            "payload": {
+              "informationNeed": "Show the remaining quota for each departure."
+            },
+            "relationships": [
+              "cand-038",
+              "cand-016",
+              "cand-021",
+              "cand-032"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 1,
+              "quote": "Sisa kuota setiap keberangkatan."
+            }
+          },
+          {
+            "candidateId": "cand-043",
+            "kind": "information_requirement",
+            "semanticKey": "safara.registration.show_agreed_registration_price",
+            "payload": {
+              "informationNeed": "Show the registration price agreed with each pilgrim."
+            },
+            "relationships": [
+              "cand-038",
+              "cand-008",
+              "cand-029"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 1,
+              "quote": "Harga pendaftaran yang telah disepakati dengan jemaah."
+            }
+          },
+          {
+            "candidateId": "cand-044",
+            "kind": "acceptance_criterion",
+            "semanticKey": "safara.increment_01.acceptance.package_to_registration_flow",
+            "payload": {
+              "criterion": "The package-creation-to-pilgrim-registration flow can be run using agreed sample data."
+            },
+            "relationships": [
+              "cand-011",
+              "cand-012",
+              "cand-013",
+              "cand-014",
+              "cand-015",
+              "cand-016"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 3,
+              "quote": "Alur dari pembuatan paket sampai pendaftaran jemaah dapat dijalankan menggunakan contoh data yang\ndisepakati."
+            }
+          },
+          {
+            "candidateId": "cand-045",
+            "kind": "registration_gate",
+            "semanticKey": "safara.registration.blocked_for_full_schedule",
+            "payload": {
+              "operation": "new registration",
+              "denyWhen": "departure schedule quota is full"
+            },
+            "relationships": [
+              "cand-021",
+              "cand-032"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 2,
+              "quote": "Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh."
+            }
+          },
+          {
+            "candidateId": "cand-046",
+            "kind": "acceptance_criterion",
+            "semanticKey": "safara.increment_01.acceptance.quota_and_remaining_quota_calculated_correctly",
+            "payload": {
+              "criterion": "Quota and remaining quota are calculated correctly."
+            },
+            "relationships": [
+              "cand-021",
+              "cand-032"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 3,
+              "quote": "Kuota dan sisa kuota dihitung dengan benar."
+            }
+          },
+          {
+            "candidateId": "cand-047",
+            "kind": "registration_history_rule",
+            "semanticKey": "safara.registration.multiple_registration_histories_allowed",
+            "payload": {
+              "entity": "pilgrim",
+              "allowance": "may have multiple registration histories"
+            },
+            "relationships": [
+              "cand-007",
+              "cand-030"
+            ],
+            "possibleAffectedSemanticKey": null,
+            "evidence": {
+              "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+              "page": 2,
+              "quote": "Satu jemaah dapat memiliki beberapa riwayat pendaftaran, tetapi tidak boleh memiliki dua pendaftaran aktif\npada keberangkatan yang sama."
+            }
+          }
+        ],
+        "sourceStatementInventory": [
+          {
+            "inventoryId": "inv-002",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 1,
+            "quote": "Menyatukan data paket, jadwal keberangkatan,\njemaah, dan pendaftaran dalam satu aplikasi\noperasional.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "objective": "Unify package, departure schedule, pilgrim, and registration data in one operational application."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-038"
+            }
+          },
+          {
+            "inventoryId": "inv-003",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 1,
+            "quote": "Satu perusahaan dan satu cabang; paket,\nkeberangkatan, data jemaah, pendaftaran, dan kuota.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "scope": "One company, one branch, and specified operational entities."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-001"
+            }
+          },
+          {
+            "inventoryId": "inv-005",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 1,
+            "quote": "Dokumen ini menetapkan fondasi operasional pertama Safara. Pembayaran, dokumen perjalanan,\nkesiapan, manifest, dan laporan belum menjadi ruang lingkup increment ini.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "outOfScope": [
+                "payment",
+                "travel documents",
+                "readiness",
+                "manifest",
+                "reporting"
+              ]
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-002"
+            }
+          },
+          {
+            "inventoryId": "inv-007",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 1,
+            "quote": "Kami membutuhkan aplikasi web internal untuk mengelola data dasar administrasi jemaah umrah pada tahap\npendaftaran.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "system": "Internal web application for basic Umrah pilgrim administration at registration stage."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-003"
+            }
+          },
+          {
+            "inventoryId": "inv-008",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 1,
+            "quote": "Saat ini informasi paket, jadwal keberangkatan, data jemaah, dan pendaftaran sering tersebar di spreadsheet,\nchat, dan catatan yang berbeda. Hal ini menyulitkan tim untuk mengetahui:",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "problem": "Operational registration information is fragmented across spreadsheets, chat, and notes."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-039"
+            }
+          },
+          {
+            "inventoryId": "inv-009a",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 1,
+            "quote": "Jemaah terdaftar pada keberangkatan yang mana.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "informationNeed": "Pilgrim registered departure"
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-040"
+            }
+          },
+          {
+            "inventoryId": "inv-009b",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 1,
+            "quote": "Jumlah jemaah yang sudah terdaftar pada setiap keberangkatan.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "informationNeed": "Registered pilgrim count per departure"
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-041"
+            }
+          },
+          {
+            "inventoryId": "inv-009c",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 1,
+            "quote": "Sisa kuota setiap keberangkatan.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "informationNeed": "Remaining quota per departure"
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-042"
+            }
+          },
+          {
+            "inventoryId": "inv-009d",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 1,
+            "quote": "Harga pendaftaran yang telah disepakati dengan jemaah.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "informationNeed": "Agreed registration price"
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-043"
+            }
+          },
+          {
+            "inventoryId": "inv-010",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 1,
+            "quote": "Aplikasi pada increment ini diharapkan menjadi satu sumber data untuk proses pendaftaran dan pengelolaan\nkuota sebelum kebutuhan operasional berikutnya ditambahkan.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "requirement": "Provide a single source of data for registration and quota management."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-004"
+            }
+          },
+          {
+            "inventoryId": "inv-012",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 1,
+            "quote": "Mengurangi kesalahan pencatatan data jemaah dan pendaftaran.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "objective": "Reduce recording errors."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-005"
+            }
+          },
+          {
+            "inventoryId": "inv-013",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 1,
+            "quote": "Mempermudah pemantauan kuota keberangkatan.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "objective": "Improve quota monitoring."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-006"
+            }
+          },
+          {
+            "inventoryId": "inv-014",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 1,
+            "quote": "Menjaga riwayat pendaftaran jemaah agar tidak hilang ketika data dibatalkan atau dinonaktifkan.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "objective": "Retain registration history after cancellation or deactivation."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-007"
+            }
+          },
+          {
+            "inventoryId": "inv-015",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 1,
+            "quote": "Memastikan harga pendaftaran yang sudah disepakati tidak berubah ketika harga paket diperbarui.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "objective": "Keep agreed registration price unchanged after package price updates."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-008"
+            }
+          },
+          {
+            "inventoryId": "inv-017",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 1,
+            "quote": "Dapat melihat dan mengelola paket, jadwal keberangkatan, data jemaah, dan pendaftaran pada increment ini.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "role": "Owner/Admin",
+              "permissions": [
+                "view",
+                "manage"
+              ]
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-009"
+            }
+          },
+          {
+            "inventoryId": "inv-018",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 1,
+            "quote": "Pengguna yang sudah dinonaktifkan tidak boleh masuk ke aplikasi.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "deactivatedUserLogin": "denied"
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-010"
+            }
+          },
+          {
+            "inventoryId": "inv-021",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Admin membuat paket umrah.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "workflowOrder": 1,
+              "action": "Admin creates Umrah package."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-011"
+            }
+          },
+          {
+            "inventoryId": "inv-022",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Admin membuat jadwal keberangkatan untuk paket yang dipilih.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "workflowOrder": 2,
+              "action": "Admin creates schedule for selected package."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-012"
+            }
+          },
+          {
+            "inventoryId": "inv-023",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Admin mencatat data jemaah.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "workflowOrder": 3,
+              "action": "Admin records pilgrim data."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-013"
+            }
+          },
+          {
+            "inventoryId": "inv-024",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Admin memilih jemaah dan mendaftarkannya ke jadwal keberangkatan yang masih terbuka.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "workflowOrder": 4,
+              "condition": "Departure schedule remains open."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-014"
+            }
+          },
+          {
+            "inventoryId": "inv-025",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Sistem menyimpan harga pendaftaran yang berlaku saat pendaftaran.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "workflowOrder": 5,
+              "action": "System stores registration-time price."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-015"
+            }
+          },
+          {
+            "inventoryId": "inv-026",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Sistem menampilkan jumlah jemaah terdaftar dan sisa kuota setiap keberangkatan.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "workflowOrder": 6,
+              "action": "System displays registered count and remaining quota per departure."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-016"
+            }
+          },
+          {
+            "inventoryId": "inv-027",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Admin dapat membuat, melihat, mengubah, dan menonaktifkan paket umrah.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "packageOperations": [
+                "create",
+                "view",
+                "update",
+                "deactivate"
+              ]
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-017"
+            }
+          },
+          {
+            "inventoryId": "inv-028",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Informasi paket minimal mencakup nama paket, durasi, harga dasar, deskripsi, dan status aktif.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "packageRequiredFields": [
+                "name",
+                "duration",
+                "base price",
+                "description",
+                "active status"
+              ]
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-018"
+            }
+          },
+          {
+            "inventoryId": "inv-029",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Setiap paket dapat memiliki satu atau lebih jadwal keberangkatan.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "relationship": "Package has one or more departure schedules."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-019"
+            }
+          },
+          {
+            "inventoryId": "inv-030",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Informasi jadwal minimal mencakup kode keberangkatan, tanggal berangkat, tanggal pulang, kota asal,\nkuota, harga, maskapai, nomor penerbangan, hotel Makkah, hotel Madinah, dan status keberangkatan.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "departureScheduleRequiredFields": [
+                "code",
+                "departure date",
+                "return date",
+                "origin city",
+                "quota",
+                "price",
+                "airline",
+                "flight number",
+                "Makkah hotel",
+                "Madinah hotel",
+                "status"
+              ]
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-020"
+            }
+          },
+          {
+            "inventoryId": "inv-031",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Aplikasi menampilkan jumlah jemaah terdaftar dan sisa kuota.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "display": "Registered count and remaining quota."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-021"
+            }
+          },
+          {
+            "inventoryId": "inv-032",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "registrationDeniedWhen": "schedule closed"
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-022"
+            }
+          },
+          {
+            "inventoryId": "inv-032a",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Pendaftaran baru tidak dapat dilakukan apabila jadwal sudah ditutup atau kuota sudah penuh.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "registrationDeniedWhen": "quota is full"
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-045"
+            }
+          },
+          {
+            "inventoryId": "inv-033",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Admin dapat menambah, melihat, mengubah, mencari, dan menonaktifkan data jemaah.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "pilgrimOperations": [
+                "create",
+                "view",
+                "update",
+                "search",
+                "deactivate"
+              ]
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-023"
+            }
+          },
+          {
+            "inventoryId": "inv-034",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Informasi minimum jemaah: nama sesuai paspor, NIK, jenis kelamin, tempat dan tanggal lahir, nomor\ntelepon, alamat, nomor dan masa berlaku paspor, serta nama dan nomor kontak darurat.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "pilgrimRequiredFields": [
+                "passport name",
+                "NIK",
+                "gender",
+                "birth place and date",
+                "phone",
+                "address",
+                "passport number and validity",
+                "emergency contact name and number"
+              ]
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-024"
+            }
+          },
+          {
+            "inventoryId": "inv-035",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "NIK harus terdiri dari 16 angka apabila diisi.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "NIK": "16 digits when provided"
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-025"
+            }
+          },
+          {
+            "inventoryId": "inv-036",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Aplikasi harus memberikan peringatan apabila NIK atau nomor paspor sudah digunakan oleh jemaah lain.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "warning": "NIK or passport number already used by another pilgrim."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-026"
+            }
+          },
+          {
+            "inventoryId": "inv-037",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Pada halaman daftar, NIK dan nomor paspor tidak perlu ditampilkan secara penuh.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "listDisplay": "NIK and passport number need not be shown in full."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-027"
+            }
+          },
+          {
+            "inventoryId": "inv-038",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Admin dapat memilih jemaah dan mendaftarkannya ke jadwal keberangkatan yang masih terbuka.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "registrationAction": "Admin selects pilgrim and registers to open schedule."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-014",
+              "duplicateOf": "cand-014"
+            }
+          },
+          {
+            "inventoryId": "inv-039",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Setiap pendaftaran memiliki nomor pendaftaran yang berbeda.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "registrationNumber": "Different for every registration."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-028"
+            }
+          },
+          {
+            "inventoryId": "inv-040",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Harga yang berlaku saat pendaftaran disimpan sebagai harga pendaftaran yang disepakati dan menjadi\nnilai acuan tetap untuk pendaftaran tersebut.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "registrationPrice": "Captured at registration and retained as fixed reference."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-029"
+            }
+          },
+          {
+            "inventoryId": "inv-041",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Perubahan harga paket setelah pendaftaran tidak boleh mengubah harga pendaftaran yang sudah\ndisepakati.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "agreedRegistrationPrice": "Unaffected by later package price changes."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-008",
+              "duplicateOf": "cand-008"
+            }
+          },
+          {
+            "inventoryId": "inv-042",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Jemaah yang sama tidak boleh memiliki dua pendaftaran aktif pada jadwal keberangkatan yang sama.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "constraint": "No two active registrations for same pilgrim and schedule."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-030"
+            }
+          },
+          {
+            "inventoryId": "inv-043",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Pendaftaran dapat dibatalkan dengan alasan yang tercatat, tetapi riwayatnya tetap dapat dilihat.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "cancellation": "Requires recorded reason and preserves visible history."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-031"
+            }
+          },
+          {
+            "inventoryId": "inv-044a",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Satu jemaah dapat memiliki beberapa riwayat pendaftaran, tetapi tidak boleh memiliki dua pendaftaran aktif\npada keberangkatan yang sama.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "history": "Multiple registration histories are allowed."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-047"
+            }
+          },
+          {
+            "inventoryId": "inv-044b",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Satu jemaah dapat memiliki beberapa riwayat pendaftaran, tetapi tidak boleh memiliki dua pendaftaran aktif\npada keberangkatan yang sama.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "constraint": "No two active registrations for same pilgrim and schedule."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-030",
+              "duplicateOf": "cand-030"
+            }
+          },
+          {
+            "inventoryId": "inv-045",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Jumlah pendaftaran aktif tidak boleh melebihi kuota keberangkatan.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "constraint": "Active registrations cannot exceed departure quota."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-032"
+            }
+          },
+          {
+            "inventoryId": "inv-046",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Harga pendaftaran yang sudah disepakati tidak berubah ketika harga paket diperbarui.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "constraint": "Agreed registration price remains unchanged after package price update."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-008",
+              "duplicateOf": "cand-008"
+            }
+          },
+          {
+            "inventoryId": "inv-047",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Pembatalan atau penonaktifan data tidak boleh menghilangkan riwayat sebelumnya.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "history": "Prior history must not be deleted by cancellation or deactivation."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-007",
+              "duplicateOf": "cand-007"
+            }
+          },
+          {
+            "inventoryId": "inv-048",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Informasi jemaah hanya boleh dilihat oleh pengguna yang berkepentingan.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "access": "Pilgrim information only for users with a legitimate interest."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-033"
+            }
+          },
+          {
+            "inventoryId": "inv-051",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 3,
+            "quote": "Sebelum increment ini dinyatakan selesai, kami akan mencoba minimal skenario berikut:",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "verification": "The following minimum scenarios will be tested before increment completion."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-034"
+            }
+          },
+          {
+            "inventoryId": "inv-052",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 3,
+            "quote": "Membuat paket dan jadwal keberangkatan, lalu melihat sisa kuota.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "verificationScenario": "Create package and schedule, then view remaining quota."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-021",
+              "duplicateOf": "cand-021"
+            }
+          },
+          {
+            "inventoryId": "inv-053",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 3,
+            "quote": "Mendaftarkan jemaah sampai kuota penuh dan memastikan pendaftaran berikutnya ditolak.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "verificationScenario": "Fill quota with registrations and reject the next registration."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-045",
+              "duplicateOf": "cand-045"
+            }
+          },
+          {
+            "inventoryId": "inv-054",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 3,
+            "quote": "Mencoba mendaftarkan jemaah yang sama dua kali pada keberangkatan yang sama.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "verificationScenario": "Attempt duplicate active registration for same pilgrim and departure."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-030",
+              "duplicateOf": "cand-030"
+            }
+          },
+          {
+            "inventoryId": "inv-055",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 3,
+            "quote": "Memperbarui harga paket setelah pendaftaran dan memastikan harga pendaftaran yang sudah disepakati\ntidak berubah.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "verificationScenario": "Update package price after registration and preserve agreed registration price."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-008",
+              "duplicateOf": "cand-008"
+            }
+          },
+          {
+            "inventoryId": "inv-056",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 3,
+            "quote": "Membatalkan pendaftaran dan memastikan riwayatnya tetap dapat dilihat.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "verificationScenario": "Cancel registration and keep history visible."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-031",
+              "duplicateOf": "cand-031"
+            }
+          },
+          {
+            "inventoryId": "inv-057",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 3,
+            "quote": "Aplikasi web increment pertama yang dapat digunakan untuk pengelolaan paket, jadwal keberangkatan,\ndata jemaah, pendaftaran, dan kuota.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "deliverable": "Usable first-increment web app covering specified management areas."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-034",
+              "duplicateOf": "cand-034"
+            }
+          },
+          {
+            "inventoryId": "inv-058",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 3,
+            "quote": "Alamat aplikasi yang dapat diakses oleh pengguna yang ditentukan.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "deliverable": "Application address accessible by designated users."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-035"
+            }
+          },
+          {
+            "inventoryId": "inv-059",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 3,
+            "quote": "Akun awal untuk Owner/Admin.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "deliverable": "Initial Owner/Admin account."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-036"
+            }
+          },
+          {
+            "inventoryId": "inv-060",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 3,
+            "quote": "Panduan penggunaan singkat untuk fungsi pada increment ini.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "deliverable": "Short usage guide for increment functions."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-037"
+            }
+          },
+          {
+            "inventoryId": "inv-061",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 3,
+            "quote": "Owner/Admin dapat masuk dan menjalankan fungsi yang ditetapkan pada increment ini.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "acceptanceCriterion": "Owner/Admin can log in and perform defined functions."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-009",
+              "duplicateOf": "cand-009"
+            }
+          },
+          {
+            "inventoryId": "inv-062",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 3,
+            "quote": "Alur dari pembuatan paket sampai pendaftaran jemaah dapat dijalankan menggunakan contoh data yang\ndisepakati.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "acceptanceCriterion": "Package-creation-to-pilgrim-registration flow runs with agreed sample data."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-044"
+            }
+          },
+          {
+            "inventoryId": "inv-063",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 3,
+            "quote": "Kuota dan sisa kuota dihitung dengan benar.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "acceptanceCriterion": "Quota and remaining quota are calculated correctly."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-046"
+            }
+          },
+          {
+            "inventoryId": "inv-064a",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 3,
+            "quote": "Pendaftaran ditolak ketika jadwal ditutup, kuota penuh, atau jemaah yang sama sudah memiliki pendaftaran\naktif pada keberangkatan yang sama.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "acceptanceCriterion": "Registration is rejected when the schedule is closed."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-022",
+              "duplicateOf": "cand-022"
+            }
+          },
+          {
+            "inventoryId": "inv-064b",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 3,
+            "quote": "Pendaftaran ditolak ketika jadwal ditutup, kuota penuh, atau jemaah yang sama sudah memiliki pendaftaran\naktif pada keberangkatan yang sama.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "acceptanceCriterion": "Registration is rejected when quota is full."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-045",
+              "duplicateOf": "cand-045"
+            }
+          },
+          {
+            "inventoryId": "inv-064c",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 3,
+            "quote": "Pendaftaran ditolak ketika jadwal ditutup, kuota penuh, atau jemaah yang sama sudah memiliki pendaftaran\naktif pada keberangkatan yang sama.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "acceptanceCriterion": "Registration is rejected for a duplicate active pilgrim registration on the same departure."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-030",
+              "duplicateOf": "cand-030"
+            }
+          },
+          {
+            "inventoryId": "inv-065",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 3,
+            "quote": "Harga pendaftaran yang sudah disepakati tetap tersimpan ketika harga paket berubah.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "acceptanceCriterion": "Agreed registration price remains stored when package price changes."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-008",
+              "duplicateOf": "cand-008"
+            }
+          },
+          {
+            "inventoryId": "inv-066",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 3,
+            "quote": "Riwayat pendaftaran tetap dapat dilihat setelah pembatalan atau penonaktifan data.",
+            "classification": "material",
+            "normalizedInterpretation": {
+              "acceptanceCriterion": "Registration history remains viewable after cancellation or deactivation."
+            },
+            "destination": {
+              "type": "candidate_assertion",
+              "candidateId": "cand-007",
+              "duplicateOf": "cand-007"
+            }
+          },
+          {
+            "inventoryId": "nonfact-001",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 1,
+            "quote": "SAFARA - Increment 01",
+            "classification": "non_fact",
+            "normalizedInterpretation": {
+              "category": "document_branding"
+            },
+            "destination": {
+              "type": "non_fact",
+              "reason": "Document branding is not a business assertion."
+            }
+          },
+          {
+            "inventoryId": "nonfact-002",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 1,
+            "quote": "INCREMENTAL PROJECT REQUEST",
+            "classification": "non_fact",
+            "normalizedInterpretation": {
+              "category": "document_heading"
+            },
+            "destination": {
+              "type": "non_fact",
+              "reason": "Heading is not a business assertion."
+            }
+          },
+          {
+            "inventoryId": "nonfact-003",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 1,
+            "quote": "Konteks",
+            "classification": "non_fact",
+            "normalizedInterpretation": {
+              "category": "heading"
+            },
+            "destination": {
+              "type": "non_fact",
+              "reason": "Heading is not a business assertion."
+            }
+          },
+          {
+            "inventoryId": "nonfact-004",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 1,
+            "quote": "Tujuan Bisnis",
+            "classification": "non_fact",
+            "normalizedInterpretation": {
+              "category": "heading"
+            },
+            "destination": {
+              "type": "non_fact",
+              "reason": "Heading is not a business assertion."
+            }
+          },
+          {
+            "inventoryId": "nonfact-005",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 1,
+            "quote": "Pengguna",
+            "classification": "non_fact",
+            "normalizedInterpretation": {
+              "category": "heading"
+            },
+            "destination": {
+              "type": "non_fact",
+              "reason": "Heading is not a business assertion."
+            }
+          },
+          {
+            "inventoryId": "nonfact-006",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 1,
+            "quote": "Safara - Sistem Administrasi Travel Umrah Dokumen Bisnis | 27 Juli 2026 |",
+            "classification": "non_fact",
+            "normalizedInterpretation": {
+              "category": "repeating_footer"
+            },
+            "destination": {
+              "type": "non_fact",
+              "reason": "Repeating document footer is not a business assertion."
+            }
+          },
+          {
+            "inventoryId": "nonfact-007",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Alur Utama",
+            "classification": "non_fact",
+            "normalizedInterpretation": {
+              "category": "heading"
+            },
+            "destination": {
+              "type": "non_fact",
+              "reason": "Heading is not a business assertion."
+            }
+          },
+          {
+            "inventoryId": "nonfact-008",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Kebutuhan",
+            "classification": "non_fact",
+            "normalizedInterpretation": {
+              "category": "heading"
+            },
+            "destination": {
+              "type": "non_fact",
+              "reason": "Heading is not a business assertion."
+            }
+          },
+          {
+            "inventoryId": "nonfact-009",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Aturan Bisnis Utama",
+            "classification": "non_fact",
+            "normalizedInterpretation": {
+              "category": "heading"
+            },
+            "destination": {
+              "type": "non_fact",
+              "reason": "Heading is not a business assertion."
+            }
+          },
+          {
+            "inventoryId": "nonfact-010",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 2,
+            "quote": "Safara - Sistem Administrasi Travel Umrah Dokumen Bisnis | 27 Juli 2026 |",
+            "classification": "non_fact",
+            "normalizedInterpretation": {
+              "category": "repeating_footer"
+            },
+            "destination": {
+              "type": "non_fact",
+              "reason": "Repeating document footer is not a business assertion."
+            }
+          },
+          {
+            "inventoryId": "nonfact-011",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 3,
+            "quote": "Skenario Pemeriksaan Hasil",
+            "classification": "non_fact",
+            "normalizedInterpretation": {
+              "category": "heading"
+            },
+            "destination": {
+              "type": "non_fact",
+              "reason": "Heading is not a business assertion."
+            }
+          },
+          {
+            "inventoryId": "nonfact-012",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 3,
+            "quote": "Hasil yang Harus Diserahkan",
+            "classification": "non_fact",
+            "normalizedInterpretation": {
+              "category": "heading"
+            },
+            "destination": {
+              "type": "non_fact",
+              "reason": "Heading is not a business assertion."
+            }
+          },
+          {
+            "inventoryId": "nonfact-013",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 3,
+            "quote": "Kriteria Penerimaan Increment 01",
+            "classification": "non_fact",
+            "normalizedInterpretation": {
+              "category": "heading"
+            },
+            "destination": {
+              "type": "non_fact",
+              "reason": "Heading is not a business assertion."
+            }
+          },
+          {
+            "inventoryId": "nonfact-014",
+            "artifactId": "artifact-saf-yw4mk2muaiuw-prd-01",
+            "page": 3,
+            "quote": "Safara - Sistem Administrasi Travel Umrah Dokumen Bisnis | 27 Juli 2026 |",
+            "classification": "non_fact",
+            "normalizedInterpretation": {
+              "category": "repeating_footer"
+            },
+            "destination": {
+              "type": "non_fact",
+              "reason": "Repeating document footer is not a business assertion."
+            }
+          }
+        ],
+        "questions": []
       }
     }
   ]
