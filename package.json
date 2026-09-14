@@ -2,10 +2,17 @@
   "name": "atlas-workspace",
   "private": true,
   "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=24.0.0 <25.0.0"
+  },
   "scripts": {
     "dev": "corepack pnpm --filter @atlas/app dev",
     "build": "pnpm --filter @atlas/app build",
     "test": "pnpm --filter @atlas/fixtures test && pnpm --filter @atlas/app test",
-    "lint": "pnpm --filter @atlas/app lint"
+    "lint": "pnpm --filter @atlas/app lint",
+    "typecheck": "pnpm -r --if-present typecheck"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
   }
 }

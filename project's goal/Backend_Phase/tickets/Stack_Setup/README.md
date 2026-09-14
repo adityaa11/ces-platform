@@ -1,6 +1,6 @@
 # Backend Stack Setup Ticket Set
 
-- **State:** `planned`
+- **State:** `in_progress`
 - **Primary baseline:** [Atlas Backend Production Baseline](../../atlas-backend-production-baseline.md)
 - **Architecture guardrails:** [Atlas Core Architecture — Updated Checkpoint](../../atlas-core-architecture-checkpoint-v2.md)
 
@@ -12,11 +12,11 @@ The existing `apps/atlas` UI and its fixture-driven prototype remain in place wh
 
 ## Delivery order
 
-Each ticket is its own review batch because each establishes a distinct boundary and acceptance decision. Every batch is currently planned; its implementation commit will be recorded when that ticket reaches review.
+Each ticket is its own review batch because each establishes a distinct boundary and acceptance decision. Tickets remain planned until authorized; each implementation commit is recorded when its batch reaches review.
 
 | Order | Ticket / batch | State | Depends on | Review question |
 |---:|---|---|---|---|
-| 1 | [BSS-001](BSS-001-runtime-and-workspace-foundation.md) / BSS-BATCH-01 | `planned` | — | Is the workspace reproducible on the selected Node and TypeScript toolchain while preserving the existing prototype? |
+| 1 | [BSS-001](BSS-001-runtime-and-workspace-foundation.md) / BSS-BATCH-01 | `awaiting_review` | — | Is the workspace reproducible on the selected Node and TypeScript toolchain while preserving the existing prototype? |
 | 2 | [BSS-002](BSS-002-local-postgresql-compose.md) / BSS-BATCH-02 | `planned` | BSS-001 | Can developers start a durable local PostgreSQL instance through the documented Compose workflow? |
 | 3 | [BSS-003](BSS-003-postgresql-drizzle-boundaries.md) / BSS-BATCH-03 | `planned` | BSS-001, BSS-002 | Are PostgreSQL migrations, schema ownership, and repository boundaries established without prematurely fixing the domain schema? |
 | 4 | [BSS-004](BSS-004-better-auth-persistence.md) / BSS-BATCH-04 | `planned` | BSS-003 | Does Better Auth persist identity and sessions in its own PostgreSQL schema without taking ownership of Atlas authorization? |
