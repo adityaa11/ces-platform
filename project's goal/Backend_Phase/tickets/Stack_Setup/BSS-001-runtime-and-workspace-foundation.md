@@ -37,7 +37,7 @@ Make the monorepo reproducible on the baseline Node.js and TypeScript toolchain 
 
 - **Review question:** Is the workspace reproducible on the selected Node and TypeScript toolchain while preserving the existing prototype?
 - **Combined acceptance:** Runtime and package-manager versions are declared; a clean frozen install and workspace type-check pass; the existing UI build and tests pass; package ownership and fixture boundaries are explicit.
-- **Commit to review:** Pending final validation and commit.
+- **Commit to review:** `5c93620`.
 
 ## Implementation checkpoint
 
