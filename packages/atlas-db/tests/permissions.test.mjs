@@ -13,8 +13,10 @@ test("Agents Bridge cannot write trusted Atlas state while Atlas can", { skip },
   try {
     await admin.unsafe("CREATE TABLE IF NOT EXISTS atlas.boundary_probe (id integer PRIMARY KEY)");
     await admin.unsafe("GRANT INSERT, UPDATE, DELETE, SELECT ON atlas.boundary_probe TO atlas_app");
-    await assert.rejects(() => bridge.unsafe("INSERT INTO atlas.boundary_probe VALUES (1)"), /permission denied/i);
     await atlas.unsafe("INSERT INTO atlas.boundary_probe VALUES (1) ON CONFLICT DO NOTHING");
+    await assert.rejects(() => bridge.unsafe("INSERT INTO atlas.boundary_probe VALUES (2)"), /permission denied/i);
+    await assert.rejects(() => bridge.unsafe("UPDATE atlas.boundary_probe SET id = 2 WHERE id = 1"), /permission denied/i);
+    await assert.rejects(() => bridge.unsafe("DELETE FROM atlas.boundary_probe WHERE id = 1"), /permission denied/i);
   } finally {
     await admin.unsafe("DROP TABLE IF EXISTS atlas.boundary_probe");
     await Promise.all([admin.end(), bridge.end(), atlas.end()]);
