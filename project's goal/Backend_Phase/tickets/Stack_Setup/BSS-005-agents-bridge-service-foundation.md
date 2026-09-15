@@ -1,6 +1,6 @@
 # BSS-005: Agents Bridge service foundation
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** BSS-BATCH-05
 - **Depends on:** BSS-001, BSS-003
 - **Baseline:** [Production Baseline](../../atlas-backend-production-baseline.md) §§7, 8, 9, 15, 16; [Architecture Checkpoint](../../atlas-core-architecture-checkpoint-v2.md) — Sections 9–10, Cross-Cutting: Reasoning vs Deterministic Authority

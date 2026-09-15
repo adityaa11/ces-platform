@@ -7,11 +7,15 @@
     "dev": "jiti src/main.ts",
     "start": "jiti src/main.ts",
     "typecheck": "tsc -p tsconfig.json",
-    "test": "jiti tests/service.test.ts"
+    "test": "jiti tests/service.test.ts && jiti tests/worker.integration.test.ts",
+    "worker": "jiti src/worker-main.ts"
   },
   "dependencies": {
     "@atlas/contracts": "workspace:*",
-    "fastify": "5.8.2"
+    "drizzle-orm": "0.45.2",
+    "fastify": "5.8.2",
+    "pg-boss": "12.32.0",
+    "postgres": "3.4.7"
   },
   "devDependencies": {
     "@types/node": "22.19.19",

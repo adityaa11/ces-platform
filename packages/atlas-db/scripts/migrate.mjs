@@ -7,7 +7,7 @@ const replacements = {
   "{{ATLAS_APP_PASSWORD}}": process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only",
   "{{AGENTS_BRIDGE_PASSWORD}}": process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only",
 };
-const migrations = ["0000_bss003_boundaries", "0001_bss004_better_auth"];
+const migrations = ["0000_bss003_boundaries", "0001_bss004_better_auth", "0002_bss006_pgboss"];
 const readMigration = async (name) => {
   let migration = await readFile(new URL(`../migrations/${name}.sql`, import.meta.url), "utf8");
   for (const [token, value] of Object.entries(replacements)) migration = migration.replaceAll(token, value.replaceAll("'", "''"));

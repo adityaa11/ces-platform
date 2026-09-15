@@ -1,6 +1,6 @@
 # BSS-006: pg-boss background runtime
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** BSS-BATCH-06
 - **Depends on:** BSS-003, BSS-005
 - **Baseline:** [Production Baseline](../../atlas-backend-production-baseline.md) §§2, 7, 8, 10, 11, 12, 19, 21; [Architecture Checkpoint](../../atlas-core-architecture-checkpoint-v2.md) — Cross-Cutting: Incremental by Default
@@ -40,4 +40,12 @@ Run bounded, retryable background reasoning work through pg-boss and PostgreSQL,
 
 - **Review question:** Can the background runtime process PostgreSQL-backed jobs with retries while remaining unable to mutate trusted Atlas state?
 - **Combined acceptance:** Transactional enqueue, retry/idempotency behavior, controlled shutdown, shared executor use, and Bridge write denial all pass integration checks.
-- **Commit to review:** Pending implementation commit.
+- **Commit to review:** `HEAD` (the BSS-006 checkpoint commit).
+
+## Implementation checkpoint
+
+- Added a `pgboss` PostgreSQL schema owned by `agents_bridge`, plus a Bridge-owned idempotency ledger under `bridge`; Atlas has only the queue metadata and job-insert privileges required to transactionally enqueue bounded work.
+- Added a standalone Agents Bridge worker entry point with bounded concurrency, timeout, retry/backoff, graceful shutdown, and a Compose readiness signal.
+- Added a transactional queue producer that validates the BSS-005 provider-neutral envelope and joins the caller's source-operation transaction through pg-boss's Drizzle adapter.
+- Added a test-only queue isolation path so integration tests exercise transactional enqueue/rollback, retry, idempotency, cancellation/shutdown, and the shared `ReasoningRuntime` without contending with the Compose worker.
+- Verified the Bridge worker and PostgreSQL integration suite, direct database permission denial for trusted Atlas writes, affected package type-checks, Compose configuration, and a full Compose boot with all services healthy.
