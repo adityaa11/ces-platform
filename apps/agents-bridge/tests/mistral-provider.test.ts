@@ -93,3 +93,14 @@ test("cancellation and timeout map consistently before headers, during JSON, and
   await assert.rejects(async () => { for await (const _event of sseProvider.streamChat({ messages: [{ role: "user", content: "test" }], signal: new AbortController().signal })) { /* consume */ } }, (error: unknown) => error instanceof BridgeProviderError && error.code === "provider_unavailable");
   assert.equal(attempts, 1);
 });
+
+test("Bridge-configured retry limits and bounded backoff are honored", async () => {
+  let attempts = 0; const waits: number[] = [];
+  const provider = new MistralProvider({ ...config, retryMaxAttempts: 3, retryDelayMilliseconds: 7 }, async () => { attempts += 1; return attempts < 3 ? new Response("", { status: 503 }) : response({ choices: [{ message: { content: "{}" } }] }); }, async (milliseconds) => { waits.push(milliseconds); });
+  await provider.structured({ messages: [], schema: { type: "object" }, signal: new AbortController().signal });
+  assert.equal(attempts, 3); assert.deepEqual(waits, [7, 14]);
+  let limitedAttempts = 0;
+  const limited = new MistralProvider({ ...config, retryMaxAttempts: 1 }, async () => { limitedAttempts += 1; return new Response("", { status: 503 }); });
+  await assert.rejects(() => limited.structured({ messages: [], schema: { type: "object" }, signal: new AbortController().signal }), (error: unknown) => error instanceof BridgeProviderError && error.code === "provider_unavailable");
+  assert.equal(limitedAttempts, 1);
+});

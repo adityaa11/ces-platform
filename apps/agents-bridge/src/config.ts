@@ -13,6 +13,8 @@ export type BridgeConfig = {
     readonly maxResponseBytes: number;
     readonly maxStreamBytes: number;
     readonly timeoutMilliseconds: number;
+    readonly retryMaxAttempts: number;
+    readonly retryDelayMilliseconds: number;
     readonly zeroDataRetentionApproved: boolean;
   };
 };
@@ -43,6 +45,8 @@ export function loadBridgeConfig(environment: NodeJS.ProcessEnv = process.env): 
       maxResponseBytes: boundedPositiveInteger(environment.MISTRAL_MAX_RESPONSE_BYTES, 10 * 1024 * 1024, "MISTRAL_MAX_RESPONSE_BYTES"),
       maxStreamBytes: boundedPositiveInteger(environment.MISTRAL_MAX_STREAM_BYTES, 10 * 1024 * 1024, "MISTRAL_MAX_STREAM_BYTES"),
       timeoutMilliseconds: boundedPositiveInteger(environment.MISTRAL_TIMEOUT_MS, 30_000, "MISTRAL_TIMEOUT_MS"),
+      retryMaxAttempts: boundedPositiveInteger(environment.MISTRAL_RETRY_MAX_ATTEMPTS, 2, "MISTRAL_RETRY_MAX_ATTEMPTS"),
+      retryDelayMilliseconds: boundedPositiveInteger(environment.MISTRAL_RETRY_DELAY_MS, 250, "MISTRAL_RETRY_DELAY_MS"),
       zeroDataRetentionApproved: environment.MISTRAL_ZDR_APPROVED === "true",
     },
   };

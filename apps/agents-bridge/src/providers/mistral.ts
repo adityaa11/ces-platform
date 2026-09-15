@@ -28,9 +28,12 @@ export type MistralProviderConfig = {
   readonly maxResponseBytes?: number;
   readonly maxStreamBytes?: number;
   readonly timeoutMilliseconds?: number;
+  readonly retryMaxAttempts?: number;
+  readonly retryDelayMilliseconds?: number;
 };
 
 type FetchLike = (input: string, init: RequestInit) => Promise<Response>;
+type Sleep = (milliseconds: number, signal: AbortSignal) => Promise<void>;
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
 
 function modelFor(config: MistralProviderConfig, capability: MistralCapability): string {
@@ -56,7 +59,7 @@ function providerError(status: number): BridgeProviderError {
 
 /** Stateless Mistral transport. It receives explicit content only; it never opens Atlas storage or databases. */
 export class MistralProvider {
-  constructor(private readonly config: MistralProviderConfig, private readonly fetcher: FetchLike = fetch) {}
+  constructor(private readonly config: MistralProviderConfig, private readonly fetcher: FetchLike = fetch, private readonly sleep: Sleep = (milliseconds, signal) => new Promise((resolve, reject) => { const timer = setTimeout(resolve, milliseconds); signal.addEventListener("abort", () => { clearTimeout(timer); reject(new DOMException("aborted", "AbortError")); }, { once: true }); })) {}
 
   capabilityModel(capability: MistralCapability): string { return modelFor(this.config, capability); }
 
@@ -79,19 +82,21 @@ export class MistralProvider {
     if (Buffer.byteLength(serialized) > (this.config.maxRequestBytes ?? 2 * 1024 * 1024)) throw new BridgeProviderError("invalid_request", "Provider request exceeded the configured byte limit.");
     const deadline = AbortSignal.timeout(this.config.timeoutMilliseconds ?? 30_000);
     const requestSignal = AbortSignal.any([signal, deadline]);
-    for (let attempt = 1; attempt <= 2; attempt += 1) {
+    const maxAttempts = this.config.retryMaxAttempts ?? 2;
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
       const started = Date.now();
       let response: Response;
       try {
         response = await this.fetcher(`${this.config.baseUrl}${endpoint}`, { method: "POST", headers: { authorization: `Bearer ${this.config.apiKey}`, "content-type": "application/json" }, body: serialized, signal: requestSignal });
       } catch (error) {
         if (requestSignal.aborted) throw this.abortError(signal, deadline);
-        if (attempt === 2) throw new BridgeProviderError("provider_unavailable", "Mistral could not be reached.");
+        if (attempt === maxAttempts) throw new BridgeProviderError("provider_unavailable", "Mistral could not be reached.");
+        await this.sleep((this.config.retryDelayMilliseconds ?? 250) * attempt, requestSignal);
         continue;
       }
       if (response.ok) return { response, attempt, started, signal: requestSignal, deadline };
       const mapped = providerError(response.status);
-      if ((mapped.code === "rate_limited" || mapped.code === "provider_unavailable") && attempt < 2) continue;
+      if ((mapped.code === "rate_limited" || mapped.code === "provider_unavailable") && attempt < maxAttempts) { await this.sleep((this.config.retryDelayMilliseconds ?? 250) * attempt, requestSignal); continue; }
       throw mapped;
     }
     throw new BridgeProviderError("provider_unavailable", "Mistral could not be reached.");
