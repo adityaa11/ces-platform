@@ -104,3 +104,19 @@ test("Bridge-configured retry limits and bounded backoff are honored", async () 
   await assert.rejects(() => limited.structured({ messages: [], schema: { type: "object" }, signal: new AbortController().signal }), (error: unknown) => error instanceof BridgeProviderError && error.code === "provider_unavailable");
   assert.equal(limitedAttempts, 1);
 });
+
+test("timeout, malformed payloads, and active SSE cancellation use stable error codes", async () => {
+  for (const status of [408, 504]) {
+    const provider = new MistralProvider(config, async () => new Response("", { status }));
+    await assert.rejects(() => provider.structured({ messages: [], schema: { type: "object" }, signal: new AbortController().signal }), (error: unknown) => error instanceof BridgeProviderError && error.code === "timeout");
+  }
+  const malformedJson = new MistralProvider(config, async () => new Response("{", { status: 200 }));
+  await assert.rejects(() => malformedJson.structured({ messages: [], schema: { type: "object" }, signal: new AbortController().signal }), (error: unknown) => error instanceof BridgeProviderError && error.code === "malformed_response");
+  const malformedSse = new MistralProvider(config, async () => new Response(new ReadableStream<Uint8Array>({ start(controller) { controller.enqueue(new TextEncoder().encode("data: {bad}\n\n")); controller.close(); } }), { status: 200 }));
+  await assert.rejects(async () => { for await (const _event of malformedSse.streamChat({ messages: [], signal: new AbortController().signal })) { /* consume */ } }, (error: unknown) => error instanceof BridgeProviderError && error.code === "malformed_response");
+  const controller = new AbortController();
+  const active = new MistralProvider(config, async () => new Response(new ReadableStream<Uint8Array>({ start() { /* blocked until cancellation */ } }), { status: 200 }));
+  const run = (async () => { for await (const _event of active.streamChat({ messages: [], signal: controller.signal })) { /* consume */ } })();
+  setTimeout(() => controller.abort(), 0);
+  await assert.rejects(() => run, (error: unknown) => error instanceof BridgeProviderError && error.code === "cancelled");
+});

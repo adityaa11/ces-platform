@@ -50,6 +50,7 @@ function usageOf(value: unknown): ProviderUsage | undefined {
 }
 
 function providerError(status: number): BridgeProviderError {
+  if (status === 408 || status === 504) return new BridgeProviderError("timeout", "Mistral request timed out.");
   if (status === 401 || status === 403) return new BridgeProviderError("authentication", "Mistral authentication was rejected.");
   if (status === 400 || status === 404 || status === 422) return new BridgeProviderError("invalid_request", "Mistral rejected the provider request.");
   if (status === 429) return new BridgeProviderError("rate_limited", "Mistral rate limit reached.");
@@ -141,6 +142,8 @@ export class MistralProvider {
     if (!response.body) throw new BridgeProviderError("malformed_response", "Mistral returned no stream body.");
     const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffered = ""; let usage: ProviderUsage | undefined; let streamBytes = 0;
     const toolCalls = new Map<string, { id: string; name: string; arguments: string }>();
+    const cancelReader = () => { void reader.cancel(); };
+    result.signal.addEventListener("abort", cancelReader, { once: true });
     try {
       while (true) {
         const chunk = await reader.read(); if (chunk.done) break; streamBytes += chunk.value.byteLength;
@@ -166,7 +169,8 @@ export class MistralProvider {
       if (error instanceof BridgeProviderError) throw error;
       if (result.signal.aborted) throw this.abortError(input.signal, result.deadline);
       throw new BridgeProviderError("provider_unavailable", "Mistral stream failed.");
-    } finally { reader.releaseLock(); }
+    } finally { result.signal.removeEventListener("abort", cancelReader); reader.releaseLock(); }
+    if (result.signal.aborted) throw this.abortError(input.signal, result.deadline);
     for (const call of toolCalls.values()) {
       if (!call.id || !call.name) throw new BridgeProviderError("malformed_response", "Mistral sent an incomplete tool call.");
       yield { type: "tool_call", ...call };
