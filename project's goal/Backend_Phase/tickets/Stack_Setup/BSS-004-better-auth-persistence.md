@@ -1,6 +1,6 @@
 # BSS-004: Better Auth persistence
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** BSS-BATCH-04
 - **Depends on:** BSS-003
 - **Baseline:** [Production Baseline](../../atlas-backend-production-baseline.md) §§2, 3, 4, 12, 21
@@ -37,4 +37,11 @@ Use Better Auth with its Drizzle adapter to persist user identity and sessions i
 
 - **Review question:** Does Better Auth persist identity and sessions in its own PostgreSQL schema without taking ownership of Atlas authorization?
 - **Combined acceptance:** Authentication tables remain in `auth`, the tested session lifecycle is durable, and project membership/authorization remain outside Better Auth.
-- **Commit to review:** Pending implementation commit.
+- **Commit to review:** `HEAD` (the BSS-004 checkpoint commit).
+
+## Implementation checkpoint
+
+- Added `@atlas/auth`, which creates a Better Auth email/password boundary using the Drizzle adapter and only the `auth`-schema user, session, account, and verification tables.
+- Added the idempotent `0001_bss004_better_auth` migration and extended the migration runner to apply and verify both BSS migrations in order.
+- Configuration requires a 32+ character secret, an absolute auth URL, and validated trusted origins; sample variable names are documented without production values.
+- Verified locally on PostgreSQL: migration check passed, the existing Atlas/Bridge role-permission proof passed, and the Better Auth lifecycle test proved sign-up, a session surviving a newly created service instance, and sign-out invalidation. The temporary test user is deleted afterward.

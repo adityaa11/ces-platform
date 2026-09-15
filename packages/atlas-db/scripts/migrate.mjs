@@ -7,16 +7,22 @@ const replacements = {
   "{{ATLAS_APP_PASSWORD}}": process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only",
   "{{AGENTS_BRIDGE_PASSWORD}}": process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only",
 };
-let migration = await readFile(new URL("../migrations/0000_bss003_boundaries.sql", import.meta.url), "utf8");
-for (const [token, value] of Object.entries(replacements)) migration = migration.replaceAll(token, value.replaceAll("'", "''"));
+const migrations = ["0000_bss003_boundaries", "0001_bss004_better_auth"];
+const readMigration = async (name) => {
+  let migration = await readFile(new URL(`../migrations/${name}.sql`, import.meta.url), "utf8");
+  for (const [token, value] of Object.entries(replacements)) migration = migration.replaceAll(token, value.replaceAll("'", "''"));
+  return migration;
+};
 const sql = postgres(connectionString, { max: 1 });
 try {
   if (process.argv.includes("--check")) {
-    const [{ exists }] = await sql`SELECT EXISTS (SELECT 1 FROM atlas.schema_migrations WHERE name = '0000_bss003_boundaries') AS exists`;
-    if (!exists) throw new Error("BSS-003 migration has not been applied");
-    console.log("BSS-003 migration boundary check passed");
+    for (const name of migrations) {
+      const [{ exists }] = await sql`SELECT EXISTS (SELECT 1 FROM atlas.schema_migrations WHERE name = ${name}) AS exists`;
+      if (!exists) throw new Error(`${name} has not been applied`);
+    }
+    console.log("Atlas database migration check passed");
   } else {
-    await sql.unsafe(migration);
-    console.log("BSS-003 migration applied");
+    for (const name of migrations) await sql.unsafe(await readMigration(name));
+    console.log("Atlas database migrations applied");
   }
 } finally { await sql.end(); }

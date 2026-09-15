@@ -1,6 +1,6 @@
 # BSS-003: PostgreSQL, Drizzle, and repository boundaries
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** BSS-BATCH-03
 - **Depends on:** BSS-001, BSS-002
 - **Baseline:** [Production Baseline](../../atlas-backend-production-baseline.md) §§4, 5, 6, 12; [Architecture Checkpoint](../../atlas-core-architecture-checkpoint-v2.md) — Section 1, Cross-Cutting: Reasoning vs Deterministic Authority
