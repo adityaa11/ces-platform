@@ -37,12 +37,16 @@ export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningR
     boss,
     async start() {
       await boss.start();
-      await boss.createQueue(queueName, {
+      const queueOptions = {
         retryLimit: config.retryLimit,
         retryDelay: config.retryDelaySeconds,
         retryBackoff: true,
         expireInSeconds: config.timeoutSeconds,
-      });
+      };
+      await boss.createQueue(queueName, queueOptions);
+      // createQueue deliberately preserves an existing queue. Reapply policy on
+      // every worker start so deployed configuration changes are effective.
+      await boss.updateQueue(queueName, queueOptions);
       await boss.getDb().executeSql("GRANT SELECT ON TABLE pgboss.version, pgboss.queue TO atlas_app");
       await boss.getDb().executeSql("GRANT INSERT ON TABLE pgboss.job_common TO atlas_app");
       await boss.getDb().executeSql("GRANT SELECT (id) ON TABLE pgboss.job_common TO atlas_app");

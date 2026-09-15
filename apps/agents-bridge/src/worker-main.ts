@@ -4,6 +4,9 @@ import { loadWorkerConfig } from "./worker-config.js";
 import { createBackgroundWorker } from "./worker.js";
 
 const readinessPath = "/tmp/agents-bridge-worker.ready";
+// A container can be restarted without its writable layer being discarded.
+// Remove an earlier marker before the asynchronous broker startup begins.
+await rm(readinessPath, { force: true });
 const worker = createBackgroundWorker(loadWorkerConfig(), new TestRuntime());
 await worker.start();
 await writeFile(readinessPath, "ready\n");

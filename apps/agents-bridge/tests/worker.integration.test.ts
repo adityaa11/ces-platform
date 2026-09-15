@@ -4,7 +4,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { sql } from "drizzle-orm";
 import postgres from "postgres";
 import type { ExecutionEvent, ExecutionRequest, ReasoningRuntime } from "@atlas/contracts";
-import { createTransactionalQueueProducer, type TransactionalQueueProducer } from "../src/queue.ts";
+import { createTransactionalQueueProducer, parseBackgroundExecutionJob, type TransactionalQueueProducer } from "../src/queue.ts";
 import { createBackgroundWorker } from "../src/worker.ts";
 import { loadWorkerConfig, type WorkerConfig } from "../src/worker-config.ts";
 
@@ -19,6 +19,8 @@ const execution = (id: string): ExecutionRequest => ({
   input: { prompt: "test" },
   context: { boundary: "workspace:test", items: [] },
 });
+
+const interactiveExecution = (id: string): ExecutionRequest => ({ ...execution(id), mode: "interactive" });
 
 const waitFor = async (predicate: () => Promise<boolean>, timeoutMs = 10000): Promise<void> => {
   const deadline = Date.now() + timeoutMs;
@@ -41,6 +43,14 @@ test("worker configuration has bounded defaults and rejects unsafe values", () =
   assert.throws(
     () => loadWorkerConfig({ AGENTS_BRIDGE_DATABASE_URL: "postgresql://bridge@localhost/atlas", AGENTS_BRIDGE_WORKER_CONCURRENCY: "0" }),
     /AGENTS_BRIDGE_WORKER_CONCURRENCY/,
+  );
+  assert.throws(
+    () => loadWorkerConfig({ AGENTS_BRIDGE_DATABASE_URL: "postgresql://bridge@localhost/atlas", AGENTS_BRIDGE_WORKER_SHUTDOWN_TIMEOUT_MS: "15001" }),
+    /AGENTS_BRIDGE_WORKER_SHUTDOWN_TIMEOUT_MS/,
+  );
+  assert.throws(
+    () => parseBackgroundExecutionJob({ idempotencyKey: "interactive", execution: interactiveExecution("interactive") }),
+    /requires mode background/,
   );
 });
 
@@ -81,7 +91,7 @@ test("pg-boss commits enqueueing atomically, retries idempotently, and releases 
     retryDelaySeconds: 1,
     shutdownTimeoutMilliseconds: 1000,
   };
-  const worker = createBackgroundWorker(config, runtime, queueName);
+  let worker = createBackgroundWorker(config, runtime, queueName);
   let producer: TransactionalQueueProducer | undefined;
 
   try {
@@ -91,6 +101,24 @@ test("pg-boss commits enqueueing atomically, retries idempotently, and releases 
     await bridgeClient.unsafe("DELETE FROM bridge.background_effects");
     await worker.start();
     producer = await createTransactionalQueueProducer(atlasUrl.toString(), queueName);
+
+    // Queue configuration is persistent in pg-boss. Restart with a changed
+    // policy to prove a deployment applies its configured bounds to the
+    // existing named queue rather than silently retaining stale values.
+    await worker.stop();
+    const changedConfig: WorkerConfig = { ...config, retryLimit: 3, retryDelaySeconds: 2, timeoutSeconds: 6 };
+    worker = createBackgroundWorker(changedConfig, runtime, queueName);
+    await worker.start();
+    const queue = (await bridgeClient.unsafe("SELECT retry_limit, retry_delay, retry_backoff, expire_seconds FROM pgboss.queue WHERE name = $1", [queueName]))[0];
+    assert.deepEqual(queue, { retry_limit: 3, retry_delay: 2, retry_backoff: true, expire_seconds: 6 });
+
+    await assert.rejects(
+      () => producer!.enqueue(atlasDb as never, { idempotencyKey: keys.rollback, execution: interactiveExecution("producer-interactive") }),
+      /requires mode background/,
+    );
+    await worker.boss.send(queueName, { idempotencyKey: "interactive-direct", execution: interactiveExecution("worker-interactive") }, { singletonKey: "interactive-direct" });
+    await new Promise((resolve) => setTimeout(resolve, 750));
+    assert.equal(calls.get("worker-interactive"), undefined);
 
     await atlasDb.transaction(async (transaction) => {
       await transaction.execute(sql`INSERT INTO atlas.queue_source_probe (id) VALUES ('commit')`);

@@ -21,6 +21,7 @@ export async function createTransactionalQueueProducer(databaseUrl: string, queu
     async enqueue(transaction, job) {
       if (!job.idempotencyKey || job.idempotencyKey.length > 200) throw new Error("idempotencyKey must be between 1 and 200 characters.");
       const execution = parseExecutionRequest(job.execution);
+      if (execution.mode !== "background") throw new Error("Background queue requires mode background.");
       return boss.send(queueName, { idempotencyKey: job.idempotencyKey, execution }, {
         db: fromDrizzle(transaction, sql),
         singletonKey: job.idempotencyKey,
@@ -38,5 +39,7 @@ export function parseBackgroundExecutionJob(value: unknown): BackgroundExecution
   if (typeof candidate.idempotencyKey !== "string" || candidate.idempotencyKey.length < 1 || candidate.idempotencyKey.length > 200) {
     throw new Error("Background job idempotencyKey must be between 1 and 200 characters.");
   }
-  return { idempotencyKey: candidate.idempotencyKey, execution: parseExecutionRequest(candidate.execution) };
+  const execution = parseExecutionRequest(candidate.execution);
+  if (execution.mode !== "background") throw new Error("Background queue requires mode background.");
+  return { idempotencyKey: candidate.idempotencyKey, execution };
 }

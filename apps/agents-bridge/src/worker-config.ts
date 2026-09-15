@@ -22,6 +22,8 @@ export function loadWorkerConfig(environment: NodeJS.ProcessEnv = process.env): 
     timeoutSeconds: boundedInteger(environment.AGENTS_BRIDGE_JOB_TIMEOUT_SECONDS, 30, "AGENTS_BRIDGE_JOB_TIMEOUT_SECONDS", 5, 300),
     retryLimit: boundedInteger(environment.AGENTS_BRIDGE_JOB_RETRY_LIMIT, 2, "AGENTS_BRIDGE_JOB_RETRY_LIMIT", 0, 10),
     retryDelaySeconds: boundedInteger(environment.AGENTS_BRIDGE_JOB_RETRY_DELAY_SECONDS, 1, "AGENTS_BRIDGE_JOB_RETRY_DELAY_SECONDS", 1, 60),
-    shutdownTimeoutMilliseconds: boundedInteger(environment.AGENTS_BRIDGE_WORKER_SHUTDOWN_TIMEOUT_MS, 15000, "AGENTS_BRIDGE_WORKER_SHUTDOWN_TIMEOUT_MS", 1000, 60000),
+    // Compose grants the worker 20 seconds to stop. Keep five seconds available
+    // for signal delivery and container teardown at the highest accepted value.
+    shutdownTimeoutMilliseconds: boundedInteger(environment.AGENTS_BRIDGE_WORKER_SHUTDOWN_TIMEOUT_MS, 15000, "AGENTS_BRIDGE_WORKER_SHUTDOWN_TIMEOUT_MS", 1000, 15000),
   };
 }
