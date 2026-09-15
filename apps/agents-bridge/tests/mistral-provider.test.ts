@@ -65,3 +65,31 @@ test("provider failures are stable, retried only before output, and never expose
   await retried.structured({ messages: [], schema: { type: "object" }, signal: new AbortController().signal });
   assert.equal(attempts, 2);
 });
+
+test("capability validation, OCR localization, and stream bounds are enforced before observable provider leakage", async () => {
+  let calls = 0;
+  const provider = new MistralProvider({ ...config, maxStreamBytes: 1 }, async () => { calls += 1; return new Response(new ReadableStream<Uint8Array>({ start(controller) { controller.enqueue(new TextEncoder().encode('data: {"choices":[{"delta":{"content":"hello"}}]}\n\n')); controller.close(); } }), { status: 200 }); });
+  assert.throws(() => provider.capabilityModel("not-an-atlas-capability" as never), (error: unknown) => error instanceof BridgeProviderError && error.code === "unsupported_capability");
+  await assert.rejects(async () => { for await (const _event of provider.streamChat({ messages: [{ role: "user", content: "test" }], signal: new AbortController().signal })) { /* consume */ } }, (error: unknown) => error instanceof BridgeProviderError && error.code === "response_bound");
+  assert.equal(calls, 1);
+  const ocr = new MistralProvider(config, async () => response({ model: "ocr-qualified", pages: [{ index: 0, markdown: "text", tables: [{ id: "t" }], images: [{ id: "i", bbox: [1, 2, 3, 4] }], dimensions: { width: 10 }, blocks: [{ top_left_x: 1, confidence_scores: { average_content_confidence_score: 0.9 } }] }], usage_info: { processed_pages: 1 } }));
+  const result = await ocr.perceive({ bytes: new Uint8Array([1]), mimeType: "application/pdf" }, new AbortController().signal);
+  const page = (result.providerResult.pages as Array<Record<string, unknown>>)[0];
+  assert.deepEqual(page.tables, [{ id: "t" }]); assert.deepEqual(page.images, [{ id: "i", bbox: [1, 2, 3, 4] }]); assert.deepEqual(page.dimensions, { width: 10 }); assert.ok(Array.isArray(page.blocks));
+});
+
+test("cancellation and timeout map consistently before headers, during JSON, and during SSE without retries after output", async () => {
+  const waitForAbort = async (_url: string, init: RequestInit) => new Promise<Response>((_resolve, reject) => init.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")), { once: true }));
+  const before = new AbortController(); const beforeProvider = new MistralProvider(config, waitForAbort); const beforeRun = beforeProvider.structured({ messages: [], schema: { type: "object" }, signal: before.signal }); before.abort();
+  await assert.rejects(() => beforeRun, (error: unknown) => error instanceof BridgeProviderError && error.code === "cancelled");
+  const timeout = new MistralProvider({ ...config, timeoutMilliseconds: 1 }, waitForAbort);
+  await assert.rejects(() => timeout.structured({ messages: [], schema: { type: "object" }, signal: new AbortController().signal }), (error: unknown) => error instanceof BridgeProviderError && error.code === "timeout");
+  const after = new AbortController();
+  const jsonProvider = new MistralProvider(config, async (_url, init) => new Response(new ReadableStream<Uint8Array>({ start(controller) { init.signal?.addEventListener("abort", () => controller.error(new DOMException("aborted", "AbortError")), { once: true }); } }), { status: 200 }));
+  const afterRun = jsonProvider.structured({ messages: [], schema: { type: "object" }, signal: after.signal }); setTimeout(() => after.abort(), 0);
+  await assert.rejects(() => afterRun, (error: unknown) => error instanceof BridgeProviderError && error.code === "cancelled");
+  let attempts = 0;
+  const sseProvider = new MistralProvider(config, async () => { attempts += 1; return new Response(new ReadableStream<Uint8Array>({ start(controller) { controller.enqueue(new TextEncoder().encode('data: {"choices":[{"delta":{"content":"first"}}]}\n\n')); controller.error(new Error("lost after output")); } }), { status: 200 }); });
+  await assert.rejects(async () => { for await (const _event of sseProvider.streamChat({ messages: [{ role: "user", content: "test" }], signal: new AbortController().signal })) { /* consume */ } }, (error: unknown) => error instanceof BridgeProviderError && error.code === "provider_unavailable");
+  assert.equal(attempts, 1);
+});
