@@ -1,6 +1,6 @@
 # BSS-003: PostgreSQL, Drizzle, and repository boundaries
 
-- **State:** `in_progress`
+- **State:** `awaiting_review`
 - **Review batch:** BSS-BATCH-03
 - **Depends on:** BSS-001, BSS-002
 - **Baseline:** [Production Baseline](../../atlas-backend-production-baseline.md) §§4, 5, 6, 12; [Architecture Checkpoint](../../atlas-core-architecture-checkpoint-v2.md) — Section 1, Cross-Cutting: Reasoning vs Deterministic Authority
@@ -37,4 +37,11 @@ Establish PostgreSQL migrations and the Drizzle adapter boundary while keeping A
 
 - **Review question:** Are PostgreSQL migrations, schema ownership, and repository boundaries established without prematurely fixing the domain schema?
 - **Combined acceptance:** Clean migration from an empty database, verified schema/role boundaries, denied Bridge writes to trusted Atlas state, and no Drizzle dependency in Atlas Core.
-- **Commit to review:** Pending implementation commit.
+- **Commit to review:** `9c1dcdb98d7e2925db2f0a7a9062210d9cfb3472`.
+
+## Implementation checkpoint
+
+- Added `@atlas/core` persistence-neutral transaction contracts and `@atlas/db` as the sole Drizzle/PostgreSQL adapter package.
+- Added an idempotent SQL migration that establishes `auth`, `atlas`, and `bridge` namespaces, migration metadata, and separate `atlas_app` and `agents_bridge` roles. The Bridge role is explicitly denied all `atlas` schema and table privileges.
+- Verified a clean migration-status check and the live least-privilege proof on the Compose PostgreSQL service at port `55432`: `agents_bridge` was denied an insert to `atlas.boundary_probe`, while `atlas_app` successfully performed the authorized insert.
+- Type-checks passed for both `@atlas/core` and `@atlas/db`; no final Atlas domain table or constraint was introduced.

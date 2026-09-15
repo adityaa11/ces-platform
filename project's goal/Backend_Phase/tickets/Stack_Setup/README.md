@@ -25,7 +25,7 @@ Each ticket is its own review batch because each establishes a distinct boundary
 |---:|---|---|---|---|
 | 1 | [BSS-001](BSS-001-runtime-and-workspace-foundation.md) / BSS-BATCH-01 | `approved` | — | Is the workspace reproducible on the selected Node and TypeScript toolchain while preserving the existing prototype? |
 | 2 | [BSS-002](BSS-002-local-postgresql-compose.md) / BSS-BATCH-02 | `approved` | BSS-001 | Can developers start a durable local PostgreSQL instance through the documented Compose workflow? |
-| 3 | [BSS-003](BSS-003-postgresql-drizzle-boundaries.md) / BSS-BATCH-03 | `in_progress` | BSS-001, BSS-002 | Are PostgreSQL migrations, schema ownership, and repository boundaries established without prematurely fixing the domain schema? |
+| 3 | [BSS-003](BSS-003-postgresql-drizzle-boundaries.md) / BSS-BATCH-03 | `awaiting_review` | BSS-001, BSS-002 | Are PostgreSQL migrations, schema ownership, and repository boundaries established without prematurely fixing the domain schema? |
 | 4 | [BSS-004](BSS-004-better-auth-persistence.md) / BSS-BATCH-04 | `planned` | BSS-003 | Does Better Auth persist identity and sessions in its own PostgreSQL schema without taking ownership of Atlas authorization? |
 | 5 | [BSS-005](BSS-005-agents-bridge-service-foundation.md) / BSS-BATCH-05 | `planned` | BSS-001, BSS-003 | Can Agents Bridge serve a provider-neutral interactive API and SSE while remaining separate from Atlas truth? |
 | 6 | [BSS-006](BSS-006-pg-boss-background-runtime.md) / BSS-BATCH-06 | `planned` | BSS-003, BSS-005 | Can the background runtime process PostgreSQL-backed jobs with retries while remaining unable to mutate trusted Atlas state? |
