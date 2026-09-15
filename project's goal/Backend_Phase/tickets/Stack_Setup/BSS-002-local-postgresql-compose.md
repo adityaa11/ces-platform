@@ -36,7 +36,7 @@ Give developers a repeatable local PostgreSQL service that reflects the producti
 
 - **Review question:** Can developers start a durable local PostgreSQL instance through the documented Compose workflow?
 - **Combined acceptance:** Compose configuration validates, PostgreSQL becomes healthy and accepts a connection, and named-volume persistence/reset behavior matches the documentation.
-- **Commit to review:** Pending implementation commit.
+- **Commit to review:** `4d1f997`.
 
 ## Implementation checkpoint
 
