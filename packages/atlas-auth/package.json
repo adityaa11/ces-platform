@@ -10,8 +10,8 @@
   },
   "dependencies": {
     "@atlas/db": "workspace:*",
-    "@better-auth/drizzle-adapter": "1.6.33",
-    "better-auth": "1.6.33"
+    "@better-auth/drizzle-adapter": "1.6.32",
+    "better-auth": "1.6.32"
   },
   "devDependencies": {
     "jiti": "2.7.0",

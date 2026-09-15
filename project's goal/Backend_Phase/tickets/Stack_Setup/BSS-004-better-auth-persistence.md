@@ -50,3 +50,4 @@ Use Better Auth with its Drizzle adapter to persist user identity and sessions i
 
 - BSS-BATCH-04 F-001: `@atlas/auth` now runs its committed tests through its direct `jiti` development dependency, so its source-only workspace imports resolve reproducibly.
 - BSS-BATCH-04 F-002: the migration grants `atlas_app` only `auth` schema/table privileges needed for identity and sessions; the lifecycle test connects through that role while cleanup remains on the administrative connection.
+- BSS-BATCH-04 F-001 (round 2): Better Auth and its companion packages now use the published `1.6.32` line, whose lockfile-defined `@better-auth/core` package includes the runnable `dist/index.mjs` entry required by the auth runtime; the stale `1.6.33` core override was removed.

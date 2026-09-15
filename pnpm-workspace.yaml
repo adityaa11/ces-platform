@@ -2,20 +2,17 @@ packages:
   - apps/*
   - packages/*
 
-overrides:
-  '@better-auth/core': 1.6.33
-
 allowBuilds:
   esbuild: true
   sharp: false
   workerd: true
 
 minimumReleaseAgeExclude:
-  - '@better-auth/core@1.6.33'
-  - '@better-auth/drizzle-adapter@1.6.33'
-  - '@better-auth/kysely-adapter@1.6.33'
-  - '@better-auth/memory-adapter@1.6.33'
-  - '@better-auth/mongo-adapter@1.6.33'
-  - '@better-auth/prisma-adapter@1.6.33'
-  - '@better-auth/telemetry@1.6.33'
-  - better-auth@1.6.33
+  - '@better-auth/core@1.6.32'
+  - '@better-auth/drizzle-adapter@1.6.32'
+  - '@better-auth/kysely-adapter@1.6.32'
+  - '@better-auth/memory-adapter@1.6.32'
+  - '@better-auth/mongo-adapter@1.6.32'
+  - '@better-auth/prisma-adapter@1.6.32'
+  - '@better-auth/telemetry@1.6.32'
+  - better-auth@1.6.32
