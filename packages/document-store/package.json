@@ -1,0 +1,15 @@
+{
+  "name": "@atlas/document-store",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "jiti tests/document-store.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.19",
+    "jiti": "2.7.0"
+  }
+}

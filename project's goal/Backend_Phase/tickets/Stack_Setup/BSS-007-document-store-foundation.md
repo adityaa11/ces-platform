@@ -1,6 +1,6 @@
 # BSS-007: DocumentStore foundation
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** BSS-BATCH-07
 - **Depends on:** BSS-001
 - **Baseline:** [Production Baseline](../../atlas-backend-production-baseline.md) §§2, 13, 17, 21; [Architecture Checkpoint](../../atlas-core-architecture-checkpoint-v2.md) — Sections 2–3, Cross-Cutting: Evidence & Provenance
@@ -40,3 +40,15 @@ Keep immutable project document bytes behind a storage-neutral DocumentStore con
 - **Review question:** Can immutable source bytes be stored and retrieved through a storage-neutral interface using the initial local adapter?
 - **Combined acceptance:** The local adapter passes conformance/security-boundary tests, paths remain private to the adapter, and the production storage follow-up is explicit.
 - **Commit to review:** Pending implementation commit.
+
+## Implementation checkpoint
+
+- Added `@atlas/document-store`, a persistence-neutral `DocumentStore` contract and development-only local filesystem adapter. The adapter generates opaque `documents/<UUID>` keys, returns SHA-256 content metadata, and never exposes its configured local root.
+- The adapter accepts only generated document keys, writes with exclusive creation semantics, and rejects duplicate writes and traversal-shaped keys before filesystem access.
+- Local document bytes default to `.atlas-data/documents`, which is ignored by Git. A durable S3-compatible adapter is required before production document persistence; it must implement the same `DocumentStore` contract.
+
+## Validation record
+
+- `corepack pnpm --filter @atlas/document-store typecheck` passed.
+- `corepack pnpm --filter @atlas/document-store test` passed: 2/2 covering byte/hash fidelity, private storage metadata, immutable-key rejection, traversal rejection, and root isolation.
+- `.atlas-data/` is excluded through the repository `.gitignore`; the adapter introduces no Compose service or manual boot step.

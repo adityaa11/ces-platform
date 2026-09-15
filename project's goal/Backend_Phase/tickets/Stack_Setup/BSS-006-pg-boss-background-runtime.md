@@ -1,6 +1,6 @@
 # BSS-006: pg-boss background runtime
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** BSS-BATCH-06
 - **Depends on:** BSS-003, BSS-005
 - **Baseline:** [Production Baseline](../../atlas-backend-production-baseline.md) §§2, 7, 8, 10, 11, 12, 19, 21; [Architecture Checkpoint](../../atlas-core-architecture-checkpoint-v2.md) — Cross-Cutting: Incremental by Default
