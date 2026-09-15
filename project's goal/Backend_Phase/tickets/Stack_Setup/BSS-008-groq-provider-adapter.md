@@ -20,6 +20,7 @@ Implement Groq as the first model provider behind the provider-neutral Agents Br
 - Normalize provider responses, finish/refusal states, reported token usage, and failures into Bridge-owned contracts. Represent missing provider usage as unavailable; do not estimate price or calculate budgets in the adapter.
 - Respect Bridge-supplied timeout, cancellation, attempt, request-size, and response-size limits. Retry only eligible pre-completion transient failures with bounded backoff; never replay already-emitted chat deltas.
 - Keep provider rate limits, capacity controls, usage persistence, and cost/budget decisions in the Bridge runtime and its usage manager.
+- Run the adapter inside the Compose-managed Agents Bridge service from BSS-005; do not create a separate provider container or manual boot command.
 
 ## Acceptance criteria
 
@@ -29,6 +30,7 @@ Implement Groq as the first model provider behind the provider-neutral Agents Br
 - Provider/model selection is server-controlled; unconfigured aliases and unsupported capabilities fail before sending a provider request.
 - Transient failures follow the configured bounded retry policy; authentication, invalid-request, rate-limit, timeout, and malformed-response failures map to stable Bridge error codes without leaking provider response bodies or secrets.
 - Provider-reported token usage is normalized when available. No pricing, budget reservation, or trusted Atlas state is owned by the adapter.
+- With configured local development credentials, `docker compose up` makes the Bridge provider path available without a separate provider boot step; the adapter adds no standalone Compose service.
 - Mocked conformance tests cover request mapping, schema validation, model capability checks, streaming, retries, cancellation, response bounds, usage normalization, and secret-safe errors; ordinary CI tests make no live Groq calls.
 
 ## Validation
@@ -36,6 +38,7 @@ Implement Groq as the first model provider behind the provider-neutral Agents Br
 - Run the adapter and provider-contract conformance tests with mocked HTTP/SSE responses.
 - Run a separately gated live qualification test only when explicit Groq credentials and a selected model are available; verify the configured structured-output mode and usage fields against the live API.
 - Run Bridge type-check, adapter/contract tests, and build; the ticket-set fixture-suite exclusion applies.
+- Boot the Bridge through `docker compose up` before any manually gated live qualification check; no live provider call is part of ordinary Compose boot or CI validation.
 
 ## Review checkpoint
 

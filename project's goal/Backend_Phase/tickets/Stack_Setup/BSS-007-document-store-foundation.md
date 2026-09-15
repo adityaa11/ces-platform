@@ -17,6 +17,7 @@ Keep immutable project document bytes behind a storage-neutral DocumentStore con
 - Make accepted objects immutable through the adapter contract; changes create a new object/key rather than overwrite accepted bytes.
 - Keep local filesystem paths private to the adapter. Do not expose machine-specific paths as document identity or business meaning.
 - Design the contract for a future S3/R2 adapter, but do not select or implement a hosted provider in this ticket.
+- This ticket adds no standalone process: the adapter must run inside its owning Compose-managed service and must not require a separate local boot command.
 
 ## Acceptance criteria
 
@@ -26,6 +27,7 @@ Keep immutable project document bytes behind a storage-neutral DocumentStore con
 - Local document bytes are excluded from Git and are not stored in PostgreSQL.
 - Storage metadata returned to Atlas uses a storage key and content metadata, never an absolute local path.
 - Ticket documentation identifies local filesystem storage as a development adapter; a durable S3-compatible adapter is required before production document persistence.
+- The adapter introduces no additional Compose service or manual boot prerequisite beyond `docker compose up` for its owning service.
 
 ## Validation
 

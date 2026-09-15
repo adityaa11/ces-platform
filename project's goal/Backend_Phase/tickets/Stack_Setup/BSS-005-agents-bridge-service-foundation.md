@@ -12,6 +12,7 @@ Create the independently deployable Fastify service boundary and provider-neutra
 ## Scope
 
 - Create `apps/agents-bridge` as a Fastify Node.js service with environment-based configuration and graceful startup/shutdown.
+- Add the Bridge as a root Compose service so `docker compose up` starts it after its required dependencies are ready; define its health/readiness check and graceful stop behavior there.
 - Establish health/readiness endpoints and a versioned interactive API boundary.
 - Establish an SSE response path for interactive execution.
 - Define the generic execution/runtime envelope in `packages/atlas-contracts` so synchronous requests and background workers can use the same contract.
@@ -21,6 +22,7 @@ Create the independently deployable Fastify service boundary and provider-neutra
 ## Acceptance criteria
 
 - Agents Bridge can start independently from `apps/atlas` and exposes documented health/readiness routes.
+- `docker compose up` boots the Bridge without a separate manual process-start command, and the Compose health/readiness result reflects the service's availability.
 - The service streams a test response using `text/event-stream` and closes the stream cleanly on completion or cancellation.
 - The shared execution contract is provider-neutral and validated at the boundary; no final skill list or CES schema is introduced.
 - The runtime contract can be called from both an interactive handler and the later background worker without duplicating execution semantics.
@@ -30,6 +32,7 @@ Create the independently deployable Fastify service boundary and provider-neutra
 ## Validation
 
 - Run the Bridge health/readiness integration test independently of the UI app.
+- Boot the complete supported local stack with `docker compose up` and verify the Bridge's Compose health/readiness result.
 - Verify streamed headers, ordered chunks, completion behavior, and cancellation using a test executor.
 - Run contract validation against accepted and rejected test payloads.
 - Run type-check and tests for Agents Bridge and its directly affected contracts; the ticket-set fixture-suite exclusion applies.

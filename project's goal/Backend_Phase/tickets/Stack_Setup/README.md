@@ -15,6 +15,16 @@ The existing `apps/atlas` UI and its fixture-driven prototype remain in place wh
 - BSS acceptance is limited to stack setup and the service, database, queue, storage, or provider boundary named by the individual ticket.
 - The `@atlas/fixtures` test suite, golden-bundle generation and reconciliation, PRD/PDF fixture catalog checks, and fixture-driven UI scenario checks are explicitly excluded from BSS acceptance criteria and blockers. They belong to the AUI, GLF, or SFE ticket sets.
 - References to workspace tests in BSS tickets mean tests for the BSS-owned packages and directly affected integration targets. They do not require the Atlas golden-fixture suite.
+
+## Local boot contract
+
+This is an additive developer-workflow convention recorded after BSS-001 through BSS-004 were approved; it does not reopen or change their accepted review criteria.
+
+- For every planned BSS ticket that introduces a runnable process or local infrastructure dependency, `docker compose up` is the canonical command that boots the supported local stack.
+- A ticket that adds a long-running service must add or update its root `docker-compose.yml` service definition, including the required environment configuration, startup dependencies, health/readiness checks where applicable, and graceful shutdown behavior. Developers must not need a separate manual process-start command after `docker compose up`.
+- A ticket that adds a library, adapter, or filesystem-only capability must state that it runs inside an existing Compose-managed service and must not introduce an unnecessary standalone container.
+- The ticket's validation must prove its runnable component is available from the Compose boot path. `docker compose up -d postgres` remains the supported database-only workflow.
+- `docker compose down` stops the local stack but preserves named data volumes; only `docker compose down --volumes` is a deliberate local-data reset.
 - Build or smoke checks for `apps/atlas` may be used when a ticket needs to verify stack compatibility; they do not expand the ticket to fixture-suite validation or UI changes.
 
 ## Delivery order

@@ -12,6 +12,7 @@ Run bounded, retryable background reasoning work through pg-boss and PostgreSQL,
 ## Scope
 
 - Add pg-boss queue setup and a separate Bridge worker entry point using the restricted Agents Bridge database role.
+- Add the worker as a root Compose service so `docker compose up` starts it after PostgreSQL and its Bridge runtime dependencies are ready; its Compose lifecycle must preserve the ticket's graceful-shutdown policy.
 - Establish worker lifecycle handling for startup, graceful shutdown, bounded concurrency, timeout/cancellation, retry/backoff, and failed-job visibility.
 - Demonstrate transactionally coupled enqueueing for a test job and idempotent handling across retries.
 - Keep provider capacity and usage/budget accounting owned by the Bridge runtime boundary, without making skills aware of pricing.
@@ -23,12 +24,14 @@ Run bounded, retryable background reasoning work through pg-boss and PostgreSQL,
 - A test job can be enqueued in the same database transaction as its source operation: commit makes both visible, rollback leaves neither committed.
 - A failing test job retries according to configured policy; replaying an idempotent test job does not duplicate its effect.
 - Worker shutdown stops accepting new work and completes or safely releases in-flight work within the configured policy.
+- `docker compose up` boots the worker without a separate manual process-start command, and stopping the Compose stack exercises the worker's configured shutdown behavior.
 - The worker uses the Bridge role and cannot directly mutate Atlas trusted-state tables.
 - Interactive and background paths invoke the same provider-neutral execution runtime defined in BSS-005.
 
 ## Validation
 
 - Run queue integration tests against PostgreSQL for enqueue, transaction rollback, successful completion, retry, idempotency, and shutdown.
+- Boot the complete supported local stack with `docker compose up` and verify that the worker becomes ready through its Compose-managed lifecycle.
 - Verify database role permissions deny trusted Atlas writes from the worker process.
 - Verify concurrency and timeout settings are loaded from configuration and have bounded defaults.
 - Run type-check and tests for the BSS-owned worker and queue packages and directly affected integration targets; the ticket-set fixture-suite exclusion applies.
