@@ -17,8 +17,9 @@ export type ExecutionRequest = {
 
 export type ExecutionEvent =
   | { readonly type: "text"; readonly text: string }
+  | { readonly type: "tool_call"; readonly id: string; readonly name: string; readonly arguments: string }
   | { readonly type: "complete" }
-  | { readonly type: "error"; readonly message: string };
+  | { readonly type: "error"; readonly message: string; readonly code?: string };
 
 export interface ReasoningRuntime {
   execute(request: ExecutionRequest, options: { readonly signal: AbortSignal }): AsyncIterable<ExecutionEvent>;
@@ -51,4 +52,13 @@ const validate = ajv.compile(executionRequestSchema);
 export function parseExecutionRequest(value: unknown): ExecutionRequest {
   if (!validate(value)) throw new Error(`Invalid execution request: ${ajv.errorsText(validate.errors)}`);
   return value as ExecutionRequest;
+}
+
+/**
+ * Revalidates a provider-produced value against the complete Atlas-owned
+ * schema. Providers may constrain output, but never replace this check.
+ */
+export function validateJsonSchema(schema: object, value: unknown): void {
+  const schemaValidator = ajv.compile(schema);
+  if (!schemaValidator(value)) throw new Error(`Schema validation failed: ${ajv.errorsText(schemaValidator.errors)}`);
 }

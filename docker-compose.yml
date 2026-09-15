@@ -56,6 +56,11 @@ services:
       AGENTS_BRIDGE_HOST: 0.0.0.0
       AGENTS_BRIDGE_PORT: 3002
       AGENTS_BRIDGE_VERSION: 0.1.0
+      MISTRAL_API_KEY: ${MISTRAL_API_KEY:-}
+      MISTRAL_STRUCTURED_MODEL: ${MISTRAL_STRUCTURED_MODEL:-mistral-large-3-25-12}
+      MISTRAL_CHAT_MODEL: ${MISTRAL_CHAT_MODEL:-mistral-small-4-0-26-03}
+      MISTRAL_OCR_MODEL: ${MISTRAL_OCR_MODEL:-mistral-ocr-4-1}
+      MISTRAL_ZDR_APPROVED: ${MISTRAL_ZDR_APPROVED:-false}
     command: ["sh", "-c", "exec corepack pnpm --filter @atlas/agents-bridge start"]
     ports:
       - "127.0.0.1:${AGENTS_BRIDGE_PORT:-3002}:3002"

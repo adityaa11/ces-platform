@@ -7,7 +7,7 @@
     "dev": "jiti src/main.ts",
     "start": "jiti src/main.ts",
     "typecheck": "tsc -p tsconfig.json",
-    "test": "jiti tests/service.test.ts && jiti tests/worker.integration.test.ts",
+    "test": "jiti tests/service.test.ts && jiti tests/mistral-provider.test.ts && jiti tests/worker.integration.test.ts",
     "worker": "jiti src/worker-main.ts"
   },
   "dependencies": {
