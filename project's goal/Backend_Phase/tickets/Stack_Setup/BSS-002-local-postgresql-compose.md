@@ -1,6 +1,6 @@
 # BSS-002: Local PostgreSQL with Docker Compose
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** BSS-BATCH-02
 - **Depends on:** BSS-001
 - **Baseline:** [Production Baseline](../../atlas-backend-production-baseline.md) §§2, 4, 17, 19; [Architecture Checkpoint](../../atlas-core-architecture-checkpoint-v2.md) — Section 1
@@ -37,3 +37,16 @@ Give developers a repeatable local PostgreSQL service that reflects the producti
 - **Review question:** Can developers start a durable local PostgreSQL instance through the documented Compose workflow?
 - **Combined acceptance:** Compose configuration validates, PostgreSQL becomes healthy and accepts a connection, and named-volume persistence/reset behavior matches the documentation.
 - **Commit to review:** Pending implementation commit.
+
+## Implementation checkpoint
+
+The local database uses the PostgreSQL 18 official Alpine image with a Compose-project-scoped named volume mounted at `/var/lib/postgresql`, matching the PostgreSQL 18 image's version-specific data-directory layout. The Compose configuration validates with `.env.example` and the live checks passed in an isolated Compose project using host port `55432` because host port `5432` was unavailable:
+
+- Docker Engine `29.1.3` and Docker Compose `v2.40.3` are available.
+- The service starts and reports `healthy` through its readiness health check.
+- `psql` connects successfully as `atlas` to `atlas_dev` and returns `current_database`, `current_user`, and `1`.
+- A probe row survives `docker compose stop postgres` followed by `docker compose start postgres`, confirming named-volume persistence.
+- `docker compose down --volumes` removes the isolated named volume; a fresh start no longer contains the probe table, confirming reset behavior.
+- The isolated verification container, network, and volume were removed after validation.
+
+The implementation and BSS-scoped validation are complete. The ticket is ready for its committed review checkpoint.

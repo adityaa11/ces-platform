@@ -1,6 +1,6 @@
 # BSS-001: Runtime and workspace foundation
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** BSS-BATCH-01
 - **Depends on:** None
 - **Baseline:** [Production Baseline](../../atlas-backend-production-baseline.md) §§2, 14, 17, 21; [Architecture Checkpoint](../../atlas-core-architecture-checkpoint-v2.md) — Core Principle, Cross-Cutting: Reasoning vs Deterministic Authority
@@ -38,7 +38,7 @@ Make the monorepo reproducible on the baseline Node.js and TypeScript toolchain 
 
 - **Review question:** Is the workspace reproducible on the selected Node and TypeScript toolchain while preserving the existing prototype?
 - **Combined acceptance:** Runtime and package-manager versions are declared; a clean frozen install and workspace type-check pass; the existing UI can be built under Node.js 24; package ownership and the BSS fixture-suite exclusion are explicit.
-- **Commit to review:** `5c93620`.
+- **Commit to review:** `05eaac88ee14359a288499d70776d6e3ebe229f0` (reviewed `PASS` in [BSS-BATCH-01 feedback](../../../feedback/BSS-BATCH-01-05eaac8-review.md)).
 
 ## Implementation checkpoint
 
