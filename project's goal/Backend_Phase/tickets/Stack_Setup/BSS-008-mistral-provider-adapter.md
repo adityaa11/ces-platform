@@ -1,6 +1,6 @@
 # BSS-008: Mistral provider adapter
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** BSS-BATCH-08
 - **Depends on:** BSS-005
 - **Supersedes planned scope:** `BSS-008-groq-provider-adapter.md`

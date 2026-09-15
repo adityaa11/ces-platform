@@ -71,8 +71,8 @@ A dependent ticket must not begin implementation until the dependency checkpoint
 | 5 | [BSS-005](BSS-005-agents-bridge-service-foundation.md) / BSS-BATCH-05 | `approved` | BSS-001, BSS-003 | Can Agents Bridge serve a provider-neutral interactive API and SSE while remaining separate from Atlas truth? |
 | 6 | [BSS-006](BSS-006-pg-boss-background-runtime.md) / BSS-BATCH-06 | `approved` | BSS-003, BSS-005 | Can the background runtime process PostgreSQL-backed jobs with retries while remaining unable to mutate trusted Atlas state? |
 | 7 | [BSS-007](BSS-007-document-store-foundation.md) / BSS-BATCH-07 | `approved` | BSS-001 | Can immutable source bytes be stored and retrieved through a storage-neutral interface using the initial local adapter? |
-| 8 | [BSS-008](BSS-008-mistral-provider-adapter.md) / BSS-BATCH-08 | `planned` | BSS-005 | Can Mistral provide structured reasoning, streamed chat/tool events, and a document-perception provider primitive through provider-neutral Bridge contracts without taking ownership of Atlas truth or document authorization? |
-| 9 | [BSS-009](BSS-009-document-perception-pipeline.md) / BSS-BATCH-09 | `planned` | BSS-006, BSS-007, BSS-008 | Can Atlas process an authorized immutable PDF through a background provider-neutral Document Perception pipeline and produce a rebuildable `NormalizedDocument` without exposing DocumentStore paths, persisting raw PDF bytes in the queue/database, performing semantic interpretation, or allowing Agents Bridge to mutate trusted Atlas state? |
+| 8 | [BSS-008](BSS-008-mistral-provider-adapter.md) / BSS-BATCH-08 | `approved` | BSS-005 | Can Mistral provide structured reasoning, streamed chat/tool events, and a document-perception provider primitive through provider-neutral Bridge contracts without taking ownership of Atlas truth or document authorization? |
+| 9 | [BSS-009](BSS-009-document-perception-pipeline.md) / BSS-BATCH-09 | `in_progress` | BSS-006, BSS-007, BSS-008 | Can Atlas process an authorized immutable PDF through a background provider-neutral Document Perception pipeline and produce a rebuildable `NormalizedDocument` without exposing DocumentStore paths, persisting raw PDF bytes in the queue/database, performing semantic interpretation, or allowing Agents Bridge to mutate trusted Atlas state? |
 
 ### Dependency sequence after BSS-007
 
@@ -399,22 +399,15 @@ BSS-004  approved
 BSS-005  approved
 BSS-006  approved
 BSS-007  approved
-BSS-008  planned
-BSS-009  planned
+BSS-008  approved (`b9b75f3`, PASS)
+BSS-009  in_progress
 ```
 
 Therefore:
 
 ```text
-BSS-008 implementation
-    must wait for the ticket-set dependency/review rules
-    applicable to its prerequisites
-
 BSS-009 implementation
-    must not begin until:
-        BSS-006 = PASS
-        BSS-007 = PASS
-        BSS-008 = PASS
+    is authorized by the `go` decision after all dependencies passed review
 ```
 
 ---
