@@ -25,13 +25,30 @@ See [backend package ownership](docs/backend-package-ownership.md) for the plann
 
 ## Local PostgreSQL
 
-The local database uses the PostgreSQL 18 official image. Its data lives in the named, Compose-project-scoped `postgres-data` volume, not in the repository. If you do not already have a local `.env`, create one from the example; the example credentials are local development values only and must not be reused in deployed environments.
+The local database uses the PostgreSQL 18 official image. Its data lives in the named, Compose-project-scoped `postgres-data` volume, not in the repository. Compose supplies local-only defaults, so a fresh clone can boot without an `.env` file. Copy `.env.example` to `.env` only when you need to override a port, database name, or local development credentials.
+
+## Boot Atlas with Docker Compose
+
+Boot the Atlas app, run the database migrations, and start PostgreSQL with one command:
 
 ```sh
-cp .env.example .env
+docker compose up
 ```
 
-Start PostgreSQL and wait until it reports healthy:
+Open <http://localhost:3001>. The first boot builds the app image; subsequent boots reuse it unless the Dockerfile or dependencies change. Use `docker compose up --build` after changing application dependencies or Docker configuration.
+
+To inspect service health and follow the app logs:
+
+```sh
+docker compose ps
+docker compose logs -f atlas
+```
+
+Set `ATLAS_PORT` in `.env` to use a different host port. The application always connects to the Compose PostgreSQL service internally, while `DATABASE_URL` on your host remains available for local commands and tests.
+
+### PostgreSQL-only workflow
+
+Start PostgreSQL without the Atlas app and wait until it reports healthy:
 
 ```sh
 docker compose up -d postgres

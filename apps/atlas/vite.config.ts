@@ -134,10 +134,18 @@ export default defineConfig(async () => {
   // Wrangler snapshots its log path while the Cloudflare plugin is imported.
   const { cloudflare } = await import("@cloudflare/vite-plugin");
 
+  const server =
+    isCodexSeatbeltSandbox || process.env.ATLAS_DOCKER === "true"
+      ? {
+          ...(isCodexSeatbeltSandbox
+            ? { watch: { useFsEvents: false, usePolling: true } }
+            : {}),
+          ...(process.env.ATLAS_DOCKER === "true" ? { host: "0.0.0.0" } : {}),
+        }
+      : undefined;
+
   return {
-    server: isCodexSeatbeltSandbox
-      ? { watch: { useFsEvents: false, usePolling: true } }
-      : undefined,
+    server,
     plugins: [
       localFixtureStore,
       vinext(),

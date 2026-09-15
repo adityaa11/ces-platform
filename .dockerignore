@@ -1,0 +1,14 @@
+.git
+.pnpm-store
+node_modules
+**/node_modules
+**/.next
+**/.vinext
+**/.wrangler
+**/dist
+apps/atlas/generated
+apps/atlas/public/source-pdfs
+project's goal
+.env
+.env.*
+*.log
