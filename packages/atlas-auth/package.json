@@ -6,7 +6,7 @@
   "exports": "./src/index.ts",
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
-    "test": "node --experimental-strip-types --test tests/*.test.ts"
+    "test": "jiti tests/config.test.ts && jiti tests/lifecycle.test.ts"
   },
   "dependencies": {
     "@atlas/db": "workspace:*",

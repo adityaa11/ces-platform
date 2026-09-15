@@ -45,3 +45,8 @@ Use Better Auth with its Drizzle adapter to persist user identity and sessions i
 - Added the idempotent `0001_bss004_better_auth` migration and extended the migration runner to apply and verify both BSS migrations in order.
 - Configuration requires a 32+ character secret, an absolute auth URL, and validated trusted origins; sample variable names are documented without production values.
 - Verified locally on PostgreSQL: migration check passed, the existing Atlas/Bridge role-permission proof passed, and the Better Auth lifecycle test proved sign-up, a session surviving a newly created service instance, and sign-out invalidation. The temporary test user is deleted afterward.
+
+## Feedback remediation
+
+- BSS-BATCH-04 F-001: `@atlas/auth` now runs its committed tests through its direct `jiti` development dependency, so its source-only workspace imports resolve reproducibly.
+- BSS-BATCH-04 F-002: the migration grants `atlas_app` only `auth` schema/table privileges needed for identity and sessions; the lifecycle test connects through that role while cleanup remains on the administrative connection.

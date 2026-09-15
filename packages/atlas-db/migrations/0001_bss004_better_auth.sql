@@ -48,4 +48,9 @@ CREATE TABLE IF NOT EXISTS auth.verification (
 );
 CREATE INDEX IF NOT EXISTS verification_identifier_idx ON auth.verification (identifier);
 
+-- The Atlas application establishes identity, but Atlas authorization remains in atlas.*.
+GRANT USAGE ON SCHEMA auth TO atlas_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA auth TO atlas_app;
+ALTER DEFAULT PRIVILEGES IN SCHEMA auth GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO atlas_app;
+
 INSERT INTO atlas.schema_migrations (name) VALUES ('0001_bss004_better_auth') ON CONFLICT DO NOTHING;

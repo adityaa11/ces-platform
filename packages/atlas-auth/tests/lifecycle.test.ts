@@ -9,8 +9,11 @@ const skip = !databaseUrl;
 
 test("email sign-up creates a durable session and sign-out invalidates it", { skip }, async () => {
   const email = `bss004-${randomUUID()}@example.test`;
+  const applicationUrl = new URL(databaseUrl!);
+  applicationUrl.username = "atlas_app";
+  applicationUrl.password = process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only";
   const config = {
-    databaseUrl: databaseUrl!,
+    databaseUrl: applicationUrl.toString(),
     secret: "0123456789abcdef0123456789abcdef",
     baseURL: "http://localhost:3001",
     trustedOrigins: ["http://localhost:3001"],
