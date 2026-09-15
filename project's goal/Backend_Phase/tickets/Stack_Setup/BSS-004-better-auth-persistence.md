@@ -1,6 +1,6 @@
 # BSS-004: Better Auth persistence
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** BSS-BATCH-04
 - **Depends on:** BSS-003
 - **Baseline:** [Production Baseline](../../atlas-backend-production-baseline.md) §§2, 3, 4, 12, 21
