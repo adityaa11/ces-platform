@@ -1,6 +1,6 @@
 # BSS-002: Local PostgreSQL with Docker Compose
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** BSS-BATCH-02
 - **Depends on:** BSS-001
 - **Baseline:** [Production Baseline](../../atlas-backend-production-baseline.md) §§2, 4, 17, 19; [Architecture Checkpoint](../../atlas-core-architecture-checkpoint-v2.md) — Section 1
