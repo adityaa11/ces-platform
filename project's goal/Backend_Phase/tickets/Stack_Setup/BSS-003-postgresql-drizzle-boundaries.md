@@ -45,3 +45,7 @@ Establish PostgreSQL migrations and the Drizzle adapter boundary while keeping A
 - Added an idempotent SQL migration that establishes `auth`, `atlas`, and `bridge` namespaces, migration metadata, and separate `atlas_app` and `agents_bridge` roles. The Bridge role is explicitly denied all `atlas` schema and table privileges.
 - Verified a clean migration-status check and the live least-privilege proof on the Compose PostgreSQL service at port `55432`: `agents_bridge` was denied an insert to `atlas.boundary_probe`, while `atlas_app` successfully performed the authorized insert.
 - Type-checks passed for both `@atlas/core` and `@atlas/db`; no final Atlas domain table or constraint was introduced.
+
+## Feedback remediation
+
+The accepted BSS-BATCH-03 finding F-001 was remediated in `2f5447f36b5aa9345c7fca982d1d8965ae034eb2`. The live-role test now verifies that `agents_bridge` is denied `INSERT`, `UPDATE`, and `DELETE` against trusted Atlas state, while retaining the authorized `atlas_app` insert and cleanup.
