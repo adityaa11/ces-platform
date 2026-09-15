@@ -43,5 +43,28 @@ services:
       retries: 12
       start_period: 20s
 
+  agents-bridge:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    init: true
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      AGENTS_BRIDGE_HOST: 0.0.0.0
+      AGENTS_BRIDGE_PORT: 3002
+      AGENTS_BRIDGE_VERSION: 0.1.0
+    command: ["sh", "-c", "exec corepack pnpm --filter @atlas/agents-bridge start"]
+    ports:
+      - "127.0.0.1:${AGENTS_BRIDGE_PORT:-3002}:3002"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3002/readyz').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
 volumes:
   postgres-data:

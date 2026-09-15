@@ -1,6 +1,6 @@
 # BSS-005: Agents Bridge service foundation
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** BSS-BATCH-05
 - **Depends on:** BSS-001, BSS-003
 - **Baseline:** [Production Baseline](../../atlas-backend-production-baseline.md) §§7, 8, 9, 15, 16; [Architecture Checkpoint](../../atlas-core-architecture-checkpoint-v2.md) — Sections 9–10, Cross-Cutting: Reasoning vs Deterministic Authority
@@ -41,4 +41,12 @@ Create the independently deployable Fastify service boundary and provider-neutra
 
 - **Review question:** Can Agents Bridge serve a provider-neutral interactive API and SSE while remaining separate from Atlas truth?
 - **Combined acceptance:** Independent Fastify service starts, SSE contract tests pass, execution envelopes validate, and no Atlas truth/retrieval authority is added to the Bridge.
-- **Commit to review:** Pending implementation commit.
+- **Commit to review:** `HEAD` (the BSS-005 checkpoint commit).
+
+## Implementation checkpoint
+
+- Added `@atlas/contracts` with a versioned, AJV-validated provider-neutral execution envelope and a single `ReasoningRuntime` interface shared by interactive and future background callers.
+- Added the independently runnable Fastify Agents Bridge with health (`/healthz`), readiness (`/readyz`), and versioned interactive SSE (`/v1/interactive/execute`) boundaries. It only accepts explicit bounded context and has no Atlas retrieval, repository, or trusted-state mutation path.
+- Added a deterministic test runtime solely for service-foundation validation; no provider adapter, provider secret, final skill registry, or CES schema is introduced.
+- Added Compose boot, health checking, and graceful signal shutdown. The Compose-managed service was verified healthy and returned ordered SSE `text` then `complete` events at `http://127.0.0.1:3002`.
+- Verified accepted/rejected contract inputs; service health/readiness; ordered streaming completion; client cancellation propagation; both directly affected package type-checks; and both directly affected test suites.
