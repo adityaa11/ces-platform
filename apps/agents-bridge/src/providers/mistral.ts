@@ -24,7 +24,10 @@ export type MistralProviderConfig = {
   readonly ocrModel: string;
   readonly maxDocumentBytes: number;
   readonly zeroDataRetentionApproved: boolean;
+  readonly maxRequestBytes?: number;
   readonly maxResponseBytes?: number;
+  readonly maxStreamBytes?: number;
+  readonly timeoutMilliseconds?: number;
 };
 
 type FetchLike = (input: string, init: RequestInit) => Promise<Response>;
@@ -65,18 +68,28 @@ export class MistralProvider {
     return model;
   }
 
-  private async request(endpoint: "/v1/chat/completions" | "/v1/ocr", body: Record<string, unknown>, signal: AbortSignal): Promise<{ readonly response: Response; readonly attempt: number; readonly started: number }> {
+  private abortError(signal: AbortSignal, deadline: AbortSignal): BridgeProviderError {
+    return deadline.aborted && !signal.aborted
+      ? new BridgeProviderError("timeout", "Provider request exceeded the configured timeout.")
+      : new BridgeProviderError("cancelled", "Provider request was cancelled.");
+  }
+
+  private async request(endpoint: "/v1/chat/completions" | "/v1/ocr", body: Record<string, unknown>, signal: AbortSignal): Promise<{ readonly response: Response; readonly attempt: number; readonly started: number; readonly signal: AbortSignal; readonly deadline: AbortSignal }> {
+    const serialized = JSON.stringify(body);
+    if (Buffer.byteLength(serialized) > (this.config.maxRequestBytes ?? 2 * 1024 * 1024)) throw new BridgeProviderError("invalid_request", "Provider request exceeded the configured byte limit.");
+    const deadline = AbortSignal.timeout(this.config.timeoutMilliseconds ?? 30_000);
+    const requestSignal = AbortSignal.any([signal, deadline]);
     for (let attempt = 1; attempt <= 2; attempt += 1) {
       const started = Date.now();
       let response: Response;
       try {
-        response = await this.fetcher(`${this.config.baseUrl}${endpoint}`, { method: "POST", headers: { authorization: `Bearer ${this.config.apiKey}`, "content-type": "application/json" }, body: JSON.stringify(body), signal });
+        response = await this.fetcher(`${this.config.baseUrl}${endpoint}`, { method: "POST", headers: { authorization: `Bearer ${this.config.apiKey}`, "content-type": "application/json" }, body: serialized, signal: requestSignal });
       } catch (error) {
-        if (signal.aborted) throw new BridgeProviderError("cancelled", "Provider request was cancelled.");
+        if (requestSignal.aborted) throw this.abortError(signal, deadline);
         if (attempt === 2) throw new BridgeProviderError("provider_unavailable", "Mistral could not be reached.");
         continue;
       }
-      if (response.ok) return { response, attempt, started };
+      if (response.ok) return { response, attempt, started, signal: requestSignal, deadline };
       const mapped = providerError(response.status);
       if ((mapped.code === "rate_limited" || mapped.code === "provider_unavailable") && attempt < 2) continue;
       throw mapped;
@@ -84,17 +97,26 @@ export class MistralProvider {
     throw new BridgeProviderError("provider_unavailable", "Mistral could not be reached.");
   }
 
-  private async json(response: Response): Promise<Record<string, unknown>> {
-    const text = await response.text();
-    if (text.length > (this.config.maxResponseBytes ?? 10 * 1024 * 1024)) throw new BridgeProviderError("response_bound", "Provider response exceeded the configured bound.");
+  private async json(response: Response, signal: AbortSignal, deadline: AbortSignal, callerSignal: AbortSignal): Promise<Record<string, unknown>> {
+    if (!response.body) throw new BridgeProviderError("malformed_response", "Mistral returned no response body.");
+    const reader = response.body.getReader(); const chunks: Uint8Array[] = []; let size = 0;
+    try {
+      while (true) { const chunk = await reader.read(); if (chunk.done) break; size += chunk.value.byteLength; if (size > (this.config.maxResponseBytes ?? 10 * 1024 * 1024)) throw new BridgeProviderError("response_bound", "Provider response exceeded the configured bound."); chunks.push(chunk.value); }
+    } catch (error) {
+      if (error instanceof BridgeProviderError) throw error;
+      if (signal.aborted) throw this.abortError(callerSignal, deadline);
+      throw new BridgeProviderError("provider_unavailable", "Mistral response stream failed.");
+    } finally { reader.releaseLock(); }
+    const text = new TextDecoder().decode(Buffer.concat(chunks.map((chunk) => Buffer.from(chunk))));
     try { const parsed: unknown = JSON.parse(text); if (isRecord(parsed)) return parsed; } catch { /* mapped below */ }
     throw new BridgeProviderError("malformed_response", "Mistral returned an invalid response.");
   }
 
   async structured(input: { readonly messages: readonly ChatMessage[]; readonly schema: Readonly<Record<string, unknown>>; readonly signal: AbortSignal; readonly requireZeroDataRetention?: boolean }): Promise<{ readonly value: unknown; readonly provenance: ProviderProvenance }> {
     const model = this.preflight("atlas.reasoning.structured", input.requireZeroDataRetention);
-    const { response, attempt, started } = await this.request("/v1/chat/completions", { model, stream: false, messages: input.messages, response_format: { type: "json_schema", json_schema: { name: "atlas_output", strict: true, schema: input.schema } } }, input.signal);
-    const payload = await this.json(response);
+    const result = await this.request("/v1/chat/completions", { model, stream: false, messages: input.messages, response_format: { type: "json_schema", json_schema: { name: "atlas_output", strict: true, schema: input.schema } } }, input.signal);
+    const { response, attempt, started } = result;
+    const payload = await this.json(response, result.signal, result.deadline, input.signal);
     const choices = payload.choices;
     const first = Array.isArray(choices) && isRecord(choices[0]) ? choices[0] : undefined;
     const message = first && isRecord(first.message) ? first.message : undefined;
@@ -109,12 +131,15 @@ export class MistralProvider {
   async *streamChat(input: { readonly messages: readonly ChatMessage[]; readonly tools?: readonly ChatTool[]; readonly signal: AbortSignal; readonly requireZeroDataRetention?: boolean }): AsyncIterable<ChatStreamEvent> {
     const model = this.preflight("atlas.chat.default", input.requireZeroDataRetention);
     const tools = input.tools?.map((tool) => ({ type: "function", function: { name: tool.name, description: tool.description, parameters: tool.parameters } }));
-    const { response, attempt, started } = await this.request("/v1/chat/completions", { model, stream: true, messages: input.messages, ...(tools?.length ? { tools } : {}) }, input.signal);
+    const result = await this.request("/v1/chat/completions", { model, stream: true, messages: input.messages, ...(tools?.length ? { tools } : {}) }, input.signal);
+    const { response, attempt, started } = result;
     if (!response.body) throw new BridgeProviderError("malformed_response", "Mistral returned no stream body.");
-    const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffered = ""; let usage: ProviderUsage | undefined;
+    const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffered = ""; let usage: ProviderUsage | undefined; let streamBytes = 0;
+    const toolCalls = new Map<string, { id: string; name: string; arguments: string }>();
     try {
       while (true) {
-        const chunk = await reader.read(); if (chunk.done) break;
+        const chunk = await reader.read(); if (chunk.done) break; streamBytes += chunk.value.byteLength;
+        if (streamBytes > (this.config.maxStreamBytes ?? this.config.maxResponseBytes ?? 10 * 1024 * 1024)) throw new BridgeProviderError("response_bound", "Provider stream exceeded the configured byte limit.");
         buffered += decoder.decode(chunk.value, { stream: true });
         const lines = buffered.split(/\r?\n/u); buffered = lines.pop() ?? "";
         for (const line of lines) {
@@ -125,10 +150,22 @@ export class MistralProvider {
           const choice = Array.isArray(payload.choices) && isRecord(payload.choices[0]) ? payload.choices[0] : undefined;
           const delta = choice && isRecord(choice.delta) ? choice.delta : undefined;
           if (typeof delta?.content === "string" && delta.content) yield { type: "text", text: delta.content };
-          if (Array.isArray(delta?.tool_calls)) for (const call of delta.tool_calls) if (isRecord(call) && isRecord(call.function) && typeof call.function.name === "string") yield { type: "tool_call", id: typeof call.id === "string" ? call.id : "", name: call.function.name, arguments: typeof call.function.arguments === "string" ? call.function.arguments : "" };
+          if (Array.isArray(delta?.tool_calls)) for (const call of delta.tool_calls) if (isRecord(call) && isRecord(call.function)) {
+            const key = typeof call.index === "number" ? `index:${call.index}` : typeof call.id === "string" ? call.id : `index:${toolCalls.size}`;
+            const prior = toolCalls.get(key) ?? { id: "", name: "", arguments: "" };
+            toolCalls.set(key, { id: typeof call.id === "string" ? call.id : prior.id, name: typeof call.function.name === "string" ? call.function.name : prior.name, arguments: prior.arguments + (typeof call.function.arguments === "string" ? call.function.arguments : "") });
+          }
         }
       }
+    } catch (error) {
+      if (error instanceof BridgeProviderError) throw error;
+      if (result.signal.aborted) throw this.abortError(input.signal, result.deadline);
+      throw new BridgeProviderError("provider_unavailable", "Mistral stream failed.");
     } finally { reader.releaseLock(); }
+    for (const call of toolCalls.values()) {
+      if (!call.id || !call.name) throw new BridgeProviderError("malformed_response", "Mistral sent an incomplete tool call.");
+      yield { type: "tool_call", ...call };
+    }
     yield { type: "complete", provenance: { provider: "mistral", model, endpoint: "/v1/chat/completions", latencyMilliseconds: Date.now() - started, attempt, usage } };
   }
 
@@ -137,8 +174,9 @@ export class MistralProvider {
     if (input.mimeType !== "application/pdf") throw new BridgeProviderError("invalid_request", "Only explicit PDF input is supported by this capability.");
     if (input.bytes.byteLength > this.config.maxDocumentBytes) throw new BridgeProviderError("invalid_request", "Document exceeds the configured provider byte limit.");
     const documentUrl = `data:${input.mimeType};base64,${Buffer.from(input.bytes).toString("base64")}`;
-    const { response, attempt, started } = await this.request("/v1/ocr", { model, document: { type: "document_url", document_url: documentUrl }, include_blocks: input.options?.includeBlocks ?? true, include_image_base64: input.options?.includeImageBase64 ?? false, table_format: input.options?.tableFormat ?? "markdown", confidence_scores_granularity: input.options?.confidenceScoresGranularity ?? "block" }, signal);
-    const payload = await this.json(response);
+    const result = await this.request("/v1/ocr", { model, document: { type: "document_url", document_url: documentUrl }, include_blocks: input.options?.includeBlocks ?? true, include_image_base64: input.options?.includeImageBase64 ?? false, table_format: input.options?.tableFormat ?? "markdown", confidence_scores_granularity: input.options?.confidenceScoresGranularity ?? "block" }, signal);
+    const { response, attempt, started } = result;
+    const payload = await this.json(response, result.signal, result.deadline, signal);
     if (!Array.isArray(payload.pages)) throw new BridgeProviderError("malformed_response", "Mistral OCR response did not contain pages.");
     return { providerResult: payload, provenance: { provider: "mistral", model: typeof payload.model === "string" ? payload.model : model, endpoint: "/v1/ocr", latencyMilliseconds: Date.now() - started, attempt, usage: usageOf(payload.usage_info) } };
   }

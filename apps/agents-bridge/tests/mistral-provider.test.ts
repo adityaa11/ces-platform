@@ -41,3 +41,27 @@ test("the Bridge forwards tool-call proposals but never executes them", async ()
   assert.deepEqual(events[0], { type: "tool_call", id: "call-2", name: "proposed_action", arguments: "{\"x\":1}" });
   assert.deepEqual(events[1], { type: "complete" });
 });
+
+test("streaming joins fragmented tool calls and enforces configured request and response bounds", async () => {
+  const fragmented = new ReadableStream<Uint8Array>({ start(controller) { controller.enqueue(new TextEncoder().encode('data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call-3","function":{"name":"lookup","arguments":"{\\"q\\":"}}]}}]}\n\ndata: {"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":"\\"atlas\\"}"}}]}}]}\n\ndata: [DONE]\n\n')); controller.close(); } });
+  const provider = new MistralProvider(config, async () => new Response(fragmented, { status: 200 }));
+  const events = []; for await (const event of provider.streamChat({ messages: [{ role: "user", content: "test" }], signal: new AbortController().signal })) events.push(event);
+  assert.deepEqual(events[0], { type: "tool_call", id: "call-3", name: "lookup", arguments: "{\"q\":\"atlas\"}" });
+  let calls = 0;
+  const limited = new MistralProvider({ ...config, maxRequestBytes: 20, maxResponseBytes: 20 }, async () => { calls += 1; return response({}); });
+  await assert.rejects(() => limited.structured({ messages: [{ role: "user", content: "this request is deliberately too long" }], schema: { type: "object" }, signal: new AbortController().signal }), (error: unknown) => error instanceof BridgeProviderError && error.code === "invalid_request");
+  assert.equal(calls, 0);
+  const oversized = new MistralProvider({ ...config, maxResponseBytes: 10 }, async () => response({ choices: [{ message: { content: "{}" } }], padding: "too much" }));
+  await assert.rejects(() => oversized.structured({ messages: [], schema: { type: "object" }, signal: new AbortController().signal }), (error: unknown) => error instanceof BridgeProviderError && error.code === "response_bound");
+});
+
+test("provider failures are stable, retried only before output, and never expose credentials", async () => {
+  for (const [status, code] of [[401, "authentication"], [400, "invalid_request"], [429, "rate_limited"], [500, "provider_unavailable"]] as const) {
+    const provider = new MistralProvider(config, async () => new Response("private provider body test-secret", { status }));
+    await assert.rejects(() => provider.structured({ messages: [], schema: { type: "object" }, signal: new AbortController().signal }), (error: unknown) => error instanceof BridgeProviderError && error.code === code && !error.message.includes("test-secret"));
+  }
+  let attempts = 0;
+  const retried = new MistralProvider(config, async () => { attempts += 1; return attempts === 1 ? new Response("", { status: 503 }) : response({ choices: [{ message: { content: "{}" } }] }); });
+  await retried.structured({ messages: [], schema: { type: "object" }, signal: new AbortController().signal });
+  assert.equal(attempts, 2);
+});
