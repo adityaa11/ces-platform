@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readdir, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -35,5 +35,22 @@ test("local store rejects overwrites and unsafe keys without leaving its root", 
     await assert.rejects(() => store.put({ bytes: new Uint8Array([1]), mediaType: "application/octet-stream", storageKey: "documents/../../outside" }), /generated documents UUID key/);
   } finally {
     await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("local store rejects a documents-directory reparse point", async () => {
+  const root = await mkdtemp(join(tmpdir(), "atlas-document-store-root-"));
+  const outside = await mkdtemp(join(tmpdir(), "atlas-document-store-outside-"));
+  try {
+    await symlink(outside, join(root, "documents"), process.platform === "win32" ? "junction" : "dir");
+    const store = new LocalFilesystemDocumentStore(root);
+    await assert.rejects(
+      () => store.put({ bytes: new Uint8Array([1]), mediaType: "application/octet-stream" }),
+      /reparse point/,
+    );
+    assert.deepEqual(await readdir(outside), []);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+    await rm(outside, { recursive: true, force: true });
   }
 });

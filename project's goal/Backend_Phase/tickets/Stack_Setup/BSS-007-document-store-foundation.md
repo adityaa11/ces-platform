@@ -39,7 +39,8 @@ Keep immutable project document bytes behind a storage-neutral DocumentStore con
 
 - **Review question:** Can immutable source bytes be stored and retrieved through a storage-neutral interface using the initial local adapter?
 - **Combined acceptance:** The local adapter passes conformance/security-boundary tests, paths remain private to the adapter, and the production storage follow-up is explicit.
-- **Commit to review:** Pending implementation commit.
+- **Reviewed implementation checkpoint:** `113fe4cffa5819f522b640918643f4d3d9eb7c6e`
+- **Commit to review:** `HEAD` (the BSS-007 remediation checkpoint).
 
 ## Implementation checkpoint
 
