@@ -5,6 +5,7 @@ import { loadWorkerConfig } from "./worker-config.js";
 import { createBackgroundWorker } from "./worker.js";
 import { createAtlasPerceptionClients, loadAtlasPerceptionClientConfig } from "./atlas-perception-client.js";
 import { runDocumentPerception } from "./document-perception-worker.js";
+import { createPerceptionResultReplay } from "./perception-result-replay.js";
 import { loadBridgeConfig } from "./config.js";
 
 const readinessPath = "/tmp/agents-bridge-worker.ready";
@@ -13,7 +14,7 @@ const readinessPath = "/tmp/agents-bridge-worker.ready";
 await rm(readinessPath, { force: true });
 const clients = createAtlasPerceptionClients(loadAtlasPerceptionClientConfig());
 const provider = new MistralProvider(loadBridgeConfig().mistral);
-const worker = createBackgroundWorker(loadWorkerConfig(), new TestRuntime(), undefined, (request, signal) => runDocumentPerception(request, provider, clients.source, clients.results, signal));
+const worker = createBackgroundWorker(loadWorkerConfig(), new TestRuntime(), undefined, (request, signal, context) => runDocumentPerception(request, provider, clients.source, clients.results, signal, { idempotencyKey: context.idempotencyKey, store: createPerceptionResultReplay(context.database) }));
 await worker.start();
 await writeFile(readinessPath, "ready\n");
 

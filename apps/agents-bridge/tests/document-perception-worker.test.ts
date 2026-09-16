@@ -22,3 +22,22 @@ test("perception worker never delivers a provider result returned after cancella
   await assert.rejects(() => runDocumentPerception(request, provider as never, { redeem: async () => ({ bytes: new Uint8Array([1, 2, 3, 4]), mimeType: "application/pdf" as const }) }, { deliver: async () => { delivered = true; } }, controller.signal), /cancelled/);
   assert.equal(delivered, false);
 });
+
+test("a lost result acknowledgement replays staged normalized output without a second provider call", async () => {
+  let providerCalls = 0;
+  let deliveryCalls = 0;
+  let staged: import("@atlas/contracts").NormalizedDocument | undefined;
+  const store = {
+    load: async () => staged,
+    stage: async (_key: string, _execution: string, result: import("@atlas/contracts").NormalizedDocument) => { staged = result; },
+    acknowledge: async () => { staged = undefined; },
+  };
+  const provider = { perceive: async () => { providerCalls += 1; return { providerResult: { pages: [{ index: 0, markdown: "replay" }] }, provenance: { provider: "mistral" as const, model: "ocr-qualified", endpoint: "/v1/ocr" as const, latencyMilliseconds: 1, attempt: 1 } }; } };
+  const source = { redeem: async () => ({ bytes: new Uint8Array([1, 2, 3, 4]), mimeType: "application/pdf" as const }) };
+  const results = { deliver: async () => { deliveryCalls += 1; if (deliveryCalls === 1) throw new Error("acknowledgement lost after Atlas commit"); } };
+  const replay = { idempotencyKey: "perception:exec-1", store };
+  await runDocumentPerception(request, provider as never, source, results, new AbortController().signal, replay);
+  assert.equal(providerCalls, 1);
+  assert.equal(deliveryCalls, 2);
+  assert.equal(staged, undefined);
+});

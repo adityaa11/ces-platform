@@ -12,6 +12,7 @@ import { LocalFilesystemDocumentStore } from "@atlas/document-store";
 import { createAtlasPerceptionClients } from "../src/atlas-perception-client.ts";
 import { documentPerceptionQueue } from "../src/perception-job.ts";
 import { runDocumentPerception } from "../src/document-perception-worker.ts";
+import { createPerceptionResultReplay } from "../src/perception-result-replay.ts";
 import { createBackgroundWorker } from "../src/worker.ts";
 import type { WorkerConfig } from "../src/worker-config.ts";
 
@@ -48,6 +49,7 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
   const request = await authority.create(input);
   const routes = createPerceptionInternalRoutes({ authority, sources: store, serviceCredential, maximumSourceBytes: 20 * 1024 * 1024, maximumResultBytes: 10 * 1024 * 1024 });
   let delivered: NormalizedDocument | undefined;
+  let droppedAcknowledgement = false;
   const clients = createAtlasPerceptionClients({ baseUrl: "http://atlas.test", sourcePath: "/internal/perception/source", resultPath: "/internal/perception/result", serviceCredential, maximumSourceBytes: 20 * 1024 * 1024, maximumResultBytes: 10 * 1024 * 1024, timeoutMilliseconds: 5_000 }, async (url, init) => {
     const headers = init?.headers as Record<string, string>;
     const credential = headers.authorization?.replace(/^Bearer /u, "");
@@ -58,6 +60,10 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
     }
     delivered = body.result as NormalizedDocument;
     const response = await routes.deliver(credential, body.request, body.result);
+    if (!droppedAcknowledgement) {
+      droppedAcknowledgement = true;
+      return new Response(JSON.stringify({ error: "synthetic acknowledgement loss" }), { status: 503, headers: { "content-type": "application/json" } });
+    }
     return new Response(response.status === 204 ? null : JSON.stringify(response.body), { status: response.status, headers: { "content-type": response.contentType } });
   });
   const providerCalls: number[] = [];
@@ -75,15 +81,17 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
     },
   };
   const queueName = `atlas-perception-integration-${randomUUID()}`;
+  const perceptionQueueName = `${documentPerceptionQueue}-test-${randomUUID()}`;
   const config: WorkerConfig = { databaseUrl: bridgeUrl.toString(), concurrency: 1, timeoutSeconds: 5, retryLimit: 1, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 };
-  const worker = createBackgroundWorker(config, { async *execute() { yield { type: "complete" as const }; } }, queueName, (queuedRequest, signal) => runDocumentPerception(queuedRequest, provider as never, clients.source, clients.results, signal));
+  const worker = createBackgroundWorker(config, { async *execute() { yield { type: "complete" as const }; } }, queueName, (queuedRequest, signal, context) => runDocumentPerception(queuedRequest, provider as never, clients.source, clients.results, signal, { idempotencyKey: context.idempotencyKey, store: createPerceptionResultReplay(context.database) }), perceptionQueueName);
   try {
     assert.equal((await routes.redeem("wrong-credential", request)).status, 401);
     assert.equal((await routes.redeem(serviceCredential, { ...request, executionId: "wrong-execution" })).status, 400);
     await worker.start();
-    await worker.boss.send(documentPerceptionQueue, { idempotencyKey: input.idempotencyKey, request }, { singletonKey: input.idempotencyKey });
+    await worker.boss.send(perceptionQueueName, { idempotencyKey: input.idempotencyKey, request }, { singletonKey: input.idempotencyKey });
     await waitFor(async () => (await atlas.unsafe("SELECT state FROM atlas.document_perception_execution WHERE id=$1", [executionId]))[0]?.state === "completed");
-    assert.equal(providerCalls.length, 2, "the first provider failure should be retried by the existing worker queue");
+    await waitFor(async () => (await bridge.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [input.idempotencyKey]))[0]?.status === "completed");
+    assert.equal(providerCalls.length, 2, "provider failure retries once; the lost acknowledgement replays staged output without a third provider call");
     assert.ok(delivered);
     assert.equal(delivered?.pages[0]?.number, 1);
     assert.equal(delivered?.pages[0]?.textBlocks[0]?.text, "Synthetic PDF text");
@@ -94,7 +102,8 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
     const derivedAssets = typeof cacheRows[0]?.derived_assets === "string" ? JSON.parse(cacheRows[0].derived_assets) : cacheRows[0]?.derived_assets;
     assert.deepEqual(derivedAssets, ["derived/integration/figure-1.png"]);
     assert.equal((await bridge.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [input.idempotencyKey]))[0]?.status, "completed");
-    const queuedRows = await bridge.unsafe("SELECT data::text AS data FROM pgboss.job WHERE name=$1", [documentPerceptionQueue]);
+    assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.document_perception_result_delivery WHERE idempotency_key=$1", [input.idempotencyKey]))[0]?.count, 0, "the replay outbox is removed only after the successful acknowledgement");
+    const queuedRows = await bridge.unsafe("SELECT data::text AS data FROM pgboss.job WHERE name=$1", [perceptionQueueName]);
     assert.ok(queuedRows.length >= 1);
     assert.ok(queuedRows.every((row) => !String(row.data).includes("%PDF-synthetic") && !String(row.data).includes(stored.storageKey)));
 
@@ -105,6 +114,7 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
     await worker.stop().catch(() => undefined);
     await atlas.unsafe("DELETE FROM atlas.document_perception_execution WHERE id=$1", [executionId]).catch(() => undefined);
     await bridge.unsafe("DELETE FROM bridge.background_effects WHERE idempotency_key=$1", [input.idempotencyKey]).catch(() => undefined);
+    await bridge.unsafe("DELETE FROM bridge.document_perception_result_delivery WHERE idempotency_key=$1", [input.idempotencyKey]).catch(() => undefined);
     await Promise.all([atlas.end(), bridge.end()]);
     await rm(sourceRoot, { recursive: true, force: true });
   }

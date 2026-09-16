@@ -15,7 +15,7 @@ export type BackgroundWorker = {
  * The Bridge can execute perception only through an injected bounded handoff.
  * It deliberately has no Atlas repository or cache dependency.
  */
-export type DocumentPerceptionQueueHandler = (request: DocumentPerceptionRequest, signal: AbortSignal) => Promise<void>;
+export type DocumentPerceptionQueueHandler = (request: DocumentPerceptionRequest, signal: AbortSignal, context: { readonly idempotencyKey: string; readonly database: Db }) => Promise<void>;
 
 async function executeOnce(idempotencyKey: string, executionId: string, leaseSeconds: number, work: () => Promise<void>, database: Db): Promise<void> {
   const owner = randomUUID();
@@ -35,7 +35,7 @@ async function executeOnce(idempotencyKey: string, executionId: string, leaseSec
   } catch (error) { await database.executeSql("UPDATE bridge.background_effects SET status = 'pending', lease_expires_at = now(), last_error = $4 WHERE idempotency_key = $1 AND lease_owner = $2 AND lease_generation = $3 AND status = 'running'", [idempotencyKey, owner, generation, error instanceof Error ? error.message : "Background execution failed."]); throw error; }
 }
 
-export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningRuntime, queueName = backgroundExecutionQueue, documentPerception?: DocumentPerceptionQueueHandler): BackgroundWorker {
+export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningRuntime, queueName = backgroundExecutionQueue, documentPerception?: DocumentPerceptionQueueHandler, perceptionQueueName = documentPerceptionQueue): BackgroundWorker {
   let stopping = false;
   const boss = new PgBoss({
     connectionString: config.databaseUrl,
@@ -79,11 +79,11 @@ export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningR
         }, boss.getDb());
       });
       if (documentPerception) {
-        await boss.createQueue(documentPerceptionQueue, queueOptions);
-        await boss.updateQueue(documentPerceptionQueue, queueOptions);
-        await boss.work(documentPerceptionQueue, workOptions, async ([job]) => {
+        await boss.createQueue(perceptionQueueName, queueOptions);
+        await boss.updateQueue(perceptionQueueName, queueOptions);
+        await boss.work(perceptionQueueName, workOptions, async ([job]) => {
           const perceptionJob = parseDocumentPerceptionJob(job.data);
-          await executeOnce(perceptionJob.idempotencyKey, perceptionJob.request.executionId, config.timeoutSeconds, () => documentPerception(perceptionJob.request, job.signal), boss.getDb());
+          await executeOnce(perceptionJob.idempotencyKey, perceptionJob.request.executionId, config.timeoutSeconds, () => documentPerception(perceptionJob.request, job.signal, { idempotencyKey: perceptionJob.idempotencyKey, database: boss.getDb() }), boss.getDb());
         });
       }
     },
