@@ -26,7 +26,7 @@ const perceptionRequest = (executionId: string): DocumentPerceptionRequest => ({
   version: "v1",
   executionId,
   artifact: { id: `artifact-${executionId}`, mimeType: "application/pdf", byteSize: 4, sourceSha256: "a".repeat(64) },
-  source: { grant: "opaque-source-grant" },
+  source: { grant: `123e4567-e89b-12d3-a456-426614174000.${"a".repeat(43)}` },
   perception: { capability: "atlas.document.perceive", contractVersion: "v1" },
 });
 
@@ -77,7 +77,7 @@ test("pg-boss commits enqueueing atomically, retries idempotently, and releases 
   const perceptionCalls = new Map<string, number>();
   const runKey = (name: string) => `${name}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const queueName = runKey("bridge-background-test");
-  const keys = { commit: runKey("commit"), rollback: runKey("rollback"), retry: runKey("retry"), duplicate: runKey("duplicate"), perception: runKey("perception"), shutdown: runKey("shutdown") };
+  const keys = { commit: runKey("commit"), rollback: runKey("rollback"), retry: runKey("retry"), duplicate: runKey("duplicate"), perception: runKey("perception"), perceptionLong: runKey("perception-long"), perceptionConflict: runKey("perception-conflict"), shutdown: runKey("shutdown") };
   let shutdownAbortObserved = false;
   const runtime: ReasoningRuntime = {
     async *execute(request, { signal }): AsyncIterable<ExecutionEvent> {
@@ -119,6 +119,7 @@ test("pg-boss commits enqueueing atomically, retries idempotently, and releases 
     worker = createBackgroundWorker(changedConfig, runtime, queueName, async (request, signal) => {
       assert.equal(signal.aborted, false);
       perceptionCalls.set(request.executionId, (perceptionCalls.get(request.executionId) ?? 0) + 1);
+      if (request.executionId === "perception-long") await new Promise((resolve) => setTimeout(resolve, 1500));
     });
     await worker.start();
     const queue = (await bridgeClient.unsafe("SELECT retry_limit, retry_delay, retry_backoff, expire_seconds FROM pgboss.queue WHERE name = $1", [queueName]))[0];
@@ -128,6 +129,26 @@ test("pg-boss commits enqueueing atomically, retries idempotently, and releases 
     await worker.boss.send(documentPerceptionQueue, { idempotencyKey: keys.perception, request: perception }, { singletonKey: `${keys.perception}-a` });
     await worker.boss.send(documentPerceptionQueue, { idempotencyKey: keys.perception, request: perception }, { singletonKey: `${keys.perception}-b` });
     await waitFor(async () => perceptionCalls.get(perception.executionId) === 1 && (await bridgeClient.unsafe("SELECT COUNT(*)::int AS count FROM bridge.background_effects WHERE idempotency_key = $1", [keys.perception]))[0].count === 1);
+
+    // The effect lease follows the configured timeout (six seconds here), so
+    // duplicate work arriving while a slow provider call is active cannot run.
+    const longPerception = perceptionRequest("perception-long");
+    await worker.boss.send(documentPerceptionQueue, { idempotencyKey: keys.perceptionLong, request: longPerception }, { singletonKey: `${keys.perceptionLong}-a` });
+    await waitFor(async () => perceptionCalls.get(longPerception.executionId) === 1);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await worker.boss.send(documentPerceptionQueue, { idempotencyKey: keys.perceptionLong, request: longPerception }, { singletonKey: `${keys.perceptionLong}-b` });
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    assert.equal(perceptionCalls.get(longPerception.executionId), 1);
+
+    // An idempotency key is bound to one execution identity; a conflicting
+    // retry must not invoke a second provider/result side effect.
+    const conflictFirst = perceptionRequest("perception-conflict-a");
+    const conflictSecond = perceptionRequest("perception-conflict-b");
+    await worker.boss.send(documentPerceptionQueue, { idempotencyKey: keys.perceptionConflict, request: conflictFirst }, { singletonKey: `${keys.perceptionConflict}-a` });
+    await waitFor(async () => perceptionCalls.get(conflictFirst.executionId) === 1);
+    await worker.boss.send(documentPerceptionQueue, { idempotencyKey: keys.perceptionConflict, request: conflictSecond }, { singletonKey: `${keys.perceptionConflict}-b` });
+    await new Promise((resolve) => setTimeout(resolve, 750));
+    assert.equal(perceptionCalls.get(conflictSecond.executionId), undefined);
 
     await assert.rejects(
       () => producer!.enqueue(atlasDb as never, { idempotencyKey: keys.rollback, execution: interactiveExecution("producer-interactive") }),

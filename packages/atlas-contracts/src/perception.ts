@@ -34,13 +34,15 @@ export type NormalizedDocument = {
 
 const sha256 = "^[a-f0-9]{64}$";
 const boundedString = (maxLength: number) => ({ type: "string", minLength: 1, maxLength });
+const opaqueGrant = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\.[A-Za-z0-9_-]{43}$";
+const opaqueIdentifier = "^(?![A-Za-z]:[\\\\/])(?!/)(?!file:)[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$";
 const boundingBox = { type: "object", additionalProperties: false, required: ["x", "y", "width", "height"], properties: { x: { type: "number", minimum: 0 }, y: { type: "number", minimum: 0 }, width: { type: "number", exclusiveMinimum: 0 }, height: { type: "number", exclusiveMinimum: 0 } } } as const;
 
 export const documentPerceptionRequestSchema = {
   type: "object", additionalProperties: false, required: ["version", "executionId", "artifact", "source", "perception"], properties: {
     version: { const: documentPerceptionContractVersion }, executionId: boundedString(200),
-    artifact: { type: "object", additionalProperties: false, required: ["id", "mimeType", "byteSize", "sourceSha256"], properties: { id: boundedString(200), mimeType: { const: "application/pdf" }, byteSize: { type: "integer", minimum: 1, maximum: 20 * 1024 * 1024 }, sourceSha256: { type: "string", pattern: sha256 } } },
-    source: { type: "object", additionalProperties: false, required: ["grant"], properties: { grant: boundedString(2048) } },
+    artifact: { type: "object", additionalProperties: false, required: ["id", "mimeType", "byteSize", "sourceSha256"], properties: { id: { ...boundedString(200), pattern: opaqueIdentifier }, mimeType: { const: "application/pdf" }, byteSize: { type: "integer", minimum: 1, maximum: 20 * 1024 * 1024 }, sourceSha256: { type: "string", pattern: sha256 } } },
+    source: { type: "object", additionalProperties: false, required: ["grant"], properties: { grant: { type: "string", pattern: opaqueGrant } } },
     perception: { type: "object", additionalProperties: false, required: ["capability", "contractVersion"], properties: { capability: { const: "atlas.document.perceive" }, contractVersion: { const: documentPerceptionContractVersion } } },
   },
 } as const;

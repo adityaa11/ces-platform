@@ -26,3 +26,9 @@ test("Atlas handoff rejects a stale or mismatched completion", () => {
   assert.throws(() => handoff.deliver({ ...request, executionId: "exec-2" }, result), /stale|unauthorized/);
   assert.throws(() => handoff.deliver(request, { ...result, artifactId: "other" }), /does not match/);
 });
+
+test("Atlas handoff rejects conflicting idempotency-key reuse before issuing a second operation", () => {
+  const handoff = new AtlasPerceptionHandoff(new PerceptionSourceGrantIssuer("s".repeat(32)), { read: async () => bytes });
+  handoff.start(operation);
+  assert.throws(() => handoff.start({ ...operation, executionId: "exec-2" }), /idempotency key conflicts/);
+});

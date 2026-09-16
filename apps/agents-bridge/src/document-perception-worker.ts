@@ -10,6 +10,8 @@ export async function runDocumentPerception(request: DocumentPerceptionRequest, 
   const input = await source.redeem(request, signal);
   if (signal.aborted) throw new Error("Document perception was cancelled.");
   const perceived = await provider.perceive({ bytes: input.bytes, mimeType: input.mimeType }, signal);
+  if (signal.aborted) throw new Error("Document perception was cancelled.");
   const normalized = normalizePerceptionResult({ executionId: request.executionId, artifactId: request.artifact.id, sourceSha256: request.artifact.sourceSha256, provider: { provider: perceived.provenance.provider, processor: perceived.provenance.model, executionId: request.executionId, processedAt: new Date().toISOString() }, result: perceived.providerResult as { pages: readonly unknown[] } });
+  if (signal.aborted) throw new Error("Document perception was cancelled.");
   await results.deliver(request, normalized, signal);
 }

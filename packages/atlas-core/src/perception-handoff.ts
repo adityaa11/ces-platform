@@ -22,12 +22,15 @@ type StoredOperation = StartPerceptionOperation & { readonly request: DocumentPe
  */
 export class AtlasPerceptionHandoff {
   readonly #operations = new Map<string, StoredOperation>();
+  readonly #idempotency = new Map<string, Pick<StartPerceptionOperation, "executionId" | "artifactId" | "sourceSha256">>();
   readonly #cache = new Map<string, NormalizedDocument>();
 
   constructor(private readonly grants: PerceptionSourceGrantIssuer, private readonly sources: SourceReader, private readonly maximumBytes = 20 * 1024 * 1024) {}
 
   start(input: StartPerceptionOperation): DocumentPerceptionRequest {
     if (!input.idempotencyKey || input.idempotencyKey.length > 200) throw new Error("Perception idempotency key must be between 1 and 200 characters.");
+    const priorByKey = this.#idempotency.get(input.idempotencyKey);
+    if (priorByKey && (priorByKey.executionId !== input.executionId || priorByKey.artifactId !== input.artifactId || priorByKey.sourceSha256 !== input.sourceSha256)) throw new Error("Perception idempotency key conflicts with an existing execution identity.");
     const prior = this.#operations.get(input.executionId);
     if (prior) {
       if (prior.idempotencyKey !== input.idempotencyKey || prior.artifactId !== input.artifactId || prior.sourceSha256 !== input.sourceSha256) throw new Error("Perception execution identity conflicts with an existing operation.");
@@ -42,6 +45,7 @@ export class AtlasPerceptionHandoff {
       perception: { capability: "atlas.document.perceive", contractVersion: documentPerceptionContractVersion },
     });
     this.#operations.set(input.executionId, { ...input, request, state: "queued" });
+    this.#idempotency.set(input.idempotencyKey, { executionId: input.executionId, artifactId: input.artifactId, sourceSha256: input.sourceSha256 });
     return request;
   }
 

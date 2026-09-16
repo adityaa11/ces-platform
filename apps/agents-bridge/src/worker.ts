@@ -17,13 +17,17 @@ export type BackgroundWorker = {
  */
 export type DocumentPerceptionQueueHandler = (request: DocumentPerceptionRequest, signal: AbortSignal) => Promise<void>;
 
-async function executeOnce(idempotencyKey: string, executionId: string, work: () => Promise<void>, database: Db): Promise<void> {
+async function executeOnce(idempotencyKey: string, executionId: string, leaseSeconds: number, work: () => Promise<void>, database: Db): Promise<void> {
   const owner = randomUUID();
   const effect = await database.executeSql(
-    "INSERT INTO bridge.background_effects (idempotency_key, execution_id, status, lease_owner, lease_generation, lease_expires_at, started_at) VALUES ($1, $2, 'running', $3, 1, now() + interval '30 seconds', now()) ON CONFLICT (idempotency_key) DO UPDATE SET status = 'running', lease_owner = $3, lease_generation = bridge.background_effects.lease_generation + 1, lease_expires_at = now() + interval '30 seconds', started_at = now(), last_error = NULL WHERE bridge.background_effects.status <> 'completed' AND (bridge.background_effects.lease_expires_at IS NULL OR bridge.background_effects.lease_expires_at < now()) RETURNING lease_generation",
-    [idempotencyKey, executionId, owner],
+    "INSERT INTO bridge.background_effects (idempotency_key, execution_id, status, lease_owner, lease_generation, lease_expires_at, started_at) VALUES ($1, $2, 'running', $3, 1, now() + make_interval(secs => $4), now()) ON CONFLICT (idempotency_key) DO UPDATE SET status = 'running', lease_owner = $3, lease_generation = bridge.background_effects.lease_generation + 1, lease_expires_at = now() + make_interval(secs => $4), started_at = now(), last_error = NULL WHERE bridge.background_effects.execution_id = EXCLUDED.execution_id AND bridge.background_effects.status <> 'completed' AND (bridge.background_effects.lease_expires_at IS NULL OR bridge.background_effects.lease_expires_at < now()) RETURNING lease_generation",
+    [idempotencyKey, executionId, owner, leaseSeconds],
   );
-  if (!effect.rows.length) return;
+  if (!effect.rows.length) {
+    const existing = await database.executeSql("SELECT execution_id FROM bridge.background_effects WHERE idempotency_key = $1", [idempotencyKey]);
+    if (existing.rows.length && (existing.rows[0] as { execution_id: string }).execution_id !== executionId) throw new Error("Background idempotency key conflicts with an existing execution identity.");
+    return;
+  }
   const generation = Number((effect.rows[0] as { lease_generation: number }).lease_generation);
   try { await work();
     const completed = await database.executeSql("UPDATE bridge.background_effects SET status = 'completed', completed_at = now(), lease_expires_at = NULL WHERE idempotency_key = $1 AND lease_owner = $2 AND lease_generation = $3 AND status = 'running' RETURNING idempotency_key", [idempotencyKey, owner, generation]);
@@ -67,7 +71,7 @@ export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningR
       };
       await boss.work(queueName, workOptions, async ([job]) => {
         const backgroundJob = parseBackgroundExecutionJob(job.data);
-        await executeOnce(backgroundJob.idempotencyKey, backgroundJob.execution.executionId, async () => {
+        await executeOnce(backgroundJob.idempotencyKey, backgroundJob.execution.executionId, config.timeoutSeconds, async () => {
           for await (const event of runtime.execute(backgroundJob.execution, { signal: job.signal })) {
             if (job.signal.aborted) throw new Error("Background execution was cancelled.");
             if (event.type === "error") throw new Error(event.message);
@@ -79,7 +83,7 @@ export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningR
         await boss.updateQueue(documentPerceptionQueue, queueOptions);
         await boss.work(documentPerceptionQueue, workOptions, async ([job]) => {
           const perceptionJob = parseDocumentPerceptionJob(job.data);
-          await executeOnce(perceptionJob.idempotencyKey, perceptionJob.request.executionId, () => documentPerception(perceptionJob.request, job.signal), boss.getDb());
+          await executeOnce(perceptionJob.idempotencyKey, perceptionJob.request.executionId, config.timeoutSeconds, () => documentPerception(perceptionJob.request, job.signal), boss.getDb());
         });
       }
     },

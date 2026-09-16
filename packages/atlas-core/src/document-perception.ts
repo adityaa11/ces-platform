@@ -9,6 +9,12 @@ const number = (value: unknown): number | undefined => typeof value === "number"
 const array = (value: unknown): readonly unknown[] => Array.isArray(value) ? value : [];
 
 function box(value: unknown): { readonly x: number; readonly y: number; readonly width: number; readonly height: number } | undefined {
+  if (Array.isArray(value) && value.length === 4) {
+    const [left, top, right, bottom] = value.map(number);
+    return left !== undefined && top !== undefined && right !== undefined && bottom !== undefined && left >= 0 && top >= 0 && right > left && bottom > top
+      ? { x: left, y: top, width: right - left, height: bottom - top }
+      : undefined;
+  }
   const candidate = record(value);
   const x = number(candidate?.x ?? candidate?.left);
   const y = number(candidate?.y ?? candidate?.top);
@@ -28,8 +34,11 @@ export function normalizePerceptionResult(input: { readonly executionId: string;
     const dimensions = record(page.dimensions);
     const textBlocks = array(page.blocks).map((rawBlock, index) => {
       const block = record(rawBlock) ?? {};
-      return { id: string(block.id) ?? `page-${offset + 1}-block-${index + 1}`, text: string(block.text ?? block.markdown) ?? "", ...(string(block.type) ? { kind: string(block.type)! } : {}), ...(box(block.bbox ?? block.bounding_box) ? { boundingBox: box(block.bbox ?? block.bounding_box)! } : {}), ...(number(block.confidence) !== undefined ? { confidence: number(block.confidence)! } : {}) };
+      const confidenceScores = record(block.confidence_scores);
+      const confidence = number(block.confidence) ?? number(confidenceScores?.average_content_confidence_score);
+      return { id: string(block.id) ?? `page-${offset + 1}-block-${index + 1}`, text: string(block.text ?? block.markdown) ?? "", ...(string(block.type) ? { kind: string(block.type)! } : {}), ...(box(block.bbox ?? block.bounding_box) ? { boundingBox: box(block.bbox ?? block.bounding_box)! } : {}), ...(confidence !== undefined ? { confidence } : {}) };
     }).filter((block) => block.text.length > 0);
+    if (!textBlocks.length && string(page.markdown)) textBlocks.push({ id: `page-${offset + 1}-markdown`, text: string(page.markdown)! });
     const tables = array(page.tables).map((rawTable, index) => {
       const table = record(rawTable) ?? {};
       return { id: string(table.id) ?? `page-${offset + 1}-table-${index + 1}`, content: string(table.markdown ?? table.content) ?? "", ...(box(table.bbox ?? table.bounding_box) ? { boundingBox: box(table.bbox ?? table.bounding_box)! } : {}) };
@@ -38,7 +47,9 @@ export function normalizePerceptionResult(input: { readonly executionId: string;
       const region = record(rawRegion) ?? {};
       return { id: string(region.id) ?? `page-${offset + 1}-visual-${index + 1}`, ...(string(region.label) ? { label: string(region.label)! } : {}), ...(box(region.bbox ?? region.bounding_box) ? { boundingBox: box(region.bbox ?? region.bounding_box)! } : {}), ...(string(region.assetRef) ? { assetRef: string(region.assetRef)! } : {}) };
     });
-    return { number: number(page.index ?? page.page_number) ?? offset + 1, ...(number(dimensions?.width ?? page.width) !== undefined ? { width: number(dimensions?.width ?? page.width)! } : {}), ...(number(dimensions?.height ?? page.height) !== undefined ? { height: number(dimensions?.height ?? page.height)! } : {}), textBlocks, tables, visualRegions };
+    const explicitPageNumber = number(page.page_number);
+    const providerIndex = number(page.index);
+    return { number: explicitPageNumber ?? (providerIndex !== undefined ? providerIndex + 1 : offset + 1), ...(number(dimensions?.width ?? page.width) !== undefined ? { width: number(dimensions?.width ?? page.width)! } : {}), ...(number(dimensions?.height ?? page.height) !== undefined ? { height: number(dimensions?.height ?? page.height)! } : {}), textBlocks, tables, visualRegions };
   });
   return parseNormalizedDocument({ version: documentPerceptionContractVersion, executionId: input.executionId, artifactId: input.artifactId, sourceSha256: input.sourceSha256, perception: { capability: "atlas.document.perceive", contractVersion: documentPerceptionContractVersion }, provider: { name: input.provider.provider, processor: input.provider.processor, executionId: input.provider.executionId, processedAt: input.provider.processedAt }, pages });
 }
