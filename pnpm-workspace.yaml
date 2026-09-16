@@ -7,6 +7,9 @@ allowBuilds:
   sharp: false
   workerd: true
 
+overrides:
+  cron-parser: 5.9.0
+
 minimumReleaseAgeExclude:
   - '@better-auth/core@1.6.32'
   - '@better-auth/drizzle-adapter@1.6.32'
@@ -17,3 +20,7 @@ minimumReleaseAgeExclude:
   - '@better-auth/telemetry@1.6.32'
   - better-auth@1.6.32
   - pg-boss@12.32.0
+
+patchedDependencies:
+  cron-parser@5.9.0: patches/cron-parser@5.9.0.patch
+  pg-boss@12.32.0: patches/pg-boss@12.32.0.patch

@@ -1,1 +1,2 @@
 export { executionRequestSchema, parseExecutionRequest, validateJsonSchema, type ExecutionEvent, type ExecutionRequest, type JsonValue, type ReasoningRuntime } from "./execution.js";
+export { documentPerceptionContractVersion, documentPerceptionRequestSchema, normalizedDocumentSchema, parseDocumentPerceptionRequest, parseNormalizedDocument, type BoundingBox, type DocumentPerceptionRequest, type NormalizedDocument } from "./perception.js";

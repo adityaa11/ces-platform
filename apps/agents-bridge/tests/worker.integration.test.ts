@@ -3,8 +3,9 @@ import test from "node:test";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { sql } from "drizzle-orm";
 import postgres from "postgres";
-import type { ExecutionEvent, ExecutionRequest, ReasoningRuntime } from "@atlas/contracts";
+import type { DocumentPerceptionRequest, ExecutionEvent, ExecutionRequest, ReasoningRuntime } from "@atlas/contracts";
 import { createTransactionalQueueProducer, parseBackgroundExecutionJob, type TransactionalQueueProducer } from "../src/queue.ts";
+import { documentPerceptionQueue } from "../src/perception-job.ts";
 import { createBackgroundWorker } from "../src/worker.ts";
 import { loadWorkerConfig, type WorkerConfig } from "../src/worker-config.ts";
 
@@ -21,6 +22,13 @@ const execution = (id: string): ExecutionRequest => ({
 });
 
 const interactiveExecution = (id: string): ExecutionRequest => ({ ...execution(id), mode: "interactive" });
+const perceptionRequest = (executionId: string): DocumentPerceptionRequest => ({
+  version: "v1",
+  executionId,
+  artifact: { id: `artifact-${executionId}`, mimeType: "application/pdf", byteSize: 4, sourceSha256: "a".repeat(64) },
+  source: { grant: "opaque-source-grant" },
+  perception: { capability: "atlas.document.perceive", contractVersion: "v1" },
+});
 
 const waitFor = async (predicate: () => Promise<boolean>, timeoutMs = 10000): Promise<void> => {
   const deadline = Date.now() + timeoutMs;
@@ -66,9 +74,10 @@ test("pg-boss commits enqueueing atomically, retries idempotently, and releases 
   const bridgeClient = postgres(bridgeUrl.toString(), { max: 4 });
   const atlasDb = drizzle(atlasClient);
   const calls = new Map<string, number>();
+  const perceptionCalls = new Map<string, number>();
   const runKey = (name: string) => `${name}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const queueName = runKey("bridge-background-test");
-  const keys = { commit: runKey("commit"), rollback: runKey("rollback"), retry: runKey("retry"), duplicate: runKey("duplicate"), shutdown: runKey("shutdown") };
+  const keys = { commit: runKey("commit"), rollback: runKey("rollback"), retry: runKey("retry"), duplicate: runKey("duplicate"), perception: runKey("perception"), shutdown: runKey("shutdown") };
   let shutdownAbortObserved = false;
   const runtime: ReasoningRuntime = {
     async *execute(request, { signal }): AsyncIterable<ExecutionEvent> {
@@ -107,10 +116,18 @@ test("pg-boss commits enqueueing atomically, retries idempotently, and releases 
     // existing named queue rather than silently retaining stale values.
     await worker.stop();
     const changedConfig: WorkerConfig = { ...config, retryLimit: 3, retryDelaySeconds: 2, timeoutSeconds: 6 };
-    worker = createBackgroundWorker(changedConfig, runtime, queueName);
+    worker = createBackgroundWorker(changedConfig, runtime, queueName, async (request, signal) => {
+      assert.equal(signal.aborted, false);
+      perceptionCalls.set(request.executionId, (perceptionCalls.get(request.executionId) ?? 0) + 1);
+    });
     await worker.start();
     const queue = (await bridgeClient.unsafe("SELECT retry_limit, retry_delay, retry_backoff, expire_seconds FROM pgboss.queue WHERE name = $1", [queueName]))[0];
     assert.deepEqual(queue, { retry_limit: 3, retry_delay: 2, retry_backoff: true, expire_seconds: 6 });
+
+    const perception = perceptionRequest("perception");
+    await worker.boss.send(documentPerceptionQueue, { idempotencyKey: keys.perception, request: perception }, { singletonKey: `${keys.perception}-a` });
+    await worker.boss.send(documentPerceptionQueue, { idempotencyKey: keys.perception, request: perception }, { singletonKey: `${keys.perception}-b` });
+    await waitFor(async () => perceptionCalls.get(perception.executionId) === 1 && (await bridgeClient.unsafe("SELECT COUNT(*)::int AS count FROM bridge.background_effects WHERE idempotency_key = $1", [keys.perception]))[0].count === 1);
 
     await assert.rejects(
       () => producer!.enqueue(atlasDb as never, { idempotencyKey: keys.rollback, execution: interactiveExecution("producer-interactive") }),

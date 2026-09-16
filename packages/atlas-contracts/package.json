@@ -6,7 +6,7 @@
   "exports": "./src/index.ts",
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
-    "test": "jiti tests/execution.test.ts"
+    "test": "jiti tests/execution.test.ts && jiti tests/perception.test.ts"
   },
   "dependencies": {
     "ajv": "8.20.0"

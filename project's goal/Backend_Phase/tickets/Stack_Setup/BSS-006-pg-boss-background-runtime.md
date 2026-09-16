@@ -49,3 +49,16 @@ Run bounded, retryable background reasoning work through pg-boss and PostgreSQL,
 - Added a transactional queue producer that validates the BSS-005 provider-neutral envelope and joins the caller's source-operation transaction through pg-boss's Drizzle adapter.
 - Added a test-only queue isolation path so integration tests exercise transactional enqueue/rollback, retry, idempotency, cancellation/shutdown, and the shared `ReasoningRuntime` without contending with the Compose worker.
 - Verified the Bridge worker and PostgreSQL integration suite, direct database permission denial for trusted Atlas writes, affected package type-checks, Compose configuration, and a full Compose boot with all services healthy.
+
+## Narrow atomic-idempotency amendment
+
+The callback-provided pg-boss transaction used by the original checkpoint is
+replaced by the approved Bridge-managed PostgreSQL state machine. pg-boss
+continues to own delivery, retry/backoff, concurrency, acknowledgement, and
+worker coordination. Bridge-owned records now provide short transactional
+claim, bounded lease, fencing generation, and transactional logical
+completion. Delivery and external provider calls are at-least-once; completed
+logical effects are exactly-once per idempotency key.
+
+This amendment does not change queue technology, ownership, transactional
+enqueue, restricted Bridge permissions, or Atlas trusted-state authority.

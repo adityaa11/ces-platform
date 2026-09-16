@@ -72,7 +72,9 @@ A dependent ticket must not begin implementation until the dependency checkpoint
 | 6 | [BSS-006](BSS-006-pg-boss-background-runtime.md) / BSS-BATCH-06 | `approved` | BSS-003, BSS-005 | Can the background runtime process PostgreSQL-backed jobs with retries while remaining unable to mutate trusted Atlas state? |
 | 7 | [BSS-007](BSS-007-document-store-foundation.md) / BSS-BATCH-07 | `approved` | BSS-001 | Can immutable source bytes be stored and retrieved through a storage-neutral interface using the initial local adapter? |
 | 8 | [BSS-008](BSS-008-mistral-provider-adapter.md) / BSS-BATCH-08 | `approved` | BSS-005 | Can Mistral provide structured reasoning, streamed chat/tool events, and a document-perception provider primitive through provider-neutral Bridge contracts without taking ownership of Atlas truth or document authorization? |
-| 9 | [BSS-009](BSS-009-document-perception-pipeline.md) / BSS-BATCH-09 | `in_progress` | BSS-006, BSS-007, BSS-008 | Can Atlas process an authorized immutable PDF through a background provider-neutral Document Perception pipeline and produce a rebuildable `NormalizedDocument` without exposing DocumentStore paths, persisting raw PDF bytes in the queue/database, performing semantic interpretation, or allowing Agents Bridge to mutate trusted Atlas state? |
+| 9 | [BSS-009](BSS-009-document-perception-pipeline.md) / BSS-BATCH-09 | `awaiting_review` | BSS-006, BSS-007, BSS-008 | Are the Document Perception contracts, bounded source-handoff primitives, provider-neutral normalization, and existing-worker queue foundation safe for later Atlas-owned endpoint and integration work? |
+| 10 | [BSS-009-01](BSS-009-01-atlas-perception-authority.md) / BSS-BATCH-09.1 | `planned` | BSS-009 | Does Atlas exclusively and securely own perception operational state, source redemption, result handoff, and rebuildable cache persistence? |
+| 11 | [BSS-009-02](BSS-009-02-bridge-perception-integration.md) / BSS-BATCH-09.2 | `planned` | BSS-009-01, BSS-008 | Can the existing Atlas/Bridge stack execute a secure, idempotent, provider-neutral PDF perception operation end to end while preserving all authority and privacy boundaries? |
 
 ### Dependency sequence after BSS-007
 
@@ -88,7 +90,17 @@ Mistral provider adapter
       | PASS
       v
 BSS-009
-Document Perception pipeline
+Document Perception foundations
+      |
+      | PASS
+      v
+BSS-009-01
+Atlas perception authority
+      |
+      | PASS
+      v
+BSS-009-02
+Bridge perception integration
 ```
 
 BSS-009 also depends on the already-approved BSS-006 queue/runtime boundary.
@@ -105,7 +117,7 @@ BSS-008
         +-- streamed chat/tool events
         +-- OCR/document-perception provider primitive
 
-BSS-009
+BSS-009 series
     Atlas document-perception workflow
         |
         +-- source authorization
@@ -124,7 +136,7 @@ Semantic Extraction remains downstream work outside this Stack Setup checkpoint:
 DocumentStore
       |
       v
-Document Perception       <- BSS-009
+Document Perception       <- BSS-009 series
       |
       v
 NormalizedDocument
@@ -311,7 +323,7 @@ Mistral OCR
 Bridge-owned provider perception result
 ```
 
-BSS-009 owns the actual Atlas pipeline:
+The BSS-009 series owns the actual Atlas pipeline:
 
 ```text
 DocumentStore
@@ -400,13 +412,15 @@ BSS-005  approved
 BSS-006  approved
 BSS-007  approved
 BSS-008  approved (`b9b75f3`, PASS)
-BSS-009  in_progress
+BSS-009  awaiting_review
+BSS-009-01  planned
+BSS-009-02  planned
 ```
 
 Therefore:
 
 ```text
-BSS-009 implementation
+BSS-009 foundation implementation
     is authorized by the `go` decision after all dependencies passed review
 ```
 

@@ -1,0 +1,9 @@
+diff --git a/dist/fields/types.js b/dist/fields/types.js
+index c8ad2e549bdc6801e0d1c80b0308d4b9bd4985ce..788f68339a44f1b6489282c549fb9be3c4a4ad76 100644
+--- a/dist/fields/types.js
++++ b/dist/fields/types.js
+@@ -1,2 +1,4 @@
+ "use strict";
++// The published package exports TypeScript-only declarations from this module.
++// Keep a runtime module so CommonJS resolution succeeds without inventing data.
+ Object.defineProperty(exports, "__esModule", { value: true });

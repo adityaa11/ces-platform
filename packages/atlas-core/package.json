@@ -4,5 +4,12 @@
   "private": true,
   "type": "module",
   "exports": "./src/index.ts",
-  "scripts": { "typecheck": "tsc -p tsconfig.json" }
+  "dependencies": {
+    "@atlas/contracts": "workspace:*"
+  },
+  "scripts": { "typecheck": "tsc -p tsconfig.json", "test": "jiti tests/document-perception.test.ts && jiti tests/source-grant.test.ts && jiti tests/source-handoff.test.ts && jiti tests/perception-handoff.test.ts" },
+  "devDependencies": {
+    "@types/node": "22.19.19",
+    "jiti": "2.7.0"
+  }
 }
