@@ -10,6 +10,7 @@ RUN corepack enable
 # Install dependencies before application source so Docker can reuse this layer
 # when only workspace code changes.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
+COPY patches/ patches/
 COPY apps/atlas/package.json apps/atlas/package.json
 COPY apps/agents-bridge/package.json apps/agents-bridge/package.json
 COPY packages/atlas-auth/package.json packages/atlas-auth/package.json
@@ -17,6 +18,7 @@ COPY packages/atlas-contracts/package.json packages/atlas-contracts/package.json
 COPY packages/atlas-core/package.json packages/atlas-core/package.json
 COPY packages/atlas-db/package.json packages/atlas-db/package.json
 COPY packages/atlas-fixtures/package.json packages/atlas-fixtures/package.json
+COPY packages/document-store/package.json packages/document-store/package.json
 RUN corepack pnpm install --frozen-lockfile
 
 COPY . .

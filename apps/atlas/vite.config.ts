@@ -6,6 +6,7 @@ import { access, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises
 import { dirname, resolve } from "node:path";
 import { createHash } from "node:crypto";
 import { completeSfeExtraction, failSfeExtraction, getFixtureScenario, type ProjectFixture, type SfeExtractionResult } from "../../packages/atlas-fixtures/src/index.ts";
+import { createAtlasPerceptionInternalPlugin } from "./perception-internal";
 
 const SITE_CREATOR_PLACEHOLDER_DATABASE_ID =
   "00000000-0000-4000-8000-000000000000";
@@ -148,6 +149,7 @@ export default defineConfig(async () => {
     server,
     plugins: [
       localFixtureStore,
+      createAtlasPerceptionInternalPlugin(),
       vinext(),
       sites(),
       cloudflare({

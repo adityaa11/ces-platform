@@ -1,6 +1,6 @@
 # BSS-009-01: Atlas perception authority
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** BSS-BATCH-09.1
 - **Depends on:** BSS-009 / BSS-BATCH-09 `PASS`
 - **Baseline:** [Production Baseline](../../atlas-backend-production-baseline.md) §§7–8, 12–13, 19, 21–22
