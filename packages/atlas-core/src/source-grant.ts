@@ -23,15 +23,27 @@ export class PerceptionSourceGrantIssuer {
     if (!Number.isInteger(lifetimeMilliseconds) || lifetimeMilliseconds < 1 || lifetimeMilliseconds > 15 * 60_000) throw new Error("Source-grant lifetime must be between 1ms and 15 minutes.");
     const grantId = randomUUID();
     this.#grants.set(grantId, { ...identity, expiresAt: this.now() + lifetimeMilliseconds });
+    return this.format(grantId);
+  }
+
+  /** Verifies a stateless grant envelope. Persistent authority checks its ID and scope in storage. */
+  verify(grant: string): string {
+    const [grantId, encodedSignature, ...extra] = grant.split(".");
+    if (!grantId || !encodedSignature || extra.length || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u.test(grantId)) throw new Error("Source grant is malformed.");
+    const actual = decode(encodedSignature);
+    const signature = createHmac("sha256", this.secret).update(grantId).digest();
+    if (actual.byteLength !== signature.byteLength || !timingSafeEqual(actual, signature)) throw new Error("Source grant is invalid.");
+    return grantId;
+  }
+
+  /** Reconstructs a valid opaque envelope for an already-persisted grant ID. */
+  format(grantId: string): string {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u.test(grantId)) throw new Error("Source grant ID is malformed.");
     return `${grantId}.${encode(createHmac("sha256", this.secret).update(grantId).digest())}`;
   }
 
   redeem(grant: string, expected: Pick<PerceptionSourceIdentity, "executionId" | "artifactId">): RedeemedPerceptionSource {
-    const [grantId, encodedSignature, ...extra] = grant.split(".");
-    if (!grantId || !encodedSignature || extra.length) throw new Error("Source grant is malformed.");
-    const actual = decode(encodedSignature);
-    const signature = createHmac("sha256", this.secret).update(grantId).digest();
-    if (actual.byteLength !== signature.byteLength || !timingSafeEqual(actual, signature)) throw new Error("Source grant is invalid.");
+    const grantId = this.verify(grant);
     const candidate = this.#grants.get(grantId);
     if (!candidate) throw new Error("Source grant is invalid.");
     assertIdentity(candidate);
