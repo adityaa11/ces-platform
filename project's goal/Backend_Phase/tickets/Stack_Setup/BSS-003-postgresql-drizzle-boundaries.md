@@ -43,7 +43,7 @@ Establish PostgreSQL migrations and the Drizzle adapter boundary while keeping A
 
 - Added `@atlas/core` persistence-neutral transaction contracts and `@atlas/db` as the sole Drizzle/PostgreSQL adapter package.
 - Added an idempotent SQL migration that establishes `auth`, `atlas`, and `bridge` namespaces, migration metadata, and separate `atlas_app` and `agents_bridge` roles. The Bridge role is explicitly denied all `atlas` schema and table privileges.
-- Verified a clean migration-status check and the live least-privilege proof on the Compose PostgreSQL service at port `55432`: `agents_bridge` was denied an insert to `atlas.boundary_probe`, while `atlas_app` successfully performed the authorized insert.
+- Verified a clean migration-status check and the live least-privilege proof on the Compose PostgreSQL service at port `5432`: `agents_bridge` was denied an insert to `atlas.boundary_probe`, while `atlas_app` successfully performed the authorized insert.
 - Type-checks passed for both `@atlas/core` and `@atlas/db`; no final Atlas domain table or constraint was introduced.
 
 ## Feedback remediation

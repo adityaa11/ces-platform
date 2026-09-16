@@ -72,17 +72,17 @@ The full series also excludes semantic extraction, SemanticCandidates, reconcili
 
 ## Local PostgreSQL validation note
 
-All database-backed validation for the BSS-009 series, including BSS-009-01 and BSS-009-02, must use the existing Compose PostgreSQL instance through host port `55432`:
+All database-backed validation for the BSS-009 series, including BSS-009-01 and BSS-009-02, must use the existing Compose PostgreSQL instance through host port `5432`:
 
 ```text
-Host connection:    127.0.0.1:55432
+Host connection:    127.0.0.1:5432
 Container port:     5432
 Database:           atlas_dev
-Atlas URL:          postgresql://atlas:atlas_local_dev_only@127.0.0.1:55432/atlas_dev
-Bridge URL:         postgresql://agents_bridge:agents_bridge_local_dev_only@127.0.0.1:55432/atlas_dev
+Atlas URL:          postgresql://atlas:atlas_local_dev_only@127.0.0.1:5432/atlas_dev
+Bridge URL:         postgresql://agents_bridge:agents_bridge_local_dev_only@127.0.0.1:5432/atlas_dev
 ```
 
-Start the database with `POSTGRES_PORT=55432 docker compose up -d postgres` and use the local sample credentials from `.env.example` or explicitly supplied local environment variables. The tracked sample and Compose default also use `55432`. From the host, set `DATABASE_URL` and, where required, `AGENTS_BRIDGE_DATABASE_URL` to the `55432` URLs above before running migrations or PostgreSQL integration tests. Services running inside Compose must continue to connect to `postgres:5432`; `55432` is the host-mapped port only. Never commit real credentials.
+Start the database with `POSTGRES_PORT=5432 docker compose up -d postgres` and use the local sample credentials from `.env.example` or explicitly supplied local environment variables. From the host, set `DATABASE_URL` and, where required, `AGENTS_BRIDGE_DATABASE_URL` to the `5432` URLs above before running migrations or PostgreSQL integration tests. Services running inside Compose must continue to connect to `postgres:5432`; the host mapping is now the same port. Never commit real credentials.
 
 ## Review checkpoint
 

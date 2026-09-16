@@ -40,7 +40,7 @@ Give developers a repeatable local PostgreSQL service that reflects the producti
 
 ## Implementation checkpoint
 
-The local database uses the PostgreSQL 18 official Alpine image with a Compose-project-scoped named volume mounted at `/var/lib/postgresql`, matching the PostgreSQL 18 image's version-specific data-directory layout. The Compose configuration validates with `.env.example` and the live checks passed in an isolated Compose project using host port `55432` because host port `5432` was unavailable:
+The local database uses the PostgreSQL 18 official Alpine image with a Compose-project-scoped named volume mounted at `/var/lib/postgresql`, matching the PostgreSQL 18 image's version-specific data-directory layout. The Compose configuration validates with `.env.example` and the live checks passed in an isolated Compose project using host port `5432`:
 
 - Docker Engine `29.1.3` and Docker Compose `v2.40.3` are available.
 - The service starts and reports `healthy` through its readiness health check.
