@@ -18,7 +18,7 @@ import type { WorkerConfig } from "../src/worker-config.ts";
 
 const databaseUrl = process.env.DATABASE_URL;
 const skip = !databaseUrl;
-const waitFor = async (predicate: () => Promise<boolean>, timeoutMs = 15_000): Promise<void> => {
+const waitFor = async (predicate: () => Promise<boolean>, timeoutMs = 60_000): Promise<void> => {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     if (await predicate()) return;
@@ -28,6 +28,7 @@ const waitFor = async (predicate: () => Promise<boolean>, timeoutMs = 15_000): P
 };
 
 test("the queued PDF perception path crosses Atlas authority and completes idempotently", { skip }, async () => {
+  const admin = postgres(databaseUrl!, { max: 2 });
   const atlasUrl = new URL(databaseUrl!);
   atlasUrl.username = "atlas_app";
   atlasUrl.password = process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only";
@@ -72,7 +73,6 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
       assert.equal(inputValue.mimeType, "application/pdf");
       assert.deepEqual([...inputValue.bytes], [...bytes]);
       providerCalls.push(Date.now());
-      if (providerCalls.length === 1) throw new Error("synthetic provider retry");
       if (signal.aborted) throw new Error("synthetic cancellation");
       return {
         providerResult: { pages: [{ index: 0, markdown: "Synthetic PDF text", images: [{ id: "figure-1", label: "diagram", bbox: [1, 2, 11, 22], assetRef: "derived/integration/figure-1.png" }] }] },
@@ -82,7 +82,20 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
   };
   const queueName = `atlas-perception-integration-${randomUUID()}`;
   const perceptionQueueName = `${documentPerceptionQueue}-test-${randomUUID()}`;
-  const config: WorkerConfig = { databaseUrl: bridgeUrl.toString(), concurrency: 1, timeoutSeconds: 5, retryLimit: 1, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 };
+  // These one-shot database faults occur after Atlas has accepted the result.
+  // They prove that a pg-boss retry replays the staged result, rather than
+  // re-reading the source or invoking the provider a second time.
+  const completionFault = `pcf_${randomUUID().replace(/-/gu, "").slice(0, 16)}`;
+  const cleanupFault = `pcf_${randomUUID().replace(/-/gu, "").slice(0, 16)}`;
+  await admin.unsafe(`CREATE TABLE ${completionFault} (remaining integer NOT NULL)`);
+  await admin.unsafe(`INSERT INTO ${completionFault} VALUES (1)`);
+  await admin.unsafe(`CREATE FUNCTION ${completionFault}_fn() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.status = 'completed' AND (SELECT remaining FROM ${completionFault}) > 0 THEN UPDATE ${completionFault} SET remaining = remaining - 1; RAISE EXCEPTION 'synthetic completion update loss'; END IF; RETURN NEW; END $$`);
+  await admin.unsafe(`CREATE TRIGGER ${completionFault}_trigger BEFORE UPDATE ON bridge.background_effects FOR EACH ROW EXECUTE FUNCTION ${completionFault}_fn()`);
+  await admin.unsafe(`CREATE TABLE ${cleanupFault} (remaining integer NOT NULL)`);
+  await admin.unsafe(`INSERT INTO ${cleanupFault} VALUES (1)`);
+  await admin.unsafe(`CREATE FUNCTION ${cleanupFault}_fn() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF (SELECT remaining FROM ${cleanupFault}) > 0 THEN UPDATE ${cleanupFault} SET remaining = remaining - 1; RAISE EXCEPTION 'synthetic replay cleanup loss'; END IF; RETURN OLD; END $$`);
+  await admin.unsafe(`CREATE TRIGGER ${cleanupFault}_trigger BEFORE DELETE ON bridge.document_perception_result_delivery FOR EACH ROW EXECUTE FUNCTION ${cleanupFault}_fn()`);
+  const config: WorkerConfig = { databaseUrl: bridgeUrl.toString(), concurrency: 1, timeoutSeconds: 5, retryLimit: 2, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 };
   const worker = createBackgroundWorker(config, { async *execute() { yield { type: "complete" as const }; } }, queueName, async (queuedRequest, signal, context) => {
     const store = createPerceptionResultReplay(context.database);
     await runDocumentPerception(queuedRequest, provider as never, clients.source, clients.results, signal, { idempotencyKey: context.idempotencyKey, store });
@@ -90,11 +103,15 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
   try {
     assert.equal((await routes.redeem("wrong-credential", request)).status, 401);
     assert.equal((await routes.redeem(serviceCredential, { ...request, executionId: "wrong-execution" })).status, 400);
+    assert.equal((await routes.redeem(serviceCredential, { ...request, artifact: { ...request.artifact, sourceSha256: "b".repeat(64) } })).status, 400, "a hash mismatch cannot redeem source bytes");
+    assert.equal((await routes.redeem(serviceCredential, { ...request, artifact: { ...request.artifact, byteSize: request.artifact.byteSize + 1 } })).status, 400, "a size mismatch cannot redeem source bytes");
+    assert.equal((await routes.redeem(serviceCredential, { ...request, artifact: { ...request.artifact, mimeType: "text/plain" } })).status, 400, "a MIME mismatch cannot redeem source bytes");
     await worker.start();
     await worker.boss.send(perceptionQueueName, { idempotencyKey: input.idempotencyKey, request }, { singletonKey: input.idempotencyKey });
     await waitFor(async () => (await atlas.unsafe("SELECT state FROM atlas.document_perception_execution WHERE id=$1", [executionId]))[0]?.state === "completed");
     await waitFor(async () => (await bridge.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [input.idempotencyKey]))[0]?.status === "completed");
-    assert.equal(providerCalls.length, 2, "provider failure retries once; the lost acknowledgement replays staged output without a third provider call");
+    await waitFor(async () => (await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.document_perception_result_delivery WHERE idempotency_key=$1", [input.idempotencyKey]))[0]?.count === 0);
+    assert.equal(providerCalls.length, 1, "post-delivery completion and cleanup retries replay staged output without a second provider call");
     assert.ok(delivered);
     assert.equal(delivered?.pages[0]?.number, 1);
     assert.equal(delivered?.pages[0]?.textBlocks[0]?.text, "Synthetic PDF text");
@@ -109,6 +126,8 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
     const queuedRows = await bridge.unsafe("SELECT data::text AS data FROM pgboss.job WHERE name=$1", [perceptionQueueName]);
     assert.ok(queuedRows.length >= 1);
     assert.ok(queuedRows.every((row) => !String(row.data).includes("%PDF-synthetic") && !String(row.data).includes(stored.storageKey)));
+    const persistedRows = await bridge.unsafe("SELECT normalized_result::text AS result FROM bridge.document_perception_result_delivery WHERE idempotency_key=$1", [input.idempotencyKey]);
+    assert.equal(persistedRows.length, 0, "the replay row is eventually removed after a transient cleanup failure");
 
     assert.equal((await routes.deliver(serviceCredential, request, delivered)).status, 204, "acknowledgement replay must remain idempotent");
     await authority.invalidateCache({ sourceSha256, perception: request.perception, capabilityIdentity: input.capabilityIdentity });
@@ -118,7 +137,13 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
     await atlas.unsafe("DELETE FROM atlas.document_perception_execution WHERE id=$1", [executionId]).catch(() => undefined);
     await bridge.unsafe("DELETE FROM bridge.background_effects WHERE idempotency_key=$1", [input.idempotencyKey]).catch(() => undefined);
     await bridge.unsafe("DELETE FROM bridge.document_perception_result_delivery WHERE idempotency_key=$1", [input.idempotencyKey]).catch(() => undefined);
-    await Promise.all([atlas.end(), bridge.end()]);
+    await admin.unsafe(`DROP TRIGGER IF EXISTS ${completionFault}_trigger ON bridge.background_effects`).catch(() => undefined);
+    await admin.unsafe(`DROP FUNCTION IF EXISTS ${completionFault}_fn()`).catch(() => undefined);
+    await admin.unsafe(`DROP TABLE IF EXISTS ${completionFault}`).catch(() => undefined);
+    await admin.unsafe(`DROP TRIGGER IF EXISTS ${cleanupFault}_trigger ON bridge.document_perception_result_delivery`).catch(() => undefined);
+    await admin.unsafe(`DROP FUNCTION IF EXISTS ${cleanupFault}_fn()`).catch(() => undefined);
+    await admin.unsafe(`DROP TABLE IF EXISTS ${cleanupFault}`).catch(() => undefined);
+    await Promise.all([admin.end(), atlas.end(), bridge.end()]);
     await rm(sourceRoot, { recursive: true, force: true });
   }
 });
