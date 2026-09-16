@@ -15,7 +15,6 @@ async function deliverStaged(request: DocumentPerceptionRequest, result: Normali
     if (!replay || signal.aborted) throw firstError;
     await results.deliver(request, result, signal);
   }
-  if (replay) await replay.store.acknowledge(replay.idempotencyKey, request.executionId);
 }
 
 /** Bridge orchestration has no storage/database authority; Atlas owns both handoff endpoints. */

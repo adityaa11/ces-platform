@@ -83,7 +83,11 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
   const queueName = `atlas-perception-integration-${randomUUID()}`;
   const perceptionQueueName = `${documentPerceptionQueue}-test-${randomUUID()}`;
   const config: WorkerConfig = { databaseUrl: bridgeUrl.toString(), concurrency: 1, timeoutSeconds: 5, retryLimit: 1, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 };
-  const worker = createBackgroundWorker(config, { async *execute() { yield { type: "complete" as const }; } }, queueName, (queuedRequest, signal, context) => runDocumentPerception(queuedRequest, provider as never, clients.source, clients.results, signal, { idempotencyKey: context.idempotencyKey, store: createPerceptionResultReplay(context.database) }), perceptionQueueName);
+  const worker = createBackgroundWorker(config, { async *execute() { yield { type: "complete" as const }; } }, queueName, async (queuedRequest, signal, context) => {
+    const store = createPerceptionResultReplay(context.database);
+    await runDocumentPerception(queuedRequest, provider as never, clients.source, clients.results, signal, { idempotencyKey: context.idempotencyKey, store });
+    return () => store.acknowledge(context.idempotencyKey, queuedRequest.executionId);
+  }, perceptionQueueName);
   try {
     assert.equal((await routes.redeem("wrong-credential", request)).status, 401);
     assert.equal((await routes.redeem(serviceCredential, { ...request, executionId: "wrong-execution" })).status, 400);

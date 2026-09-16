@@ -15,9 +15,9 @@ export type BackgroundWorker = {
  * The Bridge can execute perception only through an injected bounded handoff.
  * It deliberately has no Atlas repository or cache dependency.
  */
-export type DocumentPerceptionQueueHandler = (request: DocumentPerceptionRequest, signal: AbortSignal, context: { readonly idempotencyKey: string; readonly database: Db }) => Promise<void>;
+export type DocumentPerceptionQueueHandler = (request: DocumentPerceptionRequest, signal: AbortSignal, context: { readonly idempotencyKey: string; readonly database: Db }) => Promise<void | (() => Promise<void>)>;
 
-async function executeOnce(idempotencyKey: string, executionId: string, leaseSeconds: number, work: () => Promise<void>, database: Db): Promise<void> {
+async function executeOnce(idempotencyKey: string, executionId: string, leaseSeconds: number, work: () => Promise<void | (() => Promise<void>)>, database: Db): Promise<void> {
   const owner = randomUUID();
   const effect = await database.executeSql(
     "INSERT INTO bridge.background_effects (idempotency_key, execution_id, status, lease_owner, lease_generation, lease_expires_at, started_at) VALUES ($1, $2, 'running', $3, 1, now() + make_interval(secs => $4), now()) ON CONFLICT (idempotency_key) DO UPDATE SET status = 'running', lease_owner = $3, lease_generation = bridge.background_effects.lease_generation + 1, lease_expires_at = now() + make_interval(secs => $4), started_at = now(), last_error = NULL WHERE bridge.background_effects.execution_id = EXCLUDED.execution_id AND bridge.background_effects.status <> 'completed' AND (bridge.background_effects.lease_expires_at IS NULL OR bridge.background_effects.lease_expires_at < now()) RETURNING lease_generation",
@@ -29,9 +29,10 @@ async function executeOnce(idempotencyKey: string, executionId: string, leaseSec
     return;
   }
   const generation = Number((effect.rows[0] as { lease_generation: number }).lease_generation);
-  try { await work();
+  try { const afterCompletion = await work();
     const completed = await database.executeSql("UPDATE bridge.background_effects SET status = 'completed', completed_at = now(), lease_expires_at = NULL WHERE idempotency_key = $1 AND lease_owner = $2 AND lease_generation = $3 AND status = 'running' RETURNING idempotency_key", [idempotencyKey, owner, generation]);
     if (!completed.rows.length) throw new Error("Background execution lease was superseded.");
+    if (afterCompletion) await afterCompletion();
   } catch (error) { await database.executeSql("UPDATE bridge.background_effects SET status = 'pending', lease_expires_at = now(), last_error = $4 WHERE idempotency_key = $1 AND lease_owner = $2 AND lease_generation = $3 AND status = 'running'", [idempotencyKey, owner, generation, error instanceof Error ? error.message : "Background execution failed."]); throw error; }
 }
 

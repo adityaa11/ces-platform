@@ -39,5 +39,7 @@ test("a lost result acknowledgement replays staged normalized output without a s
   await runDocumentPerception(request, provider as never, source, results, new AbortController().signal, replay);
   assert.equal(providerCalls, 1);
   assert.equal(deliveryCalls, 2);
+  assert.ok(staged, "the replay row must survive until the worker durably completes its effect");
+  await store.acknowledge();
   assert.equal(staged, undefined);
 });
