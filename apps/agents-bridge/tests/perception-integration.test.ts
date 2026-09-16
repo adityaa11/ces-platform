@@ -86,7 +86,6 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
   const worker = createBackgroundWorker(config, { async *execute() { yield { type: "complete" as const }; } }, queueName, async (queuedRequest, signal, context) => {
     const store = createPerceptionResultReplay(context.database);
     await runDocumentPerception(queuedRequest, provider as never, clients.source, clients.results, signal, { idempotencyKey: context.idempotencyKey, store });
-    return () => store.acknowledge(context.idempotencyKey, queuedRequest.executionId);
   }, perceptionQueueName);
   try {
     assert.equal((await routes.redeem("wrong-credential", request)).status, 401);

@@ -17,7 +17,6 @@ const provider = new MistralProvider(loadBridgeConfig().mistral);
 const worker = createBackgroundWorker(loadWorkerConfig(), new TestRuntime(), undefined, async (request, signal, context) => {
   const store = createPerceptionResultReplay(context.database);
   await runDocumentPerception(request, provider, clients.source, clients.results, signal, { idempotencyKey: context.idempotencyKey, store });
-  return () => store.acknowledge(context.idempotencyKey, request.executionId);
 });
 await worker.start();
 await writeFile(readinessPath, "ready\n");
