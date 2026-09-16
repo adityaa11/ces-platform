@@ -1,6 +1,6 @@
 # BSS-009-01: Atlas perception authority
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** BSS-BATCH-09.1
 - **Depends on:** BSS-009 / BSS-BATCH-09 `PASS`
 - **Baseline:** [Production Baseline](../../atlas-backend-production-baseline.md) §§7–8, 12–13, 19, 21–22
@@ -35,4 +35,11 @@ Make Atlas the persistent authority for a perception execution: create its opera
 ## Review checkpoint
 
 - **Review question:** Does Atlas exclusively and securely own perception operational state, source redemption, result handoff, and rebuildable cache persistence?
-- **Commit to review:** Pending implementation commit.
+- **Commit to review:** Current BSS-BATCH-09.1 checkpoint commit.
+
+## Implementation notes
+
+- `0005_bss009_atlas_perception_authority` extends the BSS-009 operational tables with a qualified capability/config identity, completion fence, cache invalidation state, and separate derived-asset references. It stores no raw document bytes.
+- `PostgresPerceptionAuthority` is the Atlas-only adapter. It is deliberately the sole component that resolves the private `document_storage_key`; its returned source identity is intended for the Atlas route to read from BSS-007 `DocumentStore` and stream bounded bytes without disclosing that key to Bridge.
+- `createPerceptionInternalRoutes` supplies the bounded, constant-time-authenticated source-redemption and result-handoff route behavior for the Atlas host. BSS-009-02 owns the Bridge HTTP client and end-to-end execution orchestration.
+- Validation: the focused core route tests and real local PostgreSQL authority integration pass at `127.0.0.1:5432`; the migration is idempotent and the `agents_bridge` role is denied writes to the perception tables.

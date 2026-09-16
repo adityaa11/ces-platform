@@ -1,6 +1,6 @@
 # BSS-009: Document Perception foundations
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** BSS-BATCH-09
 - **Depends on:** BSS-006, BSS-007, BSS-008
 - **Baseline:** [Production Baseline](../../atlas-backend-production-baseline.md) §§7–8, 12–13, 15–16, 19, 21–22
