@@ -13,7 +13,12 @@ test("perception worker receives bounded source bytes and delivers only normaliz
 
 test("perception worker never delivers a provider result returned after cancellation", async () => {
   const controller = new AbortController(); let delivered = false;
-  const provider = { perceive: async () => { controller.abort(); return { providerResult: { pages: [{ index: 0, markdown: "late" }] }, provenance: { provider: "mistral" as const, model: "ocr-qualified", endpoint: "/v1/ocr" as const, latencyMilliseconds: 1, attempt: 1 } }; };
+  const provider = {
+    perceive: async () => {
+      controller.abort();
+      return { providerResult: { pages: [{ index: 0, markdown: "late" }] }, provenance: { provider: "mistral" as const, model: "ocr-qualified", endpoint: "/v1/ocr" as const, latencyMilliseconds: 1, attempt: 1 } };
+    },
+  };
   await assert.rejects(() => runDocumentPerception(request, provider as never, { redeem: async () => ({ bytes: new Uint8Array([1, 2, 3, 4]), mimeType: "application/pdf" as const }) }, { deliver: async () => { delivered = true; } }, controller.signal), /cancelled/);
   assert.equal(delivered, false);
 });

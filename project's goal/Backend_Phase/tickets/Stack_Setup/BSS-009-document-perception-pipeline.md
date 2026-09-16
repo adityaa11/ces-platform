@@ -82,7 +82,7 @@ Atlas URL:          postgresql://atlas:atlas_local_dev_only@127.0.0.1:55432/atla
 Bridge URL:         postgresql://agents_bridge:agents_bridge_local_dev_only@127.0.0.1:55432/atlas_dev
 ```
 
-Start the database with `docker compose up -d postgres` and use the local sample credentials from `.env.example` or explicitly supplied local environment variables. From the host, set `DATABASE_URL` and, where required, `AGENTS_BRIDGE_DATABASE_URL` to the `55432` URLs above before running migrations or PostgreSQL integration tests. Services running inside Compose must continue to connect to `postgres:5432`; `55432` is the host-mapped port only. Never commit real credentials.
+Start the database with `POSTGRES_PORT=55432 docker compose up -d postgres` and use the local sample credentials from `.env.example` or explicitly supplied local environment variables. The tracked sample and Compose default also use `55432`. From the host, set `DATABASE_URL` and, where required, `AGENTS_BRIDGE_DATABASE_URL` to the `55432` URLs above before running migrations or PostgreSQL integration tests. Services running inside Compose must continue to connect to `postgres:5432`; `55432` is the host-mapped port only. Never commit real credentials.
 
 ## Review checkpoint
 
