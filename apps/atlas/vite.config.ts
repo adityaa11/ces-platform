@@ -141,7 +141,7 @@ export default defineConfig(async () => {
           ...(isCodexSeatbeltSandbox
             ? { watch: { useFsEvents: false, usePolling: true } }
             : {}),
-          ...(process.env.ATLAS_DOCKER === "true" ? { host: "0.0.0.0" } : {}),
+          ...(process.env.ATLAS_DOCKER === "true" ? { host: "0.0.0.0", allowedHosts: ["atlas"] } : {}),
         }
       : undefined;
 

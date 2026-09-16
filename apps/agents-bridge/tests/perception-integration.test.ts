@@ -87,13 +87,11 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
   // re-reading the source or invoking the provider a second time.
   const completionFault = `pcf_${randomUUID().replace(/-/gu, "").slice(0, 16)}`;
   const cleanupFault = `pcf_${randomUUID().replace(/-/gu, "").slice(0, 16)}`;
-  await admin.unsafe(`CREATE TABLE ${completionFault} (remaining integer NOT NULL)`);
-  await admin.unsafe(`INSERT INTO ${completionFault} VALUES (1)`);
-  await admin.unsafe(`CREATE FUNCTION ${completionFault}_fn() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.status = 'completed' AND (SELECT remaining FROM ${completionFault}) > 0 THEN UPDATE ${completionFault} SET remaining = remaining - 1; RAISE EXCEPTION 'synthetic completion update loss'; END IF; RETURN NEW; END $$`);
+  await admin.unsafe(`CREATE SEQUENCE ${completionFault} START 1`);
+  await admin.unsafe(`CREATE FUNCTION ${completionFault}_fn() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public AS $$ BEGIN IF NEW.status = 'completed' AND nextval('atlas.${completionFault}') = 1 THEN RAISE EXCEPTION 'synthetic completion update loss'; END IF; RETURN NEW; END $$`);
   await admin.unsafe(`CREATE TRIGGER ${completionFault}_trigger BEFORE UPDATE ON bridge.background_effects FOR EACH ROW EXECUTE FUNCTION ${completionFault}_fn()`);
-  await admin.unsafe(`CREATE TABLE ${cleanupFault} (remaining integer NOT NULL)`);
-  await admin.unsafe(`INSERT INTO ${cleanupFault} VALUES (1)`);
-  await admin.unsafe(`CREATE FUNCTION ${cleanupFault}_fn() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF (SELECT remaining FROM ${cleanupFault}) > 0 THEN UPDATE ${cleanupFault} SET remaining = remaining - 1; RAISE EXCEPTION 'synthetic replay cleanup loss'; END IF; RETURN OLD; END $$`);
+  await admin.unsafe(`CREATE SEQUENCE ${cleanupFault} START 1`);
+  await admin.unsafe(`CREATE FUNCTION ${cleanupFault}_fn() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public AS $$ BEGIN IF nextval('atlas.${cleanupFault}') = 1 THEN RAISE EXCEPTION 'synthetic replay cleanup loss'; END IF; RETURN OLD; END $$`);
   await admin.unsafe(`CREATE TRIGGER ${cleanupFault}_trigger BEFORE DELETE ON bridge.document_perception_result_delivery FOR EACH ROW EXECUTE FUNCTION ${cleanupFault}_fn()`);
   const config: WorkerConfig = { databaseUrl: bridgeUrl.toString(), concurrency: 1, timeoutSeconds: 5, retryLimit: 2, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 };
   const worker = createBackgroundWorker(config, { async *execute() { yield { type: "complete" as const }; } }, queueName, async (queuedRequest, signal, context) => {
@@ -136,13 +134,13 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
     await worker.stop().catch(() => undefined);
     await atlas.unsafe("DELETE FROM atlas.document_perception_execution WHERE id=$1", [executionId]).catch(() => undefined);
     await bridge.unsafe("DELETE FROM bridge.background_effects WHERE idempotency_key=$1", [input.idempotencyKey]).catch(() => undefined);
-    await bridge.unsafe("DELETE FROM bridge.document_perception_result_delivery WHERE idempotency_key=$1", [input.idempotencyKey]).catch(() => undefined);
     await admin.unsafe(`DROP TRIGGER IF EXISTS ${completionFault}_trigger ON bridge.background_effects`).catch(() => undefined);
-    await admin.unsafe(`DROP FUNCTION IF EXISTS ${completionFault}_fn()`).catch(() => undefined);
-    await admin.unsafe(`DROP TABLE IF EXISTS ${completionFault}`).catch(() => undefined);
     await admin.unsafe(`DROP TRIGGER IF EXISTS ${cleanupFault}_trigger ON bridge.document_perception_result_delivery`).catch(() => undefined);
+    await bridge.unsafe("DELETE FROM bridge.document_perception_result_delivery WHERE idempotency_key=$1", [input.idempotencyKey]).catch(() => undefined);
+    await admin.unsafe(`DROP FUNCTION IF EXISTS ${completionFault}_fn()`).catch(() => undefined);
+    await admin.unsafe(`DROP SEQUENCE IF EXISTS ${completionFault}`).catch(() => undefined);
     await admin.unsafe(`DROP FUNCTION IF EXISTS ${cleanupFault}_fn()`).catch(() => undefined);
-    await admin.unsafe(`DROP TABLE IF EXISTS ${cleanupFault}`).catch(() => undefined);
+    await admin.unsafe(`DROP SEQUENCE IF EXISTS ${cleanupFault}`).catch(() => undefined);
     await Promise.all([admin.end(), atlas.end(), bridge.end()]);
     await rm(sourceRoot, { recursive: true, force: true });
   }

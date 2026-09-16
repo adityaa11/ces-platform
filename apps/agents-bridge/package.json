@@ -7,7 +7,8 @@
     "dev": "jiti src/main.ts",
     "start": "jiti src/main.ts",
     "typecheck": "tsc -p tsconfig.json",
-    "test": "jiti tests/service.test.ts && jiti tests/mistral-provider.test.ts && jiti tests/perception-job.test.ts && jiti tests/atlas-perception-client.test.ts && jiti tests/document-perception-worker.test.ts && jiti tests/worker.integration.test.ts && jiti tests/perception-integration.test.ts",
+    "test": "jiti tests/service.test.ts && jiti tests/mistral-provider.test.ts && jiti tests/perception-job.test.ts && jiti tests/atlas-perception-client.test.ts && jiti tests/document-perception-worker.test.ts && jiti tests/worker.integration.test.ts && jiti tests/perception-integration.test.ts && jiti tests/perception-negative.integration.test.ts",
+    "test:perception-compose": "node tests/perception-compose-smoke.mjs",
     "worker": "jiti src/worker-main.ts"
   },
   "dependencies": {

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ReasoningRuntime } from "@atlas/contracts";
 import { createBridgeApp } from "../src/app.ts";
+import { loadBridgeConfig } from "../src/config.ts";
 import { TestRuntime } from "../src/runtime.ts";
 
 const request = { version: "v1", executionId: "run-1", mode: "interactive", skill: { id: "example.skill", version: "1" }, input: { prompt: "hello" }, context: { boundary: "workspace:ws-1", items: [] } };
@@ -12,6 +13,12 @@ test("health and readiness are available without the Atlas UI", async () => {
     assert.deepEqual(JSON.parse((await app.inject({ method: "GET", url: "/healthz" })).body), { status: "ok" });
     assert.deepEqual(JSON.parse((await app.inject({ method: "GET", url: "/readyz" })).body), { status: "ready", version: "test" });
   } finally { await app.close(); }
+});
+
+test("the provider endpoint remains HTTPS except for the explicit local smoke provider", () => {
+  assert.throws(() => loadBridgeConfig({ MISTRAL_API_BASE_URL: "http://provider.example" }), /HTTPS URL/);
+  assert.throws(() => loadBridgeConfig({ MISTRAL_API_BASE_URL: "http://mistral-mock:3100" }), /HTTPS URL/);
+  assert.equal(loadBridgeConfig({ MISTRAL_API_BASE_URL: "http://mistral-mock:3100", MISTRAL_ALLOW_INSECURE_LOCAL: "true" }).mistral.baseUrl, "http://mistral-mock:3100");
 });
 
 test("interactive execution emits ordered SSE events and closes", async () => {

@@ -1,0 +1,27 @@
+# Test-only overlay. The production docker-compose.yml remains a four-service
+# topology; this overlay supplies a deterministic provider endpoint while the
+# real Atlas and Bridge worker processes run unchanged.
+services:
+  mistral-mock:
+    image: node:24-bookworm-slim
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace:ro
+    environment:
+      MISTRAL_MOCK_PORT: "3100"
+    command: ["node", "apps/agents-bridge/tests/mistral-ocr-mock.mjs"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3100/healthz').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+      start_period: 2s
+
+  agents-bridge-worker:
+    depends_on:
+      mistral-mock:
+        condition: service_healthy
+    environment:
+      MISTRAL_API_KEY: compose-smoke-provider-key
+      MISTRAL_API_BASE_URL: http://mistral-mock:3100
+      MISTRAL_ALLOW_INSECURE_LOCAL: "true"

@@ -29,7 +29,13 @@ export function loadBridgeConfig(environment: NodeJS.ProcessEnv = process.env): 
   const port = Number(environment.AGENTS_BRIDGE_PORT ?? "3002");
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error("AGENTS_BRIDGE_PORT must be a valid TCP port.");
   const baseUrl = environment.MISTRAL_API_BASE_URL ?? "https://api.mistral.ai";
-  if (!/^https:\/\/[^\s]+$/u.test(baseUrl)) throw new Error("MISTRAL_API_BASE_URL must be an HTTPS URL.");
+  const parsedBaseUrl = (() => {
+    try { return new URL(baseUrl); } catch { return undefined; }
+  })();
+  const insecureLocalProvider = environment.MISTRAL_ALLOW_INSECURE_LOCAL === "true"
+    && parsedBaseUrl?.protocol === "http:"
+    && (parsedBaseUrl.hostname === "localhost" || parsedBaseUrl.hostname === "127.0.0.1" || parsedBaseUrl.hostname === "mistral-mock");
+  if (!/^https:\/\/[^\s]+$/u.test(baseUrl) && !insecureLocalProvider) throw new Error("MISTRAL_API_BASE_URL must be an HTTPS URL unless the explicitly test-only local provider is enabled.");
   return {
     host: environment.AGENTS_BRIDGE_HOST ?? "0.0.0.0",
     port,
