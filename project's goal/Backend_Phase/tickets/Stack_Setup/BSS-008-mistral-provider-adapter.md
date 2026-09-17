@@ -4,7 +4,7 @@
 - **Review batch:** BSS-BATCH-08
 - **Depends on:** BSS-005
 - **Supersedes planned scope:** `BSS-008-groq-provider-adapter.md`
-- **Baseline:** [Production Baseline](../../atlas-backend-production-baseline.md) §§7, 10–12, 15–16, 18, 21
+- **Baseline:** [Production Baseline](../../atlas-backend-production-baseline-mistral-synced.md) §§7, 10–12, 15–16, 18, 21
 - **Architecture guardrails:** [Atlas Core Architecture — Updated Checkpoint](../../atlas-core-architecture-checkpoint-v2-mistral-enriched-v2.md), especially Provider Qualification Direction, Document Perception vs Semantic Extraction, Agents Bridge provider boundary, and the Canonical Document Processing Pipeline
 - **Provider references:** [Mistral Chat API](https://docs.mistral.ai/api); [Custom Structured Outputs](https://docs.mistral.ai/studio/conversations/structured-output/custom); [Chat Completions](https://docs.mistral.ai/studio/conversations/chat-completion); [OCR Processor](https://docs.mistral.ai/studio/document-processing/basic_ocr); [OCR 4.1](https://docs.mistral.ai/models/ocr-4-1); [Mistral Small 4](https://docs.mistral.ai/models/mistral-small-4-0-26-03); [Mistral Large 3](https://docs.mistral.ai/models/mistral-large-3-25-12); [Mistral Medium 3.5](https://docs.mistral.ai/models/mistral-medium-3-5-26-04); [Mistral ZDR](https://help.mistral.ai/en/articles/347612-can-i-activate-zero-data-retention-zdr)
 

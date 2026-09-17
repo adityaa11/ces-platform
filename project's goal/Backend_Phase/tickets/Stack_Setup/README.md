@@ -1,7 +1,7 @@
 # Backend Stack Setup Ticket Set
 
 - **State:** `complete`
-- **Primary baseline:** [Atlas Backend Production Baseline](../../atlas-backend-production-baseline.md)
+- **Primary baseline:** [Atlas Backend Production Baseline](../../atlas-backend-production-baseline-mistral-synced.md)
 - **Architecture guardrails:** [Atlas Core Architecture — Updated Checkpoint](../../atlas-core-architecture-checkpoint-v2-mistral-enriched-v2.md)
 
 ## Purpose

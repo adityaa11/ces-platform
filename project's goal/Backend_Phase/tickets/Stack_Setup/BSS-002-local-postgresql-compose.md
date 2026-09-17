@@ -3,7 +3,7 @@
 - **State:** `approved`
 - **Review batch:** BSS-BATCH-02
 - **Depends on:** BSS-001
-- **Baseline:** [Production Baseline](../../atlas-backend-production-baseline.md) §§2, 4, 17, 19; [Architecture Checkpoint](../../atlas-core-architecture-checkpoint-v2-mistral-enriched-v2.md) — Section 1
+- **Baseline:** [Production Baseline](../../atlas-backend-production-baseline-mistral-synced.md) §§2, 4, 17, 19; [Architecture Checkpoint](../../atlas-core-architecture-checkpoint-v2-mistral-enriched-v2.md) — Section 1
 
 ## Outcome
 

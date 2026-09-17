@@ -1,6 +1,6 @@
 # Backend package ownership
 
-This note records the intended ownership boundaries for the Atlas backend workspace. It follows the [Backend Production Baseline](../project's%20goal/Backend_Phase/atlas-backend-production-baseline.md#14-package-structure). The current workspace contains `apps/atlas` and `packages/atlas-fixtures`; the other packages below are planned boundaries and are not created by this note.
+This note records the intended ownership boundaries for the Atlas backend workspace. It follows the [Backend Production Baseline](../project's%20goal/Backend_Phase/atlas-backend-production-baseline-mistral-synced.md#14-package-structure). The current workspace contains `apps/atlas` and `packages/atlas-fixtures`; the other packages below are planned boundaries and are not created by this note.
 
 | Workspace path | Ownership |
 |---|---|

@@ -3,7 +3,7 @@
 - **State:** `approved`
 - **Review batch:** BSS-BATCH-09.1
 - **Depends on:** BSS-009 / BSS-BATCH-09 `PASS`
-- **Baseline:** [Production Baseline](../../atlas-backend-production-baseline.md) §§7–8, 12–13, 19, 21–22
+- **Baseline:** [Production Baseline](../../atlas-backend-production-baseline-mistral-synced.md) §§7–8, 12–13, 19, 21–22
 
 ## Outcome
 

@@ -3,7 +3,7 @@
 - **State:** `approved`
 - **Review batch:** BSS-BATCH-07
 - **Depends on:** BSS-001
-- **Baseline:** [Production Baseline](../../atlas-backend-production-baseline.md) §§2, 13, 17, 21; [Architecture Checkpoint](../../atlas-core-architecture-checkpoint-v2-mistral-enriched-v2.md) — Sections 2–3, Cross-Cutting: Evidence & Provenance
+- **Baseline:** [Production Baseline](../../atlas-backend-production-baseline-mistral-synced.md) §§2, 13, 17, 21; [Architecture Checkpoint](../../atlas-core-architecture-checkpoint-v2-mistral-enriched-v2.md) — Sections 2–3, Cross-Cutting: Evidence & Provenance
 
 ## Outcome
 

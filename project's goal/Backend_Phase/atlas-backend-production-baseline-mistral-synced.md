@@ -4,7 +4,7 @@
 
 This document captures the current backend architecture direction for Atlas as a **production baseline**, not a disposable prototype.
 
-It is synchronized with the current Atlas core architecture checkpoint, including the explicit separation between **Document Perception** and **Semantic Extraction**.
+It is synchronized with the [canonical Atlas core architecture checkpoint](atlas-core-architecture-checkpoint-v2-mistral-enriched-v2.md), including the explicit separation between **Document Perception** and **Semantic Extraction**.
 
 The central architectural rule is:
 
@@ -12,11 +12,11 @@ The central architectural rule is:
 
 The local development environment should differ from production mainly in infrastructure location, provider credentials, capacity, and storage adapters—not in Atlas semantics or authority boundaries.
 
-### Compatibility with approved BSS-001 through BSS-007
+### Compatibility with approved BSS-001 through BSS-009-02
 
 This baseline update is intentionally **additive**.
 
-It must not require reopening or rewriting the already-approved foundations established by BSS-001 through BSS-007.
+It must not require reopening or rewriting the approved foundations established by BSS-001 through BSS-009-02.
 
 ```text
 BSS-001  runtime / workspace foundation
@@ -45,25 +45,35 @@ BSS-005  Agents Bridge service foundation
 BSS-006  pg-boss background runtime
     |
     +-- remains valid
-    +-- BSS-009 may introduce a real document-perception job on top of it
+    +-- the BSS-009 series uses it for document-perception work
 
 BSS-007  DocumentStore foundation
     |
     +-- remains valid
     +-- immutable source bytes remain behind the existing storage-neutral contract
+
+BSS-008  Mistral provider adapter
+    |
+    +-- approved provider capability boundary remains valid
+    +-- capability aliases remain provider-neutral
+
+BSS-009 series  Document Perception
+    |
+    +-- approved Atlas authority, perception, and Bridge integration boundaries remain valid
+    +-- `NormalizedDocument` remains derived and rebuildable
 ```
 
-The next stack changes should therefore be limited to:
+The approved Stack Setup checkpoint therefore establishes:
 
 ```text
 BSS-008
-    Mistral provider adapter / provider capability qualification
+    Mistral provider adapter and provider capability qualification
 
-BSS-009
-    Document Perception pipeline and provider-neutral perception contract
+BSS-009 / BSS-009-01 / BSS-009-02
+    Document Perception pipeline, Atlas authority, and provider-neutral Bridge integration
 ```
 
-Later semantic-extraction feature work may evolve the extraction skill contract, but that belongs outside BSS-001 through BSS-009 unless explicitly ticketed.
+Later semantic-extraction feature work may evolve the extraction skill contract, but that belongs outside the completed Stack Setup checkpoint unless explicitly ticketed.
 
 ---
 
@@ -304,7 +314,7 @@ BSS-003 remains authoritative for the established PostgreSQL/Drizzle boundary:
 - the `agents_bridge` database role remains denied write access to trusted Atlas state;
 - final domain tables remain subject to later domain design.
 
-BSS-009 may define the minimum persistence needed for derived perception identity/cache metadata, but it must do so within these existing boundaries rather than changing them.
+The BSS-009 series defines the minimum persistence needed for derived perception identity/cache metadata within these existing boundaries rather than changing them.
 
 Better Auth continues to own authentication-related tables.
 
@@ -645,7 +655,7 @@ The phrase **PRD extraction** should not be used when precision matters because 
 
 Jobs must remain idempotent even when queue retries are available.
 
-BSS-009 should add the real document-perception job on top of BSS-006 rather than redesigning the queue runtime.
+The BSS-009 series adds the real document-perception job on top of BSS-006 rather than redesigning the queue runtime.
 
 ---
 
@@ -1518,7 +1528,7 @@ Redis may be introduced later only if PostgreSQL queueing becomes a proven bottl
 
 ### 19.1 Document-perception job
 
-BSS-009 should introduce a real document-perception job on top of the existing queue infrastructure.
+The BSS-009 series introduces a real document-perception job on top of the existing queue infrastructure.
 
 Conceptually:
 
@@ -1624,8 +1634,8 @@ The provider never becomes retrieval authority.
 18. **Local and production environments use the same architecture and semantics.**
 19. **Provider usage, pricing, retries, capacity, and privacy/retention policy belong to Agents Bridge, not individual skills.**
 20. **Atlas Core owns validation, retrieval, revisions, HEAD movement, approval, commit, provenance, dependency state, and publication.**
-21. **BSS-001 through BSS-007 remain accepted foundations and are not reopened by this architecture update.**
-22. **The next stack changes are BSS-008 for the Mistral provider boundary and BSS-009 for Document Perception.**
+21. **BSS-001 through BSS-009-02 remain approved foundations and are not reopened by this architecture baseline.**
+22. **BSS-008 establishes the Mistral provider boundary, and the BSS-009 series establishes the Document Perception, Atlas authority, and Bridge integration boundaries.**
 
 ---
 
@@ -1657,4 +1667,4 @@ Deterministic Validation
 Trusted Atlas lifecycle
 ```
 
-This architecture is intended to remain consistent with the approved BSS-001 through BSS-007 foundations while allowing the planned BSS-008 Mistral provider adapter and new BSS-009 Document Perception pipeline to add the missing provider/document-processing capabilities without rewriting the accepted stack.
+This architecture remains consistent with the approved BSS-001 through BSS-009-02 foundations. Later semantic/domain work may consume these provider and document-processing capabilities without rewriting the accepted stack.

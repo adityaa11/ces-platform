@@ -3,7 +3,7 @@
 - **State:** `approved`
 - **Review batch:** BSS-BATCH-04
 - **Depends on:** BSS-003
-- **Baseline:** [Production Baseline](../../atlas-backend-production-baseline.md) §§2, 3, 4, 12, 21
+- **Baseline:** [Production Baseline](../../atlas-backend-production-baseline-mistral-synced.md) §§2, 3, 4, 12, 21
 
 ## Outcome
 

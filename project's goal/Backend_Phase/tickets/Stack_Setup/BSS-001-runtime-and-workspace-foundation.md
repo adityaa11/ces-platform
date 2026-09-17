@@ -3,7 +3,7 @@
 - **State:** `approved`
 - **Review batch:** BSS-BATCH-01
 - **Depends on:** None
-- **Baseline:** [Production Baseline](../../atlas-backend-production-baseline.md) §§2, 14, 17, 21; [Architecture Checkpoint](../../atlas-core-architecture-checkpoint-v2-mistral-enriched-v2.md) — Core Principle, Cross-Cutting: Reasoning vs Deterministic Authority
+- **Baseline:** [Production Baseline](../../atlas-backend-production-baseline-mistral-synced.md) §§2, 14, 17, 21; [Architecture Checkpoint](../../atlas-core-architecture-checkpoint-v2-mistral-enriched-v2.md) — Core Principle, Cross-Cutting: Reasoning vs Deterministic Authority
 
 ## Outcome
 
