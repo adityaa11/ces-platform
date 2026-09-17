@@ -4,7 +4,7 @@
 - **Review batch:** BSS-BATCH-09
 - **Depends on:** BSS-006, BSS-007, BSS-008
 - **Baseline:** [Production Baseline](../../atlas-backend-production-baseline.md) §§7–8, 12–13, 15–16, 19, 21–22
-- **Architecture guardrails:** [Atlas Core Architecture — Updated Checkpoint](../../atlas-core-architecture-checkpoint-v2.md), especially Evidence & Provenance, the Agents Bridge provider boundary, and the Canonical Document Processing Pipeline
+- **Architecture guardrails:** [Atlas Core Architecture — Updated Checkpoint](../../atlas-core-architecture-checkpoint-v2-mistral-enriched-v2.md), especially Evidence & Provenance, the Agents Bridge provider boundary, and the Canonical Document Processing Pipeline
 
 ## Scope-split decision
 

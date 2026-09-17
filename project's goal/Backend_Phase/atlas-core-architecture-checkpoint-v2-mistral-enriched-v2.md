@@ -8,7 +8,13 @@
 Documents
    |
    v
-Extraction
+Document Perception
+   |
+   v
+NormalizedDocument
+   |
+   v
+Semantic Extraction
    |
    v
 Knowledge Retrieval
@@ -54,7 +60,7 @@ This is **not a provider lock-in decision** and does not change Atlas's core arc
 | Atlas responsibility | Model requirement | Mistral fit | Current qualification direction |
 | --- | --- | --- | --- |
 | 1. Project/workspace/revisions | None | N/A | Atlas/PostgreSQL |
-| 2. Immutable documents | Document parsing only | Strong | Mistral OCR 4.1 |
+| 2. Document perception | Document parsing only | Strong | Mistral OCR 4.1 |
 | 3. Semantic extraction | Multimodal + structured semantic reasoning | Strong | OCR 4.1 + Large 3 / Medium 3.5 |
 | 4. Targeted retrieval | Semantic embeddings/retrieval | Strong | `mistral-embed` optional; Atlas owns index |
 | 5. Reconciliation | Deep relational reasoning | Needs benchmark | Large 3 vs Medium 3.5 |
@@ -387,7 +393,7 @@ Text extraction alone is not sufficient for these documents.
 ---
 
 
-# Section 3 — Document Extraction & Semantic Candidate Model
+# Section 3 — Document Perception & Semantic Extraction
 
 This is the first major reasoning boundary.
 
@@ -395,13 +401,19 @@ This is the first major reasoning boundary.
 Immutable Document
        |
        v
-Atlas Extraction
+Document Perception
+       |
+       v
+NormalizedDocument
+       |
+       v
+Semantic Extraction
        |
        v
 Semantic Candidates
 ```
 
-Extraction identifies meaningful project semantics such as:
+Semantic extraction identifies meaningful project semantics such as:
 
 ```text
 actors
@@ -422,7 +434,7 @@ etc.
 
 Every candidate remains grounded in document evidence.
 
-The extraction result is **not UI copy**.
+The semantic-extraction result is **not UI copy**.
 
 It is a generic semantic representation that later Atlas capabilities can reason over.
 
@@ -2313,14 +2325,20 @@ The exact public/internal capability names may evolve, but this architectural se
 # Resulting Atlas Architecture
 
 ```text
-                  IMMUTABLE PROJECT DOCUMENTS
-                       PRD / Addendum
-                              |
-                              v
-                         Extraction
-                              |
-                              v
-                    Semantic Candidates
+                   IMMUTABLE PROJECT DOCUMENTS
+                        PRD / Addendum
+                               |
+                               v
+                     Document Perception
+                               |
+                               v
+                      NormalizedDocument
+                               |
+                               v
+                    Semantic Extraction
+                               |
+                               v
+                     Semantic Candidates
                               |
                               v
                     Targeted Retrieval
@@ -2573,7 +2591,11 @@ At this checkpoint, we have established:
 ```text
 Documents
    ↓
-Extraction
+Document Perception
+   ↓
+NormalizedDocument
+   ↓
+Semantic Extraction
    ↓
 Retrieval
    ↓
