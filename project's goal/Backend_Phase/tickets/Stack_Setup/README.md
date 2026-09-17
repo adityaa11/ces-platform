@@ -399,6 +399,58 @@ The new work composes those boundaries.
 - If implementation reveals that a planned ticket would require changing an approved predecessor's accepted boundary, stop and surface that as a scope-change decision rather than silently modifying the predecessor.
 - The BSS review question must remain narrow enough to produce a finite PASS/fail decision for that ticket's named responsibility.
 
+## Forward engineering-readiness convention
+
+For new or still-planned engineering tickets, use the repository-local
+[engineering-security-refactor-readiness skill](../../../../.agents/skills/engineering-security-refactor-readiness/SKILL.md)
+during ticket authoring. Supply only the bounded ticket scope, accepted
+project/architecture context, relevant dependency boundaries, and any already
+decided technology/profile context. Do not retrofit this section into approved
+historical BSS checkpoints.
+
+When readiness is applicable, freeze a compact section in the ticket. Stable
+IDs are authoritative; wording may be concise. Record the mandatory bindings
+under the frozen `reviewBindings` field; the following is its human-readable
+Markdown form:
+
+```markdown
+## Security Refactor Readiness
+
+Status: applicable
+
+### Inherited boundaries
+
+- `BOUNDARY-...` Accepted authority or responsibility inherited by this ticket.
+
+### Required seams
+
+- `SEAM-...` Implementation seam that later security policy must be able to use.
+
+### Prohibited couplings
+
+- `COUPLING-...` Dependency or responsibility this ticket must not introduce.
+
+### Intentionally unresolved security policy
+
+- `SEC-GAP-...` Policy intentionally left for the future security baseline.
+
+### Mandatory review bindings
+
+- `REV-READY-...`
+  Ref: `SEAM-...`
+  Question: Does the implementation preserve the declared seam?
+  Evidence: boundary or test evidence
+```
+
+Implementation consumes this frozen section and does not rerun readiness
+authoring. The single [engineering-implementation-review entry point](../../../../.agents/skills/engineering-implementation-review/SKILL.md)
+always performs the base review. If the ticket declares a readiness section or
+readiness bindings, it must also load
+`references/security-refactor-readiness.md`; an unresolved required reference
+is an inconclusive/blocking finding. Readiness bindings are minimum coverage,
+not a substitute for independent review, and the result remains one overall
+review outcome.
+
 ### Current review gate
 
 At the time of this README update:
