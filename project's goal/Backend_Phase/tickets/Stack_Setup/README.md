@@ -1,6 +1,6 @@
 # Backend Stack Setup Ticket Set
 
-- **State:** `in_progress`
+- **State:** `complete`
 - **Primary baseline:** [Atlas Backend Production Baseline](../../atlas-backend-production-baseline.md)
 - **Architecture guardrails:** [Atlas Core Architecture — Updated Checkpoint](../../atlas-core-architecture-checkpoint-v2.md)
 
@@ -72,9 +72,9 @@ A dependent ticket must not begin implementation until the dependency checkpoint
 | 6 | [BSS-006](BSS-006-pg-boss-background-runtime.md) / BSS-BATCH-06 | `approved` | BSS-003, BSS-005 | Can the background runtime process PostgreSQL-backed jobs with retries while remaining unable to mutate trusted Atlas state? |
 | 7 | [BSS-007](BSS-007-document-store-foundation.md) / BSS-BATCH-07 | `approved` | BSS-001 | Can immutable source bytes be stored and retrieved through a storage-neutral interface using the initial local adapter? |
 | 8 | [BSS-008](BSS-008-mistral-provider-adapter.md) / BSS-BATCH-08 | `approved` | BSS-005 | Can Mistral provide structured reasoning, streamed chat/tool events, and a document-perception provider primitive through provider-neutral Bridge contracts without taking ownership of Atlas truth or document authorization? |
-| 9 | [BSS-009](BSS-009-document-perception-pipeline.md) / BSS-BATCH-09 | `awaiting_review` | BSS-006, BSS-007, BSS-008 | Are the Document Perception contracts, bounded source-handoff primitives, provider-neutral normalization, and existing-worker queue foundation safe for later Atlas-owned endpoint and integration work? |
+| 9 | [BSS-009](BSS-009-document-perception-pipeline.md) / BSS-BATCH-09 | `approved` | BSS-006, BSS-007, BSS-008 | Are the Document Perception contracts, bounded source-handoff primitives, provider-neutral normalization, and existing-worker queue foundation safe for later Atlas-owned endpoint and integration work? |
 | 10 | [BSS-009-01](BSS-009-01-atlas-perception-authority.md) / BSS-BATCH-09.1 | `approved` | BSS-009 | Does Atlas exclusively and securely own perception operational state, source redemption, result handoff, and rebuildable cache persistence? |
-| 11 | [BSS-009-02](BSS-009-02-bridge-perception-integration.md) / BSS-BATCH-09.2 | `awaiting_review` | BSS-009-01, BSS-008 | Can the existing Atlas/Bridge stack execute a secure, idempotent, provider-neutral PDF perception operation end to end while preserving all authority and privacy boundaries? |
+| 11 | [BSS-009-02](BSS-009-02-bridge-perception-integration.md) / BSS-BATCH-09.2 | `approved` | BSS-009-01, BSS-008 | Can the existing Atlas/Bridge stack execute a secure, idempotent, provider-neutral PDF perception operation end to end while preserving all authority and privacy boundaries? |
 
 ### Dependency sequence after BSS-007
 
@@ -464,16 +464,16 @@ BSS-005  approved
 BSS-006  approved
 BSS-007  approved
 BSS-008  approved (`b9b75f3`, PASS)
-BSS-009  awaiting_review
+BSS-009  approved (`b6c65a8`, PASS)
 BSS-009-01  approved (`5ca655f`, PASS)
-BSS-009-02  awaiting_review
+BSS-009-02  approved (`20bf00b`, PASS)
 ```
 
 Therefore:
 
 ```text
-BSS-009 foundation implementation
-    is authorized by the `go` decision after all dependencies passed review
+Stack Setup
+    is complete; no dependency-ready BSS ticket remains in this ticket set
 ```
 
 ---
