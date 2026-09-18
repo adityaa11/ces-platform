@@ -53,13 +53,35 @@ test("sign-up delegates identity creation to Better Auth without browser-owned s
   assert.match(form, /name="name" required type="text"/);
   assert.match(form, /name="email" required type="email"/);
   assert.match(form, /name="password" required type="password"/);
-  assert.match(form, /fetch\("\/api\/auth\/sign-up\/email", \{/);
-  assert.match(form, /method: "POST"/);
-  assert.match(form, /JSON\.stringify\(\{ name, email, password \}\)/);
-  assert.match(form, /credentials: "same-origin"/);
-  assert.match(form, /if \(!response\.ok\)/);
-  assert.match(form, /router\.push\("\/demo"\)/);
+  assert.match(form, /createSignUpSubmission/);
   assert.match(form, /disabled=\{isSubmitting\}/);
   assert.match(form, /role="alert"/);
   assert.doesNotMatch(form, /localStorage|sessionStorage|document\.cookie|token|raw server|response\.text\(\)/i);
+});
+
+test("sign-up submission waits for success, restores retryability, and coalesces duplicate requests", async () => {
+  const { createSignUpSubmission } = await jiti.import("../components/sign-up-submission.ts");
+  const payload = { name: "Nadia Hartono", email: "nadia@example.test", password: "not-a-real-password" };
+  let requestCount = 0;
+  let resolveRequest;
+  const navigation = [];
+  const pending = new Promise((resolve) => { resolveRequest = resolve; });
+  const submission = createSignUpSubmission(async (received) => {
+    requestCount += 1;
+    assert.deepEqual(received, payload);
+    return pending;
+  }, () => navigation.push("/demo"));
+
+  const firstAttempt = submission.submit(payload);
+  const duplicateAttempt = submission.submit(payload);
+  assert.strictEqual(firstAttempt, duplicateAttempt);
+  assert.equal(requestCount, 1);
+  resolveRequest(new Response(JSON.stringify({ user: { id: "user-1" } }), { status: 200 }));
+  assert.equal(await firstAttempt, "success");
+  assert.deepEqual(navigation, ["/demo"]);
+
+  const failedSubmission = createSignUpSubmission(async () => new Response("not exposed", { status: 400 }), () => navigation.push("unexpected"));
+  assert.equal(await failedSubmission.submit(payload), "failure");
+  assert.deepEqual(navigation, ["/demo"]);
+  assert.equal(await failedSubmission.submit(payload), "failure");
 });

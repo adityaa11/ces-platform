@@ -1,7 +1,8 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { createSignUpSubmission } from "./sign-up-submission";
 
 const signUpFailureMessage = "We couldn't create your account. Check your details and try again.";
 
@@ -9,6 +10,15 @@ export function SignUpForm() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const submission = useMemo(() => createSignUpSubmission(
+    (payload) => fetch("/api/auth/sign-up/email", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify(payload),
+    }),
+    () => router.push("/demo"),
+  ), [router]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -29,19 +39,10 @@ export function SignUpForm() {
     setError(null);
 
     try {
-      const response = await fetch("/api/auth/sign-up/email", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        credentials: "same-origin",
-        body: JSON.stringify({ name, email, password }),
-      });
-
-      if (!response.ok) {
+      const result = await submission.submit({ name, email, password });
+      if (result === "failure") {
         setError(signUpFailureMessage);
-        return;
       }
-
-      router.push("/demo");
     } catch {
       setError(signUpFailureMessage);
     } finally {
@@ -49,7 +50,7 @@ export function SignUpForm() {
     }
   }
 
-  return <form className="sign-up-form" onSubmit={handleSubmit} noValidate>
+  return <form className="sign-up-form" onSubmit={handleSubmit}>
     <label>Name<input autoComplete="name" name="name" required type="text" /></label>
     <label>Email<input autoComplete="email" name="email" required type="email" /></label>
     <label>Password<input autoComplete="new-password" name="password" required type="password" /></label>
