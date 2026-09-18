@@ -233,14 +233,15 @@ button {
 .auth-card label { display: grid; font-size: .9rem; font-weight: 700; gap: .45rem; }
 .auth-card input { background: #151519; border: 1px solid #3b3b43; border-radius: .55rem; color: var(--ink); font: inherit; padding: .75rem; }
 .auth-card input:focus, .profile-control:focus-visible, .navigation a:focus-visible { outline: 3px solid #8b8af8; outline-offset: 2px; }
-.sign-up-form .form-field { display: grid; gap: .45rem; }
-.sign-up-form .form-field label { align-items: center; display: flex; gap: .35rem; }
-.sign-up-form .form-field label > span { color: var(--error-ink); font-size: var(--type-body-compact); font-weight: var(--weight-semibold); }
+.sign-up-form .form-field, .sign-in-form .form-field { display: grid; gap: .45rem; }
+.sign-up-form .form-field label, .sign-in-form .form-field label { align-items: center; display: flex; gap: .35rem; }
+.sign-up-form .form-field label > span, .sign-in-form .form-field label > span { color: var(--error-ink); font-size: var(--type-body-compact); font-weight: var(--weight-semibold); }
 .sign-up-form .field-helper { color: var(--muted); font-size: var(--type-body-compact); line-height: var(--leading-body); margin: -.1rem 0 0; }
-.sign-up-form .field-error, .sign-up-form .form-error { border-inline-start: .2rem solid var(--error-ink); color: var(--error-ink); font-size: var(--type-body-compact); font-weight: var(--weight-semibold); line-height: var(--leading-body); margin: 0; padding-inline-start: .6rem; }
-.sign-up-form .form-error { background: color-mix(in srgb, var(--error-ink) 12%, transparent); border: 1px solid color-mix(in srgb, var(--error-ink) 42%, var(--line)); border-inline-start-width: .2rem; border-radius: .55rem; padding: .7rem .8rem; }
-.sign-up-form input[aria-invalid="true"] { border-color: var(--error-ink); }
-.sign-up-form .button:disabled { cursor: wait; opacity: .7; }
+.sign-up-form .field-error, .sign-up-form .form-error, .sign-in-form .field-error, .sign-in-form .form-error { border-inline-start: .2rem solid var(--error-ink); color: var(--error-ink); font-size: var(--type-body-compact); font-weight: var(--weight-semibold); line-height: var(--leading-body); margin: 0; padding-inline-start: .6rem; }
+.sign-up-form .form-error, .sign-in-form .form-error { background: color-mix(in srgb, var(--error-ink) 12%, transparent); border: 1px solid color-mix(in srgb, var(--error-ink) 42%, var(--line)); border-inline-start-width: .2rem; border-radius: .55rem; padding: .7rem .8rem; }
+.sign-up-form input[aria-invalid="true"], .sign-in-form input[aria-invalid="true"] { border-color: var(--error-ink); }
+.sign-up-form .button:disabled, .sign-in-form .button:disabled { cursor: wait; opacity: .7; }
+.auth-support-links { display: grid; gap: .65rem; }
 .text-link { color: var(--forest); font-weight: 700; text-decoration: underline; text-underline-offset: .15rem; }
 .app-shell { display: grid; grid-template-columns: 16rem minmax(0, 1fr); grid-template-rows: auto 1fr; min-height: 100vh; transition: grid-template-columns .24s cubic-bezier(.2, .8, .2, 1); }
 .sidebar-collapsed { grid-template-columns: 4.25rem minmax(0, 1fr); }

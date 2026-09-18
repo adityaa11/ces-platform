@@ -108,3 +108,49 @@ test("sign-up submission waits for success, restores retryability, and coalesces
   const networkFailure = createSignUpSubmission(async () => { throw new Error("network unreachable"); }, () => navigation.push("unexpected"));
   assert.equal(await networkFailure.submit(payload), null);
 });
+
+test("sign-in delegates credentials to Better Auth and navigates only after success", async () => {
+  const [screen, form] = await Promise.all([
+    readFile(new URL("../components/AuthScreen.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/SignInForm.tsx", import.meta.url), "utf8"),
+  ]);
+  const { createSignInSubmission, mapSignInFailure, validateSignInPayload } = await jiti.import("../components/sign-in-submission.ts");
+
+  assert.match(screen, /mode === "sign-in" \? <SignInForm \/>/);
+  assert.match(form, /fetch\("\/api\/auth\/sign-in\/email"/);
+  assert.match(form, /credentials: "same-origin"/);
+  assert.match(form, /router\.push\("\/home"\)/);
+  assert.match(form, /disabled=\{isSubmitting\}/);
+  assert.match(form, /role="alert"/);
+  assert.doesNotMatch(form, /localStorage|sessionStorage|document\.cookie|token|response\.text\(\)|\/demo/i);
+
+  const payload = { email: "nadia@example.test", password: "not-a-real-password" };
+  let requestCount = 0;
+  let resolveRequest;
+  const navigation = [];
+  const pending = new Promise((resolve) => { resolveRequest = resolve; });
+  const submission = createSignInSubmission(async (received) => {
+    requestCount += 1;
+    assert.deepEqual(received, payload);
+    return pending;
+  }, () => navigation.push("/home"));
+
+  const firstAttempt = submission.submit(payload);
+  const duplicateAttempt = submission.submit(payload);
+  assert.strictEqual(firstAttempt, duplicateAttempt);
+  assert.equal(requestCount, 1);
+  resolveRequest(new Response(JSON.stringify({ user: { id: "user-1" } }), { status: 200 }));
+  assert.equal((await firstAttempt)?.ok, true);
+  assert.deepEqual(navigation, ["/home"]);
+
+  const failure = createSignInSubmission(async () => new Response(JSON.stringify({ message: "sensitive detail" }), { status: 401 }), () => navigation.push("unexpected"));
+  assert.equal((await failure.submit(payload))?.status, 401);
+  assert.deepEqual(navigation, ["/home"]);
+  assert.equal((await failure.submit(payload))?.status, 401);
+  assert.deepEqual(validateSignInPayload({ email: "invalid", password: "" }).fieldErrors, {
+    email: "Enter a valid email address.", password: "Enter your password.",
+  });
+  assert.equal((await mapSignInFailure(new Response(JSON.stringify({ message: "sensitive detail" }), { status: 500 }))).formError, "Atlas couldn't sign you in right now. Check your email and password, then try again.");
+  const networkFailure = createSignInSubmission(async () => { throw new Error("network unreachable"); }, () => navigation.push("unexpected"));
+  assert.equal(await networkFailure.submit(payload), null);
+});

@@ -164,6 +164,11 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   const signInHtml = await signIn.text();
   const signUpHtml = await signUp.text();
   assert.match(signInHtml, /Welcome back|Forgot password/);
+  assert.match(signInHtml, /<form[^>]*class="sign-in-form"/);
+  assert.match(signInHtml, /<input(?=[^>]*name="email")(?=[^>]*required)(?=[^>]*type="email")[^>]*>/);
+  assert.match(signInHtml, /<input(?=[^>]*name="password")(?=[^>]*required)(?=[^>]*type="password")[^>]*>/);
+  assert.match(signInHtml, /<button[^>]*type="submit"[^>]*>Sign in<\/button>/);
+  assert.doesNotMatch(signInHtml, /<a[^>]*href="\/demo"[^>]*>Sign in<\/a>/);
   assert.match(signInHtml, /href="\/"/);
   assert.match(signUpHtml, /Create your Atlas account/);
   assert.match(signUpHtml, /<label[^>]*for="name"[^>]*>Name[\s\S]*?\* Required/);
