@@ -1,6 +1,6 @@
 # Atlas Sign-Up Ticket Set
 
-- **State:** `in_progress` — SUS-001 through SUS-004 remain approved and frozen; SUS-005 is the active user-authorized UI refinement.
+- **State:** `awaiting_review` — SUS-001 through SUS-004 remain approved and frozen; SUS-005 is implemented and awaiting its checkpoint review.
 - **Primary implementation baseline:** [Sign-Up Implementation Context](../../atlas-sign-up-implementation-context.md)
 - **Architecture baseline:** [Atlas Backend Production Baseline](../../atlas-backend-production-baseline-mistral-synced.md) and [Atlas Core Architecture — Updated Checkpoint](../../atlas-core-architecture-checkpoint-v2-mistral-enriched-v2.md)
 - **Product context:** [Atlas Full Product Context](../../../Atlas_Full_Product_Context.md)
@@ -31,7 +31,7 @@ Each ticket is its own review batch because each checkpoint answers a distinct r
 | 2 | [SUS-002](SUS-002-sign-up-form-and-auth-screen.md) / `SUS-BATCH-02` | `approved` | SUS-001 `PASS` | Does `/sign-up` collect the required identity fields and submit them through the browser-facing auth boundary with bounded success, loading, and failure behavior while other auth modes remain unchanged? |
 | 3 | [SUS-003](SUS-003-sign-up-end-to-end-validation.md) / `SUS-BATCH-03` | `approved` | SUS-001 and SUS-002 `PASS` | Does the browser-facing sign-up flow create a durable Better Auth identity/session and preserve the existing app, CSP, fixture, and authorization boundaries? |
 | 4 | [SUS-004](SUS-004-worker-runtime-sign-up-compatibility.md) / `SUS-BATCH-04` | `approved` | SUS-001 through SUS-003 approved; runtime-compatibility scope change approved | Does the real Vinext worker runtime complete sign-up without dynamic-code/CSP workarounds while preserving the Better Auth and Atlas boundaries? |
-| 5 | [SUS-005](SUS-005-sign-up-guidance-and-error-states.md) / `SUS-BATCH-05` | `in_progress` | SUS-004 `PASS` | Does the sign-up form explain required inputs and accepted password length clearly while turning safe validation/auth failures into actionable accessible notifications? |
+| 5 | [SUS-005](SUS-005-sign-up-guidance-and-error-states.md) / `SUS-BATCH-05` | `awaiting_review` | SUS-004 `PASS` | Does the sign-up form explain required inputs and accepted password length clearly while turning safe validation/auth failures into actionable accessible notifications? |
 
 ## Review controls
 

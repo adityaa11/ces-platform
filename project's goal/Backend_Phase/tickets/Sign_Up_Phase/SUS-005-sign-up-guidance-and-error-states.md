@@ -1,6 +1,6 @@
 # SUS-005: Sign-up guidance and meaningful error states
 
-- **State:** `in_progress`
+- **State:** `awaiting_review`
 - **Review batch:** `SUS-BATCH-05`
 - **Depends on:** SUS-004 `approved`
 - **Baseline:** [Sign-Up Implementation Context](../../atlas-sign-up-implementation-context.md) §§3, 9, 13–14, 21, AC-05–AC-06, AC-12; [SUS-002](SUS-002-sign-up-form-and-auth-screen.md); [Atlas UI/UX Prototype PRD](../../../Atlas_UI_UX_Prototype_PRD.md) §§4.1, 9.4; user-provided create-project form reference image
@@ -117,4 +117,4 @@ Status: applicable
 
 - **Review question:** Does the sign-up form explain required inputs and accepted password length clearly, while turning safe validation/auth failures into actionable accessible notifications without weakening the Better Auth boundary?
 - **Combined acceptance:** Required markers and helper notes are visible for all fields; password guidance matches the current 8–128-character Better Auth contract; field and form errors are specific, accessible, retryable, and bounded; success behavior and auth/authorization boundaries remain unchanged.
-- **Commit to review:** Recorded when `SUS-BATCH-05` enters `awaiting_review`.
+- **Commit to review:** `7158ea4` (`feat(auth): improve sign-up guidance`).
