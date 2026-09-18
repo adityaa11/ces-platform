@@ -1,6 +1,6 @@
 # SIN-003: Authenticated home route and route-aware navigation
 
-- **State:** `in_progress`
+- **State:** `awaiting_review`
 - **Review batch:** `SIN-BATCH-03`
 - **Depends on:** SIN-002 `PASS`
 - **Baseline:** [Sign-In and Authenticated Home Implementation Context](../../atlas-sign-in-home-implementation-context.md) §§7–12, 16–19, 21–28; [Backend Phase README](../../README.md) authority rules; AC-04–AC-12 and AC-14
@@ -101,4 +101,4 @@ Status: planning-review-required
 
 - **Review question:** Does `/home` consume the real Better Auth session and render an empty production shell with route-correct navigation, real profile identity, no fake role/logout, and no fixture leakage?
 - **Combined acceptance:** Authenticated users see the session-backed name/email and zero production projects; unauthenticated users do not see authenticated state; `/home` stays in production route context; `/demo` remains fixture authority.
-- **Implementation commit:** Record when `SIN-BATCH-03` enters `awaiting_review`.
+- **Implementation commit:** `0d23b26` (`feat(auth): add authenticated home route`). Docker app validation passed: 16 tests passed, 1 worker-runtime test was intentionally environment-gated; the rendered unauthenticated `/home` route redirected to `/sign-in`. The three unchanged app lint errors remain tracked outside this checkpoint.
