@@ -1,6 +1,6 @@
 # SUS-003: Sign-up end-to-end and regression validation
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `SUS-BATCH-03`
 - **Depends on:** SUS-001 `PASS`, SUS-002 `PASS`
 - **Baseline:** [Sign-Up Implementation Context](../../atlas-sign-up-implementation-context.md) §§19–26; [Backend Production Baseline](../../atlas-backend-production-baseline-mistral-synced.md) §§4–6, 12, 14, 21–22; AC-01–AC-12
@@ -100,4 +100,4 @@ Status: applicable
 
 - **Review question:** Does the browser-facing sign-up flow create a durable Better Auth identity/session and preserve the existing app, CSP, fixture, and authorization boundaries?
 - **Combined acceptance:** The full sign-up request/session path is proven with unique-user cleanup, failure behavior is bounded, existing auth/app/CSP checks remain valid, and no project state or extra auth flow is introduced.
-- **Commit to review:** Implementation commit recorded when `SUS-BATCH-03` enters `awaiting_review`.
+- **Implementation and validation commits:** `43904f5`, `8e7d9c2`, `9ba01e9`, and `917ed66`; final reviewed commit: `917ed66` ([PASS feedback](../../../feedback/SUS-BATCH-03-917ed66-review.md)).
