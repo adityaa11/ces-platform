@@ -1,6 +1,6 @@
 # SUS-004: Worker-runtime sign-up compatibility
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `SUS-BATCH-04`
 - **Depends on:** SUS-001 through SUS-003 `approved`; an approved scope change for runtime compatibility
 - **Baseline:** [Sign-Up Implementation Context](../../atlas-sign-up-implementation-context.md) §§19–26; [SUS-003](SUS-003-sign-up-end-to-end-validation.md); [Atlas Backend Production Baseline](../../atlas-backend-production-baseline-mistral-synced.md) §§4–6, 12, 14, 21–22; AC-01–AC-12
@@ -86,4 +86,4 @@ Status: applicable
 
 - **Review question:** Does the real Vinext worker runtime complete sign-up safely while preserving CSP and the approved Better Auth/Atlas authority boundaries?
 - **Combined acceptance:** A worker-runtime HTTP request establishes and reads a durable Better Auth session on success, fails safely on invalid input, and has no dynamic-code/CSP bypass or Atlas authorization side effects.
-- **Commit to review:** Recorded when `SUS-BATCH-04` enters `awaiting_review`.
+- **Commit to review:** `b920cfc` ([PASS feedback](../../../feedback/SUS-BATCH-04-b920cfc-review.md)).
