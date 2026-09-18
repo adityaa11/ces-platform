@@ -1,6 +1,6 @@
 # SIN-001: Sign-in form and Better Auth submission
 
-- **State:** `in_progress`
+- **State:** `awaiting_review`
 - **Review batch:** `SIN-BATCH-01`
 - **Depends on:** BSS-004 `approved`; completed SUS ticket set `approved`/frozen
 - **Baseline:** [Sign-In and Authenticated Home Implementation Context](../../atlas-sign-in-home-implementation-context.md) §§2–6, 21–24, 27–28; [Backend Phase README](../../README.md) authority rules; AC-01–AC-03 and AC-15
@@ -93,4 +93,4 @@ Status: applicable
 
 - **Review question:** Does `/sign-in` collect existing credentials and submit them through the approved Better Auth boundary with bounded loading, success, and failure behavior while sign-up/reset-password remain intact?
 - **Combined acceptance:** The real form uses the existing endpoint, establishes no client-owned auth truth, navigates only after success to `/home`, handles failure safely, and does not grant or invent Atlas project state.
-- **Implementation commit:** Record when `SIN-BATCH-01` enters `awaiting_review`.
+- **Implementation commit:** `a4bac3f` (`feat(auth): add sign-in form`)
