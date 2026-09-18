@@ -1,6 +1,6 @@
 # SUS-005: Sign-up guidance and meaningful error states
 
-- **State:** `planned`
+- **State:** `in_progress`
 - **Review batch:** `SUS-BATCH-05`
 - **Depends on:** SUS-004 `approved`
 - **Baseline:** [Sign-Up Implementation Context](../../atlas-sign-up-implementation-context.md) §§3, 9, 13–14, 21, AC-05–AC-06, AC-12; [SUS-002](SUS-002-sign-up-form-and-auth-screen.md); [Atlas UI/UX Prototype PRD](../../../Atlas_UI_UX_Prototype_PRD.md) §§4.1, 9.4; user-provided create-project form reference image

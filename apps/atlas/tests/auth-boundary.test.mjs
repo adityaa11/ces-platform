@@ -52,9 +52,15 @@ test("sign-up delegates identity creation to Better Auth without browser-owned s
   ]);
 
   assert.match(screen, /mode === "sign-up" \? <SignUpForm \/>/);
-  assert.match(form, /name="name" required type="text"/);
-  assert.match(form, /name="email" required type="email"/);
-  assert.match(form, /name="password" required type="password"/);
+  assert.match(form, /id: "name"[\s\S]*type: "text"/);
+  assert.match(form, /id: "email"[\s\S]*type: "email"/);
+  assert.match(form, /id: "password"[\s\S]*type: "password"/);
+  assert.match(form, /\* Required/);
+  assert.match(form, /This is the name associated with your Atlas account\./);
+  assert.match(form, /Use an email address you can access\./);
+  assert.match(form, /8–128 characters\./);
+  assert.match(form, /aria-describedby=/);
+  assert.match(form, /aria-invalid=/);
   assert.match(form, /createSignUpSubmission/);
   assert.match(form, /disabled=\{isSubmitting\}/);
   assert.match(form, /role="alert"/);
@@ -62,7 +68,7 @@ test("sign-up delegates identity creation to Better Auth without browser-owned s
 });
 
 test("sign-up submission waits for success, restores retryability, and coalesces duplicate requests", async () => {
-  const { createSignUpSubmission } = await jiti.import("../components/sign-up-submission.ts");
+  const { createSignUpSubmission, mapSignUpFailure, validateSignUpPayload } = await jiti.import("../components/sign-up-submission.ts");
   const payload = { name: "Nadia Hartono", email: "nadia@example.test", password: "not-a-real-password" };
   let requestCount = 0;
   let resolveRequest;
@@ -79,11 +85,26 @@ test("sign-up submission waits for success, restores retryability, and coalesces
   assert.strictEqual(firstAttempt, duplicateAttempt);
   assert.equal(requestCount, 1);
   resolveRequest(new Response(JSON.stringify({ user: { id: "user-1" } }), { status: 200 }));
-  assert.equal(await firstAttempt, "success");
+  assert.equal((await firstAttempt)?.ok, true);
   assert.deepEqual(navigation, ["/demo"]);
 
   const failedSubmission = createSignUpSubmission(async () => new Response("not exposed", { status: 400 }), () => navigation.push("unexpected"));
-  assert.equal(await failedSubmission.submit(payload), "failure");
+  assert.equal((await failedSubmission.submit(payload))?.status, 400);
   assert.deepEqual(navigation, ["/demo"]);
-  assert.equal(await failedSubmission.submit(payload), "failure");
+  assert.equal((await failedSubmission.submit(payload))?.status, 400);
+
+  assert.deepEqual(validateSignUpPayload({ name: "", email: "invalid", password: "" }).fieldErrors, {
+    name: "Enter your name.", email: "Enter a valid email address.", password: "Enter a password.",
+  });
+  assert.equal(validateSignUpPayload({ name: "Nadia", email: "nadia@example.test", password: "short" }).fieldErrors.password, "Password must be at least 8 characters.");
+  assert.equal(validateSignUpPayload({ name: "Nadia", email: "nadia@example.test", password: "a".repeat(129) }).fieldErrors.password, "Password must be 128 characters or fewer.");
+
+  const duplicate = await mapSignUpFailure(new Response(JSON.stringify({ code: "USER_ALREADY_EXISTS" }), { status: 409 }));
+  assert.equal(duplicate.fieldErrors.email, "An account already exists for this email. Try signing in or use a different email.");
+  const passwordPolicy = await mapSignUpFailure(new Response(JSON.stringify({ code: "password_too_short" }), { status: 400 }));
+  assert.equal(passwordPolicy.fieldErrors.password, "Password must be at least 8 characters.");
+  const unknown = await mapSignUpFailure(new Response(JSON.stringify({ message: "sensitive internal detail" }), { status: 500 }));
+  assert.equal(unknown.formError, "Atlas couldn't create your account right now. Check your connection and try again.");
+  const networkFailure = createSignUpSubmission(async () => { throw new Error("network unreachable"); }, () => navigation.push("unexpected"));
+  assert.equal(await networkFailure.submit(payload), null);
 });

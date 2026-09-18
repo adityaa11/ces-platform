@@ -166,9 +166,13 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   assert.match(signInHtml, /Welcome back|Forgot password/);
   assert.match(signInHtml, /href="\/"/);
   assert.match(signUpHtml, /Create your Atlas account/);
-  assert.match(signUpHtml, /<label[^>]*>Name<input(?=[^>]*name="name")(?=[^>]*required)(?=[^>]*type="text")[^>]*>/);
-  assert.match(signUpHtml, /<label[^>]*>Email<input(?=[^>]*name="email")(?=[^>]*required)(?=[^>]*type="email")[^>]*>/);
-  assert.match(signUpHtml, /<label[^>]*>Password<input(?=[^>]*name="password")(?=[^>]*required)(?=[^>]*type="password")[^>]*>/);
+  assert.match(signUpHtml, /<label[^>]*for="name"[^>]*>Name[\s\S]*?\* Required/);
+  assert.match(signUpHtml, /<input(?=[^>]*name="name")(?=[^>]*required)(?=[^>]*type="text")(?=[^>]*aria-describedby="name-helper")[^>]*>/);
+  assert.match(signUpHtml, /<input(?=[^>]*name="email")(?=[^>]*required)(?=[^>]*type="email")(?=[^>]*aria-describedby="email-helper")[^>]*>/);
+  assert.match(signUpHtml, /<input(?=[^>]*name="password")(?=[^>]*required)(?=[^>]*type="password")(?=[^>]*aria-describedby="password-helper")[^>]*>/);
+  assert.match(signUpHtml, /This is the name associated with your Atlas account\./);
+  assert.match(signUpHtml, /Use an email address you can access\./);
+  assert.match(signUpHtml, /8–128 characters\./);
   assert.match(signUpHtml, /<button[^>]*type="submit"[^>]*>Create account<\/button>/);
   assert.doesNotMatch(signUpHtml, /<a[^>]*href="\/demo"[^>]*>Create account<\/a>/);
   assert.doesNotMatch(signInHtml, /Account actions/);
