@@ -88,4 +88,5 @@ Status: applicable
 
 - **Review question:** Does the Atlas web app expose the approved Better Auth handler through one server-owned boundary without duplicating authentication or taking project authority?
 - **Combined acceptance:** The workspace dependency, shared server instance, and catch-all route are present; Better Auth owns credentials/session behavior; and no Atlas project state or custom auth persistence is introduced.
-- **Commit to review:** `cdda74d` (`feat(auth): expose Better Auth application boundary`).
+- **Implementation commits:** `cdda74d` (`feat(auth): expose Better Auth application boundary`) and `0ca6d7e` (`test(auth): verify mounted handler delegation`).
+- **Review record:** The immutable `project's goal/feedback/SUS-BATCH-01-<reviewed-head>-review.md` file records the exact `HEAD` evaluated at each checkpoint. This ticket deliberately records the implementation range rather than self-referencing a review `HEAD`, because committing ticket metadata necessarily creates a new commit.
