@@ -7,6 +7,8 @@
   },
   "scripts": {
     "dev": "corepack pnpm --filter @atlas/app dev",
+    "docker:atlas:reload": "docker compose down && docker compose build && docker compose up -d",
+    "docker:restart": "docker compose down && docker compose build && docker compose up -d",
     "build": "pnpm --filter @atlas/app build",
     "test": "pnpm --filter @atlas/fixtures test && pnpm --filter @atlas/app test",
     "lint": "pnpm --filter @atlas/app lint",
