@@ -1,6 +1,6 @@
 # Atlas Sign-Up Ticket Set
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Primary implementation baseline:** [Sign-Up Implementation Context](../../atlas-sign-up-implementation-context.md)
 - **Architecture baseline:** [Atlas Backend Production Baseline](../../atlas-backend-production-baseline-mistral-synced.md) and [Atlas Core Architecture — Updated Checkpoint](../../atlas-core-architecture-checkpoint-v2-mistral-enriched-v2.md)
 - **Product context:** [Atlas Full Product Context](../../../Atlas_Full_Product_Context.md)
@@ -27,7 +27,7 @@ Each ticket is its own review batch because each checkpoint answers a distinct r
 
 | Order | Ticket / batch | State | Depends on | Review question |
 |---:|---|---|---|---|
-| 1 | [SUS-001](SUS-001-application-auth-boundary.md) / `SUS-BATCH-01` | `planned` | BSS-004 approved | Does the Atlas web app expose the existing Better Auth handler through one server-owned boundary without duplicating authentication or taking project authority? |
+| 1 | [SUS-001](SUS-001-application-auth-boundary.md) / `SUS-BATCH-01` | `awaiting_review` | BSS-004 approved | Does the Atlas web app expose the existing Better Auth handler through one server-owned boundary without duplicating authentication or taking project authority? |
 | 2 | [SUS-002](SUS-002-sign-up-form-and-auth-screen.md) / `SUS-BATCH-02` | `planned` | SUS-001 `PASS` | Does `/sign-up` collect the required identity fields and submit them through the browser-facing auth boundary with bounded success, loading, and failure behavior while other auth modes remain unchanged? |
 | 3 | [SUS-003](SUS-003-sign-up-end-to-end-validation.md) / `SUS-BATCH-03` | `planned` | SUS-001 and SUS-002 `PASS` | Does the browser-facing sign-up flow create a durable Better Auth identity/session and preserve the existing app, CSP, fixture, and authorization boundaries? |
 

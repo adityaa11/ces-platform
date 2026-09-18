@@ -1,6 +1,6 @@
 # SUS-001: Application authentication boundary
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `SUS-BATCH-01`
 - **Depends on:** BSS-004 `approved`
 - **Baseline:** [Sign-Up Implementation Context](../../atlas-sign-up-implementation-context.md) §§1–2, 6–8, 15–17, 20–21, 25–26; [Backend Production Baseline](../../atlas-backend-production-baseline-mistral-synced.md) §§2–5, 12, 14, 21–22; [Core Architecture Checkpoint](../../atlas-core-architecture-checkpoint-v2-mistral-enriched-v2.md) core principle and cross-cutting authority boundary
@@ -88,4 +88,4 @@ Status: applicable
 
 - **Review question:** Does the Atlas web app expose the approved Better Auth handler through one server-owned boundary without duplicating authentication or taking project authority?
 - **Combined acceptance:** The workspace dependency, shared server instance, and catch-all route are present; Better Auth owns credentials/session behavior; and no Atlas project state or custom auth persistence is introduced.
-- **Commit to review:** Implementation commit recorded when `SUS-BATCH-01` enters `awaiting_review`.
+- **Commit to review:** `b2264ab` (`feat(auth): expose Better Auth application boundary`).
