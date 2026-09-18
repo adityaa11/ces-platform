@@ -1,6 +1,6 @@
 # Atlas Sign-In and Authenticated Home Ticket Set
 
-- **State:** `awaiting_review` — `SIN-001` and `SIN-002` are approved; `SIN-003` / `SIN-BATCH-03` completed its one remediation pass and is ready for `ck`.
+- **State:** `awaiting_review` — `SIN-001` through `SIN-003` are approved; `SIN-004` / `SIN-BATCH-04` is committed and ready for `ck`.
 - **Primary implementation baseline:** [Sign-In and Authenticated Home Implementation Context](../../atlas-sign-in-home-implementation-context.md)
 - **Phase boundary:** [Atlas Backend Phase README](../../README.md)
 - **Approved authentication dependency:** [BSS-004 Better Auth persistence](../Stack_Setup/BSS-004-better-auth-persistence.md)
@@ -53,8 +53,8 @@ Each ticket is its own review batch. The tickets change shared contracts or auth
 |---:|---|---|---|---|
 | 1 | [SIN-001](SIN-001-sign-in-form-and-submission.md) / `SIN-BATCH-01` | `approved` | BSS-004 approved; SUS set approved/frozen | Does `/sign-in` submit existing credentials through Better Auth and navigate to `/home` only after a successful response, with bounded failure behavior? |
 | 2 | [SIN-002](SIN-002-production-identity-and-project-library-boundary.md) / `SIN-BATCH-02` | `approved` | SIN-001 `PASS` | Does the shared shell distinguish authenticated identity from project membership and keep fixture project data/mutations behind an explicit fixture mode? |
-| 3 | [SIN-003](SIN-003-authenticated-home-route-and-navigation.md) / `SIN-BATCH-03` | `awaiting_review` | SIN-002 `PASS` | Does `/home` resolve the current Better Auth session and render the shared shell with real name/email, empty production projects, route-correct navigation, and no fake logout/role? |
-| 4 | [SIN-004](SIN-004-sign-in-home-end-to-end-validation.md) / `SIN-BATCH-04` | `planned` | SIN-001 through SIN-003 `PASS` | Does the complete sign-in-to-home flow work against the existing auth persistence while `/demo`, CSP, fixture, and authorization boundaries remain intact? |
+| 3 | [SIN-003](SIN-003-authenticated-home-route-and-navigation.md) / `SIN-BATCH-03` | `approved` | SIN-002 `PASS` | Does `/home` resolve the current Better Auth session and render the shared shell with real name/email, empty production projects, route-correct navigation, and no fake logout/role? |
+| 4 | [SIN-004](SIN-004-sign-in-home-end-to-end-validation.md) / `SIN-BATCH-04` | `awaiting_review` | SIN-001 through SIN-003 `PASS` | Does the complete sign-in-to-home flow work against the existing auth persistence while `/demo`, CSP, fixture, and authorization boundaries remain intact? |
 
 ## Review controls
 

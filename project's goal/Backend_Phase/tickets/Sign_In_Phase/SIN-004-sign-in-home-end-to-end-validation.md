@@ -1,6 +1,6 @@
 # SIN-004: Sign-in to home end-to-end and regression validation
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `SIN-BATCH-04`
 - **Depends on:** SIN-001 `PASS`, SIN-002 `PASS`, SIN-003 `PASS`
 - **Baseline:** [Sign-In and Authenticated Home Implementation Context](../../atlas-sign-in-home-implementation-context.md) §§21–28; [Backend Phase README](../../README.md) review and authority rules; BSS-004 lifecycle proof; completed SUS validation
@@ -46,7 +46,11 @@ Prove the complete browser-facing sign-in-to-home path against the existing Bett
 
 ### Checkpoint evidence
 
-Record the exact commands and results here when implemented. The review checkpoint must identify the reviewed `HEAD`; do not mark the batch `PASS` from an uncommitted or fixture-only result.
+- `3af7950` (`test(auth): cover complete sign-in home flow`) expands the real-server Better Auth integration test to create a unique identity, sign in through `POST /api/auth/sign-in/email`, verify the returned cookie/session and `/home` identity, preserve a genuinely empty production library, bound invalid credentials, check anonymous `/home`, and confirm empty/project-bearing `/demo` fixture paths. Test-only cleanup deletes and then verifies removal of only the unique identity.
+- `docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/app test`: build completed; 17 tests passed, 0 failed, and the existing worker-runtime test was explicitly environment-gated.
+- `docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/auth test`: 3 tests passed, including the unchanged durable-session/sign-out lifecycle proof.
+- `docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/app lint`: the existing three unrelated lint errors in `RuntimeFixtureRoute.tsx` and `vite.config.ts` remain unchanged; this checkpoint does not modify either file.
+- `git diff --check` passed before the implementation commit. The review checkpoint must identify the reviewed `HEAD`; do not mark the batch `PASS` from an uncommitted or fixture-only result.
 
 ## Security Refactor Readiness
 
@@ -101,4 +105,4 @@ Status: applicable
 
 - **Review question:** Does the complete sign-in-to-home flow establish a durable Better Auth session and preserve the app, CSP, sign-up, fixture, and authorization boundaries?
 - **Combined acceptance:** Unique-user sign-in succeeds through the application route, `/home` shows the same session-backed identity in a genuinely empty production state, invalid sign-in is bounded, `/demo` remains fixture authority, and all existing foundation checks remain valid.
-- **Implementation and validation commits:** Record the implementation and any single remediation commit when `SIN-BATCH-04` enters `awaiting_review`.
+- **Implementation and validation commits:** `3af7950` (`test(auth): cover complete sign-in home flow`); the documentation checkpoint commit records its validated `awaiting_review` state.
