@@ -161,13 +161,13 @@ test("production project-library mode stays empty and separate from fixture auth
     readFile(new URL("../components/ProfileMenu.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/demo/page.tsx", import.meta.url), "utf8"),
   ]);
-  const { shouldHydrateFixtureRegistry } = await jiti.import("../components/ProjectLibrary.tsx");
+  const { shouldHydrateFixtureRegistry } = await jiti.import("../components/project-library-mode.ts");
 
   assert.equal(shouldHydrateFixtureRegistry("production"), false);
   assert.equal(shouldHydrateFixtureRegistry("production", "owner-ready"), false);
   assert.equal(shouldHydrateFixtureRegistry("fixture", "owner-ready"), true);
   assert.equal(shouldHydrateFixtureRegistry("fixture", "viewer-ready"), false);
-  assert.match(library, /export type ProjectLibraryMode = "fixture" \| "production"/);
+  assert.match(library, /import \{ shouldHydrateFixtureRegistry, type ProjectLibraryMode \} from "\.\/project-library-mode"/);
   assert.match(library, /mode === "fixture" && \(projectRole === "owner" \|\| projectRole === "editor"\)/);
   assert.match(library, /mode === "fixture" && projectRole === "owner"/);
   assert.match(library, /shouldHydrateFixtureRegistry\(mode, scenario\)/);

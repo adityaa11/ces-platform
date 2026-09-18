@@ -1,6 +1,6 @@
 # SIN-002: Production identity and project-library authority boundary
 
-- **State:** `awaiting_review`
+- **State:** `feedback_remediation`
 - **Review batch:** `SIN-BATCH-02`
 - **Depends on:** SIN-001 `PASS`
 - **Baseline:** [Sign-In and Authenticated Home Implementation Context](../../atlas-sign-in-home-implementation-context.md) §§9–15, 18–19, 21, 24–28; [Backend Phase README](../../README.md) implementation expectations; AC-05–AC-11 and AC-14

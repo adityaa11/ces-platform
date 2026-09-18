@@ -9,9 +9,9 @@ import { EmptyState } from "./EmptyState";
 import { ProjectCard } from "./ProjectCard";
 import { demoHref } from "./WorkspaceLens";
 import type { AuthenticatedUser, ProjectRole } from "./authenticated-user";
+import { shouldHydrateFixtureRegistry, type ProjectLibraryMode } from "./project-library-mode";
 
-export type ProjectLibraryMode = "fixture" | "production";
-export const shouldHydrateFixtureRegistry = (mode: ProjectLibraryMode, scenario?: string) => mode === "fixture" && (!scenario || scenario === "owner-ready");
+export type { ProjectLibraryMode } from "./project-library-mode";
 type PendingAccessChange = { memberId: string; nextRole?: AccessRole; type: "role" | "remove" };
 type FieldErrors = Partial<Record<"projectId" | "projectName" | "projectDescription" | "prdFiles", string>>;
 const roleLabels: Record<AccessRole, string> = { owner: "Owner", editor: "Editor", viewer: "Viewer" };
