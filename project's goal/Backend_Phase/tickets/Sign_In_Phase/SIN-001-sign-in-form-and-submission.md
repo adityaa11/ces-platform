@@ -1,6 +1,6 @@
 # SIN-001: Sign-in form and Better Auth submission
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `SIN-BATCH-01`
 - **Depends on:** BSS-004 `approved`; completed SUS ticket set `approved`/frozen
 - **Baseline:** [Sign-In and Authenticated Home Implementation Context](../../atlas-sign-in-home-implementation-context.md) §§2–6, 21–24, 27–28; [Backend Phase README](../../README.md) authority rules; AC-01–AC-03 and AC-15

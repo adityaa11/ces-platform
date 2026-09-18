@@ -114,6 +114,7 @@ export function SourcesWorkspace({ user, projects, workspace, scenario, initialL
     contentClassName: "sources-content",
     fullWidthSearch: true,
     projectNavigation: true,
+    projectRole: user.role,
     projects,
     routeContext: { scenario, workspaceId: initialWorkspaceId, prd: initialLens.selectedPrdIds.length ? initialLens.selectedPrdIds.join(",") : undefined, lens: initialLens.mode === "isolate" ? "isolate" : undefined },
     selectedProjectId: workspace.project.id,

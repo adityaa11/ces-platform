@@ -154,3 +154,25 @@ test("sign-in delegates credentials to Better Auth and navigates only after succ
   const networkFailure = createSignInSubmission(async () => { throw new Error("network unreachable"); }, () => navigation.push("unexpected"));
   assert.equal(await networkFailure.submit(payload), null);
 });
+
+test("production project-library mode stays empty and separate from fixture authority", async () => {
+  const [library, profile, demo] = await Promise.all([
+    readFile(new URL("../components/ProjectLibrary.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/ProfileMenu.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/demo/page.tsx", import.meta.url), "utf8"),
+  ]);
+  const { shouldHydrateFixtureRegistry } = await jiti.import("../components/ProjectLibrary.tsx");
+
+  assert.equal(shouldHydrateFixtureRegistry("production"), false);
+  assert.equal(shouldHydrateFixtureRegistry("production", "owner-ready"), false);
+  assert.equal(shouldHydrateFixtureRegistry("fixture", "owner-ready"), true);
+  assert.equal(shouldHydrateFixtureRegistry("fixture", "viewer-ready"), false);
+  assert.match(library, /export type ProjectLibraryMode = "fixture" \| "production"/);
+  assert.match(library, /mode === "fixture" && \(projectRole === "owner" \|\| projectRole === "editor"\)/);
+  assert.match(library, /mode === "fixture" && projectRole === "owner"/);
+  assert.match(library, /shouldHydrateFixtureRegistry\(mode, scenario\)/);
+  assert.match(library, /projectRole\?: ProjectRole/);
+  assert.match(profile, /projectRole && <p><strong>\{projectRole\}<\/strong> access<\/p>/);
+  assert.doesNotMatch(profile, /user\.role/);
+  assert.match(demo, /<ProjectLibrary mode="fixture" projectRole=\{scenario\.session\.role\}/);
+});

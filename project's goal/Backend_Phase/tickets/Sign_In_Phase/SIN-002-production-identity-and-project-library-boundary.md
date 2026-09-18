@@ -1,6 +1,6 @@
 # SIN-002: Production identity and project-library authority boundary
 
-- **State:** `planned`
+- **State:** `in_progress`
 - **Review batch:** `SIN-BATCH-02`
 - **Depends on:** SIN-001 `PASS`
 - **Baseline:** [Sign-In and Authenticated Home Implementation Context](../../atlas-sign-in-home-implementation-context.md) §§9–15, 18–19, 21, 24–28; [Backend Phase README](../../README.md) implementation expectations; AC-05–AC-11 and AC-14
@@ -43,7 +43,7 @@ This ticket may update `ProjectLibrary.tsx`, `AppShell.tsx`, `ProfileMenu.tsx`, 
 
 ## Security Refactor Readiness
 
-Status: planning-review-required
+Status: applicable
 
 ### Inherited boundaries
 
@@ -75,9 +75,9 @@ Status: planning-review-required
 
 - `SEC-GAP-SIN-002-01` Production project authorization, membership resolution, RBAC, creation, sharing, and invitation policy remain future Atlas-owned work.
 
-### Planning finding
+### Planning resolution
 
-- `FINDING-SIN-002-01` The current shared components combine identity and project-role data and embed fixture mutation behavior. Ticket finalization requires the explicit production/fixture contract and role separation described above; otherwise SIN-003 cannot safely render a real session with zero projects.
+- `FINDING-SIN-002-01` Resolved before implementation: this ticket's explicit `fixture`/`production` library mode and optional project-role context are the frozen contract. SIN-003 can therefore pass a real session identity and `projects=[]` without fixture hydration or an invented membership.
 
 ### Mandatory review bindings
 

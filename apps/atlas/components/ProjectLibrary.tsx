@@ -8,15 +8,17 @@ import { Dialog } from "./Dialog";
 import { EmptyState } from "./EmptyState";
 import { ProjectCard } from "./ProjectCard";
 import { demoHref } from "./WorkspaceLens";
+import type { AuthenticatedUser, ProjectRole } from "./authenticated-user";
 
-type User = { name: string; email: string; role: "owner" | "editor" | "viewer" };
+export type ProjectLibraryMode = "fixture" | "production";
+export const shouldHydrateFixtureRegistry = (mode: ProjectLibraryMode, scenario?: string) => mode === "fixture" && (!scenario || scenario === "owner-ready");
 type PendingAccessChange = { memberId: string; nextRole?: AccessRole; type: "role" | "remove" };
 type FieldErrors = Partial<Record<"projectId" | "projectName" | "projectDescription" | "prdFiles", string>>;
 const roleLabels: Record<AccessRole, string> = { owner: "Owner", editor: "Editor", viewer: "Viewer" };
 const encodeFile = async (file: File) => { const bytes = new Uint8Array(await file.arrayBuffer()); let binary = ""; for (let offset = 0; offset < bytes.length; offset += 0x8000) binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000)); return { name: file.name, base64: btoa(binary) }; };
 const workspaceTokenCandidates = () => Array.from({ length: 3 }, () => Array.from(crypto.randomUUID().replaceAll("-", "").slice(0, 12), (character) => "abcdefghijklmnopqrstuvwxyz234567"[Number.parseInt(character, 16) * 2]).join(""));
 
-export function ProjectLibrary({ user, projects, workspace, scenario }: { user: User; projects: ProjectFixture[]; workspace?: ProjectWorkspaceFixture; scenario?: string }) {
+export function ProjectLibrary({ mode, user, projectRole, projects, workspace, scenario }: { mode: ProjectLibraryMode; user: AuthenticatedUser; projectRole?: ProjectRole; projects: ProjectFixture[]; workspace?: ProjectWorkspaceFixture; scenario?: string }) {
   const projectGridRef = useRef<HTMLDivElement>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [libraryProjects, setLibraryProjects] = useState(projects);
@@ -34,10 +36,10 @@ export function ProjectLibrary({ user, projects, workspace, scenario }: { user: 
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<AccessRole>("viewer");
   const [pendingAccessChange, setPendingAccessChange] = useState<PendingAccessChange | null>(null);
-  const canCreate = user.role === "owner" || user.role === "editor";
-  const canShare = user.role === "owner";
+  const canCreate = mode === "fixture" && (projectRole === "owner" || projectRole === "editor");
+  const canShare = mode === "fixture" && projectRole === "owner";
   const members = shareProject ? (membersByProject[shareProject.id] ?? []) : [];
-  useEffect(() => { if (scenario && scenario !== "owner-ready") return; fetch("/api/local-fixtures").then(async (response) => response.ok ? response.json() : null).then((registry: { cards: ProjectFixture[]; modalProjects: Array<{ initialDraftWorkspace: { workspaceId: string } }> } | null) => { if (!registry) return; setLibraryProjects(registry.cards); setKnownWorkspaceIds(registry.modalProjects.map((record) => record.initialDraftWorkspace.workspaceId)); }).catch(() => {}); }, [scenario]);
+  useEffect(() => { if (!shouldHydrateFixtureRegistry(mode, scenario)) return; fetch("/api/local-fixtures").then(async (response) => response.ok ? response.json() : null).then((registry: { cards: ProjectFixture[]; modalProjects: Array<{ initialDraftWorkspace: { workspaceId: string } }> } | null) => { if (!registry) return; setLibraryProjects(registry.cards); setKnownWorkspaceIds(registry.modalProjects.map((record) => record.initialDraftWorkspace.workspaceId)); }).catch(() => {}); }, [mode, scenario]);
   useEffect(() => {
     const grid = projectGridRef.current;
     if (!grid) return;
@@ -97,7 +99,7 @@ export function ProjectLibrary({ user, projects, workspace, scenario }: { user: 
     setPendingAccessChange(null);
   }
   const changingMember = members.find((member) => member.id === pendingAccessChange?.memberId);
-  return <AppShell contentClassName="project-library-content" projectNavigation={Boolean(workspace)} projects={libraryProjects} user={user} workspace={workspace}>
+  return <AppShell contentClassName="project-library-content" projectNavigation={Boolean(workspace)} projectRole={projectRole} projects={libraryProjects} user={user} workspace={workspace}>
     <div className="project-library-page">
       <section className="workspace-heading">
         <p className="eyebrow">Your workspace</p>
