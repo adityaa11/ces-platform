@@ -1,6 +1,6 @@
 # SIN-002: Production identity and project-library authority boundary
 
-- **State:** `in_progress`
+- **State:** `awaiting_review`
 - **Review batch:** `SIN-BATCH-02`
 - **Depends on:** SIN-001 `PASS`
 - **Baseline:** [Sign-In and Authenticated Home Implementation Context](../../atlas-sign-in-home-implementation-context.md) §§9–15, 18–19, 21, 24–28; [Backend Phase README](../../README.md) implementation expectations; AC-05–AC-11 and AC-14
@@ -98,4 +98,4 @@ Status: applicable
 
 - **Review question:** Does the shared project-library boundary distinguish fixture authority from production-shaped empty state and keep authenticated identity separate from project membership?
 - **Combined acceptance:** Production mode is explicitly selected, `projects=[]` remains genuinely empty, fixture reads/writes cannot leak into it, fixture `/demo` behavior remains available, and no role/authorization is invented.
-- **Implementation commit:** Record when `SIN-BATCH-02` enters `awaiting_review`.
+- **Implementation commit:** `6bd1d99` (`feat(atlas): separate fixture project authority`)
