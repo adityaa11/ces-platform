@@ -156,12 +156,17 @@ test("sign-in delegates credentials to Better Auth and navigates only after succ
 });
 
 test("production project-library mode stays empty and separate from fixture authority", async () => {
-  const [library, profile, demo] = await Promise.all([
+  const [library, profile, shell, home, demo] = await Promise.all([
     readFile(new URL("../components/ProjectLibrary.tsx", import.meta.url), "utf8"),
     readFile(new URL("../components/ProfileMenu.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/AppShell.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/home/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/demo/page.tsx", import.meta.url), "utf8"),
   ]);
-  const { shouldHydrateFixtureRegistry } = await jiti.import("../components/project-library-mode.ts");
+  const [{ shouldHydrateFixtureRegistry }, { getAuthenticatedHomeUser }] = await Promise.all([
+    jiti.import("../components/project-library-mode.ts"),
+    jiti.import("../lib/home-session.ts"),
+  ]);
 
   assert.equal(shouldHydrateFixtureRegistry("production"), false);
   assert.equal(shouldHydrateFixtureRegistry("production", "owner-ready"), false);
@@ -175,4 +180,23 @@ test("production project-library mode stays empty and separate from fixture auth
   assert.match(profile, /projectRole && <p><strong>\{projectRole\}<\/strong> access<\/p>/);
   assert.doesNotMatch(profile, /user\.role/);
   assert.match(demo, /<ProjectLibrary mode="fixture" projectRole=\{scenario\.session\.role\}/);
+  const requestHeaders = new Headers({ cookie: "better-auth.session_token=opaque" });
+  let receivedHeaders;
+  assert.deepEqual(await getAuthenticatedHomeUser(async ({ headers }) => {
+    receivedHeaders = headers;
+    return { user: { name: "Nadia Hartono", email: "nadia@example.test" } };
+  }, requestHeaders), { name: "Nadia Hartono", email: "nadia@example.test" });
+  assert.strictEqual(receivedHeaders, requestHeaders);
+  assert.equal(await getAuthenticatedHomeUser(async () => null, requestHeaders), null);
+  assert.match(home, /getAuthenticatedHomeUser\(service\.auth\.api\.getSession, await headers\(\)\)/);
+  assert.match(home, /if \(!user\) redirect\("\/sign-in"\)/);
+  assert.match(home, /<ProjectLibrary mode="production" projects=\{\[\]\} user=\{user\} \/>/);
+  assert.doesNotMatch(home, /@atlas\/fixtures|localStorage|sessionStorage|local-fixtures|role|jwt/i);
+  assert.match(library, /homeHref=\{mode === "production" \? "\/home" : "\/demo"\}/);
+  assert.match(library, /showSignOut=\{mode === "fixture"\}/);
+  assert.match(shell, /homeHref = "\/demo", showSignOut = true/);
+  assert.match(shell, /<AtlasBrand href=\{homeHref\} \/>/);
+  assert.match(shell, /href=\{homeHref\}/);
+  assert.match(shell, /<ProfileMenu projectRole=\{projectRole\} showSignOut=\{showSignOut\} user=\{user\} \/>/);
+  assert.match(profile, /showSignOut && <Link href="\/sign-in"/);
 });

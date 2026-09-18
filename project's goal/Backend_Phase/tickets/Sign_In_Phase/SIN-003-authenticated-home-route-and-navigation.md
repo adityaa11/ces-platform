@@ -1,6 +1,6 @@
 # SIN-003: Authenticated home route and route-aware navigation
 
-- **State:** `planned`
+- **State:** `in_progress`
 - **Review batch:** `SIN-BATCH-03`
 - **Depends on:** SIN-002 `PASS`
 - **Baseline:** [Sign-In and Authenticated Home Implementation Context](../../atlas-sign-in-home-implementation-context.md) §§7–12, 16–19, 21–28; [Backend Phase README](../../README.md) authority rules; AC-04–AC-12 and AC-14

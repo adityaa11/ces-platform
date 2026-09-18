@@ -99,7 +99,7 @@ export function ProjectLibrary({ mode, user, projectRole, projects, workspace, s
     setPendingAccessChange(null);
   }
   const changingMember = members.find((member) => member.id === pendingAccessChange?.memberId);
-  return <AppShell contentClassName="project-library-content" projectNavigation={Boolean(workspace)} projectRole={projectRole} projects={libraryProjects} user={user} workspace={workspace}>
+  return <AppShell contentClassName="project-library-content" homeHref={mode === "production" ? "/home" : "/demo"} projectNavigation={Boolean(workspace)} projectRole={projectRole} projects={libraryProjects} showSignOut={mode === "fixture"} user={user} workspace={workspace}>
     <div className="project-library-page">
       <section className="workspace-heading">
         <p className="eyebrow">Your workspace</p>

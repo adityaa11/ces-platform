@@ -7,7 +7,7 @@ import type { AuthenticatedUser, ProjectRole } from "./authenticated-user";
 import { Dialog } from "./Dialog";
 import { ThemeSelector } from "./ThemeSelector";
 
-export function ProfileMenu({ user, projectRole }: { user: AuthenticatedUser; projectRole?: ProjectRole }) {
+export function ProfileMenu({ user, projectRole, showSignOut = true }: { user: AuthenticatedUser; projectRole?: ProjectRole; showSignOut?: boolean }) {
   const [open, setOpen] = useState(false);
   const [mobile, setMobile] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -21,7 +21,7 @@ export function ProfileMenu({ user, projectRole }: { user: AuthenticatedUser; pr
     document.addEventListener("keydown", close);
     return () => { document.removeEventListener("pointerdown", close); document.removeEventListener("keydown", close); };
   }, [open]);
-  const actions = <>{projectRole && <p><strong>{projectRole}</strong> access</p>}<ThemeSelector /><span aria-disabled="true" className="profile-unavailable">Account settings <small>Unavailable in prototype</small></span><Link href="/sign-in" onClick={() => setOpen(false)}>Logout</Link></>;
+  const actions = <>{projectRole && <p><strong>{projectRole}</strong> access</p>}<ThemeSelector /><span aria-disabled="true" className="profile-unavailable">Account settings <small>Unavailable in prototype</small></span>{showSignOut && <Link href="/sign-in" onClick={() => setOpen(false)}>Logout</Link>}</>;
   return <div className="profile-wrap" ref={ref}>
     <button aria-expanded={open} aria-label={projectRole ? `${user.name}, ${projectRole}, ${user.email}` : `${user.name}, ${user.email}`} className="profile-control" onClick={() => setOpen((value) => !value)} type="button">
       <Avatar name={user.name} size="small" />
