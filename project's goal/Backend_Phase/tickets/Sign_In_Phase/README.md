@@ -1,6 +1,6 @@
 # Atlas Sign-In and Authenticated Home Ticket Set
 
-- **State:** `awaiting_review` — `SIN-001` is approved; `SIN-002` / `SIN-BATCH-02` is ready for `ck`.
+- **State:** `awaiting_review` — `SIN-001` is approved; `SIN-002` / `SIN-BATCH-02` has completed its one remediation pass and is ready for `ck`.
 - **Primary implementation baseline:** [Sign-In and Authenticated Home Implementation Context](../../atlas-sign-in-home-implementation-context.md)
 - **Phase boundary:** [Atlas Backend Phase README](../../README.md)
 - **Approved authentication dependency:** [BSS-004 Better Auth persistence](../Stack_Setup/BSS-004-better-auth-persistence.md)
