@@ -1,6 +1,6 @@
 # SUS-003: Sign-up end-to-end and regression validation
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `SUS-BATCH-03`
 - **Depends on:** SUS-001 `PASS`, SUS-002 `PASS`
 - **Baseline:** [Sign-Up Implementation Context](../../atlas-sign-up-implementation-context.md) §§19–26; [Backend Production Baseline](../../atlas-backend-production-baseline-mistral-synced.md) §§4–6, 12, 14, 21–22; AC-01–AC-12
@@ -39,6 +39,14 @@ Prove the complete browser-facing sign-up path against the existing Better Auth 
 - Run `pnpm --filter @atlas/app test` (or the repository-equivalent app validation command) and retain the rendered route/CSP assertions.
 - Run the relevant build/lint/type checks required by the touched packages.
 - Inspect the final diff for absence of new auth schema/migration, direct app-side password hashing, custom token/session persistence, project writes, or fixture-backed sign-up identity.
+
+### Checkpoint evidence
+
+- `$env:CI = 'true'; corepack pnpm --filter @atlas/app test`: PASS — build completed; 13 tests passed and the new database-dependent application boundary test was skipped because `DATABASE_URL` is unavailable.
+- `$env:CI = 'true'; corepack pnpm --filter @atlas/auth test`: configuration tests PASS; the established durable-session lifecycle test was skipped for the same unavailable `DATABASE_URL` condition.
+- `git diff --check`: PASS.
+- The application integration test uses a unique email, verifies Better Auth's returned session cookie and subsequent session lookup, submits a representative invalid request, asserts no route-created navigation, and deletes only the temporary `auth.user` record through a test-only admin connection.
+- No Atlas project, workspace, membership, role, permission, fixture, schema, token-storage, or client-side credential-persistence path was added.
 
 ## Security Refactor Readiness
 
