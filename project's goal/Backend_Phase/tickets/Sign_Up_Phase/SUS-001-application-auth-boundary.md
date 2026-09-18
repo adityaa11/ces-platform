@@ -1,6 +1,6 @@
 # SUS-001: Application authentication boundary
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `SUS-BATCH-01`
 - **Depends on:** BSS-004 `approved`
 - **Baseline:** [Sign-Up Implementation Context](../../atlas-sign-up-implementation-context.md) §§1–2, 6–8, 15–17, 20–21, 25–26; [Backend Production Baseline](../../atlas-backend-production-baseline-mistral-synced.md) §§2–5, 12, 14, 21–22; [Core Architecture Checkpoint](../../atlas-core-architecture-checkpoint-v2-mistral-enriched-v2.md) core principle and cross-cutting authority boundary

@@ -1,6 +1,6 @@
 # SUS-002: Sign-up form and AuthScreen integration
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `SUS-BATCH-02`
 - **Depends on:** SUS-001 `PASS`
 - **Baseline:** [Sign-Up Implementation Context](../../atlas-sign-up-implementation-context.md) §§3–5, 9–14, 17–18, 20–21, 25–26; [Atlas UI/UX Prototype PRD](../../../Atlas_UI_UX_Prototype_PRD.md) §§2.1, 4.1, 8, 9.2, 9.4; AC-04–AC-06 and AC-12

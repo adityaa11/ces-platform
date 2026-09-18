@@ -42,3 +42,24 @@ test("the mounted route preserves the established handler response and session c
   assert.equal(response.status, 201);
   assert.match(response.headers.get("set-cookie") ?? "", /better-auth\.session_token=.*HttpOnly.*SameSite=Lax/);
 });
+
+test("sign-up delegates identity creation to Better Auth without browser-owned session state", async () => {
+  const [screen, form] = await Promise.all([
+    readFile(new URL("../components/AuthScreen.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/SignUpForm.tsx", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(screen, /mode === "sign-up" \? <SignUpForm \/>/);
+  assert.match(form, /name="name" required type="text"/);
+  assert.match(form, /name="email" required type="email"/);
+  assert.match(form, /name="password" required type="password"/);
+  assert.match(form, /fetch\("\/api\/auth\/sign-up\/email", \{/);
+  assert.match(form, /method: "POST"/);
+  assert.match(form, /JSON\.stringify\(\{ name, email, password \}\)/);
+  assert.match(form, /credentials: "same-origin"/);
+  assert.match(form, /if \(!response\.ok\)/);
+  assert.match(form, /router\.push\("\/demo"\)/);
+  assert.match(form, /disabled=\{isSubmitting\}/);
+  assert.match(form, /role="alert"/);
+  assert.doesNotMatch(form, /localStorage|sessionStorage|document\.cookie|token|raw server|response\.text\(\)/i);
+});

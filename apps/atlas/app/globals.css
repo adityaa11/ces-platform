@@ -233,6 +233,8 @@ button {
 .auth-card label { display: grid; font-size: .9rem; font-weight: 700; gap: .45rem; }
 .auth-card input { background: #151519; border: 1px solid #3b3b43; border-radius: .55rem; color: var(--ink); font: inherit; padding: .75rem; }
 .auth-card input:focus, .profile-control:focus-visible, .navigation a:focus-visible { outline: 3px solid #8b8af8; outline-offset: 2px; }
+.sign-up-form .form-error { color: var(--error-ink); font-size: var(--type-body-compact); font-weight: var(--weight-semibold); line-height: var(--leading-body); margin: -.25rem 0 0; }
+.sign-up-form .button:disabled { cursor: wait; opacity: .7; }
 .text-link { color: var(--forest); font-weight: 700; text-decoration: underline; text-underline-offset: .15rem; }
 .app-shell { display: grid; grid-template-columns: 16rem minmax(0, 1fr); grid-template-rows: auto 1fr; min-height: 100vh; transition: grid-template-columns .24s cubic-bezier(.2, .8, .2, 1); }
 .sidebar-collapsed { grid-template-columns: 4.25rem minmax(0, 1fr); }
