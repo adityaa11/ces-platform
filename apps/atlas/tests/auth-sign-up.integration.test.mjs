@@ -8,8 +8,9 @@ const skip = !databaseUrl;
 const jiti = createJiti(import.meta.url, { alias: { "@": new URL("../", import.meta.url).pathname } });
 
 test("the application auth boundary creates a session without granting Atlas state", { skip }, async () => {
-  const [{ POST, closeMountedAuthServiceForTest }, postgres] = await Promise.all([
-    jiti.import("../app/api/auth/[...all]/route.ts"),
+  const { POST } = await jiti.import("../app/api/auth/[...all]/route.ts");
+  const [{ atlasAuthService }, postgres] = await Promise.all([
+    jiti.import("@/lib/auth-server"),
     jiti.import("postgres"),
   ]);
   const email = `sus003-${randomUUID()}@example.test`;
@@ -49,7 +50,7 @@ test("the application auth boundary creates a session without granting Atlas sta
     const authorizationTables = await admin`SELECT to_regclass(name) AS relation FROM unnest(ARRAY['atlas.project', 'atlas.workspace', 'atlas.membership', 'atlas.role', 'atlas.permission', 'atlas.ownership', 'atlas.master', 'atlas.initial_draft']) AS name`;
     assert.ok(authorizationTables.every(({ relation }) => relation === null), "the established Atlas schema has no auth-owned project or authorization tables");
   } finally {
-    await closeMountedAuthServiceForTest();
+    await atlasAuthService.close();
     await admin`DELETE FROM auth."user" WHERE email = ${email}`;
     await admin.end();
   }
