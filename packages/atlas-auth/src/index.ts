@@ -1,6 +1,6 @@
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { betterAuth } from "better-auth";
-import { authAccount, authSession, authUser, authVerification, createDatabase } from "@atlas/db";
+import { authAccount, authSession, authUser, authVerification, createDatabase } from "@atlas/db/auth";
 import { loadAtlasAuthConfig, type AtlasAuthConfig, type AtlasAuthEnvironment } from "./config.js";
 
 export { loadAtlasAuthConfig, type AtlasAuthConfig, type AtlasAuthEnvironment } from "./config.js";

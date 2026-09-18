@@ -9,7 +9,7 @@ const jiti = createJiti(import.meta.url, { alias: { "@": new URL("../", import.m
 
 test("the application auth boundary creates a session without granting Atlas state", { skip }, async () => {
   const { POST } = await jiti.import("../app/api/auth/[...all]/route.ts");
-  const [{ atlasAuthService }, postgres] = await Promise.all([
+  const [{ getAtlasAuthService }, postgres] = await Promise.all([
     jiti.import("@/lib/auth-server"),
     jiti.import("postgres"),
   ]);
@@ -17,6 +17,7 @@ test("the application auth boundary creates a session without granting Atlas sta
   const invalidEmail = `sus003-invalid-${randomUUID()}`;
   const baseURL = process.env.BETTER_AUTH_URL ?? "http://localhost:3001";
   const admin = postgres.default(databaseUrl, { max: 1 });
+  const atlasAuthService = await getAtlasAuthService();
 
   try {
     const signUp = await POST(new Request(`${baseURL}/api/auth/sign-up/email`, {

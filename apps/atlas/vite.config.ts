@@ -106,6 +106,9 @@ const localFixtureStore: Plugin = {
 const localBindingConfig = {
   main: "./worker/index.ts",
   compatibility_flags: ["nodejs_compat"],
+  secrets: {
+    required: ["DATABASE_URL", "BETTER_AUTH_SECRET", "BETTER_AUTH_URL", "BETTER_AUTH_TRUSTED_ORIGINS"],
+  },
   d1_databases: d1
     ? [
         {

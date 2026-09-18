@@ -1,6 +1,6 @@
 # Atlas Sign-Up Ticket Set
 
-- **State:** `approved`
+- **State:** `awaiting_review` — SUS-001 through SUS-003 remain frozen and approved; SUS-004 runtime compatibility is implemented and ready for its bounded review.
 - **Primary implementation baseline:** [Sign-Up Implementation Context](../../atlas-sign-up-implementation-context.md)
 - **Architecture baseline:** [Atlas Backend Production Baseline](../../atlas-backend-production-baseline-mistral-synced.md) and [Atlas Core Architecture — Updated Checkpoint](../../atlas-core-architecture-checkpoint-v2-mistral-enriched-v2.md)
 - **Product context:** [Atlas Full Product Context](../../../Atlas_Full_Product_Context.md)
@@ -19,7 +19,7 @@ The supplied [Sign-Up Implementation Context](../../atlas-sign-up-implementation
 
 The fixture/production split is intentional. The sign-up fixture entry is being replaced by the real `@atlas/auth` implementation, while the separate `@atlas/fixtures` package continues to supply the fixture-backed `/demo` surface and golden/test scenarios. This is a safe transitional composition: real identity/session establishment enters a fixture-backed demo without turning fixture data into production authentication truth.
 
-The ticket set does not merge the fixture package into the auth boundary, migrate demo fixtures into production tables, or require the rest of the prototype to become production-backed. Each ticket advances only through the normal review controls; this completed sign-up set is now approved and frozen.
+The ticket set does not merge the fixture package into the auth boundary, migrate demo fixtures into production tables, or require the rest of the prototype to become production-backed. SUS-001 through SUS-003 are frozen. SUS-004 is a separately planned remediation after a demonstrated Vinext worker-runtime incompatibility; it does not reopen their approved scope.
 
 ## Delivery order
 
@@ -30,6 +30,7 @@ Each ticket is its own review batch because each checkpoint answers a distinct r
 | 1 | [SUS-001](SUS-001-application-auth-boundary.md) / `SUS-BATCH-01` | `approved` | BSS-004 approved | Does the Atlas web app expose the existing Better Auth handler through one server-owned boundary without duplicating authentication or taking project authority? |
 | 2 | [SUS-002](SUS-002-sign-up-form-and-auth-screen.md) / `SUS-BATCH-02` | `approved` | SUS-001 `PASS` | Does `/sign-up` collect the required identity fields and submit them through the browser-facing auth boundary with bounded success, loading, and failure behavior while other auth modes remain unchanged? |
 | 3 | [SUS-003](SUS-003-sign-up-end-to-end-validation.md) / `SUS-BATCH-03` | `approved` | SUS-001 and SUS-002 `PASS` | Does the browser-facing sign-up flow create a durable Better Auth identity/session and preserve the existing app, CSP, fixture, and authorization boundaries? |
+| 4 | [SUS-004](SUS-004-worker-runtime-sign-up-compatibility.md) / `SUS-BATCH-04` | `awaiting_review` | SUS-001 through SUS-003 approved; runtime-compatibility scope change approved | Does the real Vinext worker runtime complete sign-up without dynamic-code/CSP workarounds while preserving the Better Auth and Atlas boundaries? |
 
 ## Review controls
 

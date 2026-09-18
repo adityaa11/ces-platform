@@ -13,9 +13,11 @@ test("mounts the shared Better Auth handler without application auth state", asy
   ]);
 
   assert.match(manifest, /"@atlas\/auth": "workspace:\*"/);
-  assert.match(server, /createAtlasAuthFromEnvironment\(\)/);
-  assert.match(server, /export const atlasAuthService = createAtlasAuthFromEnvironment\(\)/);
-  assert.match(route, /createAuthRouteHandler\(auth\)/);
+  assert.match(server, /createAtlasAuthFromEnvironment\(environment\)/);
+  assert.match(server, /export async function getAtlasAuthService/);
+  assert.match(server, /cloudflare:workers/);
+  assert.match(route, /createAuthRouteHandler\(service\.auth\)/);
+  assert.match(route, /isWorkerAuthRuntime\(\)\) await service\.close\(\)/);
   assert.match(route, /export const GET = handle/);
   assert.match(route, /export const POST = handle/);
   assert.doesNotMatch(`${server}\n${route}`, /betterAuth\(|createDatabase\(|localStorage|sessionStorage|jwt|project_member|atlas\.project/i);
