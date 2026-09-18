@@ -1,6 +1,6 @@
 # SIN-004: Sign-in to home end-to-end and regression validation
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `SIN-BATCH-04`
 - **Depends on:** SIN-001 `PASS`, SIN-002 `PASS`, SIN-003 `PASS`
 - **Baseline:** [Sign-In and Authenticated Home Implementation Context](../../atlas-sign-in-home-implementation-context.md) §§21–28; [Backend Phase README](../../README.md) review and authority rules; BSS-004 lifecycle proof; completed SUS validation
