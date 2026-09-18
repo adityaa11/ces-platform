@@ -88,4 +88,4 @@ Status: applicable
 
 - **Review question:** Does the Atlas web app expose the approved Better Auth handler through one server-owned boundary without duplicating authentication or taking project authority?
 - **Combined acceptance:** The workspace dependency, shared server instance, and catch-all route are present; Better Auth owns credentials/session behavior; and no Atlas project state or custom auth persistence is introduced.
-- **Commit to review:** `b2264ab` (`feat(auth): expose Better Auth application boundary`).
+- **Commit to review:** `cdda74d` (`feat(auth): expose Better Auth application boundary`).
