@@ -50,6 +50,7 @@ test("renders a persisted theme preference across public, authentication, and wo
   }
 });
 
+
 test("adds a fresh CSP nonce before Vinext renders and prevents HTML caching", async () => {
   const firstResponse = await render();
   const secondResponse = await render();
@@ -200,7 +201,7 @@ test("renders each account entry state and the accessible signed-in shell", asyn
   const sourcesWorkspace = await readFile(new URL("../components/SourcesWorkspace.tsx", import.meta.url), "utf8");
   const workspaceSwitcherPreview = await readFile(new URL("../components/WorkspaceSwitcherPreview.tsx", import.meta.url), "utf8");
   assert.match(appShell, /import \{ TopBar \} from "\.\/TopBar"/);
-  assert.match(appShell, /<TopBar className=\{`app-header \$\{fullWidthSearch \? "app-header-full-search" : ""\}`\.trim\(\)\} variant="workspace">/);
+  assert.match(appShell, /<TopBar className=\{`app-header \$\{fullWidthSearch \? "app-header-full-search" : ""\}`\.trim\(\)\} homeHref=\{homeHref\} variant="workspace">/);
   assert.match(appShell, /import \{ ProfileMenu \} from "\.\/ProfileMenu"/);
   assert.doesNotMatch(appShell, /libraryProjects|id:"selected"/);
   assert.match(appShell, /new URLSearchParams\(window\.location\.search\)/);
