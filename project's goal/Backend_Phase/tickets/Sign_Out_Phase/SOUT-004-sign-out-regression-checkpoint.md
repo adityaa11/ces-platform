@@ -1,6 +1,6 @@
 # SOUT-004: Sign-out regression checkpoint
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `SOUT-BATCH-04`
 - **Depends on:** SOUT-001 `PASS`, SOUT-002 `PASS`, SOUT-003 `PASS`
 - **Baseline:** [Sign-Out Implementation Context](../../atlas-sign-out-implementation-context.md) §§14, 18, 21–25; [Backend Phase README](../../README.md) review/delivery and fixture-transition rules; [Sign-Up Ticket Set](../Sign_Up_Phase/README.md); [Sign-In and Authenticated Home Ticket Set](../Sign_In_Phase/README.md); AC-01 through AC-16
@@ -94,4 +94,13 @@ Status: applicable
 
 - **Review question:** Do the complete auth, fixture, CSP, build, and directly affected checks remain valid with real production sign-out?
 - **Combined acceptance:** Real current-session sign-out is proven at package and application boundaries; SUS/SIN behavior and `/demo` remain intact; no sensitive data, custom auth path, Atlas-state mutation, or scope expansion is introduced; and the reviewed commit is identified.
-- **Implementation checkpoint:** No implementation is authorized yet. Record the final implementation/validation commit and review file when `SOUT-BATCH-04` enters `awaiting_review`.
+- **Implementation checkpoint:** Pending documentation-evidence commit. Validation was authorized by `go` after `SOUT-BATCH-03` passed at `eaf2f15`.
+
+## Validation evidence
+
+- Service-health gate: `docker compose ps` reported `postgres`, `atlas`, `agents-bridge`, and `agents-bridge-worker` healthy.
+- `docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/app test`: passed — 19 passed, 0 failed, 1 explicit worker-runtime skip. This includes sign-up, sign-in/home, production sign-out, `/demo` fixture, rendered HTML, and strict-CSP coverage.
+- `docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/auth test`: passed — 3 passed, 0 failed. The BSS-004 lifecycle proof remained unchanged and passed.
+- `docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/auth typecheck`: passed.
+- `docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/app lint`: failed on three unrelated, pre-existing errors in `apps/atlas/components/RuntimeFixtureRoute.tsx` and `apps/atlas/vite.config.ts`; their latest change predates the SOUT work (`b920cfc`). They are recorded but not modified under this bounded sign-out checkpoint.
+- `git diff --check`: passed. The intended checkpoint changes are ticket-state and validation-evidence records only; no auth route, schema, session path, project state, or fixture state changed.

@@ -1,9 +1,9 @@
 # SOUT-003: Application sign-out validation
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `SOUT-BATCH-03`
-- **Implementation checkpoint:** `HEAD` (`test(auth): validate application sign-out lifecycle`)
-- **Remediation checkpoint:** `HEAD` — F-001 serializes the package test runner so its Vinext lifecycle servers cannot overlap.
+- **Implementation checkpoint:** `d81ae7b` (`test(auth): validate application sign-out lifecycle`)
+- **Remediation checkpoint:** `eaf2f15` — F-001 serializes the package test runner so its Vinext lifecycle servers cannot overlap.
 - **Depends on:** SOUT-001 `PASS`, SOUT-002 `PASS`
 - **Baseline:** [Sign-Out Implementation Context](../../atlas-sign-out-implementation-context.md) §§3–4, 10, 13–18, 20–25; [BSS-004 Better Auth persistence](../Stack_Setup/BSS-004-better-auth-persistence.md); [Backend Phase README](../../README.md) lifecycle and authority rules; AC-01, AC-08–AC-12, AC-14, and AC-15
 

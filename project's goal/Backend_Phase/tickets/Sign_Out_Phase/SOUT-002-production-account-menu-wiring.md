@@ -1,6 +1,6 @@
 # SOUT-002: Production account-menu wiring
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `SOUT-BATCH-02`
 - **Depends on:** SOUT-001 `PASS`
 - **Baseline:** [Sign-Out Implementation Context](../../atlas-sign-out-implementation-context.md) §§7–10, 14–15, 19, 21, 23–25; [Sign-In and Authenticated Home Implementation Context](../../atlas-sign-in-home-implementation-context.md) §§8–9, 18–19; [Atlas UI/UX Prototype PRD](../../../Atlas_UI_UX_Prototype_PRD.md) §§4.1, 7, and 9.4; [Backend Phase README](../../README.md) fixture/production authority rules; AC-03–AC-07, AC-12, AC-15, and AC-16
