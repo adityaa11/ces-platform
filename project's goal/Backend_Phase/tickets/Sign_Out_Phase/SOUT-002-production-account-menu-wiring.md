@@ -62,10 +62,12 @@ The existing Atlas shell and `ProfileMenu` are the visual ancestors for this cha
 
 ## Validation
 
+- Prepare the supported environment with `docker compose up -d --build` and confirm the required service health with `docker compose ps`.
 - Render production `/home` or the equivalent shared shell and assert the button label, button semantics, placement, absence of the old fake logout link, and bounded failure feedback.
 - Render representative `/demo` fixture scenarios and assert the fixture action remains available without a Better Auth sign-out request.
 - Exercise success, failure, retry, disabled/in-flight, and responsive desktop/mobile presentation branches through the repository's current test strategy.
-- Run strict CSP/rendered HTML checks and directly affected app build/lint/type tests.
+- Run strict CSP/rendered HTML checks and directly affected app build/lint/type tests in clean Compose containers, including `docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/app test` and the applicable lint/type commands.
+- Record service health, container commands, test counts, explicit skips, and any Docker availability limitation.
 - Inspect the final diff for browser storage, manual cookie mutation, route-mode inference from identity, auth-table access, project writes, and accidental sign-up/SIN regressions.
 
 ## Security Refactor Readiness

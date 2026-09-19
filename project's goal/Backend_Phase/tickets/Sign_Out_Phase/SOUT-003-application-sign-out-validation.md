@@ -34,9 +34,11 @@ Prove the complete browser-facing production sign-out path against the existing 
 
 ## Validation
 
-- Run the application integration test against supported local PostgreSQL/auth configuration. If the environment is unavailable, report the limitation; do not replace the integration proof with a fixture-only test.
-- Run the unchanged `@atlas/auth` lifecycle test and retain evidence for durable session invalidation.
-- Run the directly affected app tests/build and rendered HTML/CSP checks.
+- Start the supported PostgreSQL environment with `docker compose up -d postgres`, confirm `docker compose ps` reports `healthy`, and run the application integration test in the Compose-built Atlas container.
+- Run the application test suite with `docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/app test`; retain the sign-out integration evidence and explicit test counts.
+- Run the unchanged `@atlas/auth` lifecycle test with `docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/auth test` and retain evidence for durable session invalidation.
+- Run the directly affected app build and rendered HTML/CSP checks in the same clean Compose environment.
+- If Docker is unavailable, report the exact limitation; do not replace the integration proof with a fixture-only test or treat `docker compose ps` alone as validation.
 - Verify the test asserts session invalidation before or independently of navigation and does not inspect secrets or emit cookie values.
 - Inspect the final diff for direct auth-table queries in app code, production cleanup paths, project/fixture writes, account deletion, and weakened assertions.
 

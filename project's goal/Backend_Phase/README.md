@@ -80,6 +80,31 @@ Each Backend Phase ticket should make the fixture-to-real transition visible by 
 
 Do not remove fixtures as a shortcut to claiming completion. Preserve them until the relevant real implementation has passed its bounded review, and keep fixture changes separate from production behavior changes unless the ticket explicitly requires a fixture update.
 
+## Canonical Docker Compose implementation and validation environment
+
+Docker Compose is the supported execution boundary for runnable Backend Phase work. Source changes may be made in the shared host worktree, but builds, tests, lint, type checks, migrations, and application-level validation must run in the Docker environment so the frozen pnpm dependency graph and service-to-service configuration are reproduced consistently.
+
+Use the repository root as the command directory and prepare the database service first:
+
+```sh
+docker compose up -d postgres
+docker compose ps
+```
+
+Continue only when the PostgreSQL service reports `healthy`. For a full running application environment, use `docker compose up -d --build` and confirm the required services with `docker compose ps`. `docker compose ps` is a health/readiness check; it is not a substitute for the relevant test or validation command.
+
+Run package checks in a clean one-off Atlas container. The `--no-deps` flag prevents a test invocation from creating duplicate long-running services; PostgreSQL must already be healthy:
+
+```sh
+docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/app test
+docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/auth test
+docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/app lint
+```
+
+Use the equivalent `docker compose run --rm --build --no-deps atlas ...` form for ticket-specific scripts. Record the exact command, service health, test counts, skips, and any environment limitation in the implementation checkpoint and review evidence. Do not weaken or replace a database-backed test with fixture-only evidence because a local host dependency is unavailable.
+
+Host-local pnpm commands are non-authoritative diagnostics only. In particular, do not treat a host `node_modules` relink or a successful `docker compose ps` alone as implementation validation.
+
 ## Review and delivery
 
 Backend work follows the Atlas review protocol:

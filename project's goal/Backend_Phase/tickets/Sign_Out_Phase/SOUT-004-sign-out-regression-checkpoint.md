@@ -34,8 +34,10 @@ This is a bounded validation checkpoint. Do not use it to redesign authenticatio
 
 ## Validation
 
-- Execute the full relevant command set from SOUT-003 plus sign-up/sign-in regressions, `/demo` fixture regressions, rendered HTML/CSP, build, and directly affected lint/type checks.
-- If a database-backed command is unavailable, record the exact limitation and preserve the test rather than weakening or replacing it.
+- Prepare the complete supported environment with `docker compose up -d --build` and confirm all required services are healthy with `docker compose ps`.
+- Execute the full relevant command set from SOUT-003 plus sign-up/sign-in regressions, `/demo` fixture regressions, rendered HTML/CSP, build, and directly affected lint/type checks in clean Compose containers. At minimum, run `docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/app test`, `docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/auth test`, and the applicable lint/type commands.
+- Record the exact container commands, service health, test counts, explicit skips, and reviewed commit.
+- If Docker is unavailable, record the exact limitation and preserve the test rather than weakening or replacing it.
 - Run `git diff --check` and inspect the final changed-file list for scope expansion.
 - Confirm any existing unrelated lint failures are identified without modifying unrelated files.
 - Prepare one consolidated review checkpoint for `SOUT-BATCH-04`; do not create implementation changes from optional review ideas.

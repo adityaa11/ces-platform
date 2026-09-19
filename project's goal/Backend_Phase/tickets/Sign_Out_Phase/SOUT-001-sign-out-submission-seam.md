@@ -1,6 +1,6 @@
 # SOUT-001: Sign-out submission seam
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `SOUT-BATCH-01`
 - **Depends on:** BSS-004 `approved`; SUS and SIN ticket sets `approved`/frozen
 - **Baseline:** [Sign-Out Implementation Context](../../atlas-sign-out-implementation-context.md) §§3–6, 10–12, 19–20, 23–25; [Backend Phase README](../../README.md) authority and fixture-transition rules; AC-01, AC-02, AC-05–AC-07, and AC-13
@@ -34,10 +34,12 @@ Do not wire the helper into `ProfileMenu`, change `/home`, alter `/demo`, add a 
 
 ## Validation
 
+- Prepare the supported environment with `docker compose up -d postgres` and confirm the service is `healthy` with `docker compose ps`.
 - Run the focused helper/component tests for success, non-2xx, network failure, and duplicate-submit branches.
 - Verify the request method, endpoint, credential mode, and call count in the test double or equivalent browser-shaped test.
 - Verify the success branch permits one navigation callback only after the response is accepted and the failure branches permit retry.
-- Run the directly affected app build/test checks and `git diff --check`.
+- Run the directly affected app build/test checks in a clean container: `docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/app test`.
+- Run `git diff --check` from the worktree and record the container test count, explicit skips, and any Docker availability limitation.
 - Inspect the changed files for absence of auth persistence, cookie mutation, project/fixture calls, and raw error output.
 
 ## Security Refactor Readiness
@@ -92,4 +94,4 @@ Status: applicable
 
 - **Review question:** Does the browser-facing sign-out seam call the approved endpoint once, expose bounded outcomes, and allow navigation only after success?
 - **Combined acceptance:** The method/endpoint/credential contract is correct; duplicate requests are prevented; success allows exactly one downstream navigation; non-2xx and network failures remain on the current surface and retryable; no competing auth or Atlas-state path exists.
-- **Implementation checkpoint:** `HEAD` (`feat(auth): add sign-out submission seam`); awaiting the consolidated `SOUT-BATCH-01` review.
+- **Implementation checkpoint:** Reviewed commit `36bc54e` (`feat(auth): add sign-out submission seam`); `SOUT-BATCH-01` `PASS` is recorded in [the consolidated review](../../../feedback/SOUT-BATCH-01-36bc54e-review.md), and the ticket was approved through `go`. The Docker Compose validation context is part of this ticket's validation contract.

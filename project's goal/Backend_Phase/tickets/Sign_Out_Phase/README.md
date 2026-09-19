@@ -1,8 +1,9 @@
 # Atlas Sign-Out Ticket Set
 
-- **State:** `awaiting_review` — SOUT-001 / SOUT-BATCH-01 is implemented and awaiting its committed checkpoint review; SOUT-002 through SOUT-004 remain planned.
+- **State:** `approved` — SOUT-001 / SOUT-BATCH-01 passed review and was approved through `go`; SOUT-002 through SOUT-004 remain planned.
 - **Primary implementation baseline:** [Sign-Out Implementation Context](../../atlas-sign-out-implementation-context.md)
 - **Phase boundary:** [Atlas Backend Phase README](../../README.md)
+- **Execution and validation environment:** use the [canonical Docker Compose environment](../../README.md#canonical-docker-compose-implementation-and-validation-environment) for runnable implementation checks, tests, builds, lint, type checks, and application validation; `docker compose ps` is the service-health gate only.
 - **Frozen authentication dependency:** [BSS-004 Better Auth persistence](../Stack_Setup/BSS-004-better-auth-persistence.md)
 - **Related frozen work:** [Sign-Up Ticket Set](../Sign_Up_Phase/README.md) and [Sign-In and Authenticated Home Ticket Set](../Sign_In_Phase/README.md)
 - **UI baseline:** [Atlas UI/UX Prototype PRD](../../../Atlas_UI_UX_Prototype_PRD.md) §§4.1, 7, and 9.4; the existing shared Atlas shell/profile-menu visual language
@@ -33,7 +34,7 @@ Each ticket is its own review batch. The boundaries are sequential because the m
 
 | Order | Ticket / batch | State | Depends on | Review question |
 |---:|---|---|---|---|
-| 1 | [SOUT-001](SOUT-001-sign-out-submission-seam.md) / `SOUT-BATCH-01` | `awaiting_review` | BSS-004 approved; SUS and SIN sets approved/frozen | Does the browser-facing sign-out seam call the approved endpoint once, navigate only on success, and remain safely retryable on failure? |
+| 1 | [SOUT-001](SOUT-001-sign-out-submission-seam.md) / `SOUT-BATCH-01` | `approved` | BSS-004 approved; SUS and SIN sets approved/frozen | Does the browser-facing sign-out seam call the approved endpoint once, navigate only on success, and remain safely retryable on failure? |
 | 2 | [SOUT-002](SOUT-002-production-account-menu-wiring.md) / `SOUT-BATCH-02` | `planned` | SOUT-001 `PASS` | Does the production account menu expose a real responsive `Sign out` button while `/demo` retains its explicit fixture behavior? |
 | 3 | [SOUT-003](SOUT-003-application-sign-out-validation.md) / `SOUT-BATCH-03` | `planned` | SOUT-001 and SOUT-002 `PASS` | Does the browser-facing flow invalidate the current Better Auth session, preserve the account, and protect `/home` after sign-out? |
 | 4 | [SOUT-004](SOUT-004-sign-out-regression-checkpoint.md) / `SOUT-BATCH-04` | `planned` | SOUT-001 through SOUT-003 `PASS` | Do the complete auth, fixture, CSP, build, and directly affected checks remain valid with real production sign-out? |
