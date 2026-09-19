@@ -6,6 +6,8 @@ export type SignOutSubmission = {
 
 export async function requestSignOut(): Promise<Response> {
   return fetch("/api/auth/sign-out", {
+    body: JSON.stringify({}),
+    headers: { "content-type": "application/json" },
     method: "POST",
     credentials: "same-origin",
   });

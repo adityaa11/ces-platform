@@ -162,6 +162,8 @@ test("sign-out submission uses the approved endpoint, navigates after success, a
   const { createSignOutSubmission, mapSignOutFailure, requestSignOut } = await jiti.import("../components/sign-out-submission.ts");
 
   assert.match(submissionSource, /fetch\("\/api\/auth\/sign-out"/);
+  assert.match(submissionSource, /body: JSON\.stringify\(\{\}\)/);
+  assert.match(submissionSource, /headers: \{ "content-type": "application\/json" \}/);
   assert.match(submissionSource, /method: "POST"/);
   assert.match(submissionSource, /credentials: "same-origin"/);
   assert.doesNotMatch(submissionSource, /localStorage|sessionStorage|document\.cookie|token|cookie|jwt|project|fixture|response\.text\(\)|console\./i);
