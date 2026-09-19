@@ -1,6 +1,6 @@
 # SOUT-004: Sign-out regression checkpoint
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `SOUT-BATCH-04`
 - **Depends on:** SOUT-001 `PASS`, SOUT-002 `PASS`, SOUT-003 `PASS`
 - **Baseline:** [Sign-Out Implementation Context](../../atlas-sign-out-implementation-context.md) §§14, 18, 21–25; [Backend Phase README](../../README.md) review/delivery and fixture-transition rules; [Sign-Up Ticket Set](../Sign_Up_Phase/README.md); [Sign-In and Authenticated Home Ticket Set](../Sign_In_Phase/README.md); AC-01 through AC-16
@@ -94,7 +94,7 @@ Status: applicable
 
 - **Review question:** Do the complete auth, fixture, CSP, build, and directly affected checks remain valid with real production sign-out?
 - **Combined acceptance:** Real current-session sign-out is proven at package and application boundaries; SUS/SIN behavior and `/demo` remain intact; no sensitive data, custom auth path, Atlas-state mutation, or scope expansion is introduced; and the reviewed commit is identified.
-- **Implementation checkpoint:** Pending documentation-evidence commit. Validation was authorized by `go` after `SOUT-BATCH-03` passed at `eaf2f15`.
+- **Implementation checkpoint:** `0bd5ee8` (`docs(sign-out): record final regression checkpoint`), passed at `SOUT-BATCH-04-0bd5ee8-review.md`; frozen by `go`.
 
 ## Validation evidence
 

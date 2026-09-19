@@ -1,6 +1,6 @@
 # Atlas Sign-Out Ticket Set
 
-- **State:** `awaiting_review` — SOUT-001 through SOUT-003 are approved; SOUT-004 / SOUT-BATCH-04 is awaiting review.
+- **State:** `complete` — SOUT-001 through SOUT-004 are approved; the Sign-Out ticket set is frozen.
 - **Primary implementation baseline:** [Sign-Out Implementation Context](../../atlas-sign-out-implementation-context.md)
 - **Phase boundary:** [Atlas Backend Phase README](../../README.md)
 - **Execution and validation environment:** use the [canonical Docker Compose environment](../../README.md#canonical-docker-compose-implementation-and-validation-environment) for runnable implementation checks, tests, builds, lint, type checks, and application validation; `docker compose ps` is the service-health gate only.
@@ -37,7 +37,7 @@ Each ticket is its own review batch. The boundaries are sequential because the m
 | 1 | [SOUT-001](SOUT-001-sign-out-submission-seam.md) / `SOUT-BATCH-01` | `approved` | BSS-004 approved; SUS and SIN sets approved/frozen | Does the browser-facing sign-out seam call the approved endpoint once, navigate only on success, and remain safely retryable on failure? |
 | 2 | [SOUT-002](SOUT-002-production-account-menu-wiring.md) / `SOUT-BATCH-02` | `approved` | SOUT-001 `PASS` | Does the production account menu expose a real responsive `Sign out` button while `/demo` retains its explicit fixture behavior? |
 | 3 | [SOUT-003](SOUT-003-application-sign-out-validation.md) / `SOUT-BATCH-03` | `approved` | SOUT-001 and SOUT-002 `PASS` | Does the browser-facing flow invalidate the current Better Auth session, preserve the account, and protect `/home` after sign-out? |
-| 4 | [SOUT-004](SOUT-004-sign-out-regression-checkpoint.md) / `SOUT-BATCH-04` | `awaiting_review` | SOUT-001 through SOUT-003 `PASS` | Do the complete auth, fixture, CSP, build, and directly affected checks remain valid with real production sign-out? |
+| 4 | [SOUT-004](SOUT-004-sign-out-regression-checkpoint.md) / `SOUT-BATCH-04` | `approved` | SOUT-001 through SOUT-003 `PASS` | Do the complete auth, fixture, CSP, build, and directly affected checks remain valid with real production sign-out? |
 
 ## Review controls
 
