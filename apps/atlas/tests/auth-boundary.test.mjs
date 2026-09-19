@@ -155,6 +155,45 @@ test("sign-in delegates credentials to Better Auth and navigates only after succ
   assert.equal(await networkFailure.submit(payload), null);
 });
 
+test("sign-out submission uses the approved endpoint, navigates after success, and stays retryable on failure", async () => {
+  const [submissionSource] = await Promise.all([
+    readFile(new URL("../components/sign-out-submission.ts", import.meta.url), "utf8"),
+  ]);
+  const { createSignOutSubmission, mapSignOutFailure, requestSignOut } = await jiti.import("../components/sign-out-submission.ts");
+
+  assert.match(submissionSource, /fetch\("\/api\/auth\/sign-out"/);
+  assert.match(submissionSource, /method: "POST"/);
+  assert.match(submissionSource, /credentials: "same-origin"/);
+  assert.doesNotMatch(submissionSource, /localStorage|sessionStorage|document\.cookie|token|cookie|jwt|project|fixture|response\.text\(\)|console\./i);
+
+  let requestCount = 0;
+  let resolveRequest;
+  const navigation = [];
+  const pending = new Promise((resolve) => { resolveRequest = resolve; });
+  const submission = createSignOutSubmission(async () => {
+    requestCount += 1;
+    return pending;
+  }, () => navigation.push("/sign-in"));
+
+  const firstAttempt = submission.submit();
+  const duplicateAttempt = submission.submit();
+  assert.strictEqual(firstAttempt, duplicateAttempt);
+  assert.equal(requestCount, 1);
+  resolveRequest(new Response(null, { status: 204 }));
+  assert.equal((await firstAttempt)?.ok, true);
+  assert.deepEqual(navigation, ["/sign-in"]);
+
+  const rejected = createSignOutSubmission(async () => new Response("not exposed", { status: 500 }), () => navigation.push("unexpected"));
+  assert.equal((await rejected.submit())?.status, 500);
+  assert.equal((await rejected.submit())?.status, 500);
+  assert.deepEqual(navigation, ["/sign-in"]);
+
+  const networkFailure = createSignOutSubmission(async () => { throw new Error("network unreachable"); }, () => navigation.push("unexpected"));
+  assert.equal(await networkFailure.submit(), null);
+  assert.equal(mapSignOutFailure(), "Atlas couldn't sign you out right now. Try again.");
+  assert.equal(typeof requestSignOut, "function");
+});
+
 test("production project-library mode stays empty and separate from fixture authority", async () => {
   const [library, profile, shell, home, demo] = await Promise.all([
     readFile(new URL("../components/ProjectLibrary.tsx", import.meta.url), "utf8"),

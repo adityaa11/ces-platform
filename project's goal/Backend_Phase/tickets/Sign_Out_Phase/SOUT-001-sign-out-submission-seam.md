@@ -1,6 +1,6 @@
 # SOUT-001: Sign-out submission seam
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `SOUT-BATCH-01`
 - **Depends on:** BSS-004 `approved`; SUS and SIN ticket sets `approved`/frozen
 - **Baseline:** [Sign-Out Implementation Context](../../atlas-sign-out-implementation-context.md) §§3–6, 10–12, 19–20, 23–25; [Backend Phase README](../../README.md) authority and fixture-transition rules; AC-01, AC-02, AC-05–AC-07, and AC-13
@@ -92,4 +92,4 @@ Status: applicable
 
 - **Review question:** Does the browser-facing sign-out seam call the approved endpoint once, expose bounded outcomes, and allow navigation only after success?
 - **Combined acceptance:** The method/endpoint/credential contract is correct; duplicate requests are prevented; success allows exactly one downstream navigation; non-2xx and network failures remain on the current surface and retryable; no competing auth or Atlas-state path exists.
-- **Implementation checkpoint:** No implementation is authorized yet. Record the commit when `SOUT-BATCH-01` enters `awaiting_review`.
+- **Implementation checkpoint:** `HEAD` (`feat(auth): add sign-out submission seam`); awaiting the consolidated `SOUT-BATCH-01` review.
