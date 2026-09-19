@@ -1,7 +1,8 @@
 # SOUT-003: Application sign-out validation
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `SOUT-BATCH-03`
+- **Implementation checkpoint:** `HEAD` (`test(auth): validate application sign-out lifecycle`)
 - **Depends on:** SOUT-001 `PASS`, SOUT-002 `PASS`
 - **Baseline:** [Sign-Out Implementation Context](../../atlas-sign-out-implementation-context.md) §§3–4, 10, 13–18, 20–25; [BSS-004 Better Auth persistence](../Stack_Setup/BSS-004-better-auth-persistence.md); [Backend Phase README](../../README.md) lifecycle and authority rules; AC-01, AC-08–AC-12, AC-14, and AC-15
 
@@ -94,4 +95,4 @@ Status: applicable
 
 - **Review question:** Does the browser-facing flow invalidate the current Better Auth session, preserve the account, and protect `/home` after sign-out?
 - **Combined acceptance:** A unique user signs in through the application, the real production control is present, the approved POST invalidates the old session, `/home` rejects it afterward, the account survives until cleanup, and no Atlas/fixture authority is mutated.
-- **Implementation checkpoint:** No implementation is authorized yet. Record the commit when `SOUT-BATCH-03` enters `awaiting_review`.
+- **Implementation checkpoint:** `HEAD` (`test(auth): validate application sign-out lifecycle`)
