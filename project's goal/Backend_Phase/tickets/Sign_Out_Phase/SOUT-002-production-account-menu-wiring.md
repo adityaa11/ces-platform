@@ -1,6 +1,6 @@
 # SOUT-002: Production account-menu wiring
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `SOUT-BATCH-02`
 - **Depends on:** SOUT-001 `PASS`
 - **Baseline:** [Sign-Out Implementation Context](../../atlas-sign-out-implementation-context.md) §§7–10, 14–15, 19, 21, 23–25; [Sign-In and Authenticated Home Implementation Context](../../atlas-sign-in-home-implementation-context.md) §§8–9, 18–19; [Atlas UI/UX Prototype PRD](../../../Atlas_UI_UX_Prototype_PRD.md) §§4.1, 7, and 9.4; [Backend Phase README](../../README.md) fixture/production authority rules; AC-03–AC-07, AC-12, AC-15, and AC-16
@@ -70,6 +70,13 @@ The existing Atlas shell and `ProfileMenu` are the visual ancestors for this cha
 - Record service health, container commands, test counts, explicit skips, and any Docker availability limitation.
 - Inspect the final diff for browser storage, manual cookie mutation, route-mode inference from identity, auth-table access, project writes, and accidental sign-up/SIN regressions.
 
+## Implementation validation record
+
+- **Container environment:** `postgres` and `atlas` reported `healthy` through `docker compose ps` before validation.
+- **Automated validation:** `docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/app test` passed with 18 tests and 1 explicit worker-runtime skip. The changed component/test files passed `eslint` in the same Compose environment. The full app lint command remains blocked by pre-existing errors in `RuntimeFixtureRoute.tsx` and `vite.config.ts`, outside this ticket.
+- **Visual inspection:** `/demo` was inspected at desktop and 573 px mobile widths in the local Compose application, in light theme. The desktop account control opens an anchored popover; compact mode opens the existing drawer followed by the existing labelled Account menu bottom sheet. Both preserve the fixture `Logout` action, action order, theme controls, and readable/operable layout. The production `session` variant reuses these same shared surfaces and adds a semantic button, loading text, disabled state, bounded alert, and token-based row styling.
+- **Frontend review gate:** VIS-001–015 pass for the affected menu. The change reuses the established ProfileMenu/Dialog hierarchy, spacing, type roles, theme tokens, focus treatment, and responsive popover-to-sheet transformation; it introduces no separate visual language or hard-coded theme treatment.
+
 ## Security Refactor Readiness
 
 Status: applicable
@@ -122,4 +129,4 @@ Status: applicable
 
 - **Review question:** Does the production account menu expose a real responsive `Sign out` button while `/demo` retains its explicit fixture behavior?
 - **Combined acceptance:** The real button is placed below Account settings, uses SOUT-001, protects against duplicate clicks, shows bounded retryable errors, navigates only after success, preserves the Atlas shell's visual/token/theme contract across desktop/tablet/mobile, works through both shared menu presentations, and does not change `/demo` or frozen SUS/SIN behavior.
-- **Implementation checkpoint:** No implementation is authorized yet. Record the commit when `SOUT-BATCH-02` enters `awaiting_review`.
+- **Implementation checkpoint:** `HEAD` (`feat(auth): wire production sign out`); awaiting the consolidated `SOUT-BATCH-02` review.

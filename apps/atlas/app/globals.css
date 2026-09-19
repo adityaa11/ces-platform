@@ -953,6 +953,12 @@ h1 { font-size: clamp(2.35rem, 6vw, 5rem); letter-spacing: -.055em; line-height:
   font-weight: var(--weight-medium);
   line-height: var(--leading-tight);
 }
+.profile-session-action { border-top: 1px solid var(--line); margin-top: .35rem; padding-top: .45rem; }
+.profile-session-action > button { background: transparent; border: 0; border-radius: .55rem; color: var(--ink); cursor: pointer; display: block; font: inherit; font-size: var(--type-body-compact); font-weight: var(--weight-medium); line-height: var(--leading-tight); padding: .65rem .5rem; text-align: left; width: 100%; }
+.profile-session-action > button:hover:not(:disabled) { background: var(--mint); }
+.profile-session-action > button:focus-visible { outline: 3px solid #8b8af8; outline-offset: 2px; }
+.profile-session-action > button:disabled { cursor: wait; opacity: .65; }
+.profile-session-action > p { color: var(--error-ink); font-size: var(--type-meta); line-height: var(--leading-body); margin: .35rem .5rem .1rem; }
 .theme-selector {
   font-size: var(--type-body-compact);
   line-height: var(--leading-tight);
