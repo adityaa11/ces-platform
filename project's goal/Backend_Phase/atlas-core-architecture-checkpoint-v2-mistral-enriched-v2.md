@@ -1,8 +1,51 @@
 # Atlas Core Architecture — Updated Checkpoint
 
-## Core Principle
+## Status
 
-> **Atlas derives durable project knowledge from immutable human-readable documents, reconciles that knowledge into workspace truth, and reasons over that truth without losing its source provenance.**
+This checkpoint is an **additive architecture update** to the existing Atlas core architecture.
+
+It incorporates the clarified post-extraction **human review + contextual chatbot** model while preserving the already-approved Backend Stack Setup foundations.
+
+The following remain frozen and are **not reopened** by this update:
+
+```text
+BSS-001  Runtime / workspace foundation
+BSS-002  Local PostgreSQL
+BSS-003  PostgreSQL / Drizzle authority boundaries
+BSS-004  Better Auth persistence
+BSS-005  Agents Bridge service foundation
+BSS-006  pg-boss background runtime
+BSS-007  DocumentStore foundation
+BSS-008  Mistral provider adapter
+BSS-009  Document Perception pipeline
+BSS-009-01 Atlas perception authority
+BSS-009-02 Bridge perception integration
+```
+
+This update applies to the **downstream semantic/domain architecture** after Document Perception:
+
+```text
+Semantic Extraction
+Retrieval
+Reconciliation
+Human Review
+Review Projection
+Resolved Knowledge
+Conversational Semantic Mediator
+Correction / Addendum
+CES
+Publication
+```
+
+Prototype/fixture-era skills may be rewritten against the production contracts established by the Backend Phase. Their useful semantic principles may be retained, but their existing implementation details do not constrain the production backend architecture.
+
+---
+
+# Core Principle
+
+> **Atlas derives durable project knowledge from immutable human-readable documents, reconciles that knowledge into reviewable workspace meaning, requires human review where meaning cannot be safely resolved, and only then allows accepted project truth to advance without losing source provenance.**
+
+The updated high-level flow is:
 
 ```text
 Documents
@@ -17,64 +60,90 @@ NormalizedDocument
 Semantic Extraction
    |
    v
+Semantic Candidates
+   |
+   v
 Knowledge Retrieval
    |
    v
 Reconciliation
    |
    v
-Resolved Workspace Knowledge
+Validated Reviewable State
    |
-   +------------------+
-   |                  |
-   v                  v
-Human Projections   CES Assessment
-Workflow / Facts        |
-   |                    v
-   |                CES Result
-   +---------+----------+
-             |
-             v
-       Review / Chatbot
-             |
-             v
-Addendum when correction is required
-             |
-             v
-same Atlas document cycle
-             |
-             v
-           Publish
+   +-------------------------+
+   |                         |
+   v                         v
+Review Projection       Contextual Chat
+   |                         |
+   +------------+------------+
+                |
+                v
+           Human Review
+                |
+                v
+   Accepted Workspace Resolution
+                |
+                v
+     Resolved Workspace Knowledge
+           /             \
+          /               \
+         v                 v
+ Main Workflow / Facts   CES Assessment
+                           |
+                           v
+                       CES Result
 ```
 
-The architecture is divided into **ten responsibilities**.
+When a human correction introduces project meaning that is **not already defensibly supported by the immutable source documents**, the correction enters the Addendum cycle:
 
-These are architectural sections, **not a declaration that Atlas must have ten skills**. Each section can later be implemented through reasoning skills, deterministic services, schemas, indexes, or combinations of them.
+```text
+Human correction / clarification
+            |
+            v
+      Preview Addendum
+            |
+            v
+   normal Atlas document cycle
+            |
+            v
+   reconciliation preview
+            |
+            v
+        approval
+            |
+            v
+   Immutable Addendum
+```
 
-## Provider Qualification Direction — Mistral
+When the human is only resolving Atlas's interpretation of evidence that already exists in immutable source documents, Atlas may record a governed **review resolution** without creating a new Addendum.
+
+The architecture remains divided into ten broad responsibilities. These are architecture responsibilities, not a declaration that Atlas must have exactly ten skills.
+
+---
+
+# Provider Qualification Direction — Mistral
 
 The current provider qualification direction maps Atlas responsibilities to Mistral capabilities as follows.
 
-This is **not a provider lock-in decision** and does not change Atlas's core architecture. Atlas should continue to expose provider-neutral capabilities through Agents Bridge. Model names below are current qualification candidates and may be replaced without changing the semantic contracts.
+This is not a provider lock-in decision. Atlas continues to expose provider-neutral capabilities through Agents Bridge.
 
-| Atlas responsibility | Model requirement | Mistral fit | Current qualification direction |
-| --- | --- | --- | --- |
-| 1. Project/workspace/revisions | None | N/A | Atlas/PostgreSQL |
-| 2. Document perception | Document parsing only | Strong | Mistral OCR 4.1 |
-| 3. Semantic extraction | Multimodal + structured semantic reasoning | Strong | OCR 4.1 + Large 3 / Medium 3.5 |
-| 4. Targeted retrieval | Semantic embeddings/retrieval | Strong | `mistral-embed` optional; Atlas owns index |
-| 5. Reconciliation | Deep relational reasoning | Needs benchmark | Large 3 vs Medium 3.5 |
-| 6. Resolved knowledge/dependencies | Mostly deterministic | N/A | Atlas |
-| 7. Workflow/Facts projections | Grounded generation | Strong | Small 4 / deterministic projection |
-| 8. CES assessment | High-quality grounded reasoning | Most important benchmark | Medium 3.5 / Large 3 |
-| 9. Chatbot mediator | Streaming + tools + reasoning | Very strong | Small 4 |
-| 10. Addendum/correction | Language + structured proposal | Strong | Small 4 / Medium 3.5 |
-| Evidence/provenance | Document localization | Exceptional fit | OCR 4.1 bounding boxes |
-| Incremental operation | Bounded reasoning | Strong | 256K-class context + targeted retrieval |
+| Atlas responsibility | Model requirement | Current direction |
+| --- | --- | --- |
+| 1. Project/workspace/revisions | None | Atlas/PostgreSQL |
+| 2. Document perception | Document parsing / OCR | Mistral OCR 4.1 |
+| 3. Semantic extraction | Structured semantic reasoning | Large 3 / Medium 3.5 qualification |
+| 4. Targeted retrieval | Semantic retrieval signal | `mistral-embed` optional; Atlas owns retrieval |
+| 5. Reconciliation | Deep relational reasoning | Large 3 vs Medium 3.5 benchmark |
+| 6. Reviewable / resolved state & dependencies | Mostly deterministic | Atlas |
+| 7. Workflow/Facts/review projections | Grounded grouping + deterministic projection | Small 4 where reasoning is needed; Atlas owns state |
+| 8. CES assessment | High-quality grounded reasoning | Medium 3.5 / Large 3 qualification |
+| 9. Conversational mediator | Streaming + tools + reasoning | Small 4 default |
+| 10. Addendum/correction | Language + structured proposal | Small 4 with bounded escalation |
+| Evidence/provenance | Source localization | OCR 4.1 is a strong source-localization candidate |
+| Incremental operation | Bounded reasoning | Targeted retrieval + bounded context |
 
-### Provider-neutral capability aliases
-
-Atlas should request capabilities rather than vendor model IDs.
+## Provider-neutral capability aliases
 
 Conceptually:
 
@@ -89,41 +158,13 @@ atlas.chat.deep
 atlas.addendum.compose
 ```
 
-A Mistral-backed qualification map can initially resolve them as:
+The server controls capability-to-provider resolution.
 
-```text
-atlas.document.perceive
-    -> Mistral OCR 4.1
+Skills and clients must not select arbitrary provider model IDs or endpoints.
 
-atlas.semantic.extract
-    -> Mistral Large 3
-       with Medium 3.5 as a qualification challenger
+## What providers may own
 
-atlas.semantic.reconcile
-    -> Large 3 vs Medium 3.5 benchmark
-
-atlas.retrieval.embed
-    -> mistral-embed
-
-atlas.ces.assess
-    -> Medium 3.5 vs Large 3 benchmark
-
-atlas.chat.default
-    -> Mistral Small 4
-
-atlas.chat.deep
-    -> stronger qualified reasoning model
-
-atlas.addendum.compose
-    -> Small 4 by default
-       with escalation when semantic complexity requires it
-```
-
-The alias is server-controlled. Skills and clients must not select arbitrary providers, model IDs, or endpoints.
-
-### What Mistral is allowed to own
-
-Mistral may provide:
+A provider may perform:
 
 ```text
 document perception
@@ -131,6 +172,8 @@ OCR / document structure
 multimodal interpretation
 language reasoning
 structured candidate generation
+semantic relationship reasoning
+semantic grouping
 embeddings
 chat response generation
 tool-call proposals
@@ -141,7 +184,9 @@ Atlas must continue to own:
 ```text
 canonical documents
 workspace state
-revision history
+candidate validation
+reviewable state
+review decisions
 resolved truth
 retrieval policy
 indexes
@@ -154,14 +199,15 @@ chat history
 authorization
 ```
 
-Therefore Atlas remains the system of record and Mistral remains a replaceable reasoning/perception provider.
+The provider reasons.
+
+Atlas remains the system of record.
 
 ---
 
-
 # Section 1 — Project, Workspace & Revision Lifecycle
 
-Define the deterministic skeleton in which everything else operates.
+Atlas operates inside a deterministic project/workspace lifecycle.
 
 ```text
 Project
@@ -171,9 +217,10 @@ Project
 +-- Workspace
     +-- base revision
     +-- source documents
-    +-- extracted knowledge
-    +-- reconciled state
+    +-- extracted candidates
+    +-- reconciliation state
     +-- review state
+    +-- accepted workspace resolution
 ```
 
 ## Initial lifecycle
@@ -188,6 +235,12 @@ Initial Draft
     |
     v
 Initial PRD processing
+    |
+    v
+Semantic Extraction
+    |
+    v
+Reconciliation
     |
     v
 Review
@@ -211,6 +264,9 @@ Choose Base
 Upload PRD
     |
     v
+Extract
+    |
+    v
 Reconcile with Base
     |
     v
@@ -225,35 +281,68 @@ Master
 
 This section establishes:
 
-- workspace isolation;
-- base revisions;
-- revision history;
-- workspace HEAD;
-- approval state;
-- publication;
-- Master advancement.
+```text
+workspace isolation
+base revisions
+revision history
+workspace HEAD
+review state
+approval state
+publication
+Master advancement
+```
 
-This should primarily be **deterministic infrastructure**, not model reasoning.
+These are primarily deterministic Atlas responsibilities.
+
+## Review state is not accepted truth
+
+A workspace may legitimately contain:
+
+```text
+validated semantic candidates
+validated reconciliation relationships
+unresolved contradictions
+ambiguities
+human review decisions
+```
+
+without those items being accepted Master truth.
+
+Therefore:
+
+```text
+reviewable
+    !=
+accepted
+
+reconciliation proposal
+    !=
+resolved truth
+
+review projection
+    !=
+publication
+```
+
+Human review is an explicit lifecycle stage, not a UI-only decoration.
 
 ---
 
 # Section 2 — Immutable Document Model
 
-Define the fundamental source-of-knowledge contract.
-
-Atlas has two primary project document origins:
+Atlas has two durable project document origins:
 
 ```text
 Externally authored
-        |
-        v
-       PRD
+      |
+      v
+     PRD
 
 
 Atlas-assisted human correction
-        |
-        v
-     Addendum
+      |
+      v
+   Addendum
 ```
 
 Both ultimately become:
@@ -262,9 +351,9 @@ Both ultimately become:
 IMMUTABLE SOURCE DOCUMENT
 ```
 
-PRDs are never rewritten when something changes.
+PRDs are never rewritten when project meaning changes.
 
-For example:
+Example:
 
 ```text
 PRD-001
@@ -272,7 +361,7 @@ PRD-001
 "The quota is 40."
 ```
 
-A later correction becomes:
+A later human-authored correction may become:
 
 ```text
 ADD-003
@@ -284,39 +373,27 @@ This replaces the previous quota only
 for Special departures."
 ```
 
-The document history therefore preserves what humans actually specified over time.
+The document history preserves what humans actually specified over time.
 
-An Addendum must be:
-
-- human-readable;
-- exportable;
-- understandable without hidden Atlas state;
-- immutable after acceptance;
-- sufficiently complete to reconstruct its intended semantics.
-
-This gives Atlas its rebuild property:
+An Addendum must remain:
 
 ```text
-PRDs + Addenda
-      |
-      v
-Extraction
-      |
-      v
-Reconciliation
-      |
-      v
-Project Knowledge
+human-readable
+exportable
+understandable without hidden Atlas state
+immutable after acceptance
+complete enough for reconstruction
+source-resolvable
+hashable
 ```
 
 Documents are the durable reconstructable source.
 
-Caches, indexes, resolved state, and projections are replaceable operational structures.
-
+Caches, indexes, review projections, resolved state, and other operational projections remain rebuildable structures.
 
 ## Mistral document-processing direction
 
-For Mistral qualification, document parsing should use OCR 4.1 as a **derived processing layer**, not as the durable source of truth.
+Document parsing may use Mistral OCR 4.1 as a derived processing layer.
 
 ```text
 Immutable PDF bytes
@@ -327,75 +404,27 @@ Immutable PDF bytes
               |
               +-- text / markdown
               +-- tables
-              +-- detected image regions
+              +-- image regions
               +-- document blocks
               +-- bounding boxes
-              +-- confidence / extraction metadata
+              +-- confidence metadata
 ```
 
-The OCR result is replaceable and can be regenerated from the immutable document.
-
-Atlas should distinguish three document/knowledge layers:
+Atlas distinguishes:
 
 ```text
 1. IMMUTABLE SOURCE
-   source.pdf
-   |
-   +-- authoritative document bytes
-   +-- content hash
-   +-- source identity
-   +-- durable / reconstructable
-
 2. DERIVED DOCUMENT PERCEPTION
-   normalized document
-   |
-   +-- page text
-   +-- structural blocks
-   +-- tables
-   +-- images / image references
-   +-- page geometry
-   +-- bounding boxes
-   +-- OCR confidence / extraction metadata
-   +-- replaceable / rebuildable
-
 3. DERIVED SEMANTICS
-   semantic candidates
-   |
-   +-- actors
-   +-- rules
-   +-- constraints
-   +-- workflow relationships
-   +-- normalized meaning
-   +-- evidence links
-   +-- candidate-only until deterministic validation
 ```
 
-Only the immutable source is the durable human-authored source of project knowledge.
-
-Derived document perception may be cached or persisted for efficiency, but it must remain rebuildable from the immutable source and must never become an alternative authoritative document.
-
-Atlas should not make a Mistral-hosted file, library, conversation, or agent the canonical document record. The source bytes and immutable identity stay inside Atlas-controlled storage.
-
-This distinction is especially important for PRDs containing:
-
-```text
-flowcharts
-sequence diagrams
-screenshots
-tables
-image-only pages
-vector diagrams
-mixed text + visual layouts
-```
-
-Text extraction alone is not sufficient for these documents.
+Only the immutable source is durable human-authored project evidence.
 
 ---
 
-
 # Section 3 — Document Perception & Semantic Extraction
 
-This is the first major reasoning boundary.
+Document Perception and Semantic Extraction are separate architectural capabilities.
 
 ```text
 Immutable Document
@@ -413,7 +442,15 @@ Semantic Extraction
 Semantic Candidates
 ```
 
-Semantic extraction identifies meaningful project semantics such as:
+Document Perception answers:
+
+> **What is physically and structurally present in this document, and where is it located?**
+
+Semantic Extraction answers:
+
+> **What project meaning can Atlas defensibly derive from that normalized representation?**
+
+Semantic extraction may identify:
 
 ```text
 actors
@@ -429,169 +466,16 @@ responsibilities
 outputs
 acceptance expectations
 exceptions
-etc.
+unresolved meaning
 ```
 
-Every candidate remains grounded in document evidence.
+Every semantic candidate remains evidence-grounded.
 
-The semantic-extraction result is **not UI copy**.
+The semantic candidate output is not UI copy and is not accepted project truth.
 
-It is a generic semantic representation that later Atlas capabilities can reason over.
+## Provider-neutral NormalizedDocument
 
-For example:
-
-```text
-Source:
-
-"Sistem tidak boleh menerima pendaftaran
-apabila kuota keberangkatan telah penuh."
-```
-
-could produce semantic meaning equivalent to:
-
-```text
-subject:
-registration
-
-constraint:
-registered_count <= departure_quota
-
-condition:
-departure quota exhausted
-
-effect:
-registration rejected
-```
-
-while retaining the original source evidence.
-
-## Project-native terminology
-
-This section also captures project-native vocabulary such as:
-
-```text
-jemaah
-pendaftaran
-jadwal keberangkatan
-kuota
-harga pendaftaran
-```
-
-This project terminology is conceptually separate from the CES assurance knowledge discussed later.
-
-It answers:
-
-> **What do these concepts mean inside this project?**
-
-
-## Document perception and semantic extraction
-
-Atlas must explicitly distinguish **Document Perception** from **Semantic Extraction**.
-
-They are separate architectural capabilities:
-
-```text
-DOCUMENT PERCEPTION
-
-Immutable Document
-       |
-       v
-PDF / document parsing
-       |
-       v
-OCR / layout / visual localization
-       |
-       v
-NormalizedDocument
-```
-
-and:
-
-```text
-SEMANTIC EXTRACTION
-
-NormalizedDocument
-       |
-       v
-multimodal semantic reasoning
-       |
-       v
-SemanticCandidates
-       |
-       v
-Atlas deterministic validation
-```
-
-The canonical combined flow is:
-
-```text
-Immutable Document
-       |
-       v
-Document Perception
-       |
-       v
-NormalizedDocument
-       |
-       +------------------+
-       |                  |
-       v                  v
- text/table blocks   visual regions
- page positions      image regions
-       |             bounding boxes
-       +--------+---------+
-                |
-                v
-       Semantic Extraction
-                |
-                v
-      multimodal semantic reasoning
-       Large 3 / Medium 3.5
-                |
-                v
-        SemanticCandidates
-                |
-                v
-      Atlas deterministic validation
-```
-
-`Document Perception` answers:
-
-> **What is physically and structurally present in this document, and where is it located?**
-
-`Semantic Extraction` answers:
-
-> **What project meaning can Atlas defensibly derive from that normalized document representation?**
-
-The semantic-extraction skill must not be responsible for opening arbitrary filesystem paths, parsing PDF internals, managing provider file state, or deciding storage policy.
-
-OCR identifies source structure and source-local regions. The reasoning model interprets relationships that OCR alone cannot safely infer, such as:
-
-```text
-decision branch direction
-arrow relationships
-diagram sequencing
-state transitions
-conditional paths
-visual grouping
-```
-
-For example, OCR may locate labels such as:
-
-```text
-Approved?
-Yes
-Continue
-No
-Manual Review
-```
-
-but semantic reasoning must determine the actual graph relationship represented by arrows and layout.
-
-
-### Normalized document representation
-
-The perception stage should produce a provider-neutral `NormalizedDocument` contract conceptually shaped like:
+Conceptually:
 
 ```text
 NormalizedDocument
@@ -600,7 +484,6 @@ NormalizedDocument
 +-- source SHA-256
 +-- perception version
 +-- pages[]
-    |
     +-- page number
     +-- dimensions
     +-- text blocks
@@ -611,135 +494,44 @@ NormalizedDocument
     +-- confidence / provider metadata
 ```
 
-The exact schema is not locked at this checkpoint.
+The current Backend Phase already established the production Document Perception boundary.
 
-The important invariants are:
+Semantic/domain implementation must build **downstream** from that boundary rather than reopening it.
 
-```text
-provider-neutral
-source-linked
-page-local
-visual-capable
-rebuildable
-suitable for deterministic evidence validation
-```
+## Structured output boundary
 
-### Derived perception cache
-
-Atlas may persist or cache the `NormalizedDocument` because recomputing OCR and page perception for every semantic operation would be wasteful.
-
-Conceptually:
+Provider structured output improves format reliability but does not grant trust.
 
 ```text
-DocumentStore
-     |
-     v
- source.pdf
-     |
-     v
-Document Perception
-     |
-     v
-NormalizedDocument
-     |
-     v
-Atlas derived-perception cache
-```
-
-The cache is operational state, not project truth.
-
-It may be invalidated and rebuilt when:
-
-```text
-perception implementation changes
-provider/version changes
-normalization contract changes
-integrity verification requires rebuild
-explicit reprocessing is requested
-```
-
-A cache entry should retain enough provenance to identify:
-
-```text
-source document hash
-perception capability/version
-provider/model or parser identity when relevant
-processing timestamp
-normalized representation version
-```
-
-### Structured output boundary
-
-Provider-side structured output improves format reliability, but it does not grant trust.
-
-The required flow remains:
-
-```text
-Mistral structured candidate
+provider semantic output
         |
         v
 JSON parse
         |
         v
-complete Atlas AJV/schema validation
+Atlas schema validation
         |
         v
 reference/evidence validation
         |
         v
-candidate may enter Atlas review/reconciliation
+validated semantic candidates
 ```
 
-If a provider cannot express the complete Atlas schema directly, Agents Bridge may use a provider-qualified transport schema, but the complete Atlas schema remains authoritative and must still validate the normalized result.
+Validated candidates may enter retrieval/reconciliation.
 
-### Extraction benchmark requirement
-
-Mistral qualification must compare at least:
-
-```text
-Large 3
-vs
-Medium 3.5
-```
-
-on Atlas-specific tasks rather than relying only on generic model benchmarks.
-
-Qualification should measure:
-
-```text
-candidate recall
-candidate precision
-hallucination rate
-schema pass rate
-text evidence accuracy
-visual-region evidence accuracy
-workflow reconstruction
-relationship preservation
-ambiguity handling
-output truncation
-latency
-cost
-```
+They still do not automatically become accepted project truth.
 
 ---
 
-
 # Section 4 — Knowledge Indexing & Targeted Retrieval
 
-This solves the full-scan problem.
-
-Atlas should not respond to:
-
-```text
-"Special departure quota is 45."
-```
-
-by scanning every historical PRD, Addendum, and assertion.
+Atlas should not full-scan all historical project material for normal interactive operations.
 
 Instead:
 
 ```text
-Incoming Candidate
+Incoming Candidate / User Request
        |
        v
 Semantic Anchors
@@ -751,7 +543,7 @@ Knowledge Index
 Relevant Knowledge Neighborhood
 ```
 
-Potential retrieval signals include:
+Retrieval signals may include:
 
 ```text
 semantic identity
@@ -763,81 +555,84 @@ relationship
 workflow neighborhood
 project terminology
 dependency
-optional semantic/vector similarity
+workspace / revision
+optional vector similarity
 ```
 
 The critical boundary is:
 
 > **Retrieval discovers potentially relevant knowledge. It does not determine truth.**
 
-Reconciliation determines what the retrieved knowledge means relative to incoming knowledge.
+Reconciliation decides what retrieved knowledge means relative to incoming knowledge.
 
-This retrieval infrastructure can eventually support:
+Retrieval infrastructure should support:
 
 ```text
 PRD reconciliation
 Addendum reconciliation
+review-item expansion
 chatbot query
 chatbot exploration
 chatbot correction
 CES project-context retrieval
+dependency lookup
 ```
 
-CES will additionally require targeted retrieval from its own assurance knowledge baseline.
-
-
-## Mistral retrieval direction
-
-`mistral-embed` may be used as one retrieval signal, but Atlas owns the index and the retrieval decision process.
-
-Conceptually:
+An embedding provider may be one retrieval signal, but Atlas owns:
 
 ```text
-Atlas semantic record
-       |
-       v
-  mistral-embed
-       |
-       v
- embedding vector
-       |
-       v
-Atlas-owned vector/index storage
-       |
-       v
-combined targeted retrieval
+index storage
+workspace scoping
+revision scoping
+retrieval policy
+semantic identity
+dependency signals
+truth decisions
 ```
-
-Vector similarity must remain optional and additive to stronger Atlas-native signals such as semantic identity, business object, actor, property, condition, dependency, workflow neighborhood, and revision/workspace scope.
-
-The embedding provider must never become the authority for:
-
-```text
-truth
-supersession
-workspace visibility
-revision selection
-dependency identity
-semantic equivalence
-```
-
-Those remain Atlas responsibilities.
 
 ---
 
-
 # Section 5 — Semantic Reconciliation
 
-Once relevant existing knowledge is retrieved:
+Reconciliation reasons over both **existing project knowledge** and the relevant **incoming semantic neighborhood**.
+
+The canonical shape is:
 
 ```text
-Incoming Candidate
+Incoming Candidates
         +
 Relevant Existing Knowledge
+        +
+Relevant Incoming Neighbors
         |
         v
 Reconciliation
+        |
+        v
+Relationship Proposals
+        |
+        v
+Deterministic Validation
+        |
+        v
+Validated Reviewable Relationships
 ```
+
+This is broader than only comparing one incoming candidate against Master.
+
+Atlas should be able to detect:
+
+```text
+incoming candidate vs existing knowledge
+```
+
+and:
+
+```text
+incoming candidate vs other incoming candidates
+```
+
+within the same reviewable extraction/reconciliation scope.
 
 Atlas reasons about relationships such as:
 
@@ -854,26 +649,27 @@ ambiguous
 requires resolution
 ```
 
-For example:
+## Example: apparent contradiction
 
-```text
 Existing:
 
+```text
 quota = 40
-
+```
 
 Incoming:
 
+```text
 Special departure quota = 45
 ```
 
-must not automatically become:
+Atlas must not automatically conclude:
 
 ```text
 40 -> 45
 ```
 
-The actual resulting semantics may be:
+The actual semantic relationship may be specialization:
 
 ```text
 General departure:
@@ -883,75 +679,164 @@ Special departure:
 quota = 45
 ```
 
-Reconciliation is therefore the heart of Atlas's **knowledge evolution**.
+## Example: source-internal conflict
 
-The same reconciliation machinery should operate whether incoming knowledge originated from:
+The same uploaded PRD may contain:
 
 ```text
-PRD
-or
-Addendum
+page 3:
+quota = 40
+
+page 8:
+quota = 45
 ```
 
-because both become source documents before entering the Atlas knowledge pipeline.
+If the document does not establish supersession or scope distinction, Atlas should surface an unresolved relationship rather than arbitrarily selecting one value.
 
+## Reconciliation proposals are reviewable before acceptance
 
-## Mistral reconciliation qualification
+A reconciliation result may be:
 
-Reconciliation is a **hard qualification gate** for the provider.
+```text
+schema-valid
+evidence-valid
+reference-valid
+workspace-valid
+```
 
-The model must correctly distinguish cases such as:
+and still remain:
+
+```text
+unresolved
+contradictory
+ambiguous
+requires human decision
+```
+
+Therefore:
+
+> **A reconciliation result may be valid and reviewable without being accepted or resolved project truth.**
+
+No model may directly update resolved knowledge.
+
+Deterministic validation verifies the proposal's structure and references.
+
+Human review and Atlas authority determine whether the proposal becomes accepted workspace meaning.
+
+## Reconciliation qualification
+
+Provider qualification must test:
 
 ```text
 replacement
-vs
 specialization
-vs
 partial supersession
-vs
 supporting detail
-vs
+duplicate
 contradiction
-vs
+incoming-vs-incoming inconsistency
 unresolved ambiguity
 ```
 
-This is more important than raw benchmark intelligence.
-
-The initial Mistral qualification should therefore run the same reconciliation fixtures through:
-
-```text
-Mistral Large 3
-Mistral Medium 3.5
-```
-
-and compare normalized semantic results.
-
-If the more expensive/deeper model does not materially improve Atlas reconciliation quality, Atlas should prefer the cheaper qualified model.
-
-No model may directly update resolved knowledge. Reconciliation output remains a proposal until deterministic validation accepts the referenced entities, evidence, relationships, workspace/base identity, and schema.
+Reconciliation quality is a hard provider qualification gate.
 
 ---
 
+# Section 6 — Reviewable State, Resolved Knowledge & Dependency Model
 
-# Section 6 — Resolved Knowledge & Dependency Model
+The previous architecture moved too directly from reconciliation to resolved knowledge.
 
-Extraction and reconciliation produce an efficient current semantic state.
+The refined boundary is:
 
 ```text
-Documents
-   |
-   v
-Candidates
-   |
-   v
-Reconciliation
-   |
-   v
+Base Resolved Knowledge
+          +
+Validated Incoming Candidates
+          +
+Validated Reconciliation Relationships
+          |
+          v
+VALIDATED REVIEWABLE STATE
+          |
+          v
+Human Review
+          |
+          v
+ACCEPTED WORKSPACE RESOLUTION
+          |
+          v
 RESOLVED WORKSPACE KNOWLEDGE
 ```
 
-Resolved knowledge should preserve:
+## 6.1 Validated Reviewable State
+
+Reviewable state may include:
+
+```text
+incoming candidates
+current/base semantic references
+reconciliation relationship proposals
+conflicts
+ambiguities
+possible supersession
+source-internal inconsistency
+affected dependency references
+evidence references
+review decisions
+```
+
+Reviewable state is Atlas-owned state.
+
+It is not provider memory and is not equivalent to accepted truth.
+
+## 6.2 Human review decisions
+
+A human review decision may do one of two fundamentally different things.
+
+### A. Resolve an evidence-supported interpretation
+
+Example:
+
+```text
+Existing documents already support:
+General quota = 40
+Special quota = 45
+
+Atlas proposed:
+45 supersedes 40
+
+Human:
+"No. 45 only applies to Special departures."
+```
+
+If the immutable evidence already supports that interpretation, Atlas may record a governed review resolution.
+
+No new project document is necessarily required.
+
+### B. Introduce new or clarifying project meaning
+
+Example:
+
+```text
+Existing documents:
+quota = 40
+
+Human:
+"Starting next release,
+Special departures use 45."
+```
+
+If that meaning is not already established by immutable project documents, the user is introducing new project meaning.
+
+That must enter Atlas through an immutable document such as an Addendum.
+
+This preserves the rule:
+
+> **Durable project knowledge originates from immutable human-readable documents.**
+
+## 6.3 Resolved Workspace Knowledge
+
+Resolved knowledge preserves:
 
 ```text
 current semantic meaning
@@ -962,163 +847,225 @@ relationships
 dependencies
 revision
 workspace
+accepted review decisions
 ```
 
-This is the state Atlas normally reads.
-
-It should not reconstruct the entire project from historical documents for every operation.
+This is the efficient semantic state Atlas normally reads after acceptance.
 
 Documents remain the reconstructable source.
 
-Resolved knowledge becomes the efficient operational state.
+## 6.4 Dependency model
 
-## Dependency model
+Atlas must know what depends on what.
 
-Atlas also needs to know what depends on what.
-
-For example:
+Example:
 
 ```text
 quota rule
    |
    +-- registration constraint
-   |
    +-- workflow condition
-   |
    +-- displayed remaining quota
-   |
+   +-- project facts
    +-- CES assessments
 ```
 
-If the quota semantics change, Atlas can determine the affected semantic neighborhood.
+If quota semantics change, Atlas can identify the affected semantic neighborhood.
 
 This enables:
 
 > **Incremental recomputation instead of project-wide regeneration.**
 
----
+Dependency impact should also be available to human review.
 
-# Section 7 — Main Workflow & Project Facts
-
-Main Workflow and Project Facts are human-facing projections of resolved project semantics.
-
-They do **not** independently reinterpret PRDs.
+For example:
 
 ```text
-                 Resolved Knowledge
-                  /             \
-                 /               \
-                v                 v
-         Main Workflow       Project Facts
+affects 3 workflow nodes
+affects 2 project facts
+affects 1 CES assessment
 ```
 
-## Main Workflow
+These are auditable dependency signals, not model-generated importance scores.
 
-Answers:
+---
+
+# Section 7 — Human Projections: Main Workflow, Project Facts & Review Projection
+
+Atlas has two different projection responsibilities that must not be confused.
+
+## 7.1 Accepted project projections
+
+Main Workflow and Project Facts are projections of **resolved accepted workspace knowledge**.
+
+```text
+             Resolved Knowledge
+              /             \
+             v               v
+      Main Workflow     Project Facts
+```
+
+Main Workflow answers:
 
 > **How is this project/system supposed to operate?**
 
-It reconstructs meaningful operational flows from things such as:
-
-```text
-actors
-triggers
-steps
-conditions
-branches
-states
-rules
-dependencies
-outputs
-exceptions
-```
-
-For example:
-
-```text
-Admin selects jemaah
-        |
-        v
-Select open departure
-        |
-        v
-Check remaining quota
-        |
-        +-- available --> Register
-        |
-        +-- full ------> Reject
-```
-
-## Project Facts
-
-Answers:
+Project Facts answers:
 
 > **What does Atlas currently know to be true about this project?**
 
-For example:
+They must resolve from the same semantic state and cannot silently disagree.
+
+CES does not scrape rendered Workflow or Facts UI.
+
+All three consume shared Atlas semantics.
+
+## 7.2 Workspace review projection
+
+A non-Master workspace also needs a human-facing **review projection** before its incoming meaning is accepted.
+
+This evolves the existing `atlas.workspace-review-projections` concept.
+
+Conceptually:
 
 ```text
-A departure has a quota.
-
-Registration cannot exceed departure quota.
-
-Registration preserves the agreed price
-at the time of registration.
+Base / Current Resolved Knowledge --------+
+                                         |
+Validated Incoming Candidates -----------+
+                                         |
+Validated Reconciliation Relationships --+--> Review Projection
+                                         |
+Dependency References -------------------+
+                                         |
+Evidence References ---------------------+
+                                         |
+Validated CES References when relevant --+
 ```
 
-Both surfaces must resolve from the same semantic state.
-
-Therefore they cannot silently disagree.
-
-## Important CES boundary
-
-CES does **not** scrape the rendered Main Workflow or Project Facts UI.
-
-Instead:
+The review projection may organize:
 
 ```text
-                 Resolved Knowledge
-                /        |        \
-               v         v         v
-          Workflow     Facts      CES
+review summary
+attention queue
+semantic groups
+workflow deltas
+fact deltas
+current-vs-incoming comparisons
+conflicts
+ambiguities
+evidence references
+affected dependencies
+review progress
 ```
 
-Workflow, Facts, and CES are different consumers of the same underlying project semantics.
-
-
-## Projection execution direction
-
-Main Workflow and Project Facts should prefer deterministic projection whenever the resolved semantic model already contains enough structure.
-
-A language model may assist with:
+The projection must **not** independently decide:
 
 ```text
-human-readable grouping
-concise explanation
-narrative rendering
-clarity
+semantic truth
+reconciliation
+supersession
+conflict resolution
+approval
+publication
+CES discovery
 ```
 
-but must not independently reinterpret source documents.
+Those responsibilities remain elsewhere.
 
-For Mistral qualification, Small 4 is a suitable default candidate for bounded grounded generation because the input should be resolved Atlas semantics, not the historical PRD corpus.
+## 7.3 Candidate-only boundary
+
+The production rewrite of `atlas.workspace-review-projections` should preserve the useful invariant already established during the fixture phase:
+
+> **Review projection is candidate/review data only. It does not become accepted truth merely because it is renderable.**
+
+Prototype-era skill implementation details are not canonical, but this authority boundary is worth preserving.
+
+## 7.4 Scalable serving
+
+The review surface must not require one giant semantic payload.
+
+The serving model should support progressive disclosure:
+
+```text
+review summary
+      |
+      v
+attention queue
+      |
+      v
+semantic groups
+      |
+      v
+selected group
+      |
+      v
+selected item
+      |
+      v
+evidence / dependencies
+```
+
+Opening a review should not require serializing:
+
+```text
+all project history
+all immutable documents
+all resolved knowledge
+all candidate knowledge
+all source evidence
+all CES assessments
+```
+
+Instead, Atlas should support bounded retrieval/pagination/cursors at the relevant review level.
+
+Exact API routes are implementation details.
+
+## 7.5 Review progress
+
+Atlas should be able to represent resumable review work.
+
+Conceptual item states may include:
+
+```text
+unreviewed
+reviewed
+needs-correction
+needs-clarification
+resolved
+```
+
+These names are not yet locked as production enum values.
+
+The backend ticket that owns review persistence must decide whether progress is:
+
+```text
+per workspace
+per user
+or both
+```
+
+The UI may then show summaries such as:
+
+```text
+38 of 42 items reviewed
+2 conflicts unresolved
+2 clarifications unresolved
+```
+
+without loading all 42 items.
 
 ---
 
-
 # Section 8 — CES Reasoning & Assurance Knowledge
 
-CES is a distinct semantic reasoning capability.
+CES remains a distinct semantic reasoning capability.
 
-It does **not** merely summarize PRDs, restate acceptance criteria, or copy Project Facts.
+It does not simply summarize PRDs, restate acceptance criteria, or copy Project Facts.
 
 CES asks:
 
 > **Given what this project is required to do, what foreseeable engineering, operational, control, and verification concerns should the team be aware of?**
 
-There are two knowledge sides involved.
-
-## 8.1 Project Knowledge Side
+## 8.1 Project knowledge side
 
 ```text
 Resolved Knowledge
@@ -1131,15 +1078,9 @@ Resolved Knowledge
    +-- provenance
 ```
 
-This represents:
+## 8.2 Assurance knowledge side
 
-> **What this particular project means and currently requires.**
-
----
-
-## 8.2 CES Assurance Knowledge Side
-
-The machine-consumed assurance sources are:
+Machine-consumed assurance sources currently include:
 
 ```text
 OWASP ASVS
@@ -1148,147 +1089,54 @@ NIST CSF
 NIST SP 800-53
 ```
 
-ISO/IEC 27001 and ISO/IEC 27002 are excluded from machine-consumed CES reasoning because of their licensing restrictions.
+ISO/IEC 27001 and 27002 remain excluded from machine-consumed reasoning because of licensing restrictions.
 
-These sources should not simply be dumped into a model prompt.
+Assurance material should be normalized/indexed into governed Atlas assurance knowledge rather than dumped wholesale into a model context.
 
-Instead:
+## 8.3 Assurance provenance
 
-```text
-OWASP ASVS ------+
-OWASP WSTG ------+
-NIST CSF --------+--> Governed Assurance Knowledge
-NIST SP 800-53 --+
-                         |
-                         v
-                 normalized/indexed
-                   CES Baseline
-```
-
-The exact normalization architecture is **not locked yet**.
-
-We may eventually need canonical concepts or a taxonomy because the four assurance sources use different terminology.
-
-However, we should not reproduce the large legacy `worker1` Policy architecture simply because it existed.
-
-The amount of normalization should be driven by actual CES requirements.
-
----
-
-## 8.3 CES Assurance Provenance
-
-Governed assurance knowledge should retain enough identity to explain where it came from.
-
-Conceptually:
+Governed assurance knowledge should preserve:
 
 ```text
-CES Assurance Concept
-        |
-        v
-Source Family
-        |
-        v
-Source Release
-        |
-        v
-Source Locator / Reference
+source family
+source release
+source locator/reference
+normalized assurance identity
 ```
 
-For example:
+## 8.4 Targeted CES retrieval
 
-```text
-assurance concept
-      |
-      +-- OWASP ASVS
-      |      +-- exact release
-      |      +-- relevant source locator
-      |
-      +-- NIST SP 800-53
-             +-- exact revision/release
-             +-- relevant source locator
-```
-
-This allows CES reasoning to remain auditable.
-
----
-
-## 8.4 Targeted CES Retrieval
-
-CES must also be **incremental by default**.
-
-It should not perform:
-
-```text
-Project
-   +
-entire OWASP ASVS
-   +
-entire WSTG
-   +
-entire NIST CSF
-   +
-entire NIST 800-53
-   |
-   v
-LLM
-```
-
-Instead:
+CES remains incremental.
 
 ```text
 Relevant Project Semantic Neighborhood
-                |
-                v
-         Semantic Anchors
-                |
-                v
-     CES Assurance Retrieval
-                |
-                v
-Relevant Assurance Knowledge
+        |
+        v
+Relevant Assurance Retrieval
+        |
+        v
+Bounded CES Context
 ```
 
-Then only the relevant project and assurance context enters CES reasoning.
+Retrieval identifies potentially relevant assurance knowledge.
 
-The same retrieval principle from Section 4 applies:
+It does not itself decide that a CES concern exists.
 
-> **Retrieval identifies potentially relevant assurance knowledge. It does not itself decide that a CES concern exists.**
+## 8.5 CES assessment reasoning
 
----
-
-## 8.5 CES Assessment Reasoning Skill
-
-The actual semantic assessment belongs in a dedicated reasoning capability.
-
-Conceptually:
+The reasoning capability receives:
 
 ```text
-Relevant Project Knowledge
-           |
-           |
-           v
-   +--------------------+
-   |                    |
-   | CES ASSESSMENT     |
-   | REASONING SKILL    |
-   |                    |
-   +--------------------+
-           ^
-           |
-Relevant CES Assurance Knowledge
+relevant project semantics
++
+relevant governed assurance semantics
++
+provenance
++
+output contract
 ```
 
-A likely future skill boundary is something similar to:
-
-```text
-atlas.ces-assessment
-```
-
-The exact name and contract are not locked yet.
-
-The important architectural responsibility is.
-
-The skill reasons about:
+and may derive:
 
 ```text
 project invariant
@@ -1301,167 +1149,38 @@ unresolved assumption
 assurance relevance
 ```
 
-while remaining grounded in supplied project and assurance context.
+It should not arbitrarily prescribe an implementation unless project requirements support that prescription.
 
----
+## 8.6 Project evidence vs CES-derived reasoning
 
-## 8.6 Example CES Reasoning
-
-Project knowledge:
+Atlas must keep separate:
 
 ```text
-Registration cannot exceed
-departure quota.
+SOURCE SAID
 ```
 
-Workflow semantics:
+from:
 
 ```text
-Admin registers a jemaah
-into an open departure.
+CES DERIVED
 ```
 
-CES retrieves assurance knowledge relevant to integrity and concurrent state changes.
-
-Then the reasoning skill may derive:
+A CES assessment therefore needs both:
 
 ```text
-Concern:
-
-Concurrent registration attempts could
-observe the same remaining capacity before
-either operation completes, allowing the
-accepted quota invariant to be violated.
-
-
-Required property:
-
-Quota enforcement must remain correct when
-registration attempts overlap.
-
-
-Verification concern:
-
-Simultaneous registration attempts should
-demonstrate that the configured departure
-quota cannot be exceeded.
+Project Support
+Assurance Support
 ```
 
-CES should not automatically say:
+plus Atlas-derived reasoning.
 
-```text
-Use Redis locking.
-```
+## 8.7 CES knowledge gaps
 
-or:
+When governed assurance knowledge is insufficient, uncertainty remains visible.
 
-```text
-Use SELECT FOR UPDATE.
-```
+Atlas must not invent unsupported compliance or control requirements.
 
-unless project requirements specifically constrain implementation.
-
-The CES responsibility is primarily:
-
-> **Surface what must remain true and what foreseeable failure needs consideration—not arbitrarily choose the implementation.**
-
----
-
-## 8.7 Project Evidence vs CES-Derived Reasoning
-
-This distinction must be explicit.
-
-```text
-SOURCE SAID:
-
-"Registration cannot exceed quota."
-```
-
-is not the same as:
-
-```text
-CES DERIVED:
-
-"Concurrent registrations are a foreseeable
-way the quota invariant could be violated."
-```
-
-CES must never make the latter appear as though it were stated by the PRD.
-
-Therefore a CES assessment should conceptually contain two support chains:
-
-```text
-CES Assessment
-|
-+-- Project Support
-|   +-- resolved knowledge IDs
-|   +-- workflow/fact semantics
-|   +-- PRD/Addendum evidence
-|
-+-- Assurance Support
-    +-- CES assurance concept
-    +-- source family
-    +-- source release
-    +-- source locator/reference
-```
-
-And separately, the assessment contains Atlas's derived reasoning:
-
-```text
-failure scenario
-engineering consideration
-operational/control consideration
-verification consideration
-```
-
-This gives Atlas an explainable answer to:
-
-> **Why did CES surface this concern?**
-
----
-
-## 8.8 CES Knowledge Gaps
-
-CES must be allowed to conclude that its assurance knowledge is insufficient.
-
-It must **not improvise unsupported compliance/control requirements**.
-
-Conceptually:
-
-```text
-Project semantics
-       +
-retrieved CES knowledge
-       |
-       v
-insufficient support
-       |
-       v
-CES KNOWLEDGE GAP
-```
-
-The exact gap taxonomy is not locked yet.
-
-Potential distinctions may eventually include:
-
-```text
-assurance source gap
-assurance extraction gap
-normalization gap
-assessment ambiguity
-```
-
-but we should define those based on the new architecture rather than copying legacy categories.
-
-The fundamental invariant is:
-
-> **When CES cannot defensibly derive a concern from governed knowledge, uncertainty must remain visible instead of being filled with invented certainty.**
-
----
-
-## 8.9 CES Assessment Candidates
-
-Model reasoning does not automatically become trusted CES output.
+## 8.8 CES assessment candidates
 
 ```text
 CES Assessment Skill
@@ -1473,208 +1192,223 @@ CES Assessment Candidates
 Deterministic Validation
         |
         v
-CES Result
+Validated CES Assessments
 ```
 
-Validation can ensure things such as:
+Model reasoning does not automatically become trusted output.
+
+## 8.9 CES projection boundary
+
+Review projection may present validated CES assessment data where relevant.
+
+It must not generate CES concerns itself.
 
 ```text
-project references exist
-assurance references exist
-source releases are known
-required provenance exists
-assessment schema is valid
-unsupported references are rejected
-dependencies resolve
-baseline identity is recorded
-```
-
-Semantic reasoning remains the model's responsibility.
-
-Authority and integrity remain deterministic responsibilities.
-
----
-
-## 8.10 CES Projection Boundary
-
-CES assessment generation and CES presentation are separate concerns.
-
-The current `atlas.workspace-review-projections` concept should therefore **not own CES discovery**.
-
-Instead:
-
-```text
-CES Assessment Skill
-        |
-        v
-validated CES assessments
-        |
-        v
-Projection
-        |
-        v
-CES Result UI
-```
-
-Projection can decide how already-produced assessment data participates in the review model.
-
-It should not independently invent the concerns.
-
-This prevents:
-
-```text
-acceptance criterion
+CES Assessment
       |
       v
-"CES assessment"
+Validated CES Assessment
+      |
+      v
+Review / Result Projection
 ```
 
-from becoming the CES architecture.
-
-
-## Mistral CES qualification direction
-
-CES is the **most important model-quality benchmark** in the Mistral evaluation.
-
-A model is not qualified merely because it can summarize project facts or return valid JSON.
-
-It must demonstrate that it can:
-
-```text
-reason from supplied project semantics
-reason from supplied governed assurance semantics
-keep source statements separate from Atlas-derived reasoning
-surface foreseeable failure scenarios
-avoid implementation prescriptions unless supported
-preserve both support chains
-expose uncertainty
-emit a knowledge gap when support is insufficient
-```
-
-The initial candidate comparison should be:
-
-```text
-Medium 3.5
-vs
-Large 3
-```
-
-using identical Atlas inputs, schemas, retrieval neighborhoods, and assurance baseline references.
-
-The benchmark should specifically penalize:
-
-```text
-invented controls
-invented compliance requirements
-fabricated source references
-unsupported implementation prescriptions
-loss of project provenance
-loss of assurance provenance
-false certainty where a knowledge gap is appropriate
-```
-
-The final production choice for `atlas.ces.assess` is therefore intentionally **not locked yet**.
-
-### CES context discipline
-
-Mistral should receive only the bounded context Atlas retrieved:
-
-```text
-relevant project semantics
-+
-relevant assurance concepts
-+
-their provenance
-+
-required output contract
-```
-
-The model should not independently fetch or choose arbitrary external assurance material during assessment.
-
-This keeps the governed CES baseline deterministic and auditable.
+`atlas.workspace-review-projections` is therefore downstream of CES reasoning.
 
 ---
-
 
 # Section 9 — Conversational Semantic Mediator
 
-The chatbot is Atlas's **conversational semantic mediator**.
+The chatbot is Atlas's **Conversational Semantic Mediator**.
 
-It supports three broad interaction modes:
+It is not the primary post-extraction surface.
+
+The primary post-extraction surface is the Atlas review projection showing:
 
 ```text
-                    USER
-                      |
-                      v
-              Semantic Mediator
-                      |
-         +------------+------------+
-         |            |            |
-         v            v            v
-       QUERY        EXPLORE      CORRECT
+what Atlas extracted
+how it relates to current knowledge
+what agrees
+what conflicts
+what is ambiguous
+what needs human attention
 ```
 
-These do not necessarily need explicit UI mode buttons.
+The chatbot is attached to that review context and helps the human:
 
-Atlas can infer intent while requiring clarification when mutating intent is ambiguous.
+```text
+understand
+query
+explore
+resolve
+correct
+navigate
+```
 
-## Query
+## 9.1 Broad interaction modes
+
+The existing broad modes remain:
+
+```text
+QUERY
+EXPLORE
+CORRECT
+```
+
+They do not require explicit UI mode buttons.
+
+Atlas may infer intent but must require clarification where mutation intent is ambiguous.
+
+### Query
 
 Example:
 
 ```text
-"Why can't a jemaah register
-when quota is full?"
+"Why does Atlas think quota-full registration is rejected?"
 ```
 
 Execution:
 
 ```text
-targeted retrieval
-      |
-      v
-resolved knowledge + evidence
-      |
-      v
-explanation
+selected review item / targeted retrieval
+        |
+        v
+current/base semantics
++
+incoming proposal when relevant
++
+evidence
+        |
+        v
+grounded explanation
 ```
 
 No mutation occurs.
 
-## Explore
+### Explore
 
 Example:
 
 ```text
-"What would happen if quota
-became 45?"
+"What would happen if quota became 45?"
 ```
 
-Atlas can retrieve relevant knowledge and reason hypothetically.
+Atlas may reason hypothetically from bounded relevant context.
 
 Still no mutation occurs.
 
-## Correct
-
-Example:
+Hypothetical state must remain visibly distinct from:
 
 ```text
-"Special departure quota
-should actually be 45."
+current accepted truth
+incoming candidate state
+reviewable proposed state
 ```
 
-Now the chatbot becomes an **assisted Addendum author**.
+### Correct
 
-The architectural boundary is:
+The broad Correct mode now has two possible governed outcomes.
+
+```text
+User correction
+      |
+      v
+Resolve target and evidence
+      |
+      v
+Does immutable evidence already
+support the intended meaning?
+      |
+   +--+--+
+   |     |
+  yes    no
+   |     |
+   v     v
+Review  Preview
+Resolution Addendum
+```
+
+#### Review Resolution
+
+If existing immutable evidence already supports the user's intended interpretation, the chatbot may assist the human in resolving Atlas's reconciliation proposal.
+
+The resulting decision remains subject to Atlas authorization, validation, and review-state rules.
+
+#### Project Correction / Clarification
+
+If the user's intended meaning is new or not defensibly supported by existing project documents, the chatbot becomes an assisted Addendum author.
+
+The canonical authority boundary remains:
 
 > **Chatbot owns human -> document. Atlas owns document -> knowledge.**
 
-This prevents the chatbot from becoming an alternative hidden mutation mechanism.
+The chatbot never becomes an alternative hidden mutation mechanism.
 
+## 9.2 Context hierarchy
 
-## Mistral chatbot direction
+The review UI gives the mediator an explicit bounded-context hierarchy:
 
-The preferred Mistral pattern is stateless model inference with Atlas-owned conversation state.
+```text
+Level 1
+project + workspace + current review
+
+Level 2
+selected semantic group
+
+Level 3
+selected workflow/fact/conflict/reconciliation item
+
+Level 4
+selected evidence / revision / dependency / CES reference
+```
+
+The mediator should receive the smallest sufficient context for the request.
+
+A normal interactive request should include only what is needed, for example:
+
+```text
+current request
++
+workspace/review identity
++
+selected semantic identity
++
+current/base semantic item when relevant
++
+incoming candidate/reconciliation relationship when relevant
++
+bounded evidence
++
+bounded dependency neighborhood
++
+bounded assurance context when required
++
+output contract
+```
+
+## 9.3 Current vs incoming vs hypothetical
+
+The mediator must preserve epistemic/state distinctions.
+
+It must be able to distinguish:
+
+```text
+CURRENT ACCEPTED PROJECT TRUTH
+
+INCOMING CANDIDATE
+
+RECONCILIATION PROPOSAL
+
+UNRESOLVED REVIEW STATE
+
+HYPOTHETICAL STATE
+```
+
+A response must not imply that incoming/proposed/hypothetical meaning is accepted truth.
+
+## 9.4 Atlas-owned conversation state
+
+The preferred provider pattern remains stateless inference with Atlas-owned conversation state.
 
 ```text
 User
@@ -1684,36 +1418,41 @@ Atlas Chat API
   |
   +-- conversation state
   +-- workspace identity
-  +-- permissions
-  +-- targeted retrieval
-  +-- resolved semantics
+  +-- authorization
+  +-- review identity
+  +-- selected semantic identity
+  +-- bounded retrieval
+  +-- current/base semantics
+  +-- incoming/reconciliation context
   +-- evidence
+  +-- dependencies
   |
   v
 Agents Bridge
   |
   v
-Mistral Small 4
+qualified chat model
   |
   v
 streamed response / tool-call proposal
 ```
 
-Atlas should store chat history itself.
+Atlas stores chat history.
 
-Mistral should not become the canonical owner of:
+The provider must not canonically own:
 
 ```text
 conversation memory
 workspace state
 project truth
+review state
 correction state
 approval state
 ```
 
-### Tool boundary
+## 9.5 Tool boundary
 
-For Query and Explore, the model may propose Atlas tools such as:
+Useful tools may conceptually include:
 
 ```text
 search_resolved_knowledge()
@@ -1723,42 +1462,75 @@ get_revision_diff()
 compare_workspaces()
 list_open_questions()
 get_ces_assessment()
+
+get_review_summary()
+get_review_group()
+get_review_item()
+get_reconciliation_relationship()
+get_dependency_impact()
 ```
 
-For Correct, the model may assist with:
+For correction/review resolution, the model may assist with:
 
 ```text
-resolve correction target
+resolve target
 identify ambiguity
 request clarification
+explain current vs incoming meaning
+propose review resolution
 compose Preview Addendum
 ```
 
-but all tools execute under Atlas authorization and deterministic validation.
+All tools execute under Atlas authorization and deterministic validation.
 
 The model never receives direct database mutation authority.
 
-### Escalation
+## 9.6 Bidirectional review context
 
-Small 4 is the default chatbot candidate.
+The center review surface and chatbot should reference the same stable Atlas identities.
 
-Atlas may internally escalate a bounded request to a stronger qualified reasoning model for tasks such as:
+Center -> Chat:
+
+```text
+select conflict
+    |
+    v
+chat receives conflict identity
+```
+
+Chat -> Center:
+
+```text
+chat references affected workflow/fact/CES IDs
+    |
+    v
+UI may highlight/open those entities
+```
+
+This must use Atlas entity/reference identities rather than free-text matching.
+
+## 9.7 Escalation
+
+A small/default model may handle ordinary bounded mediation.
+
+Atlas may escalate a bounded request when necessary for:
 
 ```text
 cross-document contradiction analysis
-complex hypothetical impact analysis
+complex hypothetical impact
 deep revision comparison
 complex Addendum composition
 ```
 
-The user-facing contract should remain an Atlas capability rather than a named vendor model.
+The user-facing capability remains Atlas, not a provider/model name.
 
 ---
 
-
 # Section 10 — Correction Preview, Addendum & Commit
 
-The correction cycle becomes:
+This section applies when human review introduces or clarifies project meaning that is **not sufficiently established by existing immutable project documents**.
+
+The correction cycle remains:
 
 ```text
 User Correction
@@ -1776,7 +1548,7 @@ clarification if necessary
 PREVIEW ADDENDUM
       |
       v
-Atlas Extraction
+incremental Semantic Extraction
       |
       v
 Targeted Retrieval
@@ -1802,17 +1574,15 @@ becomes
       v
 Immutable Addendum
 
-
 AND
-
 
 already-computed semantic result
       |
       v
-committed to workspace
+committed atomically to workspace
 ```
 
-Atlas should **not immediately extract the Addendum again**.
+Atlas should not immediately re-extract the Addendum after confirmation.
 
 The exact Preview Addendum processed by Atlas is the document being accepted.
 
@@ -1831,31 +1601,17 @@ User approval
 Atomic correction revision
 ```
 
-If the Preview Addendum changes semantically after simulation:
-
-```text
-edit preview
-     |
-     v
-previous simulation invalid
-     |
-     v
-rerun Atlas processing
-```
-
-The accepted document and accepted semantic result must correspond.
+If the Preview Addendum changes semantically after simulation, the previous simulation is invalid and must be rerun.
 
 ## Recovery / rebuild
 
-The Addendum remains independently usable later:
+Accepted Addenda remain independently usable for reconstruction:
 
 ```text
-DISASTER / REBUILD
-
 PRDs + Addenda
       |
       v
-normal Atlas extraction
+normal Atlas processing
       |
       v
 reconciliation
@@ -1864,44 +1620,13 @@ reconciliation
 reconstructed knowledge
 ```
 
-This recovery capability does not imply redundant re-extraction during normal correction confirmation.
-
-
-## Mistral Addendum direction
-
-Mistral may help transform human correction intent into a complete Preview Addendum, but the output remains an untrusted proposal until the normal Atlas cycle succeeds.
-
-Preferred default:
-
-```text
-ordinary correction wording
-    -> Small 4
-
-semantically complex correction
-    -> qualified deeper model when required
-```
-
-The Preview Addendum must remain:
-
-```text
-human-readable
-exportable
-complete enough for rebuild
-source-resolvable
-hashable
-immutable after acceptance
-```
-
-Provider conversation memory must not be required to reconstruct its meaning.
+Provider conversation memory must never be required to reconstruct Addendum meaning.
 
 ---
 
-
 # Cross-Cutting — Evidence & Provenance
 
-Evidence is not isolated to extraction.
-
-It runs through the entire architecture.
+Evidence runs through:
 
 ```text
 Source Document
@@ -1910,50 +1635,33 @@ Source Document
 Candidate
       |
       v
+Reconciliation
+      |
+      v
+Reviewable State
+      |
+      v
 Resolved Knowledge
-      |
-      +-- Workflow
-      |
-      +-- Facts
-      |
-      +-- CES Project Support
 ```
 
-CES introduces a second lineage:
+Human review should be able to inspect evidence on both sides of a semantic disagreement.
+
+For example:
 
 ```text
-Assurance Source
-      |
-      v
-Governed Assurance Knowledge
-      |
-      v
-CES Assurance Support
+Current/base evidence
+        vs
+Incoming evidence
 ```
 
-So a CES concern can eventually explain both:
-
-```text
-WHY THIS PROJECT TRIGGERED IT
-
-and
-
-WHY ATLAS CONSIDERS IT A RELEVANT CONCERN
-```
-
-
-## Text and visual evidence shapes
-
-Atlas should not force all evidence into a textual quote.
-
-At minimum, the evidence model should be able to distinguish:
+At minimum, evidence should support:
 
 ```text
 text_quote
 visual_region
 ```
 
-Conceptually:
+Conceptual text evidence:
 
 ```json
 {
@@ -1964,7 +1672,7 @@ Conceptually:
 }
 ```
 
-and:
+Conceptual visual evidence:
 
 ```json
 {
@@ -1986,55 +1694,53 @@ and:
 }
 ```
 
-The semantic interpretation belongs in the candidate payload. The evidence object points back to the immutable source material.
+The semantic interpretation belongs in semantic/reconciliation state.
 
-OCR 4.1 bounding boxes are a strong implementation candidate for producing source-local visual regions, but Atlas owns the evidence contract and must be able to rebuild or revalidate it independently of the provider.
-
-For visual evidence, Atlas should preserve enough identity to detect source drift:
-
-```text
-artifact identity
-document hash
-page
-page-render hash when applicable
-region
-source labels / OCR anchors
-```
-
-This prevents a model-generated visual description from being mistaken for direct source evidence.
+Evidence points back to immutable source material.
 
 ---
-
 
 # Cross-Cutting — Reasoning vs Deterministic Authority
 
 Atlas maintains a strict boundary.
 
 ```text
-MODEL / REASONING                  DETERMINISTIC SYSTEM
+MODEL / REASONING                  DETERMINISTIC ATLAS
 
 understand documents               validate schemas
 interpret semantics                enforce immutability
-discover semantic relationships    maintain revisions
-propose reconciliation             maintain HEAD
-reason about CES concerns          maintain indexes
-mediate user language              enforce approval
-compose Addenda                    perform atomic commit
-semantic grouping                  validate references
-CES relevance reasoning            maintain provenance
-                                   maintain dependency state
+discover relationships             validate references
+propose reconciliation             maintain revisions / HEAD
+semantic grouping                  maintain indexes
+reason about CES                   maintain dependency state
+mediate user language              maintain review state
+explain review items               calculate review progress
+compose Addenda                    enforce authorization
+                                   enforce approval
+                                   perform atomic commit
+                                   publish
+                                   preserve provenance
 ```
 
-The principle is:
+Review-specific deterministic responsibilities include:
 
-> **The model reasons. The deterministic system decides whether that reasoning satisfies the contract and may enter trusted Atlas state.**
+```text
+persist review identity/state
+preserve current-vs-incoming identity
+validate relationship references
+page/filter review items
+calculate progress
+calculate dependency impact
+enforce review decision authority
+```
 
 Reasoning alone never grants mutation authority.
 
+---
 
-## Agents Bridge provider boundary
+# Cross-Cutting — Agents Bridge Provider Boundary
 
-Agents Bridge should manage two distinct provider-facing capability families:
+Agents Bridge continues to provide two provider-facing capability families:
 
 ```text
                          AGENTS BRIDGE
@@ -2055,91 +1761,34 @@ Agents Bridge should manage two distinct provider-facing capability families:
                                               +-- Addendum composition
 ```
 
-This is an additive extension of the provider-neutral Bridge boundary, not a transfer of Atlas authority.
+No new service boundary is required for the review/chatbot refinement.
 
-Conceptually:
+The already-approved BSS foundation remains suitable.
 
-```text
-Atlas capability request
-        |
-        v
-Agents Bridge
-        |
-        +-- capability alias resolution
-        +-- timeout / cancellation
-        +-- request-size budget
-        +-- response-size budget
-        +-- retry policy
-        +-- usage accounting
-        +-- privacy policy
-        |
-        +--------------------------+
-        |                          |
-        v                          v
-Document Perception           Reasoning
-provider capability           provider capability
-        |                          |
-        v                          v
-NormalizedDocument        normalized candidate/events
-        |                          |
-        +-------------+------------+
-                      |
-                      v
-              Atlas processing
-```
-
-For the current Mistral qualification direction:
+Agents Bridge must still not own:
 
 ```text
-Document Perception
-    -> Mistral OCR 4.1
-
-Semantic Extraction
-    -> qualified Mistral reasoning model
-
-Reconciliation
-    -> qualified Mistral reasoning model
-
-CES Assessment
-    -> qualified Mistral reasoning model
-
-Chat / Addendum
-    -> Mistral Small 4 by default, with escalation when needed
+Atlas repositories
+review state
+resolved knowledge
+publication
+source authorization
+conversation authority
 ```
 
-The Mistral adapter must not gain authority that belongs to Atlas.
+Atlas supplies bounded input.
 
-Atlas remains responsible for:
+Bridge executes provider-backed work.
 
-```text
-DocumentStore access policy
-derived-perception cache ownership
-retrieval
-authorization
-candidate validation
-trusted state mutation
-revision / HEAD / publication
-```
-
-Whether the Bridge ultimately exposes document perception through a separate runtime interface, a typed capability request, or another provider-neutral contract is an implementation decision to be locked in the relevant backend ticket rather than in this architecture checkpoint.
-
-A useful future privacy policy shape is:
-
-```text
-training: deny
-retention: standard | zero
-```
-
-The provider adapter is responsible for selecting an endpoint/configuration that satisfies the requested policy, while Atlas remains responsible for its own intentional application storage.
+Atlas validates and owns the result.
 
 ---
 
-
 # Cross-Cutting — Incremental by Default
 
-Interactive Atlas operations should remain bounded.
+Interactive Atlas operations must remain bounded.
 
-For correction:
+## Correction
 
 ```text
 small Preview Addendum
@@ -2155,70 +1804,64 @@ local reconciliation
       |
       v
 affected dependency lookup
-      |
-      +-- affected Workflow/Facts
-      |
-      +-- affected CES assessments
 ```
 
-For CES:
+## Review serving
 
 ```text
-affected project semantics
-      |
-      v
-targeted assurance retrieval
-      |
-      v
-bounded CES assessment
-      |
-      v
-affected CES results
+open review
+   |
+   v
+summary
+
+open attention queue
+   |
+   v
+bounded issue page
+
+open semantic group
+   |
+   v
+bounded group items
+
+select item
+   |
+   v
+item + related dependencies
+
+inspect evidence
+   |
+   v
+specific evidence
 ```
 
 Not:
 
 ```text
-one changed fact
-      |
-      v
-scan every PRD
-      +
-all historical Addenda
-      +
-all project knowledge
-      +
-all OWASP
-      +
-all NIST
-      |
-      v
-rerun everything
+open review
+   |
+   v
+load every PRD
++
+every Addendum
++
+all candidate semantics
++
+all resolved semantics
++
+all evidence
++
+all CES results
 ```
 
-Full reconstruction remains available for:
+## Chat context
 
-```text
-recovery
-audit/integrity verification
-major reconciliation
-baseline migration
-explicit rebuild
-```
-
-but is not the normal interactive execution path.
-
-
-## Context-window implication
-
-The current Mistral qualification direction assumes a 256K-class model context.
-
-This is compatible with Atlas **because the architecture is incremental by default**.
-
-A normal operation should send:
+Normal chatbot execution should send:
 
 ```text
 current request
++
+selected review/semantic context
 +
 bounded relevant semantic neighborhood
 +
@@ -2231,16 +1874,27 @@ output contract
 
 not the entire project history.
 
-If routine reconciliation or chatbot execution repeatedly requires the full historical corpus to fit in one model context, that should be treated as an Atlas retrieval/indexing design failure before it is treated as a model context-window problem.
+If normal review/chat execution repeatedly requires the entire project corpus, that is an Atlas retrieval/indexing/serving failure before it is a model context-window problem.
 
-Large-context full reconstruction remains a separate explicit operation for recovery, audit, baseline migration, or major reconciliation.
+## Full reconstruction
+
+Project-wide reconstruction remains appropriate for:
+
+```text
+recovery
+audit/integrity verification
+major reconciliation
+baseline migration
+explicit rebuild
+```
+
+but not as the normal interactive path.
 
 ---
 
-
 # Canonical Document Processing Pipeline
 
-The production interpretation of Atlas document processing is:
+The production document-processing path remains:
 
 ```text
                       ATLAS
@@ -2257,37 +1911,50 @@ The production interpretation of Atlas document processing is:
                  Agents Bridge
                         |
                         v
-                Mistral OCR 4.1
+              provider perception
                         |
                         v
               NormalizedDocument
                         |
-            +-----------+-----------+
-            |                       |
-            v                       v
-       textual blocks          visual blocks
-       tables                  image regions
-       page positions          bounding boxes
-            |                       |
-            +-----------+-----------+
+                        v
+          Atlas derived-perception cache
                         |
                         v
-              derived-perception cache
+               Semantic Extraction
                         |
                         v
-               semantic extraction
+              Semantic Candidates
                         |
                         v
-                 Agents Bridge
+          Deterministic Validation
                         |
                         v
-             qualified reasoning model
+               Targeted Retrieval
                         |
                         v
-              SemanticCandidates
+                 Reconciliation
                         |
                         v
-          deterministic Atlas validation
+          Deterministic Validation
+                        |
+                        v
+           Validated Reviewable State
+                        |
+             +----------+----------+
+             |                     |
+             v                     v
+       Review Projection     Contextual Chat
+             |                     |
+             +----------+----------+
+                        |
+                        v
+                   Human Review
+                        |
+                        v
+          Accepted Workspace Resolution
+                        |
+                        v
+             Resolved Knowledge
 ```
 
 The boundaries are:
@@ -2300,136 +1967,133 @@ Document Perception
     derives provider-neutral document structure
 
 Derived-Perception Cache
-    stores rebuildable processing output
+    stores rebuildable perception output
 
 Semantic Extraction
-    derives project meaning from normalized document input
+    derives candidate project meaning
 
-Atlas Deterministic Core
-    validates candidates and controls trusted state
+Retrieval
+    finds relevant semantic context
+
+Reconciliation
+    proposes semantic relationships
+
+Reviewable State
+    stores validated but not necessarily accepted relationships
+
+Review Projection
+    organizes reviewable state for humans
+
+Human Review
+    resolves governed semantic decisions
+
+Resolved Knowledge
+    stores accepted current workspace semantics
 ```
-
-Therefore the phrase **"PRD extraction"** should not be used ambiguously to mean both raw PDF perception and semantic interpretation.
-
-Where precision matters, Atlas documentation should use:
-
-```text
-Document Perception
-Semantic Extraction
-```
-
-The exact public/internal capability names may evolve, but this architectural separation is canonical.
 
 ---
 
 # Resulting Atlas Architecture
 
 ```text
-                   IMMUTABLE PROJECT DOCUMENTS
-                        PRD / Addendum
-                               |
-                               v
-                     Document Perception
-                               |
-                               v
-                      NormalizedDocument
-                               |
-                               v
-                    Semantic Extraction
-                               |
-                               v
-                     Semantic Candidates
-                              |
-                              v
-                    Targeted Retrieval
-                              |
-                              v
-                       Reconciliation
-                              |
-                              v
-                     Resolved Knowledge
-                    /        |         \
-                   /         |          \
-                  v          v           \
-          Main Workflow  Project Facts    \
-                                          \
-                                           v
-                                     Project Context
-                                           |
-                                           |
-             CES ASSURANCE SIDE            |
-                                           |
- OWASP ASVS ------+                        |
- OWASP WSTG ------+                        |
- NIST CSF --------+--> Governed CES        |
- NIST SP 800-53 --+    Assurance Knowledge |
-                           |               |
-                           v               |
-                    Targeted Retrieval     |
-                           |               |
-                           +-------+-------+
-                                   |
-                                   v
-                         CES Assessment Skill
-                                   |
-                                   v
-                       Assessment Candidates
-                                   |
-                                   v
-                     Deterministic Validation
-                                   |
-                                   v
-                              CES Result
-                                   |
-                  +----------------+----------------+
-                  |                                 |
-                  v                                 v
-          Human Review                       Chatbot Mediator
-                                             /      |      \
-                                            /       |       \
-                                           v        v        v
-                                        Query    Explore   Correct
-                                                           |
-                                                           v
-                                                    Preview Addendum
-                                                           |
-                                                           v
-                                                     Atlas Processing
-                                                           |
-                                                           v
-                                                        Preview
-                                                           |
-                                                           v
-                                                        Approval
-                                                           |
-                                                           v
-                                                   Immutable Addendum
-                                                           |
-                                                           v
-                                                         Commit
-                                                           |
-                                                           v
-                                                        Publish
-                                                           |
-                                                           v
-                                                         Master
+                 IMMUTABLE PROJECT DOCUMENTS
+                      PRD / Addendum
+                             |
+                             v
+                   Document Perception
+                             |
+                             v
+                    NormalizedDocument
+                             |
+                             v
+                  Semantic Extraction
+                             |
+                             v
+                   Semantic Candidates
+                             |
+                             v
+                  Targeted Retrieval
+                             |
+                             v
+                     Reconciliation
+                             |
+                             v
+              Validated Reviewable State
+                       /           \
+                      /             \
+                     v               v
+          Review Projection   Contextual Chat
+                     \               /
+                      \             /
+                       v           v
+                         Human Review
+                             |
+                 +-----------+-----------+
+                 |                       |
+                 v                       v
+      Evidence-Supported          New / Clarifying
+       Review Resolution          Human Meaning
+                 |                       |
+                 |                       v
+                 |                Preview Addendum
+                 |                       |
+                 |                Atlas Processing
+                 |                       |
+                 +-----------+-----------+
+                             |
+                             v
+                 Accepted Workspace Resolution
+                             |
+                             v
+                   Resolved Knowledge
+                  /         |          \
+                 v          v           v
+        Main Workflow  Project Facts  Project Context
+                                         |
+                                         |
+           CES ASSURANCE SIDE             |
+                                         |
+OWASP ASVS ------+                        |
+OWASP WSTG ------+                        |
+NIST CSF --------+--> Governed CES        |
+NIST SP 800-53 --+    Assurance Knowledge |
+                         |                |
+                         v                |
+                 Targeted Retrieval      |
+                         |                |
+                         +--------+-------+
+                                  |
+                                  v
+                       CES Assessment Skill
+                                  |
+                                  v
+                      Assessment Candidates
+                                  |
+                                  v
+                    Deterministic Validation
+                                  |
+                                  v
+                       Validated CES Result
+                                  |
+                                  v
+                       Human-facing Projection
+                                  |
+                                  v
+                              Publish
+                                  |
+                                  v
+                                Master
 ```
+
+---
 
 # Current Skill-Level Direction
 
-The architecture still deliberately avoids prematurely declaring the final skill set.
+The architecture deliberately avoids prematurely locking the final production skill set.
 
-However, we now have a clearer reasoning boundary around CES.
-
-Conceptually:
+Likely reasoning responsibilities remain:
 
 ```text
-Document Perception
-        |
-        v
-NormalizedDocument
-        |
-        v
 Semantic Extraction
         |
         v
@@ -2438,84 +2102,130 @@ project semantic reasoning
 Reconciliation
         |
         v
-knowledge evolution reasoning
+knowledge-evolution reasoning
+
+Review Projection
+        |
+        v
+candidate/reconciliation organization
+and bounded human-readable grouping
 
 CES Assessment
         |
         v
 project semantics
-        +
++
 governed assurance semantics
-        |
-        v
-derived concern reasoning
 
 Semantic Mediator
         |
         v
-human language <-> Atlas document interaction
+human language
+<->
+Atlas review / semantic context
+
+Addendum Author
+        |
+        v
+human correction intent
+->
+standalone Preview Addendum
 ```
 
-One likely dedicated capability is therefore:
+## Prototype-era skill boundary
+
+Existing fixture/prototype skills predate the Backend Phase production architecture.
+
+They may be rewritten.
+
+They should be treated as:
 
 ```text
-atlas.ces-assessment
+prototype semantic experiments
+        |
+        v
+retain useful invariants
+        |
+        v
+rewrite against production contracts
 ```
 
-while something such as:
+The production backend should not contort itself around fixture-specific schemas, generated fixture repositories, or prototype execution assumptions.
+
+### `atlas.workspace-review-projections`
+
+The existing skill established a useful authority invariant:
 
 ```text
-atlas.workspace-review-projections
+candidate-only
+review-only
+source-grounded
+non-publishing
+non-authoritative
 ```
 
-should remain downstream:
+The production version should preserve those principles while evolving its input toward:
 
 ```text
-Resolved Knowledge --------+
-                           |
-CES Assessments -----------+--> Review Projection
-                           |
-Evidence ------------------+
+validated candidates
++
+current/base resolved knowledge
++
+validated reconciliation relationships
++
+dependency references
++
+evidence references
++
+review metadata
++
+validated CES references when relevant
 ```
 
-It should **present and organize CES assessments rather than generate them**.
+It must remain downstream of reconciliation.
 
+It must not become the component that decides reconciliation.
+
+---
 
 # Mistral Qualification & Development Boundary
 
-Mistral is the current **first provider qualification direction**, not a permanent architecture dependency.
-
-The provider is considered technically qualified for Atlas only after passing Atlas-specific gates.
+Mistral remains the first provider qualification direction, not a permanent dependency.
 
 ## Required qualification gates
 
 ```text
 1. Structured-output compatibility
    - real Atlas schemas
-   - complete AJV validation after normalization
+   - complete Atlas-side validation
 
-2. Text-heavy PRD extraction
-   - existing Safara golden/captured fixtures
+2. Text-heavy semantic extraction
+   - existing Atlas fixtures / captured PRDs
 
-3. Visual PRD extraction
-   - flowchart
-   - screenshot
-   - table
+3. Visual semantic extraction
+   - flowcharts
+   - screenshots
+   - tables
    - image-only content
-   - preferably sequence/state diagrams
+   - sequence/state diagrams where possible
 
 4. Evidence fidelity
    - quote accuracy
    - page accuracy
    - visual-region accuracy
-   - no fabricated source evidence
+   - no fabricated evidence
 
 5. Semantic reconciliation
-   - new/support/duplicate/refine/extend
+   - new
+   - support
+   - duplicate
+   - refine
+   - extend
    - contradiction
    - supersession
    - partial supersession
    - ambiguity
+   - incoming-vs-incoming conflict
 
 6. CES epistemic discipline
    - grounded project support
@@ -2527,22 +2237,23 @@ The provider is considered technically qualified for Atlas only after passing At
 7. Conversational mediator behavior
    - Query does not mutate
    - Explore remains hypothetical
-   - Correct produces Preview Addendum rather than hidden truth mutation
+   - current vs incoming vs hypothetical remains distinct
+   - review resolution is not silently treated as accepted truth
+   - new project meaning produces Preview Addendum rather than hidden mutation
+   - selected review context remains bounded and grounded
 
 8. Operational behavior
    - cancellation
    - timeout
    - retries
    - rate limiting
-   - output truncation
+   - response bounds
    - usage accounting
 ```
 
 ## Development vs production privacy
 
-Development may use the provider's development/free offering where available, with training opt-out enabled and non-sensitive or approved development documents.
-
-Free-tier model availability, quotas, and rate limits are **operational configuration**, not an Atlas architecture guarantee.
+Development may use provider development offerings only with approved documents and appropriate data-use settings.
 
 Production must separately qualify:
 
@@ -2554,30 +2265,31 @@ stateless endpoint coverage
 region / residency requirements if introduced
 ```
 
-Atlas should prefer stateless inference endpoints because Atlas itself already owns durable state.
+Atlas should prefer stateless provider inference because Atlas owns durable application state.
 
-## Expected provider portability
+## Provider portability
 
-A successful Mistral implementation must leave this replacement path possible:
+A successful implementation must allow:
 
 ```text
 Mistral
    |
    v
-another provider
+another qualified provider
 ```
 
 without changing:
 
 ```text
 immutable document semantics
-Atlas skill contracts
+Atlas semantic contracts
+review-state contracts
 resolved knowledge contracts
 CES support chains
 revision semantics
 approval semantics
 evidence identity
-chat correction contract
+chat correction/review-resolution contract
 ```
 
 Only provider adapters, capability aliases, and provider-specific qualification rules should need to change.
@@ -2586,7 +2298,7 @@ Only provider adapters, capability aliases, and provider-specific qualification 
 
 # Checkpoint Boundary
 
-At this checkpoint, we have established:
+At this checkpoint, Atlas architecture establishes:
 
 ```text
 Documents
@@ -2597,14 +2309,22 @@ NormalizedDocument
    ↓
 Semantic Extraction
    ↓
-Retrieval
+Validated Candidates
+   ↓
+Targeted Retrieval
    ↓
 Reconciliation
+   ↓
+Validated Reviewable State
+   ↓
+Human Review
+   ↓
+Accepted Workspace Resolution
    ↓
 Resolved Knowledge
    ├── Workflow
    ├── Facts
-   └── CES
+   └── Project Context
          +
    Governed Assurance Knowledge
          ↓
@@ -2613,30 +2333,42 @@ Resolved Knowledge
    CES Result
 ```
 
-with the major invariants:
+with these major invariants:
 
 > **Durable project knowledge originates from immutable human-readable documents.**
 
-> **Document Perception and Semantic Extraction are separate capabilities: perception derives rebuildable document structure; semantic extraction derives candidate project meaning.**
+> **Document Perception and Semantic Extraction remain separate capabilities.**
 
 > **Normalized document perception is derived operational state, not accepted project truth.**
 
 > **Retrieval finds relevant context; it does not decide truth.**
 
-> **Workflow, Facts, CES, and chatbot operate from the same resolved project semantics rather than independently reinterpreting historical PRDs.**
+> **Reconciliation proposes semantic relationships; it does not directly create accepted truth.**
 
-> **CES derives foreseeable concerns from project semantics plus governed assurance knowledge.**
+> **A reconciliation result may be valid and human-reviewable while still being unresolved.**
 
-> **CES distinguishes what the project explicitly states from what Atlas derives.**
+> **Atlas can reconcile incoming candidates against both existing knowledge and relevant incoming candidates.**
 
-> **CES must preserve both project provenance and assurance provenance.**
+> **Validated Reviewable State is distinct from Resolved Workspace Knowledge.**
 
-> **CES may expose uncertainty or a knowledge gap rather than invent unsupported assurance requirements.**
+> **Review Projection organizes Atlas-produced review state but does not decide semantic truth, reconciliation, approval, CES discovery, or publication.**
 
-> **Model output remains candidate reasoning until deterministic validation accepts it.**
+> **Human review may resolve an interpretation already supported by immutable evidence without necessarily creating an Addendum.**
 
-> **Interactive operations are incremental by default.**
+> **New or clarifying human project meaning that is not already supported by immutable documents must enter Atlas through an immutable source document such as an Addendum.**
 
-> **`worker1` is legacy reference material only; its useful principles may inform this architecture, but its implementation, taxonomy, evaluator, and package structure do not constrain `codex/new-atlas`.**
+> **Workflow, Facts, CES, review projection, and chatbot operate over shared Atlas semantic identities rather than independently reinterpreting historical PRDs.**
 
-And importantly, **we still haven't locked the final skills**. The next useful step for CES would be to design the *semantic contract* of a single CES assessment—what exactly goes into `atlas.ces-assessment`, what exactly comes out, and what the deterministic validator is allowed to enforce—before we touch implementation.
+> **The chatbot is a contextual semantic mediator attached to Atlas review/semantic state, not an independent source of truth and not the primary post-extraction surface.**
+
+> **Current accepted truth, incoming candidates, reconciliation proposals, unresolved review state, and hypothetical state must remain distinguishable.**
+
+> **Interactive review and chatbot operations are bounded and incremental by default.**
+
+> **Model output remains candidate reasoning until Atlas validation and the appropriate human/authority boundary accepts it.**
+
+> **The existing BSS-001 through BSS-009-02 implementation remains valid and frozen; this checkpoint extends the downstream semantic/domain architecture rather than reopening Stack Setup.**
+
+> **Prototype/fixture-era skills may be rewritten to satisfy the production architecture.**
+
+The next implementation work should turn these architecture responsibilities into bounded Backend Phase domain ticket sets rather than extending the completed Stack Setup ticket set.

@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Atlas — Extraction Review Workspace</title>
+  <style>
+    :root{
+      --ink:#20242e;--muted:#687386;--paper:#f6f7f9;--surface:#fff;--surface-raised:#fff;
+      --line:#e2e6ed;--forest:#5c5bd6;--mint:#efefff;--sun:#fff4d8;--hover:#f4f5fb;
+      --green:#16703d;--green-bg:#e7f7ec;--amber:#7a5200;--amber-bg:#fff4d8;--red:#b42318;--red-bg:#fff0ef;
+      --shadow:0 14px 36px rgba(32,36,46,.09);
+    }
+    *{box-sizing:border-box} html,body{margin:0;min-height:100%;font-family:Arial,Helvetica,sans-serif;background:var(--paper);color:var(--ink)}
+    button,input,textarea,select{font:inherit} button{cursor:pointer}
+    .app{display:grid;grid-template-columns:16rem minmax(0,1fr) 23rem;grid-template-rows:4rem minmax(0,1fr);min-height:100vh}
+    .topbar{grid-column:1/-1;position:sticky;top:0;z-index:30;height:4rem;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 1.25rem;gap:1rem}
+    .brand{display:flex;align-items:center;gap:.5rem;font-weight:800;font-size:1.05rem;letter-spacing:-.02em;color:var(--ink);text-decoration:none}.brand-badge{width:1.7rem;height:1.7rem;border-radius:.48rem;display:grid;place-items:center;background:var(--forest);color:#fff;font-weight:900}.topbar-center{flex:1;display:flex;justify-content:center}.search{width:min(28rem,42vw);height:2.55rem;border:1px solid var(--line);background:var(--surface);border-radius:.62rem;display:flex;align-items:center;gap:.5rem;padding:0 .75rem;color:var(--muted)}.search input{border:0;outline:0;width:100%;background:transparent;color:var(--ink)}.topbar-actions{display:flex;gap:.55rem;align-items:center}.icon-btn{width:2.55rem;height:2.55rem;border:1px solid var(--line);background:#fff;border-radius:.62rem;color:var(--muted)}
+    .sidebar{grid-column:1;grid-row:2;position:sticky;top:4rem;height:calc(100vh - 4rem);background:#fff;border-right:1px solid var(--line);padding:1rem;display:flex;flex-direction:column;gap:1rem;overflow:auto}
+    .label{font-size:.61rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);margin:0 0 .42rem}
+    .switcher{width:100%;border:1px solid var(--line);background:linear-gradient(180deg,#fff,#fafaff);border-radius:.68rem;padding:.64rem;display:grid;grid-template-columns:2rem minmax(0,1fr) auto;gap:.55rem;align-items:center;text-align:left;color:var(--ink)}
+    .switcher .badge{height:2rem;width:2rem;display:grid;place-items:center;border-radius:.45rem;background:var(--mint);color:var(--forest);font-weight:800}.switcher strong{display:block;font-size:.84rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.switcher small{display:block;margin-top:.14rem;color:var(--muted);font-size:.56rem;text-transform:uppercase;letter-spacing:.07em}.switcher .chev{color:var(--muted)}
+    .nav{display:grid;gap:.15rem}.nav a{display:flex;align-items:center;gap:.62rem;padding:.62rem .68rem;border-radius:.48rem;border-left:2px solid transparent;text-decoration:none;color:#48556a;font-size:.84rem;font-weight:650}.nav a:hover{background:var(--mint);color:var(--ink)}.nav a.active{background:var(--mint);border-left-color:var(--forest);color:var(--ink)}.nav a span:first-child{width:1.15rem;text-align:center;color:var(--muted)}
+    .profile{margin-top:auto;border-top:1px solid var(--line);padding-top:.75rem;display:grid;grid-template-columns:2rem minmax(0,1fr) auto;gap:.6rem;align-items:center}.avatar{width:2rem;height:2rem;border-radius:50%;display:grid;place-items:center;background:#eceeff;color:#4f46c8;font-size:.68rem;font-weight:800}.profile strong{display:block;font-size:.75rem}.profile small{display:block;color:var(--muted);font-size:.62rem;margin-top:.15rem}
+
+    .main{grid-column:2;grid-row:2;min-width:0;overflow:auto;padding:1.35rem 1.35rem 2.5rem}
+    .page-head{display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;margin-bottom:1rem}.kicker{font-size:.66rem;text-transform:uppercase;letter-spacing:.11em;color:var(--forest);font-weight:800;margin:0 0 .38rem}.page-head h1{margin:0;font-size:clamp(1.75rem,2.6vw,2.45rem);letter-spacing:-.045em;line-height:1.02}.page-head p{margin:.55rem 0 0;color:var(--muted);max-width:48rem;line-height:1.55}.head-actions{display:flex;gap:.5rem}.btn{border-radius:.62rem;padding:.68rem .85rem;font-weight:700;border:1px solid var(--line);background:#fff;color:var(--ink)}.btn.primary{background:var(--forest);border-color:var(--forest);color:#fff}.btn.ghost{background:transparent}.btn.small{padding:.5rem .66rem;font-size:.76rem}
+    .summary{display:grid;grid-template-columns:minmax(0,1.55fr) repeat(4,minmax(7.5rem,.72fr));gap:.72rem;margin-bottom:.9rem}.summary-card{background:#fff;border:1px solid var(--line);border-radius:.82rem;padding:.92rem}.summary-main{display:flex;flex-direction:column;justify-content:space-between;gap:.75rem}.summary-main-top{display:flex;justify-content:space-between;gap:1rem}.summary-main h2{font-size:1rem;margin:0}.summary-main p{margin:.25rem 0 0;color:var(--muted);font-size:.77rem}.progress{height:.48rem;background:#eceff4;border-radius:999px;overflow:hidden}.progress span{display:block;height:100%;width:58%;background:var(--forest)}.progress-copy{display:flex;justify-content:space-between;color:var(--muted);font-size:.68rem}.metric strong{display:block;font-size:1.55rem;letter-spacing:-.04em}.metric span{display:block;margin-top:.18rem;color:var(--muted);font-size:.72rem}.metric.conflict strong{color:var(--red)}.metric.review strong{color:var(--amber)}
+    .toolbar{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin:1rem 0 .8rem}.seg{display:flex;gap:.35rem;background:#fff;border:1px solid var(--line);border-radius:.72rem;padding:.28rem}.seg button{border:0;background:transparent;border-radius:.5rem;padding:.52rem .66rem;color:var(--muted);font-size:.73rem;font-weight:700}.seg button.active{background:var(--mint);color:var(--forest)}.toolbar .spacer{flex:1}.sort{border:1px solid var(--line);background:#fff;border-radius:.6rem;padding:.58rem .7rem;color:var(--ink);font-size:.73rem}
+    .attention{background:#fff;border:1px solid var(--line);border-radius:.9rem;margin-bottom:.9rem;overflow:hidden}.section-head{display:flex;justify-content:space-between;gap:1rem;align-items:center;padding:.95rem 1rem;border-bottom:1px solid var(--line)}.section-head h2{font-size:.98rem;margin:0}.section-head p{margin:.2rem 0 0;color:var(--muted);font-size:.72rem}.pill{border-radius:999px;padding:.28rem .5rem;font-size:.62rem;font-weight:800;white-space:nowrap}.pill.red{background:var(--red-bg);color:var(--red)}.pill.amber{background:var(--amber-bg);color:var(--amber)}.pill.green{background:var(--green-bg);color:var(--green)}.pill.purple{background:var(--mint);color:var(--forest)}
+    .issue-list{display:grid}.issue{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:.8rem;align-items:center;padding:.9rem 1rem;border-top:1px solid var(--line);background:#fff}.issue:first-child{border-top:0}.issue:hover{background:#fcfcff}.issue-icon{width:2rem;height:2rem;border-radius:.5rem;display:grid;place-items:center;font-weight:900;background:var(--red-bg);color:var(--red)}.issue h3{font-size:.86rem;margin:0}.issue p{margin:.26rem 0 0;color:var(--muted);font-size:.72rem;line-height:1.45}.issue-meta{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.45rem}.tag{font-size:.61rem;padding:.24rem .42rem;border-radius:.42rem;background:#f2f4f7;color:#5f6878}.issue button{border:1px solid var(--line);background:#fff;border-radius:.58rem;padding:.55rem .68rem;color:var(--forest);font-weight:700;font-size:.72rem}
+    .groups{display:grid;gap:.72rem}.group{background:#fff;border:1px solid var(--line);border-radius:.9rem;overflow:hidden}.group-header{width:100%;background:#fff;border:0;padding:1rem;text-align:left;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:.85rem;align-items:center}.group-header:hover{background:#fcfcff}.group-num{width:2.15rem;height:2.15rem;border-radius:.55rem;display:grid;place-items:center;background:var(--mint);color:var(--forest);font-size:.72rem;font-weight:800}.group-title h3{margin:0;font-size:.93rem}.group-title p{margin:.25rem 0 0;color:var(--muted);font-size:.72rem}.group-stats{display:flex;gap:.45rem;align-items:center}.group-body{border-top:1px solid var(--line);display:none}.group.open .group-body{display:block}.item{display:grid;grid-template-columns:1.6rem minmax(0,1fr) auto;gap:.72rem;align-items:flex-start;padding:.82rem 1rem;border-top:1px solid var(--line);position:relative}.item:first-child{border-top:0}.item:hover{background:var(--hover)}.item.selected{background:linear-gradient(90deg,var(--mint),#fff 68%)}.item-status{width:1.55rem;height:1.55rem;border-radius:.42rem;display:grid;place-items:center;font-size:.65rem;font-weight:900}.item-status.ok{background:var(--green-bg);color:var(--green)}.item-status.new{background:var(--mint);color:var(--forest)}.item-status.warn{background:var(--amber-bg);color:var(--amber)}.item-status.bad{background:var(--red-bg);color:var(--red)}.item h4{margin:.05rem 0 0;font-size:.82rem}.item p{margin:.28rem 0 0;color:var(--muted);font-size:.7rem;line-height:1.45}.item small{display:block;margin-top:.38rem;color:#8891a1;font-size:.62rem}.item button{border:0;background:transparent;color:var(--forest);font-weight:700;font-size:.7rem;padding:.3rem}.loadmore{display:flex;justify-content:center;padding:.85rem;border-top:1px solid var(--line)}
+
+    .chat{grid-column:3;grid-row:2;position:sticky;top:4rem;height:calc(100vh - 4rem);background:#fff;border-left:1px solid var(--line);display:flex;flex-direction:column;min-width:0}
+    .chat-head{padding:.9rem .95rem;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:.8rem;align-items:flex-start}.chat-head h2{font-size:.9rem;margin:0}.chat-head p{margin:.22rem 0 0;color:var(--muted);font-size:.66rem}.context-card{margin:.72rem .78rem 0;border:1px solid #d9dbff;background:linear-gradient(180deg,#f7f7ff,#fff);border-radius:.72rem;padding:.72rem}.context-card strong{font-size:.75rem}.context-card p{margin:.3rem 0 0;color:var(--muted);font-size:.66rem;line-height:1.45}.context-card footer{display:flex;gap:.38rem;margin-top:.55rem;flex-wrap:wrap}
+    .messages{flex:1;overflow:auto;padding:.9rem .78rem 1rem;display:flex;flex-direction:column;gap:.75rem}.msg{max-width:95%;font-size:.76rem;line-height:1.5}.msg.user{align-self:flex-end;background:var(--forest);color:#fff;border-radius:.8rem .8rem .2rem .8rem;padding:.67rem .75rem}.msg.atlas{align-self:flex-start}.msg.atlas .bubble{border:1px solid var(--line);background:#fff;border-radius:.8rem .8rem .8rem .2rem;padding:.72rem}.msg .who{font-size:.61rem;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.28rem}.msg.atlas .bubble p{margin:0}.msg.atlas .bubble p+p{margin-top:.5rem}.inline-card{margin-top:.6rem;border:1px solid var(--line);border-radius:.68rem;overflow:hidden}.inline-card header{padding:.58rem .65rem;background:#fafbff;border-bottom:1px solid var(--line);font-size:.68rem;font-weight:800}.compare{display:grid;grid-template-columns:1fr 1fr}.compare>div{padding:.62rem}.compare>div+div{border-left:1px solid var(--line)}.compare small{display:block;color:var(--muted);font-size:.58rem;text-transform:uppercase;letter-spacing:.07em}.compare strong{display:block;margin-top:.2rem;font-size:.73rem}.chat-actions{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.55rem}.chat-actions button{border:1px solid var(--line);background:#fff;color:var(--forest);border-radius:.52rem;padding:.46rem .55rem;font-size:.65rem;font-weight:700}
+    .composer{border-top:1px solid var(--line);padding:.75rem}.composer-box{border:1px solid var(--line);border-radius:.72rem;background:#fff;padding:.62rem}.composer textarea{width:100%;min-height:3.7rem;resize:none;border:0;outline:0;background:transparent;color:var(--ink);font-size:.75rem;line-height:1.45}.composer footer{display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin-top:.45rem}.composer footer span{font-size:.6rem;color:var(--muted)}.send{border:0;background:var(--forest);color:#fff;border-radius:.55rem;padding:.5rem .68rem;font-weight:800;font-size:.68rem}
+
+    .drawer{display:none;position:fixed;inset:4rem 0 0 auto;width:min(26rem,92vw);background:#fff;border-left:1px solid var(--line);z-index:40;box-shadow:var(--shadow);overflow:auto}.drawer.open{display:block}.drawer-head{display:flex;justify-content:space-between;align-items:center;padding:1rem;border-bottom:1px solid var(--line)}.drawer-head h3{margin:0;font-size:.92rem}.drawer-close{border:0;background:transparent;color:var(--muted);font-size:1.2rem}.drawer-body{padding:1rem}.compare-big{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:.8rem;overflow:hidden}.compare-big>section{padding:1rem}.compare-big>section+section{border-left:1px solid var(--line);background:#fcfcff}.compare-big small{color:var(--muted);font-size:.62rem;text-transform:uppercase;letter-spacing:.08em}.compare-big h4{margin:.4rem 0 .55rem}.quote{border-left:3px solid var(--forest);background:#f8f8ff;padding:.75rem .8rem;margin-top:.75rem;color:#3d4655;font-size:.74rem;line-height:1.5}.drawer .impact{margin-top:1rem;border:1px solid var(--line);border-radius:.75rem;padding:.8rem}.impact h4{margin:0 0 .5rem;font-size:.8rem}.impact ul{margin:.2rem 0 0;padding-left:1.1rem;color:var(--muted);font-size:.72rem;line-height:1.7}
+
+    @media(max-width:1220px){.app{grid-template-columns:14rem minmax(0,1fr) 21rem}.summary{grid-template-columns:minmax(0,1.4fr) repeat(2,minmax(7rem,.75fr))}.summary .metric:nth-last-child(-n+2){display:none}}
+    @media(max-width:980px){.app{grid-template-columns:4.25rem minmax(0,1fr);grid-template-rows:4rem auto auto}.sidebar{width:4.25rem;padding:.6rem .45rem;overflow:visible}.sidebar .label,.sidebar .switcher,.nav a span:last-child,.profile div:nth-child(2),.profile .chev{display:none}.nav a{justify-content:center;padding:.65rem}.profile{grid-template-columns:1fr;justify-items:center}.chat{grid-column:2;grid-row:3;position:static;height:auto;border-left:0;border-top:1px solid var(--line)}.messages{max-height:25rem}.main{grid-column:2}.summary{grid-template-columns:1fr 1fr}.summary-main{grid-column:1/-1}.topbar-center{justify-content:flex-start}.search{width:min(24rem,48vw)}}
+    @media(max-width:680px){.app{display:block}.topbar{position:sticky}.sidebar{display:none}.main{padding:1rem}.chat{position:static;height:auto}.page-head{flex-direction:column}.head-actions{width:100%}.summary{grid-template-columns:1fr 1fr}.summary-card{padding:.8rem}.toolbar .spacer{display:none}.issue{grid-template-columns:auto minmax(0,1fr)}.issue>button{grid-column:2;justify-self:start}.group-header{grid-template-columns:auto minmax(0,1fr)}.group-stats{grid-column:2;justify-content:flex-start}.item{grid-template-columns:1.5rem minmax(0,1fr)}.item>button{grid-column:2;justify-self:start}.compare-big{grid-template-columns:1fr}.compare-big>section+section{border-left:0;border-top:1px solid var(--line)}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <a class="brand" href="#"><span class="brand-badge">A</span>Atlas</a>
+    <div class="topbar-center"><label class="search">⌕ <input placeholder="Search project knowledge" /></label></div>
+    <div class="topbar-actions"><button class="icon-btn" title="Home">⌂</button><button class="icon-btn" title="Notifications">◌</button></div>
+  </header>
+
+  <aside class="sidebar">
+    <section><p class="label">Project</p><button class="switcher"><span class="badge">S</span><span><strong>Safara</strong><small>7 PRDs · Active</small></span><span class="chev">⌄</span></button></section>
+    <section><p class="label">Workspace</p><button class="switcher"><span class="badge">⌘</span><span><strong>Initial Draft</strong><small>Review · modified 8m ago</small></span><span class="chev">⌄</span></button></section>
+    <section><p class="label">Project</p><nav class="nav"><a href="#"><span>▦</span><span>Projects</span></a><a href="#"><span>∿</span><span>Main Workflow</span></a><a href="#"><span>▤</span><span>Project Facts</span></a><a href="#"><span>▣</span><span>CES Result</span></a><a href="#"><span>↻</span><span>Changes Done</span></a><a class="active" href="#"><span>◫</span><span>Extraction Review</span></a></nav></section>
+    <section><p class="label">Workspace</p><nav class="nav"><a href="#"><span>○</span><span>Sources</span></a><a href="#"><span>♙</span><span>Members</span></a><a href="#"><span>⚙</span><span>Settings</span></a></nav></section>
+    <div class="profile"><span class="avatar">AI</span><div><strong>Aditya Izhar</strong><small>aditya@example.com</small></div><span class="chev">⌄</span></div>
+  </aside>
+
+  <main class="main">
+    <header class="page-head">
+      <div><p class="kicker">Semantic extraction review</p><h1>PRD-07 · Registration Capacity Update</h1><p>Atlas extracted 42 semantic items from this PRD and reconciled them against the current project model. Review conflicts and ambiguities first, then inspect the remaining workflow and fact updates by business area.</p></div>
+      <div class="head-actions"><button class="btn">View source</button><button class="btn primary">Continue review</button></div>
+    </header>
+
+    <section class="summary">
+      <article class="summary-card summary-main"><div class="summary-main-top"><div><h2>Review progress</h2><p>24 of 42 extracted items reviewed</p></div><span class="pill amber">4 need attention</span></div><div class="progress"><span></span></div><div class="progress-copy"><span>58% reviewed</span><span>18 remaining</span></div></article>
+      <article class="summary-card metric"><strong>24</strong><span>New knowledge</span></article>
+      <article class="summary-card metric"><strong>11</strong><span>Supports existing</span></article>
+      <article class="summary-card metric conflict"><strong>2</strong><span>Conflicts</span></article>
+      <article class="summary-card metric review"><strong>2</strong><span>Clarifications</span></article>
+    </section>
+
+    <div class="toolbar">
+      <div class="seg" role="tablist"><button class="active" data-filter="all">All</button><button data-filter="attention">Needs attention</button><button data-filter="workflow">Workflow</button><button data-filter="facts">Project facts</button><button data-filter="reviewed">Reviewed</button></div>
+      <span class="spacer"></span>
+      <select class="sort" aria-label="Sort review items"><option>Sort: Needs user decision</option><option>Sort: Source order</option><option>Sort: Affected breadth</option></select>
+    </div>
+
+    <section class="attention" data-section="attention">
+      <div class="section-head"><div><h2>Needs attention</h2><p>Atlas will not resolve these items silently.</p></div><div style="display:flex;gap:.35rem"><span class="pill red">2 conflicts</span><span class="pill amber">2 clarifications</span></div></div>
+      <div class="issue-list">
+        <article class="issue"><div class="issue-icon">!</div><div><h3>Special departure quota</h3><p>Current project truth says <strong>40 passengers</strong>, while PRD-07 says <strong>45 passengers</strong>.</p><div class="issue-meta"><span class="tag">Project Fact</span><span class="tag">PRD-07 · p.4</span><span class="tag">Affects 3 workflow nodes</span></div></div><button data-open-detail="quota">Review conflict</button></article>
+        <article class="issue"><div class="issue-icon">!</div><div><h3>Quota-full registration behavior</h3><p>Current workflow rejects registration when quota is full. The incoming PRD sends the registration to a waiting list.</p><div class="issue-meta"><span class="tag">Workflow</span><span class="tag">PRD-07 · p.6</span><span class="tag">Affects 1 CES assessment</span></div></div><button data-select="quota-behavior">Review conflict</button></article>
+        <article class="issue"><div class="issue-icon" style="background:var(--amber-bg);color:var(--amber)">?</div><div><h3>Who can override capacity?</h3><p>The PRD introduces a capacity override but does not state whether the operator, supervisor, or admin owns that action.</p><div class="issue-meta"><span class="tag">Ambiguity</span><span class="tag">PRD-07 · p.8</span></div></div><button data-select="override">Clarify</button></article>
+      </div>
+    </section>
+
+    <section class="groups">
+      <article class="group open" data-kind="workflow">
+        <button class="group-header"><span class="group-num">01</span><span class="group-title"><h3>Registration</h3><p>7 workflow items · 5 project facts · 1 conflict</p></span><span class="group-stats"><span class="pill red">1 conflict</span><span class="pill purple">12 items</span></span></button>
+        <div class="group-body">
+          <div class="item" data-item="submit"><span class="item-status ok">✓</span><div><h4>Customer submits registration</h4><p>Supports the existing registration entry point. No semantic change detected.</p><small>Supports existing · PRD-07 p.2</small></div><button data-select="submit">Inspect</button></div>
+          <div class="item" data-item="quota-behavior"><span class="item-status bad">!</span><div><h4>Quota-full behavior changed</h4><p>Incoming workflow redirects full-capacity registrations to a waiting list instead of rejecting them.</p><small>Conflict · PRD-07 p.6</small></div><button data-select="quota-behavior">Inspect</button></div>
+          <div class="item" data-item="reference"><span class="item-status new">+</span><div><h4>Waiting-list reference number</h4><p>Atlas detected a new business rule: waiting-list entries receive their own reference number.</p><small>New · PRD-07 p.6</small></div><button data-select="reference">Inspect</button></div>
+          <div class="loadmore"><button class="btn small ghost">Show 9 more items in Registration</button></div>
+        </div>
+      </article>
+
+      <article class="group" data-kind="facts">
+        <button class="group-header"><span class="group-num">02</span><span class="group-title"><h3>Capacity & Package Rules</h3><p>3 workflow items · 8 project facts · 1 conflict · 1 clarification</p></span><span class="group-stats"><span class="pill red">1 conflict</span><span class="pill amber">1 clarification</span><span class="pill purple">11 items</span></span></button>
+        <div class="group-body">
+          <div class="item" data-item="quota"><span class="item-status bad">!</span><div><h4>Special departure quota = 45</h4><p>Conflicts with current resolved fact: special departure quota = 40.</p><small>Conflict · PRD-07 p.4</small></div><button data-open-detail="quota">Inspect</button></div>
+          <div class="item" data-item="override"><span class="item-status warn">?</span><div><h4>Capacity override role</h4><p>Atlas cannot determine who is authorized to override package capacity.</p><small>Needs clarification · PRD-07 p.8</small></div><button data-select="override">Inspect</button></div>
+          <div class="item"><span class="item-status new">+</span><div><h4>Waitlist capacity is independent</h4><p>The waiting list has a separate maximum of 20 entries.</p><small>New · PRD-07 p.9</small></div><button>Inspect</button></div>
+        </div>
+      </article>
+
+      <article class="group" data-kind="workflow">
+        <button class="group-header"><span class="group-num">03</span><span class="group-title"><h3>Operations & Monitoring</h3><p>5 workflow items · 6 project facts · no conflicts</p></span><span class="group-stats"><span class="pill green">No conflicts</span><span class="pill purple">11 items</span></span></button>
+        <div class="group-body">
+          <div class="item"><span class="item-status new">+</span><div><h4>Waiting-list dashboard</h4><p>New operational view for registrations waiting for capacity.</p><small>New · PRD-07 p.10</small></div><button>Inspect</button></div>
+          <div class="item"><span class="item-status ok">✓</span><div><h4>Existing operator monitoring retained</h4><p>Supports the current operational monitoring model.</p><small>Supports existing · PRD-07 p.11</small></div><button>Inspect</button></div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <aside class="chat">
+    <header class="chat-head"><div><h2>Atlas Chat</h2><p>Contextual mediator for this review</p></div><span class="pill purple">Bounded context</span></header>
+    <section class="context-card" id="contextCard"><strong>Review context</strong><p>PRD-07 · 42 extracted items · 4 need attention</p><footer><span class="tag">Initial Draft</span><span class="tag">Safara</span></footer></section>
+    <div class="messages" id="messages">
+      <div class="msg atlas"><div class="who">Atlas</div><div class="bubble"><p>I found 42 semantic items in PRD-07. Four need your attention before this draft is ready to publish.</p><p>The highest-impact conflict is the special departure quota because it also affects registration workflow and one CES assessment.</p><div class="chat-actions"><button data-open-detail="quota">Inspect quota conflict</button><button data-select="quota-behavior">Inspect workflow conflict</button></div></div></div>
+      <div class="msg user">Show me why the quota is considered a conflict.</div>
+      <div class="msg atlas"><div class="who">Atlas</div><div class="bubble"><p>The currently resolved fact says 40 passengers. PRD-07 states 45 passengers for the same Special departure concept, so Atlas cannot merge them without a user decision.</p><div class="inline-card"><header>Detected semantic conflict</header><div class="compare"><div><small>Current truth</small><strong>40 passengers</strong></div><div><small>Incoming PRD</small><strong>45 passengers</strong></div></div></div><div class="chat-actions"><button data-open-detail="quota">View both evidence sources</button><button id="correctQuota">Correct with Atlas</button></div></div></div>
+    </div>
+    <div class="composer"><div class="composer-box"><textarea id="composer" placeholder="Ask about the selected item, evidence, or propose a correction…"></textarea><footer><span>Atlas infers query / explore / correct</span><button class="send" id="sendBtn">Send</button></footer></div></div>
+  </aside>
+</div>
+
+<section class="drawer" id="drawer" aria-hidden="true">
+  <header class="drawer-head"><h3>Conflict detail</h3><button class="drawer-close" id="drawerClose">×</button></header>
+  <div class="drawer-body">
+    <p class="kicker">Project fact conflict</p><h2 style="margin:.2rem 0 .85rem;font-size:1.35rem">Special departure quota</h2>
+    <div class="compare-big"><section><small>Current project truth</small><h4>40 passengers</h4><div class="quote">“Special departure packages have a maximum capacity of 40 jemaah.”</div><p style="color:var(--muted);font-size:.68rem">PRD-03 · page 7 · accepted in Master</p></section><section><small>Incoming PRD-07</small><h4>45 passengers</h4><div class="quote">“The capacity for Special departures is increased to 45 jemaah.”</div><p style="color:var(--muted);font-size:.68rem">PRD-07 · page 4 · extraction candidate</p></section></div>
+    <section class="impact"><h4>Deterministic impact signals</h4><ul><li>3 workflow nodes reference this fact</li><li>1 CES assessment depends on capacity enforcement</li><li>2 project facts share the same Special departure concept</li></ul></section>
+    <div style="display:flex;gap:.5rem;margin-top:1rem;flex-wrap:wrap"><button class="btn small">Discuss in chat</button><button class="btn small primary" id="drawerCorrect">Propose correction</button></div>
+  </div>
+</section>
+
+<script>
+  const groups=[...document.querySelectorAll('.group')];
+  groups.forEach(g=>g.querySelector('.group-header').addEventListener('click',()=>g.classList.toggle('open')));
+
+  const contextCard=document.getElementById('contextCard');
+  const messages=document.getElementById('messages');
+  const composer=document.getElementById('composer');
+  const drawer=document.getElementById('drawer');
+  const drawerClose=document.getElementById('drawerClose');
+
+  const contexts={
+    'quota-behavior':{title:'Quota-full registration behavior',text:'Workflow conflict · Current: Reject registration · Incoming: Add to waiting list',reply:'This workflow conflict changes what happens after quota validation. The current model rejects registration; PRD-07 routes it into a waiting list.'},
+    'override':{title:'Capacity override role',text:'Needs clarification · PRD-07 page 8',reply:'Atlas found the override action, but the source does not identify which role is allowed to perform it. I can help you phrase a clarification or correction.'},
+    'submit':{title:'Customer submits registration',text:'Supports existing · PRD-07 page 2',reply:'This item supports the current registration entry point and does not change the resolved workflow.'},
+    'reference':{title:'Waiting-list reference number',text:'New workflow detail · PRD-07 page 6',reply:'Atlas treated this as new knowledge because no existing resolved item defines a waiting-list reference number.'}
+  };
+  function selectItem(id){
+    document.querySelectorAll('.item.selected').forEach(x=>x.classList.remove('selected'));
+    const item=document.querySelector(`[data-item="${id}"]`); if(item){item.classList.add('selected'); item.scrollIntoView({behavior:'smooth',block:'center'});}
+    const c=contexts[id]; if(!c)return;
+    contextCard.innerHTML=`<strong>Selected: ${c.title}</strong><p>${c.text}</p><footer><span class="tag">Selected semantic item</span></footer>`;
+    const wrap=document.createElement('div');wrap.className='msg atlas';wrap.innerHTML=`<div class="who">Atlas</div><div class="bubble"><p>${c.reply}</p><div class="chat-actions"><button>Show evidence</button><button>Discuss correction</button></div></div>`;messages.appendChild(wrap);messages.scrollTop=messages.scrollHeight;
+  }
+  document.querySelectorAll('[data-select]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();selectItem(b.dataset.select)}));
+
+  function openDrawer(){drawer.classList.add('open');drawer.setAttribute('aria-hidden','false')}
+  function closeDrawer(){drawer.classList.remove('open');drawer.setAttribute('aria-hidden','true')}
+  document.querySelectorAll('[data-open-detail="quota"]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();openDrawer()}));
+  drawerClose.addEventListener('click',closeDrawer);
+
+  function proposeCorrection(){
+    closeDrawer();composer.value='The new quota of 45 is correct and should replace the previous value of 40.';composer.focus();
+    contextCard.innerHTML='<strong>Correction context: Special departure quota</strong><p>Current truth 40 · Incoming PRD 45 · Project truth unchanged until review and approval.</p><footer><span class="tag">Correction candidate</span></footer>';
+  }
+  document.getElementById('correctQuota').addEventListener('click',proposeCorrection);
+  document.getElementById('drawerCorrect').addEventListener('click',proposeCorrection);
+
+  function send(){
+    const value=composer.value.trim();if(!value)return;
+    const u=document.createElement('div');u.className='msg user';u.textContent=value;messages.appendChild(u);composer.value='';
+    const a=document.createElement('div');a.className='msg atlas';
+    const correction=/correct|replace|should|45|waiting list|override/i.test(value);
+    a.innerHTML=correction?`<div class="who">Atlas</div><div class="bubble"><p>I interpreted that as a possible correction. I have not changed project truth.</p><div class="inline-card"><header>Preview correction</header><div style="padding:.68rem"><strong style="font-size:.74rem">${value.replace(/</g,'&lt;')}</strong><p style="margin:.35rem 0 0;color:var(--muted);font-size:.68rem">Next step: run bounded extraction/reconciliation preview before approval.</p></div></div><div class="chat-actions"><button>Run Atlas change preview</button><button>Keep discussing</button></div></div>`:`<div class="who">Atlas</div><div class="bubble"><p>I’ll answer from the currently selected review context and relevant resolved knowledge. No project state changes from this response.</p></div>`;
+    messages.appendChild(a);messages.scrollTop=messages.scrollHeight;
+  }
+  document.getElementById('sendBtn').addEventListener('click',send);
+  composer.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});
+
+  document.querySelectorAll('.seg button').forEach(btn=>btn.addEventListener('click',()=>{
+    document.querySelectorAll('.seg button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+    const f=btn.dataset.filter;
+    document.querySelector('[data-section="attention"]').style.display=(f==='workflow'||f==='facts'||f==='reviewed')?'none':'block';
+    groups.forEach(g=>{const kind=g.dataset.kind;g.style.display=(f==='workflow'&&kind!=='workflow')||(f==='facts'&&kind!=='facts')?'none':'block'});
+  }));
+</script>
+</body>
+</html>

@@ -4,22 +4,42 @@
 
 This document captures the current backend architecture direction for Atlas as a **production baseline**, not a disposable prototype.
 
-It is synchronized with the [canonical Atlas core architecture checkpoint](atlas-core-architecture-checkpoint-v2-mistral-enriched-v2.md), including the explicit separation between **Document Perception** and **Semantic Extraction**.
+It is synchronized with the canonical:
 
-The central architectural rule is:
+- `atlas-core-architecture-checkpoint-v2-mistral-enriched-v2.md`
 
-> **Atlas owns truth. PostgreSQL persists trusted Atlas state. DocumentStore preserves immutable source bytes. Atlas owns derived perception state and retrieval. Agents Bridge executes provider-backed document perception and reasoning. Skills define reasoning contracts. The queue schedules expensive work. Better Auth establishes identity.**
+including the clarified downstream architecture for:
+
+```text
+Semantic Extraction
+Targeted Retrieval
+Semantic Reconciliation
+Validated Reviewable State
+Human Review
+Review Projection
+Resolved Knowledge
+Conversational Semantic Mediator
+Correction / Addendum
+CES
+Publication
+```
+
+The central production rule remains:
+
+> **Atlas owns truth. PostgreSQL persists Atlas-owned trusted and reviewable state. DocumentStore preserves immutable source bytes. Atlas owns derived perception state, retrieval, review state, review decisions, and publication authority. Agents Bridge executes provider-backed document perception and reasoning. Skills define reasoning contracts. The queue schedules expensive work. Better Auth establishes identity.**
 
 The local development environment should differ from production mainly in infrastructure location, provider credentials, capacity, and storage adapters—not in Atlas semantics or authority boundaries.
 
-### Compatibility with approved BSS-001 through BSS-009-02
+---
 
-This baseline update is intentionally **additive**.
+# Compatibility With Approved BSS-001 Through BSS-009-02
 
-It must not require reopening or rewriting the approved foundations established by BSS-001 through BSS-009-02.
+This baseline update is **additive downstream of the completed Stack Setup phase**.
+
+It does **not** reopen or rewrite the approved BSS foundations.
 
 ```text
-BSS-001  runtime / workspace foundation
+BSS-001  Runtime / workspace foundation
     |
     +-- remains valid
 
@@ -30,7 +50,7 @@ BSS-002  PostgreSQL Compose foundation
 BSS-003  PostgreSQL / Drizzle / role boundaries
     |
     +-- remains valid
-    +-- Agents Bridge still cannot mutate Atlas trusted state
+    +-- Agents Bridge still cannot mutate Atlas-owned semantic state
 
 BSS-004  Better Auth persistence
     |
@@ -40,163 +60,180 @@ BSS-005  Agents Bridge service foundation
     |
     +-- remains valid
     +-- existing provider-neutral ReasoningRuntime remains valid
-    +-- document perception is an additive capability, not a rewrite
 
 BSS-006  pg-boss background runtime
     |
     +-- remains valid
-    +-- the BSS-009 series uses it for document-perception work
+    +-- later semantic/domain jobs may reuse it
 
 BSS-007  DocumentStore foundation
     |
     +-- remains valid
-    +-- immutable source bytes remain behind the existing storage-neutral contract
+    +-- immutable source bytes remain behind the storage-neutral contract
 
 BSS-008  Mistral provider adapter
     |
-    +-- approved provider capability boundary remains valid
-    +-- capability aliases remain provider-neutral
-
-BSS-009 series  Document Perception
-    |
-    +-- approved Atlas authority, perception, and Bridge integration boundaries remain valid
-    +-- `NormalizedDocument` remains derived and rebuildable
-```
-
-The approved Stack Setup checkpoint therefore establishes:
-
-```text
-BSS-008
-    Mistral provider adapter and provider capability qualification
+    +-- remains valid
+    +-- structured reasoning, streaming chat/tool events,
+        and perception primitives remain usable downstream
 
 BSS-009 / BSS-009-01 / BSS-009-02
-    Document Perception pipeline, Atlas authority, and provider-neutral Bridge integration
+    |
+    +-- remain valid
+    +-- Document Perception remains Atlas-authorized
+    +-- NormalizedDocument remains derived and rebuildable
+    +-- Bridge result delivery / replay boundaries remain valid
 ```
 
-Later semantic-extraction feature work may evolve the extraction skill contract, but that belongs outside the completed Stack Setup checkpoint unless explicitly ticketed.
+The completed Stack Setup phase therefore provides the production-shaped platform foundation.
+
+The new review/chatbot architecture belongs to **later Backend Phase semantic/domain implementation**, not to new BSS tickets.
+
+Prototype/fixture-era skills may be rewritten against the production contracts established by this Backend Phase.
 
 ---
 
-## 1. System Overview
+# 1. System Overview
 
 ```text
                                CLIENT
                          Atlas Web Application
                                  |
                                  v
-                     +----------------------+
-                     |    ATLAS BACKEND     |
-                     |                      |
-                     | Better Auth          |
-                     | Application Services |
-                     | Atlas Core           |
-                     | Retrieval            |
-                     | Validation           |
-                     | Approval / Publish   |
-                     +----------+-----------+
-                                |
-             +------------------+-------------------+
-             |                  |                   |
-             v                  v                   v
-        PostgreSQL        DocumentStore          pg-boss
-             |                  |                   |
-      +------+------+           |                   |
-      |      |      |           |                   |
-      v      v      v           v                   v
-    auth   atlas  bridge     source.pdf       background jobs
-   schema  schema  state        |                   |
-                                |                   v
-                                |          +----------------------+
-                                +--------->|    AGENTS BRIDGE     |
-                                           |                      |
-                                           | Document Perception  |
-                                           | Reasoning Runtime    |
-                                           | Interactive Runtime  |
-                                           | Background Workers   |
-                                           | Provider Routing     |
-                                           | Budget / Usage       |
-                                           +----------+-----------+
-                                                      |
-                                       +--------------+--------------+
-                                       |              |              |
-                                       v              v              v
-                                    Mistral       Provider B      Provider C
-                                       |
-                         +-------------+--------------+
-                         |             |              |
-                         v             v              v
-                      OCR 4.1     reasoning models  embeddings
-                         |
-                         v
-                  NormalizedDocument
-                         |
-                         v
-                Atlas-owned derived
-                 perception cache
-                         |
-                         v
-                 Semantic Extraction
-                         |
-                         v
-                 SemanticCandidates
-                         |
-                         v
-             deterministic Atlas validation
+                     +--------------------------+
+                     |      ATLAS BACKEND       |
+                     |                          |
+                     | Better Auth              |
+                     | Application Services     |
+                     | Atlas Core               |
+                     | Retrieval                |
+                     | Validation               |
+                     | Review State             |
+                     | Review Projection        |
+                     | Approval / Publish       |
+                     +-------------+------------+
+                                   |
+              +--------------------+--------------------+
+              |                    |                    |
+              v                    v                    v
+         PostgreSQL          DocumentStore           pg-boss
+              |                    |                    |
+       +------+------+             |                    |
+       |      |      |             v                    v
+       v      v      v          source.pdf       background jobs
+     auth   atlas  bridge             |
+    schema  schema  state             |
+                                      v
+                           +----------------------+
+                           |    AGENTS BRIDGE     |
+                           |                      |
+                           | Document Perception  |
+                           | Reasoning Runtime    |
+                           | Interactive Runtime  |
+                           | Background Workers   |
+                           | Provider Routing     |
+                           | Budget / Usage       |
+                           +----------+-----------+
+                                      |
+                        +-------------+--------------+
+                        |             |              |
+                        v             v              v
+                     Mistral      Provider B      Provider C
+                        |
+             +----------+-----------+----------+
+             |                      |          |
+             v                      v          v
+          OCR 4.1              reasoning    embeddings
+             |
+             v
+      NormalizedDocument
+             |
+             v
+  Atlas-owned derived cache
+             |
+             v
+    Semantic Extraction
+             |
+             v
+     SemanticCandidates
+             |
+             v
+ Deterministic Validation
+             |
+             v
+    Targeted Retrieval
+             |
+             v
+      Reconciliation
+             |
+             v
+ Deterministic Validation
+             |
+             v
+ Validated Reviewable State
+      /               \
+     v                 v
+Review Projection   Contextual Chat
+      \               /
+       \             /
+        v           v
+         Human Review
+              |
+              v
+ Accepted Workspace Resolution
+              |
+              v
+    Resolved Knowledge
 ```
 
 Atlas remains the authoritative system for project state.
 
-Agents Bridge is an independently deployable provider-execution service. It may perform document perception and reasoning, but it never owns accepted Atlas truth, retrieval authority, revision authority, approval authority, or publication authority.
-
-The canonical document-processing distinction is:
+Agents Bridge remains a provider-execution boundary. It may perform perception and reasoning, but it never owns:
 
 ```text
-Document Perception
-        !=
-Semantic Extraction
+accepted Atlas truth
+review state
+review decisions
+retrieval authority
+revision authority
+approval authority
+publication authority
+conversation authority
 ```
-
-Document Perception answers:
-
-> **What is physically and structurally present in this document, and where is it located?**
-
-Semantic Extraction answers:
-
-> **What project meaning can Atlas defensibly derive from that normalized document representation?**
 
 ---
 
-## 2. Proposed Technology Stack
+# 2. Current Technology Baseline
 
 | Area | Technology / Direction | Responsibility |
 |---|---|---|
-| Runtime | Node.js 24 LTS | Runtime for Atlas backend and Agents Bridge |
+| Runtime | Node.js 24 LTS | Atlas backend and Agents Bridge runtime |
 | Language | TypeScript | Shared contracts and type safety |
-| Main database | PostgreSQL | Canonical persistent Atlas state and operational metadata |
-| ORM / migrations | Drizzle ORM + Drizzle Kit | Schema, queries, migrations |
-| Authentication | Better Auth | Users, sessions, accounts, authentication |
-| Auth integration | Better Auth Drizzle adapter | Auth tables in PostgreSQL |
-| Async queue | pg-boss | PostgreSQL-backed jobs, retries, scheduling, concurrency |
-| Agents Bridge server | Fastify | Provider-neutral perception/reasoning execution boundary |
-| Chat streaming | SSE initially | Stream chatbot responses without WebSocket complexity |
+| Main database | PostgreSQL | Canonical Atlas state and operational metadata |
+| ORM / migrations | Drizzle ORM + Drizzle Kit | Schema and migrations |
+| Authentication | Better Auth | Identity/session persistence |
+| Auth integration | Better Auth Drizzle adapter | Better Auth tables in PostgreSQL |
+| Async queue | pg-boss | PostgreSQL-backed jobs, retries, concurrency |
+| Agents Bridge server | Fastify | Provider-neutral reasoning/perception execution |
+| Chat streaming | SSE initially | Stream bounded interactive responses |
 | Skill contracts | JSON Schema + TypeScript | Provider-neutral reasoning contracts |
-| Perception contracts | JSON Schema + TypeScript | Provider-neutral perception request/result contracts |
-| Deterministic validation | AJV | Contract and trusted-state validation |
-| Document storage | Local filesystem initially | Immutable PRD/Addendum source bytes |
-| Future object storage | S3 / R2 adapter | Replace local source storage without changing Atlas Core |
-| Derived perception cache | Atlas-owned operational state | Rebuildable `NormalizedDocument` output |
+| Perception contracts | JSON Schema + TypeScript | Provider-neutral perception contracts |
+| Deterministic validation | AJV + Atlas reference validation | Contract and authority checks |
+| Document storage | Local filesystem initially | Immutable PRD/Addendum bytes |
+| Future object storage | S3/R2 adapter | Replace local storage without changing Atlas Core |
+| Derived perception cache | Atlas-owned | Rebuildable `NormalizedDocument` state |
+| Review state | PostgreSQL / Atlas-owned | Validated reviewable semantic state and decisions |
+| Review projection | Atlas-owned downstream projection | Bounded human-facing review model |
 | First provider qualification direction | Mistral | OCR, structured reasoning, chat, optional embeddings |
-| Local infrastructure | Docker Compose | PostgreSQL and supporting services |
+| Local infrastructure | Docker Compose | Production-shaped local runtime |
 
-Redis, Kafka, Kubernetes, and a separate vector database remain intentionally deferred until they solve a proven problem.
+Redis, Kafka, Kubernetes, and a separate vector database remain deferred until a proven requirement justifies them.
 
-The Mistral direction is a **provider qualification choice**, not an Atlas architecture dependency.
-
-Clients and skills must not depend on Mistral-specific model IDs or endpoints.
+Mistral remains a provider qualification direction, not an architecture dependency.
 
 ---
 
-## 3. Atlas Backend Responsibilities
+# 3. Atlas Backend Responsibilities
 
 The Atlas backend is the deterministic authority.
 
@@ -211,19 +248,25 @@ Atlas Backend
 +-- Derived perception ownership
 +-- Revisions
 +-- HEAD
++-- Semantic candidates
++-- Retrieval
++-- Reconciliation state
++-- Reviewable state
++-- Review decisions
++-- Review progress
++-- Review projections
 +-- Assertions
 +-- Resolved Knowledge
 +-- Knowledge Index
 +-- Dependencies
-+-- Retrieval
-+-- Review
 +-- Approval
 +-- Publishing
 +-- CES Result state
 +-- Conversation state
++-- Chat context assembly
 ```
 
-Its fundamental responsibility is:
+Its fundamental responsibility remains:
 
 > **Atlas determines what is allowed to become trusted project state.**
 
@@ -232,21 +275,24 @@ Agents Bridge may return:
 ```text
 NormalizedDocument output
 reasoning candidates
+reconciliation proposals
+semantic grouping proposals
 streamed explanations
 tool-call proposals
+Addendum proposals
 usage information
 provider errors
 ```
 
-but it may never directly advance trusted Atlas state.
+but it may never directly advance trusted or review-authoritative Atlas state.
 
-Atlas also determines which immutable source document is authorized for perception.
+Atlas also determines which immutable source documents, semantic records, review objects, dependencies, and evidence references are authorized for provider-backed reasoning.
 
-Agents Bridge must not independently enumerate projects, scan Atlas repositories, or discover source documents.
+Agents Bridge must not independently enumerate projects or scan Atlas repositories to construct context.
 
 ---
 
-## 4. PostgreSQL as the Canonical Repository
+# 4. PostgreSQL as the Canonical Repository
 
 The production baseline replaces fixture-owned runtime state with PostgreSQL-backed repositories.
 
@@ -273,58 +319,94 @@ atlas.*
 +-- document
 +-- document_evidence
 |
-+-- derived document-perception metadata / cache identity
++-- document_perception_execution
++-- normalized_document_cache
 |
 +-- semantic_candidate
 +-- assertion
 +-- assertion_evidence
 |
++-- reconciliation_proposal
++-- reconciliation_relationship
+|
++-- review
++-- review_item / review relationship state
++-- review_decision
++-- review_progress
+|
 +-- resolved_knowledge
 +-- knowledge_dependency
 +-- knowledge_index
 |
-+-- reconciliation_proposal
-|
 +-- approval
 +-- publication
+|
++-- conversation
++-- conversation_message
 |
 +-- ces_assessment
 +-- ces_assessment_support
 
 
 bridge.*
-+-- execution
-+-- execution_attempt
-+-- model_usage
-+-- budget_reservation
-+-- provider_usage
++-- execution / operational state
++-- background effects
++-- provider delivery replay
++-- model usage / budget state
 
 
 pgboss.*
 +-- queue infrastructure
 ```
 
-These are **responsibility boundaries, not a final schema**.
+These are **responsibility boundaries, not a locked final schema**.
 
-BSS-003 remains authoritative for the established PostgreSQL/Drizzle boundary:
+The exact table names, cardinalities, enums, and normalization choices belong to later domain tickets.
 
-- `packages/atlas-db` owns Drizzle and migrations;
-- Atlas Core remains persistence-neutral;
-- `auth`, `atlas`, and `bridge` remain separate namespaces;
-- the `agents_bridge` database role remains denied write access to trusted Atlas state;
-- final domain tables remain subject to later domain design.
+BSS-003 remains authoritative for the existing PostgreSQL/Drizzle boundary:
 
-The BSS-009 series defines the minimum persistence needed for derived perception identity/cache metadata within these existing boundaries rather than changing them.
+```text
+packages/atlas-db owns migrations and Drizzle
+Atlas Core remains persistence-neutral
+auth / atlas / bridge remain separate authority namespaces
+agents_bridge remains denied direct Atlas semantic-state mutation
+```
 
-Better Auth continues to own authentication-related tables.
+## Review state persistence is Atlas-owned
 
-Atlas continues to own Atlas domain and derived operational state.
+The production architecture now requires a persistence boundary for reviewable state.
+
+Atlas must be able to represent that a semantic relationship is:
+
+```text
+validated
+reviewable
+possibly unresolved
+not yet accepted truth
+```
+
+without forcing it into `resolved_knowledge`.
+
+Review persistence must also support resumable human review.
+
+The exact contract for:
+
+```text
+per-workspace review state
+per-user review progress
+shared review decisions
+multi-reviewer coordination
+```
+
+is intentionally deferred to the domain ticket that owns review persistence.
+
+No BSS ticket needs to be reopened to add these Atlas-owned domain tables.
 
 ---
 
-## 5. Repository Boundary
+# 5. Repository Boundary
 
-Atlas Core should not depend directly on Drizzle queries.
+Atlas Core should remain independent of Drizzle-specific queries.
 
 ```text
 Atlas Core
@@ -336,52 +418,51 @@ Repository Interfaces
 PostgreSQL / Drizzle Implementations
 ```
 
-Representative existing direction:
+Representative future repository responsibilities may include:
 
-```ts
-interface WorkspaceRepository {
-  get(workspaceId: string): Promise<Workspace | null>;
-  create(workspace: Workspace): Promise<void>;
-}
-
-interface RevisionRepository {
-  get(revisionId: string): Promise<Revision | null>;
-  getHead(workspaceId: string): Promise<RevisionId>;
-  commit(input: CommitRevisionInput): Promise<Revision>;
-}
-
-interface KnowledgeRepository {
-  getResolved(input: KnowledgeQuery): Promise<ResolvedKnowledge[]>;
-  saveAssertions(input: SaveAssertionsInput): Promise<void>;
-}
+```text
+WorkspaceRepository
+RevisionRepository
+DocumentRepository
+CandidateRepository
+ReconciliationRepository
+ReviewRepository
+KnowledgeRepository
+DependencyRepository
+ConversationRepository
+CesRepository
 ```
 
-A later BSS-009 implementation may introduce a persistence-neutral derived-perception repository/cache abstraction if one is required.
+The exact interface shapes are not locked by this baseline.
 
-That must not make Atlas Core depend on Drizzle or a Mistral SDK.
+The important boundary is:
 
-This preserves BSS-003 without reopening it.
+> **Domain semantics belong in Atlas Core/application services. Drizzle remains an implementation detail beneath repositories.**
 
 ---
 
-## 6. Transactions and Authority
+# 6. Transactions and Authority
 
 Database persistence is part of the deterministic authority boundary.
 
-Publishing should be transactional.
+## 6.1 Publication
+
+Publishing should remain transactional.
 
 ```text
 BEGIN TRANSACTION
 
 verify workspace is reviewable
+verify unresolved blockers are satisfied
 verify approval
 verify captured base revision
 verify Master HEAD has not unexpectedly moved
 
 create revision
 persist accepted assertions
+persist accepted review decisions where required
 update resolved state
-update dependencies/indexes
+update dependencies / indexes
 advance Master HEAD
 record publication event
 
@@ -394,12 +475,16 @@ On failure:
 ROLLBACK
 ```
 
-The same principle applies to accepted corrections and Addenda.
+## 6.2 Accepted correction / Addendum
+
+The same principle applies to accepted corrections.
 
 ```text
 Preview Addendum
       +
 preview hash
+      +
+extraction result
       +
 reconciliation result
       +
@@ -409,54 +494,71 @@ user approval
 transaction
       |
       +-- immutable document metadata
+      +-- accepted semantic result
       +-- assertions
       +-- revision
       +-- resolved knowledge
-      +-- HEAD movement
+      +-- dependency/index updates
+      +-- HEAD movement where applicable
 ```
 
-Derived perception output is different.
+## 6.3 Review resolution without Addendum
 
-It is operational/rebuildable state and does **not** itself move HEAD, create accepted assertions, approve a revision, or publish project truth.
+A human may sometimes correct Atlas's interpretation without introducing new project meaning.
+
+If existing immutable evidence already supports the intended interpretation:
+
+```text
+validated review relationship
+       +
+human review decision
+       +
+evidence references
+       |
+       v
+governed review resolution
+```
+
+This may be accepted without creating a new Addendum, subject to the final review/approval contract.
+
+This path must **not** be used when the human is introducing project meaning not already supported by immutable source documents.
+
+In that case an Addendum is required.
+
+## 6.4 Derived perception remains non-authoritative
+
+Derived perception output remains rebuildable operational state.
+
+It does not itself:
+
+```text
+move HEAD
+create accepted assertions
+approve review decisions
+publish project truth
+```
 
 ---
 
-## 7. Agents Bridge as a Separate Service
+# 7. Agents Bridge as a Separate Service
 
-Agents Bridge remains the one provider-execution service currently justified as independently deployable.
+Agents Bridge remains the single provider-execution service justified as independently deployable.
 
 ```text
 apps/
 +-- atlas/
-|
 +-- agents-bridge/
 ```
 
-BSS-005 established the service foundation and provider-neutral reasoning envelope.
+BSS-005 remains valid.
 
-That approved foundation remains valid.
+## 7.1 Reasoning runtime
 
-### 7.1 Existing reasoning runtime
+The provider-neutral reasoning runtime remains the execution boundary for interactive and background reasoning.
 
-The existing conceptual reasoning boundary remains:
+The approved runtime should be extended through bounded contracts rather than replaced.
 
-```ts
-interface ReasoningRuntime {
-  execute<I, O>(
-    skill: SkillDefinition<I, O>,
-    input: I,
-    context: ExecutionContext
-  ): Promise<O>;
-}
-```
-
-The implementation currently uses a versioned provider-neutral execution envelope shared by interactive and background callers.
-
-BSS-009 must **not require BSS-005 to be rewritten**.
-
-### 7.2 Additive provider capability families
-
-The Bridge should evolve additively into two provider-facing capability families:
+## 7.2 Provider capability families
 
 ```text
                          AGENTS BRIDGE
@@ -477,104 +579,58 @@ The Bridge should evolve additively into two provider-facing capability families
                                               +-- Addendum composition
 ```
 
-The exact BSS-009 API shape is not locked here.
+Review state and review projection ownership remain outside Bridge.
 
-It may use:
-
-```text
-a separate perception runtime
-a typed provider-capability request
-a dedicated Bridge route/job envelope
-```
-
-provided that it remains provider-neutral and does not break the existing BSS-005 `ReasoningRuntime`.
-
-### 7.3 Bridge operational responsibilities
+## 7.3 Bridge operational responsibilities
 
 ```text
 Agents Bridge
 |
-+-- Skill / capability registry
-|
++-- Capability / skill registry
 +-- Interactive Executor
-|   +-- chatbot
-|
 +-- Background Worker
-|   +-- pg-boss
-|
 +-- Document Perception execution
-|
 +-- Provider Router
-|
 +-- Rate Limiter
 +-- Concurrency Manager
 +-- Retry Manager
 +-- Timeout / Cancellation
-|
 +-- Usage Manager
 +-- Budget Manager
-|
 +-- Provider Adapters
-    +-- Mistral first qualification direction
-    +-- future providers
 ```
 
-Provider adapters live beneath provider-neutral contracts.
+Provider adapters remain below provider-neutral contracts.
 
-### 7.4 Document source access boundary
+## 7.4 Source and semantic-context access boundary
 
-Agents Bridge must **not** directly open Atlas local paths or independently read DocumentStore.
-
-The production-shaped flow is:
+Agents Bridge must not directly discover:
 
 ```text
-Atlas
-  |
-  +-- authorize project/workspace/document
-  |
-  +-- resolve immutable document metadata
-  |
-  +-- read source bytes through DocumentStore
-  |
-  v
-submit authorized perception request
-  |
-  v
-Agents Bridge
+DocumentStore paths
+projects
+workspaces
+review items
+resolved knowledge
+dependency graph
+conversation authority
 ```
 
-The BSS-009 perception contract must define how the authorized document content reaches the Bridge without exposing machine-specific DocumentStore paths.
+Atlas authorizes and supplies bounded input.
 
-Possible transport mechanisms may include a bounded binary upload/stream or another explicit provider-neutral file payload contract.
+For perception, that means source bytes through the approved BSS-009 authority flow.
 
-The exact transport is a BSS-009 implementation decision.
-
-This preserves:
-
-```text
-BSS-003
-    Bridge has no Atlas trusted-state authority
-
-BSS-005
-    Bridge receives explicit bounded input
-
-BSS-007
-    DocumentStore paths remain private to the storage adapter
-```
+For semantic reasoning/chat, that means bounded Atlas-selected semantic/evidence context.
 
 ---
 
-## 8. Dual Execution Modes
+# 8. Dual Execution Modes
 
-Agents Bridge should continue to support both interactive and background execution.
+Agents Bridge continues to support interactive and background execution.
 
-BSS-006 already established the reusable pg-boss background runtime, retries, idempotency, concurrency, timeout/cancellation, and restricted Bridge database role.
+## 8.1 Interactive
 
-That infrastructure remains unchanged.
-
-### 8.1 Interactive
-
-Used when a human is waiting for a response.
+Used when a human is waiting.
 
 ```text
 Atlas
@@ -595,20 +651,19 @@ SSE streamed response
 Atlas / Client
 ```
 
-Typical interactive operations:
+Typical interactive work:
 
 ```text
-semantic mediator
 chatbot query
 chatbot exploration
-Addendum drafting
+selected-review-item explanation
 clarification
-small bounded reasoning
+review-resolution assistance
+Addendum drafting
+small bounded hypothetical reasoning
 ```
 
-Document perception should normally be treated as a background operation unless a later product requirement demonstrates that an interactive path is necessary and sufficiently bounded.
-
-### 8.2 Background
+## 8.2 Background
 
 Used for expensive or non-interactive work.
 
@@ -619,26 +674,18 @@ Atlas
 enqueue
   |
   v
-PostgreSQL / pg-boss
+pg-boss
   |
   v
 Agents Bridge worker
   |
-  +---------------------------+
-  |                           |
-  v                           v
-document perception       reasoning execution
-  |                           |
-  v                           v
-NormalizedDocument       candidate result
-  |                           |
-  +-------------+-------------+
-                |
-                v
-        Atlas processing
+  +----------------------------+
+  |                            |
+  v                            v
+document perception        reasoning execution
 ```
 
-Typical background operations now include:
+Typical background work may include:
 
 ```text
 document perception
@@ -651,135 +698,492 @@ assurance-source ingestion
 large dependency refresh
 ```
 
-The phrase **PRD extraction** should not be used when precision matters because it can incorrectly collapse document perception and semantic extraction into one step.
+Jobs remain idempotent even when queue retries exist.
 
-Jobs must remain idempotent even when queue retries are available.
+The completed BSS-006 worker lifecycle should be reused.
 
-The BSS-009 series adds the real document-perception job on top of BSS-006 rather than redesigning the queue runtime.
+No review/chatbot requirement currently justifies a second queue framework.
 
 ---
 
-## 9. Chatbot Architecture
+# 9. Semantic Extraction, Reconciliation & Reviewable State
 
-### 9.1 Query
+The production semantic pipeline downstream of BSS is:
+
+```text
+NormalizedDocument
+      |
+      v
+Semantic Extraction
+      |
+      v
+SemanticCandidates
+      |
+      v
+Deterministic Validation
+      |
+      v
+Targeted Retrieval
+      |
+      v
+Semantic Reconciliation
+      |
+      v
+Deterministic Validation
+      |
+      v
+Validated Reviewable State
+```
+
+## 9.1 Reconciliation scope
+
+Reconciliation must support:
+
+```text
+incoming candidate
+vs
+relevant existing knowledge
+```
+
+and:
+
+```text
+incoming candidate
+vs
+relevant incoming candidates
+```
+
+This allows Atlas to surface:
+
+```text
+new
+supports
+duplicates
+refines
+extends
+contradicts
+supersedes
+partially supersedes
+ambiguous
+requires resolution
+```
+
+including source-internal conflicts.
+
+## 9.2 Reviewable does not mean accepted
+
+A reconciliation result may be valid but still unresolved.
+
+For example:
+
+```text
+Current:
+quota = 40
+
+Incoming:
+quota = 45
+
+Relationship:
+contradiction
+
+State:
+requires human decision
+```
+
+Atlas must be able to persist and serve this state without forcing either side into accepted truth.
+
+Therefore:
+
+```text
+validated reconciliation
+    !=
+accepted resolution
+
+reviewable
+    !=
+published
+```
+
+## 9.3 Accepted resolution
+
+After governed human review, Atlas may produce an accepted workspace resolution.
+
+Only then should the relevant semantic state participate in ordinary resolved-knowledge reads.
+
+---
+
+# 10. Review Projection and Scalable Serving
+
+The existing `atlas.workspace-review-projections` concept evolves into a production review projection downstream of validated candidates and reconciliation.
+
+Conceptually:
+
+```text
+Base / Current Resolved Knowledge --------+
+                                         |
+Validated Incoming Candidates -----------+
+                                         |
+Validated Reconciliation Relationships --+--> Review Projection
+                                         |
+Dependency References -------------------+
+                                         |
+Evidence References ---------------------+
+                                         |
+Validated CES References when relevant --+
+```
+
+The projection may organize:
+
+```text
+summary
+attention queue
+semantic groups
+workflow deltas
+fact deltas
+current-vs-incoming comparisons
+conflicts
+ambiguities
+dependency impact
+evidence references
+review progress
+```
+
+The projection must not decide:
+
+```text
+semantic truth
+reconciliation
+supersession
+conflict resolution
+approval
+publication
+CES discovery
+```
+
+## 10.1 Candidate/review-only invariant
+
+The useful prototype-era invariant should remain:
+
+> **A review projection is review data, not accepted project truth.**
+
+The existing fixture implementation may be rewritten, but the authority distinction remains valuable.
+
+## 10.2 Progressive serving
+
+Review data should be served progressively.
+
+Conceptually:
+
+```text
+review summary
+      |
+      v
+attention queue
+      |
+      v
+semantic-group list
+      |
+      v
+selected group
+      |
+      v
+selected item
+      |
+      v
+evidence / dependencies
+```
+
+Opening a review must not require serializing:
+
+```text
+all historical PRDs
+all Addenda
+all candidates
+all resolved semantics
+all evidence
+all CES assessments
+```
+
+The backend should support bounded fetching through appropriate repository/API patterns such as:
+
+```text
+pagination
+cursor-based retrieval
+group-scoped retrieval
+item-scoped retrieval
+evidence-on-demand
+dependency-on-demand
+```
+
+Exact routes are not locked here.
+
+## 10.3 Attention queue
+
+Items that require a human decision should be surfaced explicitly.
+
+Examples:
+
+```text
+contradiction
+ambiguity
+possible partial supersession
+source-internal inconsistency
+unresolved correction target
+missing semantic relationship
+```
+
+Triage should favor explainable Atlas signals:
+
+```text
+requires user decision
+blocks publication
+affects N workflow nodes
+affects N project facts
+affects N CES assessments
+```
+
+Opaque model-generated importance scores should not be required.
+
+## 10.4 Review progress
+
+Review progress should be resumable.
+
+The exact production enum is not locked, but the backend must eventually support state sufficient to express things such as:
+
+```text
+unreviewed
+reviewed
+needs-correction
+needs-clarification
+resolved
+```
+
+The domain ticket must decide whether progress is:
+
+```text
+per workspace
+per user
+or both
+```
+
+before schema values are frozen.
+
+---
+
+# 11. Conversational Semantic Mediator
+
+The chatbot remains Atlas's **Conversational Semantic Mediator**.
+
+It is **not** the primary post-extraction surface.
+
+The primary surface is the review projection that shows what Atlas extracted and where human attention is needed.
+
+Chat is contextual to that surface.
+
+## 11.1 Query
 
 ```text
 User
  |
- | "What's the current quota?"
+ | "Why does Atlas think this step rejects registration?"
  v
 Atlas API
  |
  +-- authorize user
- +-- resolve workspace
+ +-- resolve project/workspace
+ +-- resolve review identity
+ +-- resolve selected semantic item
  +-- targeted retrieval
-        |
-        v
-Relevant Resolved Knowledge
+ +-- bounded evidence
         |
         v
 Agents Bridge
-semantic-mediator
+semantic mediator
         |
         v
-stream explanation
-        |
-        v
-User
+stream grounded explanation
 ```
 
-Agents Bridge should not independently scan the entire project database to decide what knowledge matters.
+No mutation occurs.
 
-Atlas owns retrieval and passes bounded context to the reasoning layer.
-
-### 9.2 Explore
+## 11.2 Explore
 
 Hypothetical reasoning remains non-mutating.
 
 ```text
-User question
-    |
-    v
-Atlas targeted retrieval
-    |
-    v
-bounded context
-    |
-    v
-Agents Bridge
-    |
-    v
+selected semantic context
+       +
+hypothetical change
+       |
+       v
+bounded reasoning
+       |
+       v
 hypothetical explanation
 ```
 
-### 9.3 Correction
+Hypothetical state must remain distinct from:
 
 ```text
-"Special departure quota should be 45."
-                |
-                v
-          Atlas Backend
-                |
-                v
-         targeted context
-                |
-                v
-       Agents Bridge - sync
-                |
-         Semantic Mediator
-                |
-                v
-         Addendum Author
-                |
-                v
-       Preview Addendum
-                |
-                v
-              USER
-             confirms
-                |
-                v
-         Atlas processing
-                |
-       +--------+--------+
-       |                 |
- small change        larger change
-       |                 |
-      sync             queue
-       |                 |
-       +--------+--------+
-                |
-                v
-          Reconciliation
-                |
-                v
-       Deterministic Validation
-                |
-                v
-              Review
-                |
-                v
-             Approval
-                |
-                v
-              Commit
+current accepted truth
+incoming candidate
+reconciliation proposal
+unresolved review state
 ```
 
-This preserves the key boundary:
+## 11.3 Correct / Resolve
+
+A user correction inside the review experience may lead to two different governed paths.
+
+```text
+User correction
+      |
+      v
+resolve target and evidence
+      |
+      v
+Does immutable evidence already
+support the intended meaning?
+      |
+   +--+--+
+   |     |
+  yes    no
+   |     |
+   v     v
+Review  Preview
+Resolution Addendum
+```
+
+### Review Resolution
+
+If the user's intended interpretation is already supported by immutable evidence, Atlas may record a governed review decision.
+
+The chatbot may assist with:
+
+```text
+target resolution
+ambiguity explanation
+evidence comparison
+review-decision proposal
+```
+
+but does not itself mutate accepted truth.
+
+### Preview Addendum
+
+If the user introduces new or clarifying project meaning that existing documents do not establish, the chatbot becomes an assisted Addendum author.
+
+The architectural boundary remains:
 
 > **Chatbot owns human -> document. Atlas owns document -> knowledge.**
 
-Atlas owns conversation state.
+## 11.4 Chat context assembly
 
-Provider-side conversation/agent state must not become required for Atlas correctness or reconstruction.
+Atlas owns context assembly.
+
+A bounded chat request may include:
+
+```text
+conversation state
+workspace identity
+review identity
+selected semantic identity
+current/base semantic item
+incoming candidate when relevant
+reconciliation relationship when relevant
+bounded evidence
+affected dependencies
+bounded CES references when relevant
+permissions
+output contract
+```
+
+Agents Bridge does not discover this context independently.
+
+## 11.5 Stable semantic references
+
+Review UI and chat should reference the same stable Atlas identities.
+
+```text
+center selection
+   -> chat context
+
+chat references semantic entity
+   -> UI can focus/highlight entity
+```
+
+This must use semantic/reference IDs rather than free-text matching.
+
+## 11.6 Conversation ownership
+
+Atlas stores conversation history.
+
+Provider conversation/agent state must not become required for:
+
+```text
+correctness
+review state
+project truth
+correction state
+approval
+reconstruction
+```
 
 ---
 
-## 10. Paid Model and Perception Usage / Budget Management
+# 12. Correction / Addendum Processing
 
-The operational concern should be broader than token counting.
+The existing Addendum architecture remains valid.
 
-Use a **Usage & Budget Manager** for both reasoning and provider-backed document perception.
+Use it when human meaning is not already defensibly supported by immutable project sources.
+
+```text
+User Correction
+      |
+      v
+Semantic Mediator
+      |
+      v
+resolve correction target
+      |
+      v
+clarification if required
+      |
+      v
+Preview Addendum
+      |
+      v
+incremental Semantic Extraction
+      |
+      v
+Targeted Retrieval
+      |
+      v
+Reconciliation Simulation
+      |
+      v
+Atlas Change Preview
+      |
+      v
+User Confirmation
+      |
+      v
+Atomic Correction Revision
+```
+
+The exact Preview Addendum processed by Atlas is the document being accepted.
+
+Atlas should not immediately re-extract that accepted preview after confirmation.
+
+If the Preview Addendum changes semantically after simulation, the previous simulation is invalid and must be rerun.
+
+The accepted document and accepted semantic result must correspond.
+
+---
+
+# 13. Provider Usage, Budget and Capacity
+
+Provider usage/budget concerns remain Agents Bridge responsibilities.
 
 Conceptually:
 
@@ -793,9 +1197,7 @@ execution
 +-- source document when applicable
 +-- estimated usage
 +-- actual usage
-+-- OCR pages when applicable
-+-- input tokens when applicable
-+-- output tokens when applicable
++-- pages/tokens
 +-- estimated cost
 +-- actual cost
 +-- latency
@@ -803,105 +1205,31 @@ execution
 +-- status
 ```
 
-Lifecycle:
-
-```text
-Provider-backed request
-       |
-       v
-estimate cost / usage
-       |
-       v
-budget check
-       |
-       v
-reserve
-       |
-       v
-execute
-       |
-       v
-receive provider usage
-       |
-       v
-calculate actual cost
-       |
-       v
-reconcile reservation
-```
-
 Skills and Atlas Core must remain unaware of provider pricing.
 
-For example, `atlas.ces-assessment` should not know:
+Agents Bridge also owns provider-specific operational constraints such as:
 
 ```text
-provider pricing
-remaining account credit
-provider rate limits
-token pricing
-OCR page pricing
+concurrency
+requests/minute
+tokens/minute
+document/page limits
+retry limits
+privacy policy
 ```
-
-Those remain Agents Bridge operational concerns.
-
-BSS-006's existing rule that usage/budget concerns remain Bridge-owned continues to hold.
 
 ---
 
-## 11. Provider Capacity Management
+# 14. Security Boundary
 
-Agents Bridge should manage provider-specific operational limits across capability types.
-
-```text
-Provider A
-+-- max concurrent reasoning jobs
-+-- max concurrent OCR jobs
-+-- requests/minute
-+-- tokens/minute
-+-- page/document limits
-
-Provider B
-+-- different limits
-```
-
-The execution decision may consider:
-
-```text
-Queued job
-   |
-   v
-capability requirement
-   |
-   v
-provider capability
-   |
-   v
-remaining provider capacity
-   |
-   v
-remaining project/user budget
-   |
-   v
-privacy / retention policy
-   |
-   v
-execute
-```
-
-This becomes more important as Atlas uses multiple provider capabilities and vendors.
-
----
-
-## 12. Security Boundary
-
-Separate database roles continue to reinforce the architecture established by BSS-003.
+The database-role boundary established by BSS-003 remains unchanged.
 
 ```text
 atlas_app
 |
 +-- auth.*
 +-- atlas.*
-+-- enqueue jobs
++-- authorized enqueue operations
 
 
 agents_bridge
@@ -911,75 +1239,57 @@ agents_bridge
 +-- explicitly granted operational access only
 ```
 
-Agents Bridge must not have permission to directly perform operations such as:
+Agents Bridge must not directly execute operations such as:
 
 ```sql
 UPDATE atlas.resolved_knowledge;
+UPDATE atlas.review_decision;
 UPDATE atlas.workspace_head;
 UPDATE atlas.revision;
 UPDATE atlas.publication;
 ```
 
-The existing BSS-003 denial of Atlas trusted-state writes from the Bridge role remains valid and should not be weakened for document perception.
+## 14.1 Document security
 
-### 12.1 Source-document security boundary
+Agents Bridge receives document bytes only through the existing Atlas-authorized perception handoff.
 
-Agents Bridge does not need direct database authority or direct DocumentStore path access in order to run OCR.
+## 14.2 Semantic/review security
 
-Instead:
+Agents Bridge receives only Atlas-authorized semantic/review context for reasoning.
 
-```text
-Atlas authorization
-      |
-      v
-DocumentStore.read(authorized key)
-      |
-      v
-bounded perception request
-      |
-      v
-Agents Bridge
-```
+It must not be granted broad repository access simply to make chatbot or reconciliation implementation convenient.
 
-This prevents provider-execution code from becoming a document-discovery authority.
+## 14.3 Provider secrets
 
-### 12.2 Provider secret boundary
-
-Provider credentials such as Mistral API keys belong only to Agents Bridge configuration / deployment secret handling.
+Provider credentials remain Bridge deployment secrets.
 
 They must not appear in:
 
 ```text
-Atlas skill contracts
-NormalizedDocument
-Atlas database business records
-client responses
-ordinary logs
+skill contracts
+review projections
+NormalizedDocument business fields
+ordinary client responses
+business database records
 test snapshots
 ```
 
-### 12.3 Privacy policy boundary
+## 14.4 Privacy policy
 
-Agents Bridge should eventually be able to express a provider execution policy such as:
+Provider execution policy may include:
 
 ```text
 training: deny
 retention: standard | zero
 ```
 
-The adapter must select a provider endpoint/configuration compatible with the requested policy.
-
 Atlas remains responsible for its own intentional persistent storage.
 
 ---
 
-## 13. Immutable Document Storage
+# 15. Immutable Document Storage
 
-Document bytes remain separate from canonical database state.
-
-BSS-007 remains valid and authoritative for the source-byte storage boundary.
-
-Initial architecture:
+BSS-007 remains authoritative for immutable source-byte storage.
 
 ```text
 Atlas
@@ -991,91 +1301,37 @@ DocumentStore
 LocalFilesystemDocumentStore
 ```
 
-Example conceptual local layout:
-
-```text
-.atlas-data/
-└── documents/
-    └── <generated-storage-key>
-```
-
-The exact physical path remains private to the adapter.
-
-PostgreSQL stores metadata such as:
-
-```text
-document_id
-content_hash
-storage_key
-mime_type
-byte_size
-source_kind
-created_by
-created_at
-```
-
-The database must not store machine-specific local paths as business meaning.
-
 Later:
 
 ```text
 LocalFilesystemDocumentStore
              |
              v
-      S3DocumentStore
+      S3 / R2 DocumentStore
 ```
 
-Atlas Core should not need to change when source storage moves from local disk to S3/R2.
+Atlas Core should not change when storage adapters change.
 
-### 13.1 Three-layer document model
-
-Atlas should distinguish:
+## 15.1 Three-layer document model
 
 ```text
 1. IMMUTABLE SOURCE
-
-source.pdf
-|
-+-- authoritative document bytes
-+-- content hash
-+-- source identity
-+-- durable / reconstructable
-
+   source.pdf
 
 2. DERIVED DOCUMENT PERCEPTION
-
-NormalizedDocument
-|
-+-- page text
-+-- structural blocks
-+-- tables
-+-- images / image references
-+-- page geometry
-+-- bounding boxes
-+-- OCR confidence / extraction metadata
-+-- replaceable / rebuildable
-
+   NormalizedDocument
 
 3. DERIVED SEMANTICS
-
-SemanticCandidates
-|
-+-- actors
-+-- rules
-+-- constraints
-+-- workflow relationships
-+-- normalized meaning
-+-- evidence links
-+-- candidate-only until deterministic validation
+   SemanticCandidates
 ```
 
-Only the immutable source document is durable human-authored source material.
+Only layer 1 is durable human-authored source material.
 
-Derived perception is operational state.
+Reviewable and resolved semantic states remain reconstructable Atlas state derived from immutable documents plus governed human decisions.
 
-Derived semantic candidates are reasoning output and remain untrusted until deterministic validation.
+---
 
-### 13.2 Canonical document-processing pipeline
+# 16. Canonical Production Processing Pipeline
 
 ```text
                       ATLAS
@@ -1087,7 +1343,6 @@ Derived semantic candidates are reasoning output and remain untrusted until dete
                         |
                         v
               Atlas authorization
-                  and source read
                         |
                         v
              document-perception job
@@ -1096,105 +1351,98 @@ Derived semantic candidates are reasoning output and remain untrusted until dete
                  Agents Bridge
                         |
                         v
-                Mistral OCR 4.1
+              provider perception
                         |
                         v
               NormalizedDocument
                         |
-            +-----------+-----------+
-            |                       |
-            v                       v
-       textual blocks          visual blocks
-       tables                  image regions
-       page positions          bounding boxes
-            |                       |
-            +-----------+-----------+
+                        v
+             derived-perception cache
                         |
                         v
-              derived-perception cache
-                        |
-                        v
-               semantic extraction
-                        |
-                        v
-                 Agents Bridge
-                        |
-                        v
-             qualified reasoning model
+               Semantic Extraction
                         |
                         v
               SemanticCandidates
                         |
                         v
-          deterministic Atlas validation
+          Deterministic Validation
+                        |
+                        v
+               Targeted Retrieval
+                        |
+                        v
+                 Reconciliation
+                        |
+                        v
+          Deterministic Validation
+                        |
+                        v
+           Validated Reviewable State
+                        |
+             +----------+----------+
+             |                     |
+             v                     v
+       Review Projection     Contextual Chat
+             |                     |
+             +----------+----------+
+                        |
+                        v
+                   Human Review
+                        |
+                        v
+          Accepted Workspace Resolution
+                        |
+                        v
+             Resolved Knowledge
+                        |
+              +---------+---------+
+              |         |         |
+              v         v         v
+           Workflow    Facts      CES
 ```
 
-### 13.3 `NormalizedDocument`
-
-The provider-neutral perception result should conceptually contain:
+The core production boundaries are therefore:
 
 ```text
-NormalizedDocument
-|
-+-- artifact identity
-+-- source SHA-256
-+-- perception contract/version
-+-- pages[]
-    |
-    +-- page number
-    +-- dimensions
-    +-- text blocks
-    +-- tables
-    +-- visual regions
-    +-- image references
-    +-- bounding boxes
-    +-- confidence / provider metadata
+DocumentStore
+    owns immutable source bytes
+
+Document Perception
+    derives provider-neutral document structure
+
+Semantic Extraction
+    derives candidate project meaning
+
+Retrieval
+    finds relevant context
+
+Reconciliation
+    proposes semantic relationships
+
+Reviewable State
+    stores validated, potentially unresolved semantic state
+
+Review Projection
+    organizes reviewable state for humans
+
+Human Review
+    produces governed semantic decisions
+
+Resolved Knowledge
+    represents accepted current workspace semantics
+
+Chat
+    mediates human interaction with bounded Atlas context
 ```
-
-The exact schema is owned by BSS-009 and is **not locked by this baseline**.
-
-Required properties are:
-
-```text
-provider-neutral
-source-linked
-page-local
-visual-capable
-rebuildable
-suitable for deterministic evidence validation
-```
-
-### 13.4 Derived-perception cache
-
-Atlas may persist/cache a `NormalizedDocument` because repeating OCR and page perception for every semantic operation would be wasteful.
-
-The cache must remain rebuildable from:
-
-```text
-immutable source bytes
-+
-perception capability/version
-```
-
-It may be invalidated when:
-
-```text
-perception implementation changes
-provider/version changes
-normalization contract changes
-integrity verification requires rebuild
-explicit reprocessing is requested
-```
-
-The cache is not accepted project truth.
 
 ---
 
-## 14. Package Structure
+# 17. Package Structure Direction
 
-The existing package boundaries established by BSS-001 remain valid.
+The existing workspace/package boundaries remain valid.
 
-Recommended direction:
+Recommended downstream direction:
 
 ```text
 apps/
@@ -1216,9 +1464,13 @@ packages/
 |   +-- project/
 |   +-- workspace/
 |   +-- document/
+|   +-- semantic/
+|   +-- retrieval/
+|   +-- reconciliation/
+|   +-- review/
+|   +-- conversation/
 |   +-- revision/
 |   +-- knowledge/
-|   +-- reconciliation/
 |   +-- approval/
 |   +-- publishing/
 |
@@ -1228,200 +1480,194 @@ packages/
 |   +-- migrations/
 |
 +-- atlas-contracts/
-|   +-- reasoning/
 |   +-- perception/
+|   +-- reasoning/
+|   +-- semantic/
+|   +-- reconciliation/
+|   +-- review/
+|   +-- conversation/
 |   +-- execution/
-|   +-- events/
 |
 +-- atlas-skills/
-|   +-- document-extraction/     # existing skill; semantic role clarified later
+|   +-- semantic-extraction/
 |   +-- semantic-reconciliation/
+|   +-- workspace-review-projections/
 |   +-- semantic-mediator/
 |   +-- addendum-author/
 |   +-- ces-assessment/
 |
 +-- document-store/
 |
-└-- atlas-fixtures/
-    └-- golden/test data only
++-- atlas-fixtures/
+    +-- golden/test/regression only
 ```
 
-This is an additive organization inside existing package ownership.
-
-It does **not** require a new root package merely to support BSS-009.
+These paths are directional, not locked filenames.
 
 `@atlas/fixtures` remains:
 
 ```text
-test scenarios
-golden fixtures
+tests
+golden scenarios
 regression fixtures
 architecture verification
 ```
 
-It must not own application runtime truth.
+It must never become runtime authority.
 
 ---
 
-## 15. Reasoning Skills and Provider Capabilities
+# 18. Reasoning Skills and Provider Capabilities
 
-The baseline now distinguishes provider capabilities from Atlas reasoning skills.
+The baseline distinguishes provider capabilities from Atlas reasoning responsibilities.
 
-### 15.1 Provider capability: Document Perception
-
-Document Perception is not itself required to be an Atlas reasoning skill.
-
-Conceptually:
+## 18.1 Document Perception
 
 ```text
 atlas.document.perceive
     |
     v
-source document payload
+authorized source document
     |
     v
 NormalizedDocument
 ```
 
-The capability alias is server-controlled.
+The approved BSS-008/BSS-009 implementation remains the foundation.
 
-For the first Mistral qualification:
+## 18.2 Production skill direction
 
-```text
-atlas.document.perceive
-    -> Mistral OCR 4.1
-```
+Prototype-era skills may be rewritten.
 
-The alias is architectural; the exact provider/model may change.
+The production responsibilities are conceptually:
 
-### 15.2 Reasoning skills
-
-Expected reasoning capabilities remain conceptually:
-
-| Skill / capability | Responsibility |
+| Skill / capability | Production responsibility |
 |---|---|
-| existing `atlas.document-extraction` / future semantic-extraction contract | `NormalizedDocument` -> semantic candidates |
-| `atlas.semantic-reconciliation` | Incoming candidates + retrieved knowledge -> semantic relationship proposals |
-| `atlas.semantic-mediator` | User language -> query/explore/correct intent |
-| `atlas.addendum-author` | Accepted correction intent -> standalone Preview Addendum |
-| `atlas.ces-assessment` | Relevant project semantics + assurance knowledge -> CES assessment candidates |
-| `atlas.workspace-review-projections` | Trusted resolved knowledge + validated CES assessments -> review projection |
+| semantic extraction | `NormalizedDocument` -> evidence-grounded semantic candidates |
+| semantic reconciliation | incoming candidates + bounded existing/incoming context -> relationship proposals |
+| workspace review projections | validated reviewable Atlas state -> bounded human-review model |
+| semantic mediator | user language + bounded Atlas context -> query/explore/resolve/correct assistance |
+| Addendum author | correction intent requiring new meaning -> standalone Preview Addendum |
+| CES assessment | relevant resolved project semantics + governed assurance knowledge -> CES candidates |
 
-The existing `atlas.document-extraction` name is **not renamed by this baseline**.
+## 18.3 `atlas.workspace-review-projections`
 
-A later SFE/document-extraction ticket may decide whether to:
+The old prototype/fixture contract is not production-canonical.
 
-```text
-keep atlas.document-extraction
-or
-rename/evolve it to atlas.semantic-extraction
-```
-
-What is canonical now is the responsibility separation:
+Useful invariants to preserve:
 
 ```text
-Document Perception
-    -> NormalizedDocument
-
-Semantic Extraction
-    -> SemanticCandidates
+candidate/review-only
+source-grounded
+non-publishing
+non-authoritative
+shared semantic references
 ```
 
-Skills produce candidate reasoning.
-
-They do not directly mutate trusted Atlas state.
-
-### 15.3 Current Mistral qualification map
-
-The current qualification direction is:
+Its production input should evolve toward:
 
 ```text
-atlas.document.perceive
-    -> Mistral OCR 4.1
-
-semantic extraction
-    -> Mistral Large 3 initially
-       Medium 3.5 as qualification challenger
-
-semantic reconciliation
-    -> Large 3 vs Medium 3.5 benchmark
-
-CES assessment
-    -> Medium 3.5 vs Large 3 benchmark
-
-chat default
-    -> Mistral Small 4
-
-retrieval embedding, if needed
-    -> mistral-embed
+validated incoming candidates
++
+current/base resolved knowledge
++
+validated reconciliation relationships
++
+dependency references
++
+evidence references
++
+review metadata
++
+validated CES references where relevant
 ```
 
-These are implementation/qualification candidates, not permanent Atlas contracts.
+Its output should remain a review projection.
+
+It must not become the reconciliation authority.
+
+## 18.4 `atlas.semantic-mediator`
+
+The production mediator receives bounded Atlas context.
+
+It should not:
+
+```text
+scan the database directly
+discover project state independently
+mutate truth
+decide approval
+invent review relationships
+```
+
+It assists humans over state Atlas already owns.
 
 ---
 
-## 16. Deterministic vs Provider / Model Responsibilities
+# 19. Deterministic vs Provider / Model Responsibilities
 
-### Provider-backed Document Perception
+## Provider-backed perception
 
 ```text
-parse document representation
-OCR text
-identify structural blocks
-extract tables
-locate images / visual regions
-provide page geometry / bounding boxes
-return provider usage / confidence metadata when available
+OCR
+document parsing
+structural blocks
+tables
+visual regions
+page geometry
+provider usage metadata
 ```
 
-### Model / Agents Bridge Reasoning
+## Model / Agents Bridge reasoning
 
 ```text
-interpret normalized document semantics
+interpret normalized semantics
 discover semantic relationships
 propose reconciliation
+semantic grouping
 reason about CES concerns
 mediate user language
+explain selected review state
 compose Addenda
-semantic grouping
 produce candidate explanations
 ```
 
-### Deterministic Atlas Core
+## Deterministic Atlas
 
 ```text
 authorize document access
 own DocumentStore interaction
-own derived-perception cache identity
+own derived-perception identity/cache
 validate schemas
-enforce immutability
-create revisions
-move HEAD
-maintain indexes
+validate references
+validate evidence identity
+persist semantic candidates
 perform retrieval
+persist reconciliation proposals
+persist review state
+preserve current-vs-incoming identity
+calculate dependency impact
+calculate review progress
+page/filter review items
+enforce review-decision authority
+maintain revisions
+maintain HEAD
+maintain indexes
+maintain provenance
 enforce approval
 perform atomic commit
-validate references
-maintain provenance
-maintain dependency state
 publish
 ```
 
 Invariant:
 
-> **Providers perceive and models reason. Atlas decides whether derived output satisfies the contract and may enter trusted state.**
-
-Provider output alone never grants mutation authority.
+> **Providers perceive and models reason. Atlas owns state, authority, validation, review, acceptance, and publication.**
 
 ---
 
-## 17. Local Production-Shaped Environment
+# 20. Local Production-Shaped Environment
 
-The local environment should already mirror production architecture.
-
-BSS-001, BSS-002, BSS-005, BSS-006, and BSS-007 remain valid.
-
-### Local
+The local environment remains production-shaped.
 
 ```text
 Atlas
@@ -1429,60 +1675,44 @@ Agents Bridge
 Agents Bridge worker
 PostgreSQL
 LocalFilesystemDocumentStore
-Mistral development credentials when explicitly configured
+qualified provider credentials when configured
 ```
 
-`docker compose up` remains the canonical supported stack boot path for runnable stack components introduced by BSS tickets.
+`docker compose up` remains the supported stack path established by BSS.
 
-The local filesystem adapter remains development-only document persistence as recorded by BSS-007.
-
-### Production later
+Production may later use:
 
 ```text
 Atlas
 Agents Bridge x N
-Agents Bridge workers x N
+Workers x N
 Managed PostgreSQL
-S3 / R2 compatible DocumentStore
-qualified provider configuration
-production privacy / retention policy
+S3/R2-compatible DocumentStore
+production-qualified provider configuration
 ```
 
-Avoid:
-
-```text
-local architecture A
-        |
-        v
-rewrite
-        |
-        v
-production architecture B
-```
-
-The same repository contracts, revision rules, skill contracts, perception contracts, validation, and authority boundaries should exist in both environments.
+No new service is required merely because review/chatbot domain capabilities are being added.
 
 ---
 
-## 18. Initial Deployment Philosophy
+# 21. Initial Deployment Philosophy
 
-Atlas should remain mostly a modular application.
+Atlas should remain mostly modular.
 
-Do not split every capability into a service.
-
-Avoid creating services such as:
+Do not create separate deployable services for:
 
 ```text
-atlas-document-perception-service
-atlas-semantic-extraction-service
-atlas-reconciliation-service
-atlas-ces-service
-atlas-addendum-service
-atlas-retrieval-service
-atlas-publish-service
+semantic extraction
+reconciliation
+review projection
+chat context assembly
+CES
+Addendum composition
+retrieval
+publication
 ```
 
-Those are internal capabilities.
+unless operational evidence later justifies a service split.
 
 The initial service boundary remains approximately:
 
@@ -1493,157 +1723,183 @@ The initial service boundary remains approximately:
 4. DocumentStore
 ```
 
-Document Perception does **not** justify another independently deployed service.
-
-It runs through Agents Bridge because provider credentials, rate limits, retries, timeout/cancellation, usage, privacy policy, and cost management already belong there.
-
-This does not turn Agents Bridge into project authority.
-
 ---
 
-## 19. Queue Strategy
+# 22. Queue Strategy
 
-Use the PostgreSQL-backed queueing established by BSS-006.
-
-```text
-PostgreSQL
-+-- Atlas state
-+-- Auth state
-+-- Bridge execution state
-+-- pg-boss jobs
-```
+Continue using the BSS-006 PostgreSQL-backed queue.
 
 Benefits remain:
 
-- fewer infrastructure components
-- transactional enqueueing
-- retry/backoff
-- scheduling
-- concurrency controls
-- failed-job visibility
-- idempotent processing
-- simpler local development
-
-Redis may be introduced later only if PostgreSQL queueing becomes a proven bottleneck.
-
-### 19.1 Document-perception job
-
-The BSS-009 series introduces a real document-perception job on top of the existing queue infrastructure.
-
-Conceptually:
-
 ```text
-Atlas accepts/stores source document
-        |
-        v
-transactionally record source operation
-and enqueue perception work when appropriate
-        |
-        v
-pg-boss
-        |
-        v
-Agents Bridge worker
-        |
-        v
-provider document perception
-        |
-        v
-NormalizedDocument result
-        |
-        v
-Atlas-owned derived cache / validation
+transactional enqueue
+retry / backoff
+scheduling
+concurrency control
+failed-job visibility
+idempotency
+simpler local environment
 ```
 
-The job must be idempotent.
+Document Perception already uses this foundation.
 
-A retry must not:
+Later semantic-domain jobs may reuse it.
 
-```text
-create duplicate accepted truth
-move HEAD
-duplicate source documents
-silently replace immutable source bytes
-```
-
-The exact job payload and result contract belong to BSS-009.
+Redis should only be introduced when PostgreSQL queueing becomes a demonstrated bottleneck.
 
 ---
 
-## 20. Targeted Retrieval Boundary
+# 23. Targeted Retrieval Boundary
 
-Retrieval belongs to Atlas, not Agents Bridge.
+Retrieval remains an Atlas responsibility.
 
 ```text
-Incoming semantic request
-        |
-        v
+semantic request
+     |
+     v
 Atlas retrieval/index
-        |
-        v
-Relevant knowledge neighborhood
-        |
-        v
+     |
+     v
+relevant semantic neighborhood
+     |
+     v
 Agents Bridge reasoning
 ```
 
-Rule:
+The rule remains:
 
-> **Retrieval finds candidates for comparison; it does not decide truth.**
+> **Retrieval finds candidates for reasoning; it does not decide truth.**
 
-Agents Bridge reasons over bounded context.
-
-Atlas Core decides what can become trusted state.
-
-If `mistral-embed` or another provider embedding capability is used, the embedding remains only one retrieval signal.
+Embeddings may be one retrieval signal.
 
 Atlas owns:
 
 ```text
 embedding storage
-workspace scoping
+workspace scope
+revision scope
 semantic identity
 dependency signals
 retrieval policy
 truth decisions
 ```
 
-The provider never becomes retrieval authority.
+---
+
+# 24. Incremental-by-Default Production Behavior
+
+Interactive operations must remain bounded.
+
+## Review
+
+```text
+open review
+   -> summary
+
+open attention queue
+   -> bounded issue list
+
+open group
+   -> bounded group items
+
+select item
+   -> item + dependency neighborhood
+
+inspect evidence
+   -> specific evidence
+```
+
+## Chat
+
+```text
+current request
++
+selected review/semantic context
++
+bounded relevant semantic neighborhood
++
+bounded evidence
++
+bounded assurance context when required
++
+output contract
+```
+
+## Correction
+
+```text
+small Preview Addendum
+      |
+      v
+incremental extraction
+      |
+      v
+targeted retrieval
+      |
+      v
+local reconciliation
+      |
+      v
+affected dependency lookup
+```
+
+Full reconstruction is reserved for:
+
+```text
+recovery
+audit/integrity verification
+major reconciliation
+baseline migration
+explicit rebuild
+```
+
+If ordinary review/chat operations repeatedly require the complete project history, that should be treated as a retrieval/indexing/serving design problem.
 
 ---
 
-## 21. Production Baseline Invariants
+# 25. Production Baseline Invariants
 
 1. **Atlas owns accepted truth.**
-2. **PostgreSQL remains the canonical persistent store for Atlas state and Atlas-owned operational metadata.**
-3. **Immutable project document bytes remain behind the BSS-007 `DocumentStore` abstraction.**
-4. **Document Perception and Semantic Extraction are separate capabilities.**
-5. **Document Perception produces a provider-neutral, rebuildable `NormalizedDocument`; it does not produce accepted project truth.**
-6. **Derived perception is Atlas-owned operational/cache state and can be rebuilt from immutable source bytes.**
-7. **Agents Bridge executes provider-backed document perception and reasoning but cannot directly commit trusted Atlas state.**
-8. **Agents Bridge does not independently discover or read Atlas documents; Atlas authorizes and supplies bounded source input.**
-9. **The existing BSS-005 provider-neutral `ReasoningRuntime` remains valid; BSS-009 extends capability without requiring BSS-005 to be rewritten.**
-10. **The existing BSS-006 pg-boss runtime remains valid; BSS-009 adds document-perception work on top of it.**
-11. **Skills remain provider-neutral reasoning contracts.**
-12. **Provider capability aliases are server-controlled; clients and skills do not select arbitrary provider models/endpoints.**
-13. **Interactive and background reasoning continue to use the established Bridge execution boundary.**
-14. **Expensive perception/reasoning is queued; bounded chatbot reasoning may run synchronously.**
-15. **The database continues to enforce Atlas/Bridge authority boundaries established by BSS-003.**
-16. **Better Auth continues to own authentication persistence; Atlas owns project authorization.**
-17. **Fixtures remain tests and golden scenarios, not production truth.**
-18. **Local and production environments use the same architecture and semantics.**
-19. **Provider usage, pricing, retries, capacity, and privacy/retention policy belong to Agents Bridge, not individual skills.**
-20. **Atlas Core owns validation, retrieval, revisions, HEAD movement, approval, commit, provenance, dependency state, and publication.**
-21. **BSS-001 through BSS-009-02 remain approved foundations and are not reopened by this architecture baseline.**
-22. **BSS-008 establishes the Mistral provider boundary, and the BSS-009 series establishes the Document Perception, Atlas authority, and Bridge integration boundaries.**
+2. **Atlas also owns validated reviewable state and human review decisions.**
+3. **PostgreSQL remains the canonical persistent store for Atlas state and Atlas-owned operational metadata.**
+4. **Immutable project document bytes remain behind the BSS-007 `DocumentStore` abstraction.**
+5. **Document Perception and Semantic Extraction remain separate capabilities.**
+6. **Document Perception produces a provider-neutral, rebuildable `NormalizedDocument`; it does not produce accepted project truth.**
+7. **Derived perception is Atlas-owned rebuildable operational state.**
+8. **Agents Bridge executes provider-backed perception and reasoning but cannot directly commit trusted or review-authoritative Atlas state.**
+9. **Agents Bridge does not independently discover Atlas documents, semantic state, review items, or conversation authority.**
+10. **The BSS-005 provider-neutral `ReasoningRuntime` remains valid.**
+11. **The BSS-006 pg-boss runtime remains valid and reusable for later expensive semantic-domain work.**
+12. **The BSS-008 provider adapter remains the provider boundary for structured reasoning, chat/tool streaming, and perception capability.**
+13. **The BSS-009 series remains the authoritative Document Perception and Atlas/Bridge handoff foundation.**
+14. **Skills remain provider-neutral reasoning contracts.**
+15. **Provider capability aliases remain server-controlled.**
+16. **Interactive and background reasoning continue through the established Bridge execution boundary.**
+17. **Better Auth owns authentication persistence; Atlas owns project authorization.**
+18. **Fixtures remain tests/golden/regression scenarios, not production truth.**
+19. **Prototype/fixture-era skills may be rewritten to satisfy production contracts.**
+20. **Retrieval discovers relevant context; it does not decide truth.**
+21. **Reconciliation proposals may be valid and reviewable without being accepted truth.**
+22. **Reconciliation must be able to reason over incoming-vs-existing and relevant incoming-vs-incoming relationships.**
+23. **Validated Reviewable State is distinct from Resolved Workspace Knowledge.**
+24. **Review projections organize Atlas-produced state but do not decide reconciliation, truth, approval, CES discovery, or publication.**
+25. **Atlas owns review state, review progress, and review-decision authority.**
+26. **A human may resolve an evidence-supported interpretation without necessarily creating an Addendum.**
+27. **New or clarifying human project meaning not already supported by immutable documents must enter through an immutable source document such as an Addendum.**
+28. **The chatbot is a contextual mediator over bounded Atlas state, not a source of truth.**
+29. **Current accepted truth, incoming candidate state, reconciliation proposals, unresolved review state, and hypothetical state must remain distinguishable.**
+30. **Review and chatbot operations are incremental and bounded by default.**
+31. **Provider usage, pricing, retries, capacity, and privacy/retention policy remain Agents Bridge concerns.**
+32. **Atlas Core owns validation, retrieval, review state, revisions, HEAD movement, approval, commit, provenance, dependency state, and publication.**
+33. **BSS-001 through BSS-009-02 remain approved foundations and are not reopened by this baseline update.**
 
 ---
 
-## 22. Final Architecture Principle
+# 26. Final Architecture Principle
 
-> **Atlas owns truth. PostgreSQL persists trusted Atlas state. DocumentStore preserves immutable source bytes. Atlas authorizes source access, owns derived perception and retrieval, and validates all candidates. Agents Bridge executes provider-backed perception and reasoning under bounded contracts. The queue schedules expensive work. Skills remain provider-neutral. Better Auth establishes identity.**
+> **Atlas owns truth and review authority. PostgreSQL persists trusted and reviewable Atlas state. DocumentStore preserves immutable source bytes. Atlas authorizes source and semantic context access, owns derived perception, retrieval, reconciliation state, review state, review projection, conversation state, and publication. Agents Bridge executes provider-backed perception and reasoning under bounded contracts. The queue schedules expensive work. Skills remain provider-neutral. Better Auth establishes identity.**
 
-The canonical production-shaped document path is:
+The production-shaped downstream path is:
 
 ```text
 Immutable Source
@@ -1664,7 +1920,37 @@ SemanticCandidates
 Deterministic Validation
       |
       v
-Trusted Atlas lifecycle
+Targeted Retrieval
+      |
+      v
+Reconciliation
+      |
+      v
+Deterministic Validation
+      |
+      v
+Validated Reviewable State
+      |
+      +------------------+
+      |                  |
+      v                  v
+Review Projection    Contextual Chat
+      |                  |
+      +---------+--------+
+                |
+                v
+           Human Review
+                |
+                v
+ Accepted Workspace Resolution
+                |
+                v
+       Resolved Knowledge
+                |
+                v
+     Approval / Publish / Master
 ```
 
-This architecture remains consistent with the approved BSS-001 through BSS-009-02 foundations. Later semantic/domain work may consume these provider and document-processing capabilities without rewriting the accepted stack.
+This remains consistent with the approved BSS-001 through BSS-009-02 implementation.
+
+The next work belongs in bounded downstream Backend Phase semantic/domain ticket sets rather than extending the completed Stack Setup ticket set.
