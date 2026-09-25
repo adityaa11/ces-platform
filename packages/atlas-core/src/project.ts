@@ -31,6 +31,10 @@ export type AccessibleAtlasProject = {
   readonly description: string | null;
   readonly createdAt: Date;
   readonly initialDraftDocumentCount: number;
+  /** Persisted lifecycle prerequisites; these are evaluated before browser projection. */
+  readonly masterWorkspaceState: "empty" | null;
+  readonly initialDraftWorkspaceState: "draft" | null;
+  readonly hasDownstreamExtractionState: boolean;
 };
 
 export interface AtlasProjectRepository {

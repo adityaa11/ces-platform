@@ -15,6 +15,13 @@ async function runtimeEnvironment(): Promise<AuthEnvironment> {
   return worker.env;
 }
 
+/** Server-only secret lookup for internal assertions derived from a resolved session. */
+export async function getAtlasAuthSecret(): Promise<string> {
+  const secret = (await runtimeEnvironment()).BETTER_AUTH_SECRET;
+  if (!secret) throw new Error("BETTER_AUTH_SECRET is required.");
+  return secret;
+}
+
 /**
  * Creates auth from one central configuration boundary. Worker I/O objects are
  * request-scoped, so their PostgreSQL client cannot be reused by another
