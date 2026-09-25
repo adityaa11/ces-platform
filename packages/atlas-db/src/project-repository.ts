@@ -19,6 +19,11 @@ export class PostgresAtlasProjectRepository implements AtlasProjectRepository {
     });
   }
 
+  async isProjectIdAvailable(projectId: string): Promise<boolean> {
+    const rows = await this.sql.unsafe("SELECT 1 FROM atlas.project WHERE stable_id=$1 LIMIT 1", [projectId]);
+    return rows.length === 0;
+  }
+
   async listAccessibleTo(userId: string): Promise<readonly AccessibleAtlasProject[]> {
     const rows = await this.sql.unsafe("SELECT p.id, p.stable_id, p.name, p.description, p.created_at, COUNT(d.id)::integer AS initial_draft_document_count FROM atlas.project p JOIN atlas.project_member m ON m.project_id=p.id AND m.user_id=$1 LEFT JOIN atlas.workspace w ON w.project_id=p.id AND w.kind='initial_draft' LEFT JOIN atlas.document d ON d.workspace_id=w.id GROUP BY p.id ORDER BY p.created_at DESC", [userId]);
     return rows.map((row) => ({ id: String(row.id), projectId: String(row.stable_id), name: String(row.name), description: row.description === null ? null : String(row.description), createdAt: new Date(String(row.created_at)), initialDraftDocumentCount: Number(row.initial_draft_document_count) }));

@@ -16,3 +16,4 @@ export { AtlasPerceptionHandoff, type PerceptionOperation, type PerceptionOperat
 export { type PerceptionAuthority, type PerceptionExecutionInput, type AuthorityRedeemedPerceptionSource } from "./perception-authority.js";
 export { createPerceptionInternalRoutes, type InternalPerceptionResponse } from "./perception-internal-route.js";
 export { assertCreateAtlasProjectInput, projectIdPattern, sourceSha256Pattern, type AccessibleAtlasProject, type AtlasProjectRepository, type CreateAtlasProjectInput, type ProjectMemberRole, type ProjectSourceDocument, type ProjectWorkspaceKind } from "./project.js";
+export { createStoredAtlasProject, maxProjectRequestBytes, maxProjectSourceBytes, maxProjectSources, ProjectCreationConflictError, ProjectCreationValidationError, type CreatedAtlasProject, type CreateProjectSource, type CreateStoredAtlasProjectCommand } from "./project-creation.js";

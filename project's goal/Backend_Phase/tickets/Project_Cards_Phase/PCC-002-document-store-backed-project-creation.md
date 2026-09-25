@@ -1,6 +1,6 @@
 # PCC-002: DocumentStore-backed project creation
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `PCC-BATCH-02`
 - **Depends on:** PCC-001 `PASS`; BSS-007 `approved`
 - **Execution environment:** Docker Compose is authoritative for PostgreSQL transactions, DocumentStore integration, migration checks, and package tests; host-local commands are diagnostic only.

@@ -196,6 +196,9 @@ importers:
       '@atlas/contracts':
         specifier: workspace:*
         version: link:../atlas-contracts
+      '@atlas/document-store':
+        specifier: workspace:*
+        version: link:../document-store
     devDependencies:
       '@types/node':
         specifier: 22.19.19

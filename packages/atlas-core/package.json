@@ -5,9 +5,10 @@
   "type": "module",
   "exports": "./src/index.ts",
   "dependencies": {
-    "@atlas/contracts": "workspace:*"
+    "@atlas/contracts": "workspace:*",
+    "@atlas/document-store": "workspace:*"
   },
-  "scripts": { "typecheck": "tsc -p tsconfig.json", "test": "jiti tests/document-perception.test.ts && jiti tests/source-grant.test.ts && jiti tests/source-handoff.test.ts && jiti tests/perception-handoff.test.ts && jiti tests/perception-internal-route.test.ts && jiti tests/project.test.ts" },
+  "scripts": { "typecheck": "tsc -p tsconfig.json", "test": "jiti tests/document-perception.test.ts && jiti tests/source-grant.test.ts && jiti tests/source-handoff.test.ts && jiti tests/perception-handoff.test.ts && jiti tests/perception-internal-route.test.ts && jiti tests/project.test.ts && jiti tests/project-creation.test.ts" },
   "devDependencies": {
     "@types/node": "22.19.19",
     "jiti": "2.7.0"

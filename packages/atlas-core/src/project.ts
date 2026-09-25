@@ -36,6 +36,8 @@ export type AccessibleAtlasProject = {
 export interface AtlasProjectRepository {
   /** Creates the project graph atomically after the caller has stored source bytes. */
   create(input: CreateAtlasProjectInput): Promise<void>;
+  /** A best-effort preflight; the database unique key remains the race-safe authority. */
+  isProjectIdAvailable(projectId: string): Promise<boolean>;
   /** Returns only projects to which the supplied Better Auth identity belongs. */
   listAccessibleTo(userId: string): Promise<readonly AccessibleAtlasProject[]>;
 }
