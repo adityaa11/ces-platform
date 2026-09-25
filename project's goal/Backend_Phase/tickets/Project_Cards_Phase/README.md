@@ -1,6 +1,6 @@
 # Atlas Project Cards and PRD Intake Ticket Set
 
-- **State:** `planned` — candidate ticket set; no ticket is authorized for implementation yet.
+- **State:** `awaiting_review` — `PCC-001` / `PCC-BATCH-01` is implemented and awaiting `ck`; dependent tickets remain planned.
 - **Primary baseline:** [Project Card Creation and PRD Intake Implementation Context](../../atlas-project-card-creation-implementation-context.md)
 - **Phase boundary:** [Atlas Backend Phase README](../../README.md)
 - **Architecture baseline:** [Atlas Core Architecture — Updated Checkpoint](../../atlas-core-architecture-checkpoint-v2-mistral-enriched-v2.md)
@@ -61,7 +61,7 @@ batch.
 
 | Order | Ticket / batch | State | Depends on | Review question |
 |---:|---|---|---|---|
-| 1 | [PCC-001](PCC-001-atlas-project-domain-and-persistence.md) / `PCC-BATCH-01` | `planned` | BSS-003/BSS-004 approved; BSS-007 approved | Are the minimum Atlas project, membership, workspace, and document metadata records available behind persistence-neutral contracts without storing source bytes or starting perception? |
+| 1 | [PCC-001](PCC-001-atlas-project-domain-and-persistence.md) / `PCC-BATCH-01` | `awaiting_review` | BSS-003/BSS-004 approved; BSS-007 approved | Are the minimum Atlas project, membership, workspace, and document metadata records available behind persistence-neutral contracts without storing source bytes or starting perception? |
 | 2 | [PCC-002](PCC-002-document-store-backed-project-creation.md) / `PCC-BATCH-02` | `planned` | PCC-001 `PASS`; BSS-007 approved | Does the server-side creation operation store all PRDs through `DocumentStore` before one PostgreSQL commit, creating no visible partial project and no extraction state? |
 | 3 | [PCC-003](PCC-003-production-project-http-boundary.md) / `PCC-BATCH-03` | `planned` | PCC-002 `PASS`; approved Better Auth/session boundary | Does `POST /api/projects` authenticate the real session, enforce bounded multipart/CSRF input, map safe errors, and avoid fixture/base64 transport? |
 | 4 | [PCC-004](PCC-004-authorized-home-project-read-and-card-projection.md) / `PCC-BATCH-04` | `planned` | PCC-001 `PASS`; SIN/SOUT sets frozen | Does `/home` read only authorized Atlas projects and project them into a production-safe card model whose waiting state comes from persisted state rather than fixture or UI timers? |

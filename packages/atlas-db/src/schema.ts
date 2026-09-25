@@ -1,4 +1,4 @@
-import { boolean, index, pgSchema, text, timestamp } from "drizzle-orm/pg-core";
+import { bigint, boolean, index, pgSchema, text, timestamp, unique } from "drizzle-orm/pg-core";
 
 /** Schema ownership is established here; application tables are deferred. */
 export const authSchema = pgSchema("auth");
@@ -51,3 +51,41 @@ export const authVerification = authSchema.table("verification", {
   createdAt: timestamp("createdAt", { withTimezone: true }),
   updatedAt: timestamp("updatedAt", { withTimezone: true }),
 }, (table) => [index("verification_identifier_idx").on(table.identifier)]);
+
+/** Atlas-owned project metadata. Immutable source bytes belong to DocumentStore. */
+export const atlasProject = atlasSchema.table("project", {
+  id: text("id").primaryKey(),
+  stableId: text("stable_id").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description"),
+  createdByUserId: text("created_by_user_id").notNull().references(() => authUser.id),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+});
+
+export const atlasProjectMember = atlasSchema.table("project_member", {
+  projectId: text("project_id").notNull().references(() => atlasProject.id, { onDelete: "cascade" }),
+  userId: text("user_id").notNull().references(() => authUser.id),
+  role: text("role").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+}, (table) => [unique("project_member_pkey").on(table.projectId, table.userId), index("project_member_user_project_idx").on(table.userId, table.projectId)]);
+
+export const atlasWorkspace = atlasSchema.table("workspace", {
+  id: text("id").primaryKey(),
+  projectId: text("project_id").notNull().references(() => atlasProject.id, { onDelete: "cascade" }),
+  kind: text("kind").notNull(),
+  state: text("state").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+}, (table) => [unique("workspace_project_kind_key").on(table.projectId, table.kind)]);
+
+export const atlasDocument = atlasSchema.table("document", {
+  id: text("id").primaryKey(),
+  projectId: text("project_id").notNull().references(() => atlasProject.id, { onDelete: "cascade" }),
+  workspaceId: text("workspace_id").notNull().references(() => atlasWorkspace.id),
+  originalFilename: text("original_filename").notNull(),
+  storageKey: text("storage_key").notNull(),
+  sourceSha256: text("source_sha256").notNull(),
+  byteSize: bigint("byte_size", { mode: "number" }).notNull(),
+  mediaType: text("media_type").notNull(),
+  createdByUserId: text("created_by_user_id").notNull().references(() => authUser.id),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+}, (table) => [index("document_workspace_idx").on(table.workspaceId)]);

@@ -1,6 +1,6 @@
 # PCC-001: Atlas project domain and persistence
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `PCC-BATCH-01`
 - **Depends on:** BSS-003 and BSS-004 `approved`; BSS-007 `approved`
 - **Execution environment:** Docker Compose is authoritative for PostgreSQL, migrations, repository integration tests, and package checks; host-local commands are diagnostic only.
