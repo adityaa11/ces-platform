@@ -5,6 +5,9 @@ import { createStoredAtlasProject, ProjectCreationConflictError, ProjectCreation
 
 const pdf = new Uint8Array(Buffer.from("%PDF-1.7\nproject source"));
 const hash = (bytes: Uint8Array) => `sha256:${createHash("sha256").update(bytes).digest("hex")}`;
+const source = (overrides: Partial<{ originalFilename: string; bytes: Uint8Array; mediaType: string }> = {}) => ({ originalFilename: "brief.pdf", bytes: pdf, mediaType: "application/pdf", ...overrides });
+const command = (overrides: Partial<{ projectId: string; name: string; description: string | null; creatorUserId: string; sources: ReturnType<typeof source>[] }> = {}) => ({ projectId: "customer-portal", name: "Customer portal", description: null, creatorUserId: "server-auth-user", sources: [source()], ...overrides });
+const pdfOfSize = (size: number) => { const bytes = new Uint8Array(size); bytes.set(pdf.subarray(0, size)); return bytes; };
 
 function repository(events: string[], options: { available?: boolean; failure?: Error } = {}): AtlasProjectRepository {
   return {
@@ -31,6 +34,27 @@ test("project creation rejects invalid input before storing bytes and makes stor
   await assert.rejects(() => createStoredAtlasProject({ projectId: "bad", name: "Name", description: null, creatorUserId: "server-auth-user", sources: [{ originalFilename: "not-a-pdf.pdf", bytes: new Uint8Array([1]), mediaType: "application/pdf" }] }, { documentStore: { async put() { events.push("store"); throw new Error("unreachable"); }, async read() { return pdf; } }, projectRepository: repository(events) }), ProjectCreationValidationError);
   assert.deepEqual(events, []);
   await assert.rejects(() => createStoredAtlasProject({ projectId: "customer-portal", name: "Name", description: null, creatorUserId: "server-auth-user", sources: [{ originalFilename: "brief.pdf", bytes: pdf, mediaType: "application/pdf" }] }, { documentStore: { async put() { events.push("store"); throw new Error("storage unavailable"); }, async read() { return pdf; } }, projectRepository: repository(events) }), /storage unavailable/);
+  assert.deepEqual(events, ["preflight", "store"]);
+});
+
+test("project creation rejects every declared command boundary before storage", async () => {
+  const tooLarge = pdfOfSize(20 * 1024 * 1024 + 1);
+  const requestTooLarge = [source({ bytes: pdfOfSize(20 * 1024 * 1024) }), source({ bytes: pdfOfSize(20 * 1024 * 1024) }), source({ bytes: pdfOfSize(1) })];
+  const cases = [
+    command({ projectId: "UPPER" }), command({ name: "" }), command({ name: "x".repeat(81) }), command({ description: "x".repeat(281) }), command({ sources: [] }),
+    command({ sources: [source({ mediaType: "text/plain" })] }), command({ sources: [source({ bytes: new Uint8Array() })] }), command({ sources: [source({ bytes: tooLarge })] }),
+    command({ sources: Array.from({ length: 11 }, () => source()) }), command({ sources: requestTooLarge }),
+  ];
+  for (const invalid of cases) {
+    const events: string[] = [];
+    await assert.rejects(() => createStoredAtlasProject(invalid, { documentStore: { async put() { events.push("store"); throw new Error("unreachable"); }, async read() { return pdf; } }, projectRepository: repository(events) }), ProjectCreationValidationError);
+    assert.deepEqual(events, []);
+  }
+});
+
+test("project creation rejects inconsistent DocumentStore metadata before starting the repository transaction", async () => {
+  const events: string[] = [];
+  await assert.rejects(() => createStoredAtlasProject(command(), { documentStore: { async put() { events.push("store"); return { storageKey: "documents/1", contentHash: hash(pdf), byteSize: pdf.byteLength + 1, mediaType: "application/pdf" }; }, async read() { return pdf; } }, projectRepository: repository(events) }), ProjectCreationValidationError);
   assert.deepEqual(events, ["preflight", "store"]);
 });
 

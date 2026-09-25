@@ -4,7 +4,7 @@ import { projectIdPattern, type AtlasProjectRepository, type CreateAtlasProjectI
 
 export const maxProjectSourceBytes = 20 * 1024 * 1024;
 export const maxProjectSources = 10;
-export const maxProjectRequestBytes = 100 * 1024 * 1024;
+export const maxProjectRequestBytes = 40 * 1024 * 1024;
 
 export type CreateProjectSource = {
   readonly originalFilename: string;
