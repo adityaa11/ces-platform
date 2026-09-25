@@ -1204,6 +1204,7 @@ h1 { font-size: clamp(2.35rem, 6vw, 5rem); letter-spacing: -.055em; line-height:
 .repository-status-extracting { background: var(--repository-extracting-bg); color: var(--repository-extracting-ink); }
 .repository-status-ready-for-review { background: var(--repository-review-bg); color: var(--repository-review-ink); }
 .repository-status-waiting-for-extraction { background: var(--repository-waiting-bg); color: var(--repository-waiting-ink); }
+.production-project-notice { background: var(--repository-waiting-bg); border: 1px solid color-mix(in srgb, var(--repository-waiting-ink) 38%, var(--line)); border-radius: .65rem; color: var(--repository-waiting-ink); font-size: var(--type-body-compact); line-height: var(--leading-body); margin: 0 0 1rem; padding: .7rem .85rem; }
 
 /* A repository card is a fixed information frame: identity, summary, state,
    metrics, then one next action. The card's internals align across lifecycle
