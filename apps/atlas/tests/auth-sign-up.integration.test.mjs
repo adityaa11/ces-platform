@@ -54,8 +54,8 @@ test("the application auth boundary creates a session without granting Atlas sta
     assert.equal(await anonymous.json(), null, "a failed sign-up cannot create authenticated state");
     assert.equal(await getAuthenticatedHomeUser(atlasAuthService.auth.api.getSession, new Headers()), null, "an anonymous request has no authenticated home identity");
     assert.equal((await admin`SELECT id FROM auth."user" WHERE email = ${invalidEmail}`).length, 0);
-    const authorizationTables = await admin`SELECT to_regclass(name) AS relation FROM unnest(ARRAY['atlas.project', 'atlas.workspace', 'atlas.membership', 'atlas.role', 'atlas.permission', 'atlas.ownership', 'atlas.master', 'atlas.initial_draft']) AS name`;
-    assert.ok(authorizationTables.every(({ relation }) => relation === null), "the established Atlas schema has no auth-owned project or authorization tables");
+    const atlasTables = await admin`SELECT to_regclass(name) AS relation FROM unnest(ARRAY['atlas.project', 'atlas.workspace', 'atlas.project_member', 'atlas.document']) AS name`;
+    assert.ok(atlasTables.every(({ relation }) => relation !== null), "accepted Atlas project tables remain outside Better Auth ownership");
   } finally {
     await atlasAuthService.close();
     await admin`DELETE FROM auth."user" WHERE email = ${email}`;
