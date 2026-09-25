@@ -1,6 +1,6 @@
 # PCC-002: DocumentStore-backed project creation
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `PCC-BATCH-02`
 - **Depends on:** PCC-001 `PASS`; BSS-007 `approved`
 - **Execution environment:** Docker Compose is authoritative for PostgreSQL transactions, DocumentStore integration, migration checks, and package tests; host-local commands are diagnostic only.
@@ -134,3 +134,4 @@ Status: applicable
 
 - **Review question:** Does the server-side creation operation durably bind all uploaded immutable source metadata to one authorized Atlas project without exposing partial state or starting downstream processing?
 - **Combined acceptance:** All source writes precede one Atlas commit; failures remain non-visible; the creator owns the project; Master/Initial Draft/documents are distinct; and BSS-007/BSS-009 boundaries remain frozen.
+- **Implementation checkpoint:** Remediation commit `389494a` (`fix(atlas): remediate PCC-002 CK-002 CK-003`); `PCC-BATCH-02` `PASS` is recorded in [the consolidated review](../../../feedback/PCC-BATCH-02-389494a-review.md), and this ticket was approved by the subsequent GO workflow.
