@@ -17,10 +17,32 @@ document metadata into `Waiting for extraction`, without pretending to be a
 This ticket owns the read/projection seam. PCC-005 owns the client dialog,
 submission interaction, shared presentation refactor, and visual validation.
 
+### Checkpoint boundary
+
+PCC-004 is a server/read-model checkpoint, not the final Project Library or
+Project Card UI delivery. It may provide the minimum server-rendered card
+surface, production adapter, or route-level markup needed to prove the
+projection contract and acceptance labels. That minimal proof must remain
+truthful and fixture-independent, but it is not a request to complete the
+shared card redesign or the full interaction/visual contract.
+
+PCC-005 consumes the accepted PCC-004 view model and owns the final shared
+Project Card presentation, `+ New project` dialog, submission/retry behavior,
+responsive and theme composition, keyboard/focus states, and visual review.
+PCC-004 must not be blocked on those PCC-005 deliverables.
+
+### Handoff contract
+
+PCC-004 hands PCC-005 a browser-safe `ProjectCardViewModel` whose lifecycle
+state, PRD count, metrics, and unavailable-action capability are already
+derived on the server. PCC-005 may adapt that model to shared presentation,
+but must not rederive lifecycle truth from client arrays, timers, filenames,
+project names, or fixture state.
+
 ## Scope
 
 - Resolve the current Better Auth session in the existing server route and pass its user ID to an authorization-scoped Atlas project-list repository/service.
-- Update `apps/atlas/app/home/page.tsx` or the repository-equivalent route composition to supply real production project view models.
+- Update `apps/atlas/app/home/page.tsx` or the repository-equivalent route composition to supply real production project view models. The route may use a minimal production render/adapter for this checkpoint; final shared presentation wiring remains with PCC-005.
 - Define or adapt a production-safe `ProjectCardViewModel` that is independent of `ProjectFixture` while remaining consumable by shared presentation.
 - Project only persisted Atlas data: human Project ID, name, description/summary, empty Master state, Initial Draft source-document count, and bounded card metrics/action state.
 - Derive the initial lifecycle state deterministically:
@@ -31,7 +53,7 @@ submission interaction, shared presentation refactor, and visual validation.
       -> Waiting for extraction
   ```
 
-- Render the truthful new-project card state: `Waiting for extraction`, `No published work`, `0 of N PRDs processed`, `0%`, `0 published facts`, and `N PRDs uploaded` or equivalent labels consistent with the established card layout.
+- Render or assert the truthful new-project card contract: `Waiting for extraction`, `No published work`, `0 of N PRDs processed`, `0%`, `0 published facts`, and `N PRDs uploaded` or equivalent labels consistent with the established card layout. PCC-004 only requires route-level/server-rendered contract proof; PCC-005 owns the final card composition and visual treatment.
 - Keep project listing server-authorized. Do not enumerate all projects and filter in React.
 - Keep production card actions disabled/unavailable until a production workspace route exists. Do not calculate `demoHref(...)` for a real project, add production Share, or invent a production route.
 - Preserve the empty state for an authenticated user with no memberships and keep the Better Auth identity/profile behavior frozen.
@@ -41,14 +63,20 @@ Do not add extraction states beyond this checkpoint, accepted semantic facts,
 publication, project sharing, document download, workspace navigation, or any
 review projection data.
 
+The following are explicitly deferred to PCC-005 and must not be used as
+PCC-004 review blockers: the `+ New project` dialog, client submission and
+retry behavior, shared `ProjectCard`/library refactoring, final hover/focus/
+loading/error interaction states, responsive and theme composition, and the
+full frontend visual/accessibility review.
+
 ## Acceptance criteria
 
 - `/home` lists only projects accessible through the current user's Atlas membership.
 - User A's project is visible to User A and absent for User B without membership; the browser receives no unauthorized projects.
 - Production cards do not use `ProjectFixture` as their domain contract or import fixture records as a production fallback.
-- A newly created project displays the required waiting state and correct `N` PRD count from persisted document metadata.
-- A new card shows no published Master work, no published facts, no extraction-complete state, and no enabled production project-opening action.
-- A production card never links to `/demo` and does not expose fixture Share behavior.
+- The authenticated `/home` route exposes the required waiting-state contract and correct `N` PRD count from persisted document metadata.
+- The route-level production projection exposes no published Master work, no published facts, no extraction-complete state, and no enabled production project-opening action.
+- The route-level production output never links to `/demo` and does not expose fixture Share behavior.
 - A user with no production projects still receives the established empty state.
 - The route does not create a project, mutate fixtures, enqueue jobs, query perception state as a UI shortcut, or infer project authorization from authentication alone.
 - The production view model does not expose storage keys, filesystem paths, session IDs, raw source bytes, or private document URLs.
@@ -58,10 +86,15 @@ review projection data.
 - Start and health-check PostgreSQL through Docker Compose before authenticated `/home` or repository tests. Run the route, database, build, and rendering checks inside the Compose-managed `atlas` service; do not treat fixture-only or host-local DB results as authoritative.
 - Add a server/read-model test for two users proving membership-scoped listing and no browser-side filtering.
 - Add projection tests for zero PRDs/invalid state handling, one and multiple PRDs, empty Master, Initial Draft, and no downstream extraction state.
-- Add rendered route assertions for the production card labels, absence of `/demo` project links, absence of fixture Share, and preserved empty state.
+- Add rendered HTML/route assertions for the production card labels, absence of `/demo` project links, absence of fixture Share, and preserved empty state. These assertions prove the server/read-model contract; they are not the PCC-005 visual inspection gate.
 - Exercise `/home` with the existing Better Auth session integration and verify sign-in/sign-out route behavior remains unchanged.
 - Run application build, rendered HTML/CSP tests, directly affected app tests, and app type/lint checks in the supported Compose environment.
 - Inspect the route and view model for fixture imports, client-side authorization, timers, fake progress, and private storage metadata leakage.
+
+PCC-004 validation may use the existing shell or a minimal route-level
+production card surface to make the contract observable. Do not require a
+completed shared-card redesign, dialog, responsive/theme inspection, or final
+visual polish until PCC-005.
 
 ## Security Refactor Readiness
 
@@ -116,8 +149,8 @@ Status: applicable
 
 ## Review checkpoint
 
-- **Review question:** Does authenticated `/home` read only authorized Atlas projects and render a truthful production card model without fixture/domain or route leakage?
-- **Combined acceptance:** Real project state replaces the empty hard-code, waiting-state metrics are persisted-data projections, private metadata stays server-side, and no production card opens `/demo` or starts downstream work.
+- **Review question:** Does authenticated `/home` read only authorized Atlas projects and expose a truthful production card projection contract without fixture/domain or route leakage?
+- **Combined acceptance:** Real project state replaces the empty hard-code, waiting-state metrics are persisted-data projections, private metadata stays server-side, and no production card opens `/demo` or starts downstream work. Final shared presentation, create interaction, responsive/theme behavior, and visual review are PCC-005 acceptance, not PCC-004 acceptance.
 
 ## Implementation checkpoint
 

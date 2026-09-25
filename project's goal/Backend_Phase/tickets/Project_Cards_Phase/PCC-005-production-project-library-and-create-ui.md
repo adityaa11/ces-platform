@@ -26,7 +26,7 @@ This is a bounded UI/data-source refactor, not a redesign of the Atlas shell.
 - Submit same-origin multipart data to `POST /api/projects`; do not call `createFixtureProject`, `/api/local-fixtures`, base64 JSON, or any browser token path in production mode.
 - Use production copy that does not claim extraction started: `Create project` or equivalent, and bounded success feedback that PRDs are waiting for extraction.
 - On success, close/reset the dialog and refresh or reconcile the server-backed production list so the new card is visible. On failure, keep the dialog retryable and map bounded errors to the relevant fields/form alert.
-- Refactor shared `ProjectCard` input toward the production-safe view model while preserving the fixture adapter. Add the `Waiting for extraction` state and the disabled/unavailable action required by PCC-004.
+- Consume the accepted PCC-004 `ProjectCardViewModel` for production presentation while preserving the fixture adapter. Do not rederive `Waiting for extraction`, PRD counts, metrics, or the disabled/unavailable action in client code.
 - Keep `/demo` fixture creation, sharing, processing notice, and fixture card navigation unchanged in meaning.
 
 ### Frontend visual and interaction contract
