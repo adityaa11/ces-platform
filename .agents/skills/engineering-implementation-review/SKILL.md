@@ -60,6 +60,17 @@ They do not replace the base review and do not limit independent inspection.
 
 The reviewer may identify defects that are absent from all declared review bindings.
 
+## Review scope when invoked by CK
+
+CK owns review lifecycle, round limits, artifact persistence, finding IDs, and convergence. This skill owns independent inspection and engineering finding classification.
+
+- **CK Round 1** is the complete independent review described above. Inspect the full ticket-authorized affected boundary, not only the implementer's claimed diff.
+- **CK Round 2 or 3** verifies prior findings, the remediation delta, remediation regressions, and the acceptance criteria affected by that delta. Do not restart broad exploratory review over unrelated areas already accepted in the same session.
+- A later round may still identify a genuine ticket violation that existed within Round 1's authorized boundary. Record it as a CK `LATE_DISCOVERY`, explain the evidence, and classify it using the rules below. A late discovery may block PASS; it does not authorize an unbounded fresh review.
+- Reopen a previously resolved finding only when concrete evidence shows incomplete remediation, new evidence, or a remediation regression. Reviewer preference or wording changes are insufficient.
+
+When CK is not the invoking workflow, continue to perform the complete independent review for the supplied scope. Do not take over CK's lifecycle decisions.
+
 ## Finding classification
 
 ### IMPLEMENTATION_DEFECT

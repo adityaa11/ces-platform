@@ -44,7 +44,7 @@ Each ticket is its own review batch. The boundaries are sequential because the m
 - Tickets remain `planned` until the user authorizes the relevant batch through `go`.
 - Work only the current ticket or batch. A dependent ticket cannot begin until the prior batch has a `PASS` feedback file for its final reviewed commit and the user says `go`.
 - When a batch is implemented, validated, and committed, set it to `awaiting_review` and record the implementation commit in the ticket.
-- Use one consolidated `ck` feedback file per batch and at most one remediation commit for that review stage.
+- Use one consolidated CK artifact per review round for a batch; at most one CFC remediation commit may follow a `CHANGES_REQUIRED` review, and the review session is limited to three CK rounds. See the [CK skill](../../../../.agents/skills/ck/SKILL.md) and [CFC skill](../../../../.agents/skills/cfc/SKILL.md).
 - A new requirement that changes this sign-out baseline is a `SCOPE_CHANGE`; record it separately, update the baseline only with user approval, and do not absorb it into an active ticket.
 
 ## Shared acceptance boundary

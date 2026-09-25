@@ -38,7 +38,7 @@ Each ticket is its own review batch because each checkpoint answers a distinct r
 - Tickets remain `planned` until explicitly authorized through `go`; approved batches are frozen unless a new review stage is opened.
 - Work only the ticket or batch currently authorized by `go`.
 - When a batch is implemented, validated, and committed, set it to `awaiting_review` and record the commit in the ticket.
-- Use one consolidated `ck` feedback file per batch and one remediation commit at most for that review stage.
+- Use one consolidated CK artifact per review round for a batch; at most one CFC remediation commit may follow a `CHANGES_REQUIRED` review, and the review session is limited to three CK rounds. See the [CK skill](../../../../.agents/skills/ck/SKILL.md) and [CFC skill](../../../../.agents/skills/cfc/SKILL.md).
 - A dependent ticket cannot start until the prior batch has a `PASS` feedback file for its final reviewed commit and the user says `go`.
 - A new requirement that changes the supplied sign-up baseline is a `SCOPE_CHANGE`; record it separately and stop for direction rather than absorbing it into an active ticket.
 

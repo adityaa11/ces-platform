@@ -62,11 +62,13 @@ All other tickets have individual batches because their acceptance decisions are
 
 ## Review controls
 
-- After a ticket or batch is implemented, validated, and committed, set it to `awaiting_review`.
-- `ck` reviews the committed `HEAD` and writes one consolidated review file under `project's goal/feedback/`.
-- `cfc` resolves accepted in-scope feedback and commits the remediation; it returns the ticket to `awaiting_review`.
-- `go` may start the next dependency-ready ticket only after the final commit has a `PASS` review.
+- [`go`](../../.agents/skills/go/SKILL.md) controls bounded implementation progression and may advance to the next dependency-ready ticket only after the current final commit has a CK `PASS`.
+- [`ck`](../../.agents/skills/ck/SKILL.md) reviews committed checkpoints, applies engineering and applicable frontend review requirements, and writes one consolidated artifact per review round under `project's goal/feedback/`.
+- [`cfc`](../../.agents/skills/cfc/SKILL.md) remediates only eligible open implementation findings from the latest CK artifact, commits the bounded fix, and returns the ticket to `awaiting_review`.
+- The implementation review uses at most three CK rounds per session. Unresolved blockers at the limit become `REVIEW_CONVERGENCE_BLOCKED`; they never become PASS automatically. Planning and scope decisions return to human authority.
 - New requirements are recorded as scope changes and become a separate ticket or baseline update; they do not reopen an approved ticket.
+
+The implementation sequence is `go -> implementation, validation, and commit -> awaiting_review -> ck`; eligible findings follow `cfc -> remediation commit -> awaiting_review -> ck`. This implementation cycle is separate from the stakeholder review stages in the [Atlas UI/UX Review Protocol](../Atlas_UI_UX_Review_Protocol.md). CFC verification does not open a new stakeholder design-feedback round or reopen approved design direction.
 
 ## Required visual-validation record
 

@@ -37,6 +37,14 @@ Continue the normal independent implementation review.
 
 The reviewer may discover a relevant concern that the readiness authoring skill did not identify.
 
+### Bounded CK review sessions
+
+For CK Round 1, apply the full applicable security-readiness inspection above and verify every declared binding.
+
+For CK Round 2 or 3, verify unresolved readiness findings and bindings, inspect the security-relevant remediation delta, and check for regressions caused by remediation. Do not restart the entire security inspection over unrelated areas already accepted in the same review session.
+
+A genuinely missed security-relevant ticket violation may still be reported in a later round as `LATE_DISCOVERY`, with concrete evidence and its existing review classification. A late discovery can block PASS and counts toward convergence. This bounded scope does not weaken or waive any declared security requirement.
+
 ## Readiness-specific finding classification
 
 ### IMPLEMENTATION_DEFECT

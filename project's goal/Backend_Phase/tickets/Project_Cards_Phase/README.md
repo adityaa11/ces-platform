@@ -90,7 +90,7 @@ The complete set must satisfy the context's AC-01 through AC-32:
 - Keep tickets `planned` until the user authorizes the relevant batch through `go`.
 - Work only the current ticket or batch. Do not begin a dependent ticket from an `awaiting_review` predecessor.
 - After implementation and validation, record the commit and set the ticket to `awaiting_review`.
-- Use one consolidated `ck` feedback file per batch and at most one remediation commit for that review stage.
+- Use one consolidated CK artifact per review round for a batch; at most one CFC remediation commit may follow a `CHANGES_REQUIRED` review, and the review session is limited to three CK rounds. See the [CK skill](../../../../.agents/skills/ck/SKILL.md) and [CFC skill](../../../../.agents/skills/cfc/SKILL.md).
 - Any requirement that changes the context or reopens BSS-007/BSS-009 is a `SCOPE_CHANGE`, not an implementation detail.
 
 ## Open planning finding

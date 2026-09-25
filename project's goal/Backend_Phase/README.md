@@ -107,13 +107,13 @@ Host-local pnpm commands are non-authoritative diagnostics only. In particular, 
 
 ## Review and delivery
 
-Backend work follows the Atlas review protocol:
+Backend implementation tickets use the repository workflow skills:
 
-1. Define a bounded ticket against the approved product and architecture baselines.
-2. Implement only the currently authorized ticket or review batch.
-3. Validate the real boundary and the fixture/regression boundary it must preserve.
-4. Commit the checkpoint and mark it `awaiting_review`.
-5. Use `ck` for one consolidated review, `cfc` for the bounded remediation pass, and `go` before beginning the next dependency-ready ticket.
+- [`go`](../../.agents/skills/go/SKILL.md) controls implementation progression. It checks the frozen ticket and dependencies, implements only authorized scope, records validation evidence, and commits the checkpoint as `awaiting_review`. After a CK `PASS`, it may advance to the next dependency-ready ticket.
+- [`ck`](../../.agents/skills/ck/SKILL.md) reviews a committed checkpoint using [engineering implementation review](../../.agents/skills/engineering-implementation-review/SKILL.md) and writes one consolidated artifact per review round under `project's goal/feedback/`.
+- [`cfc`](../../.agents/skills/cfc/SKILL.md) performs one bounded remediation pass for eligible open implementation findings, commits the fix, and returns the ticket to `awaiting_review`.
+
+The sequence is `go -> implementation and validation -> committed awaiting_review checkpoint -> ck -> PASS and go`, or `ck -> CHANGES_REQUIRED -> cfc -> committed awaiting_review remediation -> ck`. CK allows at most three rounds in a review session; unresolved blockers produce `REVIEW_CONVERGENCE_BLOCKED`, never an automatic PASS or GO advancement. Planning, scope, knowledge, or mandatory-review blockers return to human/planning authority.
 
 A later implementation may extend an approved boundary, but it must not silently turn fixtures into production authority, reopen an approved predecessor, or absorb a new product requirement without a recorded scope change.
 
