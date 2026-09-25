@@ -36,19 +36,26 @@ export function createProjectCreationBoundary(): Plugin {
       documentStore: new store.LocalFilesystemDocumentStore(process.env.ATLAS_DOCUMENT_STORE_ROOT ?? resolve(process.cwd(), ".atlas-data")),
     });
     server.middlewares.use(async (request, response, next) => {
-      if (new URL(request.url ?? "/", "http://atlas.local").pathname !== "/api/projects") return next();
-      if (request.method !== "POST") { response.statusCode = 405; response.setHeader("allow", "POST"); response.end(); return; }
+      const pathname = new URL(request.url ?? "/", "http://atlas.local").pathname;
+      if (pathname !== "/api/projects" && pathname !== "/api/projects/home") return next();
       try {
         const config = (await jiti.import<typeof import("../../packages/atlas-auth/src/config")>("../../packages/atlas-auth/src/config.ts")).loadAtlasAuthConfig(process.env);
+        const headers = new Headers(); for (const [name, value] of Object.entries(request.headers)) if (typeof value === "string") headers.set(name, value);
+        const sessionResponse = await fetch(`${config.baseURL}/api/auth/get-session`, { headers: { cookie: headers.get("cookie") ?? "" } });
+        const session = sessionResponse.ok ? await sessionResponse.json() as { user?: { id?: string } } : null;
+        const creatorUserId = session?.user?.id;
+        if (pathname === "/api/projects/home") {
+          if (request.method !== "GET") { response.statusCode = 405; response.setHeader("allow", "GET"); response.end(); return; }
+          if (!creatorUserId) { send(response, 401, { error: "Sign in to view projects." }); return; }
+          const projects = await new repository.PostgresAtlasProjectRepository(sql).listAccessibleTo(creatorUserId);
+          send(response, 200, { projects }); return;
+        }
+        if (request.method !== "POST") { response.statusCode = 405; response.setHeader("allow", "POST"); response.end(); return; }
         const origin = request.headers.origin;
         if (typeof origin !== "string" || !config.trustedOrigins.includes(origin)) { send(response, 403, { error: "Request origin is not allowed." }); return; }
         if (!request.headers["content-type"]?.toLowerCase().startsWith("multipart/form-data")) { send(response, 415, { error: "Project uploads must use multipart/form-data." }); return; }
         const bytes = await readBounded(request, request.headers["content-length"]);
-        const headers = new Headers(); for (const [name, value] of Object.entries(request.headers)) if (typeof value === "string") headers.set(name, value);
         const form = await new Request("http://atlas.local/api/projects", { method: "POST", headers, body: bytes }).formData();
-        const sessionResponse = await fetch(`${config.baseURL}/api/auth/get-session`, { headers: { cookie: headers.get("cookie") ?? "" } });
-        const session = sessionResponse.ok ? await sessionResponse.json() as { user?: { id?: string } } : null;
-        const creatorUserId = session?.user?.id;
         if (!creatorUserId) { send(response, 401, { error: "Sign in to create a project." }); return; }
         const projectId = form.get("projectId"), name = form.get("projectName"), description = form.get("projectDescription"), files = form.getAll("prdFiles[]");
         if (typeof projectId !== "string" || typeof name !== "string" || (description !== null && typeof description !== "string") || !files.length || files.length > core.maxProjectSources || files.some((file) => typeof file === "string")) { send(response, 400, { error: "Invalid project upload." }); return; }

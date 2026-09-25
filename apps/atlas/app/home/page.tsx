@@ -1,20 +1,21 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { ProjectLibrary } from "../../components/ProjectLibrary";
+import { ProductionProjectLibrary } from "../../components/ProductionProjectLibrary";
 import { getAtlasAuthService, isWorkerAuthRuntime } from "../../lib/auth-server";
-import { getAuthenticatedHomeUser } from "../../lib/home-session";
+import { getAuthenticatedHomeIdentity } from "../../lib/home-session";
+import { listHomeProjectCards } from "../../lib/home-projects";
 
 /**
- * `/home` is an identity guard only. Atlas project authorization remains a
- * separate future boundary, so the production library begins genuinely empty.
+ * Better Auth identifies the caller; Atlas membership scopes the production read.
  */
 export default async function HomePage() {
   const service = await getAtlasAuthService();
   try {
-    const user = await getAuthenticatedHomeUser(service.auth.api.getSession, await headers());
-    if (!user) redirect("/sign-in");
+    const requestHeaders = await headers();
+    const identity = await getAuthenticatedHomeIdentity(service.auth.api.getSession, requestHeaders);
+    if (!identity) redirect("/sign-in");
 
-    return <ProjectLibrary mode="production" projects={[]} user={user} />;
+    return <ProductionProjectLibrary projects={await listHomeProjectCards(requestHeaders)} user={identity.user} />;
   } finally {
     if (isWorkerAuthRuntime()) await service.close();
   }

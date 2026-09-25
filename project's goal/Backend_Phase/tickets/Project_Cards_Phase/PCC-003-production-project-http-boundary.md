@@ -1,6 +1,6 @@
 # PCC-003: Production project HTTP boundary
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `PCC-BATCH-03`
 - **Depends on:** PCC-002 `PASS`; approved BSS-004/SIN/SOUT auth boundaries
 - **Execution environment:** Docker Compose is authoritative for Better Auth, PostgreSQL-backed route integration, application tests, and builds; host-local commands are diagnostic only.

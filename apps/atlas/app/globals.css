@@ -1174,6 +1174,8 @@ h1 { font-size: clamp(2.35rem, 6vw, 5rem); letter-spacing: -.055em; line-height:
   --repository-extracting-ink: #b9d6ff;
   --repository-review-bg: #39275f;
   --repository-review-ink: #d6cbff;
+  --repository-waiting-bg: #183b6b;
+  --repository-waiting-ink: #b9d6ff;
 }
 :root[data-theme="light"] {
   --repository-published-bg: #e6f7ee;
@@ -1182,6 +1184,8 @@ h1 { font-size: clamp(2.35rem, 6vw, 5rem); letter-spacing: -.055em; line-height:
   --repository-extracting-ink: #2e6ddd;
   --repository-review-bg: #f0edff;
   --repository-review-ink: #765ce9;
+  --repository-waiting-bg: #eaf2ff;
+  --repository-waiting-ink: #2e6ddd;
 }
 @media (prefers-color-scheme: light) {
   :root:not([data-theme]) {
@@ -1191,12 +1195,15 @@ h1 { font-size: clamp(2.35rem, 6vw, 5rem); letter-spacing: -.055em; line-height:
     --repository-extracting-ink: #2e6ddd;
     --repository-review-bg: #f0edff;
     --repository-review-ink: #765ce9;
+    --repository-waiting-bg: #eaf2ff;
+    --repository-waiting-ink: #2e6ddd;
   }
 }
 .project-lifecycle-icon svg { height: 1.25rem; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; width: 1.25rem; }
 .repository-status-published { background: var(--repository-published-bg); color: var(--repository-published-ink); }
 .repository-status-extracting { background: var(--repository-extracting-bg); color: var(--repository-extracting-ink); }
 .repository-status-ready-for-review { background: var(--repository-review-bg); color: var(--repository-review-ink); }
+.repository-status-waiting-for-extraction { background: var(--repository-waiting-bg); color: var(--repository-waiting-ink); }
 
 /* A repository card is a fixed information frame: identity, summary, state,
    metrics, then one next action. The card's internals align across lifecycle

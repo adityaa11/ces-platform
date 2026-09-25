@@ -229,9 +229,10 @@ test("production project-library mode stays empty and separate from fixture auth
   }, requestHeaders), { name: "Nadia Hartono", email: "nadia@example.test" });
   assert.strictEqual(receivedHeaders, requestHeaders);
   assert.equal(await getAuthenticatedHomeUser(async () => null, requestHeaders), null);
-  assert.match(home, /getAuthenticatedHomeUser\(service\.auth\.api\.getSession, await headers\(\)\)/);
-  assert.match(home, /if \(!user\) redirect\("\/sign-in"\)/);
-  assert.match(home, /<ProjectLibrary mode="production" projects=\{\[\]\} user=\{user\} \/>/);
+  assert.match(home, /getAuthenticatedHomeIdentity\(service\.auth\.api\.getSession, requestHeaders\)/);
+  assert.match(home, /listHomeProjectCards\(requestHeaders\)/);
+  assert.match(home, /if \(!identity\) redirect\("\/sign-in"\)/);
+  assert.match(home, /<ProductionProjectLibrary projects=\{await listHomeProjectCards\(requestHeaders\)\} user=\{identity\.user\} \/>/);
   assert.doesNotMatch(home, /@atlas\/fixtures|localStorage|sessionStorage|local-fixtures|role|jwt/i);
   assert.match(library, /homeHref=\{mode === "production" \? "\/home" : "\/demo"\}/);
   assert.match(library, /signOutMode=\{mode === "production" \? "session" : "fixture-link"\}/);
