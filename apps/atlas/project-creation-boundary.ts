@@ -46,7 +46,7 @@ export function createProjectCreationBoundary(): Plugin {
         const bytes = await readBounded(request, request.headers["content-length"]);
         const headers = new Headers(); for (const [name, value] of Object.entries(request.headers)) if (typeof value === "string") headers.set(name, value);
         const form = await new Request("http://atlas.local/api/projects", { method: "POST", headers, body: bytes }).formData();
-        const sessionResponse = await fetch(`http://${request.headers.host ?? "localhost:3001"}/api/auth/get-session`, { headers: { cookie: headers.get("cookie") ?? "" } });
+        const sessionResponse = await fetch(`${config.baseURL}/api/auth/get-session`, { headers: { cookie: headers.get("cookie") ?? "" } });
         const session = sessionResponse.ok ? await sessionResponse.json() as { user?: { id?: string } } : null;
         const creatorUserId = session?.user?.id;
         if (!creatorUserId) { send(response, 401, { error: "Sign in to create a project." }); return; }
