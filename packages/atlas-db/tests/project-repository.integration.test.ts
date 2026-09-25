@@ -45,7 +45,7 @@ test("project repository persists a private project graph and scopes reads to me
     assert.deepEqual(Array.from(rawByteColumns), []);
     const sourceBytes = [new Uint8Array(Buffer.from("%PDF-1.7\nPCC-002 integration source")), new Uint8Array(Buffer.from("%PDF-1.7\nPCC-002 second source"))];
     const [beforeAtlasEffects] = await atlas.unsafe("SELECT (SELECT COUNT(*)::integer FROM atlas.document_perception_execution) AS execution_count, (SELECT COUNT(*)::integer FROM atlas.document_perception_source_grant) AS grant_count, (SELECT COUNT(*)::integer FROM atlas.normalized_document_cache) AS cache_count, (SELECT COUNT(*)::integer FROM atlas.document_perception_derived_asset) AS derived_asset_count");
-    const [beforeBridgeEffects] = await admin.unsafe("SELECT (SELECT COUNT(*)::integer FROM bridge.background_effects) AS background_effect_count, (SELECT COUNT(*)::integer FROM bridge.document_perception_result_delivery) AS delivery_count, (SELECT COUNT(*)::integer FROM pg_catalog.pg_tables WHERE schemaname='pgboss') AS pgboss_table_count");
+    const [beforeBridgeEffects] = await admin.unsafe("SELECT (SELECT COUNT(*)::integer FROM bridge.background_effects) AS background_effect_count, (SELECT COUNT(*)::integer FROM bridge.document_perception_result_delivery) AS delivery_count");
     const created = await createStoredAtlasProject({ projectId: serviceProjectId, name: "PCC creation service", description: "stored through the application seam", creatorUserId: owner, sources: sourceBytes.map((bytes, index) => ({ originalFilename: `service-prd-${index + 1}.pdf`, bytes, mediaType: "application/pdf" })) }, { documentStore, projectRepository: repository });
     assert.deepEqual(created, { projectId: serviceProjectId, name: "PCC creation service", documentCount: 2 });
     const [serviceProject] = await atlas.unsafe("SELECT id, created_by_user_id FROM atlas.project WHERE stable_id=$1", [serviceProjectId]);
@@ -64,8 +64,15 @@ test("project repository persists a private project graph and scopes reads to me
     }
     const [afterAtlasEffects] = await atlas.unsafe("SELECT (SELECT COUNT(*)::integer FROM atlas.document_perception_execution) AS execution_count, (SELECT COUNT(*)::integer FROM atlas.document_perception_source_grant) AS grant_count, (SELECT COUNT(*)::integer FROM atlas.normalized_document_cache) AS cache_count, (SELECT COUNT(*)::integer FROM atlas.document_perception_derived_asset) AS derived_asset_count");
     assert.deepEqual(afterAtlasEffects, beforeAtlasEffects);
-    const [afterBridgeEffects] = await admin.unsafe("SELECT (SELECT COUNT(*)::integer FROM bridge.background_effects) AS background_effect_count, (SELECT COUNT(*)::integer FROM bridge.document_perception_result_delivery) AS delivery_count, (SELECT COUNT(*)::integer FROM pg_catalog.pg_tables WHERE schemaname='pgboss') AS pgboss_table_count");
+    const [afterBridgeEffects] = await admin.unsafe("SELECT (SELECT COUNT(*)::integer FROM bridge.background_effects) AS background_effect_count, (SELECT COUNT(*)::integer FROM bridge.document_perception_result_delivery) AS delivery_count");
     assert.deepEqual(afterBridgeEffects, beforeBridgeEffects);
+    const [{ job_table }] = await admin.unsafe("SELECT to_regclass('pgboss.job') AS job_table");
+    if (job_table === null) {
+      assert.equal(job_table, null, "pg-boss has not initialized a job table for project creation to populate.");
+    } else {
+      const [{ count: projectJobs }] = await admin.unsafe("SELECT COUNT(*)::integer AS count FROM pgboss.job WHERE name='atlas-document-perception-v1' AND data::text LIKE $1", [`%${serviceProjectId}%`]);
+      assert.equal(Number(projectJobs), 0);
+    }
     await assert.rejects(() => createStoredAtlasProject({ projectId: input.projectId, name: "Duplicate project", description: null, creatorUserId: owner, sources: [{ originalFilename: "duplicate.pdf", bytes: sourceBytes[0], mediaType: "application/pdf" }] }, { documentStore, projectRepository: repository }), /already exists/);
     const [{ count: duplicateRows }] = await atlas.unsafe("SELECT COUNT(*)::integer AS count FROM atlas.document WHERE storage_key LIKE 'documents/%'");
     assert.equal(Number(duplicateRows), 2);

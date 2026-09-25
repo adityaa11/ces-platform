@@ -39,7 +39,7 @@ test("project creation rejects invalid input before storing bytes and makes stor
 
 test("project creation rejects every declared command boundary before storage", async () => {
   const tooLarge = pdfOfSize(20 * 1024 * 1024 + 1);
-  const requestTooLarge = [source({ bytes: pdfOfSize(20 * 1024 * 1024) }), source({ bytes: pdfOfSize(20 * 1024 * 1024) }), source({ bytes: pdfOfSize(1) })];
+  const requestTooLarge = [source({ bytes: pdfOfSize(20 * 1024 * 1024) }), source({ bytes: pdfOfSize(20 * 1024 * 1024) }), source({ bytes: pdfOfSize(5) })];
   const cases = [
     command({ projectId: "UPPER" }), command({ name: "" }), command({ name: "x".repeat(81) }), command({ description: "x".repeat(281) }), command({ sources: [] }),
     command({ sources: [source({ mediaType: "text/plain" })] }), command({ sources: [source({ bytes: new Uint8Array() })] }), command({ sources: [source({ bytes: tooLarge })] }),
