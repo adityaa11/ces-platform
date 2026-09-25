@@ -1,6 +1,6 @@
 # PCC-004: Authorized `/home` project read and card projection
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `PCC-BATCH-04`
 - **Depends on:** PCC-001 `PASS`; SIN and SOUT ticket sets frozen/approved
 - **Execution environment:** Docker Compose is authoritative for Better Auth session reads, PostgreSQL authorization queries, app rendering, and integration checks; host-local commands are diagnostic only.

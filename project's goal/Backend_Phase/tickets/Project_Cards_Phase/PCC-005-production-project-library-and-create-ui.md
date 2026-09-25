@@ -1,6 +1,6 @@
 # PCC-005: Production Project Library and create UI
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `PCC-BATCH-05`
 - **Depends on:** PCC-003 and PCC-004 `PASS`
 - **Execution environment:** Docker Compose is authoritative for application builds/tests, authenticated production UI integration, and any PostgreSQL-backed validation; host-local commands are diagnostic only.
@@ -123,3 +123,11 @@ Status: applicable
 
 - **Review question:** Does the established Project Library support real production project creation and truthful waiting cards without leaking fixture authority or degrading the Atlas visual/interaction contract?
 - **Combined acceptance:** `/home` uses the production API and view model, `/demo` remains intact, the dialog/card states are bounded and accessible, and the visual review gate passes across route, theme, and responsive states.
+
+## Implementation checkpoint
+
+- **Commit:** `f3b67f1` (`feat(atlas): add production project creation UI`)
+- **Implemented:** `/home` now exposes `+ New project` in the established heading row. Its client-only submission seam validates bounded fields/files, sends exactly one same-origin multipart `POST /api/projects`, prevents duplicate submits while pending, maps bounded errors, announces successful waiting-for-extraction creation, closes/resets, and refreshes the server-authorized card list. It contains no fixture persistence, base64 transport, storage, or database logic.
+- **Validated:** a rebuilt Compose image passed the two focused PCC-005 helper tests. The healthy Compose-managed `atlas` service passed `corepack pnpm --filter @atlas/app test`: 26 passed, 0 failed, 1 intentional worker-runtime skip. This includes the existing authenticated project-create and two-user `/home` integration checks.
+- **Rendered inspection:** inspected the established `/demo` Entity Library and create dialog at desktop width. The production implementation reuses the same Project Library heading, card-grid fit bounds, dialog/form classes, semantic theme tokens, native labelled controls, field error wiring, and focus trap. Browser viewport overrides were unavailable, so narrow/mobile and alternate-theme visual checks remain CK review evidence rather than claimed implementation evidence.
+- **Known environment result:** `docker compose run --rm --build --no-deps atlas ... test` builds and runs isolated helper checks but cannot reach the Compose app at `127.0.0.1:3001`; the healthy service rerun is the authoritative route result. Full app lint continues to report three pre-existing, out-of-scope errors in `components/RuntimeFixtureRoute.tsx` and `vite.config.ts`; PCC-005 paths build and test cleanly.
