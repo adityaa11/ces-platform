@@ -1,6 +1,6 @@
 # PCC-001: Atlas project domain and persistence
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `PCC-BATCH-01`
 - **Depends on:** BSS-003 and BSS-004 `approved`; BSS-007 `approved`
 - **Execution environment:** Docker Compose is authoritative for PostgreSQL, migrations, repository integration tests, and package checks; host-local commands are diagnostic only.
@@ -110,3 +110,4 @@ Status: applicable
 
 - **Review question:** Does Atlas have the minimum real project/membership/workspace/document metadata boundary needed for project creation while preserving BSS authority and keeping raw source bytes outside PostgreSQL?
 - **Combined acceptance:** The additive schema and persistence-neutral contracts support authorized project reads and distinct empty Master/Initial Draft/source metadata, with no upload route, fixture authority, or perception execution introduced.
+- **Implementation checkpoint:** Remediation commit `cedb520` (`fix(atlas): remediate PCC-001 CK-001 and CK-002`); `PCC-BATCH-01` `PASS` is recorded in [the consolidated review](../../../feedback/PCC-BATCH-01-cedb520-review.md), and the ticket was approved by explicit user authorization after CK Round 2.
