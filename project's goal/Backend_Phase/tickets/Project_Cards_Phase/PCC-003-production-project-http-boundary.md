@@ -1,6 +1,6 @@
 # PCC-003: Production project HTTP boundary
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `PCC-BATCH-03`
 - **Depends on:** PCC-002 `PASS`; approved BSS-004/SIN/SOUT auth boundaries
 - **Execution environment:** Docker Compose is authoritative for Better Auth, PostgreSQL-backed route integration, application tests, and builds; host-local commands are diagnostic only.
@@ -109,3 +109,4 @@ Status: planning-review-required
 
 - **Review question:** Does `POST /api/projects` provide one secure, bounded, production-only multipart entry point that delegates to the approved session and Atlas services?
 - **Combined acceptance:** Real session authority, explicit origin/CSRF handling, bounded PDF intake, safe status mapping, and no fixture/storage/path/secret leakage are proven without downstream extraction behavior.
+- **Implementation checkpoint:** `6b1c771` (`feat(atlas): add PCC-003 project creation boundary`). Compose PostgreSQL was healthy; `docker compose exec -T atlas corepack pnpm --filter @atlas/app exec node --test tests/project-create.integration.test.mjs` passed (1 test). The route rejects an untrusted origin and accepts a trusted Better Auth session multipart request, creating one Atlas project through PCC-002.
