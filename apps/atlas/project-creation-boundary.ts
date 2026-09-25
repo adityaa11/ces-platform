@@ -54,6 +54,8 @@ export function createProjectCreationBoundary(): Plugin {
         if (typeof projectId !== "string" || typeof name !== "string" || (description !== null && typeof description !== "string") || !files.length || files.length > core.maxProjectSources || files.some((file) => typeof file === "string")) { send(response, 400, { error: "Invalid project upload." }); return; }
         let total = 0;
         const sources = await Promise.all(files.map(async (file) => { const upload = file as File; if (upload.type.toLowerCase() !== "application/pdf") throw new TypeError("media"); if (!upload.size) throw new core.ProjectCreationValidationError("Source document bytes are required."); if (upload.size > core.maxProjectSourceBytes) throw new RangeError(); total += upload.size; if (total > core.maxProjectRequestBytes) throw new RangeError(); return { originalFilename: upload.name, bytes: new Uint8Array(await upload.arrayBuffer()), mediaType: "application/pdf" }; }));
+        // Compose-only regression hook; unset in normal application execution.
+        if (process.env.ATLAS_PROJECT_CREATION_TEST_FAILURE === "1") throw new Error("Injected project creation failure.");
         const created = await createProject({ projectId, name, description: typeof description === "string" && description.trim() ? description : null, creatorUserId, sources });
         send(response, 201, { project: created });
       } catch (error) {
