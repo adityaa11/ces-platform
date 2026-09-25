@@ -35,6 +35,17 @@ If the user names a ticket or batch, use that one. Otherwise select the first de
 
 If the ticket, dependency state, frozen baseline, or current review status is ambiguous, stop and ask for the smallest planning decision needed. Do not infer approval from an `awaiting_review` state, a successful build, or a non-`PASS` review.
 
+## Scope grounding
+
+Before implementation, distinguish the ticket's binding authority from repository context:
+
+- **Binding authority:** the frozen ticket, its explicit acceptance/scope items, mandatory review bindings, explicitly incorporated source anchors, and accepted dependency checkpoints.
+- **Implementation evidence:** repository files, framework configuration, build output, runtime entrypoints, local services, and existing tests.
+
+Implementation evidence may inform how the ticket is carried out, but it does not create a new acceptance criterion, deployment target, provider, runtime, or architecture constraint by itself. Do not treat an existing Worker/Cloudflare entrypoint, Vite middleware, preview server, Compose service, or alternate adapter as mandatory unless binding authority explicitly names it or the stated acceptance criterion necessarily requires it.
+
+For each material implementation choice that depends on context outside the ticket, record the exact binding requirement it serves. If no such requirement exists, treat the choice as optional implementation context; do not expand the ticket. When the required authority is genuinely ambiguous, request the smallest planning decision rather than selecting a new target by inference.
+
 ## Advancement after review
 
 When GO follows CK, inspect the latest review artifact for the current ticket and confirm its `PASS` applies to the exact final reviewed commit and frozen ticket baseline.
@@ -47,7 +58,7 @@ Never start a dependent ticket while its predecessor is only `awaiting_review`.
 
 ## Implement the frozen ticket
 
-Read the full ticket and only the accepted dependency/context material needed to implement its scope. Apply relevant repository skills and required validation. Implement only the authorized ticket or batch.
+Read the full ticket and only the accepted dependency/context material needed to implement its scope. Apply relevant repository skills and required validation. Implement only the authorized ticket or batch. Do not use incidental runtime context to add work that lacks a trace to a ticket requirement.
 
 GO may inspect, implement, validate, record evidence, commit the bounded changes, and mark the checkpoint `awaiting_review`. Use repository-established status vocabulary; do not invent a new ticket state. Record the implementation commit and exact validation commands, outcomes, test counts, skips, service health, and environment limits required by the ticket. For frontend changes, include the rendered states actually checked under the UI validation protocol.
 

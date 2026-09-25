@@ -32,6 +32,16 @@ CK reviews a committed revision only. Confirm that the ticket is `awaiting_revie
 
 Read legacy review artifacts without requiring retroactive migration. New artifacts must use the richer format below.
 
+## Frozen-authority and runtime-boundary rule
+
+The frozen ticket, its explicitly referenced source anchors, and accepted dependency checkpoints are the review contract. Repository files, build outputs, deployment entrypoints, and local runtime behavior are evidence for that contract; they do not add requirements by themselves.
+
+Do not promote an existing runtime or deployment path into mandatory scope merely because it exists in the repository. In particular, a Worker/Cloudflare entrypoint, Vite dev middleware, preview server, Compose service, or alternate adapter is in scope only when the frozen ticket or an accepted baseline explicitly names it, makes it the authoritative execution target, or a ticket acceptance criterion cannot be evaluated without it.
+
+Resolve the ticket's execution environment and deployment target separately. “Compose is authoritative for validation” selects where evidence must be gathered; it does not, by itself, select a production deployment runtime. Likewise, a ticket's use of “production” does not authorize CK to infer a Worker or Cloudflare requirement when the ticket and referenced baseline leave the deployment target unspecified.
+
+If implementation behavior and an unreferenced repository runtime disagree, do not automatically report a ticket violation. First determine whether the disagreement is within the frozen review boundary. If the boundary is genuinely ambiguous, record a `PLANNING_GAP` or `KNOWLEDGE_GAP` and request the smallest scope decision; do not expand the ticket through review.
+
 ## Determine the review round
 
 Review rounds belong to one ticket/batch and frozen ticket baseline. Find the latest artifact for that baseline and follow its remediation chain.
@@ -93,6 +103,8 @@ Evidence
 Requested observable outcome
 ```
 
+The requirement field must be an explicit trace to the frozen ticket, an incorporated source anchor, a mandatory binding, or an accepted dependency checkpoint. Label the authority source as `EXPLICIT` or `NECESSARILY_ENTAILED`; do not use repository configuration, deployment topology, or reviewer preference as the source. A finding without that trace is advisory, or a planning/knowledge gap when the missing authority prevents review.
+
 Allowed origins:
 
 ```text
@@ -150,7 +162,7 @@ Write one new artifact per CK round under `project's goal/feedback/`, following 
 ...
 
 ## Findings
-| ID | Classification | Origin | Status | Requirement | Location | Evidence | Requested outcome |
+| ID | Classification | Origin | Status | Requirement / authority source | Location | Evidence | Requested outcome |
 |---|---|---|---|---|---|---|---|
 
 ## Advisory observations
