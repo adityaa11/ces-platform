@@ -1,6 +1,6 @@
 # PCC-004: Authorized `/home` project read and card projection
 
-- **State:** `in_progress`
+- **State:** `awaiting_review`
 - **Review batch:** `PCC-BATCH-04`
 - **Depends on:** PCC-001 `PASS`; SIN and SOUT ticket sets frozen/approved
 - **Execution environment:** Docker Compose is authoritative for Better Auth session reads, PostgreSQL authorization queries, app rendering, and integration checks; host-local commands are diagnostic only.
@@ -118,3 +118,12 @@ Status: applicable
 
 - **Review question:** Does authenticated `/home` read only authorized Atlas projects and render a truthful production card model without fixture/domain or route leakage?
 - **Combined acceptance:** Real project state replaces the empty hard-code, waiting-state metrics are persisted-data projections, private metadata stays server-side, and no production card opens `/demo` or starts downstream work.
+
+## Implementation checkpoint
+
+- **Commit:** `b045a25` (`feat(atlas): add authorized home project cards`)
+- **Compose health:** `postgres`, `atlas`, `agents-bridge`, and `agents-bridge-worker` reported healthy.
+- **Validated:** `docker compose exec -T atlas corepack pnpm --filter @atlas/app test` passed: 22 tests passed, 0 failed, 1 intentional worker-runtime skip. This includes the real two-user `/home` integration proof, persisted waiting-card labels, empty-state preservation, and absence of fixture links/share actions or private storage/source data.
+- **Validated:** `docker compose exec -T atlas corepack pnpm --filter @atlas/core --filter @atlas/db typecheck` and `docker compose exec -T atlas corepack pnpm --filter @atlas/db migration:check` passed.
+- **Validated:** targeted changed-path lint passed through the Compose `atlas` service; `git diff --check` passed before commit.
+- **Environment limitation:** the full application lint command still reports three pre-existing violations in `components/RuntimeFixtureRoute.tsx` and `vite.config.ts`; neither file is part of this checkpoint. The result is preserved for CK rather than waived here.
