@@ -22,6 +22,14 @@ Use the supplied:
 
 Do not silently expand or rewrite the ticket.
 
+## Frozen scope controls runtime interpretation
+
+The frozen ticket, explicitly referenced source material, and accepted dependency checkpoints define what the implementation must satisfy. Existing repository architecture is useful evidence, but it is not independent authority for adding a deployment target, runtime, or platform requirement.
+
+Treat a Worker/Cloudflare entrypoint, Vite `configureServer` middleware, preview runtime, Compose service, or alternate storage/runtime adapter as review scope only when the ticket or accepted baseline explicitly identifies it as authoritative or requires behavior that can only be proven there. Do not infer a Worker requirement from the presence of `apps/*/worker`, a build plugin, or a repository template.
+
+Keep validation environment and production deployment distinct: a ticket may require Compose for authoritative validation without making Compose the production runtime, and the word “production” alone does not identify Cloudflare, Workers, or any other deployment target. When the frozen materials do not resolve that target, classify the ambiguity as a planning/knowledge issue or request a scope decision instead of treating one repository runtime as the contract.
+
 ## Base review
 
 Always inspect:
