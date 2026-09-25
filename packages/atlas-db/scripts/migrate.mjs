@@ -13,16 +13,25 @@ const readMigration = async (name) => {
   for (const [token, value] of Object.entries(replacements)) migration = migration.replaceAll(token, value.replaceAll("'", "''"));
   return migration;
 };
+const getAppliedMigrations = async () => {
+  const [{ exists }] = await sql`SELECT to_regclass('atlas.schema_migrations') IS NOT NULL AS exists`;
+  if (!exists) return new Set();
+  const rows = await sql`SELECT name FROM atlas.schema_migrations`;
+  return new Set(rows.map(({ name }) => String(name)));
+};
 const sql = postgres(connectionString, { max: 1 });
 try {
+  const applied = await getAppliedMigrations();
   if (process.argv.includes("--check")) {
-    for (const name of migrations) {
-      const [{ exists }] = await sql`SELECT EXISTS (SELECT 1 FROM atlas.schema_migrations WHERE name = ${name}) AS exists`;
-      if (!exists) throw new Error(`${name} has not been applied`);
-    }
+    const missing = migrations.filter((name) => !applied.has(name));
+    if (missing.length) throw new Error(`${missing.join(", ")} have not been applied`);
     console.log("Atlas database migration check passed");
   } else {
-    for (const name of migrations) await sql.unsafe(await readMigration(name));
-    console.log("Atlas database migrations applied");
+    const pending = migrations.filter((name) => !applied.has(name));
+    for (const name of pending) {
+      await sql.unsafe(await readMigration(name));
+      applied.add(name);
+    }
+    console.log(pending.length ? `Atlas database migrations applied: ${pending.join(", ")}` : "Atlas database migrations already up to date");
   }
 } finally { await sql.end(); }

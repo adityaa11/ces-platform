@@ -11,6 +11,19 @@ CK reviews a committed implementation checkpoint, creates one consolidated revie
 
 The frozen ticket is the review contract. Review authority does not permit changing or expanding it.
 
+## Execution efficiency
+
+CK must optimize orchestration and output volume without weakening review coverage.
+
+- Resolve the target in one compact read-only pass: current `HEAD`, worktree status, ticket state/batch, latest review artifact, review round, and remediation commit. Do not dump the whole repository or every feedback file.
+- Read only the current ticket sections needed for the round. Do not load large implementation-context documents unless a ticket reference or unresolved finding requires them.
+- Round 1 may inspect the full ticket-authorized boundary. Rounds 2 and 3 must remain bounded to the prior findings, remediation diff, affected acceptance criteria, and affected review extensions.
+- Prefer targeted `git show`, `git diff`, `rg`, and line slices over whole-file output. Keep tool output compact; summarize successful commands instead of replaying their logs into context.
+- For Compose validation, start required services once, build the validation image once (`docker compose build --quiet atlas`), then omit `--build` from subsequent `docker compose run --rm --no-deps atlas ...` commands. Do not rebuild for every check.
+- When several Compose checks are required, use `.agents/skills/ck/scripts/run-compose-checks.mjs` with a task-local manifest or `--checks-json`. It builds once, runs checks serially, emits pass/fail counts, and can write a compact JSON report with command arguments, durations, exit codes, and output tails. Retain full logs only when a command fails or the review artifact requires an environment limitation.
+- Do not run database-mutating checks in parallel. Read-only target resolution, source inspection, and independent static checks may be parallelized when they do not obscure failure attribution.
+- Record exact commands and results in the review artifact, but do not include repeated Docker build logs or unchanged diagnostic output.
+
 ## Resolve the review target
 
 From repository state, resolve the current ticket and batch, ticket-set README, frozen ticket baseline, dependency checkpoints, implementation evidence, required validation evidence, current committed `HEAD`, prior CK artifacts for this ticket/baseline, and any CFC remediation commit.
