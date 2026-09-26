@@ -1,6 +1,6 @@
 # PCC-006: Project-card creation end-to-end and regression checkpoint
 
-- **State:** `awaiting_review`
++ **State:** `approved`
 - **Review batch:** `PCC-BATCH-06`
 - **Depends on:** PCC-001 through PCC-005 `PASS`
 - **Execution environment:** Docker Compose is the authoritative environment for the full two-user flow, PostgreSQL, Better Auth, migrations, DocumentStore, app tests/builds, and regression evidence; host-local commands are diagnostic only.
@@ -144,3 +144,11 @@ Status: applicable
 - **Addressed findings:** `CK-001` keeps the Compose-only storage and database fault adapters conformant with the full `DocumentStore` and `AtlasProjectRepository` contracts by delegating unaffected operations. `CK-002` adds the real zero-byte multipart upload case and confirms it creates no visible project.
 - **Validated:** rebuilt Compose `atlas` and PostgreSQL services healthy; focused HTTP integration passed **1/1**; targeted ESLint passed. The full app TypeScript diagnostic no longer identifies the CFC adapters; its remaining `project-creation-boundary.ts:83` error is the pre-existing `ProcessEnv`/`AtlasAuthEnvironment` mismatch.
 - **Next state:** `awaiting_review`; CFC does not decide the CK result.
+
+## CK approval
+
+- **Review artifact:** `project's goal/feedback/PCC-BATCH-06-f5bec1c-review.md`.
+- **Reviewed commit:** `f5bec1c65023f6747b45ed8e37abdf8ae508cddd`.
+- **Result:** `PASS` (Round 2; findings `CK-001` and `CK-002` resolved).
+- **Frozen baseline:** PCC-006 scope and acceptance as reviewed in Round 1.
+- **GO authorization:** The user invoked `go` for PCC-006; this final ticket is approved and the Project Cards ticket set is complete.
