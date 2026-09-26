@@ -131,3 +131,11 @@ Status: applicable
 - **Validated:** a rebuilt Compose image passed the two focused PCC-005 helper tests. The healthy Compose-managed `atlas` service passed `corepack pnpm --filter @atlas/app test`: 26 passed, 0 failed, 1 intentional worker-runtime skip. This includes the existing authenticated project-create and two-user `/home` integration checks.
 - **Rendered inspection:** inspected the established `/demo` Entity Library and create dialog at desktop width. The production implementation reuses the same Project Library heading, card-grid fit bounds, dialog/form classes, semantic theme tokens, native labelled controls, field error wiring, and focus trap. Browser viewport overrides were unavailable, so narrow/mobile and alternate-theme visual checks remain CK review evidence rather than claimed implementation evidence.
 - **Known environment result:** `docker compose run --rm --build --no-deps atlas ... test` builds and runs isolated helper checks but cannot reach the Compose app at `127.0.0.1:3001`; the healthy service rerun is the authoritative route result. Full app lint continues to report three pre-existing, out-of-scope errors in `components/RuntimeFixtureRoute.tsx` and `vite.config.ts`; PCC-005 paths build and test cleanly.
+
+## CFC remediation checkpoint
+
+- **CK source:** `PCC-BATCH-05-f3b67f1-review-session-2.md`, Round 1 `CHANGES_REQUIRED`.
+- **Remediation commit:** `779712f` (`fix(atlas): remediate PCC-005 CK-001 CK-002 CK-003 CK-004`).
+- **Addressed findings:** `CK-001` validates the success payload before dialog close/refresh and maps only bounded error copy; `CK-002` coalesces concurrent submits through a single in-flight helper; `CK-003` maps 409/413/415 and other known failures to the appropriate field or form alert; `CK-004` adds validation, safe-response, retry, authority-separation, and rendered-alert regression coverage.
+- **Validated:** rebuilt Compose focused helper suite passed 5/5. The healthy Compose-managed `atlas` service passed `corepack pnpm --filter @atlas/app test`: 29 passed, 0 failed, 1 intentional worker-runtime skip. Targeted eslint for the three remediation files passed. Full lint remains limited to the pre-existing out-of-scope errors recorded above.
+- **Next state:** `awaiting_review`; only CK may resolve the findings or issue PASS.
