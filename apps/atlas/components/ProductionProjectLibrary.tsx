@@ -7,13 +7,14 @@ import { Button } from "./Button";
 import { Dialog } from "./Dialog";
 import { EmptyState } from "./EmptyState";
 import { ProductionProjectCard } from "./ProductionProjectCard";
-import { productionProjectLimits, submitProductionProject, validateProductionProject, type ProductionProjectErrors } from "./production-project-create";
+import { createProductionProjectSubmitter, productionProjectLimits, ProductionProjectSubmissionError, validateProductionProject, type ProductionProjectErrors } from "./production-project-create";
 import type { AuthenticatedUser } from "./authenticated-user";
 import type { ProjectCardViewModel } from "./project-card-view-model";
 
 export function ProductionProjectLibrary({ projects, user }: { projects: readonly ProjectCardViewModel[]; user: AuthenticatedUser }) {
   const router = useRouter();
   const gridRef = useRef<HTMLDivElement>(null);
+  const submitterRef = useRef<ReturnType<typeof createProductionProjectSubmitter> | null>(null);
   const [open, setOpen] = useState(false), [projectId, setProjectId] = useState(""), [projectName, setProjectName] = useState(""), [projectDescription, setProjectDescription] = useState(""), [files, setFiles] = useState<File[]>([]), [errors, setErrors] = useState<ProductionProjectErrors>({}), [submitState, setSubmitState] = useState<"idle" | "loading" | "error">("idle"), [notice, setNotice] = useState<string | null>(null);
   useEffect(() => {
     const grid = gridRef.current; if (!grid) return;
@@ -27,8 +28,8 @@ export function ProductionProjectLibrary({ projects, user }: { projects: readonl
     event.preventDefault(); const input = { projectId, projectName, projectDescription, files }, nextErrors = validateProductionProject(input); setErrors(nextErrors);
     if (Object.keys(nextErrors).length) { setSubmitState("error"); return; }
     setSubmitState("loading");
-    try { const created = await submitProductionProject(input); setNotice(`${created.project.name} was created. Its PRDs are waiting for extraction.`); close(); router.refresh(); }
-    catch (error) { setSubmitState("error"); setErrors({ prdFiles: error instanceof Error ? error.message : "Unable to create the project. Please try again." }); }
+    try { const created = await (submitterRef.current ??= createProductionProjectSubmitter())(input); setNotice(`${created.project.name} was created. Its PRDs are waiting for extraction.`); close(); router.refresh(); }
+    catch (error) { setSubmitState("error"); setErrors(error instanceof ProductionProjectSubmissionError ? error.errors : { form: "Unable to create the project. Please try again." }); }
   }
   return <AppShell contentClassName="project-library-content" homeHref="/home" projectNavigation={false} projects={[]} signOutMode="session" user={user}>
     <div className="project-library-page">
@@ -38,6 +39,7 @@ export function ProductionProjectLibrary({ projects, user }: { projects: readonl
       <section aria-labelledby="project-list-title" className="repository-projects"><header><h2 id="project-list-title">Your projects</h2><span>{projects.length} repositories</span></header><div aria-label="Projects" className="project-grid" ref={gridRef}>{projects.map((project) => <ProductionProjectCard key={project.id} project={project} />)}</div></section>
       {projects.length === 0 && <EmptyState title="No projects yet" description="Create a project to begin reviewing your PRDs." />}
       {open && <Dialog onClose={submitState === "loading" ? () => {} : close} title="Create a project"><form className="create-project-form" noValidate onSubmit={createProject}>
+        {errors.form && <p className="field-error" role="alert">{errors.form}</p>}
         <label htmlFor="production-project-id">Project ID <span>* Required · 3–48 lowercase letters, numbers, and hyphens</span><input aria-describedby="production-project-id-count production-project-id-error" aria-invalid={Boolean(errors.projectId)} disabled={submitState === "loading"} id="production-project-id" maxLength={productionProjectLimits.id} onChange={(event) => setProjectId(event.target.value)} placeholder="Example: customer-portal-v2" required value={projectId} /></label><p className="field-count" id="production-project-id-count">{projectId.length}/48 characters</p>{errors.projectId && <p className="field-error" id="production-project-id-error" role="alert">{errors.projectId}</p>}
         <label htmlFor="production-project-name">Project Name <span>* Required</span><input aria-describedby="production-project-name-count production-project-name-error" aria-invalid={Boolean(errors.projectName)} disabled={submitState === "loading"} id="production-project-name" maxLength={productionProjectLimits.name} onChange={(event) => { const value = event.target.value; setProjectName(value); if (!projectId) setProjectId(deriveProjectId(value)); }} required value={projectName} /></label><p className="field-count" id="production-project-name-count">{projectName.length}/80 characters</p>{errors.projectName && <p className="field-error" id="production-project-name-error" role="alert">{errors.projectName}</p>}
         <label htmlFor="production-project-description">Project Description <span>Optional</span><textarea aria-describedby="production-project-description-count production-project-description-error" aria-invalid={Boolean(errors.projectDescription)} disabled={submitState === "loading"} id="production-project-description" maxLength={productionProjectLimits.description} onChange={(event) => setProjectDescription(event.target.value)} value={projectDescription} /></label><p className="field-count" id="production-project-description-count">{projectDescription.length}/280 characters</p>{errors.projectDescription && <p className="field-error" id="production-project-description-error" role="alert">{errors.projectDescription}</p>}
