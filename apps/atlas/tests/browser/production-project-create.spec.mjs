@@ -156,6 +156,9 @@ for (const theme of ["light", "dark"]) {
         for (const text of ["Waiting for extraction", "No published work", "0 of 1 PRDs processed", "0%", "PRDs uploaded"]) await expect(card).toContainText(text);
         await expect(card.locator(".repository-master-state .repository-state-icon")).toBeVisible();
         await expect(card.locator(".repository-metrics > div")).toHaveCount(3);
+        const [statusValue, ...statusDescription] = (await card.locator(".repository-status").innerText()).trim().split(/\s+/);
+        await expect(card.locator(".repository-metrics > div").nth(2).locator("dd")).toHaveText(statusValue);
+        await expect(card.locator(".repository-metrics > div").nth(2).locator("dt")).toHaveText(statusDescription.join(" "));
         await expect(card.locator(".repository-metrics div").filter({ hasText: "PRDs uploaded" }).locator("dd")).toHaveText("1");
         await expect(card.getByRole("button", { name: /Workspace unavailable/ })).toBeDisabled();
         await expect(card.locator('a[href^="/demo"]')).toHaveCount(0);
