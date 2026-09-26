@@ -1,6 +1,6 @@
 # PCC-006: Project-card creation end-to-end and regression checkpoint
 
-+ **State:** `approved`
+- **State:** `approved`
 - **Review batch:** `PCC-BATCH-06`
 - **Depends on:** PCC-001 through PCC-005 `PASS`
 - **Execution environment:** Docker Compose is the authoritative environment for the full two-user flow, PostgreSQL, Better Auth, migrations, DocumentStore, app tests/builds, and regression evidence; host-local commands are diagnostic only.

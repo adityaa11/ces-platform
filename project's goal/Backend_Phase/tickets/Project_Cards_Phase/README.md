@@ -1,6 +1,6 @@
 # Atlas Project Cards and PRD Intake Ticket Set
 
-+ **State:** `complete` — `PCC-001` through `PCC-006` are approved; the Project Cards and PRD Intake ticket set is frozen.
+- **State:** `complete` — `PCC-001` through `PCC-006` are approved; the Project Cards and PRD Intake ticket set is frozen.
 - **Primary baseline:** [Project Card Creation and PRD Intake Implementation Context](../../atlas-project-card-creation-implementation-context.md)
 - **Phase boundary:** [Atlas Backend Phase README](../../README.md)
 - **Architecture baseline:** [Atlas Core Architecture — Updated Checkpoint](../../atlas-core-architecture-checkpoint-v2-mistral-enriched-v2.md)
