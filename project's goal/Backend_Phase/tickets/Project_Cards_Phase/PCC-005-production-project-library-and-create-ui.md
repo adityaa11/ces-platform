@@ -1,6 +1,6 @@
 # PCC-005: Production Project Library and create UI
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `PCC-BATCH-05`
 - **Depends on:** PCC-003 and PCC-004 `PASS`
 - **Execution environment:** Docker Compose is authoritative for application builds/tests, authenticated production UI integration, and any PostgreSQL-backed validation; host-local commands are diagnostic only.
@@ -164,3 +164,9 @@ Status: applicable
 - **Change:** the production adapter maps the view-model state to the badge label once and derives the third metric's value and description from that label. Browser coverage asserts that both metric cells match the rendered status badge.
 - **Validation:** rebuilt the Compose Atlas image and confirmed the `atlas` service healthy. The production-card browser suite passed **9/9**; focused production-create helper tests passed **12/12**; full app tests passed **36**, failed **0**, with **1** intentional worker-runtime skip. Targeted ESLint passed for both changed files. `git diff --check` passed. Repository-wide lint still reports three existing errors in `RuntimeFixtureRoute.tsx` and `vite.config.ts`; TypeScript still reports existing errors in the demo route, `SourcesWorkspace`, `WorkspaceSwitcherPreview`, auth/Vite wiring, and fixture package. These diagnostics do not name either changed implementation or browser-test file.
 - **Next state:** `awaiting_review`; CK retains authority to resolve `CK-001` or issue a review result. No CK round was run as part of remediation.
+
+## CK approval
+
+- **Review artifact:** `project's goal/feedback/PCC-BATCH-05-6623b4b-review.md`.
+- **Reviewed commit:** `6623b4b5e534986090d2edf191658da0be58b495`.
+- **Result:** `PASS` (session 3, Round 2). The frozen PCC-005 baseline is approved; the review artifact remains the decision record.

@@ -55,10 +55,22 @@ export function createProjectCreationBoundary(): Plugin {
       const sql = postgres(databaseUrl, { max: 4 });
       const homeReadSecret = composeWorkerAuthSecret();
       if (!homeReadSecret) throw new Error("BETTER_AUTH_SECRET is required for the internal home read.");
-    const createProject = (command: Parameters<Core["createStoredAtlasProject"]>[0]) => core.createStoredAtlasProject(command, {
-      projectRepository: new repository.PostgresAtlasProjectRepository(sql),
-      documentStore: new store.LocalFilesystemDocumentStore(process.env.ATLAS_DOCUMENT_STORE_ROOT ?? resolve(process.cwd(), ".atlas-data")),
-    });
+    const createProject = (command: Parameters<Core["createStoredAtlasProject"]>[0]) => {
+      const failure = process.env.ATLAS_PROJECT_CREATION_TEST_FAILURE;
+      // Compose-only regression seams. They are opt-in through container
+      // configuration and allow PCC-006 to prove failed work is not visible.
+      const documentStore = failure === "storage"
+        ? { put: async () => { throw new Error("Injected DocumentStore failure."); } }
+        : new store.LocalFilesystemDocumentStore(process.env.ATLAS_DOCUMENT_STORE_ROOT ?? resolve(process.cwd(), ".atlas-data"));
+      const projectRepository = new repository.PostgresAtlasProjectRepository(sql);
+      const repositoryForCreation = failure === "database"
+        ? {
+          isProjectIdAvailable: (projectId: string) => projectRepository.isProjectIdAvailable(projectId),
+          create: async () => { throw new Error("Injected PostgreSQL failure."); },
+        }
+        : projectRepository;
+      return core.createStoredAtlasProject(command, { projectRepository: repositoryForCreation, documentStore });
+    };
     server.middlewares.use(async (request, response, next) => {
       const pathname = new URL(request.url ?? "/", "http://atlas.local").pathname;
         if (pathname !== "/api/projects" && pathname !== "/internal/home-projects") return next();

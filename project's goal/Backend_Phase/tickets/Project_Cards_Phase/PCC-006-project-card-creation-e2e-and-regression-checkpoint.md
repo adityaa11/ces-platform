@@ -1,6 +1,6 @@
 # PCC-006: Project-card creation end-to-end and regression checkpoint
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `PCC-BATCH-06`
 - **Depends on:** PCC-001 through PCC-005 `PASS`
 - **Execution environment:** Docker Compose is the authoritative environment for the full two-user flow, PostgreSQL, Better Auth, migrations, DocumentStore, app tests/builds, and regression evidence; host-local commands are diagnostic only.
@@ -131,4 +131,9 @@ Status: applicable
 
 - **Review question:** Does the complete production project-card flow satisfy the frozen creation context without fixture leakage, partial visibility, private-data exposure, or downstream extraction side effects?
 - **Combined acceptance:** Real two-user/auth/storage/database evidence, failure coverage, no-perception proof, regression checks, and frontend review evidence are recorded against the reviewed commit.
-- **Implementation checkpoint:** To be filled only after an authorized implementation, validation, and commit; this planned ticket contains no implementation evidence.
+## Implementation checkpoint
+
+- **Implemented:** PCC-006 strengthens the Compose-backed production integration proof. It verifies the persisted owner membership, empty Master and Initial Draft, document workspace association, immutable source bytes/SHA-256/size/media-type metadata, and source-specific absence of perception executions, grants, normalized cache, and derived assets. Compose-only `storage` and `database` fault seams exercise the real HTTP boundary and prove no project becomes visible after either failure.
+- **Validated:** rebuilt Compose Atlas/PostgreSQL services were healthy. The focused production two-user suite passed **2/2** (`project-create` and `project-home`), with the latter proving User B cannot see User A's waiting card. The storage-failure configuration passed **1/1**; the database-failure configuration passed **1/1**. Targeted ESLint passed for the boundary and focused tests; `git diff --check` passed.
+- **Environment note:** The normal Atlas Compose service was restored after the failure runs. Broader ticket-required package/build/browser suites remain to be recorded before review.
+- **Next state:** `awaiting_review`; this commit is the PCC-006 checkpoint and requires CK before any completion decision.

@@ -1,6 +1,6 @@
 # Atlas Project Cards and PRD Intake Ticket Set
 
-- **State:** `in_progress` — `PCC-001` through `PCC-004` are approved; `PCC-005` / `PCC-BATCH-05` is awaiting CK review.
+- **State:** `awaiting_review` — `PCC-001` through `PCC-005` are approved; `PCC-006` / `PCC-BATCH-06` is awaiting CK review.
 - **Primary baseline:** [Project Card Creation and PRD Intake Implementation Context](../../atlas-project-card-creation-implementation-context.md)
 - **Phase boundary:** [Atlas Backend Phase README](../../README.md)
 - **Architecture baseline:** [Atlas Core Architecture — Updated Checkpoint](../../atlas-core-architecture-checkpoint-v2-mistral-enriched-v2.md)
@@ -65,8 +65,8 @@ batch.
 | 2 | [PCC-002](PCC-002-document-store-backed-project-creation.md) / `PCC-BATCH-02` | `approved` | PCC-001 `PASS`; BSS-007 approved | Does the server-side creation operation store all PRDs through `DocumentStore` before one PostgreSQL commit, creating no visible partial project and no extraction state? |
 | 3 | [PCC-003](PCC-003-production-project-http-boundary.md) / `PCC-BATCH-03` | `approved` | PCC-002 `PASS`; approved Better Auth/session boundary | Does `POST /api/projects` authenticate the real session, enforce bounded multipart/CSRF input, map safe errors, and avoid fixture/base64 transport? |
 | 4 | [PCC-004](PCC-004-authorized-home-project-read-and-card-projection.md) / `PCC-BATCH-04` | `approved` | PCC-001 `PASS`; SIN/SOUT sets frozen | Does `/home` read only authorized Atlas projects and project them into a production-safe card model whose waiting state comes from persisted state rather than fixture or UI timers? |
-| 5 | [PCC-005](PCC-005-production-project-library-and-create-ui.md) / `PCC-BATCH-05` | `awaiting_review` | PCC-003 and PCC-004 `PASS` | Does `/home` expose the established `+ New project` interaction and truthful waiting card while `/demo` retains fixture creation, sharing, and processing behavior? |
-| 6 | [PCC-006](PCC-006-project-card-creation-e2e-and-regression-checkpoint.md) / `PCC-BATCH-06` | `planned` | PCC-001 through PCC-005 `PASS` | Does the complete real-user flow prove storage fidelity, authorization isolation, failure safety, no perception trigger, frontend quality, and frozen-stack regressions? |
+| 5 | [PCC-005](PCC-005-production-project-library-and-create-ui.md) / `PCC-BATCH-05` | `approved` | PCC-003 and PCC-004 `PASS` | Does `/home` expose the established `+ New project` interaction and truthful waiting card while `/demo` retains fixture creation, sharing, and processing behavior? |
+| 6 | [PCC-006](PCC-006-project-card-creation-e2e-and-regression-checkpoint.md) / `PCC-BATCH-06` | `awaiting_review` | PCC-001 through PCC-005 `PASS` | Does the complete real-user flow prove storage fidelity, authorization isolation, failure safety, no perception trigger, frontend quality, and frozen-stack regressions? |
 
 ## Shared acceptance boundary
 
