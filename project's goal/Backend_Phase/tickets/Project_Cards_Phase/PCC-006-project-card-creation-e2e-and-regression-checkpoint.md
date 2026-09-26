@@ -137,3 +137,10 @@ Status: applicable
 - **Validated:** rebuilt Compose Atlas/PostgreSQL services were healthy. The focused production two-user suite passed **2/2** (`project-create` and `project-home`), with the latter proving User B cannot see User A's waiting card. The storage-failure configuration passed **1/1**; the database-failure configuration passed **1/1**. Targeted ESLint passed for the boundary and focused tests; `git diff --check` passed.
 - **Environment note:** The normal Atlas Compose service was restored after the failure runs. Broader ticket-required package/build/browser suites remain to be recorded before review.
 - **Next state:** `awaiting_review`; this commit is the PCC-006 checkpoint and requires CK before any completion decision.
+
+## CFC remediation checkpoint
+
+- **CK source:** `project's goal/feedback/PCC-BATCH-06-16f27eb-review.md`, Round 1 `CHANGES_REQUIRED`.
+- **Addressed findings:** `CK-001` keeps the Compose-only storage and database fault adapters conformant with the full `DocumentStore` and `AtlasProjectRepository` contracts by delegating unaffected operations. `CK-002` adds the real zero-byte multipart upload case and confirms it creates no visible project.
+- **Validated:** rebuilt Compose `atlas` and PostgreSQL services healthy; focused HTTP integration passed **1/1**; targeted ESLint passed. The full app TypeScript diagnostic no longer identifies the CFC adapters; its remaining `project-creation-boundary.ts:83` error is the pre-existing `ProcessEnv`/`AtlasAuthEnvironment` mismatch.
+- **Next state:** `awaiting_review`; CFC does not decide the CK result.

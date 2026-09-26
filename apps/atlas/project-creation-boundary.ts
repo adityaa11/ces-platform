@@ -59,14 +59,19 @@ export function createProjectCreationBoundary(): Plugin {
       const failure = process.env.ATLAS_PROJECT_CREATION_TEST_FAILURE;
       // Compose-only regression seams. They are opt-in through container
       // configuration and allow PCC-006 to prove failed work is not visible.
+      const liveDocumentStore = new store.LocalFilesystemDocumentStore(process.env.ATLAS_DOCUMENT_STORE_ROOT ?? resolve(process.cwd(), ".atlas-data"));
       const documentStore = failure === "storage"
-        ? { put: async () => { throw new Error("Injected DocumentStore failure."); } }
-        : new store.LocalFilesystemDocumentStore(process.env.ATLAS_DOCUMENT_STORE_ROOT ?? resolve(process.cwd(), ".atlas-data"));
+        ? {
+          put: async () => { throw new Error("Injected DocumentStore failure."); },
+          read: (storageKey: string) => liveDocumentStore.read(storageKey),
+        }
+        : liveDocumentStore;
       const projectRepository = new repository.PostgresAtlasProjectRepository(sql);
       const repositoryForCreation = failure === "database"
         ? {
           isProjectIdAvailable: (projectId: string) => projectRepository.isProjectIdAvailable(projectId),
           create: async () => { throw new Error("Injected PostgreSQL failure."); },
+          listAccessibleTo: (userId: string) => projectRepository.listAccessibleTo(userId),
         }
         : projectRepository;
       return core.createStoredAtlasProject(command, { projectRepository: repositoryForCreation, documentStore });

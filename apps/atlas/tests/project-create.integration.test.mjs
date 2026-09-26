@@ -48,6 +48,9 @@ test("PCC-003 enforces the authenticated multipart creation boundary and safe fa
     assert.equal((await route(new FormData(), cookie, { "content-type": "application/json" })).status, 415, "JSON and fixture transport are rejected");
     assert.equal((await route(form(id, { omitId: true }), cookie)).status, 400, "required metadata is validated");
     assert.equal((await route(form(`pcc-no-prd-${suffix}`, { omitFile: true }), cookie)).status, 400, "at least one PRD is required");
+    const zeroByteId = `pcc-empty-${suffix}`;
+    assert.equal((await route(form(zeroByteId, { bytes: Buffer.alloc(0) }), cookie)).status, 400, "zero-byte PRDs are rejected at the real multipart boundary");
+    assert.equal((await admin`SELECT stable_id FROM atlas.project WHERE stable_id=${zeroByteId}`).length, 0, "zero-byte input does not create a visible Atlas project");
     const tooMany = new FormData();
     tooMany.set("projectId", `pcc-many-${suffix}`); tooMany.set("projectName", "Too many PDFs");
     for (let index = 0; index < 11; index += 1) tooMany.append("prdFiles[]", new File([sourceBytes], `brief-${index}.pdf`, { type: "application/pdf" }));
