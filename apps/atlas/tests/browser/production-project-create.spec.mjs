@@ -154,10 +154,12 @@ for (const theme of ["light", "dark"]) {
         const card = page.getByRole("article", { name: "PCC browser project" });
         await expect(card).toBeVisible();
         for (const text of ["Waiting for extraction", "No published work", "0 of 1 PRDs processed", "0%", "PRDs uploaded"]) await expect(card).toContainText(text);
+        await expect(card.locator(".repository-master-state .repository-state-icon")).toBeVisible();
+        await expect(card.locator(".repository-metrics > div")).toHaveCount(3);
         await expect(card.locator(".repository-metrics div").filter({ hasText: "PRDs uploaded" }).locator("dd")).toHaveText("1");
         await expect(card.getByRole("button", { name: /Workspace unavailable/ })).toBeDisabled();
         await expect(card.locator('a[href^="/demo"]')).toHaveCount(0);
-        await expect(card.getByRole("button", { name: /Share/ })).toHaveCount(0);
+        await expect(card.getByRole("button", { name: /Sharing unavailable/ })).toBeDisabled();
         await expect(page.locator("body")).not.toContainText("Extraction has started");
         expect(fixtureRequests).toEqual([]);
         for (const request of posts) {

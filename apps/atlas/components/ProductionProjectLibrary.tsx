@@ -1,26 +1,22 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "./AppShell";
 import { Button } from "./Button";
 import { Dialog } from "./Dialog";
 import { EmptyState } from "./EmptyState";
 import { ProductionProjectCard } from "./ProductionProjectCard";
+import { useProjectCardGrid } from "./useProjectCardGrid";
 import { createProductionProjectSubmitter, productionProjectLimits, ProductionProjectSubmissionError, validateProductionProject, type ProductionProjectErrors } from "./production-project-create";
 import type { AuthenticatedUser } from "./authenticated-user";
 import type { ProjectCardViewModel } from "./project-card-view-model";
 
 export function ProductionProjectLibrary({ projects, user }: { projects: readonly ProjectCardViewModel[]; user: AuthenticatedUser }) {
   const router = useRouter();
-  const gridRef = useRef<HTMLDivElement>(null);
+  const gridRef = useProjectCardGrid(projects.length);
   const submitterRef = useRef<ReturnType<typeof createProductionProjectSubmitter> | null>(null);
   const [open, setOpen] = useState(false), [projectId, setProjectId] = useState(""), [projectName, setProjectName] = useState(""), [projectDescription, setProjectDescription] = useState(""), [files, setFiles] = useState<File[]>([]), [errors, setErrors] = useState<ProductionProjectErrors>({}), [submitState, setSubmitState] = useState<"idle" | "loading" | "error">("idle"), [notice, setNotice] = useState<string | null>(null);
-  useEffect(() => {
-    const grid = gridRef.current; if (!grid) return;
-    const update = () => { const gap = 16, minimum = 304, maximum = 400, width = grid.clientWidth, columns = Math.max(1, Math.min(projects.length || 1, Math.floor((width + gap) / (minimum + gap)))); grid.style.setProperty("--project-column-count", String(columns)); grid.style.setProperty("--project-card-width", `${Math.min(maximum, (width - gap * (columns - 1)) / columns)}px`); };
-    const observer = new ResizeObserver(update); observer.observe(grid); update(); return () => observer.disconnect();
-  }, [projects.length]);
   const reset = () => { setProjectId(""); setProjectName(""); setProjectDescription(""); setFiles([]); setErrors({}); setSubmitState("idle"); };
   const close = () => { setOpen(false); reset(); };
   const deriveProjectId = (name: string) => name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, productionProjectLimits.id);

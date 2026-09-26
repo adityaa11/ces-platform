@@ -39,7 +39,7 @@ test("PCC-004 renders only the session member's persisted waiting projects on /h
     assert.match(ownerHtml, /<dd>1<\/dd><dt>PRDs uploaded<\/dt>/);
     assert.match(ownerHtml, /Workspace unavailable/);
     assert.doesNotMatch(ownerHtml, /href="\/demo\?projectId=/);
-    assert.doesNotMatch(ownerHtml, />Share</);
+    assert.match(ownerHtml, /aria-label="Sharing unavailable until production sharing is supported"[^>]*disabled=""[^>]*>Share<\/button>/);
     assert.doesNotMatch(ownerHtml, /storage_key|PCC-004 source|\.atlas-data/i);
     assert.doesNotMatch(otherHtml, new RegExp(`PCC home project|${projectId}`), "membership authorization happens before project data reaches User B's browser");
     assert.match(otherHtml, /No projects yet/);

@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { createFixtureProject, projectCardStressLimits, projectIdPattern, type AccessRole, type MembershipFixture, type PrdFileMetadata, type ProjectCreateRequest, type ProjectFixture, type ProjectWorkspaceFixture } from "@atlas/fixtures";
 import { AppShell } from "./AppShell";
 import { Button } from "./Button";
 import { Dialog } from "./Dialog";
 import { EmptyState } from "./EmptyState";
 import { ProjectCard } from "./ProjectCard";
+import { useProjectCardGrid } from "./useProjectCardGrid";
 import { demoHref } from "./WorkspaceLens";
 import type { AuthenticatedUser, ProjectRole } from "./authenticated-user";
 import { shouldHydrateFixtureRegistry, type ProjectLibraryMode } from "./project-library-mode";
@@ -19,7 +20,6 @@ const encodeFile = async (file: File) => { const bytes = new Uint8Array(await fi
 const workspaceTokenCandidates = () => Array.from({ length: 3 }, () => Array.from(crypto.randomUUID().replaceAll("-", "").slice(0, 12), (character) => "abcdefghijklmnopqrstuvwxyz234567"[Number.parseInt(character, 16) * 2]).join(""));
 
 export function ProjectLibrary({ mode, user, projectRole, projects, workspace, scenario }: { mode: ProjectLibraryMode; user: AuthenticatedUser; projectRole?: ProjectRole; projects: ProjectFixture[]; workspace?: ProjectWorkspaceFixture; scenario?: string }) {
-  const projectGridRef = useRef<HTMLDivElement>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [libraryProjects, setLibraryProjects] = useState(projects);
   const [knownWorkspaceIds, setKnownWorkspaceIds] = useState<string[]>([]);
@@ -40,36 +40,7 @@ export function ProjectLibrary({ mode, user, projectRole, projects, workspace, s
   const canShare = mode === "fixture" && projectRole === "owner";
   const members = shareProject ? (membersByProject[shareProject.id] ?? []) : [];
   useEffect(() => { if (!shouldHydrateFixtureRegistry(mode, scenario)) return; fetch("/api/local-fixtures").then(async (response) => response.ok ? response.json() : null).then((registry: { cards: ProjectFixture[]; modalProjects: Array<{ initialDraftWorkspace: { workspaceId: string } }> } | null) => { if (!registry) return; setLibraryProjects(registry.cards); setKnownWorkspaceIds(registry.modalProjects.map((record) => record.initialDraftWorkspace.workspaceId)); }).catch(() => {}); }, [mode, scenario]);
-  useEffect(() => {
-    const grid = projectGridRef.current;
-    if (!grid) return;
-    const container = grid.parentElement ?? grid;
-    const minimumCardWidth = 304;
-    const maximumCardWidth = 400;
-    const gap = 16;
-    let previousFormula = "";
-    let frame = 0;
-    const updateGridFormula = () => {
-      const availableWidth = grid.clientWidth;
-      const candidateColumns = Math.floor((availableWidth + gap) / (minimumCardWidth + gap));
-      const columns = Math.max(1, Math.min(libraryProjects.length || 1, candidateColumns));
-      const fluidWidth = (availableWidth - gap * (columns - 1)) / columns;
-      const cardWidth = Math.min(maximumCardWidth, Math.max(0, fluidWidth));
-      const formula = `${columns}:${cardWidth}`;
-      if (formula === previousFormula) return;
-      previousFormula = formula;
-      grid.style.setProperty("--project-column-count", String(columns));
-      grid.style.setProperty("--project-card-width", `${cardWidth}px`);
-    };
-    const scheduleFormula = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(updateGridFormula);
-    };
-    const observer = new ResizeObserver(scheduleFormula);
-    observer.observe(container);
-    scheduleFormula();
-    return () => { cancelAnimationFrame(frame); observer.disconnect(); };
-  }, [libraryProjects.length]);
+  const projectGridRef = useProjectCardGrid(libraryProjects.length);
   function resetCreateForm() { setProjectId(""); setProjectName(""); setProjectDescription(""); setSelectedFiles([]); setErrors({}); setSubmitState("idle"); }
   function deriveProjectId(name: string) { return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, projectCardStressLimits.id); }
   function validateCreateRequest(): FieldErrors {
