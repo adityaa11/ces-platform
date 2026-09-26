@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { createJiti } from "jiti";
 
@@ -22,6 +21,9 @@ test("PCC-005 submits exactly one same-origin multipart request without base64 t
   let url, options;
   const result = await submitProductionProject(input, async (nextUrl, nextOptions) => { url = nextUrl; options = nextOptions; return createdResponse(); });
   assert.equal(url, "/api/projects"); assert.equal(options.method, "POST"); assert.equal(options.body.get("projectId"), "customer-portal"); assert.equal(options.body.get("projectName"), "Customer portal"); assert.equal(options.body.getAll("prdFiles[]").length, 1); assert.equal(options.headers, undefined); assert.equal(result.project.documentCount, 1);
+  assert.deepEqual([...options.body.keys()], ["projectId", "projectName", "projectDescription", "prdFiles[]"]);
+  assert.equal(options.body.get("projectDescription"), input.projectDescription);
+  assert.equal(await options.body.get("prdFiles[]").text(), await pdf.text());
 });
 
 test("PCC-005 rejects malformed success and maps bounded status failures", async () => {
@@ -31,16 +33,26 @@ test("PCC-005 rejects malformed success and maps bounded status failures", async
   }
 });
 
-test("PCC-005 coalesces an in-flight request and permits retry after failure", async () => {
+test("PCC-005 coalesces an in-flight request", async () => {
   let calls = 0, resolve;
   const submit = createProductionProjectSubmitter(async () => { calls += 1; return await new Promise((done) => { resolve = done; }); });
   const first = submit(input), second = submit({ ...input, projectId: "ignored-second-submit" });
   assert.equal(first, second); assert.equal(calls, 1); resolve(createdResponse()); await first;
-  const retry = createProductionProjectSubmitter(async () => { calls += 1; return createdResponse(); }); await retry(input); assert.equal(calls, 2);
 });
 
-test("PCC-005 renders a safe form alert and preserves fixture authority", async () => {
-  const [production, fixture] = await Promise.all([readFile(new URL("../components/ProductionProjectLibrary.tsx", import.meta.url), "utf8"), readFile(new URL("../components/ProjectLibrary.tsx", import.meta.url), "utf8")]);
-  assert.match(production, /errors\.form.*role="alert"/); assert.match(production, /createProductionProjectSubmitter/); assert.doesNotMatch(production, /local-fixtures|createFixtureProject|base64/i);
-  assert.match(fixture, /createFixtureProject/); assert.match(fixture, /\/api\/local-fixtures/);
-});
+for (const failure of ["network", 400, 409, 413, 415, 500, "invalid-json", "invalid-schema"]) {
+  test(`PCC-005 retries on the SAME submitter after ${failure}`, async () => {
+    let calls = 0;
+    const submit = createProductionProjectSubmitter(async () => {
+      calls += 1;
+      if (calls > 1) return createdResponse();
+      if (failure === "network") throw new Error("private transport detail");
+      if (typeof failure === "number") return Response.json({ error: "private server detail" }, { status: failure });
+      return new Response(failure === "invalid-json" ? "invalid" : "{}", { status: 201 });
+    });
+    await assert.rejects(submit(input), ProductionProjectSubmissionError);
+    assert.equal(calls, 1);
+    assert.deepEqual(await submit(input), { project: { projectId: input.projectId, name: input.projectName, documentCount: 1 } });
+    assert.equal(calls, 2, "a failed request must release the original submitter's in-flight promise");
+  });
+}

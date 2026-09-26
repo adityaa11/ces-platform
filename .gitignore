@@ -3,6 +3,8 @@ node_modules/
 dist/
 .wrangler/
 coverage/
+test-results/
+playwright-report/
 .env*
 .atlas-data/
 apps/atlas/generated/

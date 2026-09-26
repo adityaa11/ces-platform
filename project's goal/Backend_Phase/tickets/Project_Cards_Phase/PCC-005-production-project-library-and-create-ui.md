@@ -139,3 +139,11 @@ Status: applicable
 - **Addressed findings:** `CK-001` validates the success payload before dialog close/refresh and maps only bounded error copy; `CK-002` coalesces concurrent submits through a single in-flight helper; `CK-003` maps 409/413/415 and other known failures to the appropriate field or form alert; `CK-004` adds validation, safe-response, retry, authority-separation, and rendered-alert regression coverage.
 - **Validated:** rebuilt Compose focused helper suite passed 5/5. The healthy Compose-managed `atlas` service passed `corepack pnpm --filter @atlas/app test`: 29 passed, 0 failed, 1 intentional worker-runtime skip. Targeted eslint for the three remediation files passed. Full lint remains limited to the pre-existing out-of-scope errors recorded above.
 - **Next state:** `awaiting_review`; only CK may resolve the findings or issue PASS.
+
+## CFC CK-004 coverage checkpoint (session 2 Round 2 follow-up)
+
+- **Base / review:** `e85f00f7ae8128ab36969279033f48892f09d081`, `PCC-BATCH-05-e85f00f-review.md`; only open finding `CK-004` is addressed by this bounded pass.
+- **Change:** replaces the source-regex render claim with actual Chromium component flows and adds failure-then-success coverage on the same submitter. Production success uses the real API and verifies refreshed, persisted waiting cards; fixture creation/share interactions execute with isolated fixture persistence.
+- **Evidence:** [commands, results, rendered-state captures and limitations](PCC-005-cfc-ck004-validation.md). Final rebuilt Compose validation: 9/9 browser tests; app build and 36 passing app tests with 1 intentional skip; targeted lint clean. Existing full lint/type failures remain recorded.
+- **Visual observation:** request/dialog states were inspected in both themes at desktop, tablet, mobile and 200%-equivalent reflow. Inspection also exposed an inherited production-card Master text wrapping defect, recorded for CK without modifying accepted PCC-004 code. No complete frontend PASS is claimed.
+- **Next state:** remains `awaiting_review`. CK owns closure of `CK-004` and assessment of the recorded visual mismatch. No automatic CK round or PCC-006 advancement.
