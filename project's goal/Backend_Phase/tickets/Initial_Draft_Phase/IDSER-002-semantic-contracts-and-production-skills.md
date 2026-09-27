@@ -1,6 +1,6 @@
 # IDSER-002: Semantic contracts and production skills
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `IDSER-BATCH-02`
 - **Depends on:** IDSER-001 `PASS`.
 - **Baseline:** SRC-IDSER-01 sections 12-17, 20-22, 25, 30-32, 41.3-41.5; AC-08/10/11/13/19/20. See [README](README.md).
@@ -111,5 +111,22 @@ remain candidate meaning, never decisions, approval or publication.
 **Question:** Can the two production skills express evidence-grounded candidate
 meaning and unresolved relationships under strict bounded contracts?
 
-**Implementation checkpoint:** Not started; record commit and Compose evidence
-before `awaiting_review`.
+**Implementation checkpoint:** Implemented versioned, model-neutral semantic
+contracts and parsers at `f4b65f08c949d223a690ca0c3c1b6e98e7b797ff`, including
+bounded semantic jobs, extraction/reconciliation contexts, result envelopes,
+technical failures, UTF-8 JSON aggregate limits, local source-accounting
+integrity checks, and strict output schemas. Added `@atlas/skills` with only
+the production extraction and reconciliation definitions, their evidence and
+authority constraints, plus Docker workspace-package support. No dispatcher,
+context route, persistence mutation, projection schema, or UI was added.
+
+**Compose evidence:** PostgreSQL was healthy. `docker compose build atlas`
+succeeded with the updated frozen lockfile. In the Compose `atlas` service,
+`corepack pnpm --filter @atlas/contracts test` passed 6/6 tests,
+`corepack pnpm --filter @atlas/contracts typecheck` passed,
+`corepack pnpm --filter @atlas/skills test` passed 1/1 test, and
+`corepack pnpm --filter @atlas/skills typecheck` passed. `git diff --check`
+passed. Host package checks were not used as evidence because its existing
+modules directory required a non-interactive purge/install.
+
+**Next state:** `awaiting_review`; CK is required before IDSER-003.
