@@ -1,6 +1,6 @@
 # IDSER-004: Semantic context and result authority
 
-- **State:** `in_progress`
+- **State:** `awaiting_review`
 - **Review batch:** `IDSER-BATCH-04`
 - **Depends on:** IDSER-002 and IDSER-003 `PASS`.
 - **Baseline:** SRC-IDSER-01 sections 11, 14-15, 17, 24-25, 32-34, 36-37; AC-03/11/12/25/28/36. See [README](README.md).
@@ -74,4 +74,19 @@ authorized context and cannot select unrelated scope or write trusted state.
 **Question:** Is every semantic handoff execution-bound and idempotent while
 keeping result acceptance and lifecycle decisions under Atlas authority?
 
-**Implementation checkpoint:** Not started; record commit and Compose evidence.
+**Implementation checkpoint:** `feat(idser): add semantic execution authority`
+adds the Atlas-only semantic
+authority contract, a PostgreSQL execution/capability adapter, and authenticated
+bounded internal context/result/failure routes. Context redemption is strictly
+execution/scope/capability bound and only returns a validated normalized document.
+Completion fingerprints reject conflicting replay; unavailable IDSER-006/007
+acceptance handlers fail closed, so no result is acknowledged before an owning
+transactional handler exists. The existing perception routes and browser boundary
+remain unchanged.
+
+**Compose evidence:** `@atlas/core` and `@atlas/db` TypeScript checks passed;
+the Atlas application build passed; `git diff --check` passed. The Core route
+suite includes authenticated context redemption and fail-closed delivery coverage.
+
+**Next state:** `awaiting_review`; CK must review the bounded semantic authority
+implementation before IDSER-005 or IDSER-006 consume its interfaces.

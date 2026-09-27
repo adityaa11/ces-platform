@@ -5,10 +5,14 @@ import type { Plugin } from "vite";
 
 type AtlasCoreModule = typeof import("../../packages/atlas-core/src/index");
 type AtlasDbModule = typeof import("../../packages/atlas-db/src/perception-authority");
+type SemanticDbModule = typeof import("../../packages/atlas-db/src/semantic-authority");
 type DocumentStoreModule = typeof import("../../packages/document-store/src/local-filesystem-document-store");
 
 const sourcePath = "/internal/perception/source";
 const resultPath = "/internal/perception/result";
+const semanticContextPath = "/internal/semantic/context";
+const semanticResultPath = "/internal/semantic/result";
+const semanticFailurePath = "/internal/semantic/failure";
 const requestLimit = 16 * 1024;
 const sourceLimit = 20 * 1024 * 1024;
 const resultLimit = 10 * 1024 * 1024;
@@ -59,23 +63,29 @@ export function createAtlasPerceptionInternalPlugin(): Plugin {
       // Vite's Node-side config loader needs the workspace TypeScript resolver
       // so the local Compose process can execute those same sources directly.
       const jiti = createJiti(import.meta.url);
-      const [core, database, documentStore] = await Promise.all([
+      const [core, database, semanticDatabase, documentStore] = await Promise.all([
         jiti.import<AtlasCoreModule>("../../packages/atlas-core/src/index.ts"),
         jiti.import<AtlasDbModule>("../../packages/atlas-db/src/perception-authority.ts"),
+        jiti.import<SemanticDbModule>("../../packages/atlas-db/src/semantic-authority.ts"),
         jiti.import<DocumentStoreModule>("../../packages/document-store/src/local-filesystem-document-store.ts"),
       ]);
       const sql = postgres(databaseUrl, { max: 4 });
       const authority = new database.PostgresPerceptionAuthority(sql, new core.PerceptionSourceGrantIssuer(credential));
       const sources = new documentStore.LocalFilesystemDocumentStore(process.env.ATLAS_DOCUMENT_STORE_ROOT ?? resolve(process.cwd(), ".atlas-data"));
       const routes = core.createPerceptionInternalRoutes({ authority, sources, serviceCredential: credential, maximumSourceBytes: sourceLimit, maximumResultBytes: resultLimit });
+      const semanticAuthority = new semanticDatabase.PostgresSemanticAuthority(sql);
+      const semanticRoutes = core.createSemanticInternalRoutes({ authority: semanticAuthority, serviceCredential: credential, handler: { accept: async () => { throw new Error("Semantic acceptance handlers are unavailable until IDSER-006/007."); } } });
 
       server.middlewares.use(async (request, response, next) => {
         const pathname = new URL(request.url ?? "/", "http://atlas.local").pathname;
-        if (pathname !== sourcePath && pathname !== resultPath) return next();
+        if (pathname !== sourcePath && pathname !== resultPath && pathname !== semanticContextPath && pathname !== semanticResultPath && pathname !== semanticFailurePath) return next();
         if (request.method !== "POST") { response.statusCode = 405; response.setHeader("allow", "POST"); response.end(); return; }
         try {
-          const body = await readJson(request, request.headers["content-length"], pathname === sourcePath ? requestLimit : resultLimit + requestLimit);
+          const body = await readJson(request, request.headers["content-length"], pathname === sourcePath || pathname === semanticContextPath || pathname === semanticFailurePath ? requestLimit : resultLimit + requestLimit);
           const credentialValue = bridgeCredential(request);
+          if (pathname === semanticContextPath) { const result = await semanticRoutes.context(credentialValue, body); sendJson(response, result.status, result.body); return; }
+          if (pathname === semanticResultPath) { const result = await semanticRoutes.deliver(credentialValue, body); if (result.status === 204) { response.statusCode = 204; response.end(); } else sendJson(response, result.status, result.body); return; }
+          if (pathname === semanticFailurePath) { const result = await semanticRoutes.fail(credentialValue, body); if (result.status === 204) { response.statusCode = 204; response.end(); } else sendJson(response, result.status, result.body); return; }
           if (pathname === sourcePath) {
             const result = await routes.redeem(credentialValue, body);
             if (result.body instanceof Uint8Array) {
