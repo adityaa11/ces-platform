@@ -1,0 +1,10 @@
+{
+  "name": "@atlas/skills",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "scripts": { "typecheck": "tsc -p tsconfig.json", "test": "jiti tests/semantic-skills.test.ts" },
+  "dependencies": { "@atlas/contracts": "workspace:*" },
+  "devDependencies": { "@types/node": "22.19.19", "jiti": "2.7.0" }
+}
