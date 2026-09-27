@@ -20,7 +20,16 @@ export class PostgresPerceptionAuthority implements PerceptionAuthority {
   constructor(private readonly sql: Sql, private readonly grants: GrantSigner) {}
 
   async create(input: PerceptionExecutionInput): Promise<DocumentPerceptionRequest> {
-    return this.sql.begin(async (sql) => {
+    return this.sql.begin((sql) => this.createWithSql(sql, input));
+  }
+
+  /** Bounded composition seam for IDSER-003. The caller owns the surrounding
+   * Atlas transaction; this method never opens a nested transaction. */
+  async createInTransaction(sql: Sql, input: PerceptionExecutionInput): Promise<DocumentPerceptionRequest> {
+    return this.createWithSql(sql, input);
+  }
+
+  private async createWithSql(sql: Sql, input: PerceptionExecutionInput): Promise<DocumentPerceptionRequest> {
       const prior = await sql.unsafe("SELECT id, artifact_id, document_storage_key, source_sha256, mime_type, byte_size, contract_version, idempotency_key, capability_identity FROM atlas.document_perception_execution WHERE idempotency_key=$1 OR id=$2 FOR UPDATE", [input.idempotencyKey, input.executionId]);
       if (prior.length) {
         const row = prior[0];
@@ -34,7 +43,6 @@ export class PostgresPerceptionAuthority implements PerceptionAuthority {
       await sql.unsafe("INSERT INTO atlas.document_perception_execution (id, artifact_id, document_storage_key, source_sha256, mime_type, byte_size, contract_version, state, idempotency_key, capability_identity) VALUES ($1,$2,$3,$4,$5,$6,$7,'queued',$8,$9)", [input.executionId, input.artifactId, input.storageKey, input.sourceSha256, input.mimeType, input.byteSize, documentPerceptionContractVersion, input.idempotencyKey, input.capabilityIdentity]);
       await sql.unsafe("INSERT INTO atlas.document_perception_source_grant (grant_id, execution_id, artifact_id, source_sha256, mime_type, byte_size, expires_at) VALUES ($1,$2,$3,$4,$5,$6,now() + interval '5 minutes')", [grantId, input.executionId, input.artifactId, input.sourceSha256, input.mimeType, input.byteSize]);
       return requestFrom(input, grant);
-    });
   }
 
   async redeem(request: Pick<DocumentPerceptionRequest, "executionId" | "artifact" | "source">): Promise<AuthorityRedeemedPerceptionSource> {

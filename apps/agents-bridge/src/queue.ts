@@ -1,4 +1,6 @@
 import { sql } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/postgres-js";
+import { parseDocumentPerceptionJob, documentPerceptionQueue, type DocumentPerceptionJob } from "./perception-job.js";
 import { fromDrizzle, PgBoss, type DrizzleTransactionLike } from "pg-boss";
 import { parseExecutionRequest, type ExecutionRequest } from "@atlas/contracts";
 
@@ -13,6 +15,25 @@ export type TransactionalQueueProducer = {
   enqueue(transaction: DrizzleTransactionLike, job: BackgroundExecutionJob): Promise<string | null>;
   close(): Promise<void>;
 };
+
+/** IDSER-003 adapter: pg-boss receives the caller's postgres.js transaction,
+ * so the initial perception job can never commit separately from Atlas state. */
+export type TransactionalPerceptionQueueProducer = {
+  enqueue(transaction: unknown, job: DocumentPerceptionJob): Promise<string | null>;
+  close(): Promise<void>;
+};
+
+export async function createTransactionalPerceptionQueueProducer(databaseUrl: string, queueName = documentPerceptionQueue): Promise<TransactionalPerceptionQueueProducer> {
+  const boss = new PgBoss({ connectionString: databaseUrl, schema: "pgboss", migrate: false, supervise: false, schedule: false, createSchema: false, application_name: "atlas-perception-kickoff-producer" });
+  await boss.start();
+  return {
+    async enqueue(transaction, job) {
+      const parsed = parseDocumentPerceptionJob(job);
+      return boss.send(queueName, parsed, { db: fromDrizzle(drizzle(transaction as never) as DrizzleTransactionLike, sql), singletonKey: parsed.idempotencyKey });
+    },
+    async close() { await boss.stop({ graceful: false }); },
+  };
+}
 
 export async function createTransactionalQueueProducer(databaseUrl: string, queueName = backgroundExecutionQueue): Promise<TransactionalQueueProducer> {
   const boss = new PgBoss({ connectionString: databaseUrl, schema: "pgboss", migrate: false, supervise: false, schedule: false, createSchema: false, application_name: "atlas-queue-producer" });

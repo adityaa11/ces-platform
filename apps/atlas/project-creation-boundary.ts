@@ -7,6 +7,9 @@ import type { Plugin } from "vite";
 
 type Core = typeof import("../../packages/atlas-core/src/project-creation");
 type Repository = typeof import("../../packages/atlas-db/src/project-repository");
+type PerceptionAuthority = typeof import("../../packages/atlas-db/src/perception-authority");
+type SourceGrant = typeof import("../../packages/atlas-core/src/source-grant");
+type PerceptionQueue = typeof import("../agents-bridge/src/queue");
 type Store = typeof import("../../packages/document-store/src/local-filesystem-document-store");
 type HomeProjects = typeof import("./lib/home-projects");
 const maximumRequestBytes = 40 * 1024 * 1024 + 64 * 1024;
@@ -46,15 +49,20 @@ export function createProjectCreationBoundary(): Plugin {
     const databaseUrl = process.env.ATLAS_DATABASE_URL ?? process.env.DATABASE_URL;
     if (!databaseUrl) return;
     const jiti = createJiti(import.meta.url);
-    const [core, repository, store, homeProjects] = await Promise.all([
+    const [core, repository, store, homeProjects, perceptionAuthority, sourceGrant, perceptionQueue] = await Promise.all([
       jiti.import<Core>("../../packages/atlas-core/src/project-creation.ts"),
       jiti.import<Repository>("../../packages/atlas-db/src/project-repository.ts"),
       jiti.import<Store>("../../packages/document-store/src/local-filesystem-document-store.ts"),
       jiti.import<HomeProjects>("./lib/home-projects.ts"),
+      jiti.import<PerceptionAuthority>("../../packages/atlas-db/src/perception-authority.ts"),
+      jiti.import<SourceGrant>("../../packages/atlas-core/src/source-grant.ts"),
+      jiti.import<PerceptionQueue>("../agents-bridge/src/queue.ts"),
     ]);
       const sql = postgres(databaseUrl, { max: 4 });
       const homeReadSecret = composeWorkerAuthSecret();
       if (!homeReadSecret) throw new Error("BETTER_AUTH_SECRET is required for the internal home read.");
+      const perceptionCredential = process.env.AGENTS_BRIDGE_SERVICE_CREDENTIAL;
+      if (!perceptionCredential) throw new Error("AGENTS_BRIDGE_SERVICE_CREDENTIAL is required for perception kickoff.");
     const createProject = (command: Parameters<Core["createStoredAtlasProject"]>[0]) => {
       const failure = process.env.ATLAS_PROJECT_CREATION_TEST_FAILURE;
       // Compose-only regression seams. They are opt-in through container
@@ -66,7 +74,10 @@ export function createProjectCreationBoundary(): Plugin {
           read: (storageKey: string) => liveDocumentStore.read(storageKey),
         }
         : liveDocumentStore;
-      const projectRepository = new repository.PostgresAtlasProjectRepository(sql);
+      const projectRepository = new repository.PostgresAtlasProjectRepository(sql, {
+        authority: new perceptionAuthority.PostgresPerceptionAuthority(sql, new sourceGrant.PerceptionSourceGrantIssuer(perceptionCredential)),
+        queue: perceptionProducer,
+      });
       const repositoryForCreation = failure === "database"
         ? {
           isProjectIdAvailable: (projectId: string) => projectRepository.isProjectIdAvailable(projectId),
@@ -76,6 +87,7 @@ export function createProjectCreationBoundary(): Plugin {
         : projectRepository;
       return core.createStoredAtlasProject(command, { projectRepository: repositoryForCreation, documentStore });
     };
+    const perceptionProducer = await perceptionQueue.createTransactionalPerceptionQueueProducer(databaseUrl);
     server.middlewares.use(async (request, response, next) => {
       const pathname = new URL(request.url ?? "/", "http://atlas.local").pathname;
         if (pathname !== "/api/projects" && pathname !== "/internal/home-projects") return next();
@@ -116,6 +128,6 @@ export function createProjectCreationBoundary(): Plugin {
         else send(response, 500, { error: "Unable to create the project. Please try again." });
       }
     });
-    server.httpServer?.once("close", () => { void sql.end(); });
+    server.httpServer?.once("close", () => { void perceptionProducer.close(); void sql.end(); });
   } };
 }

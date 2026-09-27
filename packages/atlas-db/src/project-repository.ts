@@ -1,11 +1,15 @@
+import { randomUUID } from "node:crypto";
+import { documentPerceptionContractVersion, type DocumentPerceptionRequest } from "@atlas/core";
 import { assertCreateAtlasProjectInput, type AccessibleAtlasProject, type AtlasProjectRepository, type CreateAtlasProjectInput } from "@atlas/core";
+import { PostgresPerceptionAuthority } from "./perception-authority.js";
 
 type Row = Record<string, unknown>;
 type Sql = { unsafe(query: string, parameters?: readonly unknown[]): Promise<readonly Row[]>; begin<T>(work: (transaction: Sql) => Promise<T>): Promise<T> };
+export type PerceptionKickoffQueue = { enqueue(transaction: Sql, job: { readonly idempotencyKey: string; readonly request: DocumentPerceptionRequest }): Promise<string | null> };
 
 /** PostgreSQL adapter for the Atlas project graph; core receives no SQL details. */
 export class PostgresAtlasProjectRepository implements AtlasProjectRepository {
-  constructor(private readonly sql: Sql) {}
+  constructor(private readonly sql: Sql, private readonly kickoff?: { readonly authority: PostgresPerceptionAuthority; readonly queue: PerceptionKickoffQueue }) {}
 
   async create(input: CreateAtlasProjectInput): Promise<void> {
     assertCreateAtlasProjectInput(input);
@@ -15,6 +19,25 @@ export class PostgresAtlasProjectRepository implements AtlasProjectRepository {
       await sql.unsafe("INSERT INTO atlas.workspace (id, project_id, kind, state, display_name) VALUES ($1,$2,'master','empty','Master'),($3,$2,'initial_draft','draft','Initial Draft')", [input.masterWorkspaceId, input.id, input.initialDraftWorkspaceId]);
       for (const document of input.documents) {
         await sql.unsafe("INSERT INTO atlas.document (id, project_id, workspace_id, original_filename, storage_key, source_sha256, byte_size, media_type, created_by_user_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)", [document.id, input.id, input.initialDraftWorkspaceId, document.originalFilename, document.storageKey, document.sourceSha256, document.byteSize, document.mediaType, document.createdByUserId]);
+      }
+      if (this.kickoff) {
+        const bundleId = randomUUID();
+        await sql.unsafe("INSERT INTO atlas.extraction_bundle (id, project_id, workspace_id, state, semantic_contract_version, reconciliation_contract_version, expected_document_count, completed_document_count) VALUES ($1,$2,$3,'waiting',$4,$4,$5,0)", [bundleId, input.id, input.initialDraftWorkspaceId, documentPerceptionContractVersion, input.documents.length]);
+        for (const [index, document] of input.documents.entries()) {
+          await sql.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id, document_id, project_id, workspace_id, sequence, state) VALUES ($1,$2,$3,$4,$5,$6)", [bundleId, document.id, input.id, input.initialDraftWorkspaceId, index + 1, index === 0 ? "perception_queued" : "pending"]);
+        }
+        await sql.unsafe("UPDATE atlas.extraction_bundle SET state='processing', started_at=now() WHERE id=$1 AND state='waiting'", [bundleId]);
+        const first = input.documents[0];
+        const executionId = randomUUID();
+        const idempotencyKey = `perception:${bundleId}:${first.id}:${documentPerceptionContractVersion}`;
+        const request = await this.kickoff.authority.createInTransaction(sql, { executionId, artifactId: first.id, storageKey: first.storageKey, sourceSha256: first.sourceSha256, mimeType: first.mediaType, byteSize: first.byteSize, idempotencyKey, capabilityIdentity: `bundle:${bundleId}:document:${first.id}:perception:${documentPerceptionContractVersion}` });
+        // postgres.js transaction scopes do not carry the parent's parser
+        // configuration, while the pg-boss Drizzle bridge requires it.
+        const transactionClient = sql as unknown as { options?: unknown };
+        transactionClient.options ??= (this.sql as unknown as { options?: unknown }).options;
+        const queued = await this.kickoff.queue.enqueue(sql, { idempotencyKey, request });
+        if (queued === null) throw new Error("Perception kickoff was deduplicated before the new project committed.");
+        await sql.unsafe("UPDATE atlas.extraction_bundle_document SET perception_execution_id=$3 WHERE bundle_id=$1 AND document_id=$2", [bundleId, first.id, executionId]);
       }
     });
   }

@@ -3,8 +3,10 @@ import test from "node:test";
 import postgres from "postgres";
 import { randomUUID } from "node:crypto";
 import { createHash } from "node:crypto";
-import { createStoredAtlasProject } from "@atlas/core";
+import { createStoredAtlasProject, PerceptionSourceGrantIssuer } from "@atlas/core";
 import { PostgresAtlasProjectRepository } from "../src/project-repository.ts";
+import { PostgresPerceptionAuthority } from "../src/perception-authority.ts";
+import { createTransactionalPerceptionQueueProducer } from "../../../apps/agents-bridge/src/queue.ts";
 
 const databaseUrl = process.env.DATABASE_URL;
 const skip = !databaseUrl;
@@ -74,7 +76,7 @@ test("project repository persists a private project graph and scopes reads to me
       assert.equal(Number(projectJobs), 0);
     }
     await assert.rejects(() => createStoredAtlasProject({ projectId: input.projectId, name: "Duplicate project", description: null, creatorUserId: owner, sources: [{ originalFilename: "duplicate.pdf", bytes: sourceBytes[0], mediaType: "application/pdf" }] }, { documentStore, projectRepository: repository }), /already exists/);
-    const [{ count: duplicateRows }] = await atlas.unsafe("SELECT COUNT(*)::integer AS count FROM atlas.document WHERE storage_key LIKE 'documents/%'");
+    const [{ count: duplicateRows }] = await atlas.unsafe("SELECT COUNT(*)::integer AS count FROM atlas.document WHERE project_id=$1", [serviceProject.id]);
     assert.equal(Number(duplicateRows), 2);
     await admin.unsafe("CREATE OR REPLACE FUNCTION atlas.pcc002_force_transaction_failure() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'PCC-002 controlled transaction failure'; END; $$");
     await admin.unsafe("CREATE TRIGGER pcc002_force_transaction_failure BEFORE INSERT ON atlas.workspace FOR EACH ROW EXECUTE FUNCTION atlas.pcc002_force_transaction_failure()");
@@ -84,7 +86,7 @@ test("project repository persists a private project graph and scopes reads to me
     const [{ project_count, member_count, workspace_count, document_count }] = await atlas.unsafe("SELECT (SELECT COUNT(*)::integer FROM atlas.project WHERE stable_id=$1) AS project_count, (SELECT COUNT(*)::integer FROM atlas.project_member m JOIN atlas.project p ON p.id=m.project_id WHERE p.stable_id=$1) AS member_count, (SELECT COUNT(*)::integer FROM atlas.workspace w JOIN atlas.project p ON p.id=w.project_id WHERE p.stable_id=$1) AS workspace_count, (SELECT COUNT(*)::integer FROM atlas.document d JOIN atlas.project p ON p.id=d.project_id WHERE p.stable_id=$1) AS document_count", [failedProjectId]);
     assert.deepEqual({ project_count: Number(project_count), member_count: Number(member_count), workspace_count: Number(workspace_count), document_count: Number(document_count) }, { project_count: 0, member_count: 0, workspace_count: 0, document_count: 0 });
     await atlas.unsafe("INSERT INTO atlas.project (id, stable_id, name, created_by_user_id) VALUES ($1,$2,$3,$4)", [unrelatedProject, `pcc-${randomUUID().slice(0, 12)}`, "Unrelated project", owner]);
-    await atlas.unsafe("INSERT INTO atlas.workspace (id, project_id, kind, state) VALUES ($1,$2,'initial_draft','draft')", [unrelatedWorkspace, unrelatedProject]);
+    await atlas.unsafe("INSERT INTO atlas.workspace (id, project_id, kind, state, display_name) VALUES ($1,$2,'initial_draft','draft','Initial Draft')", [unrelatedWorkspace, unrelatedProject]);
     await assert.rejects(() => atlas.unsafe("INSERT INTO atlas.document (id, project_id, workspace_id, original_filename, storage_key, source_sha256, byte_size, media_type, created_by_user_id) VALUES ($1,$2,$3,'cross-project.pdf','private/cross-project',$4,1,'application/pdf',$5)", [`cross-project-${randomUUID()}`, project, unrelatedWorkspace, "b".repeat(64), owner]), /foreign key/i);
     const [{ count }] = await atlas.unsafe("SELECT COUNT(*)::integer AS count FROM atlas.document_perception_execution WHERE artifact_id=$1", [input.documents[0].id]);
     assert.equal(Number(count), 0);
@@ -93,6 +95,41 @@ test("project repository persists a private project graph and scopes reads to me
     await admin.unsafe("DROP FUNCTION IF EXISTS atlas.pcc002_force_transaction_failure()");
     await admin.unsafe("DELETE FROM atlas.project WHERE id=$1 OR id=$2 OR stable_id=$3", [project, unrelatedProject, serviceProjectId]);
     await admin.unsafe('DELETE FROM auth."user" WHERE id=$1 OR id=$2', [owner, other]);
+    await Promise.all([admin.end(), atlas.end()]);
+  }
+});
+
+test("IDSER-003 atomically persists the ordered bundle and only D1 kickoff", { skip }, async () => {
+  const admin = postgres(databaseUrl!, { max: 1 });
+  const atlasUrl = new URL(databaseUrl!);
+  atlasUrl.username = "atlas_app";
+  atlasUrl.password = process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only";
+  const atlas = postgres(atlasUrl.toString(), { max: 1 });
+  const owner = `idser-owner-${randomUUID()}`;
+  const project = `idser-project-${randomUUID().slice(0, 12)}`;
+  const input = { id: randomUUID(), projectId: project, name: "IDSER kickoff", description: null, creatorUserId: owner, masterWorkspaceId: randomUUID(), initialDraftWorkspaceId: randomUUID(), documents: [1, 2, 3].map((sequence) => ({ id: randomUUID(), originalFilename: `source-${sequence}.pdf`, storageKey: `private/${randomUUID()}`, sourceSha256: String(sequence).repeat(64), byteSize: 20, mediaType: "application/pdf" as const, createdByUserId: owner })) };
+  let producer: Awaited<ReturnType<typeof createTransactionalPerceptionQueueProducer>> | undefined;
+  try {
+    await admin.unsafe('INSERT INTO auth."user" (id, name, email, "emailVerified", "createdAt", "updatedAt") VALUES ($1,$2,$3,false,now(),now())', [owner, owner, `${owner}@example.test`]);
+    const authority = new PostgresPerceptionAuthority(atlas, new PerceptionSourceGrantIssuer("idser-test-service-credential-which-is-long-enough"));
+    producer = await createTransactionalPerceptionQueueProducer(atlasUrl.toString());
+    const repository = new PostgresAtlasProjectRepository(atlas, { authority, queue: producer });
+    await repository.create(input);
+    const [bundle] = await atlas.unsafe("SELECT expected_document_count, completed_document_count, state FROM atlas.extraction_bundle WHERE project_id=$1", [input.id]);
+    assert.deepEqual(bundle, { expected_document_count: 3, completed_document_count: 0, state: "processing" });
+    assert.deepEqual(Array.from(await atlas.unsafe("SELECT document_id, sequence, state, perception_execution_id FROM atlas.extraction_bundle_document WHERE bundle_id=(SELECT id FROM atlas.extraction_bundle WHERE project_id=$1) ORDER BY sequence", [input.id])).map((row) => ({ document_id: row.document_id, sequence: Number(row.sequence), state: row.state, started: row.perception_execution_id !== null })), input.documents.map((document, index) => ({ document_id: document.id, sequence: index + 1, state: index === 0 ? "perception_queued" : "pending", started: index === 0 })));
+    const [{ count: queued }] = await admin.unsafe("SELECT COUNT(*)::integer AS count FROM pgboss.job WHERE name='atlas-document-perception-v1' AND data->>'idempotencyKey' LIKE $1", [`%:${input.documents[0].id}:v1`]);
+    assert.equal(Number(queued), 1);
+    assert.equal((await atlas.unsafe("SELECT COUNT(*)::integer AS count FROM atlas.document_perception_execution WHERE artifact_id IN ($1,$2,$3)", input.documents.map((document) => document.id)))[0].count, 1);
+    const failing = new PostgresAtlasProjectRepository(atlas, { authority, queue: { async enqueue() { throw new Error("injected queue failure"); } } });
+    const failed = { ...input, id: randomUUID(), projectId: `idser-failed-${randomUUID().slice(0, 8)}`, masterWorkspaceId: randomUUID(), initialDraftWorkspaceId: randomUUID(), documents: input.documents.map((document) => ({ ...document, id: randomUUID() })) };
+    await assert.rejects(() => failing.create(failed), /injected queue failure/);
+    assert.equal((await atlas.unsafe("SELECT COUNT(*)::integer AS count FROM atlas.project WHERE id=$1", [failed.id]))[0].count, 0);
+  } finally {
+    if (producer) await producer.close();
+    await admin.unsafe("DELETE FROM pgboss.job WHERE name='atlas-document-perception-v1' AND data->>'idempotencyKey' LIKE $1", [`%:${input.documents[0].id}:v1`]);
+    await admin.unsafe("DELETE FROM atlas.project WHERE id=$1", [input.id]);
+    await admin.unsafe('DELETE FROM auth."user" WHERE id=$1', [owner]);
     await Promise.all([admin.end(), atlas.end()]);
   }
 });
