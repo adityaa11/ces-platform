@@ -1,6 +1,6 @@
 # IDSER-001: Domain and persistence foundation
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `IDSER-BATCH-01`
 - **Depends on:** PCC-006 `PASS`; approved BSS-003/005/006/007/008/009 boundaries.
 - **Baseline:** SRC-IDSER-01 sections 6-8, 18-19, 21, 25-26, 33, 35-37; AC-03/04/15/16/22/33/36. Source IDs are defined in [README](README.md).
@@ -134,3 +134,8 @@ was added. **Next state:** `awaiting_review`; CK is required before IDSER-002.
 - **Repeatability:** `test:semantic-foundation` passed twice consecutively against the reusable Compose database. Teardown removes Bridge replay and both Atlas fixture projects, and the post-run residue check returned `0|0|0` for IDSER projects, IDSER owners, and Bridge deliveries.
 - **Direct validation:** migration check, Core/DB typechecks, and permission isolation test passed.
 - **Next state:** `awaiting_review`; stop for CK verification.
+
+## CK approval and GO checkpoint
+
+- **CK result:** `PASS` in [`IDSER-BATCH-01-a64c62b-verification.md`](../../../feedback/IDSER-BATCH-01-a64c62b-verification.md), reviewed commit `a64c62b122c1f3aba1ab11058f05e1495fcaba30`.
+- **GO decision:** recorded IDSER-001 as approved. Per the user's bounded authorization, stop here; IDSER-002 has not been started.
