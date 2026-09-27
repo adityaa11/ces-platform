@@ -114,3 +114,9 @@ was added. **Next state:** `awaiting_review`; CK is required before IDSER-002.
 - **CK source:** `project's goal/feedback/IDSER-BATCH-01-8f89626-review.md` (`CHANGES_REQUIRED`).
 - **Addressed findings:** `CK-001` limits post-start immutability to membership identity fields while allowing member lifecycle updates. `CK-002` adds composite relational scope keys and foreign keys through bundle membership, execution, extraction, candidate, evidence, index, reconciliation, and relationship records.
 - **Next state:** `awaiting_review`; CFC does not decide the CK result.
+
+## Follow-up CFC remediation checkpoint
+
+- **Authorization:** `project's goal/feedback/IDSER-001-ck.md` establishes a new human/planning-authorized remediation cycle for unresolved CK-002.
+- **Addressed scope:** migration `0014` binds index candidate references to the full project/workspace/bundle/document tuple and binds optional reconciliation targets to the index project/workspace/bundle tuple.
+- **Next state:** `awaiting_review`; CK verification is required.

@@ -24,12 +24,22 @@ test("semantic foundation preserves bundle scope, lifecycle, and Bridge isolatio
     await atlas.unsafe("UPDATE atlas.extraction_bundle SET state='processing', started_at=now() WHERE id=$1", [bundle]);
     await atlas.unsafe("UPDATE atlas.extraction_bundle_document SET state='perceiving', started_at=now(), perception_execution_id=$3 WHERE bundle_id=$1 AND document_id=$2", [bundle, document, `perception-${suffix}`]);
     await assert.rejects(() => atlas.unsafe("UPDATE atlas.extraction_bundle_document SET sequence=2 WHERE bundle_id=$1 AND document_id=$2", [bundle, document]), /immutable/i);
+    const execution = `execution-${suffix}`; const extraction = `extraction-${suffix}`; const candidate = `candidate-${suffix}`; const semantic = `semantic-${suffix}`;
+    await atlas.unsafe("INSERT INTO atlas.semantic_execution (id, project_id, workspace_id, bundle_id, document_id, stage, contract_version, skill_version, logical_identity, lifecycle, authorized_context_identity, authorized_context_fingerprint, capability_valid_until) VALUES ($1,$2,$3,$4,$5,'extraction','v1','v1',$1,'queued','context','fingerprint',now()+interval '1 hour')", [execution, project, workspace, bundle, document]);
+    await atlas.unsafe("INSERT INTO atlas.semantic_extraction_result (id, execution_id, project_id, workspace_id, bundle_id, document_id, contract_version, source_sha256, provider_provenance, result_json, completion_fingerprint) VALUES ($1,$2,$3,$4,$5,$6,'v1',$7,'{}','{}','done')", [extraction, execution, project, workspace, bundle, document, "a".repeat(64)]);
+    await atlas.unsafe("INSERT INTO atlas.semantic_candidate (id, extraction_result_id, project_id, workspace_id, bundle_id, document_id, semantic_key, kind, payload, normalized_meaning, needs_resolution, state) VALUES ($1,$2,$3,$4,$5,$6,'candidate','fact','{}','meaning',true,'candidate')", [candidate, extraction, project, workspace, bundle, document]);
+    await atlas.unsafe("INSERT INTO atlas.knowledge_index (semantic_id, project_id, workspace_id, bundle_id, document_id, semantic_key, kind, semantic_candidate_id) VALUES ($1,$2,$3,$4,$5,'candidate','fact',$6)", [semantic, project, workspace, bundle, document, candidate]);
+    await assert.rejects(() => atlas.unsafe("UPDATE atlas.knowledge_index SET document_id=$2 WHERE semantic_id=$1", [semantic, `wrong-document-${suffix}`]), /foreign key/i);
     await assert.rejects(() => bridge.unsafe("SELECT * FROM atlas.extraction_bundle"), /permission denied/i);
     await bridge.unsafe("INSERT INTO bridge.semantic_result_delivery (idempotency_key, execution_id, stage, validated_envelope, provenance, completion_fingerprint) VALUES ($1,$2,'extraction','{}','{}','fingerprint')", [`delivery-${suffix}`, `execution-${suffix}`]);
   } catch (error) {
     t.diagnostic(error instanceof Error ? `${error.name}: ${error.message}` : String(error));
     throw error;
   } finally {
+    await admin.unsafe("DELETE FROM atlas.knowledge_index WHERE bundle_id=$1", [bundle]);
+    await admin.unsafe("DELETE FROM atlas.semantic_candidate WHERE bundle_id=$1", [bundle]);
+    await admin.unsafe("DELETE FROM atlas.semantic_extraction_result WHERE bundle_id=$1", [bundle]);
+    await admin.unsafe("DELETE FROM atlas.semantic_execution WHERE bundle_id=$1", [bundle]);
     await admin.unsafe("UPDATE atlas.extraction_bundle SET state='waiting', started_at=NULL WHERE id=$1", [bundle]);
     await admin.unsafe("DELETE FROM atlas.project WHERE id=$1", [project]);
     await admin.unsafe('DELETE FROM auth."user" WHERE id=$1', [owner]);
