@@ -1,6 +1,6 @@
 # IDSER-003: Transactional project bundle kickoff
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `IDSER-BATCH-03`
 - **Depends on:** IDSER-001 and IDSER-002 `PASS`; PCC-006 and BSS-006/007/009 frozen.
 - **Baseline:** SRC-IDSER-01 sections 8-12, 23, 25, 37, 41.1-41.2; AC-01/02/03/05/06/24/37/38. See [README](README.md).
@@ -78,4 +78,20 @@ validate command -> DocumentStore.put ALL PRDs -> shared PostgreSQL transaction
 **Question:** Can a committed production project ever lose its first job or expose
 a partial bundle graph? The answer must be no, with actual transaction evidence.
 
-**Implementation checkpoint:** Not started; record commit and Compose evidence.
+**Implementation checkpoint:** `1c68912` (`feat(idser): atomically kick off
+first perception`) extends the existing project-creation transaction with one
+bootstrap extraction bundle, immutable upload-order manifest, one D1 perception
+execution/source grant, and the existing pg-boss perception job. It adds the
+bounded `createInTransaction` seam to the existing perception authority; the
+Bridge queue producer receives that same postgres.js transaction. No new worker,
+queue framework, source-store rollback, semantic dispatch, result handling, UI,
+or future-document scheduling was added.
+
+**Compose evidence:** PostgreSQL and the full Atlas/Bridge/worker Compose stack
+were healthy. `@atlas/db` and `@atlas/agents-bridge` typechecks passed; the
+Atlas application build passed. `@atlas/db test:project-repository` passed 2/2,
+including the IDSER-003 scenario: a three-document bundle preserves input order,
+creates only D1's perception execution and pg-boss job, and rolls the graph back
+when enqueue fails. `git diff --check` passed.
+
+**Next state:** `awaiting_review`; CK must review `1c68912` before IDSER-004.
