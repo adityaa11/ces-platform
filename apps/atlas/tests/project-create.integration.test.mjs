@@ -27,6 +27,7 @@ test("PCC-003 enforces the authenticated multipart creation boundary and safe fa
   const duplicateId = `pcc-duplicate-${suffix}`;
   const email = `pcc-${suffix}@example.test`;
   const admin = postgres(databaseUrl, { max: 1 });
+  let kickoffDocumentId;
   try {
     assert.equal((await route(form(id))).status, 401, "unauthenticated uploads cannot create Atlas state");
     const signedUp = await fetch("http://localhost:3001/api/auth/sign-up/email", { method: "POST", headers: { "content-type": "application/json", origin }, body: JSON.stringify({ name: "PCC", email, password: "a-tested-local-password" }) });
@@ -75,6 +76,7 @@ test("PCC-003 enforces the authenticated multipart creation boundary and safe fa
     assert.deepEqual(Array.from(await admin`SELECT user_id, role FROM atlas.project_member WHERE project_id=${project.id}`), [{ user_id: session.user.id, role: "owner" }], "creator receives the persisted owner membership");
     assert.deepEqual(Array.from(await admin`SELECT kind, state FROM atlas.workspace WHERE project_id=${project.id} ORDER BY kind`), [{ kind: "initial_draft", state: "draft" }, { kind: "master", state: "empty" }], "creation establishes the empty Master and Initial Draft");
     const document = (await admin`SELECT id, storage_key, source_sha256, byte_size, media_type, workspace_id FROM atlas.document WHERE project_id=${project.id}`)[0];
+    kickoffDocumentId = document.id;
     assert.deepEqual(await readFile(join(process.env.ATLAS_DOCUMENT_STORE_ROOT, document.storage_key)), sourceBytes, "DocumentStore preserves exact upload bytes");
     assert.equal(document.source_sha256, createHash("sha256").update(sourceBytes).digest("hex"), "metadata retains the immutable source hash");
     assert.equal(Number(document.byte_size), sourceBytes.byteLength, "metadata retains source byte size");
@@ -87,14 +89,19 @@ test("PCC-003 enforces the authenticated multipart creation boundary and safe fa
     const fixtureState = await fetch("http://localhost:3001/api/local-fixtures");
     assert.equal(fixtureState.status, 200);
     assert.doesNotMatch(await fixtureState.text(), new RegExp(`${id}|${duplicateId}`), "production uploads never enter fixture persistence");
-    const [{ count: queueCount }] = await admin`SELECT COUNT(*)::integer AS count FROM pgboss.job WHERE name='atlas-document-perception-v1' AND data::text LIKE ${`%${id}%`}`;
-    assert.equal(queueCount, 0, "project creation does not enqueue downstream perception");
+    const [bundle] = await admin`SELECT id, expected_document_count, completed_document_count, state FROM atlas.extraction_bundle WHERE project_id=${project.id}`;
+    assert.deepEqual({ expected: Number(bundle.expected_document_count), completed: Number(bundle.completed_document_count), state: bundle.state }, { expected: 1, completed: 0, state: "processing" });
+    const [member] = await admin`SELECT document_id, sequence, state, perception_execution_id FROM atlas.extraction_bundle_document WHERE bundle_id=${bundle.id}`;
+    assert.deepEqual({ document: member.document_id, sequence: Number(member.sequence), state: member.state, started: member.perception_execution_id !== null }, { document: document.id, sequence: 1, state: "perception_queued", started: true });
+    const [{ count: queueCount }] = await admin`SELECT COUNT(*)::integer AS count FROM pgboss.job WHERE name='atlas-document-perception-v1' AND data->>'idempotencyKey' LIKE ${`%:${document.id}:v1`}`;
+    assert.equal(queueCount, 1, "project creation transactionally enqueues only D1 perception");
     const [{ executions, grants, cache, derived }] = await admin`SELECT (SELECT COUNT(*)::integer FROM atlas.document_perception_execution WHERE artifact_id=${document.id}) AS executions, (SELECT COUNT(*)::integer FROM atlas.document_perception_source_grant WHERE artifact_id=${document.id}) AS grants, (SELECT COUNT(*)::integer FROM atlas.normalized_document_cache WHERE source_sha256=${document.source_sha256}) AS cache, (SELECT COUNT(*)::integer FROM atlas.document_perception_derived_asset asset JOIN atlas.normalized_document_cache cache ON cache.cache_key=asset.cache_key WHERE cache.source_sha256=${document.source_sha256}) AS derived`;
-    assert.equal(executions, 0, "creation does not start perception execution");
-    assert.equal(grants, 0, "creation does not issue a perception source grant");
+    assert.equal(executions, 1, "creation starts exactly one D1 perception execution");
+    assert.equal(grants, 1, "creation issues the D1 perception source grant");
     assert.equal(cache, 0, "creation does not write normalized extraction cache state");
     assert.equal(derived, 0, "creation does not write perception-derived assets");
   } finally {
+    if (kickoffDocumentId) await admin`DELETE FROM pgboss.job WHERE name='atlas-document-perception-v1' AND data->>'idempotencyKey' LIKE ${`%:${kickoffDocumentId}:v1`}`;
     await admin`DELETE FROM atlas.project WHERE stable_id IN (${id}, ${duplicateId})`;
     await admin`DELETE FROM auth."user" WHERE email = ${email}`;
     await admin.end();

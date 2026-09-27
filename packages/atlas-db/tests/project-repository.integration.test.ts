@@ -121,12 +121,19 @@ test("IDSER-003 atomically persists the ordered bundle and only D1 kickoff", { s
     const [{ count: queued }] = await admin.unsafe("SELECT COUNT(*)::integer AS count FROM pgboss.job WHERE name='atlas-document-perception-v1' AND data->>'idempotencyKey' LIKE $1", [`%:${input.documents[0].id}:v1`]);
     assert.equal(Number(queued), 1);
     assert.equal((await atlas.unsafe("SELECT COUNT(*)::integer AS count FROM atlas.document_perception_execution WHERE artifact_id IN ($1,$2,$3)", input.documents.map((document) => document.id)))[0].count, 1);
-    const failing = new PostgresAtlasProjectRepository(atlas, { authority, queue: { async enqueue() { throw new Error("injected queue failure"); } } });
+    const failing = new PostgresAtlasProjectRepository(atlas, { authority, queue: producer });
     const failed = { ...input, id: randomUUID(), projectId: `idser-failed-${randomUUID().slice(0, 8)}`, masterWorkspaceId: randomUUID(), initialDraftWorkspaceId: randomUUID(), documents: input.documents.map((document) => ({ ...document, id: randomUUID() })) };
-    await assert.rejects(() => failing.create(failed), /injected queue failure/);
+    await admin.unsafe("CREATE OR REPLACE FUNCTION atlas.idser003_fail_after_enqueue() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'IDSER-003 controlled post-enqueue failure'; END; $$");
+    await admin.unsafe("CREATE TRIGGER idser003_fail_after_enqueue BEFORE UPDATE OF perception_execution_id ON atlas.extraction_bundle_document FOR EACH ROW EXECUTE FUNCTION atlas.idser003_fail_after_enqueue()");
+    await assert.rejects(() => failing.create(failed), /controlled post-enqueue failure/);
+    await admin.unsafe("DROP TRIGGER idser003_fail_after_enqueue ON atlas.extraction_bundle_document");
+    await admin.unsafe("DROP FUNCTION atlas.idser003_fail_after_enqueue()");
     assert.equal((await atlas.unsafe("SELECT COUNT(*)::integer AS count FROM atlas.project WHERE id=$1", [failed.id]))[0].count, 0);
+    assert.equal((await admin.unsafe("SELECT COUNT(*)::integer AS count FROM pgboss.job WHERE name='atlas-document-perception-v1' AND data->>'idempotencyKey' LIKE $1", [`%:${failed.documents[0].id}:v1`]))[0].count, 0);
   } finally {
     if (producer) await producer.close();
+    await admin.unsafe("DROP TRIGGER IF EXISTS idser003_fail_after_enqueue ON atlas.extraction_bundle_document");
+    await admin.unsafe("DROP FUNCTION IF EXISTS atlas.idser003_fail_after_enqueue()");
     await admin.unsafe("DELETE FROM pgboss.job WHERE name='atlas-document-perception-v1' AND data->>'idempotencyKey' LIKE $1", [`%:${input.documents[0].id}:v1`]);
     await admin.unsafe("DELETE FROM atlas.project WHERE id=$1", [input.id]);
     await admin.unsafe('DELETE FROM auth."user" WHERE id=$1', [owner]);
