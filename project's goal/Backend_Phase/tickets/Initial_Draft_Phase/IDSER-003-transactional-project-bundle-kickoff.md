@@ -95,3 +95,23 @@ creates only D1's perception execution and pg-boss job, and rolls the graph back
 when enqueue fails. `git diff --check` passed.
 
 **Next state:** `awaiting_review`; CK must review `1c68912` before IDSER-004.
+
+## CFC remediation checkpoint
+
+- **CK source:** `project's goal/feedback/IDSER-BATCH-03-1c68912-review.md`
+  (`CHANGES_REQUIRED`).
+- **Remediation commit:** `470a161` (`test(idser): prove transactional kickoff
+  remediation`).
+- **Addressed findings:** CK-001 updates the authenticated project-creation
+  integration to verify the bundle, ordered D1 member, perception execution,
+  source grant, and exactly one document-identity-scoped pg-boss job while
+  preserving its auth, validation, byte/hash, duplicate, isolation, safe
+  response, and cache assertions. CK-002 makes the repository test use the
+  real transactional producer and injects a failure after its real enqueue;
+  the test verifies both the Atlas project graph and the exact job are absent
+  after rollback.
+- **Compose evidence:** With the worker paused for queue isolation, the
+  authenticated `@atlas/app` creation integration passed 1/1. The `@atlas/db`
+  project-repository integration passed 2/2. `git diff --check` passed.
+- **Next state:** `awaiting_review`; CFC does not decide CK findings. Stop for
+  CK verification of `470a161`.
