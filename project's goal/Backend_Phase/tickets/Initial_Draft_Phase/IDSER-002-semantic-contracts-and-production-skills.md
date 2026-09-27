@@ -149,6 +149,22 @@ modules directory required a non-interactive purge/install.
   `git diff --check` passed.
 - **Next state:** `awaiting_review`; stop for CK verification.
 
+## HMN-authorized reconciliation-context evidence remediation checkpoint
+
+- **Authorization consumed:** `HMN-IDSER-002-002`
+  (`AUTHORIZE_EVIDENCE_REMEDIATION`), for the sole remaining CK-004 fixture.
+- **CK source:** `project's goal/feedback/IDSER-BATCH-02-dbf9661-verification.md`
+  (`CHANGES_REQUIRED`).
+- **Remediation commit:** `5bf1bbbb10711223e3d17acd94324dc834196ddc`.
+- **Addressed scope:** added only the `atlas.semantic.reconcile` context
+  fixture at exactly 1 MiB UTF-8 JSON and at one byte over; the former passes
+  `parseSemanticReconciliationContext`, and the latter fails deterministically.
+  All prior extraction-context and result-envelope boundary fixtures remain.
+- **Compose evidence:** `docker compose build atlas` succeeded; contracts tests
+  passed 11/11, skills tests passed 1/1, contracts/skills typechecks passed,
+  and `git diff --check` passed.
+- **Next state:** `awaiting_review`; stop for CK verification.
+
 ## HMN-authorized CFC evidence remediation checkpoint
 
 - **Authorization consumed:** `HMN-IDSER-002-001`
