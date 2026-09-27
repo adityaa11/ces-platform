@@ -120,3 +120,17 @@ was added. **Next state:** `awaiting_review`; CK is required before IDSER-002.
 - **Authorization:** `project's goal/feedback/IDSER-001-ck.md` establishes a new human/planning-authorized remediation cycle for unresolved CK-002.
 - **Addressed scope:** migration `0014` binds index candidate references to the full project/workspace/bundle/document tuple and binds optional reconciliation targets to the index project/workspace/bundle tuple.
 - **Next state:** `awaiting_review`; CK verification is required.
+
+## Test-focused CFC remediation checkpoint
+
+- **Authorization:** explicit human/planning test-focused remediation following `IDSER-BATCH-01-5cab5e7-verification.md`.
+- **Addressed scope:** real PostgreSQL A/B scope coverage asserts the named candidate-index and reconciliation-target composite foreign keys, including same-scope and nullable-target positives.
+- **Next state:** `awaiting_review`; CK verification is required.
+
+## CK-002 remediation evidence
+
+- **Authorization:** continued existing human/planning-authorized CK-002 remediation; no new CFC cycle was opened.
+- **Evidence:** database-backed fixture coverage now builds legitimate indexed semantics at `P1/W1/B1`, `P1/W1/B2`, `P1/W2/B3`, and `P2/W3/B4`. With the relationship itself fixed at `P1/W1/B1`, the same-scope target and `NULL` target succeed; each valid foreign target is rejected by PostgreSQL with SQLSTATE `23503` at `reconciliation_relationship_target_scope_fkey`.
+- **Repeatability:** `test:semantic-foundation` passed twice consecutively against the reusable Compose database. Teardown removes Bridge replay and both Atlas fixture projects, and the post-run residue check returned `0|0|0` for IDSER projects, IDSER owners, and Bridge deliveries.
+- **Direct validation:** migration check, Core/DB typechecks, and permission isolation test passed.
+- **Next state:** `awaiting_review`; stop for CK verification.
