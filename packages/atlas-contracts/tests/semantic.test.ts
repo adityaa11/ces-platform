@@ -6,6 +6,22 @@ const scope = { projectId: "project-1", workspaceId: "workspace-1", bundleId: "b
 const evidence = { page_number: 1, locator_type: "text_block", locator_id: "block-1", excerpt: "quota is 40" };
 const extraction = { version: "v1", candidate_assertions: [{ local_candidate_id: "local-1", semantic_key: "quota", kind: "rule", payload: { value: 40 }, normalized_meaning: "quota is 40", source_wording: "quota is 40", needs_resolution: false, evidence_refs: [evidence] }], source_statement_inventory: [{ source_unit_id: "unit-1", page_number: 1, locator_type: "text_block", locator_id: "block-1", classification: "candidate", destination_local_candidate_ids: ["local-1"] }], questions: [] };
 const normalizedDocument = { version: "v1", executionId: "perception-1", artifactId: "document-1", sourceSha256: "a".repeat(64), perception: { capability: "atlas.document.perceive", contractVersion: "v1" }, provider: { name: "provider", processor: "processor", executionId: "perception-1", processedAt: "2026-09-27T00:00:00Z" }, pages: [{ number: 1, textBlocks: [{ id: "block-1", text: "quota is 40" }], tables: [], visualRegions: [] }] };
+const jsonBytes = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).byteLength;
+const contextWithBytes = (target: number) => {
+  const context = structuredClone({ version: "v1", skill: "atlas.semantic.extract", scope, normalizedDocument: { ...normalizedDocument, pages: [{ ...normalizedDocument.pages[0], textBlocks: [{ id: "block-1", text: "x".repeat(900000) }, { id: "block-2", text: "" }] }] } });
+  context.normalizedDocument.pages[0].textBlocks[1].text = "x".repeat(target - jsonBytes(context));
+  assert.equal(jsonBytes(context), target);
+  return context;
+};
+const envelopeWithBytes = (target: number) => {
+  const candidates = Array.from({ length: 200 }, (_, index) => ({ local_candidate_id: `local-${index}`, semantic_key: `key-${index}`, kind: "rule", payload: {}, normalized_meaning: "meaning", source_wording: "x", needs_resolution: false, evidence_refs: [{ ...evidence, locator_id: `block-${index}` }] }));
+  const result = { version: "v1", candidate_assertions: candidates, source_statement_inventory: candidates.map((candidate, index) => ({ source_unit_id: `unit-${index}`, page_number: 1, locator_type: "text_block", locator_id: `block-${index}`, classification: "candidate", destination_local_candidate_ids: [candidate.local_candidate_id] })), questions: [] };
+  const envelope = { version: "v1", scope, skill: { id: "atlas.semantic.extract", version: "v1" }, provider: { provider: "mistral", model: "configured", endpoint: "/v1", latencyMilliseconds: 1, attempt: 1 }, result };
+  let remaining = target - jsonBytes(envelope);
+  for (const candidate of candidates) { const added = Math.min(remaining, 11999); candidate.source_wording += "x".repeat(added); remaining -= added; }
+  assert.equal(remaining, 0); assert.equal(jsonBytes(envelope), target);
+  return envelope;
+};
 
 test("semantic parsers reject provider fields, dangling IDs, and multibyte overflow", () => {
   assert.doesNotThrow(() => parseSemanticBackgroundJob({ version: "v1", executionId: "execution-1", skill: { id: "atlas.semantic.extract", version: "v1" }, contextCapability: "capability" }));
@@ -46,4 +62,24 @@ test("all reconciliation relationships and scope binding are validated", () => {
   assert.throws(() => parseSemanticExtractionContext({ version: "v1", skill: "atlas.semantic.extract", scope: { ...scope, documentId: "other-document" }, normalizedDocument }));
   const contextCandidate = { id: "canonical-1", semantic_key: "quota", kind: "rule", normalized_meaning: "quota", payload: {}, evidence_refs: [evidence] };
   assert.throws(() => parseSemanticReconciliationContext({ version: "v1", skill: "atlas.semantic.reconcile", scope, currentCandidates: Array.from({ length: 501 }, () => contextCandidate), priorCandidates: [], selection: { policy: "semantic-key-kind", overflow: true } }));
+});
+
+test("empty and unresolved extraction outcomes preserve reviewable ambiguity", () => {
+  assert.doesNotThrow(() => parseSemanticExtractionResult({ version: "v1", candidate_assertions: [], source_statement_inventory: [], questions: [] }));
+  const unresolved = { ...extraction.candidate_assertions[0], local_candidate_id: "unresolved-1", kind: "unresolved", normalized_meaning: "The approval threshold is unclear.", needs_resolution: true };
+  assert.doesNotThrow(() => parseSemanticExtractionResult({ version: "v1", candidate_assertions: [unresolved], source_statement_inventory: [{ ...extraction.source_statement_inventory[0], destination_local_candidate_ids: [unresolved.local_candidate_id] }], questions: [{ question: "Which approval threshold applies?", reason: "The document states conflicting values.", evidence_refs: [evidence] }] }));
+});
+
+test("same-document contradictions and prior-neighborhood limits are representable", () => {
+  assert.doesNotThrow(() => parseSemanticReconciliationResult({ version: "v1", relationships: [{ source_candidate_id: "current-quota-40", target_candidate_id: "current-quota-45", relationship_type: "contradicts", payload: { same_document: true }, requires_resolution: true, evidence_refs: [evidence] }], questions: [{ question: "Which quota applies?", reason: "Two statements in this document conflict.", evidence_refs: [evidence] }] }));
+  const candidate = { id: "prior-1", semantic_key: "quota", kind: "rule", normalized_meaning: "quota", payload: {}, evidence_refs: [evidence] };
+  assert.doesNotThrow(() => parseSemanticReconciliationContext({ version: "v1", skill: "atlas.semantic.reconcile", scope, currentCandidates: [], priorCandidates: Array.from({ length: semanticLimits.priorCandidates }, () => candidate), selection: { policy: "semantic-key-kind", overflow: false, selectedCount: semanticLimits.priorCandidates } }));
+  assert.throws(() => parseSemanticReconciliationContext({ version: "v1", skill: "atlas.semantic.reconcile", scope, currentCandidates: [], priorCandidates: Array.from({ length: semanticLimits.priorCandidates + 1 }, () => candidate), selection: { policy: "semantic-key-kind", overflow: true } }));
+});
+
+test("context and result-envelope UTF-8 JSON limits accept at limit and reject one byte over", () => {
+  assert.doesNotThrow(() => parseSemanticExtractionContext(contextWithBytes(semanticLimits.contextBytes)));
+  assert.throws(() => parseSemanticExtractionContext(contextWithBytes(semanticLimits.contextBytes + 1)));
+  assert.doesNotThrow(() => parseSemanticResultEnvelope(envelopeWithBytes(semanticLimits.resultEnvelopeBytes)));
+  assert.throws(() => parseSemanticResultEnvelope(envelopeWithBytes(semanticLimits.resultEnvelopeBytes + 1)));
 });
