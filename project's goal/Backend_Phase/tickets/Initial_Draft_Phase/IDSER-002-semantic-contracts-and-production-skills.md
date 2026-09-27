@@ -148,3 +148,21 @@ modules directory required a non-interactive purge/install.
   passed 8/8, skills tests passed 1/1, and contracts/skills typechecks passed.
   `git diff --check` passed.
 - **Next state:** `awaiting_review`; stop for CK verification.
+
+## HMN-authorized CFC evidence remediation checkpoint
+
+- **Authorization consumed:** `HMN-IDSER-002-001`
+  (`AUTHORIZE_EVIDENCE_REMEDIATION`), for CK-004 only.
+- **CK source:** `project's goal/feedback/IDSER-BATCH-02-c75d8aa-verification.md`
+  (`CHANGES_REQUIRED`).
+- **Remediation commit:** `dbf9661962c2957cfadb5bd15ba06383ef5dc329`.
+- **Addressed scope:** added only deterministic contract fixtures for empty
+  extraction, unresolved candidate meaning/questions, same-document
+  contradiction, prior-neighborhood 500/501 boundaries, and exact 1 MiB
+  context plus 2 MiB result-envelope UTF-8 JSON boundaries with one-byte-over
+  rejection. Existing CK-001 through CK-003 and vocabulary fixtures remain.
+- **Compose evidence:** `docker compose build atlas` succeeded; contracts tests
+  passed 11/11, skills tests passed 1/1, contracts/skills typechecks passed,
+  and `git diff --check` passed. At-limit byte fixtures passed; each one-byte
+  overflow failed deterministically.
+- **Next state:** `awaiting_review`; stop for CK verification.
