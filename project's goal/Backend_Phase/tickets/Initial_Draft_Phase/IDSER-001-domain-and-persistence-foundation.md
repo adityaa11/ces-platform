@@ -108,3 +108,9 @@ unrelated leftover test row (`3 !== 2` expected global `documents/%` count),
 not an IDSER assertion; rerun it against a clean Compose database during CK.
 No provider runtime, queue activation, UI, source-byte writes, or review state
 was added. **Next state:** `awaiting_review`; CK is required before IDSER-002.
+
+## CFC remediation checkpoint
+
+- **CK source:** `project's goal/feedback/IDSER-BATCH-01-8f89626-review.md` (`CHANGES_REQUIRED`).
+- **Addressed findings:** `CK-001` limits post-start immutability to membership identity fields while allowing member lifecycle updates. `CK-002` adds composite relational scope keys and foreign keys through bundle membership, execution, extraction, candidate, evidence, index, reconciliation, and relationship records.
+- **Next state:** `awaiting_review`; CFC does not decide the CK result.

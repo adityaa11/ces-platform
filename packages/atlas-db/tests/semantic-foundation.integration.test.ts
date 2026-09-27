@@ -18,11 +18,12 @@ test("semantic foundation preserves bundle scope, lifecycle, and Bridge isolatio
     await atlas.unsafe("INSERT INTO atlas.workspace (id, project_id, kind, state, display_name) VALUES ($1,$2,'initial_draft','draft','A duplicate display name')", [workspace, project]);
     await atlas.unsafe("INSERT INTO atlas.document (id, project_id, workspace_id, original_filename, storage_key, source_sha256, byte_size, media_type, created_by_user_id) VALUES ($1,$2,$3,'prd.pdf','test/idser',$4,1,'application/pdf',$5)", [document, project, workspace, "a".repeat(64), owner]);
     await atlas.unsafe("INSERT INTO atlas.extraction_bundle (id, project_id, workspace_id, state, semantic_contract_version, reconciliation_contract_version, expected_document_count) VALUES ($1,$2,$3,'waiting','v1','v1',1)", [bundle, project, workspace]);
-    await atlas.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id, document_id, sequence, state) VALUES ($1,$2,1,'pending')", [bundle, document]);
+    await atlas.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id, document_id, project_id, workspace_id, sequence, state) VALUES ($1,$2,$3,$4,1,'pending')", [bundle, document, project, workspace]);
     const found = await new PostgresSemanticFoundationRepository(atlas).findBundle(bundle);
     assert.deepEqual(found && { ...found, expectedDocumentCount: Number(found.expectedDocumentCount) }, { id: bundle, projectId: project, workspaceId: workspace, state: "waiting", expectedDocumentCount: 1, completedDocumentCount: 0 });
     await atlas.unsafe("UPDATE atlas.extraction_bundle SET state='processing', started_at=now() WHERE id=$1", [bundle]);
-    await assert.rejects(() => atlas.unsafe("UPDATE atlas.extraction_bundle_document SET state='perception_queued' WHERE bundle_id=$1 AND document_id=$2", [bundle, document]), /immutable/i);
+    await atlas.unsafe("UPDATE atlas.extraction_bundle_document SET state='perceiving', started_at=now(), perception_execution_id=$3 WHERE bundle_id=$1 AND document_id=$2", [bundle, document, `perception-${suffix}`]);
+    await assert.rejects(() => atlas.unsafe("UPDATE atlas.extraction_bundle_document SET sequence=2 WHERE bundle_id=$1 AND document_id=$2", [bundle, document]), /immutable/i);
     await assert.rejects(() => bridge.unsafe("SELECT * FROM atlas.extraction_bundle"), /permission denied/i);
     await bridge.unsafe("INSERT INTO bridge.semantic_result_delivery (idempotency_key, execution_id, stage, validated_envelope, provenance, completion_fingerprint) VALUES ($1,$2,'extraction','{}','{}','fingerprint')", [`delivery-${suffix}`, `execution-${suffix}`]);
   } catch (error) {
