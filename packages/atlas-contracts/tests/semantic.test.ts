@@ -13,6 +13,14 @@ const contextWithBytes = (target: number) => {
   assert.equal(jsonBytes(context), target);
   return context;
 };
+const reconciliationContextWithBytes = (target: number) => {
+  const priorCandidates = Array.from({ length: 100 }, (_, index) => ({ id: `prior-${index}`, semantic_key: `key-${index}`, kind: "rule", normalized_meaning: "meaning", payload: "x", evidence_refs: [{ ...evidence, locator_id: `block-${index}` }] }));
+  const context = { version: "v1", skill: "atlas.semantic.reconcile", scope, currentCandidates: [], priorCandidates, selection: { policy: "semantic-key-kind", overflow: false, selectedCount: priorCandidates.length } };
+  let remaining = target - jsonBytes(context);
+  for (const candidate of priorCandidates) { const added = Math.min(remaining, 16383); candidate.payload += "x".repeat(added); remaining -= added; }
+  assert.equal(remaining, 0); assert.equal(jsonBytes(context), target);
+  return context;
+};
 const envelopeWithBytes = (target: number) => {
   const candidates = Array.from({ length: 200 }, (_, index) => ({ local_candidate_id: `local-${index}`, semantic_key: `key-${index}`, kind: "rule", payload: {}, normalized_meaning: "meaning", source_wording: "x", needs_resolution: false, evidence_refs: [{ ...evidence, locator_id: `block-${index}` }] }));
   const result = { version: "v1", candidate_assertions: candidates, source_statement_inventory: candidates.map((candidate, index) => ({ source_unit_id: `unit-${index}`, page_number: 1, locator_type: "text_block", locator_id: `block-${index}`, classification: "candidate", destination_local_candidate_ids: [candidate.local_candidate_id] })), questions: [] };
@@ -80,6 +88,8 @@ test("same-document contradictions and prior-neighborhood limits are representab
 test("context and result-envelope UTF-8 JSON limits accept at limit and reject one byte over", () => {
   assert.doesNotThrow(() => parseSemanticExtractionContext(contextWithBytes(semanticLimits.contextBytes)));
   assert.throws(() => parseSemanticExtractionContext(contextWithBytes(semanticLimits.contextBytes + 1)));
+  assert.doesNotThrow(() => parseSemanticReconciliationContext(reconciliationContextWithBytes(semanticLimits.contextBytes)));
+  assert.throws(() => parseSemanticReconciliationContext(reconciliationContextWithBytes(semanticLimits.contextBytes + 1)));
   assert.doesNotThrow(() => parseSemanticResultEnvelope(envelopeWithBytes(semanticLimits.resultEnvelopeBytes)));
   assert.throws(() => parseSemanticResultEnvelope(envelopeWithBytes(semanticLimits.resultEnvelopeBytes + 1)));
 });
