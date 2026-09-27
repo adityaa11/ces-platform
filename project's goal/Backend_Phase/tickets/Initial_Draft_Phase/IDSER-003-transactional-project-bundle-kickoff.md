@@ -1,6 +1,6 @@
 # IDSER-003: Transactional project bundle kickoff
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `IDSER-BATCH-03`
 - **Depends on:** IDSER-001 and IDSER-002 `PASS`; PCC-006 and BSS-006/007/009 frozen.
 - **Baseline:** SRC-IDSER-01 sections 8-12, 23, 25, 37, 41.1-41.2; AC-01/02/03/05/06/24/37/38. See [README](README.md).
@@ -138,3 +138,10 @@ when enqueue fails. `git diff --check` passed.
 - **Scope confirmation:** Test-local evidence only; no production transaction,
   queue/worker, source-grant, schema, UI, or future-document behavior changed.
 - **Next state:** `awaiting_review`; hand commit `3dbd7dc` to CK verification.
+
+## Approval record
+
+- **CK verification:** `project's goal/feedback/IDSER-BATCH-03-3dbd7dc-verification.md`
+  records `PASS` for remediation commit `3dbd7dce1eb0120ea8bc2e0b56ff20d4af2e9f40`.
+- **Approved state:** `approved`; IDSER-004 may consume the frozen IDSER-003
+  transaction-kickoff interface.
