@@ -18,7 +18,7 @@ const id = { type: "string", minLength: 1, maxLength: 200, pattern: "^[A-Za-z0-9
 const text = (maxLength: number) => ({ type: "string", minLength: 1, maxLength });
 const jsonValue = { anyOf: [{ type: "null" }, { type: "boolean" }, { type: "number" }, { type: "string", maxLength: 16384 }, { type: "array", maxItems: 100, items: {} }, { type: "object", maxProperties: 100, additionalProperties: {} }] } as const;
 const scopeSchema = { type: "object", additionalProperties: false, required: ["projectId", "workspaceId", "bundleId", "documentId", "executionId", "contractVersion"], properties: { projectId: id, workspaceId: id, bundleId: id, documentId: id, executionId: id, contractVersion: { const: semanticContractVersion } } } as const;
-const evidenceRefSchema = { type: "object", additionalProperties: false, required: ["page_number", "locator_type", "locator_id"], properties: { page_number: { type: "integer", minimum: 1 }, locator_type: { enum: ["text_block", "table", "visual_region"] }, locator_id: id, excerpt: { type: "string", minLength: 1, maxLength: 4000 } } } as const;
+const evidenceRefSchema = { type: "object", additionalProperties: false, required: ["page_number", "locator_type", "locator_id"], properties: { page_number: { type: "integer", minimum: 1 }, locator_type: { enum: ["text_block", "table", "visual_region"] }, locator_id: id, excerpt: { type: "string", minLength: 1, maxLength: 4000 } }, allOf: [{ if: { properties: { locator_type: { enum: ["text_block", "table"] } } }, then: { required: ["excerpt"] } }] } as const;
 const kindValues = ["actor", "business_object", "business_property", "responsibility", "rule", "constraint", "condition", "decision", "workflow_step", "state_transition", "relationship", "input", "output", "acceptance_expectation", "exception", "unresolved"] as const;
 const candidateSchema = { type: "object", additionalProperties: false, required: ["local_candidate_id", "semantic_key", "kind", "payload", "normalized_meaning", "needs_resolution", "evidence_refs"], properties: { local_candidate_id: id, semantic_key: text(300), kind: { enum: kindValues }, payload: jsonValue, normalized_meaning: text(8000), source_wording: { type: "string", minLength: 1, maxLength: 12000 }, needs_resolution: { type: "boolean" }, evidence_refs: { type: "array", minItems: 1, maxItems: 32, items: evidenceRefSchema } } } as const;
 const inventorySchema = { type: "object", additionalProperties: false, required: ["source_unit_id", "page_number", "locator_type", "locator_id", "classification", "destination_local_candidate_ids"], properties: { source_unit_id: id, page_number: { type: "integer", minimum: 1 }, locator_type: { enum: ["text_block", "table", "visual_region"] }, locator_id: id, classification: { enum: ["candidate", "non_fact"] }, destination_local_candidate_ids: { type: "array", maxItems: 64, items: id }, non_fact_reason: { type: "string", minLength: 1, maxLength: 1000 } } } as const;
@@ -45,29 +45,38 @@ export type SemanticReconciliationResult = { readonly version: "v1"; readonly re
 const validators = { job: ajv.compile(semanticBackgroundJobSchema), extractionContext: ajv.compile(semanticExtractionContextSchema), reconciliationContext: ajv.compile(semanticReconciliationContextSchema), extractionResult: ajv.compile(semanticExtractionResultSchema), reconciliationResult: ajv.compile(semanticReconciliationResultSchema), envelope: ajv.compile(semanticResultEnvelopeSchema), failure: ajv.compile(semanticTechnicalFailureSchema) };
 function parse<T>(validator: Validator, value: unknown, label: string, maximumBytes: number): T { assertUtf8JsonBytes(value, maximumBytes, label); if (!validator(value)) throw new Error(`Invalid ${label}: ${ajv.errorsText(validator.errors)}`); return value as T; }
 export function assertUtf8JsonBytes(value: unknown, maximumBytes: number, label = "semantic value"): void { let serialized: string; try { serialized = JSON.stringify(value); } catch { throw new Error(`Invalid ${label}: not JSON serializable`); } if (new TextEncoder().encode(serialized).byteLength > maximumBytes) throw new Error(`Invalid ${label}: exceeds ${maximumBytes} UTF-8 JSON bytes`); }
+function assertBoundedPayload(value: unknown, depth = 0): void {
+  if (depth > 8) throw new Error("Invalid semantic payload: exceeds nesting depth 8");
+  if (typeof value === "string" && value.length > 16384) throw new Error("Invalid semantic payload: string exceeds limit");
+  if (Array.isArray(value)) { if (value.length > 100) throw new Error("Invalid semantic payload: array exceeds limit"); for (const item of value) assertBoundedPayload(item, depth + 1); return; }
+  if (value && typeof value === "object") { const entries = Object.values(value); if (entries.length > 100) throw new Error("Invalid semantic payload: object exceeds limit"); for (const item of entries) assertBoundedPayload(item, depth + 1); }
+}
 export function parseSemanticBackgroundJob(value: unknown): SemanticBackgroundJob { return parse<SemanticBackgroundJob>(validators.job, value, "semantic background job", semanticLimits.jobBytes); }
-export function parseSemanticExtractionContext(value: unknown): SemanticExtractionContext { return parse<SemanticExtractionContext>(validators.extractionContext, value, "semantic extraction context", semanticLimits.contextBytes); }
-export function parseSemanticReconciliationContext(value: unknown): SemanticReconciliationContext { const parsed = parse<SemanticReconciliationContext>(validators.reconciliationContext, value, "semantic reconciliation context", semanticLimits.contextBytes); if (parsed.currentCandidates.length + parsed.priorCandidates.length > semanticLimits.totalCandidates) throw new Error("Invalid semantic reconciliation context: candidate total exceeds limit"); return parsed; }
+export function parseSemanticExtractionContext(value: unknown): SemanticExtractionContext { const parsed = parse<SemanticExtractionContext>(validators.extractionContext, value, "semantic extraction context", semanticLimits.contextBytes); if (parsed.scope.documentId !== parsed.normalizedDocument.artifactId) throw new Error("Invalid semantic extraction context: scope document does not match normalized document"); return parsed; }
+export function parseSemanticReconciliationContext(value: unknown): SemanticReconciliationContext { const parsed = parse<SemanticReconciliationContext>(validators.reconciliationContext, value, "semantic reconciliation context", semanticLimits.contextBytes); if (parsed.currentCandidates.length + parsed.priorCandidates.length > semanticLimits.totalCandidates) throw new Error("Invalid semantic reconciliation context: candidate total exceeds limit"); for (const candidate of [...parsed.currentCandidates, ...parsed.priorCandidates]) assertBoundedPayload((candidate as { readonly payload: unknown }).payload); return parsed; }
 export function parseSemanticExtractionResult(value: unknown): SemanticExtractionResult {
   const parsed = parse<SemanticExtractionResult>(validators.extractionResult, value, "semantic extraction result", semanticLimits.resultEnvelopeBytes);
   const result = parsed as unknown as { readonly candidate_assertions: readonly { readonly local_candidate_id: string }[]; readonly source_statement_inventory: readonly { readonly page_number: number; readonly locator_type: string; readonly locator_id: string; readonly classification: string; readonly destination_local_candidate_ids: readonly string[]; readonly non_fact_reason?: string }[] };
   const localIds = new Set<string>();
-  for (const candidate of result.candidate_assertions) { if (localIds.has(candidate.local_candidate_id)) throw new Error("Invalid semantic extraction result: duplicate local candidate ID"); localIds.add(candidate.local_candidate_id); }
+  for (const candidate of result.candidate_assertions) { if (localIds.has(candidate.local_candidate_id)) throw new Error("Invalid semantic extraction result: duplicate local candidate ID"); localIds.add(candidate.local_candidate_id); assertBoundedPayload((candidate as unknown as { payload: unknown }).payload); }
   const sources = new Set<string>();
+  const accountedCandidateIds = new Set<string>();
   for (const item of result.source_statement_inventory) {
     const source = `${item.page_number}:${item.locator_type}:${item.locator_id}`;
     if (sources.has(source)) throw new Error("Invalid semantic extraction result: duplicate source inventory identity");
     sources.add(source);
     if (item.classification === "candidate" && item.destination_local_candidate_ids.length === 0) throw new Error("Invalid semantic extraction result: candidate inventory needs a destination");
     if (item.classification === "non_fact" && (!item.non_fact_reason || item.destination_local_candidate_ids.length)) throw new Error("Invalid semantic extraction result: non_fact inventory needs only a reason");
-    for (const destination of item.destination_local_candidate_ids) if (!localIds.has(destination)) throw new Error("Invalid semantic extraction result: dangling local candidate ID");
+    for (const destination of item.destination_local_candidate_ids) { if (!localIds.has(destination)) throw new Error("Invalid semantic extraction result: dangling local candidate ID"); accountedCandidateIds.add(destination); }
   }
+  for (const localId of localIds) if (!accountedCandidateIds.has(localId)) throw new Error("Invalid semantic extraction result: candidate is missing source accounting");
   return parsed;
 }
 export function parseSemanticReconciliationResult(value: unknown): SemanticReconciliationResult {
   const parsed = parse<SemanticReconciliationResult>(validators.reconciliationResult, value, "semantic reconciliation result", semanticLimits.resultEnvelopeBytes);
-  for (const relationship of (parsed as unknown as { readonly relationships: readonly { readonly relationship_type: string; readonly target_candidate_id?: string }[] }).relationships) {
+  for (const relationship of (parsed as unknown as { readonly relationships: readonly { readonly relationship_type: string; readonly target_candidate_id?: string; readonly payload: unknown }[] }).relationships) {
     if (relationship.relationship_type === "new" ? relationship.target_candidate_id !== undefined : relationship.target_candidate_id === undefined) throw new Error("Invalid semantic reconciliation result: relationship target is inconsistent with type");
+    assertBoundedPayload(relationship.payload);
   }
   return parsed;
 }
