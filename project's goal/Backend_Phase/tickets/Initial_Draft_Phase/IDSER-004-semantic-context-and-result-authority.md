@@ -1,6 +1,6 @@
 # IDSER-004: Semantic context and result authority
 
-- **State:** `planned`
+- **State:** `in_progress`
 - **Review batch:** `IDSER-BATCH-04`
 - **Depends on:** IDSER-002 and IDSER-003 `PASS`.
 - **Baseline:** SRC-IDSER-01 sections 11, 14-15, 17, 24-25, 32-34, 36-37; AC-03/11/12/25/28/36. See [README](README.md).
