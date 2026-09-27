@@ -5,73 +5,28 @@ description: Atlas bounded feedback-correction workflow. Use only when the user 
 
 # Atlas CFC Workflow
 
-## Purpose and authority
-
-CFC performs bounded remediation from the frozen ticket and the latest CK review. It is not a planning command, does not grant `PASS`, and cannot expand the ticket.
+CFC performs one bounded remediation pass for accepted, in-scope findings in the latest consolidated CK review. The frozen ticket remains the authority; a CK statement is not a requirement by itself.
 
 ## Preflight
 
-Resolve from repository state:
+Read the frozen current ticket and its explicitly incorporated source references, the latest consolidated CK artifact, the reviewed commit, and the current remediation base. Proceed only when CK returned `CHANGES_REQUIRED` and the artifact identifies implementation-repairable findings that trace to current-ticket requirements. Preserve unrelated user changes and stage only authorized paths.
 
-- the current frozen ticket and ticket/batch;
-- the latest CK artifact, review round, result, and stable finding IDs;
-- all findings still marked `OPEN`;
-- the committed revision reviewed by CK and the current remediation base; and
-- finding-specific and required regression validation.
+For each finding, identify the ticket requirement it enforces. If no such requirement exists, do not implement it. If it requires changing the ticket, reopening an approved predecessor, adding a provider/runtime/deployment target, making an architecture/product/policy decision, or doing future dependency work, stop and return it to human/planning authority as a scope-change issue.
 
-Confirm that the current working tree does not mix in-scope remediation with uncommitted user changes. Preserve unrelated work and stage only authorized paths.
+## Remediate and hand off
 
-CFC may proceed only when the latest result is `CHANGES_REQUIRED`, at least one open finding is an implementation-repairable `IMPLEMENTATION_DEFECT`, and the review session has not reached its three-round limit. The reviewed commit must be the remediation base. If the review is `PASS`, `BLOCKED`, or `REVIEW_CONVERGENCE_BLOCKED`, or the latest artifact/baseline is ambiguous, stop and return control to CK, GO, planning, or human authority as appropriate.
+Fix only the accepted in-scope findings from that consolidated review. Do not conduct a new review, create findings, change acceptance criteria, or add unrelated refactoring. Preserve approved predecessor boundaries. Run finding-specific validation and directly affected regressions; record exact results and limitations.
 
-## Finding authority gate
+Create one bounded remediation commit, identify the CK findings it addresses, update the checkpoint to `awaiting_review`, and stop for CK verification. CFC does not issue `PASS` and never invokes another CK/CFC cycle. After CK verification, unresolved findings or direct remediation regressions return to human/planning authority; there is no automatic second remediation pass.
 
-Before changing code for each finding, confirm a complete requirement trace:
+## Authority
 
 ```text
-open finding
--> exact frozen-ticket scope item, acceptance criterion, mandatory binding,
-   explicitly incorporated source anchor, or accepted dependency checkpoint
--> requested observable outcome
+frozen current ticket
+> its explicit source references
+> the published dependency interfaces/boundaries it consumes
+> repository evidence for implementation
+> CK feedback only when it traces to that ticket authority
 ```
 
-Repository configuration, build output, deployment entrypoints, local runtime behavior, and existing tests are evidence only. They do not independently authorize remediation or turn an inferred runtime/deployment choice into ticket scope. For example, an existing Worker/Cloudflare entrypoint, Vite middleware, preview server, Compose service, or alternate adapter is not an automatic CFC target.
-
-If the finding lacks this trace, or its requested outcome adds a new provider, authority boundary, runtime, or product requirement, do not repair it. Return it to CK as an unsupported finding or to planning as a `PLANNING_GAP`/`KNOWLEDGE_GAP`; CFC must not silently make the review's inference real through implementation.
-
-## Eligible remediation
-
-Read the full frozen ticket and latest consolidated review. Fix the open, in-scope implementation defects identified by CK that pass the finding authority gate. CFC may inspect adjacent code and add the smallest necessary regression coverage to prove the fix.
-
-Do not silently repair or decide:
-
-- `SCOPE_DIVERGENCE`;
-- `PLANNING_GAP`;
-- `KNOWLEDGE_GAP` requiring a new policy or evidence source;
-- new product requirements, technologies, providers, or authority relationships;
-- unrelated cleanup, refactoring, or features; or
-- any finding after the review has ended with `REVIEW_CONVERGENCE_BLOCKED`.
-
-Those conditions leave the implementation loop. Return the evidence to human/planning authority instead of inventing a solution. If a finding cannot be fixed without changing the frozen ticket, stop and request a planning decision.
-
-Address eligible open findings as one bounded remediation pass. Do not change historical CK artifacts or mark findings resolved yourself; CK owns finding status and approval.
-
-## Validate and commit
-
-Run the finding-specific validation and affected regressions required by the ticket and repository. For frontend remediation, include the applicable rendered states required by the frontend review gate and Atlas UI/UX protocol. Record exact commands, results, counts/skips, service health, and environment limits; never claim unrun validation passed.
-
-Commit only the bounded remediation. The commit message or implementation checkpoint must identify the CK finding IDs addressed and record the validation evidence. Preserve existing ticket requirements and dependency checkpoints. Leave the ticket/checkpoint at `awaiting_review` and return it to CK.
-
-```text
-latest CK: CHANGES_REQUIRED
--> bounded CFC remediation
--> finding-specific and regression validation
--> remediation commit naming CK finding IDs
--> awaiting_review
--> CK next round
-```
-
-CFC must not issue a review result, advance to another ticket, waive findings, edit acceptance criteria, or trigger an automatic additional round. If remediation cannot be completed within scope, stop and report the blocker.
-
-## Final rule
-
-CFC repairs defects CK found inside the frozen ticket. Only CK may decide whether the committed remediation satisfies the ticket.
+CFC repairs the ticket's accepted in-scope findings once. It cannot turn reviewer inference into scope.
