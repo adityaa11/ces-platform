@@ -1,0 +1,3 @@
+-- IDSER-001 amendment: inspect the owning bundle lifecycle, including cascade cleanup.
+CREATE OR REPLACE FUNCTION atlas.assert_bundle_manifest_mutable() RETURNS trigger LANGUAGE plpgsql AS $$ DECLARE bundle_state text; bundle_id_value text; BEGIN bundle_id_value := COALESCE(NEW.bundle_id, OLD.bundle_id); SELECT state INTO bundle_state FROM atlas.extraction_bundle WHERE id = bundle_id_value; IF bundle_state IS NOT NULL AND bundle_state <> 'waiting' THEN RAISE EXCEPTION 'extraction bundle manifest is immutable after processing starts'; END IF; RETURN COALESCE(NEW, OLD); END $$;
+INSERT INTO atlas.schema_migrations (name) VALUES ('0010_idser001_manifest_trigger_fix') ON CONFLICT DO NOTHING;

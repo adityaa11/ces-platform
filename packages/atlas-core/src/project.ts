@@ -46,6 +46,37 @@ export interface AtlasProjectRepository {
   listAccessibleTo(userId: string): Promise<readonly AccessibleAtlasProject[]>;
 }
 
+/** Candidate-pipeline records stay persistence-neutral so Bridge and UI cannot own Atlas state. */
+export type ExtractionBundleState = "waiting" | "processing" | "ready_for_review" | "needs_attention";
+export type ExtractionBundleDocumentState = "pending" | "perception_queued" | "perceiving" | "extracting" | "reconciling" | "completed" | "needs_attention";
+export type SemanticStage = "extraction" | "reconciliation";
+
+export interface ExtractionBundleScope {
+  readonly id: string;
+  readonly projectId: string;
+  readonly workspaceId: string;
+  readonly state: ExtractionBundleState;
+  readonly expectedDocumentCount: number;
+  readonly completedDocumentCount: number;
+}
+
+export interface SemanticExecutionScope {
+  readonly id: string;
+  readonly projectId: string;
+  readonly workspaceId: string;
+  readonly bundleId: string;
+  readonly documentId: string;
+  readonly stage: SemanticStage;
+  readonly contractVersion: string;
+  readonly skillVersion: string;
+  readonly logicalIdentity: string;
+}
+
+/** Read seam for later pipeline tickets; callers receive domain records, never SQL handles. */
+export interface SemanticFoundationRepository {
+  findBundle(id: string): Promise<ExtractionBundleScope | null>;
+}
+
 export const projectIdPattern = /^[a-z0-9-]{3,48}$/;
 export const sourceSha256Pattern = /^[a-f0-9]{64}$/;
 

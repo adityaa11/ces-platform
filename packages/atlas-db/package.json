@@ -13,7 +13,8 @@
     "migration:check": "node scripts/migrate.mjs --check",
     "test:permissions": "node --test tests/permissions.test.mjs",
     "test:perception-authority": "jiti tests/perception-authority.integration.test.ts",
-    "test:project-repository": "jiti tests/project-repository.integration.test.ts"
+    "test:project-repository": "jiti tests/project-repository.integration.test.ts",
+    "test:semantic-foundation": "jiti tests/semantic-foundation.integration.test.ts"
   },
   "dependencies": {
     "@atlas/core": "workspace:*",

@@ -12,7 +12,7 @@ export class PostgresAtlasProjectRepository implements AtlasProjectRepository {
     await this.sql.begin(async (sql) => {
       await sql.unsafe("INSERT INTO atlas.project (id, stable_id, name, description, created_by_user_id) VALUES ($1,$2,$3,$4,$5)", [input.id, input.projectId, input.name, input.description, input.creatorUserId]);
       await sql.unsafe("INSERT INTO atlas.project_member (project_id, user_id, role) VALUES ($1,$2,'owner')", [input.id, input.creatorUserId]);
-      await sql.unsafe("INSERT INTO atlas.workspace (id, project_id, kind, state) VALUES ($1,$2,'master','empty'),($3,$2,'initial_draft','draft')", [input.masterWorkspaceId, input.id, input.initialDraftWorkspaceId]);
+      await sql.unsafe("INSERT INTO atlas.workspace (id, project_id, kind, state, display_name) VALUES ($1,$2,'master','empty','Master'),($3,$2,'initial_draft','draft','Initial Draft')", [input.masterWorkspaceId, input.id, input.initialDraftWorkspaceId]);
       for (const document of input.documents) {
         await sql.unsafe("INSERT INTO atlas.document (id, project_id, workspace_id, original_filename, storage_key, source_sha256, byte_size, media_type, created_by_user_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)", [document.id, input.id, input.initialDraftWorkspaceId, document.originalFilename, document.storageKey, document.sourceSha256, document.byteSize, document.mediaType, document.createdByUserId]);
       }
