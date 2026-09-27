@@ -30,6 +30,12 @@ After the single bounded CFC remediation commit, verify only the original consol
 
 Record whether the original findings are resolved and whether a direct remediation regression exists. If a finding remains unresolved or remediation introduced a direct regression, report `CHANGES_REQUIRED` with the evidence and stop for human/planning authority. Do not start another CFC pass. Otherwise record `PASS`. This verification does not authorize a new full review.
 
+## Review after an HMN-authorized CFC
+
+A newer explicit HMN authorization issued after control returned to human/planning authority establishes one new bounded remediation checkpoint. When its committed CFC remediation records the consumed HMN authorization ID, read the active HMN artifact and verify only its named unresolved original finding(s), the remediation diff, the contract's required evidence, and direct regressions introduced by that remediation. Do not restart broad review or add unrelated findings discovered outside this scope.
+
+The valid HMN decision satisfies the earlier handoff to human/planning authority; do not reject this verification merely because a previous post-CFC verification occurred. The result remains `PASS` or `CHANGES_REQUIRED`. If unresolved again, record the evidence and return control to human/planning authority. Do not authorize or invoke another CFC: a further remediation requires a fresh explicit user `hmn` invocation and new HMN authorization.
+
 ## Review record
 
 Write one consolidated artifact for the reviewed checkpoint under `project's goal/feedback/`, following the repository's batch/commit naming convention. Preserve prior artifacts. Include the ticket and batch, reviewed commit, frozen ticket reference, result, validation/evidence, findings traced to explicit ticket authority, any separate scope-change observations, and the decision. A post-CFC artifact must identify the original findings and state that it is verification. Record only checks actually performed.
@@ -44,4 +50,4 @@ frozen current ticket
 > general engineering or specialist guidance
 ```
 
-CK judges only the committed work against that authority. One consolidated first review, then at most one verification after CFC; anything beyond that returns to human/planning authority.
+CK judges only the committed work against that authority. Without HMN, there is one consolidated first review and at most one verification after CFC. A valid newer HMN authorization permits one additional bounded verification of its committed remediation; anything further again returns to human/planning authority.

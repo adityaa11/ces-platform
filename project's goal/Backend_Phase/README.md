@@ -113,7 +113,7 @@ Backend work follows the Atlas review protocol:
 2. Implement only the currently authorized ticket or review batch.
 3. Validate the real boundary and the fixture/regression boundary it must preserve.
 4. Commit the checkpoint and mark it `awaiting_review`.
-5. Use `ck` for one consolidated review, `cfc` for the bounded remediation pass, and `go` before beginning the next dependency-ready ticket.
+5. Use `ck` for one consolidated review, `cfc` for the bounded remediation pass, and `go` before beginning the next dependency-ready ticket. If a post-CFC verification remains unresolved, only an explicit user `hmn` delegation may authorize the next bounded continuation; it does not create an automatic review/remediation loop.
 
 A later implementation may extend an approved boundary, but it must not silently turn fixtures into production authority, reopen an approved predecessor, or absorb a new product requirement without a recorded scope change.
 

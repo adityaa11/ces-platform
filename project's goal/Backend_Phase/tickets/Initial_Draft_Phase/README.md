@@ -182,10 +182,10 @@ completion/card -> 008/009; Compose proof -> 010/011.
 ## Execution and review controls
 
 Follow [Backend rules](../../README.md) and the current [GO](../../../../.agents/skills/go/SKILL.md),
-[CK](../../../../.agents/skills/ck/SKILL.md), and [CFC](../../../../.agents/skills/cfc/SKILL.md)
-workflow when implementation is requested. Keep every ticket `planned` until
+[CK](../../../../.agents/skills/ck/SKILL.md), [CFC](../../../../.agents/skills/cfc/SKILL.md), and
+[HMN](../../../../.agents/skills/hmn/SKILL.md) workflow when implementation is requested. Keep every ticket `planned` until
 authorized. Record implementation commit and validation, then `awaiting_review`.
-Use one consolidated CK feedback file and the bounded remediation workflow.
+Use one consolidated CK feedback file and the bounded remediation workflow; a further remediation after a stalled verification needs an explicit user `hmn` delegation.
 This authoring pass does not claim CK approval.
 
 Docker Compose is authoritative for runnable checks. Start PostgreSQL with

@@ -102,4 +102,4 @@ after its named SFE dependencies pass review and receive an explicit `go`.
 - Implement only the currently authorized ticket or review batch. Do not start the next batch until the current batch has a PASS review and the user says `go`.
 - UI batches require rendered browser validation for the connected component flow, supported responsive widths and themes, and keyboard/focus behavior.
 - Fixture batches validate source provenance, stable project/workspace IDs, branch/workspace relationships, and proposal-versus-accepted-truth boundaries.
-- `go`, `ck`, and `cfc` follow the repository workflow skills for bounded implementation, consolidated review, and at most one remediation pass.
+- `go`, `ck`, and `cfc` follow the repository workflow skills for bounded implementation, consolidated review, and at most one remediation pass. A further stalled verification may continue only through an explicit user `hmn` delegation and its new bounded authorization; it never starts an automatic remediation loop.

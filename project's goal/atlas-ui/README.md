@@ -66,9 +66,10 @@ All other tickets have individual batches because their acceptance decisions are
 - [`ck`](../../.agents/skills/ck/SKILL.md) performs one consolidated review of the committed checkpoint against the frozen ticket. Specialist guidance is binding only where the ticket explicitly incorporates it.
 - [`cfc`](../../.agents/skills/cfc/SKILL.md) performs at most one bounded remediation pass for in-scope CK findings, commits the fix, and returns the ticket to `awaiting_review`.
 - After CFC, CK verifies the original findings and direct remediation regressions only. Unresolved findings return to human/planning authority; new requirements become scope changes.
+- [`hmn`](../../.agents/skills/hmn/SKILL.md) acts only on explicit user delegation as that human/planning authority: it diagnoses a stalled ticket, records the smallest ticket-bound continuation, and hands work back to CFC, CK, or GO. Each additional post-verification remediation needs a fresh `hmn` invocation.
 - New requirements are recorded as scope changes and become a separate ticket or baseline update; they do not reopen an approved ticket.
 
-The implementation sequence is `go -> implementation, validation, and commit -> awaiting_review -> ck`; eligible findings follow `cfc -> remediation commit -> awaiting_review -> ck`. This implementation cycle is separate from the stakeholder review stages in the [Atlas UI/UX Review Protocol](../Atlas_UI_UX_Review_Protocol.md). CFC verification does not open a new stakeholder design-feedback round or reopen approved design direction.
+The implementation sequence is `go -> implementation, validation, and commit -> awaiting_review -> ck`; eligible findings follow `cfc -> remediation commit -> awaiting_review -> ck`. A later unresolved verification may continue only as `hmn -> bounded authorization -> cfc -> ck`. This implementation cycle is separate from the stakeholder review stages in the [Atlas UI/UX Review Protocol](../Atlas_UI_UX_Review_Protocol.md). CFC verification does not open a new stakeholder design-feedback round or reopen approved design direction.
 
 ## Required visual-validation record
 

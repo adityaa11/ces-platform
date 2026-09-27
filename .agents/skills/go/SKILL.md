@@ -24,6 +24,8 @@ Then stop and return control to CK. GO does not review or label its own work `PA
 
 When invoked after a CK `PASS`, record the approved state. Begin another dependency-ready ticket only if the user's GO authorization covers that ticket or batch. A `CHANGES_REQUIRED` result belongs to CFC and must not be remediated by GO.
 
+If a current HMN artifact explicitly records `RETURN_TO_GO`, GO may resume or complete only the frozen-ticket implementation named by that authorization and must record its HMN authorization ID in the checkpoint. GO must not consume `AUTHORIZE_NEXT_CFC`, `AUTHORIZE_EVIDENCE_REMEDIATION`, or `AUTHORIZE_DIRECT_REGRESSION_REPAIR`; those belong to CFC. An HMN artifact never expands ticket scope.
+
 ## Authority
 
 ```text
