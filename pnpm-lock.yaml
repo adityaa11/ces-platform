@@ -225,6 +225,9 @@ importers:
 
   packages/atlas-db:
     dependencies:
+      '@atlas/contracts':
+        specifier: workspace:*
+        version: link:../atlas-contracts
       '@atlas/core':
         specifier: workspace:*
         version: link:../atlas-core

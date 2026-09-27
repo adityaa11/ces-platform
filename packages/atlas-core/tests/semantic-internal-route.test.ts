@@ -11,7 +11,7 @@ test("semantic routes authenticate and fail closed when acceptance is unavailabl
   const calls: string[] = [];
   const routes = createSemanticInternalRoutes({ serviceCredential: credential, authority: {
     redeem: async () => ({ executionId: job.executionId, skill: job.skill, scope, context: { version: "v1", skill: "atlas.semantic.extract", scope, normalizedDocument: { version: "v1", executionId: job.executionId, artifactId: "document", sourceSha256: "a".repeat(64), perception: { capability: "atlas.document.perceive", contractVersion: "v1" }, provider: { name: "test", processor: "test", executionId: job.executionId, processedAt: "2026-09-27T00:00:00.000Z" }, pages: [{ number: 1, textBlocks: [], tables: [], visualRegions: [] }] } } }),
-    deliver: async () => { calls.push("deliver"); }, fail: async () => { calls.push("fail"); },
+    deliver: async (_envelope, handler) => { calls.push("deliver"); await handler.accept({ executionId: job.executionId, completionFingerprint: "x", envelope: _envelope }); }, fail: async () => { calls.push("fail"); },
   }, handler: { accept: async () => { throw new Error("unavailable"); } } });
   assert.equal((await routes.context("bad", job)).status, 401);
   assert.equal((await routes.context(credential, job)).status, 200);

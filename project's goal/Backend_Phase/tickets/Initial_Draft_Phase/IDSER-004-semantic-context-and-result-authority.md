@@ -74,19 +74,19 @@ authorized context and cannot select unrelated scope or write trusted state.
 **Question:** Is every semantic handoff execution-bound and idempotent while
 keeping result acceptance and lifecycle decisions under Atlas authority?
 
-**Implementation checkpoint:** `feat(idser): add semantic execution authority`
-adds the Atlas-only semantic
-authority contract, a PostgreSQL execution/capability adapter, and authenticated
-bounded internal context/result/failure routes. Context redemption is strictly
-execution/scope/capability bound and only returns a validated normalized document.
-Completion fingerprints reject conflicting replay; unavailable IDSER-006/007
-acceptance handlers fail closed, so no result is acknowledged before an owning
-transactional handler exists. The existing perception routes and browser boundary
-remain unchanged.
+**CFC remediation checkpoint:** Repairs CK-001 through CK-005 without changing
+the ticket boundary. Completion fingerprints now canonically include recursive
+nested values; extraction cache redemption checks the exact perception execution;
+and reconciliation redemption snapshots its bounded current/prior candidate
+context in an Atlas-owned table so retries cannot broaden it. The route double
+now exercises handler failure, `@atlas/contracts` is a direct DB dependency, and
+the migration runner includes the persisted-context migration.
 
-**Compose evidence:** `@atlas/core` and `@atlas/db` TypeScript checks passed;
-the Atlas application build passed; `git diff --check` passed. The Core route
-suite includes authenticated context redemption and fail-closed delivery coverage.
+**Validation evidence:** In Compose, `corepack pnpm --filter @atlas/db typecheck`,
+the semantic fingerprint test, and the Core semantic internal-route test passed.
+`corepack pnpm --filter @atlas/db migrate` applied
+`0015_idser004_semantic_context_authority`; `corepack pnpm --filter @atlas/app build`
+passed. `git diff --check` passed.
 
-**Next state:** `awaiting_review`; CK must review the bounded semantic authority
-implementation before IDSER-005 or IDSER-006 consume its interfaces.
+**Next state:** `awaiting_review`; CK must verify this bounded remediation before
+IDSER-005 or IDSER-006 consume its interfaces.

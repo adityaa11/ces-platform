@@ -1,11 +1,18 @@
 import { createHash } from "node:crypto";
-import { parseNormalizedDocument, parseSemanticExtractionContext, semanticContractVersion, type SemanticBackgroundJob, type SemanticSkillId } from "@atlas/contracts";
+import { parseNormalizedDocument, parseSemanticExtractionContext, parseSemanticReconciliationContext, semanticContractVersion, type SemanticSkillId } from "@atlas/contracts";
 import type { AuthorizedSemanticContext, SemanticAcceptanceHandler, SemanticAuthority, SemanticExecutionRequest } from "@atlas/core";
 
 type Row = Record<string, unknown>;
 type Sql = { unsafe(query: string, parameters?: readonly unknown[]): Promise<readonly Row[]>; begin<T>(work: (transaction: Sql) => Promise<T>): Promise<T> };
-const digest = (value: unknown) => createHash("sha256").update(JSON.stringify(value, Object.keys(value as object).sort())).digest("hex");
+const canonicalize = (value: unknown): unknown => {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b)).map(([key, item]) => [key, canonicalize(item)]));
+  return value;
+};
+export const canonicalSemanticFingerprint = (value: unknown) => createHash("sha256").update(JSON.stringify(canonicalize(value))).digest("hex");
+const digest = canonicalSemanticFingerprint;
 const stageSkill = (stage: unknown): SemanticSkillId => stage === "extraction" ? "atlas.semantic.extract" : "atlas.semantic.reconcile";
+const json = (value: unknown) => typeof value === "string" ? JSON.parse(value) : value;
 
 /** Atlas-only SQL adapter. Bridge receives contexts, never this connection. */
 export class PostgresSemanticAuthority implements SemanticAuthority {
@@ -13,19 +20,44 @@ export class PostgresSemanticAuthority implements SemanticAuthority {
 
   async redeem(request: SemanticExecutionRequest): Promise<AuthorizedSemanticContext> {
     return this.sql.begin(async (sql) => {
-      const rows = await sql.unsafe("SELECT e.*, d.source_sha256, p.capability_identity, c.normalized_document FROM atlas.semantic_execution e JOIN atlas.document d ON d.id=e.document_id AND d.project_id=e.project_id AND d.workspace_id=e.workspace_id JOIN atlas.extraction_bundle_document m ON m.bundle_id=e.bundle_id AND m.document_id=e.document_id AND m.project_id=e.project_id AND m.workspace_id=e.workspace_id JOIN atlas.document_perception_execution p ON p.id=m.perception_execution_id JOIN atlas.normalized_document_cache c ON c.source_sha256=d.source_sha256 AND c.capability_identity=p.capability_identity AND c.invalidated_at IS NULL WHERE e.id=$1 FOR UPDATE OF e", [request.executionId]);
+      const rows = await sql.unsafe("SELECT e.*, d.source_sha256 FROM atlas.semantic_execution e JOIN atlas.document d ON d.id=e.document_id AND d.project_id=e.project_id AND d.workspace_id=e.workspace_id WHERE e.id=$1 FOR UPDATE OF e", [request.executionId]);
       if (!rows.length) throw new Error("Semantic execution is unavailable.");
       const row = rows[0];
       if (row.lifecycle === "completed" || row.lifecycle === "failed" || new Date(String(row.capability_valid_until)).getTime() <= Date.now()) throw new Error("Semantic execution is stale.");
       if (stageSkill(row.stage) !== request.skill.id || row.skill_version !== request.skill.version || row.contract_version !== semanticContractVersion || digest(request.contextCapability) !== row.authorized_context_fingerprint) throw new Error("Semantic execution authorization failed.");
-      if (row.stage !== "extraction") throw new Error("Reconciliation context is unavailable until IDSER-007 selection authority is implemented.");
-      const normalized = parseNormalizedDocument(typeof row.normalized_document === "string" ? JSON.parse(row.normalized_document) : row.normalized_document);
-      if (normalized.artifactId !== row.document_id || normalized.sourceSha256 !== row.source_sha256) throw new Error("Normalized document binding failed.");
       const scope = { projectId: String(row.project_id), workspaceId: String(row.workspace_id), bundleId: String(row.bundle_id), documentId: String(row.document_id), executionId: String(row.id), contractVersion: semanticContractVersion } as const;
-      const context = parseSemanticExtractionContext({ version: semanticContractVersion, skill: "atlas.semantic.extract", scope, normalizedDocument: normalized });
+      const context = row.stage === "extraction"
+        ? await this.extractionContext(sql, row, scope)
+        : await this.reconciliationContext(sql, row, scope);
       await sql.unsafe("UPDATE atlas.semantic_execution SET lifecycle='running' WHERE id=$1 AND lifecycle='queued'", [request.executionId]);
       return { executionId: scope.executionId, skill: request.skill, scope, context };
     });
+  }
+
+  private async extractionContext(sql: Sql, row: Row, scope: AuthorizedSemanticContext["scope"]): Promise<unknown> {
+    const cached = await sql.unsafe("SELECT p.id AS perception_execution_id, c.normalized_document FROM atlas.extraction_bundle_document m JOIN atlas.document_perception_execution p ON p.id=m.perception_execution_id JOIN atlas.normalized_document_cache c ON c.source_sha256=$2 AND c.capability_identity=p.capability_identity AND c.invalidated_at IS NULL WHERE m.bundle_id=$1 AND m.document_id=$3 AND m.project_id=$4 AND m.workspace_id=$5 FOR UPDATE OF p", [scope.bundleId, row.source_sha256, scope.documentId, scope.projectId, scope.workspaceId]);
+    if (!cached.length) throw new Error("Normalized document is unavailable.");
+    const normalized = parseNormalizedDocument(json(cached[0].normalized_document));
+    if (normalized.executionId !== cached[0].perception_execution_id || normalized.artifactId !== scope.documentId || normalized.sourceSha256 !== row.source_sha256) throw new Error("Normalized document binding failed.");
+    return parseSemanticExtractionContext({ version: semanticContractVersion, skill: "atlas.semantic.extract", scope, normalizedDocument: normalized });
+  }
+
+  private async reconciliationContext(sql: Sql, row: Row, scope: AuthorizedSemanticContext["scope"]): Promise<unknown> {
+    const prior = await sql.unsafe("SELECT context_json, context_fingerprint FROM atlas.semantic_execution_context WHERE execution_id=$1 FOR UPDATE", [scope.executionId]);
+    if (prior.length) {
+      const context = parseSemanticReconciliationContext(json(prior[0].context_json));
+      if (String(prior[0].context_fingerprint) !== digest(context)) throw new Error("Persisted reconciliation context is invalid.");
+      return context;
+    }
+    const candidateRows = await sql.unsafe("SELECT c.id, c.semantic_key, c.kind, c.normalized_meaning, c.payload, COALESCE(json_agg(json_strip_nulls(json_build_object('page_number', ev.page_number, 'locator_type', ev.locator_type, 'locator_id', ev.locator_id, 'excerpt', ev.excerpt)) ORDER BY ev.page_number, ev.locator_id) FILTER (WHERE ev.id IS NOT NULL), '[]'::json) AS evidence_refs FROM atlas.semantic_candidate c LEFT JOIN atlas.semantic_evidence ev ON ev.semantic_candidate_id=c.id AND ev.document_id=c.document_id WHERE c.project_id=$1 AND c.workspace_id=$2 AND c.bundle_id=$3 AND c.document_id=$4 GROUP BY c.id ORDER BY c.id LIMIT 500", [scope.projectId, scope.workspaceId, scope.bundleId, scope.documentId]);
+    const priorRows = await sql.unsafe("SELECT k.semantic_id AS id, c.semantic_key, c.kind, c.normalized_meaning, c.payload, COALESCE(json_agg(json_strip_nulls(json_build_object('page_number', ev.page_number, 'locator_type', ev.locator_type, 'locator_id', ev.locator_id, 'excerpt', ev.excerpt)) ORDER BY ev.page_number, ev.locator_id) FILTER (WHERE ev.id IS NOT NULL), '[]'::json) AS evidence_refs FROM atlas.knowledge_index k JOIN atlas.semantic_candidate c ON c.id=k.semantic_candidate_id LEFT JOIN atlas.semantic_evidence ev ON ev.semantic_candidate_id=c.id AND ev.document_id=c.document_id WHERE k.project_id=$1 AND k.workspace_id=$2 AND k.bundle_id=$3 AND k.document_id<>$4 GROUP BY k.semantic_id, c.id ORDER BY k.semantic_id LIMIT 500", [scope.projectId, scope.workspaceId, scope.bundleId, scope.documentId]);
+    const materialize = (candidate: Row) => ({ id: String(candidate.id), semantic_key: String(candidate.semantic_key), kind: String(candidate.kind), normalized_meaning: String(candidate.normalized_meaning), payload: json(candidate.payload), evidence_refs: json(candidate.evidence_refs) as unknown[] });
+    const currentCandidates = candidateRows.map(materialize).filter((candidate) => candidate.evidence_refs.length > 0);
+    const priorCandidates = priorRows.map(materialize).filter((candidate) => candidate.evidence_refs.length > 0);
+    const context = parseSemanticReconciliationContext({ version: semanticContractVersion, skill: "atlas.semantic.reconcile", scope, currentCandidates, priorCandidates, selection: { policy: "persisted-current-and-prior-candidates-v1", overflow: candidateRows.length > currentCandidates.length || priorRows.length > priorCandidates.length, selectedCount: priorCandidates.length } });
+    const fingerprint = digest(context);
+    await sql.unsafe("INSERT INTO atlas.semantic_execution_context (execution_id, context_json, context_fingerprint) VALUES ($1,$2::jsonb,$3)", [scope.executionId, JSON.stringify(context), fingerprint]);
+    return context;
   }
 
   async deliver(envelope: unknown, handler: SemanticAcceptanceHandler): Promise<void> {

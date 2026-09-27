@@ -14,9 +14,11 @@
     "test:permissions": "node --test tests/permissions.test.mjs",
     "test:perception-authority": "jiti tests/perception-authority.integration.test.ts",
     "test:project-repository": "jiti tests/project-repository.integration.test.ts",
-    "test:semantic-foundation": "jiti tests/semantic-foundation.integration.test.ts"
+    "test:semantic-foundation": "jiti tests/semantic-foundation.integration.test.ts",
+    "test:semantic-authority": "jiti tests/semantic-authority.integration.test.ts"
   },
   "dependencies": {
+    "@atlas/contracts": "workspace:*",
     "@atlas/core": "workspace:*",
     "drizzle-orm": "0.45.2",
     "postgres": "3.4.7"
