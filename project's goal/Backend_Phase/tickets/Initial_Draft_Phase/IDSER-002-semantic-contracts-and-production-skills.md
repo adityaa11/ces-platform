@@ -1,6 +1,6 @@
 # IDSER-002: Semantic contracts and production skills
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `IDSER-BATCH-02`
 - **Depends on:** IDSER-001 `PASS`.
 - **Baseline:** SRC-IDSER-01 sections 12-17, 20-22, 25, 30-32, 41.3-41.5; AC-08/10/11/13/19/20. See [README](README.md).
@@ -182,3 +182,11 @@ modules directory required a non-interactive purge/install.
   and `git diff --check` passed. At-limit byte fixtures passed; each one-byte
   overflow failed deterministically.
 - **Next state:** `awaiting_review`; stop for CK verification.
+
+## CK approval and GO checkpoint
+
+- **CK result:** `PASS` in
+  [`IDSER-BATCH-02-5bf1bbb-verification.md`](../../../feedback/IDSER-BATCH-02-5bf1bbb-verification.md),
+  reviewed remediation commit `5bf1bbbb10711223e3d17acd94324dc834196ddc`.
+- **GO decision:** recorded IDSER-002 as approved. IDSER-003 is now the next
+  dependency-ready ticket in the authorized IDSER set.
