@@ -115,3 +115,26 @@ when enqueue fails. `git diff --check` passed.
   project-repository integration passed 2/2. `git diff --check` passed.
 - **Next state:** `awaiting_review`; CFC does not decide CK findings. Stop for
   CK verification of `470a161`.
+
+## CFC evidence remediation checkpoint
+
+- **CK source:** `project's goal/feedback/IDSER-BATCH-03-470a161-verification.md`
+  (`CHANGES_REQUIRED`, remaining CK-002 only).
+- **HMN authorization consumed:** `HMN-IDSER-003-001`
+  (`AUTHORIZE_EVIDENCE_REMEDIATION`).
+- **Remediation commit:** `3dbd7dc` (`test(idser): prove transaction visibility
+  and full rollback`).
+- **Addressed finding:** CK-002 now gates the real transactional pg-boss
+  producer after its enqueue and before the enclosing Atlas transaction commits.
+  An independent admin connection proves that the project, member, workspaces,
+  documents, bundle, ordered manifest, D1 execution, source grant, and matching
+  job are all invisible before commit and present with their expected counts
+  afterward. The controlled post-enqueue failure proves every same graph row and
+  matching job is absent after rollback.
+- **Compose evidence:** With the worker paused for queue isolation,
+  `@atlas/db` project-repository integration passed 2/2 and the authenticated
+  `@atlas/app` project-creation integration passed 1/1. Direct `@atlas/db`
+  TypeScript checking and `git diff --check` passed.
+- **Scope confirmation:** Test-local evidence only; no production transaction,
+  queue/worker, source-grant, schema, UI, or future-document behavior changed.
+- **Next state:** `awaiting_review`; hand commit `3dbd7dc` to CK verification.
