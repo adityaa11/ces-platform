@@ -130,3 +130,21 @@ passed. Host package checks were not used as evidence because its existing
 modules directory required a non-interactive purge/install.
 
 **Next state:** `awaiting_review`; CK is required before IDSER-003.
+
+## CFC remediation checkpoint
+
+- **CK source:** `project's goal/feedback/IDSER-BATCH-02-f4b65f0-review.md`
+  (`CHANGES_REQUIRED`).
+- **Remediation commit:** `c75d8aa1b12df9dbdafc2703fd37cce477584427`.
+- **Addressed findings:** `CK-001` now requires excerpts for text/table
+  evidence and bidirectionally accounts every local candidate through source
+  inventory. `CK-002` bounds recursive payload depth, nested collections and
+  nested strings independently of aggregate UTF-8 size. `CK-003` requires the
+  extraction context scope document to match the normalized document artifact.
+  `CK-004` adds positive/negative coverage for all sixteen semantic kinds and
+  ten relationship types, non-fact/ambiguity, count limits, deep payloads,
+  malformed envelopes and mismatched context scope.
+- **Compose evidence:** `docker compose build atlas` succeeded; contracts tests
+  passed 8/8, skills tests passed 1/1, and contracts/skills typechecks passed.
+  `git diff --check` passed.
+- **Next state:** `awaiting_review`; stop for CK verification.
