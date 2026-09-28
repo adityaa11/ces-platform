@@ -22,7 +22,7 @@ const worker = createBackgroundWorker(loadWorkerConfig(), new TestRuntime(), und
   const store = createPerceptionResultReplay(context.database);
   await runDocumentPerception(request, provider, clients.source, clients.results, signal, { idempotencyKey: context.idempotencyKey, store });
 }, undefined, async (job, signal, context) => {
-  await runSemanticJob(job, provider, semanticClient, createSemanticResultReplay(context.database), context.idempotencyKey, signal);
+  await runSemanticJob(job, provider, semanticClient, createSemanticResultReplay(context.database), context.idempotencyKey, signal, { owner: context.leaseOwner, generation: context.leaseGeneration });
 });
 await worker.start();
 await writeFile(readinessPath, "ready\n");

@@ -27,3 +27,10 @@ test("semantic worker fails closed for unavailable and malformed production work
   assert.equal(failures.length, 1);
   await assert.rejects(() => runSemanticJob({ ...job, skill: { id: "atlas.semantic.unknown", version: "v1" } } as never, provider as never, { context: async () => context, deliver: async () => {}, fail: async () => {} }, { load: async () => undefined, stage: async () => {}, acknowledge: async () => {} }, "semantic-key-unknown", new AbortController().signal));
 });
+
+test("a stale semantic claimant redelivers an immutable winning stage instead of reporting a terminal failure", async () => {
+  const winning = { version: "v1", scope, skill: job.skill, provider: { provider: "mistral", model: "winning", endpoint: "/v1/chat/completions", latencyMilliseconds: 1, attempt: 1 }, result };
+  const delivered: unknown[] = []; const failures: unknown[] = [];
+  await runSemanticJob(job, { structured: async () => ({ value: result, provenance: { provider: "mistral" as const, model: "stale", endpoint: "/v1/chat/completions" as const, latencyMilliseconds: 1, attempt: 1 } }) } as never, { context: async () => context, deliver: async (value: unknown) => { delivered.push(value); }, fail: async (value: unknown) => { failures.push(value); } }, { load: async () => undefined, stage: async () => winning, acknowledge: async () => {} }, "semantic-key-race", new AbortController().signal, { owner: "stale-worker", generation: 2 });
+  assert.deepEqual(delivered, [winning]); assert.equal(failures.length, 0);
+});
