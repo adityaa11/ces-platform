@@ -1,12 +1,11 @@
 import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import type { AddressInfo } from "node:net";
 import test from "node:test";
 import Fastify from "fastify";
 import postgres from "postgres";
 import { createSemanticInternalRoutes } from "@atlas/core";
 import { PostgresSemanticAuthority } from "@atlas/db";
-import { canonicalSemanticFingerprint } from "../../../packages/atlas-db/src/semantic-authority.ts";
 import { MistralProvider } from "../src/providers/mistral.ts";
 import { createAtlasSemanticClient } from "../src/atlas-semantic-client.ts";
 import { createSemanticResultReplay } from "../src/semantic-result-replay.ts";
@@ -19,6 +18,7 @@ const databaseUrl = process.env.DATABASE_URL;
 const skip = !databaseUrl;
 const credential = "semantic-integration-service-credential-32-bytes";
 const capability = "semantic-integration-capability";
+const capabilityFingerprint = createHash("sha256").update(JSON.stringify(capability)).digest("hex");
 
 const waitFor = async (predicate: () => Promise<boolean>, label: string, timeoutMs = 30_000): Promise<void> => {
   const deadline = Date.now() + timeoutMs;
@@ -123,7 +123,7 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     await atlas.unsafe("INSERT INTO atlas.normalized_document_cache (cache_key,source_sha256,contract_version,capability,capability_identity,normalized_document) VALUES ($1,$2,'v1','atlas.document.perceive','semantic-worker-test',$3::jsonb)", [`semantic-worker-cache-${suffix}`, sourceSha256, JSON.stringify(normalized(perception, document, sourceSha256))]);
     for (const [label, executionId] of Object.entries(executions)) {
       const stage = label === "extract" ? "extraction" : "reconciliation";
-      await atlas.unsafe("INSERT INTO atlas.semantic_execution (id,project_id,workspace_id,bundle_id,document_id,stage,contract_version,skill_version,logical_identity,lifecycle,authorized_context_identity,authorized_context_fingerprint,capability_valid_until) VALUES ($1,$2,$3,$4,$5,$6,'v1','v1',$1,'queued','context',$7,now()+interval '1 hour')", [executionId, project, workspace, bundle, document, stage, canonicalSemanticFingerprint(capability)]);
+      await atlas.unsafe("INSERT INTO atlas.semantic_execution (id,project_id,workspace_id,bundle_id,document_id,stage,contract_version,skill_version,logical_identity,lifecycle,authorized_context_identity,authorized_context_fingerprint,capability_valid_until) VALUES ($1,$2,$3,$4,$5,$6,'v1','v1',$1,'queued','context',$7,now()+interval '1 hour')", [executionId, project, workspace, bundle, document, stage, capabilityFingerprint]);
     }
     await admin.unsafe(`CREATE SEQUENCE ${completionFault} START 1`);
     await admin.unsafe(`CREATE FUNCTION ${completionFault}_fn() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public AS $$ BEGIN IF NEW.status = 'completed' AND nextval('atlas.${completionFault}') = 1 THEN RAISE EXCEPTION 'synthetic completion acknowledgement loss'; END IF; RETURN NEW; END $$`);
