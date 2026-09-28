@@ -58,6 +58,7 @@ async function executeOnce(idempotencyKey: string, executionId: string, leaseSec
 
 export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningRuntime, queueName = backgroundExecutionQueue, documentPerception?: DocumentPerceptionQueueHandler, perceptionQueueName = documentPerceptionQueue, semantic?: SemanticQueueHandler): BackgroundWorker {
   let stopping = false;
+  const shutdown = new AbortController();
   const boss = new PgBoss({
     connectionString: config.databaseUrl,
     schema: "pgboss",
@@ -91,17 +92,18 @@ export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningR
         pollingIntervalSeconds: 0.5,
       };
       await boss.work(queueName, workOptions, async ([job]) => {
+        const signal = AbortSignal.any([job.signal, shutdown.signal]);
         const backgroundJob = parseBackgroundExecutionJob(job.data);
         const isSemantic = backgroundJob.execution.skill.id.startsWith("atlas.semantic.");
         await executeOnce(backgroundJob.idempotencyKey, backgroundJob.execution.executionId, config.timeoutSeconds, async (lease) => {
           if (isSemantic) {
             if (!semantic) throw new Error("Production semantic dispatcher is unavailable.");
             const semanticJob = parseSemanticBackgroundJob({ version: backgroundJob.execution.version, executionId: backgroundJob.execution.executionId, skill: backgroundJob.execution.skill, ...backgroundJob.execution.input });
-            await semantic(semanticJob, job.signal, { idempotencyKey: backgroundJob.idempotencyKey, database: boss.getDb(), leaseOwner: lease.owner, leaseGeneration: lease.generation });
+            await semantic(semanticJob, signal, { idempotencyKey: backgroundJob.idempotencyKey, database: boss.getDb(), leaseOwner: lease.owner, leaseGeneration: lease.generation });
             return;
           }
-          for await (const event of runtime.execute(backgroundJob.execution, { signal: job.signal })) {
-            if (job.signal.aborted) throw new Error("Background execution was cancelled.");
+          for await (const event of runtime.execute(backgroundJob.execution, { signal })) {
+            if (signal.aborted) throw new Error("Background execution was cancelled.");
             if (event.type === "error") throw new Error(event.message);
           }
         }, boss.getDb(), isSemantic
@@ -124,6 +126,7 @@ export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningR
     },
     async stop() {
       stopping = true;
+      shutdown.abort();
       await boss.stop({ graceful: true, timeout: config.shutdownTimeoutMilliseconds });
     },
   };

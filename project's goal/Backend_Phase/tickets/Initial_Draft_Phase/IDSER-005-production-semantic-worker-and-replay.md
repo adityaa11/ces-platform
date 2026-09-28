@@ -125,6 +125,28 @@ remains IDSER-011.
   the same consolidated CK finding.
 - **Next state:** `awaiting_review`; CK verification is required.
 
+## HMN-007 final production-path evidence remediation checkpoint
+
+- **Authorization consumed:** `HMN-IDSER-005-007` (`AUTHORIZE_EVIDENCE_REMEDIATION`).
+- **CK source:** `project's goal/feedback/IDSER-BATCH-05-1bc3fba-verification.md` (`CHANGES_REQUIRED`, unresolved original `CK-002` only).
+- **Remediation commit:** this CFC handoff commit (`fix(idser): complete semantic worker evidence matrix`).
+- **Remediation:** completed the existing Compose-backed `semantic-worker.integration.test.ts` matrix using real pg-boss workers, PostgreSQL Bridge effects/replay rows, the configured default-fetch `MistralProvider`, loopback Fastify `createSemanticInternalRoutes`, and `PostgresSemanticAuthority`. Shutdown now aborts the active semantic signal so pre-stage cancellation returns to its fenced retry path rather than issuing an Atlas failure. Replay preserves structural result validation but applies the envelope transport limit only at the Atlas handoff, so a schema-valid oversized envelope stages immutably and remains retryable.
+- **Finding Closure Matrix:**
+
+  | Frozen clause | Production-path observation | Status |
+  | --- | --- | --- |
+  | `CK-002.a` conflicting idempotency/stage | An unavailable result route stages winner A; execution B with the same Bridge key cannot replace A, has no provider call or accepted effect, and A alone later completes and cleans up. | `PROVEN` |
+  | `CK-002.b` Atlas context bound | An oversized real context response makes no provider request, creates no replay or accepted effect, and records a redacted bounded Bridge error. | `PROVEN` |
+  | `CK-002.c` result envelope bound after stage | A schema-valid oversized provenance envelope stages once, has zero Atlas acceptance/failure calls, keeps its replay row and non-completed fenced effect after client rejection, and does not re-invoke the provider. | `PROVEN` |
+  | `CK-002.d` semantic-worker cancellation | `worker.stop()` interrupts a real active provider request before stage: no replay or Atlas acceptance exists, the effect remains pending with a fenced lease and redacted diagnostics, and a fresh worker later accepts the retry. | `PROVEN` |
+  | `CK-002.e` orderly in-flight stop/fresh worker | The result route is blocked after immutable stage, `worker.stop()` occurs while active, and a fresh worker redelivers once, completes one Atlas effect, and cleans replay without a second provider call. | `PROVEN` |
+  | Existing `CK-002` cases | Extract/reconcile, acknowledgement loss, completion/cleanup fault, unavailable handler, expired successor, delivery outage, Atlas timeout, duplicate job, missing/rejected credential, malformed/schema-invalid result, provider timeout, and request/response bounds remain registered. Their assertions cover provider/effect/replay outcomes and redacted errors; bounds retain explicit zero/one provider-call behavior. | `PROVEN` |
+
+- **Validation:** rebuilt `agents-bridge` and `agents-bridge-worker`; healthy Compose `postgres`, `atlas`, `agents-bridge`, and `agents-bridge-worker`; `@atlas/db migration:check`; Bridge typecheck; `test:semantic-integration`; `test:semantic`; full Bridge suite; Atlas Core suite; Atlas DB `test:semantic-authority`; contracts; skills; and `git diff --check`. Deterministic loopback HTTP mocks and synthetic credentials were used; no live Mistral credential was read or used.
+- **Direct-regression boundary:** resolved `CK-001` fencing/schema and prior production cases remain closed; this change is limited to frozen `CK-002` cancellation and oversized-envelope replay behavior.
+- **Internal readiness:** `READY_FOR_CK`.
+- **Next state:** `awaiting_review`; hand the one bounded CFC commit to CK for original `CK-002` verification only.
+
 ## HMN-authorized production-path evidence remediation checkpoint
 
 - **Authorization consumed:** `HMN-IDSER-005-003`
@@ -259,6 +281,42 @@ remains IDSER-011.
   route host, Bridge replay ledger/lease database state, or all restart and
   configuration scenarios required by CK-002. It must not be read as a PASS.
 - **Next state:** `awaiting_review`; CK verification is required.
+
+## HMN-007 CFC in-progress checkpoint
+
+- **Authorization:** `HMN-IDSER-005-007` (`AUTHORIZE_EVIDENCE_REMEDIATION`).
+- **Finding Closure Matrix (legacy frozen CK-002):**
+  - `CK-002.a` conflicting idempotency/stage: `IMPLEMENTED_UNPROVEN`; the
+    Compose harness now stages a real winning execution during a result-route
+    outage, submits a distinct losing execution with the identical Bridge key,
+    and asserts winner immutability, zero loser effect/provider calls, and
+    winner-only recovery/cleanup. The complete matrix has not passed.
+  - `CK-002.b` Atlas context bound: `IMPLEMENTED_UNPROVEN`; the Compose
+    harness now drives an oversized response through the real semantic context
+    route and asserts no provider call/replay/acceptance plus bounded ledger
+    diagnostics, but the complete matrix has not passed.
+  - `CK-002.c` result-envelope bound after stage: `UNRESOLVED`; the current
+    replay validator rejects an oversized envelope before durable stage, which
+    conflicts with the frozen required post-stage observation and needs an
+    in-scope determination/repair before this row can be proven.
+  - `CK-002.d` semantic-worker cancellation: `IMPLEMENTED_UNPROVEN`; the
+    harness now stops a real worker while its configured provider request is
+    active and checks the Bridge ledger/replay boundary, but the required
+    successor and uniform observation evidence is incomplete.
+  - `CK-002.e` orderly in-flight stop and fresh worker: `IMPLEMENTED_UNPROVEN`;
+    the harness now creates a post-stage in-flight result-route boundary before
+    `worker.stop()` and requires fresh-worker replay, completion, and cleanup;
+    the focused Compose run has not completed.
+- **Direct regression boundary:** resolved `CK-001` fencing/schema work is not
+  modified. Existing ACK-loss, completion/cleanup fault, delivery outage,
+  duplicate-job, and provider failure cases are preserved.
+- **Validation attempted:** Bridge typecheck and `git diff --check` passed.
+  Compose PostgreSQL, Atlas, Bridge, and Bridge worker services were rebuilt
+  and healthy. The focused `test:semantic-integration` process started against
+  that environment but did not complete in the available execution window, so
+  it is not evidence of a passing matrix.
+- **Internal readiness:** `CFC_NOT_READY_FOR_CK`. No CFC commit, checkpoint
+  handoff, or HMN-007 authorization consumption has occurred.
 
 ## HMN-authorized CFC checkpoint
 
