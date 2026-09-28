@@ -125,6 +125,21 @@ remains IDSER-011.
   the same consolidated CK finding.
 - **Next state:** `awaiting_review`; CK verification is required.
 
+## HMN-authorized evidence remediation checkpoint
+
+- **Authorization consumed:** `HMN-IDSER-005-002`
+  (`AUTHORIZE_EVIDENCE_REMEDIATION`).
+- **Remediation commit:** `b4af1f50688ffa07f7f15f0059448b2e2903cea1`.
+- **Addressed evidence:** registered `test:semantic` now runs deterministic
+  configured `MistralProvider.structured(...)` coverage for both production
+  skill schemas and authenticated semantic context/result HTTP-client handoffs,
+  alongside the replay worker tests. Compose Bridge typecheck passed; the
+  registered semantic suite passed 4/4; `git diff --check` passed.
+- **Limitation:** this evidence does not yet exercise the complete real Atlas
+  route host, Bridge replay ledger/lease database state, or all restart and
+  configuration scenarios required by CK-002. It must not be read as a PASS.
+- **Next state:** `awaiting_review`; CK verification is required.
+
 ## HMN-authorized CFC checkpoint
 
 - **Authorization consumed:** `HMN-IDSER-005-001` (`AUTHORIZE_NEXT_CFC`).
