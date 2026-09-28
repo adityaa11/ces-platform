@@ -25,6 +25,12 @@ GO MUST NOT substitute its own broader or narrower interpretation.
    behavior-versus-proof distinctions; and forbidden scope expansion. GO MUST NOT
    start from only a ticket title or Outcome section.
 
+For each row, record the ticket's pass condition separately from the evidence
+that will demonstrate it. Do not turn every available diagnostic surface into
+an acceptance condition. This row ledger is the basis for GO readiness and
+the checkpoint CK will review; later CK or HMN wording cannot add ticket
+obligations.
+
 If a required predecessor must be reopened, or the work needs a new product requirement, provider, runtime, deployment target, architecture decision, or unresolved policy, stop and return that decision to human/planning authority. Repository code, tests, runtime entrypoints, specialist guidance, and deployment configuration are implementation evidence; they do not add ticket scope.
 
 ## Implement and hand off
@@ -36,13 +42,16 @@ contract-required harness and observations; a weaker test or generic suite pass
 is not a substitute. Before commit/handoff, perform a shadow-CK readiness check for every
 applicable contract row, comparing required and actual evidence and assigning
 the shared closure status. GO MUST NOT hand off with a known `UNRESOLVED`,
-`IMPLEMENTED_UNPROVEN`, or `BLOCKED_AUTHORITY` row. A permitted
-`BLOCKED_ENVIRONMENT` limitation must be explicit. Do not use CK as a
-requirements-discovery phase.
+`IMPLEMENTED_UNPROVEN`, `BLOCKED_AUTHORITY`, or `BLOCKED_ENVIRONMENT` row unless
+the frozen ticket explicitly permits skipping that validation and defines
+accepted alternative proof. Do not use CK as a requirements-discovery phase.
 
 The checkpoint MUST include a compact `## Review Contract Closure` summary with
-stable row IDs, ticket authority, required proof, and status, followed by
-`Internal readiness: READY_FOR_CK`. This is never a self-issued `PASS`.
+stable row IDs, ticket authority, required proof, evidence/test locator, exact
+validation command and outcome, and status, followed by `Internal readiness:
+READY_FOR_CK`. CK should be able to decide each row from this ledger and the
+committed evidence without inventing missing acceptance conditions. This is
+never a self-issued `PASS`.
 
 Then stop and return control to CK. GO does not review or label its own work `PASS`, remediate CK findings, or perform unrelated cleanup.
 

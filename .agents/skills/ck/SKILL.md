@@ -27,14 +27,28 @@ the frozen contract and submitted evidence can surface. Do not stop at the first
 serious finding. Required harnesses, named scenarios, and named observations
 must be proven as specified; a generic or weaker test cannot replace them.
 
+For every proposed required observation, identify the exact ticket row that
+requires it. Separate acceptance conditions from probes used to collect
+evidence: inspecting an additional surface may help prove a condition, but does
+not itself become a condition unless the ticket requires that surface. Do not
+add a uniform per-scenario checklist by reviewer preference. If ticket wording
+cannot resolve a proposed condition, do not convert it into `CHANGES_REQUIRED`;
+record a scope/authority observation and follow the existing human/planning
+handoff if that ambiguity prevents a ticket-based decision.
+
 A blocking finding must name the current-ticket requirement it violates and include the evidence, affected location, and observable correction needed. Use only these ordinary results:
 
 - `PASS`: the committed work satisfies the current ticket and its explicit review obligations.
 - `CHANGES_REQUIRED`: one or more implementation-repairable violations of the current ticket remain.
 
 Each first-review finding MUST have a stable `CK-###` ID and a `## Frozen Finding Closure Matrix`. Every clause (`CK-###.a`) MUST state exact ticket authority,
-unsatisfied evidence, and observable correction/proof. Freeze all clauses when
-the artifact is written; later verification MUST NOT silently strengthen them.
+unsatisfied evidence, and observable correction/proof. State a binary closure
+oracle for each clause: the required observable state, exact evidence location
+or validation that demonstrates it, and direct-regression boundary. Freeze all
+clauses and oracles when the artifact is written; later verification MUST NOT
+silently strengthen them.
+CK findings define the complete admissible closure target. HMN may select or
+narrow unresolved clauses, but its authorization cannot add pass conditions.
 
 Record concerns requiring a ticket change, a new provider/runtime/deployment target, an architecture or product decision, unresolved policy, or reopening an approved predecessor as separate scope-change observations. They are not `CHANGES_REQUIRED` findings and are not CFC work. If the ticket cannot be reviewed without such a decision, stop and return control to human/planning authority.
 
@@ -48,6 +62,15 @@ After the single bounded CFC remediation commit, verify only the original consol
 
 Record whether the original findings are resolved and whether a direct remediation regression exists. If a finding remains unresolved or remediation introduced a direct regression, report `CHANGES_REQUIRED` with the evidence and stop for human/planning authority. Do not start another CFC pass. Otherwise record `PASS`. This verification does not authorize a new full review.
 
+For every original clause, record `RESOLVED` or `UNRESOLVED` against its
+frozen closure oracle. An `UNRESOLVED` result must name the exact expected
+state, actual state, and evidence locator; a general statement that evidence
+is incomplete is insufficient. Do not add a new oracle during verification.
+
+Return `PASS` once all ticket-derived frozen clauses are proven and no direct
+regression remains. Do not withhold it for extra HMN-authored probes or
+observations that are not independently required by the frozen ticket.
+
 If later verification finds a ticket-authorized, non-regression obligation that
 was reasonably identifiable during first review but omitted from the frozen
 matrix, record `REVIEW_CONTRACT_GAP`, not `CHANGES_REQUIRED` against CFC. State
@@ -58,6 +81,15 @@ an out-of-scope observation, not a CFC requirement.
 ## Review after an HMN-authorized CFC
 
 A newer explicit HMN authorization issued after control returned to human/planning authority establishes one new bounded remediation checkpoint. When its committed CFC remediation records the consumed HMN authorization ID, read the active HMN artifact and verify only its named unresolved original finding(s), the remediation diff, the contract's required evidence, and direct regressions introduced by that remediation. Do not restart broad review or add unrelated findings discovered outside this scope.
+
+Treat the HMN artifact as a scope selector and handoff record, not as an
+acceptance source. Verify only ticket-authorized clauses in the original
+frozen matrix. If HMN added a condition with no such authority, record it as a
+scope/contract error; do not enforce it to deny `PASS`.
+Use HMN only to confirm the user authorized another bounded cycle for the
+listed unresolved clause IDs. Read each closure oracle and residual mismatch
+from the original CK artifact; do not require HMN to retranscribe them and do
+not review against a second HMN checklist.
 
 The valid HMN decision satisfies the earlier handoff to human/planning authority; do not reject this verification merely because a previous post-CFC verification occurred. The result remains `PASS`, `CHANGES_REQUIRED`, or `REVIEW_CONTRACT_GAP`. If unresolved again, record the evidence and return control to human/planning authority. Do not authorize or invoke another CFC: a further remediation requires a fresh explicit user `hmn` invocation and new HMN authorization.
 

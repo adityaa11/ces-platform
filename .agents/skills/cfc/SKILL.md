@@ -20,11 +20,12 @@ Read the frozen current ticket and its explicitly incorporated source references
 
 Also resolve the active-ticket tuple and read the shared Review Contract and
 original frozen CK closure matrix. Do not operate from CK prose alone. Before
-changing code, construct a Finding Closure Matrix for each authorized clause:
-ticket authority, required behavior/proof, required harness/scenario/observation,
-current status, and direct-regression boundary. Normalize and freeze a legacy
-matrix when needed without rewriting old artifacts. Preserve already `PROVEN`
-rows and do not redesign them.
+changing code, create a working progress view keyed to the original CK clause
+IDs. For each authorized clause record its current status and evidence location;
+link back to the CK artifact for ticket authority, required behavior/proof,
+harness/scenario/observation, and closure oracle. Do not copy or rewrite those
+criteria. Normalize and freeze a legacy matrix when needed without rewriting
+old artifacts. Preserve already `PROVEN` rows and do not redesign them.
 
 After CK has performed its allowed post-CFC verification and returned control to human/planning authority, do not begin another remediation from CK alone. Read the active newer HMN artifact under `project's goal/feedback/` during preflight. It must be explicitly delegated by a user `hmn` invocation, match the current ticket and unresolved finding/scope, be newer than the CK blocked event it addresses, remain within frozen-ticket authority, and have no later artifact that supersedes it. Only these HMN decisions authorize a new CFC cycle:
 
@@ -34,6 +35,19 @@ After CK has performed its allowed post-CFC verification and returned control to
 
 For uncommitted interrupted work, `CONTINUE_CURRENT_CFC` permits resuming the same authorized scope only. Confirm there is no remediation commit or CK handoff, that the partial worktree changes are in scope, and that the HMN record identifies what remains. It is not a new remediation cycle. Do not resume or consume a stale, mismatched, superseded, or scope-expanding HMN authorization.
 
+Treat HMN as authorization to work on unresolved frozen clauses, not as a
+source of acceptance criteria. Before acting on each HMN instruction, trace it
+to both an unresolved CK clause and its ticket authority. If the HMN artifact
+adds a test surface, scenario, or assertion not required by either, do not
+silently adopt it as a readiness gate; record it as diagnostic-only or return
+the authorization as out of scope for human/planning resolution.
+
+For post-CFC HMN work, use HMN only to confirm that the user authorized work on
+the named unresolved clause IDs. Read the closure oracle, CK-observed mismatch,
+and required evidence directly from the referenced CK artifact. If an
+authorized clause has no objective oracle or ticket trace, stop before editing
+and return that CK review-contract defect to human/planning authority.
+
 For each finding, identify the ticket requirement it enforces. If no such requirement exists, do not implement it. If it requires changing the ticket, reopening an approved predecessor, adding a provider/runtime/deployment target, making an architecture/product/policy decision, or doing future dependency work, stop and return it to human/planning authority as a scope-change issue.
 
 ## Remediate and hand off
@@ -42,10 +56,17 @@ Fix only the accepted in-scope findings from that consolidated review. Do not co
 
 Complete the whole authorized closure matrix, not a convenient subset. Before
 commit/handoff, perform a shadow-CK evidence check. If any authorized clause is
-not `PROVEN` (or does not have a permitted explicit environmental limitation),
+not `PROVEN` (including any required validation blocked by the environment,
+unless the frozen ticket explicitly permits that validation to be skipped and
+defines accepted alternative proof),
 record `CFC_NOT_READY_FOR_CK` and continue the same authorized cycle; do not
 hand off merely to discover what CK asks next. Use the ticket-required harness
 and observations, not weaker substitutes.
+
+The shadow-CK check MUST use the original CK artifact's frozen closure
+condition. Extra HMN probes can be recorded as supporting evidence, but their
+absence cannot make CFC unready unless the frozen ticket or CK clause requires
+them. Never replace CK's matrix with a duplicated HMN-authored matrix.
 
 If the execution window ends before closure, preserve partial in-scope work and
 report interrupted/incomplete CFC. Do not create a completed checkpoint, mark
@@ -58,6 +79,12 @@ Create one bounded remediation commit, identify the CK findings it addresses, an
 The checkpoint MUST map each authorized clause to closure evidence, identify
 direct regressions checked, and record `Internal readiness: READY_FOR_CK` before
 `awaiting_review`.
+
+For each clause, the checkpoint MUST name the test/assertion or other evidence
+locator, the exact required command and its outcome (or the explicit permitted
+environment limitation), and whether the frozen oracle passed. CK must be able
+to map the evidence directly to the original CK clause and its HMN authorization
+ID without inference.
 
 ## Authority
 

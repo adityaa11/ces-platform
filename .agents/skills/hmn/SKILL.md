@@ -48,6 +48,13 @@ Do not ask the user to restate workflow history when it is available in the repo
 4. the latest CFC checkpoint/remediation commit and any newer HMN artifact;
 5. `HEAD`, worktree status, and the directly relevant implementation, tests, migrations, or validation evidence.
 
+When a CK finding has survived multiple CFC cycles, explicitly audit the loop
+before authorizing more work: compare the original frozen clause, every HMN
+authorization, each CFC checkpoint, and each CK decision. Identify whether
+the target stayed stable or gained new scenarios/assertions. Repeated reviewer
+requests and prior HMN wording are not ticket authority; do not legitimize an
+expanded target by repeating it in a new authorization.
+
 Resolve the active-ticket tuple and consume the active Review Contract and the
 frozen CK closure matrix. Identify proven rows, unresolved rows, direct
 regressions, and current CFC state. HMN MUST NOT reconstruct acceptance from
@@ -74,6 +81,21 @@ classify `REVIEW_CONTRACT_GAP` before authorization. Record the omitted
 authority, why it was absent, and whether it affects completion; it is not
 automatic CFC authority. An expectation lacking frozen-ticket authority is out
 of scope or `HUMAN_DECISION_REQUIRED`.
+
+For every proposed CFC authorization, verify that each authorized clause is
+unresolved, frozen by CK, and traceable to the ticket. HMN authorizes those
+clause IDs; it does not define the repair steps or validation because CFC reads
+them in the CK artifact. If a CK clause exceeds ticket authority, authorize no
+CFC for that clause; record the contract/scope problem and hand it to
+human/planning authority.
+
+For a post-CFC authorization, record the latest CK artifact reference and list
+exactly the unresolved CK clause IDs authorized for remediation. Do not copy
+the oracle, mismatch, test command, or repair plan into HMN. CFC reads those
+directly from CK's frozen artifact; HMN's record supplies the explicit
+authorization boundary and the reason to open the cycle. If CK's artifact lacks
+an objective mismatch or ticket trace, do not authorize CFC; classify the
+review-contract defect or unresolved authority instead.
 
 Do not use GO to remediate a CK `CHANGES_REQUIRED` result. Do not issue another CFC merely because review is pending. Do not turn a completed CFC into a new cycle just because the execution session ended.
 
@@ -121,11 +143,16 @@ For `HUMAN_DECISION_REQUIRED`, identify the exact unresolved decision and do not
 
 ## CFC authorization contract
 
-For `CONTINUE_CURRENT_CFC`, `AUTHORIZE_NEXT_CFC`, `AUTHORIZE_EVIDENCE_REMEDIATION`, or `AUTHORIZE_DIRECT_REGRESSION_REPAIR`, the record must be implementation-ready. Name the blocked ticket and CK finding(s), why workflow stopped, current implementation state, exact remaining defect or evidence gap, and the frozen-ticket requirement authorizing the work. State exact permitted changes, exact validation, forbidden changes, whether it continues an existing cycle or opens one bounded new cycle, and that the next command after a committed remediation is `ck`.
+For `CONTINUE_CURRENT_CFC`, `AUTHORIZE_NEXT_CFC`, `AUTHORIZE_EVIDENCE_REMEDIATION`, or `AUTHORIZE_DIRECT_REGRESSION_REPAIR`, the record must identify the blocked ticket, latest CK artifact, unresolved clause IDs, why workflow stopped, and whether it continues an existing cycle or opens one bounded new cycle. The frozen ticket and CK clause already define the defect, repair target, validation, and closure proof; reference them rather than transcribing them. State the authorization boundary (authorized clause IDs only), explicitly exclude resolved clauses from redesign, and name `ck` as the next command after a committed remediation.
 
 For every CFC authorization, name only the exact unresolved clause IDs and the
 already resolved rows forbidden from redesign. A new post-CFC authorization
 still requires a fresh explicit user `hmn` invocation and authorizes one cycle.
+The referenced CK artifact and exact authorized clause IDs are mandatory after
+a post-CFC result. The `Authorized scope`, `Required validation`, and `Forbidden
+work` sections may define the permission boundary and cite the CK artifact;
+they MUST NOT restate its defect, oracle, test commands, or repair checklist.
+CFC must cite the CK artifact and HMN authorization ID in its checkpoint.
 
 For a new CFC cycle, make the active authorization newer than the CK event it addresses. A CFC remediation commit consumes exactly one active HMN authorization and must record that ID. A later unresolved CK needs a new user `hmn` invocation and a new artifact.
 

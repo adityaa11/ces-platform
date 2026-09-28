@@ -106,15 +106,42 @@ observations include replay, provider-call count, lease generation, redaction,
 or cleanup, evidence MUST show each named item. Reuse a `PROVEN` row unless the
 authorized remediation directly invalidates it or creates a direct regression.
 
+### Acceptance versus evidence collection
+
+Separate ticket pass conditions from the method used to inspect them. Every
+required observation must trace to a specific Review Contract row and authority
+reference. A reviewer or HMN may name a useful probe (for example, reading a
+persisted queue row or capturing a thrown error), but that probe is not an
+independent acceptance condition unless the frozen ticket requires that
+behavior or observable surface. Record extra probes as diagnostic evidence.
+
+CK closure clauses MUST say which ticket condition is unsatisfied and what
+observable result would satisfy it. They MUST NOT turn a broad ticket
+requirement into an unbounded uniform checklist across every scenario unless
+the ticket requires that checklist. HMN can select or narrow unresolved
+clauses, never make authorization text a new source of pass conditions.
+Repeating a condition in a CK artifact or HMN authorization cannot give it
+ticket authority it did not have.
+
+`PASS` is justified when all applicable ticket-derived Review Contract rows
+and admissible frozen CK clauses are proven, required validation is recorded,
+and no direct in-scope regression remains. Do not withhold `PASS` for an
+unproven diagnostic probe that is not a ticket condition. Do not issue `PASS`
+while a ticket condition or direct regression remains unproven. This is a
+consistent decision rule, not a promise that arbitrary implementation will
+pass.
+
 ## 4. READY_FOR_CK and durable artifacts
 
 `READY_FOR_CK` is an internal implementer/remediator readiness gate, never a
 PASS result. A checkpoint is ready only when every applicable authorized row is
-`PROVEN`, or a permitted `BLOCKED_ENVIRONMENT` limitation is explicit; required
-validation used the correct harness; no known predictable rejection remains;
-and the checkpoint has enough evidence for CK to verify without reconstructing
-basic completion conditions. `UNRESOLVED`, `IMPLEMENTED_UNPROVEN`, and
-`BLOCKED_AUTHORITY` are not ready.
+`PROVEN`; required validation used the correct harness; no known predictable
+rejection remains; and the checkpoint has enough evidence for CK to verify
+without reconstructing basic completion conditions. `UNRESOLVED`,
+`IMPLEMENTED_UNPROVEN`, and `BLOCKED_AUTHORITY` are not ready. An explicit
+`BLOCKED_ENVIRONMENT` is not `PROVEN` and does not satisfy readiness unless the
+frozen ticket explicitly permits that validation to be skipped and names an
+accepted alternative proof.
 
 Persist this normalized interpretation in the existing workflow artifacts:
 
@@ -122,10 +149,15 @@ Persist this normalized interpretation in the existing workflow artifacts:
   authority, required proof, status, and `Internal readiness: READY_FOR_CK`.
 - First CK artifacts include `## Frozen Finding Closure Matrix`. Every finding
   (`CK-001`) and clause (`CK-001.a`) identifies ticket authority, unsatisfied
-  evidence, and observable closure condition.
-- CFC checkpoints map every authorized clause to its status and evidence.
-- HMN artifacts authorize only unresolved clause IDs and identify already
-  resolved rows that MUST NOT be reopened.
+  evidence, and observable closure condition. Each clause also has a binary
+  closure oracle: the required observable state, exact evidence location or
+  validation that demonstrates it, and direct-regression boundary.
+- CFC checkpoints map every authorized clause to its status, exact test or
+  evidence location, executed command and outcome, and whether the closure
+  oracle passed.
+- HMN artifacts authorize exact unresolved clause IDs and identify resolved
+  clauses that MUST NOT be reopened. They reference the CK artifact as the
+  source of closure oracles; they do not copy or rewrite CK's criteria.
 
 Do not renumber established identifiers. New artifacts may normalize legacy
 ones that lack clause IDs from the frozen ticket, existing CK finding, and
@@ -139,11 +171,22 @@ all currently identifiable ticket-bound deficiencies. Each finding's closure
 clauses freeze when that artifact is written. A finding cannot be silently
 strengthened later.
 
+Before freezing a clause, CK MUST record its exact ticket authority and decide
+whether each proposed test or observation is required by that authority or is
+only a method of gathering evidence. If the ticket is ambiguous about a new
+acceptance obligation, CK records a scope/authority question for human/planning
+resolution; it does not turn the question into `CHANGES_REQUIRED` or let HMN
+settle product acceptance by adding prose.
+
 Post-CFC CK verifies only frozen unresolved clauses, the remediation diff,
 evidence required for those clauses, and direct regressions introduced by the
 remediation. It may return `CHANGES_REQUIRED` only for an unresolved frozen
 clause or such a direct regression. It MUST NOT restart broad review, introduce
 unrelated findings, or demand a stronger harness than the frozen requirement.
+HMN instructions may help locate the evidence CK requested, but cannot make
+additional HMN-authored assertions prerequisites for `PASS`. If a frozen CK
+clause itself exceeds ticket authority, correct that review-contract error
+instead of enforcing it against CFC.
 
 If later verification finds a ticket-authorized obligation that was reasonably
 identifiable in the first review, omitted from frozen closure clauses, and not
@@ -155,8 +198,10 @@ out-of-scope observation or `HUMAN_DECISION_REQUIRED`, not remediation work.
 
 ## 6. Bounded remediation and HMN
 
-CFC builds a Finding Closure Matrix before modifying code and completes every
-authorized clause before `READY_FOR_CK`. It preserves already proven rows. An
+CFC builds a working progress view before modifying code, keyed to the original
+CK clause IDs and linked to the CK artifact. It tracks status and evidence
+locations without copying or changing the closure oracles. CFC completes every
+authorized clause before `READY_FOR_CK` and preserves already proven rows. An
 interrupted execution window with in-scope uncommitted work, no remediation
 commit, and no CK handoff is incomplete current CFC work, not a failed or
 completed cycle. It may be resumed only with `CONTINUE_CURRENT_CFC` semantics.
@@ -169,7 +214,29 @@ requirements. A new post-CFC remediation cycle always requires a fresh explicit
 user `hmn` invocation and a new bounded authorization. No protocol participant
 may recursively invoke GO, CK, CFC, or HMN.
 
+For every post-CFC `CHANGES_REQUIRED`, HMN decides whether another bounded CFC
+is authorized and names only the exact unresolved CK clause IDs. The latest CK
+artifact remains the single source of the residual mismatch and closure
+oracle. HMN MUST NOT duplicate the clause text, closure oracle, repair steps,
+or test commands in a second contract. If CK did not record an objective
+mismatch or the clause cannot be traced to ticket authority, authorize no CFC
+for that item and route the review-contract/scope problem to human/planning.
+
+CFC reads the original CK finding and closure matrix directly, then uses HMN
+only to confirm authorization and its permitted clause IDs. Its readiness
+check is row-by-row: every authorized oracle must have a named assertion or
+evidence locator and an executed required command with a passing outcome. CK's
+post-CFC check reuses the original oracles. A failed oracle or direct
+regression is `CHANGES_REQUIRED`; every passed oracle with no direct
+regression is `PASS`. A new or stronger condition is never a reason to fail
+CFC.
+that CFC.
+
 ## Examples
+
+When changing this protocol or any of its four consuming skills, apply the
+[Atlas review workflow regression benchmark](atlas-ticket-review-regression-benchmark.md)
+and record the outcome in the implementation summary.
 
 1. A ticket requires implementation A, Compose scenarios B/C/D, and observation
    E. If only B/C are proven, GO is `NOT READY FOR CK`; it continues D/E.
@@ -181,6 +248,11 @@ may recursively invoke GO, CK, CFC, or HMN.
    `CONTINUE_CURRENT_CFC`, not `AUTHORIZE_NEXT_CFC`.
 5. If later CK adds a previously identifiable non-regression scenario omitted
    from the frozen matrix, it is `REVIEW_CONTRACT_GAP`, not a CFC failure.
+6. Historical IDSER-005 regression: `17ce58d` left only the redaction/cancellation
+   observations CK listed on original `CK-002.a`--`.e`; HMN-009 mapped those
+   residuals one-to-one; CFC `2707518` recorded job/error/cancellation evidence;
+   CK returned `PASS`. This is the expected bounded HMN -> CFC -> CK result,
+   not proof that arbitrary remediation passes.
 
 ## Non-negotiable scope locks
 
