@@ -15,7 +15,7 @@ export { readVerifiedPerceptionSource, type ImmutablePerceptionSource, type Sour
 export { AtlasPerceptionHandoff, type PerceptionOperation, type PerceptionOperationState, type StartPerceptionOperation } from "./perception-handoff.js";
 export { type PerceptionAuthority, type PerceptionExecutionInput, type AuthorityRedeemedPerceptionSource } from "./perception-authority.js";
 export { createPerceptionInternalRoutes, type InternalPerceptionResponse } from "./perception-internal-route.js";
-export { type AuthorizedSemanticContext, type SemanticAcceptanceHandler, type SemanticAuthority, type SemanticExecutionRequest } from "./semantic-authority.js";
+export { type AuthorizedSemanticContext, type SemanticAcceptanceHandler, type SemanticAuthority, type SemanticExecutionRequest, type SemanticReconciliationSelectionPort } from "./semantic-authority.js";
 export { createSemanticInternalRoutes, type InternalSemanticResponse } from "./semantic-internal-route.js";
 export { assertCreateAtlasProjectInput, projectIdPattern, sourceSha256Pattern, type AccessibleAtlasProject, type AtlasProjectRepository, type CreateAtlasProjectInput, type ExtractionBundleDocumentState, type ExtractionBundleScope, type ExtractionBundleState, type ProjectMemberRole, type ProjectSourceDocument, type ProjectWorkspaceKind, type SemanticExecutionScope, type SemanticFoundationRepository, type SemanticStage } from "./project.js";
 export { createStoredAtlasProject, maxProjectRequestBytes, maxProjectSourceBytes, maxProjectSources, ProjectCreationConflictError, ProjectCreationValidationError, type CreatedAtlasProject, type CreateProjectSource, type CreateStoredAtlasProjectCommand } from "./project-creation.js";

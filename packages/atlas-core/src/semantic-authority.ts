@@ -19,6 +19,11 @@ export type SemanticAcceptanceHandler = {
   accept(input: { readonly executionId: string; readonly completionFingerprint: string; readonly envelope: unknown }): Promise<void>;
 };
 
+/** IDSER-007 owns neighborhood policy. IDSER-004 only persists its bounded result. */
+export type SemanticReconciliationSelectionPort = {
+  select(scope: AuthorizedSemanticContext["scope"]): Promise<unknown>;
+};
+
 export interface SemanticAuthority {
   redeem(request: SemanticExecutionRequest): Promise<AuthorizedSemanticContext>;
   /** An unavailable downstream handler must reject rather than acknowledge. */

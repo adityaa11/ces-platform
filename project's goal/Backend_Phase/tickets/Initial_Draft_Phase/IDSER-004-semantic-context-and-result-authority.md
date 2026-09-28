@@ -88,5 +88,12 @@ the semantic fingerprint test, and the Core semantic internal-route test passed.
 `0015_idser004_semantic_context_authority`; `corepack pnpm --filter @atlas/app build`
 passed. `git diff --check` passed.
 
+**CFC cycle 2 checkpoint:** Consumes `HMN-IDSER-004-002`. Reconciliation now
+requires an injected IDSER-007 selection port and rejects unavailable selection
+instead of discovering a broad neighborhood itself. The DB authority persists
+only the returned, contract-validated context snapshot. Its PostgreSQL suite
+now covers persisted retry, exact perception-execution cache binding, replay
+conflict, post-completion failure rejection, and Bridge SQL denial.
+
 **Next state:** `awaiting_review`; CK must verify this bounded remediation before
 IDSER-005 or IDSER-006 consume its interfaces.
