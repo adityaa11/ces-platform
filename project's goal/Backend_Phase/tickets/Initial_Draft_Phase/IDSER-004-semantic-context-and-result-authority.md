@@ -95,5 +95,11 @@ only the returned, contract-validated context snapshot. Its PostgreSQL suite
 now covers persisted retry, exact perception-execution cache binding, replay
 conflict, post-completion failure rejection, and Bridge SQL denial.
 
+**CFC cycle 3 checkpoint:** Consumes `HMN-IDSER-004-003` for evidence only.
+The PostgreSQL suite drives the real internal route over the PostgreSQL-backed
+authority, proves failed credential/scope/skill/capability paths, execution-bound
+cache isolation, selector non-reinvocation with changed later output, replay and
+completion/failure behavior, and Bridge SQL denial.
+
 **Next state:** `awaiting_review`; CK must verify this bounded remediation before
 IDSER-005 or IDSER-006 consume its interfaces.
