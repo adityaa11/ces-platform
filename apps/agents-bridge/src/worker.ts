@@ -3,6 +3,7 @@ import { PgBoss, type Db } from "pg-boss";
 import type { DocumentPerceptionRequest, ReasoningRuntime } from "@atlas/contracts";
 import { backgroundExecutionQueue, parseBackgroundExecutionJob } from "./queue.js";
 import { documentPerceptionQueue, parseDocumentPerceptionJob } from "./perception-job.js";
+import { parseSemanticBackgroundJob } from "@atlas/contracts";
 import type { WorkerConfig } from "./worker-config.js";
 
 export type BackgroundWorker = {
@@ -16,6 +17,7 @@ export type BackgroundWorker = {
  * It deliberately has no Atlas repository or cache dependency.
  */
 export type DocumentPerceptionQueueHandler = (request: DocumentPerceptionRequest, signal: AbortSignal, context: { readonly idempotencyKey: string; readonly database: Db }) => Promise<void>;
+export type SemanticQueueHandler = (job: ReturnType<typeof parseSemanticBackgroundJob>, signal: AbortSignal, context: { readonly idempotencyKey: string; readonly database: Db }) => Promise<void>;
 
 async function executeOnce(idempotencyKey: string, executionId: string, leaseSeconds: number, work: () => Promise<void>, database: Db, afterCompletion?: () => Promise<void>): Promise<void> {
   const owner = randomUUID();
@@ -37,7 +39,7 @@ async function executeOnce(idempotencyKey: string, executionId: string, leaseSec
   } catch (error) { await database.executeSql("UPDATE bridge.background_effects SET status = 'pending', lease_expires_at = now(), last_error = $4 WHERE idempotency_key = $1 AND lease_owner = $2 AND lease_generation = $3 AND status = 'running'", [idempotencyKey, owner, generation, error instanceof Error ? error.message : "Background execution failed."]); throw error; }
 }
 
-export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningRuntime, queueName = backgroundExecutionQueue, documentPerception?: DocumentPerceptionQueueHandler, perceptionQueueName = documentPerceptionQueue): BackgroundWorker {
+export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningRuntime, queueName = backgroundExecutionQueue, documentPerception?: DocumentPerceptionQueueHandler, perceptionQueueName = documentPerceptionQueue, semantic?: SemanticQueueHandler): BackgroundWorker {
   let stopping = false;
   const boss = new PgBoss({
     connectionString: config.databaseUrl,
@@ -73,12 +75,21 @@ export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningR
       };
       await boss.work(queueName, workOptions, async ([job]) => {
         const backgroundJob = parseBackgroundExecutionJob(job.data);
+        const isSemantic = backgroundJob.execution.skill.id.startsWith("atlas.semantic.");
         await executeOnce(backgroundJob.idempotencyKey, backgroundJob.execution.executionId, config.timeoutSeconds, async () => {
+          if (isSemantic) {
+            if (!semantic) throw new Error("Production semantic dispatcher is unavailable.");
+            const semanticJob = parseSemanticBackgroundJob({ version: backgroundJob.execution.version, executionId: backgroundJob.execution.executionId, skill: backgroundJob.execution.skill, ...backgroundJob.execution.input });
+            await semantic(semanticJob, job.signal, { idempotencyKey: backgroundJob.idempotencyKey, database: boss.getDb() });
+            return;
+          }
           for await (const event of runtime.execute(backgroundJob.execution, { signal: job.signal })) {
             if (job.signal.aborted) throw new Error("Background execution was cancelled.");
             if (event.type === "error") throw new Error(event.message);
           }
-        }, boss.getDb());
+        }, boss.getDb(), isSemantic
+          ? () => boss.getDb().executeSql("DELETE FROM bridge.semantic_result_delivery WHERE idempotency_key=$1 AND execution_id=$2", [backgroundJob.idempotencyKey, backgroundJob.execution.executionId]).then(() => undefined)
+          : undefined);
       });
       if (documentPerception) {
         await boss.createQueue(perceptionQueueName, queueOptions);
