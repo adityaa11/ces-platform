@@ -26,8 +26,15 @@ async function executeOnce(idempotencyKey: string, executionId: string, leaseSec
     [idempotencyKey, executionId, owner, leaseSeconds],
   );
   if (!effect.rows.length) {
-    const existing = await database.executeSql("SELECT execution_id, status FROM bridge.background_effects WHERE idempotency_key = $1", [idempotencyKey]);
-    if (existing.rows.length && (existing.rows[0] as { execution_id: string }).execution_id !== executionId) throw new Error("Background idempotency key conflicts with an existing execution identity.");
+    const existing = await database.executeSql("SELECT execution_id, status, lease_owner, lease_generation FROM bridge.background_effects WHERE idempotency_key = $1", [idempotencyKey]);
+    const current = existing.rows[0] as { execution_id: string; status: string; lease_owner: unknown; lease_generation: unknown } | undefined;
+    if (current && current.execution_id !== executionId) throw new Error("Background idempotency key conflicts with an existing execution identity.");
+    // Completion can commit before replay cleanup. If cleanup then faults, a
+    // pg-boss retry must use the completed claimant's persisted fence rather
+    // than treating the already-completed effect as a no-op forever.
+    if (current?.status === "completed" && afterCompletion && typeof current.lease_owner === "string" && Number.isInteger(Number(current.lease_generation))) {
+      await afterCompletion({ owner: current.lease_owner, generation: Number(current.lease_generation) });
+    }
     return;
   }
   const generation = Number((effect.rows[0] as { lease_generation: number }).lease_generation);
@@ -36,7 +43,17 @@ async function executeOnce(idempotencyKey: string, executionId: string, leaseSec
     const completed = await database.executeSql("UPDATE bridge.background_effects SET status = 'completed', completed_at = now(), lease_expires_at = NULL WHERE idempotency_key = $1 AND lease_owner = $2 AND lease_generation = $3 AND status = 'running' RETURNING idempotency_key", [idempotencyKey, owner, generation]);
     if (!completed.rows.length) throw new Error("Background execution lease was superseded.");
     if (afterCompletion) await afterCompletion(lease);
-  } catch (error) { await database.executeSql("UPDATE bridge.background_effects SET status = 'pending', lease_expires_at = now(), last_error = $4 WHERE idempotency_key = $1 AND lease_owner = $2 AND lease_generation = $3 AND status = 'running'", [idempotencyKey, owner, generation, error instanceof Error ? error.message : "Background execution failed."]); throw error; }
+  } catch (error) {
+    const released = await database.executeSql("UPDATE bridge.background_effects SET status = 'pending', lease_expires_at = now(), last_error = $4 WHERE idempotency_key = $1 AND lease_owner = $2 AND lease_generation = $3 AND status = 'running' RETURNING idempotency_key", [idempotencyKey, owner, generation, error instanceof Error ? error.message : "Background execution failed."]);
+    // `afterCompletion` runs after the fenced status update. A cleanup fault
+    // therefore cannot be released as ordinary pending work; its effect is
+    // already complete. Retry that cleanup with the exact completed fence.
+    if (!released.rows.length && afterCompletion) {
+      const completed = await database.executeSql("SELECT idempotency_key FROM bridge.background_effects WHERE idempotency_key=$1 AND execution_id=$2 AND status='completed' AND lease_owner=$3 AND lease_generation=$4", [idempotencyKey, executionId, owner, generation]);
+      if (completed.rows.length) { await afterCompletion(lease); return; }
+    }
+    throw error;
+  }
 }
 
 export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningRuntime, queueName = backgroundExecutionQueue, documentPerception?: DocumentPerceptionQueueHandler, perceptionQueueName = documentPerceptionQueue, semantic?: SemanticQueueHandler): BackgroundWorker {
@@ -88,7 +105,11 @@ export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningR
             if (event.type === "error") throw new Error(event.message);
           }
         }, boss.getDb(), isSemantic
-          ? (lease) => boss.getDb().executeSql("DELETE FROM bridge.semantic_result_delivery WHERE idempotency_key=$1 AND execution_id=$2 AND lease_owner=$3 AND lease_generation=$4", [backgroundJob.idempotencyKey, backgroundJob.execution.executionId, lease.owner, lease.generation]).then(() => undefined)
+          // `executeOnce` invokes this only after this claimant has fenced the
+          // logical Bridge completion. The staged envelope can belong to an
+          // earlier claimant after acknowledgement loss, so its stage fence is
+          // not a cleanup precondition; exact execution identity remains so.
+          ? () => boss.getDb().executeSql("DELETE FROM bridge.semantic_result_delivery WHERE idempotency_key=$1 AND execution_id=$2", [backgroundJob.idempotencyKey, backgroundJob.execution.executionId]).then(() => undefined)
           : undefined);
       });
       if (documentPerception) {
