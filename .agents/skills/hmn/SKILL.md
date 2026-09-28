@@ -7,6 +7,13 @@ description: Atlas delegated human/planning-authority workflow control. Use only
 
 HMN is the explicit user-delegated human/planning authority for a stalled, bounded Atlas ticket. The user's `hmn` invocation is the delegation event; do not request a second confirmation when repository evidence permits a decision within the frozen ticket.
 
+## Shared interpretation rule
+
+GO, CK, CFC, and HMN MUST derive active-ticket scope, acceptance obligations,
+validation obligations, evidence sufficiency, and finding closure from the
+[shared Atlas Review Contract](../_shared/atlas-ticket-review-contract.md).
+HMN MUST NOT substitute its own broader or narrower interpretation.
+
 HMN does not implement production code, perform CFC work, perform CK review, issue `PASS`, change ticket acceptance criteria, or create a new lifecycle state. Its job is:
 
 ```text
@@ -41,19 +48,32 @@ Do not ask the user to restate workflow history when it is available in the repo
 4. the latest CFC checkpoint/remediation commit and any newer HMN artifact;
 5. `HEAD`, worktree status, and the directly relevant implementation, tests, migrations, or validation evidence.
 
+Resolve the active-ticket tuple and consume the active Review Contract and the
+frozen CK closure matrix. Identify proven rows, unresolved rows, direct
+regressions, and current CFC state. HMN MUST NOT reconstruct acceptance from
+scratch, progressively invent scenarios, strengthen validation/evidence, or add
+harness requirements. Already proven rows MUST be protected from reopening.
+
 Preserve unrelated user changes. A partial worktree may prove an interrupted CFC, but it does not itself authorize work outside the recorded remediation scope.
 
 ## Classify before deciding
 
 Choose exactly one decision and explain why the evidence fits it:
 
-- `CONTINUE_CURRENT_CFC` — a valid CFC authorization already exists, in-scope partial remediation is uncommitted, no handoff to CK occurred, and no new authority is needed. This continues the same cycle; it does not create one.
-- `AUTHORIZE_NEXT_CFC` — a committed CFC remediation was verified by CK, CK returned `CHANGES_REQUIRED` and control to human/planning authority, and the remaining ticket-bound defect is repairable.
-- `AUTHORIZE_EVIDENCE_REMEDIATION` — production code is materially correct, but ticket-required tests, fixtures, deterministic validation, or evidence do not prove the invariant. This is a next-CFC authorization and must protect the correct production implementation from redesign.
-- `AUTHORIZE_DIRECT_REGRESSION_REPAIR` — the prior authorized remediation directly introduced a regression that must be repaired to resolve the same frozen-ticket finding.
-- `RETURN_TO_CK` — a bounded implementation/remediation commit is awaiting review, the worktree does not make its target ambiguous, and CK has not yet reviewed that checkpoint.
-- `RETURN_TO_GO` — no committed implementation checkpoint was reached, no applicable CK finding requires CFC, and the frozen ticket still authorizes completing its initial implementation.
-- `HUMAN_DECISION_REQUIRED` — existing ticket authority cannot select the continuation.
+- `CONTINUE_CURRENT_CFC` - a valid CFC authorization already exists, in-scope partial remediation is uncommitted, no handoff to CK occurred, and no new authority is needed. This continues the same cycle; it does not create one.
+- `AUTHORIZE_NEXT_CFC` - a committed CFC remediation was verified by CK, CK returned `CHANGES_REQUIRED` and control to human/planning authority, and the remaining ticket-bound defect is repairable.
+- `AUTHORIZE_EVIDENCE_REMEDIATION` - production code is materially correct, but ticket-required tests, fixtures, deterministic validation, or evidence do not prove the invariant. This is a next-CFC authorization and must protect the correct production implementation from redesign.
+- `AUTHORIZE_DIRECT_REGRESSION_REPAIR` - the prior authorized remediation directly introduced a regression that must be repaired to resolve the same frozen-ticket finding.
+- `RETURN_TO_CK` - a bounded implementation/remediation commit is awaiting review, the worktree does not make its target ambiguous, and CK has not yet reviewed that checkpoint.
+- `RETURN_TO_GO` - no committed implementation checkpoint was reached, no applicable CK finding requires CFC, and the frozen ticket still authorizes completing its initial implementation.
+- `HUMAN_DECISION_REQUIRED` - existing ticket authority cannot select the continuation.
+
+If post-CFC verification introduces a ticket-authorized non-regression
+expectation that was reasonably identifiable but absent from the frozen matrix,
+classify `REVIEW_CONTRACT_GAP` before authorization. Record the omitted
+authority, why it was absent, and whether it affects completion; it is not
+automatic CFC authority. An expectation lacking frozen-ticket authority is out
+of scope or `HUMAN_DECISION_REQUIRED`.
 
 Do not use GO to remediate a CK `CHANGES_REQUIRED` result. Do not issue another CFC merely because review is pending. Do not turn a completed CFC into a new cycle just because the execution session ended.
 
@@ -102,6 +122,10 @@ For `HUMAN_DECISION_REQUIRED`, identify the exact unresolved decision and do not
 ## CFC authorization contract
 
 For `CONTINUE_CURRENT_CFC`, `AUTHORIZE_NEXT_CFC`, `AUTHORIZE_EVIDENCE_REMEDIATION`, or `AUTHORIZE_DIRECT_REGRESSION_REPAIR`, the record must be implementation-ready. Name the blocked ticket and CK finding(s), why workflow stopped, current implementation state, exact remaining defect or evidence gap, and the frozen-ticket requirement authorizing the work. State exact permitted changes, exact validation, forbidden changes, whether it continues an existing cycle or opens one bounded new cycle, and that the next command after a committed remediation is `ck`.
+
+For every CFC authorization, name only the exact unresolved clause IDs and the
+already resolved rows forbidden from redesign. A new post-CFC authorization
+still requires a fresh explicit user `hmn` invocation and authorizes one cycle.
 
 For a new CFC cycle, make the active authorization newer than the CK event it addresses. A CFC remediation commit consumes exactly one active HMN authorization and must record that ID. A later unresolved CK needs a new user `hmn` invocation and a new artifact.
 

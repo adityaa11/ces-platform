@@ -7,9 +7,24 @@ description: Atlas bounded feedback-correction workflow. Use only when the user 
 
 CFC performs one bounded remediation pass for accepted, in-scope findings in the latest consolidated CK review. The frozen ticket remains the authority; a CK statement is not a requirement by itself. The default remains one CFC pass followed by one CK verification; CFC cannot autonomously start another pass.
 
+## Shared interpretation rule
+
+GO, CK, CFC, and HMN MUST derive active-ticket scope, acceptance obligations,
+validation obligations, evidence sufficiency, and finding closure from the
+[shared Atlas Review Contract](../_shared/atlas-ticket-review-contract.md).
+CFC MUST NOT substitute its own broader or narrower interpretation.
+
 ## Preflight
 
 Read the frozen current ticket and its explicitly incorporated source references, the latest consolidated CK artifact, the reviewed commit, and the current remediation base. Proceed only when CK returned `CHANGES_REQUIRED` and the artifact identifies implementation-repairable findings that trace to current-ticket requirements. Preserve unrelated user changes and stage only authorized paths.
+
+Also resolve the active-ticket tuple and read the shared Review Contract and
+original frozen CK closure matrix. Do not operate from CK prose alone. Before
+changing code, construct a Finding Closure Matrix for each authorized clause:
+ticket authority, required behavior/proof, required harness/scenario/observation,
+current status, and direct-regression boundary. Normalize and freeze a legacy
+matrix when needed without rewriting old artifacts. Preserve already `PROVEN`
+rows and do not redesign them.
 
 After CK has performed its allowed post-CFC verification and returned control to human/planning authority, do not begin another remediation from CK alone. Read the active newer HMN artifact under `project's goal/feedback/` during preflight. It must be explicitly delegated by a user `hmn` invocation, match the current ticket and unresolved finding/scope, be newer than the CK blocked event it addresses, remain within frozen-ticket authority, and have no later artifact that supersedes it. Only these HMN decisions authorize a new CFC cycle:
 
@@ -25,7 +40,24 @@ For each finding, identify the ticket requirement it enforces. If no such requir
 
 Fix only the accepted in-scope findings from that consolidated review. Do not conduct a new review, create findings, change acceptance criteria, or add unrelated refactoring. Preserve approved predecessor boundaries. Run finding-specific validation and directly affected regressions; record exact results and limitations.
 
+Complete the whole authorized closure matrix, not a convenient subset. Before
+commit/handoff, perform a shadow-CK evidence check. If any authorized clause is
+not `PROVEN` (or does not have a permitted explicit environmental limitation),
+record `CFC_NOT_READY_FOR_CK` and continue the same authorized cycle; do not
+hand off merely to discover what CK asks next. Use the ticket-required harness
+and observations, not weaker substitutes.
+
+If the execution window ends before closure, preserve partial in-scope work and
+report interrupted/incomplete CFC. Do not create a completed checkpoint, mark
+`awaiting_review`, consume the cycle, or hand off to CK. A valid
+`CONTINUE_CURRENT_CFC` authorization resumes this uncommitted, in-scope work
+only; it is not a new remediation cycle.
+
 Create one bounded remediation commit, identify the CK findings it addresses, and, when HMN-authorized, record `HMN authorization consumed: <stable ID>` in the remediation checkpoint. Update the checkpoint to `awaiting_review` and stop for CK verification. CFC does not issue `PASS` and never invokes another CK/CFC cycle. After CK verification, unresolved findings or direct remediation regressions return to human/planning authority; there is no automatic second remediation pass.
+
+The checkpoint MUST map each authorized clause to closure evidence, identify
+direct regressions checked, and record `Internal readiness: READY_FOR_CK` before
+`awaiting_review`.
 
 ## Authority
 

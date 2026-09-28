@@ -7,20 +7,38 @@ description: Atlas committed-checkpoint review workflow. Use only when the user 
 
 CK reviews one committed checkpoint against the frozen current ticket and produces one consolidated review. The ticket is the review contract. A CK artifact records whether existing ticket authority was met; it cannot create requirements.
 
+## Shared interpretation rule
+
+GO, CK, CFC, and HMN MUST derive active-ticket scope, acceptance obligations,
+validation obligations, evidence sufficiency, and finding closure from the
+[shared Atlas Review Contract](../_shared/atlas-ticket-review-contract.md).
+CK MUST NOT substitute its own broader or narrower interpretation.
+
 ## First review
 
 Confirm the ticket is `awaiting_review`, the recorded commit matches the committed revision under review, and the worktree does not make the review target ambiguous. If these preconditions fail, stop and return control for clarification; do not invent a review result.
 
 Review the current ticket's scope, acceptance criteria, explicit review requirements, explicit source references, and the approved dependency interfaces/boundaries it actually consumes. Check only regressions the ticket requires to remain green. Inspect enough implementation evidence to make a reasonable consolidated review; broad inspection does not broaden review authority.
 
+Resolve the active-ticket tuple and derive the complete Review Contract before
+reviewing. The first review MUST traverse every applicable row and consolidate
+all currently identifiable ticket-bound deficiencies that a competent review of
+the frozen contract and submitted evidence can surface. Do not stop at the first
+serious finding. Required harnesses, named scenarios, and named observations
+must be proven as specified; a generic or weaker test cannot replace them.
+
 A blocking finding must name the current-ticket requirement it violates and include the evidence, affected location, and observable correction needed. Use only these ordinary results:
 
 - `PASS`: the committed work satisfies the current ticket and its explicit review obligations.
 - `CHANGES_REQUIRED`: one or more implementation-repairable violations of the current ticket remain.
 
+Each first-review finding MUST have a stable `CK-###` ID and a `## Frozen Finding Closure Matrix`. Every clause (`CK-###.a`) MUST state exact ticket authority,
+unsatisfied evidence, and observable correction/proof. Freeze all clauses when
+the artifact is written; later verification MUST NOT silently strengthen them.
+
 Record concerns requiring a ticket change, a new provider/runtime/deployment target, an architecture or product decision, unresolved policy, or reopening an approved predecessor as separate scope-change observations. They are not `CHANGES_REQUIRED` findings and are not CFC work. If the ticket cannot be reviewed without such a decision, stop and return control to human/planning authority.
 
-Dependency approval permits use of only the interfaces, capabilities, invariants, and authority boundaries that the ticket explicitly consumes. It does not import deferred work. For example, PCC may be reviewed for correct use and preservation of BSS-007 `DocumentStore`; BSS-007's future S3/R2-compatible adapter is not PCC scope. Do not require R2, S3, Cloudflare storage, or a deployment change, and do not reopen BSS-007 for that future work. “Production” means the real Atlas application path when used that way in a ticket; it does not select cloud deployment infrastructure by itself.
+Dependency approval permits use of only the interfaces, capabilities, invariants, and authority boundaries that the ticket explicitly consumes. It does not import deferred work. For example, PCC may be reviewed for correct use and preservation of BSS-007 `DocumentStore`; BSS-007's future S3/R2-compatible adapter is not PCC scope. Do not require R2, S3, Cloudflare storage, or a deployment change, and do not reopen BSS-007 for that future work. "Production" means the real Atlas application path when used that way in a ticket; it does not select cloud deployment infrastructure by itself.
 
 Specialist skills may help reason about evidence. They are review authorities only when the frozen ticket explicitly incorporates a specific requirement or binding from them. A skill's `MUST` statement alone cannot expand ticket acceptance.
 
@@ -30,15 +48,26 @@ After the single bounded CFC remediation commit, verify only the original consol
 
 Record whether the original findings are resolved and whether a direct remediation regression exists. If a finding remains unresolved or remediation introduced a direct regression, report `CHANGES_REQUIRED` with the evidence and stop for human/planning authority. Do not start another CFC pass. Otherwise record `PASS`. This verification does not authorize a new full review.
 
+If later verification finds a ticket-authorized, non-regression obligation that
+was reasonably identifiable during first review but omitted from the frozen
+matrix, record `REVIEW_CONTRACT_GAP`, not `CHANGES_REQUIRED` against CFC. State
+the omitted authority, why it matters and was omitted, completion impact, and
+handoff to human/planning authority. An expectation with no ticket authority is
+an out-of-scope observation, not a CFC requirement.
+
 ## Review after an HMN-authorized CFC
 
 A newer explicit HMN authorization issued after control returned to human/planning authority establishes one new bounded remediation checkpoint. When its committed CFC remediation records the consumed HMN authorization ID, read the active HMN artifact and verify only its named unresolved original finding(s), the remediation diff, the contract's required evidence, and direct regressions introduced by that remediation. Do not restart broad review or add unrelated findings discovered outside this scope.
 
-The valid HMN decision satisfies the earlier handoff to human/planning authority; do not reject this verification merely because a previous post-CFC verification occurred. The result remains `PASS` or `CHANGES_REQUIRED`. If unresolved again, record the evidence and return control to human/planning authority. Do not authorize or invoke another CFC: a further remediation requires a fresh explicit user `hmn` invocation and new HMN authorization.
+The valid HMN decision satisfies the earlier handoff to human/planning authority; do not reject this verification merely because a previous post-CFC verification occurred. The result remains `PASS`, `CHANGES_REQUIRED`, or `REVIEW_CONTRACT_GAP`. If unresolved again, record the evidence and return control to human/planning authority. Do not authorize or invoke another CFC: a further remediation requires a fresh explicit user `hmn` invocation and new HMN authorization.
 
 ## Review record
 
 Write one consolidated artifact for the reviewed checkpoint under `project's goal/feedback/`, following the repository's batch/commit naming convention. Preserve prior artifacts. Include the ticket and batch, reviewed commit, frozen ticket reference, result, validation/evidence, findings traced to explicit ticket authority, any separate scope-change observations, and the decision. A post-CFC artifact must identify the original findings and state that it is verification. Record only checks actually performed.
+
+For legacy artifacts without clause IDs, derive the matrix from the frozen
+ticket, existing finding, and evidence at the next applicable workflow event;
+record it as legacy normalization and freeze it without rewriting history.
 
 ## Authority
 
