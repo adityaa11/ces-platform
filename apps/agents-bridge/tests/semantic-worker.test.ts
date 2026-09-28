@@ -36,3 +36,16 @@ test("a stale semantic claimant redelivers an immutable winning stage instead of
   await runSemanticJob(job, { structured: async () => ({ value: result, provenance: { provider: "mistral" as const, model: "stale", endpoint: "/v1/chat/completions" as const, latencyMilliseconds: 1, attempt: 1 } }) } as never, { context: async () => context, deliver: async (value: unknown) => { delivered.push(value); }, fail: async (value: unknown) => { failures.push(value); } }, { load: async () => (++loads === 1 ? undefined : winning), stage: async () => { throw new SemanticReplayLeaseLostError("superseded"); }, acknowledge: async () => {} }, "semantic-key-race", new AbortController().signal, { owner: "stale-worker", generation: 2 });
   assert.deepEqual(delivered, [winning]); assert.equal(failures.length, 0);
 });
+
+test("a post-stage delivery failure remains retryable and never reports the durable result as failed", async () => {
+  const failures: unknown[] = [];
+  await assert.rejects(() => runSemanticJob(
+    job,
+    { structured: async () => ({ value: result, provenance: { provider: "mistral" as const, model: "configured", endpoint: "/v1/chat/completions" as const, latencyMilliseconds: 1, attempt: 1 } }) } as never,
+    { context: async () => context, deliver: async () => { throw new Error("Atlas result transport timed out"); }, fail: async (failure: unknown) => { failures.push(failure); } },
+    { load: async () => undefined, stage: async (_key: string, _execution: string, value: unknown) => value, acknowledge: async () => {} },
+    "semantic-key-post-stage-timeout",
+    new AbortController().signal,
+  ));
+  assert.equal(failures.length, 0);
+});

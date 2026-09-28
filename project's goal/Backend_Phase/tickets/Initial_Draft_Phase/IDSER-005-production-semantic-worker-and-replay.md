@@ -192,6 +192,43 @@ remains IDSER-011.
 - **Next state:** `awaiting_review`; stop for CK verification of original
   `CK-001` and `CK-002` only.
 
+## HMN-authorized CK-002 delivery/replay remediation checkpoint
+
+- **Authorization consumed:** `HMN-IDSER-005-005` (`AUTHORIZE_NEXT_CFC`).
+- **CK source:** `project's goal/feedback/IDSER-BATCH-05-56cbb80-verification.md`
+  (`CHANGES_REQUIRED`, unresolved original `CK-002` only).
+- **Remediation:** extended the registered Compose-backed semantic worker
+  fixture with isolated document/bundle identities for acknowledgement-loss,
+  completion/cleanup fault, unavailable handler with expired successor,
+  delivery outage, Atlas result timeout after immutable staging, and duplicate
+  queue delivery. The fixture runs real pg-boss claims, Bridge
+  `background_effects` and `semantic_result_delivery` rows, the configured
+  HTTP `MistralProvider`, and loopback Fastify Atlas internal routes for both
+  production skills. `runSemanticJob` now treats every error after successful
+  immutable staging as retryable: it returns that error to pg-boss and never
+  sends `client.fail` for the durable envelope.
+- **Scenario evidence:** acknowledgement loss/restart, completion before
+  cleanup, and cleanup fault produced one provider call and one Atlas logical
+  effect, later fenced completion, then replay cleanup. Handler unavailability
+  retained its replay row; an expired successor redelivered it without a second
+  provider call and cleaned it. Delivery outage and Atlas timeout each retained
+  the staged row, made zero Atlas failure-route calls, replayed once to one
+  accepted effect, and cleaned the row. Duplicate queue messages made one
+  provider call, one logical effect, and left no replay row. The full Bridge
+  suite also passed its existing provider cases for missing/invalid
+  credentials, malformed data, request/response bounds, timeout/cancellation,
+  and generic worker orderly-stop cases; deterministic runs used only local
+  HTTP mocks and no Mistral credential.
+- **Validation:** rebuilt `agents-bridge` and worker Compose images, started
+  PostgreSQL/Atlas/Bridge dependencies, then passed Bridge typecheck,
+  `test:semantic-integration`, `test:semantic`, the complete Bridge suite, and
+  `git diff --check`. The Compose integration command supplied its explicit
+  local Bridge database URL; it never used a `--no-deps` PostgreSQL-free run.
+- **Remediation commit:** this CFC handoff commit
+  (`fix(idser): retain staged semantic delivery retries`).
+- **Next state:** `awaiting_review`; stop for CK verification of only original
+  `CK-002`.
+
 ## HMN-authorized evidence remediation checkpoint
 
 - **Authorization consumed:** `HMN-IDSER-005-002`
