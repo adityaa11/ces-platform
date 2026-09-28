@@ -55,6 +55,13 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     outage: `semantic-worker-outage-${suffix}`,
     timeout: `semantic-worker-timeout-${suffix}`,
     duplicate: `semantic-worker-duplicate-${suffix}`,
+    rejected: `semantic-worker-rejected-${suffix}`,
+    malformed: `semantic-worker-malformed-${suffix}`,
+    schemaInvalid: `semantic-worker-schema-invalid-${suffix}`,
+    providerTimeout: `semantic-worker-provider-timeout-${suffix}`,
+    missingCredential: `semantic-worker-missing-credential-${suffix}`,
+    requestBound: `semantic-worker-request-bound-${suffix}`,
+    responseBound: `semantic-worker-response-bound-${suffix}`,
   };
   const resources = Object.fromEntries(Object.keys(executions).map((label) => [label, {
     bundle: `semantic-worker-bundle-${label}-${suffix}`,
@@ -122,9 +129,14 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     return response.code(result.status).type(result.contentType).send(result.body);
   });
   const mistralApp = Fastify();
-  mistralApp.post("/v1/chat/completions", async (request) => {
+  mistralApp.post("/v1/chat/completions", async (request, response) => {
     const body = request.body as { messages?: Array<{ content?: string }>; response_format?: { json_schema?: { schema?: Record<string, unknown> } } };
     providerCallCount += 1;
+    const requested = JSON.parse(body.messages?.at(-1)?.content ?? "{}") as { scope?: { executionId?: string } };
+    if (requested.scope?.executionId === executions.rejected) return response.code(401).send({ error: "credential rejected" });
+    if (requested.scope?.executionId === executions.malformed) return { model: "semantic-integration-model", choices: [{ message: { content: "{" } }] };
+    if (requested.scope?.executionId === executions.schemaInvalid) return { model: "semantic-integration-model", choices: [{ message: { content: JSON.stringify({ version: "v1", candidate_assertions: "not-an-array" }) } }] };
+    if (requested.scope?.executionId === executions.providerTimeout) await new Promise((resolve) => setTimeout(resolve, 250));
     const schema = body.response_format?.json_schema?.schema;
     const reconciliation = Boolean(schema?.properties && "relationships" in schema.properties);
     const value = reconciliation
@@ -157,16 +169,19 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     await mistralApp.listen({ host: "127.0.0.1", port: 0 });
     const atlasPort = (atlasApp.server.address() as AddressInfo).port;
     const mistralPort = (mistralApp.server.address() as AddressInfo).port;
-    const provider = new MistralProvider({ apiKey: "synthetic-provider-key", baseUrl: `http://127.0.0.1:${mistralPort}`, structuredModel: "semantic-integration-model", chatModel: "unused", ocrModel: "unused", maxDocumentBytes: 1, zeroDataRetentionApproved: false, timeoutMilliseconds: 2_000, retryMaxAttempts: 1 });
+    const provider = new MistralProvider({ apiKey: "synthetic-provider-key", baseUrl: `http://127.0.0.1:${mistralPort}`, structuredModel: "semantic-integration-model", chatModel: "unused", ocrModel: "unused", maxDocumentBytes: 1, zeroDataRetentionApproved: false, timeoutMilliseconds: 100, retryMaxAttempts: 1 });
     const client = createAtlasSemanticClient({ baseUrl: `http://127.0.0.1:${atlasPort}`, contextPath: "/internal/semantic/context", resultPath: "/internal/semantic/result", failurePath: "/internal/semantic/failure", serviceCredential: credential, timeoutMilliseconds: 100 });
     const config: WorkerConfig = { databaseUrl: bridgeUrl.toString(), concurrency: 1, timeoutSeconds: 5, retryLimit: 3, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 };
-    worker = createBackgroundWorker(config, new TestRuntime(), queueName, undefined, undefined, async (job, signal, context) => {
+    const createWorker = () => createBackgroundWorker(config, new TestRuntime(), queueName, undefined, undefined, async (job, signal, context) => {
       await runSemanticJob(job, provider, client, createSemanticResultReplay(context.database), context.idempotencyKey, signal, { owner: context.leaseOwner, generation: context.leaseGeneration });
     });
+    worker = createWorker();
     await worker.start();
     const enqueue = async (label: keyof typeof executions, skill: "atlas.semantic.extract" | "atlas.semantic.reconcile") => worker!.boss.send(queueName, { idempotencyKey: keys[label], execution: { version: "v1", executionId: executions[label], mode: "background", skill: { id: skill, version: "v1" }, input: { contextCapability: capability }, context: { boundary: "semantic-worker-integration", items: [] } } }, { singletonKey: `${keys[label]}-${randomUUID()}` });
 
     await enqueue("extract", "atlas.semantic.extract");
+    await waitFor(async () => (await bridge.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [keys.extract]))[0]?.status === "pending", "Atlas acceptance before completion restart boundary");
+    await worker.stop(); worker = createWorker(); await worker.start();
     await waitFor(async () => (await bridge.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [keys.extract]))[0]?.status === "completed", "extraction completion");
     await waitFor(async () => (await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [keys.extract]))[0]?.count === 0, "fenced replay cleanup");
     assert.equal(providerCallCount, 1, "acknowledgement loss, completion retry, and cleanup retry replay one immutable provider result");
@@ -193,6 +208,7 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     // worker attempt must replay that exact envelope instead of failing it.
     await enqueue("outage", "atlas.semantic.extract");
     await waitFor(async () => (await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [keys.outage]))[0]?.count === 1, "durable replay after delivery outage");
+    await worker.stop(); worker = createWorker(); await worker.start();
     await waitFor(async () => (await bridge.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [keys.outage]))[0]?.status === "completed", "outage replay completion");
     await waitFor(async () => (await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [keys.outage]))[0]?.count === 0, "outage replay cleanup");
     assert.equal(accepted.get(executions.outage), 1, "delivery outage reaches one Atlas logical effect after replay");
@@ -215,6 +231,49 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     assert.equal(accepted.get(executions.duplicate), 1, "duplicate queue jobs create one Atlas logical effect");
     assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [keys.duplicate]))[0]?.count, 0, "duplicate completion leaves no replay row");
     assert.equal(providerCallCount, 5, "duplicate jobs invoke Mistral once for their shared execution");
+
+    // Pre-stage provider failures use the real worker, HTTP adapter, Atlas
+    // failure route, and Bridge effect ledger; none creates a trusted replay.
+    for (const label of ["rejected", "malformed", "schemaInvalid", "providerTimeout"] as const) {
+      await enqueue(label, "atlas.semantic.extract");
+      await waitFor(async () => (await atlas.unsafe("SELECT lifecycle FROM atlas.semantic_execution WHERE id=$1", [executions[label]]))[0]?.lifecycle === "failed", `${label} bounded Atlas failure`);
+      assert.equal(accepted.get(executions[label]) ?? 0, 0, `${label} creates no accepted effect`);
+      assert.equal(failed.get(executions[label]), 1, `${label} reaches one bounded failure handoff`);
+      assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [keys[label]]))[0]?.count, 0, `${label} creates no trusted replay`);
+      const effect = (await bridge.unsafe("SELECT status, last_error FROM bridge.background_effects WHERE idempotency_key=$1", [keys[label]]))[0];
+      assert.equal(effect?.status, "completed", `${label} records one completed bounded failure effect`);
+      assert.doesNotMatch(String(effect?.last_error ?? ""), /synthetic-provider-key|semantic-integration-capability|private\/semantic-worker/u);
+    }
+
+    const missingQueue = `${queueName}-missing`;
+    const missingWorker = createBackgroundWorker(config, new TestRuntime(), missingQueue, undefined, undefined, async (job, signal, context) => {
+      const missingProvider = new MistralProvider({ apiKey: undefined, baseUrl: `http://127.0.0.1:${mistralPort}`, structuredModel: "semantic-integration-model", chatModel: "unused", ocrModel: "unused", maxDocumentBytes: 1, zeroDataRetentionApproved: false, timeoutMilliseconds: 100, retryMaxAttempts: 1 });
+      await runSemanticJob(job, missingProvider, client, createSemanticResultReplay(context.database), context.idempotencyKey, signal, { owner: context.leaseOwner, generation: context.leaseGeneration });
+    });
+    try {
+      await missingWorker.start();
+      await missingWorker.boss.send(missingQueue, { idempotencyKey: keys.missingCredential, execution: { version: "v1", executionId: executions.missingCredential, mode: "background", skill: { id: "atlas.semantic.extract", version: "v1" }, input: { contextCapability: capability }, context: { boundary: "semantic-worker-integration", items: [] } } }, { singletonKey: `${keys.missingCredential}-${randomUUID()}` });
+      await waitFor(async () => (await atlas.unsafe("SELECT lifecycle FROM atlas.semantic_execution WHERE id=$1", [executions.missingCredential]))[0]?.lifecycle === "failed", "missing credential bounded failure");
+      assert.equal(accepted.get(executions.missingCredential) ?? 0, 0);
+      assert.equal(failed.get(executions.missingCredential), 1);
+      assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [keys.missingCredential]))[0]?.count, 0);
+    } finally { await missingWorker.stop().catch(() => undefined); }
+
+    for (const [label, bounds] of [["requestBound", { maxRequestBytes: 1 }], ["responseBound", { maxResponseBytes: 1 }]] as const) {
+      const boundedQueue = `${queueName}-${label}`;
+      const boundedWorker = createBackgroundWorker(config, new TestRuntime(), boundedQueue, undefined, undefined, async (job, signal, context) => {
+        const boundedProvider = new MistralProvider({ apiKey: "synthetic-provider-key", baseUrl: `http://127.0.0.1:${mistralPort}`, structuredModel: "semantic-integration-model", chatModel: "unused", ocrModel: "unused", maxDocumentBytes: 1, zeroDataRetentionApproved: false, timeoutMilliseconds: 100, retryMaxAttempts: 1, ...bounds });
+        await runSemanticJob(job, boundedProvider, client, createSemanticResultReplay(context.database), context.idempotencyKey, signal, { owner: context.leaseOwner, generation: context.leaseGeneration });
+      });
+      try {
+        await boundedWorker.start();
+        await boundedWorker.boss.send(boundedQueue, { idempotencyKey: keys[label], execution: { version: "v1", executionId: executions[label], mode: "background", skill: { id: "atlas.semantic.extract", version: "v1" }, input: { contextCapability: capability }, context: { boundary: "semantic-worker-integration", items: [] } } }, { singletonKey: `${keys[label]}-${randomUUID()}` });
+        await waitFor(async () => (await atlas.unsafe("SELECT lifecycle FROM atlas.semantic_execution WHERE id=$1", [executions[label]]))[0]?.lifecycle === "failed", `${label} bounded failure`);
+        assert.equal(accepted.get(executions[label]) ?? 0, 0);
+        assert.equal(failed.get(executions[label]), 1);
+        assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [keys[label]]))[0]?.count, 0);
+      } finally { await boundedWorker.stop().catch(() => undefined); }
+    }
   } finally {
     await worker?.stop().catch(() => undefined);
     await atlasApp.close().catch(() => undefined);

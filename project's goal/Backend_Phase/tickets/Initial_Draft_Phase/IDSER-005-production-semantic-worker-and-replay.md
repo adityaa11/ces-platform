@@ -229,6 +229,22 @@ remains IDSER-011.
 - **Next state:** `awaiting_review`; stop for CK verification of only original
   `CK-002`.
 
+## HMN-006 semantic matrix continuation checkpoint
+
+- **Authorization consumed:** `HMN-IDSER-005-006` (`AUTHORIZE_NEXT_CFC`).
+- **Remediation:** extended the same registered Compose semantic-worker
+  harness with explicit worker replacement at both post-stage and
+  post-acceptance/pre-completion boundaries, plus configured missing/rejected
+  credential, malformed JSON, schema-invalid output, provider-timeout, and
+  provider request/response-bound paths. Each uses an isolated Atlas execution
+  and Bridge effect/replay identity and asserts bounded failure or single
+  replayed completion without secret-bearing diagnostics.
+- **Validation:** rebuilt the Bridge image; Bridge typecheck and the complete
+  Compose `test:semantic-integration` matrix passed with PostgreSQL available.
+- **Remediation commit:** this CFC handoff commit.
+- **Next state:** `awaiting_review`; CK verification remains limited to
+  original `CK-002`.
+
 ## HMN-authorized evidence remediation checkpoint
 
 - **Authorization consumed:** `HMN-IDSER-005-002`
