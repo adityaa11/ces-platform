@@ -37,7 +37,11 @@ test("semantic authority binds execution context, replay, failure, and Bridge is
     assert.equal((await routes.context("wrong", { version: "v1" })).status, 401);
     assert.equal((await routes.context("s".repeat(32), extractionJob)).status, 200);
     assert.equal((await routes.context("s".repeat(32), { ...extractionJob, skill: { id: "atlas.semantic.reconcile", version: "v1" } })).status, 400);
+    assert.equal((await routes.context("s".repeat(32), { ...extractionJob, skill: { id: "atlas.semantic.extract", version: "wrong" } })).status, 400);
     assert.equal((await routes.context("s".repeat(32), { ...extractionJob, contextCapability: "x".repeat(20000) })).status, 400);
+    await atlas.unsafe("UPDATE atlas.semantic_execution SET capability_valid_until=now()-interval '1 second' WHERE id=$1", [extraction]);
+    assert.equal((await routes.context("s".repeat(32), extractionJob)).status, 400);
+    await atlas.unsafe("UPDATE atlas.semantic_execution SET capability_valid_until=now()+interval '1 hour' WHERE id=$1", [extraction]);
     await atlas.unsafe("INSERT INTO atlas.document_perception_execution (id,artifact_id,document_storage_key,source_sha256,mime_type,byte_size,contract_version,state,idempotency_key,capability_identity) VALUES ($1,$2,'private/source',$3,'application/pdf',1,'v1','completed',$4,'test')", [otherPerception, document, sha, `perception-other-key-${suffix}`]);
     await atlas.unsafe("UPDATE atlas.normalized_document_cache SET normalized_document=$2::jsonb WHERE cache_key=$1", [`cache-${suffix}`, JSON.stringify(normalized(otherPerception, document, sha))]);
     await assert.rejects(() => authority.redeem(extractionJob), /binding failed/);
@@ -48,8 +52,10 @@ test("semantic authority binds execution context, replay, failure, and Bridge is
     const first = await authority.redeem(reconciliationJob); const second = await authority.redeem(reconciliationJob);
     assert.deepEqual(first.context, second.context); assert.equal(selectionCalls, 1);
     const envelope = { version: "v1", scope: extractionScope, skill: extractionJob.skill, provider: { provider: "test", model: "test", endpoint: "internal", latencyMilliseconds: 1, attempt: 1 }, result: { version: "v1", candidate_assertions: [], source_statement_inventory: [], questions: [] } };
-    assert.equal((await routes.deliver("s".repeat(32), { ...envelope, scope: { ...envelope.scope, projectId: "wrong" } })).status, 409);
-    assert.equal((await routes.deliver("s".repeat(32), envelope)).status, 204); assert.equal((await routes.deliver("s".repeat(32), envelope)).status, 204); assert.equal(accepted, 1);
+    const rejected = await routes.deliver("s".repeat(32), { ...envelope, scope: { ...envelope.scope, projectId: "wrong" } });
+    assert.equal(rejected.status, 409); assert.deepEqual(rejected.body, { error: "Semantic delivery cannot be accepted." }); assert.doesNotMatch(JSON.stringify(rejected.body), /private|capability|SELECT|test/i);
+    const deliveries = await Promise.all([routes.deliver("s".repeat(32), envelope), routes.deliver("s".repeat(32), envelope)]);
+    assert.deepEqual(deliveries.map(({ status }) => status), [204, 204]); assert.equal(accepted, 1);
     await assert.rejects(() => authority.deliver({ ...envelope, provider: { ...envelope.provider, model: "changed" } }, { accept: async () => {} }), /conflicts/);
     await assert.rejects(() => authority.fail({ scope: extractionScope, code: "provider_timeout" }), /unauthorized/);
     await assert.rejects(() => bridge.unsafe("SELECT * FROM atlas.semantic_execution"), /permission denied/i);

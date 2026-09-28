@@ -101,5 +101,10 @@ authority, proves failed credential/scope/skill/capability paths, execution-boun
 cache isolation, selector non-reinvocation with changed later output, replay and
 completion/failure behavior, and Bridge SQL denial.
 
+**CFC cycle 4 checkpoint:** Consumes `HMN-IDSER-004-004` for remaining route
+evidence. The real route/DB fixture now asserts skill-version and expiry
+rejection, oversized request rejection, redacted bounded error output, and
+concurrent identical completion replay produces one acceptance effect.
+
 **Next state:** `awaiting_review`; CK must verify this bounded remediation before
 IDSER-005 or IDSER-006 consume its interfaces.
