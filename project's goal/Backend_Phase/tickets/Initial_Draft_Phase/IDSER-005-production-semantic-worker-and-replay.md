@@ -104,3 +104,23 @@ live Mistral credential was required or used. The final live-provider proof
 remains IDSER-011.
 
 **Next state:** `awaiting_review`; stop for CK verification.
+
+## CFC remediation checkpoint
+
+- **CK source:** `project's goal/feedback/IDSER-BATCH-05-0209921-review.md`
+  (`CHANGES_REQUIRED`).
+- **Addressed finding:** `CK-001`. Semantic replay staging now receives the
+  BSS-006 lease owner/generation, verifies it against the current Bridge claim,
+  persists that fence on the replay record, and performs cleanup only when the
+  same fenced claimant completes. A same-execution staged winner is redelivered
+  unchanged rather than converted into an Atlas terminal failure by a stale
+  claimant. The additive migration is `0017_idser005_semantic_replay_fencing`.
+- **Remediation commit:** `6bdc2d285538f758a3fd6d7dbde3e72159558d6e`.
+- **Validation:** Compose applied migration `0017`; Bridge typecheck passed;
+  the focused semantic suite passed 3/3, including stale-claim winning-envelope
+  redelivery with no terminal failure; `git diff --check` passed.
+- **Remaining CK scope:** `CK-002` requires the specified real mocked-HTTP,
+  Bridge-ledger, Atlas-route, restart/fencing, and configuration integration
+  matrix. This checkpoint does not claim that evidence; it remains subject to
+  the same consolidated CK finding.
+- **Next state:** `awaiting_review`; CK verification is required.
