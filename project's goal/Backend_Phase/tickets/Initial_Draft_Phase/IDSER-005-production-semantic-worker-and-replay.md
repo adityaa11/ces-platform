@@ -125,6 +125,48 @@ remains IDSER-011.
   the same consolidated CK finding.
 - **Next state:** `awaiting_review`; CK verification is required.
 
+## HMN-authorized production-path evidence remediation checkpoint
+
+- **Authorization consumed:** `HMN-IDSER-005-003`
+  (`AUTHORIZE_EVIDENCE_REMEDIATION`).
+- **Addressed findings:** remaining evidence for original `CK-001` and
+  `CK-002` in `project's goal/feedback/IDSER-BATCH-05-b4af1f5-verification.md`.
+- **Remediation:** added and registered
+  `apps/agents-bridge/tests/semantic-worker.integration.test.ts` as
+  `test:semantic-integration` and in the complete Bridge suite. It uses
+  role-specific PostgreSQL connections, actual pg-boss `createBackgroundWorker`,
+  Bridge effect/replay rows, loopback Fastify Atlas semantic routes backed by
+  `PostgresSemanticAuthority`, and loopback HTTP Mistral through configured
+  default clients. It drives both authorized skills through acknowledgement
+  loss, completion/cleanup faults, handler unavailability, and stale-successor
+  redelivery.
+- **Concrete repair:** the integration suite showed that a redelivery can
+  complete under a newer Bridge lease while its immutable staged envelope
+  retains the original stage lease. Cleanup incorrectly required those leases
+  to match, leaving a replay row after acknowledgement loss. Fenced completion
+  now owns exact-execution cleanup and retries cleanup in its
+  committed-completion window; stale claimants cannot reach cleanup because
+  they cannot fence completion.
+- **Evidence:** normal Compose PostgreSQL, Atlas, Bridge, and Bridge worker
+  services were healthy. The focused production-path suite passed 1/1: one
+  provider call and one Atlas logical effect for acknowledgement-loss recovery,
+  a later completed effect lease, and eventual replay cleanup. Handler
+  unavailability retained replay and did not complete Bridge or Atlas; an
+  expired successor redelivered the same envelope without another provider call,
+  completed it once, then cleaned it. The registered full Bridge suite passed;
+  Core semantic-route, DB semantic-authority, contract, and skill suites also
+  passed. Existing provider/client/worker tests cover bounded configuration,
+  malformed output, timeout/cancellation, and unknown-skill failure without
+  live credentials or sensitive-payload leakage.
+- **Commands:** `docker compose up -d postgres`; `docker compose ps`; Bridge
+  typecheck; focused semantic tests; the registered full Bridge suite; consumed
+  Core/DB semantic authority, contract, and skill suites; and `git diff --check`.
+  All deterministic runs used loopback mocks and no live Mistral credential.
+- **Remediation commit:** `35784b0c45ff27c504b61a55cc16c99466873614`
+  (`fix(idser): recover semantic replay cleanup`).
+- **Next state:** `awaiting_review`; stop for CK verification of only original
+  `CK-001` and `CK-002`.
+
 ## HMN-authorized evidence remediation checkpoint
 
 - **Authorization consumed:** `HMN-IDSER-005-002`
