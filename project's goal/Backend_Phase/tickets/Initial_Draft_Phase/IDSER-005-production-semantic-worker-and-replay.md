@@ -1,6 +1,6 @@
 # IDSER-005: Production semantic worker and replay
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `IDSER-BATCH-05`
 - **Depends on:** IDSER-001, IDSER-002 and IDSER-004 `PASS`.
 - **Baseline:** SRC-IDSER-01 sections 12-15, 24-25, 32-35, 41.3/41.6/41.7, 43; AC-07/08/09/25/28/38/41. See [README](README.md).
@@ -79,4 +79,28 @@ strict semantic job -> fenced Bridge claim -> load staged result, if any
 **Question:** Does the existing worker perform bounded production semantic
 reasoning with durable replay and no duplicate Atlas logical completion?
 
-**Implementation checkpoint:** Not started; record commit and Compose evidence.
+**Implementation checkpoint:** Implemented the production semantic dispatcher at
+`0209921f5bc0cc1aaed6d74b2c30098f3e68b9b8`. The existing
+`bridge-background-execution-v1` worker now admits only the strict semantic
+job shape for the `atlas.semantic.*` namespace, sends the two authorized
+skill IDs through the configured `MistralProvider.structured(...)` boundary,
+fetches only the authenticated Atlas context, locally revalidates structured
+output, and stages the envelope in immutable Bridge replay storage before
+Atlas delivery. A staged result is redelivered without a new provider call;
+the replay row is retired only after fenced Bridge logical completion. Provider
+or schema failures send a bounded typed failure to Atlas; unavailable result
+handoff remains retryable through the existing worker/pg-boss path. Existing
+OCR and generic foundation-runtime behavior remain separately wired.
+
+**Compose evidence:** PostgreSQL and the Atlas service were healthy.
+`docker compose run --rm --no-deps atlas corepack pnpm --filter
+@atlas/agents-bridge typecheck` passed. The focused semantic suite passed 2/2:
+production structured dispatch with staged acknowledgement-loss replay, and
+malformed/unknown semantic work failing closed. The complete Bridge suite then
+passed 28/28 tests, including existing provider, worker/lease, perception
+replay, and negative-authority coverage. `git diff --check` passed before the
+implementation commit. Deterministic tests use mock provider responses; no
+live Mistral credential was required or used. The final live-provider proof
+remains IDSER-011.
+
+**Next state:** `awaiting_review`; stop for CK verification.
