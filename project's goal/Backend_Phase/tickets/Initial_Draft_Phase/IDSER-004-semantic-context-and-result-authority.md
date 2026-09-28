@@ -1,6 +1,6 @@
 # IDSER-004: Semantic context and result authority
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `IDSER-BATCH-04`
 - **Depends on:** IDSER-002 and IDSER-003 `PASS`.
 - **Baseline:** SRC-IDSER-01 sections 11, 14-15, 17, 24-25, 32-34, 36-37; AC-03/11/12/25/28/36. See [README](README.md).
@@ -135,3 +135,11 @@ schema, migration, lifecycle, authority, or route contract changed.
 
 **Next state:** `awaiting_review`; CK must verify this bounded remediation before
 IDSER-005 or IDSER-006 consume its interfaces.
+
+## Approval record
+
+- **CK verification:** `project's goal/feedback/IDSER-BATCH-04-9b36ee8-verification.md`
+  records `PASS` for remediation commit
+  `9b36ee87a746f81844d6b1d9a7d796dae2e7e820`.
+- **Approved state:** `approved`; IDSER-004's frozen interfaces are available to
+  dependent tickets. IDSER-005 has not been started by this GO invocation.
