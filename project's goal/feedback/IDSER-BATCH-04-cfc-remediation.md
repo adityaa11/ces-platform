@@ -32,3 +32,20 @@
 - Passed: `git diff --check`.
 
 No CK result is asserted here. CK must review the remediation commit.
+
+## CFC cycle 6 remediation
+
+- HMN authorization consumed: `HMN-IDSER-004-009` (`AUTHORIZE_NEXT_CFC`).
+- Addressed finding: remaining `CK-004` cancellation, atomicity, and concurrent
+  acceptance evidence.
+- Added `0016_idser004_cancelled_semantic_execution`, registered in the migration
+  runner, and fail-closed cancelled checks for context redemption, result delivery,
+  and failure notification.
+- The PostgreSQL route suite persists `cancelled`, verifies bounded/redacted route
+  rejection and zero handler effects, uses a provisional-write trigger to prove
+  rollback, and exercises competing completion/failure and conflicting completion
+  claims with one accepted effect.
+
+Validation passed in Compose: migration application/check, DB semantic-authority
+suite (1 passed, 0 skipped), Core tests, DB/Core typechecks, app build, and
+`git diff --check`.

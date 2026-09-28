@@ -23,7 +23,7 @@ export class PostgresSemanticAuthority implements SemanticAuthority {
       const rows = await sql.unsafe("SELECT e.*, d.source_sha256 FROM atlas.semantic_execution e JOIN atlas.document d ON d.id=e.document_id AND d.project_id=e.project_id AND d.workspace_id=e.workspace_id WHERE e.id=$1 FOR UPDATE OF e", [request.executionId]);
       if (!rows.length) throw new Error("Semantic execution is unavailable.");
       const row = rows[0];
-      if (row.lifecycle === "completed" || row.lifecycle === "failed" || new Date(String(row.capability_valid_until)).getTime() <= Date.now()) throw new Error("Semantic execution is stale.");
+      if (row.lifecycle === "completed" || row.lifecycle === "failed" || row.lifecycle === "cancelled" || new Date(String(row.capability_valid_until)).getTime() <= Date.now()) throw new Error("Semantic execution is stale.");
       if (stageSkill(row.stage) !== request.skill.id || row.skill_version !== request.skill.version || row.contract_version !== semanticContractVersion || digest(request.contextCapability) !== row.authorized_context_fingerprint) throw new Error("Semantic execution authorization failed.");
       const scope = { projectId: String(row.project_id), workspaceId: String(row.workspace_id), bundleId: String(row.bundle_id), documentId: String(row.document_id), executionId: String(row.id), contractVersion: semanticContractVersion } as const;
       const context = row.stage === "extraction"
@@ -67,7 +67,7 @@ export class PostgresSemanticAuthority implements SemanticAuthority {
       const row = rows[0];
       if (String(row.project_id) !== scope.projectId || String(row.workspace_id) !== scope.workspaceId || String(row.bundle_id) !== scope.bundleId || String(row.document_id) !== scope.documentId || stageSkill(row.stage) !== value.skill!.id || row.skill_version !== value.skill!.version) throw new Error("Semantic result scope mismatch.");
       if (row.lifecycle === "completed") { if (row.completion_fingerprint === completionFingerprint) return; throw new Error("Semantic result conflicts with completed execution."); }
-      if (row.lifecycle === "failed") throw new Error("Semantic execution is failed.");
+      if (row.lifecycle === "failed" || row.lifecycle === "cancelled") throw new Error("Semantic execution is not accepting results.");
       await handler.accept({ executionId: String(row.id), completionFingerprint, envelope });
       await sql.unsafe("UPDATE atlas.semantic_execution SET lifecycle='completed', completion_fingerprint=$2, completed_at=now() WHERE id=$1 AND lifecycle IN ('queued','running')", [row.id, completionFingerprint]);
     });
@@ -77,7 +77,7 @@ export class PostgresSemanticAuthority implements SemanticAuthority {
     const scope = (failure as { scope?: Record<string, unknown> }).scope; if (!scope) throw new Error("Invalid semantic failure.");
     await this.sql.begin(async (sql) => {
       const rows = await sql.unsafe("SELECT lifecycle, project_id, workspace_id, bundle_id, document_id FROM atlas.semantic_execution WHERE id=$1 FOR UPDATE", [scope.executionId]);
-      if (!rows.length || rows[0].lifecycle === "completed" || String(rows[0].project_id) !== scope.projectId || String(rows[0].workspace_id) !== scope.workspaceId || String(rows[0].bundle_id) !== scope.bundleId || String(rows[0].document_id) !== scope.documentId) throw new Error("Semantic failure is unauthorized.");
+      if (!rows.length || rows[0].lifecycle === "completed" || rows[0].lifecycle === "cancelled" || String(rows[0].project_id) !== scope.projectId || String(rows[0].workspace_id) !== scope.workspaceId || String(rows[0].bundle_id) !== scope.bundleId || String(rows[0].document_id) !== scope.documentId) throw new Error("Semantic failure is unauthorized.");
       await sql.unsafe("UPDATE atlas.semantic_execution SET lifecycle='failed', failure_code=$2 WHERE id=$1 AND lifecycle <> 'failed'", [scope.executionId, (failure as { code: string }).code]);
     });
   }

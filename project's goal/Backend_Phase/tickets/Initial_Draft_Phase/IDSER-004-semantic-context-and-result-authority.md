@@ -111,5 +111,11 @@ The PostgreSQL-backed route proves a rejecting acceptance handler yields no 204
 or completed lifecycle; duplicate failure remains idempotent, and failure before
 completion prevents acceptance.
 
+**CFC cycle 6 checkpoint:** Consumes `HMN-IDSER-004-009`. Migration `0016`
+persists `cancelled` as a terminal semantic lifecycle and the authority rejects
+it before context, delivery, failure, or handler effects. The PostgreSQL route
+suite also proves provisional accepted-state rollback and contended completion /
+failure and conflicting-completion claims retain one terminal effect.
+
 **Next state:** `awaiting_review`; CK must verify this bounded remediation before
 IDSER-005 or IDSER-006 consume its interfaces.
