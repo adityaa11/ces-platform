@@ -124,3 +124,21 @@ remains IDSER-011.
   matrix. This checkpoint does not claim that evidence; it remains subject to
   the same consolidated CK finding.
 - **Next state:** `awaiting_review`; CK verification is required.
+
+## HMN-authorized CFC checkpoint
+
+- **Authorization consumed:** `HMN-IDSER-005-001` (`AUTHORIZE_NEXT_CFC`).
+- **CK source:** `project's goal/feedback/IDSER-BATCH-05-6bdc2d2-verification.md`
+  (`CHANGES_REQUIRED`).
+- **Remediation commit:** `924d556cb23a99c55b50af39a80b067bd3ddd3a9`.
+- **Addressed state transition:** a `SemanticReplayLeaseLostError` now causes
+  Bridge to reload and deliver an already-durable same-execution envelope. If
+  no winner exists it remains a retryable worker error. It no longer reaches
+  the terminal Atlas failure route, so a stale claimant cannot invalidate the
+  winning replay payload.
+- **Validation:** rebuilt Compose image; Bridge typecheck passed; focused
+  semantic suite passed 3/3; `git diff --check` passed.
+- **Limitation:** the required CK-002 real HTTP/Atlas/Bridge-ledger integration
+  matrix has not yet been completed, so this checkpoint does not claim the
+  comprehensive HMN evidence package is satisfied.
+- **Next state:** `awaiting_review`; CK verification is required.
