@@ -49,3 +49,31 @@ No CK result is asserted here. CK must review the remediation commit.
 Validation passed in Compose: migration application/check, DB semantic-authority
 suite (1 passed, 0 skipped), Core tests, DB/Core typechecks, app build, and
 `git diff --check`.
+
+## CFC evidence cycle 7 remediation
+
+- HMN authorization consumed: `HMN-IDSER-004-010`
+  (`AUTHORIZE_EVIDENCE_REMEDIATION`).
+- Addressed finding: remaining `CK-004` evidence only: exact boundary behavior,
+  bounded/redacted errors, and both completion/failure terminal orders.
+- Core coverage proves an exact 16 KiB job representation and exactly 1 MiB
+  serialized extraction context are accepted; one byte beyond the context
+  response bound is rejected. The host remains responsible for rejecting
+  over-limit streamed whitespace before parsed JSON reaches the neutral route.
+- The PostgreSQL fixture retains cancelled, rollback, and conflicting-delivery
+  checks and adds a test-local advisory-lock trigger gate. Completion first
+  leaves `completed` with one handler effect; failure first leaves `failed` and
+  the contending completion cannot add an effect.
+
+Validation on the final remediation worktree, in Compose:
+
+- `corepack pnpm --filter @atlas/core test`: 18 passed, 0 failed, 0 skipped.
+- Core and DB typechecks, DB migration and migration check, and app build:
+  passed; migrations were already up to date.
+- `corepack pnpm --filter @atlas/db test:semantic-authority`: 1 passed, 0
+  failed, 0 skipped; it exercises cancellation redaction, provisional rollback,
+  conflicting delivery, completion-wins, and failure-wins.
+- `git diff --check`: passed.
+
+No environment limitation remained. State: `awaiting_review`; hand the single
+remediation commit directly to CK for bounded verification.

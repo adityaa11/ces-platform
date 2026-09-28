@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import test from "node:test";
 import postgres from "postgres";
 import { createSemanticInternalRoutes } from "@atlas/core";
+import { semanticLimits } from "@atlas/contracts";
 import { PostgresSemanticAuthority, canonicalSemanticFingerprint } from "../src/semantic-authority.ts";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -15,20 +16,20 @@ test("semantic authority binds execution context, replay, failure, and Bridge is
   const atlasUrl = new URL(databaseUrl!); atlasUrl.username = "atlas_app"; atlasUrl.password = process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only";
   const bridgeUrl = new URL(databaseUrl!); bridgeUrl.username = "agents_bridge"; bridgeUrl.password = process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only";
   const atlas = postgres(atlasUrl.toString(), { max: 1 }); const bridge = postgres(bridgeUrl.toString(), { max: 1 });
-  const suffix = randomUUID(); const owner = `semantic-owner-${suffix}`; const project = `semantic-project-${suffix}`; const workspace = `semantic-workspace-${suffix}`; const bundle = `semantic-bundle-${suffix}`; const document = `semantic-document-${suffix}`; const raceDocument = `semantic-race-document-${suffix}`; const conflictDocument = `semantic-conflict-document-${suffix}`; const perception = `perception-${suffix}`; const otherPerception = `perception-other-${suffix}`; const extraction = `semantic-extraction-${suffix}`; const reconciliation = `semantic-reconciliation-${suffix}`; const race = `semantic-race-${suffix}`; const conflict = `semantic-conflict-${suffix}`; const sha = "a".repeat(64);
+  const suffix = randomUUID(); const owner = `semantic-owner-${suffix}`; const project = `semantic-project-${suffix}`; const workspace = `semantic-workspace-${suffix}`; const bundle = `semantic-bundle-${suffix}`; const document = `semantic-document-${suffix}`; const raceDocument = `semantic-race-document-${suffix}`; const failureDocument = `semantic-failure-document-${suffix}`; const conflictDocument = `semantic-conflict-document-${suffix}`; const perception = `perception-${suffix}`; const otherPerception = `perception-other-${suffix}`; const extraction = `semantic-extraction-${suffix}`; const reconciliation = `semantic-reconciliation-${suffix}`; const race = `semantic-race-${suffix}`; const failureRace = `semantic-failure-race-${suffix}`; const conflict = `semantic-conflict-${suffix}`; const sha = "a".repeat(64);
   const insertExecution = (id: string, stage: "extraction" | "reconciliation", documentId = document) => atlas.unsafe("INSERT INTO atlas.semantic_execution (id, project_id, workspace_id, bundle_id, document_id, stage, contract_version, skill_version, logical_identity, lifecycle, authorized_context_identity, authorized_context_fingerprint, capability_valid_until) VALUES ($1,$2,$3,$4,$5,$6,'v1','v1',$1,'queued','context',$7,now()+interval '1 hour')", [id, project, workspace, bundle, documentId, stage, canonicalSemanticFingerprint(capability)]);
   try {
     await admin.unsafe('INSERT INTO auth."user" (id,name,email,"emailVerified","createdAt","updatedAt") VALUES ($1,$1,$2,false,now(),now())', [owner, `${owner}@example.test`]);
     await atlas.unsafe("INSERT INTO atlas.project (id,stable_id,name,created_by_user_id) VALUES ($1,$2,'semantic',$3)", [project, `semantic-${suffix.slice(0, 12)}`, owner]);
     await atlas.unsafe("INSERT INTO atlas.workspace (id,project_id,kind,state,display_name) VALUES ($1,$2,'initial_draft','draft','Draft')", [workspace, project]);
     await atlas.unsafe("INSERT INTO atlas.document (id,project_id,workspace_id,original_filename,storage_key,source_sha256,byte_size,media_type,created_by_user_id) VALUES ($1,$2,$3,'source.pdf','private/source',$4,1,'application/pdf',$5)", [document, project, workspace, sha, owner]);
-    await atlas.unsafe("INSERT INTO atlas.document (id,project_id,workspace_id,original_filename,storage_key,source_sha256,byte_size,media_type,created_by_user_id) VALUES ($1,$2,$3,'race.pdf','private/race',$4,1,'application/pdf',$5),($6,$2,$3,'conflict.pdf','private/conflict',$4,1,'application/pdf',$5)", [raceDocument, project, workspace, sha, owner, conflictDocument]);
+    await atlas.unsafe("INSERT INTO atlas.document (id,project_id,workspace_id,original_filename,storage_key,source_sha256,byte_size,media_type,created_by_user_id) VALUES ($1,$2,$3,'race.pdf','private/race',$4,1,'application/pdf',$5),($6,$2,$3,'failure.pdf','private/failure',$4,1,'application/pdf',$5),($7,$2,$3,'conflict.pdf','private/conflict',$4,1,'application/pdf',$5)", [raceDocument, project, workspace, sha, owner, failureDocument, conflictDocument]);
     await atlas.unsafe("INSERT INTO atlas.extraction_bundle (id,project_id,workspace_id,state,semantic_contract_version,reconciliation_contract_version,expected_document_count) VALUES ($1,$2,$3,'waiting','v1','v1',1)", [bundle, project, workspace]);
     await atlas.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id,document_id,project_id,workspace_id,sequence,state,perception_execution_id) VALUES ($1,$2,$3,$4,1,'pending',$5)", [bundle, document, project, workspace, perception]);
-    await atlas.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id,document_id,project_id,workspace_id,sequence,state) VALUES ($1,$2,$3,$4,2,'pending'),($1,$5,$3,$4,3,'pending')", [bundle, raceDocument, project, workspace, conflictDocument]);
+    await atlas.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id,document_id,project_id,workspace_id,sequence,state) VALUES ($1,$2,$3,$4,2,'pending'),($1,$5,$3,$4,3,'pending'),($1,$6,$3,$4,4,'pending')", [bundle, raceDocument, project, workspace, failureDocument, conflictDocument]);
     await atlas.unsafe("INSERT INTO atlas.document_perception_execution (id,artifact_id,document_storage_key,source_sha256,mime_type,byte_size,contract_version,state,idempotency_key,capability_identity) VALUES ($1,$2,'private/source',$3,'application/pdf',1,'v1','completed',$4,'test')", [perception, document, sha, `perception-key-${suffix}`]);
     await atlas.unsafe("INSERT INTO atlas.normalized_document_cache (cache_key,source_sha256,contract_version,capability,capability_identity,normalized_document) VALUES ($1,$2,'v1','atlas.document.perceive','test',$3::jsonb)", [`cache-${suffix}`, sha, JSON.stringify(normalized(perception, document, sha))]);
-    await insertExecution(extraction, "extraction"); await insertExecution(reconciliation, "reconciliation"); await insertExecution(race, "extraction", raceDocument); await insertExecution(conflict, "extraction", conflictDocument);
+    await insertExecution(extraction, "extraction"); await insertExecution(reconciliation, "reconciliation"); await insertExecution(race, "extraction", raceDocument); await insertExecution(failureRace, "extraction", failureDocument); await insertExecution(conflict, "extraction", conflictDocument);
     let selectionCalls = 0;
     const selection = { select: async (scope: ReturnType<typeof scopeOf>) => { selectionCalls += 1; return { version: "v1", skill: "atlas.semantic.reconcile", scope, currentCandidates: [], priorCandidates: selectionCalls === 1 ? [] : [{ id: "later", semantic_key: "later", kind: "rule", normalized_meaning: "later", payload: {}, evidence_refs: [{ page_number: 1, locator_type: "text_block", locator_id: "later", excerpt: "later" }] }], selection: { policy: "idser-007-test", overflow: false, selectedCount: 0 } }; } };
     const authority = new PostgresSemanticAuthority(atlas, selection);
@@ -41,6 +42,13 @@ test("semantic authority binds execution context, replay, failure, and Bridge is
     assert.equal((await routes.context("s".repeat(32), { ...extractionJob, skill: { id: "atlas.semantic.reconcile", version: "v1" } })).status, 400);
     assert.equal((await routes.context("s".repeat(32), { ...extractionJob, skill: { id: "atlas.semantic.extract", version: "wrong" } })).status, 400);
     assert.equal((await routes.context("s".repeat(32), { ...extractionJob, contextCapability: "x".repeat(20000) })).status, 400);
+    const stream = (source: string) => new ReadableStream<Uint8Array>({ start(controller) { for (let index = 0; index < source.length; index += 127) controller.enqueue(Buffer.from(source.slice(index, index + 127))); controller.close(); } });
+    const exactRequest = `${" ".repeat(semanticLimits.jobBytes - Buffer.byteLength(JSON.stringify(extractionJob)))}${JSON.stringify(extractionJob)}`;
+    const internalCredential = process.env.AGENTS_BRIDGE_SERVICE_CREDENTIAL ?? "agents_bridge_service_local_dev_only_32";
+    const internalRequest = async (body: string) => fetch("http://127.0.0.1:3001/internal/semantic/context", { method: "POST", headers: { authorization: `Bearer ${internalCredential}`, "content-type": "application/json" }, body: stream(body), duplex: "half" } as RequestInit);
+    assert.equal(Buffer.byteLength(exactRequest), semanticLimits.jobBytes);
+    assert.equal((await internalRequest(exactRequest)).status, 200);
+    assert.equal((await internalRequest(`${exactRequest} `)).status, 400);
     await atlas.unsafe("UPDATE atlas.semantic_execution SET capability_valid_until=now()-interval '1 second' WHERE id=$1", [extraction]);
     assert.equal((await routes.context("s".repeat(32), extractionJob)).status, 400);
     await atlas.unsafe("UPDATE atlas.semantic_execution SET capability_valid_until=now()+interval '1 hour' WHERE id=$1", [extraction]);
@@ -87,6 +95,20 @@ test("semantic authority binds execution context, replay, failure, and Bridge is
     const failure = authority.fail({ scope: raceScope, code: "provider_timeout" }); releaseCompletion();
     await completion; await assert.rejects(failure, /unauthorized/);
     assert.equal((await atlas.unsafe("SELECT lifecycle FROM atlas.semantic_execution WHERE id=$1", [race]))[0].lifecycle, "completed"); assert.equal(raceEffects, 1);
+    const failureRaceScope = scopeOf(failureRace, project, workspace, bundle, failureDocument);
+    const failureRaceEnvelope = { ...envelope, scope: failureRaceScope };
+    const failureGate = 104004;
+    await admin.unsafe("CREATE OR REPLACE FUNCTION atlas.idser004_hold_failure_commit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN PERFORM pg_advisory_xact_lock(104004); RETURN NEW; END; $$");
+    await admin.unsafe("CREATE TRIGGER idser004_hold_failure_commit BEFORE UPDATE OF lifecycle ON atlas.semantic_execution FOR EACH ROW EXECUTE FUNCTION atlas.idser004_hold_failure_commit()");
+    const gate = postgres(databaseUrl!, { max: 1 });
+    await gate.unsafe("SELECT pg_advisory_lock($1)", [failureGate]);
+    const failureFirst = authority.fail({ scope: failureRaceScope, code: "provider_timeout" });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    const completionAfterFailure = authority.deliver(failureRaceEnvelope, { accept: async () => { raceEffects += 1; } });
+    await gate.unsafe("SELECT pg_advisory_unlock($1)", [failureGate]); await gate.end();
+    await failureFirst; await assert.rejects(completionAfterFailure, /not accepting/);
+    assert.equal((await atlas.unsafe("SELECT lifecycle FROM atlas.semantic_execution WHERE id=$1", [failureRace]))[0].lifecycle, "failed"); assert.equal(raceEffects, 1);
+    await admin.unsafe("DROP TRIGGER idser004_hold_failure_commit ON atlas.semantic_execution"); await admin.unsafe("DROP FUNCTION atlas.idser004_hold_failure_commit()");
     const conflictScope = scopeOf(conflict, project, workspace, bundle, conflictDocument);
     const conflicts = await Promise.allSettled([authority.deliver({ ...envelope, scope: conflictScope }, { accept: async () => { raceEffects += 1; } }), authority.deliver({ ...envelope, scope: conflictScope, provider: { ...envelope.provider, model: "different" } }, { accept: async () => { raceEffects += 1; } })]);
     assert.equal(conflicts.filter(({ status }) => status === "fulfilled").length, 1); assert.equal(raceEffects, 2);
@@ -98,7 +120,7 @@ test("semantic authority binds execution context, replay, failure, and Bridge is
     await assert.rejects(() => authority.fail({ scope: extractionScope, code: "provider_timeout" }), /unauthorized/);
     await assert.rejects(() => bridge.unsafe("SELECT * FROM atlas.semantic_execution"), /permission denied/i);
   } finally {
-    await admin.unsafe("DROP TRIGGER IF EXISTS idser004_fail_after_provisional_acceptance ON atlas.semantic_execution"); await admin.unsafe("DROP FUNCTION IF EXISTS atlas.idser004_fail_after_provisional_acceptance()"); await admin.unsafe("DROP TABLE IF EXISTS atlas.idser004_provisional_acceptance");
-    await admin.unsafe("DELETE FROM atlas.semantic_execution_context WHERE execution_id=$1 OR execution_id=$2", [extraction, reconciliation]); await admin.unsafe("DELETE FROM atlas.semantic_execution WHERE id IN ($1,$2,$3,$4)", [extraction, reconciliation, race, conflict]); await admin.unsafe("DELETE FROM atlas.normalized_document_cache WHERE cache_key=$1", [`cache-${suffix}`]); await admin.unsafe("DELETE FROM atlas.document_perception_execution WHERE id=$1 OR id=$2", [perception, otherPerception]); await admin.unsafe("DELETE FROM atlas.extraction_bundle_document WHERE bundle_id=$1", [bundle]); await admin.unsafe("DELETE FROM atlas.extraction_bundle WHERE id=$1", [bundle]); await admin.unsafe("DELETE FROM atlas.document WHERE id IN ($1,$2,$3)", [document, raceDocument, conflictDocument]); await admin.unsafe("DELETE FROM atlas.workspace WHERE id=$1", [workspace]); await admin.unsafe("DELETE FROM atlas.project WHERE id=$1", [project]); await admin.unsafe('DELETE FROM auth."user" WHERE id=$1', [owner]); await Promise.all([admin.end(), atlas.end(), bridge.end()]);
+    await admin.unsafe("DROP TRIGGER IF EXISTS idser004_fail_after_provisional_acceptance ON atlas.semantic_execution"); await admin.unsafe("DROP FUNCTION IF EXISTS atlas.idser004_fail_after_provisional_acceptance()"); await admin.unsafe("DROP TRIGGER IF EXISTS idser004_hold_failure_commit ON atlas.semantic_execution"); await admin.unsafe("DROP FUNCTION IF EXISTS atlas.idser004_hold_failure_commit()"); await admin.unsafe("DROP TABLE IF EXISTS atlas.idser004_provisional_acceptance");
+    await admin.unsafe("DELETE FROM atlas.semantic_execution_context WHERE execution_id=$1 OR execution_id=$2", [extraction, reconciliation]); await admin.unsafe("DELETE FROM atlas.semantic_execution WHERE id IN ($1,$2,$3,$4,$5)", [extraction, reconciliation, race, failureRace, conflict]); await admin.unsafe("DELETE FROM atlas.normalized_document_cache WHERE cache_key=$1", [`cache-${suffix}`]); await admin.unsafe("DELETE FROM atlas.document_perception_execution WHERE id=$1 OR id=$2", [perception, otherPerception]); await admin.unsafe("DELETE FROM atlas.extraction_bundle_document WHERE bundle_id=$1", [bundle]); await admin.unsafe("DELETE FROM atlas.extraction_bundle WHERE id=$1", [bundle]); await admin.unsafe("DELETE FROM atlas.document WHERE id IN ($1,$2,$3,$4)", [document, raceDocument, failureDocument, conflictDocument]); await admin.unsafe("DELETE FROM atlas.workspace WHERE id=$1", [workspace]); await admin.unsafe("DELETE FROM atlas.project WHERE id=$1", [project]); await admin.unsafe('DELETE FROM auth."user" WHERE id=$1', [owner]); await Promise.all([admin.end(), atlas.end(), bridge.end()]);
   }
 });

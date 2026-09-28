@@ -117,5 +117,13 @@ it before context, delivery, failure, or handler effects. The PostgreSQL route
 suite also proves provisional accepted-state rollback and contended completion /
 failure and conflicting-completion claims retain one terminal effect.
 
+**CFC evidence cycle 7 checkpoint:** Consumes `HMN-IDSER-004-010` for CK-004
+only. Exact context request and serialized-context boundaries are covered at the
+Core contract limit, including one-byte-over rejection and redacted failure
+output. The PostgreSQL authority fixture now holds the real row lock through a
+test-local transactional advisory gate to prove both completion-wins and
+failure-wins overlap orders, retaining one terminal state and no extra handler
+effect. No production authority, migration, schema, or route contract changed.
+
 **Next state:** `awaiting_review`; CK must verify this bounded remediation before
 IDSER-005 or IDSER-006 consume its interfaces.

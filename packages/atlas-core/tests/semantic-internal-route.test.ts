@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createSemanticInternalRoutes } from "../src/index.ts";
+import { semanticLimits } from "@atlas/contracts";
 
 const credential = "s".repeat(32);
 const job = { version: "v1", executionId: "semantic-route", skill: { id: "atlas.semantic.extract", version: "v1" }, contextCapability: "capability" } as const;
@@ -17,4 +18,25 @@ test("semantic routes authenticate and fail closed when acceptance is unavailabl
   assert.equal((await routes.context(credential, job)).status, 200);
   assert.equal((await routes.deliver(credential, result)).status, 409);
   assert.deepEqual(calls, ["deliver"]);
+});
+
+test("semantic routes enforce exact JSON request and serialized-context byte boundaries", async () => {
+  const baseContext = { version: "v1", skill: "atlas.semantic.extract", scope, normalizedDocument: { version: "v1", executionId: job.executionId, artifactId: "document", sourceSha256: "a".repeat(64), perception: { capability: "atlas.document.perceive", contractVersion: "v1" }, provider: { name: "test", processor: "test", executionId: job.executionId, processedAt: "2026-09-27T00:00:00.000Z" }, pages: [{ number: 1, textBlocks: [{ id: "limit", text: "" }], tables: [], visualRegions: [] }] } } as const;
+  const exactContext = structuredClone(baseContext) as typeof baseContext;
+  exactContext.normalizedDocument.pages[0].textBlocks[0].text = "x".repeat(semanticLimits.contextBytes - Buffer.byteLength(JSON.stringify(exactContext)));
+  assert.equal(Buffer.byteLength(JSON.stringify(exactContext)), semanticLimits.contextBytes);
+  const routes = createSemanticInternalRoutes({ serviceCredential: credential, authority: {
+    redeem: async () => ({ executionId: job.executionId, skill: job.skill, scope, context: exactContext }),
+    deliver: async () => {}, fail: async () => {},
+  }, handler: { accept: async () => {} } });
+  const exactJob = `${" ".repeat(semanticLimits.jobBytes - Buffer.byteLength(JSON.stringify(job)))}${JSON.stringify(job)}`;
+  assert.equal(Buffer.byteLength(exactJob), semanticLimits.jobBytes);
+  assert.equal((await routes.context(credential, JSON.parse(exactJob))).status, 200);
+  const serializedOverLimit = `${exactJob} `;
+  assert.equal(Buffer.byteLength(serializedOverLimit), semanticLimits.jobBytes + 1);
+  // The framework host rejects this streamed representation before parsing; the
+  // framework-neutral route receives parsed JSON, so whitespace is not retained.
+  assert.equal((await routes.context(credential, JSON.parse(serializedOverLimit))).status, 200);
+  exactContext.normalizedDocument.pages[0].textBlocks[0].text += "x";
+  assert.equal((await routes.context(credential, job)).status, 400);
 });
