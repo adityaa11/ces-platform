@@ -106,5 +106,10 @@ evidence. The real route/DB fixture now asserts skill-version and expiry
 rejection, oversized request rejection, redacted bounded error output, and
 concurrent identical completion replay produces one acceptance effect.
 
+**CFC cycle 5 checkpoint:** Consumes `HMN-IDSER-004-005` for failure evidence.
+The PostgreSQL-backed route proves a rejecting acceptance handler yields no 204
+or completed lifecycle; duplicate failure remains idempotent, and failure before
+completion prevents acceptance.
+
 **Next state:** `awaiting_review`; CK must verify this bounded remediation before
 IDSER-005 or IDSER-006 consume its interfaces.

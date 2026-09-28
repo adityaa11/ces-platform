@@ -51,6 +51,14 @@ test("semantic authority binds execution context, replay, failure, and Bridge is
     const reconciliationJob = { version: "v1" as const, executionId: reconciliation, skill: { id: "atlas.semantic.reconcile" as const, version: "v1" as const }, contextCapability: capability };
     const first = await authority.redeem(reconciliationJob); const second = await authority.redeem(reconciliationJob);
     assert.deepEqual(first.context, second.context); assert.equal(selectionCalls, 1);
+    const reconciliationScope = scopeOf(reconciliation, project, workspace, bundle, document);
+    const reconciliationEnvelope = { version: "v1", scope: reconciliationScope, skill: reconciliationJob.skill, provider: { provider: "test", model: "test", endpoint: "internal", latencyMilliseconds: 1, attempt: 1 }, result: { version: "v1", relationships: [], questions: [] } };
+    const failingRoutes = createSemanticInternalRoutes({ serviceCredential: "s".repeat(32), authority, handler: { accept: async () => { throw new Error("enqueue failed"); } } });
+    assert.equal((await failingRoutes.deliver("s".repeat(32), reconciliationEnvelope)).status, 409);
+    assert.equal((await atlas.unsafe("SELECT lifecycle FROM atlas.semantic_execution WHERE id=$1", [reconciliation]))[0].lifecycle, "running");
+    await authority.fail({ scope: reconciliationScope, code: "provider_timeout" }); await authority.fail({ scope: reconciliationScope, code: "provider_timeout" });
+    assert.equal((await atlas.unsafe("SELECT lifecycle FROM atlas.semantic_execution WHERE id=$1", [reconciliation]))[0].lifecycle, "failed");
+    assert.equal((await routes.deliver("s".repeat(32), reconciliationEnvelope)).status, 409);
     const envelope = { version: "v1", scope: extractionScope, skill: extractionJob.skill, provider: { provider: "test", model: "test", endpoint: "internal", latencyMilliseconds: 1, attempt: 1 }, result: { version: "v1", candidate_assertions: [], source_statement_inventory: [], questions: [] } };
     const rejected = await routes.deliver("s".repeat(32), { ...envelope, scope: { ...envelope.scope, projectId: "wrong" } });
     assert.equal(rejected.status, 409); assert.deepEqual(rejected.body, { error: "Semantic delivery cannot be accepted." }); assert.doesNotMatch(JSON.stringify(rejected.body), /private|capability|SELECT|test/i);
