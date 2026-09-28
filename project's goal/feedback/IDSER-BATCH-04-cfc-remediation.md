@@ -77,3 +77,32 @@ Validation on the final remediation worktree, in Compose:
 
 No environment limitation remained. State: `awaiting_review`; hand the single
 remediation commit directly to CK for bounded verification.
+
+## CFC evidence cycle 8 remediation
+
+- HMN authorization consumed: `HMN-IDSER-004-011`
+  (`AUTHORIZE_EVIDENCE_REMEDIATION`).
+- Addressed finding: final `CK-004` Compose-HTTP response-boundary and
+  persisted-cancellation response-body evidence only.
+- The PostgreSQL-backed HTTP fixture constructs a valid normalized document in
+  bounded text fields whose authorized extraction-context response is exactly
+  `1,048,576` UTF-8 JSON bytes. It asserts HTTP 200, parses the response, and
+  confirms its execution identity. After one additional byte, the real HTTP
+  context route returns HTTP 400 with a bounded error body before any handler
+  effect.
+- The same fixture posts context, result, and failure requests for a persisted
+  `cancelled` execution. It asserts HTTP `400`, `409`, and `400`, respectively;
+  every response body is under 512 bytes and excludes provider/payload/prompt,
+  grant/credential/capability, document/source material, and SQL terms. Existing
+  no-handler-effect, request-boundary, rollback, conflicting-delivery, and both
+  terminal-race assertions remain intact.
+
+Validation on the final remediation worktree, in Compose:
+
+- `corepack pnpm --filter @atlas/db test:semantic-authority`: 1 passed, 0
+  failed, 0 skipped; includes all cycle-8 HTTP assertions.
+- Core tests/typecheck, DB typecheck, migration application/check, app build,
+  and `git diff --check`: passed.
+
+No environment limitation remained. State: `awaiting_review`; hand the single
+remediation commit directly to CK for bounded verification.

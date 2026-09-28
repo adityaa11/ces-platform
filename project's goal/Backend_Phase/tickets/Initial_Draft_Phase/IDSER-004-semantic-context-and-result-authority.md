@@ -125,5 +125,13 @@ test-local transactional advisory gate to prove both completion-wins and
 failure-wins overlap orders, retaining one terminal state and no extra handler
 effect. No production authority, migration, schema, or route contract changed.
 
+**CFC evidence cycle 8 checkpoint:** Consumes `HMN-IDSER-004-011` for the
+last CK-004 route assertions only. The Compose HTTP fixture receives a persisted
+extraction context whose response serializes to exactly 1 MiB, verifies it is
+usable, then proves a one-byte-larger serialized context is rejected. It also
+inspects real internal context/result/failure responses for a persisted
+`cancelled` execution, proving each is bounded and redacted. No production code,
+schema, migration, lifecycle, authority, or route contract changed.
+
 **Next state:** `awaiting_review`; CK must verify this bounded remediation before
 IDSER-005 or IDSER-006 consume its interfaces.
