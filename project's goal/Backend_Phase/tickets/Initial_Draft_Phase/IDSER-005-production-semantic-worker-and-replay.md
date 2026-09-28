@@ -167,6 +167,31 @@ remains IDSER-011.
 - **Next state:** `awaiting_review`; stop for CK verification of only original
   `CK-001` and `CK-002`.
 
+## HMN-authorized fixture-regression remediation checkpoint
+
+- **Authorization consumed:** `HMN-IDSER-005-004`
+  (`AUTHORIZE_DIRECT_REGRESSION_REPAIR`).
+- **CK source:** `project's goal/feedback/IDSER-BATCH-05-35784b0-verification.md`
+  (`CHANGES_REQUIRED`, original `CK-001` and `CK-002` only).
+- **Remediation:** removed the unavailable/private
+  `canonicalSemanticFingerprint` import from
+  `semantic-worker.integration.test.ts`. The fixed fixture now derives its
+  literal capability fingerprint locally with Node SHA-256 over
+  `JSON.stringify(capability)`, matching the authority's canonical result for
+  that string without changing the Atlas DB public API or production code.
+- **Remediation commit:** `56cbb8063f9e771ddef502b263ab03820ad1e20c`
+  (`test(idser): repair semantic fixture import`).
+- **Validation:** normal Compose PostgreSQL was healthy; Bridge typecheck,
+  `test:semantic-integration` (1/1), `test:semantic` (4/4), and the complete
+  Bridge suite passed. The integration suite reached its existing assertions:
+  acknowledgement-loss recovery observed one provider call, one Atlas logical
+  effect, later completed lease, and replay cleanup; handler unavailability
+  retained the replay without completing Bridge or Atlas; the expired successor
+  redelivered the same stored result with no additional provider call, completed
+  once, and cleaned the replay row. `git diff --check` passed.
+- **Next state:** `awaiting_review`; stop for CK verification of original
+  `CK-001` and `CK-002` only.
+
 ## HMN-authorized evidence remediation checkpoint
 
 - **Authorization consumed:** `HMN-IDSER-005-002`
