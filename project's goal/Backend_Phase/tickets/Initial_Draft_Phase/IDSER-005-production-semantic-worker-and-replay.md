@@ -125,6 +125,57 @@ remains IDSER-011.
   the same consolidated CK finding.
 - **Next state:** `awaiting_review`; CK verification is required.
 
+## HMN-009 authorized evidence remediation checkpoint
+
+- **Authorization consumed:** `HMN-IDSER-005-009`
+  (`AUTHORIZE_EVIDENCE_REMEDIATION`).
+- **CK source:** `project's goal/feedback/IDSER-BATCH-05-17ce58d-verification.md`
+  (`CHANGES_REQUIRED`, frozen original `CK-002.a`--`CK-002.e`; `CK-001` stays
+  resolved and closed).
+- **Remediation:** the registered Compose semantic-worker integration now
+  reads the actual queued records from `pgboss.job`, inspects their stored data
+  and output through recursive serialization, and captures errors thrown by
+  `runSemanticJob` before rethrowing the same error to pg-boss. Redaction checks
+  now serialize plain objects and inspect Error name/message/cause rather than
+  coercing objects to `[object Object]`. The real semantic job's required
+  `contextCapability` remains present in its contract field; queue-payload
+  inspection checks the rest of the stored payload and output, while public
+  responses, stored errors, and thrown errors are checked for that capability
+  and other configured sensitive sentinels.
+- **Finding Closure Matrix:**
+
+  | Frozen clause | Status | Closure evidence |
+  | --- | --- | --- |
+  | `CK-002.a` | `PROVEN` | The conflict case reads actual pg-boss rows for winner and loser, checks their serialized payload/output, preserves separate winner/loser provider counts, and checks redaction of the captured failed winner-delivery error, responses, and stored error before/after recovery. Existing lifecycle, lease, envelope, and cleanup assertions remain. |
+  | `CK-002.b` | `PROVEN` | The context-bound case checks the stored pg-boss payload/output and captured thrown context error; zero provider calls, bounded outcome, lifecycle/fence, no replay, response, and stored-error assertions remain. |
+  | `CK-002.c` | `PROVEN` | The post-stage result-bound case checks the stored pg-boss payload/output and captured thrown handoff error; rejection synchronization, unchanged replay envelope, retained fence, no terminal failure, retry identity, response, and stored-error assertions remain. |
+  | `CK-002.d` | `PROVEN` | At the pre-stage stop boundary, the test checks the stored job payload/output, captures and redacts the thrown cancellation error, asserts the exact bounded `Provider request was cancelled.` value, and preserves provider/failure counts, lifecycle/fence, no replay/acceptance, and successor retry assertions. |
+  | `CK-002.e` | `PROVEN` | At the active post-stage stop boundary, the test checks the stored pg-boss payload/output and captured interrupted-delivery error, then preserves replay identity, provider/acceptance/failure counts, lifecycle/fence, completion, and cleanup proof through fresh-worker recovery. |
+
+- **Direct-regression boundary:** no production source, resolved `CK-001`,
+  replay/fencing behavior, queue policy, Atlas authority, contracts, skills,
+  deployment, or downstream ticket was changed. Existing production-path
+  scenarios and response/stored-error assertions remain in place.
+- **Remediation commit:** this HMN-009 CFC handoff commit; the exact review
+  target is the commit containing this checkpoint and the integration-test
+  evidence above.
+- **Validation:** Docker Compose services were healthy (`docker compose ps`).
+  These exact commands completed successfully in this CFC run:
+  `docker compose exec atlas corepack pnpm --filter @atlas/agents-bridge typecheck`;
+  `docker compose exec atlas corepack pnpm --filter @atlas/agents-bridge test:semantic-integration`
+  (1/1 passed against Compose PostgreSQL, actual pg-boss, Bridge rows, and
+  loopback Atlas/Mistral HTTP);
+  `docker compose exec atlas corepack pnpm --filter @atlas/agents-bridge test:semantic`
+  (semantic worker 4/4 and semantic client integration 1/1 passed);
+  `docker compose exec atlas corepack pnpm --filter @atlas/agents-bridge test`
+  (all registered Bridge test commands completed successfully); and
+  `git diff --check` passed. Provider traffic used loopback HTTP and synthetic
+  credentials; no live Mistral credential was used.
+- **Internal readiness:** `READY_FOR_CK` for only frozen original
+  `CK-002.a`--`CK-002.e`.
+- **Next state:** `awaiting_review`; hand this exact remediation commit to CK
+  for bounded verification. CK-001 is not reopened.
+
 ## HMN-007 final production-path evidence remediation checkpoint
 
 - **Authorization consumed:** `HMN-IDSER-005-007` (`AUTHORIZE_EVIDENCE_REMEDIATION`).

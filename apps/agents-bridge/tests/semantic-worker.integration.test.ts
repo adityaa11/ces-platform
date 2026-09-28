@@ -87,6 +87,7 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
   const failed = new Map<string, number>();
   const providerCalls = new Map<string, number>();
   const routeResponses = new Map<string, string[]>();
+  const thrownErrors = new Map<string, unknown[]>();
   let providerCallCount = 0;
   let loseAcknowledgement = true;
   let handlerUnavailable = false;
@@ -100,6 +101,7 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
   let cancellationProviderCalls = 0;
   let conflictDeliveryUnavailable = true;
   const secretPattern = /semantic-integration-capability|private\/semantic-worker|synthetic-provider-key|semantic-integration-service-credential|payload/u;
+  const queuePayloadForbiddenPattern = /private\/semantic-worker|synthetic-provider-key|semantic-integration-service-credential|prompt|candidate_assertions|normalized_meaning/u;
   const recordRouteResponse = (executionId: string | undefined, operation: string, status: number, body: unknown) => {
     if (!executionId) return;
     const values = routeResponses.get(executionId) ?? [];
@@ -108,8 +110,34 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
   };
   const assertRedacted = (executionId: string, ...values: unknown[]) => {
     for (const value of [...values, ...(routeResponses.get(executionId) ?? [])]) {
-      assert.doesNotMatch(String(value ?? ""), secretPattern, `operational surface for ${executionId} is redacted`);
+      const serialized = value instanceof Error
+        ? `${value.name}: ${value.message}${value.cause === undefined ? "" : `; cause: ${String(value.cause)}`}`
+        : typeof value === "string" ? value : JSON.stringify(value ?? "");
+      assert.doesNotMatch(serialized, secretPattern, `operational surface for ${executionId} is redacted`);
     }
+  };
+  const queuedJobsFor = async (executionId: string) => await admin.unsafe(
+    "SELECT data, output, state, retry_count FROM pgboss.job WHERE name=$1 AND data->'execution'->>'executionId'=$2 ORDER BY created_on",
+    [queueName, executionId],
+  ) as Array<{ data: unknown; output: unknown; state: string; retry_count: number }>;
+  const assertQueuedJobRedacted = async (executionId: string) => {
+    const rows = await queuedJobsFor(executionId);
+    assert.ok(rows.length > 0, `the real pg-boss row is observable for ${executionId}`);
+    for (const row of rows) {
+      const data = row.data as { execution?: { input?: Record<string, unknown> } };
+      const input = data.execution?.input;
+      assert.equal(input?.contextCapability, capability, `the queue retains only the contract-required context capability for ${executionId}`);
+      // contextCapability is required in the semantic job contract, so inspect
+      // the real payload for any other secret-bearing content. The capability
+      // itself must still be absent from errors and response surfaces.
+      assert.doesNotMatch(JSON.stringify(data), queuePayloadForbiddenPattern, `queued payload for ${executionId} has no prompt, source, credential, or result body`);
+      assertRedacted(executionId, row.output);
+    }
+  };
+  const assertThrownErrorsRedacted = (executionId: string) => {
+    const errors = thrownErrors.get(executionId) ?? [];
+    for (const error of errors) assertRedacted(executionId, error);
+    return errors;
   };
   const authority = new PostgresSemanticAuthority(atlas, {
     select: async (scope) => ({ version: "v1" as const, skill: "atlas.semantic.reconcile" as const, scope, currentCandidates: [], priorCandidates: [], selection: { policy: "semantic-worker-integration", overflow: false, selectedCount: 0 } }),
@@ -237,7 +265,14 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     const client = createAtlasSemanticClient({ baseUrl: `http://127.0.0.1:${atlasPort}`, contextPath: "/internal/semantic/context", resultPath: "/internal/semantic/result", failurePath: "/internal/semantic/failure", serviceCredential: credential, timeoutMilliseconds: 100 });
     const config: WorkerConfig = { databaseUrl: bridgeUrl.toString(), concurrency: 1, timeoutSeconds: 5, retryLimit: 3, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 };
     const createWorker = () => createBackgroundWorker(config, new TestRuntime(), queueName, undefined, undefined, async (job, signal, context) => {
-      await runSemanticJob(job, provider, client, createSemanticResultReplay(context.database), context.idempotencyKey, signal, { owner: context.leaseOwner, generation: context.leaseGeneration });
+      try {
+        await runSemanticJob(job, provider, client, createSemanticResultReplay(context.database), context.idempotencyKey, signal, { owner: context.leaseOwner, generation: context.leaseGeneration });
+      } catch (error) {
+        const errors = thrownErrors.get(job.executionId) ?? [];
+        errors.push(error);
+        thrownErrors.set(job.executionId, errors);
+        throw error;
+      }
     });
     worker = createWorker();
     await worker.start();
@@ -356,6 +391,8 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     assert.ok(Number(contextEffect?.lease_generation) >= 1, "the context-bound effect keeps its claimant fence");
     assert.match(String(contextEffect?.last_error), /context|byte|limit|semantic/iu, "the context-bound effect records a bounded failure outcome");
     assertRedacted(executions.contextBound, contextEffect?.last_error);
+    await assertQueuedJobRedacted(executions.contextBound);
+    assert.ok(assertThrownErrorsRedacted(executions.contextBound).length > 0, "the actual context-bound thrown error is captured and checked");
 
     // A schema-valid result can still exceed the result-envelope transport
     // limit because provenance is preserved. It stages before the bounded
@@ -380,6 +417,8 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     assert.deepEqual(oversizedReplayAfter?.validated_envelope, oversizedReplayBefore?.validated_envelope, "the rejected handoff cannot replace the persisted replay envelope");
     assert.equal(oversizedReplayAfter?.execution_id, executions.resultBound, "the retained replay belongs to the original execution identity");
     assertRedacted(executions.resultBound, oversizedEffect?.last_error);
+    await assertQueuedJobRedacted(executions.resultBound);
+    assert.ok(assertThrownErrorsRedacted(executions.resultBound).length > 0, "the actual post-stage handoff error is captured and checked");
 
     // Stopping a real worker while its configured provider request is active
     // must leave no trusted result. A successor is then free to retry.
@@ -401,6 +440,10 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     assert.equal(await lifecycleFor(executions.cancellation), "running", "pre-stage cancellation leaves the Atlas lifecycle bounded but incomplete for retry");
     assert.equal(providerCalls.get(executions.cancellation), 1, "the cancelled claimant made one active provider call");
     assertRedacted(executions.cancellation, cancellationEffect?.last_error);
+    await assertQueuedJobRedacted(executions.cancellation);
+    const cancellationErrors = assertThrownErrorsRedacted(executions.cancellation);
+    assert.ok(cancellationErrors.length > 0, "the actual cancellation thrown by runSemanticJob is captured");
+    assert.ok(cancellationErrors.every((error) => error instanceof Error && error.message === "Provider request was cancelled."), "pre-stage cancellation exposes only its bounded typed provider-cancellation outcome");
     worker = createWorker(); await worker.start();
     // Explicitly submit the existing idempotency identity to the fresh real
     // pg-boss worker.  This observes successor recovery without depending on
@@ -428,6 +471,8 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     assert.ok(replayAfterStop?.lease_owner, "the retained replay preserves its staging owner");
     assert.ok(Number(replayAfterStop?.lease_generation) >= 1, "the retained replay preserves its staging generation");
     assertRedacted(executions.stopPostStage, stoppedEffect?.last_error);
+    await assertQueuedJobRedacted(executions.stopPostStage);
+    assert.ok(assertThrownErrorsRedacted(executions.stopPostStage).length > 0, "the actual interrupted-delivery thrown error is captured and checked");
     worker = createWorker(); await worker.start();
     await waitFor(async () => (await bridge.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [keys.stopPostStage]))[0]?.status === "completed", "fresh worker post-stage replay completion");
     await waitFor(async () => (await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [keys.stopPostStage]))[0]?.count === 0, "fresh worker post-stage replay cleanup");
@@ -479,6 +524,10 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     assert.ok(recoveredConflictEffect?.lease_owner, "the recovered winner has a completion owner");
     assert.ok(Number(recoveredConflictEffect?.lease_generation) >= 1, "the recovered winner has a completion generation");
     assertRedacted(executions.conflictWinner, recoveredConflictEffect?.last_error);
+    await assertQueuedJobRedacted(executions.conflictWinner);
+    await assertQueuedJobRedacted(executions.conflictLoser);
+    assert.ok(assertThrownErrorsRedacted(executions.conflictWinner).length > 0, "the actual failed winner delivery error is captured and checked during conflict recovery");
+    assertThrownErrorsRedacted(executions.conflictLoser);
   } finally {
     await worker?.stop().catch(() => undefined);
     await atlasApp.close().catch(() => undefined);
