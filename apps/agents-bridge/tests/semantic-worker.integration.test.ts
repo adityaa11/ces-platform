@@ -85,6 +85,8 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
   const cleanupFault = `swc_${randomUUID().replace(/-/gu, "").slice(0, 16)}`;
   const accepted = new Map<string, number>();
   const failed = new Map<string, number>();
+  const providerCalls = new Map<string, number>();
+  const routeResponses = new Map<string, string[]>();
   let providerCallCount = 0;
   let loseAcknowledgement = true;
   let handlerUnavailable = false;
@@ -95,7 +97,20 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
   let contextBoundRequests = 0;
   let resultDeliveryAttempts = 0;
   let cancellationProviderStarted = false;
+  let cancellationProviderCalls = 0;
   let conflictDeliveryUnavailable = true;
+  const secretPattern = /semantic-integration-capability|private\/semantic-worker|synthetic-provider-key|semantic-integration-service-credential|payload/u;
+  const recordRouteResponse = (executionId: string | undefined, operation: string, status: number, body: unknown) => {
+    if (!executionId) return;
+    const values = routeResponses.get(executionId) ?? [];
+    values.push(`${operation}:${status}:${JSON.stringify(body)}`);
+    routeResponses.set(executionId, values);
+  };
+  const assertRedacted = (executionId: string, ...values: unknown[]) => {
+    for (const value of [...values, ...(routeResponses.get(executionId) ?? [])]) {
+      assert.doesNotMatch(String(value ?? ""), secretPattern, `operational surface for ${executionId} is redacted`);
+    }
+  };
   const authority = new PostgresSemanticAuthority(atlas, {
     select: async (scope) => ({ version: "v1" as const, skill: "atlas.semantic.reconcile" as const, scope, currentCandidates: [], priorCandidates: [], selection: { policy: "semantic-worker-integration", overflow: false, selectedCount: 0 } }),
   });
@@ -118,9 +133,12 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     const executionId = (request.body as { executionId?: string })?.executionId;
     if (executionId === executions.contextBound) {
       contextBoundRequests += 1;
-      return response.code(200).type("application/json").send(`\"${"x".repeat(semanticLimits.contextBytes + 1)}\"`);
+      const body = `\"${"x".repeat(semanticLimits.contextBytes + 1)}\"`;
+      recordRouteResponse(executionId, "context", 200, body);
+      return response.code(200).type("application/json").send(body);
     }
     const result = await reply("context", request.headers.authorization, request.body);
+    recordRouteResponse(executionId, "context", result.status, result.body);
     return response.code(result.status).type(result.contentType).send(result.body);
   });
   atlasApp.post("/internal/semantic/result", async (request, response) => {
@@ -144,6 +162,7 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     }
     if (executionId === executions.resultBound) resultDeliveryAttempts += 1;
     const result = await reply("deliver", request.headers.authorization, request.body);
+    recordRouteResponse(executionId, "deliver", result.status, result.body);
     if (executionId === executions.extract && loseAcknowledgement && result.status === 204) {
       loseAcknowledgement = false;
       return response.code(503).send({ error: "synthetic acknowledgement loss" });
@@ -154,6 +173,7 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     const executionId = (request.body as { scope?: { executionId?: string } })?.scope?.executionId;
     if (executionId) failed.set(executionId, (failed.get(executionId) ?? 0) + 1);
     const result = await reply("fail", request.headers.authorization, request.body);
+    recordRouteResponse(executionId, "failure", result.status, result.body);
     return response.code(result.status).type(result.contentType).send(result.body);
   });
   const mistralApp = Fastify();
@@ -161,13 +181,15 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     const body = request.body as { messages?: Array<{ content?: string }>; response_format?: { json_schema?: { schema?: Record<string, unknown> } } };
     providerCallCount += 1;
     const requested = JSON.parse(body.messages?.at(-1)?.content ?? "{}") as { scope?: { executionId?: string } };
+    if (requested.scope?.executionId) providerCalls.set(requested.scope.executionId, (providerCalls.get(requested.scope.executionId) ?? 0) + 1);
     if (requested.scope?.executionId === executions.rejected) return response.code(401).send({ error: "credential rejected" });
     if (requested.scope?.executionId === executions.malformed) return { model: "semantic-integration-model", choices: [{ message: { content: "{" } }] };
     if (requested.scope?.executionId === executions.schemaInvalid) return { model: "semantic-integration-model", choices: [{ message: { content: JSON.stringify({ version: "v1", candidate_assertions: "not-an-array" }) } }] };
     if (requested.scope?.executionId === executions.providerTimeout) return response.code(504).send({ error: "synthetic provider timeout" });
     if (requested.scope?.executionId === executions.cancellation) {
       cancellationProviderStarted = true;
-      await new Promise((resolve) => setTimeout(resolve, 5_000));
+      cancellationProviderCalls += 1;
+      if (cancellationProviderCalls === 1) await new Promise((resolve) => setTimeout(resolve, 5_000));
     }
     const schema = body.response_format?.json_schema?.schema;
     const reconciliation = Boolean(schema?.properties && "relationships" in schema.properties);
@@ -220,6 +242,9 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     worker = createWorker();
     await worker.start();
     const enqueue = async (label: keyof typeof executions, skill: "atlas.semantic.extract" | "atlas.semantic.reconcile", idempotencyKey = keys[label]) => worker!.boss.send(queueName, { idempotencyKey, execution: { version: "v1", executionId: executions[label], mode: "background", skill: { id: skill, version: "v1" }, input: { contextCapability: capability }, context: { boundary: "semantic-worker-integration", items: [] } } }, { singletonKey: `${idempotencyKey}-${randomUUID()}` });
+    const effectFor = async (idempotencyKey: string) => (await bridge.unsafe("SELECT execution_id, status, lease_owner, lease_generation, completed_at, last_error FROM bridge.background_effects WHERE idempotency_key=$1", [idempotencyKey]))[0] as { execution_id?: string; status?: string; lease_owner?: string; lease_generation?: number; completed_at?: string; last_error?: string } | undefined;
+    const replayFor = async (idempotencyKey: string) => (await bridge.unsafe("SELECT execution_id, validated_envelope, lease_owner, lease_generation FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [idempotencyKey]))[0] as { execution_id?: string; validated_envelope?: unknown; lease_owner?: string; lease_generation?: number } | undefined;
+    const lifecycleFor = async (executionId: string) => (await atlas.unsafe("SELECT lifecycle FROM atlas.semantic_execution WHERE id=$1", [executionId]))[0]?.lifecycle;
 
     await enqueue("extract", "atlas.semantic.extract");
     await waitFor(async () => (await bridge.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [keys.extract]))[0]?.status === "pending", "Atlas acceptance before completion restart boundary");
@@ -321,10 +346,16 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     await enqueue("contextBound", "atlas.semantic.extract");
     await waitFor(async () => contextBoundRequests > 0, "oversized Atlas context request");
     await waitFor(async () => Boolean((await bridge.unsafe("SELECT last_error FROM bridge.background_effects WHERE idempotency_key=$1", [keys.contextBound]))[0]?.last_error), "bounded context failure ledger entry");
+    const contextEffect = await effectFor(keys.contextBound);
+    assert.equal(providerCalls.get(executions.contextBound) ?? 0, 0, "an oversized Atlas context never reaches Mistral");
     assert.equal(accepted.get(executions.contextBound) ?? 0, 0);
-    assert.equal(failed.get(executions.contextBound) ?? 0, 0);
+    assert.equal(await lifecycleFor(executions.contextBound), "queued", "the oversized synthetic response cannot advance the Atlas execution lifecycle");
     assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [keys.contextBound]))[0]?.count, 0);
-    assert.doesNotMatch(String((await bridge.unsafe("SELECT last_error FROM bridge.background_effects WHERE idempotency_key=$1", [keys.contextBound]))[0]?.last_error ?? ""), /semantic-integration-capability|private\/semantic-worker|synthetic-provider-key/u);
+    assert.equal(contextEffect?.status, "pending", "the context-bound effect records a bounded retryable outcome");
+    assert.ok(contextEffect?.lease_owner, "the context-bound effect keeps its claimant identity");
+    assert.ok(Number(contextEffect?.lease_generation) >= 1, "the context-bound effect keeps its claimant fence");
+    assert.match(String(contextEffect?.last_error), /context|byte|limit|semantic/iu, "the context-bound effect records a bounded failure outcome");
+    assertRedacted(executions.contextBound, contextEffect?.last_error);
 
     // A schema-valid result can still exceed the result-envelope transport
     // limit because provenance is preserved. It stages before the bounded
@@ -333,12 +364,22 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     const providerBeforeResultBound = providerCallCount;
     await enqueue("resultBound", "atlas.semantic.extract");
     await waitFor(async () => (await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [keys.resultBound]))[0]?.count === 1, "oversized immutable result replay");
+    const oversizedReplayBefore = await replayFor(keys.resultBound);
+    await waitFor(async () => Boolean((await effectFor(keys.resultBound))?.last_error), "bounded Atlas handoff rejection");
+    const oversizedEffect = await effectFor(keys.resultBound);
+    const oversizedReplayAfter = await replayFor(keys.resultBound);
     assert.equal(accepted.get(executions.resultBound) ?? 0, 0);
     assert.equal(failed.get(executions.resultBound) ?? 0, 0, "a staged oversized result is never terminally failed");
     assert.equal(providerCallCount, providerBeforeResultBound + 1, "the oversized retry retains one provider result");
-    const oversizedEffect = (await bridge.unsafe("SELECT status, lease_owner, lease_generation FROM bridge.background_effects WHERE idempotency_key=$1", [keys.resultBound]))[0];
+    assert.equal(providerCalls.get(executions.resultBound), 1, "the oversized handoff has exactly one provider call");
+    assert.equal(resultDeliveryAttempts, 0, "the Atlas client rejects the oversized envelope before public delivery");
+    assert.equal(await lifecycleFor(executions.resultBound), "running", "the staged result remains an in-progress Atlas execution for retry");
     assert.notEqual(oversizedEffect?.status, "completed", "Atlas transport rejection cannot complete the Bridge effect");
+    assert.ok(oversizedEffect?.lease_owner, "the retained oversized effect keeps its fence owner");
     assert.ok(Number(oversizedEffect?.lease_generation) >= 1, "the staged oversized result retains a fenced Bridge lease record");
+    assert.deepEqual(oversizedReplayAfter?.validated_envelope, oversizedReplayBefore?.validated_envelope, "the rejected handoff cannot replace the persisted replay envelope");
+    assert.equal(oversizedReplayAfter?.execution_id, executions.resultBound, "the retained replay belongs to the original execution identity");
+    assertRedacted(executions.resultBound, oversizedEffect?.last_error);
 
     // Stopping a real worker while its configured provider request is active
     // must leave no trusted result. A successor is then free to retry.
@@ -350,12 +391,21 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     // Starting the successor first would let it legitimately complete the
     // same execution and erase the pre-stage cancellation boundary.
     assert.equal(accepted.get(executions.cancellation) ?? 0, 0);
+    assert.equal(failed.get(executions.cancellation) ?? 0, 0, "pre-stage cancellation does not fabricate a terminal failure");
     assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [keys.cancellation]))[0]?.count, 0);
-    const cancellationEffect = (await bridge.unsafe("SELECT status, lease_owner, lease_generation FROM bridge.background_effects WHERE idempotency_key=$1", [keys.cancellation]))[0];
+    const cancellationEffect = await effectFor(keys.cancellation);
     assert.ok(cancellationEffect, "in-flight cancellation is represented in the Bridge lease ledger");
     assert.equal(cancellationEffect?.status, "pending", "pre-stage cancellation remains retryable rather than completing a trusted effect");
-    assert.doesNotMatch(String((await bridge.unsafe("SELECT last_error FROM bridge.background_effects WHERE idempotency_key=$1", [keys.cancellation]))[0]?.last_error ?? ""), /semantic-integration-capability|private\/semantic-worker|synthetic-provider-key/u);
+    assert.ok(cancellationEffect?.lease_owner, "pre-stage cancellation records the active lease owner");
+    assert.ok(Number(cancellationEffect?.lease_generation) >= 1, "pre-stage cancellation records its lease generation");
+    assert.equal(await lifecycleFor(executions.cancellation), "running", "pre-stage cancellation leaves the Atlas lifecycle bounded but incomplete for retry");
+    assert.equal(providerCalls.get(executions.cancellation), 1, "the cancelled claimant made one active provider call");
+    assertRedacted(executions.cancellation, cancellationEffect?.last_error);
     worker = createWorker(); await worker.start();
+    // Explicitly submit the existing idempotency identity to the fresh real
+    // pg-boss worker.  This observes successor recovery without depending on
+    // the abandoned worker's retry scheduler after orderly shutdown.
+    await enqueue("cancellation", "atlas.semantic.extract");
     await waitFor(async () => (await bridge.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [keys.cancellation]))[0]?.status === "completed", "fresh worker pre-stage retry");
     assert.equal(accepted.get(executions.cancellation), 1, "only the fresh worker may accept a pre-stage-cancelled execution");
     assert.ok(providerCallCount >= providerBeforeCancellation + 2, "pre-stage cancellation permits at-least-once provider execution by the fresh worker");
@@ -366,11 +416,31 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     const providerBeforePostStageStop = providerCallCount;
     await enqueue("stopPostStage", "atlas.semantic.extract");
     await waitFor(async () => stopPostStageDeliveryStarted && (await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [keys.stopPostStage]))[0]?.count === 1, "active post-stage delivery boundary");
-    await worker.stop(); worker = createWorker(); await worker.start();
+    const stoppedReplay = await replayFor(keys.stopPostStage);
+    await worker.stop();
+    const stoppedEffect = await effectFor(keys.stopPostStage);
+    const replayAfterStop = await replayFor(keys.stopPostStage);
+    assert.equal(await lifecycleFor(executions.stopPostStage), "running", "the active stop cannot complete Atlas before successor delivery");
+    assert.equal(stoppedEffect?.status, "pending", "the active stop returns the fenced effect to retryable state");
+    assert.ok(stoppedEffect?.lease_owner, "the stopped claimant is identified in the Bridge lease ledger");
+    assert.ok(Number(stoppedEffect?.lease_generation) >= 1, "the stopped claimant has a Bridge lease generation");
+    assert.deepEqual(replayAfterStop?.validated_envelope, stoppedReplay?.validated_envelope, "the replay envelope identity survives the active worker stop");
+    assert.ok(replayAfterStop?.lease_owner, "the retained replay preserves its staging owner");
+    assert.ok(Number(replayAfterStop?.lease_generation) >= 1, "the retained replay preserves its staging generation");
+    assertRedacted(executions.stopPostStage, stoppedEffect?.last_error);
+    worker = createWorker(); await worker.start();
     await waitFor(async () => (await bridge.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [keys.stopPostStage]))[0]?.status === "completed", "fresh worker post-stage replay completion");
     await waitFor(async () => (await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [keys.stopPostStage]))[0]?.count === 0, "fresh worker post-stage replay cleanup");
     assert.equal(providerCallCount, providerBeforePostStageStop + 1, "post-stage stop reuses the immutable provider result");
+    assert.equal(providerCalls.get(executions.stopPostStage), 1, "post-stage recovery never calls the provider twice");
     assert.equal(accepted.get(executions.stopPostStage), 1, "post-stage stop creates one Atlas logical effect");
+    assert.equal(failed.get(executions.stopPostStage) ?? 0, 0, "post-stage stop has no terminal failure handoff");
+    assert.equal(await lifecycleFor(executions.stopPostStage), "completed", "the successor advances Atlas only after replay delivery");
+    const stopEffect = await effectFor(keys.stopPostStage);
+    assert.equal(stopEffect?.status, "completed", "the successor fences logical completion");
+    assert.ok(stopEffect?.lease_owner, "the completed successor has a lease owner");
+    assert.ok(Number(stopEffect?.lease_generation) >= 1, "the completed successor has a lease generation");
+    assertRedacted(executions.stopPostStage, stopEffect?.last_error);
 
     // A second execution may not replace a staged winner that owns the same
     // Bridge idempotency identity. The real pg-boss path records the conflict
@@ -378,17 +448,37 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     const callsBeforeConflict = providerCallCount;
     await enqueue("conflictWinner", "atlas.semantic.extract", conflictKey);
     await waitFor(async () => (await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [conflictKey]))[0]?.count === 1, "immutable conflicting-stage winner");
-    const winner = (await bridge.unsafe("SELECT validated_envelope FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [conflictKey]))[0]?.validated_envelope;
+    const winnerReplay = await replayFor(conflictKey);
     await enqueue("conflictLoser", "atlas.semantic.extract", conflictKey);
     await waitFor(async () => Boolean((await bridge.unsafe("SELECT last_error FROM bridge.background_effects WHERE idempotency_key=$1", [conflictKey]))[0]?.last_error), "conflicting idempotency rejection");
     assert.equal(providerCallCount, callsBeforeConflict + 1, "only the staged winner reaches Mistral");
-    assert.deepEqual((await bridge.unsafe("SELECT validated_envelope FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [conflictKey]))[0]?.validated_envelope, winner, "the losing execution cannot replace the immutable envelope");
+    assert.equal(providerCalls.get(executions.conflictWinner), 1, "winner A reaches the provider exactly once");
+    assert.equal(providerCalls.get(executions.conflictLoser) ?? 0, 0, "loser B never reaches the provider");
+    assert.deepEqual((await replayFor(conflictKey))?.validated_envelope, winnerReplay?.validated_envelope, "the losing execution cannot replace the immutable envelope");
     assert.equal(accepted.get(executions.conflictLoser) ?? 0, 0, "the losing execution has no logical Atlas effect");
+    assert.equal(failed.get(executions.conflictLoser) ?? 0, 0, "the losing execution has no terminal failure handoff");
+    assert.equal(await lifecycleFor(executions.conflictWinner), "running", "winner A remains in the Atlas delivery lifecycle while its replay is retained");
+    assert.equal(await lifecycleFor(executions.conflictLoser), "queued", "loser B cannot enter the Atlas lifecycle through the conflicting Bridge key");
+    const conflictEffect = await effectFor(conflictKey);
+    assert.equal(conflictEffect?.execution_id, executions.conflictWinner, "the Bridge effect remains owned by winner A");
+    assert.equal(conflictEffect?.status, "pending", "the unavailable winner remains replayable, not completed");
+    assert.ok(conflictEffect?.lease_owner, "the retained winner records its lease owner");
+    assert.ok(Number(conflictEffect?.lease_generation) >= 1, "the retained winner records its fence generation");
+    assert.ok(winnerReplay?.lease_owner, "the immutable winner replay retains its stage owner");
+    assert.ok(Number(winnerReplay?.lease_generation) >= 1, "the immutable winner replay retains its stage generation");
+    assertRedacted(executions.conflictWinner, conflictEffect?.last_error);
     conflictDeliveryUnavailable = false;
     await enqueue("conflictWinner", "atlas.semantic.extract", conflictKey);
     await waitFor(async () => (await bridge.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [conflictKey]))[0]?.status === "completed", "winner-only conflict recovery");
     await waitFor(async () => (await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [conflictKey]))[0]?.count === 0, "winner-only conflict cleanup");
     assert.equal(accepted.get(executions.conflictWinner), 1, "only the immutable winner completes");
+    assert.equal(failed.get(executions.conflictWinner) ?? 0, 0, "winner recovery never terminally fails the staged result");
+    assert.equal(await lifecycleFor(executions.conflictWinner), "completed", "winner recovery completes the original Atlas execution");
+    const recoveredConflictEffect = await effectFor(conflictKey);
+    assert.equal(recoveredConflictEffect?.status, "completed", "only the recovered winner fences completion");
+    assert.ok(recoveredConflictEffect?.lease_owner, "the recovered winner has a completion owner");
+    assert.ok(Number(recoveredConflictEffect?.lease_generation) >= 1, "the recovered winner has a completion generation");
+    assertRedacted(executions.conflictWinner, recoveredConflictEffect?.last_error);
   } finally {
     await worker?.stop().catch(() => undefined);
     await atlasApp.close().catch(() => undefined);

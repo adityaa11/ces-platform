@@ -147,6 +147,27 @@ remains IDSER-011.
 - **Internal readiness:** `READY_FOR_CK`.
 - **Next state:** `awaiting_review`; hand the one bounded CFC commit to CK for original `CK-002` verification only.
 
+## HMN-008 production-path evidence remediation checkpoint
+
+- **Authorization consumed:** `HMN-IDSER-005-008` (`AUTHORIZE_EVIDENCE_REMEDIATION`).
+- **CK source:** `project's goal/feedback/IDSER-BATCH-05-e8a9b3d-verification.md` (`CHANGES_REQUIRED`, unresolved frozen original `CK-002.a`--`CK-002.e` only). `CK-001` remains closed and was not changed.
+- **Remediation commit:** this CFC handoff commit (`test(idser): complete semantic evidence assertions`).
+- **Remediation:** extended only `semantic-worker.integration.test.ts`, retaining its real PostgreSQL roles, pg-boss worker, Bridge effect/replay tables, configured default-fetch `MistralProvider`, loopback `createAtlasSemanticClient`, and `createSemanticInternalRoutes`. The fixture now records per-execution provider calls and public-route response surfaces, reads Atlas lifecycle plus Bridge status/owner/generation/error state, captures replay envelope identity, and asserts redaction. The cancellation successor is explicitly submitted to the fresh real worker and only the intentionally interrupted first provider request is delayed, making the pre-stage cancellation/recovery boundary deterministic.
+- **Finding Closure Matrix:**
+
+  | Frozen clause | Required production-path evidence now asserted | Status |
+  | --- | --- | --- |
+  | `CK-002.a` | Separate Mistral counts prove winner A = 1 and loser B = 0; winner replay envelope/identity and stage fence stay immutable while delivery is unavailable; winner/loser Atlas lifecycle, acceptance/failure counts, Bridge owner/generation/status, redacted error, recovered completion, and cleanup are observed. | `PROVEN` |
+  | `CK-002.b` | Oversized context produces zero provider calls, zero accepted output, queued Atlas lifecycle, a bounded redacted Bridge error with pending status/owner/generation, and no replay row. The test records the actual public context response rather than asserting absence of a bounded context failure outcome. | `PROVEN` |
+  | `CK-002.c` | The oversized schema-valid result stages before handoff rejection; the test waits for the bounded rejection, compares persisted envelope before/after, proves one provider call, zero terminal failure/acceptance, running Atlas lifecycle, retained fenced Bridge effect, and redacted error. | `PROVEN` |
+  | `CK-002.d` | At the active pre-stage cancellation boundary, the test proves one provider call, zero trusted replay/acceptance/terminal failure, running Atlas lifecycle, pending fenced Bridge effect with bounded redacted error, then explicitly drives the fresh worker to one accepted retry. | `PROVEN` |
+  | `CK-002.e` | At the active post-stage stop boundary, the test compares the replay envelope before/after stop, records pending status and Bridge/replay owner/generation plus redaction, then proves fresh-worker replay reaches exactly one provider call, one acceptance, zero failure, completed Atlas lifecycle/fenced Bridge effect, and cleanup. | `PROVEN` |
+
+- **Direct-regression boundary:** production source, resolved `CK-001` fencing/schema, replay technology, queue policy, Atlas authority, contracts, skills, deployment configuration, and downstream tickets were not modified. Existing registered semantic scenarios remain in the full Bridge suite.
+- **Validation:** Docker/Compose was available. Rebuilt `agents-bridge` and `agents-bridge-worker`, started healthy `postgres`, `atlas`, `agents-bridge`, and `agents-bridge-worker`, and rebuilt/recreated `atlas` before running its copied test source. The following commands completed successfully: `docker compose build agents-bridge agents-bridge-worker`; `docker compose up -d postgres atlas agents-bridge agents-bridge-worker`; `docker compose ps`; `docker compose exec atlas corepack pnpm --filter @atlas/db migration:check`; `docker compose exec atlas corepack pnpm --filter @atlas/agents-bridge typecheck`; `docker compose exec atlas corepack pnpm --filter @atlas/agents-bridge test:semantic-integration`; `docker compose exec atlas corepack pnpm --filter @atlas/agents-bridge test:semantic`; `docker compose exec atlas corepack pnpm --filter @atlas/agents-bridge test`; `docker compose exec atlas corepack pnpm --filter @atlas/core test`; `docker compose exec atlas corepack pnpm --filter @atlas/db test:semantic-authority`; `docker compose exec atlas corepack pnpm --filter @atlas/contracts test`; `docker compose exec atlas corepack pnpm --filter @atlas/skills test`; and `git diff --check`. All semantic integration traffic used loopback HTTP and synthetic credentials; no live Mistral credential was read or used.
+- **Internal readiness:** `READY_FOR_CK`.
+- **Next state:** `awaiting_review`; this one bounded CFC handoff is ready for CK verification of only original `CK-002.a`--`CK-002.e` and direct regressions.
+
 ## HMN-authorized production-path evidence remediation checkpoint
 
 - **Authorization consumed:** `HMN-IDSER-005-003`
