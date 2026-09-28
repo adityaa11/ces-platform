@@ -1,6 +1,7 @@
 import { parseSemanticBackgroundJob, parseSemanticExtractionResult, parseSemanticReconciliationResult, semanticContractVersion, type SemanticBackgroundJob } from "@atlas/contracts";
 import { getProductionSemanticSkill } from "@atlas/skills";
 import { BridgeProviderError, type MistralProvider } from "./providers/mistral.js";
+import { SemanticReplayLeaseLostError } from "./semantic-result-replay.js";
 
 export type SemanticClient = { context(job: SemanticBackgroundJob, signal: AbortSignal): Promise<unknown>; deliver(envelope: unknown, signal: AbortSignal): Promise<void>; fail(failure: unknown, signal: AbortSignal): Promise<void> };
 export type SemanticReplay = { load(idempotencyKey: string, executionId: string): Promise<unknown | undefined>; stage(idempotencyKey: string, executionId: string, envelope: unknown, lease: { readonly owner: string; readonly generation: number }): Promise<unknown>; acknowledge(idempotencyKey: string, executionId: string): Promise<void> };
@@ -21,6 +22,11 @@ export async function runSemanticJob(jobValue: unknown, provider: MistralProvide
     const winningEnvelope = await replay.stage(idempotencyKey, job.executionId, envelope, lease);
     await client.deliver(winningEnvelope, signal);
   } catch (error) {
+    if (error instanceof SemanticReplayLeaseLostError) {
+      const winner = await replay.load(idempotencyKey, job.executionId);
+      if (winner) { await client.deliver(winner, signal); return; }
+      throw error;
+    }
     if (context && !(error instanceof Error && error.message.includes("handoff was rejected"))) {
       const failure = { version: semanticContractVersion, scope: context.scope, code: failureCode(error), message: "Semantic execution failed before a trusted result was delivered." };
       await client.fail(failure, signal);

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { runSemanticJob } from "../src/semantic-worker.ts";
+import { SemanticReplayLeaseLostError } from "../src/semantic-result-replay.ts";
 import type { SemanticBackgroundJob } from "@atlas/contracts";
 
 const job: SemanticBackgroundJob = { version: "v1", executionId: "semantic-execution", skill: { id: "atlas.semantic.extract", version: "v1" }, contextCapability: "capability" };
@@ -31,6 +32,7 @@ test("semantic worker fails closed for unavailable and malformed production work
 test("a stale semantic claimant redelivers an immutable winning stage instead of reporting a terminal failure", async () => {
   const winning = { version: "v1", scope, skill: job.skill, provider: { provider: "mistral", model: "winning", endpoint: "/v1/chat/completions", latencyMilliseconds: 1, attempt: 1 }, result };
   const delivered: unknown[] = []; const failures: unknown[] = [];
-  await runSemanticJob(job, { structured: async () => ({ value: result, provenance: { provider: "mistral" as const, model: "stale", endpoint: "/v1/chat/completions" as const, latencyMilliseconds: 1, attempt: 1 } }) } as never, { context: async () => context, deliver: async (value: unknown) => { delivered.push(value); }, fail: async (value: unknown) => { failures.push(value); } }, { load: async () => undefined, stage: async () => winning, acknowledge: async () => {} }, "semantic-key-race", new AbortController().signal, { owner: "stale-worker", generation: 2 });
+  let loads = 0;
+  await runSemanticJob(job, { structured: async () => ({ value: result, provenance: { provider: "mistral" as const, model: "stale", endpoint: "/v1/chat/completions" as const, latencyMilliseconds: 1, attempt: 1 } }) } as never, { context: async () => context, deliver: async (value: unknown) => { delivered.push(value); }, fail: async (value: unknown) => { failures.push(value); } }, { load: async () => (++loads === 1 ? undefined : winning), stage: async () => { throw new SemanticReplayLeaseLostError("superseded"); }, acknowledge: async () => {} }, "semantic-key-race", new AbortController().signal, { owner: "stale-worker", generation: 2 });
   assert.deepEqual(delivered, [winning]); assert.equal(failures.length, 0);
 });
