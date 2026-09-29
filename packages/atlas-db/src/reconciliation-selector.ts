@@ -26,14 +26,14 @@ export class PostgresReconciliationSelector implements SemanticReconciliationSel
     let priorRows: readonly Row[] = [];
     if (keys.length || kinds.length) {
       priorRows = await sql.unsafe(`SELECT k.semantic_id, c.semantic_key, c.kind, c.normalized_meaning, c.payload, m.sequence,
-        CASE WHEN c.semantic_key = ANY($6::text[]) THEN 0 ELSE 1 END AS match_rank
+        CASE WHEN k.semantic_key = ANY($6::text[]) THEN 0 ELSE 1 END AS match_rank
         FROM atlas.knowledge_index k
         JOIN atlas.semantic_candidate c ON c.id=k.semantic_candidate_id
         JOIN atlas.extraction_bundle_document m ON m.bundle_id=k.bundle_id AND m.document_id=k.document_id AND m.project_id=k.project_id AND m.workspace_id=k.workspace_id
         JOIN atlas.semantic_execution prior_reconciliation ON prior_reconciliation.id=m.semantic_reconciliation_execution_id AND prior_reconciliation.stage='reconciliation' AND prior_reconciliation.lifecycle='completed'
         WHERE k.project_id=$1 AND k.workspace_id=$2 AND k.bundle_id=$3 AND m.sequence < $4
           AND m.state='completed'
-          AND (c.semantic_key = ANY($6::text[]) OR c.kind = ANY($7::text[]))
+          AND (k.semantic_key = ANY($6::text[]) OR k.kind = ANY($7::text[]))
         ORDER BY match_rank ASC, m.sequence ASC, k.semantic_id ASC
         LIMIT $5`, [scope.projectId, scope.workspaceId, scope.bundleId, member[0].sequence, semanticLimits.priorCandidates + 1, keys, kinds]);
     }
