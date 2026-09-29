@@ -1,4 +1,4 @@
-import type { DocumentPerceptionRequest, NormalizedDocument } from "@atlas/contracts";
+import type { DocumentPerceptionRequest, DocumentPerceptionTechnicalFailure, NormalizedDocument } from "@atlas/contracts";
 
 /**
  * Atlas's persistence-neutral boundary for document perception. Implementations
@@ -30,6 +30,7 @@ export interface PerceptionAuthority {
   create(input: PerceptionExecutionInput): Promise<DocumentPerceptionRequest>;
   redeem(input: Pick<DocumentPerceptionRequest, "executionId" | "artifact" | "source">): Promise<AuthorityRedeemedPerceptionSource>;
   deliver(request: DocumentPerceptionRequest, result: NormalizedDocument): Promise<void>;
+  fail(failure: DocumentPerceptionTechnicalFailure): Promise<void>;
   getCached(input: Pick<NormalizedDocument, "sourceSha256" | "perception"> & { readonly capabilityIdentity: string }): Promise<NormalizedDocument | undefined>;
   invalidateCache(input: Pick<NormalizedDocument, "sourceSha256" | "perception"> & { readonly capabilityIdentity: string }): Promise<void>;
 }

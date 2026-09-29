@@ -15,6 +15,7 @@ type DocumentStoreModule = typeof import("../../packages/document-store/src/loca
 
 const sourcePath = "/internal/perception/source";
 const resultPath = "/internal/perception/result";
+const perceptionFailurePath = "/internal/perception/failure";
 const semanticContextPath = "/internal/semantic/context";
 const semanticResultPath = "/internal/semantic/result";
 const semanticFailurePath = "/internal/semantic/failure";
@@ -99,7 +100,7 @@ export function createAtlasPerceptionInternalPlugin(): Plugin {
 
       server.middlewares.use(async (request, response, next) => {
         const pathname = new URL(request.url ?? "/", "http://atlas.local").pathname;
-        if (pathname !== sourcePath && pathname !== resultPath && pathname !== semanticContextPath && pathname !== semanticResultPath && pathname !== semanticFailurePath) return next();
+        if (pathname !== sourcePath && pathname !== resultPath && pathname !== perceptionFailurePath && pathname !== semanticContextPath && pathname !== semanticResultPath && pathname !== semanticFailurePath) return next();
         if (request.method !== "POST") { response.statusCode = 405; response.setHeader("allow", "POST"); response.end(); return; }
         try {
           const body = await readJson(request, request.headers["content-length"], pathname === sourcePath || pathname === semanticContextPath || pathname === semanticFailurePath ? requestLimit : resultLimit + requestLimit);
@@ -116,6 +117,12 @@ export function createAtlasPerceptionInternalPlugin(): Plugin {
               response.setHeader("cache-control", "no-store");
               response.end(Buffer.from(result.body));
             } else sendJson(response, result.status, result.body);
+            return;
+          }
+          if (pathname === perceptionFailurePath) {
+            const result = await routes.fail(credentialValue, body);
+            if (result.status === 204) { response.statusCode = 204; response.setHeader("cache-control", "no-store"); response.end(); }
+            else sendJson(response, result.status, result.body);
             return;
           }
           if (!body || typeof body !== "object" || Array.isArray(body)) { sendJson(response, 400, { error: "Invalid perception internal request." }); return; }

@@ -78,7 +78,13 @@ export class PostgresSemanticAuthority implements SemanticAuthority {
     await this.sql.begin(async (sql) => {
       const rows = await sql.unsafe("SELECT lifecycle, project_id, workspace_id, bundle_id, document_id FROM atlas.semantic_execution WHERE id=$1 FOR UPDATE", [scope.executionId]);
       if (!rows.length || rows[0].lifecycle === "completed" || rows[0].lifecycle === "cancelled" || String(rows[0].project_id) !== scope.projectId || String(rows[0].workspace_id) !== scope.workspaceId || String(rows[0].bundle_id) !== scope.bundleId || String(rows[0].document_id) !== scope.documentId) throw new Error("Semantic failure is unauthorized.");
-      await sql.unsafe("UPDATE atlas.semantic_execution SET lifecycle='failed', failure_code=$2 WHERE id=$1 AND lifecycle <> 'failed'", [scope.executionId, (failure as { code: string }).code]);
+      const code = (failure as { code: string }).code;
+      await sql.unsafe("UPDATE atlas.semantic_execution SET lifecycle='failed', failure_code=$2 WHERE id=$1 AND lifecycle <> 'failed'", [scope.executionId, code]);
+      // A terminal authenticated technical failure is lifecycle truth.  The
+      // bridge retains its retry/effect ledger if this transaction cannot
+      // commit, so an outage is never misrepresented as persisted attention.
+      await sql.unsafe("UPDATE atlas.extraction_bundle_document SET state='needs_attention', last_failure_code=$3, last_failure_at=now() WHERE bundle_id=$1 AND document_id=$2 AND state <> 'completed'", [rows[0].bundle_id, rows[0].document_id, code]);
+      await sql.unsafe("UPDATE atlas.extraction_bundle SET state='needs_attention', last_failure_code=$2, last_failure_at=now() WHERE id=$1 AND state <> 'ready_for_review'", [rows[0].bundle_id, code]);
     });
   }
 }

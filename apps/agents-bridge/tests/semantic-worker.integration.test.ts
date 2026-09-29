@@ -140,7 +140,7 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     return errors;
   };
   const authority = new PostgresSemanticAuthority(atlas, {
-    select: async (scope) => ({ version: "v1" as const, skill: "atlas.semantic.reconcile" as const, scope, currentCandidates: [], priorCandidates: [], selection: { policy: "semantic-worker-integration", overflow: false, selectedCount: 0 } }),
+    select: async (scope) => ({ version: "v1" as const, skill: "atlas.semantic.reconcile" as const, scope, currentCandidates: [], priorCandidates: [], selection: { policy: "semantic-worker-integration", version: "v1" as const, overflow: false, selectedCount: 0, currentCount: 0, totalCount: 0, byteLimit: semanticLimits.contextBytes, byteCount: 0, omittedPriorCount: 0 } }),
   });
   const routes = createSemanticInternalRoutes({
     serviceCredential: credential,

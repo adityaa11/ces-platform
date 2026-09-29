@@ -14,6 +14,11 @@ export type DocumentPerceptionRequest = {
   readonly perception: { readonly capability: "atlas.document.perceive"; readonly contractVersion: typeof documentPerceptionContractVersion };
 };
 
+export type DocumentPerceptionTechnicalFailure = {
+  readonly request: DocumentPerceptionRequest;
+  readonly code: "provider_timeout" | "provider_unavailable" | "malformed_output" | "integrity_validation" | "source_grant_expired";
+};
+
 export type BoundingBox = { readonly x: number; readonly y: number; readonly width: number; readonly height: number };
 export type NormalizedDocument = {
   readonly version: typeof documentPerceptionContractVersion;
@@ -61,9 +66,17 @@ export const normalizedDocumentSchema = {
   },
 } as const;
 
+export const documentPerceptionTechnicalFailureSchema = {
+  type: "object", additionalProperties: false, required: ["request", "code"], properties: {
+    request: documentPerceptionRequestSchema,
+    code: { enum: ["provider_timeout", "provider_unavailable", "malformed_output", "integrity_validation", "source_grant_expired"] },
+  },
+} as const;
+
 const ajv = new AjvConstructor({ allErrors: true, strict: false });
 const validateRequest = ajv.compile(documentPerceptionRequestSchema);
 const validateNormalized = ajv.compile(normalizedDocumentSchema);
+const validateTechnicalFailure = ajv.compile(documentPerceptionTechnicalFailureSchema);
 
 function parse<T>(validator: Validator, value: unknown, label: string): T {
   if (!validator(value)) throw new Error(`Invalid ${label}: ${ajv.errorsText(validator.errors)}`);
@@ -72,3 +85,4 @@ function parse<T>(validator: Validator, value: unknown, label: string): T {
 
 export function parseDocumentPerceptionRequest(value: unknown): DocumentPerceptionRequest { return parse<DocumentPerceptionRequest>(validateRequest, value, "document perception request"); }
 export function parseNormalizedDocument(value: unknown): NormalizedDocument { return parse<NormalizedDocument>(validateNormalized, value, "normalized document"); }
+export function parseDocumentPerceptionTechnicalFailure(value: unknown): DocumentPerceptionTechnicalFailure { return parse<DocumentPerceptionTechnicalFailure>(validateTechnicalFailure, value, "document perception technical failure"); }

@@ -1,5 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
-import { documentPerceptionContractVersion, parseDocumentPerceptionRequest, parseNormalizedDocument, type DocumentPerceptionRequest, type NormalizedDocument, type PerceptionAuthority, type PerceptionExecutionInput, type AuthorityRedeemedPerceptionSource } from "@atlas/core";
+import { documentPerceptionContractVersion, parseDocumentPerceptionRequest, parseNormalizedDocument, type DocumentPerceptionRequest, type NormalizedDocument } from "@atlas/core";
+import type { DocumentPerceptionTechnicalFailure } from "@atlas/contracts";
+import type { PerceptionAuthority, PerceptionExecutionInput, AuthorityRedeemedPerceptionSource } from "@atlas/core";
 
 type Row = Record<string, unknown>;
 type Sql = { unsafe(query: string, parameters?: readonly unknown[]): Promise<readonly Row[]>; begin<T>(work: (transaction: Sql) => Promise<T>): Promise<T> };
@@ -105,6 +107,17 @@ export class PostgresPerceptionAuthority implements PerceptionAuthority {
     await this.sql.begin(async (sql) => {
       await sql.unsafe("UPDATE atlas.normalized_document_cache SET invalidated_at=now() WHERE cache_key=$1 AND invalidated_at IS NULL", [key]);
       await sql.unsafe("UPDATE atlas.document_perception_derived_asset SET deleted_at=now() WHERE cache_key=$1 AND deleted_at IS NULL", [key]);
+    });
+  }
+
+  async fail(failure: DocumentPerceptionTechnicalFailure): Promise<void> {
+    const { request, code } = failure;
+    await this.sql.begin(async (sql) => {
+      const rows = await sql.unsafe("SELECT e.state, m.bundle_id, m.document_id FROM atlas.document_perception_execution e JOIN atlas.extraction_bundle_document m ON m.perception_execution_id=e.id WHERE e.id=$1 AND e.artifact_id=$2 AND e.source_sha256=$3 AND e.mime_type=$4 AND e.byte_size=$5 FOR UPDATE OF e,m", [request.executionId, request.artifact.id, request.artifact.sourceSha256, request.artifact.mimeType, request.artifact.byteSize]);
+      if (rows.length !== 1 || rows[0].state === "completed" || rows[0].state === "cancelled") throw new Error("Perception failure is stale or unauthorized.");
+      await sql.unsafe("UPDATE atlas.document_perception_execution SET state='failed', updated_at=now() WHERE id=$1 AND state NOT IN ('completed','cancelled')", [request.executionId]);
+      await sql.unsafe("UPDATE atlas.extraction_bundle_document SET state='needs_attention', last_failure_code=$3, last_failure_at=now() WHERE bundle_id=$1 AND document_id=$2 AND state <> 'completed'", [rows[0].bundle_id, rows[0].document_id, code]);
+      await sql.unsafe("UPDATE atlas.extraction_bundle SET state='needs_attention', last_failure_code=$2, last_failure_at=now() WHERE id=$1 AND state <> 'ready_for_review'", [rows[0].bundle_id, code]);
     });
   }
 }

@@ -1,9 +1,10 @@
-import type { DocumentPerceptionRequest, NormalizedDocument } from "@atlas/contracts";
+import type { DocumentPerceptionRequest, DocumentPerceptionTechnicalFailure, NormalizedDocument } from "@atlas/contracts";
 
 export type AtlasPerceptionClientConfig = {
   readonly baseUrl: string;
   readonly sourcePath: string;
   readonly resultPath: string;
+  readonly failurePath: string;
   readonly serviceCredential: string;
   readonly maximumSourceBytes: number;
   readonly maximumResultBytes: number;
@@ -13,7 +14,7 @@ export type AtlasPerceptionClientConfig = {
 type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 
 export class AtlasPerceptionClientError extends Error {
-  constructor(readonly operation: "source" | "result", message: string) {
+  constructor(readonly operation: "source" | "result" | "failure", message: string) {
     super(message);
     this.name = "AtlasPerceptionClientError";
   }
@@ -41,7 +42,7 @@ export function loadAtlasPerceptionClientConfig(environment: NodeJS.ProcessEnv =
   return {
     baseUrl: baseUrl.replace(/\/$/u, ""),
     sourcePath: internalPath(environment.AGENTS_BRIDGE_ATLAS_SOURCE_PATH, "/internal/perception/source", "AGENTS_BRIDGE_ATLAS_SOURCE_PATH"),
-    resultPath: internalPath(environment.AGENTS_BRIDGE_ATLAS_RESULT_PATH, "/internal/perception/result", "AGENTS_BRIDGE_ATLAS_RESULT_PATH"),
+    resultPath: internalPath(environment.AGENTS_BRIDGE_ATLAS_RESULT_PATH, "/internal/perception/result", "AGENTS_BRIDGE_ATLAS_RESULT_PATH"), failurePath: internalPath(environment.AGENTS_BRIDGE_ATLAS_PERCEPTION_FAILURE_PATH, "/internal/perception/failure", "AGENTS_BRIDGE_ATLAS_PERCEPTION_FAILURE_PATH"),
     serviceCredential,
     maximumSourceBytes: boundedPositiveInteger(environment.AGENTS_BRIDGE_MAX_SOURCE_BYTES, 20 * 1024 * 1024, "AGENTS_BRIDGE_MAX_SOURCE_BYTES", 20 * 1024 * 1024),
     maximumResultBytes: boundedPositiveInteger(environment.AGENTS_BRIDGE_MAX_RESULT_BYTES, 10 * 1024 * 1024, "AGENTS_BRIDGE_MAX_RESULT_BYTES", 10 * 1024 * 1024),
@@ -53,11 +54,11 @@ function endpoint(config: AtlasPerceptionClientConfig, path: string): string {
   return new URL(path, `${config.baseUrl}/`).toString();
 }
 
-function cancellationError(operation: "source" | "result"): AtlasPerceptionClientError {
+function cancellationError(operation: "source" | "result" | "failure"): AtlasPerceptionClientError {
   return new AtlasPerceptionClientError(operation, `Atlas ${operation} handoff was cancelled.`);
 }
 
-async function readBoundedBytes(response: Response, maximumBytes: number, operation: "source" | "result", signal: AbortSignal): Promise<Uint8Array> {
+async function readBoundedBytes(response: Response, maximumBytes: number, operation: "source" | "result" | "failure", signal: AbortSignal): Promise<Uint8Array> {
   const declaredLength = response.headers.get("content-length");
   if (declaredLength && (!/^\d+$/u.test(declaredLength) || Number(declaredLength) > maximumBytes)) throw new AtlasPerceptionClientError(operation, `Atlas ${operation} handoff exceeded its configured byte limit.`);
   if (!response.body) {
@@ -90,7 +91,7 @@ async function readBoundedBytes(response: Response, maximumBytes: number, operat
 }
 
 export function createAtlasPerceptionClients(config: AtlasPerceptionClientConfig, fetcher: FetchLike = fetch) {
-  const request = async (operation: "source" | "result", path: string, body: unknown, signal: AbortSignal): Promise<Response> => {
+    const request = async (operation: "source" | "result" | "failure", path: string, body: unknown, signal: AbortSignal): Promise<Response> => {
     const serialized = JSON.stringify(body);
     const deadline = AbortSignal.timeout(config.timeoutMilliseconds);
     const requestSignal = AbortSignal.any([signal, deadline]);
@@ -126,6 +127,10 @@ export function createAtlasPerceptionClients(config: AtlasPerceptionClientConfig
         if (Buffer.byteLength(serialized) > config.maximumResultBytes) throw new AtlasPerceptionClientError("result", "Atlas result handoff exceeded its configured byte limit.");
         const response = await request("result", config.resultPath, { request: perceptionRequest, result }, signal);
         if (response.status !== 204) throw new AtlasPerceptionClientError("result", "Atlas result handoff returned an invalid acknowledgement.");
+      },
+      async fail(failure: DocumentPerceptionTechnicalFailure, signal: AbortSignal): Promise<void> {
+        const response = await request("failure", config.failurePath, failure, signal);
+        if (response.status !== 204) throw new AtlasPerceptionClientError("failure", "Atlas failure handoff returned an invalid acknowledgement.");
       },
     },
   };

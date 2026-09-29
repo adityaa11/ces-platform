@@ -1,6 +1,6 @@
 # IDSER-008: Bundle completion and failure lifecycle
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `IDSER-BATCH-08`
 - **Depends on:** IDSER-003 through IDSER-007 `PASS`.
 - **Baseline:** SRC-IDSER-01 sections 10-11, 23-29, 32, 41.6-41.9; AC-23/27/28/29/31/32. See [README](README.md).
@@ -93,4 +93,4 @@ acceptance. Exact replay of the already accepted final result remains valid.
 **Question:** Is review-ready state a proven integrity boundary, with truthful
 recoverable technical failure and no premature advancement of project truth?
 
-**Implementation checkpoint:** Not started; record commit and Compose evidence.
+**Implementation checkpoint:** `project's goal/feedback/IDSER-BATCH-08-go-checkpoint.md`; awaiting first CK review.

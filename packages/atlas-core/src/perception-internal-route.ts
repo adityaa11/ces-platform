@@ -1,5 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
-import { parseDocumentPerceptionRequest, parseNormalizedDocument } from "@atlas/contracts";
+import { parseDocumentPerceptionRequest, parseDocumentPerceptionTechnicalFailure, parseNormalizedDocument } from "@atlas/contracts";
 import { readVerifiedPerceptionSource, type SourceReader } from "./source-handoff.js";
 import type { PerceptionAuthority } from "./perception-authority.js";
 
@@ -43,6 +43,14 @@ export function createPerceptionInternalRoutes(options: { readonly authority: Pe
         const result = parseNormalizedDocument(resultBody);
         if (result.provider.executionId !== request.executionId) return badRequest();
         await options.authority.deliver(request, result);
+        return { status: 204, body: new Uint8Array(), contentType: "application/json" };
+      } catch { return badRequest(); }
+    },
+    async fail(credential: string | undefined, body: unknown): Promise<InternalPerceptionResponse> {
+      if (!constantTimeEqual(credential, options.serviceCredential)) return unauthorized();
+      try {
+        if (exceedsBodyLimit(body, 16 * 1024)) return badRequest();
+        await options.authority.fail(parseDocumentPerceptionTechnicalFailure(body));
         return { status: 204, body: new Uint8Array(), contentType: "application/json" };
       } catch { return badRequest(); }
     },
