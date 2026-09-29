@@ -5,6 +5,7 @@ type Row = Record<string, unknown>;
 type Sql = { unsafe(query: string, parameters?: readonly unknown[]): Promise<readonly Row[]> };
 type ContextCandidate = { id: string; semantic_key: string; kind: string; normalized_meaning: string; payload: unknown; evidence_refs: readonly { page_number: number; locator_type: string; locator_id: string; excerpt?: string }[] };
 const json = (value: unknown): unknown => typeof value === "string" ? JSON.parse(value) : value;
+const serializedBytes = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).byteLength;
 
 /**
  * Atlas-owned v1 neighborhood policy. It deliberately selects incoming
@@ -36,16 +37,42 @@ export class PostgresReconciliationSelector implements SemanticReconciliationSel
         ORDER BY match_rank ASC, m.sequence ASC, k.semantic_id ASC
         LIMIT $5`, [scope.projectId, scope.workspaceId, scope.bundleId, member[0].sequence, semanticLimits.priorCandidates + 1, keys, kinds]);
     }
-    const overflow = priorRows.length > semanticLimits.priorCandidates;
-    const prior = await Promise.all(priorRows.slice(0, semanticLimits.priorCandidates).map((row) => this.withEvidence(sql, scope, row)));
-    const context = {
+    const rankedPrior = await Promise.all(priorRows.slice(0, semanticLimits.priorCandidates).map((row) => this.withEvidence(sql, scope, row)));
+    const sourceOverflow = priorRows.length > semanticLimits.priorCandidates;
+    const contextFor = (prior: readonly ContextCandidate[], omittedPriorCount: number, overflow: boolean, byteCount = 0) => ({
       version: semanticContractVersion,
       skill: "atlas.semantic.reconcile" as const,
       scope,
       currentCandidates: current,
       priorCandidates: prior,
-      selection: { policy: "idser-007.semantic-key-then-kind.v1", overflow, selectedCount: prior.length },
+      selection: {
+        policy: "idser-007.semantic-key-then-kind.v1", version: "v1" as const, overflow,
+        selectedCount: prior.length, currentCount: current.length, totalCount: current.length + prior.length,
+        byteLimit: semanticLimits.contextBytes, byteCount, omittedPriorCount,
+      },
+    });
+    const withExactByteCount = (prior: readonly ContextCandidate[], omittedPriorCount: number, overflow: boolean) => {
+      let context = contextFor(prior, omittedPriorCount, overflow);
+      // The recorded byte count is itself serialized. Iterate to its stable value.
+      for (let attempt = 0; attempt < 8; attempt += 1) {
+        const count = serializedBytes(context);
+        const next = contextFor(prior, omittedPriorCount, overflow, count);
+        if (serializedBytes(next) === count) return next;
+        context = next;
+      }
+      throw new Error("Reconciliation selection byte accounting did not stabilize.");
     };
+    const currentOnly = withExactByteCount([], rankedPrior.length + (sourceOverflow ? 1 : 0), rankedPrior.length > 0 || sourceOverflow);
+    if (serializedBytes(currentOnly) > semanticLimits.contextBytes) throw new Error("Current reconciliation candidates and required evidence exceed the mandatory context limit.");
+    const selected: ContextCandidate[] = [];
+    for (const candidate of rankedPrior) {
+      const proposed = withExactByteCount([...selected, candidate], rankedPrior.length - selected.length - 1 + (sourceOverflow ? 1 : 0), sourceOverflow || rankedPrior.length > selected.length + 1);
+      if (serializedBytes(proposed) > semanticLimits.contextBytes) break;
+      selected.push(candidate);
+    }
+    const omittedPriorCount = rankedPrior.length - selected.length + (sourceOverflow ? 1 : 0);
+    const context = withExactByteCount(selected, omittedPriorCount, omittedPriorCount > 0);
+    if (serializedBytes(context) > semanticLimits.contextBytes) throw new Error("Reconciliation selection exceeds the mandatory context limit.");
     return parseSemanticReconciliationContext(context);
   }
 

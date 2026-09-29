@@ -10,6 +10,8 @@ export type SemanticCandidateScope = {
 };
 
 export type SemanticEvidenceRecord = {
+  /** Stable evidence identity, also used as the opaque continuation cursor. */
+  readonly evidenceId: string;
   readonly pageNumber: number;
   readonly locatorType: "text_block" | "table" | "visual_region";
   readonly locatorId: string;
@@ -51,7 +53,8 @@ export type SemanticRelationshipRecord = {
 export interface SemanticCandidateRepository {
   findCandidate(scope: SemanticCandidateScope & { readonly semanticId: string }): Promise<SemanticCandidateRecord | null>;
   listCandidates(query: SemanticCandidateQuery): Promise<readonly SemanticCandidateRecord[]>;
-  listEvidence(scope: SemanticCandidateScope & { readonly semanticId: string }): Promise<readonly SemanticEvidenceRecord[]>;
+  /** Bounded page of evidence. Pass the last returned `evidenceId` as `afterEvidenceId` for the next page. */
+  listEvidence(scope: SemanticCandidateScope & { readonly semanticId: string; readonly limit?: number; readonly afterEvidenceId?: string }): Promise<readonly SemanticEvidenceRecord[]>;
   /** Bounded, scope-bound traversal for later semantic consumers. */
   listRelationships(scope: SemanticCandidateScope & { readonly semanticId: string; readonly limit?: number }): Promise<readonly SemanticRelationshipRecord[]>;
 }
