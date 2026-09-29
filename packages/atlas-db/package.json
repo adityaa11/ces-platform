@@ -16,7 +16,8 @@
     "test:project-repository": "jiti tests/project-repository.integration.test.ts",
     "test:semantic-foundation": "jiti tests/semantic-foundation.integration.test.ts",
     "test:semantic-authority": "jiti tests/semantic-authority.integration.test.ts",
-    "test:extraction-acceptance": "jiti tests/extraction-acceptance.integration.test.ts"
+    "test:extraction-acceptance": "jiti tests/extraction-acceptance.integration.test.ts",
+    "test:reconciliation-acceptance": "jiti tests/reconciliation-acceptance.integration.test.ts"
   },
   "dependencies": {
     "@atlas/contracts": "workspace:*",

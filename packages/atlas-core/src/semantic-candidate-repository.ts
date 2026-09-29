@@ -37,9 +37,21 @@ export type SemanticCandidateQuery = SemanticCandidateScope & {
   readonly limit?: number;
 };
 
+export type SemanticRelationshipRecord = {
+  readonly relationshipId: string;
+  readonly reconciliationResultId: string;
+  readonly sourceSemanticId: string;
+  readonly targetSemanticId: string | null;
+  readonly relationshipType: string;
+  readonly payload: unknown;
+  readonly requiresResolution: boolean;
+};
+
 /** Atlas-selected bounded reads for later projections and chatbot context. */
 export interface SemanticCandidateRepository {
   findCandidate(scope: SemanticCandidateScope & { readonly semanticId: string }): Promise<SemanticCandidateRecord | null>;
   listCandidates(query: SemanticCandidateQuery): Promise<readonly SemanticCandidateRecord[]>;
   listEvidence(scope: SemanticCandidateScope & { readonly semanticId: string }): Promise<readonly SemanticEvidenceRecord[]>;
+  /** Bounded, scope-bound traversal for later semantic consumers. */
+  listRelationships(scope: SemanticCandidateScope & { readonly semanticId: string; readonly limit?: number }): Promise<readonly SemanticRelationshipRecord[]>;
 }

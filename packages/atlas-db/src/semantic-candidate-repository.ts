@@ -1,5 +1,5 @@
 import { semanticLimits } from "@atlas/contracts";
-import type { SemanticCandidateQuery, SemanticCandidateRecord, SemanticCandidateRepository, SemanticCandidateScope, SemanticEvidenceRecord } from "@atlas/core";
+import type { SemanticCandidateQuery, SemanticCandidateRecord, SemanticCandidateRepository, SemanticCandidateScope, SemanticEvidenceRecord, SemanticRelationshipRecord } from "@atlas/core";
 
 type Row = Record<string, unknown>;
 type Sql = { unsafe(query: string, parameters?: readonly unknown[]): Promise<readonly Row[]> };
@@ -34,5 +34,11 @@ export class PostgresSemanticCandidateRepository implements SemanticCandidateRep
   async listEvidence(scope: SemanticCandidateScope & { readonly semanticId: string }): Promise<readonly SemanticEvidenceRecord[]> {
     const rows = await this.sql.unsafe("SELECT e.page_number, e.locator_type, e.locator_id, e.excerpt FROM atlas.knowledge_index k JOIN atlas.semantic_evidence e ON e.semantic_candidate_id=k.semantic_candidate_id WHERE k.semantic_id=$1 AND k.project_id=$2 AND k.workspace_id=$3 AND k.bundle_id=$4 ORDER BY e.page_number ASC, e.locator_type ASC, e.locator_id ASC", [scope.semanticId, scope.projectId, scope.workspaceId, scope.bundleId]);
     return rows.map((row) => ({ pageNumber: Number(row.page_number), locatorType: row.locator_type as SemanticEvidenceRecord["locatorType"], locatorId: String(row.locator_id), excerpt: row.excerpt === null ? null : String(row.excerpt) }));
+  }
+
+  async listRelationships(scope: SemanticCandidateScope & { readonly semanticId: string; readonly limit?: number }): Promise<readonly SemanticRelationshipRecord[]> {
+    const limit = Math.max(1, Math.min(scope.limit ?? semanticLimits.retrievalPage, semanticLimits.retrievalPage));
+    const rows = await this.sql.unsafe("SELECT r.id, r.reconciliation_result_id, r.source_semantic_id, r.target_semantic_id, r.relationship_type, r.payload, r.requires_resolution FROM atlas.reconciliation_relationship r WHERE r.project_id=$1 AND r.workspace_id=$2 AND r.bundle_id=$3 AND (r.source_semantic_id=$4 OR r.target_semantic_id=$4) ORDER BY r.id ASC LIMIT $5", [scope.projectId, scope.workspaceId, scope.bundleId, scope.semanticId, limit]);
+    return rows.map((row) => ({ relationshipId: String(row.id), reconciliationResultId: String(row.reconciliation_result_id), sourceSemanticId: String(row.source_semantic_id), targetSemanticId: row.target_semantic_id === null ? null : String(row.target_semantic_id), relationshipType: String(row.relationship_type), payload: json(row.payload), requiresResolution: row.requires_resolution === true }));
   }
 }

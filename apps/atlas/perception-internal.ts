@@ -7,6 +7,8 @@ type AtlasCoreModule = typeof import("../../packages/atlas-core/src/index");
 type AtlasDbModule = typeof import("../../packages/atlas-db/src/perception-authority");
 type SemanticDbModule = typeof import("../../packages/atlas-db/src/semantic-authority");
 type ExtractionAcceptanceModule = typeof import("../../packages/atlas-db/src/extraction-acceptance");
+type ReconciliationAcceptanceModule = typeof import("../../packages/atlas-db/src/reconciliation-acceptance");
+type ReconciliationSelectorModule = typeof import("../../packages/atlas-db/src/reconciliation-selector");
 type BackgroundQueue = typeof import("../agents-bridge/src/queue");
 type BackgroundExecutionJob = import("../agents-bridge/src/queue").BackgroundExecutionJob;
 type DocumentStoreModule = typeof import("../../packages/document-store/src/local-filesystem-document-store");
@@ -66,28 +68,33 @@ export function createAtlasPerceptionInternalPlugin(): Plugin {
       // Vite's Node-side config loader needs the workspace TypeScript resolver
       // so the local Compose process can execute those same sources directly.
       const jiti = createJiti(import.meta.url);
-      const [core, database, semanticDatabase, extractionAcceptance, documentStore, backgroundQueue] = await Promise.all([
+      const [core, database, semanticDatabase, extractionAcceptance, reconciliationAcceptance, reconciliationSelector, documentStore, backgroundQueue] = await Promise.all([
         jiti.import<AtlasCoreModule>("../../packages/atlas-core/src/index.ts"),
         jiti.import<AtlasDbModule>("../../packages/atlas-db/src/perception-authority.ts"),
         jiti.import<SemanticDbModule>("../../packages/atlas-db/src/semantic-authority.ts"),
         jiti.import<ExtractionAcceptanceModule>("../../packages/atlas-db/src/extraction-acceptance.ts"),
+        jiti.import<ReconciliationAcceptanceModule>("../../packages/atlas-db/src/reconciliation-acceptance.ts"),
+        jiti.import<ReconciliationSelectorModule>("../../packages/atlas-db/src/reconciliation-selector.ts"),
         jiti.import<DocumentStoreModule>("../../packages/document-store/src/local-filesystem-document-store.ts"),
         jiti.import<BackgroundQueue>("../agents-bridge/src/queue.ts"),
       ]);
       const sql = postgres(databaseUrl, { max: 4 });
       const semanticQueue = await backgroundQueue.createTransactionalQueueProducer(databaseUrl);
+      const perceptionQueue = await backgroundQueue.createTransactionalPerceptionQueueProducer(databaseUrl);
       // pg-boss's Drizzle transaction type is narrower than the Atlas
       // persistence port, while both adapters receive this same SQL transaction.
       const atlasSemanticQueue = { enqueue: (transaction: unknown, job: BackgroundExecutionJob) => semanticQueue.enqueue(transaction as never, job) };
       const authority = new database.PostgresPerceptionAuthority(sql, new core.PerceptionSourceGrantIssuer(credential), atlasSemanticQueue);
       const sources = new documentStore.LocalFilesystemDocumentStore(process.env.ATLAS_DOCUMENT_STORE_ROOT ?? resolve(process.cwd(), ".atlas-data"));
       const routes = core.createPerceptionInternalRoutes({ authority, sources, serviceCredential: credential, maximumSourceBytes: sourceLimit, maximumResultBytes: resultLimit });
-      const semanticAuthority = new semanticDatabase.PostgresSemanticAuthority(sql);
+      const semanticAuthority = new semanticDatabase.PostgresSemanticAuthority(sql, new reconciliationSelector.PostgresReconciliationSelector(sql));
       const extractionHandler = new extractionAcceptance.PostgresExtractionAcceptanceHandler(atlasSemanticQueue);
+      const reconciliationHandler = new reconciliationAcceptance.PostgresReconciliationAcceptanceHandler({ authority, queue: perceptionQueue });
       const semanticRoutes = core.createSemanticInternalRoutes({ authority: semanticAuthority, serviceCredential: credential, handler: { accept: async (input, transaction) => {
         const skill = (input.envelope as { skill?: { id?: string } }).skill?.id;
-        if (skill !== "atlas.semantic.extract") throw new Error("Semantic acceptance handler is unavailable for this stage.");
-        await extractionHandler.accept(input, transaction);
+        if (skill === "atlas.semantic.extract") await extractionHandler.accept(input, transaction);
+        else if (skill === "atlas.semantic.reconcile") await reconciliationHandler.accept(input, transaction);
+        else throw new Error("Semantic acceptance handler is unavailable for this stage.");
       } } });
 
       server.middlewares.use(async (request, response, next) => {
@@ -120,7 +127,7 @@ export function createAtlasPerceptionInternalPlugin(): Plugin {
           sendJson(response, 400, { error: "Invalid perception internal request." });
         }
       });
-      server.httpServer?.once("close", () => { void semanticQueue.close(); void sql.end(); });
+      server.httpServer?.once("close", () => { void semanticQueue.close(); void perceptionQueue.close(); void sql.end(); });
     },
   };
 }

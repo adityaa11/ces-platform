@@ -50,7 +50,7 @@ export class PostgresSemanticAuthority implements SemanticAuthority {
       return context;
     }
     if (!this.reconciliationSelection) throw new Error("Reconciliation selection authority is unavailable.");
-    const context = parseSemanticReconciliationContext(await this.reconciliationSelection.select(scope));
+    const context = parseSemanticReconciliationContext(await this.reconciliationSelection.select(scope, sql));
     if (context.scope.projectId !== scope.projectId || context.scope.workspaceId !== scope.workspaceId || context.scope.bundleId !== scope.bundleId || context.scope.documentId !== scope.documentId || context.scope.executionId !== scope.executionId) throw new Error("Reconciliation selection scope mismatch.");
     const fingerprint = digest(context);
     await sql.unsafe("INSERT INTO atlas.semantic_execution_context (execution_id, context_json, context_fingerprint) VALUES ($1,$2::jsonb,$3)", [scope.executionId, context, fingerprint]);

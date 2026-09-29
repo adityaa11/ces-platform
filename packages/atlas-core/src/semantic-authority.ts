@@ -21,7 +21,8 @@ export type SemanticAcceptanceHandler = {
 
 /** IDSER-007 owns neighborhood policy. IDSER-004 only persists its bounded result. */
 export type SemanticReconciliationSelectionPort = {
-  select(scope: AuthorizedSemanticContext["scope"]): Promise<unknown>;
+  /** The authority transaction keeps snapshot selection and context persistence atomic. */
+  select(scope: AuthorizedSemanticContext["scope"], transaction?: unknown): Promise<unknown>;
 };
 
 export interface SemanticAuthority {

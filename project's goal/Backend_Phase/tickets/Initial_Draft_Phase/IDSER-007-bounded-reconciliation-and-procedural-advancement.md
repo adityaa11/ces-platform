@@ -1,6 +1,6 @@
 # IDSER-007: Bounded reconciliation and procedural advancement
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `IDSER-BATCH-07`
 - **Depends on:** IDSER-003, IDSER-004, IDSER-005 and IDSER-006 `PASS`.
 - **Baseline:** SRC-IDSER-01 sections 19-25, 29-32, 36, 41.5-41.7; AC-17/18/19/20/21/22/23/24/25/26/33/34/35. See [README](README.md).
@@ -83,4 +83,7 @@ member in one Atlas transaction.
 accounting and advance one ordered bundle safely without leaking or resolving
 meaning outside its authority?
 
-**Implementation checkpoint:** Not started; record commit and Compose evidence.
+**Implementation checkpoint:** the GO handoff commit
+`feat(idser): add bounded reconciliation advancement`; Compose
+PostgreSQL/pg-boss acceptance evidence and the Review Contract Closure are recorded in
+`project's goal/feedback/IDSER-BATCH-07-go-checkpoint.md`.
