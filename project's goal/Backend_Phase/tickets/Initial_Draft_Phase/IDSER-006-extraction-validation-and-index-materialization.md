@@ -1,6 +1,6 @@
 # IDSER-006: Extraction validation and index materialization
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `IDSER-BATCH-06`
 - **Depends on:** IDSER-004 and IDSER-005 `PASS`; IDSER-001/002/003 inherited.
 - **Baseline:** SRC-IDSER-01 sections 14.1, 16-19, 23, 25, 29-31, 35-37, 41.4; AC-06/13/14/15/17/24/25/33/34/35. See [README](README.md).
@@ -74,4 +74,19 @@ retrieval anchors. All materialized rows remain candidate/reviewable state.
 **Question:** Can only valid source-grounded extraction create stable queryable
 semantic state, with atomic reconciliation scheduling and replay-safe effects?
 
-**Implementation checkpoint:** Not started; record commit and Compose evidence.
+**Implementation checkpoint:** `ee7124d0dcf7d38c3947c66c10d9fab6dba3fd80` — validated extraction materialization, bounded read ports, and transactional continuation handoff.
+
+## Review Contract Closure
+
+| Row | Ticket authority / required proof | Evidence and validation | Status |
+|---|---|---|---|
+| RC-001 | Scope and AC-01: accepted perception, extraction execution, and `atlas.semantic.extract/v1` enqueue commit together; delivery replay creates no second continuation. | `packages/atlas-db/tests/extraction-acceptance.integration.test.ts`, kickoff case; Compose command below. | PROVEN |
+| RC-002 | Scope and AC-02/03: validate the Bridge result plus independent source, scope, evidence, locator, excerpt, inventory and candidate identity constraints before any write. | Focused integration covers text/table/visual evidence, `needs_resolution`, malformed/dangling source accounting, and zero accepted state after rejection. Contract suite covers empty/non-fact and contradiction representations. | PROVEN |
+| RC-003 | Scope and AC-02/06: persist result/provenance, candidate rows, evidence, deterministic index anchors, and auditable local-to-canonical mapping; expose bounded persistence-neutral candidate/evidence reads. | `PostgresExtractionAcceptanceHandler`, `PostgresSemanticCandidateRepository`, migration `0018`; focused integration asserts counts, provenance-bound rows, retrieval cap, and scope denial. | PROVEN |
+| RC-004 | Scope and AC-04: exact result replay retains identities and one continuation; a conflicting completion cannot overwrite it. | Focused integration re-delivers the exact envelope, verifies one enqueue, and rejects a changed completion fingerprint. | PROVEN |
+| RC-005 | Scope and AC-05/24: every materialization and reconciliation enqueue failure rolls back and redelivery remains clean. | Focused PostgreSQL integration injects failure after result, candidate, index, identity-map, evidence, and enqueue; each leaves execution queued with no result, then a later replay persists two candidates once. | PROVEN |
+| RC-006 | Mandatory bindings REV-READY-IDSER-006-01/02/03: preserve candidate-only state and source/provenance scope, without cache-only identity or UI-owned semantics. | Execution-bound normalized-document lookup, source hash and locator validation, candidate-only read models, and Core/DB/semantic-authority Compose regressions. | PROVEN |
+
+Compose evidence on 2026-09-29: PostgreSQL healthy; `docker compose build atlas`; `docker compose run --rm --no-deps atlas corepack pnpm --filter @atlas/db test:extraction-acceptance` (2/2); `docker compose exec -T atlas corepack pnpm --filter @atlas/db test:semantic-authority` (1/1); `docker compose run --rm --no-deps atlas corepack pnpm --filter @atlas/core test`; and `docker compose run --rm --no-deps atlas corepack pnpm --filter @atlas/contracts test` all passed. Core and DB typechecks passed; `git diff --check` passed. The app-wide TypeScript diagnostic has pre-existing errors outside this ticket (demo, Sources workspace, Cloudflare typings, and fixtures); no IDSER-006 path was reported.
+
+Internal readiness: READY_FOR_CK
