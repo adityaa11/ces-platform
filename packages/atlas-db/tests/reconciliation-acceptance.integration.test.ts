@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
+import { spawn, type ChildProcess } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
+import { once } from "node:events";
+import { fileURLToPath } from "node:url";
+import { deflateRawSync } from "node:zlib";
 import test from "node:test";
 import postgres from "postgres";
 import { semanticLimits } from "@atlas/contracts";
@@ -9,18 +13,61 @@ import { PostgresReconciliationAcceptanceHandler } from "../src/reconciliation-a
 import { PostgresReconciliationSelector } from "../src/reconciliation-selector.ts";
 import { PostgresSemanticCandidateRepository } from "../src/semantic-candidate-repository.ts";
 import { PostgresSemanticAuthority, canonicalSemanticFingerprint } from "../src/semantic-authority.ts";
-import { createTransactionalPerceptionQueueProducer } from "../../../apps/agents-bridge/src/queue.ts";
+import { backgroundExecutionQueue, createTransactionalPerceptionQueueProducer, createTransactionalQueueProducer } from "../../../apps/agents-bridge/src/queue.ts";
 
 const databaseUrl = process.env.DATABASE_URL;
 const capability = "reconciliation-capability";
 
+const restartWorkerPath = fileURLToPath(new URL("../../../apps/agents-bridge/tests/reconciliation-restart-worker.ts", import.meta.url));
+const jitiCliPath = fileURLToPath(new URL("../../../apps/agents-bridge/node_modules/jiti/lib/jiti-cli.mjs", import.meta.url));
+
+async function startComposeReconciliationWorker(): Promise<{ child: ChildProcess; ready: Promise<void>; stderr: () => string }> {
+  const bridgeUrl = new URL(databaseUrl!);
+  bridgeUrl.username = "agents_bridge";
+  bridgeUrl.password = process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only";
+  const child = spawn(process.execPath, [jitiCliPath, restartWorkerPath], { cwd: process.cwd(), env: { ...process.env, AGENTS_BRIDGE_DATABASE_URL: bridgeUrl.toString() }, stdio: ["ignore", "pipe", "pipe"] });
+  let stdout = "";
+  let stderr = "";
+  child.stdout!.setEncoding("utf8").on("data", (chunk: string) => { stdout += chunk; });
+  child.stderr!.setEncoding("utf8").on("data", (chunk: string) => { stderr += chunk; });
+  const ready = (async () => {
+    const deadline = Date.now() + 20000;
+    while (!stdout.includes("COMPOSE_RECONCILIATION_WORKER_READY")) {
+      if (child.exitCode !== null) throw new Error(`Compose worker exited before ready (${child.exitCode}): ${stderr}`);
+      if (Date.now() >= deadline) { child.kill("SIGTERM"); throw new Error(`Compose worker did not become ready: ${stderr}`); }
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+  })();
+  await ready;
+  return { child, ready, stderr: () => stderr };
+}
+
+async function stopComposeReconciliationWorker(child: ChildProcess): Promise<void> {
+  if (child.exitCode !== null) return;
+  child.kill("SIGTERM");
+  await Promise.race([
+    once(child, "exit"),
+    new Promise((_, reject) => setTimeout(() => reject(new Error("Compose worker did not stop after SIGTERM")), 10000)),
+  ]);
+  assert.equal(child.exitCode, 0, "Compose worker process stops through its shutdown handler");
+}
+
+async function waitForCondition(check: () => Promise<boolean>, message: string | (() => string), timeoutMilliseconds = 30000): Promise<void> {
+  const deadline = Date.now() + timeoutMilliseconds;
+  while (Date.now() < deadline) {
+    if (await check()) return;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error(typeof message === "function" ? message() : message);
+}
+
 test("IDSER-007 selects a stable incoming neighborhood and atomically advances one bundle member", { skip: !databaseUrl }, async () => {
   const admin = postgres(databaseUrl!, { max: 1 }); const atlasUrl = new URL(databaseUrl!); atlasUrl.username = "atlas_app"; atlasUrl.password = process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only";
-  const atlas = postgres(atlasUrl.toString(), { max: 1 }); const atlasSecond = postgres(atlasUrl.toString(), { max: 1 }); const suffix = randomUUID(); const owner = `idser007-owner-${suffix}`; const project = `idser007-project-${suffix}`; const workspace = `idser007-workspace-${suffix}`; const bundle = `idser007-bundle-${suffix}`; const first = `idser007-first-${suffix}`; const second = `idser007-second-${suffix}`; const third = `idser007-third-${suffix}`; const overBudgetBundle = `over-budget-bundle-${suffix}`; const overBudgetDocument = `over-budget-document-${suffix}`; const execution = `idser007-reconcile-${suffix}`; const foreignProject = `foreign-project-${suffix}`; const foreignWorkspace = `foreign-workspace-${suffix}`; const foreignBundle = `foreign-bundle-${suffix}`; const foreignDocument = `foreign-document-${suffix}`; const foreignNext = `foreign-next-${suffix}`; const foreignExecution = `foreign-execution-${suffix}`; const foreignReconcile = `foreign-reconcile-${suffix}`; const foreignResult = `foreign-result-${suffix}`; const foreignCandidate = `foreign-candidate-${suffix}`; const foreignSemantic = `foreign-semantic-${suffix}`; const sha = createHash("sha256").update(suffix).digest("hex");
+  const atlas = postgres(atlasUrl.toString(), { max: 1 }); const atlasSecond = postgres(atlasUrl.toString(), { max: 1 }); const suffix = randomUUID(); const owner = `idser007-owner-${suffix}`; const foreignOwner = `idser007-foreign-owner-${suffix}`; const project = `idser007-project-${suffix}`; const workspace = `idser007-workspace-${suffix}`; const bundle = `idser007-bundle-${suffix}`; const first = `idser007-first-${suffix}`; const second = `idser007-second-${suffix}`; const third = `idser007-third-${suffix}`; const overBudgetBundle = `over-budget-bundle-${suffix}`; const overBudgetDocument = `over-budget-document-${suffix}`; const execution = `idser007-reconcile-${suffix}`; const foreignProject = `foreign-project-${suffix}`; const foreignWorkspace = `foreign-workspace-${suffix}`; const foreignBundle = `foreign-bundle-${suffix}`; const foreignDocument = `foreign-document-${suffix}`; const foreignNext = `foreign-next-${suffix}`; const foreignExecution = `foreign-execution-${suffix}`; const foreignReconcile = `foreign-reconcile-${suffix}`; const foreignResult = `foreign-result-${suffix}`; const foreignCandidate = `foreign-candidate-${suffix}`; const foreignSemantic = `foreign-semantic-${suffix}`; const sha = createHash("sha256").update(suffix).digest("hex");
   const scope = { projectId: project, workspaceId: workspace, bundleId: bundle, documentId: first, executionId: execution, contractVersion: "v1" as const };
   const perceptionQueue = await createTransactionalPerceptionQueueProducer(databaseUrl!);
   try {
-    await admin.unsafe('INSERT INTO auth."user" (id,name,email,"emailVerified","createdAt","updatedAt") VALUES ($1,$1,$2,false,now(),now())', [owner, `${owner}@example.test`]);
+    await admin.unsafe('INSERT INTO auth."user" (id,name,email,"emailVerified","createdAt","updatedAt") VALUES ($1,$1,$2,false,now(),now()),($3,$3,$4,false,now(),now())', [owner, `${owner}@example.test`, foreignOwner, `${foreignOwner}@example.test`]);
     await atlas.unsafe("INSERT INTO atlas.project (id,stable_id,name,created_by_user_id) VALUES ($1,$2,'IDSER-007',$3)", [project, `idser007-${suffix.slice(0, 12)}`, owner]);
     await atlas.unsafe("INSERT INTO atlas.workspace (id,project_id,kind,state,display_name) VALUES ($1,$2,'initial_draft','draft','Same display')", [workspace, project]);
     await atlas.unsafe("INSERT INTO atlas.document (id,project_id,workspace_id,original_filename,storage_key,source_sha256,byte_size,media_type,created_by_user_id) VALUES ($1,$2,$3,'one.pdf','private/one',$4,1,'application/pdf',$5),($6,$2,$3,'two.pdf','private/two',$4,1,'application/pdf',$5),($7,$2,$3,'three.pdf','private/three',$4,1,'application/pdf',$5),($8,$2,$3,'over-budget.pdf','private/over-budget',$4,1,'application/pdf',$5)", [first, project, workspace, sha, owner, second, third, overBudgetDocument]);
@@ -48,7 +95,7 @@ test("IDSER-007 selects a stable incoming neighborhood and atomically advances o
     await atlas.unsafe("INSERT INTO atlas.semantic_candidate (id,extraction_result_id,project_id,workspace_id,bundle_id,document_id,semantic_key,kind,payload,normalized_meaning,needs_resolution,state) VALUES ($1,$2,$3,$4,$5,$6,'unselected','actor','{}','existing but not selected',false,'candidate')", [unselectedCandidate, extractionResult, project, workspace, bundle, first]);
     await atlas.unsafe("INSERT INTO atlas.knowledge_index (semantic_id,project_id,workspace_id,bundle_id,document_id,semantic_key,kind,semantic_candidate_id) VALUES ($1,$2,$3,$4,$5,'unselected','actor',$6)", [unselectedSemantic, project, workspace, bundle, first, unselectedCandidate]);
     await atlas.unsafe("INSERT INTO atlas.semantic_evidence (id,semantic_candidate_id,document_id,page_number,locator_type,locator_id,excerpt) VALUES ($1,$2,$3,1,'text_block','unselected','existing')", [`unselected-evidence-${suffix}`, unselectedCandidate, first]);
-    await atlas.unsafe("INSERT INTO atlas.project (id,stable_id,name,created_by_user_id) VALUES ($1,$2,'Foreign',$3)", [foreignProject, `foreign-${suffix.slice(0, 12)}`, owner]);
+    await atlas.unsafe("INSERT INTO atlas.project (id,stable_id,name,created_by_user_id) VALUES ($1,$2,'Foreign',$3)", [foreignProject, `foreign-${suffix.slice(0, 12)}`, foreignOwner]);
     await atlas.unsafe("INSERT INTO atlas.workspace (id,project_id,kind,state,display_name) VALUES ($1,$2,'initial_draft','draft','Same display')", [foreignWorkspace, foreignProject]);
     await atlas.unsafe("INSERT INTO atlas.document (id,project_id,workspace_id,original_filename,storage_key,source_sha256,byte_size,media_type,created_by_user_id) VALUES ($1,$2,$3,'foreign.pdf','private/foreign',$4,1,'application/pdf',$5),($6,$2,$3,'foreign-next.pdf','private/foreign-next',$4,1,'application/pdf',$5)", [foreignDocument, foreignProject, foreignWorkspace, sha, owner, foreignNext]);
     await atlas.unsafe("INSERT INTO atlas.extraction_bundle (id,project_id,workspace_id,state,semantic_contract_version,reconciliation_contract_version,expected_document_count) VALUES ($1,$2,$3,'waiting','v1','v1',2)", [foreignBundle, foreignProject, foreignWorkspace]);
@@ -86,7 +133,8 @@ test("IDSER-007 selects a stable incoming neighborhood and atomically advances o
     assert.equal((await atlas.unsafe("SELECT state FROM atlas.extraction_bundle_document WHERE bundle_id=$1 AND document_id=$2", [bundle, second]))[0].state, "perception_queued");
     assert.equal((await atlas.unsafe("SELECT completed_document_count FROM atlas.extraction_bundle WHERE id=$1", [bundle]))[0].completed_document_count, 1);
     assert.equal((await admin.unsafe("SELECT count(*)::int AS count FROM pgboss.job WHERE name='atlas-document-perception-v1' AND data->'request'->>'executionId'=(SELECT perception_execution_id FROM atlas.extraction_bundle_document WHERE bundle_id=$1 AND document_id=$2)", [bundle, second]))[0].count, 1);
-    assert.equal((await atlas.unsafe("SELECT state FROM atlas.extraction_bundle_document WHERE bundle_id=$1 AND document_id=$2", [foreignBundle, foreignNext]))[0].state, "perception_queued", "distinct bundles advance independently despite identical workspace display wording");
+    assert.equal((await atlas.unsafe("SELECT state FROM atlas.extraction_bundle_document WHERE bundle_id=$1 AND document_id=$2", [foreignBundle, foreignNext]))[0].state, "perception_queued", "distinct bundles owned by distinct users advance independently despite identical workspace display wording");
+    assert.notEqual((await atlas.unsafe("SELECT created_by_user_id FROM atlas.project WHERE id=$1", [project]))[0].created_by_user_id, (await atlas.unsafe("SELECT created_by_user_id FROM atlas.project WHERE id=$1", [foreignProject]))[0].created_by_user_id, "the concurrent bundles belong to distinct user identities");
     const restartedAuthority = new PostgresSemanticAuthority(atlas, new PostgresReconciliationSelector(atlas));
     await restartedAuthority.deliver(envelope, handler);
     assert.equal((await admin.unsafe("SELECT count(*)::int AS count FROM pgboss.job WHERE name='atlas-document-perception-v1' AND data->'request'->>'executionId'=(SELECT perception_execution_id FROM atlas.extraction_bundle_document WHERE bundle_id=$1 AND document_id=$2)", [bundle, second]))[0].count, 1, "same acknowledgement cannot advance twice");
@@ -129,13 +177,60 @@ test("IDSER-007 selects a stable incoming neighborhood and atomically advances o
     assert.equal(unresolvedEvidence.length, 1);
     const crossTarget = nextContext.context.priorCandidates[0].id;
     const secondEnvelope = { version: "v1", scope: { ...scope, documentId: second, executionId: reconciliation2 }, skill: { id: "atlas.semantic.reconcile", version: "v1" }, provider: { provider: "test", model: "test", endpoint: "loopback", latencyMilliseconds: 1, attempt: 1 }, result: { version: "v1", relationships: [...["supports", "duplicates", "refines", "extends", "contradicts", "supersedes", "partially_supersedes", "ambiguous", "requires_resolution"].map((relationship_type) => ({ source_candidate_id: semantic2, target_candidate_id: crossTarget, relationship_type, payload: { cross_document: true, supersession_evidence: relationship_type === "supersedes" ? "supported" : "not_inferred_from_order" }, requires_resolution: ["contradicts", "partially_supersedes", "ambiguous", "requires_resolution"].includes(relationship_type), evidence_refs: relationship_type === "supersedes" ? supportedEvidence : unresolvedEvidence })), { source_candidate_id: semantic2, target_candidate_id: crossTarget, relationship_type: "supersedes", payload: { cross_document: true, supersession_evidence: "unsupported" }, requires_resolution: true, evidence_refs: unresolvedEvidence }], questions: [] } };
-    await authority.deliver(secondEnvelope, handler);
+    const backgroundQueue = await createTransactionalQueueProducer(databaseUrl!);
+    const reconciliationJobIdempotencyKey = `idser007-reconcile-restart-${suffix}`;
+    const compressedEnvelope = `z:${deflateRawSync(Buffer.from(JSON.stringify(secondEnvelope))).toString("base64")}`;
+    assert.ok(compressedEnvelope.length <= 1000, "compressed frozen semantic envelope fits the semantic capability bound");
+    let idleWorker: ChildProcess | undefined;
+    let restartedWorker: ChildProcess | undefined;
+    let restartedWorkerStderr = () => "";
+    try {
+      idleWorker = (await startComposeReconciliationWorker()).child;
+      await stopComposeReconciliationWorker(idleWorker);
+      await atlas.begin(async (transaction) => backgroundQueue.enqueue(transaction, {
+        idempotencyKey: reconciliationJobIdempotencyKey,
+        execution: {
+          version: "v1",
+          executionId: reconciliation2,
+          mode: "background",
+          skill: { id: "atlas.semantic.reconcile", version: "v1" },
+          input: {
+            version: "v1",
+            executionId: reconciliation2,
+            skill: { id: "atlas.semantic.reconcile", version: "v1" },
+            contextCapability: compressedEnvelope,
+          },
+          context: { boundary: "idser-007-restart-test", items: [] },
+        },
+      }));
+      assert.equal((await admin.unsafe("SELECT state FROM pgboss.job WHERE name=$1 AND data->>'idempotencyKey'=$2", [backgroundExecutionQueue, reconciliationJobIdempotencyKey]))[0].state, "created", "reconciliation delivery remains queued while the Compose worker is stopped");
+      const restarted = await startComposeReconciliationWorker();
+      restartedWorker = restarted.child;
+      restartedWorkerStderr = restarted.stderr;
+      try {
+        await waitForCondition(async () => {
+          const [result] = await atlas.unsafe("SELECT count(*)::int AS count FROM atlas.semantic_reconciliation_result WHERE execution_id=$1", [reconciliation2]);
+          const [effect] = await admin.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [reconciliationJobIdempotencyKey]);
+          return result.count === 1 && effect?.status === "completed";
+        }, "restarted Compose worker did not complete reconciliation");
+      } catch (error) {
+        const [job] = await admin.unsafe("SELECT state, retry_count, output FROM pgboss.job WHERE name=$1 AND data->>'idempotencyKey'=$2", [backgroundExecutionQueue, reconciliationJobIdempotencyKey]);
+        const [effect] = await admin.unsafe("SELECT status, last_error, lease_generation FROM bridge.background_effects WHERE idempotency_key=$1", [reconciliationJobIdempotencyKey]);
+        throw new Error(`${error instanceof Error ? error.message : String(error)}; job=${JSON.stringify(job)}; effect=${JSON.stringify(effect)}; stderr=${restartedWorkerStderr()}`);
+      }
+    } finally {
+      if (restartedWorker) await stopComposeReconciliationWorker(restartedWorker);
+      await admin.unsafe("DELETE FROM pgboss.job WHERE name=$1 AND data->>'idempotencyKey'=$2", [backgroundExecutionQueue, reconciliationJobIdempotencyKey]).catch(() => undefined);
+      await admin.unsafe("DELETE FROM bridge.background_effects WHERE idempotency_key=$1", [reconciliationJobIdempotencyKey]).catch(() => undefined);
+      await backgroundQueue.close();
+    }
     assert.deepEqual((await atlas.unsafe("SELECT payload->>'supersession_evidence' AS evidence FROM atlas.reconciliation_relationship WHERE reconciliation_result_id=(SELECT id FROM atlas.semantic_reconciliation_result WHERE execution_id=$1) AND relationship_type='supersedes' ORDER BY evidence", [reconciliation2])).map((row) => String(row.evidence)), ["supported", "unsupported"], "supported and unsupported supersession proposals remain distinct incoming records");
     const supersessionEvidence = await atlas.unsafe("SELECT relationship->'evidence_refs' AS evidence_refs FROM atlas.semantic_reconciliation_result, jsonb_array_elements(result_json->'relationships') AS relationship WHERE execution_id=$1 AND relationship->>'relationship_type'='supersedes' ORDER BY relationship->'payload'->>'supersession_evidence'", [reconciliation2]);
     assert.deepEqual(supersessionEvidence.map((row) => ((typeof row.evidence_refs === "string" ? JSON.parse(row.evidence_refs) : row.evidence_refs) as { locator_id: string }[])[0].locator_id), ["supporting-supersession", "unresolved-supersession"], "supported and unsupported supersession proposals cite distinct evidence");
     assert.equal((await atlas.unsafe("SELECT state FROM atlas.extraction_bundle_document WHERE bundle_id=$1 AND document_id=$2", [bundle, second]))[0].state, "completed");
     assert.equal((await atlas.unsafe("SELECT state FROM atlas.extraction_bundle_document WHERE bundle_id=$1 AND document_id=$2", [bundle, third]))[0].state, "perception_queued");
     assert.equal((await atlas.unsafe("SELECT completed_document_count FROM atlas.extraction_bundle WHERE id=$1", [bundle]))[0].completed_document_count, 2, "D3 is queued only after D2 reconciliation commits");
+    assert.equal((await admin.unsafe("SELECT count(*)::int AS count FROM pgboss.job WHERE name='atlas-document-perception-v1' AND data->'request'->>'executionId'=(SELECT perception_execution_id FROM atlas.extraction_bundle_document WHERE bundle_id=$1 AND document_id=$2)", [bundle, third]))[0].count, 1, "the restarted worker's reconciliation schedules exactly one D3 perception job");
     const extraction3 = `extract-three-${suffix}`; const result3 = `result-three-${suffix}`; const candidate3 = `candidate-three-${suffix}`; const semantic3 = `semantic-three-${suffix}`; const reconciliation3 = `reconcile-three-${suffix}`; const capability3 = "reconciliation-capability-three";
     await atlas.unsafe("INSERT INTO atlas.semantic_execution (id,project_id,workspace_id,bundle_id,document_id,stage,contract_version,skill_version,logical_identity,lifecycle,authorized_context_identity,authorized_context_fingerprint,capability_valid_until,completion_fingerprint,completed_at) VALUES ($1,$2,$3,$4,$5,'extraction','v1','v1',$1,'completed','perception',$6,now()+interval '1 hour',$7,now()),($8,$2,$3,$4,$5,'reconciliation','v1','v1',$8,'queued','extraction',$9,now()+interval '1 hour',NULL,NULL)", [extraction3, project, workspace, bundle, third, canonicalSemanticFingerprint(extraction3), `fingerprint-three-${suffix}`, reconciliation3, canonicalSemanticFingerprint(capability3)]);
     await atlas.unsafe("INSERT INTO atlas.semantic_extraction_result (id,execution_id,project_id,workspace_id,bundle_id,document_id,contract_version,source_sha256,provider_provenance,result_json,completion_fingerprint) VALUES ($1,$2,$3,$4,$5,$6,'v1',$7,'{}','{}',$8)", [result3, extraction3, project, workspace, bundle, third, sha, `fingerprint-three-${suffix}`]);
@@ -189,6 +284,6 @@ test("IDSER-007 selects a stable incoming neighborhood and atomically advances o
     assert.match(evidencePlan.map((row) => String(row["QUERY PLAN"])).join("\n"), /semantic_evidence_candidate_page/);
     assert.match(relationshipPlan.map((row) => String(row["QUERY PLAN"])).join("\n"), /Index (Only )?Scan using reconciliation_relationship_/);
   } finally {
-    await admin.unsafe("DELETE FROM pgboss.job WHERE data->'request'->>'executionId' IN (SELECT perception_execution_id FROM atlas.extraction_bundle_document WHERE bundle_id=$1)", [bundle]).catch(() => undefined); await admin.unsafe("DELETE FROM atlas.semantic_execution_context WHERE execution_id=$1", [execution]).catch(() => undefined); await admin.unsafe("DELETE FROM atlas.semantic_execution WHERE bundle_id=$1 OR bundle_id=$2", [bundle, overBudgetBundle]).catch(() => undefined); await admin.unsafe("DELETE FROM atlas.extraction_bundle_document WHERE bundle_id=$1 OR bundle_id=$2", [bundle, overBudgetBundle]).catch(() => undefined); await admin.unsafe("DELETE FROM atlas.extraction_bundle WHERE id=$1 OR id=$2", [bundle, overBudgetBundle]).catch(() => undefined); await admin.unsafe("DELETE FROM atlas.document WHERE id=$1 OR id=$2 OR id=$3 OR id=$4", [first, second, third, overBudgetDocument]).catch(() => undefined); await admin.unsafe("DELETE FROM atlas.semantic_execution WHERE project_id=$1", [foreignProject]).catch(() => undefined); await admin.unsafe("DELETE FROM atlas.extraction_bundle_document WHERE project_id=$1", [foreignProject]).catch(() => undefined); await admin.unsafe("DELETE FROM atlas.extraction_bundle WHERE project_id=$1", [foreignProject]).catch(() => undefined); await admin.unsafe("DELETE FROM atlas.document WHERE project_id=$1", [foreignProject]).catch(() => undefined); await admin.unsafe("DELETE FROM atlas.workspace WHERE project_id=$1", [foreignProject]).catch(() => undefined); await admin.unsafe("DELETE FROM atlas.project WHERE id=$1", [foreignProject]).catch(() => undefined); await admin.unsafe("DELETE FROM atlas.workspace WHERE id=$1", [workspace]).catch(() => undefined); await admin.unsafe("DELETE FROM atlas.project WHERE id=$1", [project]).catch(() => undefined); await admin.unsafe('DELETE FROM auth."user" WHERE id=$1', [owner]).catch(() => undefined); await Promise.all([perceptionQueue.close(), admin.end(), atlas.end(), atlasSecond.end()]);
+    await admin.unsafe("DELETE FROM pgboss.job WHERE data->'request'->>'executionId' IN (SELECT perception_execution_id FROM atlas.extraction_bundle_document WHERE bundle_id=$1)", [bundle]).catch(() => undefined); await admin.unsafe("DELETE FROM atlas.semantic_execution_context WHERE execution_id=$1", [execution]).catch(() => undefined); await admin.unsafe("DELETE FROM atlas.semantic_execution WHERE bundle_id=$1 OR bundle_id=$2", [bundle, overBudgetBundle]).catch(() => undefined); await admin.unsafe("DELETE FROM atlas.extraction_bundle_document WHERE bundle_id=$1 OR bundle_id=$2", [bundle, overBudgetBundle]).catch(() => undefined); await admin.unsafe("DELETE FROM atlas.extraction_bundle WHERE id=$1 OR id=$2", [bundle, overBudgetBundle]).catch(() => undefined); await admin.unsafe("DELETE FROM atlas.document WHERE id=$1 OR id=$2 OR id=$3 OR id=$4", [first, second, third, overBudgetDocument]).catch(() => undefined); await admin.unsafe("DELETE FROM atlas.semantic_execution WHERE project_id=$1", [foreignProject]).catch(() => undefined); await admin.unsafe("DELETE FROM atlas.extraction_bundle_document WHERE project_id=$1", [foreignProject]).catch(() => undefined); await admin.unsafe("DELETE FROM atlas.extraction_bundle WHERE project_id=$1", [foreignProject]).catch(() => undefined); await admin.unsafe("DELETE FROM atlas.document WHERE project_id=$1", [foreignProject]).catch(() => undefined); await admin.unsafe("DELETE FROM atlas.workspace WHERE project_id=$1", [foreignProject]).catch(() => undefined); await admin.unsafe("DELETE FROM atlas.project WHERE id=$1", [foreignProject]).catch(() => undefined); await admin.unsafe("DELETE FROM atlas.workspace WHERE id=$1", [workspace]).catch(() => undefined); await admin.unsafe("DELETE FROM atlas.project WHERE id=$1", [project]).catch(() => undefined); await admin.unsafe('DELETE FROM auth."user" WHERE id = ANY($1::text[])', [[owner, foreignOwner]]).catch(() => undefined); await Promise.all([perceptionQueue.close(), admin.end(), atlas.end(), atlasSecond.end()]);
   }
 });
