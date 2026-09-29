@@ -16,6 +16,26 @@ export type TransactionalQueueProducer = {
   close(): Promise<void>;
 };
 
+/**
+ * pg-boss's Drizzle adapter only needs a client with `unsafe()` and driver
+ * codecs. A postgres.js transaction scope has the former but deliberately
+ * does not expose the root client's mutable `options` object. Supplying an
+ * isolated codec bag keeps pg-boss on that same transaction connection while
+ * preventing Drizzle setup from mutating the caller's JSON serializers.
+ */
+function drizzleTransaction(transaction: unknown): DrizzleTransactionLike {
+  const client = transaction as { unsafe(query: string, params?: readonly unknown[]): unknown };
+  const options = { parsers: {} as Record<string, unknown>, serializers: {} as Record<string, unknown> };
+  const adapter = new Proxy(client, {
+    get(target, property, receiver) {
+      if (property === "options") return options;
+      if (property === "unsafe") return (query: string, params: readonly unknown[] = []) => target.unsafe(query, params);
+      return Reflect.get(target, property, receiver);
+    },
+  });
+  return drizzle(adapter as never) as DrizzleTransactionLike;
+}
+
 /** IDSER-003 adapter: pg-boss receives the caller's postgres.js transaction,
  * so the initial perception job can never commit separately from Atlas state. */
 export type TransactionalPerceptionQueueProducer = {
@@ -29,7 +49,7 @@ export async function createTransactionalPerceptionQueueProducer(databaseUrl: st
   return {
     async enqueue(transaction, job) {
       const parsed = parseDocumentPerceptionJob(job);
-      return boss.send(queueName, parsed, { db: fromDrizzle(drizzle(transaction as never) as DrizzleTransactionLike, sql), singletonKey: parsed.idempotencyKey });
+      return boss.send(queueName, parsed, { db: fromDrizzle(drizzleTransaction(transaction), sql), singletonKey: parsed.idempotencyKey });
     },
     async close() { await boss.stop({ graceful: false }); },
   };
@@ -44,7 +64,9 @@ export async function createTransactionalQueueProducer(databaseUrl: string, queu
       const execution = parseExecutionRequest(job.execution);
       if (execution.mode !== "background") throw new Error("Background queue requires mode background.");
       return boss.send(queueName, { idempotencyKey: job.idempotencyKey, execution }, {
-        db: fromDrizzle(transaction, sql),
+        // Atlas adapters use postgres.js transactions; pg-boss's Drizzle
+        // bridge must receive the corresponding Drizzle transaction wrapper.
+        db: fromDrizzle(drizzleTransaction(transaction), sql),
         singletonKey: job.idempotencyKey,
       });
     },
