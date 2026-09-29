@@ -1,6 +1,6 @@
 # IDSER-005: Production semantic worker and replay
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `IDSER-BATCH-05`
 - **Depends on:** IDSER-001, IDSER-002 and IDSER-004 `PASS`.
 - **Baseline:** SRC-IDSER-01 sections 12-15, 24-25, 32-35, 41.3/41.6/41.7, 43; AC-07/08/09/25/28/38/41. See [README](README.md).

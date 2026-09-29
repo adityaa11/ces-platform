@@ -1,6 +1,6 @@
 # IDSER-006: Extraction validation and index materialization
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `IDSER-BATCH-06`
 - **Depends on:** IDSER-004 and IDSER-005 `PASS`; IDSER-001/002/003 inherited.
 - **Baseline:** SRC-IDSER-01 sections 14.1, 16-19, 23, 25, 29-31, 35-37, 41.4; AC-06/13/14/15/17/24/25/33/34/35. See [README](README.md).
