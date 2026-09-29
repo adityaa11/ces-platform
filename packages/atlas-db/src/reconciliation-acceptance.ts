@@ -49,13 +49,13 @@ export class PostgresReconciliationAcceptanceHandler implements SemanticAcceptan
       await sql.unsafe("UPDATE atlas.extraction_bundle_document SET state='perception_queued', perception_execution_id=$3, started_at=COALESCE(started_at,now()) WHERE bundle_id=$1 AND document_id=$2 AND state='pending'", [scope.bundleId, next[0].document_id, executionId]);
       return;
     }
-    await this.completeBundle(sql, scope.bundleId, scope.projectId, scope.workspaceId);
+    await this.completeBundle(sql, scope.bundleId, scope.projectId, scope.workspaceId, scope.documentId);
   }
 
   /** The final result remains inside the semantic-authority transaction: a
    * failed integrity check rolls back the result, relationship rows, member
    * completion, progress count, and both lifecycle transitions together. */
-  private async completeBundle(sql: Sql, bundleId: string, projectId: string, workspaceId: string): Promise<void> {
+  private async completeBundle(sql: Sql, bundleId: string, projectId: string, workspaceId: string, finalDocumentId: string): Promise<void> {
     const bundles = await sql.unsafe("SELECT expected_document_count, completed_document_count, semantic_contract_version, reconciliation_contract_version FROM atlas.extraction_bundle WHERE id=$1 AND project_id=$2 AND workspace_id=$3 AND state='processing' FOR UPDATE", [bundleId, projectId, workspaceId]);
     if (bundles.length !== 1) throw new Error("Bundle completion state is unavailable.");
     const bundle = bundles[0];
@@ -69,7 +69,26 @@ export class PostgresReconciliationAcceptanceHandler implements SemanticAcceptan
         if (Number(executions[0].count) !== 1) throw new Error("Bundle completion has an incomplete semantic stage.");
       }
     }
-    const invalid = await sql.unsafe("SELECT 1 FROM atlas.semantic_candidate c LEFT JOIN atlas.semantic_extraction_result r ON r.id=c.extraction_result_id AND r.project_id=c.project_id AND r.workspace_id=c.workspace_id AND r.bundle_id=c.bundle_id AND r.document_id=c.document_id LEFT JOIN atlas.semantic_evidence e ON e.semantic_candidate_id=c.id AND e.document_id=c.document_id WHERE c.bundle_id=$1 AND c.project_id=$2 AND c.workspace_id=$3 AND (r.id IS NULL OR c.state IN ('accepted','resolved') OR (SELECT count(*) FROM atlas.semantic_evidence check_e WHERE check_e.semantic_candidate_id=c.id AND check_e.document_id<>c.document_id)>0) LIMIT 1", [bundleId, projectId, workspaceId]);
+    const invalid = await sql.unsafe(`
+      SELECT c.id, r.id IS NULL AS result_invalid, n.cache_key IS NULL AS cache_missing,
+        EXISTS (SELECT 1 FROM atlas.semantic_evidence e WHERE e.semantic_candidate_id=c.id AND (
+          e.document_id<>c.document_id OR n.normalized_document::text NOT LIKE '%' || e.locator_id || '%'
+        )) AS evidence_invalid
+      FROM atlas.semantic_candidate c
+      LEFT JOIN atlas.semantic_extraction_result r ON r.id=c.extraction_result_id AND r.project_id=c.project_id AND r.workspace_id=c.workspace_id AND r.bundle_id=c.bundle_id AND r.document_id=c.document_id
+      LEFT JOIN atlas.extraction_bundle_document m ON m.bundle_id=c.bundle_id AND m.document_id=c.document_id AND m.project_id=c.project_id AND m.workspace_id=c.workspace_id
+      LEFT JOIN atlas.document_perception_execution p ON p.id=m.perception_execution_id
+      LEFT JOIN atlas.normalized_document_cache n ON n.source_sha256=(SELECT d.source_sha256 FROM atlas.document d WHERE d.id=c.document_id AND d.project_id=c.project_id AND d.workspace_id=c.workspace_id) AND n.capability_identity=p.capability_identity AND n.invalidated_at IS NULL
+      WHERE c.bundle_id=$1 AND c.project_id=$2 AND c.workspace_id=$3 AND c.document_id=$4 AND (
+        r.id IS NULL OR c.state IN ('accepted','resolved') OR n.cache_key IS NULL OR EXISTS (
+          SELECT 1 FROM atlas.semantic_evidence e
+          WHERE e.semantic_candidate_id=c.id AND (
+            e.document_id<>c.document_id OR n.normalized_document::text NOT LIKE '%' || e.locator_id || '%'
+          )
+        )
+      )
+      LIMIT 1
+    `, [bundleId, projectId, workspaceId, finalDocumentId]);
     if (invalid.length) throw new Error("Bundle completion detected invalid candidate or evidence authority.");
     const unresolved = await sql.unsafe("SELECT 1 FROM atlas.semantic_execution WHERE bundle_id=$1 AND project_id=$2 AND workspace_id=$3 AND contract_version IN ($4,$5) AND lifecycle IN ('queued','running','failed') LIMIT 1", [bundleId, projectId, workspaceId, bundle.semantic_contract_version, bundle.reconciliation_contract_version]);
     if (unresolved.length) throw new Error("Bundle completion has an active or failed semantic stage.");

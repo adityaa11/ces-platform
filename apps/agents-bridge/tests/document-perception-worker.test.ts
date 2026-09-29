@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { AtlasPerceptionClientError } from "../src/atlas-perception-client.js";
 import { runDocumentPerception } from "../src/document-perception-worker.ts";
+import { BridgeProviderError } from "../src/providers/mistral.js";
 
 const request = { version: "v1", executionId: "exec-1", artifact: { id: "artifact-1", mimeType: "application/pdf" as const, byteSize: 4, sourceSha256: "a".repeat(64) }, source: { grant: `123e4567-e89b-12d3-a456-426614174000.${"a".repeat(43)}` }, perception: { capability: "atlas.document.perceive" as const, contractVersion: "v1" as const } };
 
@@ -42,4 +44,28 @@ test("a lost result acknowledgement replays staged normalized output without a s
   assert.ok(staged, "the replay row must survive until the worker durably completes its effect");
   await store.acknowledge();
   assert.equal(staged, undefined);
+});
+
+test("transient Atlas source and replay-store faults remain with the queue instead of reporting terminal failure", async () => {
+  let failures = 0;
+  const results = { deliver: async () => undefined, fail: async () => { failures += 1; } };
+  await assert.rejects(
+    () => runDocumentPerception(request, {} as never, { redeem: async () => { throw new AtlasPerceptionClientError("source", "Atlas source handoff was unavailable."); } }, results, new AbortController().signal, { idempotencyKey: "perception:exec-1", store: { load: async () => { throw new Error("temporary replay read failure"); }, stage: async () => undefined, acknowledge: async () => undefined }, finalAttempt: true }),
+    /replay load is temporarily unavailable/,
+  );
+  await assert.rejects(
+    () => runDocumentPerception(request, {} as never, { redeem: async () => { throw new AtlasPerceptionClientError("source", "Atlas source handoff was unavailable."); } }, results, new AbortController().signal),
+    /Atlas source handoff was unavailable/,
+  );
+  assert.equal(failures, 0);
+});
+
+test("retryable provider failures become bounded terminal failures only on the final queue attempt", async () => {
+  const failures: string[] = [];
+  const results = { deliver: async () => undefined, fail: async (failure: { code: string }) => { failures.push(failure.code); } };
+  const provider = { perceive: async () => { throw new BridgeProviderError("timeout", "synthetic timeout"); } };
+  const replay = { idempotencyKey: "perception:exec-1", store: { load: async () => undefined, stage: async () => undefined, acknowledge: async () => undefined } };
+  await assert.rejects(() => runDocumentPerception(request, provider as never, { redeem: async () => ({ bytes: new Uint8Array([1]), mimeType: "application/pdf" as const }) }, results, new AbortController().signal, { ...replay, finalAttempt: false }), /synthetic timeout/);
+  await runDocumentPerception(request, provider as never, { redeem: async () => ({ bytes: new Uint8Array([1]), mimeType: "application/pdf" as const }) }, results, new AbortController().signal, { ...replay, finalAttempt: true });
+  assert.deepEqual(failures, ["provider_timeout"]);
 });

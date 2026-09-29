@@ -20,7 +20,7 @@ const provider = new MistralProvider(loadBridgeConfig().mistral);
 const semanticClient = createAtlasSemanticClient(loadAtlasSemanticClientConfig());
 const worker = createBackgroundWorker(loadWorkerConfig(), new TestRuntime(), undefined, async (request, signal, context) => {
   const store = createPerceptionResultReplay(context.database);
-  await runDocumentPerception(request, provider, clients.source, clients.results, signal, { idempotencyKey: context.idempotencyKey, store });
+  await runDocumentPerception(request, provider, clients.source, clients.results, signal, { idempotencyKey: context.idempotencyKey, store, finalAttempt: context.finalAttempt });
 }, undefined, async (job, signal, context) => {
   await runSemanticJob(job, provider, semanticClient, createSemanticResultReplay(context.database), context.idempotencyKey, signal, { owner: context.leaseOwner, generation: context.leaseGeneration });
 });

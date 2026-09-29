@@ -16,7 +16,7 @@ export type BackgroundWorker = {
  * The Bridge can execute perception only through an injected bounded handoff.
  * It deliberately has no Atlas repository or cache dependency.
  */
-export type DocumentPerceptionQueueHandler = (request: DocumentPerceptionRequest, signal: AbortSignal, context: { readonly idempotencyKey: string; readonly database: Db }) => Promise<void>;
+export type DocumentPerceptionQueueHandler = (request: DocumentPerceptionRequest, signal: AbortSignal, context: { readonly idempotencyKey: string; readonly database: Db; readonly finalAttempt: boolean }) => Promise<void>;
 export type SemanticQueueHandler = (job: ReturnType<typeof parseSemanticBackgroundJob>, signal: AbortSignal, context: { readonly idempotencyKey: string; readonly database: Db; readonly leaseOwner: string; readonly leaseGeneration: number }) => Promise<void>;
 
 async function executeOnce(idempotencyKey: string, executionId: string, leaseSeconds: number, work: (lease: { readonly owner: string; readonly generation: number }) => Promise<void>, database: Db, afterCompletion?: (lease: { readonly owner: string; readonly generation: number }) => Promise<void>): Promise<void> {
@@ -88,6 +88,7 @@ export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningR
       await boss.getDb().executeSql("GRANT SELECT (id) ON TABLE pgboss.job_common TO atlas_app");
       const workOptions = {
         transactional: false,
+        includeMetadata: true as const,
         localConcurrency: config.concurrency,
         pollingIntervalSeconds: 0.5,
       };
@@ -120,7 +121,7 @@ export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningR
         await boss.work(perceptionQueueName, workOptions, async ([job]) => {
           const perceptionJob = parseDocumentPerceptionJob(job.data);
           const cleanup = () => boss.getDb().executeSql("DELETE FROM bridge.document_perception_result_delivery WHERE idempotency_key=$1 AND execution_id=$2", [perceptionJob.idempotencyKey, perceptionJob.request.executionId]).then(() => undefined);
-          await executeOnce(perceptionJob.idempotencyKey, perceptionJob.request.executionId, config.timeoutSeconds, () => documentPerception(perceptionJob.request, job.signal, { idempotencyKey: perceptionJob.idempotencyKey, database: boss.getDb() }), boss.getDb(), cleanup);
+          await executeOnce(perceptionJob.idempotencyKey, perceptionJob.request.executionId, config.timeoutSeconds, () => documentPerception(perceptionJob.request, job.signal, { idempotencyKey: perceptionJob.idempotencyKey, database: boss.getDb(), finalAttempt: job.retryCount >= job.retryLimit }), boss.getDb(), cleanup);
         });
       }
     },
