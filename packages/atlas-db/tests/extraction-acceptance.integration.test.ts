@@ -106,8 +106,9 @@ test("IDSER-006 materializes only validated extraction state, replays atomically
       { ...extractionResult(), candidate_assertions: extractionResult().candidate_assertions.map((candidate, index) => index ? candidate : { ...candidate, evidence_refs: [{ page_number: 1, locator_type: "table", locator_id: "invented-table", excerpt: "customer" }] }) },
       { ...extractionResult(), candidate_assertions: extractionResult().candidate_assertions.map((candidate, index) => index ? candidate : { ...candidate, evidence_refs: [{ page_number: 1, locator_type: "visual_region", locator_id: "invented-visual" }] }) },
       { ...extractionResult(), candidate_assertions: extractionResult().candidate_assertions.map((candidate, index) => index ? candidate : { ...candidate, evidence_refs: [{ page_number: 1, locator_type: "text_block", locator_id: "block-1", excerpt: "invented excerpt" }] }) },
-      { ...extractionResult(), source_statement_inventory: extractionResult().source_statement_inventory.slice(0, 2) },
-      { ...extractionResult(), candidate_assertions: [extractionResult().candidate_assertions[0], { ...extractionResult().candidate_assertions[0], local_candidate_id: "candidate-order" }] },
+       { ...extractionResult(), source_statement_inventory: extractionResult().source_statement_inventory.slice(0, 2) },
+       { ...extractionResult(), source_statement_inventory: extractionResult().source_statement_inventory.map((item, index) => index ? item : { ...item, destination_local_candidate_ids: ["missing-candidate"] }) },
+       { ...extractionResult(), candidate_assertions: [extractionResult().candidate_assertions[0], { ...extractionResult().candidate_assertions[0], local_candidate_id: "candidate-order" }] },
       { ...extractionResult(), source_statement_inventory: [...extractionResult().source_statement_inventory, { ...extractionResult().source_statement_inventory[0], source_unit_id: "duplicate-source" }] },
     ];
     const rejectedQueueCount = queue.jobs.length;
@@ -125,8 +126,22 @@ test("IDSER-006 materializes only validated extraction state, replays atomically
     const concurrentAuthority = new PostgresSemanticAuthority(atlasSecond);
     await Promise.all([authority.deliver(concurrentEnvelope, handler), concurrentAuthority.deliver(concurrentEnvelope, handler)]);
     assert.equal((await atlas.unsafe("SELECT count(*)::int AS count FROM atlas.semantic_extraction_result WHERE execution_id=$1", [secondExecution]))[0].count, 1);
+    assert.equal((await atlas.unsafe("SELECT count(*)::int AS count FROM atlas.semantic_candidate WHERE document_id=$1", [secondDocument]))[0].count, 2);
+    assert.equal((await atlas.unsafe("SELECT count(*)::int AS count FROM atlas.semantic_evidence WHERE document_id=$1 AND semantic_candidate_id IN (SELECT id FROM atlas.semantic_candidate WHERE document_id=$1)", [secondDocument]))[0].count, 3);
+    assert.equal((await atlas.unsafe("SELECT count(*)::int AS count FROM atlas.knowledge_index WHERE bundle_id=$1 AND document_id=$2", [bundle, secondDocument]))[0].count, 2);
     assert.equal((await atlas.unsafe("SELECT count(*)::int AS count FROM atlas.semantic_candidate_identity_map WHERE extraction_execution_id=$1", [secondExecution]))[0].count, 2);
+    assert.equal(queue.jobs.length, rejectedQueueCount + 1, "concurrent exact delivery must create one continuation");
+    const [concurrentResult] = await atlas.unsafe("SELECT id, completion_fingerprint, result_json FROM atlas.semantic_extraction_result WHERE execution_id=$1", [secondExecution]);
+    const concurrentCandidateIds = await atlas.unsafe("SELECT id FROM atlas.semantic_candidate WHERE document_id=$1 ORDER BY id", [secondDocument]);
+    const concurrentIndexIds = await atlas.unsafe("SELECT semantic_id FROM atlas.knowledge_index WHERE bundle_id=$1 AND document_id=$2 ORDER BY semantic_id", [bundle, secondDocument]);
+    const concurrentMappings = await atlas.unsafe("SELECT local_candidate_id, canonical_semantic_id, semantic_candidate_id FROM atlas.semantic_candidate_identity_map WHERE extraction_execution_id=$1 ORDER BY local_candidate_id", [secondExecution]);
     await assert.rejects(() => authority.deliver({ ...concurrentEnvelope, result: { ...extractionResult(), candidate_assertions: [{ ...extractionResult().candidate_assertions[0], normalized_meaning: "Changed provider meaning." }, extractionResult().candidate_assertions[1]] } }, handler), /conflicts/);
+    assert.deepEqual(await atlas.unsafe("SELECT id, completion_fingerprint, result_json FROM atlas.semantic_extraction_result WHERE execution_id=$1", [secondExecution]), [concurrentResult], "a conflicting result cannot overwrite the accepted completion");
+    assert.deepEqual(await atlas.unsafe("SELECT id FROM atlas.semantic_candidate WHERE document_id=$1 ORDER BY id", [secondDocument]), concurrentCandidateIds, "a conflicting result preserves stable candidate IDs");
+    assert.deepEqual(await atlas.unsafe("SELECT semantic_id FROM atlas.knowledge_index WHERE bundle_id=$1 AND document_id=$2 ORDER BY semantic_id", [bundle, secondDocument]), concurrentIndexIds, "a conflicting result preserves index identities");
+    assert.deepEqual(await atlas.unsafe("SELECT local_candidate_id, canonical_semantic_id, semantic_candidate_id FROM atlas.semantic_candidate_identity_map WHERE extraction_execution_id=$1 ORDER BY local_candidate_id", [secondExecution]), concurrentMappings, "a conflicting result preserves local-to-canonical mappings");
+    assert.equal((await atlas.unsafe("SELECT count(*)::int AS count FROM atlas.semantic_evidence WHERE document_id=$1 AND semantic_candidate_id IN (SELECT id FROM atlas.semantic_candidate WHERE document_id=$1)", [secondDocument]))[0].count, 3);
+    assert.equal(queue.jobs.length, rejectedQueueCount + 1, "a conflicting result must not enqueue another continuation");
 
     await atlas.unsafe("INSERT INTO atlas.project (id,stable_id,name,created_by_user_id) VALUES ($1,$2,'IDSER-006 isolated',$3)", [isolatedProject, `isolated-${suffix.slice(0, 12)}`, owner]);
     await atlas.unsafe("INSERT INTO atlas.workspace (id,project_id,kind,state,display_name) VALUES ($1,$2,'initial_draft','draft','Initial Draft')", [isolatedWorkspace, isolatedProject]);
