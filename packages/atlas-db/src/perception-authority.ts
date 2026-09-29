@@ -4,6 +4,7 @@ import { documentPerceptionContractVersion, parseDocumentPerceptionRequest, pars
 type Row = Record<string, unknown>;
 type Sql = { unsafe(query: string, parameters?: readonly unknown[]): Promise<readonly Row[]>; begin<T>(work: (transaction: Sql) => Promise<T>): Promise<T> };
 type GrantSigner = { issue(input: PerceptionExecutionInput): string; verify(grant: string): string; format(grantId: string): string };
+type SemanticKickoffQueue = { enqueue(transaction: Sql, job: { readonly idempotencyKey: string; readonly execution: { readonly version: "v1"; readonly executionId: string; readonly mode: "background"; readonly skill: { readonly id: "atlas.semantic.extract"; readonly version: "v1" }; readonly input: { readonly contextCapability: string }; readonly context: { readonly boundary: string; readonly items: readonly [] } } }): Promise<string | null> };
 const cacheKey = (sourceSha256: string, version: string, capability: string, identity: string) => createHash("sha256").update(`${sourceSha256}:${version}:${capability}:${identity}`).digest("hex");
 const canonicalize = (value: unknown): unknown => {
   if (Array.isArray(value)) return value.map(canonicalize);
@@ -17,7 +18,7 @@ const requestFrom = (input: PerceptionExecutionInput, grant: string): DocumentPe
 
 /** PostgreSQL adapter; only the Atlas process is given this connection. */
 export class PostgresPerceptionAuthority implements PerceptionAuthority {
-  constructor(private readonly sql: Sql, private readonly grants: GrantSigner) {}
+  constructor(private readonly sql: Sql, private readonly grants: GrantSigner, private readonly semanticQueue?: SemanticKickoffQueue) {}
 
   async create(input: PerceptionExecutionInput): Promise<DocumentPerceptionRequest> {
     return this.sql.begin((sql) => this.createWithSql(sql, input));
@@ -69,6 +70,26 @@ export class PostgresPerceptionAuthority implements PerceptionAuthority {
       const assets = result.pages.flatMap((page) => page.visualRegions.flatMap((region) => region.assetRef ? [region.assetRef] : []));
       await sql.unsafe("INSERT INTO atlas.normalized_document_cache (cache_key, source_sha256, contract_version, capability, capability_identity, normalized_document, derived_assets) VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7::jsonb) ON CONFLICT (cache_key) DO UPDATE SET normalized_document=EXCLUDED.normalized_document, derived_assets=EXCLUDED.derived_assets, invalidated_at=NULL", [key, result.sourceSha256, result.perception.contractVersion, result.perception.capability, identity, JSON.stringify(result), JSON.stringify(assets)]);
       for (const asset of assets) await sql.unsafe("INSERT INTO atlas.document_perception_derived_asset (id, cache_key, asset_ref) VALUES ($1,$2,$3) ON CONFLICT (cache_key, asset_ref) DO NOTHING", [randomUUID(), key, asset]);
+      // IDSER-006 couples accepted perception, the extraction authority record,
+      // and its pg-boss handoff in this one transaction.
+      const bundleRows = await sql.unsafe("SELECT bundle_id, project_id, workspace_id FROM atlas.extraction_bundle_document WHERE document_id=$1 AND perception_execution_id=$2 FOR UPDATE", [request.artifact.id, request.executionId]);
+      if (bundleRows.length) {
+        const bundle = bundleRows[0];
+        const executionId = randomUUID();
+        const capability = randomUUID();
+        const capabilityFingerprint = fingerprint(capability);
+        const logicalIdentity = `extract:${String(bundle.bundle_id)}:${request.artifact.id}:${documentPerceptionContractVersion}`;
+        const priorExecution = await sql.unsafe("SELECT id FROM atlas.semantic_execution WHERE logical_identity=$1 FOR UPDATE", [logicalIdentity]);
+        const semanticExecutionId = priorExecution.length ? String(priorExecution[0].id) : executionId;
+        if (!priorExecution.length) await sql.unsafe("INSERT INTO atlas.semantic_execution (id, project_id, workspace_id, bundle_id, document_id, stage, contract_version, skill_version, logical_identity, lifecycle, authorized_context_identity, authorized_context_fingerprint, capability_valid_until) VALUES ($1,$2,$3,$4,$5,'extraction','v1','v1',$6,'queued',$7,$8,now()+interval '1 hour')", [semanticExecutionId, bundle.project_id, bundle.workspace_id, bundle.bundle_id, request.artifact.id, logicalIdentity, `perception:${request.executionId}`, capabilityFingerprint]);
+        if (!priorExecution.length) {
+          if (!this.semanticQueue) throw new Error("Semantic extraction queue is unavailable.");
+          const idempotencyKey = `semantic:${semanticExecutionId}`;
+          const queued = await this.semanticQueue.enqueue(sql, { idempotencyKey, execution: { version: "v1", executionId: semanticExecutionId, mode: "background", skill: { id: "atlas.semantic.extract", version: "v1" }, input: { contextCapability: capability }, context: { boundary: "atlas.semantic.internal/v1", items: [] } } });
+          if (queued === null) throw new Error("Semantic extraction queue was deduplicated before perception committed.");
+        }
+        await sql.unsafe("UPDATE atlas.extraction_bundle_document SET state='extracting', semantic_extraction_execution_id=$3 WHERE bundle_id=$1 AND document_id=$2", [bundle.bundle_id, request.artifact.id, semanticExecutionId]);
+      }
       await sql.unsafe("UPDATE atlas.document_perception_execution SET state='completed', completion_fingerprint=$2, updated_at=now() WHERE id=$1 AND state NOT IN ('completed','cancelled','failed')", [request.executionId, digest]);
     });
   }

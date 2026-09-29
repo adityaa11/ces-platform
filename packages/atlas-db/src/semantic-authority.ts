@@ -68,7 +68,7 @@ export class PostgresSemanticAuthority implements SemanticAuthority {
       if (String(row.project_id) !== scope.projectId || String(row.workspace_id) !== scope.workspaceId || String(row.bundle_id) !== scope.bundleId || String(row.document_id) !== scope.documentId || stageSkill(row.stage) !== value.skill!.id || row.skill_version !== value.skill!.version) throw new Error("Semantic result scope mismatch.");
       if (row.lifecycle === "completed") { if (row.completion_fingerprint === completionFingerprint) return; throw new Error("Semantic result conflicts with completed execution."); }
       if (row.lifecycle === "failed" || row.lifecycle === "cancelled") throw new Error("Semantic execution is not accepting results.");
-      await handler.accept({ executionId: String(row.id), completionFingerprint, envelope });
+      await handler.accept({ executionId: String(row.id), completionFingerprint, envelope }, sql);
       await sql.unsafe("UPDATE atlas.semantic_execution SET lifecycle='completed', completion_fingerprint=$2, completed_at=now() WHERE id=$1 AND lifecycle IN ('queued','running')", [row.id, completionFingerprint]);
     });
   }

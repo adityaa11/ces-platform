@@ -6,6 +6,9 @@ import type { Plugin } from "vite";
 type AtlasCoreModule = typeof import("../../packages/atlas-core/src/index");
 type AtlasDbModule = typeof import("../../packages/atlas-db/src/perception-authority");
 type SemanticDbModule = typeof import("../../packages/atlas-db/src/semantic-authority");
+type ExtractionAcceptanceModule = typeof import("../../packages/atlas-db/src/extraction-acceptance");
+type BackgroundQueue = typeof import("../agents-bridge/src/queue");
+type BackgroundExecutionJob = import("../agents-bridge/src/queue").BackgroundExecutionJob;
 type DocumentStoreModule = typeof import("../../packages/document-store/src/local-filesystem-document-store");
 
 const sourcePath = "/internal/perception/source";
@@ -63,18 +66,29 @@ export function createAtlasPerceptionInternalPlugin(): Plugin {
       // Vite's Node-side config loader needs the workspace TypeScript resolver
       // so the local Compose process can execute those same sources directly.
       const jiti = createJiti(import.meta.url);
-      const [core, database, semanticDatabase, documentStore] = await Promise.all([
+      const [core, database, semanticDatabase, extractionAcceptance, documentStore, backgroundQueue] = await Promise.all([
         jiti.import<AtlasCoreModule>("../../packages/atlas-core/src/index.ts"),
         jiti.import<AtlasDbModule>("../../packages/atlas-db/src/perception-authority.ts"),
         jiti.import<SemanticDbModule>("../../packages/atlas-db/src/semantic-authority.ts"),
+        jiti.import<ExtractionAcceptanceModule>("../../packages/atlas-db/src/extraction-acceptance.ts"),
         jiti.import<DocumentStoreModule>("../../packages/document-store/src/local-filesystem-document-store.ts"),
+        jiti.import<BackgroundQueue>("../agents-bridge/src/queue.ts"),
       ]);
       const sql = postgres(databaseUrl, { max: 4 });
-      const authority = new database.PostgresPerceptionAuthority(sql, new core.PerceptionSourceGrantIssuer(credential));
+      const semanticQueue = await backgroundQueue.createTransactionalQueueProducer(databaseUrl);
+      // pg-boss's Drizzle transaction type is narrower than the Atlas
+      // persistence port, while both adapters receive this same SQL transaction.
+      const atlasSemanticQueue = { enqueue: (transaction: unknown, job: BackgroundExecutionJob) => semanticQueue.enqueue(transaction as never, job) };
+      const authority = new database.PostgresPerceptionAuthority(sql, new core.PerceptionSourceGrantIssuer(credential), atlasSemanticQueue);
       const sources = new documentStore.LocalFilesystemDocumentStore(process.env.ATLAS_DOCUMENT_STORE_ROOT ?? resolve(process.cwd(), ".atlas-data"));
       const routes = core.createPerceptionInternalRoutes({ authority, sources, serviceCredential: credential, maximumSourceBytes: sourceLimit, maximumResultBytes: resultLimit });
       const semanticAuthority = new semanticDatabase.PostgresSemanticAuthority(sql);
-      const semanticRoutes = core.createSemanticInternalRoutes({ authority: semanticAuthority, serviceCredential: credential, handler: { accept: async () => { throw new Error("Semantic acceptance handlers are unavailable until IDSER-006/007."); } } });
+      const extractionHandler = new extractionAcceptance.PostgresExtractionAcceptanceHandler(atlasSemanticQueue);
+      const semanticRoutes = core.createSemanticInternalRoutes({ authority: semanticAuthority, serviceCredential: credential, handler: { accept: async (input, transaction) => {
+        const skill = (input.envelope as { skill?: { id?: string } }).skill?.id;
+        if (skill !== "atlas.semantic.extract") throw new Error("Semantic acceptance handler is unavailable for this stage.");
+        await extractionHandler.accept(input, transaction);
+      } } });
 
       server.middlewares.use(async (request, response, next) => {
         const pathname = new URL(request.url ?? "/", "http://atlas.local").pathname;
@@ -106,7 +120,7 @@ export function createAtlasPerceptionInternalPlugin(): Plugin {
           sendJson(response, 400, { error: "Invalid perception internal request." });
         }
       });
-      server.httpServer?.once("close", () => { void sql.end(); });
+      server.httpServer?.once("close", () => { void semanticQueue.close(); void sql.end(); });
     },
   };
 }

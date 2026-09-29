@@ -16,7 +16,7 @@ export type AuthorizedSemanticContext = {
 
 export type SemanticAcceptanceHandler = {
   /** Must commit all trusted effects before resolving. */
-  accept(input: { readonly executionId: string; readonly completionFingerprint: string; readonly envelope: unknown }): Promise<void>;
+  accept(input: { readonly executionId: string; readonly completionFingerprint: string; readonly envelope: unknown }, transaction?: unknown): Promise<void>;
 };
 
 /** IDSER-007 owns neighborhood policy. IDSER-004 only persists its bounded result. */
