@@ -89,6 +89,16 @@ them in the CK artifact. If a CK clause exceeds ticket authority, authorize no
 CFC for that clause; record the contract/scope problem and hand it to
 human/planning authority.
 
+For a `REVIEW_CONTRACT_GAP`, do not authorize CFC under the ordinary path. A
+completed planning-authorized supplemental CK freeze is eligible for
+`AUTHORIZE_EVIDENCE_REMEDIATION` only when every supplemental clause is frozen,
+unresolved, and directly traceable to the existing ticket, and no product,
+scope, architecture, or policy decision remains. The new HMN record must be
+later than the supplemental CK artifact, reference it as the oracle source,
+and name only the unresolved supplemental clause IDs. Preserve all historical
+resolved original clauses. If these conditions are not met, return the issue
+to human/planning authority without CFC authorization.
+
 For a post-CFC authorization, record the latest CK artifact reference and list
 exactly the unresolved CK clause IDs authorized for remediation. Do not copy
 the oracle, mismatch, test command, or repair plan into HMN. CFC reads those

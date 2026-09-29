@@ -78,6 +78,22 @@ the omitted authority, why it matters and was omitted, completion impact, and
 handoff to human/planning authority. An expectation with no ticket authority is
 an out-of-scope observation, not a CFC requirement.
 
+### Supplemental-gap verification
+
+After the shared contract's planning-authorized supplemental freeze and a
+newer HMN-authorized CFC checkpoint, verify only the supplemental frozen
+clauses named by the consumed HMN authorization, evidence required by their
+oracles, the remediation diff, and direct regressions introduced by that
+remediation. Confirm that the checkpoint records the consumed authorization
+ID. Carry forward every historical original clause and outcome unchanged;
+neither reopen resolved clauses nor restart broad review. Record each selected
+supplemental clause as resolved or unresolved against its frozen oracle. Return
+`PASS` only when every original and supplemental ticket-derived clause is
+proven and no direct regression remains. Otherwise identify the exact failed
+oracle or direct regression and return control to human/planning authority
+under the existing bounded rules. This verification does not authorize another
+CFC cycle.
+
 ## Review after an HMN-authorized CFC
 
 A newer explicit HMN authorization issued after control returned to human/planning authority establishes one new bounded remediation checkpoint. When its committed CFC remediation records the consumed HMN authorization ID, read the active HMN artifact and verify only its named unresolved original finding(s), the remediation diff, the contract's required evidence, and direct regressions introduced by that remediation. Do not restart broad review or add unrelated findings discovered outside this scope.

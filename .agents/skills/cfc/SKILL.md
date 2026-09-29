@@ -18,6 +18,19 @@ CFC MUST NOT substitute its own broader or narrower interpretation.
 
 Read the frozen current ticket and its explicitly incorporated source references, the latest consolidated CK artifact, the reviewed commit, and the current remediation base. Proceed only when CK returned `CHANGES_REQUIRED` and the artifact identifies implementation-repairable findings that trace to current-ticket requirements. Preserve unrelated user changes and stage only authorized paths.
 
+The only result exception is the shared contract's supplemental
+`REVIEW_CONTRACT_GAP` recovery path. Before editing under that path, verify all
+of its durable prerequisites: a planning decision authorized the supplemental
+freeze; the supplemental CK artifact freezes stable unresolved clauses with
+direct frozen-ticket traces and exact oracles; historical clauses were
+preserved unchanged; a newer explicit HMN artifact authorizes
+`AUTHORIZE_EVIDENCE_REMEDIATION` for only those supplemental clause IDs; and no
+later artifact supersedes that authorization. If any prerequisite is absent,
+do not treat the gap as CFC authority; return it to human/planning authority.
+Use the supplemental CK artifact as the closure-oracle source, protect every
+historical resolved clause, remediate only the selected supplemental IDs, and
+record the consumed HMN authorization ID in the single bounded checkpoint.
+
 Also resolve the active-ticket tuple and read the shared Review Contract and
 original frozen CK closure matrix. Do not operate from CK prose alone. Before
 changing code, create a working progress view keyed to the original CK clause
@@ -98,3 +111,7 @@ frozen current ticket
 ```
 
 CFC repairs the ticket's accepted in-scope findings once. An HMN authorization is valid only within frozen-ticket authority; it cannot turn reviewer inference into scope.
+
+Ordinary `REVIEW_CONTRACT_GAP` remains non-authorizing. The supplemental path
+does not change ordinary `CHANGES_REQUIRED`, resolved-clause protection, or the
+one explicit user `hmn` invocation required for each new remediation cycle.

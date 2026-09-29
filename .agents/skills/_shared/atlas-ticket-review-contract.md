@@ -196,6 +196,58 @@ why it was omitted, whether it affects completion, and handoff to
 human/planning authority. An expectation with no ticket authority is an
 out-of-scope observation or `HUMAN_DECISION_REQUIRED`, not remediation work.
 
+### Supplemental contract-gap recovery
+
+`REVIEW_CONTRACT_GAP` remains non-authorizing for ordinary CFC. A narrow
+supplemental recovery path is valid only when every condition below is recorded
+in durable artifacts, in this order:
+
+1. CK returned the gap to human/planning authority.
+2. A durable planning decision explicitly authorized one supplemental
+   contract-gap freeze, limited to the identified ticket-derived omission.
+3. CK wrote a supplemental frozen closure matrix with stable supplemental
+   clause IDs, exact ticket traces, unresolved status, and binary closure
+   oracles. The matrix identifies the original CK artifact and gap verification
+   it supplements.
+4. Every supplemental clause traces directly to the existing frozen ticket.
+   The supplemental freeze does not reopen, renumber, modify, or strengthen
+   historical clauses or their recorded outcomes.
+5. A newer explicit user `hmn` invocation produced
+   `AUTHORIZE_EVIDENCE_REMEDIATION` after that supplemental freeze, naming only
+   its unresolved supplemental clause IDs. No later artifact supersedes this
+   authorization.
+
+Only then may CFC consume the supplemental CK artifact as the source of its
+frozen closure oracles, even though its result is `REVIEW_CONTRACT_GAP` rather
+than `CHANGES_REQUIRED`. The supplemental clauses are the entire remediation
+target. Historical resolved clauses remain protected; CFC does not restart
+broad review. CFC records the consumed HMN authorization ID, maps each selected
+supplemental clause to the frozen oracle and evidence, checks direct regressions
+introduced by remediation, commits one bounded checkpoint, and hands off to CK.
+
+If the planning decision, supplemental frozen matrix, ticket trace, unresolved
+status, newer HMN evidence-remediation authorization, exact clause selection,
+or non-supersession condition is absent, `REVIEW_CONTRACT_GAP` is not CFC
+authority. Return to human/planning authority. Ordinary
+`CHANGES_REQUIRED` authorization and the one-user-invocation-per-remediation-
+cycle rule are unchanged.
+
+For verification of this supplemental remediation, CK reads the consumed HMN
+authorization and supplemental frozen matrix. It verifies only the selected
+supplemental clauses, the remediation diff, evidence required by those frozen
+oracles, and direct regressions introduced by remediation. It carries forward
+all historical resolved outcomes unchanged. CK returns `PASS` when all
+original ticket-derived clauses and all supplemental ticket-derived clauses
+are proven and no direct regression remains. Otherwise it records the exact
+unresolved oracle or regression and returns control to human/planning authority
+under the existing bounded rules; it does not invoke another CFC cycle.
+
+HMN may classify a completed supplemental freeze as eligible for
+`AUTHORIZE_EVIDENCE_REMEDIATION` when the supplemental clauses are frozen,
+unresolved, directly ticket-traceable, and no product, scope, architecture, or
+policy decision remains. HMN authorizes only those unresolved supplemental
+clause IDs and references the supplemental CK artifact as the oracle source.
+
 ## 6. Bounded remediation and HMN
 
 CFC builds a working progress view before modifying code, keyed to the original
@@ -230,7 +282,6 @@ post-CFC check reuses the original oracles. A failed oracle or direct
 regression is `CHANGES_REQUIRED`; every passed oracle with no direct
 regression is `PASS`. A new or stronger condition is never a reason to fail
 CFC.
-that CFC.
 
 ## Examples
 

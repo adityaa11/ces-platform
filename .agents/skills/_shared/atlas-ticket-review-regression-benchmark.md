@@ -77,6 +77,33 @@ the affected ticket row and evidence. Existing closure proof is preserved.
 
 Benchmark result: **PASS** only if direct regressions remain blockable.
 
+## Case E: planning-authorized supplemental contract-gap recovery
+
+Input state: CK returned `REVIEW_CONTRACT_GAP`; human/planning authority
+durably authorized a supplemental ticket-bound freeze; CK froze stable,
+unresolved supplemental clauses with direct ticket traces and binary oracles
+without changing historical clauses; and a newer explicit HMN invocation
+authorized `AUTHORIZE_EVIDENCE_REMEDIATION` for only those supplemental IDs.
+
+Expected HMN behavior: authorize only the unresolved supplemental clause IDs
+when no product, scope, architecture, or policy decision remains. Ordinary
+gaps without the planning decision and supplemental freeze remain
+non-authorizing.
+
+Expected CFC behavior: accept the supplemental artifact as the oracle source
+only after validating all prerequisites and non-supersession; protect all
+historical resolved clauses; remediate only the HMN-selected supplemental
+clauses; record the consumed HMN ID; and hand off one bounded checkpoint to CK.
+
+Expected CK behavior: verify only the selected supplemental clauses, required
+evidence, remediation diff, and direct regressions. Preserve historical
+resolved outcomes. Return `PASS` only when all original and supplemental
+ticket-derived clauses are proven and no direct regression remains; otherwise
+return to human/planning authority without starting another CFC cycle.
+
+Benchmark result: **PASS** only if ordinary `REVIEW_CONTRACT_GAP` still cannot
+authorize CFC and every supplemental gate and scope boundary is enforced.
+
 ## Applying the benchmark
 
 When changing GO, CK, CFC, HMN, or the shared contract, review each case and
