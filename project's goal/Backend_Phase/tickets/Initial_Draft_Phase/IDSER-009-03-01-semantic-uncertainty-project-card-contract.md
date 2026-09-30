@@ -1,6 +1,6 @@
 # IDSER-009-03-01: Semantic uncertainty project-card contract
 
-- **State:** `awaiting_review` (GO checkpoint pending CK).
+- **State:** `approved` at `ed38f6a`; **Review batch:** `IDSER-BATCH-09-03-01`.
 - **Depends on:** IDSER-009-03 `PASS`.
 - **Unblocks:** IDSER-009-03-02 in sequence; then IDSER-009-04 may resume only after both corrective tickets reach CK `PASS`.
 - **Execution environment:** Focused Compose PostgreSQL/read-model integration plus deterministic mapper, transport-shape, and component tests.
