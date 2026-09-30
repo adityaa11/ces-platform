@@ -4,7 +4,8 @@
   approved at `5bf1bbb`, IDSER-003 is approved at `3dbd7dc`, IDSER-004 is
   approved at `9b36ee8`, IDSER-005 at `2707518`, IDSER-006 at `266f5a3`, and
   IDSER-007 at `c890410`, IDSER-008 at `ec1e973`.
-- **Prefix:** `IDSER`; one bounded ticket per `IDSER-BATCH-XX`.
+- **Prefix:** `IDSER`; one bounded ticket per `IDSER-BATCH-XX` (IDSER-009 is
+  an umbrella partition record; its four child batches are executable).
 - **Primary baseline:** [Initial Draft implementation context](../../atlas-initial-draft-semantic-extraction-reconciliation-implementation-context.md), sections 1-45, AC-01 through AC-44.
 - **Hard predecessor:** [PCC-006](../Project_Cards_Phase/PCC-006-project-card-creation-e2e-and-regression-checkpoint.md) `PASS`; the [PCC set](../Project_Cards_Phase/README.md) remains frozen.
 - **Planning inspection:** branch `codex/new-atlas-backend`, HEAD `3bb1d24d7ceb11b875d5dde0a0b41568dd9f1b6c`, 2026-09-27. The context inspected `efc4f997fc883cb9d7b2e9617516aabda6a7686b`; the intervening commit changes documentation/workflow skills, not the inspected application code.
@@ -72,9 +73,13 @@ documents do not authorize starting implementation automatically.
 | 6 | [IDSER-006](IDSER-006-extraction-validation-and-index-materialization.md) / IDSER-BATCH-06 | IDSER-004, IDSER-005 | Full extraction validation, stable candidates, evidence and index |
 | 7 | [IDSER-007](IDSER-007-bounded-reconciliation-and-procedural-advancement.md) / IDSER-BATCH-07 | IDSER-003, IDSER-004, IDSER-005, IDSER-006 | Bounded incoming neighborhood, relationships and atomic next-document scheduling |
 | 8 | [IDSER-008](IDSER-008-bundle-completion-and-failure-lifecycle.md) / IDSER-BATCH-08 | IDSER-003 through IDSER-007 | Completion gate, technical failure lifecycle and durable recovery |
-| 9 | [IDSER-009](IDSER-009-production-project-card-lifecycle.md) / IDSER-BATCH-09 | IDSER-008; frozen PCC UI | Authorized card reads, exact progress and visual/accessibility regression |
-| 10 | [IDSER-010](IDSER-010-deterministic-compose-and-regression-checkpoint.md) / IDSER-BATCH-10 | IDSER-001 through IDSER-009 | Deterministic Compose scenarios A-H and regression proof |
-| 11 | [IDSER-011](IDSER-011-live-mistral-acceptance-checkpoint.md) / IDSER-BATCH-11 | IDSER-010 | Mandatory live Mistral scenario I with at least two PDFs |
+| 9 | [IDSER-009](IDSER-009-production-project-card-lifecycle.md) / umbrella | IDSER-008; frozen PCC UI | Non-executable ownership and traceability record for the card-lifecycle partition |
+| 10 | [IDSER-009-01](IDSER-009-01-authorized-persisted-lifecycle-read.md) / IDSER-BATCH-09-01 | IDSER-008 | Membership-scoped persisted lifecycle read and read-boundary integrity |
+| 11 | [IDSER-009-02](IDSER-009-02-deterministic-production-card-projection.md) / IDSER-BATCH-09-02 | IDSER-009-01 | Deterministic browser-safe lifecycle/card projection |
+| 12 | [IDSER-009-03](IDSER-009-03-production-project-card-presentation.md) / IDSER-BATCH-09-03 | IDSER-009-02 | Accessible faithful rendering of the approved card model |
+| 13 | [IDSER-009-04](IDSER-009-04-integrated-project-card-regression-checkpoint.md) / IDSER-BATCH-09-04 | IDSER-009-03 | Authenticated browser/frontend/regression checkpoint |
+| 14 | [IDSER-010](IDSER-010-deterministic-compose-and-regression-checkpoint.md) / IDSER-BATCH-10 | IDSER-001 through IDSER-008; IDSER-009-01 through IDSER-009-04 | Deterministic Compose scenarios A-H and regression proof |
+| 15 | [IDSER-011](IDSER-011-live-mistral-acceptance-checkpoint.md) / IDSER-BATCH-11 | IDSER-010 | Mandatory live Mistral scenario I with at least two PDFs |
 
 Intermediate tickets are composable implementation checkpoints, not independent
 production rollouts. Route/worker tests may inject explicit bounded test doubles
@@ -91,7 +96,7 @@ full pipeline proof are required by IDSER-008/010/011.
 | PLAN-IDSER-02 | Workspace schema has no display-name field and has global `(project_id, kind)` uniqueness plus only `empty`/`draft` states | IDSER-001 adds non-authoritative display metadata and system-kind partial uniqueness, preserves existing IDs, and admits bootstrap `ready_for_review`; no revision fields or ordinary-workspace creation flow. |
 | PLAN-IDSER-03 | `worker-main.ts` injects TestRuntime; generic execution events have no structured-result sink | IDSER-002/004/005 add typed semantic contracts and result delivery while retaining the existing generic queue and worker. Interactive chat remains a separate inherited capability. |
 | PLAN-IDSER-04 | Perception delivery persists a hash/capability cache but has no bundle continuation; cache entries can be reused/updated by source hash | IDSER-004/006 bind the exact normalized representation/locator set to the semantic execution and couple perception acceptance with extraction enqueue. Do not use another execution's cache identity merely because bytes match. |
-| PLAN-IDSER-05 | `home-projects.ts` filters out any project with downstream perception state; card types only admit waiting/zero percent | IDSER-009 replaces that phase-specific guard with persisted lifecycle validation. Retain an explicit legacy PCC no-bundle waiting read; do not automatically backfill old projects with guessed upload order. |
+| PLAN-IDSER-05 | `home-projects.ts` filters out any project with downstream perception state; card types only admit waiting/zero percent | IDSER-009-01 supplies validated persisted lifecycle read; 009-02 replaces the phase-specific guard with deterministic projection and retains explicit legacy PCC no-bundle waiting. Do not automatically backfill old projects with guessed upload order. |
 | PLAN-IDSER-06 | Existing perception source grants expire after five minutes and delivery checks expiry; generic failures otherwise stay in Bridge operational state | IDSER-003/008 must test delayed delivery and durably surface failures. Reuse supported BSS-009 behavior; do not extend source authority or redesign grants silently. An actual frozen-contract incompatibility is SCOPE_CHANGE with evidence. |
 
 All above are implementation seams with owners, not permission to reopen frozen
@@ -132,7 +137,7 @@ coverage across owners; IDSER-011 additionally proves the actual provider path.
 
 | Context AC | Primary owner(s) |
 |---|---|
-| AC-01 | IDSER-003, IDSER-009, IDSER-010 |
+| AC-01 | IDSER-003, IDSER-009-01/02/03/04, IDSER-010 |
 | AC-02 | IDSER-003 |
 | AC-03 | IDSER-001, IDSER-003, IDSER-004 |
 | AC-04 | IDSER-001 |
@@ -157,11 +162,11 @@ coverage across owners; IDSER-011 additionally proves the actual provider path.
 | AC-23 | IDSER-007, IDSER-008 |
 | AC-24 | IDSER-003, IDSER-006, IDSER-007 |
 | AC-25 | IDSER-004, IDSER-005, IDSER-006, IDSER-007 |
-| AC-26 | IDSER-007, IDSER-009 |
-| AC-27 | IDSER-008, IDSER-009 |
+| AC-26 | IDSER-007, IDSER-009-01/02/04 |
+| AC-27 | IDSER-008, IDSER-009-01/02/04 |
 | AC-28 | IDSER-004, IDSER-005, IDSER-008 |
 | AC-29 | IDSER-008 |
-| AC-30 | IDSER-009 |
+| AC-30 | IDSER-009-01/02/03/04 |
 | AC-31 | IDSER-008, IDSER-010 |
 | AC-32 | IDSER-008, IDSER-010 |
 | AC-33 | IDSER-001, IDSER-006, IDSER-007 |
@@ -170,7 +175,7 @@ coverage across owners; IDSER-011 additionally proves the actual provider path.
 | AC-36 | IDSER-001, IDSER-004, IDSER-010 |
 | AC-37 | IDSER-003, IDSER-010 |
 | AC-38 | IDSER-003, IDSER-005, IDSER-010 |
-| AC-39 | IDSER-009, IDSER-010 |
+| AC-39 | IDSER-009-04, IDSER-010 |
 | AC-40 | IDSER-010 |
 | AC-41 | IDSER-005, IDSER-011 |
 | AC-42 | IDSER-011 |
@@ -180,7 +185,8 @@ coverage across owners; IDSER-011 additionally proves the actual provider path.
 Section 40 responsibility mapping: foundation -> 001; contracts/skills -> 002;
 kickoff -> 003; internal authority -> 004 plus 006/007 acceptance handlers;
 worker -> 005; extraction/index -> 006; reconciliation/advancement -> 007;
-completion/card -> 008/009; Compose proof -> 010/011.
+completion -> 008; card read/projection/presentation/integrated proof ->
+009-01/02/03/04; Compose proof -> 010/011.
 
 ## Execution and review controls
 
@@ -218,7 +224,7 @@ review evidence. Use synthetic/non-confidential PDFs.
 
 ## Completion
 
-All eleven checkpoints must pass. The final system must reach review-ready state
+All fourteen executable checkpoints must pass. The final system must reach review-ready state
 through both deterministic Compose tests and a real Mistral run, preserving
 conflicts, evidence, stable IDs, replay safety and empty Master. A successful
 planning pass, mocked run, or ready worker health check alone does not complete

@@ -1,97 +1,76 @@
-# IDSER-009: Production project-card lifecycle
+# IDSER-009: Production project-card lifecycle — umbrella partition record
 
-- **State:** `planned`
-- **Review batch:** `IDSER-BATCH-09`
+- **State:** `partitioned-planned`; it is no longer directly executable by GO.
+- **Original batch:** `IDSER-BATCH-09`; children are `IDSER-BATCH-09-01` through `IDSER-BATCH-09-04`.
 - **Depends on:** IDSER-008 `PASS`; frozen PCC-004/005/006 and auth/home boundaries.
-- **Baseline:** SRC-IDSER-01 sections 26-28, 37, 41.8; AC-01/26/27/30/39; SRC-IDSER-08/09. See [README](README.md).
-- **Execution environment:** Docker Compose app/read-model tests and rendered browser evidence.
+- **Baseline:** SRC-IDSER-01 sections 26–28, 37, 41.8; AC-01/26/27/30/39; SRC-IDSER-08/09. See [README](README.md).
 
-## Outcome
+## Disposition and order
 
-Show the four truthful production lifecycle states and processed-document
-progress in the existing project library, derived from authorized persisted
-Atlas state. Review-ready cards do not imply that a review surface exists.
+This record preserves the complete original IDSER-009 contract and planning history, but it is not a GO target. The child tickets own execution in this order; the umbrella is complete only after each child has CK `PASS`.
 
-## Inspected seams and edit scope
+```text
+IDSER-008 PASS -> 009-01 PASS -> 009-02 PASS -> 009-03 PASS -> 009-04 PASS -> IDSER-010
+```
 
-- Extend `packages/atlas-core/src/project.ts` AccessibleAtlasProject, `packages/atlas-db/src/project-repository.ts` authorized read and bundle-aware projection data.
-- Extend `apps/atlas/lib/home-projects.ts`, `home-project-read-service.ts`, `components/project-card-view-model.ts`, `ProductionProjectCard.tsx`, and existing `project-creation-boundary.ts` internal home read as needed.
-- Reuse `ProjectCardPresentation.tsx`, `ProjectLibrary.tsx`, shared Button/theme/type/status tokens and existing authenticated home refresh path. Keep actual lifecycle mapping server-side.
-- The current mapper rejects any `hasDownstreamExtractionState`; replace that predecessor-only guard rather than allowing new cards to disappear. Retain membership joins and fail-closed handling of invalid/incomplete state.
+The split is by authority and proof surface, not by files. No child changes the original lifecycle semantics, creates a review surface, publishes facts, changes Master, or starts IDSER-010 work.
 
-## State and progress contract
+## Preserved functional contract and ownership
 
-| Persisted condition | View-model state | Visible label |
+The required outcome remains: production cards truthfully show authorized persisted lifecycle and exact document progress. A review-ready card is not a review surface. The only states are `waiting-for-extraction` / **Waiting for extraction** (new waiting bundle with no active processing or technical failure), `extracting` / **Extracting** (active queued/running work after activation), `needs-attention` / **Needs attention** (terminal technical/integrity failure after supported retries or deterministic rejection), and `ready-for-review` / **Ready for review** (every member completed and the completion gate passed).
+
+| Original IDSER-009 obligation | Implementation owner | Final proof owner |
 |---|---|---|
-| New bundle waiting, no active processing or technical failure | `waiting-for-extraction` | Waiting for extraction |
-| Active pipeline queued/running after bundle activation | `extracting` | Extracting |
-| Technical/integrity failure blocks progress after supported retries or deterministic rejection | `needs-attention` | Needs attention |
-| Every member completed and completion gate passed | `ready-for-review` | Ready for review |
+| Membership-scoped project/workspace/bundle/member read; unrelated users receive no lifecycle/progress | 009-01 | 009-01; 009-04 browser negative |
+| Bundle state, immutable expected N, completed X, workspace state, legacy/no-bundle distinction, malformed persisted state | 009-01 | 009-01 |
+| Waiting, active processing, terminal technical failure and completion-gated ready map to four exact states | 009-02 | 009-02; 009-04 |
+| Exact `X of N`, `floor(100 * X / N)`, 100 only X=N; OCR/extraction alone never increments X | 009-02 | 009-02; 009-04 |
+| Semantic uncertainty differs from technical failure and may coexist with ready | 009-02 | 009-02; 009-04 |
+| Intact legacy PCC no-bundle record stays waiting; invalid new bundle state fails closed | 009-01, 009-02 | 009-01, 009-02; 009-04 legacy proof |
+| Zero published facts and Master `No published work` in every state | 009-02 | 009-02; 009-04 |
+| Bounded safe failure reason; no provider body, prompts, SQL, execution/capability/private data | 009-01, 009-02 | 009-01, 009-02; 009-04 response proof |
+| Authenticated refresh uses persisted state only; no timer, fixture, queue or local-storage progress | 009-02 | 009-02; 009-04 |
+| Production review/workspace action remains unavailable; no production `/demo`, fixture Share, review UI or attention queue | 009-02, 009-03 | 009-03; 009-04 |
+| Four-state shared-language rendering, non-color status, safe failure, accessible progress/status/action | 009-03 | 009-03; 009-04 rendered gate |
+| Responsive/theme/shell/content matrix, keyboard/focus, sparse/multiple cards and direct auth/CSP/demo/card regression | 009-04 | 009-04 |
 
-Derive X from completed bundle members and N from the immutable manifest.
-Render `X of N PRDs processed`. Percentage is `floor(100 * X / N)` for valid
-N > 0, reaching 100 only with X=N; the ready label still requires the completion
-gate. OCR-only or extraction-only completion does not increment X.
+The original presentation contract is retained through 009-03/04: extend the existing Entity Library rather than redesign it; reuse shared tokens/components; do not solve valid long content with shrunken type or accidental truncation; retain accessible status without repeated noisy refresh announcements; inspect loading/error refresh as well as all states. The original implementation seams remain `project.ts`, `project-repository.ts`, `home-projects.ts`, `home-project-read-service.ts`, `project-creation-boundary.ts`, `project-card-view-model.ts`, `ProductionProjectCard.tsx`, `ProjectCardPresentation.tsx`, and `ProductionProjectLibrary.tsx`, allocated by the child contracts.
 
-- Keep published-fact count zero and Master `No published work` in every state.
-- Semantic contradictions/ambiguities may coexist with ready-for-review. They do not display as Needs attention.
-- Persisted technical failure may expose a bounded safe user-facing reason, never provider error bodies, source prompts, SQL or internal execution/capability details.
-- Retain explicit legacy PCC waiting projection only for intact pre-IDSER projects with no bundle or downstream state. Do not invent a bundle or auto-start historical processing. New bundle-backed records must satisfy the new invariants; invalid missing bundles cannot masquerade as valid new work.
-- No timer, simulated fixture transition, browser inference, queue length or local storage may create progress. A bounded authenticated refresh may fetch persisted state; no new transport infrastructure is required.
-- Keep the production workspace/review action unavailable with a truthful reason until a real authorized review surface exists. No production `/demo` navigation, fixture Share authority, review UI or attention queue.
+## Preserved security and review-binding ownership
 
-## Frontend contract
-
-Apply [frontend awareness](../../../../.agents/skills/frontend-awareness/SKILL.md),
-established-language mode, existing-UI extension. The information pattern is
-the existing Entity Library: project identity, meaningful state, concise
-progress and truthful action availability. Frozen PCC visual ancestors and
-shared components remain authoritative; no redesign is requested.
-
-- All four states must remain understandable without color alone; use existing semantic status tokens with light/dark parity.
-- Progress/status updates use appropriate accessible text/semantics and do not create repeated noisy announcements on refresh.
-- Preserve keyboard/focus behavior and a discoverable disabled-action reason. Keep titles, counts and action labels readable.
-- Respect card min/max width, shell expanded/collapsed state, sparse and multi-card layouts, mobile reflow and existing type roles. Do not solve longer state copy with shrinking type or accidental truncation.
-- Inspect long maximum-valid names/IDs/descriptions, unbroken and mixed-case text, all states, loading/error refresh and both themes.
-
-## Acceptance criteria
-
-1. Authorized real projects remain visible through all four persisted states; unauthorized users receive no project lifecycle/progress.
-2. X changes only after validated reconciliation completion; percentage and label are exact, no accepted fact count or published Master work appears.
-3. Technical failure and semantic uncertainty render differently according to persisted authority; ready requires the full gate.
-4. Legacy waiting cards remain readable without invented progress; corrupt state is not projected as success.
-5. Production action availability is truthful, and `/demo` retains fixture creation/sharing/simulation behavior.
-6. Shared visual language, themes, responsive layout and accessible status/action semantics pass rendered inspection.
-
-## Validation
-
-- Compose unit/read-model tests for every lifecycle state, X=0/partial/N, invalid N/counts, incomplete readiness, OCR-only/extraction-only results, uncertainty and terminal failure.
-- PostgreSQL-backed authorized home reads for owner vs unrelated user, new and legacy records and malformed state; retain signed internal identity checks.
-- Browser integration against real persisted state, observing transitions via the app's refresh path; no fixture timer may drive the production test.
-- Render all states at desktop/tablet/mobile and 200% reflow, expanded/collapsed shell, sparse/multiple cards, light/dark themes and valid content extremes. Record screenshots plus accessibility/focus observations.
-- Apply the [frontend review gate](../../../../.agents/skills/frontend-awareness/references/review-gate.md); build/lint alone is not visual proof. Run app tests/build/lint and directly affected `/demo`, auth and CSP regression checks in Compose.
-
-## Security Refactor Readiness
-
-- **Status:** `applicable`.
-- **Inherited boundaries:** Better Auth -> server identity assertion -> Atlas membership-scoped read -> browser-safe projection.
-- **Trust boundaries / assets:** persisted lifecycle -> public card response; project membership, name/description and safe progress metadata.
-- **Identity context:** server-derived user ID, project/workspace/bootstrap bundle identities; display names remain presentation only.
-- **SEAM-IDSER-009-01:** Separate authorized repository read, deterministic card mapping and presentation for later read-policy changes.
-- **SEAM-IDSER-009-02:** Safe failure/status mapping and existing refresh path preserve error and caching controls.
-- **COUPLING-IDSER-009-01:** No direct UI DB/semantic access, provider-detail leakage, fixture identity, simulated progress or `/demo` route fallback.
-- **Unresolved security policy:** sharing/review authorization and new public actions remain deferred.
-- **Planning findings:** PLAN-IDSER-05 is resolved by lifecycle-aware reads and explicit legacy compatibility.
-
-| Mandatory review binding | Readiness reference | Question / evidence |
+| Original readiness item / binding | Owner | Preserved review evidence |
 |---|---|---|
-| REV-READY-IDSER-009-01 | SEAM-IDSER-009-01 | Are all card states membership-scoped and derived from persisted invariants? Repository/read-model tests. |
-| REV-READY-IDSER-009-02 | COUPLING-IDSER-009-01 | Are action boundaries, fixture separation and response privacy intact? Browser/negative route tests. |
-| REV-READY-IDSER-009-03 | SEAM-IDSER-009-02 | Are failure/status semantics truthful and accessible across themes/widths? Rendered evidence and frontend gate. |
+| Better Auth -> server identity -> membership-scoped Atlas read; persisted lifecycle trust boundary | 009-01 | `REV-READY-IDSER-009-01`: PostgreSQL read-model/membership proof |
+| `SEAM-IDSER-009-01`: separate repository read, deterministic mapping and presentation | 009-01 / 009-02 / 009-03 | Each local child boundary; 009-04 composed path |
+| `SEAM-IDSER-009-02`: safe failure/status mapping and existing refresh error/caching controls | 009-02 | Safe mapping/read-service proof; 009-04 browser proof |
+| `COUPLING-IDSER-009-01`: no UI DB/semantic access, provider leakage, fixture identity, simulated progress or `/demo` fallback | 009-01 / 009-02 / 009-03 / 009-04 | Local boundary proof; `REV-READY-IDSER-009-02` route/auth/fixture negatives in 009-04 |
+| `REV-READY-IDSER-009-03`: truthful accessible failure/status across themes and widths | 009-03 / 009-04 | Component semantics then frontend-gate rendered proof |
+| Deferred sharing/review authorization and new public actions | all children | Explicitly unavailable; never implemented |
 
-## Review checkpoint
+## Sizing self-check
 
-**Question:** Do production cards accurately communicate persisted processing
-and readiness without inventing review access, progress or published truth?
+| Child | GO + dominant proof | Bounded CK/CFC/HMN decision |
+|---|---|---|
+| 009-01 | One persisted-read authority + PostgreSQL tests | Isolation, integrity and non-leaking read only |
+| 009-02 | One deterministic mapper + mapper/read-model tests | Mapping, redaction and fail-closed invariants only |
+| 009-03 | One presentation authority + component/accessibility tests | Faithful accessible rendering only |
+| 009-04 | One integration checkpoint + authenticated browser proof | Browser regression/visual observation only |
 
-**Implementation checkpoint:** Not started; record commit, Compose and visual evidence.
+## Required final partition self-check
+
+Each result is **YES** for 009-01, 009-02, 009-03 and 009-04: the individual hard stops, RC tables and explicit non-authority sections are the child-specific evidence for this assessment.
+
+| Question | Result |
+|---|---|
+| Can GO understand the entire ticket before coding? | YES |
+| Can GO implement the entire scope in one coherent layer? | YES |
+| Can GO produce every mandatory proof before handoff? | YES |
+| Does the ticket have one dominant proof harness? | YES |
+| Can CK completely review it in one bounded pass? | YES |
+| Are likely CK findings locally repairable by CFC? | YES |
+| Would HMN receive only a narrow residual? | YES |
+| Are unrelated sibling responsibilities explicitly deferred? | YES |
+| Are inherited security obligations bounded to this scope? | YES |
+| Is every original IDSER-009 obligation still owned somewhere? | YES |
+
+Every row remains owned. No implementation, migration, GO, CK, CFC, or HMN action is authorized or claimed by this planning record.

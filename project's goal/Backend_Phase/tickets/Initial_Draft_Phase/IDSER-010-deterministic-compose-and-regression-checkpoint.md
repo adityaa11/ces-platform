@@ -2,7 +2,7 @@
 
 - **State:** `planned`
 - **Review batch:** `IDSER-BATCH-10`
-- **Depends on:** IDSER-001 through IDSER-009 `PASS`.
+- **Depends on:** IDSER-001 through IDSER-008 and IDSER-009-01 through IDSER-009-04 `PASS`. The IDSER-009 umbrella is complete only when that child series passes.
 - **Baseline:** SRC-IDSER-01 sections 39-44, especially 41.1-41.9 and scenarios A-H; AC-01 through AC-40. See [README](README.md) for ownership.
 - **Execution environment:** Real Compose Atlas/PostgreSQL/pg-boss/Bridge/worker/DocumentStore with controlled Mistral responses.
 
@@ -55,7 +55,7 @@ actual test evidence.
 2. Start/health-check PostgreSQL, apply/check migrations, then start the complete Compose stack with explicit deterministic provider configuration.
 3. Execute registered focused/E2E scripts in Compose. Record exact commands and test counts; verify required DB-backed cases ran rather than being conditionally skipped.
 4. Record service health, permissions outcome, scenario IDs, non-sensitive project/bundle/execution IDs, state/count assertions and replay call-count evidence.
-5. Record app/browser/CSP results and reference IDSER-009 rendered evidence or refresh it if changes require it.
+5. Record app/browser/CSP results and reference IDSER-009-04 rendered evidence or refresh it if changes require it.
 6. Document pre-existing unrelated failures with evidence; do not misreport them as passing or weaken affected requirements.
 
 Existing script entry points include `@atlas/db migration:check`,
