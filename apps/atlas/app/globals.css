@@ -1174,6 +1174,8 @@ h1 { font-size: clamp(2.35rem, 6vw, 5rem); letter-spacing: -.055em; line-height:
   --repository-extracting-ink: #b9d6ff;
   --repository-review-bg: #39275f;
   --repository-review-ink: #d6cbff;
+  --repository-attention-bg: #482522;
+  --repository-attention-ink: #ffaaa0;
   --repository-waiting-bg: #183b6b;
   --repository-waiting-ink: #b9d6ff;
 }
@@ -1184,6 +1186,8 @@ h1 { font-size: clamp(2.35rem, 6vw, 5rem); letter-spacing: -.055em; line-height:
   --repository-extracting-ink: #2e6ddd;
   --repository-review-bg: #f0edff;
   --repository-review-ink: #765ce9;
+  --repository-attention-bg: #ffebe8;
+  --repository-attention-ink: #a63b30;
   --repository-waiting-bg: #eaf2ff;
   --repository-waiting-ink: #2e6ddd;
 }
@@ -1195,6 +1199,8 @@ h1 { font-size: clamp(2.35rem, 6vw, 5rem); letter-spacing: -.055em; line-height:
     --repository-extracting-ink: #2e6ddd;
     --repository-review-bg: #f0edff;
     --repository-review-ink: #765ce9;
+    --repository-attention-bg: #ffebe8;
+    --repository-attention-ink: #a63b30;
     --repository-waiting-bg: #eaf2ff;
     --repository-waiting-ink: #2e6ddd;
   }
@@ -1203,6 +1209,7 @@ h1 { font-size: clamp(2.35rem, 6vw, 5rem); letter-spacing: -.055em; line-height:
 .repository-status-published { background: var(--repository-published-bg); color: var(--repository-published-ink); }
 .repository-status-extracting { background: var(--repository-extracting-bg); color: var(--repository-extracting-ink); }
 .repository-status-ready-for-review { background: var(--repository-review-bg); color: var(--repository-review-ink); }
+.repository-status-needs-attention { background: var(--repository-attention-bg); color: var(--repository-attention-ink); }
 .repository-status-waiting-for-extraction { background: var(--repository-waiting-bg); color: var(--repository-waiting-ink); }
 .production-project-notice { background: var(--repository-waiting-bg); border: 1px solid color-mix(in srgb, var(--repository-waiting-ink) 38%, var(--line)); border-radius: .65rem; color: var(--repository-waiting-ink); font-size: var(--type-body-compact); line-height: var(--leading-body); margin: 0 0 1rem; padding: .7rem .85rem; }
 
@@ -1220,6 +1227,7 @@ h1 { font-size: clamp(2.35rem, 6vw, 5rem); letter-spacing: -.055em; line-height:
 .repository-summary { min-height: 0; overflow-wrap: anywhere; word-break: break-word; }
 .repository-state-stack { align-content: start; margin-top: 1rem; min-height: 0; }
 .repository-master-state { min-height: 5.625rem; }
+.repository-card-notice { background: var(--repository-attention-bg); border: 1px solid color-mix(in srgb, var(--repository-attention-ink) 38%, var(--line)); border-radius: .65rem; color: var(--repository-attention-ink); font-size: var(--type-body-compact); line-height: var(--leading-body); margin: 0; padding: .65rem .7rem; }
 .repository-card-footer { padding-top: .9rem; }
 .repository-metrics dd { overflow-wrap: anywhere; white-space: normal; }
 .repository-card-actions { grid-template-columns: minmax(0, 1fr) auto; }

@@ -1,6 +1,6 @@
 # IDSER-009-03: Production project-card lifecycle presentation
 
-- **State:** `planned`; **Review batch:** `IDSER-BATCH-09-03`.
+- **State:** `awaiting_review`; **Review batch:** `IDSER-BATCH-09-03`.
 - **Depends on:** IDSER-009-02 `PASS`.
 - **Execution environment:** Existing app component/render/accessibility-focused tests.
 
@@ -30,3 +30,8 @@ The component consumes 009-02; it must not query persistence, reconstruct lifecy
 ## Hard stop
 
 GO must have component/render/accessibility proof for all rows before review. Full authenticated browser, responsive/reflow, theme, shell and regression proof is deferred to 009-04; no persistence or mapping authority is reopened here.
+
+## GO checkpoint
+
+- **Implementation checkpoint:** `project's goal/feedback/IDSER-BATCH-09-03-go-checkpoint.md`
+- **Implementation commit:** this GO handoff commit; CK remains the sole authority to issue `PASS`.
