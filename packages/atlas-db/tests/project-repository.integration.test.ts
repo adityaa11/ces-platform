@@ -221,7 +221,9 @@ test("IDSER-009-01 returns only membership-scoped, internally consistent persist
     assert.deepEqual(await repository.listAccessibleTo(other), [], "membership precedes every lifecycle read");
     assert.equal(projects.find((project) => project.id === waiting.projectId)?.hasSemanticUncertainty, true, "a same-bundle candidate flag produces only the bounded signal");
     assert.equal(projects.find((project) => project.id === processing.projectId)?.hasSemanticUncertainty, true, "a same-bundle relationship flag independently produces the bounded signal");
-    assert.equal(projects.find((project) => project.id === ready.projectId)?.hasSemanticUncertainty, false, "unflagged bundles remain false");
+    const foreignBundleFlag = await atlas.unsafe("SELECT candidate.bundle_id AS flagged_bundle_id, target.id AS target_bundle_id FROM atlas.semantic_candidate candidate JOIN atlas.extraction_bundle target ON target.project_id=$1 WHERE candidate.project_id=$2 AND candidate.needs_resolution=true AND candidate.bundle_id<>target.id", [ready.projectId, waiting.projectId]);
+    assert.equal(foreignBundleFlag.length, 1, "the ready target has a flagged semantic candidate only in a foreign project's bundle");
+    assert.equal(projects.find((project) => project.id === ready.projectId)?.hasSemanticUncertainty, false, "a flagged semantic candidate in a foreign project's bundle contributes no signal to the target project's card");
     assert.equal(projects.find((project) => project.id === legacy.projectId)?.lifecycle.kind, "legacy_no_bundle");
     const waitingRead = projects.find((project) => project.id === waiting.projectId)!;
     const facts = (projectId: string) => {
