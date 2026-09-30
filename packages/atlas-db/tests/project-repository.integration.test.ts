@@ -138,7 +138,7 @@ test("IDSER-003 atomically persists the ordered bundle and only D1 kickoff", { s
     await creation;
     assert.deepEqual(await countsFor(input.id, input.documents[0].id), { project_count: 1, member_count: 1, workspace_count: 2, document_count: 3, bundle_count: 1, bundle_document_count: 3, execution_count: 1, grant_count: 1, job_count: 1 });
     const [bundle] = await atlas.unsafe("SELECT expected_document_count, completed_document_count, state FROM atlas.extraction_bundle WHERE project_id=$1", [input.id]);
-    assert.deepEqual(bundle, { expected_document_count: 3, completed_document_count: 0, state: "processing" });
+    assert.deepEqual(bundle, { expected_document_count: 3, completed_document_count: 0, state: "waiting" });
     assert.deepEqual(Array.from(await atlas.unsafe("SELECT document_id, sequence, state, perception_execution_id FROM atlas.extraction_bundle_document WHERE bundle_id=(SELECT id FROM atlas.extraction_bundle WHERE project_id=$1) ORDER BY sequence", [input.id])).map((row) => ({ document_id: row.document_id, sequence: Number(row.sequence), state: row.state, started: row.perception_execution_id !== null })), input.documents.map((document, index) => ({ document_id: document.id, sequence: index + 1, state: index === 0 ? "perception_queued" : "pending", started: index === 0 })));
     const [{ count: queued }] = await admin.unsafe("SELECT COUNT(*)::integer AS count FROM pgboss.job WHERE name='atlas-document-perception-v1' AND data->>'idempotencyKey' LIKE $1", [`%:${input.documents[0].id}:v1`]);
     assert.equal(Number(queued), 1);

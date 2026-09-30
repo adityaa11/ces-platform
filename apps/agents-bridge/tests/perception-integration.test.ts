@@ -200,8 +200,7 @@ test("the Compose perception worker exhausts retries, bounds expired grants, and
     const request = await authority.create(input);
     await atlas.unsafe("INSERT INTO atlas.document (id,project_id,workspace_id,original_filename,storage_key,source_sha256,byte_size,media_type,created_by_user_id) VALUES ($1,$2,$3,$4,$5,$6,$7,'application/pdf',$8)", [document, project, workspace, `${label}.pdf`, stored.storageKey, input.sourceSha256, input.byteSize, owner]);
     await atlas.unsafe("INSERT INTO atlas.extraction_bundle (id,project_id,workspace_id,state,semantic_contract_version,reconciliation_contract_version,expected_document_count) VALUES ($1,$2,$3,'waiting','v1','v1',1)", [bundle, project, workspace]);
-    await atlas.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id,document_id,project_id,workspace_id,sequence,state,perception_execution_id,started_at) VALUES ($1,$2,$3,$4,1,'perception_queued',$5,now())", [bundle, document, project, workspace, executionId]);
-    await atlas.unsafe("UPDATE atlas.extraction_bundle SET state='processing', started_at=now() WHERE id=$1", [bundle]);
+    await atlas.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id,document_id,project_id,workspace_id,sequence,state,perception_execution_id) VALUES ($1,$2,$3,$4,1,'perception_queued',$5)", [bundle, document, project, workspace, executionId]);
     executions.push(executionId); keys.push(input.idempotencyKey); bundles.push(bundle); documents.push(document);
     return { input, request, bundle };
   };
@@ -225,6 +224,7 @@ test("the Compose perception worker exhausts retries, bounds expired grants, and
     await atlas.unsafe("INSERT INTO atlas.project (id,stable_id,name,created_by_user_id) VALUES ($1,$2,'perception lifecycle',$3)", [project, `perception-lifecycle-${suffix.slice(0, 12)}`, owner]);
     await atlas.unsafe("INSERT INTO atlas.workspace (id,project_id,kind,state,display_name) VALUES ($1,$2,'initial_draft','draft','Draft')", [workspace, project]);
     const exhaustion = await fixture("exhaustion"); const expired = await fixture("expired"); const race = await fixture("race");
+    assert.deepEqual(Array.from(await atlas.unsafe("SELECT b.state AS bundle_state, b.started_at IS NULL AS bundle_unstarted, m.state AS member_state, b.completed_document_count FROM atlas.extraction_bundle b JOIN atlas.extraction_bundle_document m ON m.bundle_id=b.id WHERE b.id = ANY($1::text[]) ORDER BY b.id", [[exhaustion.bundle, expired.bundle, race.bundle]])), ["exhaustion", "expired", "race"].sort().map(() => ({ bundle_state: "waiting", bundle_unstarted: true, member_state: "perception_queued", completed_document_count: 0 })), "durably queued jobs do not activate lifecycle before authenticated source redemption");
     await admin.unsafe("UPDATE atlas.document_perception_source_grant SET expires_at=now()-interval '1 second' WHERE grant_id=$1", [expired.request.source.grant.split(".", 1)[0]]);
     await worker.start();
     for (const value of [exhaustion, expired, race]) await worker.boss.send(queue, { idempotencyKey: value.input.idempotencyKey, request: value.request }, { singletonKey: value.input.idempotencyKey });

@@ -49,7 +49,6 @@ export class PostgresAtlasProjectRepository implements AtlasProjectRepository {
         for (const [index, document] of input.documents.entries()) {
           await sql.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id, document_id, project_id, workspace_id, sequence, state) VALUES ($1,$2,$3,$4,$5,$6)", [bundleId, document.id, input.id, input.initialDraftWorkspaceId, index + 1, index === 0 ? "perception_queued" : "pending"]);
         }
-        await sql.unsafe("UPDATE atlas.extraction_bundle SET state='processing', started_at=now() WHERE id=$1 AND state='waiting'", [bundleId]);
         const first = input.documents[0];
         const executionId = randomUUID();
         const idempotencyKey = `perception:${bundleId}:${first.id}:${documentPerceptionContractVersion}`;
