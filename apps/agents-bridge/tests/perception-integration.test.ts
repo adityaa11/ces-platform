@@ -47,8 +47,15 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
   const artifactId = `artifact-${randomUUID()}`;
   const sourceSha256 = createHash("sha256").update(bytes).digest("hex");
   const input = { executionId, artifactId, storageKey: stored.storageKey, sourceSha256, mimeType: "application/pdf" as const, byteSize: bytes.byteLength, idempotencyKey: `perception-integration-${randomUUID()}`, capabilityIdentity: "mistral-ocr:test-config" };
-  const authority = new PostgresPerceptionAuthority(atlas, new PerceptionSourceGrantIssuer(serviceCredential));
+  const owner = `perception-integration-owner-${randomUUID()}`; const project = `perception-integration-project-${randomUUID()}`; const workspace = `perception-integration-workspace-${randomUUID()}`; const bundle = `perception-integration-bundle-${randomUUID()}`;
+  const authority = new PostgresPerceptionAuthority(atlas, new PerceptionSourceGrantIssuer(serviceCredential), { enqueue: async () => randomUUID() });
   const request = await authority.create(input);
+  await admin.unsafe('INSERT INTO auth."user" (id,name,email,"emailVerified","createdAt","updatedAt") VALUES ($1,$1,$2,false,now(),now())', [owner, `${owner}@example.test`]);
+  await atlas.unsafe("INSERT INTO atlas.project (id,stable_id,name,created_by_user_id) VALUES ($1,$2,'perception integration',$3)", [project, `perception-integration-${randomUUID().slice(0, 12)}`, owner]);
+  await atlas.unsafe("INSERT INTO atlas.workspace (id,project_id,kind,state,display_name) VALUES ($1,$2,'initial_draft','draft','Draft')", [workspace, project]);
+  await atlas.unsafe("INSERT INTO atlas.document (id,project_id,workspace_id,original_filename,storage_key,source_sha256,byte_size,media_type,created_by_user_id) VALUES ($1,$2,$3,'source.pdf',$4,$5,$6,'application/pdf',$7)", [artifactId, project, workspace, stored.storageKey, sourceSha256, bytes.byteLength, owner]);
+  await atlas.unsafe("INSERT INTO atlas.extraction_bundle (id,project_id,workspace_id,state,semantic_contract_version,reconciliation_contract_version,expected_document_count) VALUES ($1,$2,$3,'waiting','v1','v1',1)", [bundle, project, workspace]);
+  await atlas.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id,document_id,project_id,workspace_id,sequence,state,perception_execution_id) VALUES ($1,$2,$3,$4,1,'perception_queued',$5)", [bundle, artifactId, project, workspace, executionId]);
   const routes = createPerceptionInternalRoutes({ authority, sources: store, serviceCredential, maximumSourceBytes: 20 * 1024 * 1024, maximumResultBytes: 10 * 1024 * 1024 });
   let delivered: NormalizedDocument | undefined;
   let droppedAcknowledgement = false;
@@ -162,6 +169,11 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
     assert.equal(await authority.getCached({ sourceSha256, perception: request.perception, capabilityIdentity: input.capabilityIdentity }), undefined);
   } finally {
     await worker.stop().catch(() => undefined);
+    await atlas.unsafe("DELETE FROM atlas.semantic_execution_context WHERE execution_id IN (SELECT id FROM atlas.semantic_execution WHERE bundle_id=$1)", [bundle]).catch(() => undefined);
+    await atlas.unsafe("DELETE FROM atlas.semantic_execution WHERE bundle_id=$1", [bundle]).catch(() => undefined);
+    await atlas.unsafe("DELETE FROM atlas.extraction_bundle_document WHERE bundle_id=$1", [bundle]).catch(() => undefined);
+    await atlas.unsafe("DELETE FROM atlas.extraction_bundle WHERE id=$1", [bundle]).catch(() => undefined);
+    await atlas.unsafe("DELETE FROM atlas.document WHERE id=$1", [artifactId]).catch(() => undefined);
     await atlas.unsafe("DELETE FROM atlas.document_perception_execution WHERE id=$1", [executionId]).catch(() => undefined);
     await bridge.unsafe("DELETE FROM bridge.background_effects WHERE idempotency_key=$1", [input.idempotencyKey]).catch(() => undefined);
     await admin.unsafe(`DROP TRIGGER IF EXISTS ${completionFault}_trigger ON bridge.background_effects`).catch(() => undefined);
@@ -171,6 +183,9 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
     await admin.unsafe(`DROP SEQUENCE IF EXISTS ${completionFault}`).catch(() => undefined);
     await admin.unsafe(`DROP FUNCTION IF EXISTS ${cleanupFault}_fn()`).catch(() => undefined);
     await admin.unsafe(`DROP SEQUENCE IF EXISTS ${cleanupFault}`).catch(() => undefined);
+    await atlas.unsafe("DELETE FROM atlas.workspace WHERE id=$1", [workspace]).catch(() => undefined);
+    await atlas.unsafe("DELETE FROM atlas.project WHERE id=$1", [project]).catch(() => undefined);
+    await admin.unsafe('DELETE FROM auth."user" WHERE id=$1', [owner]).catch(() => undefined);
     await Promise.all([admin.end(), atlas.end(), bridge.end()]);
     await rm(sourceRoot, { recursive: true, force: true });
   }
