@@ -14,6 +14,7 @@ import { documentPerceptionQueue } from "../src/perception-job.ts";
 import { runDocumentPerception } from "../src/document-perception-worker.ts";
 import { createPerceptionResultReplay } from "../src/perception-result-replay.ts";
 import { createBackgroundWorker } from "../src/worker.ts";
+import { createTransactionalQueueProducer } from "../src/queue.ts";
 import type { WorkerConfig } from "../src/worker-config.ts";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -172,5 +173,74 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
     await admin.unsafe(`DROP SEQUENCE IF EXISTS ${cleanupFault}`).catch(() => undefined);
     await Promise.all([admin.end(), atlas.end(), bridge.end()]);
     await rm(sourceRoot, { recursive: true, force: true });
+  }
+});
+
+test("the Compose perception worker exhausts retries, bounds expired grants, and fences completion against stale failure", { skip }, async () => {
+  const admin = postgres(databaseUrl!, { max: 2 });
+  const atlasUrl = new URL(databaseUrl!); atlasUrl.username = "atlas_app"; atlasUrl.password = process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only";
+  const bridgeUrl = new URL(databaseUrl!); bridgeUrl.username = "agents_bridge"; bridgeUrl.password = process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only";
+  const atlas = postgres(atlasUrl.toString(), { max: 2 });
+  const bridge = postgres(bridgeUrl.toString(), { max: 2 });
+  const sourceRoot = await mkdtemp(join(tmpdir(), "atlas-perception-lifecycle-"));
+  const store = new LocalFilesystemDocumentStore(sourceRoot);
+  const serviceCredential = "service-credential-that-is-at-least-32-bytes-long";
+  const backgroundQueue = `background-perception-lifecycle-${randomUUID()}`;
+  const queue = `${documentPerceptionQueue}-lifecycle-${randomUUID()}`;
+  const semanticQueue = await createTransactionalQueueProducer(databaseUrl!, backgroundQueue);
+  const authority = new PostgresPerceptionAuthority(atlas, new PerceptionSourceGrantIssuer(serviceCredential), semanticQueue);
+  const routes = createPerceptionInternalRoutes({ authority, sources: store, serviceCredential, maximumSourceBytes: 20 * 1024 * 1024, maximumResultBytes: 10 * 1024 * 1024 });
+  const suffix = randomUUID(); const owner = `perception-lifecycle-owner-${suffix}`; const project = `perception-lifecycle-project-${suffix}`; const workspace = `perception-lifecycle-workspace-${suffix}`;
+  const executions: string[] = []; const keys: string[] = []; const bundles: string[] = []; const documents: string[] = [];
+  let raceFailureStatus: number | undefined;
+  const fixture = async (label: string) => {
+    const bytes = new Uint8Array(Buffer.from(`%PDF-perception-${label}-${suffix}%`)); const stored = await store.put({ bytes, mediaType: "application/pdf" });
+    const document = `perception-lifecycle-document-${label}-${suffix}`; const bundle = `perception-lifecycle-bundle-${label}-${suffix}`; const executionId = `perception-lifecycle-execution-${label}-${suffix}`;
+    const input = { executionId, artifactId: document, storageKey: stored.storageKey, sourceSha256: createHash("sha256").update(bytes).digest("hex"), mimeType: "application/pdf" as const, byteSize: bytes.byteLength, idempotencyKey: `perception-lifecycle-key-${label}-${suffix}`, capabilityIdentity: `perception-lifecycle-${label}-${suffix}` };
+    const request = await authority.create(input);
+    await atlas.unsafe("INSERT INTO atlas.document (id,project_id,workspace_id,original_filename,storage_key,source_sha256,byte_size,media_type,created_by_user_id) VALUES ($1,$2,$3,$4,$5,$6,$7,'application/pdf',$8)", [document, project, workspace, `${label}.pdf`, stored.storageKey, input.sourceSha256, input.byteSize, owner]);
+    await atlas.unsafe("INSERT INTO atlas.extraction_bundle (id,project_id,workspace_id,state,semantic_contract_version,reconciliation_contract_version,expected_document_count) VALUES ($1,$2,$3,'waiting','v1','v1',1)", [bundle, project, workspace]);
+    await atlas.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id,document_id,project_id,workspace_id,sequence,state,perception_execution_id,started_at) VALUES ($1,$2,$3,$4,1,'perception_queued',$5,now())", [bundle, document, project, workspace, executionId]);
+    await atlas.unsafe("UPDATE atlas.extraction_bundle SET state='processing', started_at=now() WHERE id=$1", [bundle]);
+    executions.push(executionId); keys.push(input.idempotencyKey); bundles.push(bundle); documents.push(document);
+    return { input, request, bundle };
+  };
+  const clients = createAtlasPerceptionClients({ baseUrl: "http://atlas.test", sourcePath: "/internal/perception/source", resultPath: "/internal/perception/result", failurePath: "/internal/perception/failure", serviceCredential, maximumSourceBytes: 20 * 1024 * 1024, maximumResultBytes: 10 * 1024 * 1024, timeoutMilliseconds: 5_000 }, async (url, init) => {
+    const credential = (init?.headers as Record<string, string>).authorization?.replace(/^Bearer /u, ""); const body = JSON.parse(String(init?.body));
+    if (url.endsWith("/source")) { const response = await routes.redeem(credential, body); return new Response(response.body instanceof Uint8Array ? response.body : JSON.stringify(response.body), { status: response.status, headers: { "content-type": response.contentType } }); }
+    if (url.endsWith("/failure")) { const response = await routes.fail(credential, body); return new Response(response.status === 204 ? null : JSON.stringify(response.body), { status: response.status, headers: { "content-type": response.contentType } }); }
+    const response = await routes.deliver(credential, body.request, body.result);
+    return new Response(response.status === 204 ? null : JSON.stringify(response.body), { status: response.status, headers: { "content-type": response.contentType } });
+  });
+  const worker = createBackgroundWorker({ databaseUrl: bridgeUrl.toString(), concurrency: 1, timeoutSeconds: 5, retryLimit: 2, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 }, { async *execute() { yield { type: "complete" as const }; } }, backgroundQueue, async (request, signal, context) => {
+    const replay = createPerceptionResultReplay(context.database);
+    const provider = { perceive: async () => {
+      if (request.executionId.includes("exhaustion")) throw new (await import("../src/providers/mistral.ts")).BridgeProviderError("timeout", "synthetic retryable provider timeout");
+      return { providerResult: { pages: [{ index: 0, markdown: "worker lifecycle evidence" }] }, provenance: { provider: "mistral" as const, model: "test", endpoint: "/test", latencyMilliseconds: 1, attempt: 1 } };
+    } };
+    await runDocumentPerception(request, provider as never, clients.source, clients.results, signal, { idempotencyKey: context.idempotencyKey, store: replay, finalAttempt: context.finalAttempt });
+  }, queue);
+  try {
+    await admin.unsafe('INSERT INTO auth."user" (id,name,email,"emailVerified","createdAt","updatedAt") VALUES ($1,$1,$2,false,now(),now())', [owner, `${owner}@example.test`]);
+    await atlas.unsafe("INSERT INTO atlas.project (id,stable_id,name,created_by_user_id) VALUES ($1,$2,'perception lifecycle',$3)", [project, `perception-lifecycle-${suffix.slice(0, 12)}`, owner]);
+    await atlas.unsafe("INSERT INTO atlas.workspace (id,project_id,kind,state,display_name) VALUES ($1,$2,'initial_draft','draft','Draft')", [workspace, project]);
+    const exhaustion = await fixture("exhaustion"); const expired = await fixture("expired"); const race = await fixture("race");
+    await admin.unsafe("UPDATE atlas.document_perception_source_grant SET expires_at=now()-interval '1 second' WHERE grant_id=$1", [expired.request.source.grant.split(".", 1)[0]]);
+    await worker.start();
+    for (const value of [exhaustion, expired, race]) await worker.boss.send(queue, { idempotencyKey: value.input.idempotencyKey, request: value.request }, { singletonKey: value.input.idempotencyKey });
+    await waitFor(async () => (await atlas.unsafe("SELECT state FROM atlas.document_perception_execution WHERE id=$1", [exhaustion.input.executionId]))[0]?.state === "failed");
+    await waitFor(async () => (await atlas.unsafe("SELECT state FROM atlas.document_perception_execution WHERE id=$1", [expired.input.executionId]))[0]?.state === "failed");
+    await waitFor(async () => (await atlas.unsafe("SELECT state FROM atlas.document_perception_execution WHERE id=$1", [race.input.executionId]))[0]?.state === "completed");
+    raceFailureStatus = (await routes.fail(serviceCredential, { request: race.request, code: "provider_timeout" })).status;
+    assert.equal((await bridge.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [exhaustion.input.idempotencyKey]))[0]?.status, "completed", "retry exhaustion reports one bounded terminal Bridge effect");
+    assert.equal((await bridge.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [expired.input.idempotencyKey]))[0]?.status, "completed", "expired delivery is bounded through the real worker path");
+    assert.deepEqual(Array.from(await atlas.unsafe("SELECT state FROM atlas.document_perception_execution WHERE id = ANY($1::text[]) ORDER BY id", [[exhaustion.input.executionId, expired.input.executionId]])), [{ state: "failed" }, { state: "failed" }], "retry exhaustion and grant expiry cannot create trusted completion");
+    assert.equal(raceFailureStatus, 400, "the stale failure loses after the worker committed accepted perception completion");
+    assert.deepEqual((await atlas.unsafe("SELECT p.state AS perception_state, m.state AS member_state, b.state AS bundle_state FROM atlas.document_perception_execution p JOIN atlas.extraction_bundle_document m ON m.perception_execution_id=p.id JOIN atlas.extraction_bundle b ON b.id=m.bundle_id WHERE p.id=$1", [race.input.executionId]))[0], { perception_state: "completed", member_state: "extracting", bundle_state: "processing" }, "the accepted worker completion has no contradictory failure state");
+  } finally {
+    await worker.stop().catch(() => undefined);
+    await bridge.unsafe("DELETE FROM bridge.document_perception_result_delivery WHERE idempotency_key = ANY($1::text[])", [keys]).catch(() => undefined); await bridge.unsafe("DELETE FROM bridge.background_effects WHERE idempotency_key = ANY($1::text[])", [keys]).catch(() => undefined);
+    await atlas.unsafe("DELETE FROM atlas.semantic_execution_context WHERE execution_id IN (SELECT id FROM atlas.semantic_execution WHERE bundle_id = ANY($1::text[]))", [bundles]).catch(() => undefined); await atlas.unsafe("DELETE FROM atlas.semantic_execution WHERE bundle_id = ANY($1::text[])", [bundles]).catch(() => undefined); await atlas.unsafe("DELETE FROM atlas.extraction_bundle_document WHERE bundle_id = ANY($1::text[])", [bundles]).catch(() => undefined); await atlas.unsafe("DELETE FROM atlas.document_perception_execution WHERE id = ANY($1::text[])", [executions]).catch(() => undefined); await atlas.unsafe("DELETE FROM atlas.extraction_bundle WHERE id = ANY($1::text[])", [bundles]).catch(() => undefined); await atlas.unsafe("DELETE FROM atlas.document WHERE id = ANY($1::text[])", [documents]).catch(() => undefined); await atlas.unsafe("DELETE FROM atlas.workspace WHERE id=$1", [workspace]).catch(() => undefined); await atlas.unsafe("DELETE FROM atlas.project WHERE id=$1", [project]).catch(() => undefined); await admin.unsafe('DELETE FROM auth."user" WHERE id=$1', [owner]).catch(() => undefined);
+    await Promise.all([semanticQueue.close(), admin.end(), atlas.end(), bridge.end()]); await rm(sourceRoot, { recursive: true, force: true });
   }
 });
