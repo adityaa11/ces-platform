@@ -3,7 +3,7 @@
 - **State:** `in_progress`; IDSER-001 is approved at `a64c62b`, IDSER-002 is
   approved at `5bf1bbb`, IDSER-003 is approved at `3dbd7dc`, IDSER-004 is
   approved at `9b36ee8`, IDSER-005 at `2707518`, IDSER-006 at `266f5a3`, and
-  IDSER-007 at `c890410`.
+  IDSER-007 at `c890410`, IDSER-008 at `ec1e973`.
 - **Prefix:** `IDSER`; one bounded ticket per `IDSER-BATCH-XX`.
 - **Primary baseline:** [Initial Draft implementation context](../../atlas-initial-draft-semantic-extraction-reconciliation-implementation-context.md), sections 1-45, AC-01 through AC-44.
 - **Hard predecessor:** [PCC-006](../Project_Cards_Phase/PCC-006-project-card-creation-e2e-and-regression-checkpoint.md) `PASS`; the [PCC set](../Project_Cards_Phase/README.md) remains frozen.
