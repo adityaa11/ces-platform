@@ -172,7 +172,7 @@ test("IDSER-009-01 returns only membership-scoped, internally consistent persist
   const other = `idser009-other-${randomUUID()}`;
   const ids: string[] = [];
   const repository = new PostgresAtlasProjectRepository(atlas);
-  const create = async (state: "legacy" | "waiting" | "processing" | "needs_attention" | "ready_for_review" | "malformed", documentCount = 2) => {
+  const create = async (state: "legacy" | "waiting" | "processing" | "needs_attention" | "ready_for_review" | "malformed" | "mismatched_failure" | "waiting_active" | "waiting_completed", documentCount = 2) => {
     const projectId = randomUUID(), masterId = randomUUID(), draftId = randomUUID(), bundleId = randomUUID();
     ids.push(projectId);
     await admin.unsafe("INSERT INTO atlas.project (id, stable_id, name, created_by_user_id) VALUES ($1,$2,$3,$4)", [projectId, `idser009-${randomUUID().slice(0, 12)}`, state, owner]);
@@ -184,11 +184,12 @@ test("IDSER-009-01 returns only membership-scoped, internally consistent persist
     await admin.unsafe("INSERT INTO atlas.extraction_bundle (id,project_id,workspace_id,state,semantic_contract_version,reconciliation_contract_version,expected_document_count,completed_document_count) VALUES ($1,$2,$3,'waiting','v1','v1',$4,0)", [bundleId, projectId, draftId, documentCount]);
     const members = state === "malformed" ? documents.slice(0, 1) : documents;
     for (const [index, documentId] of members.entries()) {
-      const memberState = state === "ready_for_review" ? "completed" : state === "needs_attention" && index === 0 ? "needs_attention" : state === "processing" && index === 0 ? "perceiving" : "pending";
+      const memberState = state === "ready_for_review" || (state === "waiting_completed" || state === "mismatched_failure") && index === 0 ? "completed" : (state === "needs_attention" || state === "mismatched_failure") && (state === "mismatched_failure" ? index === 1 : index === 0) ? "needs_attention" : (state === "processing" || state === "waiting_active") && index === 0 ? "perceiving" : "pending";
       await admin.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id,document_id,project_id,workspace_id,sequence,state,started_at,completed_at,last_failure_code,last_failure_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)", [bundleId, documentId, projectId, draftId, index + 1, memberState, memberState === "pending" ? null : new Date(), memberState === "completed" ? new Date() : null, memberState === "needs_attention" ? "provider body: should never cross" : null, memberState === "needs_attention" ? new Date() : null]);
     }
-    if (state !== "waiting" && state !== "malformed") await admin.unsafe("UPDATE atlas.extraction_bundle SET state=$2, completed_document_count=$3, started_at=now(), completed_at=$4, last_failure_code=$5, last_failure_at=$6 WHERE id=$1", [bundleId, state, state === "ready_for_review" ? documentCount : 0, state === "ready_for_review" ? new Date() : null, state === "needs_attention" ? "technical_failure" : null, state === "needs_attention" ? new Date() : null]);
-    return { projectId, masterId, draftId, bundleId };
+    if (state !== "waiting" && state !== "malformed" && state !== "waiting_active" && state !== "waiting_completed") await admin.unsafe("UPDATE atlas.extraction_bundle SET state=$2, completed_document_count=$3, started_at=now(), completed_at=$4, last_failure_code=$5, last_failure_at=$6 WHERE id=$1", [bundleId, state === "mismatched_failure" ? "needs_attention" : state, state === "ready_for_review" ? documentCount : 0, state === "ready_for_review" ? new Date() : null, state === "needs_attention" || state === "mismatched_failure" ? "technical_failure" : null, state === "needs_attention" || state === "mismatched_failure" ? new Date() : null]);
+    if (state === "waiting_completed") await admin.unsafe("UPDATE atlas.extraction_bundle SET completed_document_count=1 WHERE id=$1", [bundleId]);
+    return { projectId, masterId, draftId, bundleId, documents };
   };
   try {
     for (const user of [owner, other]) await admin.unsafe('INSERT INTO auth."user" (id,name,email,"emailVerified","createdAt","updatedAt") VALUES ($1,$2,$3,false,now(),now())', [user, user, `${user}@example.test`]);
@@ -198,16 +199,32 @@ test("IDSER-009-01 returns only membership-scoped, internally consistent persist
     const failed = await create("needs_attention");
     const ready = await create("ready_for_review");
     await create("malformed");
+    const mismatchedFailure = await create("mismatched_failure");
+    const waitingActive = await create("waiting_active");
+    const waitingCompleted = await create("waiting_completed");
     const projects = await repository.listAccessibleTo(owner);
     assert.equal(projects.length, 5, "malformed bundle-backed records fail closed");
+    for (const invalid of [mismatchedFailure, waitingActive, waitingCompleted]) assert.equal(projects.some((project) => project.id === invalid.projectId), false, "contradictory lifecycle records fail closed");
     assert.deepEqual(await repository.listAccessibleTo(other), [], "membership precedes every lifecycle read");
     assert.equal(projects.find((project) => project.id === legacy.projectId)?.lifecycle.kind, "legacy_no_bundle");
     const waitingRead = projects.find((project) => project.id === waiting.projectId)!;
-    assert.deepEqual(waitingRead.lifecycle, { kind: "bundle", bundleId: waiting.bundleId, bundleState: "waiting", expectedDocumentCount: 2, completedDocumentCount: 0, memberFacts: waitingRead.lifecycle.kind === "bundle" ? waitingRead.lifecycle.memberFacts : [] });
-    assert.equal(projects.find((project) => project.id === processing.projectId)?.lifecycle.kind, "bundle");
-    assert.equal(projects.find((project) => project.id === ready.projectId)?.lifecycle.kind, "bundle");
+    const facts = (projectId: string) => {
+      const lifecycle = projects.find((project) => project.id === projectId)?.lifecycle;
+      assert.ok(lifecycle && lifecycle.kind !== "legacy_no_bundle");
+      return lifecycle.memberFacts;
+    };
+    assert.deepEqual(waitingRead.lifecycle, { kind: "bundle", bundleId: waiting.bundleId, bundleState: "waiting", expectedDocumentCount: 2, completedDocumentCount: 0, memberFacts: facts(waiting.projectId) });
+    assert.deepEqual(facts(waiting.projectId), waiting.documents.map((documentId, index) => ({ documentId, sequence: index + 1, state: "pending", hasTechnicalFailure: false })));
+    const processingRead = projects.find((project) => project.id === processing.projectId)!;
+    assert.deepEqual(processingRead.lifecycle.kind === "bundle" ? { kind: processingRead.lifecycle.kind, bundleState: processingRead.lifecycle.bundleState, expectedDocumentCount: processingRead.lifecycle.expectedDocumentCount, completedDocumentCount: processingRead.lifecycle.completedDocumentCount } : null, { kind: "bundle", bundleState: "processing", expectedDocumentCount: 2, completedDocumentCount: 0 });
+    assert.deepEqual(facts(processing.projectId), processing.documents.map((documentId, index) => ({ documentId, sequence: index + 1, state: index === 0 ? "perceiving" : "pending", hasTechnicalFailure: false })));
+    const readyRead = projects.find((project) => project.id === ready.projectId)!;
+    assert.deepEqual(readyRead.lifecycle.kind === "bundle" ? { kind: readyRead.lifecycle.kind, bundleState: readyRead.lifecycle.bundleState, expectedDocumentCount: readyRead.lifecycle.expectedDocumentCount, completedDocumentCount: readyRead.lifecycle.completedDocumentCount } : null, { kind: "bundle", bundleState: "ready_for_review", expectedDocumentCount: 2, completedDocumentCount: 2 });
+    assert.deepEqual(facts(ready.projectId), ready.documents.map((documentId, index) => ({ documentId, sequence: index + 1, state: "completed", hasTechnicalFailure: false })));
     const failure = projects.find((project) => project.id === failed.projectId)!;
     assert.equal(failure.lifecycle.kind, "technical_failure");
+    assert.deepEqual(failure.lifecycle.kind === "technical_failure" ? { expectedDocumentCount: failure.lifecycle.expectedDocumentCount, completedDocumentCount: failure.lifecycle.completedDocumentCount } : null, { expectedDocumentCount: 2, completedDocumentCount: 0 });
+    assert.deepEqual(facts(failed.projectId), failed.documents.map((documentId, index) => ({ documentId, sequence: index + 1, state: index === 0 ? "needs_attention" : "pending", hasTechnicalFailure: index === 0 })));
     assert.doesNotMatch(JSON.stringify(failure), /provider body|last_failure/);
     assert.equal(failure.masterWorkspaceId, failed.masterId);
     assert.equal(failure.initialDraftWorkspaceId, failed.draftId);

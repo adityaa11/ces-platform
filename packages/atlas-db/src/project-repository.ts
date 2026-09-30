@@ -127,9 +127,11 @@ export class PostgresAtlasProjectRepository implements AtlasProjectRepository {
       const completedFacts = memberFacts.filter((member) => member.state === "completed").length;
       const failedFacts = memberFacts.filter((member) => member.hasTechnicalFailure || member.state === "needs_attention").length;
       const complete = completed === expected && completedFacts === expected;
-      const validState = (bundleState === "waiting" || bundleState === "processing") && draftState === "draft" && masterState === "empty" && completed === completedFacts && failedFacts === 0
+      const waitingMembers = memberFacts.every((member) => member.state === "pending" || member.state === "perception_queued");
+      const validState = bundleState === "waiting" && draftState === "draft" && masterState === "empty" && completed === completedFacts && failedFacts === 0 && waitingMembers
+        || bundleState === "processing" && draftState === "draft" && masterState === "empty" && completed === completedFacts && failedFacts === 0
         || bundleState === "ready_for_review" && complete && masterState === "empty" && row.initial_draft_workspace_state === "ready_for_review"
-        || bundleState === "needs_attention" && draftState === "draft" && masterState === "empty" && failedFacts > 0;
+        || bundleState === "needs_attention" && draftState === "draft" && masterState === "empty" && completed === completedFacts && failedFacts > 0;
       if (!validState) continue;
       const lifecycle = bundleState === "needs_attention"
         ? { kind: "technical_failure" as const, bundleId, expectedDocumentCount: expected, completedDocumentCount: completed, memberFacts }
