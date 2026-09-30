@@ -1,6 +1,6 @@
 # IDSER-009-04: Integrated production project-card regression checkpoint
 
-- **State:** `awaiting_review`; **Review batch:** `IDSER-BATCH-09-04`.
+- **State:** `approved` at `286eaee`; **Review batch:** `IDSER-BATCH-09-04`.
 - **Depends on:** IDSER-009-01, IDSER-009-02 and IDSER-009-03 `PASS`.
 - **Execution environment:** Compose authenticated app plus existing Playwright/browser and direct integration harnesses.
 
