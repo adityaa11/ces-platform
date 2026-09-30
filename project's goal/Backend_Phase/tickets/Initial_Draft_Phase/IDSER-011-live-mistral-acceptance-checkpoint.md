@@ -2,7 +2,7 @@
 
 - **State:** `planned`
 - **Review batch:** `IDSER-BATCH-11`
-- **Depends on:** IDSER-010 `PASS` and its reviewed IDSER prerequisites.
+- **Depends on:** every executable IDSER-010 child — IDSER-010-01, IDSER-010-02, IDSER-010-03-01, IDSER-010-03-02, IDSER-010-04, IDSER-010-05 and IDSER-010-06 — at CK `PASS`, plus their reviewed IDSER prerequisites. The IDSER-010 umbrella is coverage authority only and is not a PASS target.
 - **Baseline:** SRC-IDSER-01 sections 12.5, 42 scenario I, 43-45; AC-41/42/43/44 plus end-to-end phase invariants. See [README](README.md).
 - **Execution environment:** Real Compose stack and configured actual Mistral API through existing BSS-008 adapter.
 

@@ -5,11 +5,12 @@
   approved at `9b36ee8`, IDSER-005 at `2707518`, IDSER-006 at `266f5a3`, and
   IDSER-007 at `c890410`, IDSER-008 at `ec1e973`, IDSER-009-02 at `64f7072`,
   IDSER-009-03 at `2a6a8f0`, and IDSER-009-04 at `286eaee`.
-- **Prefix:** `IDSER`; one bounded ticket per `IDSER-BATCH-XX` (IDSER-009 is
-  an umbrella partition record; its four child batches are executable).
+- **Prefix:** `IDSER`; one bounded executable ticket per `IDSER-BATCH-XX`.
+  IDSER-009 and IDSER-010 are umbrella partition records, not executable GO
+  targets; their child batches carry implementation and proof authority.
 - **Primary baseline:** [Initial Draft implementation context](../../atlas-initial-draft-semantic-extraction-reconciliation-implementation-context.md), sections 1-45, AC-01 through AC-44.
 - **Hard predecessor:** [PCC-006](../Project_Cards_Phase/PCC-006-project-card-creation-e2e-and-regression-checkpoint.md) `PASS`; the [PCC set](../Project_Cards_Phase/README.md) remains frozen.
-- **Planning inspection:** branch `codex/new-atlas-backend`, HEAD `3bb1d24d7ceb11b875d5dde0a0b41568dd9f1b6c`, 2026-09-27. The context inspected `efc4f997fc883cb9d7b2e9617516aabda6a7686b`; the intervening commit changes documentation/workflow skills, not the inspected application code.
+- **Planning inspection:** branch `codex/new-atlas-backend`, HEAD `3a0ec9d9d95e52c0e9cd5b4b392d9a1b1596d4cf`, 2026-09-30. IDSER-010 was repartitioned against the current production seams, existing focused authority suites and the completed IDSER-009 corrective history.
 
 ## Outcome and authority
 
@@ -79,8 +80,16 @@ documents do not authorize starting implementation automatically.
 | 11 | [IDSER-009-02](IDSER-009-02-deterministic-production-card-projection.md) / IDSER-BATCH-09-02 | IDSER-009-01 | Deterministic browser-safe lifecycle/card projection |
 | 12 | [IDSER-009-03](IDSER-009-03-production-project-card-presentation.md) / IDSER-BATCH-09-03 | IDSER-009-02 | Accessible faithful rendering of the approved card model |
 | 13 | [IDSER-009-04](IDSER-009-04-integrated-project-card-regression-checkpoint.md) / IDSER-BATCH-09-04 | IDSER-009-03 | Authenticated browser/frontend/regression checkpoint |
-| 14 | [IDSER-010](IDSER-010-deterministic-compose-and-regression-checkpoint.md) / IDSER-BATCH-10 | IDSER-001 through IDSER-008; IDSER-009-01 through IDSER-009-04 | Deterministic Compose scenarios A-H and regression proof |
-| 15 | [IDSER-011](IDSER-011-live-mistral-acceptance-checkpoint.md) / IDSER-BATCH-11 | IDSER-010 | Mandatory live Mistral scenario I with at least two PDFs |
+| 14 | [IDSER-010](IDSER-010-deterministic-compose-and-regression-checkpoint.md) / umbrella | IDSER-001 through IDSER-008; complete IDSER-009 series | Non-executable lossless ownership record for deterministic partition |
+| 15 | [IDSER-010-01](IDSER-010-01-deterministic-production-single-document-foundation.md) / IDSER-BATCH-10-01 | approved IDSER-001–009 series | Production-shaped controlled-provider harness; scenarios A/B |
+| 16 | [IDSER-010-02](IDSER-010-02-multi-document-semantic-sequencing.md) / IDSER-BATCH-10-02 | IDSER-010-01 | Scenarios C/D/E; bounded selection, relationship/accounting and sequential advancement |
+| 17 | [IDSER-010-03](IDSER-010-03-failure-authority-partition.md) / umbrella | IDSER-010-02 | Non-executable failure-family partition record |
+| 18 | [IDSER-010-03-01](IDSER-010-03-01-creation-kickoff-rollback.md) / IDSER-BATCH-10-03-01 | IDSER-010-02 | Creation/DocumentStore/initial-enqueue atomic rollback |
+| 19 | [IDSER-010-03-02](IDSER-010-03-02-semantic-failure-containment.md) / IDSER-BATCH-10-03-02 | IDSER-010-03-01 | Scenario G semantic rejection, no false progress/successor |
+| 20 | [IDSER-010-04](IDSER-010-04-concurrent-bundle-identity-isolation.md) / IDSER-BATCH-10-04 | IDSER-010-03-02 | Scenario F concurrent identity, context/result and consumer isolation |
+| 21 | [IDSER-010-05](IDSER-010-05-staged-result-replay-restart.md) / IDSER-BATCH-10-05 | IDSER-010-04 | Scenario H staged replay, restart and lease/fingerprint fencing |
+| 22 | [IDSER-010-06](IDSER-010-06-integrated-deterministic-compose-regression-checkpoint.md) / IDSER-BATCH-10-06 | IDSER-010-01, -02, -03-01, -03-02, -04 and -05 | Final deterministic A-H, AC ledger, regression and negative-authority composition |
+| 23 | [IDSER-011](IDSER-011-live-mistral-acceptance-checkpoint.md) / IDSER-BATCH-11 | all executable IDSER-010 children through IDSER-010-06 | Mandatory live Mistral scenario I with at least two PDFs |
 
 Intermediate tickets are composable implementation checkpoints, not independent
 production rollouts. Route/worker tests may inject explicit bounded test doubles
@@ -225,7 +234,7 @@ review evidence. Use synthetic/non-confidential PDFs.
 
 ## Completion
 
-All fourteen executable checkpoints must pass. The final system must reach review-ready state
+All twenty-two executable checkpoints must pass. The final system must reach review-ready state
 through both deterministic Compose tests and a real Mistral run, preserving
 conflicts, evidence, stable IDs, replay safety and empty Master. A successful
 planning pass, mocked run, or ready worker health check alone does not complete
