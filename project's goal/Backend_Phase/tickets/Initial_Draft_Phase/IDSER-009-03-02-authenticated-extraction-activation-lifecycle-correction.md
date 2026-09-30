@@ -1,6 +1,6 @@
 # IDSER-009-03-02: Authenticated extraction activation lifecycle correction
 
-- **State:** `awaiting_review` (corrected review contract pending supplemental CK freeze).
+- **State:** `approved` at `5a8a3dd091295a6c6f684aad8b3fc309374e888b`.
 - **Depends on:** IDSER-009-03-01 `PASS`.
 - **Unblocks:** IDSER-009-04 only after this and IDSER-009-03-01 reach CK `PASS`.
 - **Execution environment:** Compose PostgreSQL, existing pg-boss/worker and authenticated Atlas internal perception-source route harness.
@@ -84,3 +84,12 @@ This ticket does not own semantic uncertainty/model/presentation, new database a
 ## Required handoff
 
 Before CK handoff, the bounded remediation checkpoint records RC-A through RC-C as `PROVEN` with exact Compose commands/results and `Internal readiness: READY_FOR_CK`. CK `PASS` proves only the authenticated activation prerequisite. The unchanged IDSER-009-04 retains final integrated closure authority.
+
+## Approval record
+
+- **CK result:** `PASS` in
+  `project's goal/feedback/IDSER-BATCH-09-03-02-5a8a3dd-supplemental-d-verification.md`,
+  reviewing remediation commit `5a8a3dd091295a6c6f684aad8b3fc309374e888b`.
+- **GO decision:** recorded IDSER-009-03-02 as `approved`. This approves only
+  the persisted authenticated activation prerequisite; it does not close or
+  resume IDSER-009-04's frozen integrated review.
