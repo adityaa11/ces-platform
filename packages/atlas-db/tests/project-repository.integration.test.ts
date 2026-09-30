@@ -161,3 +161,59 @@ test("IDSER-003 atomically persists the ordered bundle and only D1 kickoff", { s
     await Promise.all([admin.end(), atlas.end()]);
   }
 });
+
+test("IDSER-009-01 returns only membership-scoped, internally consistent persisted lifecycle facts", { skip }, async () => {
+  const admin = postgres(databaseUrl!, { max: 1 });
+  const atlasUrl = new URL(databaseUrl!);
+  atlasUrl.username = "atlas_app";
+  atlasUrl.password = process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only";
+  const atlas = postgres(atlasUrl.toString(), { max: 1 });
+  const owner = `idser009-owner-${randomUUID()}`;
+  const other = `idser009-other-${randomUUID()}`;
+  const ids: string[] = [];
+  const repository = new PostgresAtlasProjectRepository(atlas);
+  const create = async (state: "legacy" | "waiting" | "processing" | "needs_attention" | "ready_for_review" | "malformed", documentCount = 2) => {
+    const projectId = randomUUID(), masterId = randomUUID(), draftId = randomUUID(), bundleId = randomUUID();
+    ids.push(projectId);
+    await admin.unsafe("INSERT INTO atlas.project (id, stable_id, name, created_by_user_id) VALUES ($1,$2,$3,$4)", [projectId, `idser009-${randomUUID().slice(0, 12)}`, state, owner]);
+    await admin.unsafe("INSERT INTO atlas.project_member (project_id,user_id,role) VALUES ($1,$2,'owner')", [projectId, owner]);
+    await admin.unsafe("INSERT INTO atlas.workspace (id,project_id,kind,state,display_name) VALUES ($1,$2,'master','empty','Master'),($3,$2,'initial_draft',$4,'Initial Draft')", [masterId, projectId, draftId, state === "ready_for_review" ? "ready_for_review" : "draft"]);
+    const documents = Array.from({ length: documentCount }, () => randomUUID());
+    for (const [index, documentId] of documents.entries()) await admin.unsafe("INSERT INTO atlas.document (id,project_id,workspace_id,original_filename,storage_key,source_sha256,byte_size,media_type,created_by_user_id) VALUES ($1,$2,$3,$4,$5,$6,1,'application/pdf',$7)", [documentId, projectId, draftId, `${index}.pdf`, `private/${documentId}`, "a".repeat(64), owner]);
+    if (state === "legacy") return { projectId, masterId, draftId };
+    await admin.unsafe("INSERT INTO atlas.extraction_bundle (id,project_id,workspace_id,state,semantic_contract_version,reconciliation_contract_version,expected_document_count,completed_document_count) VALUES ($1,$2,$3,'waiting','v1','v1',$4,0)", [bundleId, projectId, draftId, documentCount]);
+    const members = state === "malformed" ? documents.slice(0, 1) : documents;
+    for (const [index, documentId] of members.entries()) {
+      const memberState = state === "ready_for_review" ? "completed" : state === "needs_attention" && index === 0 ? "needs_attention" : state === "processing" && index === 0 ? "perceiving" : "pending";
+      await admin.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id,document_id,project_id,workspace_id,sequence,state,started_at,completed_at,last_failure_code,last_failure_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)", [bundleId, documentId, projectId, draftId, index + 1, memberState, memberState === "pending" ? null : new Date(), memberState === "completed" ? new Date() : null, memberState === "needs_attention" ? "provider body: should never cross" : null, memberState === "needs_attention" ? new Date() : null]);
+    }
+    if (state !== "waiting" && state !== "malformed") await admin.unsafe("UPDATE atlas.extraction_bundle SET state=$2, completed_document_count=$3, started_at=now(), completed_at=$4, last_failure_code=$5, last_failure_at=$6 WHERE id=$1", [bundleId, state, state === "ready_for_review" ? documentCount : 0, state === "ready_for_review" ? new Date() : null, state === "needs_attention" ? "technical_failure" : null, state === "needs_attention" ? new Date() : null]);
+    return { projectId, masterId, draftId, bundleId };
+  };
+  try {
+    for (const user of [owner, other]) await admin.unsafe('INSERT INTO auth."user" (id,name,email,"emailVerified","createdAt","updatedAt") VALUES ($1,$2,$3,false,now(),now())', [user, user, `${user}@example.test`]);
+    const legacy = await create("legacy");
+    const waiting = await create("waiting");
+    const processing = await create("processing");
+    const failed = await create("needs_attention");
+    const ready = await create("ready_for_review");
+    await create("malformed");
+    const projects = await repository.listAccessibleTo(owner);
+    assert.equal(projects.length, 5, "malformed bundle-backed records fail closed");
+    assert.deepEqual(await repository.listAccessibleTo(other), [], "membership precedes every lifecycle read");
+    assert.equal(projects.find((project) => project.id === legacy.projectId)?.lifecycle.kind, "legacy_no_bundle");
+    const waitingRead = projects.find((project) => project.id === waiting.projectId)!;
+    assert.deepEqual(waitingRead.lifecycle, { kind: "bundle", bundleId: waiting.bundleId, bundleState: "waiting", expectedDocumentCount: 2, completedDocumentCount: 0, memberFacts: waitingRead.lifecycle.kind === "bundle" ? waitingRead.lifecycle.memberFacts : [] });
+    assert.equal(projects.find((project) => project.id === processing.projectId)?.lifecycle.kind, "bundle");
+    assert.equal(projects.find((project) => project.id === ready.projectId)?.lifecycle.kind, "bundle");
+    const failure = projects.find((project) => project.id === failed.projectId)!;
+    assert.equal(failure.lifecycle.kind, "technical_failure");
+    assert.doesNotMatch(JSON.stringify(failure), /provider body|last_failure/);
+    assert.equal(failure.masterWorkspaceId, failed.masterId);
+    assert.equal(failure.initialDraftWorkspaceId, failed.draftId);
+  } finally {
+    for (const id of ids) await admin.unsafe("DELETE FROM atlas.project WHERE id=$1", [id]);
+    await admin.unsafe('DELETE FROM auth."user" WHERE id=$1 OR id=$2', [owner, other]);
+    await Promise.all([admin.end(), atlas.end()]);
+  }
+});

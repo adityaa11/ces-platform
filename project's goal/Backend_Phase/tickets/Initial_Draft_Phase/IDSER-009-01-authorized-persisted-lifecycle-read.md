@@ -1,6 +1,6 @@
 # IDSER-009-01: Authorized persisted lifecycle read
 
-- **State:** `planned`; **Review batch:** `IDSER-BATCH-09-01`.
+- **State:** `awaiting_review`; **Review batch:** `IDSER-BATCH-09-01`.
 - **Depends on:** IDSER-008 `PASS`; frozen PCC-004/005/006 authorization/read boundaries.
 - **Consumes:** IDSER-008's accepted completion gate and failure lifecycle without reopening them.
 - **Execution environment:** Compose PostgreSQL repository/read-model tests.
@@ -33,3 +33,8 @@ This ticket does not map card labels/states/percentages, serialize a browser mod
 ## Hard stop
 
 Before `awaiting_review`, GO records every RC row as `PROVEN` with Compose PostgreSQL evidence. The persisted lifecycle read is complete; no browser-safe mapping, JSX, visual proof or IDSER-010 work begins.
+
+## GO checkpoint
+
+- **Implementation checkpoint:** `project's goal/feedback/IDSER-BATCH-09-01-go-checkpoint.md`
+- **Implementation commit:** this GO handoff commit; CK remains the sole authority to issue `PASS`.

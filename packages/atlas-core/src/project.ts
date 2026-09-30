@@ -30,11 +30,45 @@ export type AccessibleAtlasProject = {
   readonly name: string;
   readonly description: string | null;
   readonly createdAt: Date;
+  readonly masterWorkspaceId: string;
+  readonly initialDraftWorkspaceId: string;
   readonly initialDraftDocumentCount: number;
   /** Persisted lifecycle prerequisites; these are evaluated before browser projection. */
   readonly masterWorkspaceState: "empty" | null;
   readonly initialDraftWorkspaceState: "draft" | null;
   readonly hasDownstreamExtractionState: boolean;
+  /**
+   * Server-validated persisted lifecycle truth. This deliberately remains a
+   * domain read record: browser labels, percentages and card states belong to
+   * IDSER-009-02.
+   */
+  readonly lifecycle: AuthorizedPersistedLifecycle;
+};
+
+export type AuthorizedPersistedLifecycle =
+  | { readonly kind: "legacy_no_bundle" }
+  | {
+    readonly kind: "bundle";
+    readonly bundleId: string;
+    readonly bundleState: ExtractionBundleState;
+    readonly expectedDocumentCount: number;
+    readonly completedDocumentCount: number;
+    readonly memberFacts: readonly PersistedLifecycleMemberFact[];
+  }
+  | {
+    /** A bounded signal only; raw failure code/detail never leaves persistence. */
+    readonly kind: "technical_failure";
+    readonly bundleId: string;
+    readonly expectedDocumentCount: number;
+    readonly completedDocumentCount: number;
+    readonly memberFacts: readonly PersistedLifecycleMemberFact[];
+  };
+
+export type PersistedLifecycleMemberFact = {
+  readonly documentId: string;
+  readonly sequence: number;
+  readonly state: ExtractionBundleDocumentState;
+  readonly hasTechnicalFailure: boolean;
 };
 
 export interface AtlasProjectRepository {
