@@ -1,10 +1,16 @@
 # IDSER-009-03-02: Authenticated extraction activation lifecycle correction
 
-- **State:** `awaiting_review` (GO checkpoint pending CK).
+- **State:** `awaiting_review` (corrected review contract pending supplemental CK freeze).
 - **Depends on:** IDSER-009-03-01 `PASS`.
 - **Unblocks:** IDSER-009-04 only after this and IDSER-009-03-01 reach CK `PASS`.
 - **Execution environment:** Compose PostgreSQL, existing pg-boss/worker and authenticated Atlas internal perception-source route harness.
-- **Corrects:** Production prerequisite for frozen IDSER-009-04 `CK-001.c`; final integrated closure remains IDSER-009-04.
+- **Corrects:** The persisted production prerequisite consumed by frozen IDSER-009-04 `CK-001.c`; final authenticated `/home` observation remains IDSER-009-04.
+
+## 2026-09-30 review-contract correction
+
+The original GO/CK/CFC history remains preserved in its existing artifacts, including the original CK matrix and `CFC_NOT_READY_FOR_CK` record. That cycle exposed a contract-sizing error: the former integrated production-card observation was assigned to this lifecycle-authority ticket even though it is final integration evidence owned by IDSER-009-04.
+
+Under explicit human/planning authority recorded in `project's goal/feedback/IDSER-009-03-02-review-contract-correction.md`, this corrected ticket owns only authenticated, exact-scope persisted lifecycle activation at `PostgresPerceptionAuthority.redeem()`. The corrected closure contract is RC-A through RC-C below. It does not alter production lifecycle semantics, predecessor contracts, or any historical evidence; it removes the full authenticated `/home` card sequence from this ticket's PASS conditions and assigns that sequence to IDSER-009-04.
 
 ## Authority question
 
@@ -39,11 +45,9 @@ At the first valid authenticated, scope-matched redemption, activation and the e
 
 The smallest negative matrix is derived from the actual source-grant boundary: unauthenticated/incorrect service credential; forged or tampered grant; expired grant; revoked/missing persisted grant; stale or terminal execution; execution/artifact/source metadata mismatch (including wrong document); and a valid grant whose execution has no matching D1 member in the same project/workspace/bundle or targets another bundle. Each rejected case must leave the target and unrelated lifecycle rows unchanged. Do not add hypothetical invalid categories unsupported by this request/grant contract.
 
-## Deterministic test-only waiting proof
+## Final card proof ownership
 
-Use the existing Compose worker service as a test control. In the focused regression, stop/pause `agents-bridge-worker` before authenticated project creation, create through the real owner route, and verify the independently committed bundle/member/count/job facts above plus the production card label `Waiting for extraction`. Then drive the real scope-valid D1 job through the existing authenticated internal source route / worker harness and verify persisted `processing` + `perceiving` and production card `Extracting`.
-
-This pause is test orchestration only. Do not add a production pause hook, worker delay, environment-controlled lifecycle authority, or a widened IDSER-009-04 browser matrix. Always restore the worker after the focused test, including failure cleanup.
+The previous deterministic worker-pause/browser-card sequence is not a closure condition for this ticket. IDSER-009-04 owns the real authenticated creation -> persisted waiting card -> authenticated execution start -> persisted extracting card sequence. This ticket supplies the persisted authority consumed by that final integration proof; it must not add a production pause hook, worker delay, environment-controlled lifecycle authority, or browser-card assertion to do so.
 
 ## Security readiness
 
@@ -55,7 +59,7 @@ This pause is test orchestration only. Do not add a production pause hook, worke
 - **Extension seam:** retain the authenticated route, capability/grant verification, explicit project-workspace-bundle-member join, row locks, and one atomic transition for future policy attachment.
 - **Prohibited coupling:** queue depth, browser/UI, time, caller-supplied project identity, unscoped grant lookup, post-commit queue, or test-only worker control as production state.
 - **Minimal security proof:** wrong service credential and each applicable grant/scope negative leave all bundle/member state unchanged; same project valid grant activates only its exact bundle/member; same valid replay is idempotent and cannot regress terminal or progressed state.
-- **Deferred:** semantic-information projection (009-03-01), semantic uncertainty versus failure model/presentation, full authenticated browser and responsive/theme/shell matrix (`CK-001.b`), broad IDSER-009-04 regression, IDSER-010, and unrelated security baseline work.
+- **Deferred:** semantic-information projection (009-03-01), semantic uncertainty versus failure model/presentation, all authenticated production-card and browser visual proof, broad IDSER-009-04 regression, IDSER-010, and unrelated security baseline work.
 
 ## Review contract
 
@@ -63,21 +67,20 @@ Rows prove this lifecycle prerequisite only. They do not close frozen IDSER-009-
 
 | Row | Ticket authority and exact required behavior | Smallest authoritative proof | Binary closure oracle | Direct-regression boundary |
 |---|---|---|---|---|
-| RC-009-03-02-01 | This ticket plus IDSER-003: successful creation commit contains one waiting bundle, D1 `perception_queued`, X=0 and the durable D1 job; enqueue failure leaves no partial graph/job. | Compose project-creation integration with an independent DB connection, actual pg-boss producer, and controlled enqueue failure. | **PASS** iff committed observations match all four facts and failure leaves no project graph or matching job. | Existing atomic project-create transaction and D1 kickoff only; do not reopen IDSER-003 authority. |
-| RC-009-03-02-02 | This ticket plus IDSER-008: only authenticated, exact-scope first grant redemption activates the matched bundle and D1 member before protected source release; start time is set once. | Compose integration through the existing service-authenticated internal source route and `PostgresPerceptionAuthority.redeem()`. | **PASS** iff valid first redemption changes exactly the target waiting/perception_queued pair to processing/perceiving, preserves X=0, and no activation is observable before the route transaction commits. | Existing grant redemption and persisted bundle/member transition; no new execution authority. |
-| RC-009-03-02-03 | This ticket: invalid auth/grant/execution/document/scope and terminal cases cannot activate; valid replay cannot reset progress, regress a progressed member, or mutate an unrelated/terminal bundle. | Table-driven Compose PostgreSQL authority integration from the applicable matrix above, with before/after row snapshots. | **PASS** iff every applicable negative is rejected without lifecycle mutation and replay leaves start time, progress, progressed/terminal state, and unrelated rows unchanged. | Grant validation and lifecycle activation transaction only; do not expand into semantic/pipeline failure behavior. |
-| RC-009-03-02-04 | This ticket, deterministic test-only orchestration: a stopped existing worker leaves the real created card waiting; a subsequent valid authenticated D1 redemption makes it extracting. | Focused Compose authenticated project-create/card integration, real pg-boss row, stopped worker, then controlled real internal source route call; worker restored in cleanup. | **PASS** iff committed queued-before-start state renders `Waiting for extraction`, and the same scope-valid execution after redemption renders `Extracting`; no production delay/hook or weakened assertion is used. | Creation-to-activation lifecycle observation only; visual matrix/loading/error/collapsed-shell/content proof remains 009-04 `CK-001.b`. |
+| RC-A | This ticket plus approved IDSER-003: successful creation commit contains one waiting bundle, D1 `perception_queued`, X=0 and the durable D1 job; enqueue failure leaves no partial graph/job. | Focused existing Compose project-repository integration with an independent DB connection, actual pg-boss producer, and controlled enqueue failure. | **PASS** iff committed observations match all four facts and failure leaves no project graph or matching job. | Existing atomic project-create transaction and D1 kickoff only; do not reopen IDSER-003 authority. |
+| RC-B | This ticket plus IDSER-008: only authenticated, exact-scope first grant redemption activates the matched bundle and D1 member before protected source release; start times are set once. | Compose PostgreSQL perception-authority integration through `PostgresPerceptionAuthority.redeem()`. | **PASS** iff valid first redemption changes exactly the target waiting/perception_queued pair to processing/perceiving, preserves X=0, sets each start time once, and no activation is committed before the trusted redemption transaction. | Existing grant redemption and persisted bundle/member transition; no new execution authority. |
+| RC-C | This ticket: invalid auth/grant/execution/document/scope and terminal cases cannot activate; valid replay cannot reset progress, timestamps, advanced state, or mutate an unrelated/terminal bundle. | Table-driven Compose PostgreSQL authority integration from the applicable source-grant matrix, with before/after target and unrelated-row snapshots. | **PASS** iff every applicable negative is rejected without lifecycle mutation and replay leaves timestamps, progress, progressed/terminal state, and unrelated rows unchanged. | Grant validation and lifecycle activation transaction only; do not expand into semantic/pipeline failure behavior. |
 
 ## CFC repair and hard stop
 
-Normal findings are repairable inside the existing repository, `PostgresPerceptionAuthority.redeem()` transaction, authenticated route, and named Compose harness. Preserve the IDSER-003 atomic graph/job and IDSER-008 transition authority in every repair. Do not resolve a finding by changing the frozen IDSER-009-04 expectation to `Waiting OR Extracting`.
+Normal findings are repairable inside the existing repository, `PostgresPerceptionAuthority.redeem()` transaction, authenticated route, and named Compose harness. Preserve the IDSER-003 atomic graph/job and IDSER-008 transition authority in every repair. Do not resolve a finding by changing IDSER-009-04's eventual card expectation to `Waiting OR Extracting`.
 
 If implementation requires new schema/lifecycle authority, a separate queue/worker architecture, a migration not implied by this state transition, or another materially distinct proof harness, stop with `HUMAN_DECISION_REQUIRED` and report the specific boundary; do not create another ticket. IDSER-009-04 retains the final integrated create-to-card regression closure.
 
 ## Explicit non-authority
 
-This ticket does not own semantic uncertainty/model/presentation, new database authority, initial kickoff redesign, queue or grant-policy redesign, retry/failure/completion semantics beyond preventing invalid activation, artificial production timing, browser visual evidence, or IDSER-009-04 `CK-001.c` closure. `CK-001.b` remains entirely IDSER-009-04.
+This ticket does not own semantic uncertainty/model/presentation, new database authority, initial kickoff redesign, queue or grant-policy redesign, retry/failure/completion semantics beyond preventing invalid activation, artificial production timing, browser visual evidence, or final IDSER-009-04 `CK-001.c` closure.
 
 ## Required handoff
 
-Before CK handoff, GO records all rows as `PROVEN` with exact Compose commands/results and `Internal readiness: READY_FOR_CK`. CK `PASS` proves only the authenticated activation prerequisite. The unchanged IDSER-009-04 retains final integrated closure authority.
+Before CK handoff, the bounded remediation checkpoint records RC-A through RC-C as `PROVEN` with exact Compose commands/results and `Internal readiness: READY_FOR_CK`. CK `PASS` proves only the authenticated activation prerequisite. The unchanged IDSER-009-04 retains final integrated closure authority.
