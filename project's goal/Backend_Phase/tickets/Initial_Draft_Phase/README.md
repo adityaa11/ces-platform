@@ -4,7 +4,7 @@
   approved at `5bf1bbb`, IDSER-003 is approved at `3dbd7dc`, IDSER-004 is
   approved at `9b36ee8`, IDSER-005 at `2707518`, IDSER-006 at `266f5a3`, and
   IDSER-007 at `c890410`, IDSER-008 at `ec1e973`, and IDSER-009-02 at
-  `64f7072`.
+  `64f7072`, and IDSER-009-03 at `2a6a8f0`.
 - **Prefix:** `IDSER`; one bounded ticket per `IDSER-BATCH-XX` (IDSER-009 is
   an umbrella partition record; its four child batches are executable).
 - **Primary baseline:** [Initial Draft implementation context](../../atlas-initial-draft-semantic-extraction-reconciliation-implementation-context.md), sections 1-45, AC-01 through AC-44.

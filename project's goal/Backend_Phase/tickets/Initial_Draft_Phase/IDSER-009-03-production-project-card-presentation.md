@@ -1,6 +1,6 @@
 # IDSER-009-03: Production project-card lifecycle presentation
 
-- **State:** `awaiting_review`; **Review batch:** `IDSER-BATCH-09-03`.
+- **State:** `approved` at `2a6a8f0`; **Review batch:** `IDSER-BATCH-09-03`.
 - **Depends on:** IDSER-009-02 `PASS`.
 - **Execution environment:** Existing app component/render/accessibility-focused tests.
 
