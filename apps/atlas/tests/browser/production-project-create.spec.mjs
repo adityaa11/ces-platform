@@ -12,8 +12,8 @@ const sizes = [
   { name: "reflow", width: 640, height: 720 },
 ];
 
-const holdPerceptionDelivery = (admin) => admin.unsafe("CREATE OR REPLACE FUNCTION pgboss.idser00904_hold_perception() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.name='atlas-document-perception-v1' THEN NEW.start_after=now()+interval '10 minutes'; END IF; RETURN NEW; END; $$; DROP TRIGGER IF EXISTS idser00904_hold_perception ON pgboss.job_common; CREATE TRIGGER idser00904_hold_perception BEFORE INSERT ON pgboss.job_common FOR EACH ROW EXECUTE FUNCTION pgboss.idser00904_hold_perception();");
-const releasePerceptionDelivery = (admin) => admin.unsafe("DROP TRIGGER IF EXISTS idser00904_hold_perception ON pgboss.job_common; DROP FUNCTION IF EXISTS pgboss.idser00904_hold_perception(); DELETE FROM pgboss.job WHERE name='atlas-document-perception-v1' AND start_after>now();");
+const holdPerceptionDelivery = (admin, projectId) => admin.unsafe(`CREATE OR REPLACE FUNCTION pgboss.idser00904_hold_perception() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.name='atlas-document-perception-v1' AND EXISTS (SELECT 1 FROM atlas.document document JOIN atlas.project project ON project.id=document.project_id WHERE document.id=(NEW.data #>> '{request,artifact,id}')::uuid AND project.stable_id=TG_ARGV[0]) THEN NEW.start_after=now()+interval '10 minutes'; END IF; RETURN NEW; END; $$; DROP TRIGGER IF EXISTS idser00904_hold_perception ON pgboss.job_common; CREATE TRIGGER idser00904_hold_perception BEFORE INSERT ON pgboss.job_common FOR EACH ROW EXECUTE FUNCTION pgboss.idser00904_hold_perception('${projectId}');`);
+const releasePerceptionDelivery = (admin, projectId) => admin.unsafe("DROP TRIGGER IF EXISTS idser00904_hold_perception ON pgboss.job_common; DROP FUNCTION IF EXISTS pgboss.idser00904_hold_perception(); DELETE FROM pgboss.job WHERE name='atlas-document-perception-v1' AND start_after>now() AND data #>> '{request,artifact,id}' IN (SELECT id::text FROM atlas.document WHERE project_id=(SELECT id FROM atlas.project WHERE stable_id=$1));", [projectId]);
 
 async function capture(page, info, state) {
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -64,7 +64,7 @@ for (const theme of ["light", "dark"]) {
         if (url.pathname === "/home") homeReads += 1;
       });
       try {
-        await holdPerceptionDelivery(admin);
+        await holdPerceptionDelivery(admin, projectId);
         await page.setViewportSize({ width: size.width, height: size.height });
         await context.addInitScript((value) => localStorage.setItem("atlas-theme", value), theme);
         const signedUp = await context.request.post("/api/auth/sign-up/email", {
@@ -183,7 +183,7 @@ for (const theme of ["light", "dark"]) {
         const rows = await admin`SELECT stable_id FROM atlas.project WHERE stable_id=${projectId}`;
         expect(rows).toHaveLength(1);
       } finally {
-        await releasePerceptionDelivery(admin);
+        await releasePerceptionDelivery(admin, projectId);
         await admin`DELETE FROM atlas.project WHERE stable_id=${projectId}`;
         await admin`DELETE FROM auth."user" WHERE email=${email}`;
         await admin.end();

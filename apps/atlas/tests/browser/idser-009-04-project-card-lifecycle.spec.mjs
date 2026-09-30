@@ -202,6 +202,10 @@ test("IDSER-009-04 records the production card visual and keyboard matrix across
           await assertNoOverflow(page);
           await page.screenshot({ path: info.outputPath(`project-cards-${theme}-${size.name}-collapsed.png`), fullPage: true });
           await page.getByRole("button", { name: "Expand sidebar" }).click();
+          await expect(page.locator(".app-shell")).not.toHaveClass(/sidebar-collapsed/);
+          await expect(page.getByRole("button", { name: "Collapse sidebar" })).toBeVisible();
+          await expect.poll(() => page.locator(".app-shell").evaluate((element) => getComputedStyle(element).gridTemplateColumns)).toMatch(/^256px /);
+          await assertNoOverflow(page);
         } else {
           const menu = page.getByRole("button", { name: "Open navigation menu" });
           await menu.focus();
