@@ -25,7 +25,7 @@ async function createPersistedProject(sql, ownerId, prefix, state, options = {})
   const draftId = randomUUID();
   const bundleId = randomUUID();
   const documentCount = options.documentCount ?? 2;
-  const stableId = `${prefix}-${state.replaceAll("_", "-")}-${randomUUID().slice(0, 8)}`;
+  const stableId = options.stableId ?? `${prefix}-${state.replaceAll("_", "-")}-${randomUUID().slice(0, 8)}`;
   const name = options.name ?? `${state.replaceAll("_", " ")} project`;
   const description = options.description ?? "Persisted lifecycle evidence for the authenticated production home.";
   await sql.unsafe("INSERT INTO atlas.project (id,stable_id,name,description,created_by_user_id) VALUES ($1,$2,$3,$4,$5)", [projectId, stableId, name, description, ownerId]);
@@ -45,9 +45,29 @@ async function createPersistedProject(sql, ownerId, prefix, state, options = {})
   return { projectId, stableId, bundleId, documents };
 }
 
+async function markSemanticUncertainty(sql, project, documentId) {
+  const executionId = randomUUID();
+  const resultId = randomUUID();
+  await sql.unsafe("INSERT INTO atlas.semantic_execution (id,project_id,workspace_id,bundle_id,document_id,stage,contract_version,skill_version,logical_identity,lifecycle,authorized_context_identity,authorized_context_fingerprint,capability_valid_until,completion_fingerprint,completed_at) VALUES ($1,$2,(SELECT workspace_id FROM atlas.extraction_bundle WHERE id=$3),$3,$4,'extraction','v1','v1',$5,'completed','internal','fixture',now(),'complete',now())", [executionId, project.projectId, project.bundleId, documentId, `idser-009-04-semantic-${executionId}`]);
+  await sql.unsafe("INSERT INTO atlas.semantic_extraction_result (id,execution_id,project_id,workspace_id,bundle_id,document_id,contract_version,source_sha256,provider_provenance,result_json,completion_fingerprint) VALUES ($1,$2,$3,(SELECT workspace_id FROM atlas.extraction_bundle WHERE id=$4),$4,$5,'v1',$6,'{}','{}','complete')", [resultId, executionId, project.projectId, project.bundleId, documentId, "a".repeat(64)]);
+  await sql.unsafe("INSERT INTO atlas.semantic_candidate (id,extraction_result_id,project_id,workspace_id,bundle_id,document_id,semantic_key,kind,payload,normalized_meaning,needs_resolution,state) VALUES ($1,$2,$3,(SELECT workspace_id FROM atlas.extraction_bundle WHERE id=$4),$4,$5,'idser-009-04-uncertainty','fact','{}','bounded uncertainty',true,'candidate')", [randomUUID(), resultId, project.projectId, project.bundleId, documentId]);
+}
+
 async function assertNoOverflow(page) {
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await expect.poll(() => page.locator(".project-grid").evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+}
+
+async function deletePersistedProjects(sql, prefix) {
+  const projectIds = "SELECT id FROM atlas.project WHERE stable_id LIKE $1";
+  const params = [`${prefix}%`];
+  await sql.unsafe(`DELETE FROM atlas.knowledge_index WHERE project_id IN (${projectIds})`, params);
+  await sql.unsafe(`DELETE FROM atlas.semantic_candidate WHERE project_id IN (${projectIds})`, params);
+  await sql.unsafe(`DELETE FROM atlas.reconciliation_relationship WHERE project_id IN (${projectIds})`, params);
+  await sql.unsafe(`DELETE FROM atlas.semantic_reconciliation_result WHERE project_id IN (${projectIds})`, params);
+  await sql.unsafe(`DELETE FROM atlas.semantic_extraction_result WHERE project_id IN (${projectIds})`, params);
+  await sql.unsafe(`DELETE FROM atlas.semantic_execution WHERE project_id IN (${projectIds})`, params);
+  await sql.unsafe("DELETE FROM atlas.project WHERE stable_id LIKE $1", params);
 }
 
 test("IDSER-009-04 keeps authenticated persisted lifecycle cards scoped, refreshed, safe, and unavailable", async ({ browser }) => {
@@ -74,6 +94,8 @@ test("IDSER-009-04 keeps authenticated persisted lifecycle cards scoped, refresh
       await createPersistedProject(admin, ownerId, prefix, "processing"),
       await createPersistedProject(admin, ownerId, prefix, "needs_attention"),
       await createPersistedProject(admin, ownerId, prefix, "ready_for_review"),
+      await createPersistedProject(admin, ownerId, prefix, "ready_for_review", { name: "semantic uncertainty project" }),
+      await createPersistedProject(admin, ownerId, prefix, "waiting", { name: "invalid lifecycle project" }),
       await createPersistedProject(admin, ownerId, prefix, "waiting", {
         name: "MIXEDCase_".repeat(8),
         description: "UnbrokenDescription".repeat(16),
@@ -82,8 +104,13 @@ test("IDSER-009-04 keeps authenticated persisted lifecycle cards scoped, refresh
 
     const fixtureRequests = [];
     ownerPage.on("request", (request) => { if (new URL(request.url()).pathname === "/api/local-fixtures") fixtureRequests.push(request.url()); });
+    const semanticReady = created[5];
+    const invalid = created[6];
+    await markSemanticUncertainty(admin, semanticReady, semanticReady.documents[0]);
+    // Contradictory persisted lifecycle data must be withheld, never guessed at.
+    await admin.unsafe("UPDATE atlas.extraction_bundle SET completed_document_count=1 WHERE id=$1", [invalid.bundleId]);
     await ownerPage.goto("/home");
-    await expect(ownerPage.getByRole("article")).toHaveCount(6);
+    await expect(ownerPage.getByRole("article")).toHaveCount(7);
     for (const [name, status, progress] of [
       ["legacy project", "Waiting for extraction", "0 of 2 PRDs processed"],
       ["waiting project", "Waiting for extraction", "0 of 2 PRDs processed"],
@@ -101,6 +128,9 @@ test("IDSER-009-04 keeps authenticated persisted lifecycle cards scoped, refresh
       await expect(card.locator('a, [href*="/demo"]')).toHaveCount(0);
     }
     await expect(ownerPage.getByRole("article", { name: "needs attention project" })).toContainText("Processing needs attention.");
+    await expect(ownerPage.getByRole("article", { name: "semantic uncertainty project" })).toContainText("Ready for review");
+    await expect(ownerPage.getByRole("article", { name: "semantic uncertainty project" })).toContainText("Semantic uncertainty");
+    await expect(ownerPage.getByRole("article", { name: "invalid lifecycle project" })).toHaveCount(0);
     await expect(ownerPage.locator("body")).not.toContainText("private provider failure");
     expect(fixtureRequests).toEqual([]);
 
@@ -113,6 +143,10 @@ test("IDSER-009-04 keeps authenticated persisted lifecycle cards scoped, refresh
     await admin.unsafe("UPDATE atlas.extraction_bundle_document SET state='perceiving', started_at=now() WHERE bundle_id=$1 AND document_id=$2", [waiting.bundleId, waiting.documents[0]]);
     await ownerPage.reload();
     await expect(ownerPage.getByRole("article", { name: "waiting project" })).toContainText("Extracting");
+    await admin.unsafe("UPDATE atlas.extraction_bundle_document SET state='completed', completed_at=now() WHERE bundle_id=$1 AND document_id=$2", [waiting.bundleId, waiting.documents[0]]);
+    await admin.unsafe("UPDATE atlas.extraction_bundle SET completed_document_count=1 WHERE id=$1", [waiting.bundleId]);
+    await ownerPage.reload();
+    await expect(ownerPage.getByRole("article", { name: "waiting project" })).toContainText("1 of 2 PRDs processed");
     await admin.unsafe("UPDATE atlas.extraction_bundle_document SET state='completed', completed_at=now() WHERE bundle_id=$1", [waiting.bundleId]);
     await admin.unsafe("UPDATE atlas.workspace SET state='ready_for_review' WHERE project_id=$1 AND kind='initial_draft'", [waiting.projectId]);
     await admin.unsafe("UPDATE atlas.extraction_bundle SET state='ready_for_review', completed_document_count=2, completed_at=now() WHERE id=$1", [waiting.bundleId]);
@@ -121,7 +155,7 @@ test("IDSER-009-04 keeps authenticated persisted lifecycle cards scoped, refresh
     await expect(refreshed).toContainText("Ready for review");
     await expect(refreshed.getByRole("progressbar")).toHaveAttribute("value", "100");
   } finally {
-    await admin.unsafe("DELETE FROM atlas.project WHERE stable_id LIKE $1", [`${prefix}%`]);
+    await deletePersistedProjects(admin, prefix);
     await admin.unsafe('DELETE FROM auth."user" WHERE email=$1 OR email=$2', [ownerEmail, otherEmail]);
     await Promise.all([owner.close(), other.close(), admin.end()]);
   }
@@ -134,14 +168,16 @@ test("IDSER-009-04 records the production card visual and keyboard matrix across
   const context = await browser.newContext();
   const page = await context.newPage();
   const prefix = `i904v-${suffix}`;
+  const maximumId = `${prefix}-${"a".repeat(48 - prefix.length - 1)}`;
   try {
     await signUp(context.request, "IDSER visual owner", email);
     const [owner] = await admin.unsafe('SELECT id FROM auth."user" WHERE email=$1', [email]);
     await Promise.all([
       ...["waiting", "processing", "needs_attention", "ready_for_review"].map((state) => createPersistedProject(admin, owner.id, prefix, state)),
       createPersistedProject(admin, owner.id, prefix, "waiting", {
-        name: "MIXEDCase_".repeat(8),
-        description: "UnbrokenDescription".repeat(16),
+        stableId: maximumId,
+        name: "MixedCase".repeat(8) + "MiXeCaSe",
+        description: ("MixedCaseUnbrokenDescription".repeat(11)).slice(0, 280),
       }),
     ]);
     for (const theme of ["light", "dark"]) {
@@ -151,6 +187,9 @@ test("IDSER-009-04 records the production card visual and keyboard matrix across
         await page.goto("/home");
         await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
         await expect(page.getByRole("article")).toHaveCount(5);
+        const maximumCard = page.getByRole("article", { name: "MixedCase".repeat(8) + "MiXeCaSe" });
+        await expect(maximumCard).toContainText(`project-id: ${maximumId}`);
+        await expect(maximumCard).toContainText(("MixedCaseUnbrokenDescription".repeat(11)).slice(0, 280));
         await assertNoOverflow(page);
         const newProject = page.getByRole("button", { name: "+ New project", exact: true });
         await newProject.focus();
@@ -161,6 +200,7 @@ test("IDSER-009-04 records the production card visual and keyboard matrix across
           await sidebar.click();
           await expect(page.locator(".app-shell")).toHaveClass(/sidebar-collapsed/);
           await assertNoOverflow(page);
+          await page.screenshot({ path: info.outputPath(`project-cards-${theme}-${size.name}-collapsed.png`), fullPage: true });
           await page.getByRole("button", { name: "Expand sidebar" }).click();
         } else {
           const menu = page.getByRole("button", { name: "Open navigation menu" });
@@ -173,7 +213,7 @@ test("IDSER-009-04 records the production card visual and keyboard matrix across
       }
     }
   } finally {
-    await admin.unsafe("DELETE FROM atlas.project WHERE stable_id LIKE $1", [`${prefix}%`]);
+    await deletePersistedProjects(admin, prefix);
     await admin.unsafe('DELETE FROM auth."user" WHERE email=$1', [email]);
     await Promise.all([context.close(), admin.end()]);
   }

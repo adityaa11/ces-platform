@@ -12,6 +12,9 @@ const signUp = async (name, email) => {
   return cookieHeader(response);
 };
 
+const holdPerceptionDelivery = (admin) => admin.unsafe("CREATE OR REPLACE FUNCTION pgboss.idser00904_hold_perception() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.name='atlas-document-perception-v1' THEN NEW.start_after=now()+interval '10 minutes'; END IF; RETURN NEW; END; $$; DROP TRIGGER IF EXISTS idser00904_hold_perception ON pgboss.job_common; CREATE TRIGGER idser00904_hold_perception BEFORE INSERT ON pgboss.job_common FOR EACH ROW EXECUTE FUNCTION pgboss.idser00904_hold_perception();");
+const releasePerceptionDelivery = (admin) => admin.unsafe("DROP TRIGGER IF EXISTS idser00904_hold_perception ON pgboss.job_common; DROP FUNCTION IF EXISTS pgboss.idser00904_hold_perception(); DELETE FROM pgboss.job WHERE name='atlas-document-perception-v1' AND start_after>now();");
+
 test("PCC-004 renders only the session member's persisted waiting projects on /home", { skip: !databaseUrl }, async () => {
   const suffix = randomUUID().slice(0, 12);
   const projectId = `pcc-home-${suffix}`;
@@ -19,6 +22,7 @@ test("PCC-004 renders only the session member's persisted waiting projects on /h
   const otherEmail = `pcc-home-other-${suffix}@example.test`;
   const admin = postgres(databaseUrl, { max: 1 });
   try {
+    await holdPerceptionDelivery(admin);
     const [ownerCookie, otherCookie] = await Promise.all([signUp("PCC home owner", ownerEmail), signUp("PCC home other", otherEmail)]);
     const form = new FormData();
     form.set("projectId", projectId); form.set("projectName", "PCC home project"); form.set("projectDescription", "Persisted Atlas project description");
@@ -44,6 +48,7 @@ test("PCC-004 renders only the session member's persisted waiting projects on /h
     assert.doesNotMatch(otherHtml, new RegExp(`PCC home project|${projectId}`), "membership authorization happens before project data reaches User B's browser");
     assert.match(otherHtml, /No projects yet/);
   } finally {
+    await releasePerceptionDelivery(admin);
     await admin`DELETE FROM atlas.project WHERE stable_id=${projectId}`;
     await admin`DELETE FROM auth."user" WHERE email IN (${ownerEmail}, ${otherEmail})`;
     await admin.end();
