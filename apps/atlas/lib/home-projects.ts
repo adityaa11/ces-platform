@@ -36,7 +36,7 @@ export function toProjectCardViewModel(project: AccessibleAtlasProject): Project
     } else return null;
   }
   const progressPercent = Math.floor(100 * completed / documentCount);
-  return { id: project.id, projectId: project.projectId, name: project.name, summary: project.description ?? "No project description provided.", documentCount, state, ...(attentionReason ? { attentionReason } : {}), master: { label: "No published work" }, initialDraft: { processedLabel: `${completed} of ${documentCount} PRDs processed`, progressPercent }, metrics: { publishedFacts: 0, uploadedPrds: documentCount }, action: unavailableAction };
+  return { id: project.id, projectId: project.projectId, name: project.name, summary: project.description ?? "No project description provided.", documentCount, state, hasSemanticUncertainty: project.hasSemanticUncertainty, ...(attentionReason ? { attentionReason } : {}), master: { label: "No published work" }, initialDraft: { processedLabel: `${completed} of ${documentCount} PRDs processed`, progressPercent }, metrics: { publishedFacts: 0, uploadedPrds: documentCount }, action: unavailableAction };
 }
 
 /** Maps an already-authorized repository result; it has no request transport or cookie boundary. */

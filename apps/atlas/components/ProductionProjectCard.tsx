@@ -11,6 +11,7 @@ export function ProductionProjectCard({ project }: { project: ProjectCardViewMod
     master={{ detail: "Published work becomes available after a later review and publication workflow.", summary: project.master.label }}
     metrics={presentation.metrics}
     notice={presentation.attentionReason}
+    semanticUncertainty={project.hasSemanticUncertainty}
     project={project} status={presentation.status}
   />;
 }

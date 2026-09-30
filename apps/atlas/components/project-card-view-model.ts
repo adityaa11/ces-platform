@@ -8,6 +8,8 @@ export type ProjectCardViewModel = {
   readonly summary: string;
   readonly documentCount: number;
   readonly state: ProjectCardLifecycleState;
+  /** Required browser-safe semantic signal; source records stay server-side. */
+  readonly hasSemanticUncertainty: boolean;
   /** Present only for the bounded technical-failure projection. */
   readonly attentionReason?: "Processing needs attention.";
   readonly master: { readonly label: "No published work" };

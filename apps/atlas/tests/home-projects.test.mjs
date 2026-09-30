@@ -6,7 +6,7 @@ import test from "node:test";
 const jiti = createJiti(import.meta.url);
 const { toProjectCardViewModel } = await jiti.import("../lib/home-projects.ts");
 const { parseApprovedHomeProjectCards } = await jiti.import("../lib/home-project-read-service.ts");
-const base = { id: "private-project-row", projectId: "customer-portal", name: "Customer portal", description: null, createdAt: new Date(), masterWorkspaceId: "master", initialDraftWorkspaceId: "draft", initialDraftDocumentCount: 2, masterWorkspaceState: "empty", initialDraftWorkspaceState: "draft", hasDownstreamExtractionState: true };
+const base = { id: "private-project-row", projectId: "customer-portal", name: "Customer portal", description: null, createdAt: new Date(), masterWorkspaceId: "master", initialDraftWorkspaceId: "draft", initialDraftDocumentCount: 2, masterWorkspaceState: "empty", initialDraftWorkspaceState: "draft", hasDownstreamExtractionState: true, hasSemanticUncertainty: false };
 const members = (states, failures = []) => states.map((state, index) => ({ documentId: `doc-${index + 1}`, sequence: index + 1, state, hasTechnicalFailure: failures.includes(index) }));
 const bundle = (bundleState, completed, states, failures) => ({ kind: "bundle", bundleId: "bundle", bundleState, expectedDocumentCount: 2, completedDocumentCount: completed, memberFacts: members(states, failures) });
 
@@ -23,6 +23,7 @@ test("IDSER-009-02 maps every valid persisted lifecycle state without deriving p
     assert.equal(card?.state, state);
     assert.equal(card?.initialDraft.processedLabel, label);
     assert.equal(card?.initialDraft.progressPercent, percent);
+    assert.equal(card?.hasSemanticUncertainty, false);
     assert.deepEqual(card?.master, { label: "No published work" });
     assert.deepEqual(card?.metrics, { publishedFacts: 0, uploadedPrds: 2 });
     assert.deepEqual(card?.action, { label: "Workspace unavailable", unavailableReason: "A production workspace is not available yet." });
@@ -30,6 +31,21 @@ test("IDSER-009-02 maps every valid persisted lifecycle state without deriving p
   assert.equal(toProjectCardViewModel(cases[3][0])?.attentionReason, "Processing needs attention.");
   const thirds = toProjectCardViewModel({ ...base, initialDraftDocumentCount: 3, lifecycle: { kind: "bundle", bundleId: "bundle-3", bundleState: "processing", expectedDocumentCount: 3, completedDocumentCount: 1, memberFacts: members(["completed", "extracting", "pending"]) } });
   assert.deepEqual(thirds?.initialDraft, { processedLabel: "1 of 3 PRDs processed", progressPercent: 33 }, "partial progress floors from persisted X/N");
+});
+
+test("IDSER-009-03-01 carries semantic uncertainty without changing lifecycle or progress", () => {
+  const cases = [
+    [bundle("waiting", 0, ["pending", "perception_queued"]), "waiting-for-extraction", 0],
+    [bundle("processing", 1, ["completed", "extracting"]), "extracting", 50],
+    [{ kind: "technical_failure", bundleId: "bundle", expectedDocumentCount: 2, completedDocumentCount: 0, memberFacts: members(["needs_attention", "pending"], [0]) }, "needs-attention", 0],
+    [bundle("ready_for_review", 2, ["completed", "completed"]), "ready-for-review", 100],
+  ];
+  for (const [lifecycle, state, progressPercent] of cases) {
+    const card = toProjectCardViewModel({ ...base, lifecycle, hasSemanticUncertainty: true, initialDraftWorkspaceState: state === "ready-for-review" ? null : "draft" });
+    assert.equal(card?.hasSemanticUncertainty, true);
+    assert.equal(card?.state, state);
+    assert.equal(card?.initialDraft.progressPercent, progressPercent);
+  }
 });
 
 test("IDSER-009-02 fails closed for malformed records and does not count non-completed stages", () => {
@@ -41,13 +57,16 @@ test("IDSER-009-02 fails closed for malformed records and does not count non-com
 });
 
 test("IDSER-009-02 transports only the approved signed read model", async () => {
-  const valid = { projects: [{ id: "project", projectId: "customer", name: "Customer", summary: "Summary", documentCount: 1, state: "extracting", master: { label: "No published work" }, initialDraft: { processedLabel: "0 of 1 PRDs processed", progressPercent: 0 }, metrics: { publishedFacts: 0, uploadedPrds: 1 }, action: { label: "Workspace unavailable", unavailableReason: "A production workspace is not available yet." } }] };
+  const valid = { projects: [{ id: "project", projectId: "customer", name: "Customer", summary: "Summary", documentCount: 1, state: "extracting", hasSemanticUncertainty: false, master: { label: "No published work" }, initialDraft: { processedLabel: "0 of 1 PRDs processed", progressPercent: 0 }, metrics: { publishedFacts: 0, uploadedPrds: 1 }, action: { label: "Workspace unavailable", unavailableReason: "A production workspace is not available yet." } }] };
   assert.deepEqual(parseApprovedHomeProjectCards(valid), valid.projects);
   const needsAttention = { projects: [{ ...valid.projects[0], state: "needs-attention", attentionReason: "Processing needs attention." }] };
   assert.deepEqual(parseApprovedHomeProjectCards(needsAttention), needsAttention.projects);
   assert.throws(() => parseApprovedHomeProjectCards({ projects: [{ ...needsAttention.projects[0], attentionReason: undefined }] }), /Invalid Atlas project model/);
   assert.throws(() => parseApprovedHomeProjectCards({ projects: [{ ...needsAttention.projects[0], attentionReason: "Different reason." }] }), /Invalid Atlas project model/);
   assert.throws(() => parseApprovedHomeProjectCards({ projects: [{ ...valid.projects[0], storageKey: "private/key" }] }), /Invalid Atlas project model/);
+  assert.deepEqual(parseApprovedHomeProjectCards({ projects: [{ ...valid.projects[0], hasSemanticUncertainty: true }] }), [{ ...valid.projects[0], hasSemanticUncertainty: true }]);
+  assert.throws(() => parseApprovedHomeProjectCards({ projects: [{ ...valid.projects[0], hasSemanticUncertainty: "true" }] }), /Invalid Atlas project model/);
+  assert.throws(() => parseApprovedHomeProjectCards({ projects: [{ ...valid.projects[0], semanticCandidate: { id: "private-candidate", payload: "secret" } }] }), /Invalid Atlas project model/);
   assert.throws(() => parseApprovedHomeProjectCards({ projects: [{ ...valid.projects[0], state: "invented" }] }), /Invalid Atlas project model/);
   const source = await readFile(new URL("../lib/home-project-read-service.ts", import.meta.url), "utf8");
   assert.match(source, /const internalHomeReadUrl = "http:\/\/atlas:3001\/internal\/home-projects"/);

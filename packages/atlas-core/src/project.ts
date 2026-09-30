@@ -37,6 +37,8 @@ export type AccessibleAtlasProject = {
   readonly masterWorkspaceState: "empty" | null;
   readonly initialDraftWorkspaceState: "draft" | null;
   readonly hasDownstreamExtractionState: boolean;
+  /** A bounded server-derived signal; never a semantic record or lifecycle decision. */
+  readonly hasSemanticUncertainty: boolean;
   /**
    * Server-validated persisted lifecycle truth. This deliberately remains a
    * domain read record: browser labels, percentages and card states belong to

@@ -17,6 +17,7 @@ const base = {
   master: { label: "No published work" },
   metrics: { publishedFacts: 0, uploadedPrds: 2 },
   name: "Project one",
+  hasSemanticUncertainty: false,
   projectId: "project-one",
   summary: "A browser-safe card.",
 };
@@ -33,6 +34,19 @@ test("renders each approved production lifecycle label from the supplied model",
     assert.deepEqual(presentation.status, { label, tone: state });
     assert.deepEqual(presentation.metrics, [{ label: "published facts", value: 0 }, { label: "PRDs uploaded", value: 2 }, { label: metricLabel, value }]);
   }
+});
+
+test("renders semantic uncertainty only as the bounded, accessible card indication", () => {
+  for (const model of [
+    { state: "ready-for-review", attentionReason: undefined },
+    { state: "needs-attention", attentionReason: "Processing needs attention." },
+  ]) {
+    const html = renderToStaticMarkup(createElement(ProductionProjectCard, { project: { ...base, ...model, hasSemanticUncertainty: true } }));
+    assert.match(html, /<p class="repository-card-semantic-uncertainty">Semantic uncertainty<\/p>/);
+    assert.match(html, new RegExp(`repository-status-${model.state}`));
+  }
+  const falseHtml = renderToStaticMarkup(createElement(ProductionProjectCard, { project: { ...base, state: "extracting", hasSemanticUncertainty: false } }));
+  assert.doesNotMatch(falseHtml, /Semantic uncertainty|repository-card-semantic-uncertainty/);
 });
 
 test("renders every approved production lifecycle model with its exact card content", () => {

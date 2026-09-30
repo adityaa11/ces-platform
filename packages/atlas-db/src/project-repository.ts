@@ -78,6 +78,7 @@ export class PostgresAtlasProjectRepository implements AtlasProjectRepository {
       COALESCE(workspace.initial_draft_document_count, 0)::integer AS initial_draft_document_count,
       EXISTS (SELECT 1 FROM atlas.document_perception_execution e JOIN atlas.document d ON d.id=e.artifact_id WHERE d.project_id=p.id) AS has_downstream_extraction_state,
       bundle.id AS bundle_id, bundle.state AS bundle_state, bundle.expected_document_count, bundle.completed_document_count, bundle.workspace_id AS bundle_workspace_id,
+      COALESCE(semantic.has_semantic_uncertainty, false) AS has_semantic_uncertainty,
       COALESCE(members.member_facts, '[]'::jsonb) AS member_facts
       FROM atlas.project p
       JOIN atlas.project_member membership ON membership.project_id=p.id AND membership.user_id=$1
@@ -92,6 +93,15 @@ export class PostgresAtlasProjectRepository implements AtlasProjectRepository {
         FROM atlas.workspace w LEFT JOIN atlas.document d ON d.workspace_id=w.id WHERE w.project_id=p.id
       ) workspace ON true
       LEFT JOIN atlas.extraction_bundle bundle ON bundle.project_id=p.id
+      LEFT JOIN LATERAL (
+        SELECT EXISTS (
+          SELECT 1 FROM atlas.semantic_candidate candidate
+          WHERE candidate.project_id=p.id AND candidate.workspace_id=bundle.workspace_id AND candidate.bundle_id=bundle.id AND candidate.needs_resolution=true
+        ) OR EXISTS (
+          SELECT 1 FROM atlas.reconciliation_relationship relationship
+          WHERE relationship.project_id=p.id AND relationship.workspace_id=bundle.workspace_id AND relationship.bundle_id=bundle.id AND relationship.requires_resolution=true
+        ) AS has_semantic_uncertainty
+      ) semantic ON bundle.id IS NOT NULL
       LEFT JOIN LATERAL (
         SELECT jsonb_agg(jsonb_build_object('document_id', member.document_id, 'sequence', member.sequence, 'state', member.state, 'has_technical_failure', member.last_failure_code IS NOT NULL OR member.last_failure_at IS NOT NULL) ORDER BY member.sequence) AS member_facts
         FROM atlas.extraction_bundle_document member
@@ -117,7 +127,7 @@ export class PostgresAtlasProjectRepository implements AtlasProjectRepository {
       const masterState = row.master_workspace_state === "empty" ? "empty" : null;
       const draftState = row.initial_draft_workspace_state === "draft" ? "draft" : null;
       const hasDownstream = row.has_downstream_extraction_state === true;
-      const common = { id, projectId, name, description: row.description === null ? null : String(row.description), createdAt: new Date(String(row.created_at)), masterWorkspaceId, initialDraftWorkspaceId: draftWorkspaceId, initialDraftDocumentCount: documentCount, masterWorkspaceState: masterState, initialDraftWorkspaceState: draftState, hasDownstreamExtractionState: hasDownstream } as const;
+      const common = { id, projectId, name, description: row.description === null ? null : String(row.description), createdAt: new Date(String(row.created_at)), masterWorkspaceId, initialDraftWorkspaceId: draftWorkspaceId, initialDraftDocumentCount: documentCount, masterWorkspaceState: masterState, initialDraftWorkspaceState: draftState, hasDownstreamExtractionState: hasDownstream, hasSemanticUncertainty: row.has_semantic_uncertainty === true } as const;
       if (row.bundle_id === null) {
         if (!hasDownstream && masterState === "empty" && draftState === "draft") projects.push({ ...common, lifecycle: { kind: "legacy_no_bundle" } });
         continue;
