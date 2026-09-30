@@ -72,6 +72,7 @@ test("the Compose PostgreSQL perception authority rejects the complete negative 
     baseUrl: "http://atlas.test",
     sourcePath: "/internal/perception/source",
     resultPath: "/internal/perception/result",
+    failurePath: "/internal/perception/failure",
     serviceCredential,
     maximumSourceBytes: 20 * 1024 * 1024,
     maximumResultBytes: 10 * 1024 * 1024,
@@ -83,6 +84,10 @@ test("the Compose PostgreSQL perception authority rejects the complete negative 
     if (url.endsWith("/source")) {
       const response = await routes.redeem(credential, body);
       return new Response(response.body instanceof Uint8Array ? response.body : JSON.stringify(response.body), { status: response.status, headers: { "content-type": response.contentType } });
+    }
+    if (url.endsWith("/failure")) {
+      const response = await routes.fail(credential, body);
+      return new Response(response.status === 204 ? null : JSON.stringify(response.body), { status: response.status, headers: { "content-type": response.contentType } });
     }
     const response = await routes.deliver(credential, body.request, body.result);
     return new Response(response.status === 204 ? null : JSON.stringify(response.body), { status: response.status, headers: { "content-type": response.contentType } });
@@ -123,7 +128,7 @@ test("the Compose PostgreSQL perception authority rejects the complete negative 
     await assertNoTrustedCompletion(invalid, "invalid normalized result");
 
     for (const [label, provider, expected] of [
-      ["provider-failure", { perceive: async () => { throw new Error("synthetic provider failure"); } }, /synthetic provider failure/u],
+      ["provider-failure", { perceive: async () => { throw new Error("synthetic provider failure"); } }, /failure handoff was rejected/u],
       ["timeout", { perceive: async () => { throw new BridgeProviderError("timeout", "synthetic provider timeout"); } }, /synthetic provider timeout/u],
     ] as const) {
       const fixture = await makeFixture(label);
@@ -147,7 +152,7 @@ test("the Compose PostgreSQL perception authority rejects the complete negative 
     const malformed = {
       perceive: async () => ({ providerResult: { pages: [{ index: 0, images: [{ assetRef: "https://provider.example/private.png" }] }] }, provenance: { provider: "mistral" as const, model: "ocr-qualified", endpoint: "/v1/ocr" as const, latencyMilliseconds: 1, attempt: 1 } }),
     };
-    await assert.rejects(() => runDocumentPerception(malformedProvider.request, malformed as never, clientsFor().source, clientsFor().results, new AbortController().signal), /Invalid normalized document/u);
+    await assert.rejects(() => runDocumentPerception(malformedProvider.request, malformed as never, clientsFor().source, clientsFor().results, new AbortController().signal), /failure handoff was rejected/u);
     await assertNoTrustedCompletion(malformedProvider, "invalid provider normalization");
 
     const cacheFailure = await makeFixture("cache-failure");

@@ -102,7 +102,13 @@ export function createAtlasPerceptionClients(config: AtlasPerceptionClientConfig
         body: serialized,
         signal: requestSignal,
       });
-      if (!response.ok) throw new AtlasPerceptionClientError(operation, `Atlas ${operation} handoff was rejected.`);
+      if (!response.ok) {
+        // A 5xx comes from a temporarily unavailable Atlas boundary.  It must
+        // remain with the existing pg-boss retry ledger; only a bounded 4xx
+        // rejection can describe an invalid or expired handoff.
+        const disposition = response.status >= 500 ? "unavailable" : "rejected";
+        throw new AtlasPerceptionClientError(operation, `Atlas ${operation} handoff was ${disposition}.`);
+      }
       return response;
     } catch (error) {
       if (error instanceof AtlasPerceptionClientError) throw error;

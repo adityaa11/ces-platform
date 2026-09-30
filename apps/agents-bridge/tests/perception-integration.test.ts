@@ -51,13 +51,21 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
   const routes = createPerceptionInternalRoutes({ authority, sources: store, serviceCredential, maximumSourceBytes: 20 * 1024 * 1024, maximumResultBytes: 10 * 1024 * 1024 });
   let delivered: NormalizedDocument | undefined;
   let droppedAcknowledgement = false;
-  const clients = createAtlasPerceptionClients({ baseUrl: "http://atlas.test", sourcePath: "/internal/perception/source", resultPath: "/internal/perception/result", serviceCredential, maximumSourceBytes: 20 * 1024 * 1024, maximumResultBytes: 10 * 1024 * 1024, timeoutMilliseconds: 5_000 }, async (url, init) => {
+  let sourceUnavailable = true;
+  let replayLoadUnavailable = true;
+  let replayStageUnavailable = true;
+  const clients = createAtlasPerceptionClients({ baseUrl: "http://atlas.test", sourcePath: "/internal/perception/source", resultPath: "/internal/perception/result", failurePath: "/internal/perception/failure", serviceCredential, maximumSourceBytes: 20 * 1024 * 1024, maximumResultBytes: 10 * 1024 * 1024, timeoutMilliseconds: 5_000 }, async (url, init) => {
     const headers = init?.headers as Record<string, string>;
     const credential = headers.authorization?.replace(/^Bearer /u, "");
     const body = JSON.parse(String(init?.body));
     if (url.endsWith("/source")) {
+      if (sourceUnavailable) return new Response(JSON.stringify({ error: "synthetic Atlas source outage" }), { status: 503, headers: { "content-type": "application/json" } });
       const response = await routes.redeem(credential, body);
       return new Response(response.body instanceof Uint8Array ? response.body : JSON.stringify(response.body), { status: response.status, headers: { "content-type": response.contentType } });
+    }
+    if (url.endsWith("/failure")) {
+      const response = await routes.fail(credential, body);
+      return new Response(response.status === 204 ? null : JSON.stringify(response.body), { status: response.status, headers: { "content-type": response.contentType } });
     }
     delivered = body.result as NormalizedDocument;
     const response = await routes.deliver(credential, body.request, body.result);
@@ -93,10 +101,21 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
   await admin.unsafe(`CREATE SEQUENCE ${cleanupFault} START 1`);
   await admin.unsafe(`CREATE FUNCTION ${cleanupFault}_fn() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public AS $$ BEGIN IF nextval('atlas.${cleanupFault}') = 1 THEN RAISE EXCEPTION 'synthetic replay cleanup loss'; END IF; RETURN OLD; END $$`);
   await admin.unsafe(`CREATE TRIGGER ${cleanupFault}_trigger BEFORE DELETE ON bridge.document_perception_result_delivery FOR EACH ROW EXECUTE FUNCTION ${cleanupFault}_fn()`);
-  const config: WorkerConfig = { databaseUrl: bridgeUrl.toString(), concurrency: 1, timeoutSeconds: 5, retryLimit: 2, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 };
+  const config: WorkerConfig = { databaseUrl: bridgeUrl.toString(), concurrency: 1, timeoutSeconds: 5, retryLimit: 8, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 };
   const worker = createBackgroundWorker(config, { async *execute() { yield { type: "complete" as const }; } }, queueName, async (queuedRequest, signal, context) => {
-    const store = createPerceptionResultReplay(context.database);
-    await runDocumentPerception(queuedRequest, provider as never, clients.source, clients.results, signal, { idempotencyKey: context.idempotencyKey, store });
+    const persisted = createPerceptionResultReplay(context.database);
+    const replay = {
+      load: async (idempotencyKey: string, execution: string) => {
+        if (replayLoadUnavailable) throw new Error("synthetic replay load outage");
+        return persisted.load(idempotencyKey, execution);
+      },
+      stage: async (idempotencyKey: string, execution: string, result: NormalizedDocument) => {
+        if (replayStageUnavailable) throw new Error("synthetic replay stage outage");
+        await persisted.stage(idempotencyKey, execution, result);
+      },
+      acknowledge: persisted.acknowledge,
+    };
+    await runDocumentPerception(queuedRequest, provider as never, clients.source, clients.results, signal, { idempotencyKey: context.idempotencyKey, store: replay, finalAttempt: context.finalAttempt });
   }, perceptionQueueName);
   try {
     assert.equal((await routes.redeem("wrong-credential", request)).status, 401);
@@ -106,6 +125,16 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
     assert.equal((await routes.redeem(serviceCredential, { ...request, artifact: { ...request.artifact, mimeType: "text/plain" } })).status, 400, "a MIME mismatch cannot redeem source bytes");
     await worker.start();
     await worker.boss.send(perceptionQueueName, { idempotencyKey: input.idempotencyKey, request }, { singletonKey: input.idempotencyKey });
+    const retryable = async (label: string) => {
+      await waitFor(async () => (await bridge.unsafe("SELECT status, last_error FROM bridge.background_effects WHERE idempotency_key=$1", [input.idempotencyKey]))[0]?.status === "pending");
+      assert.notEqual((await atlas.unsafe("SELECT state FROM atlas.document_perception_execution WHERE id=$1", [executionId]))[0]?.state, "failed", `${label} must not terminally fail Atlas`);
+    };
+    await retryable("replay load outage");
+    replayLoadUnavailable = false;
+    await retryable("Atlas source outage");
+    sourceUnavailable = false;
+    await retryable("replay stage outage");
+    replayStageUnavailable = false;
     await waitFor(async () => (await atlas.unsafe("SELECT state FROM atlas.document_perception_execution WHERE id=$1", [executionId]))[0]?.state === "completed");
     await waitFor(async () => (await bridge.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [input.idempotencyKey]))[0]?.status === "completed");
     await waitFor(async () => (await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.document_perception_result_delivery WHERE idempotency_key=$1", [input.idempotencyKey]))[0]?.count === 0);

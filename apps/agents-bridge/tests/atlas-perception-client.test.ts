@@ -26,6 +26,7 @@ test("Atlas perception client config requires a bounded internal URL and service
     baseUrl: "http://localhost:3001",
     sourcePath: "/internal/perception/source",
     resultPath: "/internal/perception/result",
+    failurePath: "/internal/perception/failure",
     serviceCredential: credential,
     maximumSourceBytes: 20 * 1024 * 1024,
     maximumResultBytes: 10 * 1024 * 1024,
@@ -47,7 +48,7 @@ test("Atlas perception clients keep credentials in headers and enforce bounded, 
     assert.deepEqual(body, { request, result });
     return new Response(null, { status: 204 });
   };
-  const clients = createAtlasPerceptionClients({ baseUrl: "http://atlas.test", sourcePath: "/internal/perception/source", resultPath: "/internal/perception/result", serviceCredential: credential, maximumSourceBytes: 4, maximumResultBytes: 10_000, timeoutMilliseconds: 1_000 }, fetcher);
+  const clients = createAtlasPerceptionClients({ baseUrl: "http://atlas.test", sourcePath: "/internal/perception/source", resultPath: "/internal/perception/result", failurePath: "/internal/perception/failure", serviceCredential: credential, maximumSourceBytes: 4, maximumResultBytes: 10_000, timeoutMilliseconds: 1_000 }, fetcher);
   const source = await clients.source.redeem(request, new AbortController().signal);
   assert.deepEqual([...source.bytes], [1, 2, 3, 4]);
   await clients.results.deliver(request, result, new AbortController().signal);
@@ -56,6 +57,11 @@ test("Atlas perception clients keep credentials in headers and enforce bounded, 
 });
 
 test("Atlas perception client rejects an oversized source before returning bytes", async () => {
-  const clients = createAtlasPerceptionClients({ baseUrl: "http://atlas.test", sourcePath: "/source", resultPath: "/result", serviceCredential: credential, maximumSourceBytes: 3, maximumResultBytes: 10_000, timeoutMilliseconds: 1_000 }, async () => new Response(new Uint8Array([1, 2, 3, 4]), { status: 200, headers: { "content-type": "application/pdf", "content-length": "4" } }));
+  const clients = createAtlasPerceptionClients({ baseUrl: "http://atlas.test", sourcePath: "/source", resultPath: "/result", failurePath: "/failure", serviceCredential: credential, maximumSourceBytes: 3, maximumResultBytes: 10_000, timeoutMilliseconds: 1_000 }, async () => new Response(new Uint8Array([1, 2, 3, 4]), { status: 200, headers: { "content-type": "application/pdf", "content-length": "4" } }));
   await assert.rejects(() => clients.source.redeem(request, new AbortController().signal), /exceeded its configured byte limit/);
+});
+
+test("Atlas perception clients classify a 5xx handoff as retryable unavailability", async () => {
+  const clients = createAtlasPerceptionClients({ baseUrl: "http://atlas.test", sourcePath: "/source", resultPath: "/result", failurePath: "/failure", serviceCredential: credential, maximumSourceBytes: 4, maximumResultBytes: 10_000, timeoutMilliseconds: 1_000 }, async () => new Response("temporary outage", { status: 503 }));
+  await assert.rejects(() => clients.source.redeem(request, new AbortController().signal), /unavailable/);
 });
