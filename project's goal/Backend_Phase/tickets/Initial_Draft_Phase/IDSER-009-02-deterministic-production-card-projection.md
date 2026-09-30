@@ -1,6 +1,6 @@
 # IDSER-009-02: Deterministic production card projection
 
-- **State:** `awaiting_review`; **Review batch:** `IDSER-BATCH-09-02`.
+- **State:** `approved`; **Review batch:** `IDSER-BATCH-09-02`.
 - **Depends on:** IDSER-009-01 `PASS`.
 - **Execution environment:** Existing deterministic app mapper/read-model tests.
 
