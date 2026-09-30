@@ -1,6 +1,6 @@
 # IDSER-009-02: Deterministic production card projection
 
-- **State:** `planned`; **Review batch:** `IDSER-BATCH-09-02`.
+- **State:** `awaiting_review`; **Review batch:** `IDSER-BATCH-09-02`.
 - **Depends on:** IDSER-009-01 `PASS`.
 - **Execution environment:** Existing deterministic app mapper/read-model tests.
 
@@ -31,3 +31,8 @@ This ticket neither changes the PostgreSQL lifecycle implementation accepted by 
 ## Hard stop
 
 GO may hand this ticket to CK only after all mapping rows have deterministic proof and `Internal readiness: READY_FOR_CK`. The approved model is the sole input to 009-03; no JSX/CSS, visual work, browser matrix or integrated checkpoint begins.
+
+## GO checkpoint
+
+- **Implementation checkpoint:** `project's goal/feedback/IDSER-BATCH-09-02-go-checkpoint.md`
+- **Implementation commit:** this GO handoff commit; CK remains the sole authority to issue `PASS`.
