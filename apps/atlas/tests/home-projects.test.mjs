@@ -43,6 +43,10 @@ test("IDSER-009-02 fails closed for malformed records and does not count non-com
 test("IDSER-009-02 transports only the approved signed read model", async () => {
   const valid = { projects: [{ id: "project", projectId: "customer", name: "Customer", summary: "Summary", documentCount: 1, state: "extracting", master: { label: "No published work" }, initialDraft: { processedLabel: "0 of 1 PRDs processed", progressPercent: 0 }, metrics: { publishedFacts: 0, uploadedPrds: 1 }, action: { label: "Workspace unavailable", unavailableReason: "A production workspace is not available yet." } }] };
   assert.deepEqual(parseApprovedHomeProjectCards(valid), valid.projects);
+  const needsAttention = { projects: [{ ...valid.projects[0], state: "needs-attention", attentionReason: "Processing needs attention." }] };
+  assert.deepEqual(parseApprovedHomeProjectCards(needsAttention), needsAttention.projects);
+  assert.throws(() => parseApprovedHomeProjectCards({ projects: [{ ...needsAttention.projects[0], attentionReason: undefined }] }), /Invalid Atlas project model/);
+  assert.throws(() => parseApprovedHomeProjectCards({ projects: [{ ...needsAttention.projects[0], attentionReason: "Different reason." }] }), /Invalid Atlas project model/);
   assert.throws(() => parseApprovedHomeProjectCards({ projects: [{ ...valid.projects[0], storageKey: "private/key" }] }), /Invalid Atlas project model/);
   assert.throws(() => parseApprovedHomeProjectCards({ projects: [{ ...valid.projects[0], state: "invented" }] }), /Invalid Atlas project model/);
   const source = await readFile(new URL("../lib/home-project-read-service.ts", import.meta.url), "utf8");
