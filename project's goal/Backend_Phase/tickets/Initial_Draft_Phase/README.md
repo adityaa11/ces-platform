@@ -6,11 +6,11 @@
   IDSER-007 at `c890410`, IDSER-008 at `ec1e973`, IDSER-009-02 at `64f7072`,
   IDSER-009-03 at `2a6a8f0`, and IDSER-009-04 at `286eaee`.
 - **Prefix:** `IDSER`; one bounded executable ticket per `IDSER-BATCH-XX`.
-  IDSER-009 and IDSER-010 are umbrella partition records, not executable GO
+  IDSER-009, IDSER-010 and IDSER-011 are umbrella partition records, not executable GO
   targets; their child batches carry implementation and proof authority.
 - **Primary baseline:** [Initial Draft implementation context](../../atlas-initial-draft-semantic-extraction-reconciliation-implementation-context.md), sections 1-45, AC-01 through AC-44.
 - **Hard predecessor:** [PCC-006](../Project_Cards_Phase/PCC-006-project-card-creation-e2e-and-regression-checkpoint.md) `PASS`; the [PCC set](../Project_Cards_Phase/README.md) remains frozen.
-- **Planning inspection:** branch `codex/new-atlas-backend`, HEAD `3a0ec9d9d95e52c0e9cd5b4b392d9a1b1596d4cf`, 2026-09-30. IDSER-010 was repartitioned against the current production seams, existing focused authority suites and the completed IDSER-009 corrective history.
+- **Planning inspection:** branch `codex/new-atlas-backend`, HEAD `1e2fb34db561f8b27d4a284ad2db2dba4b8ff183`, 2026-10-01. IDSER-011 was repartitioned against BSS-008/009, actual worker/provider/Atlas seams, the approved IDSER-010 series and current Compose harnesses.
 
 ## Outcome and authority
 
@@ -89,7 +89,11 @@ documents do not authorize starting implementation automatically.
 | 20 | [IDSER-010-04](IDSER-010-04-concurrent-bundle-identity-isolation.md) / IDSER-BATCH-10-04 | IDSER-010-03-02 | Scenario F concurrent identity, context/result and consumer isolation |
 | 21 | [IDSER-010-05](IDSER-010-05-staged-result-replay-restart.md) / IDSER-BATCH-10-05 | IDSER-010-04 | Scenario H staged replay, restart and lease/fingerprint fencing |
 | 22 | [IDSER-010-06](IDSER-010-06-integrated-deterministic-compose-regression-checkpoint.md) / IDSER-BATCH-10-06 | IDSER-010-01, -02, -03-01, -03-02, -04 and -05 | Final deterministic A-H, AC ledger, regression and negative-authority composition |
-| 23 | [IDSER-011](IDSER-011-live-mistral-acceptance-checkpoint.md) / IDSER-BATCH-11 | all executable IDSER-010 children through IDSER-010-06 | Mandatory live Mistral scenario I with at least two PDFs |
+| 23 | [IDSER-011](IDSER-011-live-mistral-acceptance-checkpoint.md) / umbrella | all executable IDSER-010 children through IDSER-010-06 | Non-executable lossless live-provider ownership record |
+| 24 | [IDSER-011-01](IDSER-011-01-live-runtime-credential-qualification.md) / IDSER-BATCH-11-01 | all executable IDSER-010 children through IDSER-010-06 | Real runtime/credential qualification with secret-safe Compose evidence |
+| 25 | [IDSER-011-02](IDSER-011-02-live-first-document-production-path.md) / IDSER-BATCH-11-02 | IDSER-011-01 | D1 real OCR, semantic path, authenticated acceptance and persistence |
+| 26 | [IDSER-011-03](IDSER-011-03-live-incremental-sequencing-context.md) / IDSER-BATCH-11-03 | IDSER-011-02 | D2 real sequencing and Atlas-authorized bounded prior context |
+| 27 | [IDSER-011-04](IDSER-011-04-integrated-live-acceptance-checkpoint.md) / IDSER-BATCH-11-04 | IDSER-011-01, IDSER-011-02, IDSER-011-03 | Final Scenario I, lifecycle/card, AC-41–44 and negative-authority composition |
 
 Intermediate tickets are composable implementation checkpoints, not independent
 production rollouts. Route/worker tests may inject explicit bounded test doubles
@@ -143,7 +147,9 @@ schemas and the selection policy against these defaults, with boundary tests.
 ## Acceptance traceability
 
 The primary owner implements the requirement. IDSER-010 verifies deterministic
-coverage across owners; IDSER-011 additionally proves the actual provider path.
+coverage across owners; the IDSER-011 children additionally prove the actual
+provider path. IDSER-011-04 is final integration owner for AC-41–44 and the
+parent's live-acceptance ledger; it does not replace its children's proof.
 
 | Context AC | Primary owner(s) |
 |---|---|
@@ -187,16 +193,18 @@ coverage across owners; IDSER-011 additionally proves the actual provider path.
 | AC-38 | IDSER-003, IDSER-005, IDSER-010 |
 | AC-39 | IDSER-009-04, IDSER-010 |
 | AC-40 | IDSER-010 |
-| AC-41 | IDSER-005, IDSER-011 |
-| AC-42 | IDSER-011 |
-| AC-43 | IDSER-011 |
-| AC-44 | IDSER-011 |
+| AC-41 | IDSER-005, IDSER-011-01; final IDSER-011-04 |
+| AC-42 | IDSER-011-03; final IDSER-011-04 |
+| AC-43 | IDSER-011-04 |
+| AC-44 | IDSER-011-01; final IDSER-011-04 |
 
 Section 40 responsibility mapping: foundation -> 001; contracts/skills -> 002;
 kickoff -> 003; internal authority -> 004 plus 006/007 acceptance handlers;
 worker -> 005; extraction/index -> 006; reconciliation/advancement -> 007;
 completion -> 008; card read/projection/presentation/integrated proof ->
-009-01/02/03/04; Compose proof -> 010/011.
+009-01/02/03/04; deterministic Compose proof -> 010; live qualification ->
+011-01; D1 live path -> 011-02; incremental live context -> 011-03; final live
+composition -> 011-04.
 
 ## Execution and review controls
 

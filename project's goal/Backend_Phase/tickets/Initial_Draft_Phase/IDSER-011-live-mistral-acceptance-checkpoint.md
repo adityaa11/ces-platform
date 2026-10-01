@@ -1,98 +1,103 @@
-# IDSER-011: Live Mistral acceptance checkpoint
+# IDSER-011: Live Mistral acceptance checkpoint — umbrella partition record
 
-- **State:** `planned`
-- **Review batch:** `IDSER-BATCH-11`
-- **Depends on:** every executable IDSER-010 child — IDSER-010-01, IDSER-010-02, IDSER-010-03-01, IDSER-010-03-02, IDSER-010-04, IDSER-010-05 and IDSER-010-06 — at CK `PASS`, plus their reviewed IDSER prerequisites. The IDSER-010 umbrella is coverage authority only and is not a PASS target.
-- **Baseline:** SRC-IDSER-01 sections 12.5, 42 scenario I, 43-45; AC-41/42/43/44 plus end-to-end phase invariants. See [README](README.md).
-- **Execution environment:** Real Compose stack and configured actual Mistral API through existing BSS-008 adapter.
+- **State:** `partitioned-planned`; no longer directly executable by GO.
+- **Original batch:** `IDSER-BATCH-11`; executable children are `IDSER-BATCH-11-01` through `IDSER-BATCH-11-04`.
+- **Depends on:** every executable IDSER-010 child—IDSER-010-01, -02, -03-01, -03-02, -04, -05 and -06—at CK `PASS`. The IDSER-010 umbrella remains coverage authority only.
+- **Baseline:** SRC-IDSER-01 sections 12.5, 42 Scenario I, 43–45; AC-41–44 and phase invariants; BSS-008/009. See [README](README.md).
+- **Execution environment:** real Compose and configured actual Mistral API through the existing BSS-008 adapter. This record authorizes no execution.
 
-## Outcome
+## Disposition, preserved outcome and order
 
-Prove that actual Mistral OCR and structured extraction/reconciliation execute
-through the production worker and authenticated Atlas handoffs to complete a
-multi-PRD bundle at `Ready for review`. This is a mandatory acceptance gate.
+This record preserves the full frozen IDSER-011 live-acceptance contract. It is an umbrella coverage authority, not a GO target. Every executable child must receive CK `PASS`; no missing credential, provider failure, skip, mock or partial run may be represented as phase completion.
 
-## Scope and credential gate
+```text
+all IDSER-010 executable children PASS
+  -> 011-01 real runtime/credential qualification PASS
+  -> 011-02 D1 real production path PASS
+  -> 011-03 D2 bounded incremental path PASS
+  -> 011-04 final live composition PASS
+  -> IDSER-011 complete at Ready for review -> STOP
+```
 
-- Add/document a repeatable live acceptance harness and secret-safe evidence record using at least two synthetic/non-confidential PDF PRDs in one newly created authenticated production project.
-- Supply a real `MISTRAL_API_KEY` through the existing secret/environment configuration consumed by `agents-bridge` and `agents-bridge-worker`. Do not ask for a secret in a ticket or copy it into source, skill definitions, business records, browser responses, commands, logs, snapshots or review artifacts.
-- Use configured `MISTRAL_API_BASE_URL`, `MISTRAL_STRUCTURED_MODEL`, `MISTRAL_OCR_MODEL`, `MISTRAL_ZDR_APPROVED` and inherited limit/retry settings. Record non-secret model/endpoint identity and outcome through the approved provenance boundary.
-- Verify actual production configuration rather than dumping the environment or `docker compose config` with expanded secrets. No mock endpoint, TestRuntime, local pseudo-model or alternate provider qualifies.
-- Missing/unavailable credentials or unreachable provider are `BLOCKED` as appropriate; invalid/rejected credentials or implementation failures are `FAIL`/`BLOCKED` according to evidence. Never mark this gate skipped and then mark the phase complete.
-- Deterministic suites remain secret-free and authoritative for exact semantic classification. This live run proves integration, contract validity, provenance and bounded lifecycle, not brittle model wording.
+The retained outcome is a real authenticated fresh synthetic multi-PDF project: D1 and D2 execute BSS-009 OCR through `MistralProvider.perceive(...)`, then extraction/reconciliation through `MistralProvider.structured(...)`, authenticated Atlas result acceptance, valid persistence and bounded procedural advancement, and finally `Ready for review`. It does not assert nondeterministic model wording; it asserts valid schema, candidate/evidence/reference accounting, approved identity scope, actual provider provenance, ordering, persistence, lifecycle and negative authority.
 
-## Required live procedure
+No child may redesign BSS-008/009, IDSER persistence, queue/worker, authentication, schemas, reconciliation authority, lifecycle or Project Card semantics. No child may introduce Mistral Files, Agents, Conversations, provider-hosted memory, TestRuntime handling, a mock/alternate fallback, a second OCR pipeline, worker or queue. Human review UI, canonical resolution, publication, Master movement, chatbot/conversations, CES and projections remain out of scope.
 
-1. Record reviewed HEAD, all prerequisite PASS references, Compose health and applied migrations. Confirm real provider configuration without exposing secrets.
-2. Create a real project through the authenticated production creation flow with at least two synthetic PDFs. Record safe project/workspace/bundle/document/execution IDs and source hashes, upload order and initial state.
-3. Observe D1 BSS-009 `MistralProvider.perceive(...)` and Atlas NormalizedDocument acceptance, followed by `atlas.semantic.extract/v1` via `MistralProvider.structured(...)`.
-4. Verify Atlas deterministic extraction validation and candidate/evidence/index persistence, then D1 `atlas.semantic.reconcile/v1` via the same structured capability and authenticated result delivery.
-5. Confirm D1 processed completion before D2 is scheduled; observe D2 real OCR, extraction and reconciliation with only the bounded relevant incoming D1/current-D2 context authorized by Atlas.
-6. Verify all candidate/evidence/source-accounting/reconciliation references and provider provenance resolve to the actual run; inspect persisted full results and addressable records using bounded summaries in evidence.
-7. Confirm bundle completion validation, workspace `ready_for_review`, card `Ready for review`, `2 of 2 PRDs processed` (or N/N for a larger run), and 100%.
-8. Verify Master remains empty, published fact count stays zero, production review action remains truthfully unavailable and no out-of-scope review/projection/resolution/publication/conversation/CES state exists.
+## Executable-child topology and sizing
 
-The live project should contain related synthetic statements so the D2 selector
-can demonstrate a real bounded prior-neighborhood handoff. Do not require a
-particular sentence or relationship label from nondeterministic model output;
-assert schema/reference validity and record what the provider actually returned.
-If no meaningful candidates or intended prior-neighborhood evidence is produced,
-investigate and qualify the scenario rather than claiming unobserved coverage.
+| Child | Dominant authority question | RC rows | Why coherent |
+|---|---|---:|---|
+| [011-01](IDSER-011-01-live-runtime-credential-qualification.md) | Is the approved real Mistral runtime genuinely available and secret-safe? | 3 | Deployment secret, reviewed Compose image and non-secret qualification share one provider-config/evidence oracle; no document path is claimed. |
+| [011-02](IDSER-011-02-live-first-document-production-path.md) | Can D1 traverse the approved provider/Atlas path to validated reconciliation completion? | 4 | One D1 execution/persistence trail runs from OCR through authenticated reconciliation acceptance. |
+| [011-03](IDSER-011-03-live-incremental-sequencing-context.md) | Does D2 preserve Atlas-authorized bounded incremental reconciliation? | 4 | The new authority relative to D1 is temporal/context scope; ordering, selection and D2 accounting are one proof surface. |
+| [011-04](IDSER-011-04-integrated-live-acceptance-checkpoint.md) | Do accepted deterministic and live interfaces compose to reviewable completion without truth authority? | 4 | Final lifecycle/card/negative observations must be read together from one bundle; it consumes child PASS evidence. |
 
-## Required evidence
+Each child has an enumerable binary Review Contract, local CFC repair seam, narrow HMN residual and explicit GO hard stop. The final child is composition only: a material discovery in a child-owned contract is a `SCOPE_CHANGE`/predecessor authority problem, never hidden final-checkpoint implementation.
 
-| Evidence | Acceptance expectation |
+## Lossless parent-to-child ownership ledger
+
+Every frozen obligation has exactly one primary executable owner and `011-04` as final integration owner. “Final” means a bounded composition observation, not duplicate primary proof.
+
+| Frozen IDSER-011 obligation | Primary owner | Final owner | Evidence / closure oracle |
+|---|---|---|---|
+| Credential gate; real key only at Bridge/deployment-secret boundary; absent/unavailable gate blocks honestly | 011-01 | 011-04 | Secret-safe initialization/outcome; real provider succeeds or remains factual `BLOCKED`/`FAIL`, never mock-qualified. |
+| Configured base URL, OCR/structured models, ZDR, limits/retries and non-secret identity | 011-01 | 011-04 | Reviewed configuration/image plus approved provenance; path/identities attributable without value leakage. |
+| Procedure 1: reviewed HEAD, predecessor PASS, Compose health and migrations | 011-01 | 011-04 | PASS/HEAD/image/health/migration ledger identifies the reviewed runtime. |
+| Procedure 2: authenticated project, >=2 synthetic PDFs, safe IDs/hashes/upload order/initial state | 011-03 | 011-04 | Fresh two-PDF scoped create records and source hashes prove a synthetic authenticated scope. |
+| Scenario I / procedure 3: D1 OCR -> NormalizedDocument through real BSS-009 `perceive(...)` | 011-02 | 011-04 | D1 perception execution/provenance/persistence identifies actual OCR adapter path. |
+| Scenario I / procedure 3–4: D1 extraction -> validation/candidates/evidence/index -> reconciliation -> authenticated acceptance -> processed | 011-02 | 011-04 | D1 structured executions and scoped validated records resolve only inside D1 bundle and completion follows reconciliation. |
+| D2 waits for D1 validated reconciliation completion | 011-03 | 011-04 | Ordered execution/member/job history permits no earlier D2 semantic work. |
+| Scenario I / procedure 5: D2 real OCR, extraction, reconciliation and authenticated acceptance | 011-03 | 011-04 | D2 actual-provider/handoff trail is attributable to its fresh scope. |
+| D2 has only bounded same-bundle D1/current-D2 context; no foreign project/workspace/bundle | 011-03 | 011-04 | Authorized context IDs/fingerprint/count/bytes/overflow meet frozen selector contract. |
+| D1 candidate/evidence/source/reconciliation references and provenance resolve to its actual run | 011-02 | 011-04 | Scoped D1 persistence/accounting has no missing or mis-scoped reference. |
+| D2 candidate/evidence/source/reconciliation references and provenance resolve to its actual run | 011-03 | 011-04 | Scoped D2 persistence/accounting has no missing or mis-scoped reference. |
+| Procedure 7: completion gate, workspace ready, card ready, N/N and 100% | 011-04 | 011-04 | Bundle/member/result/card states agree after all reconciliations. |
+| Procedure 8: Master empty, published facts zero, review unavailable, no downstream state | 011-04 | 011-04 | Scoped DB/read/permission negatives are all absent/zero. |
+| Existing worker, no TestRuntime, no direct Bridge trusted-state mutation | 011-03 | 011-04 | Two-document worker/provider/handoff/permission observations reject substitute/direct authority. |
+| Environment evidence row | 011-01 | 011-04 | Exact secret-safe commands, HEAD, services and migrations. |
+| Provider evidence row | 011-01 | 011-04 | Configured/actual non-secret OCR and structured identities/provenance. |
+| Execution evidence row | 011-03 | 011-04 | Two-document worker/skill/order/context summaries with no substitute runtime. |
+| Persistence evidence row | 011-03 | 011-04 | Complete two-document result/accounting/reference records. |
+| Lifecycle, authority and combined deterministic/live evidence rows | 011-04 | 011-04 | Final completion, negative authority, IDSER-010 A-H references, limits/skips classification. |
+| Parent acceptance 1: secret never business/evidence data | 011-01 | 011-04 | RC-011-01-02/03 plus final redaction inspection. |
+| Parent acceptance 2: >=2 PDFs use OCR and both semantic skills | 011-03 | 011-04 | Fresh D1/D2 actual-provider stage records. |
+| Parent acceptance 3: schemas, accounting and authorized references valid | 011-03 | 011-04 | Validated two-document persistence. |
+| Parent acceptance 4: sequencing/context/completion proves pipeline and ready | 011-04 | 011-04 | Ordered contexts and final lifecycle/card. |
+| Parent acceptance 5: no truth promotion/Master/downstream state | 011-04 | 011-04 | Final negative-authority inspection. |
+| Parent acceptance 6: 010 and live gate PASS; blocked credential leaves phase incomplete | 011-04 | 011-04 | PASS/blocked status ledger. |
+| AC-41 | 011-01 | 011-04 | Existing secret boundary and redacted qualification. |
+| AC-42 | 011-03 | 011-04 | OCR plus both structured paths across fresh D1/D2. |
+| AC-43 | 011-04 | 011-04 | Two-PDF incremental live run through completion and ready. |
+| AC-44 | 011-01 | 011-04 | Credential gate state and final completion guard. |
+
+## Security readiness and review bindings
+
+**SecurityReadiness status: applicable.** Inherited boundaries are BSS-008 secrets/provider configuration, BSS-009 perception, authenticated Atlas context/result acceptance, IDSER bounded context and reviewable-only lifecycle. Sensitive assets are the credential, synthetic source-derived context, provider metadata and execution evidence. Identity context is reviewed HEAD/image, project/workspace/bundle/document/execution IDs, source hashes, skill versions and approved provenance.
+
+| Readiness item / binding | Primary owner | Final owner | Preserved boundary |
+|---|---|---|---|
+| `SEAM-IDSER-011-01` | 011-01 | 011-04 | Real qualification is distinct from deterministic mocks; child 02/03 preserve its live path/context boundary, credentials stay deployment-only and Atlas remains authorization/persistence authority. |
+| `COUPLING-IDSER-011-01` | 011-04 | 011-04 | No secret dump/confidential fixture/fallback/skipped gate; no excess context or Bridge truth authority. |
+| `REV-READY-IDSER-011-01` | 011-03 | 011-04 | Secret-safe evidence proves actual OCR and both structured skills on two PDFs. |
+| `REV-READY-IDSER-011-02` | 011-04 | 011-04 | Evidence is redacted and completion is withheld on live gate failure/block. |
+
+Unresolved security policy remains unchanged: confidential deployment material/privacy approval is outside this synthetic checkpoint. No ticket contains a credential, tells GO to print one, or accepts `env`, `printenv`, `docker compose config` or equivalent secret-expanding evidence. Provider/model/endpoint identities may be recorded only through existing non-secret provenance/configuration boundaries.
+
+## Compose integrity and long-running execution
+
+All children use fresh scoped identifiers and bounded approved-harness cleanup. Diagnose stale image, stale/reused container, stale process, PostgreSQL state, pg-boss jobs, DocumentStore artifacts, fixture contamination, code/config defect and credential/provider/network outcome before recording a failure. Source/config changes require rebuilding/recreating affected services before final evidence. Broad teardown/pruning—including `docker compose down -v`, `docker system prune`, and volume pruning—is not routine live-test cleanup.
+
+GO starts, observes, polls and completes every Compose/live provider operation, then inspects persisted final state and runs every assertion before `READY_FOR_CK`. A running operation or execution-window boundary cannot create an awaiting-review checkpoint.
+
+## Final partition self-check
+
+| Question | Result |
 |---|---|
-| Environment | Reviewed HEAD, healthy existing services, migration results and exact secret-safe commands |
-| Provider | Configured/actual model and endpoint provenance for OCR and both semantic skills, provider success/usage where available; no key |
-| Execution | Existing worker handled both skills; no TestRuntime; document/stage ordering and Atlas-authorized context IDs/counts/bytes |
-| Persistence | Complete validated extraction/reconciliation JSON retained, stable candidates/evidence/index/relationships and authenticated acceptance |
-| Lifecycle | N/N processed, completion gate passed, card/workspace ready, unresolved results retained if produced |
-| Authority | No Bridge direct trusted-state mutation; empty Master and no prohibited downstream state |
-| Combined proof | IDSER-010 deterministic counts/regressions plus this live outcome, limitations and any unrelated skips |
+| Does every parent obligation have a primary executable and final owner? | YES — no shared-only or deferred row. |
+| Can GO complete each child before CK? | YES — 3–4 bounded binary RC rows and hard stops. |
+| Does Scenario I have an owner for every arrow? | YES — 011-01 runtime, 011-02 D1, 011-03 D2/context, 011-04 completion/hard stop. |
+| Are AC-41–44 concrete child obligations? | YES — mapped above and in README. |
+| Are real-provider, secret, Compose-staleness and long-running rules retained? | YES — partitioned by their exercised authority. |
+| Has future review/projection scope been pulled forward? | NO. |
 
-Provider provenance fields must use existing approved storage/usage boundaries.
-If OCR endpoint information is not a persisted NormalizedDocument field, record
-secret-safe execution evidence alongside the configured model and actual adapter
-path; do not redesign BSS-009 merely for a new provenance column.
-
-## Acceptance criteria
-
-1. Real credentials are supplied through the existing Bridge environment boundary and never appear in persisted business data or evidence.
-2. At least two PDFs execute real BSS-009 OCR and both real semantic structured skills through existing MistralProvider methods and the existing worker.
-3. Provider outputs pass actual Atlas schemas, exact evidence/source accounting and authorized relationship-reference validation.
-4. The persisted sequence/context and completion evidence proves the procedural bundle pipeline, authenticated result handoff and ready-for-review state.
-5. No model output is promoted to accepted/resolved truth; Master and downstream excluded features remain untouched.
-6. Phase completion requires this gate and IDSER-010 both PASS. Credential/provider blockage is recorded honestly and leaves IDSER incomplete.
-
-## Validation
-
-- Run the live harness in Compose; record exact command and actual result rather than a proposed invocation.
-- Inspect non-secret execution/provider provenance and persisted scope/relationship/count summaries.
-- Confirm browser card behavior for the live persisted project and negative authority state.
-- Re-run affected deterministic checks only if the live run requires code/configuration changes that invalidate prior evidence; preserve checkpoint/HEAD traceability.
-
-## Security Refactor Readiness
-
-- **Status:** `applicable`.
-- **Inherited boundaries:** BSS-008 secrets/privacy/provider config, BSS-009 OCR, Atlas internal acceptance and IDSER bounded context.
-- **Trust boundaries / assets:** synthetic source-derived context reaches actual external Mistral; API/service credentials and provider evidence require safe handling.
-- **Identity context:** exact reviewed HEAD, bundle/document/stage IDs, source hashes, skill versions and actual provider provenance.
-- **SEAM-IDSER-011-01:** Explicit live credential gate and secret-safe execution evidence separate actual provider qualification from mocked proof.
-- **COUPLING-IDSER-011-01:** No secret dumps, confidential source substitution without approved controls, fallback runtime or skipped live gate counted as phase completion.
-- **Unresolved security policy:** confidential deployment material/privacy approval is outside this synthetic checkpoint.
-- **Planning findings:** credential availability is not assessed during ticket authoring; this is an execution-time prerequisite, not a reason to leave the ticket set unwritten.
-
-| Mandatory review binding | Readiness reference | Question / evidence |
-|---|---|---|
-| REV-READY-IDSER-011-01 | SEAM-IDSER-011-01 | Do actual provider and persistence records prove OCR plus both structured skills on two PDFs? Secret-safe live evidence. |
-| REV-READY-IDSER-011-02 | COUPLING-IDSER-011-01 | Is evidence free of secrets and completion withheld if the live gate fails/blocks? Configuration handling and final status review. |
-
-## Review checkpoint
-
-**Question:** Has the complete authorized production path actually succeeded
-with real Mistral while preserving all Atlas authority and hard-stop rules?
-
-**Implementation checkpoint:** Not started. Record reviewed implementation HEAD,
-live evidence and consolidated review. Only after all required PASS checkpoints
-may the ticket set state become `complete`.
+This planning record authorizes no implementation, live call, GO, CK, CFC or HMN action. IDSER-011 ends only at validated live `Ready for review`, then **STOP**.
