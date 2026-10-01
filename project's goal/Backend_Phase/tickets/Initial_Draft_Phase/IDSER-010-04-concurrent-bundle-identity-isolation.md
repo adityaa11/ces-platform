@@ -1,6 +1,6 @@
 # IDSER-010-04: Concurrent bundle identity isolation
 
-- **State:** `planned`; **Review batch:** `IDSER-BATCH-10-04`.
+- **State:** `awaiting_review`; **Review batch:** `IDSER-BATCH-10-04`.
 - **Predecessors:** IDSER-010-03-02 `PASS`.
 - **Consumes:** approved membership, bundle identity, context/result authority, queue and reconciliation boundaries; it does not alter their semantics.
 - **Execution environment:** two authenticated users/projects in the deterministic Compose stack with independently named scoped queues/consumers where the existing test configuration supports them.

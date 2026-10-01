@@ -39,7 +39,7 @@ const server = createServer(async (request, response) => {
         return;
       }
       const sourceText = Buffer.from(documentUrl.slice("data:application/pdf;base64,".length), "base64").toString("utf8");
-      const markdown = ["Conflicting quota statements", "Supports approval statement", "Duplicate approval statement"].find((fixture) => sourceText.includes(fixture)) ?? "Normal approval statement";
+      const markdown = ["Conflicting quota statements", "Supports approval statement", "Duplicate approval statement", "Isolation alpha payload", "Isolation beta payload"].find((fixture) => sourceText.includes(fixture)) ?? "Normal approval statement";
       ocrCalls += 1;
       json(response, 200, {
         model: "compose-smoke-ocr",
@@ -65,7 +65,7 @@ const server = createServer(async (request, response) => {
         const conflicting = text === "Conflicting quota statements";
         const candidates = conflicting
           ? [["quota-40", "quota.limit.40", "The quota is 40."], ["quota-45", "quota.limit.45", "The quota is 45."]]
-          : [["approval", "order.approval", text === "Supports approval statement" ? "A customer supports an order approval." : text === "Duplicate approval statement" ? "A customer repeats an order approval." : "A customer approves an order."]];
+          : [["approval", "order.approval", text === "Supports approval statement" ? "A customer supports an order approval." : text === "Duplicate approval statement" ? "A customer repeats an order approval." : text === "Isolation alpha payload" ? "Scenario F alpha assertion." : text === "Isolation beta payload" ? "Scenario F beta assertion." : "A customer approves an order."]];
         value = {
           version: "v1",
           candidate_assertions: candidates.map(([local_candidate_id, semantic_key, meaning]) => ({ local_candidate_id, semantic_key, kind: "rule", payload: { controlled: true }, normalized_meaning: meaning, source_wording: meaning, needs_resolution: conflicting, evidence_refs: [{ page_number: 1, locator_type: "text_block", locator_id: "page-1-markdown", excerpt: text }] })),

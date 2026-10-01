@@ -43,6 +43,14 @@ const readProjectCard = async (projectId, expectedUncertainty, expectedDocuments
   const card = body.projects.find((value) => value.projectId === projectId);
   assert.deepEqual(card && { state: card.state, uncertainty: card.hasSemanticUncertainty, attentionReason: card.attentionReason, processed: card.initialDraft?.processedLabel, progress: card.initialDraft?.progressPercent, master: card.master?.label }, { state: "ready-for-review", uncertainty: expectedUncertainty, attentionReason: undefined, processed: `${expectedDocuments} of ${expectedDocuments} PRDs processed`, progress: 100, master: "No published work" }, "the production card presents the completed bundle as Ready for review without Needs attention");
 };
+const readOwnedProjectIds = async (ownerId) => {
+  const issuedAt = String(Date.now());
+  const signature = createHmac("sha256", await homeReadSecret()).update(`${ownerId}.${issuedAt}`).digest("hex");
+  const response = await fetch(`${origin}/internal/home-projects`, { headers: { "x-atlas-home-user-id": ownerId, "x-atlas-home-issued-at": issuedAt, "x-atlas-home-signature": signature } });
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  return body.projects.map((project) => project.projectId);
+};
 const cookie = async (label) => {
   const email = `idser-010-${label}-${crypto.randomUUID().slice(0, 10)}@example.test`;
   const signUp = await fetch(`${origin}/api/auth/sign-up/email`, { method: "POST", headers: { "content-type": "application/json", origin }, body: JSON.stringify({ name: "IDSER 010", email, password: "a-tested-local-password" }) });
@@ -51,14 +59,14 @@ const cookie = async (label) => {
   assert.equal(signIn.status, 200);
   return { email, value: signIn.headers.getSetCookie().map((item) => item.split(";", 1)[0]).join("; ") };
 };
-const create = async (label, texts) => {
+const create = async (label, texts, projectName = `IDSER 010 ${label}`) => {
   const auth = await cookie(label);
   const projectId = `idser-010-${label}-${crypto.randomUUID().slice(0, 10)}`;
-  const form = new FormData(); form.set("projectId", projectId); form.set("projectName", `IDSER 010 ${label}`);
+  const form = new FormData(); form.set("projectId", projectId); form.set("projectName", projectName);
   for (const [index, text] of texts.entries()) form.append("prdFiles[]", new File([Buffer.from(`%PDF-1.7\n${text}`)], `${label}-${index + 1}.pdf`, { type: "application/pdf" }));
   const response = await fetch(`${origin}/api/projects`, { method: "POST", headers: { cookie: auth.value, origin }, body: form });
   assert.equal(response.status, 201, await response.text());
-  return { projectId, email: auth.email };
+  return { projectId, email: auth.email, cookie: auth.value };
 };
 let projects = [];
 try {
@@ -99,12 +107,42 @@ try {
     assert.ok(Number(candidateStates.candidates) >= texts.length, `${label} accounts for every current document candidate`);
     await readProjectCard(item.projectId, relationship === "contradicts", texts.length);
   }
+  // Scenario F: create two identically named projects concurrently.  The
+  // controlled provider emits distinct candidate meanings from their source
+  // text, making a cross-context or cross-result delivery observable.
+  const sameDisplayName = "Scenario F duplicate display name";
+  const [alpha, beta] = await Promise.all([
+    create("scenario-f-alpha", ["Isolation alpha payload"], sameDisplayName),
+    create("scenario-f-beta", ["Isolation beta payload"], sameDisplayName),
+  ]);
+  projects.push(alpha, beta);
+  await Promise.all([alpha, beta].map((item) => waitFor(async () => (await atlas.unsafe("SELECT state FROM atlas.extraction_bundle WHERE project_id=(SELECT id FROM atlas.project WHERE stable_id=$1)", [item.projectId]))[0]?.state === "ready_for_review")));
+  const isolated = await atlas.unsafe("SELECT p.stable_id, p.id AS project_id, p.name, p.created_by_user_id, w.id AS workspace_id, b.id AS bundle_id, d.id AS document_id, array_agg(e.id ORDER BY e.stage) AS execution_ids, b.expected_document_count, b.completed_document_count, array_agg(DISTINCT c.normalized_meaning) AS meanings, count(DISTINCT x.id)::int AS extraction_results, count(DISTINCT r.id)::int AS reconciliation_results, count(DISTINCT c.id)::int AS candidates, count(DISTINCT ev.id)::int AS evidence, count(DISTINCT rr.id)::int AS relationships FROM atlas.project p JOIN atlas.workspace w ON w.project_id=p.id AND w.kind='initial_draft' JOIN atlas.extraction_bundle b ON b.project_id=p.id AND b.workspace_id=w.id JOIN atlas.document d ON d.project_id=p.id AND d.workspace_id=w.id JOIN atlas.semantic_execution e ON e.project_id=p.id AND e.workspace_id=w.id AND e.bundle_id=b.id AND e.document_id=d.id JOIN atlas.semantic_candidate c ON c.project_id=p.id AND c.workspace_id=w.id AND c.bundle_id=b.id AND c.document_id=d.id JOIN atlas.semantic_extraction_result x ON x.project_id=p.id AND x.workspace_id=w.id AND x.bundle_id=b.id AND x.document_id=d.id JOIN atlas.semantic_reconciliation_result r ON r.project_id=p.id AND r.workspace_id=w.id AND r.bundle_id=b.id AND r.current_document_id=d.id JOIN atlas.semantic_evidence ev ON ev.document_id=d.id AND ev.semantic_candidate_id=c.id JOIN atlas.reconciliation_relationship rr ON rr.project_id=p.id AND rr.workspace_id=w.id AND rr.bundle_id=b.id WHERE p.stable_id = ANY($1::text[]) GROUP BY p.stable_id, p.id, p.name, p.created_by_user_id, w.id, b.id, d.id, b.expected_document_count, b.completed_document_count ORDER BY p.stable_id", [[alpha.projectId, beta.projectId]]);
+  assert.equal(isolated.length, 2, "both same-display-name scopes finish");
+  assert.deepEqual(isolated.map((row) => row.name), [sameDisplayName, sameDisplayName]);
+  for (const row of isolated) {
+    assert.deepEqual({ expected: Number(row.expected_document_count), completed: Number(row.completed_document_count), extraction: Number(row.extraction_results), reconciliation: Number(row.reconciliation_results), candidates: Number(row.candidates), evidence: Number(row.evidence), relationships: Number(row.relationships) }, { expected: 1, completed: 1, extraction: 1, reconciliation: 1, candidates: 1, evidence: 1, relationships: 1 }, "each bundle has exactly its own completed N/N materialization");
+    assert.equal(new Set([row.project_id, row.workspace_id, row.bundle_id, row.document_id, ...row.execution_ids]).size, 6, "every persisted scenario-F identity is unique");
+    const expectedMeaning = row.stable_id === alpha.projectId ? "Scenario F alpha assertion." : "Scenario F beta assertion.";
+    assert.deepEqual(row.meanings, [expectedMeaning], "the controlled provider result stays bound to its exact execution scope");
+  }
+  assert.notDeepEqual(isolated[0].execution_ids, isolated[1].execution_ids, "no execution identity is shared across same-display-name bundles");
+  for (const item of [alpha, beta]) {
+    const owner = isolated.find((row) => row.stable_id === item.projectId).created_by_user_id;
+    const visible = await readOwnedProjectIds(owner);
+    assert.ok(visible.includes(item.projectId), "an owner can read its own same-display-name project");
+    const foreign = item === alpha ? beta.projectId : alpha.projectId;
+    assert.ok(!visible.includes(foreign), "an owner cannot cross-read the other same-display-name project");
+  }
+  const executionIds = isolated.flatMap((row) => row.execution_ids);
+  const [remainingJobs] = await atlas.unsafe("SELECT count(*)::int AS count FROM pgboss.job WHERE data->'execution'->>'executionId' = ANY($1::text[])", [executionIds]);
+  assert.equal(Number(remainingJobs.count), 0, "the production worker cleaned up each scoped queue job after exactly one completed delivery");
   const metrics = JSON.parse(await run([...compose, "exec", "-T", "mistral-mock", "node", "-e", "fetch('http://127.0.0.1:3100/metrics').then(async response => process.stdout.write(await response.text()))"]));
-  assert.ok(metrics.ocrCalls >= 11, "the controlled Mistral endpoint received every single- and multi-document OCR call");
-  assert.ok(metrics.structuredCalls >= 22, "the controlled Mistral endpoint received both semantic stages for every controlled document");
+  assert.ok(metrics.ocrCalls >= 13, "the controlled Mistral endpoint received every single- and multi-document OCR call");
+  assert.ok(metrics.structuredCalls >= 26, "the controlled Mistral endpoint received both semantic stages for every controlled document");
   const [direct] = await bridge.unsafe("SELECT has_schema_privilege('agents_bridge','atlas','USAGE') AS schema_usage");
   assert.equal(direct.schema_usage, false, "Bridge has no direct Atlas schema privilege");
-  process.stdout.write("IDSER-010 controlled Compose scenarios A/B/C/D/E passed.\n");
+  process.stdout.write("IDSER-010 controlled Compose scenarios A/B/C/D/E/F passed.\n");
 } finally {
   for (const item of projects) {
     const project = "SELECT id FROM atlas.project WHERE stable_id=$1";
