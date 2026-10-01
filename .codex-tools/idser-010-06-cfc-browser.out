@@ -1,0 +1,89 @@
+$ playwright test
+
+Running 11 tests using 1 worker
+
+  ✓   1 tests/browser/idser-009-04-project-card-lifecycle.spec.mjs:73:1 › IDSER-009-04 keeps authenticated persisted lifecycle cards scoped, refreshed, safe, and unavailable (3.1s)
+  ✓   2 tests/browser/idser-009-04-project-card-lifecycle.spec.mjs:164:1 › IDSER-009-04 records the production card visual and keyboard matrix across themes and shell widths (6.6s)
+{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'00000'[39m,
+  message: [32m'trigger "idser00904_hold_perception" for relation "pgboss.job_common" does not exist, skipping'[39m,
+  file: [32m'dropcmds.c'[39m,
+  line: [32m'523'[39m,
+  routine: [32m'does_not_exist_skipping'[39m
+}
+  ✓   3 tests/browser/production-project-create.spec.mjs:58:5 › PCC-005 production transitions light desktop (3.6s)
+{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'00000'[39m,
+  message: [32m'trigger "idser00904_hold_perception" for relation "pgboss.job_common" does not exist, skipping'[39m,
+  file: [32m'dropcmds.c'[39m,
+  line: [32m'523'[39m,
+  routine: [32m'does_not_exist_skipping'[39m
+}
+  ✓   4 tests/browser/production-project-create.spec.mjs:58:5 › PCC-005 production transitions light tablet (3.1s)
+{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'00000'[39m,
+  message: [32m'trigger "idser00904_hold_perception" for relation "pgboss.job_common" does not exist, skipping'[39m,
+  file: [32m'dropcmds.c'[39m,
+  line: [32m'523'[39m,
+  routine: [32m'does_not_exist_skipping'[39m
+}
+  ✓   5 tests/browser/production-project-create.spec.mjs:58:5 › PCC-005 production transitions light mobile (3.0s)
+{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'00000'[39m,
+  message: [32m'trigger "idser00904_hold_perception" for relation "pgboss.job_common" does not exist, skipping'[39m,
+  file: [32m'dropcmds.c'[39m,
+  line: [32m'523'[39m,
+  routine: [32m'does_not_exist_skipping'[39m
+}
+  ✓   6 tests/browser/production-project-create.spec.mjs:58:5 › PCC-005 production transitions light reflow (3.1s)
+{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'00000'[39m,
+  message: [32m'trigger "idser00904_hold_perception" for relation "pgboss.job_common" does not exist, skipping'[39m,
+  file: [32m'dropcmds.c'[39m,
+  line: [32m'523'[39m,
+  routine: [32m'does_not_exist_skipping'[39m
+}
+  ✓   7 tests/browser/production-project-create.spec.mjs:58:5 › PCC-005 production transitions dark desktop (3.0s)
+{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'00000'[39m,
+  message: [32m'trigger "idser00904_hold_perception" for relation "pgboss.job_common" does not exist, skipping'[39m,
+  file: [32m'dropcmds.c'[39m,
+  line: [32m'523'[39m,
+  routine: [32m'does_not_exist_skipping'[39m
+}
+  ✓   8 tests/browser/production-project-create.spec.mjs:58:5 › PCC-005 production transitions dark tablet (2.9s)
+{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'00000'[39m,
+  message: [32m'trigger "idser00904_hold_perception" for relation "pgboss.job_common" does not exist, skipping'[39m,
+  file: [32m'dropcmds.c'[39m,
+  line: [32m'523'[39m,
+  routine: [32m'does_not_exist_skipping'[39m
+}
+  ✓   9 tests/browser/production-project-create.spec.mjs:58:5 › PCC-005 production transitions dark mobile (2.9s)
+{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'00000'[39m,
+  message: [32m'trigger "idser00904_hold_perception" for relation "pgboss.job_common" does not exist, skipping'[39m,
+  file: [32m'dropcmds.c'[39m,
+  line: [32m'523'[39m,
+  routine: [32m'does_not_exist_skipping'[39m
+}
+  ✓  10 tests/browser/production-project-create.spec.mjs:58:5 › PCC-005 production transitions dark reflow (3.0s)
+  ✓  11 tests/browser/production-project-create.spec.mjs:203:1 › PCC-005 fixture creation, simulated processing, sharing and scenario hydration stay distinct (8.3s)
+
+  11 passed (43.6s)

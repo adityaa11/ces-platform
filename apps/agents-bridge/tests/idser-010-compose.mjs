@@ -70,6 +70,18 @@ const jobRows = async (executionIds) => bridge.unsafe("SELECT id::text AS id, na
 const allJobStates = async () => bridge.unsafe("SELECT id::text AS id, name, state FROM pgboss.job ORDER BY id");
 const queueStateSummary = (rows) => ({ rowCount: rows.length, sha256: createHash("sha256").update(JSON.stringify(rows)).digest("hex") });
 const progressSnapshot = async (projectIds) => atlas.unsafe("SELECT p.stable_id, p.id AS project_id, w.id AS workspace_id, w.state AS workspace_state, b.id AS bundle_id, b.state AS bundle_state, b.completed_document_count, (SELECT count(*)::int FROM atlas.semantic_execution e WHERE e.bundle_id=b.id) AS executions, (SELECT count(*)::int FROM atlas.semantic_extraction_result r WHERE r.bundle_id=b.id) AS extraction_results, (SELECT count(*)::int FROM atlas.semantic_reconciliation_result r WHERE r.bundle_id=b.id) AS reconciliation_results, (SELECT count(*)::int FROM atlas.semantic_candidate c WHERE c.bundle_id=b.id) AS candidates, (SELECT count(*)::int FROM atlas.semantic_evidence e JOIN atlas.semantic_candidate c ON c.id=e.semantic_candidate_id WHERE c.bundle_id=b.id) AS evidence, (SELECT count(*)::int FROM atlas.reconciliation_relationship r WHERE r.bundle_id=b.id) AS relationships FROM atlas.project p JOIN atlas.workspace w ON w.project_id=p.id AND w.kind='initial_draft' JOIN atlas.extraction_bundle b ON b.project_id=p.id AND b.workspace_id=w.id WHERE p.stable_id=ANY($1::text[]) ORDER BY p.stable_id", [projectIds]);
+const compositionScenarioEvidence = async (scenario, items, workerEvents) => {
+  const projectIds = items.map((item) => item.projectId);
+  const scopes = await atlas.unsafe("SELECT p.stable_id,p.id AS project_id,w.id AS workspace_id,b.id AS bundle_id,b.state AS bundle_state,master.state AS master_state,b.expected_document_count,b.completed_document_count,array_agg(DISTINCT d.id ORDER BY d.id) AS document_ids FROM atlas.project p JOIN atlas.workspace w ON w.project_id=p.id AND w.kind='initial_draft' JOIN atlas.workspace master ON master.project_id=p.id AND master.kind='master' JOIN atlas.extraction_bundle b ON b.project_id=p.id AND b.workspace_id=w.id JOIN atlas.document d ON d.project_id=p.id AND d.workspace_id=w.id WHERE p.stable_id=ANY($1::text[]) GROUP BY p.stable_id,p.id,w.id,b.id,master.state ORDER BY p.stable_id", [projectIds]);
+  const executionRows = await atlas.unsafe("SELECT p.stable_id,e.id,e.stage,e.lifecycle,e.workspace_id,e.bundle_id,e.document_id FROM atlas.semantic_execution e JOIN atlas.project p ON p.id=e.project_id WHERE p.stable_id=ANY($1::text[]) ORDER BY p.stable_id,e.stage,e.document_id", [projectIds]);
+  const executionIds = executionRows.map((row) => row.id);
+  const queueJobs = executionIds.length ? await bridge.unsafe("SELECT id::text AS id,name,state,data->'execution'->>'executionId' AS execution_id FROM pgboss.job WHERE data->'execution'->>'executionId'=ANY($1::text[]) ORDER BY execution_id,name", [executionIds]) : [];
+  const dbRows = await atlas.unsafe("SELECT p.stable_id,(SELECT count(*)::int FROM atlas.semantic_extraction_result r WHERE r.project_id=p.id) AS extraction_results,(SELECT count(*)::int FROM atlas.semantic_reconciliation_result r WHERE r.project_id=p.id) AS reconciliation_results,(SELECT count(*)::int FROM atlas.semantic_candidate c WHERE c.project_id=p.id) AS candidates,(SELECT count(*)::int FROM atlas.semantic_evidence ev JOIN atlas.semantic_candidate c ON c.id=ev.semantic_candidate_id WHERE c.project_id=p.id) AS evidence,(SELECT count(*)::int FROM atlas.reconciliation_relationship r WHERE r.project_id=p.id) AS relationships FROM atlas.project p WHERE p.stable_id=ANY($1::text[]) ORDER BY p.stable_id", [projectIds]);
+  const relationshipObservations = await atlas.unsafe("SELECT p.stable_id,r.relationship_type,r.requires_resolution,r.source_semantic_id,r.target_semantic_id FROM atlas.reconciliation_relationship r JOIN atlas.project p ON p.id=r.project_id WHERE p.stable_id=ANY($1::text[]) ORDER BY p.stable_id,r.relationship_type,r.source_semantic_id", [projectIds]);
+  const orderedMembers = await atlas.unsafe("SELECT p.stable_id,m.sequence,m.document_id,m.state,m.started_at,m.completed_at,(SELECT count(*)::int FROM atlas.semantic_execution e WHERE e.bundle_id=m.bundle_id AND e.document_id=m.document_id AND e.lifecycle='completed') AS completed_stages FROM atlas.extraction_bundle_document m JOIN atlas.extraction_bundle b ON b.id=m.bundle_id JOIN atlas.project p ON p.id=b.project_id WHERE p.stable_id=ANY($1::text[]) ORDER BY p.stable_id,m.sequence", [projectIds]);
+  const ids = new Set(executionIds);
+  return { scenario, safeScopedIds: scopes, dbObservations: dbRows, relationshipObservations, orderedMembers, executions: executionRows, queueJobs, providerEvents: workerEvents.filter((event) => ids.has(event.scope?.executionId)) };
+};
 const semanticRequest = async (path, body) => {
   const response = await fetch(`${origin}/internal/semantic/${path}`, { method: "POST", headers: { authorization: `Bearer ${process.env.AGENTS_BRIDGE_SERVICE_CREDENTIAL ?? "agents_bridge_service_local_dev_only_32"}`, "content-type": "application/json" }, body: JSON.stringify(body) });
   return { status: response.status, body: response.status === 204 ? null : await response.json() };
@@ -99,6 +111,9 @@ try {
   await run([...compose, "run", "--rm", "--no-deps", "--workdir", "/workspace/apps/agents-bridge", "agents-bridge-worker", "node", "-e", "import('pg-boss').then(async ({ PgBoss }) => { const boss = new PgBoss({ connectionString: process.env.AGENTS_BRIDGE_DATABASE_URL, schema: 'pgboss', migrate: true, createSchema: true }); await boss.start(); await boss.stop(); })"]);
   await run([...compose, "exec", "-T", "postgres", "psql", "-U", "atlas", "-d", "atlas_dev", "-c", "GRANT USAGE ON SCHEMA pgboss TO atlas_app; GRANT SELECT ON ALL TABLES IN SCHEMA pgboss TO atlas_app"]);
   await run([...compose, "up", "-d", "--build", "--wait"]);
+  const composeHealth = await run([...compose, "ps", "--format", "json"]);
+  process.stdout.write(`IDSER-010 Compose service health: ${composeHealth.trim()}\n`);
+  const compositionScenarios = [];
   for (const [label, texts, expectedCandidates, relationship] of [["normal", ["Normal approval statement"], 1, "new"], ["conflict", ["Conflicting quota statements"], 2, "contradicts"]]) {
     const item = await create(label, texts); projects.push(item);
     await waitFor(async () => (await atlas.unsafe("SELECT state FROM atlas.extraction_bundle WHERE project_id=(SELECT id FROM atlas.project WHERE stable_id=$1)", [item.projectId]))[0]?.state === "ready_for_review");
@@ -116,6 +131,7 @@ try {
       assert.equal(Number(relationshipState.unresolved), 1, "the persisted conflict relationship remains unresolved");
     }
     await readProjectCard(item.projectId, label === "conflict");
+    compositionScenarios.push({ scenario: label === "normal" ? "A" : "B", items: [item] });
   }
   for (const [label, texts, relationship] of [["scenario-c-supports", ["Normal approval statement", "Supports approval statement"], "supports"], ["scenario-c-duplicates", ["Normal approval statement", "Duplicate approval statement"], "duplicates"], ["scenario-d", ["Normal approval statement", "Conflicting quota statements"], "contradicts"], ["scenario-e", ["Normal approval statement", "Normal approval statement", "Normal approval statement"], "new"]]) {
     const item = await create(label, texts); projects.push(item);
@@ -134,7 +150,10 @@ try {
     assert.equal(Number(candidateStates.non_candidates), 0, `${label} keeps all relationship results as incoming candidates`);
     assert.ok(Number(candidateStates.candidates) >= texts.length, `${label} accounts for every current document candidate`);
     await readProjectCard(item.projectId, relationship === "contradicts", texts.length);
+    compositionScenarios.push({ scenario: label === "scenario-c-supports" ? "C-supports" : label === "scenario-c-duplicates" ? "C-duplicates" : label === "scenario-d" ? "D" : "E", items: [item] });
   }
+  const scenarioEvidenceEvents = await mockMetrics();
+  for (const scenario of compositionScenarios) process.stdout.write(`IDSER-010 Scenario ${scenario.scenario} evidence: ${JSON.stringify(await compositionScenarioEvidence(scenario.scenario, scenario.items, scenarioEvidenceEvents.structuredEvents))}\n`);
   // Scenario G follows the normal production worker path but returns a
   // controlled invalid evidence locator. The trusted boundary must contain it.
   const invalid = await create("scenario-g-invalid", ["Invalid semantic output"]); projects.push(invalid);
