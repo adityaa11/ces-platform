@@ -8,6 +8,7 @@ import postgres from "postgres";
 
 const execFileAsync = promisify(execFile);
 const root = fileURLToPath(new URL("../../../", import.meta.url));
+const canonicalJson = (value) => JSON.stringify(value, (_key, item) => item && typeof item === "object" && !Array.isArray(item) ? Object.fromEntries(Object.entries(item).sort(([left], [right]) => left.localeCompare(right))) : item);
 // This checkpoint owns a disposable Compose project so its restart and queue
 // observations cannot consume or mutate a developer's long-lived pg-boss DB.
 const composeEnvironment = { ...process.env, POSTGRES_PORT: "15432", ATLAS_PORT: "13001", AGENTS_BRIDGE_PORT: "13002" };
@@ -30,6 +31,13 @@ const bridge = postgres(bridgeUrl.toString(), { max: 2 });
 const admin = postgres(url, { max: 2 });
 const origin = "http://localhost:13001";
 const browserOrigin = "http://localhost:3001";
+const semanticResultObservations = async () => {
+  const response = await fetch(`${origin}/__test/semantic-result-observations`, { headers: { authorization: `Bearer ${process.env.AGENTS_BRIDGE_SERVICE_CREDENTIAL ?? "agents_bridge_service_local_dev_only_32"}` } });
+  assert.equal(response.status, 200, "the controlled Atlas result-boundary observer accepts only the Bridge credential");
+  const body = await response.json();
+  assert.ok(Array.isArray(body.observations), "the controlled Atlas result-boundary observer returns its received envelopes");
+  return body.observations;
+};
 const homeReadSecret = async () => {
   const settings = await readFile(new URL("../../atlas/.dev.vars", import.meta.url), "utf8");
   const match = settings.match(/^BETTER_AUTH_SECRET=(.+)$/m);
@@ -306,6 +314,14 @@ try {
   await run([...compose, "start", "agents-bridge-worker"]);
   await bridge.unsafe("UPDATE pgboss.job SET state='created', started_on=NULL, completed_on=NULL, start_after=now() WHERE data->>'idempotencyKey'=$1", [replayKey]);
   await waitFor(async () => (await bridge.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [replayKey]))[0]?.status === "completed");
+  let resumedAtlasBoundEnvelopes;
+  await waitFor(async () => {
+    resumedAtlasBoundEnvelopes = await semanticResultObservations();
+    return resumedAtlasBoundEnvelopes.length > 0;
+  });
+  for (const envelope of resumedAtlasBoundEnvelopes) assert.deepEqual(envelope, staged.validated_envelope, "every actual post-restart Atlas-bound envelope equals the durable pre-interruption staged envelope");
+  const resumedAtlasBoundEnvelope = resumedAtlasBoundEnvelopes[0];
+  assert.deepEqual(resumedAtlasBoundEnvelope, staged.validated_envelope, "the real resumed worker delivers the exact durable staged envelope at the trusted Atlas result boundary");
   await waitFor(async () => (await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [replayKey]))[0]?.count === 0);
   await waitFor(async () => (await atlas.unsafe("SELECT state FROM atlas.extraction_bundle WHERE id=$1", [replayScope.bundle_id]))[0]?.state === "ready_for_review");
   await mockControl(0);
@@ -315,7 +331,10 @@ try {
   assert.deepEqual({ lifecycle: replayEffects.lifecycle, expected: Number(replayEffects.expected_document_count), completed: Number(replayEffects.completed_document_count), extraction: Number(replayEffects.extraction_results), candidates: Number(replayEffects.candidates), evidence: Number(replayEffects.evidence), relationships: Number(replayEffects.relationships), completedJobs: Number(replayEffects.completed_jobs) }, { lifecycle: "completed", expected: 1, completed: 1, extraction: 1, candidates: 1, evidence: 1, relationships: 1, completedJobs: 1 }, "identical replay has singular Atlas rows, progress, successor work, and final queue record");
   const [completedEffect] = await bridge.unsafe("SELECT lease_generation FROM bridge.background_effects WHERE idempotency_key=$1", [replayKey]);
   assert.ok(Number(completedEffect.lease_generation) > Number(staged.lease_generation), "the resumed claimant completes under a later lease generation");
-  process.stdout.write(`IDSER-010 Scenario H evidence: ${JSON.stringify({ executionId: replayScope.execution_id, idempotencyKey: replayKey, stagedLeaseGeneration: staged.lease_generation, resumedLeaseGeneration: completedEffect.lease_generation, providerCallsBefore: beforeReplayMetrics.structuredCalls, providerCallsAfter: afterReplayMetrics.structuredCalls, stagedEnvelopeSha256: createHash("sha256").update(JSON.stringify(staged.validated_envelope)).digest("hex"), singularEffects: replayEffects })}\n`);
+  const stagedEnvelopeSha256 = createHash("sha256").update(canonicalJson(staged.validated_envelope)).digest("hex");
+  const resumedAtlasBoundEnvelopeSha256 = createHash("sha256").update(canonicalJson(resumedAtlasBoundEnvelope)).digest("hex");
+  assert.equal(resumedAtlasBoundEnvelopeSha256, stagedEnvelopeSha256, "the observed resumed Atlas-bound envelope fingerprint equals the durable staged fingerprint");
+  process.stdout.write(`IDSER-010 Scenario H evidence: ${JSON.stringify({ executionId: replayScope.execution_id, idempotencyKey: replayKey, stagedLeaseGeneration: staged.lease_generation, resumedLeaseGeneration: completedEffect.lease_generation, providerCallsBefore: beforeReplayMetrics.structuredCalls, providerCallsAfter: afterReplayMetrics.structuredCalls, stagedEnvelopeSha256, resumedAtlasBoundEnvelopeSha256, resumedAtlasBoundEnvelopeCount: resumedAtlasBoundEnvelopes.length, resumedAtlasBoundEnvelopeEqualsStaged: true, singularEffects: replayEffects })}\n`);
   await bridge.unsafe(`DROP TRIGGER IF EXISTS ${faultName}_trigger ON bridge.background_effects`);
   await bridge.unsafe(`DROP FUNCTION IF EXISTS bridge.${faultName}_completion()`);
   await bridge.unsafe(`DROP SEQUENCE IF EXISTS bridge.${faultName}_sequence`);

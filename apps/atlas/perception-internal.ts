@@ -62,6 +62,10 @@ export function createAtlasPerceptionInternalPlugin(): Plugin {
     async configureServer(server) {
       const databaseUrl = process.env.ATLAS_DATABASE_URL ?? process.env.DATABASE_URL;
       const credential = process.env.AGENTS_BRIDGE_SERVICE_CREDENTIAL;
+      // This read-only probe is enabled only by the disposable Compose harness.
+      // It records the already-authenticated result request at this Atlas
+      // boundary, rather than reconstructing it from Bridge persistence.
+      const semanticResultObservationPath = process.env.ATLAS_SEMANTIC_RESULT_OBSERVATION_PATH;
       if (!databaseUrl && !credential) return;
       if (!databaseUrl || !credential) throw new Error("ATLAS_DATABASE_URL and AGENTS_BRIDGE_SERVICE_CREDENTIAL are required together.");
 
@@ -97,16 +101,31 @@ export function createAtlasPerceptionInternalPlugin(): Plugin {
         else if (skill === "atlas.semantic.reconcile") await reconciliationHandler.accept(input, transaction);
         else throw new Error("Semantic acceptance handler is unavailable for this stage.");
       } } });
+      const semanticResultObservations: unknown[] = [];
 
       server.middlewares.use(async (request, response, next) => {
         const pathname = new URL(request.url ?? "/", "http://atlas.local").pathname;
+        if (semanticResultObservationPath && pathname === semanticResultObservationPath) {
+          if (request.method !== "GET") { response.statusCode = 405; response.setHeader("allow", "GET"); response.end(); return; }
+          if (bridgeCredential(request) !== credential) { response.statusCode = 401; response.end(); return; }
+          sendJson(response, 200, { observations: semanticResultObservations });
+          return;
+        }
         if (pathname !== sourcePath && pathname !== resultPath && pathname !== perceptionFailurePath && pathname !== semanticContextPath && pathname !== semanticResultPath && pathname !== semanticFailurePath) return next();
         if (request.method !== "POST") { response.statusCode = 405; response.setHeader("allow", "POST"); response.end(); return; }
         try {
           const body = await readJson(request, request.headers["content-length"], pathname === sourcePath || pathname === semanticContextPath || pathname === semanticFailurePath ? requestLimit : resultLimit + requestLimit);
           const credentialValue = bridgeCredential(request);
           if (pathname === semanticContextPath) { const result = await semanticRoutes.context(credentialValue, body); sendJson(response, result.status, result.body); return; }
-          if (pathname === semanticResultPath) { const result = await semanticRoutes.deliver(credentialValue, body); if (result.status === 204) { response.statusCode = 204; response.end(); } else sendJson(response, result.status, result.body); return; }
+          if (pathname === semanticResultPath) {
+            const result = await semanticRoutes.deliver(credentialValue, body);
+            if (result.status === 204) {
+              semanticResultObservations.push(body);
+              response.statusCode = 204;
+              response.end();
+            } else sendJson(response, result.status, result.body);
+            return;
+          }
           if (pathname === semanticFailurePath) { const result = await semanticRoutes.fail(credentialValue, body); if (result.status === 204) { response.statusCode = 204; response.end(); } else sendJson(response, result.status, result.body); return; }
           if (pathname === sourcePath) {
             const result = await routes.redeem(credentialValue, body);

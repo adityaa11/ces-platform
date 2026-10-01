@@ -2,6 +2,10 @@
 # topology; this overlay supplies a deterministic provider endpoint while the
 # real Atlas and Bridge worker processes run unchanged.
 services:
+  atlas:
+    environment:
+      ATLAS_SEMANTIC_RESULT_OBSERVATION_PATH: /__test/semantic-result-observations
+
   mistral-mock:
     image: node:24-bookworm-slim
     working_dir: /workspace
