@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { createHmac } from "node:crypto";
+import { createHash, createHmac } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
@@ -50,6 +50,16 @@ const readOwnedProjectIds = async (ownerId) => {
   assert.equal(response.status, 200);
   const body = await response.json();
   return body.projects.map((project) => project.projectId);
+};
+const mockControl = async (delayMs) => JSON.parse(await run([...compose, "exec", "-T", "mistral-mock", "node", "-e", `fetch('http://127.0.0.1:3100/__test-control',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({delayMs:${delayMs}})}).then(async r=>process.stdout.write(await r.text()))`]));
+const mockMetrics = async () => JSON.parse(await run([...compose, "exec", "-T", "mistral-mock", "node", "-e", "fetch('http://127.0.0.1:3100/metrics').then(async r=>process.stdout.write(await r.text()))"]));
+const jobRows = async (executionIds) => bridge.unsafe("SELECT id::text AS id, name, state, data->'execution'->>'executionId' AS execution_id, data->'execution'->'input'->>'contextCapability' AS context_capability FROM pgboss.job WHERE data->'execution'->>'executionId'=ANY($1::text[]) ORDER BY name, execution_id", [executionIds]);
+const allJobStates = async () => bridge.unsafe("SELECT id::text AS id, name, state FROM pgboss.job ORDER BY id");
+const queueStateSummary = (rows) => ({ rowCount: rows.length, sha256: createHash("sha256").update(JSON.stringify(rows)).digest("hex") });
+const progressSnapshot = async (projectIds) => atlas.unsafe("SELECT p.stable_id, p.id AS project_id, w.id AS workspace_id, w.state AS workspace_state, b.id AS bundle_id, b.state AS bundle_state, b.completed_document_count, (SELECT count(*)::int FROM atlas.semantic_execution e WHERE e.bundle_id=b.id) AS executions, (SELECT count(*)::int FROM atlas.semantic_extraction_result r WHERE r.bundle_id=b.id) AS extraction_results, (SELECT count(*)::int FROM atlas.semantic_reconciliation_result r WHERE r.bundle_id=b.id) AS reconciliation_results, (SELECT count(*)::int FROM atlas.semantic_candidate c WHERE c.bundle_id=b.id) AS candidates, (SELECT count(*)::int FROM atlas.semantic_evidence e JOIN atlas.semantic_candidate c ON c.id=e.semantic_candidate_id WHERE c.bundle_id=b.id) AS evidence, (SELECT count(*)::int FROM atlas.reconciliation_relationship r WHERE r.bundle_id=b.id) AS relationships FROM atlas.project p JOIN atlas.workspace w ON w.project_id=p.id AND w.kind='initial_draft' JOIN atlas.extraction_bundle b ON b.project_id=p.id AND b.workspace_id=w.id WHERE p.stable_id=ANY($1::text[]) ORDER BY p.stable_id", [projectIds]);
+const semanticRequest = async (path, body) => {
+  const response = await fetch(`${origin}/internal/semantic/${path}`, { method: "POST", headers: { authorization: `Bearer ${process.env.AGENTS_BRIDGE_SERVICE_CREDENTIAL ?? "agents_bridge_service_local_dev_only_32"}`, "content-type": "application/json" }, body: JSON.stringify(body) });
+  return { status: response.status, body: response.status === 204 ? null : await response.json() };
 };
 const cookie = async (label) => {
   const email = `idser-010-${label}-${crypto.randomUUID().slice(0, 10)}@example.test`;
@@ -110,38 +120,130 @@ try {
   // Scenario F: create two identically named projects concurrently.  The
   // controlled provider emits distinct candidate meanings from their source
   // text, making a cross-context or cross-result delivery observable.
+  await mockControl(1200);
   const sameDisplayName = "Scenario F duplicate display name";
   const [alpha, beta] = await Promise.all([
     create("scenario-f-alpha", ["Isolation alpha payload"], sameDisplayName),
     create("scenario-f-beta", ["Isolation beta payload"], sameDisplayName),
   ]);
   projects.push(alpha, beta);
-  await Promise.all([alpha, beta].map((item) => waitFor(async () => (await atlas.unsafe("SELECT state FROM atlas.extraction_bundle WHERE project_id=(SELECT id FROM atlas.project WHERE stable_id=$1)", [item.projectId]))[0]?.state === "ready_for_review")));
-  const isolated = await atlas.unsafe("SELECT p.stable_id, p.id AS project_id, p.name, p.created_by_user_id, w.id AS workspace_id, b.id AS bundle_id, d.id AS document_id, array_agg(e.id ORDER BY e.stage) AS execution_ids, b.expected_document_count, b.completed_document_count, array_agg(DISTINCT c.normalized_meaning) AS meanings, count(DISTINCT x.id)::int AS extraction_results, count(DISTINCT r.id)::int AS reconciliation_results, count(DISTINCT c.id)::int AS candidates, count(DISTINCT ev.id)::int AS evidence, count(DISTINCT rr.id)::int AS relationships FROM atlas.project p JOIN atlas.workspace w ON w.project_id=p.id AND w.kind='initial_draft' JOIN atlas.extraction_bundle b ON b.project_id=p.id AND b.workspace_id=w.id JOIN atlas.document d ON d.project_id=p.id AND d.workspace_id=w.id JOIN atlas.semantic_execution e ON e.project_id=p.id AND e.workspace_id=w.id AND e.bundle_id=b.id AND e.document_id=d.id JOIN atlas.semantic_candidate c ON c.project_id=p.id AND c.workspace_id=w.id AND c.bundle_id=b.id AND c.document_id=d.id JOIN atlas.semantic_extraction_result x ON x.project_id=p.id AND x.workspace_id=w.id AND x.bundle_id=b.id AND x.document_id=d.id JOIN atlas.semantic_reconciliation_result r ON r.project_id=p.id AND r.workspace_id=w.id AND r.bundle_id=b.id AND r.current_document_id=d.id JOIN atlas.semantic_evidence ev ON ev.document_id=d.id AND ev.semantic_candidate_id=c.id JOIN atlas.reconciliation_relationship rr ON rr.project_id=p.id AND rr.workspace_id=w.id AND rr.bundle_id=b.id WHERE p.stable_id = ANY($1::text[]) GROUP BY p.stable_id, p.id, p.name, p.created_by_user_id, w.id, b.id, d.id, b.expected_document_count, b.completed_document_count ORDER BY p.stable_id", [[alpha.projectId, beta.projectId]]);
-  assert.equal(isolated.length, 2, "both same-display-name scopes finish");
-  assert.deepEqual(isolated.map((row) => row.name), [sameDisplayName, sameDisplayName]);
-  for (const row of isolated) {
-    assert.deepEqual({ expected: Number(row.expected_document_count), completed: Number(row.completed_document_count), extraction: Number(row.extraction_results), reconciliation: Number(row.reconciliation_results), candidates: Number(row.candidates), evidence: Number(row.evidence), relationships: Number(row.relationships) }, { expected: 1, completed: 1, extraction: 1, reconciliation: 1, candidates: 1, evidence: 1, relationships: 1 }, "each bundle has exactly its own completed N/N materialization");
-    assert.equal(new Set([row.project_id, row.workspace_id, row.bundle_id, row.document_id, ...row.execution_ids]).size, 6, "every persisted scenario-F identity is unique");
-    const expectedMeaning = row.stable_id === alpha.projectId ? "Scenario F alpha assertion." : "Scenario F beta assertion.";
-    assert.deepEqual(row.meanings, [expectedMeaning], "the controlled provider result stays bound to its exact execution scope");
-  }
-  assert.notDeepEqual(isolated[0].execution_ids, isolated[1].execution_ids, "no execution identity is shared across same-display-name bundles");
+  const initialScopes = await atlas.unsafe("SELECT p.stable_id,p.id AS project_id,p.name,p.created_by_user_id,w.id AS workspace_id,b.id AS bundle_id,d.id AS document_id FROM atlas.project p JOIN atlas.workspace w ON w.project_id=p.id AND w.kind='initial_draft' JOIN atlas.extraction_bundle b ON b.project_id=p.id AND b.workspace_id=w.id JOIN atlas.document d ON d.project_id=p.id AND d.workspace_id=w.id WHERE p.stable_id=ANY($1::text[]) ORDER BY p.stable_id", [[alpha.projectId, beta.projectId]]);
+  assert.equal(initialScopes.length, 2);
+  assert.deepEqual(initialScopes.map((row) => row.name), [sameDisplayName, sameDisplayName]);
+  const safeIds = initialScopes.map((row) => ({ projectId: row.stable_id, projectRowId: row.project_id, workspaceId: row.workspace_id, bundleId: row.bundle_id, documentId: row.document_id }));
   for (const item of [alpha, beta]) {
-    const owner = isolated.find((row) => row.stable_id === item.projectId).created_by_user_id;
+    const owner = initialScopes.find((row) => row.stable_id === item.projectId).created_by_user_id;
     const visible = await readOwnedProjectIds(owner);
     assert.ok(visible.includes(item.projectId), "an owner can read its own same-display-name project");
     const foreign = item === alpha ? beta.projectId : alpha.projectId;
     assert.ok(!visible.includes(foreign), "an owner cannot cross-read the other same-display-name project");
   }
+  let extractionExecutions = [];
+  await waitFor(async () => {
+    extractionExecutions = await atlas.unsafe("SELECT e.id,e.stage,e.lifecycle,p.stable_id FROM atlas.semantic_execution e JOIN atlas.project p ON p.id=e.project_id WHERE p.stable_id=ANY($1::text[]) AND e.stage='extraction' ORDER BY p.stable_id", [[alpha.projectId, beta.projectId]]);
+    if (extractionExecutions.length !== 2) return false;
+    const active = await jobRows(extractionExecutions.map((row) => row.id));
+    return active.length === 2 && active.every((row) => row.state === "active" && row.context_capability);
+  });
+  const extractionJobs = await jobRows(extractionExecutions.map((row) => row.id));
+  assert.equal(new Set(extractionJobs.map((row) => row.id)).size, 2);
+  assert.ok(extractionJobs.every((row) => row.name === extractionJobs[0].name), "both production jobs use their matching configured queue");
+  const alphaExtraction = extractionExecutions.find((row) => row.stable_id === alpha.projectId);
+  const betaExtraction = extractionExecutions.find((row) => row.stable_id === beta.projectId);
+  const beforeContextDenial = await progressSnapshot([alpha.projectId, beta.projectId]);
+  const unrelatedJobsBefore = (await allJobStates()).filter((row) => !extractionJobs.some((job) => job.id === row.id));
+  const deniedContext = await semanticRequest("context", { version: "v1", executionId: betaExtraction.id, skill: { id: "atlas.semantic.extract", version: "v1" }, contextCapability: extractionJobs.find((row) => row.execution_id === alphaExtraction.id).context_capability });
+  assert.ok(deniedContext.status === 400 || deniedContext.status === 409, "a capability from the other owner cannot redeem semantic context");
+  const afterContextDenial = await progressSnapshot([alpha.projectId, beta.projectId]);
+  assert.deepEqual(afterContextDenial, beforeContextDenial, "cross-owner context denial leaves target and control progress unchanged");
+  const unrelatedJobsAfterContextDenial = (await allJobStates()).filter((row) => !extractionJobs.some((job) => job.id === row.id));
+  assert.deepEqual(unrelatedJobsAfterContextDenial, unrelatedJobsBefore, "cross-owner context denial leaves unrelated queue state unchanged");
+
+  const alphaBundle = initialScopes.find((row) => row.stable_id === alpha.projectId);
+  const betaBundle = initialScopes.find((row) => row.stable_id === beta.projectId);
+  const mismatchedScope = await semanticRequest("result", {
+    version: "v1",
+    scope: { projectId: betaBundle.project_id, workspaceId: betaBundle.workspace_id, bundleId: betaBundle.bundle_id, documentId: betaBundle.document_id, executionId: alphaExtraction.id, contractVersion: "v1" },
+    skill: { id: "atlas.semantic.extract", version: "v1" },
+    provider: { provider: "mistral", model: "compose-smoke-structured", endpoint: "/v1/chat/completions", latencyMilliseconds: 1, attempt: 1 },
+    result: { version: "v1", candidate_assertions: [], source_statement_inventory: [], questions: [] },
+  });
+  assert.equal(mismatchedScope.status, 409, "a foreign owner's scope cannot mutate another execution's progress");
+  const afterCrossOwnerProgressMutation = await progressSnapshot([alpha.projectId, beta.projectId]);
+  assert.deepEqual(afterCrossOwnerProgressMutation, beforeContextDenial, "denied cross-owner result delivery leaves both target and control observations unchanged");
+
+  let reconciliationExecutions = [];
+  await waitFor(async () => {
+    reconciliationExecutions = await atlas.unsafe("SELECT e.id,e.stage,e.lifecycle,p.stable_id FROM atlas.semantic_execution e JOIN atlas.project p ON p.id=e.project_id WHERE p.stable_id=ANY($1::text[]) AND e.stage='reconciliation' ORDER BY p.stable_id", [[alpha.projectId, beta.projectId]]);
+    if (reconciliationExecutions.length !== 2) return false;
+    const active = await jobRows(reconciliationExecutions.map((row) => row.id));
+    return active.length === 2 && active.every((row) => row.state === "active");
+  });
+  const reconciliationJobs = await jobRows(reconciliationExecutions.map((row) => row.id));
+  assert.equal(new Set(reconciliationJobs.map((row) => row.id)).size, 2);
+  assert.ok(reconciliationJobs.every((row) => row.name === extractionJobs[0].name));
+  const alphaReconciliation = reconciliationExecutions.find((row) => row.stable_id === alpha.projectId);
+  const betaForeignCandidate = await atlas.unsafe("SELECT id FROM atlas.semantic_candidate WHERE bundle_id=$1 LIMIT 1", [betaBundle.bundle_id]);
+  const [alphaContext] = await atlas.unsafe("SELECT context_json FROM atlas.semantic_execution_context WHERE execution_id=$1", [alphaReconciliation.id]);
+  const reconciledContext = typeof alphaContext.context_json === "string" ? JSON.parse(alphaContext.context_json) : alphaContext.context_json;
+  const beforeForeignReferenceDenial = await progressSnapshot([alpha.projectId, beta.projectId]);
+  const unrelatedBeforeForeignReference = (await allJobStates()).filter((row) => ![...extractionJobs, ...reconciliationJobs].some((job) => job.id === row.id));
+  const deniedForeignReference = await semanticRequest("result", {
+    version: "v1",
+    scope: { projectId: alphaBundle.project_id, workspaceId: alphaBundle.workspace_id, bundleId: alphaBundle.bundle_id, documentId: alphaBundle.document_id, executionId: alphaReconciliation.id, contractVersion: "v1" },
+    skill: { id: "atlas.semantic.reconcile", version: "v1" },
+    provider: { provider: "mistral", model: "compose-smoke-structured", endpoint: "/v1/chat/completions", latencyMilliseconds: 1, attempt: 1 },
+    result: { version: "v1", relationships: reconciledContext.currentCandidates.map((candidate) => ({ source_candidate_id: candidate.id, target_candidate_id: betaForeignCandidate[0].id, relationship_type: "supports", payload: { controlled: true }, requires_resolution: false, evidence_refs: candidate.evidence_refs })), questions: [] },
+  });
+  assert.equal(deniedForeignReference.status, 422, "Atlas rejects a reconciliation result that references the other owner's candidate");
+  const afterForeignReferenceDenial = await progressSnapshot([alpha.projectId, beta.projectId]);
+  assert.deepEqual(afterForeignReferenceDenial, beforeForeignReferenceDenial, "foreign candidate rejection leaves target and control result/progress observations unchanged");
+  const unrelatedAfterForeignReference = (await allJobStates()).filter((row) => ![...extractionJobs, ...reconciliationJobs].some((job) => job.id === row.id));
+  assert.deepEqual(unrelatedAfterForeignReference, unrelatedBeforeForeignReference, "foreign candidate rejection leaves unrelated queue state unchanged");
+
+  await Promise.all([alpha, beta].map((item) => waitFor(async () => (await atlas.unsafe("SELECT state FROM atlas.extraction_bundle WHERE project_id=(SELECT id FROM atlas.project WHERE stable_id=$1)", [item.projectId]))[0]?.state === "ready_for_review")));
+  const isolated = await atlas.unsafe("SELECT p.stable_id,p.id AS project_id,p.name,p.created_by_user_id,w.id AS workspace_id,b.id AS bundle_id,d.id AS document_id,array_agg(e.id ORDER BY e.stage) AS execution_ids,b.expected_document_count,b.completed_document_count,array_agg(DISTINCT c.normalized_meaning) AS meanings,count(DISTINCT x.id)::int AS extraction_results,count(DISTINCT r.id)::int AS reconciliation_results,count(DISTINCT c.id)::int AS candidates,count(DISTINCT ev.id)::int AS evidence,count(DISTINCT rr.id)::int AS relationships FROM atlas.project p JOIN atlas.workspace w ON w.project_id=p.id AND w.kind='initial_draft' JOIN atlas.extraction_bundle b ON b.project_id=p.id AND b.workspace_id=w.id JOIN atlas.document d ON d.project_id=p.id AND d.workspace_id=w.id JOIN atlas.semantic_execution e ON e.project_id=p.id AND e.workspace_id=w.id AND e.bundle_id=b.id AND e.document_id=d.id JOIN atlas.semantic_candidate c ON c.project_id=p.id AND c.workspace_id=w.id AND c.bundle_id=b.id AND c.document_id=d.id JOIN atlas.semantic_extraction_result x ON x.project_id=p.id AND x.workspace_id=w.id AND x.bundle_id=b.id AND x.document_id=d.id JOIN atlas.semantic_reconciliation_result r ON r.project_id=p.id AND r.workspace_id=w.id AND r.bundle_id=b.id AND r.current_document_id=d.id JOIN atlas.semantic_evidence ev ON ev.document_id=d.id AND ev.semantic_candidate_id=c.id JOIN atlas.reconciliation_relationship rr ON rr.project_id=p.id AND rr.workspace_id=w.id AND rr.bundle_id=b.id WHERE p.stable_id=ANY($1::text[]) GROUP BY p.stable_id,p.id,p.name,p.created_by_user_id,w.id,b.id,d.id,b.expected_document_count,b.completed_document_count ORDER BY p.stable_id", [[alpha.projectId, beta.projectId]]);
+  assert.equal(isolated.length, 2, "both same-display-name scopes finish");
+  assert.deepEqual(isolated.map((row) => row.name), [sameDisplayName, sameDisplayName]);
+  for (const row of isolated) {
+    assert.deepEqual({ expected: Number(row.expected_document_count), completed: Number(row.completed_document_count), extraction: Number(row.extraction_results), reconciliation: Number(row.reconciliation_results), candidates: Number(row.candidates), evidence: Number(row.evidence), relationships: Number(row.relationships) }, { expected: 1, completed: 1, extraction: 1, reconciliation: 1, candidates: 1, evidence: 1, relationships: 1 }, "each bundle has exactly its own completed N/N materialization");
+    assert.equal(new Set([row.project_id,row.workspace_id,row.bundle_id,row.document_id,...row.execution_ids]).size, 6, "every persisted scenario-F identity is unique");
+    assert.deepEqual(row.meanings, [row.stable_id === alpha.projectId ? "Scenario F alpha assertion." : "Scenario F beta assertion."], "the controlled provider result stays bound to its exact execution scope");
+  }
+  assert.notDeepEqual(isolated[0].execution_ids, isolated[1].execution_ids, "no execution identity is shared across same-display-name bundles");
+  for (const row of isolated) safeIds.find((scope) => scope.projectId === row.stable_id).executionIds = row.execution_ids;
   const executionIds = isolated.flatMap((row) => row.execution_ids);
-  const [remainingJobs] = await atlas.unsafe("SELECT count(*)::int AS count FROM pgboss.job WHERE data->'execution'->>'executionId' = ANY($1::text[])", [executionIds]);
-  assert.equal(Number(remainingJobs.count), 0, "the production worker cleaned up each scoped queue job after exactly one completed delivery");
+  const semanticExecutions = [...extractionExecutions, ...reconciliationExecutions];
+  await waitFor(async () => (await atlas.unsafe("SELECT count(*)::int AS count FROM atlas.semantic_execution WHERE id=ANY($1::text[]) AND lifecycle='completed'", [executionIds]))[0].count === executionIds.length);
+  const scenarioJobs = [...extractionJobs, ...reconciliationJobs];
+  const workerMetrics = await mockMetrics();
+  const scenarioEvents = workerMetrics.structuredEvents.filter((event) => executionIds.includes(event.scope?.executionId));
+  assert.equal(scenarioEvents.length, 4, "the production worker produced one logged provider execution for each extraction and reconciliation job");
+  for (const item of [alpha, beta]) for (const stage of ["atlas.semantic.extract", "atlas.semantic.reconcile"]) assert.equal(scenarioEvents.filter((event) => event.scope?.projectId === isolated.find((row) => row.stable_id === item.projectId).project_id && event.stage === stage).length, 1, "each job is delivered once by its matching scope");
+  for (const stage of ["atlas.semantic.extract", "atlas.semantic.reconcile"]) {
+    const [left, right] = scenarioEvents.filter((event) => event.stage === stage);
+    assert.ok(Date.parse(left.startedAt) < Date.parse(right.finishedAt) && Date.parse(right.startedAt) < Date.parse(left.finishedAt), `${stage} worker execution overlaps for both scopes`);
+  }
+  const [remainingJobs] = await bridge.unsafe("SELECT count(*)::int AS count FROM pgboss.job WHERE data->'execution'->>'executionId' = ANY($1::text[])", [executionIds]);
+  const finalJobs = await bridge.unsafe("SELECT id::text AS id,name,state,data->'execution'->>'executionId' AS execution_id FROM pgboss.job WHERE data->'execution'->>'executionId'=ANY($1::text[]) ORDER BY execution_id", [executionIds]);
+  assert.equal(finalJobs.length, 4);
+  assert.ok(finalJobs.every((job) => job.state === "completed"), "each matching pg-boss job reaches its terminal completed state");
+  assert.equal(Number(remainingJobs.count), 4, "the four completed queue records remain auditable in pg-boss");
+  const [deliveryOutbox] = await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE execution_id=ANY($1::text[])", [executionIds]);
+  assert.equal(Number(deliveryOutbox.count), 0, "the production worker cleans up all four acknowledged result deliveries");
+  await mockControl(0);
   const metrics = JSON.parse(await run([...compose, "exec", "-T", "mistral-mock", "node", "-e", "fetch('http://127.0.0.1:3100/metrics').then(async response => process.stdout.write(await response.text()))"]));
   assert.ok(metrics.ocrCalls >= 13, "the controlled Mistral endpoint received every single- and multi-document OCR call");
   assert.ok(metrics.structuredCalls >= 26, "the controlled Mistral endpoint received both semantic stages for every controlled document");
   const [direct] = await bridge.unsafe("SELECT has_schema_privilege('agents_bridge','atlas','USAGE') AS schema_usage");
   assert.equal(direct.schema_usage, false, "Bridge has no direct Atlas schema privilege");
+  const finalScopes = await progressSnapshot([alpha.projectId, beta.projectId]);
+  const finalExecutionStates = await atlas.unsafe("SELECT id,stage,lifecycle FROM atlas.semantic_execution WHERE id=ANY($1::text[]) ORDER BY id", [executionIds]);
+  const finalByJobId = new Map(finalJobs.map((job) => [job.id, job]));
+  const observedQueueJobs = scenarioJobs.map((job) => ({ id: job.id, queueName: job.name, claimedStateAtObservation: job.state, finalState: finalByJobId.get(job.id)?.state, executionId: job.execution_id }));
+  const foreignReference = { candidateId: betaForeignCandidate[0].id, candidateBundleId: betaBundle.bundle_id, attemptedSourceExecutionId: alphaReconciliation.id };
+  const evidence = { scenario: "F", composeCommand: "node apps/agents-bridge/tests/idser-010-compose.mjs", ownersAndIds: safeIds, queueJobs: observedQueueJobs, workerEvents: scenarioEvents, deniedContext: { status: deniedContext.status, targetControlBefore: beforeContextDenial, targetControlAfter: afterContextDenial, unrelatedQueueStateBefore: queueStateSummary(unrelatedJobsBefore), unrelatedQueueStateAfter: queueStateSummary(unrelatedJobsAfterContextDenial) }, deniedCrossOwnerProgressMutation: { status: mismatchedScope.status, targetControlBefore: beforeContextDenial, targetControlAfter: afterCrossOwnerProgressMutation }, deniedForeignCandidateReference: { status: deniedForeignReference.status, foreignReference, targetControlBefore: beforeForeignReferenceDenial, targetControlAfter: afterForeignReferenceDenial, unrelatedQueueStateBefore: queueStateSummary(unrelatedBeforeForeignReference), unrelatedQueueStateAfter: queueStateSummary(unrelatedAfterForeignReference) }, completedStageCounts: finalExecutionStates, ocrCalls: metrics.ocrCalls, structuredCalls: metrics.structuredCalls, acknowledgedOutboxRowsRemaining: Number(deliveryOutbox.count), finalScopes };
+  process.stdout.write(`IDSER-010 Scenario F evidence: ${JSON.stringify(evidence)}\n`);
   process.stdout.write("IDSER-010 controlled Compose scenarios A/B/C/D/E/F passed.\n");
 } finally {
   for (const item of projects) {

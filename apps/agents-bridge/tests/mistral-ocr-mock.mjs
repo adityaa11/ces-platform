@@ -3,6 +3,8 @@ import { createServer } from "node:http";
 const port = Number(process.env.MISTRAL_MOCK_PORT ?? "3100");
 let ocrCalls = 0;
 let structuredCalls = 0;
+let structuredDelayMs = 0;
+const structuredEvents = [];
 
 const readBody = async (request) => {
   const chunks = [];
@@ -51,6 +53,15 @@ const server = createServer(async (request, response) => {
     }
     return;
   }
+  if (request.method === "POST" && request.url === "/__test-control") {
+    try {
+      const body = await readBody(request);
+      if (!Number.isSafeInteger(body.delayMs) || body.delayMs < 0 || body.delayMs > 10_000) throw new Error("invalid delay");
+      structuredDelayMs = body.delayMs;
+      json(response, 200, { delayMs: structuredDelayMs });
+    } catch { json(response, 400, { error: "invalid test control" }); }
+    return;
+  }
   if (request.method !== "GET" && request.url === "/v1/chat/completions") {
     try {
       if (request.headers.authorization !== "Bearer compose-smoke-provider-key") {
@@ -59,6 +70,9 @@ const server = createServer(async (request, response) => {
       }
       const body = await readBody(request);
       const context = JSON.parse(body?.messages?.[1]?.content ?? "null");
+      const event = { stage: context?.skill, scope: context?.scope, startedAt: new Date().toISOString() };
+      structuredEvents.push(event);
+      if (structuredDelayMs) await new Promise((resolve) => setTimeout(resolve, structuredDelayMs));
       const text = context?.normalizedDocument?.pages?.[0]?.textBlocks?.[0]?.text;
       let value;
       if (context?.skill === "atlas.semantic.extract") {
@@ -87,6 +101,7 @@ const server = createServer(async (request, response) => {
         return;
       }
       structuredCalls += 1;
+      event.finishedAt = new Date().toISOString();
       json(response, 200, { model: "compose-smoke-structured", choices: [{ message: { content: JSON.stringify(value) } }] });
     } catch {
       json(response, 400, { error: "malformed mock request" });
@@ -94,7 +109,7 @@ const server = createServer(async (request, response) => {
     return;
   }
   if (request.method === "GET" && request.url === "/metrics") {
-    json(response, 200, { ocrCalls, structuredCalls });
+    json(response, 200, { ocrCalls, structuredCalls, structuredEvents });
     return;
   }
   response.statusCode = 404;
