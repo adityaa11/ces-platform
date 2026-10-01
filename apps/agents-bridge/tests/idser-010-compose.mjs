@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
+import { createHmac } from "node:crypto";
+import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import postgres from "postgres";
@@ -23,6 +25,24 @@ const bridgeUrl = new URL(url); bridgeUrl.username = "agents_bridge"; bridgeUrl.
 const atlas = postgres(atlasUrl.toString(), { max: 2 });
 const bridge = postgres(bridgeUrl.toString(), { max: 2 });
 const origin = "http://localhost:3001";
+const homeReadSecret = async () => {
+  const settings = await readFile(new URL("../../atlas/.dev.vars", import.meta.url), "utf8");
+  const match = settings.match(/^BETTER_AUTH_SECRET=(.+)$/m);
+  assert.ok(match?.[1], "the controlled Compose configuration supplies the internal home-read secret");
+  return match[1].trim();
+};
+const readProjectCard = async (projectId, expectedUncertainty) => {
+  const [project] = await atlas.unsafe("SELECT id, created_by_user_id FROM atlas.project WHERE stable_id=$1", [projectId]);
+  assert.ok(project, "the authenticated project remains available to its owner");
+  const issuedAt = String(Date.now());
+  const signature = createHmac("sha256", await homeReadSecret()).update(`${project.created_by_user_id}.${issuedAt}`).digest("hex");
+  const response = await fetch(`${origin}/internal/home-projects`, { headers: { "x-atlas-home-user-id": project.created_by_user_id, "x-atlas-home-issued-at": issuedAt, "x-atlas-home-signature": signature } });
+  assert.equal(response.status, 200, "the production home-project read model accepts the authenticated owner identity");
+  const body = await response.json();
+  assert.ok(Array.isArray(body.projects), "the production home-project route returns its bounded card collection");
+  const card = body.projects.find((value) => value.projectId === projectId);
+  assert.deepEqual(card && { state: card.state, uncertainty: card.hasSemanticUncertainty, attentionReason: card.attentionReason, processed: card.initialDraft?.processedLabel, progress: card.initialDraft?.progressPercent, master: card.master?.label }, { state: "ready-for-review", uncertainty: expectedUncertainty, attentionReason: undefined, processed: "1 of 1 PRDs processed", progress: 100, master: "No published work" }, "the production card presents the completed bundle as Ready for review without Needs attention");
+};
 const cookie = async (label) => {
   const email = `idser-010-${label}-${crypto.randomUUID().slice(0, 10)}@example.test`;
   const signUp = await fetch(`${origin}/api/auth/sign-up/email`, { method: "POST", headers: { "content-type": "application/json", origin }, body: JSON.stringify({ name: "IDSER 010", email, password: "a-tested-local-password" }) });
@@ -50,10 +70,15 @@ try {
     assert.ok(Number(facts.evidence) >= expectedCandidates);
     const [states] = await atlas.unsafe("SELECT count(*)::int AS completed FROM atlas.semantic_execution e JOIN atlas.project p ON p.id=e.project_id WHERE p.stable_id=$1 AND e.lifecycle='completed'", [item.projectId]);
     assert.equal(Number(states.completed), 2, "actual extraction and reconciliation executions complete");
+    const [results] = await atlas.unsafe("SELECT (SELECT count(*)::int FROM atlas.semantic_extraction_result extraction JOIN atlas.semantic_execution execution ON execution.id=extraction.execution_id AND execution.project_id=extraction.project_id AND execution.workspace_id=extraction.workspace_id AND execution.bundle_id=extraction.bundle_id AND execution.document_id=extraction.document_id JOIN atlas.document document ON document.id=extraction.document_id AND document.project_id=extraction.project_id AND document.workspace_id=extraction.workspace_id WHERE extraction.project_id=p.id AND extraction.workspace_id=b.workspace_id AND extraction.bundle_id=b.id AND execution.stage='extraction' AND execution.lifecycle='completed' AND extraction.contract_version='v1' AND extraction.source_sha256=document.source_sha256 AND extraction.provider_provenance->>'provider'='mistral' AND extraction.provider_provenance->>'endpoint'='/v1/chat/completions' AND extraction.result_json->>'version'='v1' AND jsonb_typeof(extraction.result_json->'candidate_assertions')='array' AND jsonb_array_length(extraction.result_json->'candidate_assertions')=$2) AS extraction_results, (SELECT count(*)::int FROM atlas.semantic_reconciliation_result reconciliation JOIN atlas.semantic_execution execution ON execution.id=reconciliation.execution_id AND execution.project_id=reconciliation.project_id AND execution.workspace_id=reconciliation.workspace_id AND execution.bundle_id=reconciliation.bundle_id AND execution.document_id=reconciliation.current_document_id WHERE reconciliation.project_id=p.id AND reconciliation.workspace_id=b.workspace_id AND reconciliation.bundle_id=b.id AND execution.stage='reconciliation' AND execution.lifecycle='completed' AND reconciliation.contract_version='v1' AND reconciliation.provider_provenance->>'provider'='mistral' AND reconciliation.provider_provenance->>'endpoint'='/v1/chat/completions' AND reconciliation.result_json->>'version'='v1' AND jsonb_typeof(reconciliation.result_json->'relationships')='array' AND jsonb_array_length(reconciliation.result_json->'relationships')=$2) AS reconciliation_results, (SELECT count(*)::int FROM atlas.semantic_candidate candidate JOIN atlas.semantic_extraction_result extraction ON extraction.id=candidate.extraction_result_id AND extraction.project_id=candidate.project_id AND extraction.workspace_id=candidate.workspace_id AND extraction.bundle_id=candidate.bundle_id AND extraction.document_id=candidate.document_id JOIN atlas.semantic_evidence evidence ON evidence.semantic_candidate_id=candidate.id AND evidence.document_id=candidate.document_id JOIN atlas.knowledge_index knowledge ON knowledge.semantic_candidate_id=candidate.id AND knowledge.project_id=candidate.project_id AND knowledge.workspace_id=candidate.workspace_id AND knowledge.bundle_id=candidate.bundle_id AND knowledge.document_id=candidate.document_id WHERE candidate.project_id=p.id AND candidate.workspace_id=b.workspace_id AND candidate.bundle_id=b.id) AS resolved_candidate_evidence_ids FROM atlas.project p JOIN atlas.extraction_bundle b ON b.project_id=p.id WHERE p.stable_id=$1", [item.projectId, expectedCandidates]);
+    assert.deepEqual({ extraction: Number(results.extraction_results), reconciliation: Number(results.reconciliation_results), resolvedCandidateEvidenceIds: Number(results.resolved_candidate_evidence_ids) }, { extraction: 1, reconciliation: 1, resolvedCandidateEvidenceIds: expectedCandidates }, "persisted full semantic results, provider provenance, and candidate/evidence identities resolve in this project bundle");
     if (label === "conflict") {
       const [unresolved] = await atlas.unsafe("SELECT count(*)::int AS count FROM atlas.semantic_candidate c JOIN atlas.project p ON p.id=c.project_id WHERE p.stable_id=$1 AND c.needs_resolution AND c.state='candidate'", [item.projectId]);
       assert.equal(Number(unresolved.count), 2);
+      const [relationshipState] = await atlas.unsafe("SELECT count(*)::int AS unresolved FROM atlas.reconciliation_relationship relationship JOIN atlas.project p ON p.id=relationship.project_id JOIN atlas.extraction_bundle b ON b.id=relationship.bundle_id AND b.project_id=p.id WHERE p.stable_id=$1 AND relationship.workspace_id=b.workspace_id AND relationship.relationship_type='contradicts' AND relationship.requires_resolution=true", [item.projectId]);
+      assert.equal(Number(relationshipState.unresolved), 1, "the persisted conflict relationship remains unresolved");
     }
+    await readProjectCard(item.projectId, label === "conflict");
   }
   const metrics = JSON.parse(await run([...compose, "exec", "-T", "mistral-mock", "node", "-e", "fetch('http://127.0.0.1:3100/metrics').then(async response => process.stdout.write(await response.text()))"]));
   assert.ok(metrics.ocrCalls >= 2, "the controlled Mistral endpoint received both OCR calls");
