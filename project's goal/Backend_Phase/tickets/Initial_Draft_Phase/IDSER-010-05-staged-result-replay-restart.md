@@ -1,6 +1,6 @@
 # IDSER-010-05: Staged-result replay, restart and fencing
 
-- **State:** `planned`; **Review batch:** `IDSER-BATCH-10-05`.
+- **State:** `awaiting_review`; **Review batch:** `IDSER-BATCH-10-05`.
 - **Predecessors:** IDSER-010-04 `PASS`.
 - **Consumes:** approved `semantic_result_delivery` outbox, semantic acceptance idempotency, pg-boss leases and worker shutdown behavior.
 - **Execution environment:** controlled-provider Compose worker and durable PostgreSQL/pg-boss restart harness.

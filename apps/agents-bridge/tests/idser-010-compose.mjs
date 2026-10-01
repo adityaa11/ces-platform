@@ -8,10 +8,13 @@ import postgres from "postgres";
 
 const execFileAsync = promisify(execFile);
 const root = fileURLToPath(new URL("../../../", import.meta.url));
-const base = ["compose", "-f", "docker-compose.yml"];
+// This checkpoint owns a disposable Compose project so its restart and queue
+// observations cannot consume or mutate a developer's long-lived pg-boss DB.
+const composeEnvironment = { ...process.env, POSTGRES_PORT: "15432", ATLAS_PORT: "13001", AGENTS_BRIDGE_PORT: "13002" };
+const base = ["compose", "-p", "idser-010-compose", "-f", "docker-compose.yml"];
 const compose = [...base, "-f", "docker-compose.perception-smoke.yml"];
 const run = async (args, optional = false) => {
-  try { return (await execFileAsync("docker", args, { cwd: root, maxBuffer: 4 * 1024 * 1024 })).stdout; }
+  try { return (await execFileAsync("docker", args, { cwd: root, env: composeEnvironment, maxBuffer: 4 * 1024 * 1024 })).stdout; }
   catch (error) { if (optional) return ""; throw new Error(String(error?.stderr ?? error).slice(-4000)); }
 };
 const waitFor = async (predicate) => {
@@ -19,12 +22,14 @@ const waitFor = async (predicate) => {
   while (Date.now() < deadline) { if (await predicate()) return; await new Promise((resolve) => setTimeout(resolve, 250)); }
   throw new Error("Timed out waiting for the controlled IDSER-010 scenario.");
 };
-const url = process.env.DATABASE_URL ?? "postgresql://atlas:atlas_local_dev_only@localhost:5432/atlas_dev";
+const url = process.env.DATABASE_URL ?? "postgresql://atlas:atlas_local_dev_only@localhost:15432/atlas_dev";
 const atlasUrl = new URL(url); atlasUrl.username = "atlas_app"; atlasUrl.password = process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only";
 const bridgeUrl = new URL(url); bridgeUrl.username = "agents_bridge"; bridgeUrl.password = process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only";
 const atlas = postgres(atlasUrl.toString(), { max: 2 });
 const bridge = postgres(bridgeUrl.toString(), { max: 2 });
-const origin = "http://localhost:3001";
+const admin = postgres(url, { max: 2 });
+const origin = "http://localhost:13001";
+const browserOrigin = "http://localhost:3001";
 const homeReadSecret = async () => {
   const settings = await readFile(new URL("../../atlas/.dev.vars", import.meta.url), "utf8");
   const match = settings.match(/^BETTER_AUTH_SECRET=(.+)$/m);
@@ -63,9 +68,9 @@ const semanticRequest = async (path, body) => {
 };
 const cookie = async (label) => {
   const email = `idser-010-${label}-${crypto.randomUUID().slice(0, 10)}@example.test`;
-  const signUp = await fetch(`${origin}/api/auth/sign-up/email`, { method: "POST", headers: { "content-type": "application/json", origin }, body: JSON.stringify({ name: "IDSER 010", email, password: "a-tested-local-password" }) });
+  const signUp = await fetch(`${origin}/api/auth/sign-up/email`, { method: "POST", headers: { "content-type": "application/json", origin: browserOrigin }, body: JSON.stringify({ name: "IDSER 010", email, password: "a-tested-local-password" }) });
   assert.equal(signUp.status, 200);
-  const signIn = await fetch(`${origin}/api/auth/sign-in/email`, { method: "POST", headers: { "content-type": "application/json", origin }, body: JSON.stringify({ email, password: "a-tested-local-password" }) });
+  const signIn = await fetch(`${origin}/api/auth/sign-in/email`, { method: "POST", headers: { "content-type": "application/json", origin: browserOrigin }, body: JSON.stringify({ email, password: "a-tested-local-password" }) });
   assert.equal(signIn.status, 200);
   return { email, value: signIn.headers.getSetCookie().map((item) => item.split(";", 1)[0]).join("; ") };
 };
@@ -74,12 +79,17 @@ const create = async (label, texts, projectName = `IDSER 010 ${label}`) => {
   const projectId = `idser-010-${label}-${crypto.randomUUID().slice(0, 10)}`;
   const form = new FormData(); form.set("projectId", projectId); form.set("projectName", projectName);
   for (const [index, text] of texts.entries()) form.append("prdFiles[]", new File([Buffer.from(`%PDF-1.7\n${text}`)], `${label}-${index + 1}.pdf`, { type: "application/pdf" }));
-  const response = await fetch(`${origin}/api/projects`, { method: "POST", headers: { cookie: auth.value, origin }, body: form });
+  const response = await fetch(`${origin}/api/projects`, { method: "POST", headers: { cookie: auth.value, origin: browserOrigin }, body: form });
   assert.equal(response.status, 201, await response.text());
   return { projectId, email: auth.email, cookie: auth.value };
 };
 let projects = [];
 try {
+  await run([...compose, "down", "-v"], true);
+  await run([...compose, "up", "-d", "postgres", "--wait"]);
+  await run([...compose, "exec", "-T", "postgres", "psql", "-U", "atlas", "-d", "atlas_dev", "-c", "CREATE ROLE agents_bridge LOGIN PASSWORD 'agents_bridge_local_dev_only'; CREATE ROLE atlas_app LOGIN PASSWORD 'atlas_app_local_dev_only'; GRANT ALL ON DATABASE atlas_dev TO agents_bridge, atlas_app"]);
+  await run([...compose, "run", "--rm", "--no-deps", "--workdir", "/workspace/apps/agents-bridge", "agents-bridge-worker", "node", "-e", "import('pg-boss').then(async ({ PgBoss }) => { const boss = new PgBoss({ connectionString: process.env.AGENTS_BRIDGE_DATABASE_URL, schema: 'pgboss', migrate: true, createSchema: true }); await boss.start(); await boss.stop(); })"]);
+  await run([...compose, "exec", "-T", "postgres", "psql", "-U", "atlas", "-d", "atlas_dev", "-c", "GRANT USAGE ON SCHEMA pgboss TO atlas_app; GRANT SELECT ON ALL TABLES IN SCHEMA pgboss TO atlas_app"]);
   await run([...compose, "up", "-d", "--build", "--wait"]);
   for (const [label, texts, expectedCandidates, relationship] of [["normal", ["Normal approval statement"], 1, "new"], ["conflict", ["Conflicting quota statements"], 2, "contradicts"]]) {
     const item = await create(label, texts); projects.push(item);
@@ -225,6 +235,7 @@ try {
     assert.ok(Date.parse(left.startedAt) < Date.parse(right.finishedAt) && Date.parse(right.startedAt) < Date.parse(left.finishedAt), `${stage} worker execution overlaps for both scopes`);
   }
   const [remainingJobs] = await bridge.unsafe("SELECT count(*)::int AS count FROM pgboss.job WHERE data->'execution'->>'executionId' = ANY($1::text[])", [executionIds]);
+  await waitFor(async () => (await bridge.unsafe("SELECT count(*)::int AS count FROM pgboss.job WHERE data->'execution'->>'executionId'=ANY($1::text[]) AND state='completed'", [executionIds]))[0]?.count === executionIds.length);
   const finalJobs = await bridge.unsafe("SELECT id::text AS id,name,state,data->'execution'->>'executionId' AS execution_id FROM pgboss.job WHERE data->'execution'->>'executionId'=ANY($1::text[]) ORDER BY execution_id", [executionIds]);
   assert.equal(finalJobs.length, 4);
   assert.ok(finalJobs.every((job) => job.state === "completed"), "each matching pg-boss job reaches its terminal completed state");
@@ -244,7 +255,71 @@ try {
   const foreignReference = { candidateId: betaForeignCandidate[0].id, candidateBundleId: betaBundle.bundle_id, attemptedSourceExecutionId: alphaReconciliation.id };
   const evidence = { scenario: "F", composeCommand: "node apps/agents-bridge/tests/idser-010-compose.mjs", ownersAndIds: safeIds, queueJobs: observedQueueJobs, workerEvents: scenarioEvents, deniedContext: { status: deniedContext.status, targetControlBefore: beforeContextDenial, targetControlAfter: afterContextDenial, unrelatedQueueStateBefore: queueStateSummary(unrelatedJobsBefore), unrelatedQueueStateAfter: queueStateSummary(unrelatedJobsAfterContextDenial) }, deniedCrossOwnerProgressMutation: { status: mismatchedScope.status, targetControlBefore: beforeContextDenial, targetControlAfter: afterCrossOwnerProgressMutation }, deniedForeignCandidateReference: { status: deniedForeignReference.status, foreignReference, targetControlBefore: beforeForeignReferenceDenial, targetControlAfter: afterForeignReferenceDenial, unrelatedQueueStateBefore: queueStateSummary(unrelatedBeforeForeignReference), unrelatedQueueStateAfter: queueStateSummary(unrelatedAfterForeignReference) }, completedStageCounts: finalExecutionStates, ocrCalls: metrics.ocrCalls, structuredCalls: metrics.structuredCalls, acknowledgedOutboxRowsRemaining: Number(deliveryOutbox.count), finalScopes };
   process.stdout.write(`IDSER-010 Scenario F evidence: ${JSON.stringify(evidence)}\n`);
-  process.stdout.write("IDSER-010 controlled Compose scenarios A/B/C/D/E/F passed.\n");
+  // Scenario H: stage an extraction result while Atlas is deliberately
+  // unavailable, stop the real Compose worker, then recover through the
+  // durable pg-boss/outbox state. A one-shot completion trigger makes the
+  // first post-acceptance acknowledgement fail, forcing identical replay.
+  const replay = await create("scenario-h-replay", ["Replay restart payload"]); projects.push(replay);
+  let replayScope;
+  await waitFor(async () => {
+    [replayScope] = await atlas.unsafe("SELECT p.id AS project_id,w.id AS workspace_id,b.id AS bundle_id,d.id AS document_id,e.id AS execution_id FROM atlas.project p JOIN atlas.workspace w ON w.project_id=p.id AND w.kind='initial_draft' JOIN atlas.extraction_bundle b ON b.project_id=p.id AND b.workspace_id=w.id JOIN atlas.document d ON d.project_id=p.id AND d.workspace_id=w.id JOIN atlas.semantic_execution e ON e.bundle_id=b.id AND e.document_id=d.id AND e.stage='extraction' WHERE p.stable_id=$1", [replay.projectId]);
+    return Boolean(replayScope);
+  });
+  assert.ok(replayScope, "Scenario H has its extraction execution");
+  let replayKey;
+  await waitFor(async () => {
+    replayKey = (await bridge.unsafe("SELECT data->>'idempotencyKey' AS key FROM pgboss.job WHERE data->'execution'->>'executionId'=$1", [replayScope.execution_id]))[0]?.key;
+    return Boolean(replayKey);
+  });
+  assert.ok(replayKey, "Scenario H exposes its durable Bridge idempotency key");
+  const faultName = `idser_h_${crypto.randomUUID().replaceAll("-", "").slice(0, 18)}`;
+  await bridge.unsafe(`CREATE SEQUENCE bridge.${faultName}_sequence START 1`);
+  await bridge.unsafe(`CREATE FUNCTION bridge.${faultName}_completion() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.idempotency_key = '${replayKey}' AND NEW.status = 'completed' AND nextval('bridge.${faultName}_sequence') = 1 THEN RAISE EXCEPTION 'controlled Scenario H acknowledgement loss'; END IF; RETURN NEW; END $$`);
+  await bridge.unsafe(`CREATE TRIGGER ${faultName}_trigger BEFORE UPDATE ON bridge.background_effects FOR EACH ROW EXECUTE FUNCTION bridge.${faultName}_completion()`);
+  const beforeReplayMetrics = await mockMetrics();
+  await mockControl(3_000);
+  await waitFor(async () => (await mockMetrics()).structuredEvents.length > beforeReplayMetrics.structuredEvents.length);
+  await run([...compose, "stop", "atlas"]);
+  await waitFor(async () => (await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [replayKey]))[0]?.count === 1);
+  const [staged] = await bridge.unsafe("SELECT execution_id,validated_envelope,provenance,lease_owner,lease_generation FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [replayKey]);
+  const [stagedEffect] = await bridge.unsafe("SELECT status,lease_owner,lease_generation FROM bridge.background_effects WHERE idempotency_key=$1", [replayKey]);
+  assert.equal(staged.execution_id, replayScope.execution_id, "only the scoped execution owns the staged envelope");
+  assert.ok(staged.lease_owner && Number(staged.lease_generation) >= 1, "staging records a durable lease fence");
+  assert.ok(["pending", "running"].includes(stagedEffect.status), "the stopped delivery retains a staged replay claimant");
+  const [conflictingStage] = await bridge.unsafe("INSERT INTO bridge.semantic_result_delivery (idempotency_key,execution_id,stage,validated_envelope,provenance,completion_fingerprint,lease_owner,lease_generation) SELECT idempotency_key,$2,stage,validated_envelope,provenance,'conflicting-fingerprint','losing-claimant',0 FROM bridge.semantic_result_delivery WHERE idempotency_key=$1 ON CONFLICT (idempotency_key) DO NOTHING RETURNING idempotency_key", [replayKey, `${replayScope.execution_id}-conflict`]);
+  assert.equal(conflictingStage, undefined, "a conflicting result/fingerprint cannot replace the staged winner");
+  const [afterConflictStage] = await bridge.unsafe("SELECT validated_envelope,execution_id,lease_generation FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [replayKey]);
+  assert.deepEqual(afterConflictStage, { validated_envelope: staged.validated_envelope, execution_id: staged.execution_id, lease_generation: staged.lease_generation }, "the losing fingerprint mutation leaves the durable winner unchanged");
+  await bridge.unsafe("UPDATE bridge.background_effects SET lease_owner='superseding-claimant', lease_generation=lease_generation+1, lease_expires_at=now()-interval '1 second' WHERE idempotency_key=$1", [replayKey]);
+  const [staleCompletion] = await bridge.unsafe("UPDATE bridge.background_effects SET status='completed' WHERE idempotency_key=$1 AND lease_owner=$2 AND lease_generation=$3 AND status='running' RETURNING idempotency_key", [replayKey, stagedEffect.lease_owner, stagedEffect.lease_generation]);
+  assert.equal(staleCompletion, undefined, "the stale lease claimant cannot complete the superseded effect");
+  const [afterStaleCompletion] = await bridge.unsafe("SELECT status,lease_owner,lease_generation FROM bridge.background_effects WHERE idempotency_key=$1", [replayKey]);
+  assert.deepEqual(afterStaleCompletion, { status: stagedEffect.status, lease_owner: "superseding-claimant", lease_generation: Number(stagedEffect.lease_generation) + 1 }, "the stale completion attempt leaves the superseding control row unchanged");
+  await run([...compose, "stop", "agents-bridge-worker"]);
+  const [survivingStage] = await bridge.unsafe("SELECT validated_envelope,lease_generation FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [replayKey]);
+  assert.deepEqual(survivingStage.validated_envelope, staged.validated_envelope, "the exact staged envelope survives worker interruption");
+  await run([...compose, "start", "atlas"]);
+  await waitFor(async () => {
+    try { return (await fetch(origin)).ok; }
+    catch { return false; }
+  });
+  await run([...compose, "start", "agents-bridge-worker"]);
+  await bridge.unsafe("UPDATE pgboss.job SET state='created', started_on=NULL, completed_on=NULL, start_after=now() WHERE data->>'idempotencyKey'=$1", [replayKey]);
+  await waitFor(async () => (await bridge.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [replayKey]))[0]?.status === "completed");
+  await waitFor(async () => (await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [replayKey]))[0]?.count === 0);
+  await waitFor(async () => (await atlas.unsafe("SELECT state FROM atlas.extraction_bundle WHERE id=$1", [replayScope.bundle_id]))[0]?.state === "ready_for_review");
+  await mockControl(0);
+  const afterReplayMetrics = await mockMetrics();
+  assert.equal(afterReplayMetrics.structuredEvents.filter((event) => event.scope?.executionId === replayScope.execution_id).length, 1, "restart and acknowledgement-loss replay do not make a second extraction provider call");
+  const [replayEffects] = await atlas.unsafe("SELECT e.lifecycle,b.expected_document_count,b.completed_document_count,(SELECT count(*)::int FROM atlas.semantic_extraction_result WHERE execution_id=e.id) AS extraction_results,(SELECT count(*)::int FROM atlas.semantic_candidate WHERE bundle_id=e.bundle_id AND document_id=e.document_id) AS candidates,(SELECT count(*)::int FROM atlas.semantic_evidence evidence JOIN atlas.semantic_candidate candidate ON candidate.id=evidence.semantic_candidate_id WHERE candidate.bundle_id=e.bundle_id AND candidate.document_id=e.document_id) AS evidence,(SELECT count(*)::int FROM atlas.reconciliation_relationship WHERE bundle_id=e.bundle_id) AS relationships,(SELECT count(*)::int FROM pgboss.job WHERE data->'execution'->>'executionId'=e.id AND state='completed') AS completed_jobs FROM atlas.semantic_execution e JOIN atlas.extraction_bundle b ON b.id=e.bundle_id WHERE e.id=$1", [replayScope.execution_id]);
+  assert.deepEqual({ lifecycle: replayEffects.lifecycle, expected: Number(replayEffects.expected_document_count), completed: Number(replayEffects.completed_document_count), extraction: Number(replayEffects.extraction_results), candidates: Number(replayEffects.candidates), evidence: Number(replayEffects.evidence), relationships: Number(replayEffects.relationships), completedJobs: Number(replayEffects.completed_jobs) }, { lifecycle: "completed", expected: 1, completed: 1, extraction: 1, candidates: 1, evidence: 1, relationships: 1, completedJobs: 1 }, "identical replay has singular Atlas rows, progress, successor work, and final queue record");
+  const [completedEffect] = await bridge.unsafe("SELECT lease_generation FROM bridge.background_effects WHERE idempotency_key=$1", [replayKey]);
+  assert.ok(Number(completedEffect.lease_generation) > Number(staged.lease_generation), "the resumed claimant completes under a later lease generation");
+  process.stdout.write(`IDSER-010 Scenario H evidence: ${JSON.stringify({ executionId: replayScope.execution_id, idempotencyKey: replayKey, stagedLeaseGeneration: staged.lease_generation, resumedLeaseGeneration: completedEffect.lease_generation, providerCallsBefore: beforeReplayMetrics.structuredCalls, providerCallsAfter: afterReplayMetrics.structuredCalls, stagedEnvelopeSha256: createHash("sha256").update(JSON.stringify(staged.validated_envelope)).digest("hex"), singularEffects: replayEffects })}\n`);
+  await bridge.unsafe(`DROP TRIGGER IF EXISTS ${faultName}_trigger ON bridge.background_effects`);
+  await bridge.unsafe(`DROP FUNCTION IF EXISTS bridge.${faultName}_completion()`);
+  await bridge.unsafe(`DROP SEQUENCE IF EXISTS bridge.${faultName}_sequence`);
+  process.stdout.write("IDSER-010 controlled Compose scenarios A/B/C/D/E/F/H passed.\n");
 } finally {
   for (const item of projects) {
     const project = "SELECT id FROM atlas.project WHERE stable_id=$1";
@@ -260,7 +335,6 @@ try {
     await atlas.unsafe("DELETE FROM atlas.project WHERE stable_id=$1", [item.projectId]);
     await atlas.unsafe('DELETE FROM auth."user" WHERE email=$1', [item.email]);
   }
-  await Promise.all([atlas.end(), bridge.end()]);
-  await run([...compose, "down"], true);
-  await run([...base, "up", "-d", "--wait"], true);
+  await Promise.all([atlas.end(), bridge.end(), admin.end()]);
+  await run([...compose, "down", "-v"], true);
 }
