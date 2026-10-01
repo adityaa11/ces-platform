@@ -54,7 +54,10 @@ export class PostgresPerceptionAuthority implements PerceptionAuthority {
       const rows = await sql.unsafe("SELECT e.id, e.artifact_id, e.document_storage_key, e.source_sha256, e.mime_type, e.byte_size, member.bundle_id, member.document_id, member.state AS member_state, bundle.state AS bundle_state FROM atlas.document_perception_source_grant g JOIN atlas.document_perception_execution e ON e.id=g.execution_id JOIN atlas.extraction_bundle_document member ON member.perception_execution_id=e.id AND member.document_id=e.artifact_id JOIN atlas.extraction_bundle bundle ON bundle.id=member.bundle_id AND bundle.project_id=member.project_id AND bundle.workspace_id=member.workspace_id WHERE g.grant_id=$1 AND g.execution_id=$2 AND g.artifact_id=$3 AND g.source_sha256=$4 AND g.mime_type=$5 AND g.byte_size=$6 AND g.expires_at>now() AND e.state NOT IN ('completed','cancelled','failed') AND bundle.state NOT IN ('ready_for_review','needs_attention') FOR UPDATE OF e, member, bundle", [grantId, request.executionId, request.artifact.id, request.artifact.sourceSha256, request.artifact.mimeType, request.artifact.byteSize]);
       if (!rows.length) throw new Error("Perception source redemption is stale or unauthorized.");
       const row = rows[0];
-      if (row.bundle_state === "waiting" && row.member_state === "perception_queued") {
+      if (row.member_state === "perception_queued" && ["waiting", "processing"].includes(String(row.bundle_state))) {
+        // The first document moves a waiting bundle into processing. Every
+        // later document is queued by reconciliation while that same bundle is
+        // already processing, so both transitions are authorized here.
         await sql.unsafe("UPDATE atlas.extraction_bundle SET state='processing', started_at=COALESCE(started_at, now()) WHERE id=$1 AND state='waiting'", [row.bundle_id]);
         await sql.unsafe("UPDATE atlas.extraction_bundle_document SET state='perceiving', started_at=COALESCE(started_at, now()) WHERE bundle_id=$1 AND document_id=$2 AND state='perception_queued'", [row.bundle_id, row.document_id]);
       } else if (row.bundle_state !== "processing" || !["perceiving", "extracting", "reconciling", "completed"].includes(String(row.member_state))) throw new Error("Perception source redemption is stale or unauthorized.");

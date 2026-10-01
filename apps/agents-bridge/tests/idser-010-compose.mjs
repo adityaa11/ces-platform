@@ -31,7 +31,7 @@ const homeReadSecret = async () => {
   assert.ok(match?.[1], "the controlled Compose configuration supplies the internal home-read secret");
   return match[1].trim();
 };
-const readProjectCard = async (projectId, expectedUncertainty) => {
+const readProjectCard = async (projectId, expectedUncertainty, expectedDocuments = 1) => {
   const [project] = await atlas.unsafe("SELECT id, created_by_user_id FROM atlas.project WHERE stable_id=$1", [projectId]);
   assert.ok(project, "the authenticated project remains available to its owner");
   const issuedAt = String(Date.now());
@@ -41,7 +41,7 @@ const readProjectCard = async (projectId, expectedUncertainty) => {
   const body = await response.json();
   assert.ok(Array.isArray(body.projects), "the production home-project route returns its bounded card collection");
   const card = body.projects.find((value) => value.projectId === projectId);
-  assert.deepEqual(card && { state: card.state, uncertainty: card.hasSemanticUncertainty, attentionReason: card.attentionReason, processed: card.initialDraft?.processedLabel, progress: card.initialDraft?.progressPercent, master: card.master?.label }, { state: "ready-for-review", uncertainty: expectedUncertainty, attentionReason: undefined, processed: "1 of 1 PRDs processed", progress: 100, master: "No published work" }, "the production card presents the completed bundle as Ready for review without Needs attention");
+  assert.deepEqual(card && { state: card.state, uncertainty: card.hasSemanticUncertainty, attentionReason: card.attentionReason, processed: card.initialDraft?.processedLabel, progress: card.initialDraft?.progressPercent, master: card.master?.label }, { state: "ready-for-review", uncertainty: expectedUncertainty, attentionReason: undefined, processed: `${expectedDocuments} of ${expectedDocuments} PRDs processed`, progress: 100, master: "No published work" }, "the production card presents the completed bundle as Ready for review without Needs attention");
 };
 const cookie = async (label) => {
   const email = `idser-010-${label}-${crypto.randomUUID().slice(0, 10)}@example.test`;
@@ -97,7 +97,7 @@ try {
     const [candidateStates] = await atlas.unsafe("SELECT count(*)::int AS candidates, count(*) FILTER (WHERE state <> 'candidate')::int AS non_candidates FROM atlas.semantic_candidate WHERE bundle_id=$1", [bundle.id]);
     assert.equal(Number(candidateStates.non_candidates), 0, `${label} keeps all relationship results as incoming candidates`);
     assert.ok(Number(candidateStates.candidates) >= texts.length, `${label} accounts for every current document candidate`);
-    await readProjectCard(item.projectId, relationship === "contradicts");
+    await readProjectCard(item.projectId, relationship === "contradicts", texts.length);
   }
   const metrics = JSON.parse(await run([...compose, "exec", "-T", "mistral-mock", "node", "-e", "fetch('http://127.0.0.1:3100/metrics').then(async response => process.stdout.write(await response.text()))"]));
   assert.ok(metrics.ocrCalls >= 11, "the controlled Mistral endpoint received every single- and multi-document OCR call");
