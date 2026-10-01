@@ -12,8 +12,16 @@ const sizes = [
   { name: "reflow", width: 640, height: 720 },
 ];
 
-const holdPerceptionDelivery = (admin, projectId) => admin.unsafe(`CREATE OR REPLACE FUNCTION pgboss.idser00904_hold_perception() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.name='atlas-document-perception-v1' AND EXISTS (SELECT 1 FROM atlas.document document JOIN atlas.project project ON project.id=document.project_id WHERE document.id=(NEW.data #>> '{request,artifact,id}')::uuid AND project.stable_id=TG_ARGV[0]) THEN NEW.start_after=now()+interval '10 minutes'; END IF; RETURN NEW; END; $$; DROP TRIGGER IF EXISTS idser00904_hold_perception ON pgboss.job_common; CREATE TRIGGER idser00904_hold_perception BEFORE INSERT ON pgboss.job_common FOR EACH ROW EXECUTE FUNCTION pgboss.idser00904_hold_perception('${projectId}');`);
-const releasePerceptionDelivery = (admin, projectId) => admin.unsafe("DROP TRIGGER IF EXISTS idser00904_hold_perception ON pgboss.job_common; DROP FUNCTION IF EXISTS pgboss.idser00904_hold_perception(); DELETE FROM pgboss.job WHERE name='atlas-document-perception-v1' AND start_after>now() AND data #>> '{request,artifact,id}' IN (SELECT id::text FROM atlas.document WHERE project_id=(SELECT id FROM atlas.project WHERE stable_id=$1));", [projectId]);
+const holdPerceptionDelivery = async (admin, projectId) => {
+  await admin.unsafe(`CREATE OR REPLACE FUNCTION pgboss.idser00904_hold_perception() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.name='atlas-document-perception-v1' AND EXISTS (SELECT 1 FROM atlas.document document JOIN atlas.project project ON project.id=document.project_id WHERE document.id=NEW.data #>> '{request,artifact,id}' AND project.stable_id=TG_ARGV[0]) THEN NEW.start_after=now()+interval '10 minutes'; END IF; RETURN NEW; END; $$`);
+  await admin.unsafe("DROP TRIGGER IF EXISTS idser00904_hold_perception ON pgboss.job_common");
+  await admin.unsafe(`CREATE TRIGGER idser00904_hold_perception BEFORE INSERT ON pgboss.job_common FOR EACH ROW EXECUTE FUNCTION pgboss.idser00904_hold_perception('${projectId}')`);
+};
+const releasePerceptionDelivery = async (admin, projectId) => {
+  await admin.unsafe("DROP TRIGGER IF EXISTS idser00904_hold_perception ON pgboss.job_common");
+  await admin.unsafe("DROP FUNCTION IF EXISTS pgboss.idser00904_hold_perception()");
+  await admin.unsafe("DELETE FROM pgboss.job WHERE name='atlas-document-perception-v1' AND start_after>now() AND data #>> '{request,artifact,id}' IN (SELECT id::text FROM atlas.document WHERE project_id=(SELECT id FROM atlas.project WHERE stable_id=$1))", [projectId]);
+};
 
 async function capture(page, info, state) {
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

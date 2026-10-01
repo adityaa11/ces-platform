@@ -1,6 +1,6 @@
 # IDSER-010-06: Integrated deterministic Compose and regression checkpoint
 
-- **State:** `planned`; **Review batch:** `IDSER-BATCH-10-06`.
+- **State:** `awaiting_review`; **Review batch:** `IDSER-BATCH-10-06`.
 - **Predecessors:** IDSER-010-01, IDSER-010-02, IDSER-010-03-01, IDSER-010-03-02, IDSER-010-04 and IDSER-010-05 `PASS`.
 - **Consumes:** the approved child evidence as frozen interfaces. A material defect in a child-owned authority is not repairable here.
 - **Execution environment:** full Compose stack, registered IDSER scripts, existing focused suites, authenticated app/browser tests and secret-safe evidence collection.

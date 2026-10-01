@@ -41,7 +41,7 @@ const server = createServer(async (request, response) => {
         return;
       }
       const sourceText = Buffer.from(documentUrl.slice("data:application/pdf;base64,".length), "base64").toString("utf8");
-      const markdown = ["Conflicting quota statements", "Supports approval statement", "Duplicate approval statement", "Isolation alpha payload", "Isolation beta payload", "Replay restart payload"].find((fixture) => sourceText.includes(fixture)) ?? "Normal approval statement";
+      const markdown = ["Conflicting quota statements", "Supports approval statement", "Duplicate approval statement", "Invalid semantic output", "Isolation alpha payload", "Isolation beta payload", "Replay restart payload"].find((fixture) => sourceText.includes(fixture)) ?? "Normal approval statement";
       ocrCalls += 1;
       json(response, 200, {
         model: "compose-smoke-ocr",
@@ -77,6 +77,7 @@ const server = createServer(async (request, response) => {
       let value;
       if (context?.skill === "atlas.semantic.extract") {
         const conflicting = text === "Conflicting quota statements";
+        const invalidEvidence = text === "Invalid semantic output";
         const candidates = conflicting
           ? [["quota-40", "quota.limit.40", "The quota is 40."], ["quota-45", "quota.limit.45", "The quota is 45."]]
           : [["approval", "order.approval", text === "Supports approval statement" ? "A customer supports an order approval." : text === "Duplicate approval statement" ? "A customer repeats an order approval." : text === "Isolation alpha payload" ? "Scenario F alpha assertion." : text === "Isolation beta payload" ? "Scenario F beta assertion." : text === "Replay restart payload" ? "Scenario H replay assertion." : "A customer approves an order."]];
@@ -86,6 +87,7 @@ const server = createServer(async (request, response) => {
           source_statement_inventory: [{ source_unit_id: "source-block", page_number: 1, locator_type: "text_block", locator_id: "page-1-markdown", classification: "candidate", destination_local_candidate_ids: candidates.map(([local_candidate_id]) => local_candidate_id) }, { source_unit_id: "source-visual", page_number: 1, locator_type: "visual_region", locator_id: "compose-figure", classification: "non_fact", destination_local_candidate_ids: [], non_fact_reason: "Controlled fixture diagram carries no semantic assertion." }],
           questions: [],
         };
+        if (invalidEvidence) value.candidate_assertions[0].evidence_refs = [{ page_number: 1, locator_type: "text_block", locator_id: "missing-controlled-block", excerpt: "This reference must be rejected." }];
       } else if (context?.skill === "atlas.semantic.reconcile" && Array.isArray(context.currentCandidates)) {
         const conflicting = context.currentCandidates.length === 2;
         const current = context.currentCandidates[0];

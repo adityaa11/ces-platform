@@ -135,6 +135,14 @@ try {
     assert.ok(Number(candidateStates.candidates) >= texts.length, `${label} accounts for every current document candidate`);
     await readProjectCard(item.projectId, relationship === "contradicts", texts.length);
   }
+  // Scenario G follows the normal production worker path but returns a
+  // controlled invalid evidence locator. The trusted boundary must contain it.
+  const invalid = await create("scenario-g-invalid", ["Invalid semantic output"]); projects.push(invalid);
+  await waitFor(async () => (await atlas.unsafe("SELECT state FROM atlas.extraction_bundle WHERE project_id=(SELECT id FROM atlas.project WHERE stable_id=$1)", [invalid.projectId]))[0]?.state === "needs_attention");
+  const [invalidOutcome] = await atlas.unsafe("SELECT b.state AS bundle_state,b.completed_document_count,m.state AS member_state,(SELECT count(*)::int FROM atlas.semantic_execution e WHERE e.bundle_id=b.id AND e.lifecycle='failed') AS failed_executions,(SELECT count(*)::int FROM atlas.semantic_extraction_result r WHERE r.bundle_id=b.id) AS extraction_results,(SELECT count(*)::int FROM atlas.semantic_candidate c WHERE c.bundle_id=b.id) AS candidates,(SELECT count(*)::int FROM atlas.semantic_execution e WHERE e.bundle_id=b.id AND e.stage='reconciliation') AS successors FROM atlas.project p JOIN atlas.extraction_bundle b ON b.project_id=p.id JOIN atlas.extraction_bundle_document m ON m.bundle_id=b.id WHERE p.stable_id=$1", [invalid.projectId]);
+  const invalidSummary = { bundle: invalidOutcome.bundle_state, completed: Number(invalidOutcome.completed_document_count), member: invalidOutcome.member_state, failedExecutions: Number(invalidOutcome.failed_executions), extractionResults: Number(invalidOutcome.extraction_results), candidates: Number(invalidOutcome.candidates), successors: Number(invalidOutcome.successors) };
+  assert.deepEqual(invalidSummary, { bundle: "needs_attention", completed: 0, member: "needs_attention", failedExecutions: 1, extractionResults: 0, candidates: 0, successors: 0 }, "Scenario G rejects invalid semantic evidence without trusted progress, materialization, or successor work");
+  process.stdout.write(`IDSER-010 Scenario G evidence: ${JSON.stringify({ projectId: invalid.projectId, outcome: invalidSummary })}\n`);
   // Scenario F: create two identically named projects concurrently.  The
   // controlled provider emits distinct candidate meanings from their source
   // text, making a cross-context or cross-result delivery observable.
@@ -335,6 +343,11 @@ try {
   const resumedAtlasBoundEnvelopeSha256 = createHash("sha256").update(canonicalJson(resumedAtlasBoundEnvelope)).digest("hex");
   assert.equal(resumedAtlasBoundEnvelopeSha256, stagedEnvelopeSha256, "the observed resumed Atlas-bound envelope fingerprint equals the durable staged fingerprint");
   process.stdout.write(`IDSER-010 Scenario H evidence: ${JSON.stringify({ executionId: replayScope.execution_id, idempotencyKey: replayKey, stagedLeaseGeneration: staged.lease_generation, resumedLeaseGeneration: completedEffect.lease_generation, providerCallsBefore: beforeReplayMetrics.structuredCalls, providerCallsAfter: afterReplayMetrics.structuredCalls, stagedEnvelopeSha256, resumedAtlasBoundEnvelopeSha256, resumedAtlasBoundEnvelopeCount: resumedAtlasBoundEnvelopes.length, resumedAtlasBoundEnvelopeEqualsStaged: true, singularEffects: replayEffects })}\n`);
+  const [negativeAuthority] = await atlas.unsafe("SELECT (count(*) FILTER (WHERE master.state <> 'empty'))::int AS nonempty_masters FROM atlas.project p JOIN atlas.workspace master ON master.project_id=p.id AND master.kind='master' WHERE p.stable_id=ANY($1::text[])", [projects.map((item) => item.projectId)]);
+  assert.equal(Number(negativeAuthority.nonempty_masters), 0, "every controlled outcome retains an empty Master workspace");
+  const prohibitedState = await atlas.unsafe("SELECT unnest($1::text[]) AS state_name, to_regclass('atlas.' || unnest($1::text[]))::text AS relation", [["resolved_knowledge", "approval", "publication", "review_decision", "projection", "ces_assessment", "conversation", "addendum", "workspace_revision", "workspace_head"]]);
+  assert.ok(prohibitedState.every((row) => row.relation === null), "the deterministic composition introduces no downstream truth, review, CES, conversation, Addendum, revision, or HEAD state");
+  process.stdout.write(`IDSER-010 negative-authority evidence: ${JSON.stringify({ controlledProjects: projects.map((item) => item.projectId), nonemptyMasters: Number(negativeAuthority.nonempty_masters), prohibitedRelations: prohibitedState })}\n`);
   await bridge.unsafe(`DROP TRIGGER IF EXISTS ${faultName}_trigger ON bridge.background_effects`);
   await bridge.unsafe(`DROP FUNCTION IF EXISTS bridge.${faultName}_completion()`);
   await bridge.unsafe(`DROP SEQUENCE IF EXISTS bridge.${faultName}_sequence`);
