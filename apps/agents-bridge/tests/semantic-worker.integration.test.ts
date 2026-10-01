@@ -4,7 +4,7 @@ import type { AddressInfo } from "node:net";
 import test from "node:test";
 import Fastify from "fastify";
 import postgres from "postgres";
-import { createSemanticInternalRoutes } from "@atlas/core";
+import { createSemanticInternalRoutes, SemanticAcceptanceRejection } from "@atlas/core";
 import { PostgresSemanticAuthority } from "@atlas/db";
 import { semanticLimits } from "@atlas/contracts";
 import { MistralProvider } from "../src/providers/mistral.ts";
@@ -60,6 +60,7 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     malformed: `semantic-worker-malformed-${suffix}`,
     schemaInvalid: `semantic-worker-schema-invalid-${suffix}`,
     providerTimeout: `semantic-worker-provider-timeout-${suffix}`,
+    acceptanceRejected: `semantic-worker-acceptance-rejected-${suffix}`,
     missingCredential: `semantic-worker-missing-credential-${suffix}`,
     requestBound: `semantic-worker-request-bound-${suffix}`,
     responseBound: `semantic-worker-response-bound-${suffix}`,
@@ -148,6 +149,7 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     handler: {
       accept: async ({ executionId }) => {
         if (handlerUnavailable && executionId === executions.unavailable) throw new Error("synthetic acceptance handler unavailable");
+        if (executionId === executions.acceptanceRejected) throw new SemanticAcceptanceRejection("synthetic invalid evidence reference");
         accepted.set(executionId, (accepted.get(executionId) ?? 0) + 1);
       },
     },
@@ -345,6 +347,16 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
       assert.equal(effect?.status, "completed", `${label} records one completed bounded failure effect`);
       assert.doesNotMatch(String(effect?.last_error ?? ""), /synthetic-provider-key|semantic-integration-capability|private\/semantic-worker/u);
     }
+
+    // A current, schema-valid envelope that Atlas deterministically rejects is
+    // not replayable delivery work.  It uses the established failure route,
+    // rolling back the untrusted result and containing only its own member.
+    await enqueue("acceptanceRejected", "atlas.semantic.extract");
+    await waitFor(async () => (await atlas.unsafe("SELECT lifecycle FROM atlas.semantic_execution WHERE id=$1", [executions.acceptanceRejected]))[0]?.lifecycle === "failed", "deterministic acceptance rejection failure");
+    assert.equal(accepted.get(executions.acceptanceRejected) ?? 0, 0, "a deterministically rejected result has no trusted acceptance");
+    assert.equal(failed.get(executions.acceptanceRejected), 1, "a deterministically rejected result uses one terminal failure handoff");
+    assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [keys.acceptanceRejected]))[0]?.count, 0, "terminal failure cleanup removes the rejected staged envelope");
+    assert.deepEqual((await atlas.unsafe("SELECT m.state AS member_state, b.state AS bundle_state, b.completed_document_count FROM atlas.semantic_execution e JOIN atlas.extraction_bundle_document m ON m.bundle_id=e.bundle_id AND m.document_id=e.document_id JOIN atlas.extraction_bundle b ON b.id=m.bundle_id WHERE e.id=$1", [executions.acceptanceRejected]))[0], { member_state: "needs_attention", bundle_state: "needs_attention", completed_document_count: 0 }, "the failed result makes only its own bundle member need attention without progress");
 
     const missingQueue = `${queueName}-missing`;
     const missingWorker = createBackgroundWorker(config, new TestRuntime(), missingQueue, undefined, undefined, async (job, signal, context) => {

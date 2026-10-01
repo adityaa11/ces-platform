@@ -2,7 +2,7 @@ import { parseSemanticBackgroundJob, parseSemanticResultEnvelope, parseSemanticT
 
 type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 export type AtlasSemanticClientConfig = { readonly baseUrl: string; readonly contextPath: string; readonly resultPath: string; readonly failurePath: string; readonly serviceCredential: string; readonly timeoutMilliseconds: number };
-export class AtlasSemanticClientError extends Error { constructor(readonly operation: "context" | "result" | "failure", message: string) { super(message); } }
+export class AtlasSemanticClientError extends Error { constructor(readonly operation: "context" | "result" | "failure", message: string, readonly status?: number) { super(message); } }
 
 const path = (value: string | undefined, fallback: string, name: string) => { const result = value ?? fallback; if (!result.startsWith("/") || result.includes("..") || result.length > 200) throw new Error(`${name} must be a bounded absolute internal path.`); return result; };
 const positive = (value: string | undefined, fallback: number, name: string) => { const result = Number(value ?? fallback); if (!Number.isInteger(result) || result < 1 || result > 120_000) throw new Error(`${name} must be an integer between 1 and 120000.`); return result; };
@@ -23,7 +23,7 @@ export function createAtlasSemanticClient(config: AtlasSemanticClientConfig, fet
     const deadline = AbortSignal.timeout(config.timeoutMilliseconds); const requestSignal = AbortSignal.any([signal, deadline]);
     try {
       const response = await fetcher(new URL(target, `${config.baseUrl}/`).toString(), { method: "POST", headers: { authorization: `Bearer ${config.serviceCredential}`, "content-type": "application/json" }, body: serialized, signal: requestSignal });
-      if (!response.ok) throw new AtlasSemanticClientError(operation, `Atlas semantic ${operation} handoff was rejected.`);
+      if (!response.ok) throw new AtlasSemanticClientError(operation, `Atlas semantic ${operation} handoff was rejected.`, response.status);
       return response;
     } catch (error) {
       if (error instanceof AtlasSemanticClientError) throw error;

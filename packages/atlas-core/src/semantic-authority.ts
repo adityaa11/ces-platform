@@ -1,5 +1,8 @@
 import type { SemanticBackgroundJob, SemanticSkillId } from "@atlas/contracts";
 
+/** A parsed, current semantic result failed Atlas deterministic acceptance. */
+export class SemanticAcceptanceRejection extends Error {}
+
 /**
  * Atlas-owned boundary for semantic work. Implementations validate the stored
  * execution scope; callers never supply an authoritative project scope.

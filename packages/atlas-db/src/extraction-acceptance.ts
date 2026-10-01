@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { parseNormalizedDocument, parseSemanticExtractionResult } from "@atlas/contracts";
-import type { SemanticAcceptanceHandler } from "@atlas/core";
+import { SemanticAcceptanceRejection, type SemanticAcceptanceHandler } from "@atlas/core";
 
 type Row = Record<string, unknown>;
 type Sql = { unsafe(query: string, parameters?: readonly unknown[]): Promise<readonly Row[]> };
@@ -36,14 +36,14 @@ export class PostgresExtractionAcceptanceHandler implements SemanticAcceptanceHa
       for (const visual of page.visualRegions) if (visual.label?.trim() || visual.assetRef) locators.set(`${page.number}:visual_region:${visual.id}`, {});
     }
     const inventory = new Set(result.source_statement_inventory.map((item) => `${item.page_number}:${item.locator_type}:${item.locator_id}`));
-    if (inventory.size !== locators.size || [...locators.keys()].some((key) => !inventory.has(key))) throw new Error("Extraction result does not account for normalized source units.");
+    if (inventory.size !== locators.size || [...locators.keys()].some((key) => !inventory.has(key))) throw new SemanticAcceptanceRejection("Extraction result does not account for normalized source units.");
     const evidenceKeys = (evidence: readonly Evidence[]) => new Set(evidence.map((item) => `${item.page_number}:${item.locator_type}:${item.locator_id}`));
     const validateEvidence = (evidence: readonly Evidence[]) => {
       const seen = new Set<string>();
       for (const item of evidence) {
         const key = `${item.page_number}:${item.locator_type}:${item.locator_id}`;
         const locator = locators.get(key);
-        if (!locator || seen.has(key) || (item.excerpt && (!locator.excerpt || !locator.excerpt.includes(item.excerpt)))) throw new Error("Extraction evidence is not grounded in the normalized document.");
+        if (!locator || seen.has(key) || (item.excerpt && (!locator.excerpt || !locator.excerpt.includes(item.excerpt)))) throw new SemanticAcceptanceRejection("Extraction evidence is not grounded in the normalized document.");
         seen.add(key);
       }
     };
@@ -51,7 +51,7 @@ export class PostgresExtractionAcceptanceHandler implements SemanticAcceptanceHa
       validateEvidence(candidate.evidence_refs);
       const candidateEvidence = evidenceKeys(candidate.evidence_refs);
       for (const item of result.source_statement_inventory.filter((entry) => entry.destination_local_candidate_ids.includes(candidate.local_candidate_id))) {
-        if (!candidateEvidence.has(`${item.page_number}:${item.locator_type}:${item.locator_id}`)) throw new Error("Candidate source accounting lacks matching evidence.");
+        if (!candidateEvidence.has(`${item.page_number}:${item.locator_type}:${item.locator_id}`)) throw new SemanticAcceptanceRejection("Candidate source accounting lacks matching evidence.");
       }
     }
     for (const question of result.questions) if (question.evidence_refs) validateEvidence(question.evidence_refs);

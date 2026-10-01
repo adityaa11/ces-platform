@@ -1,6 +1,6 @@
 # IDSER-010-03-02: Semantic failure containment
 
-- **State:** `planned`; **Review batch:** `IDSER-BATCH-10-03-02`.
+- **State:** `awaiting_review`; **Review batch:** `IDSER-BATCH-10-03-02`.
 - **Predecessors:** IDSER-010-03-01 `PASS`.
 - **Consumes:** frozen IDSER-004 context/result authority, IDSER-005 worker failure mapping, IDSER-006/007 validation/acceptance and IDSER-008 bounded lifecycle.
 - **Execution environment:** controlled-provider Compose worker plus focused Atlas semantic-authority/extraction/reconciliation integration suites.

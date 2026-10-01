@@ -1,6 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { parseSemanticBackgroundJob, parseSemanticResultEnvelope, parseSemanticTechnicalFailure, semanticLimits } from "@atlas/contracts";
-import type { SemanticAcceptanceHandler, SemanticAuthority } from "./semantic-authority.js";
+import { SemanticAcceptanceRejection, type SemanticAcceptanceHandler, type SemanticAuthority } from "./semantic-authority.js";
 
 export type InternalSemanticResponse = { readonly status: number; readonly body: unknown; readonly contentType: "application/json" };
 const equal = (actual: string | undefined, expected: string) => {
@@ -16,6 +16,7 @@ export function createSemanticInternalRoutes(options: { readonly authority: Sema
   const unauthorized = (): InternalSemanticResponse => ({ status: 401, body: { error: "Unauthorized internal service request." }, contentType: "application/json" });
   const invalid = (): InternalSemanticResponse => ({ status: 400, body: { error: "Invalid semantic internal request." }, contentType: "application/json" });
   const unavailable = (): InternalSemanticResponse => ({ status: 409, body: { error: "Semantic delivery cannot be accepted." }, contentType: "application/json" });
+  const rejected = (): InternalSemanticResponse => ({ status: 422, body: { error: "Semantic result failed deterministic validation." }, contentType: "application/json" });
   return {
     async context(credential: string | undefined, body: unknown): Promise<InternalSemanticResponse> {
       if (!equal(credential, options.serviceCredential)) return unauthorized();
@@ -28,7 +29,7 @@ export function createSemanticInternalRoutes(options: { readonly authority: Sema
     },
     async deliver(credential: string | undefined, body: unknown): Promise<InternalSemanticResponse> {
       if (!equal(credential, options.serviceCredential)) return unauthorized();
-      try { if (!bounded(body, semanticLimits.resultEnvelopeBytes)) return invalid(); await options.authority.deliver(parseSemanticResultEnvelope(body), options.handler); return { status: 204, body: null, contentType: "application/json" }; } catch { return unavailable(); }
+      try { if (!bounded(body, semanticLimits.resultEnvelopeBytes)) return invalid(); await options.authority.deliver(parseSemanticResultEnvelope(body), options.handler); return { status: 204, body: null, contentType: "application/json" }; } catch (error) { return error instanceof SemanticAcceptanceRejection ? rejected() : unavailable(); }
     },
     async fail(credential: string | undefined, body: unknown): Promise<InternalSemanticResponse> {
       if (!equal(credential, options.serviceCredential)) return unauthorized();

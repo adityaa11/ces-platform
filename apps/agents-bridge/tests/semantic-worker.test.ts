@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { runSemanticJob } from "../src/semantic-worker.ts";
 import { SemanticReplayLeaseLostError } from "../src/semantic-result-replay.ts";
+import { AtlasSemanticClientError } from "../src/atlas-semantic-client.ts";
 import type { SemanticBackgroundJob } from "@atlas/contracts";
 
 const job: SemanticBackgroundJob = { version: "v1", executionId: "semantic-execution", skill: { id: "atlas.semantic.extract", version: "v1" }, contextCapability: "capability" };
@@ -48,4 +49,10 @@ test("a post-stage delivery failure remains retryable and never reports the dura
     new AbortController().signal,
   ));
   assert.equal(failures.length, 0);
+});
+
+test("a deterministic post-stage validation rejection uses the existing terminal failure path", async () => {
+  const failures: unknown[] = [];
+  await runSemanticJob(job, { structured: async () => ({ value: result, provenance: { provider: "mistral" as const, model: "configured", endpoint: "/v1/chat/completions" as const, latencyMilliseconds: 1, attempt: 1 } }) } as never, { context: async () => context, deliver: async () => { throw new AtlasSemanticClientError("result", "Atlas semantic result handoff was rejected.", 422); }, fail: async (failure: unknown) => { failures.push(failure); } }, { load: async () => undefined, stage: async (_key: string, _execution: string, value: unknown) => value, acknowledge: async () => {} }, "semantic-key-validation-rejection", new AbortController().signal);
+  assert.deepEqual(failures, [{ version: "v1", scope, code: "integrity_validation", message: "Semantic execution failed before a trusted result was delivered." }]);
 });

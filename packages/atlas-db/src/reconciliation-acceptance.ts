@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { parseSemanticReconciliationContext, parseSemanticReconciliationResult, type DocumentPerceptionRequest } from "@atlas/contracts";
-import type { PerceptionExecutionInput, SemanticAcceptanceHandler } from "@atlas/core";
+import { SemanticAcceptanceRejection, type PerceptionExecutionInput, type SemanticAcceptanceHandler } from "@atlas/core";
 import { PostgresPerceptionAuthority } from "./perception-authority.js";
 
 type Row = Record<string, unknown>;
@@ -107,13 +107,13 @@ export class PostgresReconciliationAcceptanceHandler implements SemanticAcceptan
     const evidence = new Set([...context.currentCandidates, ...context.priorCandidates].flatMap((candidate) => candidate.evidence_refs.map(evidenceKey)));
     const accounted = new Set<string>();
     for (const relationship of relationships) {
-      if (!current.has(relationship.source_candidate_id)) throw new Error("Reconciliation source is not in the current authorized set.");
-      if (relationship.relationship_type === "new") { if (relationship.target_candidate_id !== undefined) throw new Error("New reconciliation relationship cannot have a target."); }
-      else if (!relationship.target_candidate_id || !authorized.has(relationship.target_candidate_id)) throw new Error("Reconciliation target is outside the authorized context.");
-      for (const ref of relationship.evidence_refs) if (!evidence.has(evidenceKey(ref))) throw new Error("Reconciliation evidence is outside the authorized context.");
+      if (!current.has(relationship.source_candidate_id)) throw new SemanticAcceptanceRejection("Reconciliation source is not in the current authorized set.");
+      if (relationship.relationship_type === "new") { if (relationship.target_candidate_id !== undefined) throw new SemanticAcceptanceRejection("New reconciliation relationship cannot have a target."); }
+      else if (!relationship.target_candidate_id || !authorized.has(relationship.target_candidate_id)) throw new SemanticAcceptanceRejection("Reconciliation target is outside the authorized context.");
+      for (const ref of relationship.evidence_refs) if (!evidence.has(evidenceKey(ref))) throw new SemanticAcceptanceRejection("Reconciliation evidence is outside the authorized context.");
       accounted.add(relationship.source_candidate_id);
     }
-    for (const id of current) if (!accounted.has(id)) throw new Error("Reconciliation result does not account for every current candidate.");
+    for (const id of current) if (!accounted.has(id)) throw new SemanticAcceptanceRejection("Reconciliation result does not account for every current candidate.");
   }
 }
 

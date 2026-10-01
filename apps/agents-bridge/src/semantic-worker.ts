@@ -1,6 +1,7 @@
 import { parseSemanticBackgroundJob, parseSemanticExtractionResult, parseSemanticReconciliationResult, semanticContractVersion, type SemanticBackgroundJob } from "@atlas/contracts";
 import { getProductionSemanticSkill } from "@atlas/skills";
 import { BridgeProviderError, type MistralProvider } from "./providers/mistral.js";
+import { AtlasSemanticClientError } from "./atlas-semantic-client.js";
 import { SemanticReplayLeaseLostError } from "./semantic-result-replay.js";
 
 export type SemanticClient = { context(job: SemanticBackgroundJob, signal: AbortSignal): Promise<unknown>; deliver(envelope: unknown, signal: AbortSignal): Promise<void>; fail(failure: unknown, signal: AbortSignal): Promise<void> };
@@ -33,7 +34,13 @@ export async function runSemanticJob(jobValue: unknown, provider: MistralProvide
       if (winner) { await client.deliver(winner, signal); return; }
       throw error;
     }
-    if (trustedStage) throw error;
+    if (trustedStage) {
+      if (context && error instanceof AtlasSemanticClientError && error.operation === "result" && error.status === 422) {
+        await client.fail({ version: semanticContractVersion, scope: context.scope, code: "integrity_validation", message: "Semantic execution failed before a trusted result was delivered." }, signal);
+        return;
+      }
+      throw error;
+    }
     // A worker-stop or queue cancellation has no semantic outcome to report.
     // Let pg-boss release the fenced effect so a fresh claimant can retry;
     // sending a terminal failure with an aborted signal can otherwise race the
