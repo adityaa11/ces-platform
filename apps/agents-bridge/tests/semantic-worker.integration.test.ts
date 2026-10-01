@@ -4,8 +4,8 @@ import type { AddressInfo } from "node:net";
 import test from "node:test";
 import Fastify from "fastify";
 import postgres from "postgres";
-import { createSemanticInternalRoutes, SemanticAcceptanceRejection } from "@atlas/core";
-import { PostgresSemanticAuthority } from "@atlas/db";
+import { createSemanticInternalRoutes } from "@atlas/core";
+import { PostgresExtractionAcceptanceHandler, PostgresSemanticAuthority } from "@atlas/db";
 import { semanticLimits } from "@atlas/contracts";
 import { MistralProvider } from "../src/providers/mistral.ts";
 import { createAtlasSemanticClient } from "../src/atlas-semantic-client.ts";
@@ -50,6 +50,7 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
   const owner = `semantic-worker-owner-${suffix}`;
   const project = `semantic-worker-project-${suffix}`;
   const workspace = `semantic-worker-workspace-${suffix}`;
+  const master = `semantic-worker-master-${suffix}`;
   const executions = {
     extract: `semantic-worker-extract-${suffix}`,
     unavailable: `semantic-worker-unavailable-${suffix}`,
@@ -147,9 +148,13 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     serviceCredential: credential,
     authority,
     handler: {
-      accept: async ({ executionId }) => {
+      accept: async (input, transaction) => {
+        const { executionId } = input;
         if (handlerUnavailable && executionId === executions.unavailable) throw new Error("synthetic acceptance handler unavailable");
-        if (executionId === executions.acceptanceRejected) throw new SemanticAcceptanceRejection("synthetic invalid evidence reference");
+        if (executionId === executions.acceptanceRejected) {
+          await new PostgresExtractionAcceptanceHandler().accept(input, transaction);
+          return;
+        }
         accepted.set(executionId, (accepted.get(executionId) ?? 0) + 1);
       },
     },
@@ -223,7 +228,14 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     }
     const schema = body.response_format?.json_schema?.schema;
     const reconciliation = Boolean(schema?.properties && "relationships" in schema.properties);
-    const value = requested.scope?.executionId === executions.resultBound
+    const value = requested.scope?.executionId === executions.acceptanceRejected
+      ? {
+          version: "v1",
+          candidate_assertions: [{ local_candidate_id: "invalid-evidence", semantic_key: "invalid.evidence", kind: "rule", payload: {}, normalized_meaning: "Invalid evidence must fail closed.", needs_resolution: false, evidence_refs: [{ page_number: 1, locator_type: "text_block", locator_id: "invented", excerpt: "not present" }] }],
+          source_statement_inventory: [{ source_unit_id: "source-real", page_number: 1, locator_type: "text_block", locator_id: "real", classification: "candidate", destination_local_candidate_ids: ["invalid-evidence"] }],
+          questions: [],
+        }
+      : requested.scope?.executionId === executions.resultBound
       ? {
           version: "v1",
           candidate_assertions: Array.from({ length: 20 }, (_, index) => ({ local_candidate_id: `bound-${index}`, semantic_key: `bound-${index}`, kind: "rule", payload: "x".repeat(16_384), normalized_meaning: "y".repeat(8_000), needs_resolution: false, evidence_refs: [{ page_number: 1, locator_type: "text_block", locator_id: `bound-${index}`, excerpt: "z" }] })),
@@ -242,15 +254,17 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
   try {
     await admin.unsafe('INSERT INTO auth."user" (id,name,email,"emailVerified","createdAt","updatedAt") VALUES ($1,$1,$2,false,now(),now())', [owner, `${owner}@example.test`]);
     await atlas.unsafe("INSERT INTO atlas.project (id,stable_id,name,created_by_user_id) VALUES ($1,$2,'semantic worker integration',$3)", [project, `semantic-worker-${suffix.slice(0, 12)}`, owner]);
-    await atlas.unsafe("INSERT INTO atlas.workspace (id,project_id,kind,state,display_name) VALUES ($1,$2,'initial_draft','draft','Draft')", [workspace, project]);
+    await atlas.unsafe("INSERT INTO atlas.workspace (id,project_id,kind,state,display_name) VALUES ($1,$2,'initial_draft','draft','Draft'),($3,$2,'master','empty','Master')", [workspace, project, master]);
     for (const [label, executionId] of Object.entries(executions)) {
       const resource = resources[label as keyof typeof executions];
       const stage = label === "unavailable" ? "reconciliation" : "extraction";
       await atlas.unsafe("INSERT INTO atlas.document (id,project_id,workspace_id,original_filename,storage_key,source_sha256,byte_size,media_type,created_by_user_id) VALUES ($1,$2,$3,'semantic-worker.pdf','private/semantic-worker',$4,1,'application/pdf',$5)", [resource.document, project, workspace, resource.sourceSha256, owner]);
       await atlas.unsafe("INSERT INTO atlas.extraction_bundle (id,project_id,workspace_id,state,semantic_contract_version,reconciliation_contract_version,expected_document_count) VALUES ($1,$2,$3,'waiting','v1','v1',1)", [resource.bundle, project, workspace]);
-      await atlas.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id,document_id,project_id,workspace_id,sequence,state,perception_execution_id) VALUES ($1,$2,$3,$4,1,'pending',$5)", [resource.bundle, resource.document, project, workspace, resource.perception]);
+      await atlas.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id,document_id,project_id,workspace_id,sequence,state,perception_execution_id,semantic_extraction_execution_id) VALUES ($1,$2,$3,$4,1,'pending',$5,$6)", [resource.bundle, resource.document, project, workspace, resource.perception, executionId]);
       await atlas.unsafe("INSERT INTO atlas.document_perception_execution (id,artifact_id,document_storage_key,source_sha256,mime_type,byte_size,contract_version,state,idempotency_key,capability_identity) VALUES ($1,$2,'private/semantic-worker',$3,'application/pdf',1,'v1','completed',$4,$5)", [resource.perception, resource.document, resource.sourceSha256, `semantic-worker-perception-key-${label}-${suffix}`, resource.capabilityIdentity]);
-      await atlas.unsafe("INSERT INTO atlas.normalized_document_cache (cache_key,source_sha256,contract_version,capability,capability_identity,normalized_document) VALUES ($1,$2,'v1','atlas.document.perceive',$3,$4::jsonb)", [resource.cache, resource.sourceSha256, resource.capabilityIdentity, JSON.stringify(normalized(resource.perception, resource.document, resource.sourceSha256))]);
+      const document = normalized(resource.perception, resource.document, resource.sourceSha256);
+      if (label === "acceptanceRejected") document.pages[0].textBlocks.push({ id: "real", text: "A real normalized source unit." });
+      await atlas.unsafe("INSERT INTO atlas.normalized_document_cache (cache_key,source_sha256,contract_version,capability,capability_identity,normalized_document) VALUES ($1,$2,'v1','atlas.document.perceive',$3,$4::jsonb)", [resource.cache, resource.sourceSha256, resource.capabilityIdentity, JSON.stringify(document)]);
       await atlas.unsafe("INSERT INTO atlas.semantic_execution (id,project_id,workspace_id,bundle_id,document_id,stage,contract_version,skill_version,logical_identity,lifecycle,authorized_context_identity,authorized_context_fingerprint,capability_valid_until) VALUES ($1,$2,$3,$4,$5,$6,'v1','v1',$1,'queued','context',$7,now()+interval '1 hour')", [executionId, project, workspace, resource.bundle, resource.document, stage, capabilityFingerprint]);
     }
     await admin.unsafe(`CREATE SEQUENCE ${completionFault} START 1`);
@@ -343,6 +357,8 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
       assert.equal(accepted.get(executions[label]) ?? 0, 0, `${label} creates no accepted effect`);
       assert.equal(failed.get(executions[label]), 1, `${label} reaches one bounded failure handoff`);
       assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [keys[label]]))[0]?.count, 0, `${label} creates no trusted replay`);
+      assert.equal(providerCalls.get(executions[label]), 1, `${label} reaches the controlled provider exactly once before its bounded failure`);
+      assert.deepEqual((await atlas.unsafe("SELECT (SELECT count(*)::int FROM atlas.semantic_extraction_result WHERE execution_id=$1) AS results, (SELECT count(*)::int FROM atlas.semantic_candidate WHERE bundle_id=$2 AND document_id=$3) AS candidates, (SELECT count(*)::int FROM atlas.semantic_execution WHERE bundle_id=$2 AND document_id=$3 AND stage='reconciliation') AS successors, (SELECT completed_document_count FROM atlas.extraction_bundle WHERE id=$2) AS completed", [executions[label], resources[label].bundle, resources[label].document]))[0], { results: 0, candidates: 0, successors: 0, completed: 0 }, `${label} creates no materialization, progress, or successor`);
       const effect = (await bridge.unsafe("SELECT status, last_error FROM bridge.background_effects WHERE idempotency_key=$1", [keys[label]]))[0];
       assert.equal(effect?.status, "completed", `${label} records one completed bounded failure effect`);
       assert.doesNotMatch(String(effect?.last_error ?? ""), /synthetic-provider-key|semantic-integration-capability|private\/semantic-worker/u);
@@ -356,7 +372,13 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     assert.equal(accepted.get(executions.acceptanceRejected) ?? 0, 0, "a deterministically rejected result has no trusted acceptance");
     assert.equal(failed.get(executions.acceptanceRejected), 1, "a deterministically rejected result uses one terminal failure handoff");
     assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [keys.acceptanceRejected]))[0]?.count, 0, "terminal failure cleanup removes the rejected staged envelope");
-    assert.deepEqual((await atlas.unsafe("SELECT m.state AS member_state, b.state AS bundle_state, b.completed_document_count FROM atlas.semantic_execution e JOIN atlas.extraction_bundle_document m ON m.bundle_id=e.bundle_id AND m.document_id=e.document_id JOIN atlas.extraction_bundle b ON b.id=m.bundle_id WHERE e.id=$1", [executions.acceptanceRejected]))[0], { member_state: "needs_attention", bundle_state: "needs_attention", completed_document_count: 0 }, "the failed result makes only its own bundle member need attention without progress");
+    assert.equal(providerCalls.get(executions.acceptanceRejected), 1, "the real invalid-evidence result reaches the controlled provider once");
+    const controlLabel = "duplicate" as const;
+    const controlBefore = { db: await atlas.unsafe("SELECT b.state AS bundle_state, b.completed_document_count, m.state AS member_state, (SELECT count(*)::int FROM atlas.semantic_extraction_result WHERE bundle_id=b.id) AS results, (SELECT count(*)::int FROM atlas.semantic_candidate WHERE bundle_id=b.id) AS candidates FROM atlas.extraction_bundle b JOIN atlas.extraction_bundle_document m ON m.bundle_id=b.id WHERE b.id=$1 AND m.document_id=$2", [resources[controlLabel].bundle, resources[controlLabel].document]), queue: await admin.unsafe("SELECT count(*)::int AS queue_rows FROM pgboss.job WHERE name=$1 AND data->'execution'->>'executionId'=$2", [queueName, executions[controlLabel]]) };
+    assert.deepEqual((await atlas.unsafe("SELECT e.lifecycle, m.state AS member_state, b.state AS bundle_state, b.completed_document_count, (SELECT count(*)::int FROM atlas.semantic_extraction_result WHERE execution_id=e.id) AS results, (SELECT count(*)::int FROM atlas.semantic_candidate WHERE bundle_id=e.bundle_id AND document_id=e.document_id) AS candidates, (SELECT count(*)::int FROM atlas.semantic_execution WHERE bundle_id=e.bundle_id AND document_id=e.document_id AND stage='reconciliation') AS successors FROM atlas.semantic_execution e JOIN atlas.extraction_bundle_document m ON m.bundle_id=e.bundle_id AND m.document_id=e.document_id JOIN atlas.extraction_bundle b ON b.id=m.bundle_id WHERE e.id=$1", [executions.acceptanceRejected]))[0], { lifecycle: "failed", member_state: "needs_attention", bundle_state: "needs_attention", completed_document_count: 0, results: 0, candidates: 0, successors: 0 }, "the real validator rejection creates no trusted result, progress, or successor before target-only containment");
+    assert.deepEqual((await atlas.unsafe("SELECT w.state, (SELECT count(*)::int FROM atlas.extraction_bundle WHERE workspace_id=w.id) AS bundles FROM atlas.workspace w WHERE w.id=$1", [master]))[0], { state: "empty", bundles: 0 }, "the empty Master remains unmaterialized");
+    const controlAfter = { db: await atlas.unsafe("SELECT b.state AS bundle_state, b.completed_document_count, m.state AS member_state, (SELECT count(*)::int FROM atlas.semantic_extraction_result WHERE bundle_id=b.id) AS results, (SELECT count(*)::int FROM atlas.semantic_candidate WHERE bundle_id=b.id) AS candidates FROM atlas.extraction_bundle b JOIN atlas.extraction_bundle_document m ON m.bundle_id=b.id WHERE b.id=$1 AND m.document_id=$2", [resources[controlLabel].bundle, resources[controlLabel].document]), queue: await admin.unsafe("SELECT count(*)::int AS queue_rows FROM pgboss.job WHERE name=$1 AND data->'execution'->>'executionId'=$2", [queueName, executions[controlLabel]]) };
+    assert.deepEqual(controlAfter, controlBefore, "the unrelated control bundle and its queue observation remain unchanged");
 
     const missingQueue = `${queueName}-missing`;
     const missingWorker = createBackgroundWorker(config, new TestRuntime(), missingQueue, undefined, undefined, async (job, signal, context) => {
@@ -562,6 +584,7 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
       await atlas.unsafe("DELETE FROM atlas.document WHERE id=$1", [resource.document]).catch(() => undefined);
     }
     await atlas.unsafe("DELETE FROM atlas.workspace WHERE id=$1", [workspace]).catch(() => undefined);
+    await atlas.unsafe("DELETE FROM atlas.workspace WHERE id=$1", [master]).catch(() => undefined);
     await atlas.unsafe("DELETE FROM atlas.project WHERE id=$1", [project]).catch(() => undefined);
     await admin.unsafe('DELETE FROM auth."user" WHERE id=$1', [owner]).catch(() => undefined);
     await Promise.all([admin.end(), atlas.end(), bridge.end()]);
