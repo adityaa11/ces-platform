@@ -1,6 +1,6 @@
 # IDSER-010-01: Deterministic production-shaped single-document foundation
 
-- **State:** `awaiting_review`; **Review batch:** `IDSER-BATCH-10-01`.
+- **State:** `approved` at `1259109`; **Review batch:** `IDSER-BATCH-10-01`.
 - **Predecessors:** IDSER-001 through IDSER-008 and the complete IDSER-009 series through IDSER-009-04 `PASS`.
 - **Consumes:** frozen PCC create/auth, BSS-006 pg-boss, BSS-007 DocumentStore, BSS-008 `MistralProvider`, BSS-009 perception, and approved IDSER-004/005/006/008 authority without reopening them.
 - **Execution environment:** Compose PostgreSQL, actual Atlas/Bridge/worker processes, actual DocumentStore and queue, explicit controlled Mistral endpoint/configuration.
