@@ -38,11 +38,28 @@ test("PCC-003 enforces the authenticated multipart creation boundary and safe fa
     const session = await (await fetch("http://localhost:3001/api/auth/get-session", { headers: { cookie } })).json();
     assert.ok(session.user?.id);
     if (injectedFailure) {
+      const [{ count: queueBefore }] = await admin`SELECT COUNT(*)::integer AS count FROM pgboss.job WHERE name='atlas-document-perception-v1'`;
       const failed = await route(form(id), cookie);
       assert.equal(failed.status, 500);
       assert.deepEqual(await failed.json(), { error: "Unable to create the project. Please try again." });
-      const visible = await admin`SELECT stable_id FROM atlas.project WHERE stable_id=${id}`;
-      assert.equal(visible.length, 0, `${injectedFailure} failure creates no visible Atlas project`);
+      const [{ project_count, member_count, workspace_count, document_count, bundle_count, bundle_document_count, execution_count, grant_count }] = await admin`
+        SELECT
+          (SELECT COUNT(*)::integer FROM atlas.project WHERE stable_id=${id}) AS project_count,
+          (SELECT COUNT(*)::integer FROM atlas.project_member member JOIN atlas.project project ON project.id=member.project_id WHERE project.stable_id=${id}) AS member_count,
+          (SELECT COUNT(*)::integer FROM atlas.workspace workspace JOIN atlas.project project ON project.id=workspace.project_id WHERE project.stable_id=${id}) AS workspace_count,
+          (SELECT COUNT(*)::integer FROM atlas.document document JOIN atlas.project project ON project.id=document.project_id WHERE project.stable_id=${id}) AS document_count,
+          (SELECT COUNT(*)::integer FROM atlas.extraction_bundle bundle JOIN atlas.project project ON project.id=bundle.project_id WHERE project.stable_id=${id}) AS bundle_count,
+          (SELECT COUNT(*)::integer FROM atlas.extraction_bundle_document member JOIN atlas.extraction_bundle bundle ON bundle.id=member.bundle_id JOIN atlas.project project ON project.id=bundle.project_id WHERE project.stable_id=${id}) AS bundle_document_count,
+          (SELECT COUNT(*)::integer FROM atlas.document_perception_execution execution JOIN atlas.document document ON document.id=execution.artifact_id JOIN atlas.project project ON project.id=document.project_id WHERE project.stable_id=${id}) AS execution_count,
+          (SELECT COUNT(*)::integer FROM atlas.document_perception_source_grant source_grant JOIN atlas.document_perception_execution execution ON execution.id=source_grant.execution_id JOIN atlas.document document ON document.id=execution.artifact_id JOIN atlas.project project ON project.id=document.project_id WHERE project.stable_id=${id}) AS grant_count
+      `;
+      assert.deepEqual(
+        { project_count, member_count, workspace_count, document_count, bundle_count, bundle_document_count, execution_count, grant_count },
+        { project_count: 0, member_count: 0, workspace_count: 0, document_count: 0, bundle_count: 0, bundle_document_count: 0, execution_count: 0, grant_count: 0 },
+        `${injectedFailure} failure exposes no transaction-owned creation graph`,
+      );
+      const [{ count: queueAfter }] = await admin`SELECT COUNT(*)::integer AS count FROM pgboss.job WHERE name='atlas-document-perception-v1'`;
+      assert.equal(queueAfter, queueBefore, `${injectedFailure} failure adds no perception job`);
       return;
     }
     assert.equal((await route(form(id), cookie, { origin: "https://attacker.example" })).status, 403, "untrusted origins stop before creation");
@@ -90,7 +107,7 @@ test("PCC-003 enforces the authenticated multipart creation boundary and safe fa
     assert.equal(fixtureState.status, 200);
     assert.doesNotMatch(await fixtureState.text(), new RegExp(`${id}|${duplicateId}`), "production uploads never enter fixture persistence");
     const [bundle] = await admin`SELECT id, expected_document_count, completed_document_count, state FROM atlas.extraction_bundle WHERE project_id=${project.id}`;
-    assert.deepEqual({ expected: Number(bundle.expected_document_count), completed: Number(bundle.completed_document_count), state: bundle.state }, { expected: 1, completed: 0, state: "processing" });
+    assert.deepEqual({ expected: Number(bundle.expected_document_count), completed: Number(bundle.completed_document_count), state: bundle.state }, { expected: 1, completed: 0, state: "waiting" }, "the committed kickoff remains observable before a worker redeems D1");
     const [member] = await admin`SELECT document_id, sequence, state, perception_execution_id FROM atlas.extraction_bundle_document WHERE bundle_id=${bundle.id}`;
     assert.deepEqual({ document: member.document_id, sequence: Number(member.sequence), state: member.state, started: member.perception_execution_id !== null }, { document: document.id, sequence: 1, state: "perception_queued", started: true });
     const [{ count: queueCount }] = await admin`SELECT COUNT(*)::integer AS count FROM pgboss.job WHERE name='atlas-document-perception-v1' AND data->>'idempotencyKey' LIKE ${`%:${document.id}:v1`}`;

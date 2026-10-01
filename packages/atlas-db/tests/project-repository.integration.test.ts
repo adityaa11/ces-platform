@@ -143,6 +143,18 @@ test("IDSER-003 atomically persists the ordered bundle and only D1 kickoff", { s
     const [{ count: queued }] = await admin.unsafe("SELECT COUNT(*)::integer AS count FROM pgboss.job WHERE name='atlas-document-perception-v1' AND data->>'idempotencyKey' LIKE $1", [`%:${input.documents[0].id}:v1`]);
     assert.equal(Number(queued), 1);
     assert.equal((await atlas.unsafe("SELECT COUNT(*)::integer AS count FROM atlas.document_perception_execution WHERE artifact_id IN ($1,$2,$3)", input.documents.map((document) => document.id)))[0].count, 1);
+    const controlSnapshot = JSON.stringify(await admin.unsafe(`
+      SELECT 'project' AS kind, row_to_json(project)::text AS value FROM atlas.project project WHERE project.id=$1
+      UNION ALL SELECT 'member', row_to_json(member)::text FROM atlas.project_member member WHERE member.project_id=$1
+      UNION ALL SELECT 'workspace', row_to_json(workspace)::text FROM atlas.workspace workspace WHERE workspace.project_id=$1
+      UNION ALL SELECT 'document', row_to_json(document)::text FROM atlas.document document WHERE document.project_id=$1
+      UNION ALL SELECT 'bundle', row_to_json(bundle)::text FROM atlas.extraction_bundle bundle WHERE bundle.project_id=$1
+      UNION ALL SELECT 'bundle_document', row_to_json(member)::text FROM atlas.extraction_bundle_document member WHERE member.project_id=$1
+      UNION ALL SELECT 'execution', row_to_json(execution)::text FROM atlas.document_perception_execution execution JOIN atlas.document document ON document.id=execution.artifact_id WHERE document.project_id=$1
+      UNION ALL SELECT 'grant', row_to_json(source_grant)::text FROM atlas.document_perception_source_grant source_grant JOIN atlas.document_perception_execution execution ON execution.id=source_grant.execution_id JOIN atlas.document document ON document.id=execution.artifact_id WHERE document.project_id=$1
+      UNION ALL SELECT 'job', row_to_json(job)::text FROM pgboss.job job WHERE job.name='atlas-document-perception-v1' AND job.data->>'idempotencyKey' LIKE $2
+      ORDER BY kind, value
+    `, [input.id, `%:${input.documents[0].id}:v1`]));
     const failing = new PostgresAtlasProjectRepository(atlas, { authority, queue: producer });
     const failed = { ...input, id: randomUUID(), projectId: `idser-failed-${randomUUID().slice(0, 8)}`, masterWorkspaceId: randomUUID(), initialDraftWorkspaceId: randomUUID(), documents: input.documents.map((document) => ({ ...document, id: randomUUID() })) };
     await admin.unsafe("CREATE OR REPLACE FUNCTION atlas.idser003_fail_after_enqueue() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'IDSER-003 controlled post-enqueue failure'; END; $$");
@@ -151,6 +163,19 @@ test("IDSER-003 atomically persists the ordered bundle and only D1 kickoff", { s
     await admin.unsafe("DROP TRIGGER idser003_fail_after_enqueue ON atlas.extraction_bundle_document");
     await admin.unsafe("DROP FUNCTION atlas.idser003_fail_after_enqueue()");
     assert.deepEqual(await countsFor(failed.id, failed.documents[0].id), { project_count: 0, member_count: 0, workspace_count: 0, document_count: 0, bundle_count: 0, bundle_document_count: 0, execution_count: 0, grant_count: 0, job_count: 0 });
+    const controlSnapshotAfterRollback = JSON.stringify(await admin.unsafe(`
+      SELECT 'project' AS kind, row_to_json(project)::text AS value FROM atlas.project project WHERE project.id=$1
+      UNION ALL SELECT 'member', row_to_json(member)::text FROM atlas.project_member member WHERE member.project_id=$1
+      UNION ALL SELECT 'workspace', row_to_json(workspace)::text FROM atlas.workspace workspace WHERE workspace.project_id=$1
+      UNION ALL SELECT 'document', row_to_json(document)::text FROM atlas.document document WHERE document.project_id=$1
+      UNION ALL SELECT 'bundle', row_to_json(bundle)::text FROM atlas.extraction_bundle bundle WHERE bundle.project_id=$1
+      UNION ALL SELECT 'bundle_document', row_to_json(member)::text FROM atlas.extraction_bundle_document member WHERE member.project_id=$1
+      UNION ALL SELECT 'execution', row_to_json(execution)::text FROM atlas.document_perception_execution execution JOIN atlas.document document ON document.id=execution.artifact_id WHERE document.project_id=$1
+      UNION ALL SELECT 'grant', row_to_json(source_grant)::text FROM atlas.document_perception_source_grant source_grant JOIN atlas.document_perception_execution execution ON execution.id=source_grant.execution_id JOIN atlas.document document ON document.id=execution.artifact_id WHERE document.project_id=$1
+      UNION ALL SELECT 'job', row_to_json(job)::text FROM pgboss.job job WHERE job.name='atlas-document-perception-v1' AND job.data->>'idempotencyKey' LIKE $2
+      ORDER BY kind, value
+    `, [input.id, `%:${input.documents[0].id}:v1`]));
+    assert.equal(controlSnapshotAfterRollback, controlSnapshot, "post-enqueue rollback leaves the existing control graph and job byte-for-byte unchanged");
   } finally {
     if (producer) await producer.close();
     await admin.unsafe("DROP TRIGGER IF EXISTS idser003_fail_after_enqueue ON atlas.extraction_bundle_document");
