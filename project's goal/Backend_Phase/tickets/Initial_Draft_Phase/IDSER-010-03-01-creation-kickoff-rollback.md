@@ -1,6 +1,6 @@
 # IDSER-010-03-01: Creation and kickoff rollback proof
 
-- **State:** `awaiting_review`; **Review batch:** `IDSER-BATCH-10-03-01`.
+- **State:** `approved` at `0fbce45`; **Review batch:** `IDSER-BATCH-10-03-01`.
 - **Predecessors:** IDSER-010-02 `PASS`.
 - **Consumes:** frozen PCC creation, IDSER-003 transaction/kickoff, BSS-006 transactional pg-boss producer and BSS-007 DocumentStore.
 - **Execution environment:** Compose PostgreSQL with the existing authenticated project-create and project-repository integration harness.
