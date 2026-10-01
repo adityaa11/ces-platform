@@ -38,7 +38,13 @@ test("PCC-003 enforces the authenticated multipart creation boundary and safe fa
     const session = await (await fetch("http://localhost:3001/api/auth/get-session", { headers: { cookie } })).json();
     assert.ok(session.user?.id);
     if (injectedFailure) {
-      const [{ count: queueBefore }] = await admin`SELECT COUNT(*)::integer AS count FROM pgboss.job WHERE name='atlas-document-perception-v1'`;
+      const perceptionQueueSnapshot = () => admin`
+        SELECT id::text, data::text
+        FROM pgboss.job
+        WHERE name='atlas-document-perception-v1'
+        ORDER BY id
+      `;
+      const queueBefore = await perceptionQueueSnapshot();
       const failed = await route(form(id), cookie);
       assert.equal(failed.status, 500);
       assert.deepEqual(await failed.json(), { error: "Unable to create the project. Please try again." });
@@ -58,8 +64,8 @@ test("PCC-003 enforces the authenticated multipart creation boundary and safe fa
         { project_count: 0, member_count: 0, workspace_count: 0, document_count: 0, bundle_count: 0, bundle_document_count: 0, execution_count: 0, grant_count: 0 },
         `${injectedFailure} failure exposes no transaction-owned creation graph`,
       );
-      const [{ count: queueAfter }] = await admin`SELECT COUNT(*)::integer AS count FROM pgboss.job WHERE name='atlas-document-perception-v1'`;
-      assert.equal(queueAfter, queueBefore, `${injectedFailure} failure adds no perception job`);
+      const queueAfter = await perceptionQueueSnapshot();
+      assert.deepEqual(queueAfter, queueBefore, `${injectedFailure} failure leaves the relevant perception queue rows unchanged`);
       return;
     }
     assert.equal((await route(form(id), cookie, { origin: "https://attacker.example" })).status, 403, "untrusted origins stop before creation");
