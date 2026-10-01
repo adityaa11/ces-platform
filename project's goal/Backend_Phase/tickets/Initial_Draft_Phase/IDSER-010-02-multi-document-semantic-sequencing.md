@@ -1,6 +1,6 @@
 # IDSER-010-02: Multi-document semantic sequencing and bounded reconciliation
 
-- **State:** `planned`; **Review batch:** `IDSER-BATCH-10-02`.
+- **State:** `awaiting_review`; **Review batch:** `IDSER-BATCH-10-02`.
 - **Predecessors:** IDSER-010-01 `PASS`.
 - **Consumes:** the approved extraction/reconciliation storage and 010-01 deterministic boundary; it does not reopen them.
 - **Execution environment:** the 010-01 Compose harness plus focused PostgreSQL selector/acceptance suites and actual pg-boss history.

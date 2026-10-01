@@ -51,10 +51,11 @@ const cookie = async (label) => {
   assert.equal(signIn.status, 200);
   return { email, value: signIn.headers.getSetCookie().map((item) => item.split(";", 1)[0]).join("; ") };
 };
-const create = async (label, text) => {
+const create = async (label, texts) => {
   const auth = await cookie(label);
   const projectId = `idser-010-${label}-${crypto.randomUUID().slice(0, 10)}`;
-  const form = new FormData(); form.set("projectId", projectId); form.set("projectName", `IDSER 010 ${label}`); form.append("prdFiles[]", new File([Buffer.from(`%PDF-1.7\n${text}`)], `${label}.pdf`, { type: "application/pdf" }));
+  const form = new FormData(); form.set("projectId", projectId); form.set("projectName", `IDSER 010 ${label}`);
+  for (const [index, text] of texts.entries()) form.append("prdFiles[]", new File([Buffer.from(`%PDF-1.7\n${text}`)], `${label}-${index + 1}.pdf`, { type: "application/pdf" }));
   const response = await fetch(`${origin}/api/projects`, { method: "POST", headers: { cookie: auth.value, origin }, body: form });
   assert.equal(response.status, 201, await response.text());
   return { projectId, email: auth.email };
@@ -62,8 +63,8 @@ const create = async (label, text) => {
 let projects = [];
 try {
   await run([...compose, "up", "-d", "--build", "--wait"]);
-  for (const [label, text, expectedCandidates, relationship] of [["normal", "Normal approval statement", 1, "new"], ["conflict", "Conflicting quota statements", 2, "contradicts"]]) {
-    const item = await create(label, text); projects.push(item);
+  for (const [label, texts, expectedCandidates, relationship] of [["normal", ["Normal approval statement"], 1, "new"], ["conflict", ["Conflicting quota statements"], 2, "contradicts"]]) {
+    const item = await create(label, texts); projects.push(item);
     await waitFor(async () => (await atlas.unsafe("SELECT state FROM atlas.extraction_bundle WHERE project_id=(SELECT id FROM atlas.project WHERE stable_id=$1)", [item.projectId]))[0]?.state === "ready_for_review");
     const [facts] = await atlas.unsafe("SELECT b.expected_document_count, b.completed_document_count, w.state AS workspace_state, master.state AS master_state, (SELECT count(*)::int FROM atlas.semantic_candidate c WHERE c.bundle_id=b.id) AS candidates, (SELECT count(*)::int FROM atlas.semantic_evidence e JOIN atlas.semantic_candidate c ON c.id=e.semantic_candidate_id WHERE c.bundle_id=b.id) AS evidence, (SELECT count(*)::int FROM atlas.reconciliation_relationship r WHERE r.bundle_id=b.id AND r.relationship_type=$2) AS relationships FROM atlas.project p JOIN atlas.extraction_bundle b ON b.project_id=p.id JOIN atlas.workspace w ON w.id=b.workspace_id JOIN atlas.workspace master ON master.project_id=p.id AND master.kind='master' WHERE p.stable_id=$1", [item.projectId, relationship]);
     assert.deepEqual({ expected: Number(facts.expected_document_count), completed: Number(facts.completed_document_count), workspace: facts.workspace_state, master: facts.master_state, candidates: Number(facts.candidates), relationships: Number(facts.relationships) }, { expected: 1, completed: 1, workspace: "ready_for_review", master: "empty", candidates: expectedCandidates, relationships: 1 });
@@ -80,12 +81,30 @@ try {
     }
     await readProjectCard(item.projectId, label === "conflict");
   }
+  for (const [label, texts, relationship] of [["scenario-c-supports", ["Normal approval statement", "Supports approval statement"], "supports"], ["scenario-c-duplicates", ["Normal approval statement", "Duplicate approval statement"], "duplicates"], ["scenario-d", ["Normal approval statement", "Conflicting quota statements"], "contradicts"], ["scenario-e", ["Normal approval statement", "Normal approval statement", "Normal approval statement"], "new"]]) {
+    const item = await create(label, texts); projects.push(item);
+    await waitFor(async () => (await atlas.unsafe("SELECT state FROM atlas.extraction_bundle WHERE project_id=(SELECT id FROM atlas.project WHERE stable_id=$1)", [item.projectId]))[0]?.state === "ready_for_review");
+    const [bundle] = await atlas.unsafe("SELECT b.id, b.expected_document_count, b.completed_document_count FROM atlas.extraction_bundle b JOIN atlas.project p ON p.id=b.project_id WHERE p.stable_id=$1", [item.projectId]);
+    assert.deepEqual({ expected: Number(bundle.expected_document_count), completed: Number(bundle.completed_document_count) }, { expected: texts.length, completed: texts.length }, `${label} completes only after every document is reconciled`);
+    const members = await atlas.unsafe("SELECT m.sequence, m.state, m.started_at, m.completed_at, (SELECT count(*)::int FROM atlas.semantic_execution e WHERE e.bundle_id=m.bundle_id AND e.document_id=m.document_id AND e.lifecycle='completed') AS stages FROM atlas.extraction_bundle_document m WHERE m.bundle_id=$1 ORDER BY m.sequence", [bundle.id]);
+    assert.equal(members.length, texts.length);
+    assert.ok(members.every((member) => member.state === "completed" && Number(member.stages) === 2), `${label} persists both completed semantic stages for every member`);
+    for (let index = 1; index < members.length; index += 1) assert.ok(new Date(members[index].started_at).getTime() >= new Date(members[index - 1].completed_at).getTime(), `${label} starts D${index + 1} only after D${index} reconciliation acceptance`);
+    const relationships = await atlas.unsafe("SELECT r.relationship_type, r.requires_resolution, r.source_semantic_id, r.target_semantic_id FROM atlas.reconciliation_relationship r WHERE r.bundle_id=$1 AND r.relationship_type=$2", [bundle.id, relationship]);
+    assert.ok(relationships.length >= 1, `${label} persists its controlled ${relationship} relationship`);
+    if (relationship === "supports" || relationship === "duplicates") assert.ok(relationships.some((row) => row.target_semantic_id), `${label} resolves only to the selected prior candidate neighborhood`);
+    if (relationship === "contradicts") assert.ok(relationships.some((row) => row.requires_resolution), "D persists an unresolved contradiction without accepting a candidate");
+    const [candidateStates] = await atlas.unsafe("SELECT count(*)::int AS candidates, count(*) FILTER (WHERE state <> 'candidate')::int AS non_candidates FROM atlas.semantic_candidate WHERE bundle_id=$1", [bundle.id]);
+    assert.equal(Number(candidateStates.non_candidates), 0, `${label} keeps all relationship results as incoming candidates`);
+    assert.ok(Number(candidateStates.candidates) >= texts.length, `${label} accounts for every current document candidate`);
+    await readProjectCard(item.projectId, relationship === "contradicts");
+  }
   const metrics = JSON.parse(await run([...compose, "exec", "-T", "mistral-mock", "node", "-e", "fetch('http://127.0.0.1:3100/metrics').then(async response => process.stdout.write(await response.text()))"]));
-  assert.ok(metrics.ocrCalls >= 2, "the controlled Mistral endpoint received both OCR calls");
-  assert.ok(metrics.structuredCalls >= 4, "the controlled Mistral endpoint received both semantic stages for both scenarios");
+  assert.ok(metrics.ocrCalls >= 11, "the controlled Mistral endpoint received every single- and multi-document OCR call");
+  assert.ok(metrics.structuredCalls >= 22, "the controlled Mistral endpoint received both semantic stages for every controlled document");
   const [direct] = await bridge.unsafe("SELECT has_schema_privilege('agents_bridge','atlas','USAGE') AS schema_usage");
   assert.equal(direct.schema_usage, false, "Bridge has no direct Atlas schema privilege");
-  process.stdout.write("IDSER-010-01 controlled Compose scenarios A/B passed.\n");
+  process.stdout.write("IDSER-010 controlled Compose scenarios A/B/C/D/E passed.\n");
 } finally {
   for (const item of projects) {
     const project = "SELECT id FROM atlas.project WHERE stable_id=$1";
