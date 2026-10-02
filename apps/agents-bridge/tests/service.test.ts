@@ -15,6 +15,16 @@ test("health and readiness are available without the Atlas UI", async () => {
   } finally { await app.close(); }
 });
 
+test("a live profile without qualified routes fails readiness while process health remains available", async () => {
+  const app = createBridgeApp({ runtime: new TestRuntime(), version: "test", ready: () => false });
+  try {
+    assert.equal((await app.inject({ method: "GET", url: "/healthz" })).statusCode, 200);
+    const readiness = await app.inject({ method: "GET", url: "/readyz" });
+    assert.equal(readiness.statusCode, 503);
+    assert.deepEqual(JSON.parse(readiness.body), { status: "not_ready", version: "test" });
+  } finally { await app.close(); }
+});
+
 test("the provider endpoint remains HTTPS except for the explicit local smoke provider", () => {
   assert.throws(() => loadBridgeConfig({ MISTRAL_API_BASE_URL: "http://provider.example" }), /HTTPS URL/);
   assert.throws(() => loadBridgeConfig({ MISTRAL_API_BASE_URL: "http://mistral-mock:3100" }), /HTTPS URL/);

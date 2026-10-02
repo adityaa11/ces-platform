@@ -18,6 +18,12 @@ test("composition roots inject capabilities without naming concrete provider cla
   for (const relativePath of compositionPaths) {
     const source = await readFile(fileURLToPath(new URL(relativePath, import.meta.url)), "utf8");
     assert.doesNotMatch(source, /new MistralProvider|MistralChatRuntime|GeminiProvider/u, relativePath);
-    assert.match(source, /createMistralCapabilities/u, relativePath);
+    assert.match(source, /route-registry/u, relativePath);
+    assert.match(source, /createRouteRegistry/u, relativePath);
+    assert.match(source, /deploymentProfile === "test"[\s\S]*?new TestRuntime/u, relativePath);
+    if (relativePath.endsWith("worker-main.ts")) {
+      assert.match(source, /registry\.resolve\("atlas\.document\.perceive"\)/u, relativePath);
+      assert.match(source, /registry\.resolve\(capabilityForSkill\(job\.skill\.id\)\)/u, relativePath);
+    }
   }
 });

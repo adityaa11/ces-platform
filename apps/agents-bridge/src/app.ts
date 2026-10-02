@@ -1,10 +1,14 @@
 import Fastify from "fastify";
 import { parseExecutionRequest, type ReasoningRuntime } from "@atlas/contracts";
 
-export function createBridgeApp(options: { readonly runtime: ReasoningRuntime; readonly version: string }) {
+export function createBridgeApp(options: { readonly runtime: ReasoningRuntime; readonly version: string; readonly ready?: () => boolean }) {
   const app = Fastify({ logger: false });
   app.get("/healthz", async () => ({ status: "ok" }));
-  app.get("/readyz", async () => ({ status: "ready", version: options.version }));
+  app.get("/readyz", async (_request, reply) => {
+    const ready = options.ready?.() ?? true;
+    if (!ready) reply.code(503);
+    return { status: ready ? "ready" : "not_ready", version: options.version };
+  });
   app.post("/v1/interactive/execute", async (request, reply) => {
     let execution;
     try { execution = parseExecutionRequest(request.body); }

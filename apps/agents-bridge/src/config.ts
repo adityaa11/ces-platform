@@ -1,7 +1,11 @@
+import { parseDeploymentProfile, parseQualifiedRoutes, type DeploymentProfile, type QualifiedRoute } from "./route-registry.js";
+
 export type BridgeConfig = {
   readonly host: string;
   readonly port: number;
   readonly version: string;
+  readonly deploymentProfile: DeploymentProfile;
+  readonly qualifiedRoutes: readonly QualifiedRoute[];
   readonly mistral: {
     readonly apiKey?: string;
     readonly baseUrl: string;
@@ -40,6 +44,8 @@ export function loadBridgeConfig(environment: NodeJS.ProcessEnv = process.env): 
     host: environment.AGENTS_BRIDGE_HOST ?? "0.0.0.0",
     port,
     version: environment.AGENTS_BRIDGE_VERSION ?? "0.1.0",
+    deploymentProfile: parseDeploymentProfile(environment.AGENTS_BRIDGE_DEPLOYMENT_PROFILE),
+    qualifiedRoutes: parseQualifiedRoutes(environment.AGENTS_BRIDGE_QUALIFIED_ROUTES),
     mistral: {
       apiKey: environment.MISTRAL_API_KEY || undefined,
       baseUrl: baseUrl.replace(/\/$/u, ""),

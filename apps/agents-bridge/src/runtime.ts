@@ -1,5 +1,6 @@
 import type { ExecutionEvent, ExecutionRequest, ReasoningRuntime } from "@atlas/contracts";
 import { BridgeProviderError, type StreamingChatProvider } from "./provider-capabilities.js";
+import { capabilityForSkill, type AtlasCapability } from "./route-registry.js";
 
 /** A deterministic placeholder used only until a provider adapter is introduced. */
 export class TestRuntime implements ReasoningRuntime {
@@ -37,6 +38,20 @@ export class StreamingChatRuntime implements ReasoningRuntime {
     } catch (error) {
       const message = error instanceof BridgeProviderError ? error.message : "Provider execution failed.";
       yield { type: "error", message, ...(error instanceof BridgeProviderError ? { code: error.code } : {}) };
+    }
+  }
+}
+
+export class QualifiedRouteRuntime implements ReasoningRuntime {
+  constructor(private readonly resolve: (capability: AtlasCapability) => { readonly capability: AtlasCapability; readonly providerId: string }, private readonly provider: StreamingChatProvider) {}
+
+  async *execute(request: ExecutionRequest, options: { readonly signal: AbortSignal }): AsyncIterable<ExecutionEvent> {
+    try {
+      const route = this.resolve(capabilityForSkill(request.skill.id));
+      if (route.providerId !== "mistral") throw new Error("Qualified route adapter is unavailable.");
+      yield* new StreamingChatRuntime(this.provider).execute(request, options);
+    } catch (error) {
+      yield { type: "error", code: "provider_unavailable", message: error instanceof Error ? error.message : "Qualified route is unavailable." };
     }
   }
 }
