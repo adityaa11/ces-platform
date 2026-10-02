@@ -1,6 +1,7 @@
 # BSS-V2-002: Qualified route registry and deployment-profile foundation
 
-- **State:** `planned`; **Review batch:** `BSS-V2-BATCH-02`
+- **State:** `awaiting_review` at `b83fa36`; **Review batch:** `BSS-V2-BATCH-02`.
+- **GO checkpoint:** [BSS-V2-BATCH-02-b83fa36-go.md](../../../feedback/BSS-V2-BATCH-02-b83fa36-go.md).
 - **Dependencies:** BSS-V2-001 at CK `PASS`
 - **References:** V3 §§4–6, 24, 31–33; Baseline V2 §§11–12, 30–31, 48; implementation context §§6, 11, 21, 28–29
 
