@@ -1,0 +1,2 @@
+# Kept outside the Node workspace: install with the selected local Python only.
+docling==2.132.0
