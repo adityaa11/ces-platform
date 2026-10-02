@@ -21,7 +21,7 @@ test("Gemini qualification requires real adapter calls and records only observat
     async *streamChat() {},
   });
   assert.equal(structuredCalls, 3); assert.equal(perceptionCalls, 1); assert.equal(record.outcome, "success");
-  assert.equal(record.observations?.minimalInference.usagePresent, true);
+  assert.equal(record.observations?.minimalInference?.usagePresent, true);
   assert.equal(JSON.stringify(record).includes("Synthetic qualification content"), false);
 });
 
@@ -30,5 +30,5 @@ test("Gemini qualification records an external credential/provider failure witho
   const record = await qualifyLiveGemini(missing, {} as never);
   assert.deepEqual(record.outcome, "failure"); assert.equal(record.errorCode, "authentication");
   const failed = await qualifyLiveGemini(config, { async structured() { throw new BridgeProviderError("rate_limited", "private provider response"); }, async perceive() { throw new Error("unreachable"); }, async *streamChat() {} });
-  assert.equal(failed.errorCode, "rate_limited"); assert.equal(JSON.stringify(failed).includes("private provider response"), false);
+  assert.equal(failed.errorCode, "rate_limited"); assert.equal(failed.failedStep, "minimalInference"); assert.equal(JSON.stringify(failed).includes("private provider response"), false);
 });

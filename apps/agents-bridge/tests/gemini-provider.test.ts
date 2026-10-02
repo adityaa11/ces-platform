@@ -3,7 +3,7 @@ import test from "node:test";
 import { normalizePerceptionResult } from "@atlas/core";
 import { assertGeminiRouteAdapter } from "../src/route-registry.ts";
 import { QualifiedRouteRuntime } from "../src/runtime.ts";
-import { GeminiProvider, type GeminiProviderConfig } from "../src/providers/gemini.ts";
+import { GeminiProvider, geminiResponseSchema, type GeminiProviderConfig } from "../src/providers/gemini.ts";
 
 const config: GeminiProviderConfig = { apiKey: "gemini-secret-test", baseUrl: "https://gemini.test", structuredModel: "model-structured", chatModel: "model-chat", perceptionModel: "model-pdf", maxDocumentBytes: 32, maxRequestBytes: 100_000, maxResponseBytes: 50_000, maxStreamBytes: 50_000, timeoutMilliseconds: 1000, zeroDataRetentionApproved: false };
 const response = (payload: unknown) => new Response(JSON.stringify(payload), { status: 200, headers: { "content-type": "application/json" } });
@@ -24,6 +24,16 @@ test("structured request maps bounded neutral messages and revalidates Atlas sch
   await assert.rejects(() => bad.structured({ messages: [], schema, signal: new AbortController().signal }), (error: unknown) => bridgeError(error, "malformed_response"));
   const invalidJson = new GeminiProvider(config, async () => response(envelope("not-json")));
   await assert.rejects(() => invalidJson.structured({ messages: [], schema, signal: new AbortController().signal }), (error: unknown) => bridgeError(error, "malformed_response"));
+});
+
+test("Gemini request schemas use its supported subset while Atlas retains complete validation", () => {
+  const schema = geminiResponseSchema({ type: "object", additionalProperties: false, properties: { version: { const: "v1" }, identifier: { type: "string", minLength: 1, maxLength: 200, pattern: "^[A-Z]+$" } }, required: ["version", "identifier"] }) as Record<string, unknown>;
+  const properties = schema.properties as Record<string, Record<string, unknown>>;
+  assert.deepEqual(properties.version.enum, ["v1"]);
+  assert.equal("const" in properties.version, false);
+  assert.equal("minLength" in properties.identifier, false);
+  assert.equal("pattern" in properties.identifier, false);
+  assert.deepEqual(schema.required, ["version", "identifier"]);
 });
 
 test("PDF perception sends only bounded inline bytes and normalizes without invented optional metadata", async () => {

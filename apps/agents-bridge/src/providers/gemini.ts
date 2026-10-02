@@ -39,6 +39,32 @@ function providerError(status: number): BridgeProviderError {
 }
 const role = (value: ChatMessage["role"]) => value === "assistant" ? "model" : value === "tool" ? "user" : value;
 const refusalFinishReasons = new Set(["SAFETY", "BLOCKLIST", "PROHIBITED_CONTENT", "SPII", "IMAGE_SAFETY", "IMAGE_PROHIBITED_CONTENT"]);
+const geminiSchemaKeywords = new Set(["$id", "$defs", "$ref", "$anchor", "type", "format", "title", "description", "enum", "items", "prefixItems", "minItems", "maxItems", "minimum", "maximum", "anyOf", "oneOf", "properties", "additionalProperties", "required", "propertyOrdering"]);
+const jsonRecord = (value: unknown): Record<string, unknown> | undefined => typeof value === "object" && value !== null && !Array.isArray(value) ? value as Record<string, unknown> : undefined;
+
+/** Gemini accepts a documented subset of JSON Schema; Atlas still validates the full original schema after parsing. */
+export function geminiResponseSchema(schema: unknown): unknown {
+  if (Array.isArray(schema)) return schema.map(geminiResponseSchema);
+  const input = jsonRecord(schema);
+  if (!input) return schema;
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(input)) {
+    if (key === "const") {
+      if (typeof value === "string" || typeof value === "number") result.enum = [value];
+      continue;
+    }
+    if (!geminiSchemaKeywords.has(key)) continue;
+    if (key === "properties" || key === "$defs") {
+      const entries = jsonRecord(value);
+      result[key] = entries ? Object.fromEntries(Object.entries(entries).map(([name, child]) => [name, geminiResponseSchema(child)])) : value;
+      continue;
+    }
+    if (key === "items" || key === "additionalProperties") result[key] = geminiResponseSchema(value);
+    else if (key === "prefixItems" || key === "anyOf" || key === "oneOf") result[key] = Array.isArray(value) ? value.map(geminiResponseSchema) : value;
+    else result[key] = value;
+  }
+  return result;
+}
 function contents(messages: readonly ChatMessage[]) {
   const system = messages.filter((message) => message.role === "system").map((message) => message.content).join("\n\n");
   const turns = messages.filter((message) => message.role !== "system").map((message) => ({ role: role(message.role), parts: [{ text: message.content }] }));
@@ -82,7 +108,7 @@ export class GeminiProvider implements StructuredReasoningProvider, DocumentPerc
   }
   async structured(input: Parameters<StructuredReasoningProvider["structured"]>[0]): ReturnType<StructuredReasoningProvider["structured"]> {
     const model = this.model("structured", input.requireZeroDataRetention); const started = Date.now();
-    const result = await this.post(model, { ...contents(input.messages), generationConfig: { responseMimeType: "application/json", responseJsonSchema: input.schema } }, input.signal);
+    const result = await this.post(model, { ...contents(input.messages), generationConfig: { responseMimeType: "application/json", responseJsonSchema: geminiResponseSchema(input.schema) } }, input.signal);
     const payload = await this.read(result.response, input.signal, result.deadline);
     const text = partsOf(payload).map((part) => part.text ?? "").join("");
     if (!text) throw new BridgeProviderError("malformed_response", "Gemini returned no structured content.");
@@ -95,7 +121,8 @@ export class GeminiProvider implements StructuredReasoningProvider, DocumentPerc
     const model = this.model("perception", input.options?.requireZeroDataRetention);
     if (input.mimeType !== "application/pdf") throw new BridgeProviderError("invalid_request", "Only explicit PDF input is supported by this capability.");
     if (!input.bytes.byteLength || input.bytes.byteLength > this.config.maxDocumentBytes) throw new BridgeProviderError("invalid_request", "PDF is empty or exceeds the configured provider byte limit.");
-    const started = Date.now(); const response = await this.post(model, { contents: [{ role: "user", parts: [{ text: "Extract the document text page by page. Return only JSON matching the requested schema. Do not infer geometry, confidence, or visual asset references." }, { inlineData: { mimeType: "application/pdf", data: Buffer.from(input.bytes).toString("base64") } }] }], generationConfig: { responseMimeType: "application/json", responseJsonSchema: { type: "object", additionalProperties: false, required: ["pages"], properties: { pages: { type: "array", minItems: 1, items: { type: "object", additionalProperties: false, required: ["page_number", "markdown"], properties: { page_number: { type: "integer", minimum: 1 }, markdown: { type: "string", maxLength: 1000000 } } } } } } } }, signal);
+    const perceptionSchema = { type: "object", additionalProperties: false, required: ["pages"], properties: { pages: { type: "array", minItems: 1, items: { type: "object", additionalProperties: false, required: ["page_number", "markdown"], properties: { page_number: { type: "integer", minimum: 1 }, markdown: { type: "string", maxLength: 1000000 } } } } } };
+    const started = Date.now(); const response = await this.post(model, { contents: [{ role: "user", parts: [{ text: "Extract the document text page by page. Return only JSON matching the requested schema. Do not infer geometry, confidence, or visual asset references." }, { inlineData: { mimeType: "application/pdf", data: Buffer.from(input.bytes).toString("base64") } }] }], generationConfig: { responseMimeType: "application/json", responseJsonSchema: geminiResponseSchema(perceptionSchema) } }, signal);
     const payload = await this.read(response.response, signal, response.deadline); const text = partsOf(payload).map((part) => part.text ?? "").join("");
     let parsed: unknown; try { parsed = JSON.parse(text); } catch { throw new BridgeProviderError("malformed_response", "Gemini perception result was not valid JSON."); }
     if (!isRecord(parsed) || !Array.isArray(parsed.pages) || parsed.pages.length < 1 || parsed.pages.length > 1000 || parsed.pages.some((page) => !isRecord(page) || !Number.isInteger(page.page_number) || typeof page.markdown !== "string" || page.markdown.length > 1_000_000)) throw new BridgeProviderError("malformed_response", "Gemini perception result did not contain bounded pages.");

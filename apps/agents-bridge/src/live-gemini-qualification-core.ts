@@ -20,14 +20,15 @@ export type GeminiLiveQualificationRecord = {
     readonly zeroDataRetentionApproved: boolean;
   };
   readonly observations?: {
-    readonly minimalInference: Observation;
-    readonly extraction: Observation;
-    readonly reconciliation: Observation;
-    readonly perception: Observation;
+    readonly minimalInference?: Observation;
+    readonly extraction?: Observation;
+    readonly reconciliation?: Observation;
+    readonly perception?: Observation;
     readonly rateLimit: "not_observed";
     readonly evaluationPrivacy: "not_zero_retention_approved" | "zero_retention_approved";
   };
   readonly errorCode?: string;
+  readonly failedStep?: "minimalInference" | "extraction" | "reconciliation" | "perception";
 };
 
 function observation(provenance: ProviderProvenance): Observation {
@@ -68,16 +69,25 @@ function errorCode(error: unknown): string {
 export async function qualifyLiveGemini(config: BridgeConfig, provider: GeminiCapabilities): Promise<GeminiLiveQualificationRecord> {
   const base = { qualification: "bss-v2-004" as const, credentialPresent: Boolean(config.gemini.apiKey), configured: configuredGeminiQualificationRecord(config) };
   if (!config.gemini.apiKey) return { ...base, outcome: "failure", errorCode: "authentication" };
+  const observations: { minimalInference?: Observation; extraction?: Observation; reconciliation?: Observation; perception?: Observation; rateLimit: "not_observed"; evaluationPrivacy: "not_zero_retention_approved" | "zero_retention_approved" } = { rateLimit: "not_observed", evaluationPrivacy: config.gemini.zeroDataRetentionApproved ? "zero_retention_approved" : "not_zero_retention_approved" };
+  let failedStep: NonNullable<GeminiLiveQualificationRecord["failedStep"]> = "minimalInference";
   try {
     const minimal = await provider.structured({ messages: messages("Set qualified to true."), schema: minimalSchema, signal: AbortSignal.timeout(config.gemini.timeoutMilliseconds) });
+    observations.minimalInference = observation(minimal.provenance);
+    failedStep = "extraction";
     const extraction = await provider.structured({ messages: messages("Extract the one synthetic approval rule."), schema: semanticExtractionResultSchema, signal: AbortSignal.timeout(config.gemini.timeoutMilliseconds) });
     parseSemanticExtractionResult(extraction.value);
+    observations.extraction = observation(extraction.provenance);
+    failedStep = "reconciliation";
     const reconciliation = await provider.structured({ messages: messages("Reconcile the synthetic candidate as a new relationship."), schema: semanticReconciliationResultSchema, signal: AbortSignal.timeout(config.gemini.timeoutMilliseconds) });
     parseSemanticReconciliationResult(reconciliation.value);
+    observations.reconciliation = observation(reconciliation.provenance);
+    failedStep = "perception";
     const perception = await provider.perceive({ bytes: syntheticPdf, mimeType: "application/pdf" }, AbortSignal.timeout(config.gemini.timeoutMilliseconds));
     normalizePerceptionResult({ executionId: "bss-v2-004-live", artifactId: "synthetic-public-pdf", sourceSha256: "a".repeat(64), provider: { provider: perception.provenance.provider, processor: perception.provenance.model, executionId: "bss-v2-004-live", processedAt: "2026-10-02T00:00:00.000Z" }, result: perception.providerResult as { pages: readonly unknown[] } });
-    return { ...base, outcome: "success", observations: { minimalInference: observation(minimal.provenance), extraction: observation(extraction.provenance), reconciliation: observation(reconciliation.provenance), perception: observation(perception.provenance), rateLimit: "not_observed", evaluationPrivacy: config.gemini.zeroDataRetentionApproved ? "zero_retention_approved" : "not_zero_retention_approved" } };
+    observations.perception = observation(perception.provenance);
+    return { ...base, outcome: "success", observations };
   } catch (error) {
-    return { ...base, outcome: "failure", errorCode: errorCode(error) };
+    return { ...base, outcome: "failure", observations, failedStep, errorCode: errorCode(error) };
   }
 }
