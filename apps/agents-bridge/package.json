@@ -12,7 +12,7 @@
     "test:semantic-integration": "jiti tests/semantic-worker.integration.test.ts",
     "test:live-qualification": "jiti tests/live-mistral-qualification.test.ts && jiti tests/live-gemini-qualification.test.ts",
     "qualification:live": "jiti src/live-mistral-qualification.ts",
-    "qualification:gemini-live": "jiti src/live-gemini-qualification.ts",
+    "qualification:gemini-live": "node --env-file=../../.env ./node_modules/jiti/lib/jiti-cli.mjs src/live-gemini-qualification.ts",
     "test:idser-010-compose": "node tests/idser-010-compose.mjs",
     "test:perception-compose": "node tests/perception-compose-smoke.mjs",
     "worker": "jiti src/worker-main.ts"
