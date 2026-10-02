@@ -119,7 +119,24 @@ export function mistralModelForCapability(capability: AtlasCapability, models: {
 }
 
 export function assertRouteAdapter(route: QualifiedRoute, models: { readonly structuredModel: string; readonly chatModel: string; readonly ocrModel: string }): void {
-  if (route.providerId !== "mistral") throw new RouteResolutionError("invalid_route", `Route ${route.routeId} names an unavailable adapter.`);
-  if (route.adapterVersion !== "mistral-adapter-v1") throw new RouteResolutionError("invalid_route", `Route ${route.routeId} names an unavailable adapter version.`);
-  if (mistralModelForCapability(route.capability, models) !== route.modelOrProcessorId) throw new RouteResolutionError("invalid_route", `Route ${route.routeId} model identity does not match pinned adapter configuration.`);
+  if (route.providerId === "mistral") {
+    if (route.adapterVersion !== "mistral-adapter-v1") throw new RouteResolutionError("invalid_route", `Route ${route.routeId} names an unavailable adapter version.`);
+    if (mistralModelForCapability(route.capability, models) !== route.modelOrProcessorId) throw new RouteResolutionError("invalid_route", `Route ${route.routeId} model identity does not match pinned adapter configuration.`);
+    return;
+  }
+  throw new RouteResolutionError("invalid_route", `Route ${route.routeId} names an unavailable adapter.`);
+}
+
+export function assertGeminiRouteAdapter(route: QualifiedRoute, models: { readonly structuredModel: string; readonly chatModel: string; readonly perceptionModel: string }): void {
+  if (route.providerId !== "gemini") throw new RouteResolutionError("invalid_route", `Route ${route.routeId} does not name Gemini.`);
+  if (route.adapterVersion !== "gemini-adapter-v1") throw new RouteResolutionError("invalid_route", `Route ${route.routeId} names an unavailable Gemini adapter version.`);
+  const expected = route.capability === "atlas.document.perceive" ? models.perceptionModel
+    : route.capability === "atlas.chat.default" || route.capability === "atlas.chat.deep" ? models.chatModel : models.structuredModel;
+  if (!expected || expected !== route.modelOrProcessorId) throw new RouteResolutionError("invalid_route", `Route ${route.routeId} model identity does not match pinned Gemini adapter configuration.`);
+}
+
+export function assertConfiguredRouteAdapter(route: QualifiedRoute, config: { readonly mistral: { readonly structuredModel: string; readonly chatModel: string; readonly ocrModel: string }; readonly gemini: { readonly structuredModel: string; readonly chatModel: string; readonly perceptionModel: string } }): void {
+  if (route.providerId === "mistral") return assertRouteAdapter(route, config.mistral);
+  if (route.providerId === "gemini") return assertGeminiRouteAdapter(route, config.gemini);
+  throw new RouteResolutionError("invalid_route", `Route ${route.routeId} names an unavailable adapter.`);
 }

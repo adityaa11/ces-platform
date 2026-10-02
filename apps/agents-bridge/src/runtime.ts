@@ -43,13 +43,15 @@ export class StreamingChatRuntime implements ReasoningRuntime {
 }
 
 export class QualifiedRouteRuntime implements ReasoningRuntime {
-  constructor(private readonly resolve: (capability: AtlasCapability) => { readonly capability: AtlasCapability; readonly providerId: string }, private readonly provider: StreamingChatProvider) {}
+  constructor(private readonly resolve: (capability: AtlasCapability) => { readonly capability: AtlasCapability; readonly providerId: string }, private readonly providers: Readonly<Record<string, StreamingChatProvider>> | StreamingChatProvider) {}
 
   async *execute(request: ExecutionRequest, options: { readonly signal: AbortSignal }): AsyncIterable<ExecutionEvent> {
     try {
       const route = this.resolve(capabilityForSkill(request.skill.id));
-      if (route.providerId !== "mistral") throw new Error("Qualified route adapter is unavailable.");
-      yield* new StreamingChatRuntime(this.provider).execute(request, options);
+      const legacyProvider = this.providers as StreamingChatProvider;
+      const provider = typeof legacyProvider.streamChat === "function" ? legacyProvider : (this.providers as Readonly<Record<string, StreamingChatProvider>>)[route.providerId];
+      if (!provider) throw new Error("Qualified route adapter is unavailable.");
+      yield* new StreamingChatRuntime(provider).execute(request, options);
     } catch (error) {
       yield { type: "error", code: "provider_unavailable", message: error instanceof Error ? error.message : "Qualified route is unavailable." };
     }

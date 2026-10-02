@@ -21,6 +21,19 @@ export type BridgeConfig = {
     readonly retryDelayMilliseconds: number;
     readonly zeroDataRetentionApproved: boolean;
   };
+  readonly gemini: {
+    readonly apiKey?: string;
+    readonly baseUrl: string;
+    readonly structuredModel: string;
+    readonly chatModel: string;
+    readonly perceptionModel: string;
+    readonly maxDocumentBytes: number;
+    readonly maxRequestBytes: number;
+    readonly maxResponseBytes: number;
+    readonly maxStreamBytes: number;
+    readonly timeoutMilliseconds: number;
+    readonly zeroDataRetentionApproved: boolean;
+  };
 };
 
 function boundedPositiveInteger(value: string | undefined, fallback: number, name: string): number {
@@ -40,6 +53,10 @@ export function loadBridgeConfig(environment: NodeJS.ProcessEnv = process.env): 
     && parsedBaseUrl?.protocol === "http:"
     && (parsedBaseUrl.hostname === "localhost" || parsedBaseUrl.hostname === "127.0.0.1" || parsedBaseUrl.hostname === "mistral-mock");
   if (!/^https:\/\/[^\s]+$/u.test(baseUrl) && !insecureLocalProvider) throw new Error("MISTRAL_API_BASE_URL must be an HTTPS URL unless the explicitly test-only local provider is enabled.");
+  const geminiBaseUrl = environment.GEMINI_API_BASE_URL ?? "https://generativelanguage.googleapis.com";
+  let parsedGeminiUrl: URL;
+  try { parsedGeminiUrl = new URL(geminiBaseUrl); } catch { throw new Error("GEMINI_API_BASE_URL must be an absolute HTTPS URL."); }
+  if (parsedGeminiUrl.protocol !== "https:" || parsedGeminiUrl.username || parsedGeminiUrl.password || parsedGeminiUrl.search || parsedGeminiUrl.hash) throw new Error("GEMINI_API_BASE_URL must be an HTTPS URL without credentials, query parameters, or fragments.");
   return {
     host: environment.AGENTS_BRIDGE_HOST ?? "0.0.0.0",
     port,
@@ -60,6 +77,19 @@ export function loadBridgeConfig(environment: NodeJS.ProcessEnv = process.env): 
       retryMaxAttempts: boundedPositiveInteger(environment.MISTRAL_RETRY_MAX_ATTEMPTS, 2, "MISTRAL_RETRY_MAX_ATTEMPTS"),
       retryDelayMilliseconds: boundedPositiveInteger(environment.MISTRAL_RETRY_DELAY_MS, 250, "MISTRAL_RETRY_DELAY_MS"),
       zeroDataRetentionApproved: environment.MISTRAL_ZDR_APPROVED === "true",
+    },
+    gemini: {
+      apiKey: environment.GEMINI_API_KEY || undefined,
+      baseUrl: geminiBaseUrl.replace(/\/$/u, ""),
+      structuredModel: environment.GEMINI_STRUCTURED_MODEL ?? "",
+      chatModel: environment.GEMINI_CHAT_MODEL ?? "",
+      perceptionModel: environment.GEMINI_PERCEPTION_MODEL ?? "",
+      maxDocumentBytes: boundedPositiveInteger(environment.GEMINI_MAX_DOCUMENT_BYTES, 20 * 1024 * 1024, "GEMINI_MAX_DOCUMENT_BYTES"),
+      maxRequestBytes: boundedPositiveInteger(environment.GEMINI_MAX_REQUEST_BYTES, 25 * 1024 * 1024, "GEMINI_MAX_REQUEST_BYTES"),
+      maxResponseBytes: boundedPositiveInteger(environment.GEMINI_MAX_RESPONSE_BYTES, 10 * 1024 * 1024, "GEMINI_MAX_RESPONSE_BYTES"),
+      maxStreamBytes: boundedPositiveInteger(environment.GEMINI_MAX_STREAM_BYTES, 10 * 1024 * 1024, "GEMINI_MAX_STREAM_BYTES"),
+      timeoutMilliseconds: boundedPositiveInteger(environment.GEMINI_TIMEOUT_MS, 30_000, "GEMINI_TIMEOUT_MS"),
+      zeroDataRetentionApproved: environment.GEMINI_ZDR_APPROVED === "true",
     },
   };
 }
