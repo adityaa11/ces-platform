@@ -1,5 +1,5 @@
 import { rm, writeFile } from "node:fs/promises";
-import { MistralProvider } from "./providers/mistral.js";
+import { createMistralCapabilities } from "./providers/mistral.js";
 import { TestRuntime } from "./runtime.js";
 import { loadWorkerConfig } from "./worker-config.js";
 import { createBackgroundWorker } from "./worker.js";
@@ -16,13 +16,13 @@ const readinessPath = "/tmp/agents-bridge-worker.ready";
 // Remove an earlier marker before the asynchronous broker startup begins.
 await rm(readinessPath, { force: true });
 const clients = createAtlasPerceptionClients(loadAtlasPerceptionClientConfig());
-const provider = new MistralProvider(loadBridgeConfig().mistral);
+const capabilities = createMistralCapabilities(loadBridgeConfig().mistral);
 const semanticClient = createAtlasSemanticClient(loadAtlasSemanticClientConfig());
 const worker = createBackgroundWorker(loadWorkerConfig(), new TestRuntime(), undefined, async (request, signal, context) => {
   const store = createPerceptionResultReplay(context.database);
-  await runDocumentPerception(request, provider, clients.source, clients.results, signal, { idempotencyKey: context.idempotencyKey, store, finalAttempt: context.finalAttempt });
+  await runDocumentPerception(request, capabilities.perception, clients.source, clients.results, signal, { idempotencyKey: context.idempotencyKey, store, finalAttempt: context.finalAttempt });
 }, undefined, async (job, signal, context) => {
-  await runSemanticJob(job, provider, semanticClient, createSemanticResultReplay(context.database), context.idempotencyKey, signal, { owner: context.leaseOwner, generation: context.leaseGeneration });
+  await runSemanticJob(job, capabilities.structured, semanticClient, createSemanticResultReplay(context.database), context.idempotencyKey, signal, { owner: context.leaseOwner, generation: context.leaseGeneration });
 });
 await worker.start();
 await writeFile(readinessPath, "ready\n");

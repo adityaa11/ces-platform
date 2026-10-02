@@ -1,5 +1,5 @@
 import type { ExecutionEvent, ExecutionRequest, ReasoningRuntime } from "@atlas/contracts";
-import { BridgeProviderError, MistralProvider } from "./providers/mistral.js";
+import { BridgeProviderError, type StreamingChatProvider } from "./provider-capabilities.js";
 
 /** A deterministic placeholder used only until a provider adapter is introduced. */
 export class TestRuntime implements ReasoningRuntime {
@@ -17,13 +17,13 @@ export class TestRuntime implements ReasoningRuntime {
  * execution; structured and OCR capabilities are invoked by future Bridge
  * capability callers, not inferred from client-supplied model parameters.
  */
-export class MistralChatRuntime implements ReasoningRuntime {
-  constructor(private readonly provider: MistralProvider) {}
+export class StreamingChatRuntime implements ReasoningRuntime {
+  constructor(private readonly provider: StreamingChatProvider) {}
 
   async *execute(request: ExecutionRequest, options: { readonly signal: AbortSignal }): AsyncIterable<ExecutionEvent> {
     const prompt = request.input.prompt;
     if (typeof prompt !== "string" || !prompt) {
-      yield { type: "error", message: "Mistral chat execution requires a bounded string prompt." };
+      yield { type: "error", message: "Streaming chat execution requires a bounded string prompt." };
       return;
     }
     try {

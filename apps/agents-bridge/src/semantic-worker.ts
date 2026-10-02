@@ -1,6 +1,6 @@
 import { parseSemanticBackgroundJob, parseSemanticExtractionResult, parseSemanticReconciliationResult, semanticContractVersion, type SemanticBackgroundJob } from "@atlas/contracts";
 import { getProductionSemanticSkill } from "@atlas/skills";
-import { BridgeProviderError, type MistralProvider } from "./providers/mistral.js";
+import { BridgeProviderError, type StructuredReasoningProvider } from "./provider-capabilities.js";
 import { AtlasSemanticClientError } from "./atlas-semantic-client.js";
 import { SemanticReplayLeaseLostError } from "./semantic-result-replay.js";
 
@@ -9,7 +9,7 @@ export type SemanticReplay = { load(idempotencyKey: string, executionId: string)
 const failureCode = (error: unknown) => error instanceof BridgeProviderError ? (error.code === "timeout" ? "provider_timeout" : error.code === "malformed_response" || error.code === "response_bound" ? "malformed_output" : "provider_unavailable") : "integrity_validation";
 const isReplayLeaseLost = (error: unknown): error is SemanticReplayLeaseLostError => error instanceof SemanticReplayLeaseLostError || (error instanceof Error && error.name === "SemanticReplayLeaseLostError");
 
-export async function runSemanticJob(jobValue: unknown, provider: MistralProvider, client: SemanticClient, replay: SemanticReplay, idempotencyKey: string, signal: AbortSignal, lease = { owner: "unit-test", generation: 1 }): Promise<void> {
+export async function runSemanticJob(jobValue: unknown, provider: StructuredReasoningProvider, client: SemanticClient, replay: SemanticReplay, idempotencyKey: string, signal: AbortSignal, lease = { owner: "unit-test", generation: 1 }): Promise<void> {
   const job = parseSemanticBackgroundJob(jobValue);
   const staged = await replay.load(idempotencyKey, job.executionId);
   if (staged) { await client.deliver(staged, signal); return; }

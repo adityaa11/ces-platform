@@ -1,7 +1,7 @@
 import { normalizePerceptionResult } from "@atlas/core";
 import type { DocumentPerceptionRequest, DocumentPerceptionTechnicalFailure, NormalizedDocument } from "@atlas/contracts";
 import { AtlasPerceptionClientError } from "./atlas-perception-client.js";
-import { BridgeProviderError, type MistralProvider } from "./providers/mistral.js";
+import { BridgeProviderError, type DocumentPerceptionProvider } from "./provider-capabilities.js";
 
 export type SourceGrantClient = { redeem(request: DocumentPerceptionRequest, signal: AbortSignal): Promise<{ readonly bytes: Uint8Array; readonly mimeType: "application/pdf" }> };
 export type PerceptionResultClient = { deliver(request: DocumentPerceptionRequest, result: NormalizedDocument, signal: AbortSignal): Promise<void>; fail?(failure: DocumentPerceptionTechnicalFailure, signal: AbortSignal): Promise<void> };
@@ -43,7 +43,7 @@ async function deliverStaged(request: DocumentPerceptionRequest, result: Normali
 }
 
 /** Bridge orchestration has no storage/database authority; Atlas owns both handoff endpoints. */
-export async function runDocumentPerception(request: DocumentPerceptionRequest, provider: MistralProvider, source: SourceGrantClient, results: PerceptionResultClient, signal: AbortSignal, replay?: { readonly idempotencyKey: string; readonly store: PerceptionResultReplay; readonly finalAttempt?: boolean }): Promise<void> {
+export async function runDocumentPerception(request: DocumentPerceptionRequest, provider: DocumentPerceptionProvider, source: SourceGrantClient, results: PerceptionResultClient, signal: AbortSignal, replay?: { readonly idempotencyKey: string; readonly store: PerceptionResultReplay; readonly finalAttempt?: boolean }): Promise<void> {
   let trustedResult = false;
   try {
     let staged: NormalizedDocument | undefined;

@@ -1,10 +1,19 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { BridgeProviderError, MistralProvider, type MistralProviderConfig } from "../src/providers/mistral.ts";
-import { MistralChatRuntime } from "../src/runtime.ts";
+import { StreamingChatRuntime } from "../src/runtime.ts";
+import type { DocumentPerceptionProvider, StreamingChatProvider, StructuredReasoningProvider } from "../src/provider-capabilities.ts";
 
 const config: MistralProviderConfig = { apiKey: "test-secret", baseUrl: "https://mistral.test", structuredModel: "large-qualified", chatModel: "small-qualified", ocrModel: "ocr-qualified", maxDocumentBytes: 32, zeroDataRetentionApproved: false };
 const response = (value: unknown) => new Response(JSON.stringify(value), { status: 200, headers: { "content-type": "application/json" } });
+
+test("Mistral adapter conforms to every adopted Bridge capability", () => {
+  const adapter = new MistralProvider(config);
+  const structured: StructuredReasoningProvider = adapter;
+  const perception: DocumentPerceptionProvider = adapter;
+  const streaming: StreamingChatProvider = adapter;
+  assert.ok(structured && perception && streaming);
+});
 
 test("structured execution maps a configured model and revalidates the complete schema", async () => {
   let body: Record<string, unknown> | undefined;
@@ -36,7 +45,7 @@ test("privacy policy fails closed and stream events are provider-neutral", async
 
 test("the Bridge forwards tool-call proposals but never executes them", async () => {
   const stream = new ReadableStream<Uint8Array>({ start(controller) { controller.enqueue(new TextEncoder().encode('data: {"choices":[{"delta":{"tool_calls":[{"id":"call-2","function":{"name":"proposed_action","arguments":"{\\"x\\":1}"}}]}}]}\n\ndata: [DONE]\n\n')); controller.close(); } });
-  const runtime = new MistralChatRuntime(new MistralProvider(config, async () => new Response(stream, { status: 200 })));
+  const runtime = new StreamingChatRuntime(new MistralProvider(config, async () => new Response(stream, { status: 200 })));
   const events = []; for await (const event of runtime.execute({ version: "v1", executionId: "test", mode: "interactive", skill: { id: "skill", version: "1" }, input: { prompt: "hello" }, context: { boundary: "test", items: [] } }, { signal: new AbortController().signal })) events.push(event);
   assert.deepEqual(events[0], { type: "tool_call", id: "call-2", name: "proposed_action", arguments: "{\"x\":1}" });
   assert.deepEqual(events[1], { type: "complete" });

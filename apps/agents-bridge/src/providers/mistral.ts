@@ -1,20 +1,9 @@
 import { validateJsonSchema } from "@atlas/contracts";
+import { BridgeProviderError, type BridgeErrorCode, type ChatMessage, type ChatStreamEvent, type ChatTool, type DocumentPerceptionProvider, type ProviderProvenance, type ProviderUsage, type StreamingChatProvider, type StructuredReasoningProvider } from "../provider-capabilities.js";
+
+export { BridgeProviderError, type BridgeErrorCode, type ChatMessage, type ChatStreamEvent, type ChatTool, type ProviderProvenance, type ProviderUsage } from "../provider-capabilities.js";
 
 export type MistralCapability = "atlas.reasoning.structured" | "atlas.chat.default" | "atlas.document.perceive";
-export type BridgeErrorCode = "authentication" | "invalid_request" | "unsupported_capability" | "rate_limited" | "timeout" | "provider_unavailable" | "malformed_response" | "response_bound" | "privacy_policy" | "cancelled";
-
-export class BridgeProviderError extends Error {
-  constructor(readonly code: BridgeErrorCode, message: string) { super(message); }
-}
-
-export type ProviderUsage = { readonly inputTokens?: number; readonly outputTokens?: number; readonly cachedTokens?: number; readonly processedPages?: number; readonly raw?: Readonly<Record<string, unknown>> };
-export type ProviderProvenance = { readonly provider: "mistral"; readonly model: string; readonly endpoint: "/v1/chat/completions" | "/v1/ocr"; readonly latencyMilliseconds: number; readonly attempt: number; readonly usage?: ProviderUsage };
-export type ChatMessage = { readonly role: "system" | "user" | "assistant" | "tool"; readonly content: string };
-export type ChatTool = { readonly name: string; readonly description?: string; readonly parameters: Readonly<Record<string, unknown>> };
-export type ChatStreamEvent = { readonly type: "text"; readonly text: string } | { readonly type: "tool_call"; readonly id: string; readonly name: string; readonly arguments: string } | { readonly type: "complete"; readonly provenance: ProviderProvenance };
-export type PerceptionOptions = { readonly includeBlocks?: boolean; readonly includeImageBase64?: boolean; readonly tableFormat?: "markdown" | "html"; readonly confidenceScoresGranularity?: "page" | "block" | "word"; readonly requireZeroDataRetention?: boolean };
-export type PerceptionRequest = { readonly bytes: Uint8Array; readonly mimeType: string; readonly options?: PerceptionOptions };
-export type PerceptionResult = { readonly providerResult: Readonly<Record<string, unknown>>; readonly provenance: ProviderProvenance };
 
 export type MistralProviderConfig = {
   readonly apiKey?: string;
@@ -59,7 +48,7 @@ function providerError(status: number): BridgeProviderError {
 }
 
 /** Stateless Mistral transport. It receives explicit content only; it never opens Atlas storage or databases. */
-export class MistralProvider {
+export class MistralProvider implements StructuredReasoningProvider, DocumentPerceptionProvider, StreamingChatProvider {
   constructor(private readonly config: MistralProviderConfig, private readonly fetcher: FetchLike = fetch, private readonly sleep: Sleep = (milliseconds, signal) => new Promise((resolve, reject) => { const timer = setTimeout(resolve, milliseconds); signal.addEventListener("abort", () => { clearTimeout(timer); reject(new DOMException("aborted", "AbortError")); }, { once: true }); })) {}
 
   capabilityModel(capability: MistralCapability): string { return modelFor(this.config, capability); }
@@ -178,7 +167,7 @@ export class MistralProvider {
     yield { type: "complete", provenance: { provider: "mistral", model, endpoint: "/v1/chat/completions", latencyMilliseconds: Date.now() - started, attempt, usage } };
   }
 
-  async perceive(input: PerceptionRequest, signal: AbortSignal): Promise<PerceptionResult> {
+  async perceive(input: Parameters<DocumentPerceptionProvider["perceive"]>[0], signal: AbortSignal): ReturnType<DocumentPerceptionProvider["perceive"]> {
     const model = this.preflight("atlas.document.perceive", input.options?.requireZeroDataRetention);
     if (input.mimeType !== "application/pdf") throw new BridgeProviderError("invalid_request", "Only explicit PDF input is supported by this capability.");
     if (input.bytes.byteLength > this.config.maxDocumentBytes) throw new BridgeProviderError("invalid_request", "Document exceeds the configured provider byte limit.");
@@ -189,4 +178,10 @@ export class MistralProvider {
     if (!Array.isArray(payload.pages)) throw new BridgeProviderError("malformed_response", "Mistral OCR response did not contain pages.");
     return { providerResult: payload, provenance: { provider: "mistral", model: typeof payload.model === "string" ? payload.model : model, endpoint: "/v1/ocr", latencyMilliseconds: Date.now() - started, attempt, usage: usageOf(payload.usage_info) } };
   }
+}
+
+/** The composition root receives neutral capabilities while this adapter stays concrete. */
+export function createMistralCapabilities(config: MistralProviderConfig): { readonly structured: StructuredReasoningProvider; readonly perception: DocumentPerceptionProvider; readonly streaming: StreamingChatProvider } {
+  const provider = new MistralProvider(config);
+  return { structured: provider, perception: provider, streaming: provider };
 }

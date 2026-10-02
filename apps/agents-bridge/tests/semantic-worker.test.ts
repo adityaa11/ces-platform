@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { runSemanticJob } from "../src/semantic-worker.ts";
 import { SemanticReplayLeaseLostError } from "../src/semantic-result-replay.ts";
-import { AtlasSemanticClientError } from "../src/atlas-semantic-client.ts";
+import { AtlasSemanticClientError } from "../src/atlas-semantic-client.js";
 import type { SemanticBackgroundJob } from "@atlas/contracts";
 
 const job: SemanticBackgroundJob = { version: "v1", executionId: "semantic-execution", skill: { id: "atlas.semantic.extract", version: "v1" }, contextCapability: "capability" };
