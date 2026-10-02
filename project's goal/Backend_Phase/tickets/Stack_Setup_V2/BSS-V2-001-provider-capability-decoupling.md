@@ -1,6 +1,7 @@
 # BSS-V2-001: Provider capability contracts and concrete-provider decoupling
 
-- **State:** `awaiting_review`; **Review batch:** `BSS-V2-BATCH-01`
+- **State:** `approved` at `76e9b21`; **Review batch:** `BSS-V2-BATCH-01` (`PASS`).
+- **CK review:** [BSS-V2-BATCH-01-76e9b21-review.md](../../../feedback/BSS-V2-BATCH-01-76e9b21-review.md); reviewed commit `76e9b21910af34c73425fee4eb5df9f0e53bef53`.
 - **Dependencies:** accepted BSS-005, BSS-006, BSS-008, and BSS-009 series
 - **References:** V3 §§4, 5, 8–9, 27, 32–33; Baseline V2 §§8–10, 15–16, 30, 48; implementation context §§5, 11, 22, 30
 
