@@ -1,6 +1,6 @@
 # DOCGRAPH-002: Docling Graph local LLM semantic feasibility
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `DOCGRAPH-BATCH-02`
 - **Predecessors:** DOCSPIKE-001 CK-resolved local perception evidence; DOCGRAPH-001 terminal `FAIL` report and HMN evidence.
 - **Frozen inference target:** Windows local execution using `C:\venvs\docgraph\Scripts\python.exe`; Docling Graph `backend=llm`, `inference=local`, `provider_override=ollama`, and `model_override=qwen3:4b` only.
