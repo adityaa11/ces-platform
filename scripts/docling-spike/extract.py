@@ -161,12 +161,16 @@ def main() -> None:
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     started = time.perf_counter()
+    # `process_time` is a portable, process-scoped CPU observation.  It does
+    # not claim wall-clock CPU utilization or machine-wide resource use.
+    cpu_started = time.process_time()
     pipeline_options = PdfPipelineOptions()
     pipeline_options.do_ocr = args.ocr
     converter = DocumentConverter(format_options={InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options)})
     result = converter.convert(str(args.input))
     document = result.document
     elapsed_ms = round((time.perf_counter() - started) * 1000, 3)
+    process_cpu_ms = round((time.process_time() - cpu_started) * 1000, 3)
     raw = plain(document)
     provider, metrics = map_provider(document)
     write_json(args.output / "docling.raw.json", raw)
@@ -175,7 +179,7 @@ def main() -> None:
         (args.output / "docling.md").write_text(document.export_to_markdown(), encoding="utf-8")
     except Exception as error:
         (args.output / "docling-markdown-error.txt").write_text(str(error), encoding="utf-8")
-    metrics.update({"terminalExtractionStatus": "success", "latencyMs": elapsed_ms, "pythonVersion": platform.python_version(), "doclingVersion": getattr(docling, "__version__", "unknown"), "pipeline": {"ocr": args.ocr, "mode": "local PDF"}, "visualMapping": "omitted: Docling picture geometry was not stable across equivalent runs", "externalInferenceCalls": "none", "sourceSha256": hashlib.sha256(args.input.read_bytes()).hexdigest()})
+    metrics.update({"terminalExtractionStatus": "success", "latencyMs": elapsed_ms, "processCpuTimeMs": process_cpu_ms, "resourceMeasurement": {"method": "Python time.process_time() around converter.convert(...)", "scope": "current Docling extraction process", "limitation": "CPU time is not wall-clock utilization, peak memory, or machine-wide usage"}, "pythonVersion": platform.python_version(), "doclingVersion": getattr(docling, "__version__", "unknown"), "pipeline": {"ocr": args.ocr, "mode": "local PDF"}, "visualMapping": "omitted: Docling picture geometry was not stable across equivalent runs", "externalInferenceCalls": "none", "sourceSha256": hashlib.sha256(args.input.read_bytes()).hexdigest()})
     write_json(args.output / "metrics.json", metrics)
     print(json.dumps(metrics, sort_keys=True))
 

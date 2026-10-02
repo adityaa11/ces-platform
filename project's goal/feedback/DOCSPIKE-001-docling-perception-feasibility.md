@@ -54,7 +54,7 @@ Two equivalent Safara runs produced identical canonical artifacts:
 | Provider-shaped result, run 1 and run 2 | `920d689d548e6192bf4228736a8af36edbe3c90806e2e87d5c6f2832376b631e` |
 | Normalized structural output, run 1 and run 2 | `77eca1b2c8a86009b420948b3e70dba17440dbcef46a45818beac92d05cb20ad` |
 
-Measured local extraction latency was 27,602 ms for Safara Full run 1, 20,997 ms for Finance, 18,412 ms for Readiness, and 28,206 ms for Safara Full run 2. Raw Docling diagnostic JSON and Markdown remain local and ignored.
+The rerun measured local extraction latency of 36,222 ms for Safara Full run 1, 29,913 ms for Finance, 28,670 ms for Readiness, and 13,159 ms for Safara Full run 2. Its corresponding process CPU times were 60,844 ms, 40,203 ms, 31,391 ms, and 27,266 ms. `metrics.json` records these values around each `converter.convert(...)` call using Python's `time.process_time()`; this is a process-scoped CPU-time observation, not wall-clock utilization, peak memory, or machine-wide usage. Raw Docling diagnostic JSON and Markdown remain local and ignored.
 
 ## Limits and conclusion
 
@@ -71,7 +71,7 @@ Recommendation: **C. Proceed only after a bounded OCR/table/geometry follow-up s
 | RC-DOCSPIKE-001-03 | Row 03: real current Atlas normalization and v1 validation for every input. | `scripts/docling-spike/normalize.mts`; run-all output records three successful `normalizePerceptionResult(...)` results. | PROVEN |
 | RC-DOCSPIKE-001-04 | Row 04: 7 primary pages, 9 known headings, usable major-text order, honest loss/duplication observations. | Matrix and Primary Safara evidence above; ignored normalized output has 220 page-ordered blocks and all 9 headings. | PROVEN |
 | RC-DOCSPIKE-001-05 | Row 05: two equivalent primary outputs compare page/block/table order, IDs, text, emitted geometry, and normalized structure. | `scripts/docling-spike/summarize.py`; matching provider and normalized hashes above. | PROVEN |
-| RC-DOCSPIKE-001-06 | Row 06: truthful matrix, historical comparison, classification, limits, and A/B/C recommendation. | This report. | PROVEN |
+| RC-DOCSPIKE-001-06 | Row 06: truthful matrix, historical comparison, classification, limits, A/B/C recommendation, and basic resource observation. | This report; `.atlas-data/docling-spike/summary.json` and per-run `metrics.json` record process CPU time and its qualified measurement method. | PROVEN |
 
 Validation executed: `scripts/docling-spike/run-all.ps1` (success); `pnpm --filter @atlas/core test` (17 passing tests); `git diff --check` (success).
 
