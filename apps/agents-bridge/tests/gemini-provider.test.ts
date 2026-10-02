@@ -54,6 +54,21 @@ test("stream normalizes text and tools, completes once, and normalizes stable se
   await assert.rejects(() => errorProvider.structured({ messages: [], schema: { type: "object" }, signal: new AbortController().signal }), (error: unknown) => bridgeError(error, "authentication") && !error.message.includes("secret"));
 });
 
+test("safety refusal finish reason becomes a stable secret-safe Bridge error without successful completion", async () => {
+  const payload = { candidates: [{ content: { parts: [] }, finishReason: "SAFETY" }], blockedDetail: "provider-private-body gemini-secret-test" };
+  const provider = new GeminiProvider(config, async () => new Response(`data: ${JSON.stringify(payload)}\n\n`, { status: 200, headers: { "content-type": "text/event-stream" } }));
+  const events: string[] = [];
+  let observedError: unknown;
+  try {
+    for await (const event of provider.streamChat({ messages: [{ role: "user", content: "hi" }], signal: new AbortController().signal })) events.push(event.type);
+  } catch (error) { observedError = error; }
+  assert.deepEqual(events, []);
+  assert.ok(bridgeError(observedError, "provider_unavailable"));
+  assert.equal(observedError.message, "Gemini declined to complete the requested response.");
+  assert.doesNotMatch(observedError.message, /provider-private-body|gemini-secret-test/u);
+  assert.equal(events.includes("complete"), false);
+});
+
 test("cancellation, request bounds, credentials and SDK boundary fail safely", async () => {
   let fetchSignal: AbortSignal | undefined;
   const pending = new GeminiProvider(config, (_url, init) => new Promise((_resolve, reject) => { fetchSignal = init.signal as AbortSignal; fetchSignal.addEventListener("abort", () => reject(new Error("aborted")), { once: true }); }));

@@ -38,6 +38,7 @@ function providerError(status: number): BridgeProviderError {
   return new BridgeProviderError("provider_unavailable", "Gemini request failed.");
 }
 const role = (value: ChatMessage["role"]) => value === "assistant" ? "model" : value === "tool" ? "user" : value;
+const refusalFinishReasons = new Set(["SAFETY", "BLOCKLIST", "PROHIBITED_CONTENT", "SPII", "IMAGE_SAFETY", "IMAGE_PROHIBITED_CONTENT"]);
 function contents(messages: readonly ChatMessage[]) {
   const system = messages.filter((message) => message.role === "system").map((message) => message.content).join("\n\n");
   const turns = messages.filter((message) => message.role !== "system").map((message) => ({ role: role(message.role), parts: [{ text: message.content }] }));
@@ -121,7 +122,11 @@ export class GeminiProvider implements StructuredReasoningProvider, DocumentPerc
             if (part.text) yield { type: "text", text: part.text };
             if (part.functionCall) yield { type: "tool_call", id: part.functionCall.id ?? part.functionCall.name, name: part.functionCall.name, arguments: JSON.stringify(part.functionCall.args ?? {}) };
           }
-          if (isRecord(payload) && Array.isArray(payload.candidates) && isRecord(payload.candidates[0]) && payload.candidates[0].finishReason && payload.candidates[0].finishReason !== "FINISH_REASON_UNSPECIFIED") completed = true;
+          if (isRecord(payload) && Array.isArray(payload.candidates) && isRecord(payload.candidates[0])) {
+            const finishReason = payload.candidates[0].finishReason;
+            if (typeof finishReason === "string" && refusalFinishReasons.has(finishReason)) throw new BridgeProviderError("provider_unavailable", "Gemini declined to complete the requested response.");
+            if (finishReason && finishReason !== "FINISH_REASON_UNSPECIFIED") completed = true;
+          }
         }
       }
     } catch (error) { if (error instanceof BridgeProviderError) throw error; if (input.signal.aborted || result.deadline.aborted) throw new BridgeProviderError(input.signal.aborted ? "cancelled" : "timeout", input.signal.aborted ? "Gemini stream was cancelled." : "Gemini stream exceeded the configured timeout."); throw new BridgeProviderError("provider_unavailable", "Gemini stream failed."); }
