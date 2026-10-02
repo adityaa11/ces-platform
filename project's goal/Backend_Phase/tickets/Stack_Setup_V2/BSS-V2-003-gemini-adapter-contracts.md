@@ -1,7 +1,8 @@
 # BSS-V2-003: Gemini provider adapter contracts
 
-- **State:** `awaiting_review`; **Review batch:** `BSS-V2-BATCH-03`
+- **State:** `approved` following CK `PASS` for reviewed commit `1bb8554`; **Review batch:** `BSS-V2-BATCH-03`.
 - **GO checkpoint:** [BSS-V2-BATCH-03-go.md](../../../feedback/BSS-V2-BATCH-03-go.md).
+- **CK verification:** [BSS-V2-BATCH-03-1bb8554-verification.md](../../../feedback/BSS-V2-BATCH-03-1bb8554-verification.md).
 - **Dependencies:** BSS-V2-002 at CK `PASS`
 - **References:** V3 §§4–6, 8–9, 27, 31–33; Baseline V2 §§10, 13–16, 30, 36–37; implementation context §§11, 14, 21–22, 29
 
