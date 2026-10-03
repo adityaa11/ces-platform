@@ -1,18 +1,28 @@
-# BSS-V2-004: Gemini live route qualification and development activation
+# BSS-V2-004: historical Gemini live route qualification and development activation
 
-- **State:** `planned`; **Review batch:** `BSS-V2-BATCH-04`
-- **Dependencies:** BSS-V2-003 at CK `PASS`
-- **References:** V3 §§5–6, 8–9, 21, 27, 31; Baseline V2 §§12–14, 31, 36–38; implementation context §§11, 21, 28–29
+- **State:** `superseded`; **Former review batch:** `BSS-V2-BATCH-04`
+- **Historical dependency:** BSS-V2-003 at CK `PASS`
+- **Superseded by:** BSS-V2-004-01, BSS-V2-004-02, BSS-V2-004-03, BSS-V2-004-04
 
-## Outcome and current seam
+## Supersession record
+
+The architecture now separates local document perception from external semantic reasoning. The original BSS-V2-004 combined independently qualifiable capabilities and is no longer a valid executable review unit.
+
+Historical blocker/evidence artifacts remain unchanged. They retain their original meaning and do not establish a qualified Docling route, semantic extraction route, or reconciliation route.
+
+This historical ticket is not a GO target. Do not implement, remediate, or use its former combined Review Contract as acceptance authority. The approved BSS-V2-001/002/003 history remains unchanged.
+
+## Historical ticket body (preserved; not executable)
+
+### Former outcome and current seam
 
 Prove real Gemini capability-specific routes with an opt-in, secret-safe live harness; activate only the recorded qualified route identities in the development profile. Authentication, model listing, or a mock never qualify a route.
 
-## Scope and forbidden work
+### Former scope and forbidden work
 
 Use a real server-side credential and synthetic/public/non-confidential material to test minimal inference, non-zero usable entitlement, pinned configured identity, structured output with actual Atlas schema and complete validation, PDF perception/`NormalizedDocument` compatibility, representative extraction/reconciliation, normalized usage/latency, and 429 classification. Include streaming/cancellation only if the activated chat route exists. Record a qualification version and redacted evidence. Do not implement multi-user capacity, ledger, cost, privacy policy beyond evaluation evidence, fallback, product entitlement, or a replacement IDSER live-acceptance set.
 
-## Review Contract
+### Former Review Contract
 
 | Row | Exact bounded behavior | Proof and binary closure | Direct regression |
 | --- | --- | --- | --- |
@@ -22,7 +32,7 @@ Use a real server-side credential and synthetic/public/non-confidential material
 | RC-BSSV2-004-04 | Observed usage, latency, 429/rate-limit behavior, and evaluation privacy/account evidence are recorded without a secret or source leak. | Redacted harness output/evidence review. **PASS iff** required observations are classified and all prohibited content is absent. | adapter redaction |
 | RC-BSSV2-004-05 | Only passed capability routes are enabled in the development profile; failures remain inactive/blocked. | Config/profile/readiness inspection. **PASS iff** no failed or unqualified route becomes active and Mistral remains inactive. | Compose readiness |
 
-## Security Refactor Readiness
+### Historical Security Refactor Readiness
 
 **Status:** `applicable`.
 
@@ -32,6 +42,6 @@ Use a real server-side credential and synthetic/public/non-confidential material
 - **Unresolved policy:** `SEC-GAP-BSSV2-004-PRODUCTION-PRIVACY` — EVALUATION proof is not NO_TRAINING/ZDR approval.
 - **Review bindings:** `REV-READY-BSSV2-004-01` verifies secret-safe live evidence; `REV-READY-BSSV2-004-02` verifies only approved synthetic/public material; `REV-READY-BSSV2-004-03` verifies failed routes stay disabled.
 
-## Validation, Docker, and handoff
+### Historical validation and handoff
 
-First rebuild/recreate changed Bridge services, verify reviewed image/config, migrations, readiness, and fresh scoped state. Run the opt-in harness to terminal state; never print expanded environment or authorization headers. A zero-entitlement, outage, or provider mismatch is an honestly recorded external blocker: it does not become a mock PASS or `READY_FOR_CK`. CFC may repair harness/evidence/configuration observations, not substitute a provider. On PASS, BSS-V2-005 and BSS-V2-007 may start.
+First rebuild/recreate changed Bridge services, verify reviewed image/config, migrations, readiness, and fresh scoped state. Run the opt-in harness to terminal state; never print expanded environment or authorization headers. A zero-entitlement, outage, or provider mismatch is an honestly recorded external blocker: it does not become a mock PASS or `READY_FOR_CK`. CFC may repair harness/evidence/configuration observations, not substitute a provider. The former downstream references to BSS-V2-005 and BSS-V2-007 are superseded by the current README dependency graph.

@@ -1,16 +1,16 @@
 # BSS-V2-005: Quota-domain and capacity-profile foundation
 
 - **State:** `planned`; **Review batch:** `BSS-V2-BATCH-05`
-- **Dependencies:** BSS-V2-004 at CK `PASS`
+- **Dependencies:** BSS-V2-004-03 at CK `PASS` (future external semantic-extraction route qualification)
 - **References:** V3 §§15–18, 24, 27, 33; Baseline V2 §§19–23, 32, 48; implementation context §§11, 23–24, 29–30
 
 ## Outcome and current seam
 
-Represent shared upstream provider capacity with secret-free quota domains and route capacity profiles. Current global worker concurrency and per-key configuration cannot express that several routes or keys may share one provider project capacity.
+Represent shared upstream external-provider capacity with secret-free quota domains and route capacity profiles. Local Docling capacity is a distinct local runtime/resource concern and is not a quota domain.
 
 ## Scope and forbidden work
 
-Create Bridge-owned configuration/operational model for quota-domain identity, non-secret provider/project/account alias, source/effective timestamp, known request/token/page/concurrency limits, route association, and bounded local admission primitive. Normalize zero entitlement separately from transient quota exhaustion. Unknown limits remain explicit unknowns or conservative profile settings. Do not set customer allowances, product plans, worker priority, usage ledger, cost, privacy, fallback, or fixed production numeric limits.
+Create Bridge-owned configuration/operational model for external quota-domain identity, non-secret provider/project/account alias, source/effective timestamp, known request/token/page/concurrency limits, route association, and bounded admission primitive. Do not attach this model to local processor routes. Normalize zero entitlement separately from transient quota exhaustion. Unknown limits remain explicit unknowns or conservative profile settings. Do not set customer allowances, product plans, worker priority, usage ledger, cost, privacy, fallback, or fixed production numeric limits.
 
 ## Review Contract
 

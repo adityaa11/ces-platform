@@ -10,14 +10,14 @@ Create a provider-neutral privacy requirement seam and enforce route compatibili
 
 ## Scope and forbidden work
 
-Freeze a shared conceptual class/ordering for `EVALUATION`, `NO_TRAINING`, and `ZDR_REQUIRED`; attach qualified route capability and a caller/policy-provided required class; compare before adapter request. The development Gemini route may be `EVALUATION` only for approved non-sensitive use. Diagnostics are secret-safe. Do not invent legal/compliance, residency, enterprise administration, consent UI, plan design, or final workspace-policy source; do not transmit and then check privacy.
+Freeze a shared conceptual class/ordering for `EVALUATION`, `NO_TRAINING`, and `ZDR_REQUIRED`; attach qualified external route capability and a caller/policy-provided required class; compare before adapter request. A future external semantic development route may be `EVALUATION` only for approved non-sensitive use. Diagnostics are secret-safe. Do not invent legal/compliance, residency, enterprise administration, consent UI, plan design, or final workspace-policy source; do not transmit and then check privacy.
 
 ## Review Contract
 
 | Row | Exact bounded behavior | Proof and binary closure | Direct regression |
 | --- | --- | --- | --- |
 | RC-BSSV2-009-01 | Privacy requirement and route capability use one provider-neutral ordered contract. | Contract/route validation tests. **PASS iff** unknown or incoherent privacy class/mapping is rejected at configuration or request boundary. | route resolver |
-| RC-BSSV2-009-02 | Incompatible required/route classes fail before adapter transport or source transmission. | Spy-transport negative tests. **PASS iff** mismatch has zero outbound request and returns a stable policy failure. | perception and semantic paths |
+| RC-BSSV2-009-02 | Incompatible required/route classes fail before external adapter transport or source transmission. | Spy-transport negative tests. **PASS iff** mismatch has zero outbound request and returns a stable policy failure; local Docling remains governed by BSS-009 authorization rather than provider privacy classes. | external semantic paths; future external perception |
 | RC-BSSV2-009-03 | No adapter or fallback caller can silently lower the requirement to make a call succeed. | Downgrade-attempt tests. **PASS iff** chosen route and recorded provenance preserve the original requirement. | admission/usage integration |
 | RC-BSSV2-009-04 | Evaluation routes are visibly constrained to the declared development qualification and do not imply stronger terms. | Profile/status and secret-safe diagnostic tests. **PASS iff** runtime status identifies class without claiming NO_TRAINING/ZDR evidence not qualified. | Compose readiness |
 

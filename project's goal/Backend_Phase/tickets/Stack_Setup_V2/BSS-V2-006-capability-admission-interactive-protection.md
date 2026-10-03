@@ -6,7 +6,7 @@
 
 ## Outcome and current seam
 
-Apply quota-domain-aware admission before provider calls in existing background and interactive paths, preserving pg-boss. Background perception/extract/reconcile must not consume all capacity needed by interactive work.
+Apply external-provider quota-domain-aware admission before external calls and retain distinct bounded local-processor controls, preserving pg-boss. Local Docling must not be modeled as a provider quota domain.
 
 ## Scope and forbidden work
 
@@ -16,7 +16,7 @@ Use the accepted route/profile and capacity primitive to classify work, admit/re
 
 | Row | Exact bounded behavior | Proof and binary closure | Direct regression |
 | --- | --- | --- | --- |
-| RC-BSSV2-006-01 | Every provider call on an integrated path passes capability/route/quota admission first. | Instrumented deterministic integration tests. **PASS iff** denied requests never reach adapter transport. | semantic/perception workers |
+| RC-BSSV2-006-01 | Every external-provider call on an integrated path passes capability/route/quota admission first; local processor calls use their own bounded concurrency/resource seam. | Instrumented deterministic integration tests. **PASS iff** denied external requests never reach adapter transport and no fictitious Docling quota metadata is required. | semantic worker; local perception worker |
 | RC-BSSV2-006-02 | Background capacity cannot monopolize configured protected interactive capacity. | Controlled concurrent workload test. **PASS iff** interactive request is admitted by its protection rule while background saturation is bounded/deferred. | BSS-005 interactive runtime |
 | RC-BSSV2-006-03 | Temporary capacity exhaustion follows bounded cooldown/defer behavior; zero entitlement does not retry. | Queue/admission tests. **PASS iff** cooldown is finite and classifications drive the correct distinct path. | BSS-006 retry/idempotency |
 | RC-BSSV2-006-04 | Existing queue transactional, replay/fencing, cancellation, and graceful-shutdown guarantees remain intact. | Existing focused pg-boss/worker suite plus integration scenario. **PASS iff** no duplicate logical completion or trusted-state change results from admission behavior. | BSS-006; IDSER replay |

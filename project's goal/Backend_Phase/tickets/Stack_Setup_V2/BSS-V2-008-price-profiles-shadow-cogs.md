@@ -6,17 +6,17 @@
 
 ## Outcome and current seam
 
-Make provider execution costs explainable through effective-dated profiles linked to Bridge usage records, while retaining a strict boundary between operational COGS and customer billing.
+Make external-provider execution costs explainable through effective-dated profiles linked to Bridge usage records, while retaining a strict boundary between operational COGS and customer billing. Local Docling has no fabricated provider price profile.
 
 ## Scope and forbidden work
 
-Model provider/model/processor meter rules, currency, effective interval, decimal-safe rates, applied profile reference, actual cash cost, and shadow production cost. Calculate from normalized ledger meters; when an approved paid-equivalent profile exists, a free development execution records `actual_cash_cost = 0` and the independently calculated shadow estimate. Do not implement subscription price, invoice, payment, allowance, customer plan, UI, or hard-code prices in semantic skills.
+Model external provider/model meter rules, currency, effective interval, decimal-safe rates, applied profile reference, actual cash cost, and shadow production cost. Calculate from normalized ledger meters; when an approved paid-equivalent profile exists, a free development execution records `actual_cash_cost = 0` and the independently calculated shadow estimate. Do not implement subscription price, invoice, payment, allowance, customer plan, UI, or hard-code prices in semantic skills.
 
 ## Review Contract
 
 | Row | Exact bounded behavior | Proof and binary closure | Direct regression |
 | --- | --- | --- | --- |
-| RC-BSSV2-008-01 | Price profiles are provider/model/processor-specific, effective-dated, currency-labelled, and validate meter/rate/interval consistency. | Profile validation/migration tests. **PASS iff** overlapping/invalid profiles and unknown meter definitions fail deterministically. | Bridge usage schema |
+| RC-BSSV2-008-01 | Price profiles are external-provider/model-specific, effective-dated, currency-labelled, and validate meter/rate/interval consistency. | Profile validation/migration tests. **PASS iff** overlapping/invalid profiles and unknown meter definitions fail deterministically; a local processor cannot acquire a fictitious profile. | Bridge usage schema |
 | RC-BSSV2-008-02 | Cost calculation uses decimal-safe arithmetic and only supported reported/derived usage meters. | Calculation vectors. **PASS iff** expected token/page/request/cached-meter totals match exact decimal outcomes and unavailable meters are not guessed. | ledger integration |
 | RC-BSSV2-008-03 | Historical execution retains the applied profile identity and distinct actual/shadow values. | Ledger accounting integration. **PASS iff** later profile changes cannot alter a completed record's applied profile/cost explanation. | BSS-V2-007 ledger |
 | RC-BSSV2-008-04 | Free development and paid-equivalent costs remain distinguishable without product billing behavior. | Free-route example test. **PASS iff** zero actual cost can coexist with calculated shadow cost, and no customer entitlement/invoice write occurs. | affected Bridge role checks |
