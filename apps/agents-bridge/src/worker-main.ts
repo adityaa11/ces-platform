@@ -1,4 +1,4 @@
-import { rm, writeFile } from "node:fs/promises";
+import { readFile, rm, writeFile } from "node:fs/promises";
 import { createMistralCapabilities } from "./providers/mistral.js";
 import { createGeminiCapabilities } from "./providers/gemini.js";
 import { DoclingProvider } from "./providers/docling.js";
@@ -31,6 +31,13 @@ const mistral = createMistralCapabilities(config.mistral);
 const gemini = createGeminiCapabilities(config.gemini);
 const docling = new DoclingProvider(config.docling);
 const capabilities = { mistral, gemini, docling: { perception: docling } };
+if (config.qualifiedRoutes.some((route) => route.enabled && route.providerId === "docling")) {
+  // This repository-owned, non-confidential PDF initializes precisely the
+  // fixed no-OCR request profile before the worker publishes its ready marker.
+  const warmupPath = process.env.DOCLING_WARMUP_PDF_PATH ?? "docs/example/Safara_PRD_03_Readiness_Manifest_Reporting.pdf";
+  const warmupBytes = new Uint8Array(await readFile(warmupPath));
+  await docling.perceive({ bytes: warmupBytes, mimeType: "application/pdf" }, new AbortController().signal);
+}
 const semanticClient = createAtlasSemanticClient(loadAtlasSemanticClientConfig());
 const runtime = config.deploymentProfile === "test" ? new TestRuntime() : new QualifiedRouteRuntime((capability) => registry.resolve(capability), { mistral: mistral.streaming, gemini: gemini.streaming });
 const worker = createBackgroundWorker(loadWorkerConfig(), runtime, undefined, async (request, signal, context) => {

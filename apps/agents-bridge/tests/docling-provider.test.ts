@@ -8,6 +8,9 @@ const config = { baseUrl: "http://docling-serve:5001", timeoutMilliseconds: 1_00
 test("Docling maps only source-grounded structural JSON with deterministic order", () => {
   const mapped = mapDoclingDocument({ status: "success", document: { json_content: { texts: [{ self_ref: "#/texts/2", label: "text", text: "Second", prov: [{ page_no: 2 }] }, { self_ref: "#/texts/1", label: "section_header", text: "First", prov: [{ page_no: 1 }] }], tables: [{ self_ref: "#/tables/0", markdown: "| A |", prov: [{ page_no: 2 }] }] } } });
   assert.deepEqual(mapped.pages, [{ page_number: 1, blocks: [{ id: "#/texts/1", text: "First", type: "section_header" }], tables: [] }, { page_number: 2, blocks: [{ id: "#/texts/2", text: "Second", type: "text" }], tables: [{ id: "#/tables/0", content: "| A |" }] }]);
+  const withoutPageProvenance = mapDoclingDocument({ status: "success", document: { json_content: { texts: [{ self_ref: "#/texts/missing", text: "No page", prov: [] }, { self_ref: "#/texts/malformed", text: "Bad page", prov: [{ page_no: "one" }] }, { self_ref: "#/texts/source", text: "Source page", prov: [{ page_no: 2 }] }] } } });
+  assert.deepEqual(withoutPageProvenance.pages, [{ page_number: 2, blocks: [{ id: "#/texts/source", text: "Source page", type: "text" }], tables: [] }]);
+  assert.throws(() => mapDoclingDocument({ status: "success", document: { json_content: { texts: [{ text: "No source page", prov: [] }] } } }), /no source-grounded/u);
   assert.throws(() => mapDoclingDocument({ status: "partial_success", document: { json_content: {} } }), /successful JSON/u);
 });
 
@@ -43,5 +46,16 @@ test("Docling fails closed for readiness loss, timeout, cancellation, malformed 
   await assert.rejects(() => withFetcher(async (url) => url.endsWith("/v1/convert/file") ? new Response(JSON.stringify({ status: "success", document: { json_content: {} } })) : url.endsWith("/version") ? new Response(JSON.stringify({ docling_serve: doclingServeVersion, docling: doclingSlimVersion })) : new Response("{}")).perceive({ bytes: new Uint8Array([1]), mimeType: "application/pdf" }, new AbortController().signal), /no source-grounded/u);
   const aborted = new AbortController(); aborted.abort();
   await assert.rejects(() => withFetcher(async () => { throw new Error("aborted"); }).perceive({ bytes: new Uint8Array([1]), mimeType: "application/pdf" }, aborted.signal), /cancelled/u);
+  let conversionStarted = false;
+  const shortTimeout = new DoclingProvider({ ...config, timeoutMilliseconds: 25 }, async (url, init) => {
+    if (url.endsWith("/version")) return new Response(JSON.stringify({ docling_serve: doclingServeVersion, docling: doclingSlimVersion }));
+    if (!url.endsWith("/v1/convert/file")) return new Response("{}");
+    conversionStarted = true;
+    return await new Promise<Response>((_resolve, reject) => init?.signal?.addEventListener("abort", () => reject(new Error("stalled request aborted")), { once: true }));
+  });
+  const started = Date.now();
+  await assert.rejects(() => shortTimeout.perceive({ bytes: new Uint8Array([1]), mimeType: "application/pdf" }, new AbortController().signal), /configured timeout/u);
+  assert.ok(conversionStarted);
+  assert.ok(Date.now() - started < 500, "the stalled request must be bounded by the configured deadline");
   void baseResponse;
 });

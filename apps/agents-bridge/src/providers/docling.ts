@@ -21,6 +21,14 @@ const array = (value: unknown): readonly unknown[] => Array.isArray(value) ? val
 const text = (value: unknown): string | undefined => typeof value === "string" && value.trim() ? value : undefined;
 const number = (value: unknown): number | undefined => typeof value === "number" && Number.isFinite(value) ? value : undefined;
 
+function reportedProcessingMilliseconds(value: unknown): number | undefined {
+  const envelope = record(value);
+  const directMilliseconds = number(envelope?.processing_time_ms) ?? number(envelope?.processingTimeMs);
+  if (directMilliseconds !== undefined) return directMilliseconds;
+  const seconds = number(envelope?.processing_time) ?? number(envelope?.processingTime);
+  return seconds === undefined ? undefined : Math.round(seconds * 1_000);
+}
+
 function errorFor(status: number): BridgeProviderError {
   if (status === 408 || status === 504) return new BridgeProviderError("timeout", "Docling conversion timed out.");
   if (status === 400 || status === 404 || status === 422) return new BridgeProviderError("invalid_request", "Docling rejected the bounded PDF conversion request.");
@@ -33,9 +41,16 @@ export function mapDoclingDocument(value: unknown): { readonly pages: readonly u
   const envelope = record(value); const document = record(envelope?.document); const json = record(document?.json_content);
   if (envelope?.status !== "success" || !json) throw new BridgeProviderError("malformed_response", "Docling did not return a successful JSON document.");
   const pages = new Map<number, { blocks: Record<string, unknown>[]; tables: Record<string, unknown>[] }>();
-  const pageFor = (candidate: Record<string, unknown>) => number(record(array(candidate.prov)[0])?.page_no) ?? 1;
+  const pageFor = (candidate: Record<string, unknown>) => {
+    const page = number(record(array(candidate.prov)[0])?.page_no);
+    return page !== undefined && Number.isInteger(page) && page > 0 ? page : undefined;
+  };
   const add = (candidate: Record<string, unknown>, type: "text" | "table") => {
-    const page = pageFor(candidate); const target = pages.get(page) ?? { blocks: [], tables: [] }; pages.set(page, target);
+    const page = pageFor(candidate);
+    // Source page provenance is mandatory for an Atlas page assignment. Never
+    // invent page 1 (or another page) for malformed or absent Docling metadata.
+    if (page === undefined) return;
+    const target = pages.get(page) ?? { blocks: [], tables: [] }; pages.set(page, target);
     const id = text(candidate.self_ref) ?? `${type}-${page}-${type === "text" ? target.blocks.length + 1 : target.tables.length + 1}`;
     if (type === "table") { const content = text(candidate.markdown) ?? text(candidate.text) ?? ""; if (content) target.tables.push({ id, content }); }
     else { const content = text(candidate.text) ?? text(candidate.orig) ?? ""; if (content) target.blocks.push({ id, text: content, type: text(candidate.label) ?? "text" }); }
@@ -76,6 +91,7 @@ export class DoclingProvider implements DocumentPerceptionProvider {
     const raw = await response.text(); if (Buffer.byteLength(raw) > this.config.maxResponseBytes) throw new BridgeProviderError("response_bound", "Docling response exceeded the configured byte limit.");
     let payload: unknown; try { payload = JSON.parse(raw); } catch { throw new BridgeProviderError("malformed_response", "Docling returned invalid JSON."); }
     const mapped = mapDoclingDocument(payload);
-    return { providerResult: mapped, provenance: { provider: "docling", model: `docling-slim-${this.config.doclingSlimVersion}/docling-serve-${this.config.serviceVersion}/${this.config.optionProfile}`, endpoint: "compose-private:/v1/convert/file", latencyMilliseconds: Date.now() - started, attempt: 1 } satisfies ProviderProvenance };
+    const processingMilliseconds = reportedProcessingMilliseconds(payload);
+    return { providerResult: mapped, provenance: { provider: "docling", model: `docling-slim-${this.config.doclingSlimVersion}/docling-serve-${this.config.serviceVersion}/${this.config.optionProfile}`, endpoint: "compose-private:/v1/convert/file", latencyMilliseconds: Date.now() - started, attempt: 1, usage: processingMilliseconds === undefined ? undefined : { raw: { doclingReportedProcessingMilliseconds: processingMilliseconds } } } satisfies ProviderProvenance };
   }
 }

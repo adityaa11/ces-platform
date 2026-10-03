@@ -8,6 +8,10 @@ services:
       DOCLING_SERVE_SHOW_VERSION_INFO: "true"
       DOCLING_SERVE_WORKERS: "1"
       DOCLING_DEVICE: cpu
+      # One local conversion at a time avoids CPU oversubscription; four
+      # threads is the bounded qualification setting for local development.
+      DOCLING_LOCAL_CONVERSION_CONCURRENCY: "1"
+      DOCLING_CPU_THREAD_RATIONALE: bounded-four-threads-for-local-cpu-qualification
       OMP_NUM_THREADS: ${DOCLING_CPU_THREADS:-4}
       MKL_NUM_THREADS: ${DOCLING_CPU_THREADS:-4}
     volumes:
