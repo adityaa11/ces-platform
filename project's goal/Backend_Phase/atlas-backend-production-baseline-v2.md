@@ -326,17 +326,21 @@ The next required outcomes are:
 
 ```text
 1. Preserve BSS-V2-001/002/003 historical approval and interfaces.
-2. Add a production-shaped local Docling perception implementation behind the existing perception capability.
+2. Add the current production-shaped Docling perception profile as a persistent Compose-private `docling-serve` service behind the existing perception capability.
 3. Preserve BSS-009 source-grant, normalization, replay, and Atlas cache authority.
-4. Prove IDSER-003 D1 -> Docling -> Atlas-accepted NormalizedDocument v1.
-5. Stop at that perception checkpoint before semantic-provider qualification.
-6. Resume semantic extraction qualification from bounded source units derived from the accepted NormalizedDocument.
-7. Qualify semantic extraction and semantic reconciliation independently.
-8. Preserve Gemini as an available reasoning adapter; do not require Gemini PDF perception for the primary perception path.
-9. Preserve Mistral as an inactive/optional external provider until separately requalified.
-10. Apply provider quota/privacy/usage/cost controls only to external-provider routes that actually need them.
-11. Keep local processor resource limits distinct from provider quota domains.
-12. Preserve all existing queue, replay, fencing, Atlas authority, and semantic contracts.
+4. Require Agents Bridge to redeem/verify exact authorized PDF bytes and send only those bytes to Docling; Docling must not discover source storage.
+5. Keep Docling models and the exact Atlas digital-PDF processing profile warm before route readiness.
+6. Qualify the first Docling route as CPU-only and require every representative warm end-to-end perception run to complete in <=20 seconds.
+7. Prove IDSER-003 D1 -> BSS-009 -> Bridge -> persistent Docling service -> Atlas-accepted NormalizedDocument v1.
+8. Keep pg-boss as the sole Atlas job lifecycle authority; do not add Docling RQ/Redis for the current D1 path.
+9. Stop at that perception checkpoint before semantic-provider qualification.
+10. Resume semantic extraction qualification from bounded source units derived from the accepted NormalizedDocument.
+11. Qualify semantic extraction and semantic reconciliation independently.
+12. Preserve Gemini as an available reasoning adapter; do not require Gemini PDF perception for the primary perception path.
+13. Preserve Mistral as an inactive/optional external provider until separately requalified.
+14. Apply provider quota/privacy/usage/cost controls only to external-provider routes that actually need them.
+15. Keep local processor resource limits distinct from provider quota domains.
+16. Preserve all existing queue, replay, fencing, Atlas authority, and semantic contracts.
 ```
 
 These outcomes must remain split into coherent reviewable tickets. The perception milestone must not be hidden inside an oversized provider-qualification ticket.
@@ -359,22 +363,28 @@ It is:
 
 ```text
 existing DocumentPerceptionProvider-style capability
-    -> local Docling implementation
+    -> persistent Compose-private docling-serve
+    -> deterministic Atlas mapper
     -> existing BSS-009 handoff/normalization
 ```
 
-The production integration must decide only the bounded execution topology necessary to invoke Docling safely. Whether that is implemented as a managed local subprocess, loopback-only sidecar, or another isolated local adapter is a ticket-level infrastructure decision.
+The current production-shaped local Docker topology is no longer an open subprocess/sidecar choice. For the first qualified development profile, Agents Bridge calls a long-lived private Docling Serve instance over the Compose network. The service keeps its Python runtime, model artifacts, converter cache, and initialized Standard PDF pipeline reusable across document requests.
 
-It must preserve:
+This is a deployment-profile choice beneath the executor-neutral perception capability. A future perception executor may use another independently qualified topology, but the current Docling route must preserve:
 
 ```text
-Bridge receives bytes only through BSS-009 authorization
-Docling does not discover DocumentStore paths
+Bridge receives exact PDF bytes only through BSS-009 authorization/redemption
+Bridge sends only those bounded bytes to the private Docling service
+Docling does not discover DocumentStore paths or receive Atlas DB/queue authority
+Docling Serve is not exposed as a required public host service
 Docling emits no business semantics
 mapper output remains generic/source-grounded
 normalizePerceptionResult(...) remains authoritative
 NormalizedDocument v1 remains unchanged
-no public Docling endpoint is required
+models/artifacts are local before normal work
+the exact Atlas no-OCR PDF profile is warm before route readiness
+fresh per-document Python/Docling subprocess execution is not the normal production route
+pg-boss remains the Atlas job/retry/replay authority
 ```
 
 This is infrastructure work, not a reason to rewrite semantic schemas, Atlas persistence, bundle lifecycle, reconciliation semantics, review authority, or publication authority.
@@ -550,9 +560,33 @@ Gemini remains an implemented external-provider adapter and a reasoning-provider
 
 ## 13.1 Docling perception integration requirements
 
-A production-shaped Docling integration must consume only BSS-009-authorized PDF bytes, run behind the existing perception capability interface, use an explicit Docling/runtime version, map only source-grounded structure, preserve page/reading order and tables, emit stable source-unit IDs, emit geometry only when trustworthy, omit unsupported confidence/visual data instead of fabricating it, pass existing normalization, and record processor provenance/runtime metrics.
+The current production-shaped Docling profile is:
 
-Scanned-PDF/OCR support remains a separate qualification until proven.
+```text
+Agents Bridge
+    -> Compose-private persistent docling-serve 1.21.0
+         -> Docling 2.132.0
+         -> local compute engine
+         -> CPU-only first qualification profile
+         -> local model artifacts
+         -> reusable cached/initialized Standard PDF pipeline
+    -> DoclingDocument JSON
+    -> deterministic Atlas mapper
+    -> existing normalization/parser
+    -> NormalizedDocument v1
+```
+
+The deployed image/runtime identity must be immutable enough to reproduce qualification evidence; mutable `latest` or `main` tags are not frozen qualification identities.
+
+The route must consume only exact BSS-009-authorized PDF bytes supplied by Agents Bridge. Docling receives no DocumentStore paths, Atlas database credentials, pg-boss credentials, project/workspace authority, semantic authority, or publication authority.
+
+The Atlas digital-PDF option profile must remain explicit and minimal: Standard PDF pipeline; OCR off; table structure and layout/reading-order processing on; remote services off; external plugins off; picture description/classification, chart extraction, code enrichment, and formula enrichment off unless a later frozen ticket separately authorizes them; page-image generation off unless a mapper requirement proves it necessary.
+
+Models/artifacts must already be local before normal work. Route readiness requires service health, model-loading readiness, pinned runtime identity, and the exact Atlas option profile being warm/reusable. A fresh Python/Docling subprocess per PDF is not the current production route.
+
+The integration must map only source-grounded structure, preserve page/reading order and tables, emit stable source-unit IDs, emit geometry only when trustworthy, omit unsupported confidence/visual data instead of fabricating it, pass existing normalization, and record processor provenance/runtime metrics.
+
+Scanned-PDF/OCR support remains a separate qualification until proven. GPU/CUDA is also a separately qualifiable execution profile rather than an implicit fallback for the CPU route.
 
 ## 13.2 External reasoning-provider requirements
 
@@ -588,10 +622,16 @@ The Mistral incident and DOCSPIKE-001 establish one permanent BSS rule:
 
 ## 14.1 Local perception qualification
 
-For a local Docling route, the applicable gates are:
+For the current local Docling route, the applicable gates are:
 
 ```text
-explicit processor/runtime identity
+pinned docling-serve / Docling / image/runtime identity
+Compose-private service exposure
+exact BSS-009-authorized PDF byte input
+models/artifacts local before normal work
+service health plus model/pipeline readiness before route admission
+exact Atlas no-OCR Standard PDF profile warm and reusable
+explicit CPU device/thread/concurrency profile
 real bounded PDF processing
 page preservation
 major-text preservation
@@ -604,10 +644,15 @@ no fabricated confidence/visual metadata
 repeatable Atlas-facing output
 existing normalization success
 unchanged NormalizedDocument v1 parser success
-bounded timeout/cancellation/failure behavior
-source remains local/authorized
+bounded service/network/timeout/cancellation/failure behavior
+no per-document Docling process initialization
+no Docling-owned durable queue for Atlas D1
 runtime/resource observations
+every required warm end-to-end fixture run <=20 seconds
+cold boot/model/pipeline warm-up reported separately
 ```
+
+The warm latency gate begins when Bridge already possesses the authorized PDF bytes and ends after Docling conversion, response handling, deterministic mapping, `normalizePerceptionResult(...)`, and `parseNormalizedDocument(...)` succeed. Cold initialization may be excluded only because the route remains unavailable until initialization completes.
 
 Do not invent provider API credentials, RPM/TPM/RPD, 429 behavior, training-retention policy, or token pricing for a local processor.
 
@@ -817,13 +862,17 @@ effective limit source
 Local Docling routes instead use local processor controls such as:
 
 ```text
-max_concurrency
+Docling local conversion concurrency
+Docling CPU thread count
 request/page bounds
 timeout
 measured/configured CPU or memory guardrails
-retry policy
-processor version/config identity
+service readiness/warm state
+retry policy owned by the Atlas/Bridge job boundary
+processor/service/image/config identity
 ```
+
+For the first CPU profile, Docling conversion concurrency and CPU thread count must be explicit rather than accidental defaults. Increasing either is a measured capacity decision, not an assumption.
 
 Local processors do not receive a fake quota domain merely to mimic an external provider.
 
@@ -888,7 +937,7 @@ Bridge may retain fine-grained operational diagnostics while existing Atlas sema
 
 All capability execution should record secret-safe executor provenance and bounded operational metrics.
 
-Local Docling execution should record execution/capability/route identity, processor and version, qualification version, page count where useful, bounded request metrics, duration, retry count, final status, and normalized failure class.
+Local Docling execution should record execution/capability/route identity, docling-serve/Docling/image/runtime identity, device profile, option-profile fingerprint, qualification version, page count where useful, service readiness state, bounded request metrics, Docling-reported processing/pipeline time where available, Bridge-to-Docling duration, mapping/normalization duration, total warm-route duration, retry count, final status, and normalized failure class.
 
 External-provider execution additionally records provider/model identity, quota-domain and privacy metadata, provider usage units when available, provider latency, price-profile reference, actual cash cost, and shadow production cost where applicable.
 
@@ -1145,7 +1194,11 @@ Readiness is capability-specific:
 local Docling perception route
     -> implementation/config present
     -> qualification identity present
-    -> local runtime available
+    -> private Docling service healthy
+    -> pinned runtime identity matches qualification
+    -> required model artifacts available
+    -> exact Atlas PDF option profile initialized/warm
+    -> local capacity available
 
 external reasoning route
     -> adapter/config present
@@ -1221,7 +1274,7 @@ Do not grant broad Bridge access to Atlas tables for convenience.
 
 Every result used by Atlas remains attributable to its execution route.
 
-Local Docling perception provenance includes the local-processor executor type, Docling/runtime version, route identity, qualification version, attempt, duration, and bounded runtime metrics when available.
+Local Docling perception provenance includes the local-processor executor type, docling-serve/Docling/image/runtime identity, CPU/GPU device profile, route and option-profile identity, qualification version, attempt, duration, and bounded runtime metrics when available.
 
 External reasoning provenance includes provider/model identity, route and qualification identity, attempt, latency, and normalized usage when available.
 
@@ -1260,15 +1313,36 @@ privacy exposure
 
 `docker compose up` remains the canonical supported local stack boot.
 
-The local production-shaped stack includes Atlas, Agents Bridge API/worker, PostgreSQL, LocalFilesystemDocumentStore, a local Docling execution boundary for perception, and external reasoning-provider configuration only when those capabilities are being exercised.
+The local production-shaped stack includes Atlas, Agents Bridge API/worker, PostgreSQL, LocalFilesystemDocumentStore, a dedicated persistent Docling Serve service for perception, and external reasoning-provider configuration only when those capabilities are being exercised.
 
-The exact Docling topology is intentionally left to a bounded integration ticket. A managed subprocess, loopback-only sidecar/container, or equivalent local adapter is acceptable only if it preserves BSS-009 source-grant authority, prevents direct DocumentStore discovery, requires no public Docling endpoint, bounds transport, supports timeout/cancellation, and produces rebuildable derived state.
+The current Docling service contract is:
+
+```text
+service: persistent Compose-private docling-serve
+version: docling-serve 1.21.0
+Docling: 2.132.0
+first device profile: CPU-only
+compute engine: local
+Uvicorn worker processes: one unless separately justified
+Docling local conversion concurrency: explicit and bounded
+models/artifacts: local before route readiness
+converter/model cache: enabled/reusable
+public host port: not required by the base Atlas profile
+Atlas queue authority: pg-boss
+Docling RQ/Redis: not used by the current D1 path
+```
+
+Agents Bridge reaches Docling by private Compose service identity and sends exact BSS-009-authorized PDF bytes through the stable Docling Serve v1 file-conversion API or equivalent frozen v1 byte-upload contract. Docling receives no source path/storage-discovery authority.
+
+A one-shot per-document Python/Docling subprocess is not the current production-shaped route. A future perception topology may differ only after separate qualification against the same Atlas capability boundary.
+
+Docling service liveness and Atlas route readiness are distinct. The route must remain unavailable until the service is healthy, required models are loaded/available, the pinned runtime identity is verified, and the exact Atlas digital-PDF option profile is warm.
 
 ## 35.1 Stale environment discipline
 
-When perception runtime/configuration changes, rebuild or recreate the affected runtime, confirm the intended Docling/runtime version, verify migrations/readiness, ensure old processes are stopped, and scope pg-boss/fixture state correctly.
+When perception runtime/configuration changes, rebuild or recreate only the affected Bridge/Docling services, confirm the intended docling-serve/Docling/image/runtime identity, verify models/artifacts and route warm readiness, verify migrations, ensure old processes/containers are stopped, and scope pg-boss/fixture state correctly.
 
-Do not misclassify stale Docker/runtime state as an architecture failure or use destructive volume removal as the default repair.
+Do not misclassify stale Docker/runtime state as an architecture failure or use destructive volume removal as the default repair. Do not use `docker compose down --volumes`, broad image pruning, or host CUDA/Python removal as routine repair.
 
 ---
 
@@ -1282,20 +1356,44 @@ Use pure mapping and injected transport tests for route resolution, Docling mapp
 
 ## 36.2 Local Docling integration
 
-Use real local Docling with approved non-confidential fixtures to prove PDF processing, page/text/heading/table preservation, deterministic IDs/order, trustworthy geometry behavior, existing normalization, unchanged `parseNormalizedDocument(...)`, repeatability, bounded failure handling, and no external inference.
+Use the real persistent Compose-private Docling service with approved non-confidential fixtures to prove:
+
+```text
+service/model/profile warm readiness
+exact authorized-byte request boundary
+PDF processing
+page/text/heading/table preservation
+deterministic IDs/order
+trustworthy geometry behavior
+existing normalization
+unchanged parseNormalizedDocument(...)
+repeatability across sequential requests without service/process replacement
+<=20-second warm end-to-end fixture runs
+bounded unavailable/not-ready/network/5xx/timeout/cancellation/malformed-response failures
+no external inference
+no per-document subprocess fallback
+```
+
+Record cold service boot/model/pipeline warm-up separately from warm per-document latency.
 
 ## 36.3 Compose integration
 
-Prove worker/queue transactionality, source-grant redemption, retries, replay, fencing, result handoff, route selection, execution telemetry, and role permissions.
+Prove worker/queue transactionality, source-grant redemption, private Docling service readiness, retries, replay, fencing, result handoff, route selection, execution telemetry, service restart recovery, and role permissions.
 
 The perception-first Compose scenario must prove:
 
 ```text
 IDSER-003 D1 kickoff
-    -> BSS-009
-    -> Docling
+    -> pg-boss
+    -> BSS-009 grant/redemption
+    -> Bridge verifies exact PDF bytes
+    -> qualified ready/warm private Docling service
+    -> deterministic mapper
+    -> unchanged normalization/parser
     -> Atlas-accepted NormalizedDocument v1
 ```
+
+pg-boss remains the sole Atlas job lifecycle authority. The current D1 path does not add Docling RQ/Redis or another durable queue.
 
 ## 36.4 Live external-provider qualification
 
@@ -1476,9 +1574,9 @@ Represented by approved BSS-V2-001/002. It owns capability interfaces, route res
 
 ## 42.2 Workstream B - Docling production perception
 
-Own only local Docling adapter/runtime integration, BSS-009-authorized byte consumption, deterministic mapping, current `NormalizedDocument v1` normalization, processor provenance, and local resource/timeout/cancellation behavior.
+Own the current persistent local Docling service profile: Compose-private `docling-serve`, pinned service/Docling/image identity, CPU-only first qualification profile, local model artifacts, warm reusable Standard PDF pipeline, BSS-009-authorized exact-byte consumption through Bridge, deterministic mapping, current `NormalizedDocument v1` normalization, <=20-second warm-route qualification, processor provenance, and local resource/readiness/timeout/cancellation behavior.
 
-It must not implement semantic extraction or direct DocumentStore access.
+It must not implement semantic extraction, direct DocumentStore access, a per-document Docling subprocess production path, GPU qualification, or a second durable queue.
 
 ## 42.3 Workstream C - external reasoning adapter availability
 
@@ -1490,13 +1588,16 @@ Own the integrated path:
 
 ```text
 IDSER-003 D1 job
+    -> pg-boss
     -> BSS-009 source grant/redemption
-    -> Docling
-    -> normalization
+    -> Bridge verifies exact PDF bytes
+    -> already-qualified ready/warm private Docling service
+    -> deterministic mapping
+    -> normalization/parser
     -> Atlas result acceptance/cache
 ```
 
-It ends at accepted `NormalizedDocument v1`.
+It consumes, rather than redefines, the Docling <=20-second CPU qualification from Workstream B. It ends at accepted `NormalizedDocument v1`.
 
 ## 42.5 Workstreams E/F - semantic qualification
 
@@ -1633,8 +1734,9 @@ Local Docling perception and external reasoning have different economics.
 For perception:
 
 ```text
-local Docling
-    -> CPU/memory/runtime cost
+persistent local Docling service
+    -> CPU/memory/resident-service runtime cost
+    -> explicit local conversion concurrency/thread profile
     -> no token billing
     -> no provider RPM/TPM/RPD
     -> no source transmission to external inference
@@ -1668,32 +1770,35 @@ The following are V2 production-baseline invariants for BSS work.
 12. **Qualified routes may represent local processors or external providers.**
 13. **Local Docling qualification is based on document fidelity, repeatability, normalization, and runtime behavior, not provider API economics.**
 14. **Docling is the current development digital-PDF perception direction, subject to production-shaped integration qualification.**
-15. **Gemini remains an external reasoning-provider candidate and adapter, not a required perception dependency.**
-16. **Mistral may remain implemented but inactive until entitlement is corrected and requalified.**
-17. **`NormalizedDocument v1` remains the perception/semantics compatibility boundary.**
-18. **Docling structural labels never become business-semantic classifications by themselves.**
-19. **The first integrated checkpoint ends at Atlas-accepted `NormalizedDocument v1`; semantic qualification comes afterward.**
-20. **Semantic extraction/reconciliation v1 contracts remain unchanged by perception integration.**
-21. **A smaller provider-facing semantic intermediate is allowed only when deterministic finalization restores the complete unchanged Atlas v1 contract.**
-22. **pg-boss remains the background queue technology.**
-23. **Existing transaction, idempotency, replay, lease, fencing, and completion guarantees survive executor changes.**
-24. **Local processor resource limits and external provider quota domains are distinct concepts.**
-25. **External-provider capacity remains capability-aware and quota-domain-aware.**
-26. **Interactive external work must have protected capacity or equivalent priority.**
-27. **Multiple API keys in one upstream quota domain are not assumed to multiply capacity.**
-28. **Every capability execution records appropriate executor provenance.**
-29. **External-provider executions additionally record normalized usage needed for capacity/economic analysis.**
-30. **Provider pricing is effective-dated configuration, not skill logic.**
-31. **Free-tier external calls may support shadow production cost calculation.**
-32. **BSS does not implement final customer plans or billing.**
-33. **External privacy class is checked before provider transmission; local perception still obeys source authorization and local data-handling rules.**
-34. **Fallback is allowed only among qualified routes satisfying the same capability and applicable privacy contract.**
-35. **Automatic unqualified model routing is prohibited for truth-producing reasoning.**
-36. **Provider credentials remain server-side and are never distributed one-per-user by default.**
-37. **No executor failure may directly advance Atlas trusted state.**
-38. **Normal automated tests remain external-provider-independent; live provider tests are explicit and opt-in.**
-39. **Docker Compose remains the supported production-shaped local stack path.**
-40. **Executor changes must not require a rewrite of Atlas Core, semantic contracts, review semantics, or publication authority.**
+15. **The current local Docker Docling profile is a persistent Compose-private Docling Serve service; a fresh per-document Python/Docling subprocess is not the production shape.**
+16. **The current first Docling qualification profile is CPU-only, warm before routing, and every required warm production-shaped fixture run must complete within 20 seconds end to end.**
+17. **pg-boss remains the sole Atlas D1 job lifecycle authority; the current perception path does not add Docling RQ/Redis or another durable queue.**
+18. **Gemini remains an external reasoning-provider candidate and adapter, not a required perception dependency.**
+19. **Mistral may remain implemented but inactive until entitlement is corrected and requalified.**
+20. **`NormalizedDocument v1` remains the perception/semantics compatibility boundary.**
+21. **Docling structural labels never become business-semantic classifications by themselves.**
+22. **The first integrated checkpoint ends at Atlas-accepted `NormalizedDocument v1`; semantic qualification comes afterward.**
+23. **Semantic extraction/reconciliation v1 contracts remain unchanged by perception integration.**
+24. **A smaller provider-facing semantic intermediate is allowed only when deterministic finalization restores the complete unchanged Atlas v1 contract.**
+25. **pg-boss remains the background queue technology.**
+26. **Existing transaction, idempotency, replay, lease, fencing, and completion guarantees survive executor changes.**
+27. **Local processor resource limits and external provider quota domains are distinct concepts.**
+28. **External-provider capacity remains capability-aware and quota-domain-aware.**
+29. **Interactive external work must have protected capacity or equivalent priority.**
+30. **Multiple API keys in one upstream quota domain are not assumed to multiply capacity.**
+31. **Every capability execution records appropriate executor provenance.**
+32. **External-provider executions additionally record normalized usage needed for capacity/economic analysis.**
+33. **Provider pricing is effective-dated configuration, not skill logic.**
+34. **Free-tier external calls may support shadow production cost calculation.**
+35. **BSS does not implement final customer plans or billing.**
+36. **External privacy class is checked before provider transmission; local perception still obeys source authorization and local data-handling rules.**
+37. **Fallback is allowed only among qualified routes satisfying the same capability and applicable privacy contract.**
+38. **Automatic unqualified model routing is prohibited for truth-producing reasoning.**
+39. **Provider credentials remain server-side and are never distributed one-per-user by default.**
+40. **No executor failure may directly advance Atlas trusted state.**
+41. **Normal automated tests remain external-provider-independent; live provider tests are explicit and opt-in.**
+42. **Docker Compose remains the supported production-shaped local stack path.**
+43. **Executor changes must not require a rewrite of Atlas Core, semantic contracts, review semantics, or publication authority.**
 
 ---
 
@@ -1708,9 +1813,12 @@ The first required production-shaped result is:
 ```text
 IDSER-003
 project/bundle + D1 perception kickoff
+    -> pg-boss
     -> BSS-009 authority
-    -> verified PDF bytes
-    -> qualified local Docling perception
+    -> Bridge redeems/verifies exact PDF bytes
+    -> qualified persistent Compose-private Docling Serve
+         -> ready/warm CPU profile
+         -> exact Atlas digital-PDF options
     -> deterministic generic mapping
     -> existing normalizePerceptionResult(...)
     -> Atlas-accepted NormalizedDocument v1
@@ -1721,14 +1829,22 @@ Closure requires:
 
 ```text
 supported digital-PDF class explicit
-processor/runtime identity explicit
+pinned docling-serve / Docling / image/runtime identity
+CPU thread/concurrency profile explicit
+service/model/profile readiness proven
+models/artifacts local before normal work
 stable source locators
 required source units preserved
 unchanged NormalizedDocument v1
+every required warm end-to-end qualification run <=20 seconds
+cold boot/model/pipeline warm-up recorded separately
 Atlas-owned cache/result handoff
 retry/replay/idempotency/failure behavior proven
+service restart -> warm readiness -> safe retry proven
 no semantic candidate/reconciliation requirement
 no direct DocumentStore access from Docling
+no per-document subprocess production fallback
+no Docling RQ/Redis lifecycle authority
 ```
 
 Only after this checkpoint should semantic extraction/reconciliation model qualification resume.
