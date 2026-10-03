@@ -26,7 +26,7 @@ All commands passed. Cold readiness and profile warm-up are reported separately 
 
 ## Commit record
 
-- **Review target commit:** `c9a6d06` — `feat(bridge): qualify persistent Docling CPU route`
+- **Implementation/review target commit:** `b6b62d0` — `feat(bridge): qualify persistent Docling CPU route`
 - **Ticket state at commit:** `awaiting_review`
 - **Scope:** only BSS-V2-004-01 route/configuration, adapter, qualification harness/tests, ticket state, and this checkpoint were staged.
 
