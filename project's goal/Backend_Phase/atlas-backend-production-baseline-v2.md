@@ -781,252 +781,120 @@ Future BSS tickets may add capability-specific queue names if required, but a ne
 
 # 19. Capability-Aware Background Concurrency
 
-The current worker uses a global configuration such as:
+The current worker-wide concurrency setting remains a valid compatibility default but is not the final production capacity model.
+
+BSS V2 must be able to constrain these workloads independently:
 
 ```text
-AGENTS_BRIDGE_WORKER_CONCURRENCY
-```
-
-That remains a valid compatibility default but is not the final production capacity model.
-
-BSS V2 requires the ability to constrain at least these logical workloads independently:
-
-```text
-perception
+local document perception
 semantic extraction
 semantic reconciliation
 CES
 interactive chat/review assistance
 ```
 
-Implementation options include:
+Suitable mechanisms may include per-capability semaphores, route-level semaphores, local processor concurrency/resource limits, external provider token buckets, and shared external quota-domain limiters.
 
-```text
-separate pg-boss queue workers
-per-capability semaphores
-route-level semaphores
-provider token buckets
-shared quota-domain limiters
-```
-
-The exact mechanism belongs to the bounded BSS ticket.
-
-The required result is that one workload cannot unintentionally monopolize all provider capacity.
+The required result is that CPU-heavy local perception cannot monopolize the worker/runtime, while bulk external reasoning cannot consume every provider slot needed for interactive work.
 
 ---
 
-# 20. Provider Capacity Profiles
+# 20. Execution Capacity Profiles
 
-Each active route should reference a capacity profile.
+Capacity policy depends on executor type.
 
-Conceptually:
+External-provider routes may use:
 
 ```text
-CapacityProfile
-+-- capacity_profile_id
-+-- quota_domain_id
-+-- max_concurrency
-+-- requests_per_minute when known
-+-- tokens_per_minute when applicable
-+-- requests_per_day when applicable
-+-- pages_per_minute/day when applicable
-+-- request_bytes
-+-- response_bytes
-+-- cooldown policy
-+-- retry policy
-+-- source of limit
-+-- observed_at / effective_from
+quota_domain_id
+max_concurrency
+requests/tokens/day or minute when applicable
+request/response bounds
+cooldown/retry policy
+effective limit source
 ```
 
-Limits may be provider-advertised, deployment-configured, or conservatively measured.
+Local Docling routes instead use local processor controls such as:
 
-They must not be inferred from the number of API keys.
+```text
+max_concurrency
+request/page bounds
+timeout
+measured/configured CPU or memory guardrails
+retry policy
+processor version/config identity
+```
+
+Local processors do not receive a fake quota domain merely to mimic an external provider.
 
 ---
 
-# 21. Quota Domains
+# 21. External Provider Quota Domains
 
-A key V2 production concept is `quota_domain_id`.
+`quota_domain_id` is an external-provider concept.
 
-Many Atlas users may share one upstream provider project/account.
+Several reasoning routes may share one upstream provider project/account and therefore one real request/token/daily capacity pool.
 
-Several provider routes may also share the same upstream quota.
+Different model IDs or multiple keys must not be assumed to provide independent capacity unless provider qualification proves it.
 
-Example:
-
-```text
-Gemini project: atlas-dev
-        |
-        +-- perception route
-        +-- extraction route
-        +-- reconciliation route
-        +-- chat route
-```
-
-Even when those routes use different model IDs, BSS must not assume their capacity is completely independent unless provider qualification proves it.
-
-A quota domain represents the upstream pool that capacity enforcement must respect.
-
-Conceptually:
-
-```text
-QuotaDomain
-+-- quota_domain_id
-+-- provider/account/project identity alias
-+-- shared request capacity
-+-- shared token capacity
-+-- shared daily capacity
-+-- route-specific sublimits where known
-```
-
-The alias must not contain credentials.
-
-Creating multiple keys inside one upstream project must not automatically create multiple quota domains.
+Local Docling execution is governed by local processor capacity, not an upstream provider quota domain.
 
 ---
 
 # 22. Capacity Admission
 
-Before a provider network call, Agents Bridge should perform operational admission.
+Admission is executor-specific.
 
-Conceptually:
+Local processor route:
 
 ```text
-qualified route selected
-        |
-        v
-privacy preflight
-        |
-        v
-route enabled/healthy?
-        |
-        v
-quota-domain capacity available?
-        |
-        v
-route/model capacity available?
-        |
-        +-- yes -> execute
-        |
-        +-- temporary no -> queue/cooldown/fallback according to work class
-        |
-        +-- structural no -> typed failure / route disabled
+qualified route
+    -> source already authorized
+    -> route healthy
+    -> local capacity available
+    -> execute / queue / bounded failure
 ```
 
-The provider adapter itself should not implement Atlas customer-plan logic.
+External provider route:
 
-Customer entitlement is supplied/enforced by Atlas outside this operational capacity check.
+```text
+qualified route
+    -> privacy preflight
+    -> route healthy
+    -> quota-domain capacity
+    -> route/model capacity
+    -> execute / queue-cooldown-fallback / bounded failure
+```
+
+Customer entitlement remains Atlas-owned and is not implemented by executor adapters.
 
 ---
 
-# 23. Rate-Limit and Entitlement Classification
+# 23. Execution Failure Classification
 
-BSS V2 must distinguish operationally different cases.
+External-provider cases include authentication failure, zero entitlement, quota exhaustion, transient 429, provider outage, provider timeout, malformed provider output, and privacy mismatch.
 
-At minimum:
+Local-processor cases include startup/unavailability, processor timeout, local resource saturation, malformed mapped output, unsupported document class, and normalization/integrity failure.
 
-```text
-provider authentication failure
-provider entitlement = zero
-provider quota exhausted
-provider transient 429
-provider 5xx/unavailable
-local Bridge capacity saturated
-route disabled/unqualified
-privacy mismatch
-provider timeout
-malformed provider output
-response bound exceeded
-```
+Shared cases include disabled/unqualified route, Bridge capacity saturation, request/response bound failure, and cancellation.
 
-## 23.1 Zero entitlement
+Do not burn retries against known zero provider entitlement. Do not force local processor failures into provider-rate-limit categories.
 
-A provider-advertised zero request allowance is not a backoff problem.
-
-The route should be classified as unavailable/unqualified for live production use until entitlement changes.
-
-Do not burn retries against a known zero-capacity route.
-
-## 23.2 Transient 429
-
-Transient 429 handling may use bounded retry/cooldown when safe.
-
-Structured/background requests may retry before result acceptance according to existing idempotency rules.
-
-Interactive streaming must not transparently restart after observable text/tool events have been emitted.
-
-## 23.3 Public contract compatibility
-
-Bridge internal telemetry may preserve fine-grained provider failure causes even when existing Atlas semantic/perception technical contracts intentionally normalize them to broader categories such as `provider_unavailable`.
-
-Do not break IDSER contracts solely to expose provider diagnostics to Atlas domain code.
+Bridge may retain fine-grained operational diagnostics while existing Atlas semantic/perception contracts continue exposing their stable bounded failure categories.
 
 ---
 
-# 24. Normalized Usage Ledger
+# 24. Operational Execution Telemetry and Provider Usage Ledger
 
-BSS V2 establishes provider execution usage as first-class operational state.
+All capability execution should record secret-safe executor provenance and bounded operational metrics.
 
-Every real provider-backed execution should leave a secret-safe record sufficient for capacity and economic analysis.
+Local Docling execution should record execution/capability/route identity, processor and version, qualification version, page count where useful, bounded request metrics, duration, retry count, final status, and normalized failure class.
 
-Conceptually:
+External-provider execution additionally records provider/model identity, quota-domain and privacy metadata, provider usage units when available, provider latency, price-profile reference, actual cash cost, and shadow production cost where applicable.
 
-```text
-ProviderExecutionUsage
-+-- execution_id
-+-- capability
-+-- skill_id / skill_version when applicable
-+-- work_class
-+-- route_id
-+-- provider
-+-- model_or_processor
-+-- qualification_version
-+-- quota_domain_id
-+-- privacy_class
-+-- project/workspace/bundle/document references when safely supplied
-+-- request_count
-+-- retry_count
-+-- input_tokens when available
-+-- output_tokens when available
-+-- cached_tokens when available
-+-- processed_pages when applicable
-+-- request_bytes when useful
-+-- response_bytes when useful
-+-- queue_delay when applicable
-+-- provider_latency
-+-- total_duration
-+-- final_status
-+-- normalized_failure_class when applicable
-+-- price_profile_id
-+-- actual_cash_cost
-+-- shadow_production_cost
-+-- started_at
-+-- completed_at
-```
+Telemetry must not persist raw PDFs, full PRD text, full prompts/provider bodies, API keys, authorization headers, or source grants.
 
-Exact table names are not frozen here.
-
-## 24.1 No source content
-
-Usage records must not persist:
-
-```text
-raw PDF bytes
-full prompts
-full PRD text
-provider response bodies
-API keys
-authorization headers
-source grants
-```
-
-## 24.2 Authority namespace
-
-Low-level provider execution/usage state belongs under Bridge operational authority.
-
-It must not give the `agents_bridge` role new permission to mutate Atlas trusted state.
-
-Atlas may later aggregate selected usage into product/billing analytics through an explicit read/handoff boundary.
+Bridge operational telemetry must not grant the Bridge database role authority to mutate Atlas trusted state.
 
 ---
 
@@ -1133,11 +1001,9 @@ A later Atlas policy layer may choose qualified route classes based on product r
 
 ---
 
-# 28. Privacy Classes
+# 28. Privacy and Local Data Handling
 
-BSS V2 adopts the V3 privacy classes as route qualification properties.
-
-Initial conceptual classes:
+External-provider routes retain the V3 privacy classes:
 
 ```text
 EVALUATION
@@ -1145,51 +1011,11 @@ NO_TRAINING
 ZDR_REQUIRED
 ```
 
-The exact enum representation may be frozen by the ticket that introduces the shared contract.
+The required privacy class must be checked before external transmission; a provider adapter may not silently downgrade it.
 
-## 28.1 EVALUATION
+Local Docling perception does not transmit source bytes to an external provider, so provider training/retention classifications do not apply to that local route. It still must satisfy Atlas source authorization, local artifact redaction, bounded diagnostics, and deployment data-handling rules.
 
-Intended for approved non-sensitive use such as:
-
-```text
-synthetic PRDs
-public documents
-non-confidential evaluation material
-approved test fixtures
-```
-
-A free development provider may be qualified only for this class if stronger guarantees are not available.
-
-## 28.2 NO_TRAINING
-
-Requires provider/account terms that satisfy the Atlas production no-training policy.
-
-Retention may still exist unless separately constrained.
-
-## 28.3 ZDR_REQUIRED
-
-Requires explicit zero-data-retention qualification for the relevant provider/account/endpoint.
-
-A stateless API shape alone is not proof of ZDR.
-
-## 28.4 Privacy preflight
-
-Before transmitting source or semantic context:
-
-```text
-required privacy class
-        |
-        v
-selected route privacy class
-        |
-   sufficient?
-     /     \
-   yes      no
-   |        |
-execute   reject before network transmission
-```
-
-No provider adapter may silently downgrade privacy to obtain a successful response.
+If perception later moves to a remote executor, that route must independently satisfy external privacy qualification.
 
 ---
 
@@ -1392,36 +1218,15 @@ Do not grant broad Bridge access to Atlas tables for convenience.
 
 ---
 
-# 33. Provider Execution Provenance
+# 33. Execution Provenance
 
-Every provider result used by Atlas must remain attributable to an execution route.
+Every result used by Atlas remains attributable to its execution route.
 
-At minimum, provenance should retain:
+Local Docling perception provenance includes the local-processor executor type, Docling/runtime version, route identity, qualification version, attempt, duration, and bounded runtime metrics when available.
 
-```text
-provider
-model/processor
-route_id or stable route fingerprint
-qualification version
-endpoint/capability class when appropriate
-attempt
-latency
-usage metadata when available
-```
+External reasoning provenance includes provider/model identity, route and qualification identity, attempt, latency, and normalized usage when available.
 
-Provider provenance is not source evidence.
-
-Atlas must preserve both:
-
-```text
-source evidence
-    -> which immutable human document supports the meaning?
-
-execution provenance
-    -> which provider/model produced the proposal?
-```
-
-Provider migration must not change immutable evidence identity.
+Execution provenance is distinct from immutable source evidence. Changing processor or provider must never change source evidence identity.
 
 ---
 
@@ -1456,123 +1261,70 @@ privacy exposure
 
 `docker compose up` remains the canonical supported local stack boot.
 
-BSS extension work must update the existing Compose-managed services rather than creating unnecessary standalone provider containers.
+The local production-shaped stack includes Atlas, Agents Bridge API/worker, PostgreSQL, LocalFilesystemDocumentStore, a local Docling execution boundary for perception, and external reasoning-provider configuration only when those capabilities are being exercised.
 
-The expected local shape remains approximately:
-
-```text
-Atlas
-Agents Bridge API
-Agents Bridge worker
-PostgreSQL
-LocalFilesystemDocumentStore
-configured provider credentials/routes
-```
-
-Provider adapters run inside Agents Bridge.
+The exact Docling topology is intentionally left to a bounded integration ticket. A managed subprocess, loopback-only sidecar/container, or equivalent local adapter is acceptable only if it preserves BSS-009 source-grant authority, prevents direct DocumentStore discovery, requires no public Docling endpoint, bounds transport, supports timeout/cancellation, and produces rebuildable derived state.
 
 ## 35.1 Stale environment discipline
 
-BSS implementation and review must distinguish provider/code defects from stale local infrastructure.
+When perception runtime/configuration changes, rebuild or recreate the affected runtime, confirm the intended Docling/runtime version, verify migrations/readiness, ensure old processes are stopped, and scope pg-boss/fixture state correctly.
 
-When reviewed source/config changes affect a service:
-
-```text
-rebuild/recreate the affected image/container
-verify environment values
-verify migration state
-verify old processes are stopped
-verify pg-boss jobs and fixture state are scoped
-```
-
-Do not classify stale Docker state as a provider architecture failure.
-
-Do not solve stale state by indiscriminate volume destruction when bounded cleanup is sufficient.
+Do not misclassify stale Docker/runtime state as an architecture failure or use destructive volume removal as the default repair.
 
 ---
 
 # 36. Testing Strategy
 
-Normal automated tests must not depend on paid/live provider availability.
+Normal automated tests must not depend on live paid external-provider availability.
 
-The test strategy should have three layers.
+## 36.1 Deterministic contract tests
 
-## 36.1 Deterministic unit/contract tests
+Use pure mapping and injected transport tests for route resolution, Docling mapping, schemas, error handling, source boundaries, privacy preflight, capacity logic, fallback eligibility, and cost calculation.
 
-Use injected/mock transports to prove:
+## 36.2 Local Docling integration
 
-```text
-request translation
-schema handling
-response parsing
-stream parsing
-usage normalization
-error mapping
-privacy preflight
-route resolution
-capacity admission
-fallback eligibility
-cost calculation
-```
+Use real local Docling with approved non-confidential fixtures to prove PDF processing, page/text/heading/table preservation, deterministic IDs/order, trustworthy geometry behavior, existing normalization, unchanged `parseNormalizedDocument(...)`, repeatability, bounded failure handling, and no external inference.
 
-## 36.2 Integration/Compose tests
+## 36.3 Compose integration
 
-Use local provider mocks or deterministic adapters to prove:
+Prove worker/queue transactionality, source-grant redemption, retries, replay, fencing, result handoff, route selection, execution telemetry, and role permissions.
+
+The perception-first Compose scenario must prove:
 
 ```text
-Bridge API
-worker
-queue
-transactional enqueue
-retries
-idempotency
-replay
-fencing
-result handoff
-route selection
-usage persistence
-role permissions
+IDSER-003 D1 kickoff
+    -> BSS-009
+    -> Docling
+    -> Atlas-accepted NormalizedDocument v1
 ```
 
-## 36.3 Explicit live qualification tests
+## 36.4 Live external-provider qualification
 
-Live provider tests must be opt-in and secret-safe.
-
-They prove real account behavior and must never be silently substituted by mocks.
-
-A live qualification failure must be classified honestly as one of:
-
-```text
-Atlas defect
-adapter defect
-provider contract mismatch
-account entitlement/quota blocker
-privacy-policy blocker
-provider outage
-```
+Live provider tests are opt-in and secret-safe and qualify only the external reasoning capability being tested.
 
 ---
 
-# 37. Gemini Qualification Evidence Required by BSS
+# 37. External Reasoning Qualification Evidence Required by BSS
 
-Before Gemini becomes the active development route, BSS qualification should prove at least:
+Gemini remains an available reasoning-provider candidate, but Gemini PDF perception is not required for the primary perception path.
+
+Before an external provider becomes an active semantic route, qualification should prove:
 
 ```text
-1. minimal real inference returns success;
-2. exact configured model IDs are available to the real key/account;
-3. representative structured-output request succeeds;
-4. complete Atlas-side AJV validation passes;
-5. representative PDF processing succeeds;
-6. result can be normalized into current NormalizedDocument without fabricated fields;
-7. semantic extraction works against current v1 contract;
-8. reconciliation works against current v1 contract;
-9. streaming/cancellation works if chat is in scope;
-10. provider usage/provenance can be normalized;
-11. observed rate-limit behavior is recorded;
-12. privacy class for the active route is explicit.
+minimal real inference
+pinned model identity
+bounded provider-facing structured output
+deterministic finalization where used
+complete Atlas semantic v1 validation
+representative semantic extraction against the frozen oracle
+representative reconciliation before reconciliation activation
+sufficient repeatability
+latency/rate-limit observations
+normalized usage/provenance
+explicit external privacy class
 ```
 
-BSS should not claim production-grade privacy merely because the route works technically.
+Semantic qualification begins after the perception-first checkpoint has produced an accepted `NormalizedDocument v1`.
 
 ---
 
