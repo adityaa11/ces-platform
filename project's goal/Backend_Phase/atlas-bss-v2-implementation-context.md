@@ -1784,132 +1784,197 @@ A normal unit/Docling test must not accidentally spend provider credits.
 
 # 30. Regression boundary
 
-BSS V2 tickets must run directly affected regressions, not the entire historical Atlas universe by default.
+BSS V2 tickets run directly affected regressions, not the entire historical Atlas universe by default.
 
-Likely affected evidence families include, depending on the ticket:
+For BSS-V2-004-01, likely evidence includes:
 
 ```text
-BSS-005 service/runtime tests
-BSS-006 worker/queue tests
-BSS-009 perception tests
-semantic worker tests
-semantic client/handoff tests
-perception replay tests
-semantic replay/fencing tests
-Compose smoke/readiness
+provider-capability/perception interface tests
+Docling mapper tests
+real local Docling fixture runs
+BSS-009 normalization tests
+Atlas Core perception tests
+affected Bridge typechecks
+```
+
+For BSS-V2-004-02, likely evidence includes:
+
+```text
+IDSER-003 project/bundle kickoff regression
+BSS-009 source grant/result handoff
+perception worker/queue tests
+pg-boss retry/replay/fencing
+Atlas perception authority/cache tests
+Compose boot/readiness
 PostgreSQL role-denial checks
 ```
 
-Do not automatically rerun all IDSER acceptance scenarios for every provider-infrastructure ticket.
+For semantic qualification tickets, use semantic worker/client/handoff and the frozen semantic-oracle harnesses relevant to that capability.
 
-If a BSS V2 implementation changes a frozen semantic contract or Atlas authority instead of merely preserving it, stop and classify that as scope change rather than silently absorbing it into regression work.
+Do not automatically rerun all IDSER acceptance scenarios for every infrastructure ticket.
+
+If an implementation changes a frozen semantic contract, `NormalizedDocument v1`, or Atlas authority instead of merely preserving it, stop and classify that as scope change.
 
 ---
 
-# 31. Final integrated checkpoint boundary
+# 31. Integrated checkpoint boundaries
 
-BSS-V2-011 must prove the provider substrate is ready for a new live-provider IDSER acceptance phase.
+BSS V2 now has two meaningful checkpoints.
 
-It should establish:
+## 31.1 Perception checkpoint - BSS-V2-004-02
+
+This is the immediate checkpoint.
+
+It must prove:
 
 ```text
-generic workers no longer require concrete Mistral/Gemini types
-Gemini development routes are explicitly qualified and active
-Mistral adapter remains available but inactive/blocked
-route/profile configuration is explicit
-capacity/quota-domain controls compose
-interactive protection composes
-usage/provenance recording composes
-price/shadow-cost recording composes
-privacy preflight composes
-qualified fallback machinery exists without pretending a blocked route is live
-Compose stack is healthy after correct rebuild/recreate
-Bridge database authority remains restricted
-directly affected BSS/perception/semantic regressions pass
+approved generic perception interface/routing
+qualified local Docling route
+IDSER-003 D1 job consumption
+BSS-009 source authority
+unchanged NormalizedDocument v1
+Atlas-owned result/cache acceptance
+retry/replay/idempotency/restart correctness
+bounded local processor failures
+Compose/runtime freshness
+restricted Bridge database authority
 ```
 
 It intentionally does not prove:
 
 ```text
-real authenticated D1 through complete semantic persistence
-real D2 incremental sequencing
-N/N bundle Ready for Review
+semantic extraction
+semantic reconciliation
+D2 sequencing
+Ready for Review
+CES
+chat
+publication
 ```
 
-Those are the next live IDSER acceptance responsibilities.
+After CK PASS, stop before semantic qualification unless explicitly continued.
+
+## 31.2 Broader BSS V2 checkpoint - BSS-V2-011
+
+After the later semantic qualification and applicable external-provider operational tickets, BSS-V2-011 proves the full execution substrate composes.
+
+It should establish:
+
+```text
+local Docling perception route remains qualified/healthy
+semantic extraction route explicitly qualified
+reconciliation route explicitly qualified
+Mistral remains inactive unless separately requalified
+route/profile configuration is explicit
+local/external capacity controls remain distinct
+interactive provider protection composes
+executor telemetry/provenance composes
+external provider price/shadow-cost recording composes
+external privacy preflight composes
+qualified fallback machinery remains bounded
+Compose stack is healthy after correct rebuild/recreate
+Bridge database authority remains restricted
+directly affected BSS/perception/semantic regressions pass
+```
+
+It remains a composition checkpoint, not a catch-all repair ticket.
 
 ---
 
 # 32. Handoff after BSS V2
 
-After every executable BSS V2 child reaches CK PASS, the next planning step is a superseding live-provider acceptance ticket set.
+The immediate handoff after BSS-V2-004-02 is not a full live Initial Draft acceptance set.
 
-That ticket set should preserve the useful IDSER-011 decomposition:
+It is:
 
 ```text
-01 active-route live qualification consumption
-02 live first-document production path
-03 live incremental sequencing and bounded prior context
+accepted NormalizedDocument v1
+    -> bounded semantic extraction qualification
+    -> bounded reconciliation qualification
+```
+
+After the broader remaining BSS V2 set reaches PASS, a superseding live-provider Initial Draft acceptance set may then prove the complete functional path.
+
+That later set may preserve the useful IDSER-011-style decomposition:
+
+```text
+01 consume qualified semantic route
+02 real first-document semantic production path
+03 real incremental sequencing and bounded prior context
 04 integrated Ready for Review checkpoint
 ```
 
-but it must prove provider-neutral capability routes rather than hard-coding `MistralProvider` as the acceptance authority.
+but it must consume the already-established Docling perception boundary rather than re-testing remote PDF perception as a semantic-provider requirement.
 
-The actual execution provenance should identify Gemini for the current development route.
+The actual reasoning provider/model must come from qualification evidence. Do not hard-code Gemini as acceptance authority merely because the adapter exists.
 
-Do not create that IDSER ticket set as part of BSS V2 ticket generation unless separately requested.
+Do not create that later IDSER acceptance set as part of the current BSS V2 ticket regeneration unless separately requested.
 
 ---
 
 # 33. Ticket-generation procedure for Codex
 
-When this implementation context is supplied for ticket generation, Codex should perform the following planning work only.
+When this implementation context is supplied for remaining-ticket regeneration, Codex must perform planning work only unless separately given GO for an executable ticket.
 
 1. Read this implementation context in full.
-2. Read `atlas-core-architecture-checkpoint-v3.md` in full.
-3. Read `atlas-backend-production-baseline-v2.md` in full.
-4. Inspect the current approved BSS-005 through BSS-009-02 contracts needed by the planned work.
-5. Inspect the current provider/runtime/worker/config implementation seams named in this context.
-6. Inspect IDSER contracts only enough to preserve the interfaces BSS V2 must not change.
-7. Use the current Atlas ticket/review contract conventions and Security Refactor Readiness skill during ticket authoring.
-8. Generate the new `Stack_Setup_V2` README and the planned ticket files.
-9. Do not implement production code.
-10. Do not change current ticket states outside the newly generated planned BSS V2 set.
+2. Read the current `atlas-core-architecture-checkpoint-v3.md` in full.
+3. Read the current `atlas-backend-production-baseline-v2.md` in full.
+4. Inspect approved BSS-V2-001/002/003 and preserve their reviewed authority.
+5. Inspect the existing planned BSS-V2-004 and its blocker evidence; preserve them as history and do not treat them as current architecture authority.
+6. Inspect DOCSPIKE-001 ticket/report and its actual implementation scripts as feasibility evidence, including its explicit limits.
+7. Inspect BSS-009/009-01/009-02 source/perception authority.
+8. Inspect IDSER-003 for the exact D1 perception kickoff seam.
+9. Inspect IDSER-002/004/005/006 only enough to preserve the downstream semantic boundary and avoid prematurely entering it.
+10. Inspect current provider-capability, route-registry, perception-worker, config, and Compose seams.
+11. Use the current Atlas ticket/review contract conventions and Security Refactor Readiness skill.
+12. Update the existing `Stack_Setup_V2/README.md` and generate/revise only the remaining planned ticket files/children required by the current plan.
+13. Do not modify approved BSS-V2-001/002/003 ticket content or review history.
+14. Do not implement production code during ticket regeneration.
+15. Do not silently mark the historical BSS-V2-004 blocker evidence PASS.
+16. Make BSS-V2-004-01 and BSS-V2-004-02 independently GO/CK/CFC/HMN friendly.
+17. Freeze a hard stop after BSS-V2-004-02.
+18. Do not fully freeze model-specific 004-03/004-04 acceptance details from guesses; inspect the current semantic spike evidence and exact intended provider/model at the time those tickets are generated.
 
-If inspection reveals that one recommended ticket is still too large, split it before freezing the ticket set and explain the split in the README dependency graph.
-
-If inspection reveals a genuine architecture conflict that cannot be resolved within V3/Baseline V2 authority, stop ticket generation for that conflict and surface the exact planning decision rather than inventing behavior.
+If inspection reveals a genuine architecture conflict that cannot be resolved within V3/Baseline V2 authority, surface the exact planning conflict rather than inventing behavior.
 
 ---
 
 # 34. Ticket README requirements
 
-The new `Stack_Setup_V2/README.md` should contain at minimum:
+The existing `Stack_Setup_V2/README.md` should be updated to contain at minimum:
 
 ```text
 purpose
 primary architecture references
 historical BSS compatibility statement
+approved BSS-V2-001/002/003 preservation
 IDSER continuity statement
+DOCSPIKE-001 feasibility evidence and limits
 scope/non-scope
-provider direction
+Docling perception direction
+external reasoning direction
 security-readiness authoring rule
 delivery order/dependency table
 dependency graph
+perception hard stop
 review controls
 Docker/local boot convention
-completion boundary
-handoff to superseding IDSER live acceptance
+broader completion boundary
+later IDSER handoff
 ```
 
-The README must explicitly state:
+It must explicitly state:
 
 ```text
 BSS V2 is additive.
 Historical BSS checkpoints remain historical.
+BSS-V2-001/002/003 remain approved.
 IDSER-001 through IDSER-010 are not reopened.
-Gemini is the current development provider direction, not permanent architecture authority.
-Mistral remains an implemented but inactive/blocked provider route until requalified.
+Docling is the current digital-PDF perception direction, pending production-shaped qualification.
+Gemini is an available reasoning adapter/candidate, not required perception authority.
+Mistral remains implemented but inactive/blocked until requalified.
+The immediate checkpoint ends at Atlas-accepted NormalizedDocument v1.
+Semantic qualification begins afterward.
 ```
 
 ---
@@ -1956,7 +2021,22 @@ Do not generate tickets with these shapes:
     too broad
 
 "Add Gemini and migrate Atlas"
-    risks replacing one hard-coded provider with another
+    replaces one hard-coded provider with another
+
+"Make Gemini do PDF + extraction + reconciliation"
+    recreates the superseded BSS-V2-004 mega-gate
+
+"Make Docling understand workflow/rules/business facts"
+    leaks semantic reasoning into the perception layer
+
+"Let Docling read DocumentStore directly"
+    bypasses BSS-009 source authority
+
+"Give Docling RPM/TPM/RPD and token price fields"
+    invents external-provider semantics for a local processor
+
+"Change NormalizedDocument v1 to fit Docling"
+    reverses the compatibility boundary
 
 "Make security production ready"
     unbounded and not ticket-authoritative
@@ -1965,7 +2045,7 @@ Do not generate tickets with these shapes:
     confuses provider COGS telemetry with customer pricing
 
 "Add OpenRouter fallback"
-    future provider/gateway choice not currently authorized
+    future gateway integration is not automatically authorized
 
 "Use a second Gemini API key for more quota"
     assumes keys equal independent quota domains
@@ -1973,10 +2053,10 @@ Do not generate tickets with these shapes:
 "Run all IDSER live scenarios after every BSS ticket"
     excessive and reopens frozen domain work
 
-"Store prompt/response for observability"
-    violates the usage-ledger source-minimization boundary
+"Store raw source/prompt/response for observability"
+    violates source-minimization boundaries
 
-"Use TestRuntime when the live profile is misconfigured"
+"Use TestRuntime when an external live profile is misconfigured"
     creates false readiness
 
 "Use any available model as fallback"
@@ -2017,74 +2097,85 @@ If any answer is no, revise or split the ticket before freezing the set.
 
 # 38. BSS V2 completion boundary
 
-The BSS V2 phase ends when the backend has proven:
+The immediate completion boundary for the current realignment is the perception checkpoint:
 
 ```text
-provider-neutral capability injection
-qualified route/deployment profiles
-Gemini adapter
-real Gemini development qualification
-Mistral retained but inactive
-quota-domain-aware capacity representation
+approved capability/routing foundation
+    -> local Docling production executor
+    -> IDSER-003 D1 + BSS-009 authority
+    -> Atlas-accepted NormalizedDocument v1
+    -> STOP
+```
+
+That checkpoint is complete only when the supported digital-PDF class, processor/runtime identity, source-locator stability, normalization, result acceptance, and retry/replay/failure behavior are proven without semantic-model dependency.
+
+The broader BSS V2 phase later ends when the backend has also proven:
+
+```text
+semantic extraction route qualification
+semantic reconciliation route qualification
+Mistral retained inactive unless requalified
+external quota-domain-aware capacity
 capability-aware admission
-interactive capacity protection
-provider execution usage/provenance ledger
-effective-dated price profiles
-shadow production COGS
-provider-neutral privacy preflight
+interactive provider protection
+executor telemetry/provenance
+external provider price profiles/shadow COGS
+external privacy preflight
 qualified fallback foundation
 Compose/runtime compatibility
 existing queue/perception/semantic authority preserved
 ```
 
-The phase then stops.
-
-It does not continue into live Initial Draft domain acceptance automatically.
+The phase does not automatically continue into full live Initial Draft domain acceptance.
 
 ---
 
 # 39. Final implementation-context principle
 
-The BSS V2 ticket set must make this transition possible:
+The remaining BSS V2 work must make this transition explicit:
 
 ```text
-CURRENT
+CURRENT PROVEN FOUNDATIONS
 
-Atlas semantic/perception pipeline
+IDSER-003 D1 kickoff
+BSS-009 source/perception authority
+BSS-V2 capability interfaces + route resolver
+Gemini adapter available
+Docling feasibility PASS_WITH_LIMITS
         |
         v
-concrete Mistral-coupled Bridge wiring
-        |
-        v
-blocked live Mistral route
-```
 
-into:
+IMMEDIATE TARGET
 
-```text
-TARGET
+IDSER D1
+    -> BSS-009 authorized bytes
+    -> local Docling
+    -> deterministic generic perception
+    -> unchanged NormalizedDocument v1
+    -> Atlas acceptance
+    -> STOP
+        |
+        v
 
-Atlas semantic/perception pipeline
+LATER REASONING TARGET
+
+accepted NormalizedDocument v1
+    -> bounded source slots
+    -> qualified semantic extraction route
+    -> deterministic finalization
+    -> existing Atlas semantic validation
+    -> qualified reconciliation route
         |
         v
-provider-neutral Bridge capabilities
-        |
-        v
-qualified route + policy substrate
-        |
-        +-- Gemini active development route
-        +-- Mistral retained inactive route
-        +-- future qualified provider/gateway
-        |
-        v
-capacity + privacy + usage + cost controls
-        |
-        v
-existing Atlas validation / replay / authority
+
+BROADER OPERATIONAL TARGET
+
+external provider capacity + privacy + usage + cost + fallback
+    while local perception remains a distinct local-resource concern
 ```
 
 without changing what Atlas considers project truth.
 
 The final rule for ticket generation is:
 
-> Build small, closed, reviewable infrastructure checkpoints. Preserve historical authority. Make every acceptance condition explicit before GO. Keep security readiness local and future-policy aware. Prove one coherent boundary per ticket. Do not trade one provider lock-in for another, and do not push required proof into CK/CFC as a discovery phase.
+> **Build small, closed, reviewable capability checkpoints. Preserve historical authority. Let Docling do source-grounded document perception and stop at the normalized document boundary. Let external models do only separately qualified reasoning after that boundary. Make every acceptance condition explicit before GO, keep security readiness local to the ticket, and never use CK/CFC as a discovery phase for work that should have been frozen up front.**
