@@ -1,6 +1,6 @@
 # BSS-V2-004-02: IDSER D1 persistent-Docling perception lifecycle checkpoint
 
-- **State:** `awaiting_review`; **Review batch:** `BSS-V2-BATCH-04.02`
+- **State:** `approved` following CK `PASS` for reviewed commit `8a58d01`; **Review batch:** `BSS-V2-BATCH-04.02`
 - **Dependencies:** BSS-V2-004-01 at CK `PASS`; approved IDSER-003; approved BSS-009/BSS-009-01/BSS-009-02
 - **References:** V3 §§3, 5–6, 15, 31–35; Baseline V2 §§7, 11, 14–15, 28–31, 36.3, 42.4; BSS V2 context §§14–15, 22, 28–31
 
