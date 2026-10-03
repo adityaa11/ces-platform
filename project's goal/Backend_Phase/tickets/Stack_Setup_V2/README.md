@@ -38,10 +38,17 @@ The completed substrate maps Atlas capabilities to explicitly qualified routes, 
 | 15 | [BSS-V2-011](BSS-V2-011-integrated-reconciliation-checkpoint.md) | BSS-V2-BATCH-11 | 001–003, 004-02, 004-03, 004-04, 005–010 | Do frozen BSS V2 interfaces compose without reopening IDSER domain acceptance? |
 
 ```text
-001 -> 002 -> 003 -> 004-01 -> 004-02 -> STOP
-                                      |
-                                      +-> 004-03 (semantic extraction) -> 005 -> 006 --+
-                                      +-> 004-04 (semantic reconciliation)      007 -> 008 --+-> 009 -> 010 -> 011
+001 -> 002 -> 004-01 -> 004-02 -> STOP
+       \-> 003 (approved Gemini reasoning adapter; not a perception dependency)
+
+004-02 -> 004-03 (semantic extraction)
+              |
+              v
+          004-04 (semantic reconciliation)
+
+004-03 -> 005 -> 006 --+
+004-03 -> 007 -> 008 --+-> 009 -> 010 -> 011
+004-04 ----------------+
 ```
 
 Dependencies are PASS gates: an `awaiting_review` predecessor is not permission to begin a dependent implementation.
