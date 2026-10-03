@@ -5,7 +5,7 @@ Phase name: Backend Stack Setup V2 Reconciliation
 Ticket-set prefix: BSS-V2
 Repository: adityaa11/ces-platform
 Branch inspected: codex/new-atlas-backend
-Reviewed branch HEAD: 98c09b934e9b2c7a02670f0c539aa9c6bae24d1e
+Reviewed branch baseline before this context revision: 769cd368d4d2bb1d9b43c5872c2bba0a76b8976c
 Encoding: UTF-8, ASCII-safe Markdown
 
 ---
@@ -45,12 +45,21 @@ repository PDF
 
 That spike remains feasibility evidence rather than production activation authority. Its known limits are explicit: visual regions were omitted where unstable, confidence was not fabricated, and scanned-PDF/OCR behavior was not established.
 
+DOCSPIKE-001 one-shot Python timings are not the production latency qualification. The spike proved structural feasibility, determinism, and compatibility while repeatedly constructing a local conversion path. The production gate must measure the selected persistent service after required model/pipeline warm-up.
+
 The next BSS/IDSER alignment target is therefore deliberately narrow:
 
 ```text
 IDSER-003 D1 perception kickoff
     -> existing BSS-009 source authority
-    -> qualified local Docling execution
+    -> Agents Bridge redeems/verifies exact PDF bytes
+    -> qualified persistent Compose-private docling-serve
+         -> docling-serve 1.21.0
+         -> Docling 2.132.0
+         -> CPU-only first profile
+         -> local models/artifacts
+         -> warm reusable Standard PDF pipeline
+    -> deterministic Atlas mapper
     -> existing normalization
     -> Atlas-accepted NormalizedDocument v1
     -> STOP
@@ -226,10 +235,13 @@ Therefore the remaining perception seam is:
 
 ```text
 existing DocumentPerceptionProvider-style capability
-    -> production-shaped local Docling implementation
+    -> persistent Compose-private docling-serve
+    -> deterministic Atlas mapper
     -> existing BSS-009 handoff
     -> unchanged NormalizedDocument v1
 ```
+
+For the current Atlas local Docker profile, the topology is no longer an open subprocess/sidecar choice. Agents Bridge calls a long-lived private Docling Serve service. The service keeps its Python runtime, local model artifacts, converter/model cache, and initialized Standard PDF pipeline reusable across requests. A fresh Python/Docling process per PDF is not the production-shaped route.
 
 The code-level interface name `DocumentPerceptionProvider` is retained for compatibility. Its semantics are executor-neutral; implementing it with local Docling does not make Docling a remote AI provider.
 
@@ -240,6 +252,10 @@ semantic schema rewrite
 NormalizedDocument v1 rewrite
 direct Docling access to DocumentStore paths
 semantic interpretation inside Docling mapping
+fresh per-document Python/Docling subprocess as the production route
+Docling RQ/Redis or another durable queue for the current D1 lifecycle
+automatic GPU/CUDA fallback
+public host exposure of Docling as an Atlas requirement
 new queue technology
 review/publication redesign
 rewriting approved BSS/IDSER history
@@ -263,10 +279,19 @@ qualified route resolver
 local_processor route
         |
         v
-Docling adapter/runtime boundary
+Agents Bridge
+        |
+        | exact BSS-009-authorized PDF bytes
+        v
+persistent Compose-private docling-serve
+        |
+        | local compute engine
+        | warm reusable Standard PDF pipeline
+        v
+DoclingDocument JSON
         |
         v
-generic source-grounded perception result
+deterministic Atlas mapper
         |
         v
 existing normalizePerceptionResult(...)
@@ -278,7 +303,9 @@ NormalizedDocument v1
 Atlas result acceptance/cache authority
 ```
 
-The local route records processor identity/version, qualification identity, runtime/failure metrics, and route provenance.
+The current route is pinned to docling-serve 1.21.0 and Docling 2.132.0 for qualification, with an immutable deployed image/runtime identity recorded in evidence. The first qualified execution profile is CPU-only.
+
+The local route records service/processor/image identity, option-profile identity, qualification identity, warm-route timing, runtime/failure metrics, and route provenance.
 
 It does not invent provider credentials, quota domains, RPM/TPM/RPD, external privacy classes, or token pricing.
 
@@ -316,12 +343,16 @@ Before semantic-model qualification resumes, the backend must prove:
 
 ```text
 IDSER-003 D1 job
+    -> pg-boss
     -> BSS-009 source grant/redemption
-    -> local Docling
+    -> Bridge verifies exact PDF bytes
+    -> qualified ready/warm private Docling service
     -> deterministic mapping
-    -> existing normalization
+    -> existing normalization/parser
     -> Atlas-accepted NormalizedDocument v1
 ```
+
+The current D1 path keeps pg-boss as the sole Atlas job/retry/replay authority. It does not introduce Docling RQ/Redis or another durable queue.
 
 and stop there.
 
@@ -507,11 +538,13 @@ into one GO checkpoint.
 The Docling production path is split because these are independently reviewable questions:
 
 ```text
-A. Can Bridge invoke Docling safely behind the existing perception capability
-   and produce deterministic normalizer-compatible output?
+A. Can Bridge invoke a persistent Compose-private Docling Serve service safely,
+   keep the exact Atlas PDF profile warm/reusable, meet the <=20-second warm
+   latency gate, and produce deterministic normalizer-compatible output?
 
-B. Can the real IDSER-003/BSS-009 D1 lifecycle use that executor and reach
-   Atlas-accepted NormalizedDocument v1 with retry/replay/failure integrity?
+B. Can the real IDSER-003/BSS-009 D1 lifecycle use that already-qualified
+   resident service and reach Atlas-accepted NormalizedDocument v1 with
+   retry/replay/readiness/failure integrity?
 ```
 
 Those questions must not be merged.
@@ -577,26 +610,34 @@ Do not mutate its old evidence into Docling or semantic PASS evidence.
 
 Its remaining responsibilities are superseded by the following child tickets.
 
-## BSS-V2-004-01 - Local Docling perception executor integration
+## BSS-V2-004-01 - Persistent local Docling perception service integration
 
 ### Outcome
 
-Turn the successful Docling feasibility path into a production-shaped implementation behind the existing perception capability, without yet composing the full IDSER D1 lifecycle.
+Turn the successful Docling feasibility path into the production-shaped local Docker implementation: a persistent Compose-private `docling-serve` service behind the existing perception capability, without yet composing the full IDSER D1 lifecycle.
 
 ### Owns
 
 ```text
-explicit Docling/runtime version
-bounded local invocation from Agents Bridge
-executor route/config identity
-BSS-009-authorized bytes as the only source input
+docling-serve 1.21.0 + Docling 2.132.0 + immutable image/runtime identity
+dedicated persistent Compose-private Docling service
+local compute engine with bounded explicit conversion concurrency
+CPU-only first qualification profile with explicit thread count
+models/artifacts local before normal work
+service health + model/profile warm readiness before route admission
+exact Atlas Standard PDF option profile: OCR off, layout/tables on, unnecessary enrichments off
+bounded private HTTP byte-upload invocation from Agents Bridge
+BSS-009-authorized exact PDF bytes as the only source input
+no DocumentStore/database/pg-boss/project authority inside Docling
 deterministic mapper into the existing generic perception intermediate
 page/text/heading/table preservation
 stable deterministic source-unit IDs
 geometry only when trustworthy
 no fabricated confidence or visual metadata
-timeout/cancellation/process failure normalization
-processor provenance/runtime metrics
+service/network/timeout/cancellation/malformed-response normalization
+processor/service provenance and stage/runtime metrics
+every required warm fixture run <=20 seconds end to end
+cold boot/model/pipeline warm-up recorded separately
 existing normalizePerceptionResult(...)
 unchanged parseNormalizedDocument(...)
 ```
@@ -610,6 +651,9 @@ semantic kinds
 D1 project/bundle lifecycle integration
 semantic-model qualification
 OCR/scanned-PDF qualification
+GPU/CUDA qualification
+per-document Python/Docling subprocess production execution
+Docling RQ/Redis or another durable queue
 external provider quota/cost/privacy policy
 ```
 
@@ -618,36 +662,41 @@ external provider quota/cost/privacy policy
 For the currently supported digital-PDF class:
 
 ```text
-authorized PDF bytes
-    -> Docling
-    -> deterministic generic result
-    -> existing normalization
+authorized PDF bytes already at Bridge
+    -> ready/warm persistent private Docling service
+    -> Docling conversion
+    -> DoclingDocument JSON
+    -> deterministic generic mapping
+    -> existing normalization/parser
     -> parser-valid NormalizedDocument v1
 ```
 
-with no external inference and no contract weakening.
+with no external inference, no contract weakening, and every required warm qualification fixture run completing in <=20 seconds end to end.
 
 ## BSS-V2-004-02 - IDSER D1 Docling perception lifecycle checkpoint
 
 ### Outcome
 
-Compose the production-shaped Docling executor with the already-approved IDSER-003 and BSS-009 lifecycle and stop at Atlas-accepted `NormalizedDocument v1`.
+Compose the already-qualified persistent Docling service with the approved IDSER-003 and BSS-009 lifecycle and stop at Atlas-accepted `NormalizedDocument v1`.
 
 ### Owns
 
 ```text
 IDSER-003 D1 perception job consumption
+pg-boss remains sole Atlas job lifecycle authority
 BSS-009 source-grant redemption
-verified PDF-byte handoff
-qualified Docling route resolution
-perception worker execution
-existing normalization
+verified exact PDF-byte handoff
+qualified persistent Docling service route resolution
+service identity/profile/readiness verification
+perception worker execution through private HTTP conversion
+existing deterministic mapping/normalization/parser
 authenticated Atlas result handoff
 Atlas-owned derived cache acceptance
 duplicate delivery/idempotency
 retry/replay/restart behavior
+Docling service restart -> warm readiness -> safe retry
 stale/conflicting completion rejection
-bounded Docling/perception failures
+bounded Docling/network/perception failures
 Compose rebuild/readiness proof
 ```
 
@@ -656,8 +705,9 @@ Compose rebuild/readiness proof
 ```text
 create project/bundle
     -> exactly one D1 perception execution/job
-    -> redeem authorized source
-    -> Docling
+    -> redeem and verify authorized source bytes
+    -> qualified ready/warm private Docling service
+    -> deterministic mapping/normalization/parser
     -> NormalizedDocument v1
     -> Atlas accepts one logical perception completion/cache
 ```
@@ -669,15 +719,21 @@ At minimum:
 ```text
 expired/tampered source grant
 hash/size/MIME mismatch
-Docling startup/processing failure
+Docling service unavailable
+Docling service not ready
+service identity/profile mismatch
+Docling HTTP/network/5xx failure
+Docling processing failure
 timeout/cancellation
+malformed/incomplete Docling response
 malformed mapped output
 normalization/integrity failure
 result-delivery outage
 acknowledgement loss
 duplicate queue delivery
 stale/conflicting result
-worker restart/replay
+Bridge worker restart/replay
+Docling service restart between jobs
 ```
 
 None may create semantic candidates or advance semantic/reconciliation truth.
