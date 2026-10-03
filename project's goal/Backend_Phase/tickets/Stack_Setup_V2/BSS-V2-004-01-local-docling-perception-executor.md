@@ -38,7 +38,7 @@ Required properties:
 executor kind: local_processor
 service: docling-serve
 Docling version: 2.132.0
-docling-serve version: explicitly pinned and recorded
+docling-serve version: 1.21.0
 initial device profile: CPU
 remote services: disabled
 external plugins: disabled
@@ -54,7 +54,7 @@ Atlas queue authority: pg-boss, not Docling/RQ
 
 The implementation should use the official CPU-only Docling/Docling-Serve dependency path or equivalent CPU-only pinned installation. A CUDA-enabled Torch stack that cannot see an NVIDIA device is not an acceptable final CPU profile merely because it still runs on CPU.
 
-The exact image/package identity and digest/version must be recorded in qualification evidence. Do not rely on mutable `latest` or `main` tags as the frozen route identity.
+Use the official CPU-only `docling-serve` 1.21.0 runtime/image path or an equivalent reproducible image, verify `docling==2.132.0` at runtime, and pin the deployed image by immutable digest/version in qualification evidence. Do not rely on mutable `latest` or `main` tags as the frozen route identity.
 
 ## Service readiness and warm execution
 
