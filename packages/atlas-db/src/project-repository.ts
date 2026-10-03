@@ -32,7 +32,7 @@ function readMemberFacts(value: unknown): readonly PersistedLifecycleMemberFact[
 
 /** PostgreSQL adapter for the Atlas project graph; core receives no SQL details. */
 export class PostgresAtlasProjectRepository implements AtlasProjectRepository {
-  constructor(private readonly sql: Sql, private readonly kickoff?: { readonly authority: PostgresPerceptionAuthority; readonly queue: PerceptionKickoffQueue }) {}
+  constructor(private readonly sql: Sql, private readonly kickoff?: { readonly authority: PostgresPerceptionAuthority; readonly queue: PerceptionKickoffQueue; readonly capabilityIdentity?: string }) {}
 
   async create(input: CreateAtlasProjectInput): Promise<void> {
     assertCreateAtlasProjectInput(input);
@@ -52,7 +52,7 @@ export class PostgresAtlasProjectRepository implements AtlasProjectRepository {
         const first = input.documents[0];
         const executionId = randomUUID();
         const idempotencyKey = `perception:${bundleId}:${first.id}:${documentPerceptionContractVersion}`;
-        const request = await this.kickoff.authority.createInTransaction(sql, { executionId, artifactId: first.id, storageKey: first.storageKey, sourceSha256: first.sourceSha256, mimeType: first.mediaType, byteSize: first.byteSize, idempotencyKey, capabilityIdentity: `bundle:${bundleId}:document:${first.id}:perception:${documentPerceptionContractVersion}` });
+        const request = await this.kickoff.authority.createInTransaction(sql, { executionId, artifactId: first.id, storageKey: first.storageKey, sourceSha256: first.sourceSha256, mimeType: first.mediaType, byteSize: first.byteSize, idempotencyKey, capabilityIdentity: this.kickoff.capabilityIdentity ?? `bundle:${bundleId}:document:${first.id}:perception:${documentPerceptionContractVersion}` });
         // postgres.js transaction scopes do not carry the parent's parser
         // configuration, while the pg-boss Drizzle bridge requires it.
         const transactionClient = sql as unknown as { options?: unknown };

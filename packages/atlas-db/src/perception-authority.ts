@@ -20,7 +20,7 @@ const requestFrom = (input: PerceptionExecutionInput, grant: string): DocumentPe
 
 /** PostgreSQL adapter; only the Atlas process is given this connection. */
 export class PostgresPerceptionAuthority implements PerceptionAuthority {
-  constructor(private readonly sql: Sql, private readonly grants: GrantSigner, private readonly semanticQueue?: SemanticKickoffQueue) {}
+  constructor(private readonly sql: Sql, private readonly grants: GrantSigner, private readonly semanticQueue?: SemanticKickoffQueue, private readonly terminalCapabilityIdentity?: string) {}
 
   async create(input: PerceptionExecutionInput): Promise<DocumentPerceptionRequest> {
     return this.sql.begin((sql) => this.createWithSql(sql, input));
@@ -84,6 +84,13 @@ export class PostgresPerceptionAuthority implements PerceptionAuthority {
       const bundleRows = await sql.unsafe("SELECT bundle_id, project_id, workspace_id FROM atlas.extraction_bundle_document WHERE document_id=$1 AND perception_execution_id=$2 FOR UPDATE", [request.artifact.id, request.executionId]);
       if (bundleRows.length) {
         const bundle = bundleRows[0];
+        // BSS-V2-004-02 is a deliberately terminal D1 perception checkpoint.
+        // Its qualified identity may accept one normalized document, but it
+        // must not create an extraction execution or advance project truth.
+        if (identity === this.terminalCapabilityIdentity) {
+          await sql.unsafe("UPDATE atlas.document_perception_execution SET state='completed', completion_fingerprint=$2, updated_at=now() WHERE id=$1 AND state NOT IN ('completed','cancelled','failed')", [request.executionId, digest]);
+          return;
+        }
         const executionId = randomUUID();
         const capability = randomUUID();
         const capabilityFingerprint = fingerprint(capability);

@@ -49,6 +49,7 @@ test("the Compose PostgreSQL perception authority rejects the complete negative 
   const authority = new PostgresPerceptionAuthority(atlas, new PerceptionSourceGrantIssuer(serviceCredential));
   const routes = createPerceptionInternalRoutes({ authority, sources: store, serviceCredential, maximumSourceBytes: 20 * 1024 * 1024, maximumResultBytes: 10 * 1024 * 1024 });
   const executionIds: string[] = [];
+  const projectIds: string[] = [];
 
   const makeFixture = async (label: string): Promise<Fixture> => {
     const bytes = new Uint8Array(Buffer.from("%PDF-negative-" + label + "%"));
@@ -64,7 +65,20 @@ test("the Compose PostgreSQL perception authority rejects the complete negative 
       capabilityIdentity,
     };
     const request = await authority.create(input);
+    // Failure handoff is an IDSER lifecycle operation, so give each negative
+    // fixture its own real bundle/member rather than testing an unbound grant.
+    const owner = `negative-owner-${randomUUID()}`;
+    const project = `negative-project-${randomUUID()}`;
+    const workspace = `negative-workspace-${randomUUID()}`;
+    const bundle = `negative-bundle-${randomUUID()}`;
+    await admin.unsafe('INSERT INTO auth."user" (id,name,email,"emailVerified","createdAt","updatedAt") VALUES ($1,$1,$2,false,now(),now())', [owner, `${owner}@example.test`]);
+    await admin.unsafe("INSERT INTO atlas.project (id,stable_id,name,created_by_user_id) VALUES ($1,$2,'negative perception',$3)", [project, `negative-${randomUUID().slice(0, 12)}`, owner]);
+    await admin.unsafe("INSERT INTO atlas.workspace (id,project_id,kind,state,display_name) VALUES ($1,$2,'initial_draft','draft','Draft')", [workspace, project]);
+    await admin.unsafe("INSERT INTO atlas.document (id,project_id,workspace_id,original_filename,storage_key,source_sha256,byte_size,media_type,created_by_user_id) VALUES ($1,$2,$3,'negative.pdf',$4,$5,$6,'application/pdf',$7)", [input.artifactId, project, workspace, stored.storageKey, input.sourceSha256, input.byteSize, owner]);
+    await admin.unsafe("INSERT INTO atlas.extraction_bundle (id,project_id,workspace_id,state,semantic_contract_version,reconciliation_contract_version,expected_document_count) VALUES ($1,$2,$3,'waiting','v1','v1',1)", [bundle, project, workspace]);
+    await admin.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id,document_id,project_id,workspace_id,sequence,state,perception_execution_id) VALUES ($1,$2,$3,$4,1,'perception_queued',$5)", [bundle, input.artifactId, project, workspace, input.executionId]);
     executionIds.push(input.executionId);
+    projectIds.push(project);
     return { input, request };
   };
 
@@ -127,13 +141,15 @@ test("the Compose PostgreSQL perception authority rejects the complete negative 
     assert.equal((await routes.deliver(serviceCredential, invalid.request, { ...resultFor(invalid.request), pages: [] })).status, 400);
     await assertNoTrustedCompletion(invalid, "invalid normalized result");
 
-    for (const [label, provider, expected] of [
-      ["provider-failure", { perceive: async () => { throw new Error("synthetic provider failure"); } }, /failure handoff was rejected/u],
-      ["timeout", { perceive: async () => { throw new BridgeProviderError("timeout", "synthetic provider timeout"); } }, /synthetic provider timeout/u],
+    for (const [label, provider] of [
+      ["provider-failure", { perceive: async () => { throw new Error("synthetic provider failure"); } }],
+      ["timeout", { perceive: async () => { throw new BridgeProviderError("timeout", "synthetic provider timeout"); } }],
     ] as const) {
       const fixture = await makeFixture(label);
       const clients = clientsFor();
-      await assert.rejects(() => runDocumentPerception(fixture.request, provider as never, clients.source, clients.results, new AbortController().signal), expected);
+      // Terminal failures are deliberately acknowledged by Atlas. The Bridge
+      // must not fabricate a completion or rethrow after that bounded handoff.
+      await runDocumentPerception(fixture.request, provider as never, clients.source, clients.results, new AbortController().signal, { idempotencyKey: fixture.input.idempotencyKey, store: { load: async () => undefined, stage: async () => {}, acknowledge: async () => {} }, finalAttempt: true });
       await assertNoTrustedCompletion(fixture, label);
     }
 
@@ -152,7 +168,7 @@ test("the Compose PostgreSQL perception authority rejects the complete negative 
     const malformed = {
       perceive: async () => ({ providerResult: { pages: [{ index: 0, images: [{ assetRef: "https://provider.example/private.png" }] }] }, provenance: { provider: "mistral" as const, model: "ocr-qualified", endpoint: "/v1/ocr" as const, latencyMilliseconds: 1, attempt: 1 } }),
     };
-    await assert.rejects(() => runDocumentPerception(malformedProvider.request, malformed as never, clientsFor().source, clientsFor().results, new AbortController().signal), /failure handoff was rejected/u);
+    await runDocumentPerception(malformedProvider.request, malformed as never, clientsFor().source, clientsFor().results, new AbortController().signal);
     await assertNoTrustedCompletion(malformedProvider, "invalid provider normalization");
 
     const cacheFailure = await makeFixture("cache-failure");
@@ -169,6 +185,7 @@ test("the Compose PostgreSQL perception authority rejects the complete negative 
       await admin.unsafe("DROP SEQUENCE IF EXISTS atlas." + cacheFault).catch(() => undefined);
     }
   } finally {
+    for (const project of projectIds) await admin.unsafe("DELETE FROM atlas.project WHERE id=$1", [project]).catch(() => undefined);
     for (const executionId of executionIds) await admin.unsafe("DELETE FROM atlas.document_perception_execution WHERE id=$1", [executionId]).catch(() => undefined);
     await Promise.all([admin.end(), atlas.end(), bridge.end()]);
     await rm(sourceRoot, { recursive: true, force: true });

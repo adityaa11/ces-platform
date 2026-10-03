@@ -1,3 +1,6 @@
+x-docling-qualified-route: &docling-qualified-route >-
+  [{"routeId":"docling-digital-pdf","capability":"atlas.document.perceive","providerId":"docling","modelOrProcessorId":"docling-slim-2.132.0","adapterVersion":"docling-serve-adapter-v1","qualificationVersion":"bss-v2-004-01","qualificationRef":"qualification://bss-v2-004-01","workClass":"local_processor","enabled":true,"extensions":{"serviceVersion":"1.36.0","optionProfile":"atlas-digital-pdf-no-ocr-v1","imageDigest":"sha256:4ba36cb322283e3851d2a6c5f347dd1cc515d7afb8ea5cc1577da8b5bfe2fea7"}}]
+
 services:
   docling-serve:
     image: quay.io/docling-project/docling-serve-cpu:v1.36.0@sha256:4ba36cb322283e3851d2a6c5f347dd1cc515d7afb8ea5cc1577da8b5bfe2fea7
@@ -63,6 +66,9 @@ services:
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3001}
       BETTER_AUTH_TRUSTED_ORIGINS: ${BETTER_AUTH_TRUSTED_ORIGINS:-http://localhost:3001}
       ATLAS_PROJECT_CREATION_TEST_FAILURE: ${ATLAS_PROJECT_CREATION_TEST_FAILURE:-}
+      # The approved D1 route accepts a normalized document but intentionally
+      # stops before semantic extraction for BSS-V2-004-02.
+      ATLAS_D1_PERCEPTION_CAPABILITY_IDENTITY: docling-digital-pdf
     ports:
       - "127.0.0.1:${ATLAS_PORT:-3001}:3001"
     volumes:
@@ -88,7 +94,9 @@ services:
       AGENTS_BRIDGE_PORT: 3002
       AGENTS_BRIDGE_VERSION: 0.1.0
       AGENTS_BRIDGE_DEPLOYMENT_PROFILE: ${AGENTS_BRIDGE_DEPLOYMENT_PROFILE:-development}
-      AGENTS_BRIDGE_QUALIFIED_ROUTES: ${AGENTS_BRIDGE_QUALIFIED_ROUTES:-[]}
+      # D1 resolves this exact server-controlled route before it redeems a
+      # BSS-009 source grant or contacts Docling.
+      AGENTS_BRIDGE_QUALIFIED_ROUTES: *docling-qualified-route
       MISTRAL_API_KEY: ${MISTRAL_API_KEY:-}
       MISTRAL_STRUCTURED_MODEL: ${MISTRAL_STRUCTURED_MODEL:-mistral-large-3-25-12}
       MISTRAL_CHAT_MODEL: ${MISTRAL_CHAT_MODEL:-mistral-small-4-0-26-03}
@@ -141,7 +149,9 @@ services:
       AGENTS_BRIDGE_JOB_RETRY_DELAY_SECONDS: ${AGENTS_BRIDGE_JOB_RETRY_DELAY_SECONDS:-1}
       AGENTS_BRIDGE_WORKER_SHUTDOWN_TIMEOUT_MS: ${AGENTS_BRIDGE_WORKER_SHUTDOWN_TIMEOUT_MS:-15000}
       AGENTS_BRIDGE_DEPLOYMENT_PROFILE: ${AGENTS_BRIDGE_DEPLOYMENT_PROFILE:-development}
-      AGENTS_BRIDGE_QUALIFIED_ROUTES: ${AGENTS_BRIDGE_QUALIFIED_ROUTES:-[]}
+      # Development/Compose activates only the BSS-V2-004-01-qualified
+      # persistent local perception route. Other capabilities remain absent.
+      AGENTS_BRIDGE_QUALIFIED_ROUTES: *docling-qualified-route
       DOCLING_BASE_URL: http://docling-serve:5001
       DOCLING_SLIM_VERSION: 2.132.0
       DOCLING_SERVE_VERSION: 1.36.0
