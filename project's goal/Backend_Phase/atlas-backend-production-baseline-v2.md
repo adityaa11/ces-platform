@@ -1085,59 +1085,51 @@ Direct-provider capability must remain possible so a gateway does not become a n
 
 # 30. Configuration and Secret Boundary
 
-The current `BridgeConfig` is Mistral-centric and must evolve toward provider-neutral configuration.
+Configuration must separate executor-neutral service settings from executor-specific configuration.
 
-The target shape should separate:
+The target shape separates:
 
 ```text
 Bridge service config
-Provider credential/config blocks
 Qualified route/deployment profile
-Capacity profiles
-Privacy classes
-Cost profiles
+Local processor config/version
+External provider credential/config blocks
+Execution capacity profiles
+External privacy classes
+External provider cost profiles
 ```
 
-Provider secrets remain deployment secrets.
+Provider secrets remain deployment secrets and must not appear in route IDs, qualification artifacts, telemetry rows, semantic payloads, logs, snapshots, or client responses.
 
-They must not appear in:
+Local Docling configuration contains no provider API secret and must not be rejected for lacking one.
 
-```text
-route IDs
-qualification artifacts
-usage ledger rows
-Atlas semantic payloads
-logs
-test snapshots
-client responses
-```
+## 30.1 No silent test-runtime fallback
 
-## 30.1 No silent test-runtime fallback in production
+A test runtime is permitted only under explicit test-profile intent.
 
-The current service can choose a `TestRuntime` when no provider key is present.
-
-V2 requires explicit environment/profile intent.
-
-A production-shaped profile must not silently serve deterministic test responses because a provider credential is missing.
-
-Expected behavior is conceptually:
+Expected behavior is:
 
 ```text
 test profile
     -> TestRuntime permitted
 
-development profile without live provider
-    -> Bridge may boot for non-provider tests, but live route reports unavailable
+development perception profile
+    -> qualified local Docling may execute without any external provider credential
 
-live/production profile
-    -> required active routes must validate or readiness fails
+development reasoning profile
+    -> required external reasoning route must be explicitly configured and qualified
+
+production-shaped profile
+    -> every capability required by that profile must resolve to a qualified executor
 ```
+
+Missing external-provider credentials must never produce a deterministic fake reasoning success.
 
 ---
 
 # 31. Readiness and Health
 
-Service process health and provider-route readiness are different concepts.
+Service process health and capability-route readiness are different concepts.
 
 ## 31.1 Health
 
@@ -1145,36 +1137,43 @@ Service process health and provider-route readiness are different concepts.
 
 ## 31.2 Service readiness
 
-`/readyz` should continue to reflect whether the configured Bridge deployment can safely accept its required workload.
+`/readyz` should reflect whether the configured deployment can safely accept its required workloads.
 
-For a live deployment profile, readiness should consider required active route configuration.
-
-It must not claim live provider readiness merely because:
+Readiness is capability-specific:
 
 ```text
-configuration parsed
-API key exists
-model list endpoint works
+local Docling perception route
+    -> implementation/config present
+    -> qualification identity present
+    -> local runtime available
+
+external reasoning route
+    -> adapter/config present
+    -> required credential present
+    -> qualification identity present
 ```
 
-Live qualification is an explicit prerequisite artifact, not a startup network probe that repeatedly consumes provider requests.
+Startup must not repeatedly call an external provider merely to prove readiness. Live qualification is a recorded prerequisite artifact.
+
+A profile containing only a qualified local perception route may be ready for perception even when no semantic reasoning provider is active.
 
 ## 31.3 Route status
 
-BSS may expose a secret-safe operational route status view containing only data such as:
+A secret-safe operational route status may expose:
 
 ```text
 route_id
 capability
-provider
+executor_kind
+executor/provider identity
 model/processor
 qualification version
 enabled/disabled
-privacy class
-health/cooldown state
+privacy class when applicable
+health/cooldown state when applicable
 ```
 
-Do not expose credentials, quota tokens, or source content.
+Do not expose credentials, quota tokens, source content, or local source paths.
 
 ---
 
