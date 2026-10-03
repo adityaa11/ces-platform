@@ -1,50 +1,69 @@
-# BSS-V2-004-02 CFC checkpoint
+# BSS-V2-004-02 CFC checkpoint — CK-004.a evidence remediation
 
 - **Ticket:** BSS-V2-004-02 — IDSER D1 persistent-Docling perception lifecycle checkpoint
-- **Source CK:** `BSS-V2-BATCH-04.02-9c31002-review.md`
+- **Source CK:** `project's goal/feedback/BSS-V2-BATCH-04.02-88925e0-verification.md`
+- **Consumed HMN authorization:** `HMN-BSS-V2-004-02-001`
 - **CFC state:** `awaiting_review`
-- **Review target:** the single bounded remediation commit containing this checkpoint; it addresses only `CK-001.a`, `CK-001.b`, `CK-002.a`, `CK-003.a`, and `CK-004.a`.
-- **Authorized frozen clauses:** `CK-001.a`, `CK-001.b`, `CK-002.a`, `CK-003.a`, and `CK-004.a` only.
+- **Review target:** this single bounded remediation commit
+- **Authorized frozen clause:** `CK-004.a` only
 
-## Clause-by-clause closure
+`CK-001.a`, `CK-001.b`, `CK-002.a`, and `CK-003.a` remain resolved and frozen
+closed. This remediation changes neither production lifecycle behavior nor
+their evidence requirements.
 
-| Clause | Status | Exact evidence / command | Frozen oracle |
-| --- | --- | --- | --- |
-| CK-001.a | `PROVEN` | `docker compose up -d --build --wait atlas agents-bridge-worker`; `docker compose exec -T atlas node apps/atlas/scripts/perception-compose-seed.mjs docling`. Authenticated `/api/projects` kickoff recorded D1 `3152fe64-8a77-4c6f-9a7f-52cc66564d24`, one member/execution/cache, zero semantic executions. | PASS — IDSER-003 created only D1 and accepted one qualified result. |
-| CK-001.b | `PROVEN` | The same named run recorded `phase=completed`, `elapsedMilliseconds=3841`. | PASS — actual D1 latency is recorded. |
-| CK-002.a | `PROVEN` | `docker inspect --format '{{.Image}} {{index .Config.Image}}' ces-platform-docling-serve-1`; `docker image inspect quay.io/docling-project/docling-serve-cpu:v1.36.0@sha256:4ba36cb322283e3851d2a6c5f347dd1cc515d7afb8ea5cc1577da8b5bfe2fea7 --format '{{join .RepoDigests "\\n"}}'`. Both resolved to the frozen digest. | PASS — running service matches the qualified image/runtime identity. |
-| CK-003.a | `PROVEN` | `node apps/agents-bridge/tests/docling-cfc-compose.mjs`; durable output `.codex-tools/bss-v2-004-02-cfc-matrix-final-3.out`. It starts real Compose `atlas`, `pg-boss`, `agents-bridge-worker`, `docling-fault`, and `atlas-fault`, submits via authenticated `/api/projects` IDSER-003 kickoff, then drives the real worker across a Compose-private HTTP Docling adapter boundary. | PASS — all named cases preserve bounded failure/recovery; no invalid acceptance, fallback, or semantic continuation. |
-| CK-004.a | `PROVEN` | Carried forward unchanged from the user-confirmed real Compose Bridge worker restart/replay scenario at continuation. The CK-003 harness does not alter replay/fencing code. | PASS — user-confirmed restart/replay preserves one logical execution/result/cache. |
+## CK-004.a closure evidence
 
-## CK-003.a real Compose failure matrix
+The real Compose scenario was executed through the production-shaped path:
 
-The durable JSON evidence records project/bundle-document-derived D1 execution identity, idempotency key, source hash, terminal state, cache/member/execution/semantic counts, queue retry and limit, Bridge lease, and staged-result count. Every fault row: `execution_count=1`, `member_count=1`, `cache_count=0`, `semantic_execution_count=0`, `staged_result_count=0`, `bridge_effect_state=completed`; configured qualified route only is `docling-digital-pdf`, with no remote provider or subprocess fallback.
+```text
+authenticated IDSER-003 kickoff -> pg-boss -> agents-bridge-worker
+-> qualified private Docling -> staged normalized result
+-> controlled authenticated result-delivery outage -> worker recreation
+-> replay -> Atlas acceptance
+```
 
-| Injected fault | Project / execution | Actual inherited disposition | Execution result |
-| --- | --- | --- | --- |
-| unavailable | `compose-docling-fc680cdb-430` / `6d22a2a9-8226-4e1b-967a-c705d2d2d131` | retry exhaustion `2/2`, lease `3` | `failed`; recovery passed. |
-| not-ready | `compose-docling-cca57f08-356` / `565216e8-7d92-4a57-b996-611a5b550dee` | retry exhaustion `2/2`, lease `3` | `failed`; recovery passed. |
-| HTTP reset | `compose-docling-af3920ee-118` / `ccf5d99a-c6d3-49a7-bdea-bc58ae77a2fe` | retry exhaustion `2/2`, lease `3` | `failed`; recovery passed. |
-| HTTP 5xx | `compose-docling-43a43adf-58b` / `2c9f8144-dfb5-43f3-8315-8366d2a87491` | retry exhaustion `2/2`, lease `3` | `failed`; recovery passed. |
-| processing failure | `compose-docling-777335e0-d21` / `feb306aa-0acd-4f73-b090-d6c84973c561` | deterministic terminal, retries `0`, lease `1` | `failed`; no staged replay. |
-| Bridge timeout | `compose-docling-19a6cfeb-a17` / `32acd72d-06d3-4d51-abf3-43c91e71c1fc` | retry exhaustion `2/2`, lease `3` | `failed`; recovery passed. |
-| malformed response | `compose-docling-2c19ac14-3c6` / `585b16d7-ddf6-49a4-a04a-35f4b9a8096c` | deterministic terminal, retries `0`, lease `1` | `failed`; no staged replay. |
-| incomplete response | `compose-docling-216ece6a-1d1` / `c5a92c3a-f19a-40dd-9180-99e349d24b39` | deterministic terminal, retries `0`, lease `1` | `failed`; no staged replay. |
-| mapper rejection | `compose-docling-d13a184a-27f` / `01490634-d1e4-4825-b4e0-43829b6568e4` | deterministic terminal, retries `0`, lease `1` | `failed`; source-provenance validation prevents acceptance. |
-| normalization/integrity rejection | `compose-docling-75513490-1fc` / `4a3d27cf-474f-47f3-ada1-b9c0691968ac` | deterministic terminal, retries `0`, lease `1` | `failed`; normalizer bound prevents handoff. |
-| recovery after all faults | `compose-docling-bc94044e-26f` / `f4558f49-71f2-47b2-8610-2e3a1548b6f9` | normal delivery, retries `0`, lease `1` | `completed`, `cache_count=1`, zero staged/semantic rows. |
+- **Stable evidence artifact:** `.codex-tools/bss-v2-004-02-cfc-restart-replay-final-2.out`
+- **Harness:** `apps/agents-bridge/tests/docling-cfc-compose.mjs`
+- **Exact scenario invocation:**
+  `CFC_RESTART_REPLAY_ONLY=true node apps/agents-bridge/tests/docling-cfc-compose.mjs`
+- **Recorded worker recreation command:**
+  `docker compose -f docker-compose.yml -f docker-compose.cfc.yml kill -s SIGKILL agents-bridge-worker && docker compose -f docker-compose.yml -f docker-compose.cfc.yml up -d --force-recreate --wait agents-bridge-worker`
 
-`docker-compose.cfc.yml` is test-only and opt-in: it permits only Compose-private `docling-fault` with `DOCLING_ALLOW_TEST_FAULT_PROXY=true` and shortens only its per-request deadline (`DOCLING_TIMEOUT_MS=5000`). Retry limit/backoff inherit production Compose defaults. Production still requires `http://docling-serve` and has no proxy configuration.
+The harness enables only its existing opt-in `atlas-fault` result-delivery
+outage. It performs the authenticated kickoff and actual Docling conversion
+before the fault; it neither replaces the worker path nor changes production
+retry, replay, fencing, queue, or service configuration.
 
-## Regression and readiness
+| Observation | Before recreation | After restarted-worker replay |
+| --- | --- | --- |
+| D1 identity | execution `43628712-f642-46fb-abe7-8f3c5ea436d2`; idempotency key `perception:e5e860a5-d390-42e4-b6f5-f2091a4948c0:af655b5b-a235-45dd-b891-a1b144cd1789:v1` | Same execution and idempotency key |
+| Perception state / scoped execution count | `fetching_source` / `1` | `completed` / `1` |
+| Active normalized cache / semantic executions | `0` / `0` | `1` / `0` |
+| Replay staging | `staged_result_count=1`, scoped staged execution count `1` | both `0` after acknowledgement |
+| Queue / effect fence | `queue_state=retry`, retry `0/2`, effect `pending`, original execution identity, lease generation `1` | `queue_state=completed`, retry `1/2`, effect `completed`, same execution identity, lease generation `2` |
+| Actual Compose worker | container `59ba4f5f…`, running | stopped at `2026-10-03T17:55:53.11115222Z`; recreated as distinct container `0c70f2f6…`, running at `2026-10-03T17:55:56.508724697Z` |
 
+The persisted staged normalized result therefore survived termination of the
+actual worker container. Its recreated successor claimed a higher fenced lease,
+replayed the same D1 identity, accepted exactly one cache/result, and cleared
+the staged row only after acknowledgement. The one scoped effect row remains
+bound to the original execution identity; no conflicting or stale replacement
+was accepted. `semantic_execution_count=0` both before and after recovery.
+
+**Frozen-oracle conclusion:** `CK-004.a` is `PROVEN`. The artifact directly
+records a Compose Bridge worker restart/replay and the required scoped
+exactly-once state before and after it.
+
+## Direct regressions and readiness
+
+- `node --check apps/agents-bridge/tests/docling-cfc-compose.mjs` — passed.
+- `pnpm --filter @atlas/agents-bridge test` — passed (including Docling,
+  document-perception replay, queue, and authority coverage; opt-in Compose
+  rows remain skipped by design).
 - `pnpm --filter @atlas/agents-bridge typecheck` — passed.
-- `pnpm --filter @atlas/agents-bridge test` — passed; relevant Docling, perception worker, queue, replay, and authority tests passed (its separately opt-in Compose rows are skipped by design).
 - `git diff --check` — passed.
-- Direct regression check: `CK-001.a`, `CK-001.b`, `CK-002.a`, and carried-forward `CK-004.a` remain `PROVEN`; the bounded diff adds only kickoff evidence and CFC test instrumentation.
-
-## Internal readiness
 
 `Internal readiness: READY_FOR_CK`.
 
-All frozen clauses are `PROVEN`. CK must verify only the frozen clauses, this bounded remediation diff, and direct regressions.
+CK verification must inspect only `CK-004.a`, this bounded evidence-remediation
+diff, the evidence artifact above, and direct regressions introduced by it.
