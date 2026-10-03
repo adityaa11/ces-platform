@@ -1886,9 +1886,9 @@ The following are V3 invariants.
 19. **A route may be qualified for one capability and rejected for another.**
 20. **Docling is the current digital-PDF perception integration direction, subject to production-shaped qualification of the evidenced document class.**
 21. **The current local Docker Docling profile is a persistent Compose-private Docling Serve service with warm reusable models/pipeline; fresh per-document Python/Docling subprocess execution is not the qualified production shape.**
-25. **Route readiness for the current Docling profile includes model/pipeline readiness, not merely a running container; its required warm production-shaped perception runs must each complete within 20 seconds end to end.**
-26. **The current first Docling qualification profile is CPU-only. GPU/CUDA is a separately qualifiable execution profile, not an implicit fallback.**
-27. **Gemini is a reasoning-provider candidate and existing adapter capability, not an architecture dependency and not a required perception path.**
+22. **Route readiness for the current Docling profile includes model/pipeline readiness, not merely a running container; its required warm production-shaped perception runs must each complete within 20 seconds end to end.**
+23. **The current first Docling qualification profile is CPU-only. GPU/CUDA is a separately qualifiable execution profile, not an implicit fallback.**
+24. **Gemini is a reasoning-provider candidate and existing adapter capability, not an architecture dependency and not a required perception path.**
 25. **Mistral adapter code may remain, but the current Mistral live route is not treated as active production-qualified reasoning.**
 26. **Provider SDK types and processor-specific internals must not leak into Atlas Core/skills/trusted state.**
 27. **pg-boss remains the background queue technology.**
@@ -1908,9 +1908,9 @@ The following are V3 invariants.
 41. **Executor changes must preserve execution provenance and Atlas validation.**
 42. **Provider capacity failures, entitlement failures, customer allowance failures, Atlas budget failures, and local processor failures must remain distinguishable.**
 43. **Queueing may absorb temporary background bursts but must not hide structurally insufficient execution capacity.**
-41. **Provider credentials remain server-side and are never one-per-Atlas-user by default.**
-42. **Processor/provider/model changes must not change immutable source identity or silently mutate historical accepted truth.**
-43. **BSS-001 through BSS-007, BSS-009, approved BSS-V2 capability/routing work, and provider-neutral IDSER work remain foundations of V3 rather than being discarded.**
+44. **Provider credentials remain server-side and are never one-per-Atlas-user by default.**
+45. **Processor/provider/model changes must not change immutable source identity or silently mutate historical accepted truth.**
+46. **BSS-001 through BSS-007, BSS-009, approved BSS-V2 capability/routing work, and provider-neutral IDSER work remain foundations of V3 rather than being discarded.**
 ---
 
 # 34. Resulting V3 Architecture
