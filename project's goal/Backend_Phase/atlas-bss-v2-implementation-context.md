@@ -54,8 +54,8 @@ IDSER-003 D1 perception kickoff
     -> existing BSS-009 source authority
     -> Agents Bridge redeems/verifies exact PDF bytes
     -> qualified persistent Compose-private docling-serve
-         -> docling-serve 1.21.0
-         -> Docling 2.132.0
+         -> docling-serve 1.36.0
+         -> docling-slim 2.132.0
          -> CPU-only first profile
          -> local models/artifacts
          -> warm reusable Standard PDF pipeline
@@ -303,7 +303,9 @@ NormalizedDocument v1
 Atlas result acceptance/cache authority
 ```
 
-The current route is pinned to docling-serve 1.21.0 and Docling 2.132.0 for qualification, with an immutable deployed image/runtime identity recorded in evidence. The first qualified execution profile is CPU-only.
+The current route is pinned to docling-serve 1.36.0 and docling-slim 2.132.0 for qualification, with an immutable deployed image/runtime identity recorded in evidence. The first qualified execution profile is CPU-only.
+
+For the current linux/amd64 qualification route, the official image family is `quay.io/docling-project/docling-serve-cpu:v1.36.0` and the immutable platform image digest is `sha256:4ba36cb322283e3851d2a6c5f347dd1cc515d7afb8ea5cc1577da8b5bfe2fea7`. The multi-architecture index digest observed for that tag is `sha256:225c8586e20d5d0fc6811a9e0e044fa602bcc4393f00389009bad42d6787b58f`. Runtime evidence must verify the installed distributions rather than infer them from the tag.
 
 The local route records service/processor/image identity, option-profile identity, qualification identity, warm-route timing, runtime/failure metrics, and route provenance.
 
@@ -619,7 +621,7 @@ Turn the successful Docling feasibility path into the production-shaped local Do
 ### Owns
 
 ```text
-docling-serve 1.21.0 + Docling 2.132.0 + immutable image/runtime identity
+docling-serve 1.36.0 + docling-slim 2.132.0 + immutable image/runtime identity
 dedicated persistent Compose-private Docling service
 local compute engine with bounded explicit conversion concurrency
 CPU-only first qualification profile with explicit thread count
@@ -1424,7 +1426,7 @@ A local Docling route is not qualified merely because Python imports Docling, a 
 The current production-shaped perception route must prove, for its supported document class:
 
 ```text
-docling-serve 1.21.0 + Docling 2.132.0 + immutable image/runtime identity
+docling-serve 1.36.0 + docling-slim 2.132.0 + immutable image/runtime identity
 Compose-private persistent service topology
 exact BSS-009-authorized PDF byte input
 no source-store/database/queue discovery authority
@@ -1782,8 +1784,8 @@ The current Docling production topology is frozen for BSS-V2-004-01 as a dedicat
 The current local profile must preserve:
 
 ```text
-docling-serve 1.21.0
-Docling 2.132.0
+docling-serve 1.36.0
+docling-slim 2.132.0
 immutable deployed image/runtime identity
 CPU-only first profile
 local compute engine
@@ -2124,7 +2126,7 @@ Historical BSS checkpoints remain historical.
 BSS-V2-001/002/003 remain approved.
 IDSER-001 through IDSER-010 are not reopened.
 Docling is the current digital-PDF perception direction, pending production-shaped qualification.
-The current Docling profile is persistent Compose-private docling-serve 1.21.0 + Docling 2.132.0.
+The current Docling profile is persistent Compose-private docling-serve 1.36.0 + docling-slim 2.132.0.
 The first qualification profile is CPU-only, warm before routing, with <=20-second warm end-to-end fixture gates.
 Agents Bridge sends exact BSS-009-authorized PDF bytes; Docling does not discover DocumentStore.
 pg-boss remains the sole Atlas D1 job lifecycle authority; Docling RQ/Redis is not part of the current path.
@@ -2275,8 +2277,8 @@ The immediate completion boundary for the current realignment is the perception 
 ```text
 approved capability/routing foundation
     -> persistent Compose-private Docling service
-         -> docling-serve 1.21.0
-         -> Docling 2.132.0
+         -> docling-serve 1.36.0
+         -> docling-slim 2.132.0
          -> CPU-only first profile
          -> models/profile warm before routing
          -> every required warm fixture <=20 seconds end to end

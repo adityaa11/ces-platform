@@ -781,8 +781,10 @@ IDSER-scheduled D1 perception execution
     -> existing BSS-009 source authority
     -> Agents Bridge redeems and verifies exact PDF bytes
     -> qualified persistent Compose-private Docling Serve route
-         -> current profile: docling-serve 1.21.0
-         -> current profile: Docling 2.132.0
+         -> current profile: docling-serve 1.36.0
+         -> current runtime distribution: docling-slim 2.132.0
+         -> official CPU image: quay.io/docling-project/docling-serve-cpu:v1.36.0
+         -> linux/amd64 image digest: sha256:4ba36cb322283e3851d2a6c5f347dd1cc515d7afb8ea5cc1577da8b5bfe2fea7
          -> CPU-only, local, warm Standard PDF pipeline
     -> deterministic Atlas mapper
     -> unchanged normalization

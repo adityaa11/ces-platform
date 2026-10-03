@@ -564,8 +564,10 @@ The current production-shaped Docling profile is:
 
 ```text
 Agents Bridge
-    -> Compose-private persistent docling-serve 1.21.0
-         -> Docling 2.132.0
+    -> Compose-private persistent docling-serve 1.36.0
+         -> docling-slim 2.132.0
+         -> official CPU image: quay.io/docling-project/docling-serve-cpu:v1.36.0
+         -> linux/amd64 image digest: sha256:4ba36cb322283e3851d2a6c5f347dd1cc515d7afb8ea5cc1577da8b5bfe2fea7
          -> local compute engine
          -> CPU-only first qualification profile
          -> local model artifacts
@@ -1319,8 +1321,10 @@ The current Docling service contract is:
 
 ```text
 service: persistent Compose-private docling-serve
-version: docling-serve 1.21.0
-Docling: 2.132.0
+version: docling-serve 1.36.0
+Docling runtime distribution: docling-slim 2.132.0
+official CPU image: quay.io/docling-project/docling-serve-cpu:v1.36.0
+linux/amd64 image digest: sha256:4ba36cb322283e3851d2a6c5f347dd1cc515d7afb8ea5cc1577da8b5bfe2fea7
 first device profile: CPU-only
 compute engine: local
 Uvicorn worker processes: one unless separately justified

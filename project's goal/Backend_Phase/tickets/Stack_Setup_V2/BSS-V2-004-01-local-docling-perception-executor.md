@@ -37,8 +37,8 @@ Required properties:
 ```text
 executor kind: local_processor
 service: docling-serve
-Docling version: 2.132.0
-docling-serve version: 1.21.0
+Docling runtime distribution: docling-slim 2.132.0
+docling-serve version: 1.36.0
 initial device profile: CPU
 remote services: disabled
 external plugins: disabled
@@ -54,7 +54,7 @@ Atlas queue authority: pg-boss, not Docling/RQ
 
 The implementation should use the official CPU-only Docling/Docling-Serve dependency path or equivalent CPU-only pinned installation. A CUDA-enabled Torch stack that cannot see an NVIDIA device is not an acceptable final CPU profile merely because it still runs on CPU.
 
-Use the official CPU-only `docling-serve` 1.21.0 runtime/image path or an equivalent reproducible image, verify `docling==2.132.0` at runtime, and pin the deployed image by immutable digest/version in qualification evidence. Do not rely on mutable `latest` or `main` tags as the frozen route identity.
+Use the official CPU-only `quay.io/docling-project/docling-serve-cpu:v1.36.0` runtime. For the current linux/amd64 qualification route, pin `sha256:4ba36cb322283e3851d2a6c5f347dd1cc515d7afb8ea5cc1577da8b5bfe2fea7` as the platform image identity; the observed multi-architecture index digest is `sha256:225c8586e20d5d0fc6811a9e0e044fa602bcc4393f00389009bad42d6787b58f`. Verify `docling-serve==1.36.0` and `docling-slim==2.132.0` from the running container, and verify the installed Torch runtime is the CPU build rather than a CUDA-enabled build. Do not rely on mutable `latest` or `main` tags, the old `docling-serve:v1.21.0` base/CUDA-capable image, or an unqualified custom image as the frozen route identity.
 
 ## Service readiness and warm execution
 
