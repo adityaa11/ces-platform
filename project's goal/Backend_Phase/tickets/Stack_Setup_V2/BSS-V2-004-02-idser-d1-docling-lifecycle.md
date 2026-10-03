@@ -2,7 +2,7 @@
 
 - **State:** `planned`; **Review batch:** `BSS-V2-BATCH-04.02`
 - **Dependencies:** BSS-V2-004-01 at CK `PASS`; approved IDSER-003; approved BSS-009/BSS-009-01/BSS-009-02
-- **References:** V3 §§3, 15, 31–35; Baseline V2 §§7, 14–15, 28–31; BSS V2 context §§14–15, 22, 28–31
+- **References:** V3 §§3, 5–6, 15, 31–35; Baseline V2 §§7, 11, 14–15, 28–31, 36.3, 42.4; BSS V2 context §§14–15, 22, 28–31
 
 ## Outcome and starting seam
 
@@ -64,9 +64,43 @@ It consumes a route that already proved:
 
 If the active deployment no longer matches that qualified identity/profile, D1 readiness fails closed instead of silently executing an unqualified route.
 
+The identity checks have two bounded evidence layers and must not be conflated:
+
+- **Bridge/runtime fail-closed checks:** the configured qualified-route identity, `docling-serve` version, `docling-slim` version, and exact option-profile identity must match before a normal D1 conversion is accepted.
+- **Deployment/Compose qualification checks:** the reviewed Compose configuration and running container must match the BSS-V2-004-01 pinned CPU image/runtime identity, including the qualified image digest. This is deployment evidence; the Bridge is not required to query the Docker daemon or rediscover its own image digest on every D1 request.
+
+A mismatch in either layer means the environment is not the qualified D1 route.
+
+## Qualified route activation
+
+BSS-V2-004-01 qualified the Docling executor; this ticket activates that already-qualified executor for the existing `atlas.document.perceive` capability. The normal D1 worker must not rely on the repository default `AGENTS_BRIDGE_QUALIFIED_ROUTES=[]`.
+
+The active development/Compose route must resolve to the already-approved identity represented by the current BSS-V2-002 route schema:
+
+```json
+{
+  "routeId": "docling-digital-pdf",
+  "capability": "atlas.document.perceive",
+  "providerId": "docling",
+  "modelOrProcessorId": "docling-slim-2.132.0",
+  "adapterVersion": "docling-serve-adapter-v1",
+  "qualificationVersion": "bss-v2-004-01",
+  "qualificationRef": "qualification://bss-v2-004-01",
+  "workClass": "local_processor",
+  "enabled": true,
+  "extensions": {
+    "serviceVersion": "1.36.0",
+    "optionProfile": "atlas-digital-pdf-no-ocr-v1",
+    "imageDigest": "sha256:4ba36cb322283e3851d2a6c5f347dd1cc515d7afb8ea5cc1577da8b5bfe2fea7"
+  }
+}
+```
+
+This is deployment/configuration activation beneath the executor-neutral capability interface. Do not hardcode Docling directly into IDSER/Atlas Core and do not redesign the approved BSS-V2-002 route schema merely to mirror conceptual V3 field names.
+
 ## Scope
 
-- Wire the BSS-V2-004-01 qualified persistent service route through the existing IDSER-003 D1 job, BSS-009 grant redemption, perception worker, deterministic mapper, normalizer, authenticated result handoff, cache/fence, pg-boss retry/replay, and existing Compose stack.
+- Activate the exact BSS-V2-004-01 qualified `atlas.document.perceive` route in the development/Compose deployment configuration, then wire that resolved route through the existing IDSER-003 D1 job, BSS-009 grant redemption, perception worker, deterministic mapper, normalizer, authenticated result handoff, cache/fence, pg-boss retry/replay, and existing Compose stack.
 - Send only the already redeemed and verified PDF bytes from Bridge to Docling over the private Compose network.
 - Keep the Docling request option fingerprint server-controlled and identical to the qualified BSS-V2-004-01 profile.
 - Prove the success path with the real resident Docling service and inherited Atlas/Bridge/PostgreSQL/pg-boss boundaries.
@@ -100,6 +134,8 @@ Docling service restart between jobs
 
 A service restart may require its configured warm/readiness sequence before routing resumes. Atlas must not send a normal D1 request while the route is not ready.
 
+For this ticket, **route readiness is stronger than generic process/container liveness**. Evidence must show that the configured qualified route resolves, Docling `/health` and `/ready` succeed, the runtime identity matches, and the exact BSS-V2-004-01 option profile has completed its configured non-confidential warm-up before the Bridge worker advertises D1 readiness. A generic Agents Bridge HTTP health response by itself is not proof that the D1 Docling route is usable.
+
 ## Forbidden and non-authority work
 
 - Do not alter BSS-009 source grants, Atlas acceptance/fencing/cache semantics, IDSER-003 transaction kickoff, BSS-006 queue semantics, `NormalizedDocument v1`, or approved ticket/evidence history.
@@ -116,7 +152,7 @@ A service restart may require its configured warm/readiness sequence before rout
 | Row | Exact bounded behavior | Required proof / binary closure | Direct regression |
 | --- | --- | --- | --- |
 | RC-BSSV2-004-02-01 | A real IDSER-003 project/bundle kickoff creates only its D1 execution/job and reaches the already-qualified resident Docling service through BSS-009 redemption and the Bridge private HTTP adapter. | Compose PostgreSQL/pg-boss integration observes creation, job, bounded grant redemption, exact-byte service call, mapper/normalizer/parser success, authenticated handoff, and one accepted cache/result. **PASS iff** inherited authorities are preserved and no raw PDF/grant/storage key enters queue or ordinary DB transport. | IDSER-003 and BSS-009 integration suites. |
-| RC-BSSV2-004-02-02 | D1 uses the exact qualified BSS-V2-004-01 service identity/profile and routes only while it is ready/warm. | Compose config/readiness/version evidence plus service-restart case. **PASS iff** mismatched/not-ready service identity fails closed, D1 waits/retries according to inherited worker rules, and routing resumes only after qualified readiness. | BSS-V2-002 route readiness and BSS-V2-004-01 readiness regressions. |
+| RC-BSSV2-004-02-02 | D1 resolves the exact qualified BSS-V2-004-01 `atlas.document.perceive` route and routes only while its persistent Docling service is ready/warm. | Qualified-route configuration/resolution evidence; Bridge/runtime `/health`/`/ready`/version/profile checks; reviewed Compose/container image-digest evidence; worker warm-up/readiness evidence; and a service-restart case. **PASS iff** the approved route is explicitly active, runtime/profile mismatch fails closed, deployment image mismatch is rejected as unqualified, generic process health is not mistaken for D1 route readiness, D1 retries according to inherited worker rules while unavailable, and routing resumes only after qualified warm readiness. | BSS-V2-002 route readiness and BSS-V2-004-01 readiness regressions. |
 | RC-BSSV2-004-02-03 | Invalid source authority/fidelity fails before Docling receives a usable request. | Compose cases for expired/tampered grant, hash, size, and MIME mismatch. **PASS iff** no valid conversion request/result handoff/cache is created and errors remain bounded/redacted. | BSS-009 grant/source verification tests. |
 | RC-BSSV2-004-02-04 | Docling service/network/processing failure, timeout/cancellation, malformed response, mapper rejection, and normalization/integrity failure remain perception-only operational failures. | Controlled Compose service/HTTP/worker cases. **PASS iff** failure/retry follows inherited contracts, no parser-invalid result is accepted, no subprocess/remote-provider fallback occurs, and no semantic continuation/job/state is created. | BSS-006 worker, BSS-009 failure, and BSS-V2-004-01 failure tests. |
 | RC-BSSV2-004-02-05 | Delivery outages and acknowledgement loss recover without duplicate logical completion. | Force delivery failure and post-acceptance acknowledgement loss, then replay. **PASS iff** one logical result/cache remains, completion acknowledgement is idempotent, and no fresh unauthorized source or duplicate semantic continuation occurs. | BSS-009 result-handoff/cache tests. |
@@ -135,7 +171,8 @@ model artifacts local
 Docling /health healthy
 Docling /ready ready
 exact Atlas option profile warm
-Bridge route readiness true
+qualified `atlas.document.perceive` route resolves to the approved Docling identity
+Bridge worker D1 readiness is published only after exact-profile warm-up
 migrations current
 scoped pg-boss state clean
 no stale worker/service process serving
@@ -178,7 +215,7 @@ The actual D1 run should record end-to-end perception latency as operational evi
 
 | Mandatory review binding | Readiness reference | Narrow question / expected evidence |
 | --- | --- | --- |
-| REV-READY-BSSV2-004-02-01 | SEAM-BSSV2-004-02-SERVICE-READINESS / SOURCE | Does D1 invoke only the exact qualified ready private service with exact authorized bytes and server-controlled options? Compose route/request/readiness evidence. |
+| REV-READY-BSSV2-004-02-01 | SEAM-BSSV2-004-02-SERVICE-READINESS / SOURCE | Does D1 resolve only the explicitly active BSS-V2-004-01 qualified route, then invoke the exact qualified ready private service with exact authorized bytes and server-controlled options? Prove route configuration/resolution, runtime readiness/profile identity, Compose image identity, request boundary, and warm-up-before-worker-readiness evidence. |
 | REV-READY-BSSV2-004-02-02 | SEAM-BSSV2-004-02-REPLAY | Do real queue/delivery/restart cases prove one logical accepted cache/result even across Bridge/Docling restarts? Scoped state/count evidence. |
 | REV-READY-BSSV2-004-02-03 | COUPLING-BSSV2-004-02-SEMANTIC-ADVANCE / SECOND-QUEUE | Can every failure/retry remain perception-only while pg-boss remains the sole Atlas job lifecycle authority? Negative integration and topology inspection. |
 | REV-READY-BSSV2-004-02-04 | COUPLING-BSSV2-004-02-DIRECT-ATLAS-WRITE | Does Docling remain a conversion service with no Atlas persistence authority? Network/credential/role-denial evidence. |
