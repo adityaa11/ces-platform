@@ -1342,7 +1342,7 @@ or
 not qualified for active use
 ```
 
-while Gemini is active.
+while another qualified reasoning route is active.
 
 If Mistral entitlement is later corrected, requalification may enable it without changing Atlas semantic code.
 
@@ -1442,93 +1442,70 @@ Provider infrastructure must not become a catch-all reason to reopen the whole B
 
 # 42. Recommended BSS Extension Workstreams
 
-This baseline does not freeze exact ticket numbers, but the work should be decomposed into coherent reviewable boundaries similar to the following dependency order.
+Given the approved BSS-V2 history and Docling feasibility evidence, the preferred dependency shape is:
 
 ```text
-A. Provider capability decoupling and qualified-route foundation
+A. Capability decoupling + route foundation
+   BSS-V2-001 / 002 already approved
+        |
+        +------------------------------+
+        |                              |
+        v                              v
+B. Docling production perception   C. External reasoning adapter availability
+        |                              BSS-V2-003 Gemini already approved
+        v
+D. IDSER D1 -> Docling -> NormalizedDocument v1 checkpoint
         |
         v
-B. Gemini provider adapter and real route qualification
+      STOP
         |
-        +-------------------+
-        |                   |
-        v                   v
-C. Capacity/quota-domain    D. Usage/cost ledger
-   admission                   and price profiles
-        |                   |
-        +---------+---------+
-                  |
-                  v
-E. Qualified fallback / production execution profile
+        v
+E. Semantic extraction qualification
+        |
+        v
+F. Reconciliation qualification
+        |
+        v
+G. External-provider capacity / usage / privacy / fallback
 ```
 
-The exact split should be chosen so GO, CK, CFC, and HMN can complete each ticket without broad cross-scope proof.
+The perception checkpoint is intentionally before semantic-model qualification.
 
-## 42.1 Workstream A - provider capability decoupling
+## 42.1 Workstream A - capability decoupling and route foundation
 
-Should own only infrastructure such as:
+Represented by approved BSS-V2-001/002. It owns capability interfaces, route resolution, deployment-profile validation, generic injection, and explicit test/live selection.
+
+## 42.2 Workstream B - Docling production perception
+
+Own only local Docling adapter/runtime integration, BSS-009-authorized byte consumption, deterministic mapping, current `NormalizedDocument v1` normalization, processor provenance, and local resource/timeout/cancellation behavior.
+
+It must not implement semantic extraction or direct DocumentStore access.
+
+## 42.3 Workstream C - external reasoning adapter availability
+
+BSS-V2-003 already proves Gemini adapter contracts deterministically. Additional provider adapters are not required before the perception checkpoint.
+
+## 42.4 Workstream D - perception lifecycle checkpoint
+
+Own the integrated path:
 
 ```text
-provider capability interfaces
-route registry/resolver
-deployment profile validation
-generic runtime/worker injection
-removal of concrete Mistral worker typing
-explicit test/live runtime selection
+IDSER-003 D1 job
+    -> BSS-009 source grant/redemption
+    -> Docling
+    -> normalization
+    -> Atlas result acceptance/cache
 ```
 
-It should not need a real Gemini call to prove the abstraction.
+It ends at accepted `NormalizedDocument v1`.
 
-## 42.2 Workstream B - Gemini adapter and qualification
+## 42.5 Workstreams E/F - semantic qualification
 
-Should own:
+Start only after the perception checkpoint. Extraction and reconciliation qualify independently against frozen semantic oracles and final Atlas validation.
 
-```text
-Gemini transport
-structured output
-PDF perception
-streaming if required
-usage normalization
-provider-specific errors
-real-account qualification
-active development route
-```
+## 42.6 Workstream G - external-provider operations
 
-It must consume Workstream A rather than creating a second routing mechanism.
-
-## 42.3 Workstream C - capacity and quota domains
-
-Should own:
-
-```text
-capacity profiles
-quota-domain accounting
-capability concurrency
-interactive protection
-429 cooldown/admission
-```
-
-It should not implement customer subscription plans.
-
-## 42.4 Workstream D - usage/cost ledger
-
-Should own:
-
-```text
-normalized provider usage
-route provenance persistence
-price profile
-shadow production cost
-secret-safe telemetry
-```
-
-It should not implement billing or customer invoices.
-
-## 42.5 Workstream E - qualified fallback / production profile
-
-Should compose only already-qualified routes and already-proven capacity/usage primitives.
-
-It must not use arbitrary model auto-routing.
+Capacity/quota domains, interactive protection, usage/cost ledger, external privacy preflight, and provider fallback apply to external-provider routes. Local Docling resource controls remain separate and must not be forced into provider quota/economic abstractions.
 
 ---
 
@@ -1650,43 +1627,27 @@ Atlas product policy later decides how the capacity is sold or allocated.
 
 ---
 
-# 47. Development vs Production Provider Economics
+# 47. Development vs Production Execution Economics
 
-Development may use a free provider route if it passes the required technical and privacy qualification for that environment.
+Local Docling perception and external reasoning have different economics.
 
-Production must not assume that free-tier economics remain available.
-
-The architecture must support this transition without code redesign:
+For perception:
 
 ```text
-Development
-    Gemini Free
-        |
-        v
-same capability contracts
-same route resolver
-same usage ledger
-same queue/capacity controls
-
-Production
-    Gemini Paid / other qualified provider / gateway
-        |
-        v
-same capability contracts
-same Atlas semantic code
+local Docling
+    -> CPU/memory/runtime cost
+    -> no token billing
+    -> no provider RPM/TPM/RPD
+    -> no source transmission to external inference
 ```
 
-Changing provider billing mode should primarily change:
+Infrastructure resource cost may later be measured for product economics, but it must not be represented as fake provider token usage.
 
-```text
-route configuration
-capacity profiles
-price profiles
-privacy qualification
-operational budgets
-```
+For external reasoning, development may use a free route if it passes the required technical and privacy qualification for that environment.
 
-not domain code.
+Production must not assume free-tier economics remain available.
+
+Changing external-provider billing mode should primarily change route configuration, capacity profiles, price profiles, privacy qualification, and operational budgets, not domain code or the Docling/`NormalizedDocument v1` boundary.
 
 ---
 
@@ -1694,111 +1655,116 @@ not domain code.
 
 The following are V2 production-baseline invariants for BSS work.
 
-1. **Atlas owns accepted truth, review authority, publication, and customer entitlement.**
-2. **Agents Bridge owns provider execution, routing, provider capacity, retries, normalized usage, and provider secrets.**
-3. **Provider/model IDs remain deployment configuration, not semantic contracts.**
+1. **Atlas owns accepted truth, source authority, review authority, publication, and customer entitlement.**
+2. **Agents Bridge owns bounded capability execution and executor routing; external-provider credentials/capacity remain Bridge infrastructure.**
+3. **Processor/provider/model identities remain deployment configuration, not semantic contracts.**
 4. **BSS-001 through BSS-007 remain approved foundations.**
 5. **BSS-009 and its Atlas/Bridge perception authority remain approved foundations.**
-6. **BSS-008 provider-adapter mechanics are retained; current Mistral live qualification is not treated as active production capacity.**
-7. **IDSER-001 through IDSER-010 are not reopened by provider infrastructure work.**
-8. **IDSER-011 remains Mistral-specific historical/live-gate evidence and is not silently renamed to Gemini.**
-9. **Generic workers must not require concrete Mistral or Gemini provider types.**
-10. **Provider capability interfaces are the injection boundary for perception, structured reasoning, streaming chat, and future embeddings.**
-11. **Qualified routes bind capabilities to explicit provider/model identities.**
-12. **Routes require capability-specific live qualification before active use.**
-13. **Authentication/model discovery alone do not qualify a provider route.**
-14. **Gemini is the current development qualification direction, not a permanent dependency.**
-15. **Mistral may remain implemented but inactive until entitlement is corrected and requalified.**
-16. **NormalizedDocument v1 remains the provider-neutral perception compatibility boundary.**
-17. **Semantic extraction/reconciliation v1 contracts remain unchanged by provider migration.**
-18. **pg-boss remains the background queue technology.**
-19. **Existing transaction, idempotency, replay, lease, fencing, and completion guarantees must survive the provider refactor.**
-20. **One global worker concurrency value is a compatibility default, not the final multi-user capacity model.**
-21. **Provider capacity must become capability-aware and quota-domain-aware.**
-22. **Interactive work must have protected capacity or equivalent priority.**
-23. **Multiple API keys in one upstream quota domain are not assumed to multiply capacity.**
-24. **Fine-grained provider failure telemetry may exist without breaking existing Atlas semantic failure contracts.**
-25. **Every provider execution records normalized route provenance and usage.**
-26. **Provider pricing is effective-dated configuration, not skill logic.**
-27. **Free-tier calls should support shadow production cost calculation.**
-28. **BSS does not implement final customer plans or billing.**
-29. **Privacy class is a qualified route property checked before provider transmission.**
-30. **Stateless API usage alone does not prove ZDR.**
-31. **Fallback is allowed only among qualified routes that satisfy the same capability/privacy contract.**
-32. **Automatic unqualified model routing is prohibited for truth-producing reasoning.**
-33. **Gateway support may be added later without replacing Agents Bridge as the Atlas capability/qualification boundary.**
-34. **Provider credentials remain server-side and are never distributed one-per-user by default.**
-35. **No provider failure may directly advance Atlas trusted state.**
-36. **Normal automated tests remain provider-independent; live provider tests are explicit and opt-in.**
-37. **Docker Compose remains the supported production-shaped local stack path.**
-38. **Provider changes must not require a rewrite of Atlas Core, semantic contracts, review semantics, or publication authority.**
+6. **BSS-008 provider-adapter mechanics are retained; current Mistral live qualification is inactive.**
+7. **Approved BSS-V2-001/002/003 history is preserved.**
+8. **IDSER-001 through IDSER-010 are not reopened by execution infrastructure work.**
+9. **IDSER-003 D1 perception kickoff is the upstream Initial Draft handoff consumed by Docling integration.**
+10. **Generic workers must not require concrete vendor/processor types.**
+11. **The existing `DocumentPerceptionProvider` interface is executor-neutral despite its historical name.**
+12. **Qualified routes may represent local processors or external providers.**
+13. **Local Docling qualification is based on document fidelity, repeatability, normalization, and runtime behavior, not provider API economics.**
+14. **Docling is the current development digital-PDF perception direction, subject to production-shaped integration qualification.**
+15. **Gemini remains an external reasoning-provider candidate and adapter, not a required perception dependency.**
+16. **Mistral may remain implemented but inactive until entitlement is corrected and requalified.**
+17. **`NormalizedDocument v1` remains the perception/semantics compatibility boundary.**
+18. **Docling structural labels never become business-semantic classifications by themselves.**
+19. **The first integrated checkpoint ends at Atlas-accepted `NormalizedDocument v1`; semantic qualification comes afterward.**
+20. **Semantic extraction/reconciliation v1 contracts remain unchanged by perception integration.**
+21. **A smaller provider-facing semantic intermediate is allowed only when deterministic finalization restores the complete unchanged Atlas v1 contract.**
+22. **pg-boss remains the background queue technology.**
+23. **Existing transaction, idempotency, replay, lease, fencing, and completion guarantees survive executor changes.**
+24. **Local processor resource limits and external provider quota domains are distinct concepts.**
+25. **External-provider capacity remains capability-aware and quota-domain-aware.**
+26. **Interactive external work must have protected capacity or equivalent priority.**
+27. **Multiple API keys in one upstream quota domain are not assumed to multiply capacity.**
+28. **Every capability execution records appropriate executor provenance.**
+29. **External-provider executions additionally record normalized usage needed for capacity/economic analysis.**
+30. **Provider pricing is effective-dated configuration, not skill logic.**
+31. **Free-tier external calls may support shadow production cost calculation.**
+32. **BSS does not implement final customer plans or billing.**
+33. **External privacy class is checked before provider transmission; local perception still obeys source authorization and local data-handling rules.**
+34. **Fallback is allowed only among qualified routes satisfying the same capability and applicable privacy contract.**
+35. **Automatic unqualified model routing is prohibited for truth-producing reasoning.**
+36. **Provider credentials remain server-side and are never distributed one-per-user by default.**
+37. **No executor failure may directly advance Atlas trusted state.**
+38. **Normal automated tests remain external-provider-independent; live provider tests are explicit and opt-in.**
+39. **Docker Compose remains the supported production-shaped local stack path.**
+40. **Executor changes must not require a rewrite of Atlas Core, semantic contracts, review semantics, or publication authority.**
 
 ---
 
-# 49. Stack Setup V2 Completion Boundary
+# 49. Perception-First Checkpoint and Stack Setup V2 Completion Boundary
 
-The BSS extension is complete when the backend can demonstrate the following production-shaped infrastructure without requiring a semantic/domain redesign:
+BSS V2 now has an explicit near-term checkpoint before the broader external-provider substrate is considered complete.
+
+## 49.1 Near-term perception checkpoint
+
+The first required production-shaped result is:
 
 ```text
-provider-neutral capability interfaces
-        |
-        v
-qualified route/deployment profile
-        |
-        v
-Gemini adapter live-qualified for the authorized capabilities
-        |
-        v
-Mistral retained as optional/inactive adapter
-        |
-        v
-capability-aware / quota-domain-aware capacity control
-        |
-        v
-protected interactive execution
-        |
-        v
-normalized usage + route provenance
-        |
-        v
-effective-dated cost profiles + shadow COGS
-        |
-        v
-privacy-class preflight
-        |
-        v
-qualified fallback foundation
-        |
-        v
-existing BSS/IDSER contracts still passing
+IDSER-003
+project/bundle + D1 perception kickoff
+    -> BSS-009 authority
+    -> verified PDF bytes
+    -> qualified local Docling perception
+    -> deterministic generic mapping
+    -> existing normalizePerceptionResult(...)
+    -> Atlas-accepted NormalizedDocument v1
+    -> STOP
 ```
 
-The BSS extension intentionally stops before final product pricing, subscription billing, full review UI, CES product implementation, publication UI, enterprise account administration, or any other downstream domain feature.
+Closure requires:
+
+```text
+supported digital-PDF class explicit
+processor/runtime identity explicit
+stable source locators
+required source units preserved
+unchanged NormalizedDocument v1
+Atlas-owned cache/result handoff
+retry/replay/idempotency/failure behavior proven
+no semantic candidate/reconciliation requirement
+no direct DocumentStore access from Docling
+```
+
+Only after this checkpoint should semantic extraction/reconciliation model qualification resume.
+
+## 49.2 Broader BSS V2 completion
+
+The broader BSS extension may subsequently continue with semantic/reconciliation route qualification, external-provider capacity/admission, protected interactive execution, external usage and route provenance, provider cost profiles/shadow COGS, external privacy preflight, qualified fallback, and directly affected BSS/IDSER regression proof.
+
+The BSS extension intentionally stops before final product pricing, subscription billing, full review UI, CES product implementation, publication UI, enterprise account administration, or downstream domain features.
 
 ---
 
 # 50. Final Baseline Principle
 
-The production backend should be able to move through:
+The production backend should support two replaceable execution layers:
 
 ```text
-Gemini Free development
-        |
-        v
-Gemini paid production
-        |
-        v
-multi-provider direct routing
-        |
-        v
-OpenRouter or another gateway where useful
-        |
-        v
-enterprise privacy-qualified routes
+SOURCE PERCEPTION
+
+immutable PDF
+    -> qualified local Docling today
+    -> another qualified perception executor later if needed
+    -> same NormalizedDocument v1 boundary
+
+
+SEMANTIC REASONING
+
+accepted NormalizedDocument v1
+    -> qualified external reasoning model
+    -> paid/free/provider/gateway may change
+    -> same Atlas semantic contracts and validation
 ```
 
 without changing the Atlas semantic system.
 
 The final BSS V2 principle is:
 
-> **Build provider execution as infrastructure, not product truth. BSS must make provider identity, capacity, privacy, cost, and availability replaceable while preserving the already-established Atlas authority, semantic contracts, queue safety, and document lifecycle.**
+> **Build capability execution as infrastructure, not product truth. Keep source-grounded perception separate from semantic reasoning. Docling may implement perception locally; external models may implement reasoning. Both remain replaceable beneath Atlas-owned authorization, contracts, validation, provenance, queue safety, and document lifecycle.**
