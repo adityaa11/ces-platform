@@ -1,4 +1,5 @@
 import { BridgeProviderError, type DocumentPerceptionProvider, type ProviderProvenance } from "../provider-capabilities.js";
+import { performance } from "node:perf_hooks";
 
 export const doclingServeVersion = "1.36.0";
 export const doclingSlimVersion = "2.132.0";
@@ -84,14 +85,21 @@ export class DoclingProvider implements DocumentPerceptionProvider {
   }
   async perceive(input: Parameters<DocumentPerceptionProvider["perceive"]>[0], signal: AbortSignal): ReturnType<DocumentPerceptionProvider["perceive"]> {
     if (input.mimeType !== "application/pdf" || input.bytes.byteLength === 0 || input.bytes.byteLength > this.config.maxDocumentBytes) throw new BridgeProviderError("invalid_request", "Docling accepts only bounded PDF bytes.");
-    await this.verifyReady(signal); const started = Date.now(); const form = new FormData();
+    await this.verifyReady(signal); const started = Date.now(); const formStarted = performance.now(); const form = new FormData();
     form.set("files", new Blob([Buffer.from(input.bytes)], { type: "application/pdf" }), "authorized.pdf");
     form.set("from_formats", "pdf"); form.set("to_formats", "json"); form.set("pipeline", "standard"); form.set("do_ocr", "false"); form.set("force_ocr", "false"); form.set("do_table_structure", "true"); form.set("table_mode", "accurate"); form.set("include_images", "false"); form.set("include_page_images", "false"); form.set("do_picture_description", "false"); form.set("do_picture_classification", "false"); form.set("do_chart_extraction", "false"); form.set("do_code_enrichment", "false"); form.set("do_formula_enrichment", "false"); form.set("image_export_mode", "placeholder");
-    const response = await this.request("/v1/convert/file", { method: "POST", body: form }, signal);
-    const raw = await response.text(); if (Buffer.byteLength(raw) > this.config.maxResponseBytes) throw new BridgeProviderError("response_bound", "Docling response exceeded the configured byte limit.");
-    let payload: unknown; try { payload = JSON.parse(raw); } catch { throw new BridgeProviderError("malformed_response", "Docling returned invalid JSON."); }
+    const requestSerializationMilliseconds = performance.now() - formStarted;
+    const requestStarted = performance.now(); const response = await this.request("/v1/convert/file", { method: "POST", body: form }, signal); const responseHeadersReceived = performance.now();
+    const raw = await response.text(); const responseBodyReceived = performance.now(); if (Buffer.byteLength(raw) > this.config.maxResponseBytes) throw new BridgeProviderError("response_bound", "Docling response exceeded the configured byte limit.");
+    let payload: unknown; try { payload = JSON.parse(raw); } catch { throw new BridgeProviderError("malformed_response", "Docling returned invalid JSON."); } const payloadParsed = performance.now();
     const mapped = mapDoclingDocument(payload);
+    const mappedAt = performance.now();
     const processingMilliseconds = reportedProcessingMilliseconds(payload);
-    return { providerResult: mapped, provenance: { provider: "docling", model: `docling-slim-${this.config.doclingSlimVersion}/docling-serve-${this.config.serviceVersion}/${this.config.optionProfile}`, endpoint: "compose-private:/v1/convert/file", latencyMilliseconds: Date.now() - started, attempt: 1, usage: processingMilliseconds === undefined ? undefined : { raw: { doclingReportedProcessingMilliseconds: processingMilliseconds } } } satisfies ProviderProvenance };
+    const httpRoundTripMilliseconds = responseHeadersReceived - requestStarted;
+    const provenance = {
+      provider: "docling", model: `docling-slim-${this.config.doclingSlimVersion}/docling-serve-${this.config.serviceVersion}/${this.config.optionProfile}`, endpoint: "compose-private:/v1/convert/file", latencyMilliseconds: Date.now() - started, attempt: 1,
+      usage: { raw: { requestSerializationMilliseconds: Math.round(requestSerializationMilliseconds), httpRequestRoundTripMilliseconds: Math.round(httpRoundTripMilliseconds), doclingReportedProcessingMilliseconds: processingMilliseconds ?? null, httpRequestTransferMilliseconds: processingMilliseconds === undefined ? null : Math.max(0, Math.round(httpRoundTripMilliseconds) - processingMilliseconds), responseBodyTransferMilliseconds: Math.round(responseBodyReceived - responseHeadersReceived), mappingSerializationMilliseconds: Math.round(mappedAt - payloadParsed) } },
+    } satisfies ProviderProvenance;
+    return { providerResult: mapped, provenance };
   }
 }

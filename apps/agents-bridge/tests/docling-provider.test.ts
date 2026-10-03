@@ -19,11 +19,14 @@ test("Docling adapter sends only PDF bytes and a fixed no-OCR JSON profile", asy
   const provider = new DoclingProvider(config, async (url, init) => {
     calls.push({ url, init });
     if (url.endsWith("/version")) return new Response(JSON.stringify({ docling_serve: doclingServeVersion, docling: doclingSlimVersion }));
-    if (url.endsWith("/v1/convert/file")) return new Response(JSON.stringify({ status: "success", document: { json_content: { texts: [{ self_ref: "#/texts/0", text: "PDF text", prov: [{ page_no: 1 }] }] } } }));
+    if (url.endsWith("/v1/convert/file")) return new Response(JSON.stringify({ status: "success", processing_time: 0.001, document: { json_content: { texts: [{ self_ref: "#/texts/0", text: "PDF text", prov: [{ page_no: 1 }] }] } } }));
     return new Response("{}", { status: 200 });
   });
   const result = await provider.perceive({ bytes: new Uint8Array([1, 2, 3]), mimeType: "application/pdf" }, new AbortController().signal);
   assert.equal(result.providerResult.pages[0]?.page_number, 1);
+  assert.equal(result.provenance.usage?.raw?.doclingReportedProcessingMilliseconds, 1);
+  assert.equal(typeof result.provenance.usage?.raw?.httpRequestTransferMilliseconds, "number");
+  assert.equal(typeof result.provenance.usage?.raw?.mappingSerializationMilliseconds, "number");
   assert.equal(calls.map((call) => call.url).join(" "), "http://docling-serve:5001/health http://docling-serve:5001/ready http://docling-serve:5001/version http://docling-serve:5001/v1/convert/file");
   const form = calls[3]?.init?.body as FormData; assert.equal(form.get("pipeline"), "standard"); assert.equal(form.get("do_ocr"), "false"); assert.equal(form.get("force_ocr"), "false"); assert.equal(form.get("do_table_structure"), "true"); assert.equal(form.get("include_images"), "false"); assert.equal(form.get("include_page_images"), "false"); assert.equal(form.get("do_picture_description"), "false"); assert.equal(form.get("do_picture_classification"), "false"); assert.equal(form.get("do_chart_extraction"), "false"); assert.equal(form.get("do_code_enrichment"), "false"); assert.equal(form.get("do_formula_enrichment"), "false"); assert.equal(form.get("to_formats"), "json"); assert.ok(form.get("files") instanceof Blob);
   await assert.rejects(() => provider.perceive({ bytes: new Uint8Array([1]), mimeType: "text/plain" }, new AbortController().signal), /bounded PDF/u);
