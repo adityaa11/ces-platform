@@ -6,17 +6,18 @@ This document is the V3 architecture checkpoint for Atlas Core.
 
 It supersedes `atlas-core-architecture-checkpoint-v2-mistral-enriched-v2.md` where the two documents conflict. The V2 semantic, review, provenance, document, and authority principles remain valid unless explicitly amended here.
 
-V3 reconciles three realities:
+V3 reconciles four realities:
 
 1. the production-oriented architecture already established in the Backend Phase;
-2. the code that now exists on `codex/new-atlas-backend`, including BSS-001 through BSS-009 and IDSER work through the current Initial Draft pipeline; and
-3. the provider, capacity, privacy, and product-economics requirements discovered during live-provider qualification.
+2. the code that now exists on `codex/new-atlas-backend`, including BSS-001 through BSS-009 and IDSER work through the current Initial Draft pipeline;
+3. the provider, capacity, privacy, and product-economics requirements discovered during live-provider qualification; and
+4. the local Docling perception feasibility evidence showing that digital-PDF perception can reach the unchanged `NormalizedDocument v1` boundary without external inference.
 
-The goal is not to redesign Atlas around another model vendor. The goal is to make the existing Atlas architecture explicitly capable of operating as a multi-user AI product whose provider capacity, model pricing, privacy guarantees, and available models can change without changing Atlas truth semantics.
+The goal is not to redesign Atlas around another model vendor or to force every capability through a remote AI provider. The goal is to make the existing Atlas architecture explicitly capable of composing qualified local processors and qualified external reasoning providers without changing Atlas truth semantics.
 
 The central V3 rule is:
 
-> **Atlas owns project truth, product entitlement, and durable business policy. Agents Bridge owns provider execution, provider capacity enforcement, and normalized execution telemetry. Provider/model selection is a qualified deployment decision, not an Atlas semantic dependency.**
+> **Atlas owns project truth, source authority, product entitlement, and durable business policy. Agents Bridge owns bounded execution of qualified capability implementations and normalized execution telemetry. Local processors and external providers are replaceable execution mechanisms beneath Atlas-owned contracts; neither becomes Atlas semantic authority.**
 
 ---
 
@@ -92,24 +93,55 @@ Its current Mistral-specific live gate should be preserved as externally blocked
 
 A replacement or superseding provider-qualification checkpoint should prove the active provider route under V3 without reopening the deterministic IDSER-001 through IDSER-010 authority already established.
 
-## 1.3 Current code contains one provider-coupling seam to correct
+## 1.3 Capability decoupling remains the correct infrastructure direction
 
-The architecture is provider-neutral, but the current implementation still contains concrete Mistral coupling in places such as:
+The architecture requires generic workers to depend on narrow capabilities rather than concrete vendor classes.
+
+BSS-V2-001 has since demonstrated that the semantic worker, perception worker, and interactive runtime can consume provider-neutral capability interfaces while retaining the existing Mistral adapter behavior. BSS-V2-002 has established server-controlled qualified-route resolution.
+
+Those results strengthen, rather than replace, the V3 rule:
 
 ```text
-semantic-worker.ts
-    accepts concrete MistralProvider
-
-document-perception-worker.ts
-    accepts concrete MistralProvider
-
-worker-main.ts
-    directly constructs MistralProvider
+generic execution path
+    -> capability interface
+    -> qualified implementation
 ```
 
-V3 treats this as a bounded infrastructure seam, not a semantic redesign.
+A qualified implementation may be a local processor for a capability that does not require remote inference, or an external provider/model for a capability that does.
 
-The target is capability-oriented provider interfaces and a Bridge-owned route resolver. Existing semantic contracts, persistence, queue semantics, replay semantics, and Atlas authority must remain unchanged by that correction.
+Existing semantic contracts, persistence, queue semantics, replay semantics, source authority, and Atlas truth authority must remain unchanged by this infrastructure correction.
+
+## 1.4 Docling perception feasibility evidence
+
+DOCSPIKE-001 provides current feasibility evidence for a local digital-PDF perception path.
+
+The recorded experiment:
+
+```text
+repository PDF
+    -> local Docling
+    -> deterministic generic perception result
+    -> existing normalizePerceptionResult(...)
+    -> unchanged NormalizedDocument v1
+```
+
+demonstrated on the required repository-owned digital PDFs:
+
+```text
+all pages preserved
+major text preserved
+usable heading/section structure
+usable reading order
+tables preserved where present
+trustworthy text geometry preserved
+primary Safara output deterministic across equivalent runs
+no external inference call
+no NormalizedDocument v1 change
+```
+
+The recorded result is `PASS_WITH_LIMITS` and remains feasibility evidence until its review is accepted and a separate production-integration ticket is approved. The known limits are not hidden: visual regions were omitted when geometry was unstable, confidence was not fabricated, and scanned-PDF/OCR behavior was not established.
+
+This evidence changes the preferred development perception direction. It does not itself activate Docling in production and does not alter semantic extraction or reconciliation authority.
 
 ---
 
@@ -162,9 +194,9 @@ review projections
 chat context
 ```
 
-The provider never becomes the system of record.
+No perception processor or reasoning provider becomes the system of record.
 
-The provider may perceive and reason.
+A qualified perception processor may derive source-grounded document structure. A qualified reasoning provider may propose bounded semantic or analytical output.
 
 Atlas validates, persists, reviews, accepts, publishes, and reconstructs.
 
@@ -212,22 +244,26 @@ Atlas budget policy
 Agents Bridge owns:
 
 ```text
+capability implementation adapters
+local processor invocation where configured
 provider credentials
 provider adapters
 capability route resolution
-provider/model allowlists
+processor/provider/model allowlists
 provider request translation
 provider-specific limits
 provider health
 provider concurrency
 provider rate-limit enforcement
-provider retries
-provider timeout/cancellation
-normalized provider usage
-normalized provider errors
-route provenance
+bounded retries
+timeout/cancellation
+normalized execution usage/metrics
+normalized execution errors
+route/executor provenance
 operational execution budgets
 ```
+
+Provider-specific quota, pricing, retention, and rate-limit policy applies only where an external provider is actually used. A local processor such as Docling must not be forced into fictitious RPM/TPM/RPD, credential, training-retention, or token-cost semantics.
 
 Agents Bridge does not own:
 
@@ -242,29 +278,42 @@ source discovery
 Atlas semantic repository traversal
 ```
 
-## 3.3 Provider authority
+## 3.3 Capability executor authority
 
-A provider may perform:
+A local perception processor may perform only the source-grounded perception work for which it is qualified, for example:
 
 ```text
-document perception / OCR
-multimodal interpretation
+PDF parsing
+text-block recovery
+heading/structural classification
+reading-order recovery
+table recovery
+geometry normalization when trustworthy
+OCR when separately qualified
+```
+
+A reasoning provider may perform only the reasoning capabilities for which its route is qualified, for example:
+
+```text
 structured semantic reasoning
 relationship reasoning
 CES reasoning
 chat response generation
 tool-call proposals
 Addendum language composition
-embedding generation when qualified
+embedding generation
+multimodal interpretation when separately qualified
 ```
 
-Provider output remains untrusted until Atlas/Bridge validation appropriate to the capability has succeeded.
+A perception processor must not manufacture business semantics merely because it detects document structure. A reasoning provider must not become source, review, publication, or truth authority.
+
+All executor output remains untrusted until the applicable Atlas/Bridge validation succeeds.
 
 ---
 
-# 4. Provider-Neutral Capability Model
+# 4. Execution-Neutral Capability Model
 
-Atlas features request capabilities, not model IDs.
+Atlas features request capabilities, not vendor, processor, or model IDs.
 
 The initial capability vocabulary is:
 
@@ -284,18 +333,19 @@ These names describe Atlas needs.
 They do not mean:
 
 ```text
+Docling
 Gemini
 Mistral
 OpenAI
 OpenRouter
-or any fixed model family
+or any fixed processor/model family
 ```
 
-Skills and Atlas clients must not select arbitrary provider names, model IDs, endpoint URLs, provider-specific safety options, or pricing parameters.
+Skills and Atlas clients must not select arbitrary processor/provider names, model IDs, endpoint URLs, provider-specific safety options, or pricing parameters.
 
 ## 4.1 Narrow provider interfaces
 
-The concrete worker/runtime implementation should converge on capability interfaces conceptually similar to:
+The concrete worker/runtime implementation should use capability interfaces conceptually similar to:
 
 ```text
 DocumentPerceptionProvider
@@ -311,19 +361,21 @@ EmbeddingProvider
     embed(...)
 ```
 
-A provider implementation may support one or several interfaces.
+`DocumentPerceptionProvider` is the existing code-level interface name. Its semantics are executor-neutral: it may be implemented by a local processor such as Docling or by a remote provider when separately qualified. Renaming the interface is not required merely to integrate Docling.
 
-The existing Mistral adapter may continue to implement applicable interfaces. A Gemini adapter, OpenRouter gateway adapter, or future provider may implement the same contracts.
+One implementation may support one or several interfaces.
 
-The semantic worker must depend on `StructuredReasoningProvider`, not `MistralProvider`.
+The existing Mistral adapter may continue to implement applicable interfaces. The Gemini adapter may continue to implement applicable remote-provider interfaces. A local Docling adapter may implement only the perception interface. Future providers or processors may implement the same Atlas-facing capability contracts.
 
-The perception worker must depend on `DocumentPerceptionProvider`, not `MistralProvider`.
+The semantic worker must depend on `StructuredReasoningProvider`, not a concrete vendor.
+
+The perception worker must depend on the perception capability interface, not a concrete vendor or direct filesystem parser.
 
 ---
 
 # 5. Qualified Deployment Routes
 
-V3 makes provider routing a first-class deployment concept.
+V3 makes capability routing a first-class deployment concept.
 
 A capability is executed through a **Qualified Route**.
 
@@ -333,23 +385,26 @@ Conceptually:
 QualifiedRoute
 +-- route_id
 +-- capability
-+-- provider_id
++-- executor_kind              local_processor | external_provider
++-- executor_id
 +-- model_or_processor_id
 +-- adapter_version
 +-- qualification_version
 +-- work_class
-+-- privacy_class
-+-- cost_profile_id
-+-- capacity_profile_id
-+-- fallback_policy_id
++-- privacy_class              when applicable
++-- cost_profile_id            when applicable
++-- capacity_profile_id        when applicable
++-- fallback_policy_id         when applicable
 +-- effective_from
 +-- effective_until (optional)
 +-- enabled
 ```
 
-A route is not valid merely because a provider lists the model.
+The already-implemented route registry may be extended additively to represent a local processor. Existing approved route history must not be rewritten merely because the executor vocabulary becomes broader.
 
-A route becomes usable only after the relevant Atlas qualification gates pass.
+An external-provider route is not valid merely because the provider lists the model. A local-processor route is not valid merely because the library can be imported.
+
+A route becomes usable only after the qualification gates applicable to that executor and capability pass.
 
 ## 5.1 Deployment profiles
 
@@ -358,22 +413,22 @@ A deployment profile groups active routes without changing Atlas semantics.
 Example development shape:
 
 ```text
-ATLAS_DEV_FREE
+ATLAS_DEV
 
 atlas.document.perceive
-    -> qualified Gemini route
+    -> qualified local Docling route for supported digital PDFs
 
 atlas.semantic.extract
-    -> qualified Gemini route
+    -> separately qualified structured-reasoning route
 
 atlas.semantic.reconcile
-    -> qualified Gemini route
+    -> separately qualified structured-reasoning route
 
 atlas.ces.assess
-    -> qualified Gemini route
+    -> separately qualified reasoning route
 
 atlas.chat.default
-    -> qualified Gemini route
+    -> separately qualified interactive route
 ```
 
 A future production profile may map the same capabilities differently:
@@ -382,7 +437,7 @@ A future production profile may map the same capabilities differently:
 ATLAS_PRODUCTION
 
 atlas.document.perceive
-    -> Provider A / Model P
+    -> qualified local processor or remote perception provider
 
 atlas.semantic.extract
     -> Provider B / Model E
@@ -401,119 +456,135 @@ No Atlas semantic contract should change because this mapping changes.
 
 ## 5.2 Current development direction
 
-Gemini is the current development qualification direction.
-
-This is not a permanent architecture dependency and no exact Gemini model ID is frozen by this checkpoint.
-
-Exact model IDs must be:
+The current development direction is intentionally split by capability:
 
 ```text
-explicit
-pinned
-available to the real Atlas project/account
-live-qualified
-recorded in route provenance
+document perception
+    -> local Docling integration for the supported digital-PDF class
+
+semantic extraction / reconciliation
+    -> separate model qualification after the perception checkpoint
+
+chat / CES
+    -> separate capability qualification when their phases require it
 ```
+
+Docling is not semantic authority and is not evidence that semantic extraction or reconciliation is solved.
+
+Gemini remains one available development reasoning-provider direction, but no exact reasoning provider/model is frozen by this checkpoint. Any external model identity must be explicit, pinned, available to the real account, independently qualified for its capability, and recorded in route provenance.
 
 Mutable `*-latest` aliases should not be production defaults unless a deliberate qualification policy explicitly permits them.
 
-Historical `worker1` Gemini success is useful evidence that Gemini can support Atlas-style structured reasoning, but the current Backend Phase contracts must be independently requalified.
+Historical `worker1` Gemini success remains useful background evidence. It does not replace current capability-specific qualification.
 
 ---
 
-# 6. Provider Qualification Is a Production Gate
+# 6. Capability Qualification Is a Production Gate
 
-The Mistral incident establishes a permanent V3 rule:
+The Mistral incident and the Docling feasibility work establish a broader V3 rule:
 
-> **Documentation, model discovery, dashboard limits, or successful API-key authentication do not prove inference entitlement.**
+> **Do not treat installation, model listing, API-key authentication, or a successful isolated demo as production qualification. Qualification must prove the actual capability boundary Atlas will consume.**
 
-Every production route must pass live qualification before implementation depends on it.
+Every active route must pass the gates applicable to its executor type and capability before production-shaped implementation depends on it.
 
-## 6.1 Minimum qualification sequence
+## 6.1 Common qualification gates
 
-For a provider/model route, qualification should cover the applicable gates:
+Every capability route should prove, as applicable:
 
 ```text
-1. Credential and entitlement
-   - real server-side key
-   - minimal real inference succeeds
-   - no zero-capacity entitlement
+1. Executor identity
+   - exact processor/provider/model identity is recorded
+   - adapter and qualification versions are explicit
 
 2. Capability compatibility
    - exact Atlas capability is supported
-   - no hidden provider-managed state required
+   - no hidden state is required to reconstruct Atlas behavior
 
-3. Structured output
-   - real Atlas JSON Schema
-   - provider output passes complete Atlas-side validation
+3. Bounded input/output
+   - the executor receives only authorized bounded input
+   - output is parsed and validated before trusted handoff
 
-4. Document perception
-   - real bounded PDF
-   - output normalizes into current NormalizedDocument
-   - unavailable geometry/confidence is left absent, never invented
+4. Contract compatibility
+   - final Atlas-owned contract validates without weakening
+   - unavailable optional data remains absent rather than fabricated
 
-5. Semantic extraction
-   - representative Atlas PRDs
-   - evidence fidelity
-   - complete source accounting
+5. Determinism or repeatability appropriate to the capability
+   - deterministic processors should be materially repeatable
+   - probabilistic reasoning routes must meet the frozen semantic repeatability/quality oracle
 
-6. Reconciliation quality
-   - new
-   - supports
-   - duplicate
-   - refine
-   - extend
-   - contradiction
-   - supersession
-   - partial supersession
-   - ambiguity
-   - incoming-vs-incoming inconsistency
+6. Failure behavior
+   - timeout/cancellation/failure is bounded
+   - failed execution does not create trusted partial state
 
-7. CES discipline where applicable
-   - source vs derived reasoning remains distinct
-   - unsupported assurance claims are rejected
-
-8. Chat behavior where applicable
-   - bounded context
-   - streaming/cancellation
-   - current vs incoming vs hypothetical state remains distinct
-   - no hidden mutation
-
-9. Throughput/capacity
-   - observed latency
-   - real RPM/TPM/RPD or equivalent
-   - concurrent request behavior
-   - 429 behavior
-   - Retry-After behavior
-
-10. Privacy/data-use
-    - training policy
-    - retention
-    - ZDR eligibility when required
-    - regional restrictions when relevant
-
-11. Usage/economics
-    - normalized usage fields
-    - provider price profile
-    - shadow production cost calculation
+7. Provenance
+   - actual executor identity and execution metadata are recorded
 ```
 
-## 6.2 Qualification is capability-specific
+## 6.2 Local document-perception qualification
 
-A model that passes chat qualification does not automatically pass reconciliation qualification.
+For a local processor such as Docling, qualification is based on document-processing behavior rather than remote-provider economics.
 
-A model that accepts PDF input does not automatically pass Atlas perception qualification.
-
-A provider route may therefore be qualified for:
+For the currently evidenced digital-PDF path, qualification should cover:
 
 ```text
-chat only
-extraction only
-perception only
-reconciliation only
-multiple capabilities
+real bounded PDF input
+page preservation
+major-text preservation
+heading/section structure
+reading order
+table recovery where present
+stable source-unit IDs
+geometry only when trustworthy
+no fabricated confidence or visual data
+repeatable Atlas-facing output
+existing normalizePerceptionResult(...) compatibility
+unchanged parseNormalizedDocument(...) success
+bounded runtime/resource behavior
+no external source transmission
 ```
 
+Scanned-PDF/OCR behavior is a separate capability qualification until explicitly proven.
+
+A local Docling route does not need invented API credentials, RPM/TPM/RPD, provider training-retention policy, token pricing, or 429 behavior. Those concepts apply only when the actual executor has them.
+
+## 6.3 External reasoning-provider qualification
+
+An external reasoning route should cover the applicable gates:
+
+```text
+credential and usable entitlement
+pinned model identity
+bounded structured generation
+provider-facing schema compatibility
+deterministic Atlas finalization where used
+complete final Atlas-side contract validation
+representative semantic extraction when applicable
+representative reconciliation when applicable
+latency
+real rate-limit behavior
+usage metadata
+privacy/data-use classification
+cost profile when production economics require it
+```
+
+Provider-native structured output is a transport aid. Atlas may use a smaller provider-facing intermediate schema when deterministic code owns IDs, evidence wiring, source accounting, or other system-owned fields. The final Atlas result must still satisfy the complete unchanged Atlas contract before acceptance.
+
+A model that passes chat qualification does not automatically pass reconciliation qualification. A model that accepts PDFs does not automatically pass Atlas perception qualification.
+
+## 6.4 Qualification is capability-specific
+
+A route may therefore be qualified for:
+
+```text
+digital-PDF perception only
+OCR/scanned perception only
+semantic extraction only
+semantic reconciliation only
+chat only
+multiple explicitly proven capabilities
+```
+
+The same executor may serve several capabilities only when each required capability has its own valid qualification evidence.
 ---
 
 # 7. Immutable Document Model
@@ -550,6 +621,28 @@ Provider changes must never change the immutable source identity.
 
 Document Perception remains separate from Semantic Extraction.
 
+The perception stage answers structural/source questions such as:
+
+```text
+what pages exist?
+what text blocks exist?
+which blocks are headings or paragraphs?
+what is the reading order?
+what tables exist?
+what trustworthy geometry exists?
+```
+
+It does not answer business-semantic questions such as:
+
+```text
+is this a workflow step?
+is this a business rule?
+does this contradict another fact?
+which statement should be accepted?
+```
+
+The target boundary is:
+
 ```text
 Immutable PDF bytes
        |
@@ -557,16 +650,20 @@ Immutable PDF bytes
 atlas.document.perceive
        |
        v
-provider-specific perception
+qualified perception executor
+       |
+       +-- local Docling processor for supported digital PDFs
+       |
+       +-- future separately qualified perception executor
        |
        v
-Bridge-owned provider result
+generic source-grounded perception result
        |
        v
-Atlas normalization
+existing normalizePerceptionResult(...)
        |
        v
-NormalizedDocument
+NormalizedDocument v1
 ```
 
 The current BSS-009 authority flow remains valid:
@@ -575,14 +672,14 @@ The current BSS-009 authority flow remains valid:
 Atlas authorizes source access
 Atlas issues bounded source grant
 Bridge redeems explicit source bytes
-provider performs perception
-Atlas receives normalized result
+qualified perception executor processes only those bytes
+Atlas receives a normalized result
 Atlas owns derived cache
 ```
 
-Agents Bridge must not discover DocumentStore paths or project files independently.
+Agents Bridge must not discover DocumentStore paths or project files independently. A local processor does not gain direct source-store authority merely because it executes on the same machine or Compose network.
 
-## 8.1 NormalizedDocument remains provider-neutral
+## 8.1 NormalizedDocument remains the perception/semantics compatibility boundary
 
 The established contract remains the compatibility boundary.
 
@@ -593,29 +690,69 @@ NormalizedDocument
 +-- artifact identity
 +-- source SHA-256
 +-- execution identity
-+-- provider provenance
++-- executor provenance
 +-- pages[]
     +-- page number
     +-- optional dimensions
     +-- textBlocks[]
-        +-- id
+        +-- stable id
         +-- text
-        +-- optional kind
+        +-- optional structural kind
         +-- optional boundingBox
         +-- optional confidence
     +-- tables[]
     +-- visualRegions[]
 ```
 
-A new provider must adapt to this contract.
+Any perception implementation must adapt to this contract.
 
-Atlas must not weaken the contract merely to make a provider appear compatible.
+Atlas must not weaken the contract merely to make an executor appear compatible.
 
-Optional fields are genuinely optional; missing provider metadata must remain missing rather than fabricated.
+Optional fields are genuinely optional; missing or untrustworthy processor metadata must remain missing rather than fabricated.
 
+The existing field currently named `provider` in `NormalizedDocument v1` is treated as execution provenance for compatibility. Docling integration does not require an immediate v1 schema rename. A future contract version may adopt broader executor terminology only through an intentional versioned migration.
+
+## 8.2 Current Docling evidence and integration direction
+
+DOCSPIKE-001 demonstrated the following Atlas-facing path without modifying the contract:
+
+```text
+local Docling 2.132.0
+    -> deterministic mapper
+    -> generic perception result
+    -> normalizePerceptionResult(...)
+    -> parseNormalizedDocument(...)
+    -> NormalizedDocument v1
+```
+
+For the primary Safara benchmark, the recorded evidence preserved all seven pages, all nine required major headings, usable major text and reading order, and deterministic Atlas-facing output across two equivalent runs. Finance and Readiness fixtures also demonstrated table recovery.
+
+The current limits remain explicit:
+
+```text
+visual regions not yet qualified
+confidence not emitted
+scanned-PDF/OCR behavior not yet qualified
+production lifecycle integration not yet authorized by the spike itself
+```
+
+Therefore the immediate production-shaped perception goal is bounded:
+
+```text
+IDSER-scheduled D1 perception execution
+    -> existing BSS-009 source authority
+    -> local Docling processor
+    -> unchanged normalization
+    -> Atlas-accepted NormalizedDocument v1
+    -> STOP before semantic extraction qualification
+```
+
+That checkpoint must prove stable source locators and replay/failure behavior before semantic-provider qualification is resumed.
 ---
 
 # 9. Semantic Extraction and Reconciliation
+
+This section begins only after an authorized, accepted `NormalizedDocument v1` exists. The Docling realignment does not reopen or weaken the established IDSER semantic contracts.
 
 The current semantic contracts established during IDSER remain authoritative until intentionally versioned.
 
@@ -1613,23 +1750,26 @@ Rebuild/migration behavior must remain governed and auditable.
 
 ---
 
-# 31. Current Development Provider Strategy
+# 31. Current Development Execution Strategy
 
 For the immediate Backend Phase continuation:
 
 ```text
-1. preserve the Mistral adapter and blocked live evidence;
-2. introduce provider-capability interfaces at the current concrete-Mistral seams;
-3. qualify Gemini against the current Backend Phase contracts before depending on it;
-4. configure Gemini as the active development deployment profile only after live gates pass;
-5. resume live acceptance through a new/superseding provider qualification checkpoint;
-6. do not reopen IDSER-001 through IDSER-010 unless the adapter reconciliation reveals an actual contract defect.
+1. preserve approved BSS-009 source/perception authority and IDSER-003 D1 kickoff;
+2. preserve BSS-V2-001/002 capability decoupling and server-controlled route selection;
+3. integrate local Docling behind the existing perception capability for the currently evidenced digital-PDF class;
+4. prove the production-shaped D1 path through existing BSS-009 authority to an Atlas-accepted NormalizedDocument v1;
+5. stop at that perception checkpoint before semantic extraction;
+6. only after the perception checkpoint, resume bounded semantic-model qualification against source slots derived from the accepted NormalizedDocument;
+7. qualify semantic extraction and reconciliation independently;
+8. do not reopen IDSER-001 through IDSER-010 unless the integration reveals an actual frozen-contract defect.
 ```
 
-Free Gemini may be used for development/evaluation only according to its qualified privacy class and real account limits.
+Gemini remains available as a reasoning-provider candidate and as an already-implemented adapter capability, but Gemini PDF perception is no longer required for the primary development perception path.
 
-V3 does not assume that a free provider tier will support public multi-user production indefinitely.
+Free or paid external models may be used for development/evaluation only according to their qualified capability, privacy class, and real account limits.
 
+V3 does not assume that any free provider tier will support public multi-user production indefinitely.
 ---
 
 # 32. Current Implementation Reconciliation Target
@@ -1641,6 +1781,8 @@ Atlas
   |
   +-- deterministic domain/application services
   |
+  +-- source authorization / perception acceptance
+  |
   +-- entitlement / privacy / economic admission
   |
   +-- pg-boss producers
@@ -1648,23 +1790,28 @@ Atlas
           v
 Agents Bridge
   |
-  +-- Interactive Executor
   +-- Background Worker
+  +-- Interactive Executor
   +-- Capability Registry
   +-- Qualified Route Resolver
-  +-- Provider Capacity Manager
-  +-- Provider Usage Recorder
-  +-- Provider Adapters
+  |
+  +-- Perception execution
+  |       |
+  |       +-- local Docling adapter
+  |       +-- future qualified perception executor
+  |
+  +-- Reasoning execution
           |
-          +-- MistralProvider
           +-- GeminiProvider
+          +-- MistralProvider (inactive until requalified)
           +-- future GatewayProvider / DirectProvider
 ```
 
-The existing `ReasoningRuntime`, perception contracts, semantic contracts, queue transaction guarantees, replay/fencing work, and result handoff boundaries should be reused.
+External-provider-only controls such as provider quota domains, provider privacy classifications, token usage, and price profiles remain attached to external routes. Local processor execution records processor identity/version, runtime metrics, failures, and provenance without inventing provider economics.
 
-V3 does not authorize replacing them merely to fit a new vendor SDK.
+The existing `ReasoningRuntime`, BSS-009 perception contracts, `NormalizedDocument v1`, IDSER semantic contracts, queue transaction guarantees, replay/fencing work, and result handoff boundaries should be reused.
 
+V3 does not authorize replacing those contracts merely to fit Docling or a provider SDK.
 ---
 
 # 33. Architecture Invariants
@@ -1674,44 +1821,46 @@ The following are V3 invariants.
 1. **Atlas owns accepted truth and review authority.**
 2. **Durable project knowledge originates from immutable human-readable documents plus governed human decisions.**
 3. **Document Perception and Semantic Extraction remain separate capabilities.**
-4. **NormalizedDocument remains provider-neutral derived operational state.**
-5. **Semantic candidates and reconciliation results remain proposals until Atlas validation and authority rules accept them.**
-6. **Reviewable state remains distinct from resolved knowledge.**
-7. **Retrieval discovers relevant context; it does not decide truth.**
-8. **Reconciliation must reason over relevant incoming-vs-existing and incoming-vs-incoming knowledge.**
-9. **Main Workflow, Project Facts, and review projections are deterministic from Atlas state by default and must not become unnecessary inference workloads.**
-10. **CES remains grounded reasoning over resolved project semantics plus governed assurance knowledge.**
-11. **Chat remains a bounded contextual mediator, not project memory or truth authority.**
-12. **New human project meaning not supported by existing immutable evidence must enter through an immutable Addendum.**
-13. **Agents Bridge remains the provider-execution boundary.**
-14. **Atlas features request capabilities, not provider/model IDs.**
-15. **Concrete provider/model routes are deployment configuration backed by qualification evidence.**
-16. **Successful authentication or model discovery does not qualify a route; live inference is mandatory.**
-17. **A provider route may be qualified for one capability and rejected for another.**
-18. **Current Mistral adapter code may remain, but the current Mistral live route is not treated as the active production-qualified route.**
-19. **Gemini is the current development qualification direction, not an architecture dependency.**
-20. **Provider adapters must not leak provider SDK types into Atlas Core/skills/trusted state.**
-21. **The current concrete Mistral worker coupling must converge to capability interfaces without rewriting semantic authority.**
-22. **pg-boss remains the background queue technology.**
-23. **Provider capacity must become capability-aware; one global worker concurrency value is not the final multi-user capacity model.**
-24. **Interactive work must have protected capacity or equivalent priority so bulk PRD processing cannot starve chat.**
-25. **Many Atlas users may share one upstream provider quota domain; Atlas must meter users independently of provider keys.**
-26. **Customer entitlement, Atlas economic policy, and provider capacity are separate concerns.**
-27. **Every provider-backed execution must emit normalized usage and route provenance.**
-28. **Free-tier execution must still record shadow production cost when a paid-equivalent cost profile exists.**
-29. **Provider pricing is effective-dated configuration, not semantic code.**
-30. **Skills remain unaware of vendor pricing and customer plan mechanics.**
-31. **Privacy class is a route qualification property and must be checked before provider transmission.**
-32. **A stateless API call does not by itself prove ZDR.**
-33. **Fallback is allowed only among qualified routes satisfying the same capability and privacy requirement.**
-34. **Automatic unqualified model routing is not permitted for truth-producing Atlas reasoning.**
-35. **Provider/gateway changes must preserve execution provenance and Atlas validation.**
-36. **Provider capacity failures, entitlement failures, customer allowance failures, and Atlas budget failures must remain distinguishable.**
-37. **Queueing may absorb temporary background bursts but must not hide structurally insufficient production capacity.**
-38. **Provider credentials remain server-side and are never one-per-Atlas-user by default.**
-39. **Provider/model changes must not change immutable source identity or silently mutate historical accepted truth.**
-40. **BSS-001 through BSS-007, BSS-009, and provider-neutral IDSER work remain foundations of V3 rather than being discarded.**
-
+4. **Document perception may be implemented by a qualified local processor or a qualified remote provider.**
+5. **NormalizedDocument remains execution-neutral derived operational state and the perception/semantics compatibility boundary.**
+6. **Perception structure is not business semantics; headings, blocks, tables, and geometry do not become semantic assertions by themselves.**
+7. **Semantic candidates and reconciliation results remain proposals until Atlas validation and authority rules accept them.**
+8. **Reviewable state remains distinct from resolved knowledge.**
+9. **Retrieval discovers relevant context; it does not decide truth.**
+10. **Reconciliation must reason over relevant incoming-vs-existing and incoming-vs-incoming knowledge.**
+11. **Main Workflow, Project Facts, and review projections are deterministic from Atlas state by default and must not become unnecessary inference workloads.**
+12. **CES remains grounded reasoning over resolved project semantics plus governed assurance knowledge.**
+13. **Chat remains a bounded contextual mediator, not project memory or truth authority.**
+14. **New human project meaning not supported by existing immutable evidence must enter through an immutable Addendum.**
+15. **Agents Bridge remains the bounded execution boundary for capability implementations.**
+16. **Atlas features request capabilities, not processor/provider/model IDs.**
+17. **Concrete execution routes are deployment configuration backed by capability-specific qualification evidence.**
+18. **Local processor installation does not qualify a route; external-provider authentication or model discovery does not qualify a route.**
+19. **A route may be qualified for one capability and rejected for another.**
+20. **Docling is the current digital-PDF perception integration direction, subject to production-shaped qualification of the evidenced document class.**
+21. **Gemini is a reasoning-provider candidate and existing adapter capability, not an architecture dependency and not a required perception path.**
+22. **Mistral adapter code may remain, but the current Mistral live route is not treated as active production-qualified reasoning.**
+23. **Provider SDK types and processor-specific internals must not leak into Atlas Core/skills/trusted state.**
+24. **pg-boss remains the background queue technology.**
+25. **Provider capacity must become capability-aware; one global worker concurrency value is not the final multi-user capacity model.**
+26. **Interactive work must have protected capacity or equivalent priority so bulk processing cannot starve chat.**
+27. **Many Atlas users may share one upstream provider quota domain; Atlas must meter users independently of provider keys.**
+28. **Customer entitlement, Atlas economic policy, external-provider capacity, and local processor resource limits are separate concerns.**
+29. **Every capability execution must record executor provenance appropriate to its route.**
+30. **Every external-provider-backed execution must emit normalized usage suitable for provider capacity/economic accounting.**
+31. **Free-tier external execution must still record shadow production cost when a paid-equivalent cost profile exists.**
+32. **Provider pricing is effective-dated configuration, not semantic code.**
+33. **Skills remain unaware of vendor pricing and customer plan mechanics.**
+34. **Privacy class must be checked before external provider transmission. Local execution must still respect source authorization and local data-handling boundaries.**
+35. **A stateless external API call does not by itself prove ZDR.**
+36. **Fallback is allowed only among qualified routes satisfying the same capability and applicable privacy requirement.**
+37. **Automatic unqualified model routing is not permitted for truth-producing reasoning.**
+38. **Executor changes must preserve execution provenance and Atlas validation.**
+39. **Provider capacity failures, entitlement failures, customer allowance failures, Atlas budget failures, and local processor failures must remain distinguishable.**
+40. **Queueing may absorb temporary background bursts but must not hide structurally insufficient execution capacity.**
+41. **Provider credentials remain server-side and are never one-per-Atlas-user by default.**
+42. **Processor/provider/model changes must not change immutable source identity or silently mutate historical accepted truth.**
+43. **BSS-001 through BSS-007, BSS-009, approved BSS-V2 capability/routing work, and provider-neutral IDSER work remain foundations of V3 rather than being discarded.**
 ---
 
 # 34. Resulting V3 Architecture
@@ -1732,9 +1881,8 @@ The following are V3 invariants.
           +------------------------+------------------------+
           |                        |                        |
           v                        v                        v
-   Deterministic State       Background AI Work       Interactive AI Work
-   / Projections             perception/extract/      chat/review help
-                             reconcile/CES
+   Deterministic State      Background Pipeline       Interactive AI Work
+   / Projections            perception / semantics    chat/review help
           |                        |                        |
           |                        v                        |
           |                     pg-boss                     |
@@ -1744,36 +1892,34 @@ The following are V3 invariants.
                                    v
                               Agents Bridge
                                    |
-                     Capability / Route Resolver
+                         Capability / Route Resolver
                                    |
-              +--------------------+--------------------+
-              |                    |                    |
-              v                    v                    v
-         capacity policy      privacy preflight     usage/budget
-              |                    |                    |
-              +--------------------+--------------------+
-                                   |
-                                   v
-                         Qualified Deployment Route
-                                   |
-                   +---------------+---------------+
-                   |               |               |
-                   v               v               v
-                Gemini          Mistral        Gateway/Provider N
-                   |               |               |
-                   +---------------+---------------+
-                                   |
-                                   v
-                         normalized result/usage
-                                   |
-                     +-------------+-------------+
-                     |                           |
-                     v                           v
-              Atlas validation            usage/cost ledger
-                     |
-                     v
-                 Atlas state
+                    +--------------+--------------+
+                    |                             |
+                    v                             v
+             PERCEPTION ROUTE              REASONING ROUTE
+                    |                             |
+             local Docling                 external provider
+             for qualified                Gemini / Mistral /
+             document class               future provider
+                    |                             |
+                    v                             v
+         generic perception result       structured proposal
+                    |                             |
+                    v                             v
+      normalizePerceptionResult(...)    Atlas/Bridge validation
+                    |                             |
+                    v                             |
+          NormalizedDocument v1                   |
+                    |                             |
+                    +-------------+---------------+
+                                  |
+                                  v
+                           Atlas validation /
+                         persistence authority
 ```
+
+External reasoning routes additionally pass through the applicable provider capacity, privacy, usage, and economic controls. Local Docling execution uses source authorization, bounded runtime/error handling, processor provenance, and local resource controls without pretending to be a token-billed provider.
 
 The semantic knowledge path remains:
 
@@ -1781,10 +1927,12 @@ The semantic knowledge path remains:
 Immutable Source
       |
       v
-Document Perception
+Qualified Document Perception
       |
       v
-NormalizedDocument
+NormalizedDocument v1
+      |
+      +-- current first integration checkpoint / stable source locators
       |
       v
 Semantic Extraction
@@ -1817,31 +1965,60 @@ Resolved Knowledge
       +-- Review Projection
       +-- Contextual Chat
 ```
-
 ---
 
 # 35. Checkpoint Boundary
 
-At V3, Atlas has one architecture for both development and eventual production economics.
+The immediate V3 implementation checkpoint is deliberately narrower than the full AI pipeline.
 
-Development may currently use:
+The next perception milestone is:
 
 ```text
-Gemini Free
+IDSER-scheduled D1
+    |
+    v
+existing BSS-009 source authority
+    |
+    v
+qualified local Docling execution
+    |
+    v
+existing normalization
+    |
+    v
+Atlas-accepted NormalizedDocument v1
+    |
+    v
+STOP
 ```
 
-while production may later use:
+That checkpoint must establish stable source locators, deterministic/replay-safe perception behavior, bounded failure handling, and the unchanged `NormalizedDocument v1` contract for the supported digital-PDF class.
+
+It must not require semantic extraction, semantic reconciliation, CES, chat, or a remote reasoning provider to declare perception success.
+
+After that checkpoint, Atlas resumes semantic-model qualification from the accepted normalized document boundary:
 
 ```text
-Gemini Paid
-OpenRouter PAYG
+NormalizedDocument v1
+    -> deterministic bounded source selection
+    -> qualified semantic extraction
+    -> Atlas-owned final validation/materialization
+```
+
+External reasoning providers may change between development and production:
+
+```text
+Gemini
+OpenRouter-backed qualified models
 OpenAI
 Mistral if entitlement is corrected and requalified
 another direct provider
 enterprise ZDR routes
 ```
 
-The provider can change.
+The perception processor may also change in the future if another implementation independently qualifies against the same contract.
+
+The executor can change.
 
 The cost can change.
 
@@ -1855,4 +2032,4 @@ The Atlas semantic architecture must not need to change with them.
 
 The final V3 principle is therefore:
 
-> **Atlas is not built around a model vendor. Atlas is built around governed knowledge capabilities with explicit entitlement, privacy, capacity, qualification, provenance, and economics. Providers are replaceable execution suppliers beneath those contracts.**
+> **Atlas is not built around a model vendor or document-processing vendor. Atlas is built around governed capability boundaries. Source-grounded perception terminates at a stable normalized document; semantic reasoning begins only after that boundary. Every processor or provider remains replaceable beneath Atlas-owned contracts, validation, provenance, and authority.**
