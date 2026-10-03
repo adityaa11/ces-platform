@@ -1303,30 +1303,48 @@ Approved historical security bindings remain unchanged.
 
 Do not reopen their reviewed contracts solely to rename provider terminology.
 
-### BSS-V2-004-01 - Docling executor
+### BSS-V2-004-01 - Persistent Docling service
 
 ```text
 BOUNDARY-BSSV2-00401-SOURCE
-Docling receives only source bytes already authorized and redeemed through BSS-009.
+Docling receives only exact source bytes already authorized and redeemed through BSS-009 and supplied by Agents Bridge.
 
 COUPLING-BSSV2-00401-DOCUMENTSTORE
-Docling cannot discover or read DocumentStore paths independently.
+Docling cannot discover or read DocumentStore paths independently and receives no Atlas database or pg-boss credentials.
 
 COUPLING-BSSV2-00401-SEMANTICS
 Docling mapping cannot create semantic candidates, rules, workflow steps, or truth decisions.
 
+SEAM-BSSV2-00401-PRIVATE-SERVICE
+The persistent docling-serve endpoint is reachable only through the intended Compose-private service boundary in the base Atlas profile.
+
+SEAM-BSSV2-00401-READINESS
+Atlas routing cannot treat the service as ready until the pinned runtime identity, required local artifacts, and exact Atlas PDF option profile are loaded/warm.
+
+COUPLING-BSSV2-00401-SUBPROCESS
+A fresh Python/Docling process per PDF cannot be used as the normal production route or as a silent fallback.
+
+COUPLING-BSSV2-00401-SECOND-QUEUE
+The current Docling route cannot introduce RQ/Redis or another durable job authority beneath pg-boss.
+
 SEAM-BSSV2-00401-LOCAL-RUNTIME
-The local processor boundary is bounded, cancellable, versioned, and unavailable failures are normalized without leaking source material.
+The service/network/processor boundary is bounded, cancellable, versioned, and unavailable/malformed failures are normalized without leaking source material.
 ```
 
 ### BSS-V2-004-02 - D1 perception checkpoint
 
 ```text
 BOUNDARY-BSSV2-00402-EXECUTION
-The D1 perception job, source grant, result handoff, and cache completion remain bound to the exact execution/document identity.
+The D1 perception job, source grant, exact-byte Docling request, result handoff, and cache completion remain bound to the exact execution/document identity.
+
+SEAM-BSSV2-00402-SERVICE-READINESS
+A service restart, profile mismatch, or not-ready state cannot be bypassed; D1 resumes only after the qualified Docling route is ready/warm again.
 
 SEAM-BSSV2-00402-REPLAY
-Retry, acknowledgement loss, duplicate delivery, and restart cannot create a second logical perception completion.
+Retry, acknowledgement loss, duplicate delivery, Bridge restart, and Docling service restart cannot create a second logical perception completion.
+
+COUPLING-BSSV2-00402-SECOND-QUEUE
+pg-boss remains the sole Atlas D1 job lifecycle authority; Docling task/RQ persistence is not added to this path.
 
 COUPLING-BSSV2-00402-SEMANTIC-ADVANCE
 Perception success/failure cannot fabricate semantic acceptance or reconciliation state.
@@ -1401,13 +1419,20 @@ Qualification is executor- and capability-specific.
 
 ## 21.1 Local Docling perception
 
-A local Docling route is not qualified merely because Python imports Docling or a spike script runs.
+A local Docling route is not qualified merely because Python imports Docling, a spike script runs, a container is alive, or one cached conversion is fast.
 
-The production-shaped perception route must prove, for its supported document class:
+The current production-shaped perception route must prove, for its supported document class:
 
 ```text
-explicit Docling/runtime identity
-bounded authorized PDF input
+docling-serve 1.21.0 + Docling 2.132.0 + immutable image/runtime identity
+Compose-private persistent service topology
+exact BSS-009-authorized PDF byte input
+no source-store/database/queue discovery authority
+models/artifacts available locally before normal work
+service health + model/profile warm readiness
+exact Atlas no-OCR Standard PDF option fingerprint
+CPU-only first execution profile
+explicit CPU thread count and local conversion concurrency
 page preservation
 major-text preservation
 usable heading/section structure
@@ -1418,12 +1443,18 @@ geometry only when trustworthy
 no fabricated confidence/visual data
 existing normalization compatibility
 unchanged NormalizedDocument v1 validation
-repeatability appropriate to deterministic processing
-bounded timeout/cancellation/failure behavior
+repeatability across sequential requests without service/process replacement
+bounded service/network/timeout/cancellation/failure behavior
+no per-document Docling process initialization
+no Docling-owned durable queue for Atlas D1
 no external source transmission
+every required warm end-to-end fixture run <=20 seconds
+cold boot/model/pipeline warm-up measured separately
 ```
 
-Scanned-PDF/OCR behavior remains unqualified until separately proven.
+The warm latency gate begins when Agents Bridge already possesses the authorized PDF bytes and ends after Docling response handling, deterministic mapping, `normalizePerceptionResult(...)`, and `parseNormalizedDocument(...)` succeed. Cold initialization may be excluded only because the route remains unavailable until it completes.
+
+Scanned-PDF/OCR behavior remains unqualified until separately proven. GPU/CUDA is also a separate execution-profile qualification, not an automatic fallback.
 
 ## 21.2 External reasoning providers
 
@@ -1532,13 +1563,18 @@ Local processor capacity and external provider capacity are different resources.
 Plan for:
 
 ```text
-local max concurrency
+Docling local conversion concurrency
+Docling CPU thread count
 CPU/memory pressure
+resident service/model footprint
 document/page/request bounds
-processor timeout
-worker/process availability
-queue backpressure
+processor/request timeout
+service health/readiness/warm state
+Bridge worker availability
+pg-boss queue backpressure
 ```
+
+The first CPU qualification must freeze the actual thread/concurrency profile used for the <=20-second evidence. More threads or more concurrent conversions are measured deployment changes, not free capacity.
 
 Do not invent external quota-domain or token limits for Docling.
 
@@ -1617,11 +1653,17 @@ execution ID
 capability
 route ID
 executor kind = local_processor
-processor/version
+docling-serve / Docling / image/runtime identity
+device profile
+Atlas PDF option-profile fingerprint
 qualification version
+service readiness state
 page/request metrics where useful
+Docling-reported processing/pipeline time where available
+Bridge-to-Docling duration
+mapping/normalization duration
+total warm-route duration
 retry count
-latency/duration
 final normalized status
 bounded failure class
 ```
@@ -1691,10 +1733,14 @@ Local Docling still must obey:
 
 ```text
 BSS-009 source authorization
+exact-byte Bridge -> Docling request boundary
+Compose-private service exposure
 bounded local input/output
+single-use/temporary conversion artifacts only as required by the service
 ignored/local diagnostic artifact rules
 source/log redaction
 no unintended external network transmission
+no Atlas DB/DocumentStore/pg-boss credentials in Docling
 deployment filesystem/process isolation appropriate to the ticket
 ```
 
@@ -1731,33 +1777,49 @@ A blocked Mistral route cannot be treated as live reasoning fallback until separ
 
 `docker compose up` remains the canonical supported local stack path.
 
-Docling production integration may use a managed local subprocess, loopback-only sidecar/container, or equivalent local execution boundary. The exact topology belongs to BSS-V2-004-01.
+The current Docling production topology is frozen for BSS-V2-004-01 as a dedicated persistent Compose-private `docling-serve` service.
 
-Whichever topology is selected must preserve:
+The current local profile must preserve:
 
 ```text
-no public Docling endpoint requirement
+docling-serve 1.21.0
+Docling 2.132.0
+immutable deployed image/runtime identity
+CPU-only first profile
+local compute engine
+one Uvicorn worker process unless separately justified
+explicit bounded Docling conversion concurrency
+explicit CPU thread count
+models/artifacts local before normal work
+service health + model/profile warm readiness
+no required public host port
 no direct DocumentStore path discovery
-bounded source/result transport
-explicit processor/runtime version
+exact authorized byte transport from Bridge
+no Atlas database/pg-boss credentials in Docling
+no Docling RQ/Redis lifecycle authority
 timeout/cancellation
 deterministic mapping
 source-safe diagnostics
 rebuildable derived state
 ```
 
+A fresh Python/Docling subprocess per PDF is not the current production route. A future perception topology may differ only through separate qualification against the same Atlas capability boundary.
+
 Before classifying a failure as implementation/executor behavior, check as applicable:
 
 ```text
 reviewed source actually built into image/runtime
-affected container/process recreated after source/config change
-expected Docling/runtime version active
+affected Bridge/Docling service recreated after source/config change
+expected docling-serve / Docling / image/runtime identity active
+CPU-only device profile actually active
+required local model artifacts present
+exact Atlas PDF option profile warm
 environment values loaded by expected service
 old process/container not still serving
 migrations applied
 pg-boss scenario state scoped
 DocumentStore fixture state scoped
-readiness state fresh
+health/readiness state fresh
 ```
 
 Use targeted rebuild/recreate.
@@ -1795,17 +1857,22 @@ with deterministic doubles/pure functions where appropriate.
 
 ### 29.2 Real local Docling integration
 
-For BSS-V2-004-01, use real local Docling with approved non-confidential repository fixtures to prove:
+For BSS-V2-004-01, use the real persistent Compose-private Docling service with approved non-confidential repository fixtures to prove:
 
 ```text
+service/model/profile warm readiness
+exact authorized-byte request boundary
 PDF processing
 page/text/heading/table preservation
 stable deterministic IDs/order
 trustworthy-only geometry
 existing normalizePerceptionResult(...)
 unchanged parseNormalizedDocument(...)
-repeatability
-bounded failure behavior
+repeatability across sequential requests without service/process replacement
+every required warm fixture run <=20 seconds end to end
+cold service boot/model/pipeline warm-up recorded separately
+bounded unavailable/not-ready/network/5xx/timeout/cancellation/malformed-response behavior
+no subprocess fallback
 no external inference
 ```
 
@@ -1815,13 +1882,19 @@ For BSS-V2-004-02, prove:
 
 ```text
 IDSER-003 D1 kickoff
+pg-boss job authority
 BSS-009 source redemption
-Docling execution
-normalization
+Bridge exact-byte verification
+qualified service identity/profile/readiness
+persistent private Docling execution
+deterministic mapping/normalization/parser
 Atlas result handoff/cache
 retry/replay/idempotency
-restart/failure boundaries
+Bridge restart/replay
+Docling service restart -> warm readiness -> safe retry
+service/network/failure boundaries
 no semantic advancement
+no second durable queue
 ```
 
 with the real existing queue/authority seams.
@@ -1852,8 +1925,12 @@ For BSS-V2-004-01, likely evidence includes:
 
 ```text
 provider-capability/perception interface tests
+Docling private-service HTTP adapter tests
 Docling mapper tests
-real local Docling fixture runs
+service health/readiness/warm-profile tests
+real persistent Docling fixture runs
+<=20-second warm-route timing matrix
+service/network/failure classification tests
 BSS-009 normalization tests
 Atlas Core perception tests
 affected Bridge typechecks
@@ -1864,8 +1941,12 @@ For BSS-V2-004-02, likely evidence includes:
 ```text
 IDSER-003 project/bundle kickoff regression
 BSS-009 source grant/result handoff
+private Docling route identity/readiness checks
 perception worker/queue tests
 pg-boss retry/replay/fencing
+Docling service restart/readiness recovery
+no-subprocess-fallback proof
+no-RQ/Redis second-queue proof
 Atlas perception authority/cache tests
 Compose boot/readiness
 PostgreSQL role-denial checks
@@ -1891,15 +1972,23 @@ It must prove:
 
 ```text
 approved generic perception interface/routing
-qualified local Docling route
+qualified persistent Compose-private Docling service
+pinned service/Docling/image/runtime identity
+CPU-only first profile and explicit thread/concurrency settings
+models/profile warm before route readiness
+<=20-second warm-route qualification already PASS
 IDSER-003 D1 job consumption
-BSS-009 source authority
+pg-boss sole job lifecycle authority
+BSS-009 source authority and exact-byte handoff
 unchanged NormalizedDocument v1
 Atlas-owned result/cache acceptance
 retry/replay/idempotency/restart correctness
-bounded local processor failures
+Docling service restart/readiness recovery
+bounded local service/network/processor failures
+no subprocess fallback
+no second durable queue
 Compose/runtime freshness
-restricted Bridge database authority
+restricted Bridge/database/DocumentStore authority
 ```
 
 It intentionally does not prove:
