@@ -1194,8 +1194,14 @@ BSS-V2-002  low to medium
 BSS-V2-003  medium
     provider credentials, bounded input, provider-type leakage, error redaction
 
-BSS-V2-004  medium
-    live credential handling, synthetic data, secret-safe evidence
+BSS-V2-004-01  medium
+    local source/process boundary, no DocumentStore bypass, no semantic leakage
+
+BSS-V2-004-02  medium
+    execution-bound source/result handoff, replay/idempotency, no semantic advancement
+
+BSS-V2-004-03 / 004-04  medium
+    live external credential handling, bounded semantic context, secret-safe evidence, no contract weakening
 
 BSS-V2-005  low to medium
     quota-domain aliases must be non-secret; capacity must not become product authority
