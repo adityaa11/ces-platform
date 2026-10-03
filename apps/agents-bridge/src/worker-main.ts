@@ -1,6 +1,7 @@
 import { rm, writeFile } from "node:fs/promises";
 import { createMistralCapabilities } from "./providers/mistral.js";
 import { createGeminiCapabilities } from "./providers/gemini.js";
+import { DoclingProvider } from "./providers/docling.js";
 import { QualifiedRouteRuntime, TestRuntime } from "./runtime.js";
 import { loadWorkerConfig } from "./worker-config.js";
 import { createBackgroundWorker } from "./worker.js";
@@ -22,19 +23,21 @@ const config = loadBridgeConfig();
 const availableAdapters = new Set<string>();
 if (config.mistral.apiKey) availableAdapters.add("mistral");
 if (config.gemini.apiKey) availableAdapters.add("gemini");
+if (config.qualifiedRoutes.some((route) => route.enabled && route.providerId === "docling")) availableAdapters.add("docling");
 const registry = createRouteRegistry(config.qualifiedRoutes, config.deploymentProfile, availableAdapters);
 for (const route of config.qualifiedRoutes.filter((candidate) => candidate.enabled)) assertConfiguredRouteAdapter(route, config);
 if (config.deploymentProfile === "live" && !registry.ready) throw new Error("Agents Bridge worker live deployment profile is not ready.");
 const mistral = createMistralCapabilities(config.mistral);
 const gemini = createGeminiCapabilities(config.gemini);
-const capabilities = { mistral, gemini };
+const docling = new DoclingProvider(config.docling);
+const capabilities = { mistral, gemini, docling: { perception: docling } };
 const semanticClient = createAtlasSemanticClient(loadAtlasSemanticClientConfig());
 const runtime = config.deploymentProfile === "test" ? new TestRuntime() : new QualifiedRouteRuntime((capability) => registry.resolve(capability), { mistral: mistral.streaming, gemini: gemini.streaming });
 const worker = createBackgroundWorker(loadWorkerConfig(), runtime, undefined, async (request, signal, context) => {
   const route = registry.resolve("atlas.document.perceive");
   assertConfiguredRouteAdapter(route, config);
   const store = createPerceptionResultReplay(context.database);
-  await runDocumentPerception(request, capabilities[route.providerId as "mistral" | "gemini"].perception, clients.source, clients.results, signal, { idempotencyKey: context.idempotencyKey, store, finalAttempt: context.finalAttempt });
+  await runDocumentPerception(request, capabilities[route.providerId as "mistral" | "gemini" | "docling"].perception, clients.source, clients.results, signal, { idempotencyKey: context.idempotencyKey, store, finalAttempt: context.finalAttempt });
 }, undefined, async (job, signal, context) => {
   const route = registry.resolve(capabilityForSkill(job.skill.id));
   assertConfiguredRouteAdapter(route, config);

@@ -1,4 +1,25 @@
 services:
+  docling-serve:
+    image: quay.io/docling-project/docling-serve-cpu:v1.36.0@sha256:4ba36cb322283e3851d2a6c5f347dd1cc515d7afb8ea5cc1577da8b5bfe2fea7
+    restart: unless-stopped
+    environment:
+      DOCLING_SERVE_ENABLE_UI: "false"
+      DOCLING_SERVE_ENABLE_REMOTE_SERVICES: "false"
+      DOCLING_SERVE_SHOW_VERSION_INFO: "true"
+      DOCLING_SERVE_WORKERS: "1"
+      DOCLING_DEVICE: cpu
+      OMP_NUM_THREADS: ${DOCLING_CPU_THREADS:-4}
+      MKL_NUM_THREADS: ${DOCLING_CPU_THREADS:-4}
+    volumes:
+      - docling-models:/root/.cache
+    # No ports: only services on this Compose network can contact Docling.
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5001/ready').read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
   postgres:
     image: postgres:18-alpine
     restart: unless-stopped
@@ -99,6 +120,8 @@ services:
         condition: service_healthy
       agents-bridge:
         condition: service_healthy
+      docling-serve:
+        condition: service_healthy
     environment:
       AGENTS_BRIDGE_DATABASE_URL: postgresql://agents_bridge:${AGENTS_BRIDGE_PASSWORD:-agents_bridge_local_dev_only}@postgres:5432/${POSTGRES_DB:-atlas_dev}
       AGENTS_BRIDGE_ATLAS_URL: http://atlas:3001
@@ -115,6 +138,13 @@ services:
       AGENTS_BRIDGE_WORKER_SHUTDOWN_TIMEOUT_MS: ${AGENTS_BRIDGE_WORKER_SHUTDOWN_TIMEOUT_MS:-15000}
       AGENTS_BRIDGE_DEPLOYMENT_PROFILE: ${AGENTS_BRIDGE_DEPLOYMENT_PROFILE:-development}
       AGENTS_BRIDGE_QUALIFIED_ROUTES: ${AGENTS_BRIDGE_QUALIFIED_ROUTES:-[]}
+      DOCLING_BASE_URL: http://docling-serve:5001
+      DOCLING_SLIM_VERSION: 2.132.0
+      DOCLING_SERVE_VERSION: 1.36.0
+      DOCLING_OPTION_PROFILE: atlas-digital-pdf-no-ocr-v1
+      DOCLING_TIMEOUT_MS: ${DOCLING_TIMEOUT_MS:-20000}
+      DOCLING_MAX_DOCUMENT_BYTES: ${DOCLING_MAX_DOCUMENT_BYTES:-20971520}
+      DOCLING_MAX_RESPONSE_BYTES: ${DOCLING_MAX_RESPONSE_BYTES:-10485760}
       MISTRAL_API_KEY: ${MISTRAL_API_KEY:-}
       MISTRAL_API_BASE_URL: ${MISTRAL_API_BASE_URL:-https://api.mistral.ai}
       MISTRAL_STRUCTURED_MODEL: ${MISTRAL_STRUCTURED_MODEL:-mistral-large-3-25-12}
@@ -141,3 +171,4 @@ services:
 volumes:
   postgres-data:
   atlas-data:
+  docling-models:

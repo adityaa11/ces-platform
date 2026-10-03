@@ -1,6 +1,6 @@
 # BSS-V2-004-01: Persistent local Docling perception service integration
 
-- **State:** `planned` (revised before CK checkpoint); **Review batch:** `BSS-V2-BATCH-04.01`
+- **State:** `awaiting_review`; **Review batch:** `BSS-V2-BATCH-04.01`
 - **Dependencies:** BSS-V2-001 and BSS-V2-002 at CK `PASS`; BSS-V2-003 remains approved adapter history but is not a perception dependency; DOCSPIKE-001 is feasibility input only
 - **References:** V3 §§3–6, 15, 31–35; Baseline V2 §§7–15, 21–22, 28–31; BSS V2 context §§10–12, 20–31
 - **Upstream implementation correction:** any in-progress per-request Python subprocess implementation is not the final acceptance topology. Compatible mapper/config/test work may be retained, but GO must re-read and satisfy this revised persistent-service contract before CK handoff.

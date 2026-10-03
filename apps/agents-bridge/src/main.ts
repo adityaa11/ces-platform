@@ -9,6 +9,7 @@ const config = loadBridgeConfig();
 const availableAdapters = new Set<string>();
 if (config.mistral.apiKey) availableAdapters.add("mistral");
 if (config.gemini.apiKey) availableAdapters.add("gemini");
+if (config.qualifiedRoutes.some((route) => route.enabled && route.providerId === "docling")) availableAdapters.add("docling");
 const registry = createRouteRegistry(config.qualifiedRoutes, config.deploymentProfile, availableAdapters);
 for (const route of config.qualifiedRoutes.filter((candidate) => candidate.enabled)) assertConfiguredRouteAdapter(route, config);
 const mistral = createMistralCapabilities(config.mistral);

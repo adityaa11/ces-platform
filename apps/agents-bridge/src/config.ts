@@ -1,4 +1,5 @@
 import { parseDeploymentProfile, parseQualifiedRoutes, type DeploymentProfile, type QualifiedRoute } from "./route-registry.js";
+import { doclingOptionProfile, doclingServeVersion, doclingSlimVersion, type DoclingProviderConfig } from "./providers/docling.js";
 
 export type BridgeConfig = {
   readonly host: string;
@@ -34,6 +35,7 @@ export type BridgeConfig = {
     readonly timeoutMilliseconds: number;
     readonly zeroDataRetentionApproved: boolean;
   };
+  readonly docling: DoclingProviderConfig;
 };
 
 function boundedPositiveInteger(value: string | undefined, fallback: number, name: string): number {
@@ -57,6 +59,9 @@ export function loadBridgeConfig(environment: NodeJS.ProcessEnv = process.env): 
   let parsedGeminiUrl: URL;
   try { parsedGeminiUrl = new URL(geminiBaseUrl); } catch { throw new Error("GEMINI_API_BASE_URL must be an absolute HTTPS URL."); }
   if (parsedGeminiUrl.protocol !== "https:" || parsedGeminiUrl.username || parsedGeminiUrl.password || parsedGeminiUrl.search || parsedGeminiUrl.hash) throw new Error("GEMINI_API_BASE_URL must be an HTTPS URL without credentials, query parameters, or fragments.");
+  const doclingBaseUrl = environment.DOCLING_BASE_URL ?? "http://docling-serve:5001";
+  const parsedDoclingUrl = new URL(doclingBaseUrl);
+  if (parsedDoclingUrl.protocol !== "http:" || parsedDoclingUrl.hostname !== "docling-serve" || parsedDoclingUrl.username || parsedDoclingUrl.password || parsedDoclingUrl.search || parsedDoclingUrl.hash) throw new Error("DOCLING_BASE_URL must be the credential-free Compose-private http://docling-serve endpoint.");
   return {
     host: environment.AGENTS_BRIDGE_HOST ?? "0.0.0.0",
     port,
@@ -91,5 +96,6 @@ export function loadBridgeConfig(environment: NodeJS.ProcessEnv = process.env): 
       timeoutMilliseconds: boundedPositiveInteger(environment.GEMINI_TIMEOUT_MS, 30_000, "GEMINI_TIMEOUT_MS"),
       zeroDataRetentionApproved: environment.GEMINI_ZDR_APPROVED === "true",
     },
+    docling: { baseUrl: doclingBaseUrl.replace(/\/$/u, ""), timeoutMilliseconds: boundedPositiveInteger(environment.DOCLING_TIMEOUT_MS, 20_000, "DOCLING_TIMEOUT_MS"), maxDocumentBytes: boundedPositiveInteger(environment.DOCLING_MAX_DOCUMENT_BYTES, 20 * 1024 * 1024, "DOCLING_MAX_DOCUMENT_BYTES"), maxResponseBytes: boundedPositiveInteger(environment.DOCLING_MAX_RESPONSE_BYTES, 10 * 1024 * 1024, "DOCLING_MAX_RESPONSE_BYTES"), serviceVersion: environment.DOCLING_SERVE_VERSION ?? doclingServeVersion, doclingSlimVersion: environment.DOCLING_SLIM_VERSION ?? doclingSlimVersion, optionProfile: environment.DOCLING_OPTION_PROFILE ?? doclingOptionProfile },
   };
 }
