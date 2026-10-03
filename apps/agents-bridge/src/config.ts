@@ -61,7 +61,8 @@ export function loadBridgeConfig(environment: NodeJS.ProcessEnv = process.env): 
   if (parsedGeminiUrl.protocol !== "https:" || parsedGeminiUrl.username || parsedGeminiUrl.password || parsedGeminiUrl.search || parsedGeminiUrl.hash) throw new Error("GEMINI_API_BASE_URL must be an HTTPS URL without credentials, query parameters, or fragments.");
   const doclingBaseUrl = environment.DOCLING_BASE_URL ?? "http://docling-serve:5001";
   const parsedDoclingUrl = new URL(doclingBaseUrl);
-  if (parsedDoclingUrl.protocol !== "http:" || parsedDoclingUrl.hostname !== "docling-serve" || parsedDoclingUrl.username || parsedDoclingUrl.password || parsedDoclingUrl.search || parsedDoclingUrl.hash) throw new Error("DOCLING_BASE_URL must be the credential-free Compose-private http://docling-serve endpoint.");
+  const testFaultProxy = environment.DOCLING_ALLOW_TEST_FAULT_PROXY === "true" && parsedDoclingUrl.hostname === "docling-fault";
+  if (parsedDoclingUrl.protocol !== "http:" || (!testFaultProxy && parsedDoclingUrl.hostname !== "docling-serve") || parsedDoclingUrl.username || parsedDoclingUrl.password || parsedDoclingUrl.search || parsedDoclingUrl.hash) throw new Error("DOCLING_BASE_URL must be the credential-free Compose-private http://docling-serve endpoint.");
   return {
     host: environment.AGENTS_BRIDGE_HOST ?? "0.0.0.0",
     port,

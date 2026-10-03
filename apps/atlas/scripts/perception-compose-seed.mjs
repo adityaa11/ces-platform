@@ -40,6 +40,8 @@ try {
     await rm(resolve(rootDirectory, storageKey), { force: true });
   } else {
     const useDocling = process.argv[2] === "docling";
+    const expectedState = process.env.PERCEPTION_EXPECT_STATE ?? "completed";
+    if (expectedState !== "completed" && expectedState !== "failed") throw new Error("PERCEPTION_EXPECT_STATE must be completed or failed.");
     // The Docling lifecycle smoke uses the same repository-owned,
     // non-confidential PDF that warms the resident worker route. The default
     // remains the synthetic Mistral smoke fixture.
@@ -49,34 +51,62 @@ try {
       ? new Uint8Array(Buffer.concat([await readFile("docs/example/Safara_PRD_03_Readiness_Manifest_Reporting.pdf"), Buffer.from(`\n% BSS-V2-004-02 ${randomUUID()}\n`)]))
       : new Uint8Array(Buffer.from("%PDF-compose-smoke-synthetic%"));
     const store = new LocalFilesystemDocumentStore(rootDirectory);
-    const stored = await store.put({ bytes, mediaType: "application/pdf" });
-    const executionId = "compose-smoke-" + randomUUID();
-    const artifactId = "compose-smoke-artifact-" + randomUUID();
-    const sourceSha256 = createHash("sha256").update(bytes).digest("hex");
-    const idempotencyKey = "compose-smoke-" + randomUUID();
-    const projectId = useDocling ? `compose-docling-project-${randomUUID()}` : undefined;
+    const startedAt = Date.now();
+    let executionId = "compose-smoke-" + randomUUID();
+    let artifactId = "compose-smoke-artifact-" + randomUUID();
+    let sourceSha256 = createHash("sha256").update(bytes).digest("hex");
+    let idempotencyKey = "compose-smoke-" + randomUUID();
+    let projectId = useDocling ? `compose-docling-${randomUUID().slice(0, 12)}` : undefined;
     if (projectId) {
-      const owner = `compose-docling-owner-${randomUUID()}`;
-      const workspaceId = `compose-docling-workspace-${randomUUID()}`;
-      const bundleId = `compose-docling-bundle-${randomUUID()}`;
-      await atlas.unsafe('INSERT INTO auth."user" (id,name,email,"emailVerified","createdAt","updatedAt") VALUES ($1,$1,$2,false,now(),now())', [owner, `${owner}@example.test`]);
-      await atlas.unsafe("INSERT INTO atlas.project (id,stable_id,name,created_by_user_id) VALUES ($1,$2,'Docling D1 smoke',$3)", [projectId, `compose-docling-${randomUUID().slice(0, 12)}`, owner]);
-      await atlas.unsafe("INSERT INTO atlas.workspace (id,project_id,kind,state,display_name) VALUES ($1,$2,'initial_draft','draft','Draft')", [workspaceId, projectId]);
-      await atlas.unsafe("INSERT INTO atlas.document (id,project_id,workspace_id,original_filename,storage_key,source_sha256,byte_size,media_type,created_by_user_id) VALUES ($1,$2,$3,'qualified.pdf',$4,$5,$6,'application/pdf',$7)", [artifactId, projectId, workspaceId, stored.storageKey, sourceSha256, bytes.byteLength, owner]);
-      await atlas.unsafe("INSERT INTO atlas.extraction_bundle (id,project_id,workspace_id,state,semantic_contract_version,reconciliation_contract_version,expected_document_count) VALUES ($1,$2,$3,'waiting','v1','v1',1)", [bundleId, projectId, workspaceId]);
-      await atlas.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id,document_id,project_id,workspace_id,sequence,state,perception_execution_id) VALUES ($1,$2,$3,$4,1,'perception_queued',$5)", [bundleId, artifactId, projectId, workspaceId, executionId]);
+      const email = `compose-docling-${randomUUID()}@example.test`;
+      const password = "a-tested-local-password";
+      const origin = "http://localhost:3001";
+      const signUp = await fetch(`${origin}/api/auth/sign-up/email`, { method: "POST", headers: { "content-type": "application/json", origin }, body: JSON.stringify({ name: "Docling Compose", email, password }) });
+      if (!signUp.ok) throw new Error(`Compose signup failed: ${signUp.status} ${await signUp.text()}`);
+      const signIn = await fetch(`${origin}/api/auth/sign-in/email`, { method: "POST", headers: { "content-type": "application/json", origin }, body: JSON.stringify({ email, password }) });
+      if (!signIn.ok) throw new Error(`Compose signin failed: ${signIn.status} ${await signIn.text()}`);
+      const cookies = typeof signIn.headers.getSetCookie === "function" ? signIn.headers.getSetCookie() : [signIn.headers.get("set-cookie")].filter(Boolean);
+      const cookie = cookies.map((value) => value.split(";", 1)[0]).join("; ");
+      const form = new FormData();
+      form.set("projectId", projectId);
+      form.set("projectName", "Docling D1 smoke");
+      form.set("prdFiles[]", new Blob([bytes], { type: "application/pdf" }), "qualified.pdf");
+      const created = await fetch(`${origin}/api/projects`, { method: "POST", headers: { cookie, origin }, body: form });
+      if (!created.ok) throw new Error(`IDSER-003 Compose kickoff failed: ${created.status} ${await created.text()}`);
+      const lifecycle = await atlas.unsafe("SELECT p.id AS project_id, d.id AS artifact_id, m.perception_execution_id, e.idempotency_key, d.storage_key FROM atlas.project p JOIN atlas.document d ON d.project_id=p.id JOIN atlas.extraction_bundle_document m ON m.document_id=d.id JOIN atlas.document_perception_execution e ON e.id=m.perception_execution_id WHERE p.stable_id=$1", [projectId]);
+      if (lifecycle.length !== 1) throw new Error("IDSER-003 kickoff did not create exactly one D1 lifecycle.");
+      executionId = String(lifecycle[0].perception_execution_id);
+      artifactId = String(lifecycle[0].artifact_id);
+      idempotencyKey = String(lifecycle[0].idempotency_key);
+      const storageKey = String(lifecycle[0].storage_key);
+      const sourceSha256Row = await atlas.unsafe("SELECT source_sha256 FROM atlas.document WHERE id=$1", [artifactId]);
+      sourceSha256 = String(sourceSha256Row[0]?.source_sha256);
+      process.stdout.write(JSON.stringify({ phase: "kickoff", projectId, executionId, artifactId, idempotencyKey, storageKey, sourceSha256, elapsedMilliseconds: Date.now() - startedAt }) + "\n");
+      if (process.env.PERCEPTION_WAIT !== "false") {
+      const deadline = Date.now() + 120_000;
+      while (Date.now() < deadline) {
+        const state = await atlas.unsafe("SELECT state FROM atlas.document_perception_execution WHERE id=$1", [executionId]);
+        if (state[0]?.state === expectedState) break;
+        await new Promise((resume) => setTimeout(resume, 250));
+      }
+      const observation = await atlas.unsafe("SELECT e.state, (SELECT COUNT(*)::int FROM atlas.normalized_document_cache c WHERE c.source_sha256=d.source_sha256 AND c.capability_identity='docling-digital-pdf' AND c.invalidated_at IS NULL) AS cache_count, (SELECT COUNT(*)::int FROM atlas.semantic_execution s JOIN atlas.extraction_bundle b ON b.id=s.bundle_id WHERE b.project_id=p.id) AS semantic_execution_count, (SELECT COUNT(*)::int FROM atlas.document_perception_execution x JOIN atlas.document dx ON dx.id=x.artifact_id WHERE dx.project_id=p.id) AS execution_count, (SELECT COUNT(*)::int FROM atlas.extraction_bundle_document m JOIN atlas.extraction_bundle b ON b.id=m.bundle_id WHERE b.project_id=p.id) AS member_count FROM atlas.document_perception_execution e JOIN atlas.document d ON d.id=e.artifact_id JOIN atlas.project p ON p.id=d.project_id WHERE e.id=$1", [executionId]);
+      if (observation[0]?.state !== expectedState) throw new Error(`IDSER-003 D1 kickoff did not reach ${expectedState} within two minutes.`);
+      process.stdout.write(JSON.stringify({ phase: "completed", projectId, executionId, idempotencyKey, sourceSha256, elapsedMilliseconds: Date.now() - startedAt, ...observation[0] }) + "\n");
+      }
+    } else {
+      const stored = await store.put({ bytes, mediaType: "application/pdf" });
+      const input = { executionId, artifactId, storageKey: stored.storageKey, sourceSha256, mimeType: "application/pdf", byteSize: bytes.byteLength, idempotencyKey, capabilityIdentity: "mistral-ocr:compose-smoke" };
+      const authority = new PostgresPerceptionAuthority(atlas, new PerceptionSourceGrantIssuer(process.env.AGENTS_BRIDGE_SERVICE_CREDENTIAL ?? "agents_bridge_service_local_dev_only_32"));
+      const request = await authority.create(input);
+      const boss = new PgBoss({ connectionString: bridgeUrl.toString(), schema: "pgboss", migrate: false, schedule: false, createSchema: false, application_name: "atlas-perception-compose-seed" });
+      await boss.start();
+      try {
+        await boss.send(queueName, { idempotencyKey, request }, { singletonKey: idempotencyKey });
+      } finally {
+        await boss.stop({ graceful: false });
+      }
+      process.stdout.write(JSON.stringify({ executionId, idempotencyKey, artifactId, sourceSha256, storageKey: stored.storageKey, projectId }) + "\n");
     }
-    const input = { executionId, artifactId, storageKey: stored.storageKey, sourceSha256, mimeType: "application/pdf", byteSize: bytes.byteLength, idempotencyKey, capabilityIdentity: useDocling ? "docling-digital-pdf" : "mistral-ocr:compose-smoke" };
-    const authority = new PostgresPerceptionAuthority(atlas, new PerceptionSourceGrantIssuer(process.env.AGENTS_BRIDGE_SERVICE_CREDENTIAL ?? "agents_bridge_service_local_dev_only_32"));
-    const request = await authority.create(input);
-    const boss = new PgBoss({ connectionString: bridgeUrl.toString(), schema: "pgboss", migrate: false, schedule: false, createSchema: false, application_name: "atlas-perception-compose-seed" });
-    await boss.start();
-    try {
-      await boss.send(queueName, { idempotencyKey, request }, { singletonKey: idempotencyKey });
-    } finally {
-      await boss.stop({ graceful: false });
-    }
-    process.stdout.write(JSON.stringify({ executionId, idempotencyKey, artifactId, sourceSha256, storageKey: stored.storageKey, projectId }) + "\n");
   }
 } finally {
   await Promise.all([atlas.end(), bridge.end()]);

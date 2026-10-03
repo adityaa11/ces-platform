@@ -1,0 +1,34 @@
+services:
+  docling-fault:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    init: true
+    command: ["node", "apps/agents-bridge/tests/docling-fault-proxy.mjs"]
+    depends_on:
+      docling-serve:
+        condition: service_healthy
+
+  atlas-fault:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    init: true
+    command: ["node", "apps/agents-bridge/tests/atlas-result-fault-proxy.mjs"]
+    depends_on:
+      atlas:
+        condition: service_healthy
+
+  agents-bridge-worker:
+    depends_on:
+      docling-fault:
+        condition: service_started
+      atlas-fault:
+        condition: service_started
+    environment:
+      DOCLING_BASE_URL: http://docling-fault:5001
+      DOCLING_ALLOW_TEST_FAULT_PROXY: "true"
+      # CFC-only: shorten only the per-request fault deadline.  Retry count
+      # and backoff deliberately inherit the production Compose defaults.
+      DOCLING_TIMEOUT_MS: "5000"
+      AGENTS_BRIDGE_ATLAS_URL: http://atlas-fault:3001
