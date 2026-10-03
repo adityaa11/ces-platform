@@ -1233,65 +1233,77 @@ Resolve the planning conflict or split the ticket first.
 
 # 20. Recommended security seams by workstream
 
-The following are examples of bounded seams the ticket author may use when they are supported by the final ticket scope.
+These are bounded examples for the current plan. Ticket authors should use only the seams supported by the actual frozen scope.
 
-Do not copy them mechanically if the actual ticket does not need them.
+### BSS-V2-001 / 002 / 003
 
-### BSS-V2-001
+Approved historical security bindings remain unchanged.
+
+Do not reopen their reviewed contracts solely to rename provider terminology.
+
+### BSS-V2-004-01 - Docling executor
 
 ```text
-SEAM-BSSV2-001-PROVIDER-INTERFACE
-Generic workers depend only on provider-neutral capabilities.
+BOUNDARY-BSSV2-00401-SOURCE
+Docling receives only source bytes already authorized and redeemed through BSS-009.
 
-COUPLING-BSSV2-001-CONCRETE-PROVIDER
-Generic workers must not require Gemini/Mistral concrete classes.
+COUPLING-BSSV2-00401-DOCUMENTSTORE
+Docling cannot discover or read DocumentStore paths independently.
+
+COUPLING-BSSV2-00401-SEMANTICS
+Docling mapping cannot create semantic candidates, rules, workflow steps, or truth decisions.
+
+SEAM-BSSV2-00401-LOCAL-RUNTIME
+The local processor boundary is bounded, cancellable, versioned, and unavailable failures are normalized without leaking source material.
 ```
 
-### BSS-V2-002
+### BSS-V2-004-02 - D1 perception checkpoint
 
 ```text
-SEAM-BSSV2-002-SERVER-ROUTING
-Provider/model choice remains server-controlled.
+BOUNDARY-BSSV2-00402-EXECUTION
+The D1 perception job, source grant, result handoff, and cache completion remain bound to the exact execution/document identity.
 
-COUPLING-BSSV2-002-CLIENT-MODEL
-Client/skill payloads cannot choose arbitrary provider/model IDs.
+SEAM-BSSV2-00402-REPLAY
+Retry, acknowledgement loss, duplicate delivery, and restart cannot create a second logical perception completion.
+
+COUPLING-BSSV2-00402-SEMANTIC-ADVANCE
+Perception success/failure cannot fabricate semantic acceptance or reconciliation state.
 ```
 
-### BSS-V2-003
+### BSS-V2-004-03 / 004-04 - external semantic qualification
 
 ```text
-SEAM-BSSV2-003-CREDENTIAL
-Gemini credentials remain Bridge deployment secrets.
+BOUNDARY-BSSV2-0040X-EXTERNAL
+Only bounded semantic context crosses the external provider boundary.
 
-SEAM-BSSV2-003-BOUNDED-INPUT
-Only explicit bounded provider input crosses the provider boundary.
+SEAM-BSSV2-0040X-LIVE-EVIDENCE
+Live evidence is secret-safe and uses approved non-confidential fixtures.
 
-COUPLING-BSSV2-003-SDK-LEAK
-Gemini SDK/API types do not enter Atlas semantic/domain contracts.
-```
+COUPLING-BSSV2-0040X-TRUTH
+Model output remains an untrusted proposal; no model chooses accepted truth or publication.
 
-### BSS-V2-004
-
-```text
-SEAM-BSSV2-004-LIVE-EVIDENCE
-Qualification evidence is secret-safe and uses approved non-confidential material.
+COUPLING-BSSV2-0040X-SCHEMA-WEAKEN
+Provider limitations cannot weaken the final Atlas semantic contracts.
 ```
 
 ### BSS-V2-005 / 006
 
 ```text
 SEAM-BSSV2-CAPACITY-OPERATIONAL
-Provider capacity remains operational Bridge authority, not customer entitlement authority.
+External provider capacity and local processor resource admission remain operational infrastructure, not customer entitlement.
 
 COUPLING-BSSV2-CAPACITY-KEY
-Multiple API keys must not be treated as automatic independent quota domains.
+Multiple external API keys must not be treated as automatic independent quota domains.
+
+COUPLING-BSSV2-CAPACITY-LOCAL
+Local Docling must not be assigned fake RPM/TPM/RPD or quota-domain semantics.
 ```
 
 ### BSS-V2-007
 
 ```text
 SEAM-BSSV2-USAGE-REDACTION
-Usage ledger stores metrics/provenance but not raw source/prompt/secret material.
+Telemetry stores bounded metrics/provenance but not raw source, full prompts, provider bodies, or secrets.
 
 BOUNDARY-BSSV2-USAGE-DB
 Bridge telemetry persistence does not grant Bridge trusted Atlas write authority.
@@ -1301,11 +1313,13 @@ Bridge telemetry persistence does not grant Bridge trusted Atlas write authority
 
 ```text
 SEAM-BSSV2-PRIVACY-PREFLIGHT
-Required privacy compatibility is checked before provider transmission.
+Required privacy compatibility is checked before external provider transmission.
 
 COUPLING-BSSV2-PRIVACY-DOWNGRADE
-No route/adaptor may silently lower privacy requirements to obtain a successful call.
+No external route may silently lower privacy requirements to obtain a successful call.
 ```
+
+Local Docling remains subject to source authorization and local data-handling/redaction rules rather than external provider training/retention classes.
 
 ### BSS-V2-010
 
@@ -1314,32 +1328,74 @@ SEAM-BSSV2-FALLBACK-QUALIFIED
 Fallback is restricted to explicitly qualified compatible routes.
 
 COUPLING-BSSV2-AUTO-ROUTER
-Truth-producing work cannot escape into arbitrary unqualified routing.
+Truth-producing work cannot escape into arbitrary unqualified model routing.
 ```
 
 ---
 
-# 21. Provider qualification rules
+# 21. Capability qualification rules
 
-The ticket set must preserve the lesson from the Mistral live failure.
+Qualification is executor- and capability-specific.
 
-Provider documentation, API-key creation, model listing, or dashboard quota display are not sufficient qualification.
+## 21.1 Local Docling perception
 
-A route becomes active only after the route-specific live ticket proves the required capability.
+A local Docling route is not qualified merely because Python imports Docling or a spike script runs.
 
-For current Gemini development, qualification must be explicit per capability.
+The production-shaped perception route must prove, for its supported document class:
 
-The same model may serve multiple capabilities only if each capability passes its own required gates.
+```text
+explicit Docling/runtime identity
+bounded authorized PDF input
+page preservation
+major-text preservation
+usable heading/section structure
+usable reading order
+table recovery where present
+stable deterministic source-unit IDs
+geometry only when trustworthy
+no fabricated confidence/visual data
+existing normalization compatibility
+unchanged NormalizedDocument v1 validation
+repeatability appropriate to deterministic processing
+bounded timeout/cancellation/failure behavior
+no external source transmission
+```
 
-Do not encode a permanent rule that all Atlas capabilities use one model.
+Scanned-PDF/OCR behavior remains unqualified until separately proven.
 
-Do not encode a permanent rule that every capability must use a different model.
+## 21.2 External reasoning providers
 
-Capability mapping is a qualified deployment decision.
+Preserve the lesson from the Mistral live failure.
+
+Provider documentation, API-key creation, model listing, dashboard quota display, or authentication alone are not qualification.
+
+Each external reasoning capability must independently prove its live behavior.
+
+The same model may serve extraction, reconciliation, chat, or another capability only if each required capability passes its own frozen gates.
+
+Do not encode a rule that every capability must use one model or that every capability must use a different model.
+
+Provider/model mapping remains a qualified deployment decision.
+
+## 21.3 Provider-facing structured output
+
+The external model does not need to emit every system-owned field of the final Atlas semantic result directly.
+
+A bounded provider-facing intermediate is allowed when deterministic code owns fields such as source-slot identity, evidence locators, local/system IDs, or source-accounting reconstruction.
+
+The mandatory rule is:
+
+```text
+provider proposal
+    -> deterministic finalization
+    -> complete unchanged Atlas v1 validation
+```
+
+No semantic contract weakening is permitted.
 
 ---
 
-# 22. Provider-neutral contract preservation
+# 22. Execution-neutral contract preservation
 
 BSS V2 must preserve these compatibility boundaries.
 
@@ -1349,21 +1405,31 @@ BSS V2 must preserve these compatibility boundaries.
 Immutable source bytes
       |
       v
-qualified DocumentPerceptionProvider
+BSS-009 authorization/redemption
       |
       v
-Bridge-owned provider result
+qualified perception executor
+      |
+      +-- current local Docling route
+      +-- future separately qualified executor
       |
       v
-Atlas normalization
+generic source-grounded perception result
+      |
+      v
+existing Atlas normalization
       |
       v
 NormalizedDocument v1
 ```
 
-Optional provider fields such as geometry/confidence remain optional.
+The current code-level `DocumentPerceptionProvider` interface name is retained for compatibility; it does not require a remote provider.
 
-Do not fabricate Mistral-shaped fields for Gemini.
+Optional geometry/confidence/visual data remains optional.
+
+Do not fabricate missing optional fields.
+
+Docling structural kinds such as heading/title/paragraph are not semantic kinds.
 
 ### 22.2 Semantic reasoning
 
@@ -1374,15 +1440,49 @@ atlas.semantic.reconcile/v1
 
 remain Atlas contracts.
 
-Provider structured-output features may improve generation reliability but do not replace complete Atlas-side validation.
+Semantic work begins only after an accepted authorized `NormalizedDocument v1` exists.
 
-No provider migration may weaken schema validation to make a provider call succeed.
+Provider structured-output features may improve transport reliability but do not replace complete final Atlas-side validation.
+
+No provider migration may weaken schema, evidence, source-accounting, or authority requirements.
+
+### 22.3 Perception-to-semantic locator continuity
+
+The Docling path must preserve stable normalized locators suitable for existing IDSER evidence validation:
+
+```text
+page number
+locator type
+locator ID
+source text/table content
+```
+
+A semantic model should reference bounded source slots derived from these normalized units rather than inventing document locator identities.
 
 ---
 
 # 23. Capacity and multi-user rules
 
-BSS V2 must assume that many Atlas users can share one upstream provider project/account.
+Local processor capacity and external provider capacity are different resources.
+
+### 23.1 Local Docling capacity
+
+Plan for:
+
+```text
+local max concurrency
+CPU/memory pressure
+document/page/request bounds
+processor timeout
+worker/process availability
+queue backpressure
+```
+
+Do not invent external quota-domain or token limits for Docling.
+
+### 23.2 External provider capacity
+
+Many Atlas users may share one upstream provider project/account.
 
 Therefore:
 
@@ -1400,21 +1500,11 @@ provider model ID count
 guaranteed independent quota count
 ```
 
-`quota_domain_id` represents the real shared upstream capacity pool known to Atlas infrastructure.
+`quota_domain_id` represents a real shared upstream provider capacity pool.
 
-Capacity policy must be able to reason about:
+External capacity may need requests/minute, tokens/minute, requests/day, max concurrency, cooldown, and proven route/model sublimits.
 
-```text
-requests/minute
-tokens/minute
-requests/day
-pages or document limits when relevant
-max concurrency
-provider cooldown
-route-specific sublimits when proven
-```
-
-Unknown provider limits remain explicit unknowns or conservative deployment limits.
+Unknown limits remain explicit unknowns or conservative deployment values.
 
 Do not invent numerical provider limits in architecture tickets.
 
@@ -1422,14 +1512,14 @@ Do not invent numerical provider limits in architecture tickets.
 
 # 24. Interactive protection
 
-The ticket set must preserve a future responsive Atlas UX.
+The ticket set must preserve a responsive Atlas UX while recognizing two different pressure sources.
 
 Background work includes:
 
 ```text
-document perception
-semantic extraction
-semantic reconciliation
+local Docling perception
+external semantic extraction
+external semantic reconciliation
 CES assessment when later implemented
 rebuild/reprocessing
 ```
@@ -1444,76 +1534,84 @@ bounded hypothetical reasoning
 review-resolution assistance
 ```
 
-The infrastructure must support protected interactive capacity, priority-aware admission, separate capacity allocation, or an equivalent bounded mechanism.
+The infrastructure must support bounded local processor concurrency so perception cannot exhaust local runtime resources.
 
-The exact numeric percentage is deployment policy and must not be hard-coded as architecture truth.
+For external reasoning, it must support protected interactive capacity, priority-aware admission, separate capacity allocation, or equivalent protection so bulk background requests cannot consume all provider capacity.
+
+Exact numeric percentages remain deployment policy.
 
 ---
 
 # 25. Usage and economic telemetry rules
 
-Every real provider-backed execution in the current implemented capability surface should be attributable to:
+Every capability execution should be attributable to an executor route.
+
+## 25.1 Local Docling telemetry
+
+Record only useful operational/provenance data such as:
 
 ```text
 execution ID
 capability
-work class
 route ID
-provider
-model/processor
+executor kind = local_processor
+processor/version
 qualification version
-quota domain
-request/retry count
-usage units when reported
+page/request metrics where useful
+retry count
 latency/duration
 final normalized status
+bounded failure class
+```
+
+Do not invent provider tokens, quota-domain IDs, or provider price profiles.
+
+## 25.2 External provider telemetry
+
+External reasoning execution may additionally record:
+
+```text
+provider/model
+quota domain
+request/retry count
+tokens/pages when reported
+provider latency
 price profile
 actual cash cost
 shadow production cost
 ```
 
-The ledger is operational telemetry.
+The ledger is operational telemetry, not a duplicate source-document store.
 
-It is not a duplicate source-document store.
+## 25.3 Shadow cost
 
-### 25.1 Shadow cost
+Free external provider execution must not make production AI economics invisible.
 
-Free provider execution must not make Atlas economics invisible.
+When an approved paid-equivalent profile exists, `actual_cash_cost` and `shadow_production_cost` remain distinct.
 
-When a paid-equivalent profile exists:
+Local Docling infrastructure cost may be measured later through an explicit local infrastructure/product economics decision; do not manufacture a provider token bill for it.
 
-```text
-actual_cash_cost
-shadow_production_cost
-```
+## 25.4 Price changes
 
-must remain distinguishable.
+External provider prices are effective-dated configuration.
 
-Shadow cost is planning telemetry, not an invoice.
-
-### 25.2 Price changes
-
-Provider prices are effective-dated data/configuration.
-
-Historical usage must be explainable against the price profile applied at execution/accounting time.
+Historical provider usage must remain explainable against the applied price profile.
 
 Use decimal-safe accounting types for financial amounts.
 
 ---
 
-# 26. Privacy rules
+# 26. Privacy and local data-handling rules
 
-Privacy class is provider-route qualification metadata, not semantic skill behavior.
+External provider privacy class is route qualification metadata, not semantic skill behavior.
 
-The initial conceptual ordering is:
+The conceptual external classes remain:
 
 ```text
 EVALUATION
 NO_TRAINING
 ZDR_REQUIRED
 ```
-
-A route may satisfy one or more classes according to qualified provider/account/endpoint behavior.
 
 Do not assume:
 
@@ -1523,30 +1621,47 @@ paid provider = ZDR
 free provider = safe for confidential data
 ```
 
-The current development Gemini profile may be qualified for EVALUATION with synthetic/non-confidential inputs.
+Before external transmission, the selected route must satisfy the required privacy class.
 
-Final production legal/privacy policy remains outside BSS V2 unless explicitly authorized.
+Local Docling perception does not transmit source bytes to an external provider, so provider training/retention classes do not apply to that route.
+
+Local Docling still must obey:
+
+```text
+BSS-009 source authorization
+bounded local input/output
+ignored/local diagnostic artifact rules
+source/log redaction
+no unintended external network transmission
+deployment filesystem/process isolation appropriate to the ticket
+```
+
+If perception later moves to a remote executor, external privacy qualification becomes mandatory for that route.
+
+Final legal/compliance policy remains outside BSS V2 unless separately authorized.
 
 ---
 
 # 27. Qualified fallback rules
 
-Fallback is an execution reliability feature, not permission for arbitrary model choice.
+Fallback is an execution reliability feature, not permission for arbitrary model/processor choice.
 
 A fallback candidate must already satisfy:
 
 ```text
 same Atlas capability
-qualified provider/model identity
-compatible schema/contract
-required privacy class
-bounded input/output rules
+qualified executor identity
+compatible final contract
+applicable privacy/data-handling requirement
+bounded input/output
 required execution semantics
 ```
 
 The actual selected route must always be recorded in provenance.
 
-A currently blocked Mistral route cannot be treated as live fallback until separately requalified.
+No second live perception executor is required merely to complete the current Docling development route.
+
+A blocked Mistral route cannot be treated as live reasoning fallback until separately requalified.
 
 ---
 
@@ -1554,24 +1669,38 @@ A currently blocked Mistral route cannot be treated as live fallback until separ
 
 `docker compose up` remains the canonical supported local stack path.
 
-BSS V2 tickets that affect Compose-managed source/config must include a bounded stale-environment procedure.
+Docling production integration may use a managed local subprocess, loopback-only sidecar/container, or equivalent local execution boundary. The exact topology belongs to BSS-V2-004-01.
 
-Before classifying a failure as implementation or provider behavior, check as applicable:
+Whichever topology is selected must preserve:
 
 ```text
-reviewed source actually built into image
-container recreated after config/source change
-environment values loaded by expected service
-old process/container not still serving traffic
-migrations applied
-pg-boss jobs/scenario state scoped correctly
-DocumentStore fixture/scenario state scoped correctly
-readiness marker/state fresh
+no public Docling endpoint requirement
+no direct DocumentStore path discovery
+bounded source/result transport
+explicit processor/runtime version
+timeout/cancellation
+deterministic mapping
+source-safe diagnostics
+rebuildable derived state
 ```
 
-Use targeted rebuild/recreate of affected services.
+Before classifying a failure as implementation/executor behavior, check as applicable:
 
-Do not use indiscriminate `docker compose down --volumes` as a default repair.
+```text
+reviewed source actually built into image/runtime
+affected container/process recreated after source/config change
+expected Docling/runtime version active
+environment values loaded by expected service
+old process/container not still serving
+migrations applied
+pg-boss scenario state scoped
+DocumentStore fixture state scoped
+readiness state fresh
+```
+
+Use targeted rebuild/recreate.
+
+Do not use indiscriminate `docker compose down --volumes` as routine repair.
 
 Preserve unrelated local data and user changes.
 
@@ -1579,58 +1708,77 @@ Preserve unrelated local data and user changes.
 
 # 29. Test strategy
 
-Normal CI and ordinary ticket validation must not require a live paid provider.
+Normal CI and ordinary ticket validation must not require live paid external inference.
 
-Use three evidence layers.
+Use four evidence layers.
 
 ### 29.1 Deterministic unit/contract tests
 
 Prove:
 
 ```text
-provider request translation
-schema handling
-response normalization
-error classification
-privacy preflight
 route selection
+Docling mapping
+schema handling
+error classification
+source boundary enforcement
+semantic finalizer behavior where applicable
+privacy preflight
 quota-domain logic
 cost calculation
 redaction
 ```
 
-with deterministic doubles where appropriate.
+with deterministic doubles/pure functions where appropriate.
 
-### 29.2 Local integration / Compose
+### 29.2 Real local Docling integration
 
-Prove:
+For BSS-V2-004-01, use real local Docling with approved non-confidential repository fixtures to prove:
 
 ```text
-Bridge startup/readiness
-worker injection
-pg-boss behavior
-PostgreSQL role boundaries
-usage persistence
-capacity integration
-existing perception/semantic handoffs
+PDF processing
+page/text/heading/table preservation
+stable deterministic IDs/order
+trustworthy-only geometry
+existing normalizePerceptionResult(...)
+unchanged parseNormalizedDocument(...)
+repeatability
+bounded failure behavior
+no external inference
 ```
 
-without requiring every test to hit a live external provider.
+### 29.3 Compose perception lifecycle integration
 
-### 29.3 Explicit live provider qualification
+For BSS-V2-004-02, prove:
 
-Only tickets explicitly owning live qualification may require:
+```text
+IDSER-003 D1 kickoff
+BSS-009 source redemption
+Docling execution
+normalization
+Atlas result handoff/cache
+retry/replay/idempotency
+restart/failure boundaries
+no semantic advancement
+```
+
+with the real existing queue/authority seams.
+
+### 29.4 Explicit live external reasoning qualification
+
+Only tickets explicitly owning external reasoning qualification may require:
 
 ```text
 real provider credential
 real inference
 real rate-limit/usage observation
-real synthetic PDF
+semantic extraction fixture
+reconciliation fixture when applicable
 ```
 
-Live tests must be opt-in and secret-safe.
+Live tests must be opt-in, secret-safe, and bounded.
 
-A normal unit test must not accidentally spend provider credits.
+A normal unit/Docling test must not accidentally spend provider credits.
 
 ---
 
