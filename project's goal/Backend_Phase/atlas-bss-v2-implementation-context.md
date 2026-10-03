@@ -884,11 +884,11 @@ BSS-V2-002  APPROVED
       |                              |
       v                              v
 BSS-V2-004-01                    BSS-V2-003  APPROVED
-Docling executor                Gemini adapter availability
+Persistent Docling service      Gemini adapter availability
       |
       v
 BSS-V2-004-02
-D1 -> Docling -> NormalizedDocument v1
+D1 -> ready Docling service -> NormalizedDocument v1
       |
       v
     STOP
@@ -2076,15 +2076,17 @@ When this implementation context is supplied for remaining-ticket regeneration, 
 7. Inspect BSS-009/009-01/009-02 source/perception authority.
 8. Inspect IDSER-003 for the exact D1 perception kickoff seam.
 9. Inspect IDSER-002/004/005/006 only enough to preserve the downstream semantic boundary and avoid prematurely entering it.
-10. Inspect current provider-capability, route-registry, perception-worker, config, and Compose seams.
-11. Use the current Atlas ticket/review contract conventions and Security Refactor Readiness skill.
-12. Update the existing `Stack_Setup_V2/README.md` and generate/revise only the remaining planned ticket files/children required by the current plan.
-13. Do not modify approved BSS-V2-001/002/003 ticket content or review history.
-14. Do not implement production code during ticket regeneration.
-15. Do not silently mark the historical BSS-V2-004 blocker evidence PASS.
-16. Make BSS-V2-004-01 and BSS-V2-004-02 independently GO/CK/CFC/HMN friendly.
-17. Freeze a hard stop after BSS-V2-004-02.
-18. Do not fully freeze model-specific 004-03/004-04 acceptance details from guesses; inspect the current semantic spike evidence and exact intended provider/model at the time those tickets are generated.
+10. Inspect current provider-capability, route-registry, perception-worker, config, Compose, and current BSS-V2-004-01/004-02 ticket seams.
+11. Treat the current BSS-V2-004-01/004-02 persistent Docling service contracts as the executable perception authority unless V3/Baseline V2 is intentionally revised again.
+12. Do not re-authorize the superseded per-document Python/Docling subprocess implementation merely because old worktree code or historical evidence still exists.
+13. Use the current Atlas ticket/review contract conventions and Security Refactor Readiness skill.
+14. Update the existing `Stack_Setup_V2/README.md` and generate/revise only the remaining planned ticket files/children required by the current plan.
+15. Do not modify approved BSS-V2-001/002/003 ticket content or review history.
+16. Do not implement production code during ticket regeneration.
+17. Do not silently mark the historical BSS-V2-004 blocker evidence PASS.
+18. Make BSS-V2-004-01 and BSS-V2-004-02 independently GO/CK/CFC/HMN friendly.
+19. Freeze a hard stop after BSS-V2-004-02.
+20. Do not fully freeze model-specific 004-03/004-04 acceptance details from guesses; inspect the current semantic spike evidence and exact intended provider/model at the time those tickets are generated.
 
 If inspection reveals a genuine architecture conflict that cannot be resolved within V3/Baseline V2 authority, surface the exact planning conflict rather than inventing behavior.
 
@@ -2122,6 +2124,11 @@ Historical BSS checkpoints remain historical.
 BSS-V2-001/002/003 remain approved.
 IDSER-001 through IDSER-010 are not reopened.
 Docling is the current digital-PDF perception direction, pending production-shaped qualification.
+The current Docling profile is persistent Compose-private docling-serve 1.21.0 + Docling 2.132.0.
+The first qualification profile is CPU-only, warm before routing, with <=20-second warm end-to-end fixture gates.
+Agents Bridge sends exact BSS-009-authorized PDF bytes; Docling does not discover DocumentStore.
+pg-boss remains the sole Atlas D1 job lifecycle authority; Docling RQ/Redis is not part of the current path.
+Fresh per-document Python/Docling subprocess execution is not the production profile.
 Gemini is an available reasoning adapter/candidate, not required perception authority.
 Mistral remains implemented but inactive/blocked until requalified.
 The immediate checkpoint ends at Atlas-accepted NormalizedDocument v1.
@@ -2182,6 +2189,21 @@ Do not generate tickets with these shapes:
 
 "Let Docling read DocumentStore directly"
     bypasses BSS-009 source authority
+
+"Spawn a fresh Python/Docling process for every production PDF"
+    discards the required persistent warm service model and reintroduces per-request initialization
+
+"Expose Docling on a public host port because Bridge needs HTTP"
+    confuses private Compose service networking with public service exposure
+
+"Add Docling RQ/Redis under pg-boss"
+    creates a second durable job authority for the same D1 lifecycle
+
+"Silently switch the CPU route to CUDA/GPU to pass latency"
+    changes the qualified execution profile instead of proving or separately qualifying it
+
+"Count model/service cold start as normal per-document latency"
+    mixes deployment readiness with the frozen warm-route performance gate
 
 "Give Docling RPM/TPM/RPD and token price fields"
     invents external-provider semantics for a local processor
@@ -2252,13 +2274,19 @@ The immediate completion boundary for the current realignment is the perception 
 
 ```text
 approved capability/routing foundation
-    -> local Docling production executor
-    -> IDSER-003 D1 + BSS-009 authority
+    -> persistent Compose-private Docling service
+         -> docling-serve 1.21.0
+         -> Docling 2.132.0
+         -> CPU-only first profile
+         -> models/profile warm before routing
+         -> every required warm fixture <=20 seconds end to end
+    -> IDSER-003 D1 + pg-boss + BSS-009 authority
+    -> exact-byte Bridge handoff
     -> Atlas-accepted NormalizedDocument v1
     -> STOP
 ```
 
-That checkpoint is complete only when the supported digital-PDF class, processor/runtime identity, source-locator stability, normalization, result acceptance, and retry/replay/failure behavior are proven without semantic-model dependency.
+That checkpoint is complete only when the supported digital-PDF class, pinned service/processor/image identity, warm readiness, CPU thread/concurrency profile, <=20-second warm latency, source-locator stability, normalization, result acceptance, service-restart recovery, retry/replay/failure behavior, no-subprocess fallback, and single pg-boss lifecycle authority are proven without semantic-model dependency.
 
 The broader BSS V2 phase later ends when the backend has also proven:
 
@@ -2299,8 +2327,13 @@ Docling feasibility PASS_WITH_LIMITS
 IMMEDIATE TARGET
 
 IDSER D1
-    -> BSS-009 authorized bytes
-    -> local Docling
+    -> pg-boss
+    -> BSS-009 authorized exact bytes
+    -> Agents Bridge
+    -> persistent Compose-private docling-serve
+         -> CPU-only ready/warm profile
+         -> no per-document process initialization
+         -> <=20-second warm qualification
     -> deterministic generic perception
     -> unchanged NormalizedDocument v1
     -> Atlas acceptance
@@ -2329,4 +2362,4 @@ without changing what Atlas considers project truth.
 
 The final rule for ticket generation is:
 
-> **Build small, closed, reviewable capability checkpoints. Preserve historical authority. Let Docling do source-grounded document perception and stop at the normalized document boundary. Let external models do only separately qualified reasoning after that boundary. Make every acceptance condition explicit before GO, keep security readiness local to the ticket, and never use CK/CFC as a discovery phase for work that should have been frozen up front.**
+> **Build small, closed, reviewable capability checkpoints. Preserve historical authority. For the current digital-PDF route, run Docling as a persistent private local service that receives only BSS-009-authorized bytes, is warm before routing, and must satisfy the frozen CPU latency/contract gates before D1 depends on it. Stop at the normalized document boundary. Let external models do only separately qualified reasoning after that boundary. Make every acceptance condition explicit before GO, keep security readiness local to the ticket, and never use CK/CFC as a discovery phase for work that should have been frozen up front.**
