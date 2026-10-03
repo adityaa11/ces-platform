@@ -1,70 +1,68 @@
 # Atlas BSS V2 Implementation Context
 
-Status: Authorized implementation context for ticket-set decomposition
+Status: Authorized implementation context for remaining BSS V2 realignment and ticket decomposition
 Phase name: Backend Stack Setup V2 Reconciliation
 Ticket-set prefix: BSS-V2
 Repository: adityaa11/ces-platform
 Branch inspected: codex/new-atlas-backend
-Reviewed branch HEAD: 749db157579c292a7ee8dbf73c77584bd9b45162
+Reviewed branch HEAD: 98c09b934e9b2c7a02670f0c539aa9c6bae24d1e
 Encoding: UTF-8, ASCII-safe Markdown
 
 ---
 
 ## 1. Purpose
 
-This implementation context authorizes a new additive Backend Stack Setup V2 ticket set.
+This implementation context governs the remaining additive Backend Stack Setup V2 work after the repository has already approved BSS-V2-001, BSS-V2-002, and BSS-V2-003.
 
-The purpose of BSS V2 is not to redesign Atlas domain semantics and not to replace the already approved BSS and IDSER work.
+Its purpose is not to redesign Atlas domain semantics and not to rewrite approved BSS/IDSER history.
 
-BSS V2 exists to reconcile the provider-execution substrate with the architecture now established by:
+The current authority documents are:
 
 - `atlas-core-architecture-checkpoint-v3.md`; and
 - `atlas-backend-production-baseline-v2.md`.
 
-The current Atlas backend already has strong provider-neutral service, queue, document, perception, semantic, persistence, replay, and authority foundations. The remaining mismatch is concentrated inside Agents Bridge, where generic runtime and worker code still depends directly on `MistralProvider` and Mistral-centric configuration.
-
-The current Mistral adapter implementation remains useful, but the active live Mistral route cannot be treated as production-qualified because real inference is externally blocked by provider entitlement with a reported request allowance of zero.
-
-The immediate development provider direction is Gemini.
-
-The production architecture must not become Gemini-specific.
-
-The target is:
+Those documents now establish a split execution model:
 
 ```text
-Atlas capability
-      |
-      v
-Agents Bridge
-      |
-      v
-qualified route
-      |
-      +-- Gemini
-      +-- Mistral when requalified
-      +-- future direct provider
-      +-- future qualified gateway
+source-grounded document perception
+    -> qualified local processor
+
+semantic / conversational reasoning
+    -> separately qualified external reasoning provider
 ```
 
-BSS V2 must also establish the minimum production-economics substrate required so Atlas can later move from free development inference to paid multi-user operation without another backend redesign.
+The immediate perception direction is local Docling for the currently evidenced digital-PDF class.
 
-That substrate includes:
+DOCSPIKE-001 recorded `PASS_WITH_LIMITS` feasibility evidence for:
 
 ```text
-provider capability interfaces
-qualified routes
-Gemini adapter and live qualification
-quota domains
-capability-aware capacity admission
-interactive capacity protection
-provider usage/provenance telemetry
-effective-dated price profiles
-shadow production COGS
-privacy-class preflight
-qualified fallback foundation
+repository PDF
+    -> local Docling
+    -> deterministic generic perception result
+    -> existing normalizePerceptionResult(...)
+    -> unchanged NormalizedDocument v1
 ```
 
-The BSS V2 ticket set must stop before Atlas product pricing, subscriptions, billing, customer plan rules, review UI, CES product behavior, chatbot product behavior, publication behavior, or other downstream domain features.
+That spike remains feasibility evidence rather than production activation authority. Its known limits are explicit: visual regions were omitted where unstable, confidence was not fabricated, and scanned-PDF/OCR behavior was not established.
+
+The next BSS/IDSER alignment target is therefore deliberately narrow:
+
+```text
+IDSER-003 D1 perception kickoff
+    -> existing BSS-009 source authority
+    -> qualified local Docling execution
+    -> existing normalization
+    -> Atlas-accepted NormalizedDocument v1
+    -> STOP
+```
+
+Semantic extraction and reconciliation qualification resume only after that perception checkpoint.
+
+Gemini remains an implemented adapter and a candidate for later reasoning qualification. Gemini PDF perception is no longer required for the primary development perception path.
+
+Mistral remains an implemented but inactive/blocked external provider until separately requalified.
+
+The remaining BSS V2 work must also preserve the production-economics substrate required for external reasoning providers, but provider quota/privacy/token-cost concepts must not be falsely imposed on local Docling execution.
 
 ---
 
@@ -94,16 +92,20 @@ BSS-001  Runtime / workspace foundation
 BSS-002  Local PostgreSQL Compose foundation
 BSS-003  PostgreSQL / Drizzle / database-role authority boundaries
 BSS-004  Better Auth persistence
-BSS-005  Agents Bridge provider-neutral service foundation
+BSS-005  Agents Bridge service foundation
 BSS-006  pg-boss background runtime
 BSS-007  DocumentStore foundation
 BSS-008  Mistral provider adapter implementation
 BSS-009  Document Perception foundation
 BSS-009-01 Atlas perception authority
 BSS-009-02 Bridge perception integration
+
+BSS-V2-001 Provider capability decoupling        APPROVED
+BSS-V2-002 Qualified route registry              APPROVED
+BSS-V2-003 Gemini adapter contracts              APPROVED
 ```
 
-BSS-008 is specifically reclassified as:
+BSS-008 remains:
 
 ```text
 adapter implementation mechanics: retained
@@ -111,9 +113,17 @@ Mistral live route qualification: blocked / inactive
 Mistral as permanent Atlas dependency: prohibited
 ```
 
-The new ticket set must preserve the historical BSS ticket set and its review history.
+BSS-V2-001/002/003 also remain historical approved work.
 
-Do not rewrite approved BSS tickets merely to make the history appear as if Gemini or route-based execution had always been present.
+In particular:
+
+- BSS-V2-001 established narrow capability interfaces.
+- BSS-V2-002 established server-controlled qualified-route resolution.
+- BSS-V2-003 established Gemini adapter behavior under deterministic transport tests, including a PDF-capable adapter surface.
+
+The Docling realignment does not invalidate those approved commits. It changes which capability implementation is preferred for current perception.
+
+The existing planned BSS-V2-004 and its blocker evidence must not be silently reinterpreted as a PASS or rewritten to pretend the previous Gemini-first plan never existed. Remaining ticket planning should supersede that plan explicitly while preserving its historical artifacts.
 
 ---
 
@@ -121,13 +131,13 @@ Do not rewrite approved BSS tickets merely to make the history appear as if Gemi
 
 The current Initial Draft implementation through IDSER-010 remains established domain behavior.
 
-BSS V2 must preserve, at minimum:
+BSS V2 must preserve:
 
 ```text
+NormalizedDocument v1
 semantic contract v1
 atlas.semantic.extract/v1
 atlas.semantic.reconcile/v1
-NormalizedDocument v1
 bounded semantic context
 candidate persistence
 evidence/source accounting
@@ -144,112 +154,184 @@ bundle completion lifecycle
 Ready for Review boundary
 ```
 
-BSS V2 must not reopen those semantics merely because the provider substrate changes.
+For the current perception-first realignment, the important upstream/downstream split is:
 
-The existing IDSER-011 ticket set is Mistral-specific live-provider acceptance evidence.
+```text
+UPSTREAM OF PERCEPTION CHECKPOINT
 
-It must remain historical and must not be silently rewritten into Gemini acceptance under the same ticket identity.
+IDSER-003
+    project/bundle creation
+    ordered document manifest
+    D1 perception execution/source grant/job
 
-After BSS V2 reaches its final PASS checkpoint, a separate superseding live-provider acceptance ticket set may prove the active qualified route and then return Atlas to the functional point IDSER-011 was intended to establish.
+BSS-009 series
+    source authorization
+    byte redemption
+    normalization
+    Atlas-owned derived cache
+
+
+PERCEPTION CHECKPOINT
+
+Atlas-accepted NormalizedDocument v1
+
+
+DOWNSTREAM OF CHECKPOINT
+
+IDSER-002
+    semantic contracts
+
+IDSER-004
+    semantic context/result authority
+
+IDSER-005
+    semantic worker/replay
+
+IDSER-006
+    extraction validation/materialization
+
+IDSER-007+
+    reconciliation and later lifecycle
+```
+
+The perception checkpoint must not require semantic success.
+
+The existing IDSER-011 ticket set remains Mistral-specific historical live-provider acceptance evidence and must not be silently rewritten as Gemini or Docling acceptance.
+
+Once perception is production-shaped and accepted, later semantic qualification may consume the existing IDSER contracts without reopening them unless an actual contract defect is separately authorized.
 
 ---
 
 ## 5. Current repository mismatch to reconcile
 
-The architecture is provider-neutral, but current code still contains concrete Mistral coupling in generic execution paths.
+The repository has moved beyond the original BSS V2 planning assumptions.
 
-Known examples include:
+The primary concrete-provider coupling was already corrected by BSS-V2-001 and BSS-V2-002.
+
+BSS-V2-003 added Gemini beneath those interfaces.
+
+The remaining mismatch is architectural/planning:
 
 ```text
-apps/agents-bridge/src/config.ts
-    BridgeConfig is Mistral-centric.
+old remaining plan
+    Gemini must qualify perception + extraction + reconciliation together
 
-apps/agents-bridge/src/main.ts
-    directly constructs MistralProvider / MistralChatRuntime.
-
-apps/agents-bridge/src/worker-main.ts
-    directly constructs MistralProvider.
-
-apps/agents-bridge/src/semantic-worker.ts
-    requires concrete MistralProvider.
-
-apps/agents-bridge/src/document-perception-worker.ts
-    requires concrete MistralProvider.
-
-apps/agents-bridge/src/runtime.ts
-    exposes MistralChatRuntime as the concrete provider-backed runtime.
-
-docker-compose.yml
-    primarily wires MISTRAL_* provider configuration.
+current architecture
+    perception and semantic reasoning qualify independently
 ```
 
-This is a bounded infrastructure mismatch.
+DOCSPIKE-001 has shown that local Docling can reach the existing perception boundary for the current digital-PDF fixtures.
 
-It is not authority to rewrite:
+Therefore the remaining perception seam is:
 
 ```text
-Atlas semantic schemas
-NormalizedDocument semantics
-Atlas persistence
-bundle lifecycle
-review authority
-publication authority
-DocumentStore authority
-BSS-006 queue semantics
-IDSER replay/fencing behavior
+existing DocumentPerceptionProvider-style capability
+    -> production-shaped local Docling implementation
+    -> existing BSS-009 handoff
+    -> unchanged NormalizedDocument v1
+```
+
+The code-level interface name `DocumentPerceptionProvider` is retained for compatibility. Its semantics are executor-neutral; implementing it with local Docling does not make Docling a remote AI provider.
+
+The following are not authorized by this realignment:
+
+```text
+semantic schema rewrite
+NormalizedDocument v1 rewrite
+direct Docling access to DocumentStore paths
+semantic interpretation inside Docling mapping
+new queue technology
+review/publication redesign
+rewriting approved BSS/IDSER history
 ```
 
 ---
 
 ## 6. Required BSS V2 end state
 
-BSS V2 is complete only when the established backend can demonstrate this provider-execution shape:
+The remaining BSS V2 work must support two execution shapes beneath one capability-routing substrate.
+
+### 6.1 Local perception route
 
 ```text
-Atlas capability request
-        |
-        v
-provider-neutral capability interface
+Atlas/IDSER capability request
         |
         v
 qualified route resolver
         |
-        +-- deployment profile
-        +-- qualification identity
-        +-- work class
-        +-- privacy requirement
-        +-- quota domain
-        +-- capacity profile
-        +-- cost profile
+        v
+local_processor route
         |
         v
-qualified provider adapter
+Docling adapter/runtime boundary
         |
         v
-provider execution
+generic source-grounded perception result
         |
         v
-normalized result / stream / error
-        |
-        +-- route provenance
-        +-- normalized usage
-        +-- operational cost telemetry
+existing normalizePerceptionResult(...)
         |
         v
-existing Atlas validation / persistence / replay boundaries
+NormalizedDocument v1
+        |
+        v
+Atlas result acceptance/cache authority
 ```
 
-The development profile should be able to use Gemini through this substrate.
+The local route records processor identity/version, qualification identity, runtime/failure metrics, and route provenance.
 
-The Mistral adapter should remain available as an implemented but inactive route until it is separately requalified.
+It does not invent provider credentials, quota domains, RPM/TPM/RPD, external privacy classes, or token pricing.
 
-Moving later from Gemini Free to Gemini Paid, another direct provider, or a qualified gateway must primarily be a route/profile/qualification/capacity/privacy/cost change, not an Atlas semantic rewrite.
+### 6.2 External reasoning route
+
+```text
+Atlas semantic/chat capability request
+        |
+        v
+qualified route resolver
+        |
+        v
+external_provider route
+        |
+        +-- privacy preflight
+        +-- quota/capacity admission
+        +-- provider/model identity
+        |
+        v
+provider adapter
+        |
+        v
+bounded structured/stream result
+        |
+        +-- provider usage/provenance
+        +-- cost telemetry where applicable
+        |
+        v
+existing Atlas validation / persistence / replay authority
+```
+
+### 6.3 Immediate hard stop
+
+Before semantic-model qualification resumes, the backend must prove:
+
+```text
+IDSER-003 D1 job
+    -> BSS-009 source grant/redemption
+    -> local Docling
+    -> deterministic mapping
+    -> existing normalization
+    -> Atlas-accepted NormalizedDocument v1
+```
+
+and stop there.
+
+The perception checkpoint is independently useful and reviewable. It must not be hidden inside a semantic-provider live-qualification ticket.
 
 ---
 
 ## 7. Mandatory authority split
 
-Generated tickets must preserve this authority model.
+Generated or revised tickets must preserve this authority model.
 
 ### 7.1 Atlas owns
 
@@ -257,6 +339,8 @@ Generated tickets must preserve this authority model.
 project truth
 workspace/revision authority
 source authorization
+immutable source identity
+NormalizedDocument acceptance/cache authority
 semantic validation
 reviewable state
 review decisions
@@ -272,36 +356,47 @@ Atlas commercial budget policy
 ### 7.2 Agents Bridge owns
 
 ```text
-provider credentials
-provider adapters
-capability route resolution
-provider/model allowlists
-provider request translation
-provider capacity enforcement
-provider rate limits
-provider retries
-provider timeout/cancellation
-normalized provider usage
-normalized provider errors
-route provenance
-operational provider budgets
+capability implementation adapters
+qualified route resolution
+local processor invocation where configured
+external provider credentials/adapters
+processor/provider/model allowlists
+bounded retries
+timeout/cancellation
+normalized execution errors
+executor provenance
+external provider capacity/rate-limit enforcement
+external provider usage/economic telemetry
 ```
 
-### 7.3 Provider may perform
+### 7.3 Local perception processor may perform
 
 ```text
-document perception / OCR
-multimodal interpretation
-structured reasoning
+PDF parsing
+page/text-block recovery
+heading/structural classification
+reading-order recovery
+table recovery
+geometry recovery only when trustworthy
+OCR only after separate qualification
+```
+
+It may not create business-semantic assertions, choose truth, discover source files independently, or write Atlas trusted state.
+
+### 7.4 External reasoning provider may perform
+
+```text
+structured semantic reasoning
 semantic relationship reasoning
 CES reasoning when later authorized
 chat generation when later authorized
 tool-call proposals
 Addendum language assistance when later authorized
 embeddings when later qualified
+multimodal interpretation when separately qualified
 ```
 
-No BSS V2 ticket may move accepted project truth or product entitlement into Agents Bridge.
+No BSS V2 ticket may move accepted project truth or product entitlement into Agents Bridge or an executor.
 
 ---
 
