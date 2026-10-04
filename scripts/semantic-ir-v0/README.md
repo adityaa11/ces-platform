@@ -18,6 +18,29 @@ node scripts/semantic-ir-v0/check-semir-002-schema.mjs
 
 The checker reads the frozen SEMIR-001 predecessor blob at commit `8e865a9`, rather than the shared working tree, so its 43-case mapping evidence stays anchored to the approved predecessor. It makes no provider call and does not emit provider data.
 
+## SEMSPIKE-006 provider-wire compatibility gate
+
+Atlas Semantic IR remains the semantic authority: semantic absence is optional
+there. The separate Groq provider-wire schema makes every object property
+required and uses `null` only for those fixed optional semantic paths. Wire
+normalization removes those nulls structurally, then validates the result using
+the unchanged Atlas schema; it does not repair or infer semantic content.
+
+Run the offline compatibility gate with:
+
+```sh
+node scripts/semantic-ir-v0/check-semir-006-provider-wire.mjs
+```
+
+It recursively checks every reachable provider-schema object (including
+properties, items, unions, definitions, and references) for Groq's confirmed
+strict requirements: every declared property is required, every object is
+closed with `additionalProperties: false`, and no `anyOf` branch is itself an
+anonymous `anyOf` wrapper. Nullable primitives are emitted as `type` arrays
+with `null`; object unions remain leaf-variant `anyOf` constructs. It also
+records emitted constraint keywords such as `minLength` and `minItems` for
+review; no provider call is made by this gate.
+
 ## SEMIR-003 semantic oracle
 
 `SEMIR-003` compares independently materialized, untrusted Semantic IR proposals by semantic dimension. It keeps structural validation, evidence validation, semantic evaluation, and corpus-wide accounting separate. The oracle does not classify source text, repair a proposal, canonicalize vocabulary, or treat a case ID as an answer.

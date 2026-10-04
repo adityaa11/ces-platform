@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { z } from "zod";
-import { sourceSemanticResultSchema } from "./semir-002-schema.mjs";
+import { normalizeProviderWireResult, providerWireResultSchema, sourceSemanticResultSchema } from "./semir-002-schema.mjs";
 import { evaluateAccounting, evaluateSemanticResult } from "./semir-003-oracle.mjs";
 import { createQualificationFixtures } from "./semir-004-harness.mts";
 
@@ -16,7 +16,9 @@ const subsetIds = [
 ] as const;
 const model = "openai/gpt-oss-120b";
 const prompt = `Extract only meaning supported by the authorized source units. Represent each meaningful source as one or more propositions. Preserve modality, polarity, conditions, triggers, temporal relationships, quantities, scope, state, discourse role, and unresolved aspects independently when supported. Do not strengthen or weaken the source. Permission, possibility, obligation, prohibition, and recommendation are distinct. When an essential component is missing, preserve known meaning and identify the missing component as unresolved; do not invent it. Preserve examples and non-semantic structure as such. Use only evidence from the authorized source text. Do not canonicalize terminology, reconcile project truth, resolve conflicts, infer authority, or repair ambiguity.`;
-const envelopeSchema = z.object({ results: z.array(sourceSemanticResultSchema).length(subsetIds.length) }).strict();
+// The request uses the Groq-compatible wire contract; successful wire values
+// are structurally normalized and then parsed by the unchanged Atlas contract.
+const envelopeSchema = z.object({ results: z.array(providerWireResultSchema).length(subsetIds.length) }).strict();
 const output = resolve(process.env.SEMSPIKE_006_ARTIFACT_ROOT ?? ".atlas-data/semantic-ir-spike-006");
 const runIdentity = process.env.SEMSPIKE_006_RUN_ID ?? "SEMSPIKE-006";
 const callCount = Number(process.env.SEMSPIKE_006_CALL_COUNT ?? "2");
@@ -84,7 +86,8 @@ async function callProvider() {
   try { raw = JSON.parse(content); } catch { return { kind: "structural" as const, metrics, error: "Groq terminal content was not JSON." }; }
   const parsed = envelopeSchema.safeParse(raw);
   if (!parsed.success) return { kind: "structural" as const, metrics, raw, error: parsed.error.issues.map((issue) => issue.path.join(".") || "root") };
-  return { kind: "success" as const, metrics, raw, results: parsed.data.results };
+  try { return { kind: "success" as const, metrics, raw, results: parsed.data.results.map(normalizeProviderWireResult) }; }
+  catch (error) { return { kind: "structural" as const, metrics, raw, error: `Provider-wire normalization failed: ${safeError(error)}` }; }
 }
 
 function evaluate(results: z.infer<typeof sourceSemanticResultSchema>[]) {
