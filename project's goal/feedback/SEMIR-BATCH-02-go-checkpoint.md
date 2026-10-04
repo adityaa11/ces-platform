@@ -3,6 +3,7 @@
 - **Ticket / batch:** `SEMIR-002` / `SEMIR-BATCH-02`
 - **Ticket authority:** `project's goal/Backend_Phase/tickets/IR_Test_Phase/SEMIR-002-semantic-ir-zod-schema.md`
 - **Consumed predecessor:** SEMIR-001 `PASS`, verified at `8e865a9` in `project's goal/feedback/SEMIR-BATCH-01-8e865a9-verification.md`.
+- **Implementation review target:** `d7ea37f9c3c430efd83f9cf1d7a910a9cd3d2d7d` (`feat(semir): add semantic IR zod schema`). This metadata reconciliation commit is outside that bounded implementation target.
 - **State:** `awaiting_review`
 
 ## Bounded implementation
