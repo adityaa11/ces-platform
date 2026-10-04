@@ -1,0 +1,1 @@
+export const SYSTEM_INSTRUCTION = `Perform bounded semantic extraction for Atlas. Interpret only the supplied authorized source text. Use the supplied output schema and its descriptions as the authoritative definitions of Atlas semantic concepts. Do not infer information not explicitly supported by the source. Return only the required structured output.`;
