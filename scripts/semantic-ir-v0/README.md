@@ -17,3 +17,15 @@ node scripts/semantic-ir-v0/check-semir-002-schema.mjs
 ```
 
 The checker reads the frozen SEMIR-001 predecessor blob at commit `8e865a9`, rather than the shared working tree, so its 43-case mapping evidence stays anchored to the approved predecessor. It makes no provider call and does not emit provider data.
+
+## SEMIR-003 semantic oracle
+
+`SEMIR-003` compares independently materialized, untrusted Semantic IR proposals by semantic dimension. It keeps structural validation, evidence validation, semantic evaluation, and corpus-wide accounting separate. The oracle does not classify source text, repair a proposal, canonicalize vocabulary, or treat a case ID as an answer.
+
+Run the complete offline qualification command with:
+
+```sh
+node scripts/semantic-ir-v0/check-semir-003-oracle.mjs
+```
+
+It evaluates all 43 frozen known-good fixtures, permits a surface-only predicate variation when every other dimension remains equal, and asserts the required modality, polarity, applicability, unresolved-meaning, discourse, evidence, and accounting corruptions fail on their named dimensions. No provider call or artifact emission occurs.
