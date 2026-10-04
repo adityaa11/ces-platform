@@ -144,6 +144,6 @@ predecessor states and artifacts remain unchanged.
 Implementation commit: `39b06dd` (`SEMSPIKE-004 minimal semantic envelope diagnostic`).
 
 Review Contract Closure: `RC-SEMSPIKE-004-01` through `-06` have evidence
-recorded in the report. All proof obligations were exercised; `RC-004-04`
-records the truthful semantic `FAIL`, a permitted completed outcome. Internal
-readiness: `READY_FOR_CK`.
+recorded in the report. All proof obligations were exercised;
+`RC-SEMSPIKE-004-04` records the truthful semantic `FAIL`, a permitted
+completed outcome. Internal readiness: `READY_FOR_CK`.
