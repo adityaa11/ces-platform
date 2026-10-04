@@ -5,3 +5,15 @@
 Run `node scripts/semantic-ir-v0/check-semir-001-corpus.mjs` to verify stable IDs, source metadata, proposition and source-grounded evidence expectations, every §13 member, A–E material contrast distinctions, the nested possible-obligation case, three multi-proposition cases, and a valid `needs_review` boundary.
 
 The `coverage` object maps broad §13 families and `requiredMembers` maps every individual required member directly to stable case IDs. Discourse role is represented as an expectation dimension so it stays independent of source disposition. Context-dependent cases deliberately retain unresolved meaning and do not attempt context retrieval. This directory contains neither a schema nor extraction logic, so later tickets may consume the corpus without inheriting production or provider behavior.
+
+## SEMIR-002 schema gate
+
+`SEMIR-002` adds an isolated Zod proposal contract; parsing it only establishes structure and never truth, canonicalization, reconciliation, persistence, or production routing.
+
+Run the SEMIR-002 offline schema gate with:
+
+```sh
+node scripts/semantic-ir-v0/check-semir-002-schema.mjs
+```
+
+The checker reads the frozen SEMIR-001 predecessor blob at commit `8e865a9`, rather than the shared working tree, so its 43-case mapping evidence stays anchored to the approved predecessor. It makes no provider call and does not emit provider data.
