@@ -29,3 +29,18 @@ node scripts/semantic-ir-v0/check-semir-003-oracle.mjs
 ```
 
 It evaluates all 43 frozen known-good fixtures, permits a surface-only predicate variation when every other dimension remains equal, and asserts the required modality, polarity, applicability, unresolved-meaning, discourse, evidence, and accounting corruptions fail on their named dimensions. No provider call or artifact emission occurs.
+
+## SEMIR-004 real NormalizedDocument gate
+
+Run the complete real-document qualification harness with:
+
+```sh
+pnpm --filter @atlas/contracts exec jiti ../../scripts/semantic-ir-v0/check-semir-004-harness.mts
+```
+
+The harness materializes only the approved frozen corpus text into a deterministic
+`NormalizedDocument v1`, parses it with the repository's real
+`parseNormalizedDocument` boundary, and derives the manifest slots from the
+parsed blocks. It proves evidence grounding, exact accounting, semantic and
+accounting mutations, and generated-schema descriptions, emitting only safe
+fixture identifiers, a digest, and validation counts.
