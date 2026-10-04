@@ -38,6 +38,8 @@ assert.equal(full.propositions[0].qualifiers.modality.type, 'possibility');
 
 for (const invalid of [
   { sourceSlot: 'x', sourceDisposition: 'unknown', propositions: [] },
+  { sourceSlot: 'x', sourceDisposition: 'non_semantic', discourseRole: 'invented-role', propositions: [] },
+  { sourceSlot: '', sourceDisposition: 'non_semantic', propositions: [] },
   { sourceSlot: 'x', sourceDisposition: 'semantic', propositions: [] },
   { sourceSlot: 'x', sourceDisposition: 'non_semantic', propositions: [full.propositions[0]] },
   { sourceSlot: 'x', sourceDisposition: 'semantic', propositions: [{ ...full.propositions[0], arguments: [{ role: 'other', value: 'x', evidence: evidence('x', 'x') }] }] },
