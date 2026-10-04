@@ -1,6 +1,6 @@
 # SEMIR-003: Deterministic semantic oracle and mutation suite
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `SEMIR-BATCH-03`
 - **Implementation context:** [SEMIR context §§34–37](../../SEMIR-context.md)
 - **Start gate:** SEMIR-001 and SEMIR-002 `PASS` and explicit `go`.
