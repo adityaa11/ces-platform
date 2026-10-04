@@ -1,6 +1,6 @@
 # SEMIR-001: Semantic qualification corpus and frozen interpretation expectations
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `SEMIR-BATCH-01`
 - **Implementation context:** [SEMIR context §§7–17](../../SEMIR-context.md)
 - **Start gate:** explicit `go`; no provider route, credential, or live call is needed or permitted.
