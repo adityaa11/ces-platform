@@ -1,6 +1,6 @@
 # SEMIR-004: Real NormalizedDocument qualification harness
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `SEMIR-BATCH-04`
 - **Implementation context:** [SEMIR context §§38–39](../../SEMIR-context.md)
 - **Start gate:** SEMIR-001, SEMIR-002, and SEMIR-003 `PASS`; explicit `go`; an existing real `NormalizedDocument v1` path.
