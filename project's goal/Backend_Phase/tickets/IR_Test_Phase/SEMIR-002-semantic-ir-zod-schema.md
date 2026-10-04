@@ -1,6 +1,6 @@
 # SEMIR-002: Atlas Semantic IR v0 Zod schema
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `SEMIR-BATCH-02`
 - **Implementation context:** [SEMIR context §§18–33](../../SEMIR-context.md)
 - **Start gate:** SEMIR-001 `PASS` and explicit `go`.
