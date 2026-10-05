@@ -4,7 +4,7 @@
 - **Batch:** `SEM-ANM-PROMPT-002-BATCH-01`
 - **Ticket state:** `awaiting_review`
 - **GO status:** `READY_FOR_CK`; CK has not issued a result
-- **Review target:** implementation checkpoint commit (full commit identity recorded in the follow-up checkpoint metadata commit)
+- **Checkpoint / review target:** `b538b431edc1c1acd3d2547135c5f430c5328914` — `feat: project frozen Anoman semantic schema`
 - **Scope:** consume the exact frozen Atlas Semantic V1 Zod reference through public `z.toJSONSchema(...)`, generate the provider schema, and prove the ticket's structural/vocabulary/isolation conditions. No prompt rendering or provider activity.
 
 ## Implementation evidence
@@ -22,7 +22,7 @@
 | --- | --- |
 | `corepack pnpm --filter @atlas/contracts exec jiti ../../scripts/sem-anm-prompt002/generate.mts` (run twice) | PASS both times; reference SHA-256 and schema SHA-256 were identical: `67cd0908c634271871df4a6ca8a440b46d188c76f56e9ab3702073d193a2c083` / `c478bdf27be6fcf56c999ad2f1780be6de126aecc20d1503f2277867e3b8c14b`. |
 | `corepack pnpm --filter @atlas/contracts exec jiti ../../scripts/sem-anm-prompt002/test.mts` | PASS; all ticket-local deterministic checks passed with the hashes above. |
-| `git diff --check` | PASS for the staged checkpoint paths. |
+| `git diff --cached --check` | PASS for the staged checkpoint paths. |
 
 ## Review Contract Closure
 
