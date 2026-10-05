@@ -66,3 +66,15 @@ async function invoke(kind: "transport" | "semantic") {
 
 export const invokeTransportQualification = () => invoke("transport");
 export const invokeSemanticQualification = () => invoke("semantic");
+
+/** HMN-SEM-ANM-SPIKE001-001 only: retain the synthetic Gate A content before parsing. */
+export async function invokeTransportDiagnostic() {
+  const apiKey = await loadAnomanApiKey();
+  const request = buildStrictRequest("transport"), started = performance.now();
+  let response: Response;
+  try { response = await fetch(ANOMAN_ENDPOINT, { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` }, signal: AbortSignal.timeout(60_000), body: JSON.stringify(request) }); } catch { throw new EnvironmentBlockedError("Anoman network request failed."); }
+  const latencyMs = Math.round(performance.now() - started);
+  const body = await response.json().catch(() => null) as Record<string, unknown> | null;
+  const choice = (body?.choices as Array<{ finish_reason?: unknown; message?: { content?: unknown } }> | undefined)?.[0];
+  return { http_status: response.status, model: body?.model ?? null, finish_reason: choice?.finish_reason ?? null, raw_message_content: choice?.message?.content ?? null, usage: sanitizeTelemetry(body?.usage ?? null), _anoman: sanitizeTelemetry(body?._anoman ?? null), latency_ms: latencyMs };
+}

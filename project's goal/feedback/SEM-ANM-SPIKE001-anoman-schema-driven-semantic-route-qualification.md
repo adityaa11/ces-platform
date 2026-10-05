@@ -12,6 +12,29 @@ The first runner invocation incorrectly resolved `.env` from the package working
 
 The ignored, mode-`0600` artifacts are `.atlas-data/sem-anm-spike001/gate-a-transport.json` and `summary.json`. They record the bounded failure, secret-safe route/configuration fingerprints, and no credential material. No committed artifact contains the key or an authorization header.
 
+## HMN-SEM-ANM-SPIKE001-001 diagnostic rerun
+
+The one additional diagnostic-only Gate A call authorized by `HMN-SEM-ANM-SPIKE001-001` used the unchanged request profile. Its ignored evidence is `.atlas-data/sem-anm-spike001/gate-a-diagnostic-rerun.json`.
+
+- HTTP status: `200`
+- Response model: `gemini-2.5-flash`
+- Finish reason: `stop`
+- Latency: `5440 ms`
+- Usage: `{}` (no token fields exposed)
+- Anoman routing: gateway region `id`; provider region `US`; provider type `cloud_direct`; served model `gemini-2.5-flash`; cache miss.
+- Cost: `0.0016683` USD; `_anoman.billing` was `null` and is not interpreted as zero cost.
+- Guardrails: all returned statuses passed; PII mode `redact`, output DLP mode `monitor`.
+
+Exact `raw_message_content` returned before any parsing or normalization:
+
+> Please provide the **supplied schema**!
+>
+> I cannot return the fixed qualification marker without seeing the schema you are referring to. The "fixed qualification marker" would be defined *within* that schema.
+>
+> Once you provide the schema (e.g., a JSON schema, XML schema, database table definition, or a description of its structure), I'll be happy to help you identify it.
+
+This is prose, not Markdown-fenced JSON, truncation, or malformed JSON. It confirms the existing `STRICT_SCHEMA_MALFORMED_RESPONSE` / `FAIL` classification. The response indicates that the frozen strict-output schema was not made available to the model in this route/request shape; it does not authorize changing the profile or attempting another call.
+
 ## Deterministic evidence
 
 - `corepack pnpm --filter @atlas/contracts exec jiti ../../scripts/sem-anm-spike001/test.mts` — PASS.
