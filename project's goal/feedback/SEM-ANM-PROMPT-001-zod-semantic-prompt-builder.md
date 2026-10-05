@@ -3,7 +3,8 @@
 - **Ticket:** `SEM-ANM-PROMPT-001`
 - **Batch:** `SEM-ANM-PROMPT-BATCH-001`
 - **Terminal result:** `PASS`
-- **Checkpoint:** this implementation commit; the follow-on workflow record identifies its immutable review target.
+- **Checkpoint:** `5a664426bf85f4b3a4386ebdef60ee57bab09b89` — `feat: add Zod semantic prompt builder`
+- **Review target:** the checkpoint commit above. The source authority is frozen in that same commit at `project's goal/Backend_Phase/SEM-ANM-PROMPT-001-implementation-context.md`.
 - **Scope:** deterministic local prompt generation only; no provider client, credential, environment, finalizer, or Atlas-contract change.
 
 ## Derived artifacts
