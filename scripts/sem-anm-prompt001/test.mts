@@ -1,0 +1,28 @@
+import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
+import { z } from "zod";
+import { buildPromptFromZod, buildSemanticSystemPrompt } from "./prompt-builder.mts";
+import { FIXED_SECTIONS } from "./prompt-fixed-sections.mts";
+import { checkpointCoverage } from "./prompt-provenance.mts";
+import { semanticUnitSchema } from "./semantic-schema.mts";
+
+const { jsonSchema, prompt } = buildPromptFromZod();
+const repeat = buildPromptFromZod();
+assert.deepEqual(jsonSchema.type, "object");
+assert.equal(prompt, repeat.prompt);
+assert.equal(createHash("sha256").update(prompt).digest("hex"), createHash("sha256").update(repeat.prompt).digest("hex"));
+for (const marker of ["SYSTEM ROLE", "TASK INSTRUCTION", "OUTPUT SHAPE", "FIELD DEFINITIONS", "SEMANTIC UNIT RULES", "REFERENCE HANDLING", "MULTIPLE-UNIT HANDLING", "CONFLICT HANDLING", "GENERAL RULES", "SOURCE ACCOUNTING", "OUTPUT RULES", "workflow_step", "Possibility is uncertainty, not permission.", "Timing/order is not automatically an applicability condition.", "needs_resolution"]) assert.ok(prompt.includes(marker), `missing ${marker}`);
+assert.ok(checkpointCoverage(prompt).complete);
+assert.throws(() => buildSemanticSystemPrompt({ type: "object", properties: { source_results: { type: "array", items: { type: "object", properties: { semantic_units: { type: "array", items: { type: "object", properties: {} } } } } } } }), /Missing required SemanticUnit object-level description/);
+assert.throws(() => buildSemanticSystemPrompt({ $ref: "#/$defs/missing", $defs: {} }), /Broken local JSON Schema reference/);
+const changed = z.object({ source_results: z.array(z.object({ slot: z.string(), semantic_units: z.array(semanticUnitSchema.extend({ actor: z.string().nullable().describe("Zod description propagation probe") }).describe("Test-only cross-field semantic unit rule.")) })) });
+const changedPrompt = buildPromptFromZod(changed).prompt;
+assert.ok(changedPrompt.includes("Zod description propagation probe"));
+assert.notEqual(changedPrompt, prompt);
+const fixedText = Object.values(FIXED_SECTIONS).join("\n");
+for (const forbidden of ["Possibility is uncertainty, not permission.", "A concrete action or event", "The source definitely requires something.", "Material ambiguity or missing information prevents safe representation"]) assert.ok(!fixedText.includes(forbidden), `fixed ontology duplication: ${forbidden}`);
+const fixture = await readFile(new URL("./fixtures/semantic-prompt-checkpoint-v1.txt", import.meta.url), "utf8");
+assert.ok(fixture.includes("You are a semantic extraction component."));
+assert.ok(fixture.includes("Return valid JSON only."));
+console.log(`SEM-ANM-PROMPT-001 local tests passed; prompt sha256=${createHash("sha256").update(prompt).digest("hex")}`);
