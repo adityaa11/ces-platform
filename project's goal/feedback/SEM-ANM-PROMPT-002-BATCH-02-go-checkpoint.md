@@ -5,7 +5,7 @@
 - **Ticket state:** `awaiting_review`
 - **GO status:** `READY_FOR_CK`; CK has not issued a terminal result
 - **Predecessor:** `SEM-ANM-PROMPT-002-01` CK `PASS`, review `SEM-ANM-PROMPT-002-BATCH-01-b538b43-review.md`, target `b538b431edc1c1acd3d2547135c5f430c5328914`
-- **Review target:** Implementation commit to be bound immediately after commit; a follow-up checkpoint-only commit will record its exact SHA
+- **Review target:** `cb84f7aac2c9715eadf5f820696415914da5a97a` — `feat: compile deterministic Anoman extraction prompt`
 - **Scope:** deterministic offline rendering from the approved provider-schema projection and frozen Zod descriptions, combined with the fixed policy in `SEM-ANM-PROMPT-002-trimmed-v2-implementation-context.md` §8. No provider call, semantic finalizer, parser integration, reconciliation rendering, or production coupling.
 
 ## Implementation evidence
