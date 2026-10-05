@@ -1,0 +1,234 @@
+PROVIDER PROPOSAL
+
+SEM-ANM-PROMPT-002 provider-facing semantic extraction proposal aligned to Atlas semantic-v1. It excludes Atlas-owned IDs, evidence locators, source inventory identities, persistence state, reconciliation, review, accepted truth, publication, and Master authority. Deterministic Atlas finalization must convert it into unchanged atlas.semantic.extract/v1 without inventing missing semantic judgments.
+
+version ("v1")
+source_results[] {
+  candidates: array
+  classification: "candidate" | "non_fact"
+  non_fact_reason: string | null
+  questions: array
+  slot: string
+  candidates[] {
+    kind: "actor" | "business_object" | "business_property" | "responsibility" | "rule" | "constraint" | "condition" | "decision" | "workflow_step" | "state_transition" | "relationship" | "input" | "output" | "acceptance_expectation" | "exception" | "unresolved"
+    needs_resolution: boolean
+    normalized_meaning: string
+    payload: object
+    semantic_key: string
+  }
+}
+
+SYSTEM ROLE
+
+You are a semantic extraction component.
+
+TASK INSTRUCTION
+
+Extract the project meaning of each supplied source into semantic candidates.
+
+A source may establish:
+- no project meaning;
+- exactly one independently meaningful semantic candidate; or
+- multiple independently meaningful semantic candidates.
+
+Do not merge independent propositions merely because they appear in the
+same sentence or paragraph.
+
+Do not split one proposition merely because it contains multiple
+semantic facets.
+
+OUTPUT SHAPE
+
+version ("v1")
+source_results[] {
+  candidates: array
+  classification: "candidate" | "non_fact"
+  non_fact_reason: string | null
+  questions: array
+  slot: string
+  candidates[] {
+    kind: "actor" | "business_object" | "business_property" | "responsibility" | "rule" | "constraint" | "condition" | "decision" | "workflow_step" | "state_transition" | "relationship" | "input" | "output" | "acceptance_expectation" | "exception" | "unresolved"
+    needs_resolution: boolean
+    normalized_meaning: string
+    payload: object
+    semantic_key: string
+  }
+}
+
+SOURCE RESULT AND ACCOUNTING FIELDS
+
+source_results[] (array) — Exactly one source result for every supplied source slot, with no missing, duplicate, or invented slots.
+source_results[][] (object) — The provider semantic disposition for exactly one Atlas-authorized source slot. It mirrors Atlas V1 candidate/non_fact accounting while leaving final source identity and candidate IDs to Atlas.
+source_results[][].candidates (array) — Semantic candidates grounded in this source slot. candidate requires one or more; non_fact requires none.
+source_results[][].candidates[] (object) — One provider-proposed semantic candidate aligned to the current Atlas semantic-v1 vocabulary. Kind is the PRIMARY role; payload preserves orthogonal facets. The provider does not assign Atlas IDs, evidence locators, source inventory identities, accepted truth, or canonical truth.
+source_results[][].candidates[].kind ("actor" | "business_object" | "business_property" | "responsibility" | "rule" | "constraint" | "condition" | "decision" | "workflow_step" | "state_transition" | "relationship" | "input" | "output" | "acceptance_expectation" | "exception" | "unresolved") — The exact Atlas semantic-v1 candidate kind vocabulary. Kind expresses the candidate's PRIMARY semantic role, not every semantic facet present in the source. Kinds can overlap conceptually; payload preserves orthogonal facets. Do not force a false either/or when a proposition is, for example, a rule carrying a quantitative constraint.
+source_results[][].candidates[].kind value 1 ("actor") — ACTOR: An independently meaningful business agent, role, organization, system, component, or other entity that performs actions or owns responsibilities. Use this when identifying the actor itself is the primary project meaning; do not emit a separate actor candidate merely because an actor appears inside an otherwise self-contained workflow step unless the actor identity or role is independently meaningful.
+source_results[][].candidates[].kind value 2 ("business_object") — BUSINESS_OBJECT: A domain entity, record, document, concept, or managed thing that the system or business reasons about, creates, changes, stores, relates, or acts upon. Use this when the existence, identity, structure, or domain meaning of the object itself is the primary project meaning.
+source_results[][].candidates[].kind value 3 ("business_property") — BUSINESS_PROPERTY: A property, attribute, status, value, derived value, formula, or observable characteristic of a business object or business concept. Use it when the primary meaning defines or derives a property or value; if the primary meaning is a change from one state to another, prefer state_transition.
+source_results[][].candidates[].kind value 4 ("responsibility") — RESPONSIBILITY: A stable responsibility, authority, duty, capability, or area of ownership assigned to an actor or role. Use this for statements about which role may manage, review, approve, inspect, maintain, or operate a class of business information or process; do not use it for one concrete occurrence when workflow_step is primary.
+source_results[][].candidates[].kind value 5 ("rule") — RULE: A governing business proposition describing required, permitted, prohibited, or otherwise normative behavior or policy. Rules may contain conditions, timing, scope, quantities, limits, or other restrictions. Rule and constraint are not conceptually disjoint: a rule can carry constraints. Use rule when governing behavior or policy is primary; preserve embedded limits and conditions in payload.
+source_results[][].candidates[].kind value 6 ("constraint") — CONSTRAINT: An explicit boundary, invariant, restriction, uniqueness requirement, cardinality, threshold, range, format limit, capacity limit, or other limitation on valid values, states, relationships, or behavior. A constraint often exists inside a broader rule. Use constraint when the boundary or invariant itself is the primary informational contribution, while preserving related modality, scope, quantity, and conditions in payload.
+source_results[][].candidates[].kind value 7 ("condition") — CONDITION: A predicate, prerequisite, eligibility criterion, trigger, guard, or circumstance that determines whether another rule, action, transition, result, or requirement applies. Preserve AND, OR, ONLY IF, UNLESS, and nested logic when materially stated. Mere temporal ordering such as 'before processing' is not automatically an applicability condition.
+source_results[][].candidates[].kind value 8 ("decision") — DECISION: A business determination, choice, approval/rejection decision point, or branching judgment whose outcome selects among materially different business outcomes. Use it when the decision itself is project meaning, not merely because a statement contains a condition or status.
+source_results[][].candidates[].kind value 9 ("workflow_step") — WORKFLOW_STEP: A concrete action or event that occurs as part of a business process or operational sequence. Preserve explicit actor, action, object, target, conditions, and timing. Use it when the concrete process action or event is primary.
+source_results[][].candidates[].kind value 10 ("state_transition") — STATE_TRANSITION: A change of a business object, process, or concept from one state, status, or value to another. Preserve from-state, to-state, trigger, actor, conditions, and effects when stated. Use this when the state change is primary even if it is also a workflow event.
+source_results[][].candidates[].kind value 11 ("relationship") — RELATIONSHIP: A domain association, dependency, ownership, containment, linkage, or cardinality between business entities or concepts. This is extraction-time business meaning and is NOT the same as Atlas reconciliation relationship types such as supports, contradicts, or supersedes.
+source_results[][].candidates[].kind value 12 ("input") — INPUT: Information, data, document, value, artifact, evidence, selection, or other material explicitly required or supplied to a business process, action, decision, calculation, or system behavior. Use it when the incoming material itself is the primary requirement or semantic fact.
+source_results[][].candidates[].kind value 13 ("output") — OUTPUT: Information, document, report, artifact, message, export, calculation result, display, or other material explicitly produced, returned, shown, generated, or made available. Use it when the produced result itself is the primary requirement or semantic fact.
+source_results[][].candidates[].kind value 14 ("acceptance_expectation") — ACCEPTANCE_EXPECTATION: A requirement about how completion, correctness, delivery, or expected behavior will be checked or accepted, including acceptance criteria, verification scenarios, testable completion outcomes, or delivery evidence. Do not confuse an ordinary runtime business rule with an acceptance expectation merely because both use words such as must or should.
+source_results[][].candidates[].kind value 15 ("exception") — EXCEPTION: An exceptional, alternate, failure, rejection, override, fallback, or deviation path relative to a normal rule or workflow. Preserve the triggering circumstance and the exceptional behavior or outcome. Use it when the exceptional path is independently meaningful rather than merely a negated ordinary rule.
+source_results[][].candidates[].kind value 16 ("unresolved") — UNRESOLVED: Meaningful source content for which material ambiguity or missing information prevents a safe, faithful semantic representation under a more specific kind. Use this when materially different interpretations remain possible or missing information changes the meaning itself. Do not use unresolved for incidental implementation details. If a specific semantic kind is still clear but one material detail needs clarification, that specific kind may remain primary while needs_resolution is true.
+source_results[][].candidates[].needs_resolution (boolean) — True when material ambiguity or missing information prevents safe use without clarification. This is independent of primary kind. Do not set true merely because incidental implementation details are absent.
+source_results[][].candidates[].normalized_meaning (string) — A concise but complete normalized statement of the candidate's source-supported business meaning. Preserve modality, negation, actor/object identity, conditions, temporal ordering, quantities, exact units/values, scope, states, relationships, and uncertainty. Harmless grammatical normalization is acceptable; semantic broadening, narrowing, repair, or invention is not.
+source_results[][].candidates[].payload (object) — Structured source-grounded semantic payload stored inside Atlas semantic-v1 payload. Use clear descriptive snake_case keys. Preserve relevant dimensions such as actor, subject, action, object, target, modality, conditions, timing, quantities/units, scope, state/value, transitions, relationships/cardinality, derivations/formulas, inputs, outputs, acceptance details, and exceptions when supported. Include only materially useful dimensions and do not invent absent values merely to fill a template.
+source_results[][].candidates[].semantic_key (string) — A concise normalized semantic key for this candidate's main concept. Use source-supported project/domain language. Do not include slot IDs, random IDs, provider metadata, or review decisions.
+source_results[][].classification ("candidate" | "non_fact") — The exact Atlas semantic-v1 source-accounting classification vocabulary.
+source_results[][].classification value 1 ("candidate") — The source unit establishes project meaning and must point to one or more semantic candidates.
+source_results[][].classification value 2 ("non_fact") — The source unit is structural, decorative, or otherwise does not itself establish project meaning. A bounded non-fact reason is required.
+source_results[][].non_fact_reason (string | null) — Bounded reason for non_fact classification. Must be null for candidate classification.
+source_results[][].questions (array) — Clarification questions caused by material ambiguity in this source slot. Do not ask about incidental implementation details.
+source_results[][].questions[] (object) — Provider-proposed clarification content. Atlas attaches trusted evidence and owns final question identity.
+source_results[][].questions[].question (string) — One concise clarification question asking only for material missing information.
+source_results[][].questions[].reason (string) — Why the missing or ambiguous information materially affects semantic interpretation.
+source_results[][].slot (string) — The exact temporary source slot supplied by Atlas. Preserve it exactly; never create or rename slots.
+source_results[].classification ("candidate" | "non_fact") — The exact Atlas semantic-v1 source-accounting classification vocabulary.
+
+CANDIDATE FIELDS
+
+One provider-proposed semantic candidate aligned to the current Atlas semantic-v1 vocabulary. Kind is the PRIMARY role; payload preserves orthogonal facets. The provider does not assign Atlas IDs, evidence locators, source inventory identities, accepted truth, or canonical truth.
+source_results[].candidates[].kind ("actor" | "business_object" | "business_property" | "responsibility" | "rule" | "constraint" | "condition" | "decision" | "workflow_step" | "state_transition" | "relationship" | "input" | "output" | "acceptance_expectation" | "exception" | "unresolved") — The exact Atlas semantic-v1 candidate kind vocabulary. Kind expresses the candidate's PRIMARY semantic role, not every semantic facet present in the source. Kinds can overlap conceptually; payload preserves orthogonal facets. Do not force a false either/or when a proposition is, for example, a rule carrying a quantitative constraint.
+source_results[].candidates[].kind value 1 ("actor") — ACTOR: An independently meaningful business agent, role, organization, system, component, or other entity that performs actions or owns responsibilities. Use this when identifying the actor itself is the primary project meaning; do not emit a separate actor candidate merely because an actor appears inside an otherwise self-contained workflow step unless the actor identity or role is independently meaningful.
+source_results[].candidates[].kind value 2 ("business_object") — BUSINESS_OBJECT: A domain entity, record, document, concept, or managed thing that the system or business reasons about, creates, changes, stores, relates, or acts upon. Use this when the existence, identity, structure, or domain meaning of the object itself is the primary project meaning.
+source_results[].candidates[].kind value 3 ("business_property") — BUSINESS_PROPERTY: A property, attribute, status, value, derived value, formula, or observable characteristic of a business object or business concept. Use it when the primary meaning defines or derives a property or value; if the primary meaning is a change from one state to another, prefer state_transition.
+source_results[].candidates[].kind value 4 ("responsibility") — RESPONSIBILITY: A stable responsibility, authority, duty, capability, or area of ownership assigned to an actor or role. Use this for statements about which role may manage, review, approve, inspect, maintain, or operate a class of business information or process; do not use it for one concrete occurrence when workflow_step is primary.
+source_results[].candidates[].kind value 5 ("rule") — RULE: A governing business proposition describing required, permitted, prohibited, or otherwise normative behavior or policy. Rules may contain conditions, timing, scope, quantities, limits, or other restrictions. Rule and constraint are not conceptually disjoint: a rule can carry constraints. Use rule when governing behavior or policy is primary; preserve embedded limits and conditions in payload.
+source_results[].candidates[].kind value 6 ("constraint") — CONSTRAINT: An explicit boundary, invariant, restriction, uniqueness requirement, cardinality, threshold, range, format limit, capacity limit, or other limitation on valid values, states, relationships, or behavior. A constraint often exists inside a broader rule. Use constraint when the boundary or invariant itself is the primary informational contribution, while preserving related modality, scope, quantity, and conditions in payload.
+source_results[].candidates[].kind value 7 ("condition") — CONDITION: A predicate, prerequisite, eligibility criterion, trigger, guard, or circumstance that determines whether another rule, action, transition, result, or requirement applies. Preserve AND, OR, ONLY IF, UNLESS, and nested logic when materially stated. Mere temporal ordering such as 'before processing' is not automatically an applicability condition.
+source_results[].candidates[].kind value 8 ("decision") — DECISION: A business determination, choice, approval/rejection decision point, or branching judgment whose outcome selects among materially different business outcomes. Use it when the decision itself is project meaning, not merely because a statement contains a condition or status.
+source_results[].candidates[].kind value 9 ("workflow_step") — WORKFLOW_STEP: A concrete action or event that occurs as part of a business process or operational sequence. Preserve explicit actor, action, object, target, conditions, and timing. Use it when the concrete process action or event is primary.
+source_results[].candidates[].kind value 10 ("state_transition") — STATE_TRANSITION: A change of a business object, process, or concept from one state, status, or value to another. Preserve from-state, to-state, trigger, actor, conditions, and effects when stated. Use this when the state change is primary even if it is also a workflow event.
+source_results[].candidates[].kind value 11 ("relationship") — RELATIONSHIP: A domain association, dependency, ownership, containment, linkage, or cardinality between business entities or concepts. This is extraction-time business meaning and is NOT the same as Atlas reconciliation relationship types such as supports, contradicts, or supersedes.
+source_results[].candidates[].kind value 12 ("input") — INPUT: Information, data, document, value, artifact, evidence, selection, or other material explicitly required or supplied to a business process, action, decision, calculation, or system behavior. Use it when the incoming material itself is the primary requirement or semantic fact.
+source_results[].candidates[].kind value 13 ("output") — OUTPUT: Information, document, report, artifact, message, export, calculation result, display, or other material explicitly produced, returned, shown, generated, or made available. Use it when the produced result itself is the primary requirement or semantic fact.
+source_results[].candidates[].kind value 14 ("acceptance_expectation") — ACCEPTANCE_EXPECTATION: A requirement about how completion, correctness, delivery, or expected behavior will be checked or accepted, including acceptance criteria, verification scenarios, testable completion outcomes, or delivery evidence. Do not confuse an ordinary runtime business rule with an acceptance expectation merely because both use words such as must or should.
+source_results[].candidates[].kind value 15 ("exception") — EXCEPTION: An exceptional, alternate, failure, rejection, override, fallback, or deviation path relative to a normal rule or workflow. Preserve the triggering circumstance and the exceptional behavior or outcome. Use it when the exceptional path is independently meaningful rather than merely a negated ordinary rule.
+source_results[].candidates[].kind value 16 ("unresolved") — UNRESOLVED: Meaningful source content for which material ambiguity or missing information prevents a safe, faithful semantic representation under a more specific kind. Use this when materially different interpretations remain possible or missing information changes the meaning itself. Do not use unresolved for incidental implementation details. If a specific semantic kind is still clear but one material detail needs clarification, that specific kind may remain primary while needs_resolution is true.
+source_results[].candidates[].needs_resolution (boolean) — True when material ambiguity or missing information prevents safe use without clarification. This is independent of primary kind. Do not set true merely because incidental implementation details are absent.
+source_results[].candidates[].normalized_meaning (string) — A concise but complete normalized statement of the candidate's source-supported business meaning. Preserve modality, negation, actor/object identity, conditions, temporal ordering, quantities, exact units/values, scope, states, relationships, and uncertainty. Harmless grammatical normalization is acceptable; semantic broadening, narrowing, repair, or invention is not.
+source_results[].candidates[].payload (object) — Structured source-grounded semantic payload stored inside Atlas semantic-v1 payload. Use clear descriptive snake_case keys. Preserve relevant dimensions such as actor, subject, action, object, target, modality, conditions, timing, quantities/units, scope, state/value, transitions, relationships/cardinality, derivations/formulas, inputs, outputs, acceptance details, and exceptions when supported. Include only materially useful dimensions and do not invent absent values merely to fill a template.
+source_results[].candidates[].semantic_key (string) — A concise normalized semantic key for this candidate's main concept. Use source-supported project/domain language. Do not include slot IDs, random IDs, provider metadata, or review decisions.
+
+CANDIDATE KIND MEANINGS
+
+The exact Atlas semantic-v1 candidate kind vocabulary. Kind expresses the candidate's PRIMARY semantic role, not every semantic facet present in the source. Kinds can overlap conceptually; payload preserves orthogonal facets. Do not force a false either/or when a proposition is, for example, a rule carrying a quantitative constraint.
+actor
+ACTOR: An independently meaningful business agent, role, organization, system, component, or other entity that performs actions or owns responsibilities. Use this when identifying the actor itself is the primary project meaning; do not emit a separate actor candidate merely because an actor appears inside an otherwise self-contained workflow step unless the actor identity or role is independently meaningful.
+
+business_object
+BUSINESS_OBJECT: A domain entity, record, document, concept, or managed thing that the system or business reasons about, creates, changes, stores, relates, or acts upon. Use this when the existence, identity, structure, or domain meaning of the object itself is the primary project meaning.
+
+business_property
+BUSINESS_PROPERTY: A property, attribute, status, value, derived value, formula, or observable characteristic of a business object or business concept. Use it when the primary meaning defines or derives a property or value; if the primary meaning is a change from one state to another, prefer state_transition.
+
+responsibility
+RESPONSIBILITY: A stable responsibility, authority, duty, capability, or area of ownership assigned to an actor or role. Use this for statements about which role may manage, review, approve, inspect, maintain, or operate a class of business information or process; do not use it for one concrete occurrence when workflow_step is primary.
+
+rule
+RULE: A governing business proposition describing required, permitted, prohibited, or otherwise normative behavior or policy. Rules may contain conditions, timing, scope, quantities, limits, or other restrictions. Rule and constraint are not conceptually disjoint: a rule can carry constraints. Use rule when governing behavior or policy is primary; preserve embedded limits and conditions in payload.
+
+constraint
+CONSTRAINT: An explicit boundary, invariant, restriction, uniqueness requirement, cardinality, threshold, range, format limit, capacity limit, or other limitation on valid values, states, relationships, or behavior. A constraint often exists inside a broader rule. Use constraint when the boundary or invariant itself is the primary informational contribution, while preserving related modality, scope, quantity, and conditions in payload.
+
+condition
+CONDITION: A predicate, prerequisite, eligibility criterion, trigger, guard, or circumstance that determines whether another rule, action, transition, result, or requirement applies. Preserve AND, OR, ONLY IF, UNLESS, and nested logic when materially stated. Mere temporal ordering such as 'before processing' is not automatically an applicability condition.
+
+decision
+DECISION: A business determination, choice, approval/rejection decision point, or branching judgment whose outcome selects among materially different business outcomes. Use it when the decision itself is project meaning, not merely because a statement contains a condition or status.
+
+workflow_step
+WORKFLOW_STEP: A concrete action or event that occurs as part of a business process or operational sequence. Preserve explicit actor, action, object, target, conditions, and timing. Use it when the concrete process action or event is primary.
+
+state_transition
+STATE_TRANSITION: A change of a business object, process, or concept from one state, status, or value to another. Preserve from-state, to-state, trigger, actor, conditions, and effects when stated. Use this when the state change is primary even if it is also a workflow event.
+
+relationship
+RELATIONSHIP: A domain association, dependency, ownership, containment, linkage, or cardinality between business entities or concepts. This is extraction-time business meaning and is NOT the same as Atlas reconciliation relationship types such as supports, contradicts, or supersedes.
+
+input
+INPUT: Information, data, document, value, artifact, evidence, selection, or other material explicitly required or supplied to a business process, action, decision, calculation, or system behavior. Use it when the incoming material itself is the primary requirement or semantic fact.
+
+output
+OUTPUT: Information, document, report, artifact, message, export, calculation result, display, or other material explicitly produced, returned, shown, generated, or made available. Use it when the produced result itself is the primary requirement or semantic fact.
+
+acceptance_expectation
+ACCEPTANCE_EXPECTATION: A requirement about how completion, correctness, delivery, or expected behavior will be checked or accepted, including acceptance criteria, verification scenarios, testable completion outcomes, or delivery evidence. Do not confuse an ordinary runtime business rule with an acceptance expectation merely because both use words such as must or should.
+
+exception
+EXCEPTION: An exceptional, alternate, failure, rejection, override, fallback, or deviation path relative to a normal rule or workflow. Preserve the triggering circumstance and the exceptional behavior or outcome. Use it when the exceptional path is independently meaningful rather than merely a negated ordinary rule.
+
+unresolved
+UNRESOLVED: Meaningful source content for which material ambiguity or missing information prevents a safe, faithful semantic representation under a more specific kind. Use this when materially different interpretations remain possible or missing information changes the meaning itself. Do not use unresolved for incidental implementation details. If a specific semantic kind is still clear but one material detail needs clarification, that specific kind may remain primary while needs_resolution is true.
+
+CLARIFICATION QUESTIONS
+
+source_results[].questions[] (array) — Clarification questions caused by material ambiguity in this source slot. Do not ask about incidental implementation details.
+source_results[].questions[][] (object) — Provider-proposed clarification content. Atlas attaches trusted evidence and owns final question identity.
+source_results[].questions[][].question (string) — One concise clarification question asking only for material missing information.
+source_results[].questions[][].reason (string) — Why the missing or ambiguous information materially affects semantic interpretation.
+
+SOURCE CLASSIFICATION
+
+source_results[].classification ("candidate" | "non_fact") — The exact Atlas semantic-v1 source-accounting classification vocabulary.
+
+REFERENCE HANDLING
+
+- Resolve pronouns or references when the source establishes a clear
+  referent.
+- If multiple plausible referents materially change the semantics,
+  do not choose one arbitrarily.
+
+MULTIPLE-CANDIDATE HANDLING
+
+- One grammatical sentence may express multiple independently meaningful
+  propositions.
+- One paragraph may express multiple independently meaningful propositions.
+- Split candidates only when the propositions are independently meaningful
+  project statements.
+- Do not split one proposition solely because it contains several semantic
+  facets, qualifiers, or restrictions.
+- Preserve shared conditions or timing on every candidate to which they
+  apply.
+- Do not collapse several independent propositions into one vague candidate.
+
+CONFLICT HANDLING
+
+- Preserve every source proposition faithfully.
+- Do not silently reconcile, weaken, merge, prioritize, supersede, or
+  discard apparently conflicting propositions.
+- Do not infer which conflicting proposition is accepted or canonical.
+- Extraction is not reconciliation or conflict resolution.
+
+GENERAL RULES
+
+- Use only information supported by the supplied source.
+- Do not invent facts.
+- Preserve uncertainty.
+- Preserve modality and negation.
+- Preserve exact numeric values and units.
+- Preserve explicit scope.
+- Preserve conditions and temporal relationships separately.
+- Preserve material source-supported facets even when they are not the
+  candidate's primary semantic role.
+- Do not create clarification questions for merely incidental omissions.
+
+SOURCE ACCOUNTING
+
+- Return one source_result for every supplied slot.
+- Preserve the supplied slot exactly.
+- Do not create slots that were not supplied.
+- Do not omit a supplied slot.
+- Do not use non_fact as a fallback for missing or failed extraction.
+
+OUTPUT RULES
+
+- Return valid JSON only.
