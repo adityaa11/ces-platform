@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import { providerInput } from "./fixture.mts";
 import { SYSTEM_INSTRUCTION } from "./prompt.mts";
 import { providerSchema, transportProviderSchema, transportQualificationSchema } from "./schema.mts";
@@ -8,7 +9,9 @@ export const ANOMAN_MODEL = "gemini-2.5-flash";
 export class EnvironmentBlockedError extends Error { constructor(message: string, readonly httpStatus: number | null = null) { super(message); } }
 export class StrictSchemaRejectedError extends Error { constructor(message: string, readonly httpStatus: number | null = null) { super(message); } }
 
-export async function loadAnomanApiKey(env: NodeJS.ProcessEnv = process.env, dotenvPath = ".env") {
+const repositoryDotenvPath = fileURLToPath(new URL("../../.env", import.meta.url));
+
+export async function loadAnomanApiKey(env: NodeJS.ProcessEnv = process.env, dotenvPath = repositoryDotenvPath) {
   if (env.ANOMAN_API_KEY?.trim()) return env.ANOMAN_API_KEY.trim();
   let content: string;
   try { content = await readFile(dotenvPath, "utf8"); } catch { throw new EnvironmentBlockedError("ANOMAN_API_KEY is not configured in repository .env; no authenticated live inference was attempted."); }
