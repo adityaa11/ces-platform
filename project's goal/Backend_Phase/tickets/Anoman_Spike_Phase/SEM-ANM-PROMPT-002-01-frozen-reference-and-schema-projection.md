@@ -1,6 +1,6 @@
 # SEM-ANM-PROMPT-002-01: Frozen reference and provider-schema projection
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `SEM-ANM-PROMPT-002-BATCH-01`
 - **Parent context:** [SEM-ANM-PROMPT-002 implementation context](../../SEM-ANM-PROMPT-002-trimmed-v2-implementation-context.md)
 - **Start gate:** The context and supplied reference are frozen in the repository, their stated reference SHA-256 matches, and explicit `go` authorizes this offline ticket.
