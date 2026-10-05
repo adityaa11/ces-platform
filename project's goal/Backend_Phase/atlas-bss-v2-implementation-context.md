@@ -5,14 +5,14 @@ Phase name: Backend Stack Setup V2 Reconciliation
 Ticket-set prefix: BSS-V2
 Repository: adityaa11/ces-platform
 Branch inspected: codex/new-atlas-backend
-Reviewed branch baseline before this context revision: 769cd368d4d2bb1d9b43c5872c2bba0a76b8976c
+Reviewed branch baseline before this context revision: 3c0855e04743e06b51009a941c9f1d13d1c394ff
 Encoding: UTF-8, ASCII-safe Markdown
 
 ---
 
 ## 1. Purpose
 
-This implementation context governs the remaining additive Backend Stack Setup V2 work after the repository has already approved BSS-V2-001, BSS-V2-002, and BSS-V2-003.
+This implementation context governs the remaining additive Backend Stack Setup V2 work after the repository has approved BSS-V2-001, BSS-V2-002, BSS-V2-003, BSS-V2-004-01, and BSS-V2-004-02.
 
 Its purpose is not to redesign Atlas domain semantics and not to rewrite approved BSS/IDSER history.
 
@@ -21,57 +21,55 @@ The current authority documents are:
 - `atlas-core-architecture-checkpoint-v3.md`; and
 - `atlas-backend-production-baseline-v2.md`.
 
-Those documents now establish a split execution model:
+Those documents now establish the current execution split:
 
 ```text
 source-grounded document perception
-    -> qualified local processor
-
-semantic / conversational reasoning
-    -> separately qualified external reasoning provider
-```
-
-The immediate perception direction is local Docling for the currently evidenced digital-PDF class.
-
-DOCSPIKE-001 recorded `PASS_WITH_LIMITS` feasibility evidence for:
-
-```text
-repository PDF
-    -> local Docling
-    -> deterministic generic perception result
-    -> existing normalizePerceptionResult(...)
-    -> unchanged NormalizedDocument v1
-```
-
-That spike remains feasibility evidence rather than production activation authority. Its known limits are explicit: visual regions were omitted where unstable, confidence was not fabricated, and scanned-PDF/OCR behavior was not established.
-
-DOCSPIKE-001 one-shot Python timings are not the production latency qualification. The spike proved structural feasibility, determinism, and compatibility while repeatedly constructing a local conversion path. The production gate must measure the selected persistent service after required model/pipeline warm-up.
-
-The next BSS/IDSER alignment target is therefore deliberately narrow:
-
-```text
-IDSER-003 D1 perception kickoff
-    -> existing BSS-009 source authority
-    -> Agents Bridge redeems/verifies exact PDF bytes
-    -> qualified persistent Compose-private docling-serve
-         -> docling-serve 1.36.0
-         -> docling-slim 2.132.0
-         -> CPU-only first profile
-         -> local models/artifacts
-         -> warm reusable Standard PDF pipeline
-    -> deterministic Atlas mapper
-    -> existing normalization
+    -> approved qualified local Docling route
     -> Atlas-accepted NormalizedDocument v1
-    -> STOP
+
+semantic extraction
+    -> Atlas-owned PROMPT-003-equivalent semantic profile
+    -> distinct qualified Anoman gateway adapter
+    -> requested gemini-2.5-flash
+    -> small untrusted provider proposal
+    -> deterministic Atlas finalization
+    -> unchanged atlas.semantic.extract/v1 validation
+
+semantic reconciliation
+    -> separately qualified later
+    -> extraction qualification does not imply reconciliation qualification
 ```
 
-Semantic extraction and reconciliation qualification resume only after that perception checkpoint.
+The perception-first milestone is already closed:
 
-Gemini remains an implemented adapter and a candidate for later reasoning qualification. Gemini PDF perception is no longer required for the primary development perception path.
+```text
+BSS-V2-004-01  persistent local Docling executor        APPROVED
+BSS-V2-004-02  IDSER D1 -> Docling -> NormalizedDocument v1 lifecycle  APPROVED
+```
 
-Mistral remains an implemented but inactive/blocked external provider until separately requalified.
+The current semantic productionization authority additionally includes:
 
-The remaining BSS V2 work must also preserve the production-economics substrate required for external reasoning providers, but provider quota/privacy/token-cost concepts must not be falsely imposed on local Docling execution.
+```text
+SEM-ANM-PROMPT-003
+    CK-approved schema-driven extraction prompt/profile
+
+SEM-ANM-SPIKE-004
+    CK PASS for bounded live Anoman execution
+    requested model: gemini-2.5-flash
+    response_format: json_object
+    temperature: 0
+    exactly two calls
+    no retry/fallback/correction/semantic repair
+```
+
+The SPIKE-004 historical runner result remains `FAIL` because the required inherited SPIKE-003 phrase oracle produced documented false negatives for written S2/S4 semantics. CK returned `PASS` and established that the provider proposals satisfy the ticket's written semantic conditions. Ticket generation must preserve both facts and must not rerun or rewrite the spike merely to make the old oracle print PASS.
+
+The current BSS continuation therefore begins from accepted `NormalizedDocument v1` and productionizes the qualified extraction behavior. Anoman must be represented as a distinct gateway adapter; it must not be implemented by changing the direct Gemini adapter's base URL or identity.
+
+The direct Gemini adapter remains approved BSS-V2-003 history/capability. Mistral remains implemented but inactive/blocked until separately requalified.
+
+The remaining BSS V2 work must also preserve the production-economics substrate required for external reasoning routes, while provider/gateway quota/privacy/token-cost concepts must not be falsely imposed on local Docling execution.
 
 ---
 
@@ -111,7 +109,9 @@ BSS-009-02 Bridge perception integration
 
 BSS-V2-001 Provider capability decoupling        APPROVED
 BSS-V2-002 Qualified route registry              APPROVED
-BSS-V2-003 Gemini adapter contracts              APPROVED
+BSS-V2-003 Direct Gemini adapter contracts       APPROVED
+BSS-V2-004-01 Persistent Docling executor        APPROVED
+BSS-V2-004-02 D1 Docling lifecycle checkpoint    APPROVED
 ```
 
 BSS-008 remains:
@@ -122,17 +122,21 @@ Mistral live route qualification: blocked / inactive
 Mistral as permanent Atlas dependency: prohibited
 ```
 
-BSS-V2-001/002/003 also remain historical approved work.
+BSS-V2-001/002/003/004-01/004-02 remain historical approved work.
 
 In particular:
 
 - BSS-V2-001 established narrow capability interfaces.
 - BSS-V2-002 established server-controlled qualified-route resolution.
-- BSS-V2-003 established Gemini adapter behavior under deterministic transport tests, including a PDF-capable adapter surface.
+- BSS-V2-003 established the direct Gemini adapter under deterministic transport tests.
+- BSS-V2-004-01 established the persistent Compose-private Docling executor and qualification profile.
+- BSS-V2-004-02 established the real IDSER D1 lifecycle through Atlas-accepted `NormalizedDocument v1`.
 
-The Docling realignment does not invalidate those approved commits. It changes which capability implementation is preferred for current perception.
+The Docling realignment therefore no longer describes future work. Semantic tickets consume the accepted normalized-document boundary and must not requalify or reopen the completed perception milestone.
 
-The existing planned BSS-V2-004 and its blocker evidence must not be silently reinterpreted as a PASS or rewritten to pretend the previous Gemini-first plan never existed. Remaining ticket planning should supersede that plan explicitly while preserving its historical artifacts.
+The existing superseded BSS-V2-004 Gemini mega-ticket and its blocker evidence remain historical artifacts. They must not be silently reinterpreted as PASS or rewritten to pretend the previous Gemini-first combined plan never existed.
+
+The Anoman prompt/spike sequence is qualification evidence for the next semantic extraction productionization work. It does not alter approved BSS history and does not qualify reconciliation.
 
 ---
 
@@ -163,10 +167,10 @@ bundle completion lifecycle
 Ready for Review boundary
 ```
 
-For the current perception-first realignment, the important upstream/downstream split is:
+The important current split is:
 
 ```text
-UPSTREAM OF PERCEPTION CHECKPOINT
+APPROVED PERCEPTION FOUNDATION
 
 IDSER-003
     project/bundle creation
@@ -179,13 +183,12 @@ BSS-009 series
     normalization
     Atlas-owned derived cache
 
+BSS-V2-004-01 / 004-02
+    qualified Docling execution
+    accepted NormalizedDocument v1
 
-PERCEPTION CHECKPOINT
 
-Atlas-accepted NormalizedDocument v1
-
-
-DOWNSTREAM OF CHECKPOINT
+CURRENT SEMANTIC PRODUCTIONIZATION BOUNDARY
 
 IDSER-002
     semantic contracts
@@ -203,11 +206,11 @@ IDSER-007+
     reconciliation and later lifecycle
 ```
 
-The perception checkpoint must not require semantic success.
+The existing IDSER-011 ticket set remains Mistral-specific historical live-provider acceptance evidence and must not be silently rewritten as Anoman, Gemini, or Docling acceptance.
 
-The existing IDSER-011 ticket set remains Mistral-specific historical live-provider acceptance evidence and must not be silently rewritten as Gemini or Docling acceptance.
+The next BSS extraction work consumes the existing IDSER contracts. It may change execution composition from "provider emits the complete Atlas result" to "provider emits a bounded proposal and Atlas deterministically finalizes system-owned fields," but it must not weaken or redefine the final `atlas.semantic.extract/v1` contract.
 
-Once perception is production-shaped and accepted, later semantic qualification may consume the existing IDSER contracts without reopening them unless an actual contract defect is separately authorized.
+If productionization reveals an actual frozen IDSER contract defect, stop and classify it as a separate scope-change decision rather than silently changing IDSER semantics inside BSS.
 
 ---
 
@@ -219,36 +222,44 @@ The primary concrete-provider coupling was already corrected by BSS-V2-001 and B
 
 BSS-V2-003 added Gemini beneath those interfaces.
 
-The remaining mismatch is architectural/planning:
+The remaining mismatch is now semantic-runtime composition rather than perception:
 
 ```text
-old remaining plan
-    Gemini must qualify perception + extraction + reconciliation together
+current production semantic worker shape
+    -> StructuredReasoningProvider
+    -> provider expected to emit the full final Atlas semantic result
 
-current architecture
-    perception and semantic reasoning qualify independently
+qualified spike shape
+    -> deterministic bounded source slots
+    -> PROMPT-003
+    -> small Atlas Semantic V1 provider proposal
+    -> proposal validation + source accounting
+    -> deterministic finalization
+    -> complete unchanged Atlas semantic result
 ```
 
-DOCSPIKE-001 has shown that local Docling can reach the existing perception boundary for the current digital-PDF fixtures.
+The production code must catch up to the qualified spike architecture without importing the spike runner as production runtime.
 
-Therefore the remaining perception seam is:
+The current required semantic seam is:
 
 ```text
-existing DocumentPerceptionProvider-style capability
-    -> persistent Compose-private docling-serve
-    -> deterministic Atlas mapper
-    -> existing BSS-009 handoff
-    -> unchanged NormalizedDocument v1
+existing StructuredReasoningProvider capability
+    -> distinct Anoman gateway adapter
+    -> requested gemini-2.5-flash
+    -> provider-facing Atlas Semantic V1 proposal schema
+    -> deterministic Atlas finalizer
+    -> existing parseSemanticExtractionResult(...)
+    -> existing staging/replay/handoff
 ```
 
-For the current Atlas local Docker profile, the topology is no longer an open subprocess/sidecar choice. Agents Bridge calls a long-lived private Docling Serve service. The service keeps its Python runtime, local model artifacts, converter/model cache, and initialized Standard PDF pipeline reusable across requests. A fresh Python/Docling process per PDF is not the production-shaped route.
+Anoman is a gateway/executor identity, while `gemini-2.5-flash` is the requested model identity. These identities must not be collapsed.
 
-The code-level interface name `DocumentPerceptionProvider` is retained for compatibility. Its semantics are executor-neutral; implementing it with local Docling does not make Docling a remote AI provider.
+PROMPT-003 is Atlas-owned semantic instruction/profile authority for this productionization step. Its generated prompt/schema/provenance/hashes are qualification references; production runtime should reproduce equivalent behavior from production-owned packages rather than reading `scripts/sem-anm-*` artifacts forever.
 
 The following are not authorized by this realignment:
 
 ```text
-semantic schema rewrite
+semantic contract v1 rewrite
 NormalizedDocument v1 rewrite
 direct Docling access to DocumentStore paths
 semantic interpretation inside Docling mapping
@@ -256,6 +267,10 @@ fresh per-document Python/Docling subprocess as the production route
 Docling RQ/Redis or another durable queue for the current D1 lifecycle
 automatic GPU/CUDA fallback
 public host exposure of Docling as an Atlas requirement
+implementing Anoman by mutating the direct Gemini adapter identity/base URL
+permanent production imports from spike runner modules
+provider-side or deterministic post-processing semantic repair
+silent arbitrary gateway model routing
 new queue technology
 review/publication redesign
 rewriting approved BSS/IDSER history
@@ -311,10 +326,21 @@ The local route records service/processor/image identity, option-profile identit
 
 It does not invent provider credentials, quota domains, RPM/TPM/RPD, external privacy classes, or token pricing.
 
-### 6.2 External reasoning route
+### 6.2 External semantic extraction route
 
 ```text
-Atlas semantic/chat capability request
+accepted NormalizedDocument v1
+        |
+        v
+deterministic bounded source-unit preparation
+        |
+        v
+production-owned PROMPT-003-equivalent compiler
+        |
+        +-- Atlas Semantic V1 Zod/schema descriptions
+        +-- fixed cross-field semantic composition policy
+        v
+provider-facing extraction proposal schema
         |
         v
 qualified route resolver
@@ -322,43 +348,55 @@ qualified route resolver
         v
 external_provider route
         |
-        +-- privacy preflight
-        +-- quota/capacity admission
-        +-- provider/model identity
+        +-- gateway identity: anoman
+        +-- requested model: gemini-2.5-flash
+        +-- privacy/capacity admission as applicable
+        v
+Anoman StructuredReasoningProvider adapter
         |
         v
-provider adapter
+untrusted provider proposal
+        |
+        +-- JSON/proposal validation
+        +-- exact source accounting
+        v
+deterministic Atlas finalizer
+        |
+        +-- system-owned IDs
+        +-- evidence/source-inventory wiring
+        +-- final Atlas envelope fields
+        +-- NO semantic repair
+        v
+unchanged parseSemanticExtractionResult(...)
         |
         v
-bounded structured/stream result
-        |
-        +-- provider usage/provenance
-        +-- cost telemetry where applicable
-        |
-        v
-existing Atlas validation / persistence / replay authority
+existing staging / replay / Atlas handoff
 ```
 
-### 6.3 Immediate hard stop
+The current spike transport evidence used Anoman's OpenAI-compatible `/v1/chat/completions` endpoint with Bearer `ANOMAN_API_KEY`, `stream=false`, `temperature=0`, and `response_format={"type":"json_object"}`. Production tickets may preserve this qualified behavior while moving it behind normal production configuration and adapter boundaries.
 
-Before semantic-model qualification resumes, the backend must prove:
+Gateway provenance should record requested model and actual served/routed model/provider metadata when exposed. Useful Anoman-specific telemetry may be normalized from `_anoman` fields such as weighted tokens, gateway-reported cost, routing mode, provider type/region, guardrails, and cache, without leaking raw gateway response shapes into Atlas domain code.
+
+### 6.3 Current semantic hard stop
+
+The next production-shaped checkpoint is:
 
 ```text
-IDSER-003 D1 job
-    -> pg-boss
-    -> BSS-009 source grant/redemption
-    -> Bridge verifies exact PDF bytes
-    -> qualified ready/warm private Docling service
-    -> deterministic mapping
-    -> existing normalization/parser
-    -> Atlas-accepted NormalizedDocument v1
+accepted NormalizedDocument v1
+    -> production bounded source units
+    -> production PROMPT-003-equivalent compiler
+    -> production Anoman adapter
+    -> validated provider proposal
+    -> deterministic finalizer
+    -> unchanged atlas.semantic.extract/v1 validation
+    -> existing staging/replay/handoff
+    -> CK PASS for the integrated production extraction route
+    -> STOP before reconciliation
 ```
 
-The current D1 path keeps pg-boss as the sole Atlas job/retry/replay authority. It does not introduce Docling RQ/Redis or another durable queue.
+BSS-V2-004-03 must end at this extraction checkpoint.
 
-and stop there.
-
-The perception checkpoint is independently useful and reviewable. It must not be hidden inside a semantic-provider live-qualification ticket.
+BSS-V2-004-04 is a separate reconciliation qualification and must not be pulled into the extraction checkpoint.
 
 ---
 
@@ -392,14 +430,14 @@ Atlas commercial budget policy
 capability implementation adapters
 qualified route resolution
 local processor invocation where configured
-external provider credentials/adapters
-processor/provider/model allowlists
+direct-provider and gateway credentials/adapters
+processor/gateway/provider/model allowlists
 bounded retries
 timeout/cancellation
 normalized execution errors
 executor provenance
-external provider capacity/rate-limit enforcement
-external provider usage/economic telemetry
+external-route capacity/rate-limit enforcement
+external-route usage/economic telemetry
 ```
 
 ### 7.3 Local perception processor may perform
@@ -416,7 +454,7 @@ OCR only after separate qualification
 
 It may not create business-semantic assertions, choose truth, discover source files independently, or write Atlas trusted state.
 
-### 7.4 External reasoning provider may perform
+### 7.4 External reasoning executor may perform
 
 ```text
 structured semantic reasoning
@@ -453,7 +491,7 @@ publication / Master advancement
 CES product implementation
 chatbot product implementation
 Addendum product workflow
-OpenRouter integration
+additional gateway integration beyond the selected Anoman extraction route
 new queue technology
 Redis
 Kafka
@@ -463,9 +501,7 @@ S3/R2 migration
 enterprise tenancy administration
 ```
 
-OpenRouter or another gateway may be referenced only as a future adapter possibility.
-
-Do not implement it in this ticket set unless a later explicit architecture decision changes scope.
+Anoman is explicitly authorized only for the current semantic-extraction productionization path described here. OpenRouter or another additional gateway remains future scope unless a later explicit architecture decision changes it.
 
 ---
 
@@ -485,8 +521,12 @@ Preserve:
 BSS-V2-001 approved history
 BSS-V2-002 approved history
 BSS-V2-003 approved history
-existing BSS-V2-004 planned artifact
+BSS-V2-004-01 approved history
+BSS-V2-004-02 approved history
+existing superseded BSS-V2-004 planned artifact
 existing BSS-V2-004 blocker/evidence artifacts
+SEM-ANM-PROMPT-003 approved artifacts/history
+SEM-ANM-SPIKE-004 CK PASS review artifact and historical runner result
 existing planned BSS-V2-005 through BSS-V2-011 artifacts until explicitly regenerated
 ```
 
@@ -494,18 +534,20 @@ The old BSS-V2-004 concept bundled Gemini perception, extraction, reconciliation
 
 Do not rewrite its prior blocker evidence to make the history appear as though Docling had always been selected.
 
-The preferred remaining-plan mechanism is to split the superseding work under new child identities, beginning with:
+The current remaining-plan mechanism preserves the BSS-V2-004 namespace while decomposing semantic extraction further:
 
 ```text
-BSS-V2-004-01
-BSS-V2-004-02
-BSS-V2-004-03
-BSS-V2-004-04
+BSS-V2-004-01     APPROVED
+BSS-V2-004-02     APPROVED
+
+BSS-V2-004-03-01  Anoman structured-reasoning adapter and qualified-route seam
+BSS-V2-004-03-02  PROMPT-003 production semantic extraction pipeline/finalizer
+BSS-V2-004-03-03  integrated production Anoman extraction qualification
+
+BSS-V2-004-04     independent semantic reconciliation qualification
 ```
 
-This preserves the BSS-V2-004 historical namespace while making each new responsibility explicit.
-
-Ticket/regeneration work may update the Stack_Setup_V2 README and the remaining planned ticket dependencies, but it must not alter approved 001-003 review history.
+Ticket/regeneration work may update the Stack_Setup_V2 README and remaining planned dependencies, but it must not alter approved 001/002/003/004-01/004-02 review history or the completed Anoman spike history.
 
 ---
 
@@ -526,42 +568,49 @@ one primary validation harness or evidence family
 The next work must not combine:
 
 ```text
-Docling production integration
-D1 lifecycle composition
-semantic extraction qualification
+Anoman gateway transport/configuration
+PROMPT-003 compiler/schema/finalizer productionization
+integrated live production extraction qualification
 semantic reconciliation qualification
-external provider economics
+external-route economics/capacity
 ```
 
 into one GO checkpoint.
 
-## 10.1 Mandatory perception-first split
+## 10.1 Completed perception split
 
-The Docling production path is split because these are independently reviewable questions:
+BSS-V2-004-01 and BSS-V2-004-02 already proved the independently reviewable Docling executor and D1 lifecycle questions. Do not regenerate or recombine them.
 
-```text
-A. Can Bridge invoke a persistent Compose-private Docling Serve service safely,
-   keep the exact Atlas PDF profile warm/reusable, meet the <=20-second warm
-   latency gate, and produce deterministic normalizer-compatible output?
+## 10.2 Mandatory extraction split
 
-B. Can the real IDSER-003/BSS-009 D1 lifecycle use that already-qualified
-   resident service and reach Atlas-accepted NormalizedDocument v1 with
-   retry/replay/readiness/failure integrity?
-```
-
-Those questions must not be merged.
-
-## 10.2 Hard stop
-
-After the D1 perception checkpoint reaches CK PASS:
+The extraction continuation is split because these are independently reviewable questions:
 
 ```text
-STOP
+A. Can Agents Bridge represent and invoke Anoman as a distinct bounded
+   StructuredReasoningProvider route with correct identity, secret handling,
+   errors, cancellation, usage, cost, and routing provenance?
+
+B. Can production-owned code reproduce the qualified PROMPT-003 semantic
+   instruction/schema behavior, prepare bounded source units, validate the
+   small provider proposal, and deterministically materialize the complete
+   unchanged Atlas extraction contract without semantic repair?
+
+C. Can the actual production worker path compose A + B against accepted
+   NormalizedDocument v1 and real Anoman inference while preserving existing
+   staging/replay/handoff semantics?
 ```
 
-Do not continue automatically into semantic extraction qualification.
+These questions map to BSS-V2-004-03-01, -03-02, and -03-03 and must not be merged unless later planning evidence proves the review authority remains genuinely bounded.
 
-The next semantic ticket must consume the accepted perception boundary as a predecessor and use its own frozen semantic oracle.
+## 10.3 Hard stop
+
+After BSS-V2-004-03-03 reaches CK PASS:
+
+```text
+STOP BEFORE RECONCILIATION
+```
+
+BSS-V2-004-04 must then qualify reconciliation independently with its own prompt/schema/context/oracle authority.
 
 ## 10.3 General split trigger
 
@@ -582,7 +631,7 @@ Do not force work into an old ticket number merely to avoid adding a child ticke
 
 # 11. Recommended ticket decomposition
 
-The remaining ticket plan is now staged around the perception checkpoint.
+The remaining ticket plan is now staged around semantic extraction productionization from the already-approved perception checkpoint.
 
 ## BSS-V2-001 - Provider capability contracts and concrete-provider decoupling
 
@@ -613,6 +662,8 @@ Do not mutate its old evidence into Docling or semantic PASS evidence.
 Its remaining responsibilities are superseded by the following child tickets.
 
 ## BSS-V2-004-01 - Persistent local Docling perception service integration
+
+Status: **APPROVED historical authority. Do not regenerate or reopen.**
 
 ### Outcome
 
@@ -676,6 +727,8 @@ authorized PDF bytes already at Bridge
 with no external inference, no contract weakening, and every required warm qualification fixture run completing in <=20 seconds end to end.
 
 ## BSS-V2-004-02 - IDSER D1 Docling perception lifecycle checkpoint
+
+Status: **APPROVED historical authority. Do not regenerate or reopen.**
 
 ### Outcome
 
@@ -757,39 +810,159 @@ D2 sequencing
 
 to close it.
 
-## BSS-V2-004-03 - Semantic extraction live qualification
+## BSS-V2-004-03 - Semantic extraction productionization parent
 
-### Start gate
+This parent is a planning namespace. Do not execute it as one mega-ticket.
 
-May be planned in detail after BSS-V2-004-02 CK PASS. It must not be used to close the perception checkpoint.
-
-### Outcome
-
-Qualify one explicit external reasoning route for bounded semantic extraction from accepted normalized source units.
-
-### Required shape
+Authoritative predecessors:
 
 ```text
-accepted NormalizedDocument v1
-    -> deterministic bounded source-slot preparation
-    -> product-independent semantic extraction instruction
-    -> small provider-facing semantic proposal schema
-    -> deterministic finalization
-    -> complete atlas.semantic.extract/v1 validation
-    -> frozen semantic oracle
+BSS-V2-004-02                         CK PASS
+SEM-ANM-PROMPT-003                    CK-approved prompt/profile authority
+SEM-ANM-SPIKE-004 reviewed commit     8b69d5a
+SEM-ANM-SPIKE-004 CK review           PASS
 ```
 
-The external model does not need to create system-owned IDs, evidence locator identities, source inventory bookkeeping, or other fields that deterministic code can reconstruct from source slots.
+Historical SPIKE-004 runner terminal `FAIL` remains preserved because of the documented inherited oracle false negatives. The CK review, not a rewritten runner result, is the planning authority that selects the bounded productionization direction.
 
-The final Atlas result still must satisfy the existing IDSER contract without weakening.
+### BSS-V2-004-03-01 - Anoman structured-reasoning adapter and qualified-route seam
 
-Provider/model identity is selected by explicit qualification evidence, not by this architecture context.
+#### Outcome
 
-## BSS-V2-004-04 - Semantic reconciliation live qualification
+Add Anoman as a distinct production `StructuredReasoningProvider` implementation and qualified route identity without changing semantic meaning.
+
+#### Owns
+
+```text
+ANOMAN_API_KEY server-side configuration
+HTTPS base URL / OpenAI-compatible /v1/chat/completions transport
+providerId / gateway identity = anoman
+requested model identity = gemini-2.5-flash for the current qualified extraction route
+stream=false
+temperature=0
+response_format=json_object
+bounded timeout/cancellation
+request/response size bounds
+network/auth/rate-limit/provider error normalization
+usage token normalization
+Anoman weighted-token/cost/routing metadata normalization where available
+requested vs served/routed model/provider provenance
+route-registry/config/worker-main injection
+deterministic adapter tests with injected transport
+```
+
+#### Must not own
+
+```text
+PROMPT-003 semantic redesign
+source-slot semantics
+Atlas semantic finalization
+reconciliation
+live production extraction activation
+mutating GeminiProvider into an Anoman proxy
+```
+
+#### Hard stop
+
+Adapter and route seam are CK-approved under deterministic tests. No live semantic claim is made by this child alone.
+
+### BSS-V2-004-03-02 - PROMPT-003 production semantic extraction pipeline and deterministic finalizer
+
+#### Outcome
+
+Promote the qualified schema-driven extraction behavior into production-owned code while preserving Atlas Semantic V1 and avoiding permanent runtime dependency on spike scripts/artifacts.
+
+#### Owns
+
+```text
+production-owned Atlas Semantic V1 extraction proposal Zod/schema
+production-owned PROMPT-003-equivalent compiler
+schema-derived field/kind descriptions
+exact CROSS-FIELD SEMANTIC COMPOSITION policy semantics
+deterministic bounded source-unit preparation from accepted NormalizedDocument v1
+strict provider proposal parsing/validation
+exact source accounting
+deterministic finalizer
+system-owned local candidate IDs
+evidence/source-unit wiring
+source_statement_inventory materialization
+final Atlas envelope fields
+unchanged parseSemanticExtractionResult(...) validation
+semantic-worker extraction path composition
+focused replay/handoff regression coverage
+equivalence proof against the approved PROMPT-003 prompt/schema/policy artifacts
+```
+
+The finalizer may materialize only deterministic system-owned bookkeeping. It must not:
+
+```text
+change semantic kind
+rewrite normalized meaning
+invent business conditions
+invent clarification questions
+repair a semantically invalid proposal
+silently discard incompatible provider meaning to force validation
+```
+
+The production implementation does not need to preserve the spike directory layout. It must preserve the qualified semantics and prove deterministic equivalence or an explicitly reviewed compatible production representation.
+
+#### Hard stop
+
+The production extraction pipeline is deterministically testable with an injected provider proposal, passes the unchanged final Atlas parser, and is CK-approved without a live provider call.
+
+### BSS-V2-004-03-03 - Integrated production Anoman semantic-extraction qualification
+
+#### Outcome
+
+Qualify the **actual production path**, not the spike runner, for `atlas.semantic.extract`.
+
+#### Required path
+
+```text
+Atlas-accepted NormalizedDocument v1
+    -> production bounded source-unit preparation
+    -> production PROMPT-003-equivalent compiler
+    -> BSS-V2-004-03-01 Anoman adapter/qualified route
+    -> real bounded Anoman inference
+    -> provider proposal parsing/Zod validation
+    -> exact source accounting
+    -> deterministic finalizer
+    -> unchanged atlas.semantic.extract/v1 validation
+    -> existing semantic worker staging/replay/handoff
+```
+
+#### Live evidence rules
+
+```text
+opt-in and secret-safe
+approved synthetic/public/non-confidential fixture material
+pinned requested gemini-2.5-flash
+actual served/routed identity captured where exposed
+no semantic repair
+no correction call
+no arbitrary model fallback
+bounded retries only if explicitly frozen for transport behavior; never semantic retry
+normalized latency/usage/cost/routing provenance
+written-contract-aligned semantic acceptance oracle
+```
+
+Do not reuse the inherited SPIKE-003 phrase matcher as unquestioned Atlas Semantics V1 authority. The production oracle must be frozen before GO and must reflect the written semantic acceptance contract. It may reuse valid parts of prior oracle logic, but it must not rewrite historical SPIKE-004 evidence.
+
+Representative production qualification may use the bounded S1-S4 semantic set and a normalized-document fixture that exercises the real source-unit builder. Broader all-16-kind, large Safara, adversarial, or long-context coverage should be split into separately bounded robustness tickets if needed rather than making this integration ticket unreviewable.
+
+#### Activation rule
+
+Only CK PASS for this child may authorize the current development `atlas.semantic.extract` route to resolve to Anoman. A successful adapter test or historical spike alone does not activate production extraction.
+
+#### Hard stop
+
+Stop after production extraction qualification. Do not continue automatically into reconciliation.
+
+## BSS-V2-004-04 - Independent semantic reconciliation qualification
 
 ### Start gate
 
-Depends on BSS-V2-004-03 CK PASS.
+Depends on BSS-V2-004-03-03 CK PASS.
 
 ### Outcome
 
@@ -797,7 +970,21 @@ Qualify an explicit reasoning route for bounded reconciliation using validated s
 
 Extraction PASS does not imply reconciliation PASS.
 
-This ticket must have its own frozen oracle and must not broaden retrieval, truth, precedence, or publication authority.
+This ticket must freeze its own:
+
+```text
+bounded reconciliation context
+provider-facing reconciliation schema
+prompt/instruction authority
+deterministic system-owned finalization where applicable
+written acceptance oracle
+live route identity
+validation/handoff evidence
+```
+
+PROMPT-003 extraction semantics must not be assumed to describe reconciliation. The ticket may reuse the Anoman adapter if that route is selected, but adapter reuse is not semantic qualification.
+
+It must not broaden retrieval, truth, precedence, review, or publication authority.
 
 ## BSS-V2-005 - External provider quota-domain and capacity-profile foundation
 
@@ -836,7 +1023,7 @@ duration
 retry/failure outcome
 ```
 
-External provider execution additionally records tokens/provider usage/quota/cost references where applicable.
+External direct-provider/gateway execution additionally records tokens, gateway/provider/model provenance, quota/cost references, and gateway-specific normalized usage metadata where applicable.
 
 No raw source/prompt/secret material is persisted.
 
@@ -885,57 +1072,74 @@ BSS-V2-002  APPROVED
       +------------------------------+
       |                              |
       v                              v
-BSS-V2-004-01                    BSS-V2-003  APPROVED
-Persistent Docling service      Gemini adapter availability
-      |
-      v
-BSS-V2-004-02
-D1 -> ready Docling service -> NormalizedDocument v1
-      |
-      v
-    STOP
-      |
-      v
-BSS-V2-004-03
-Semantic extraction qualification
-      |
-      v
-BSS-V2-004-04
-Reconciliation qualification
-      |
-      +------------------------------+
-      |                              |
-      v                              v
-BSS-V2-005                    BSS-V2-007
-External quota/capacity       Executor telemetry/provenance
-      |                              |
-      v                              v
-BSS-V2-006                    BSS-V2-008
-Admission/interactive         External price/shadow COGS
-      |                              |
-      +---------------+--------------+
-                      |
-                      v
-                BSS-V2-009
-                External privacy preflight
-                      |
-                      v
-                BSS-V2-010
-                Qualified fallback
-                      |
-                      v
-                BSS-V2-011
-                Integrated checkpoint
+BSS-V2-003  APPROVED             BSS-V2-004-01  APPROVED
+Direct Gemini adapter            Persistent Docling service
+                                      |
+                                      v
+                                BSS-V2-004-02  APPROVED
+                                D1 -> Docling -> NormalizedDocument v1
+                                      |
+                                      +----------------------+
+                                      |                      |
+                                      |         SEM-ANM-PROMPT-003 CK authority
+                                      |         SEM-ANM-SPIKE-004 CK PASS
+                                      |                      |
+                                      +----------+-----------+
+                                                 |
+                                                 v
+                                     BSS-V2-004-03-01
+                                     Anoman adapter/route seam
+                                                 |
+                                                 v
+                                     BSS-V2-004-03-02
+                                     PROMPT-003 production pipeline/finalizer
+                                                 |
+                                                 v
+                                     BSS-V2-004-03-03
+                                     integrated production extraction qualification
+                                                 |
+                                  +--------------+--------------+
+                                  |                             |
+                                  v                             v
+                         BSS-V2-004-04                    BSS-V2-005
+                         reconciliation                   quota/capacity
+                         qualification                         |
+                                  |                             v
+                                  |                        BSS-V2-006
+                                  |                        admission/interactive
+                                  |
+                                  +--------------+--------------+
+                                                 |
+                                                 v
+                                           BSS-V2-007
+                                      telemetry/provenance
+                                                 |
+                                                 v
+                                           BSS-V2-008
+                                      price/shadow COGS
+                                                 |
+                                                 v
+                                           BSS-V2-009
+                                      external privacy preflight
+                                                 |
+                                                 v
+                                           BSS-V2-010
+                                      qualified fallback
+                                                 |
+                                                 v
+                                           BSS-V2-011
+                                      integrated checkpoint
 ```
 
 Important sequencing rules:
 
-1. BSS-V2-004-01 depends on approved BSS-V2-001/002 and the existing BSS-009 contracts, not on Gemini.
-2. BSS-V2-004-02 depends on BSS-V2-004-01 PASS plus the approved IDSER-003/BSS-009 lifecycle.
-3. BSS-V2-004-03 must not begin before the explicit perception hard stop is reviewed and released.
-4. BSS-V2-004-04 depends on extraction qualification but has independent acceptance.
-5. External-provider economics/capacity work does not need to block the Docling perception checkpoint.
-6. Dependencies must correspond to real consumed interfaces, not ticket-number ordering.
+1. BSS-V2-004-01 and BSS-V2-004-02 are already approved and are consumed as immutable predecessors.
+2. BSS-V2-004-03-01 depends on approved capability/routing infrastructure plus the selected Anoman extraction direction; it does not depend on changing the direct Gemini adapter.
+3. BSS-V2-004-03-02 depends on the PROMPT-003 qualification authority and existing IDSER semantic contracts; it may be developed against injected provider proposals.
+4. BSS-V2-004-03-03 depends on both -03-01 and -03-02 CK PASS and is the first child that qualifies the real production extraction composition.
+5. BSS-V2-004-04 depends on -03-03 CK PASS but has independent reconciliation acceptance.
+6. BSS-V2-005 and BSS-V2-007 should depend on BSS-V2-004-03-03 PASS because that is the first production-shaped external extraction route whose capacity and telemetry they operationalize. They need not wait for reconciliation unless their frozen scope explicitly consumes it.
+7. Dependencies must correspond to real consumed interfaces, not ticket-number ordering.
 
 ---
 
@@ -1105,7 +1309,7 @@ what legal privacy policy should Atlas promise?
 
 Those are planning/architecture decisions and must already be resolved or intentionally deferred.
 
-For Gemini model IDs, the live qualification ticket may use explicit configured models selected for qualification from the real provider account, but activation requires the ticket's live qualification evidence and an explicit recorded qualification identity.
+For the current extraction route, the planning choice is already resolved: gateway `anoman`, requested model `gemini-2.5-flash`, and PROMPT-003 semantic profile. GO must not reopen provider selection inside BSS-V2-004-03. Activation still requires BSS-V2-004-03-03 live production-path evidence and an explicit recorded qualification identity.
 
 ---
 
@@ -1126,8 +1330,9 @@ avoid broad words that invite reviewer invention
 CK must not need to infer that a ticket also intended:
 
 ```text
-OpenRouter
-paid Gemini
+an unrequested second gateway
+a different requested model
+paid-provider migration
 S3
 billing
 full IDSER reruns
@@ -1258,8 +1463,17 @@ BSS-V2-004-01  medium
 BSS-V2-004-02  medium
     execution-bound source/result handoff, replay/idempotency, no semantic advancement
 
-BSS-V2-004-03 / 004-04  medium
-    live external credential handling, bounded semantic context, secret-safe evidence, no contract weakening
+BSS-V2-004-03-01  medium
+    Anoman credential/config boundary, distinct gateway identity, bounded transport, provenance/error redaction
+
+BSS-V2-004-03-02  medium
+    prompt/schema authority, source-unit boundary, no semantic repair, final contract preservation
+
+BSS-V2-004-03-03  medium to high
+    live external credential handling, bounded semantic context, secret-safe evidence, route activation gate
+
+BSS-V2-004-04  medium to high
+    independent reconciliation context/schema/oracle, secret-safe live evidence, no extraction-assumption leakage
 
 BSS-V2-005  low to medium
     quota-domain aliases must be non-secret; capacity must not become product authority
@@ -1352,20 +1566,74 @@ COUPLING-BSSV2-00402-SEMANTIC-ADVANCE
 Perception success/failure cannot fabricate semantic acceptance or reconciliation state.
 ```
 
-### BSS-V2-004-03 / 004-04 - external semantic qualification
+### BSS-V2-004-03-01 - Anoman adapter/route seam
 
 ```text
-BOUNDARY-BSSV2-0040X-EXTERNAL
-Only bounded semantic context crosses the external provider boundary.
+BOUNDARY-BSSV2-0040301-SECRET
+ANOMAN_API_KEY remains server-side and never enters route IDs, semantic payloads, logs, evidence, or client responses.
 
-SEAM-BSSV2-0040X-LIVE-EVIDENCE
+SEAM-BSSV2-0040301-IDENTITY
+Gateway identity, requested model identity, and served/routed identity where available remain distinguishable and attributable.
+
+COUPLING-BSSV2-0040301-GEMINI
+The direct Gemini adapter is not repurposed into an Anoman proxy by changing only its endpoint.
+
+COUPLING-BSSV2-0040301-ROUTING
+Anoman routing cannot silently broaden the qualified model set for truth-producing work.
+```
+
+### BSS-V2-004-03-02 - PROMPT-003 production semantic pipeline
+
+```text
+BOUNDARY-BSSV2-0040302-SOURCE
+Only deterministic bounded source units derived from accepted NormalizedDocument v1 enter the provider-facing semantic payload.
+
+SEAM-BSSV2-0040302-PROMPT
+Production prompt/schema/policy authority is deterministically attributable to the CK-approved PROMPT-003 semantics.
+
+COUPLING-BSSV2-0040302-SPIKE-RUNTIME
+Production execution does not depend permanently on scripts/sem-anm-* runner modules or generated spike files.
+
+COUPLING-BSSV2-0040302-SEMANTIC-REPAIR
+The finalizer cannot change provider semantic meaning to force Atlas contract validation.
+
+COUPLING-BSSV2-0040302-SCHEMA-WEAKEN
+The final Atlas semantic contract remains unchanged even though the provider-facing proposal schema is smaller.
+```
+
+### BSS-V2-004-03-03 - integrated extraction qualification
+
+```text
+BOUNDARY-BSSV2-0040303-EXTERNAL
+Only the frozen bounded semantic payload crosses the Anoman boundary.
+
+SEAM-BSSV2-0040303-LIVE-EVIDENCE
+Live evidence is opt-in, secret-safe, attributable to the exact production route, and uses approved non-confidential fixtures.
+
+SEAM-BSSV2-0040303-ACTIVATION
+atlas.semantic.extract cannot activate the Anoman route merely because an adapter test or historical spike succeeded; this child must reach CK PASS.
+
+COUPLING-BSSV2-0040303-ORACLE
+Historical SPIKE-004 evidence is not rewritten to satisfy a stale phrase oracle; the production oracle is frozen separately against the written semantic contract.
+
+COUPLING-BSSV2-0040303-TRUTH
+Provider output remains an untrusted proposal; neither Anoman nor the requested model chooses accepted truth or publication.
+```
+
+### BSS-V2-004-04 - reconciliation qualification
+
+```text
+BOUNDARY-BSSV2-00404-EXTERNAL
+Only the frozen bounded reconciliation context crosses the selected external route.
+
+COUPLING-BSSV2-00404-EXTRACTION
+PROMPT-003 extraction authority is not assumed to define reconciliation semantics.
+
+SEAM-BSSV2-00404-LIVE-EVIDENCE
 Live evidence is secret-safe and uses approved non-confidential fixtures.
 
-COUPLING-BSSV2-0040X-TRUTH
-Model output remains an untrusted proposal; no model chooses accepted truth or publication.
-
-COUPLING-BSSV2-0040X-SCHEMA-WEAKEN
-Provider limitations cannot weaken the final Atlas semantic contracts.
+COUPLING-BSSV2-00404-TRUTH
+Reconciliation output remains an untrusted proposal; no model chooses accepted truth or publication.
 ```
 
 ### BSS-V2-005 / 006
@@ -1954,7 +2222,13 @@ Compose boot/readiness
 PostgreSQL role-denial checks
 ```
 
-For semantic qualification tickets, use semantic worker/client/handoff and the frozen semantic-oracle harnesses relevant to that capability.
+For BSS-V2-004-03-01, use deterministic Anoman adapter/config/route/error/provenance tests with injected transport and no required live call.
+
+For BSS-V2-004-03-02, use prompt/schema equivalence tests, source-unit builder tests, proposal parser/source-accounting tests, deterministic finalizer tests, unchanged Atlas parser tests, semantic-worker tests, and directly affected replay/handoff regressions.
+
+For BSS-V2-004-03-03, use an opt-in live production-path harness plus semantic worker/client/handoff and a frozen written-contract-aligned extraction oracle. Preserve the historical SPIKE-004 result rather than modifying it.
+
+For BSS-V2-004-04, use reconciliation-specific context/schema/oracle and handoff evidence; do not reuse extraction acceptance as reconciliation proof.
 
 Do not automatically rerun all IDSER acceptance scenarios for every infrastructure ticket.
 
@@ -1964,11 +2238,11 @@ If an implementation changes a frozen semantic contract, `NormalizedDocument v1`
 
 # 31. Integrated checkpoint boundaries
 
-BSS V2 now has two meaningful checkpoints.
+BSS V2 now has three meaningful checkpoints.
 
 ## 31.1 Perception checkpoint - BSS-V2-004-02
 
-This is the immediate checkpoint.
+Status: **APPROVED predecessor checkpoint.** It is no longer the immediate implementation target.
 
 It must prove:
 
@@ -2005,9 +2279,45 @@ chat
 publication
 ```
 
-After CK PASS, stop before semantic qualification unless explicitly continued.
+Its CK PASS is consumed as the stable starting boundary for semantic productionization.
 
-## 31.2 Broader BSS V2 checkpoint - BSS-V2-011
+## 31.2 Semantic extraction checkpoint - BSS-V2-004-03-03
+
+This is the immediate current checkpoint.
+
+It must prove:
+
+```text
+accepted NormalizedDocument v1
+production bounded source-unit preparation
+production PROMPT-003-equivalent semantic profile
+distinct Anoman gateway adapter
+pinned requested gemini-2.5-flash
+provider proposal validation
+exact source accounting
+deterministic finalization without semantic repair
+unchanged atlas.semantic.extract/v1 parser
+existing staging/replay/handoff compatibility
+secret-safe live route provenance
+written-contract-aligned semantic acceptance
+no arbitrary model fallback
+```
+
+It intentionally does not prove:
+
+```text
+semantic reconciliation
+all 16 kinds exhaustively
+large Safara reliability
+adversarial/long-context robustness unless separately frozen
+chat
+CES
+publication
+```
+
+After CK PASS, stop before reconciliation unless BSS-V2-004-04 is explicitly started.
+
+## 31.3 Broader BSS V2 checkpoint - BSS-V2-011
 
 After the later semantic qualification and applicable external-provider operational tickets, BSS-V2-011 proves the full execution substrate composes.
 
@@ -2036,14 +2346,15 @@ It remains a composition checkpoint, not a catch-all repair ticket.
 
 # 32. Handoff after BSS V2
 
-The immediate handoff after BSS-V2-004-02 is not a full live Initial Draft acceptance set.
-
-It is:
+The immediate handoff after the approved BSS-V2-004-02 perception boundary is:
 
 ```text
 accepted NormalizedDocument v1
-    -> bounded semantic extraction qualification
-    -> bounded reconciliation qualification
+    -> BSS-V2-004-03-01 Anoman adapter/route seam
+    -> BSS-V2-004-03-02 PROMPT-003 production pipeline/finalizer
+    -> BSS-V2-004-03-03 integrated production extraction qualification
+    -> STOP
+    -> BSS-V2-004-04 independent reconciliation qualification
 ```
 
 After the broader remaining BSS V2 set reaches PASS, a superseding live-provider Initial Draft acceptance set may then prove the complete functional path.
@@ -2059,7 +2370,7 @@ That later set may preserve the useful IDSER-011-style decomposition:
 
 but it must consume the already-established Docling perception boundary rather than re-testing remote PDF perception as a semantic-provider requirement.
 
-The actual reasoning provider/model must come from qualification evidence. Do not hard-code Gemini as acceptance authority merely because the adapter exists.
+For the current extraction productionization, the selected route is already evidence-backed: Anoman gateway requesting `gemini-2.5-flash` under PROMPT-003. Do not replace it with direct Gemini merely because the adapter exists, and do not generalize this extraction choice into reconciliation authority.
 
 Do not create that later IDSER acceptance set as part of the current BSS V2 ticket regeneration unless separately requested.
 
@@ -2072,23 +2383,24 @@ When this implementation context is supplied for remaining-ticket regeneration, 
 1. Read this implementation context in full.
 2. Read the current `atlas-core-architecture-checkpoint-v3.md` in full.
 3. Read the current `atlas-backend-production-baseline-v2.md` in full.
-4. Inspect approved BSS-V2-001/002/003 and preserve their reviewed authority.
-5. Inspect the existing planned BSS-V2-004 and its blocker evidence; preserve them as history and do not treat them as current architecture authority.
-6. Inspect DOCSPIKE-001 ticket/report and its actual implementation scripts as feasibility evidence, including its explicit limits.
-7. Inspect BSS-009/009-01/009-02 source/perception authority.
-8. Inspect IDSER-003 for the exact D1 perception kickoff seam.
-9. Inspect IDSER-002/004/005/006 only enough to preserve the downstream semantic boundary and avoid prematurely entering it.
-10. Inspect current provider-capability, route-registry, perception-worker, config, Compose, and current BSS-V2-004-01/004-02 ticket seams.
-11. Treat the current BSS-V2-004-01/004-02 persistent Docling service contracts as the executable perception authority unless V3/Baseline V2 is intentionally revised again.
-12. Do not re-authorize the superseded per-document Python/Docling subprocess implementation merely because old worktree code or historical evidence still exists.
-13. Use the current Atlas ticket/review contract conventions and Security Refactor Readiness skill.
-14. Update the existing `Stack_Setup_V2/README.md` and generate/revise only the remaining planned ticket files/children required by the current plan.
-15. Do not modify approved BSS-V2-001/002/003 ticket content or review history.
-16. Do not implement production code during ticket regeneration.
-17. Do not silently mark the historical BSS-V2-004 blocker evidence PASS.
-18. Make BSS-V2-004-01 and BSS-V2-004-02 independently GO/CK/CFC/HMN friendly.
-19. Freeze a hard stop after BSS-V2-004-02.
-20. Do not fully freeze model-specific 004-03/004-04 acceptance details from guesses; inspect the current semantic spike evidence and exact intended provider/model at the time those tickets are generated.
+4. Inspect approved BSS-V2-001/002/003/004-01/004-02 and preserve their reviewed authority.
+5. Inspect the superseded BSS-V2-004 and its blocker evidence; preserve them as history and do not treat them as current architecture authority.
+6. Inspect SEM-ANM-PROMPT-003 approved compiler/schema/policy artifacts and their provenance/hashes.
+7. Inspect SEM-ANM-SPIKE-004 runner, Anoman client reuse, exact route configuration, committed report, and committed CK PASS review artifact.
+8. Preserve the SPIKE-004 distinction: historical runner terminal FAIL under frozen inherited oracle; CK PASS because the written semantic conditions were satisfied and the oracle had documented false negatives.
+9. Inspect the exact production semantic seams: provider-capabilities, route-registry, config, worker-main, semantic-worker, atlas-skills semantic prompt/output contract, and atlas-contracts semantic parsers.
+10. Inspect BSS-009/009-01/009-02, IDSER-003, and approved 004-01/004-02 only as consumed perception authority; do not reopen them.
+11. Inspect IDSER-002/004/005/006 and directly affected replay/handoff contracts enough to preserve the final semantic boundary.
+12. Generate BSS-V2-004-03 as child tickets -03-01, -03-02, and -03-03; do not regenerate it as one mega-ticket.
+13. Keep BSS-V2-004-04 independent from extraction and do not assume PROMPT-003 is its reconciliation prompt.
+14. Update the existing `Stack_Setup_V2/README.md` and revise remaining planned BSS-V2-005 through -011 dependencies to match the new graph.
+15. Make BSS-V2-005 and BSS-V2-007 consume BSS-V2-004-03-03 PASS as their first production external-route predecessor unless a narrower real dependency is explicitly proven.
+16. Do not modify approved BSS-V2-001/002/003/004-01/004-02 ticket content or review history.
+17. Do not implement production code during ticket regeneration.
+18. Do not silently mark the historical BSS-V2-004 blocker evidence PASS.
+19. Do not rewrite SEM-ANM-SPIKE-004 to PASS at the runner level or rerun it only to satisfy the stale inherited phrase oracle.
+20. Freeze a hard stop after BSS-V2-004-03-03 before reconciliation.
+21. Use the current Atlas ticket/review contract conventions and Security Refactor Readiness skill.
 
 If inspection reveals a genuine architecture conflict that cannot be resolved within V3/Baseline V2 authority, surface the exact planning conflict rather than inventing behavior.
 
@@ -2102,16 +2414,19 @@ The existing `Stack_Setup_V2/README.md` should be updated to contain at minimum:
 purpose
 primary architecture references
 historical BSS compatibility statement
-approved BSS-V2-001/002/003 preservation
+approved BSS-V2-001/002/003/004-01/004-02 preservation
 IDSER continuity statement
-DOCSPIKE-001 feasibility evidence and limits
+completed Docling perception boundary
+SEM-ANM-PROMPT-003 authority
+SEM-ANM-SPIKE-004 CK PASS plus historical runner-result distinction
 scope/non-scope
-Docling perception direction
-external reasoning direction
+Anoman extraction productionization direction
+PROMPT-003 proposal/finalizer architecture
+independent reconciliation direction
 security-readiness authoring rule
 delivery order/dependency table
 dependency graph
-perception hard stop
+extraction hard stop
 review controls
 Docker/local boot convention
 broader completion boundary
@@ -2123,18 +2438,22 @@ It must explicitly state:
 ```text
 BSS V2 is additive.
 Historical BSS checkpoints remain historical.
-BSS-V2-001/002/003 remain approved.
+BSS-V2-001/002/003/004-01/004-02 remain approved.
 IDSER-001 through IDSER-010 are not reopened.
-Docling is the current digital-PDF perception direction, pending production-shaped qualification.
+Docling is the approved current digital-PDF perception route for the qualified class.
 The current Docling profile is persistent Compose-private docling-serve 1.36.0 + docling-slim 2.132.0.
 The first qualification profile is CPU-only, warm before routing, with <=20-second warm end-to-end fixture gates.
 Agents Bridge sends exact BSS-009-authorized PDF bytes; Docling does not discover DocumentStore.
 pg-boss remains the sole Atlas D1 job lifecycle authority; Docling RQ/Redis is not part of the current path.
 Fresh per-document Python/Docling subprocess execution is not the production profile.
-Gemini is an available reasoning adapter/candidate, not required perception authority.
+The direct Gemini adapter remains approved but is not the selected extraction route.
+The current extraction productionization route is Anoman requesting pinned gemini-2.5-flash under PROMPT-003.
+Anoman remains a distinct gateway adapter identity; do not disguise it as direct Gemini.
+Provider output is a small untrusted semantic proposal; Atlas deterministically finalizes system-owned fields without semantic repair.
+SEM-ANM-SPIKE-004 historical runner FAIL and CK PASS are both preserved.
 Mistral remains implemented but inactive/blocked until requalified.
-The immediate checkpoint ends at Atlas-accepted NormalizedDocument v1.
-Semantic qualification begins afterward.
+The immediate current checkpoint is BSS-V2-004-03-03 production extraction qualification.
+Reconciliation begins only afterward under independent BSS-V2-004-04 authority.
 ```
 
 ---
@@ -2183,6 +2502,15 @@ Do not generate tickets with these shapes:
 "Add Gemini and migrate Atlas"
     replaces one hard-coded provider with another
 
+"Point GeminiProvider at Anoman"
+    collapses gateway identity, direct-provider identity, routing provenance, and qualification authority
+
+"Make Anoman/Gemini emit the complete Atlas extraction result"
+    pushes system-owned IDs/evidence/accounting into provider semantics instead of using the qualified proposal/finalizer split
+
+"Import scripts/sem-anm-spike004/run.mts into the production worker"
+    turns qualification evidence into permanent production runtime coupling
+
 "Make Gemini do PDF + extraction + reconciliation"
     recreates the superseded BSS-V2-004 mega-gate
 
@@ -2220,7 +2548,7 @@ Do not generate tickets with these shapes:
     confuses provider COGS telemetry with customer pricing
 
 "Add OpenRouter fallback"
-    future gateway integration is not automatically authorized
+    an additional gateway is not automatically authorized merely because Anoman is now selected for extraction
 
 "Use a second Gemini API key for more quota"
     assumes keys equal independent quota domains
@@ -2272,23 +2600,23 @@ If any answer is no, revise or split the ticket before freezing the set.
 
 # 38. BSS V2 completion boundary
 
-The immediate completion boundary for the current realignment is the perception checkpoint:
+The perception checkpoint is already complete through BSS-V2-004-01 and BSS-V2-004-02.
+
+The immediate completion boundary for the current realignment is now the semantic extraction checkpoint:
 
 ```text
 approved capability/routing foundation
-    -> persistent Compose-private Docling service
-         -> docling-serve 1.36.0
-         -> docling-slim 2.132.0
-         -> CPU-only first profile
-         -> models/profile warm before routing
-         -> every required warm fixture <=20 seconds end to end
-    -> IDSER-003 D1 + pg-boss + BSS-009 authority
-    -> exact-byte Bridge handoff
+    -> approved Docling perception boundary
     -> Atlas-accepted NormalizedDocument v1
-    -> STOP
+    -> BSS-V2-004-03-01 Anoman adapter/route seam
+    -> BSS-V2-004-03-02 PROMPT-003 production pipeline/finalizer
+    -> BSS-V2-004-03-03 integrated live production extraction qualification
+    -> unchanged atlas.semantic.extract/v1
+    -> existing staging/replay/handoff
+    -> STOP BEFORE RECONCILIATION
 ```
 
-That checkpoint is complete only when the supported digital-PDF class, pinned service/processor/image identity, warm readiness, CPU thread/concurrency profile, <=20-second warm latency, source-locator stability, normalization, result acceptance, service-restart recovery, retry/replay/failure behavior, no-subprocess fallback, and single pg-boss lifecycle authority are proven without semantic-model dependency.
+That checkpoint is complete only when gateway/model/profile identities are explicit, provider output is validated as an untrusted proposal, deterministic finalization performs no semantic repair, the complete unchanged Atlas extraction contract validates, the real production worker path is exercised through live Anoman inference, route provenance is secret-safe and attributable, and CK approves activation of `atlas.semantic.extract`.
 
 The broader BSS V2 phase later ends when the backend has also proven:
 
@@ -2321,42 +2649,42 @@ CURRENT PROVEN FOUNDATIONS
 IDSER-003 D1 kickoff
 BSS-009 source/perception authority
 BSS-V2 capability interfaces + route resolver
-Gemini adapter available
-Docling feasibility PASS_WITH_LIMITS
+direct Gemini adapter available
+BSS-V2-004-01 persistent Docling PASS
+BSS-V2-004-02 D1 -> NormalizedDocument v1 PASS
+SEM-ANM-PROMPT-003 CK-approved semantic profile
+SEM-ANM-SPIKE-004 CK PASS with historical oracle-false-negative runner FAIL preserved
         |
         v
 
 IMMEDIATE TARGET
 
-IDSER D1
-    -> pg-boss
-    -> BSS-009 authorized exact bytes
-    -> Agents Bridge
-    -> persistent Compose-private docling-serve
-         -> CPU-only ready/warm profile
-         -> no per-document process initialization
-         -> <=20-second warm qualification
-    -> deterministic generic perception
-    -> unchanged NormalizedDocument v1
-    -> Atlas acceptance
-    -> STOP
+accepted NormalizedDocument v1
+    -> BSS-V2-004-03-01
+         distinct Anoman StructuredReasoningProvider adapter/route
+         requested gemini-2.5-flash
+    -> BSS-V2-004-03-02
+         production PROMPT-003-equivalent compiler
+         bounded source units
+         provider proposal validation
+         deterministic finalizer
+         unchanged Atlas extraction contract
+    -> BSS-V2-004-03-03
+         real production live extraction qualification
+    -> STOP BEFORE RECONCILIATION
         |
         v
 
-LATER REASONING TARGET
+NEXT REASONING TARGET
 
-accepted NormalizedDocument v1
-    -> bounded source slots
-    -> qualified semantic extraction route
-    -> deterministic finalization
-    -> existing Atlas semantic validation
-    -> qualified reconciliation route
+BSS-V2-004-04
+    -> independently qualified reconciliation context/schema/prompt/oracle
         |
         v
 
 BROADER OPERATIONAL TARGET
 
-external provider capacity + privacy + usage + cost + fallback
+external route capacity + privacy + usage + cost + fallback
     while local perception remains a distinct local-resource concern
 ```
 
@@ -2364,4 +2692,4 @@ without changing what Atlas considers project truth.
 
 The final rule for ticket generation is:
 
-> **Build small, closed, reviewable capability checkpoints. Preserve historical authority. For the current digital-PDF route, run Docling as a persistent private local service that receives only BSS-009-authorized bytes, is warm before routing, and must satisfy the frozen CPU latency/contract gates before D1 depends on it. Stop at the normalized document boundary. Let external models do only separately qualified reasoning after that boundary. Make every acceptance condition explicit before GO, keep security readiness local to the ticket, and never use CK/CFC as a discovery phase for work that should have been frozen up front.**
+> **Build small, closed, reviewable capability checkpoints and preserve historical authority. The Docling normalized-document boundary is already approved. Productionize semantic extraction next as three bounded responsibilities: a distinct Anoman gateway seam, a production-owned PROMPT-003 proposal/finalizer pipeline, and an integrated live production qualification. Keep provider output untrusted, keep deterministic finalization free of semantic repair, preserve the unchanged Atlas semantic contract, and stop before independently qualified reconciliation. Make every acceptance condition explicit before GO, keep security readiness local to the ticket, and never use CK/CFC as a discovery phase for work that should have been frozen up front.**
