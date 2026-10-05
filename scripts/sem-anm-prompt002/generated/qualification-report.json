@@ -1,0 +1,87 @@
+{
+  "formatVersion": 1,
+  "checkpoint": "SEM-ANM-PROMPT-002-03",
+  "result": "PASS",
+  "coverage": {
+    "kinds": {
+      "expected": [
+        "actor",
+        "business_object",
+        "business_property",
+        "responsibility",
+        "rule",
+        "constraint",
+        "condition",
+        "decision",
+        "workflow_step",
+        "state_transition",
+        "relationship",
+        "input",
+        "output",
+        "acceptance_expectation",
+        "exception",
+        "unresolved"
+      ],
+      "observed": [
+        "actor",
+        "business_object",
+        "business_property",
+        "responsibility",
+        "rule",
+        "constraint",
+        "condition",
+        "decision",
+        "workflow_step",
+        "state_transition",
+        "relationship",
+        "input",
+        "output",
+        "acceptance_expectation",
+        "exception",
+        "unresolved"
+      ],
+      "complete": true
+    },
+    "providerFields": [
+      "candidate/non_fact",
+      "semantic_key",
+      "payload",
+      "normalized_meaning",
+      "needs_resolution",
+      "questions",
+      "slot/source-result accounting"
+    ],
+    "semanticRules": [
+      "primary-kind/non-exclusive facets",
+      "unresolved versus needs_resolution",
+      "no reconciliation leakage",
+      "no PROMPT-001 ontology",
+      "reference-owned semantic descriptions"
+    ],
+    "negativeCases": [
+      "missing kind rejected",
+      "unknown kind rejected"
+    ]
+  },
+  "provenance": {
+    "sectionCount": 15,
+    "staticPolicySections": 8,
+    "schemaOwnedSections": 7,
+    "exactSourceDescriptionsChecked": 79
+  },
+  "determinism": {
+    "identicalBuilds": 2,
+    "providerSchemaBytesEqual": true,
+    "systemPromptBytesEqual": true,
+    "provenanceBytesEqual": true,
+    "hashesEqual": true,
+    "generatedArtifactsMatchBuild": true
+  },
+  "hashes": {
+    "referenceSha256": "67cd0908c634271871df4a6ca8a440b46d188c76f56e9ab3702073d193a2c083",
+    "providerSchemaSha256": "c478bdf27be6fcf56c999ad2f1780be6de126aecc20d1503f2277867e3b8c14b",
+    "systemPromptSha256": "80935e3f64f77a0569ff91e30ce7c7d7d08d1c78747dbbee304c28de88a538c5",
+    "promptProvenanceSha256": "27bb968c000d82897857f8076f7dfab1e04abaffcab2bed798c4fb8dc451f8c4",
+    "qualificationTestSha256": "37c8fa961105bd9215a63a48d63843a0849ca6f2b1ca60be81b117329c0eaa9d"
+  }
+}
