@@ -1,6 +1,6 @@
 # SEM-ANM-PROMPT-002-03: Integrated offline qualification checkpoint
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `SEM-ANM-PROMPT-002-BATCH-03`
 - **Parent context:** [SEM-ANM-PROMPT-002 implementation context](../../SEM-ANM-PROMPT-002-trimmed-v2-implementation-context.md)
 - **Predecessors:** CK `PASS` for [PROMPT-002-01](SEM-ANM-PROMPT-002-01-frozen-reference-and-schema-projection.md) and [PROMPT-002-02](SEM-ANM-PROMPT-002-02-deterministic-extraction-prompt-compiler.md)
