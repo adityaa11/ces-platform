@@ -1,23 +1,22 @@
-export const PROVENANCE = [
-  ["system role", "FIXED/SYSTEM ROLE", "You are a semantic extraction component."],
-  ["unit cardinality", "FIXED/TASK INSTRUCTION", "zero semantic units"],
-  ["output shape", "ZOD_STRUCTURE", "source_results"],
-  ["workflow kind", "ZOD_DESCRIPTION/semantic_kind", "A concrete action or event"],
-  ["rule kind", "ZOD_DESCRIPTION/semantic_kind", "Governing business or behavioral logic"],
-  ["constraint kind", "ZOD_DESCRIPTION/semantic_kind", "A restriction, bound, invariant"],
-  ["possibility distinction", "ZOD_DESCRIPTION/modality", "Possibility is uncertainty, not permission."],
-  ["timing distinction", "ZOD_DESCRIPTION/temporal_constraints", "Timing/order is not automatically an applicability condition."],
-  ["resolution", "ZOD_DESCRIPTION/resolution_status", "Material ambiguity or missing information"],
-  ["clarification", "ZOD_DESCRIPTION/SemanticUnit", "clarification_question must contain exactly one concise question"],
-  ["reference ambiguity", "FIXED/REFERENCE HANDLING", "multiple plausible referents"],
-  ["multiple units", "FIXED/MULTIPLE-UNIT HANDLING", "One grammatical sentence may express multiple semantic units."],
-  ["conflict boundary", "FIXED/CONFLICT HANDLING", "Extraction is not conflict resolution."],
-  ["source accounting", "FIXED/SOURCE ACCOUNTING", "Return one source_result for every supplied slot."],
-  ["JSON-only", "FIXED/OUTPUT RULES", "Return valid JSON only."],
-] as const;
+type Authority = "FIXED" | "ZOD_STRUCTURE" | "ZOD_DESCRIPTION";
+type Entry = readonly [id: string, authority: Authority, checkpointMarker: string, promptMarker?: string];
 
-export function checkpointCoverage(prompt: string) {
-  const entries = PROVENANCE.map(([instruction, authority, marker]) => ({ instruction, authority, marker, present: prompt.includes(marker) }));
-  const duplicateAuthorities = new Set(entries.map(({ instruction, authority }) => `${instruction}:${authority}`)).size !== entries.length;
-  return { entries, complete: entries.every(({ present }) => present) && !duplicateAuthorities };
+// Complete explicit material-instruction inventory for checkpoint V1. Each ID
+// has one authority and must appear in both fixture and generated prompt.
+export const PROVENANCE: readonly Entry[] = [
+  ["role", "FIXED", "You are a semantic extraction component."], ["cardinality", "FIXED", "zero semantic units"], ["no-merge", "FIXED", "Do not merge independent requirements"],
+  ["shape-root", "ZOD_STRUCTURE", "source_results"], ["shape-slot", "ZOD_STRUCTURE", "semantic_units"], ["shape-kind", "ZOD_STRUCTURE", "workflow_step | rule | constraint"], ["shape-null", "ZOD_STRUCTURE", "string or null"], ["shape-modality", "ZOD_STRUCTURE", "required | prohibited | permitted | possible | unspecified"], ["shape-arrays", "ZOD_STRUCTURE", "applicability_conditions"],
+  ["kind-workflow", "ZOD_DESCRIPTION", "A concrete action or event"], ["kind-rule", "ZOD_DESCRIPTION", "Governing business or behavioral logic"], ["kind-constraint", "ZOD_DESCRIPTION", "A restriction, bound, invariant"], ["kind-timing", "ZOD_DESCRIPTION", "primary semantic role"],
+  ["subject", "ZOD_DESCRIPTION", "no useful explicit subject"], ["actor", "ZOD_DESCRIPTION", "Do not infer an actor"], ["action", "ZOD_DESCRIPTION", "concise verb"], ["object", "ZOD_DESCRIPTION", "directly acted upon"], ["target", "ZOD_DESCRIPTION", "recipient or destination"],
+  ["required", "ZOD_DESCRIPTION", "definitely requires"], ["prohibited", "ZOD_DESCRIPTION", "definitely forbids"], ["permitted", "ZOD_DESCRIPTION", "explicitly allows"], ["possible", "ZOD_DESCRIPTION", "Possibility is uncertainty, not permission."], ["unspecified", "ZOD_DESCRIPTION", "does not establish one of the modalities"],
+  ["applicability", "ZOD_DESCRIPTION", "WHETHER or UNDER WHAT CIRCUMSTANCES"], ["applicability-logic", "ZOD_DESCRIPTION", "AND, OR, ONLY IF"], ["temporal", "ZOD_DESCRIPTION", "Explicit timing or ordering"], ["temporal-distinction", "ZOD_DESCRIPTION", "Timing/order is not automatically an applicability condition."], ["quantitative", "ZOD_DESCRIPTION", "numeric limits, minimums, maximums"], ["scope", "ZOD_DESCRIPTION", "Preserve the stated scope rather than broadening it."],
+  ["resolved", "ZOD_DESCRIPTION", "enough information to faithfully represent"], ["needs-resolution", "ZOD_DESCRIPTION", "Material ambiguity or missing information"], ["no-guess", "ZOD_DESCRIPTION", "Do not guess merely to avoid needs_resolution."], ["clarification", "ZOD_DESCRIPTION", "requesting only the missing material information"], ["cross-field", "ZOD_DESCRIPTION", "Mark that semantic unit as needs_resolution and ask for clarification.", "clarification_question must contain exactly one concise question"],
+  ["reference", "FIXED", "multiple plausible referents"], ["multiple", "FIXED", "One grammatical sentence may express multiple semantic units."], ["shared", "FIXED", "Preserve shared conditions or timing"], ["conflict", "FIXED", "Extraction is not conflict resolution."], ["source", "FIXED", "Use only information supported"], ["no-invent", "FIXED", "Do not invent facts."], ["uncertainty", "FIXED", "Preserve uncertainty."], ["numeric", "FIXED", "Preserve exact numeric limits."], ["accounting", "FIXED", "Return one source_result for every supplied slot."], ["slot", "FIXED", "Preserve the supplied slot exactly."], ["no-slots", "FIXED", "Do not create slots that were not supplied."], ["json", "FIXED", "Return valid JSON only."],
+];
+
+export function checkpointCoverage(checkpoint: string, prompt: string) {
+  const entries = PROVENANCE.map(([id, authority, checkpointMarker, promptMarker = checkpointMarker]) => ({ id, authority, checkpointMarker, promptMarker, inCheckpoint: checkpoint.includes(checkpointMarker), inPrompt: prompt.includes(promptMarker) }));
+  const duplicateIds = entries.map(({ id }) => id).filter((id, index, ids) => ids.indexOf(id) !== index);
+  const unmapped = entries.filter(({ inCheckpoint, inPrompt }) => !inCheckpoint || !inPrompt).map(({ id }) => id);
+  return { entries, unmapped, duplicateIds, complete: unmapped.length === 0 && duplicateIds.length === 0 };
 }
