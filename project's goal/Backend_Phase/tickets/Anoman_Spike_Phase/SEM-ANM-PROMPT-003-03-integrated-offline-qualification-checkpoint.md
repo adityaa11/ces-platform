@@ -1,6 +1,6 @@
 # SEM-ANM-PROMPT-003-03: Integrated offline qualification checkpoint
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `SEM-ANM-PROMPT-003-BATCH-03`
 - **Parent context:** [SEM-ANM-PROMPT-003 implementation context](../../SEM-ANM-PROMPT-003-cross-field-composition-implementation-context.md)
 - **Predecessors:** CK `PASS` for [PROMPT-003-01](SEM-ANM-PROMPT-003-01-frozen-cross-field-policy-insertion.md) and [PROMPT-003-02](SEM-ANM-PROMPT-003-02-differential-artifacts-and-provenance.md)
