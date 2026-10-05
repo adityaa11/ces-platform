@@ -1,6 +1,6 @@
 # SEM-ANM-PROMPT-003-02: Differential generated artifacts and provenance
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `SEM-ANM-PROMPT-003-BATCH-02`
 - **Parent context:** [SEM-ANM-PROMPT-003 implementation context](../../SEM-ANM-PROMPT-003-cross-field-composition-implementation-context.md)
 - **Predecessor:** CK `PASS` for [SEM-ANM-PROMPT-003-01](SEM-ANM-PROMPT-003-01-frozen-cross-field-policy-insertion.md)
