@@ -1,0 +1,297 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "v1",
+      "description": "The semantic vocabulary/profile version aligned to the existing Atlas semantic contract version v1."
+    },
+    "source_results": {
+      "maxItems": 100000,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "slot": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "The exact temporary source slot supplied by Atlas. Preserve it exactly; never create or rename slots."
+          },
+          "classification": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "candidate",
+                "description": "The source unit establishes project meaning and must point to one or more semantic candidates."
+              },
+              {
+                "type": "string",
+                "const": "non_fact",
+                "description": "The source unit is structural, decorative, or otherwise does not itself establish project meaning. A bounded non-fact reason is required."
+              }
+            ],
+            "description": "The exact Atlas semantic-v1 source-accounting classification vocabulary."
+          },
+          "candidates": {
+            "maxItems": 64,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "semantic_key": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 300,
+                  "description": "A concise normalized semantic key for this candidate's main concept. Use source-supported project/domain language. Do not include slot IDs, random IDs, provider metadata, or review decisions."
+                },
+                "kind": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "const": "actor",
+                      "description": "ACTOR: An independently meaningful business agent, role, organization, system, component, or other entity that performs actions or owns responsibilities. Use this when identifying the actor itself is the primary project meaning; do not emit a separate actor candidate merely because an actor appears inside an otherwise self-contained workflow step unless the actor identity or role is independently meaningful."
+                    },
+                    {
+                      "type": "string",
+                      "const": "business_object",
+                      "description": "BUSINESS_OBJECT: A domain entity, record, document, concept, or managed thing that the system or business reasons about, creates, changes, stores, relates, or acts upon. Use this when the existence, identity, structure, or domain meaning of the object itself is the primary project meaning."
+                    },
+                    {
+                      "type": "string",
+                      "const": "business_property",
+                      "description": "BUSINESS_PROPERTY: A property, attribute, status, value, derived value, formula, or observable characteristic of a business object or business concept. Use it when the primary meaning defines or derives a property or value; if the primary meaning is a change from one state to another, prefer state_transition."
+                    },
+                    {
+                      "type": "string",
+                      "const": "responsibility",
+                      "description": "RESPONSIBILITY: A stable responsibility, authority, duty, capability, or area of ownership assigned to an actor or role. Use this for statements about which role may manage, review, approve, inspect, maintain, or operate a class of business information or process; do not use it for one concrete occurrence when workflow_step is primary."
+                    },
+                    {
+                      "type": "string",
+                      "const": "rule",
+                      "description": "RULE: A governing business proposition describing required, permitted, prohibited, or otherwise normative behavior or policy. Rules may contain conditions, timing, scope, quantities, limits, or other restrictions. Rule and constraint are not conceptually disjoint: a rule can carry constraints. Use rule when governing behavior or policy is primary; preserve embedded limits and conditions in payload."
+                    },
+                    {
+                      "type": "string",
+                      "const": "constraint",
+                      "description": "CONSTRAINT: An explicit boundary, invariant, restriction, uniqueness requirement, cardinality, threshold, range, format limit, capacity limit, or other limitation on valid values, states, relationships, or behavior. A constraint often exists inside a broader rule. Use constraint when the boundary or invariant itself is the primary informational contribution, while preserving related modality, scope, quantity, and conditions in payload."
+                    },
+                    {
+                      "type": "string",
+                      "const": "condition",
+                      "description": "CONDITION: A predicate, prerequisite, eligibility criterion, trigger, guard, or circumstance that determines whether another rule, action, transition, result, or requirement applies. Preserve AND, OR, ONLY IF, UNLESS, and nested logic when materially stated. Mere temporal ordering such as 'before processing' is not automatically an applicability condition."
+                    },
+                    {
+                      "type": "string",
+                      "const": "decision",
+                      "description": "DECISION: A business determination, choice, approval/rejection decision point, or branching judgment whose outcome selects among materially different business outcomes. Use it when the decision itself is project meaning, not merely because a statement contains a condition or status."
+                    },
+                    {
+                      "type": "string",
+                      "const": "workflow_step",
+                      "description": "WORKFLOW_STEP: A concrete action or event that occurs as part of a business process or operational sequence. Preserve explicit actor, action, object, target, conditions, and timing. Use it when the concrete process action or event is primary."
+                    },
+                    {
+                      "type": "string",
+                      "const": "state_transition",
+                      "description": "STATE_TRANSITION: A change of a business object, process, or concept from one state, status, or value to another. Preserve from-state, to-state, trigger, actor, conditions, and effects when stated. Use this when the state change is primary even if it is also a workflow event."
+                    },
+                    {
+                      "type": "string",
+                      "const": "relationship",
+                      "description": "RELATIONSHIP: A domain association, dependency, ownership, containment, linkage, or cardinality between business entities or concepts. This is extraction-time business meaning and is NOT the same as Atlas reconciliation relationship types such as supports, contradicts, or supersedes."
+                    },
+                    {
+                      "type": "string",
+                      "const": "input",
+                      "description": "INPUT: Information, data, document, value, artifact, evidence, selection, or other material explicitly required or supplied to a business process, action, decision, calculation, or system behavior. Use it when the incoming material itself is the primary requirement or semantic fact."
+                    },
+                    {
+                      "type": "string",
+                      "const": "output",
+                      "description": "OUTPUT: Information, document, report, artifact, message, export, calculation result, display, or other material explicitly produced, returned, shown, generated, or made available. Use it when the produced result itself is the primary requirement or semantic fact."
+                    },
+                    {
+                      "type": "string",
+                      "const": "acceptance_expectation",
+                      "description": "ACCEPTANCE_EXPECTATION: A requirement about how completion, correctness, delivery, or expected behavior will be checked or accepted, including acceptance criteria, verification scenarios, testable completion outcomes, or delivery evidence. Do not confuse an ordinary runtime business rule with an acceptance expectation merely because both use words such as must or should."
+                    },
+                    {
+                      "type": "string",
+                      "const": "exception",
+                      "description": "EXCEPTION: An exceptional, alternate, failure, rejection, override, fallback, or deviation path relative to a normal rule or workflow. Preserve the triggering circumstance and the exceptional behavior or outcome. Use it when the exceptional path is independently meaningful rather than merely a negated ordinary rule."
+                    },
+                    {
+                      "type": "string",
+                      "const": "unresolved",
+                      "description": "UNRESOLVED: Meaningful source content for which material ambiguity or missing information prevents a safe, faithful semantic representation under a more specific kind. Use this when materially different interpretations remain possible or missing information changes the meaning itself. Do not use unresolved for incidental implementation details. If a specific semantic kind is still clear but one material detail needs clarification, that specific kind may remain primary while needs_resolution is true."
+                    }
+                  ],
+                  "description": "The exact Atlas semantic-v1 candidate kind vocabulary. Kind expresses the candidate's PRIMARY semantic role, not every semantic facet present in the source. Kinds can overlap conceptually; payload preserves orthogonal facets. Do not force a false either/or when a proposition is, for example, a rule carrying a quantitative constraint."
+                },
+                "payload": {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "additionalProperties": {
+                    "description": "The structured JSON payload carried by one Atlas semantic-v1 candidate. It is intentionally extensible because Atlas V1 stores semantic payload as JSON/JSONB rather than a fixed business-domain table. Preserve only source-grounded semantic details that help downstream reasoning. Useful dimensions can include actor, subject, action, object, target, modality, conditions, timing, quantities and units, scope, state/value information, transitions, relationships/cardinality, formulas or derivations, inputs, outputs, acceptance details, and exception details. A semantic kind is the candidate's primary semantic role; payload may preserve additional orthogonal facets. For example, a candidate whose primary kind is rule may also carry a quantitative restriction and scope without losing its rule meaning. Do not invent missing business facts merely to make the payload look complete.",
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string",
+                        "maxLength": 16384
+                      },
+                      {
+                        "maxItems": 100,
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/__schema0"
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
+                        "additionalProperties": {
+                          "$ref": "#/$defs/__schema0"
+                        }
+                      }
+                    ],
+                    "$ref": "#/$defs/__schema0"
+                  },
+                  "description": "Structured source-grounded semantic payload stored inside Atlas semantic-v1 payload. Use clear descriptive snake_case keys. Preserve relevant dimensions such as actor, subject, action, object, target, modality, conditions, timing, quantities/units, scope, state/value, transitions, relationships/cardinality, derivations/formulas, inputs, outputs, acceptance details, and exceptions when supported. Include only materially useful dimensions and do not invent absent values merely to fill a template."
+                },
+                "normalized_meaning": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 8000,
+                  "description": "A concise but complete normalized statement of the candidate's source-supported business meaning. Preserve modality, negation, actor/object identity, conditions, temporal ordering, quantities, exact units/values, scope, states, relationships, and uncertainty. Harmless grammatical normalization is acceptable; semantic broadening, narrowing, repair, or invention is not."
+                },
+                "needs_resolution": {
+                  "type": "boolean",
+                  "description": "True when material ambiguity or missing information prevents safe use without clarification. This is independent of primary kind. Do not set true merely because incidental implementation details are absent."
+                }
+              },
+              "required": [
+                "semantic_key",
+                "kind",
+                "payload",
+                "normalized_meaning",
+                "needs_resolution"
+              ],
+              "additionalProperties": false,
+              "description": "One provider-proposed semantic candidate aligned to the current Atlas semantic-v1 vocabulary. Kind is the PRIMARY role; payload preserves orthogonal facets. The provider does not assign Atlas IDs, evidence locators, source inventory identities, accepted truth, or canonical truth."
+            },
+            "description": "Semantic candidates grounded in this source slot. candidate requires one or more; non_fact requires none."
+          },
+          "non_fact_reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Bounded reason for non_fact classification. Must be null for candidate classification."
+          },
+          "questions": {
+            "maxItems": 100,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "question": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2000,
+                  "description": "One concise clarification question asking only for material missing information."
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2000,
+                  "description": "Why the missing or ambiguous information materially affects semantic interpretation."
+                }
+              },
+              "required": [
+                "question",
+                "reason"
+              ],
+              "additionalProperties": false,
+              "description": "Provider-proposed clarification content. Atlas attaches trusted evidence and owns final question identity."
+            },
+            "description": "Clarification questions caused by material ambiguity in this source slot. Do not ask about incidental implementation details."
+          }
+        },
+        "required": [
+          "slot",
+          "classification",
+          "candidates",
+          "non_fact_reason",
+          "questions"
+        ],
+        "additionalProperties": false,
+        "description": "The provider semantic disposition for exactly one Atlas-authorized source slot. It mirrors Atlas V1 candidate/non_fact accounting while leaving final source identity and candidate IDs to Atlas."
+      },
+      "description": "Exactly one source result for every supplied source slot, with no missing, duplicate, or invented slots."
+    }
+  },
+  "required": [
+    "version",
+    "source_results"
+  ],
+  "additionalProperties": false,
+  "description": "SEM-ANM-PROMPT-002 provider-facing semantic extraction proposal aligned to Atlas semantic-v1. It excludes Atlas-owned IDs, evidence locators, source inventory identities, persistence state, reconciliation, review, accepted truth, publication, and Master authority. Deterministic Atlas finalization must convert it into unchanged atlas.semantic.extract/v1 without inventing missing semantic judgments.",
+  "$defs": {
+    "__schema0": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string",
+          "maxLength": 16384
+        },
+        {
+          "maxItems": 100,
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/__schema0"
+          }
+        },
+        {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/__schema0"
+          }
+        }
+      ]
+    }
+  }
+}
