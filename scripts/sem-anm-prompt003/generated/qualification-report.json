@@ -1,0 +1,111 @@
+{
+  "formatVersion": 1,
+  "checkpoint": "SEM-ANM-PROMPT-003-03",
+  "result": "PASS",
+  "qualification": {
+    "offlineOnly": true,
+    "providerCalls": 0,
+    "credentialsRead": false,
+    "identicalBuilds": 2
+  },
+  "hashes": {
+    "predecessorReferenceSha256": "67cd0908c634271871df4a6ca8a440b46d188c76f56e9ab3702073d193a2c083",
+    "predecessorSystemPromptSha256": "80935e3f64f77a0569ff91e30ce7c7d7d08d1c78747dbbee304c28de88a538c5",
+    "predecessorProviderSchemaSha256": "c478bdf27be6fcf56c999ad2f1780be6de126aecc20d1503f2277867e3b8c14b",
+    "systemPromptSha256": "da008b14342f9414f6c64fd2315379a82b3b7dcdc4263550d83fd795d6a82ed1",
+    "providerSchemaSha256": "c478bdf27be6fcf56c999ad2f1780be6de126aecc20d1503f2277867e3b8c14b",
+    "promptProvenanceSha256": "90e9e3b6a6607dedd4c135c485dbfc9223741a6200be6bd28519d4bb7f4b5200",
+    "crossFieldPolicyBodySha256": "2f2e13a0cce0d0ad578718bb52e69d69abfbd9bb0d6dfb593ab6b010d930cb10"
+  },
+  "crosswalk": {
+    "RC-PROMPT3-001": {
+      "result": "PASS",
+      "evidence": "approved PROMPT-002 hashes and exact predecessor inputs",
+      "locator": "scripts/sem-anm-prompt003/qualification.test.mts"
+    },
+    "RC-PROMPT3-002": {
+      "result": "PASS",
+      "evidence": "16-kind Zod vocabulary and provider field assertions",
+      "locator": "scripts/sem-anm-prompt003/qualification.test.mts"
+    },
+    "RC-PROMPT3-003": {
+      "result": "PASS",
+      "evidence": "approved Zod reference SHA-256 assertion",
+      "locator": "scripts/sem-anm-prompt003/qualification.test.mts"
+    },
+    "RC-PROMPT3-004": {
+      "result": "PASS",
+      "evidence": "byte-equal provider schema and approved SHA-256 assertion",
+      "locator": "scripts/sem-anm-prompt003/qualification.test.mts"
+    },
+    "RC-PROMPT3-005": {
+      "result": "PASS",
+      "evidence": "one byte-exact frozen policy body assertion",
+      "locator": "scripts/sem-anm-prompt003/qualification.test.mts"
+    },
+    "RC-PROMPT3-006": {
+      "result": "PASS",
+      "evidence": "STATIC_POLICY provenance ownership assertion",
+      "locator": "scripts/sem-anm-prompt003/qualification.test.mts"
+    },
+    "RC-PROMPT3-007": {
+      "result": "PASS",
+      "evidence": "questions/policy/source-classification adjacency assertion",
+      "locator": "scripts/sem-anm-prompt003/qualification.test.mts"
+    },
+    "RC-PROMPT3-008": {
+      "result": "PASS",
+      "evidence": "exact predecessor provenance restoration assertion",
+      "locator": "scripts/sem-anm-prompt003/qualification.test.mts"
+    },
+    "RC-PROMPT3-009": {
+      "result": "PASS",
+      "evidence": "S4/S1-S4/Safara leakage-negative assertions",
+      "locator": "scripts/sem-anm-prompt003/qualification.test.mts"
+    },
+    "RC-PROMPT3-010": {
+      "result": "PASS",
+      "evidence": "scoped source scan rejects repair and keyword heuristic seams",
+      "locator": "scripts/sem-anm-prompt003/qualification.test.mts"
+    },
+    "RC-PROMPT3-011": {
+      "result": "PASS",
+      "evidence": "reconciliation-description leakage-negative assertions",
+      "locator": "scripts/sem-anm-prompt003/qualification.test.mts"
+    },
+    "RC-PROMPT3-012": {
+      "result": "PASS",
+      "evidence": "two-build deep equality and generated-byte checks",
+      "locator": "scripts/sem-anm-prompt003/qualification.test.mts"
+    },
+    "RC-PROMPT3-013": {
+      "result": "PASS",
+      "evidence": "working-tree predecessor-authority diff check",
+      "locator": "scripts/sem-anm-prompt003/qualification.test.mts"
+    },
+    "RC-PROMPT3-014": {
+      "result": "PASS",
+      "evidence": "scoped provider/secret access negative source scan",
+      "locator": "scripts/sem-anm-prompt003/qualification.test.mts"
+    },
+    "RC-PROMPT3-015": {
+      "result": "PASS",
+      "evidence": "bounded qualification command and generated-artifact consistency checks",
+      "locator": "scripts/sem-anm-prompt003/qualification.test.mts"
+    }
+  },
+  "negativeCases": [
+    "Zod",
+    "schema",
+    "kind",
+    "policy",
+    "placement",
+    "duplicate",
+    "leakage",
+    "predecessor-mutation",
+    "determinism",
+    "keyword-repair",
+    "post-provider-repair",
+    "live-provider-addition"
+  ]
+}
