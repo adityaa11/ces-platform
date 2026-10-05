@@ -1,6 +1,6 @@
 # SEM-ANM-PROMPT-003-01: Frozen cross-field policy and deterministic compiler insertion
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `SEM-ANM-PROMPT-003-BATCH-01`
 - **Parent context:** [SEM-ANM-PROMPT-003 implementation context](../../SEM-ANM-PROMPT-003-cross-field-composition-implementation-context.md)
 - **Predecessor:** `SEM-ANM-PROMPT-002` CK `PASS` at `e2ccb5b9529d641eca0136d73fd55f2e6e308739`, approval record `b49984c7b4fc2b9ea85b8de043cbc8338d4ac789`
