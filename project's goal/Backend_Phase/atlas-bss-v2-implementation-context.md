@@ -377,6 +377,58 @@ The current spike transport evidence used Anoman's OpenAI-compatible `/v1/chat/c
 
 Gateway provenance should record requested model and actual served/routed model/provider metadata when exposed. Useful Anoman-specific telemetry may be normalized from `_anoman` fields such as weighted tokens, gateway-reported cost, routing mode, provider type/region, guardrails, and cache, without leaking raw gateway response shapes into Atlas domain code.
 
+### 6.2.1 Frozen Anoman spike execution reference
+
+Ticket generation must understand how the reviewed qualification actually reached Anoman. This is a qualification reference, not a requirement to preserve the spike directory layout in production.
+
+The reviewed SPIKE-004 path is:
+
+```text
+scripts/sem-anm-spike004/run.mts
+    -> verifies approved predecessor reachability and exact artifact hashes
+    -> loads prompt bytes from scripts/sem-anm-prompt003/generated/system-prompt.txt
+    -> uses the frozen S1-S4 user payload inherited from sem-anm-spike003
+    -> imports callAnoman(...) through scripts/sem-anm-spike004/anoman-client.mts
+         -> thin re-export of scripts/sem-anm-spike002/anoman-client.mts
+    -> POST https://api.anoman.io/v1/chat/completions
+         Authorization: Bearer ANOMAN_API_KEY
+         model: gemini-2.5-flash
+         stream: false
+         temperature: 0
+         response_format: {"type":"json_object"}
+         messages:
+           system = exact PROMPT-003 generated prompt
+           user   = exact bounded source-slot payload
+    -> receives choices[0].message.content
+    -> optional complete outer JSON-fence removal only
+    -> JSON parse
+    -> atlasProviderExtractionProposalV1Schema.parse(...)
+    -> exact source accounting
+    -> frozen qualification oracle
+    -> no finalizer
+    -> no persistence
+    -> no reconciliation
+    -> no third/correction call
+```
+
+The qualified prompt/schema authority currently records:
+
+```text
+PROMPT-003 system prompt SHA-256
+da008b14342f9414f6c64fd2315379a82b3b7dcdc4263550d83fd795d6a82ed1
+
+provider proposal schema SHA-256
+c478bdf27be6fcf56c999ad2f1780be6de126aecc20d1503f2277867e3b8c14b
+
+prompt provenance SHA-256
+90e9e3b6a6607dedd4c135c485dbfc9223741a6200be6bd28519d4bb7f4b5200
+
+cross-field policy SHA-256
+2f2e13a0cce0d0ad578718bb52e69d69abfbd9bb0d6dfb593ab6b010d930cb10
+```
+
+Productionization may relocate or refactor this logic, but BSS-V2-004-03-02 must prove that the production semantic profile remains equivalent to the qualified PROMPT-003 authority or surface an explicit scope change.
+
 ### 6.3 Current semantic hard stop
 
 The next production-shaped checkpoint is:
