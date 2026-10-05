@@ -1,6 +1,6 @@
 # SEM-ANM-PROMPT-002-02: Deterministic extraction-prompt compiler
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `SEM-ANM-PROMPT-002-BATCH-02`
 - **Parent context:** [SEM-ANM-PROMPT-002 implementation context](../../SEM-ANM-PROMPT-002-trimmed-v2-implementation-context.md)
 - **Predecessor:** CK `PASS` for [SEM-ANM-PROMPT-002-01](SEM-ANM-PROMPT-002-01-frozen-reference-and-schema-projection.md)
