@@ -784,7 +784,7 @@ Docling must not bypass source grants by reading DocumentStore paths directly.
 
 The current primary integration target consumes the IDSER-003 D1 perception job and terminates when Atlas has accepted the corresponding `NormalizedDocument v1`.
 
-Semantic extraction is downstream and is not required to close this perception checkpoint.
+Semantic extraction was downstream and was not required to close the now-approved perception checkpoint. Current semantic work consumes the accepted `NormalizedDocument v1` produced by that boundary.
 
 ## 15.1 NormalizedDocument is the compatibility boundary
 
@@ -1897,19 +1897,19 @@ Changing external-provider billing mode should primarily change route configurat
 The following are V2 production-baseline invariants for BSS work.
 
 1. **Atlas owns accepted truth, source authority, review authority, publication, and customer entitlement.**
-2. **Agents Bridge owns bounded capability execution and executor routing; external-provider credentials/capacity remain Bridge infrastructure.**
-3. **Processor/provider/model identities remain deployment configuration, not semantic contracts.**
+2. **Agents Bridge owns bounded capability execution and executor routing; direct-provider/gateway credentials and external-route capacity remain Bridge infrastructure.**
+3. **Processor/gateway/provider/model identities remain deployment configuration, not semantic contracts.**
 4. **BSS-001 through BSS-007 remain approved foundations.**
 5. **BSS-009 and its Atlas/Bridge perception authority remain approved foundations.**
 6. **BSS-008 provider-adapter mechanics are retained; current Mistral live qualification is inactive.**
-7. **Approved BSS-V2-001/002/003 history is preserved.**
+7. **Approved BSS-V2-001/002/003/004-01/004-02 history is preserved.**
 8. **IDSER-001 through IDSER-010 are not reopened by execution infrastructure work.**
 9. **IDSER-003 D1 perception kickoff is the upstream Initial Draft handoff consumed by Docling integration.**
 10. **Generic workers must not require concrete vendor/processor types.**
 11. **The existing `DocumentPerceptionProvider` interface is executor-neutral despite its historical name.**
 12. **Qualified routes may represent local processors or external providers.**
 13. **Local Docling qualification is based on document fidelity, repeatability, normalization, and runtime behavior, not provider API economics.**
-14. **Docling is the current development digital-PDF perception direction, subject to production-shaped integration qualification.**
+14. **Docling is the approved current development digital-PDF perception route for the qualified document class; materially different Docling profiles remain separately qualifiable.**
 15. **The current local Docker Docling profile is a persistent Compose-private Docling Serve service; a fresh per-document Python/Docling subprocess is not the production shape.**
 16. **The current first Docling qualification profile is CPU-only, warm before routing, and every required warm production-shaped fixture run must complete within 20 seconds end to end.**
 17. **pg-boss remains the sole Atlas D1 job lifecycle authority; the current perception path does not add Docling RQ/Redis or another durable queue.**
