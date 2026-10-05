@@ -1,0 +1,1 @@
+export const SYSTEM_INSTRUCTION = "Extract the business semantics of each authorized source slot. Use only information supported by the source. Preserve uncertainty and explicit limits. Do not invent missing conditions. Return output matching the supplied schema.";
