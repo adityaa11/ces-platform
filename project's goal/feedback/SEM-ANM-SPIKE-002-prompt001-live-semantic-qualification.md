@@ -5,7 +5,8 @@
 - **Ticket state:** `awaiting_review`
 - **Terminal result:** `FAIL`
 - **GO authorization:** explicit user `GO SEM-ANM-SPIKE-002`
-- **Review target:** this bounded implementation and evidence checkpoint; commit recorded by GO handoff
+- **Implementation checkpoint:** `2573928` — `feat: qualify generated Anoman semantic prompt`
+- **Review target:** checkpoint `2573928` and the exact scoped implementation/evidence paths listed in the GO checkpoint
 - **Predecessor:** `SEM-ANM-PROMPT-001`, CK `PASS` in `SEM-ANM-PROMPT-BATCH-001-42f5927-verification.md`; checkpoint `42f59279d5f599d4d9a580ee2fa9986124cc8361`
 - **Accepted parser boundary:** `BSS-V2-004-02`, CK `PASS` at checkpoint `8a58d01a27985031b3961b3b1a002b83ed2144ad`
 
