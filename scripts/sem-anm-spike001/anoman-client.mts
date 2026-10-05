@@ -30,6 +30,8 @@ export function buildStrictRequest(kind: "transport" | "semantic") {
   };
 }
 
+export const serializeStrictRequest = (kind: "transport" | "semantic") => JSON.stringify(buildStrictRequest(kind));
+
 const numeric = (value: unknown) => typeof value === "number" ? value : null;
 export const sanitizeTelemetry = (value: unknown): unknown => {
   if (Array.isArray(value)) return value.map(sanitizeTelemetry);
@@ -47,9 +49,9 @@ function telemetry(body: Record<string, unknown>, status: number, latencyMs: num
 
 async function invoke(kind: "transport" | "semantic") {
   const apiKey = await loadAnomanApiKey();
-  const request = buildStrictRequest(kind), started = performance.now();
+  const serializedRequest = serializeStrictRequest(kind), started = performance.now();
   let response: Response;
-  try { response = await fetch(ANOMAN_ENDPOINT, { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` }, signal: AbortSignal.timeout(60_000), body: JSON.stringify(request) }); } catch { throw new EnvironmentBlockedError("Anoman network request failed."); }
+  try { response = await fetch(ANOMAN_ENDPOINT, { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` }, signal: AbortSignal.timeout(60_000), body: serializedRequest }); } catch { throw new EnvironmentBlockedError("Anoman network request failed."); }
   const latencyMs = Math.round(performance.now() - started);
   const body = await response.json().catch(() => null) as Record<string, unknown> | null;
   if (!response.ok) {
@@ -70,9 +72,9 @@ export const invokeSemanticQualification = () => invoke("semantic");
 /** HMN-SEM-ANM-SPIKE001-001 only: retain the synthetic Gate A content before parsing. */
 export async function invokeTransportDiagnostic() {
   const apiKey = await loadAnomanApiKey();
-  const request = buildStrictRequest("transport"), started = performance.now();
+  const serializedRequest = serializeStrictRequest("transport"), started = performance.now();
   let response: Response;
-  try { response = await fetch(ANOMAN_ENDPOINT, { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` }, signal: AbortSignal.timeout(60_000), body: JSON.stringify(request) }); } catch { throw new EnvironmentBlockedError("Anoman network request failed."); }
+  try { response = await fetch(ANOMAN_ENDPOINT, { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` }, signal: AbortSignal.timeout(60_000), body: serializedRequest }); } catch { throw new EnvironmentBlockedError("Anoman network request failed."); }
   const latencyMs = Math.round(performance.now() - started);
   const body = await response.json().catch(() => null) as Record<string, unknown> | null;
   const choice = (body?.choices as Array<{ finish_reason?: unknown; message?: { content?: unknown } }> | undefined)?.[0];

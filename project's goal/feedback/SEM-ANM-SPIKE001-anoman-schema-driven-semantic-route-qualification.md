@@ -35,6 +35,35 @@ Exact `raw_message_content` returned before any parsing or normalization:
 
 This is prose, not Markdown-fenced JSON, truncation, or malformed JSON. It confirms the existing `STRICT_SCHEMA_MALFORMED_RESPONSE` / `FAIL` classification. The response indicates that the frozen strict-output schema was not made available to the model in this route/request shape; it does not authorize changing the profile or attempting another call.
 
+## Request-construction audit
+
+No additional live call was made. The deterministic audit artifact is `.atlas-data/sem-anm-spike001/gate-a-request-construction.json` and records the exact serialized HTTP body produced by the same serializer used by the client immediately before `fetch`.
+
+Outcome: `REQUEST_CONSTRUCTION_CONFIRMED`.
+
+The serialized body contains `model: "gemini-2.5-flash"`, the frozen user message, and the complete `response_format` object:
+
+```json
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "transport_qualification",
+    "strict": true,
+    "schema": {
+      "type": "object",
+      "properties": {
+        "status": { "type": "string", "const": "ANOMAN_OK" },
+        "count": { "type": "number", "const": 1 }
+      },
+      "required": ["status", "count"],
+      "additionalProperties": false
+    }
+  }
+}
+```
+
+The audit also asserts this final serialized shape deterministically. There is no client wrapper or DTO in the request path, no later overwrite, and no undefined/null/empty schema that JSON serialization could drop. Therefore the current evidence is that Anoman returned prose despite receiving a complete strict-schema request; no provider incompatibility conclusion beyond the existing route/profile qualification failure is broadened, and no retry is authorized.
+
 ## Deterministic evidence
 
 - `corepack pnpm --filter @atlas/contracts exec jiti ../../scripts/sem-anm-spike001/test.mts` — PASS.
