@@ -1,5 +1,30 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import test from "node:test";
-import { semanticExtractionSkill, semanticReconciliationSkill, getProductionSemanticSkill } from "../src/index.ts";
+import { atlasProviderExtractionProposalV1JsonSchema, atlasProviderExtractionProposalV1Schema, compileExtractionPrompt, crossFieldSemanticCompositionPolicy, semanticExtractionProfileId, semanticExtractionSkill, semanticReconciliationSkill, getProductionSemanticSkill } from "../src/index.ts";
 import { validateJsonSchema } from "@atlas/contracts";
 test("only the two bounded model-neutral semantic skills are exported", () => { assert.equal(getProductionSemanticSkill("atlas.semantic.extract", "v1"), semanticExtractionSkill); assert.equal(getProductionSemanticSkill("atlas.semantic.reconcile", "v1"), semanticReconciliationSkill); assert.throws(() => getProductionSemanticSkill("atlas.semantic.extract", "v2")); assert.doesNotThrow(() => validateJsonSchema(semanticExtractionSkill.outputSchema, { version: "v1", candidate_assertions: [], source_statement_inventory: [], questions: [] })); });
+
+test("production prompt is deterministic, canonical-schema-derived, and proposal-only", async () => {
+  const first = compileExtractionPrompt();
+  const second = compileExtractionPrompt();
+  assert.equal(first.profile, semanticExtractionProfileId);
+  assert.equal(first.prompt, second.prompt);
+  assert.deepEqual(first.providerSchema, second.providerSchema);
+  assert.deepEqual(first.provenance.sections.map((section) => section.title), ["PROVIDER PROPOSAL", "SYSTEM ROLE", "TASK INSTRUCTION", "SOURCE RESULT AND ACCOUNTING FIELDS", "CANDIDATE FIELDS", "CANDIDATE KIND MEANINGS", "CLARIFICATION QUESTIONS", "CROSS-FIELD SEMANTIC COMPOSITION", "SOURCE CLASSIFICATION", "REFERENCE HANDLING", "CONFLICT HANDLING", "SOURCE ACCOUNTING", "OUTPUT RULES"]);
+  assert.ok(first.prompt.includes("CROSS-FIELD SEMANTIC COMPOSITION"));
+  assert.ok(first.provenance.sections.some((section) => section.ownership === "ZOD"));
+  assert.ok(first.provenance.sections.some((section) => section.ownership === "STATIC_POLICY" && section.sha256 === first.provenance.crossFieldPolicySha256));
+  const proposal = { version: "v1", source_results: [{ slot: "s1", classification: "candidate", candidates: [{ semantic_key: "quota", kind: "rule", payload: { value: 40 }, normalized_meaning: "quota is 40", needs_resolution: false }], non_fact_reason: null, questions: [] }] };
+  assert.doesNotThrow(() => atlasProviderExtractionProposalV1Schema.parse(proposal));
+  assert.doesNotThrow(() => validateJsonSchema(atlasProviderExtractionProposalV1JsonSchema, proposal));
+  assert.throws(() => atlasProviderExtractionProposalV1Schema.parse({ ...proposal, local_candidate_id: "forbidden" }));
+  assert.equal(crossFieldSemanticCompositionPolicy, compileExtractionPrompt().prompt.match(/CROSS-FIELD SEMANTIC COMPOSITION\n\n([\s\S]*?)\n\nSOURCE CLASSIFICATION/)?.[1]);
+  assert.equal(createHash("sha256").update(crossFieldSemanticCompositionPolicy).digest("hex"), "2f2e13a0cce0d0ad578718bb52e69d69abfbd9bb0d6dfb593ab6b010d930cb10");
+  const source = await readFile(resolve(import.meta.dirname, "../src/semantic-prompt.ts"), "utf8");
+  assert.ok(!source.includes("scripts/sem-anm-"));
+  assert.ok(!source.includes("DocumentStore"));
+  assert.ok(!/compileAnoman|compileGemini|providerId/.test(source));
+});

@@ -1,6 +1,6 @@
 # BSS-V2-004-03-02: Provider proposal Zod and PROMPT-003 production compiler
 
-- **State:** `planned`; **Review batch:** `BSS-V2-BATCH-04.03-02`
+- **State:** `awaiting_review`; **Review batch:** `BSS-V2-BATCH-04.03-02`
 - **Dependencies:** BSS-V2-004-03-01 CK `PASS`; approved PROMPT-003 artifacts and CK `PASS`; explicit `go`
 - **Implementation context:** [Semantic V1 Zod + Anoman productionization context](../../atlas-semantic-v1-zod-anoman-productionization-implementation-context.md) §§4–6, 9.02, 10, 13, 15
 - **Qualification reference:** [PROMPT-003 integrated offline qualification CK PASS](../../../feedback/SEM-ANM-PROMPT-003-BATCH-03-603ecca-review.md). It preserves compiler architecture and fixed-policy evidence; it is not production runtime code or the post-03-01 authority for schema-derived text.
