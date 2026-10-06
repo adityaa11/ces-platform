@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { atlasSemanticExtractionResultV1Schema, atlasSemanticReconciliationResultV1Schema, parseSemanticBackgroundJob, parseSemanticExtractionContext, parseSemanticExtractionResult, parseSemanticReconciliationContext, parseSemanticReconciliationResult, parseSemanticResultEnvelope, semanticExtractionResultSchema, semanticLimits, semanticReconciliationResultSchema, toAtlasJsonSchema, validateJsonSchema } from "../src/index.ts";
+import { atlasSemanticContextCandidateV1JsonSchema, atlasSemanticExtractionResultV1Schema, atlasSemanticReconciliationResultV1Schema, parseSemanticBackgroundJob, parseSemanticExtractionContext, parseSemanticExtractionResult, parseSemanticReconciliationContext, parseSemanticReconciliationResult, parseSemanticResultEnvelope, semanticExtractionResultSchema, semanticLimits, semanticReconciliationContextSchema, semanticReconciliationResultSchema, toAtlasJsonSchema, validateJsonSchema } from "../src/index.ts";
+import { approvedReconciliationRelationshipTypesV1, approvedSemanticKindsV1, approvedSemanticV1ParserApis, semanticV1BoundaryParityFixtures, semanticV1ParityCases, semanticV1ParityOracleVersion } from "./fixtures/semantic-v1-approved-parity.ts";
 
 const scope = { projectId: "project-1", workspaceId: "workspace-1", bundleId: "bundle-1", documentId: "document-1", executionId: "execution-1", contractVersion: "v1" };
 const evidence = { page_number: 1, locator_type: "text_block", locator_id: "block-1", excerpt: "quota is 40" };
@@ -103,4 +104,56 @@ test("canonical Zod schemas are the parser authority and generate Ajv-compatible
   assert.doesNotThrow(() => validateJsonSchema(semanticReconciliationResultSchema, { version: "v1", relationships: [], questions: [] }));
   assert.throws(() => atlasSemanticExtractionResultV1Schema.parse({ ...extraction, candidate_assertions: [{ ...extraction.candidate_assertions[0], evidence_refs: [] }] }));
   assert.throws(() => atlasSemanticReconciliationResultV1Schema.parse({ version: "v1", relationships: [{ source_candidate_id: "candidate-1", relationship_type: "new", target_candidate_id: "candidate-2", payload: {}, requires_resolution: false, evidence_refs: [evidence] }], questions: [] }));
+});
+
+test(`approved V1 differential parity oracle (${semanticV1ParityOracleVersion}) remains stable`, () => {
+  for (const kind of approvedSemanticKindsV1) {
+    assert.doesNotThrow(() => parseSemanticExtractionResult({ ...extraction, candidate_assertions: [{ ...extraction.candidate_assertions[0], kind }] }), `kind ${kind}`);
+  }
+  for (const relationship_type of approvedReconciliationRelationshipTypesV1) {
+    assert.doesNotThrow(() => parseSemanticReconciliationResult({ version: "v1", relationships: [{ source_candidate_id: "candidate-1", relationship_type, ...(relationship_type === "new" ? {} : { target_candidate_id: "candidate-2" }), payload: {}, requires_resolution: false, evidence_refs: [evidence] }], questions: [] }), `relationship ${relationship_type}`);
+  }
+  for (const parityCase of semanticV1ParityCases) {
+    let value: unknown = ("value" in parityCase ? parityCase.value : undefined) ?? structuredClone(extraction);
+    if ("patch" in parityCase && parityCase.patch) value = { ...(value as object), ...parityCase.patch };
+    if ("payloadDepth" in parityCase && parityCase.payloadDepth) {
+      let payload: unknown = "leaf";
+      for (let depth = 0; depth < parityCase.payloadDepth; depth += 1) payload = [payload];
+      value = { ...(value as typeof extraction), candidate_assertions: [{ ...extraction.candidate_assertions[0], payload }] };
+    }
+    const parse = parityCase.parser === "extraction" ? parseSemanticExtractionResult : parseSemanticReconciliationResult;
+    if (parityCase.accepted) assert.doesNotThrow(() => parse(value), parityCase.dimension);
+    else assert.throws(() => parse(value), parityCase.dimension);
+  }
+  for (const fixture of semanticV1BoundaryParityFixtures) {
+    if (fixture.parser === "extractionCandidates") {
+      const candidates = Array.from({ length: fixture.acceptedAt }, (_, index) => ({ ...extraction.candidate_assertions[0], local_candidate_id: `oracle-local-${index}`, evidence_refs: [{ ...evidence, locator_id: `oracle-block-${index}` }] }));
+      const inventory = candidates.map((candidate, index) => ({ source_unit_id: `oracle-unit-${index}`, page_number: 1, locator_type: "text_block", locator_id: `oracle-block-${index}`, classification: "candidate", destination_local_candidate_ids: [candidate.local_candidate_id] }));
+      assert.doesNotThrow(() => parseSemanticExtractionResult({ version: "v1", candidate_assertions: candidates, source_statement_inventory: inventory, questions: [] }), fixture.dimension);
+      assert.throws(() => parseSemanticExtractionResult({ version: "v1", candidate_assertions: [...candidates, { ...candidates[0], local_candidate_id: "oracle-overflow" }], source_statement_inventory: inventory, questions: [] }), fixture.dimension);
+    } else if (fixture.parser === "reconciliationCandidates") {
+      const candidate = { id: "oracle-candidate", semantic_key: "quota", kind: "rule", normalized_meaning: "quota", payload: {}, evidence_refs: [evidence] };
+      assert.doesNotThrow(() => parseSemanticReconciliationContext({ version: "v1", skill: "atlas.semantic.reconcile", scope, currentCandidates: Array.from({ length: fixture.acceptedAt }, () => candidate), priorCandidates: [], selection: selection(fixture.acceptedAt, 0) }), fixture.dimension);
+      assert.throws(() => parseSemanticReconciliationContext({ version: "v1", skill: "atlas.semantic.reconcile", scope, currentCandidates: Array.from({ length: fixture.rejectedAt }, () => candidate), priorCandidates: [], selection: selection(fixture.rejectedAt, 0, true) }), fixture.dimension);
+    } else {
+      assert.doesNotThrow(() => parseSemanticReconciliationContext(reconciliationContextWithBytes(fixture.acceptedAt)), fixture.dimension);
+      assert.throws(() => parseSemanticReconciliationContext(reconciliationContextWithBytes(fixture.rejectedAt)), fixture.dimension);
+    }
+  }
+  const parserInputs: Record<(typeof approvedSemanticV1ParserApis)[number], unknown> = {
+    parseSemanticBackgroundJob: { version: "v1", executionId: "execution-1", skill: { id: "atlas.semantic.extract", version: "v1" }, contextCapability: "capability" },
+    parseSemanticExtractionContext: { version: "v1", skill: "atlas.semantic.extract", scope, normalizedDocument },
+    parseSemanticReconciliationContext: { version: "v1", skill: "atlas.semantic.reconcile", scope, currentCandidates: [], priorCandidates: [], selection: selection(0, 0) },
+    parseSemanticExtractionResult: extraction,
+    parseSemanticReconciliationResult: { version: "v1", relationships: [], questions: [] },
+    parseSemanticResultEnvelope: { version: "v1", scope, skill: { id: "atlas.semantic.extract", version: "v1" }, provider: { provider: "mistral", model: "configured", endpoint: "/v1", latencyMilliseconds: 1, attempt: 1 }, result: extraction },
+  };
+  const parserImplementations: Record<(typeof approvedSemanticV1ParserApis)[number], (value: unknown) => unknown> = { parseSemanticBackgroundJob, parseSemanticExtractionContext, parseSemanticReconciliationContext, parseSemanticExtractionResult, parseSemanticReconciliationResult, parseSemanticResultEnvelope };
+  for (const parserApi of approvedSemanticV1ParserApis) assert.doesNotThrow(() => parserImplementations[parserApi](parserInputs[parserApi]), parserApi);
+});
+
+test("reconciliation context candidates are the canonical generated Zod projection", () => {
+  const candidateProjection = (semanticReconciliationContextSchema.properties as { readonly currentCandidates: { readonly items: unknown }; readonly priorCandidates: { readonly items: unknown } }).currentCandidates.items;
+  assert.deepEqual(candidateProjection, atlasSemanticContextCandidateV1JsonSchema);
+  assert.deepEqual((semanticReconciliationContextSchema.properties as { readonly priorCandidates: { readonly items: unknown } }).priorCandidates.items, atlasSemanticContextCandidateV1JsonSchema);
 });
