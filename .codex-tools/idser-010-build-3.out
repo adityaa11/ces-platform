@@ -1,0 +1,111 @@
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.50kB done
+#1 DONE 0.0s
+
+#2 [atlas internal] load build definition from Dockerfile
+#2 transferring dockerfile: 1.45kB done
+#2 DONE 0.0s
+
+#3 [atlas internal] load metadata for docker.io/library/node:24-bookworm-slim
+#3 DONE 0.0s
+
+#4 [agents-bridge internal] load .dockerignore
+#4 transferring context: 263B done
+#4 DONE 0.0s
+
+#5 [agents-bridge-worker  1/16] FROM docker.io/library/node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+#5 resolve docker.io/library/node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 0.0s done
+#5 DONE 0.0s
+
+#6 [agents-bridge internal] load build context
+#6 transferring context: 33.10kB 0.0s done
+#6 DONE 0.0s
+
+#7 [agents-bridge-worker 11/16] COPY packages/atlas-core/package.json packages/atlas-core/package.json
+#7 CACHED
+
+#8 [agents-bridge-worker  7/16] COPY apps/agents-bridge/package.json apps/agents-bridge/package.json
+#8 CACHED
+
+#9 [agents-bridge-worker  3/16] RUN corepack enable
+#9 CACHED
+
+#10 [agents-bridge-worker 14/16] COPY packages/document-store/package.json packages/document-store/package.json
+#10 CACHED
+
+#11 [agents-bridge-worker  8/16] COPY packages/atlas-auth/package.json packages/atlas-auth/package.json
+#11 CACHED
+
+#12 [agents-bridge-worker 12/16] COPY packages/atlas-db/package.json packages/atlas-db/package.json
+#12 CACHED
+
+#13 [agents-bridge-worker  6/16] COPY apps/atlas/package.json apps/atlas/package.json
+#13 CACHED
+
+#14 [agents-bridge-worker 10/16] COPY packages/atlas-skills/package.json packages/atlas-skills/package.json
+#14 CACHED
+
+#15 [agents-bridge-worker  4/16] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
+#15 CACHED
+
+#16 [agents-bridge-worker  5/16] COPY patches/ patches/
+#16 CACHED
+
+#17 [agents-bridge-worker 13/16] COPY packages/atlas-fixtures/package.json packages/atlas-fixtures/package.json
+#17 CACHED
+
+#18 [agents-bridge-worker  9/16] COPY packages/atlas-contracts/package.json packages/atlas-contracts/package.json
+#18 CACHED
+
+#19 [agents-bridge-worker  2/16] WORKDIR /workspace
+#19 CACHED
+
+#20 [agents-bridge-worker 15/16] RUN corepack pnpm install --frozen-lockfile
+#20 CACHED
+
+#21 [atlas 16/16] COPY . .
+#21 DONE 0.1s
+
+#21 [agents-bridge 16/16] COPY . .
+#21 DONE 0.1s
+
+#22 [atlas] exporting to image
+#22 exporting layers
+#22 exporting layers 0.3s done
+#22 exporting manifest sha256:d8410ffc98b971958ce7a8c86f6d03349e5d203213f64a8a6b5c743346c29941 0.0s done
+#22 exporting config sha256:cd857bcc75ba2f76144f80ee834f32397150ff28d735147797d579babf7f9244 0.0s done
+#22 exporting attestation manifest sha256:eac81d2416df617e7774c45715cec17e1652c480b350299795bba90bb8bbdf37 0.0s done
+#22 exporting manifest list sha256:ad328fa632ea6e5e0f43b78122e980c74bd3f9396dcd7866c3d2804375b8043d 0.0s done
+#22 naming to docker.io/library/ces-platform-atlas:latest done
+#22 unpacking to docker.io/library/ces-platform-atlas:latest
+#22 unpacking to docker.io/library/ces-platform-atlas:latest 0.1s done
+#22 DONE 0.6s
+
+#23 [agents-bridge-worker] exporting to image
+#23 exporting layers 0.3s done
+#23 exporting manifest sha256:ea04a3a1521883ad80b20cc608581f7217f377f119d62a0193ee0faca117b1c2 0.0s done
+#23 exporting config sha256:537fe9f40c21d3be9c82ef7cc8f8d0b86919eb975e2cf0ae5473513449460f16 0.0s done
+#23 exporting attestation manifest sha256:4a5cde18d174e6b8d1247df4de76549408e0cc41fdea506960359770f5e1e2c6 0.0s done
+#23 exporting manifest list sha256:630badaba61955da984904e18aef90af6de536d59fca681b7e5d18687def9d6e 0.0s done
+#23 naming to docker.io/library/ces-platform-agents-bridge-worker:latest done
+#23 unpacking to docker.io/library/ces-platform-agents-bridge-worker:latest 0.1s done
+#23 DONE 0.6s
+
+#24 [agents-bridge] exporting to image
+#24 exporting layers 0.3s done
+#24 exporting manifest sha256:a6d0e0a208680bb995e2824e66c415830b1afcdcfc0ceb9e06cecd78ee3c3c21 0.0s done
+#24 exporting config sha256:24b747489923f8c9c2d89d8d0cd9f3478d4c57b5a9a03d4885883d97263ffeb8 0.0s done
+#24 exporting attestation manifest sha256:de02b2271cdd4bfb6e10660cd7aaf4f7d146593515de412ba247c2a0aea4ce68 0.0s done
+#24 exporting manifest list sha256:71056315fca45aac61211deba3c13916b6458f45fefbee1e550061115a0a1775 0.0s done
+#24 naming to docker.io/library/ces-platform-agents-bridge:latest done
+#24 unpacking to docker.io/library/ces-platform-agents-bridge:latest 0.1s done
+#24 DONE 0.6s
+
+#25 [agents-bridge] resolving provenance for metadata file
+#25 DONE 0.0s
+
+#26 [agents-bridge-worker] resolving provenance for metadata file
+#26 DONE 0.0s
+
+#27 [atlas] resolving provenance for metadata file
+#27 DONE 0.0s

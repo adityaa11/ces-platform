@@ -1,0 +1,38 @@
+node:internal/errors:985
+  const err = new Error(message);
+              ^
+
+Error: Command failed: docker compose -f docker-compose.yml -f docker-compose.cfc.yml exec -T -e PERCEPTION_EXPECT_STATE=failed atlas node apps/atlas/scripts/perception-compose-seed.mjs docling
+file:///workspace/apps/atlas/scripts/perception-compose-seed.mjs:92
+      if (observation[0]?.state !== expectedState) throw new Error(`IDSER-003 D1 kickoff did not reach ${expectedState} within two minutes.`);
+                                                         ^
+
+Error: IDSER-003 D1 kickoff did not reach failed within two minutes.
+    at file:///workspace/apps/atlas/scripts/perception-compose-seed.mjs:92:58
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+
+Node.js v24.21.0
+
+    at genericNodeError (node:internal/errors:985:15)
+    at wrappedFn (node:internal/errors:539:14)
+    at ChildProcess.exithandler (node:child_process:417:12)
+    at ChildProcess.emit (node:events:509:28)
+    at maybeClose (node:internal/child_process:1141:16)
+    at ChildProcess._handle.onexit (node:internal/child_process:306:5) {
+  code: 1,
+  killed: false,
+  signal: null,
+  cmd: 'docker compose -f docker-compose.yml -f docker-compose.cfc.yml exec -T -e PERCEPTION_EXPECT_STATE=failed atlas node apps/atlas/scripts/perception-compose-seed.mjs docling',
+  stdout: '{"phase":"kickoff","projectId":"compose-docling-5b26326a-135","executionId":"d856d54f-956b-4df1-bc11-fa2310b6cad7","artifactId":"ae83ae87-042b-4d10-8753-aee5acf6e7e3","idempotencyKey":"perception:fc025e52-0d80-44e9-85e0-475ee9a7a9c0:ae83ae87-042b-4d10-8753-aee5acf6e7e3:v1","storageKey":"documents/8ba45a7a-6911-46e2-8076-0e26301a066a","sourceSha256":"e81b1d1457fff6f77a5964d531b91ca0860c36022f1322f5ca84f2ac8d77f4d6","elapsedMilliseconds":234}\n',
+  stderr: 'file:///workspace/apps/atlas/scripts/perception-compose-seed.mjs:92\n' +
+    '      if (observation[0]?.state !== expectedState) throw new Error(`IDSER-003 D1 kickoff did not reach ${expectedState} within two minutes.`);\n' +
+    '                                                         ^\n' +
+    '\n' +
+    'Error: IDSER-003 D1 kickoff did not reach failed within two minutes.\n' +
+    '    at file:///workspace/apps/atlas/scripts/perception-compose-seed.mjs:92:58\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n' +
+    '\n' +
+    'Node.js v24.21.0\n'
+}
+
+Node.js v24.19.0

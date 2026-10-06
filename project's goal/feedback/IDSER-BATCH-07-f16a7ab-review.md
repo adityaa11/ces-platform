@@ -1,0 +1,84 @@
+# IDSER-BATCH-07 CK review — `f16a7ab`
+
+- **Ticket:** IDSER-007 — Bounded reconciliation and procedural advancement
+- **Batch:** IDSER-BATCH-07
+- **Review type:** First consolidated CK review
+- **Ticket state:** `awaiting_review`
+- **Review target:** `f16a7ab2317fe04b1c5aae89efdcdc9256f1d850` (`feat(idser): add bounded reconciliation advancement`)
+- **Frozen ticket:** `project's goal/Backend_Phase/tickets/Initial_Draft_Phase/IDSER-007-bounded-reconciliation-and-procedural-advancement.md`
+- **GO checkpoint:** `project's goal/feedback/IDSER-BATCH-07-go-checkpoint.md`
+- **Result:** `CHANGES_REQUIRED`
+
+## Target and authority
+
+The ticket is `awaiting_review`, its implementation checkpoint names the GO handoff commit, and `HEAD` resolves to that commit. The current tracked worktree change is `apps/atlas/tsconfig.tsbuildinfo`; the generated Safara files and workflow/review records are untracked. None changes the committed IDSER-007 implementation target, so the worktree does not make the review target ambiguous.
+
+IDSER-003 through IDSER-006 remain accepted dependencies. The IDSER-007 planning decision explicitly preserves IDSER-006 `PASS`; its documented Node 24 extraction-test container mismatch is a baseline observation and is not treated as an IDSER-007 failure or a request to reopen IDSER-006.
+
+## Review Contract
+
+| Row | Ticket authority | Required behavior and proof | Status |
+|---|---|---|---|
+| RC-001 | Outcome; Neighborhood selection contract; AC-17, AC-18; REV-READY-IDSER-007-01 | Select all current candidates up to 500 and a deterministic, same-bundle prior neighborhood up to 500; bind the stable selected context to the execution; enforce the 1,000-candidate and 1 MiB UTF-8 limits without truncating records; record selection version, IDs, counts/byte limits and omission/overflow metadata. | `UNRESOLVED` — byte-aware prior fitting and required selection metadata are absent. |
+| RC-002 | Result acceptance and advancement; AC-21; Validation | Account for every current candidate and accept only IDs/evidence in the exact selected context; prove missing accounting, invented IDs, existing-but-unselected IDs, and cross-project/workspace/bundle references are rejected. | `IMPLEMENTED_UNPROVEN` — code checks current accounting and authorized references; required negative scenarios are not all evidenced. |
+| RC-003 | Result acceptance and advancement; AC-19, AC-20, AC-22; REV-READY-IDSER-007-03 | Persist all ten relationship types as reviewable proposals, preserve conflicts and unresolved state, and prove the ticket's same-PDF and cross-PDF semantic cases without order-based truth selection. | `IMPLEMENTED_UNPROVEN` — persistence of all ten labels and candidate state is shown, but required semantic fixtures are missing. |
+| RC-004 | Result acceptance and advancement; AC-23, AC-24, AC-25; REV-READY-IDSER-007-02 | Atomically persist results, complete the current member, recompute progress, and enqueue only the next member; prove three-document order, distinct-bundle concurrency, duplicate/restart safety, and rollback on enqueue/persistence failure. Final completion must fail closed until IDSER-008 supplies its validator. | `IMPLEMENTED_UNPROVEN` — the two-document same-bundle test and final-validator rollback pass; required broader scenarios are missing. |
+| RC-005 | Neighborhood/API contract; AC-33, AC-34, AC-35; Validation | Provide scoped stable candidate/evidence/relationship retrieval in 100-record pages and show indexed key/kind/scope and relationship/evidence traversal with representative query-plan evidence. | `UNRESOLVED` — evidence reads are unpaged and query-plan evidence is absent. |
+| RC-006 | Ticket scope; AC-31, AC-32, AC-36; Security Refactor Readiness; REV-READY-IDSER-007-03 | Keep retrieval and acceptance Atlas-owned; do not mutate Master or resolved truth, add projections, leak other-bundle context, or infer precedence from order. | `PROVEN` for the reviewed code paths: the selector reads scoped incoming bundle/index rows, result acceptance stores proposals, and the PostgreSQL test confirms candidate state remains `candidate`. |
+
+## Validation and evidence inspected
+
+- Ran `docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/db test:reconciliation-acceptance` at the review target — **passed, 1/1**, real PostgreSQL and pg-boss, no skips.
+- The passing integration test proves an invented target is rejected without a partial result; persists all ten relationship labels and retains both candidates as `candidate`; races the same callback through two Atlas connections; verifies one D2 perception job and same-result acknowledgement after authority reconstruction; selects 500 prior candidates with `overflow: true`; and verifies the final-member completion-validator absence rolls back the result and count.
+- Inspected `packages/atlas-db/src/reconciliation-selector.ts`, `packages/atlas-db/src/reconciliation-acceptance.ts`, `packages/atlas-db/src/semantic-candidate-repository.ts`, `packages/atlas-core/src/semantic-candidate-repository.ts`, `packages/atlas-contracts/src/semantic.ts`, migration `0019_idser007_reconciliation_retrieval.sql`, and the committed acceptance test.
+- The GO checkpoint reports DB/Core typechecks, migration check, contract tests, app build, and `git diff --check` as passing. Those are recorded as implementer evidence; CK reran only the required Compose reconciliation acceptance command.
+- The committed test has two documents. It does not exercise the ticket's named 1-PDF quota conflict, cross-PDF support/duplicate, refinement/extension, supported/unsupported supersession, candidate-accounting and unselected/cross-scope negative cases, 500/1,000/1 MiB multibyte boundaries, repeat-order stability, three-document sequencing, distinct-bundle concurrency, enqueue/persistence rollback, actual worker restart, or representative query plans.
+
+## Findings
+
+### CK-001 — Prior-neighborhood context is not fitted to the byte budget
+
+**Authority:** IDSER-007 Neighborhood selection contract: the serialized context is limited to 1 MiB; complete records with usable evidence must fit; a bounded prior selection may omit lower-ranked neighbors with explicit metadata; selection version, IDs, counts/byte limits and overflow/truncation metadata must be recorded. AC-17/18 and REV-READY-IDSER-007-01.
+
+**Unsatisfied evidence:** `PostgresReconciliationSelector.select` selects up to 500 prior rows and loads their evidence before passing the entire context to `parseSemanticReconciliationContext` (`packages/atlas-db/src/reconciliation-selector.ts`). The parser rejects a context over 1 MiB (`packages/atlas-contracts/src/semantic.ts`); there is no byte-aware removal of lower-ranked prior records. The selection schema only carries `policy`, `overflow`, and optional `selectedCount`; it does not record byte limits/usage or explicit omitted-neighborhood metadata. A current set that fits can therefore fail solely because lower-ranked prior records push the serialized context over the limit.
+
+#### Frozen Finding Closure Matrix
+
+| Clause | Exact ticket authority | Unsatisfied evidence | Observable correction and binary closure oracle |
+|---|---|---|---|
+| CK-001.a | Neighborhood selection contract, 1 MiB limit and bounded-prior omission rule; AC-17/18; REV-READY-IDSER-007-01. | When complete current candidates fit but the selected 500 prior records plus evidence exceed 1 MiB, selection reaches the context parser with the over-limit set and rejects instead of omitting lower-ranked prior records. Metadata cannot explain byte usage or omitted neighbors. | **Required state:** a fixture with a fitting current set and prior records whose serialized context exceeds 1 MiB returns a contract-valid context at or below 1 MiB, preserves every current candidate and every selected record intact, retains deterministic priority/order, and records selection version, selected IDs/counts, byte limit/usage and explicit omitted/overflow metadata. Repeating the selection yields the same IDs/order/metadata. A separate current-set-over-budget fixture still fails technically without dropping current candidates. **Proof:** `docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/db test:reconciliation-acceptance`; assertions in `packages/atlas-db/tests/reconciliation-acceptance.integration.test.ts` inspect returned contexts and metadata with multibyte UTF-8 payload/evidence. **Direct-regression boundary:** IDSER-007 reconciliation context selection and its exact-context binding only; do not require accepted-base retrieval, projections, or IDSER-008 completion behavior. |
+
+### CK-002 — Shared evidence lookup has no 100-record paging
+
+**Authority:** IDSER-007 Neighborhood selection contract: neutral Core semantic item/evidence/relationship retrieval APIs use 100-record pages; AC-33/34/35.
+
+**Unsatisfied evidence:** `SemanticCandidateRepository.listEvidence` accepts no page/limit input (`packages/atlas-core/src/semantic-candidate-repository.ts`), and `PostgresSemanticCandidateRepository.listEvidence` selects every matching evidence row without `LIMIT` or a cursor (`packages/atlas-db/src/semantic-candidate-repository.ts`). Candidate and relationship list methods clamp their results to 100; evidence retrieval does not.
+
+#### Frozen Finding Closure Matrix
+
+| Clause | Exact ticket authority | Unsatisfied evidence | Observable correction and binary closure oracle |
+|---|---|---|---|
+| CK-002.a | Neighborhood selection contract, 100-record pages; AC-33/34/35. | Evidence retrieval can return an unbounded number of rows in one call, and the shared interface has no way to request subsequent bounded pages. | **Required state:** the Core API exposes page-wise evidence retrieval capped at 100 records per call and allows a caller to retrieve all records across pages without omissions or duplicates. **Proof:** a fixture in `packages/atlas-db/tests/reconciliation-acceptance.integration.test.ts` with more than 100 evidence records verifies each response is at most 100 and the complete stable identity set is returned across pages; run `docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/db test:reconciliation-acceptance`. **Direct-regression boundary:** the IDSER-007 semantic repository API and its SQL adapter only; do not require projection/chat implementations. |
+
+### CK-003 — Mandatory IDSER-007 scenarios and query evidence are incomplete
+
+**Authority:** IDSER-007 `Validation` section and mandatory review bindings REV-READY-IDSER-007-01/02/03; AC-17 through AC-26 and AC-33 through AC-35.
+
+**Unsatisfied evidence:** The current Compose test proves useful integration behavior but does not establish all named semantic, bounds, isolation, transaction, and query-plan obligations. Adding indexes in migration `0019` does not by itself prove that representative scoped queries use them. The complete clauses below freeze the required proof and do not make extra review probes acceptance conditions.
+
+#### Frozen Finding Closure Matrix
+
+| Clause | Exact ticket authority | Unsatisfied evidence | Observable correction and binary closure oracle |
+|---|---|---|---|
+| CK-003.a | Validation: deterministic semantic cases for all ten relationships, one-PDF conflicting quotas, support/duplicate across PDFs, refinement/extension and evidence-supported versus unsupported supersession; AC-19/20/22; REV-READY-IDSER-007-03. | The test stores all ten labels in one same-document pair with the same evidence. It does not run the named cross-document and evidence comparison fixtures or prove the conflicting-quota case. | **Required state:** the ticket-named one-PDF and cross-PDF semantic fixtures execute and show the expected relationship proposals, preserved contradiction/unresolved state, and no order-based winner; both supported and unsupported supersession evidence cases are represented. **Proof:** assertions in `packages/atlas-db/tests/reconciliation-acceptance.integration.test.ts`, executed with `docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/db test:reconciliation-acceptance`, record persisted relationship/candidate observations for each named case. **Direct-regression boundary:** reconciliation proposal semantics and preservation only; do not add precedence or accepted-truth requirements. |
+| CK-003.b | Validation: missing accounting, invented IDs, existing-but-unselected same-bundle IDs, cross-project/workspace/bundle references; boundaries at 500/1,000 and 1 MiB including multibyte payload/evidence; repeat stable IDs/order/overflow and no current-candidate loss; AC-17/18/21. | The test covers an invented target and a 500-prior count only. It does not prove the remaining rejection cases, current/total limits, serialized byte boundaries, multibyte handling, repeated deterministic order/metadata, or complete current-set retention. | **Required state:** every ticket-named malformed reference/accounting case rejects without partial persistence; 500/1,000/1 MiB boundaries pass or fail as specified; multibyte byte accounting is correct; repeated selection yields identical IDs/order/overflow metadata and never silently drops a current candidate. **Proof:** Compose DB assertions in `packages/atlas-db/tests/reconciliation-acceptance.integration.test.ts` plus contract assertions in `packages/atlas-contracts/tests/semantic.test.ts`; run the corresponding DB acceptance and `docker compose run --rm --no-deps atlas corepack pnpm --filter @atlas/contracts test` commands. **Direct-regression boundary:** current/prior selection and authorized reconciliation-result validation only. |
+| CK-003.c | Validation: real DB/queue tests for three-document ordering, concurrent distinct bundles/users, same workspace display wording, duplicate callbacks, rollback before next enqueue and worker restart; AC-23/24/25; REV-READY-IDSER-007-02. | The test covers two documents, same-bundle duplicate callbacks, authority reconstruction, and final-validator rollback. It does not prove D1→D2→D3 ordering, independent bundle concurrency, the named same-workspace wording scenario, worker restart, or atomic rollback when next-job enqueue/persistence fails. | **Required state:** the real Compose/PostgreSQL/pg-boss harness proves each named scenario: only D(n+1) is queued after reconciliation; independent bundles progress concurrently; duplicate/restart delivery does not double-advance; and enqueue/persistence failure leaves no result, progress, or next job partially committed. Final-member completion remains fail-closed pending IDSER-008. **Proof:** assertions in `packages/atlas-db/tests/reconciliation-acceptance.integration.test.ts` inspect persisted document states/counts and `pgboss.job` rows; run `docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/db test:reconciliation-acceptance`. **Direct-regression boundary:** IDSER-007 advancement and queue effects only; do not require IDSER-008's completion validator implementation. |
+| CK-003.d | Validation: query-plan/index evidence on representative multi-document data proving bounded key/kind/scope and relationship/evidence traversal; AC-33/34/35; REV-READY-IDSER-007-01. | Migration `0019` creates indexes, but neither the test nor checkpoint records an `EXPLAIN`/query-plan observation on representative data or evidence traversal plan. | **Required state:** representative multi-document DB data produces recorded plans/evidence showing bounded indexed key/kind/scope selection and addressable relationship/evidence traversal. **Proof:** `EXPLAIN` assertions/output in `packages/atlas-db/tests/reconciliation-acceptance.integration.test.ts`, executed by `docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/db test:reconciliation-acceptance`, are tied to the actual selector/repository SQL and fixture cardinality. **Direct-regression boundary:** the IDSER-007 retrieval SQL and its indexes; do not require production-scale benchmarking or future projection/chat consumers. |
+
+## Scope-change observations
+
+None. The predecessor Node 24 assertion-container mismatch remains the separate baseline observation recorded by the IDSER-007 planning decision; no ticket or dependency scope change is needed to decide this review.
+
+## Decision
+
+`CHANGES_REQUIRED` for IDSER-007 / IDSER-BATCH-07 at `f16a7ab2317fe04b1c5aae89efdcdc9256f1d850`. Keep IDSER-007 `awaiting_review`. The checkpoint does not yet satisfy bounded context construction/metadata, 100-record evidence paging, or the ticket's mandatory semantic, boundary, concurrency, rollback, and query-plan proof. This is the first consolidated review; the matrix above freezes the complete admissible closure target. CFC may address only CK-001.a, CK-002.a, and CK-003.a through CK-003.d. IDSER-008 remains gated on an IDSER-007 `PASS`.

@@ -1,0 +1,19 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: all four production queue jobs were cleaned up after their matching completed delivery
+
+4 !== 0
+
+    at file:///C:/Workspace/atlas/ces-platform/apps/agents-bridge/tests/idser-010-compose.mjs:224:10
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 4,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.19.0

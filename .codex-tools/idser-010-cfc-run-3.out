@@ -1,0 +1,22 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+PostgresError: permission denied for table job
+    at ErrorResponse (file:///C:/Workspace/atlas/ces-platform/node_modules/.pnpm/postgres@3.4.7/node_modules/postgres/src/connection.js:794:26)
+    at handle (file:///C:/Workspace/atlas/ces-platform/node_modules/.pnpm/postgres@3.4.7/node_modules/postgres/src/connection.js:480:6)
+    at Socket.data (file:///C:/Workspace/atlas/ces-platform/node_modules/.pnpm/postgres@3.4.7/node_modules/postgres/src/connection.js:315:9)
+    at Socket.emit (node:events:509:28)
+    at addChunk (node:internal/streams/readable:563:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+    at Readable.push (node:internal/streams/readable:394:5)
+    at TCP.onStreamRead (node:internal/stream_base_commons:189:23) {
+  severity_local: 'ERROR',
+  severity: 'ERROR',
+  code: '42501',
+  file: 'aclchk.c',
+  line: '2793',
+  routine: 'aclcheck_error'
+}
+
+Node.js v24.19.0

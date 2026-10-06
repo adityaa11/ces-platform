@@ -1,0 +1,26 @@
+node:internal/errors:985
+  const err = new Error(message);
+              ^
+
+Error: Command failed: docker compose -f docker-compose.yml -f docker-compose.cfc.yml exec -T -e PGPASSWORD=atlas_app_local_dev_only postgres psql -U atlas_app -d atlas_dev -At -c SELECT json_build_object('queue_state', j.state, 'retry_count', j.retry_count, 'retry_limit', j.retry_limit, 'bridge_effect_state', e.status, 'effect_execution_id', e.execution_id, 'lease_owner', e.lease_owner, 'lease_generation', e.lease_generation, 'staged_result_count', (SELECT count(*) FROM bridge.document_perception_result_delivery d WHERE d.idempotency_key=j.data->>'idempotencyKey'), 'staged_execution_count', (SELECT count(*) FROM bridge.document_perception_result_delivery d WHERE d.idempotency_key=j.data->>'idempotencyKey' AND d.execution_id=e.execution_id))::text FROM pgboss.job j LEFT JOIN bridge.background_effects e ON e.idempotency_key=j.data->>'idempotencyKey' WHERE j.data->>'idempotencyKey'='perception:31885bd6-d668-4936-a7a7-548816b5d8dc:e58354f1-2fae-42da-831c-1a86478ebbf4:v1' ORDER BY j.created_on DESC LIMIT 1
+ERROR:  permission denied for schema bridge
+LINE 1: ....execution_id))::text FROM pgboss.job j LEFT JOIN bridge.bac...
+                                                             ^
+
+    at genericNodeError (node:internal/errors:985:15)
+    at wrappedFn (node:internal/errors:539:14)
+    at ChildProcess.exithandler (node:child_process:417:12)
+    at ChildProcess.emit (node:events:509:28)
+    at maybeClose (node:internal/child_process:1141:16)
+    at ChildProcess._handle.onexit (node:internal/child_process:306:5) {
+  code: 1,
+  killed: false,
+  signal: null,
+  cmd: "docker compose -f docker-compose.yml -f docker-compose.cfc.yml exec -T -e PGPASSWORD=atlas_app_local_dev_only postgres psql -U atlas_app -d atlas_dev -At -c SELECT json_build_object('queue_state', j.state, 'retry_count', j.retry_count, 'retry_limit', j.retry_limit, 'bridge_effect_state', e.status, 'effect_execution_id', e.execution_id, 'lease_owner', e.lease_owner, 'lease_generation', e.lease_generation, 'staged_result_count', (SELECT count(*) FROM bridge.document_perception_result_delivery d WHERE d.idempotency_key=j.data->>'idempotencyKey'), 'staged_execution_count', (SELECT count(*) FROM bridge.document_perception_result_delivery d WHERE d.idempotency_key=j.data->>'idempotencyKey' AND d.execution_id=e.execution_id))::text FROM pgboss.job j LEFT JOIN bridge.background_effects e ON e.idempotency_key=j.data->>'idempotencyKey' WHERE j.data->>'idempotencyKey'='perception:31885bd6-d668-4936-a7a7-548816b5d8dc:e58354f1-2fae-42da-831c-1a86478ebbf4:v1' ORDER BY j.created_on DESC LIMIT 1",
+  stdout: '',
+  stderr: 'ERROR:  permission denied for schema bridge\n' +
+    'LINE 1: ....execution_id))::text FROM pgboss.job j LEFT JOIN bridge.bac...\n' +
+    '                                                             ^\n'
+}
+
+Node.js v24.19.0

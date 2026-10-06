@@ -10,8 +10,20 @@
 This record preserves the complete original IDSER-009 contract and planning history, but it is not a GO target. The child tickets own execution in this order; the umbrella is complete only after each child has CK `PASS`.
 
 ```text
-IDSER-008 PASS -> 009-01 PASS -> 009-02 PASS -> 009-03 PASS -> 009-04 PASS -> IDSER-010
+IDSER-008 PASS -> 009-01 PASS -> 009-02 PASS -> 009-03 PASS
+              -> 009-03-01 CK PASS -> 009-03-02 CK PASS
+              -> 009-04 PASS -> IDSER-010
 ```
+
+IDSER-009-03-01 and IDSER-009-03-02 are additive corrective dependencies discovered by the frozen IDSER-009-04 integration review. IDSER-009-04 remains the final integration checkpoint in its existing `awaiting_review` state and cannot resume until both corrective dependencies have CK `PASS`. The approved 009-01/02/03, IDSER-003 and IDSER-008 checkpoints and their PASS evidence remain immutable.
+
+### Frozen IDSER-009-04 authority trace
+
+| Frozen clause | Production prerequisite | Final integrated closure |
+|---|---|---|
+| `CK-001.a` | IDSER-009-03-01 — bounded semantic-uncertainty card contract | IDSER-009-04 |
+| `CK-001.b` | None; remains entirely owned by IDSER-009-04 | IDSER-009-04 |
+| `CK-001.c` | IDSER-009-03-02 — authenticated lifecycle activation | IDSER-009-04 |
 
 The split is by authority and proof surface, not by files. No child changes the original lifecycle semantics, creates a review surface, publishes facts, changes Master, or starts IDSER-010 work.
 
@@ -25,7 +37,7 @@ The required outcome remains: production cards truthfully show authorized persis
 | Bundle state, immutable expected N, completed X, workspace state, legacy/no-bundle distinction, malformed persisted state | 009-01 | 009-01 |
 | Waiting, active processing, terminal technical failure and completion-gated ready map to four exact states | 009-02 | 009-02; 009-04 |
 | Exact `X of N`, `floor(100 * X / N)`, 100 only X=N; OCR/extraction alone never increments X | 009-02 | 009-02; 009-04 |
-| Semantic uncertainty differs from technical failure and may coexist with ready | 009-02 | 009-02; 009-04 |
+| Semantic uncertainty differs from technical failure and may coexist with ready | 009-02 baseline; additive safe card signal in 009-03-01 | 009-02; 009-03-01; 009-04 |
 | Intact legacy PCC no-bundle record stays waiting; invalid new bundle state fails closed | 009-01, 009-02 | 009-01, 009-02; 009-04 legacy proof |
 | Zero published facts and Master `No published work` in every state | 009-02 | 009-02; 009-04 |
 | Bounded safe failure reason; no provider body, prompts, SQL, execution/capability/private data | 009-01, 009-02 | 009-01, 009-02; 009-04 response proof |

@@ -1,0 +1,38 @@
+$ node tests/idser-010-compose.mjs
+(node:12244) TimeoutNegativeWarning: -354.1751931250037 is a negative number.
+Timeout duration was set to 1.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1339:18)
+    at afterConnectMultiple (node:net:1942:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:5432
+        at createConnectionError (node:net:1905:14)
+        at afterConnectMultiple (node:net:1935:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 5432
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:5432
+        at createConnectionError (node:net:1905:14)
+        at afterConnectMultiple (node:net:1935:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 5432
+    }
+  ]
+}
+
+Node.js v24.19.0
+C:\Workspace\atlas\ces-platform\apps\agents-bridge:
+[ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL] @atlas/agents-bridge@0.1.0 test:idser-010-compose: `node tests/idser-010-compose.mjs`
+Exit status 1

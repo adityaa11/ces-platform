@@ -1,0 +1,2 @@
+$ node tests/idser-010-compose.mjs
+IDSER-010-01 controlled Compose scenarios A/B passed.

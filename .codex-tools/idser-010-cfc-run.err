@@ -1,0 +1,26 @@
+$ node tests/idser-010-compose.mjs
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: persisted full semantic results, provider provenance, and candidate/evidence identities resolve in this project bundle
++ actual - expected
+
+  {
+    extraction: 1,
++   reconciliation: 0,
+-   reconciliation: 1,
+    resolvedCandidateEvidenceIds: 2
+  }
+
+    at file:///C:/Workspace/atlas/ces-platform/apps/agents-bridge/tests/idser-010-compose.mjs:74:12
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: { extraction: 1, reconciliation: 0, resolvedCandidateEvidenceIds: 2 },
+  expected: { extraction: 1, reconciliation: 1, resolvedCandidateEvidenceIds: 2 },
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.19.0

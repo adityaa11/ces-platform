@@ -1,0 +1,14 @@
+{
+  "current_candidates": [
+    {"id":"current-new","type":"new","source_unit_id":"fixture:p1:text:new"},
+    {"id":"current-supports","type":"supports","target":"prior-supports","source_unit_id":"fixture:p1:text:supports"},
+    {"id":"current-duplicates","type":"duplicates","target":"prior-duplicates","source_unit_id":"fixture:p1:text:duplicates"},
+    {"id":"current-refines","type":"refines","target":"prior-refines","source_unit_id":"fixture:p1:text:refines"},
+    {"id":"current-extends","type":"extends","target":"prior-extends","source_unit_id":"fixture:p1:text:extends"},
+    {"id":"current-contradicts","type":"contradicts","target":"prior-contradicts","source_unit_id":"fixture:p1:text:contradicts"},
+    {"id":"current-supersedes","type":"supersedes","target":"prior-supersedes","source_unit_id":"fixture:p1:text:supersedes"},
+    {"id":"current-partial","type":"partially_supersedes","target":"prior-partial","source_unit_id":"fixture:p1:text:partial"},
+    {"id":"current-ambiguous","type":"ambiguous","target":"prior-ambiguous","source_unit_id":"fixture:p1:text:ambiguous"},
+    {"id":"current-resolution","type":"requires_resolution","target":"prior-resolution","source_unit_id":"fixture:p1:text:resolution"}
+  ]
+}

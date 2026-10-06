@@ -1,0 +1,15 @@
+{
+  "source_units": [
+    {"id":"fixture:p1:text:actor","text":"Operations officer reviews each traveller document."},
+    {"id":"fixture:p1:text:object","text":"A traveller record stores name and passport number."},
+    {"id":"fixture:p1:text:rule","text":"A traveller with an expired passport must not enter the final manifest."},
+    {"id":"fixture:p1:text:condition","text":"When payment is accepted, the remaining balance is recalculated."},
+    {"id":"fixture:p1:text:workflow","text":"Finance records a payment, then Operations verifies the receipt."},
+    {"id":"fixture:p1:text:state","text":"A document changes from pending to approved after verification."},
+    {"id":"fixture:p1:text:input","text":"The operator uploads a passport scan."},
+    {"id":"fixture:p1:text:output","text":"The system produces a readiness report."},
+    {"id":"fixture:p1:text:exception","text":"If the receipt is unreadable, the payment is rejected with a reason."},
+    {"id":"fixture:p1:text:ambiguity","text":"The approval threshold may be 40 or 45 travellers; confirm the policy."},
+    {"id":"fixture:p1:text:nonfact","text":"This paragraph is an introductory greeting and contains no requirement."}
+  ]
+}

@@ -1,0 +1,26 @@
+node:internal/errors:985
+  const err = new Error(message);
+              ^
+
+Error: Command failed: docker compose -f docker-compose.yml -f docker-compose.cfc.yml exec -T postgres psql -U agents_bridge -d atlas_dev -At -c SELECT json_build_object('state', e.state, 'cache_count', (SELECT count(*) FROM atlas.normalized_document_cache c WHERE c.source_sha256=d.source_sha256 AND c.capability_identity='docling-digital-pdf' AND c.invalidated_at IS NULL), 'semantic_execution_count', (SELECT count(*) FROM atlas.semantic_execution s JOIN atlas.extraction_bundle b ON b.id=s.bundle_id WHERE b.project_id=p.id), 'execution_count', (SELECT count(*) FROM atlas.document_perception_execution x JOIN atlas.document dx ON dx.id=x.artifact_id WHERE dx.project_id=p.id), 'member_count', (SELECT count(*) FROM atlas.extraction_bundle_document m JOIN atlas.extraction_bundle b ON b.id=m.bundle_id WHERE b.project_id=p.id))::text FROM atlas.document_perception_execution e JOIN atlas.document d ON d.id=e.artifact_id JOIN atlas.project p ON p.id=d.project_id WHERE e.id='736c7b74-8878-4445-a704-bd91e791a540'
+ERROR:  permission denied for schema atlas
+LINE 1: ...=m.bundle_id WHERE b.project_id=p.id))::text FROM atlas.docu...
+                                                             ^
+
+    at genericNodeError (node:internal/errors:985:15)
+    at wrappedFn (node:internal/errors:539:14)
+    at ChildProcess.exithandler (node:child_process:417:12)
+    at ChildProcess.emit (node:events:509:28)
+    at maybeClose (node:internal/child_process:1141:16)
+    at ChildProcess._handle.onexit (node:internal/child_process:306:5) {
+  code: 1,
+  killed: false,
+  signal: null,
+  cmd: "docker compose -f docker-compose.yml -f docker-compose.cfc.yml exec -T postgres psql -U agents_bridge -d atlas_dev -At -c SELECT json_build_object('state', e.state, 'cache_count', (SELECT count(*) FROM atlas.normalized_document_cache c WHERE c.source_sha256=d.source_sha256 AND c.capability_identity='docling-digital-pdf' AND c.invalidated_at IS NULL), 'semantic_execution_count', (SELECT count(*) FROM atlas.semantic_execution s JOIN atlas.extraction_bundle b ON b.id=s.bundle_id WHERE b.project_id=p.id), 'execution_count', (SELECT count(*) FROM atlas.document_perception_execution x JOIN atlas.document dx ON dx.id=x.artifact_id WHERE dx.project_id=p.id), 'member_count', (SELECT count(*) FROM atlas.extraction_bundle_document m JOIN atlas.extraction_bundle b ON b.id=m.bundle_id WHERE b.project_id=p.id))::text FROM atlas.document_perception_execution e JOIN atlas.document d ON d.id=e.artifact_id JOIN atlas.project p ON p.id=d.project_id WHERE e.id='736c7b74-8878-4445-a704-bd91e791a540'",
+  stdout: '',
+  stderr: 'ERROR:  permission denied for schema atlas\n' +
+    'LINE 1: ...=m.bundle_id WHERE b.project_id=p.id))::text FROM atlas.docu...\n' +
+    '                                                             ^\n'
+}
+
+Node.js v24.19.0

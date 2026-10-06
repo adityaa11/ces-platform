@@ -1,0 +1,4 @@
+{"qualification":"bss-v2-004","credentialPresent":true,"configured":{"provider":"gemini","baseUrlOrigin":"https://generativelanguage.googleapis.com","structuredModel":"gemini-3.5-flash-lite","chatModel":"gemini-3.5-flash-lite","perceptionModel":"gemini-3.5-flash-lite","zeroDataRetentionApproved":false},"outcome":"failure","observations":{"rateLimit":"not_observed","evaluationPrivacy":"not_zero_retention_approved","minimalInference":{"model":"gemini-3.5-flash-lite","endpoint":"generateContent","latencyMilliseconds":1126,"usagePresent":true}},"failedStep":"extraction","errorCode":"invalid_request"}
+C:\Workspace\atlas\ces-platform\apps\agents-bridge:
+[ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL] @atlas/agents-bridge@0.1.0 qualification:gemini-live: `node --env-file=../../.env ./node_modules/jiti/lib/jiti-cli.mjs src/live-gemini-qualification.ts`
+Exit status 1

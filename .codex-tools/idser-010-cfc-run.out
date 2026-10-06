@@ -1,0 +1,3 @@
+C:\Workspace\atlas\ces-platform\apps\agents-bridge:
+[ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL] @atlas/agents-bridge@0.1.0 test:idser-010-compose: `node tests/idser-010-compose.mjs`
+Exit status 1

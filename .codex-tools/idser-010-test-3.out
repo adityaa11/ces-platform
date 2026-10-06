@@ -1,0 +1,31 @@
+$ node tests/idser-010-compose.mjs
+IDSER-010-01 controlled Compose scenarios A/B passed.
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+PostgresError: update or delete on table "document" violates foreign key constraint "semantic_evidence_document_id_fkey" on table "semantic_evidence"
+    at ErrorResponse (file:///C:/Workspace/atlas/ces-platform/node_modules/.pnpm/postgres@3.4.7/node_modules/postgres/src/connection.js:794:26)
+    at handle (file:///C:/Workspace/atlas/ces-platform/node_modules/.pnpm/postgres@3.4.7/node_modules/postgres/src/connection.js:480:6)
+    at Socket.data (file:///C:/Workspace/atlas/ces-platform/node_modules/.pnpm/postgres@3.4.7/node_modules/postgres/src/connection.js:315:9)
+    at Socket.emit (node:events:509:28)
+    at addChunk (node:internal/streams/readable:563:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+    at Readable.push (node:internal/streams/readable:394:5)
+    at TCP.onStreamRead (node:internal/stream_base_commons:189:23) {
+  severity_local: 'ERROR',
+  severity: 'ERROR',
+  code: '23503',
+  detail: 'Key (id)=(b22e2b9b-d0ee-4be8-b3b0-4f63426f19ce) is still referenced from table "semantic_evidence".',
+  schema_name: 'atlas',
+  table_name: 'semantic_evidence',
+  constraint_name: 'semantic_evidence_document_id_fkey',
+  file: 'ri_triggers.c',
+  line: '2799',
+  routine: 'ri_ReportViolation'
+}
+
+Node.js v24.19.0
+C:\Workspace\atlas\ces-platform\apps\agents-bridge:
+[ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL] @atlas/agents-bridge@0.1.0 test:idser-010-compose: `node tests/idser-010-compose.mjs`
+Exit status 1
