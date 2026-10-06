@@ -8,6 +8,7 @@
 - **Prefix:** `IDSER`; one bounded executable ticket per `IDSER-BATCH-XX`.
   IDSER-009, IDSER-010 and IDSER-011 are umbrella partition records, not executable GO
   targets; their child batches carry implementation and proof authority.
+- **IDSER-012 amendment:** [Staged worker pipeline realignment](IDSER-012-staged-worker-pipeline-realignment.md) is a planned, non-executable lifecycle amendment. It preserves the historical records while replacing their future production sequencing through four bounded child batches.
 - **Primary baseline:** [Initial Draft implementation context](../../atlas-initial-draft-semantic-extraction-reconciliation-implementation-context.md), sections 1-45, AC-01 through AC-44.
 - **Hard predecessor:** [PCC-006](../Project_Cards_Phase/PCC-006-project-card-creation-e2e-and-regression-checkpoint.md) `PASS`; the [PCC set](../Project_Cards_Phase/README.md) remains frozen.
 - **Planning inspection:** branch `codex/new-atlas-backend`, HEAD `1e2fb34db561f8b27d4a284ad2db2dba4b8ff183`, 2026-10-01. IDSER-011 was repartitioned against BSS-008/009, actual worker/provider/Atlas seams, the approved IDSER-010 series and current Compose harnesses.
@@ -94,6 +95,11 @@ documents do not authorize starting implementation automatically.
 | 25 | [IDSER-011-02](IDSER-011-02-live-first-document-production-path.md) / IDSER-BATCH-11-02 | IDSER-011-01 | D1 real OCR, semantic path, authenticated acceptance and persistence |
 | 26 | [IDSER-011-03](IDSER-011-03-live-incremental-sequencing-context.md) / IDSER-BATCH-11-03 | IDSER-011-02 | D2 real sequencing and Atlas-authorized bounded prior context |
 | 27 | [IDSER-011-04](IDSER-011-04-integrated-live-acceptance-checkpoint.md) / IDSER-BATCH-11-04 | IDSER-011-01, IDSER-011-02, IDSER-011-03 | Final Scenario I, lifecycle/card, AC-41–44 and negative-authority composition |
+| 28 | [IDSER-012](IDSER-012-staged-worker-pipeline-realignment.md) / umbrella | approved inherited BSS/IDSER boundaries | Non-executable lifecycle amendment; preserves historical proof and partitions the staged worker redesign |
+| 29 | [IDSER-012-01](IDSER-012-01-fair-bounded-local-perception-admission.md) / IDSER-BATCH-12-01 | BSS-006, BSS-009/01/02, BSS-V2-004-01/02, IDSER-003/008/010-04/05 | Fair, JIT-grant, race-safe 2/2/2 local Docling admission foundation only |
+| 30 | [IDSER-012-02](IDSER-012-02-multi-document-perception-extraction-decoupling.md) / IDSER-BATCH-12-02 | IDSER-012-01 `PASS` and qualified semantic extraction | Independent perception eligibility and per-document semantic scheduling |
+| 31 | [IDSER-012-03](IDSER-012-03-semantic-ready-reconciliation-admission.md) / IDSER-BATCH-12-03 | IDSER-012-02 `PASS` | Ready-order reconciliation with a stable keyed single writer per bundle |
+| 32 | [IDSER-012-04](IDSER-012-04-staged-pipeline-composition-regression.md) / IDSER-BATCH-12-04 | IDSER-012-01 through IDSER-012-03 `PASS` | N/N completion, read-model, failure, replay and isolation composition |
 
 Intermediate tickets are composable implementation checkpoints, not independent
 production rollouts. Route/worker tests may inject explicit bounded test doubles
