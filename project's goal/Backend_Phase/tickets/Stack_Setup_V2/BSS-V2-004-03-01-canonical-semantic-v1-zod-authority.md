@@ -1,6 +1,6 @@
 # BSS-V2-004-03-01: Canonical Atlas Semantic V1 Zod authority
 
-- **State:** `awaiting_review`; **Review batch:** `BSS-V2-BATCH-04.03-01`
+- **State:** `approved`; **Review batch:** `BSS-V2-BATCH-04.03-01`
 - **Dependencies:** BSS-V2-004-02 CK `PASS`; approved Semantic V1 behavior and existing BSS-V2-001/002/003 contracts; explicit `go`
 - **Implementation context:** [Semantic V1 Zod + Anoman productionization context](../../atlas-semantic-v1-zod-anoman-productionization-implementation-context.md) §§3–5, 9.01, 11–13
 - **Current seam:** `packages/atlas-contracts/src/semantic.ts` owns Semantic V1 parser entry points, bounds and hand-maintained JSON Schema shapes; `packages/atlas-contracts` currently does not use Zod for this authority.
