@@ -1,0 +1,47 @@
+import { z } from "zod";
+
+/** Canonical Atlas-owned Semantic V1 authority. Provider projections are derived below. */
+export const semanticKinds = ["actor", "business_object", "business_property", "responsibility", "rule", "constraint", "condition", "decision", "workflow_step", "state_transition", "relationship", "input", "output", "acceptance_expectation", "exception", "unresolved"] as const;
+export const reconciliationRelationshipTypes = ["new", "supports", "duplicates", "refines", "extends", "contradicts", "supersedes", "partially_supersedes", "ambiguous", "requires_resolution"] as const;
+export const semanticLimitsV1 = { currentCandidates: 500, priorCandidates: 500, totalCandidates: 1000 } as const;
+
+const id = z.string().min(1).max(200).regex(/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/).describe("A bounded Atlas identifier. Atlas, not a provider, owns canonical identity.");
+const text = (maxLength: number, description: string) => z.string().min(1).max(maxLength).describe(description);
+const payload = z.json().superRefine((value, ctx) => {
+  const check = (item: z.infer<typeof z.json>, depth = 0): void => {
+    if (depth > 8) { ctx.addIssue({ code: "custom", message: "Atlas semantic payload exceeds nesting depth 8." }); return; }
+    if (typeof item === "string" && item.length > 16384) ctx.addIssue({ code: "custom", message: "Atlas semantic payload string exceeds 16384 characters." });
+    if (Array.isArray(item)) { if (item.length > 100) ctx.addIssue({ code: "custom", message: "Atlas semantic payload array exceeds 100 items." }); for (const child of item) check(child, depth + 1); }
+    else if (item && typeof item === "object") { const values = Object.values(item); if (values.length > 100) ctx.addIssue({ code: "custom", message: "Atlas semantic payload object exceeds 100 properties." }); for (const child of values) check(child, depth + 1); }
+  };
+  check(value);
+}).describe("Extensible, source-grounded JSON semantic detail. Preserve material meaning without inventing facts.");
+
+export const atlasSemanticKindV1Schema = z.enum(semanticKinds).describe("The exact Atlas Semantic V1 primary-kind vocabulary: actor, business object/property, responsibility, rule, constraint, condition, decision, workflow step, state transition, business relationship, input, output, acceptance expectation, exception, or unresolved ambiguity.");
+export const atlasEvidenceRefV1Schema = z.strictObject({ page_number: z.number().int().min(1).describe("One-based trusted NormalizedDocument page."), locator_type: z.enum(["text_block", "table", "visual_region"]).describe("Trusted NormalizedDocument locator type."), locator_id: id.describe("Atlas-owned locator identifier."), excerpt: z.string().min(1).max(4000).optional().describe("Required trusted excerpt for text blocks and tables.") }).superRefine((value, ctx) => { if ((value.locator_type === "text_block" || value.locator_type === "table") && !value.excerpt) ctx.addIssue({ code: "custom", message: "text_block and table evidence require excerpt.", path: ["excerpt"] }); }).describe("Evidence grounding a semantic candidate or question.");
+export const atlasSemanticCandidateV1Schema = z.strictObject({ local_candidate_id: id.describe("Result-local candidate ID, not a canonical Atlas ID."), semantic_key: text(300, "Concise normalized semantic key."), kind: atlasSemanticKindV1Schema, payload, normalized_meaning: text(8000, "Complete, source-faithful normalized meaning; never broaden, narrow, repair, or invent."), source_wording: z.string().min(1).max(12000).optional().describe("Exact trusted source wording when available."), needs_resolution: z.boolean().describe("Whether material ambiguity needs clarification."), evidence_refs: z.array(atlasEvidenceRefV1Schema).min(1).max(32).describe("Trusted evidence references.") }).describe("One reviewable Atlas semantic candidate assertion.");
+export const atlasSourceClassificationV1Schema = z.enum(["candidate", "non_fact"]).describe("candidate establishes meaning; non_fact is structural or otherwise establishes no project meaning.");
+export const atlasSourceStatementInventoryItemV1Schema = z.strictObject({ source_unit_id: id, page_number: z.number().int().min(1), locator_type: z.enum(["text_block", "table", "visual_region"]), locator_id: id, classification: atlasSourceClassificationV1Schema, destination_local_candidate_ids: z.array(id).max(64).describe("Candidate destinations; candidate requires one and non_fact requires none."), non_fact_reason: z.string().min(1).max(1000).optional().describe("Required only for non_fact.") }).superRefine((value, ctx) => { if (value.classification === "candidate" && value.destination_local_candidate_ids.length === 0) ctx.addIssue({ code: "custom", message: "candidate inventory needs a destination." }); if (value.classification === "non_fact" && (!value.non_fact_reason || value.destination_local_candidate_ids.length)) ctx.addIssue({ code: "custom", message: "non_fact inventory needs only a reason." }); }).describe("Source-accounting inventory item.");
+export const atlasSemanticQuestionV1Schema = z.strictObject({ question: text(2000, "Material clarification question."), reason: text(2000, "Why the ambiguity materially affects interpretation."), evidence_refs: z.array(atlasEvidenceRefV1Schema).max(16).optional() }).describe("Question preserving uncertainty instead of guessing.");
+export const atlasSemanticContextCandidateV1Schema = z.strictObject({ id, semantic_key: text(300, "Concise normalized semantic key."), kind: atlasSemanticKindV1Schema, normalized_meaning: text(8000, "Complete source-faithful normalized meaning."), payload, evidence_refs: z.array(atlasEvidenceRefV1Schema).max(32) }).describe("Previously accepted candidate supplied only as reconciliation context.");
+
+export const atlasSemanticExtractionResultV1Schema = z.strictObject({ version: z.literal("v1"), candidate_assertions: z.array(atlasSemanticCandidateV1Schema).max(semanticLimitsV1.currentCandidates), source_statement_inventory: z.array(atlasSourceStatementInventoryItemV1Schema).max(100000), questions: z.array(atlasSemanticQuestionV1Schema).max(100) }).superRefine((value, ctx) => {
+  const ids = new Set<string>(); const sources = new Set<string>(); const accounted = new Set<string>();
+  for (const candidate of value.candidate_assertions) { if (ids.has(candidate.local_candidate_id)) ctx.addIssue({ code: "custom", message: "Duplicate local candidate ID." }); ids.add(candidate.local_candidate_id); }
+  for (const item of value.source_statement_inventory) { const source = `${item.page_number}:${item.locator_type}:${item.locator_id}`; if (sources.has(source)) ctx.addIssue({ code: "custom", message: "Duplicate source inventory identity." }); sources.add(source); for (const destination of item.destination_local_candidate_ids) { if (!ids.has(destination)) ctx.addIssue({ code: "custom", message: "Dangling local candidate ID." }); accounted.add(destination); } }
+  for (const candidate of ids) if (!accounted.has(candidate)) ctx.addIssue({ code: "custom", message: "Candidate is missing source accounting." });
+}).describe("Atlas Semantic V1 extraction result: candidates, complete source accounting, and questions.");
+
+export const atlasReconciliationRelationshipTypeV1Schema = z.enum(reconciliationRelationshipTypes).describe("The exact Atlas reconciliation relationship vocabulary; it is distinct from extraction-time business relationships.");
+export const atlasReconciliationRelationshipV1Schema = z.strictObject({ source_candidate_id: id, target_candidate_id: id.optional(), relationship_type: atlasReconciliationRelationshipTypeV1Schema, payload, requires_resolution: z.boolean(), evidence_refs: z.array(atlasEvidenceRefV1Schema).max(32) }).superRefine((value, ctx) => { if (value.relationship_type === "new" && value.target_candidate_id !== undefined) ctx.addIssue({ code: "custom", message: "new relationships must not have a target." }); if (value.relationship_type !== "new" && value.target_candidate_id === undefined) ctx.addIssue({ code: "custom", message: "non-new relationships require a target." }); }).describe("One reconciliation relationship proposal.");
+export const atlasSemanticReconciliationResultV1Schema = z.strictObject({ version: z.literal("v1"), relationships: z.array(atlasReconciliationRelationshipV1Schema).max(semanticLimitsV1.totalCandidates * 10), questions: z.array(atlasSemanticQuestionV1Schema).max(100) }).describe("Atlas Semantic V1 reconciliation result.");
+
+export type AtlasSemanticCandidateV1 = z.infer<typeof atlasSemanticCandidateV1Schema>;
+export type AtlasSemanticExtractionResultV1 = z.infer<typeof atlasSemanticExtractionResultV1Schema>;
+export type AtlasSemanticReconciliationResultV1 = z.infer<typeof atlasSemanticReconciliationResultV1Schema>;
+
+/** Produces a plain JSON Schema compatibility projection; Zod refinements stay locally authoritative. */
+export function toAtlasJsonSchema(schema: z.core.$ZodType): Record<string, unknown> { return z.toJSONSchema(schema, { target: "draft-7", reused: "inline" }) as Record<string, unknown>; }
+export const atlasSemanticExtractionResultV1JsonSchema = toAtlasJsonSchema(atlasSemanticExtractionResultV1Schema);
+export const atlasSemanticReconciliationResultV1JsonSchema = toAtlasJsonSchema(atlasSemanticReconciliationResultV1Schema);
+export const atlasSemanticContextCandidateV1JsonSchema = toAtlasJsonSchema(atlasSemanticContextCandidateV1Schema);

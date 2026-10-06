@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseSemanticBackgroundJob, parseSemanticExtractionContext, parseSemanticExtractionResult, parseSemanticReconciliationContext, parseSemanticReconciliationResult, parseSemanticResultEnvelope, semanticLimits } from "../src/index.ts";
+import { atlasSemanticExtractionResultV1Schema, atlasSemanticReconciliationResultV1Schema, parseSemanticBackgroundJob, parseSemanticExtractionContext, parseSemanticExtractionResult, parseSemanticReconciliationContext, parseSemanticReconciliationResult, parseSemanticResultEnvelope, semanticExtractionResultSchema, semanticLimits, semanticReconciliationResultSchema, toAtlasJsonSchema, validateJsonSchema } from "../src/index.ts";
 
 const scope = { projectId: "project-1", workspaceId: "workspace-1", bundleId: "bundle-1", documentId: "document-1", executionId: "execution-1", contractVersion: "v1" };
 const evidence = { page_number: 1, locator_type: "text_block", locator_id: "block-1", excerpt: "quota is 40" };
@@ -94,4 +94,13 @@ test("context and result-envelope UTF-8 JSON limits accept at limit and reject o
   assert.throws(() => parseSemanticReconciliationContext(reconciliationContextWithBytes(semanticLimits.contextBytes + 1)));
   assert.doesNotThrow(() => parseSemanticResultEnvelope(envelopeWithBytes(semanticLimits.resultEnvelopeBytes)));
   assert.throws(() => parseSemanticResultEnvelope(envelopeWithBytes(semanticLimits.resultEnvelopeBytes + 1)));
+});
+
+test("canonical Zod schemas are the parser authority and generate Ajv-compatible projections", () => {
+  assert.deepEqual(semanticExtractionResultSchema, toAtlasJsonSchema(atlasSemanticExtractionResultV1Schema));
+  assert.deepEqual(semanticReconciliationResultSchema, toAtlasJsonSchema(atlasSemanticReconciliationResultV1Schema));
+  assert.doesNotThrow(() => validateJsonSchema(semanticExtractionResultSchema, extraction));
+  assert.doesNotThrow(() => validateJsonSchema(semanticReconciliationResultSchema, { version: "v1", relationships: [], questions: [] }));
+  assert.throws(() => atlasSemanticExtractionResultV1Schema.parse({ ...extraction, candidate_assertions: [{ ...extraction.candidate_assertions[0], evidence_refs: [] }] }));
+  assert.throws(() => atlasSemanticReconciliationResultV1Schema.parse({ version: "v1", relationships: [{ source_candidate_id: "candidate-1", relationship_type: "new", target_candidate_id: "candidate-2", payload: {}, requires_resolution: false, evidence_refs: [evidence] }], questions: [] }));
 });
