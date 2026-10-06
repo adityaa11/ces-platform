@@ -1,6 +1,6 @@
 # BSS-V2-004-03-03: NormalizedDocument source-unit and user-prompt pipeline
 
-- **State:** `planned`; **Review batch:** `BSS-V2-BATCH-04.03-03`
+- **State:** `awaiting_review`; **Review batch:** `BSS-V2-BATCH-04.03-03`
 - **Dependencies:** BSS-V2-004-03-01 and -02 CK `PASS`; BSS-V2-004-02 `NormalizedDocument v1` boundary; explicit `go`
 - **Implementation context:** [Semantic V1 Zod + Anoman productionization context](../../atlas-semantic-v1-zod-anoman-productionization-implementation-context.md) §§5–6, 9.03, 10, 12–13
 
