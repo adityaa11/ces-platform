@@ -521,7 +521,7 @@ The current reference behavior is:
 SEM-ANM-PROMPT-003
 ```
 
-Production may relocate/refactor the compiler but must preserve the qualified semantic behavior or explicitly surface a reviewed semantic change.
+Production may relocate/refactor the compiler but must preserve the qualified PROMPT-003 design: deterministic section composition, static-policy placement/ownership, authority exclusions, provider-agnostic compilation, and no fixture, reconciliation, provider-transport, or runtime leakage. After BSS-V2-004-03-01 CK approval, its canonical Zod descriptions are the production authority for every schema-derived prompt/proposal field. PROMPT-003's historical schema-derived bytes and hashes remain immutable qualification evidence, not the production byte-level oracle; two production builds from the same 03-01 inputs must instead be byte-identical. The PROMPT-003 cross-field semantic composition policy remains frozen byte-for-byte unless separately authorized. A resulting production artifact hash change does not create Semantic V2: the final contract remains `atlas.semantic.extract/v1`.
 
 ### 6.2 User prompt
 
@@ -801,11 +801,11 @@ Create the production provider-facing extraction proposal as a projection of can
 provider proposal Zod
 reuse of canonical semantic meaning components
 schema-derived prompt descriptions
-production PROMPT-003-equivalent compiler
+production PROMPT-003-structured compiler regenerated from 03-01 canonical descriptions
 cross-field semantic composition policy
 prompt provenance/profile identity
 generated provider compatibility schema
-equivalence/differential evidence against qualified PROMPT-003 artifacts
+03-01 canonical-authority traceability, two-build determinism, frozen-static-policy equivalence, and PROMPT-003 structural differential evidence
 ```
 
 #### Must not
