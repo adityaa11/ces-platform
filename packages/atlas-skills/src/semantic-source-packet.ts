@@ -59,9 +59,9 @@ export function buildSemanticSourcePacket(input: NormalizedDocument): SemanticSo
     for (const block of [...page.textBlocks].sort(compareId)) add(page.number, "text_block", block.id, block.text);
     for (const table of [...page.tables].sort(compareId)) add(page.number, "table", table.id, table.content);
     for (const visual of [...page.visualRegions].sort(compareId)) {
-      const label = visual.label?.trim();
+      const originalLabel = visual.label;
       // v1 has no semantic-content field for an unlabeled visual. Do not infer meaning from its derived asset reference.
-      add(page.number, "visual_region", visual.id, label, "unlabeled_visual_region");
+      add(page.number, "visual_region", visual.id, originalLabel === undefined || originalLabel.trim().length === 0 ? undefined : originalLabel, "unlabeled_visual_region");
     }
   }
 

@@ -136,8 +136,9 @@ test("portable provider schema is weaker than canonical local Zod for cross-fiel
   assert.doesNotThrow(() => atlasProviderExtractionProposalV1Schema.parse(validProposal)); assert.doesNotThrow(() => validateJsonSchema(atlasProviderExtractionProposalV1JsonSchema, validProposal)); assert.throws(() => atlasProviderExtractionProposalV1Schema.parse({ ...validProposal, local_candidate_id: "forbidden" }));
 });
 
+const whitespaceSensitiveVisualLabel = "  Approval evidence required  ";
 const normalizedSourceFixture = () => ({ version: "v1", executionId: "perception-1", artifactId: "document-1", sourceSha256: "a".repeat(64), perception: { capability: "atlas.document.perceive", contractVersion: "v1" }, provider: { name: "docling", processor: "pdf", executionId: "perception-1", processedAt: "2026-10-06T00:00:00.000Z" }, pages: [
-  { number: 2, textBlocks: [{ id: "text-b", text: "Second page text" }, { id: "empty", text: "" }], tables: [{ id: "table-b", content: "B|2" }], visualRegions: [{ id: "unlabeled" }, { id: "figure", label: "Payment flow" }] },
+  { number: 2, textBlocks: [{ id: "text-b", text: "Second page text" }, { id: "empty", text: "" }], tables: [{ id: "table-b", content: "B|2" }], visualRegions: [{ id: "unlabeled" }, { id: "whitespace-only", label: "   " }, { id: "figure", label: whitespaceSensitiveVisualLabel }] },
   { number: 1, textBlocks: [{ id: "text-a", text: "First page text" }], tables: [{ id: "table-a", content: "A|1" }], visualRegions: [{ id: "figure-a", label: "Account hierarchy" }] },
 ] }) as const;
 
@@ -148,9 +149,13 @@ test("normalized documents build deterministic complete provider-neutral source 
   assert.deepEqual(first.sourceSlotMap.map(({ slot, pageNumber, locatorType, locatorId }) => [slot, pageNumber, locatorType, locatorId]), [
     ["slot-000001", 1, "text_block", "text-a"], ["slot-000002", 1, "table", "table-a"], ["slot-000003", 1, "visual_region", "figure-a"], ["slot-000004", 2, "text_block", "text-b"], ["slot-000005", 2, "table", "table-b"], ["slot-000006", 2, "visual_region", "figure"],
   ]);
-  assert.deepEqual(first.rejectedSourceUnits, [{ pageNumber: 2, locatorType: "text_block", locatorId: "empty", reason: "empty_content" }, { pageNumber: 2, locatorType: "visual_region", locatorId: "unlabeled", reason: "unlabeled_visual_region" }]);
+  assert.deepEqual(first.rejectedSourceUnits, [{ pageNumber: 2, locatorType: "text_block", locatorId: "empty", reason: "empty_content" }, { pageNumber: 2, locatorType: "visual_region", locatorId: "unlabeled", reason: "unlabeled_visual_region" }, { pageNumber: 2, locatorType: "visual_region", locatorId: "whitespace-only", reason: "unlabeled_visual_region" }]);
   const payload = JSON.parse(first.userPrompt) as { source_slots: readonly { slot: string; content: string }[] };
   assert.deepEqual(payload.source_slots, first.sourceSlotMap.map(({ slot, content }) => ({ slot, content })));
+  const visualSource = first.sourceSlotMap.find((source) => source.locatorId === "figure");
+  const visualPayload = payload.source_slots.find((source) => source.slot === visualSource?.slot);
+  assert.equal(visualSource?.content, whitespaceSensitiveVisualLabel);
+  assert.equal(visualPayload?.content, whitespaceSensitiveVisualLabel);
   assert.equal(first.semanticProfile, semanticExtractionProfileId); assert.equal(first.providerProposalJsonSchema, atlasProviderExtractionProposalV1JsonSchema);
 });
 
@@ -164,6 +169,14 @@ test("source packets fail closed for duplicate, overflow, and byte-overflow sour
   const bytes = normalizedSourceFixture() as { pages: { textBlocks: { id: string; text: string }[] }[] };
   bytes.pages[0]!.textBlocks = [{ id: "large", text: "x".repeat(semanticSourcePacketLimits.maxUserPromptBytes) }];
   assert.throws(() => buildSemanticSourcePacket(bytes), /UTF-8 bytes/);
+  const visualBoundaryCount = 1_000;
+  const visualPayloadBytes = (content: string) => Buffer.byteLength(JSON.stringify({ version: "v1", source_slots: Array.from({ length: visualBoundaryCount }, (_, index) => ({ slot: `slot-${String(index + 1).padStart(6, "0")}`, content })) }), "utf8");
+  const trimmedVisualContent = "x".repeat(Math.floor((semanticSourcePacketLimits.maxUserPromptBytes - visualPayloadBytes("")) / visualBoundaryCount));
+  const visualBoundaryLabel = ` ${trimmedVisualContent} `;
+  assert.ok(visualPayloadBytes(trimmedVisualContent) <= semanticSourcePacketLimits.maxUserPromptBytes);
+  assert.ok(visualPayloadBytes(visualBoundaryLabel) > semanticSourcePacketLimits.maxUserPromptBytes);
+  const visualBoundary = { ...normalizedSourceFixture(), pages: [{ number: 1, textBlocks: [], tables: [], visualRegions: Array.from({ length: visualBoundaryCount }, (_, index) => ({ id: `visual-boundary-${index}`, label: visualBoundaryLabel })) }] };
+  assert.throws(() => buildSemanticSourcePacket(visualBoundary), /UTF-8 bytes/);
 });
 
 test("source packet builder has no provider, classification, finalization, or persistence seam", async () => {
