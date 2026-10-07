@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { parseSemanticReconciliationContext, parseSemanticReconciliationResult, type DocumentPerceptionRequest } from "@atlas/contracts";
-import { SemanticAcceptanceRejection, type PerceptionExecutionInput, type SemanticAcceptanceHandler } from "@atlas/core";
+import { SemanticAcceptanceRejection, type SemanticAcceptanceHandler } from "@atlas/core";
 import { PostgresPerceptionAuthority } from "./perception-authority.js";
 
 type Row = Record<string, unknown>;
@@ -38,17 +38,17 @@ export class PostgresReconciliationAcceptanceHandler implements SemanticAcceptan
     await sql.unsafe("UPDATE atlas.semantic_execution SET lifecycle='completed', completion_fingerprint=$2, completed_at=now() WHERE id=$1 AND lifecycle IN ('queued','running')", [input.executionId, input.completionFingerprint]);
     const count = await sql.unsafe("SELECT count(*)::int AS count FROM atlas.extraction_bundle_document WHERE bundle_id=$1 AND state='completed'", [scope.bundleId]);
     await sql.unsafe("UPDATE atlas.extraction_bundle SET completed_document_count=$2 WHERE id=$1", [scope.bundleId, count[0].count]);
-    const next = await sql.unsafe("SELECT m.document_id, d.storage_key, d.source_sha256, d.byte_size, d.media_type FROM atlas.extraction_bundle_document m JOIN atlas.document d ON d.id=m.document_id AND d.project_id=m.project_id AND d.workspace_id=m.workspace_id WHERE m.bundle_id=$1 AND m.sequence=$2 AND m.state='pending' FOR UPDATE OF m", [scope.bundleId, Number(member[0].sequence) + 1]);
-    if (next.length) {
+    const policy = await sql.unsafe("SELECT perception_admission_policy FROM atlas.extraction_bundle WHERE id=$1 FOR UPDATE", [scope.bundleId]);
+    if (policy[0]?.perception_admission_policy === "staged-fair-local-v1") {
       if (!this.nextPerception) throw new Error("Next-document perception authority is unavailable.");
-      const executionId = randomUUID(); const idempotencyKey = `perception:${scope.bundleId}:${String(next[0].document_id)}:v1`;
-      const perceptionInput: PerceptionExecutionInput = { executionId, artifactId: String(next[0].document_id), storageKey: String(next[0].storage_key), sourceSha256: String(next[0].source_sha256), mimeType: String(next[0].media_type) as "application/pdf", byteSize: Number(next[0].byte_size), idempotencyKey, capabilityIdentity: `bundle:${scope.bundleId}:document:${String(next[0].document_id)}:perception:v1` };
-      const request = await this.nextPerception.authority.createInTransaction(sql, perceptionInput);
-      const queued = await this.nextPerception.queue.enqueue(sql, { idempotencyKey, request });
-      if (queued === null) throw new Error("Next perception was deduplicated before reconciliation committed.");
-      await sql.unsafe("UPDATE atlas.extraction_bundle_document SET state='perception_queued', perception_execution_id=$3, started_at=COALESCE(started_at,now()) WHERE bundle_id=$1 AND document_id=$2 AND state='pending'", [scope.bundleId, next[0].document_id, executionId]);
+      // Reconciliation makes pending staged work eligible but never admits it
+      // itself. The shared gate owns capacity, durable fairness, execution,
+      // grant, queue job, and member transition in this same transaction.
+      await this.nextPerception.authority.admitStagedInTransaction(sql, this.nextPerception.queue);
       return;
     }
+    const next = await sql.unsafe("SELECT 1 FROM atlas.extraction_bundle_document WHERE bundle_id=$1 AND sequence=$2 AND state='pending' FOR UPDATE", [scope.bundleId, Number(member[0].sequence) + 1]);
+    if (next.length) throw new Error("Legacy perception continuation is disabled; staged admission owns perception execution.");
     await this.completeBundle(sql, scope.bundleId, scope.projectId, scope.workspaceId);
   }
 
