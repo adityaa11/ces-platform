@@ -246,6 +246,9 @@ importers:
       jiti:
         specifier: 2.7.0
         version: 2.7.0
+      pg-boss:
+        specifier: 12.32.0
+        version: 12.32.0(patch_hash=e18fb9f6ad78f5e990086748805e5fd06f7ed7809e5d907d2f228a738da2e6bb)
 
   packages/atlas-fixtures:
     devDependencies:

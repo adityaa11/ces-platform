@@ -34,16 +34,16 @@ test("Atlas owns perception execution, completion replay, cache invalidation, an
   const semanticQueue = { enqueue: async () => randomUUID() };
   const authority = new PostgresPerceptionAuthority(atlas, issuer, semanticQueue);
   const input = { executionId, artifactId, storageKey: `private/${executionId}`, sourceSha256, mimeType: "application/pdf" as const, byteSize: 16, idempotencyKey: `idempotency-${randomUUID()}`, capabilityIdentity: "mistral-ocr:test-config" };
+  const controlInput = { ...input, executionId: controlExecutionId, artifactId: controlArtifactId, storageKey: `private/${controlExecutionId}`, sourceSha256: createHash("sha256").update(controlExecutionId).digest("hex"), idempotencyKey: `idempotency-${randomUUID()}` };
   try {
     const request = await authority.create(input);
+    const controlRequest = await authority.create(controlInput);
     await admin.unsafe('INSERT INTO auth."user" (id,name,email,"emailVerified","createdAt","updatedAt") VALUES ($1,$1,$2,false,now(),now())', [owner, `${owner}@example.test`]);
     await atlas.unsafe("INSERT INTO atlas.project (id,stable_id,name,created_by_user_id) VALUES ($1,$2,'perception authority',$3)", [project, `perception-authority-${randomUUID().slice(0, 12)}`, owner]);
     await atlas.unsafe("INSERT INTO atlas.workspace (id,project_id,kind,state,display_name) VALUES ($1,$2,'initial_draft','draft','Draft')", [workspace, project]);
     await atlas.unsafe("INSERT INTO atlas.document (id,project_id,workspace_id,original_filename,storage_key,source_sha256,byte_size,media_type,created_by_user_id) VALUES ($1,$2,$3,'source.pdf',$4,$5,$6,'application/pdf',$7)", [artifactId, project, workspace, input.storageKey, sourceSha256, input.byteSize, owner]);
     await atlas.unsafe("INSERT INTO atlas.extraction_bundle (id,project_id,workspace_id,state,semantic_contract_version,reconciliation_contract_version,expected_document_count) VALUES ($1,$2,$3,'waiting','v1','v1',1)", [bundle, project, workspace]);
     await atlas.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id,document_id,project_id,workspace_id,sequence,state,perception_execution_id) VALUES ($1,$2,$3,$4,1,'perception_queued',$5)", [bundle, artifactId, project, workspace, executionId]);
-    const controlInput = { ...input, executionId: controlExecutionId, artifactId: controlArtifactId, storageKey: `private/${controlExecutionId}`, sourceSha256: createHash("sha256").update(controlExecutionId).digest("hex"), idempotencyKey: `idempotency-${randomUUID()}` };
-    const controlRequest = await authority.create(controlInput);
     await atlas.unsafe("INSERT INTO atlas.document (id,project_id,workspace_id,original_filename,storage_key,source_sha256,byte_size,media_type,created_by_user_id) VALUES ($1,$2,$3,'control.pdf',$4,$5,$6,'application/pdf',$7)", [controlArtifactId, project, workspace, controlInput.storageKey, controlInput.sourceSha256, controlInput.byteSize, owner]);
     await atlas.unsafe("INSERT INTO atlas.extraction_bundle (id,project_id,workspace_id,state,semantic_contract_version,reconciliation_contract_version,expected_document_count) VALUES ($1,$2,$3,'waiting','v1','v1',1)", [controlBundle, project, workspace]);
     await atlas.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id,document_id,project_id,workspace_id,sequence,state,perception_execution_id) VALUES ($1,$2,$3,$4,1,'perception_queued',$5)", [controlBundle, controlArtifactId, project, workspace, controlExecutionId]);

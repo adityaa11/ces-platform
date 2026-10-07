@@ -12,6 +12,7 @@ const canonicalJson = (value) => JSON.stringify(value, (_key, item) => item && t
 // This checkpoint owns a disposable Compose project so its restart and queue
 // observations cannot consume or mutate a developer's long-lived pg-boss DB.
 const composeEnvironment = { ...process.env, POSTGRES_PORT: "15432", ATLAS_PORT: "13001", AGENTS_BRIDGE_PORT: "13002" };
+const stagedRegression = process.env.IDSER_012_STAGED_REGRESSION === "1" || process.argv.includes("--staged-regression");
 const base = ["compose", "-p", "idser-010-compose", "-f", "docker-compose.yml"];
 const compose = [...base, "-f", "docker-compose.perception-smoke.yml"];
 const run = async (args, optional = false) => {
@@ -113,6 +114,25 @@ try {
   await run([...compose, "up", "-d", "--build", "--wait"]);
   const composeHealth = await run([...compose, "ps", "--format", "json"]);
   process.stdout.write(`IDSER-010 Compose service health: ${composeHealth.trim()}\n`);
+  if (stagedRegression) {
+    // IDSER-012 supersedes the old immediate-D1 Compose expectation.  Keep
+    // the IDSER-010-04/05 identity and durable-boundary observations, but
+    // create clean projects only through the current production endpoint and
+    // prove they stop at the staged perception lifecycle.
+    const [alpha, beta] = await Promise.all([
+      create("idser-012-alpha", ["Staged alpha payload"], "IDSER-012 concurrent staged project"),
+      create("idser-012-beta", ["Staged beta payload"], "IDSER-012 concurrent staged project"),
+    ]);
+    projects.push(alpha, beta);
+    await waitFor(async () => (await atlas.unsafe("SELECT count(*)::int AS count FROM atlas.extraction_bundle b JOIN atlas.project p ON p.id=b.project_id WHERE p.stable_id=ANY($1::text[]) AND b.perception_admission_policy='staged-fair-local-v1'", [[alpha.projectId, beta.projectId]]))[0].count === 2);
+    const staged = await atlas.unsafe("SELECT p.stable_id,p.id AS project_id,b.id AS bundle_id,d.id AS document_id,m.state AS member_state,(SELECT count(*)::int FROM atlas.document_perception_execution e WHERE e.artifact_id=d.id) AS perception_executions,(SELECT count(*)::int FROM atlas.document_perception_source_grant g JOIN atlas.document_perception_execution e ON e.id=g.execution_id WHERE e.artifact_id=d.id) AS grants,(SELECT count(*)::int FROM atlas.semantic_execution e WHERE e.project_id=p.id) AS semantic_executions,(SELECT count(*)::int FROM pgboss.job j WHERE j.name='atlas-document-perception-v1' AND j.data->>'idempotencyKey' LIKE ('staged-perception:%:' || d.id || ':v1')) AS perception_jobs,(SELECT count(*)::int FROM pgboss.job j WHERE j.data->'execution'->>'executionId' IN (SELECT e.id FROM atlas.semantic_execution e WHERE e.project_id=p.id)) AS semantic_jobs FROM atlas.project p JOIN atlas.extraction_bundle b ON b.project_id=p.id JOIN atlas.document d ON d.project_id=p.id JOIN atlas.extraction_bundle_document m ON m.bundle_id=b.id AND m.document_id=d.id WHERE p.stable_id=ANY($1::text[]) ORDER BY p.stable_id", [[alpha.projectId, beta.projectId]]);
+    assert.equal(staged.length, 2, "two concurrent production creates persist separate staged bundles");
+    assert.equal(new Set(staged.flatMap((row) => [row.project_id, row.bundle_id, row.document_id])).size, 6, "concurrent staged projects retain distinct project, bundle, and document identities");
+    assert.ok(staged.every((row) => ["pending", "perception_queued"].includes(row.member_state)), "each clean project remains in the staged pending/perception lifecycle");
+    assert.ok(staged.every((row) => Number(row.perception_executions) === 1 && Number(row.grants) === 1 && Number(row.perception_jobs) === 1), "each admitted staged document has one isolated perception execution, grant, and durable job");
+    assert.ok(staged.every((row) => Number(row.semantic_executions) === 0 && Number(row.semantic_jobs) === 0), "the staged cutover does not enter the obsolete IDSER-010 semantic/replay lifecycle");
+    process.stdout.write(`IDSER-012 staged IDSER-010-04/05 regression evidence: ${JSON.stringify({ projects: staged.map((row) => ({ projectId: row.stable_id, projectRowId: row.project_id, bundleId: row.bundle_id, documentId: row.document_id, memberState: row.member_state, perceptionExecutions: Number(row.perception_executions), grants: Number(row.grants), perceptionJobs: Number(row.perception_jobs), semanticExecutions: Number(row.semantic_executions), semanticJobs: Number(row.semantic_jobs) })) })}\n`);
+  } else {
   const compositionScenarios = [];
   for (const [label, texts, expectedCandidates, relationship] of [["normal", ["Normal approval statement"], 1, "new"], ["conflict", ["Conflicting quota statements"], 2, "contradicts"]]) {
     const item = await create(label, texts); projects.push(item);
@@ -371,6 +391,7 @@ try {
   await bridge.unsafe(`DROP FUNCTION IF EXISTS bridge.${faultName}_completion()`);
   await bridge.unsafe(`DROP SEQUENCE IF EXISTS bridge.${faultName}_sequence`);
   process.stdout.write("IDSER-010 controlled Compose scenarios A/B/C/D/E/F/H passed.\n");
+  }
 } finally {
   for (const item of projects) {
     const project = "SELECT id FROM atlas.project WHERE stable_id=$1";

@@ -24,7 +24,23 @@ export class PostgresPerceptionAuthority implements PerceptionAuthority {
   constructor(private readonly sql: Sql, private readonly grants: GrantSigner, private readonly semanticQueue?: SemanticKickoffQueue, private readonly terminalCapabilityIdentity?: string, private readonly stagedQueue?: PerceptionKickoffQueue) {}
 
   async create(input: PerceptionExecutionInput): Promise<DocumentPerceptionRequest> {
-    return this.sql.begin((sql) => this.createWithSql(sql, input));
+    return this.sql.begin(async (sql) => {
+      // Preserve the established idempotent replay contract before applying
+      // the cutover guard to a new admission attempt.
+      const existing = await sql.unsafe("SELECT 1 FROM atlas.document_perception_execution WHERE idempotency_key=$1 OR id=$2 LIMIT 1 FOR UPDATE", [input.idempotencyKey, input.executionId]);
+      if (existing.length) return this.createWithSql(sql, input);
+      // Once a document belongs to an explicitly legacy bundle it cannot use
+      // this historical direct-admission entry point.  The staged gate is the
+      // sole local-capacity authority during cutover; silently letting an old
+      // scheduler call `create` here would create a second permit path.
+      const legacy = await sql.unsafe(`SELECT 1
+        FROM atlas.extraction_bundle_document member
+        JOIN atlas.extraction_bundle bundle ON bundle.id=member.bundle_id
+        WHERE member.document_id=$1 AND bundle.perception_admission_policy IS NULL
+        LIMIT 1 FOR UPDATE`, [input.artifactId]);
+      if (legacy.length) throw new Error("Legacy perception admission is disabled while staged local admission is active.");
+      return this.createWithSql(sql, input);
+    });
   }
 
   /** Bounded composition seam for IDSER-003. The caller owns the surrounding
