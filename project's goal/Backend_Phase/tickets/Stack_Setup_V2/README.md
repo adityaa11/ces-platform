@@ -21,6 +21,8 @@ The completed substrate maps Atlas capabilities to explicitly qualified routes, 
 
 ## Delivery order
 
+The dependency column and graph are authoritative GO order. Numeric ticket-family order is not topological once BSS-V2-004-03-06 is intentionally gated behind BSS-V2-005/006 plus IDSER-012-02-01/-02.
+
 | Order | Ticket | Batch | Depends on | Bounded review question |
 | ---: | --- | --- | --- | --- |
 | 1 | [BSS-V2-001](BSS-V2-001-provider-capability-decoupling.md) | BSS-V2-BATCH-01 | accepted BSS-005/006/008/009 series | Are generic execution paths provider-neutral while retained Mistral behavior still conforms? |
@@ -38,14 +40,14 @@ The completed substrate maps Atlas capabilities to explicitly qualified routes, 
 | 13 | [BSS-V2-004-03-07](BSS-V2-004-03-07-d1-docling-semantic-continuation.md) | historical | superseded before implementation by IDSER-012-02 | Retained unimplemented planning history; must not bypass BSS-V2-006. |
 | 14 | BSS-V2-004-04 (planning placeholder) | later | separate from extraction; not frozen here | Semantic reconciliation live qualification remains independent from extraction. |
 | 15 | [BSS-V2-005](BSS-V2-005-quota-domain-capacity-foundation.md) | umbrella | accepted BSS-005/006 and BSS-V2-001/002 | Non-executable provider-capacity planning partition. |
-| 16 | [BSS-V2-005-01](BSS-V2-005-01-external-quota-domain-provider-capacity-catalogue.md) | BSS-V2-BATCH-05-01 | BSS-V2-001/002 CK PASS; BSS-003 boundaries | Secret-free shared quota domains and versioned capacity profiles. |
+| 16 | [BSS-V2-005-01](BSS-V2-005-01-external-quota-domain-provider-capacity-catalogue.md) | BSS-V2-BATCH-05-01 | BSS-V2-001/002 CK PASS; BSS-003 boundaries | Secret-free shared quota domains plus versioned capacity and per-dimension window/refill semantics. |
 | 17 | [BSS-V2-005-02](BSS-V2-005-02-process-workload-envelope-catalogue.md) | BSS-V2-BATCH-05-02 | 005-01 CK PASS | Provider-dependent process and bounded workload-envelope contracts. |
 | 18 | [BSS-V2-005-03](BSS-V2-005-03-deterministic-multi-resource-capacity-planner.md) | BSS-V2-BATCH-05-03 | 005-01/02 CK PASS | Deterministic multi-resource planning with hard interactive reserve. |
 | 19 | [BSS-V2-005-04](BSS-V2-005-04-desired-admission-profile-publication.md) | BSS-V2-BATCH-05-04 | 005-03 CK PASS; BSS-003 boundaries | Immutable DesiredAdmissionProfile publication and atomic cutover. |
 | 20 | [BSS-V2-006](BSS-V2-006-capability-admission-interactive-protection.md) | umbrella | all 005 children CK PASS; BSS-006; BSS-V2-001/002 | Non-executable durable runtime-admission partition. |
 | 21 | [BSS-V2-006-01](BSS-V2-006-01-provider-work-reservation-window-foundation.md) | BSS-V2-BATCH-06-01 | 005-04 CK PASS; BSS-006/BSS-003 | Durable waiting work, reservation, quota-window, and wakeup foundation. |
-| 22 | [BSS-V2-006-02](BSS-V2-006-02-fair-admission-interactive-protection-atomic-dispatch.md) | BSS-V2-BATCH-06-02 | 006-01 CK PASS | Fair multi-resource admission, hard interactive protection, and atomic dispatch. |
-| 23 | [BSS-V2-006-03](BSS-V2-006-03-provider-usage-runtime-clamp-plan-convergence.md) | BSS-V2-BATCH-06-03 | 006-02 CK PASS; normalized adapter metadata | Usage reconciliation, runtime pressure clamp, and plan convergence. |
+| 22 | [BSS-V2-006-02](BSS-V2-006-02-fair-admission-interactive-protection-atomic-dispatch.md) | BSS-V2-BATCH-06-02 | 006-01 CK PASS | Debt-free multi-resource fairness, hard interactive protection, atomic reservation and single-attempt dispatch. |
+| 23 | [BSS-V2-006-03](BSS-V2-006-03-provider-usage-runtime-clamp-plan-convergence.md) | BSS-V2-BATCH-06-03 | 006-02 CK PASS; BSS-V2-001 provider-neutral capability boundary | Provider feedback/unknown-usage reconciliation, runtime clamp, plan wakeup and fairness-epoch convergence. |
 | 24 | [BSS-V2-006-04](BSS-V2-006-04-integrated-provider-admission-runtime-checkpoint.md) | BSS-V2-BATCH-06-04 | 006-01 through -03 CK PASS | Integrated deterministic proof of the reusable admission authority. |
 | 25 | [BSS-V2-007](BSS-V2-007-execution-usage-provenance-ledger.md) | BSS-V2-BATCH-07 | 004-03 parent scope; later dependency realignment as needed | Is external-provider usage/provenance persisted without inventing Docling economics? |
 | 26 | [BSS-V2-008](BSS-V2-008-price-profiles-shadow-cogs.md) | BSS-V2-BATCH-08 | 007 | Are external-provider prices and distinct actual/shadow costs calculated without billing? |
