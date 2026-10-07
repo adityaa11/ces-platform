@@ -1,6 +1,6 @@
 # IDSER-012-01-02: Two-worker Docling perception composition and terminal NormalizedDocument v1
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `IDSER-BATCH-12-01-02`
 - **Dependencies:** IDSER-012-01-01 CK `PASS`; approved BSS-V2-004-01/02
 - **Parent:** [IDSER-012-01](IDSER-012-01-fair-bounded-local-docling-perception.md)
