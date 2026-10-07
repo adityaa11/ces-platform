@@ -45,21 +45,13 @@ export class PostgresAtlasProjectRepository implements AtlasProjectRepository {
       }
       if (this.kickoff) {
         const bundleId = randomUUID();
-        await sql.unsafe("INSERT INTO atlas.extraction_bundle (id, project_id, workspace_id, state, semantic_contract_version, reconciliation_contract_version, expected_document_count, completed_document_count) VALUES ($1,$2,$3,'waiting',$4,$4,$5,0)", [bundleId, input.id, input.initialDraftWorkspaceId, documentPerceptionContractVersion, input.documents.length]);
+        await sql.unsafe("INSERT INTO atlas.extraction_bundle (id, project_id, workspace_id, state, semantic_contract_version, reconciliation_contract_version, perception_admission_policy, expected_document_count, completed_document_count) VALUES ($1,$2,$3,'waiting',$4,$4,'staged-fair-local-v1',$5,0)", [bundleId, input.id, input.initialDraftWorkspaceId, documentPerceptionContractVersion, input.documents.length]);
         for (const [index, document] of input.documents.entries()) {
-          await sql.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id, document_id, project_id, workspace_id, sequence, state) VALUES ($1,$2,$3,$4,$5,$6)", [bundleId, document.id, input.id, input.initialDraftWorkspaceId, index + 1, index === 0 ? "perception_queued" : "pending"]);
+          await sql.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id, document_id, project_id, workspace_id, sequence, state) VALUES ($1,$2,$3,$4,$5,'pending')", [bundleId, document.id, input.id, input.initialDraftWorkspaceId, index + 1]);
         }
-        const first = input.documents[0];
-        const executionId = randomUUID();
-        const idempotencyKey = `perception:${bundleId}:${first.id}:${documentPerceptionContractVersion}`;
-        const request = await this.kickoff.authority.createInTransaction(sql, { executionId, artifactId: first.id, storageKey: first.storageKey, sourceSha256: first.sourceSha256, mimeType: first.mediaType, byteSize: first.byteSize, idempotencyKey, capabilityIdentity: this.kickoff.capabilityIdentity ?? `bundle:${bundleId}:document:${first.id}:perception:${documentPerceptionContractVersion}` });
-        // postgres.js transaction scopes do not carry the parent's parser
-        // configuration, while the pg-boss Drizzle bridge requires it.
-        const transactionClient = sql as unknown as { options?: unknown };
-        transactionClient.options ??= (this.sql as unknown as { options?: unknown }).options;
-        const queued = await this.kickoff.queue.enqueue(sql, { idempotencyKey, request });
-        if (queued === null) throw new Error("Perception kickoff was deduplicated before the new project committed.");
-        await sql.unsafe("UPDATE atlas.extraction_bundle_document SET perception_execution_id=$3 WHERE bundle_id=$1 AND document_id=$2", [bundleId, first.id, executionId]);
+        // The gate holds the only global local-perception capacity lock.  A
+        // saturated creation intentionally commits with every member pending.
+        await this.kickoff.authority.admitStagedInTransaction(sql, this.kickoff.queue, this.kickoff.capabilityIdentity);
       }
     });
   }

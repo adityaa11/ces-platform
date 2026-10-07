@@ -75,7 +75,7 @@ export function createProjectCreationBoundary(): Plugin {
         }
         : liveDocumentStore;
       const projectRepository = new repository.PostgresAtlasProjectRepository(sql, {
-        authority: new perceptionAuthority.PostgresPerceptionAuthority(sql, new sourceGrant.PerceptionSourceGrantIssuer(perceptionCredential), undefined, process.env.ATLAS_D1_PERCEPTION_CAPABILITY_IDENTITY),
+        authority: new perceptionAuthority.PostgresPerceptionAuthority(sql, new sourceGrant.PerceptionSourceGrantIssuer(perceptionCredential), undefined, process.env.ATLAS_D1_PERCEPTION_CAPABILITY_IDENTITY, perceptionProducer),
         queue: perceptionProducer,
         capabilityIdentity: process.env.ATLAS_D1_PERCEPTION_CAPABILITY_IDENTITY,
       });

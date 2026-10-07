@@ -1,6 +1,6 @@
 # IDSER-012-01-01: Staged fair local perception admission and cutover
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `IDSER-BATCH-12-01-01`
 - **Dependencies:** approved BSS-006, BSS-009/01/02, BSS-V2-004-01/02, IDSER-003, IDSER-008, IDSER-010-04/05
 - **Parent:** [IDSER-012-01](IDSER-012-01-fair-bounded-local-docling-perception.md)
@@ -57,3 +57,26 @@ Use deterministic DB/queue fixtures, creation/refill races, rollback, grant-expi
 ## Workflow evidence
 
 Implementation must close every Review Contract row, record exact Compose commands/counts and scoped DB/queue observations in a compact closure ledger, reach `READY_FOR_CK`, and only then move to `awaiting_review`. This ticket grants no GO by itself.
+
+## Review Contract Closure
+
+| Row | Ticket authority and required proof | Evidence / validation | Status |
+| --- | --- | --- | --- |
+| RC-0120101-01 | Explicit staged marker; legacy bundles excluded from the gate and cannot use a second capacity path. | Migration `0021_idser012_staged_perception_admission.sql`; gate query selects only `staged-fair-local-v1`; dedicated fixture uses staged rows only. | PROVEN |
+| RC-0120101-02 | A saturated creation leaves durable pending members with no execution, grant, or job. | Gate counts every non-terminal Atlas perception execution under its serialized row lock and returns without changing a pending staged member when two permits are occupied. | PROVEN |
+| RC-0120101-03 | Concurrent refill/creation cannot exceed two non-terminal permits. | Singleton `atlas.perception_admission_gate` is locked `FOR UPDATE`; deterministic fixture asserts exactly two admitted executions. | PROVEN |
+| RC-0120101-04 | Durable never/least-recently-served bundle turn, lowest sequence, and lone-bundle borrowing. | `test:staged-perception-admission` proves A(4)/B(5)/C(2): A/B first, C then A by durable turns, lowest sequence, then two A permits when alone. | PROVEN |
+| RC-0120101-05 | Admission atomically creates execution, fresh grant, queue job, and member transition; rollback and payload boundaries hold. | The gate reuses `createWithSql` and the existing transactional pg-boss producer. Fixture forces enqueue rollback and observes no execution/grant/member effect; it also asserts no `private/` storage path in queued admission payloads. | PROVEN |
+
+Validation executed:
+
+```text
+corepack pnpm --filter @atlas/db typecheck
+DATABASE_URL=<isolated PostgreSQL> corepack pnpm --filter @atlas/db test:staged-perception-admission
+DATABASE_URL=<isolated PostgreSQL> corepack pnpm --filter @atlas/db migration:check
+corepack pnpm --filter @atlas/core test
+```
+
+All commands passed. The deterministic admission fixture uses an isolated PostgreSQL database and records the A/B/C, cap, elastic-borrowing, rollback, grant, and payload observations above. No Bridge/Docling concurrency or real multi-document Docling load was run.
+
+Internal readiness: READY_FOR_CK

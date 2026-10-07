@@ -7,6 +7,7 @@ type Row = Record<string, unknown>;
 type Sql = { unsafe(query: string, parameters?: readonly unknown[]): Promise<readonly Row[]>; begin<T>(work: (transaction: Sql) => Promise<T>): Promise<T> };
 type GrantSigner = { issue(input: PerceptionExecutionInput): string; verify(grant: string): string; format(grantId: string): string };
 type SemanticKickoffQueue = { enqueue(transaction: Sql, job: { readonly idempotencyKey: string; readonly execution: { readonly version: "v1"; readonly executionId: string; readonly mode: "background"; readonly skill: { readonly id: "atlas.semantic.extract"; readonly version: "v1" }; readonly input: { readonly contextCapability: string }; readonly context: { readonly boundary: string; readonly items: readonly [] } } }): Promise<string | null> };
+type PerceptionKickoffQueue = { enqueue(transaction: Sql, job: { readonly idempotencyKey: string; readonly request: DocumentPerceptionRequest }): Promise<string | null> };
 const cacheKey = (sourceSha256: string, version: string, capability: string, identity: string) => createHash("sha256").update(`${sourceSha256}:${version}:${capability}:${identity}`).digest("hex");
 const canonicalize = (value: unknown): unknown => {
   if (Array.isArray(value)) return value.map(canonicalize);
@@ -20,7 +21,7 @@ const requestFrom = (input: PerceptionExecutionInput, grant: string): DocumentPe
 
 /** PostgreSQL adapter; only the Atlas process is given this connection. */
 export class PostgresPerceptionAuthority implements PerceptionAuthority {
-  constructor(private readonly sql: Sql, private readonly grants: GrantSigner, private readonly semanticQueue?: SemanticKickoffQueue, private readonly terminalCapabilityIdentity?: string) {}
+  constructor(private readonly sql: Sql, private readonly grants: GrantSigner, private readonly semanticQueue?: SemanticKickoffQueue, private readonly terminalCapabilityIdentity?: string, private readonly stagedQueue?: PerceptionKickoffQueue) {}
 
   async create(input: PerceptionExecutionInput): Promise<DocumentPerceptionRequest> {
     return this.sql.begin((sql) => this.createWithSql(sql, input));
@@ -30,6 +31,44 @@ export class PostgresPerceptionAuthority implements PerceptionAuthority {
    * Atlas transaction; this method never opens a nested transaction. */
   async createInTransaction(sql: Sql, input: PerceptionExecutionInput): Promise<DocumentPerceptionRequest> {
     return this.createWithSql(sql, input);
+  }
+
+  /**
+   * The only local-perception admission seam for staged bundles.  The singleton
+   * gate row serializes capacity and fair-turn changes across Atlas processes.
+   * Legacy bundles have a null policy and are intentionally invisible here.
+   */
+  async admitStagedInTransaction(sql: Sql, queue: PerceptionKickoffQueue, capabilityIdentity?: string): Promise<number> {
+    const gate = await sql.unsafe("SELECT next_turn FROM atlas.perception_admission_gate WHERE gate_key='staged-fair-local-v1' FOR UPDATE");
+    if (gate.length !== 1) throw new Error("Staged perception admission gate is unavailable.");
+    let admitted = 0;
+    while (true) {
+      const occupied = await sql.unsafe("SELECT count(*)::integer AS count FROM atlas.document_perception_execution WHERE state NOT IN ('completed','cancelled','failed')");
+      if (Number(occupied[0]?.count ?? 0) >= 2) return admitted;
+      const candidate = await sql.unsafe(`SELECT b.id AS bundle_id, m.document_id, d.storage_key, d.source_sha256, d.media_type, d.byte_size
+        FROM atlas.extraction_bundle b
+        JOIN LATERAL (SELECT document_id FROM atlas.extraction_bundle_document WHERE bundle_id=b.id AND state='pending' ORDER BY sequence LIMIT 1) m ON true
+        JOIN atlas.document d ON d.id=m.document_id AND d.project_id=b.project_id AND d.workspace_id=b.workspace_id
+        WHERE b.perception_admission_policy='staged-fair-local-v1' AND b.state IN ('waiting','processing')
+        ORDER BY b.last_perception_admission_turn NULLS FIRST, b.id
+        LIMIT 1 FOR UPDATE OF b`);
+      if (!candidate.length) return admitted;
+      const row = candidate[0];
+      const turn = Number(gate[0].next_turn);
+      const executionId = randomUUID();
+      const documentId = String(row.document_id);
+      const bundleId = String(row.bundle_id);
+      const idempotencyKey = `staged-perception:${bundleId}:${documentId}:${documentPerceptionContractVersion}`;
+      const request = await this.createWithSql(sql, { executionId, artifactId: documentId, storageKey: String(row.storage_key), sourceSha256: String(row.source_sha256), mimeType: "application/pdf", byteSize: Number(row.byte_size), idempotencyKey, capabilityIdentity: capabilityIdentity ?? `staged-bundle:${bundleId}:document:${documentId}:perception:${documentPerceptionContractVersion}` });
+      const transactionClient = sql as unknown as { options?: unknown };
+      transactionClient.options ??= (this.sql as unknown as { options?: unknown }).options;
+      const queued = await queue.enqueue(sql, { idempotencyKey, request });
+      if (queued === null) throw new Error("Staged perception admission was deduplicated before commit.");
+      await sql.unsafe("UPDATE atlas.extraction_bundle_document SET state='perception_queued', perception_execution_id=$3 WHERE bundle_id=$1 AND document_id=$2 AND state='pending'", [bundleId, documentId, executionId]);
+      await sql.unsafe("UPDATE atlas.extraction_bundle SET last_perception_admission_turn=$2 WHERE id=$1", [bundleId, turn]);
+      await sql.unsafe("UPDATE atlas.perception_admission_gate SET next_turn=$1 WHERE gate_key='staged-fair-local-v1'", [turn + 1]);
+      admitted += 1;
+    }
   }
 
   private async createWithSql(sql: Sql, input: PerceptionExecutionInput): Promise<DocumentPerceptionRequest> {
@@ -84,6 +123,14 @@ export class PostgresPerceptionAuthority implements PerceptionAuthority {
       const bundleRows = await sql.unsafe("SELECT bundle_id, project_id, workspace_id FROM atlas.extraction_bundle_document WHERE document_id=$1 AND perception_execution_id=$2 FOR UPDATE", [request.artifact.id, request.executionId]);
       if (bundleRows.length) {
         const bundle = bundleRows[0];
+        const policy = await sql.unsafe("SELECT perception_admission_policy FROM atlas.extraction_bundle WHERE id=$1 FOR UPDATE", [bundle.bundle_id]);
+        // IDSER-012-01-01 owns admission only.  A staged execution must not
+        // enter the historical semantic continuation; the next ticket owns
+        // the accepted `perceived` terminal state and worker composition.
+        if (policy[0]?.perception_admission_policy === "staged-fair-local-v1") {
+          await sql.unsafe("UPDATE atlas.document_perception_execution SET state='completed', completion_fingerprint=$2, updated_at=now() WHERE id=$1 AND state NOT IN ('completed','cancelled','failed')", [request.executionId, digest]);
+          return;
+        }
         // BSS-V2-004-02 is a deliberately terminal D1 perception checkpoint.
         // Its qualified identity may accept one normalized document, but it
         // must not create an extraction execution or advance project truth.
@@ -108,6 +155,8 @@ export class PostgresPerceptionAuthority implements PerceptionAuthority {
       }
       await sql.unsafe("UPDATE atlas.document_perception_execution SET state='completed', completion_fingerprint=$2, updated_at=now() WHERE id=$1 AND state NOT IN ('completed','cancelled','failed')", [request.executionId, digest]);
     });
+    const stagedQueue = this.stagedQueue;
+    if (stagedQueue) await this.sql.begin((sql) => this.admitStagedInTransaction(sql, stagedQueue, this.terminalCapabilityIdentity));
   }
 
   async getCached(input: Pick<NormalizedDocument, "sourceSha256" | "perception"> & { readonly capabilityIdentity: string }): Promise<NormalizedDocument | undefined> {
@@ -133,5 +182,7 @@ export class PostgresPerceptionAuthority implements PerceptionAuthority {
       await sql.unsafe("UPDATE atlas.extraction_bundle_document SET state='needs_attention', last_failure_code=$3, last_failure_at=now() WHERE bundle_id=$1 AND document_id=$2 AND state <> 'completed'", [rows[0].bundle_id, rows[0].document_id, code]);
       await sql.unsafe("UPDATE atlas.extraction_bundle SET state='needs_attention', last_failure_code=$2, last_failure_at=now() WHERE id=$1 AND state <> 'ready_for_review'", [rows[0].bundle_id, code]);
     });
+    const stagedQueue = this.stagedQueue;
+    if (stagedQueue) await this.sql.begin((sql) => this.admitStagedInTransaction(sql, stagedQueue, this.terminalCapabilityIdentity));
   }
 }

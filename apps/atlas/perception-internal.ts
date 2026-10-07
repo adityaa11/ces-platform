@@ -89,7 +89,7 @@ export function createAtlasPerceptionInternalPlugin(): Plugin {
       // pg-boss's Drizzle transaction type is narrower than the Atlas
       // persistence port, while both adapters receive this same SQL transaction.
       const atlasSemanticQueue = { enqueue: (transaction: unknown, job: BackgroundExecutionJob) => semanticQueue.enqueue(transaction as never, job) };
-      const authority = new database.PostgresPerceptionAuthority(sql, new core.PerceptionSourceGrantIssuer(credential), atlasSemanticQueue, process.env.ATLAS_D1_PERCEPTION_CAPABILITY_IDENTITY);
+      const authority = new database.PostgresPerceptionAuthority(sql, new core.PerceptionSourceGrantIssuer(credential), atlasSemanticQueue, process.env.ATLAS_D1_PERCEPTION_CAPABILITY_IDENTITY, perceptionQueue);
       const sources = new documentStore.LocalFilesystemDocumentStore(process.env.ATLAS_DOCUMENT_STORE_ROOT ?? resolve(process.cwd(), ".atlas-data"));
       const routes = core.createPerceptionInternalRoutes({ authority, sources, serviceCredential: credential, maximumSourceBytes: sourceLimit, maximumResultBytes: resultLimit });
       const semanticAuthority = new semanticDatabase.PostgresSemanticAuthority(sql, new reconciliationSelector.PostgresReconciliationSelector(sql));
