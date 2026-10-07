@@ -1,7 +1,6 @@
 # IDSER-012-01-01: Staged fair local perception admission and cutover
 
-- **State:** `awaiting_review`
-- **Review batch:** `IDSER-BATCH-12-01-01`
+- **State:** `approved` at `8ac6d47`; **Review batch:** `IDSER-BATCH-12-01-01` (`PASS` in [`IDSER-BATCH-12-01-01-2fbb213-verification.md`](../../../feedback/IDSER-BATCH-12-01-01-2fbb213-verification.md)).
 - **Dependencies:** approved BSS-006, BSS-009/01/02, BSS-V2-004-01/02, IDSER-003, IDSER-008, IDSER-010-04/05
 - **Parent:** [IDSER-012-01](IDSER-012-01-fair-bounded-local-docling-perception.md)
 - **Post-generation planning amendment:** [Provider admission/staged semantic context](../../atlas-provider-admission-staged-semantic-pipeline-implementation-context.md) §21.7
