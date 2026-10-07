@@ -4,6 +4,7 @@
 - **Review batch:** `BSS-V2-BATCH-05-02`
 - **Dependencies:** BSS-V2-005-01 CK `PASS`; BSS-V2-001 capability contracts
 - **Parent:** [BSS-V2-005](BSS-V2-005-quota-domain-capacity-foundation.md)
+- **Post-generation planning amendment:** [Provider admission/staged semantic context](../../atlas-provider-admission-staged-semantic-pipeline-implementation-context.md) §21
 
 ## Outcome
 
@@ -21,7 +22,7 @@ Define reusable process-policy and workload-envelope contracts without hard-codi
 - Structural bound plus estimator/accounting/safety identities.
 - Planning and per-request RequestResourceEnvelope validation.
 
-Semantic/reconciliation/chat/CES may be represented as process identities, but remain inactive until their route/workload integration exists.
+Semantic/reconciliation/chat/CES may be represented as process identities, but remain inactive until their route/workload integration exists. Consumer activation must publish a concrete immutable process/workload version; placeholder profiles never silently activate.
 
 ## Review Contract
 

@@ -4,6 +4,7 @@
 - **Review batch:** `IDSER-BATCH-12-01-02`
 - **Dependencies:** IDSER-012-01-01 CK `PASS`; approved BSS-V2-004-01/02
 - **Parent:** [IDSER-012-01](IDSER-012-01-fair-bounded-local-docling-perception.md)
+- **Post-generation planning amendment:** [Provider admission/staged semantic context](../../atlas-provider-admission-staged-semantic-pipeline-implementation-context.md) §21.7
 
 ## Outcome
 

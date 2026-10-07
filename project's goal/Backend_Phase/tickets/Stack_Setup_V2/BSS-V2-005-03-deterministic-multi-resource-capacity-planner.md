@@ -4,6 +4,7 @@
 - **Review batch:** `BSS-V2-BATCH-05-03`
 - **Dependencies:** BSS-V2-005-01 and -02 CK `PASS`
 - **Parent:** [BSS-V2-005](BSS-V2-005-quota-domain-capacity-foundation.md)
+- **Post-generation planning amendment:** [Provider admission/staged semantic context](../../atlas-provider-admission-staged-semantic-pipeline-implementation-context.md) §21
 
 ## Outcome
 

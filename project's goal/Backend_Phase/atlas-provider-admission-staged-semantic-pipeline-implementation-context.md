@@ -1814,3 +1814,133 @@ Codex may materialize the frozen ticket drafts, update READMEs/dependencies, mar
 It must then stop.
 
 No production implementation begins until the user explicitly invokes GO for one dependency-ready executable child.
+
+
+---
+
+# 21. Post-generation CK-readiness amendments
+
+**Authority:** this section was added after reviewing the generated ticket set at branch HEAD `d2f35e60e9bbf1e3c352d168e10d751acdb50d24`. Where it conflicts with the earlier frozen drafts in §§13-16, this section and the patched ticket files are authoritative. Planning only; no GO is granted.
+
+## 21.1 Provider limit windows are first-class planning inputs
+
+A numeric limit without enforcement/reset semantics is incomplete. BSS-V2-005-01 versions the per-dimension quota-window/refill policy together with RPM/TPM/RPD capacity. Fixed-window, rolling-window, token-bucket/refill, provider-reset-observation, or daily-calendar semantics may be supported, but policy identity and required parameters are explicit. Concurrency is instantaneous rather than a refill window.
+
+Unknown reset semantics remain unknown and must not become optimistic refill behavior. An explicitly configured conservative fallback is allowed only as separately versioned/provenanced planner input. BSS-V2-006 derives runtime window state only from the active profile's exact window-policy version.
+
+## 21.2 One reservation authorizes at most one outbound provider attempt
+
+For BSS-V2-006-admitted execution:
+
+```text
+one logical attempt -> one reservation -> at most one outbound transport attempt
+```
+
+Hidden SDK/adapter retry under the same reservation is prohibited. A retry after a transmitted failure is a new explicit attempt/reservation under the same logical work identity.
+
+The provider-neutral Bridge contract may be extended additively with operational feedback needed for admission correctness: `transportMayHaveStarted`, trustworthy normalized usage, Retry-After, and safely normalized rate-limit limit/remaining/reset observations when exposed. Raw headers/provider bodies remain adapter-local.
+
+If transport definitely did not start, release the reservation. If transport may have started but usage is unavailable, release concurrency at terminal state but conservatively retain transmitted request/RPD consumption and reserved TPM until the applicable safe quota-window boundary. Missing usage is never zero usage.
+
+## 21.3 Runtime fairness has no historical borrowing debt
+
+Weighted dominant-resource virtual usage is epoch-based. Maintain a durable quota-domain virtual-time baseline from currently backlogged eligible lanes. When an idle lane becomes backlogged:
+
+```text
+laneVirtualUsage = max(laneVirtualUsage, quotaDomainVirtualTime)
+```
+
+so a newcomer cannot monopolize capacity merely because another lane previously borrowed idle capacity.
+
+When DesiredAdmissionProfile weights/caps change, BSS-V2-006 creates a new fairness epoch/rebase. Historical virtual usage under old weights must not become debt under the new plan.
+
+## 21.4 Plan activation must wake sleeping backlog
+
+BSS-V2-005-04 exposes a monotonic active-plan revision/change seam. BSS-V2-006 wires plan activation to one durable deduplicated pg-boss admission wakeup per affected quota domain.
+
+A plan increase/decrease must affect existing waiting work without requiring a new user request, worker restart, or unrelated completion event. A decrease never preempts running work.
+
+## 21.5 Semantic batching separates owned source from reference context
+
+A multi-batch document cannot assume source coverage alone preserves cross-unit meaning. The semantic batch plan distinguishes:
+
+```text
+owned source_slots
+  -> exactly one owning batch per eligible source unit
+  -> only these may produce source_results/candidates/evidence
+
+reference_context
+  -> optional bounded authorized context
+  -> may repeat across batches
+  -> never owns candidate/evidence output in the consuming batch
+```
+
+Reference context is deterministic, bounded, versioned, and part of the RequestResourceEnvelope. The provider payload keeps `source_slots` distinct from `reference_context`; canonical Semantic V1 truth schema remains unchanged.
+
+The current whole-document `buildSemanticSourcePacket()` seam must be refactored additively so deterministic source-unit enumeration exists below packet construction. Existing approved single-packet behavior remains a regression oracle.
+
+The initial context policy is structurally bounded and deterministic (for example an ordered adjacent context window defined by the workload profile). Do not claim arbitrary-document semantic equivalence. BSS-V2-004-03-06 must live-qualify the exact batch-aware request profile, including a cross-batch reference/condition fixture, before production batch execution.
+
+## 21.6 Revised semantic-consumer partition
+
+```text
+IDSER-012-02-01
+  owned/context semantic batch plan
+  + lower-level source-unit seam
+  + RequestResourceEnvelope
+  -> no provider work
+
+IDSER-012-02-02
+  concrete semantic ProviderProcessProfile
+  + WorkloadEnvelopeProfile
+  + fairnessScope = stable bundle ID
+  + publish/activate DesiredAdmissionProfile
+  -> no provider call
+
+BSS-V2-004-03-06
+  live-qualify exact batch-aware profile through BSS-V2-006
+  -> PASS required
+
+IDSER-012-02-03
+  register/admit/execute/stage production semantic batches
+
+IDSER-012-02-04
+  exact document aggregation
+  -> one Atlas extraction acceptance
+  -> semantic_ready
+  -> zero reconciliation work
+```
+
+The old generated IDSER-012-02-02 and -03 files were unimplemented planning artifacts and may be replaced/renamed.
+
+## 21.7 Revised dependency shape
+
+```text
+IDSER-012-01-01 -> IDSER-012-01-02 -> perceived
+
+BSS-V2-005-01 -> -02 -> -03 -> -04
+                                  |
+                                  v
+BSS-V2-006-01 -> -02 -> -03 -> -04
+                                  |
+                                  +--------------------------+
+                                                             |
+BSS-V2-004-03-04 -> BSS-V2-004-03-05                       |
+                         |                                   |
+                         +--------------+                    |
+                                        v                    v
+                                  IDSER-012-02-01 -> IDSER-012-02-02
+                                                          |
+                                                          v
+                                            BSS-V2-004-03-06 live PASS
+                                                          |
+                                                          v
+                                  IDSER-012-02-03 -> IDSER-012-02-04
+                                                          |
+                                                          v
+                                                    semantic_ready
+                                                          |
+                                                         STOP
+```
+
+BSS-V2-004-03-07 remains superseded-before-implementation.

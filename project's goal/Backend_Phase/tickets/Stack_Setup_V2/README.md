@@ -34,7 +34,7 @@ The completed substrate maps Atlas capabilities to explicitly qualified routes, 
 | 9 | [BSS-V2-004-03-03](BSS-V2-004-03-03-normalized-document-source-units.md) | BSS-V2-BATCH-04.03-03 | 03-01/02 CK PASS; explicit GO | Build deterministic bounded source units and a provider-neutral packet from `NormalizedDocument v1`. |
 | 10 | [BSS-V2-004-03-04](BSS-V2-004-03-04-anoman-reasoning-adapter.md) | BSS-V2-BATCH-04.03-04 | 001 CK PASS; 002 route contract; 003 retained Gemini; explicit GO | Add a distinct Anoman adapter under the neutral reasoning capability; no live call. |
 | 11 | [BSS-V2-004-03-05](BSS-V2-004-03-05-deterministic-extraction-finalizer.md) | BSS-V2-BATCH-04.03-05 | 03-01 through 03-04 CK PASS; explicit GO | Compose deterministic extraction through the neutral worker while preserving the D1 stop. |
-| 12 | [BSS-V2-004-03-06](BSS-V2-004-03-06-live-anoman-extraction-qualification.md) | BSS-V2-BATCH-04.03-06 | 03-01 through 03-05 CK PASS; explicit opt-in GO and local gates | Qualify production extraction with a frozen, secret-safe Anoman run plan. |
+| 12 | [BSS-V2-004-03-06](BSS-V2-004-03-06-live-anoman-extraction-qualification.md) | BSS-V2-BATCH-04.03-06 | 03-01 through 03-05, BSS-V2-006-04, IDSER-012-02-01/-02 CK PASS; explicit opt-in GO | Live-qualify exact batch-aware semantic request profile through BSS-V2-006 with one explicit attempt per reservation. |
 | 13 | [BSS-V2-004-03-07](BSS-V2-004-03-07-d1-docling-semantic-continuation.md) | historical | superseded before implementation by IDSER-012-02 | Retained unimplemented planning history; must not bypass BSS-V2-006. |
 | 14 | BSS-V2-004-04 (planning placeholder) | later | separate from extraction; not frozen here | Semantic reconciliation live qualification remains independent from extraction. |
 | 15 | [BSS-V2-005](BSS-V2-005-quota-domain-capacity-foundation.md) | umbrella | accepted BSS-005/006 and BSS-V2-001/002 | Non-executable provider-capacity planning partition. |
@@ -57,42 +57,42 @@ The completed substrate maps Atlas capabilities to explicitly qualified routes, 
 001 -> 002 -> 004-01 -> 004-02 -> STOP
        \-> 003 (approved Gemini reasoning adapter; not a perception dependency)
 
-004-02 -> 004-03-01 -> 004-03-02 -> 004-03-03 --+
-                                004-03-04 ------+-> 004-03-05 -> 004-03-06
-                                                                         +------+
-                                                                                |
-004-03-07 is superseded-before-implementation; it is not executable.           |
+004-02 -> 004-03-01 -> 004-03-02 -> 004-03-03
+004-03-04 -> 004-03-05 -----------------------------------------------+
+                                                                          |
+005-01 -> 005-02 -> 005-03 -> 005-04                                    |
+                                  |                                       |
+                                  v                                       |
+006-01 -> 006-02 -> 006-03 -> 006-04 -----------------------------------+
+                                                                          |
+IDSER-012-01-02 -> perceived --------------------------------------------+
+                                                                          |
+                                                                          v
+                                                               IDSER-012-02-01
+                                                                          |
+                                                                          v
+                                                               IDSER-012-02-02
+                                                                          |
+                                                                          v
+                                                               004-03-06 live PASS
+                                                                          |
+                                                                          v
+                                                               IDSER-012-02-03
+                                                                          |
+                                                                          v
+                                                               IDSER-012-02-04
+                                                                          |
+                                                                          v
+                                                                    semantic_ready
+                                                                          |
+                                                                         STOP
 
-004-04 (semantic reconciliation) remains a separately qualified later scope.
-
-005-01 -> 005-02 -> 005-03 -> 005-04
-                                  |
-                                  v
-006-01 -> 006-02 -> 006-03 -> 006-04 -------------------------------+
-                                                                       |
-IDSER-012-01-02 -> perceived -----------------------------------------+
-                                                                       |
-004-03-04 -> 004-03-05 -> 004-03-06 qualification PASS ---------------+
-                                                                       |
-                                                                       v
-                                                            IDSER-012-02-01
-                                                                       |
-                                                                       v
-                                                            IDSER-012-02-02
-                                                                       |
-                                                                       v
-                                                            IDSER-012-02-03
-                                                                       |
-                                                                       v
-                                                                 semantic_ready
-                                                                       |
-                                                                      STOP
+004-03-07 is superseded-before-implementation; it is not executable.
+004-04 reconciliation qualification remains a separately gated later scope.
 
 006-04 -------------------------+
-004-03 -> 007 -> 008 -----------+-> 009 -> 010 -> 011
-004-04 -------------------------+
+004-03 / later 004-04 ----------+-> 007 -> 008 -> 009 -> 010 -> 011
 ```
-
 Dependencies are PASS gates: an `awaiting_review` predecessor is not permission to begin a dependent implementation.
 
 ## Docling local Docker execution model
@@ -182,6 +182,6 @@ Normal tests are deterministic or Compose-local. The local Docling tickets use r
 
 ## Completion and handoff
 
-The accepted Docling milestone remains BSS-V2-004-02: Atlas accepts `NormalizedDocument v1`, then stops. BSS-V2-004-03-01 through -05 build the provider-neutral semantic route and -06 remains its only live qualification gate. The former -07 direct continuation is superseded before implementation.
+The accepted Docling milestone remains BSS-V2-004-02: Atlas accepts `NormalizedDocument v1`, then stops. BSS-V2-004-03-01 through -05 build the provider-neutral semantic route. BSS-V2-005/006 establish planning/runtime admission; IDSER-012-02-01/-02 freeze the concrete batch-aware semantic request/profile; only then does BSS-V2-004-03-06 live-qualify the exact request shape through BSS-V2-006. The former -07 direct continuation is superseded before implementation.
 
 BSS-V2-005 now ends at an immutable active DesiredAdmissionProfile and performs no runtime admission. BSS-V2-006 then proves the reusable durable provider-admission authority without implementing a product consumer. IDSER-012-02 is the first production consumer after local `perceived` and semantic qualification gates pass; it stops at durable `semantic_ready` before reconciliation. BSS-V2-007 and later operational tickets may consume the new seams but are not expanded by this planning context. No generated ticket grants full IDSER, reconciliation, CES, chat, review, publication, billing, privacy, or fallback acceptance.

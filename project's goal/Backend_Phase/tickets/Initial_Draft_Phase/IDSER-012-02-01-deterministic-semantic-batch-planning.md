@@ -1,38 +1,53 @@
-# IDSER-012-02-01: Deterministic semantic batch planning and provider resource envelopes
+# IDSER-012-02-01: Deterministic semantic owned/context batching and resource envelopes
 
 - **State:** `planned`
 - **Review batch:** `IDSER-BATCH-12-02-01`
-- **Dependencies:** IDSER-012-01-02 CK `PASS`; BSS-V2-004-03-01/02/03/05 CK `PASS`; BSS-V2-005/006 contracts CK `PASS`
+- **Dependencies:** IDSER-012-01-02 CK `PASS`; BSS-V2-004-03-01/02/03/05 CK `PASS`; BSS-V2-005-04 and BSS-V2-006-04 CK `PASS`
 - **Parent:** [IDSER-012-02](IDSER-012-02-provider-admitted-multi-batch-semantic-extraction.md)
+- **Planning authority:** [Provider admission/staged semantic context](../../atlas-provider-admission-staged-semantic-pipeline-implementation-context.md) §§21.5-21.7
 
 ## Outcome
 
-From one accepted/perceived `NormalizedDocument v1`, create one document-level semantic execution plus a deterministic complete batch plan. Build an exact provider request and RequestResourceEnvelope for each batch without making a provider call.
+From one accepted/perceived `NormalizedDocument v1`, expose deterministic source-unit enumeration below the current whole-document packet seam and create a complete ordered batch plan. Every eligible source unit has exactly one owning batch; batches may include separately identified bounded authorized reference context. Build the exact request and RequestResourceEnvelope per batch without provider work.
+
+## Required batch model
+
+```text
+owned source_slots
+  -> exactly one owning batch
+  -> only these may produce source_results/candidates/evidence
+
+reference_context
+  -> bounded deterministic authorized context
+  -> may repeat
+  -> never owns candidate/evidence output in this batch
+```
+
+Reference context counts toward structural/token/resource bounds. Preserve approved single-packet behavior as a regression oracle. The initial context algorithm is deterministic/profile-versioned; do not claim arbitrary-document semantic equivalence.
 
 ## Review Contract
 
 | Row | Required behavior | Binary closure oracle |
 | --- | --- | --- |
-| RC-0120201-01 | Same NormalizedDocument/profile versions produce the same ordered batch plan, stable batch IDs and plan hash. | PASS iff repeat build is deterministic and independent of provider/runtime state. |
-| RC-0120201-02 | Every eligible source unit is represented exactly once across the batch plan or the document fails closed. | PASS iff duplicate, omitted, dangling or individually-unfit source units cannot silently continue. |
-| RC-0120201-03 | Every batch is bounded by the active semantic WorkloadEnvelopeProfile and prepared through the approved provider-neutral source/prompt compiler. | PASS iff no batch exceeds corpus/request structural bounds and no provider-specific lifecycle branch appears. |
-| RC-0120201-04 | Each batch receives a valid RequestResourceEnvelope derived from the exact request plus versioned estimator/accounting/safety policy. | PASS iff resource vectors stay within planning ceilings and weighted billing metadata is not substituted for TPM. |
-| RC-0120201-05 | No provider work, semantic result acceptance, candidate materialization or reconciliation is emitted. | PASS iff this child is pure preparation plus durable document/batch planning only. |
+| RC-0120201-01 | Source-unit enumeration is deterministic below packet construction and preserves approved single-packet output for fitting documents. | PASS iff repeat order is stable and current BSS-V2-004-03-03 fixtures remain equivalent. |
+| RC-0120201-02 | Every eligible source unit is owned exactly once; context-only units are separate and may repeat only within profile bounds. | PASS iff missing/duplicate ownership fails closed, context cannot own output, foreign/dangling context is rejected. |
+| RC-0120201-03 | Same document/profile versions produce same batch IDs, owned/context maps and plan hash. | PASS iff independent of provider/runtime state. |
+| RC-0120201-04 | Every batch stays within structural/context/request bounds and payload distinguishes `source_slots` from `reference_context`. | PASS iff an individually unfit owned unit fails closed and no overflow/truncation occurs. |
+| RC-0120201-05 | Each batch gets a valid multi-resource RequestResourceEnvelope from exact request + versioned estimator/accounting/output/safety policy. | PASS iff resource vectors stay within planning ceiling and weighted billing never substitutes for TPM. |
+| RC-0120201-06 | No provider work/result/candidate materialization occurs. | PASS iff this ticket is deterministic preparation only. |
 
 ## Security Refactor Readiness
 
 **Status:** `applicable`.
 
-- **Inherited boundaries:** `BOUNDARY-0120201-NORMALIZED-SOURCE` accepts only Atlas-accepted `NormalizedDocument v1`; `BOUNDARY-0120201-COMPILER` retains the provider-neutral source/prompt compiler; `BOUNDARY-0120201-NO-TRANSPORT` keeps preparation separate from provider transport and Atlas result acceptance.
-- **Trust boundary:** `TRUST-0120201-PLAN-BUILD` converts accepted normalized source units plus versioned profiles into bounded requests and resource claims that later admission will trust.
-- **Sensitive assets:** `ASSET-0120201-SOURCE-CORPUS` covers normalized document content and compiled request material; it must not be copied into admission metadata or ordinary evidence.
-- **Identity context:** `IDENTITY-0120201-BATCH-PLAN` binds project/bundle/document/execution, normalized artifact, source-unit set, compiler/schema/workload/estimator/accounting versions, ordered batch IDs, and plan hash.
-- **Extension seams:** `SEAM-0120201-STRUCTURAL-BOUND`, `SEAM-0120201-TOKEN-ESTIMATOR`, `SEAM-0120201-RESOURCE-ENVELOPE`, and `SEAM-0120201-PLAN-HASH` permit later policy/version changes without provider-specific lifecycle branching.
-- **Prohibited couplings:** `COUPLING-0120201-PROVIDER-LIFECYCLE` forbids adapter identity in lifecycle planning; `COUPLING-0120201-WEIGHTED-AS-TPM` forbids billing weights as rate-limit truth; `COUPLING-0120201-SILENT-TRUNCATION` forbids omitted/duplicated/unfit units; `COUPLING-0120201-EARLY-EFFECTS` forbids provider work, candidate materialization, or reconciliation.
-- **Verification seams:** `VERIFY-0120201-COVERAGE` proves exact source-unit partitioning; `VERIFY-0120201-DETERMINISM` proves stable order/IDs/hash; `VERIFY-0120201-BOUNDARY` proves structural and envelope ceilings; `VERIFY-0120201-NEGATIVE-EFFECTS` inspects DB/queue/transport absence.
-- **Unresolved security policy:** `SEC-GAP-0120201-CONTENT-POLICY` leaves future privacy, legal, residency, retention, and provider-content policy outside this ticket.
-- **Review bindings:** `REV-READY-0120201-01` verifies plan identity and exact source coverage; `REV-READY-0120201-02` verifies compiler/bounds/estimator seams with boundary and invalid-profile fixtures; `REV-READY-0120201-03` verifies prohibited provider coupling and zero downstream effects.
+- **Trust boundary:** accepted normalized source -> bounded owned/context plan later admission may trust.
+- **Sensitive assets:** normalized/source/prompt material never enters admission metadata/evidence.
+- **Identity context:** document execution, normalized artifact, owned/context sets, compiler/schema/workload/estimator/accounting versions, batch IDs, plan hash.
+- **Extension seams:** source enumeration, owned/context selection, structural bound, estimator, envelope, plan hash.
+- **Prohibited couplings:** provider-specific lifecycle, context-as-output ownership, weighted-as-TPM, silent truncation, early effects.
+- **Verification seams:** single-packet regression, exact ownership, context negatives, determinism, envelope ceilings.
+- **Review bindings:** CK verifies source/context identity, backward compatibility, deterministic bounds/envelopes and zero provider effects.
 
 ## Workflow evidence
 
-Implementation must close every Review Contract row with deterministic fixtures and a compact closure ledger, record exact Compose commands/counts and scoped state observations, reach `READY_FOR_CK`, and only then move to `awaiting_review`. This ticket grants no GO by itself.
+Close all rows with deterministic fixtures, including a cross-boundary pronoun/reference/shared-condition fixture reserved for later live qualification; `READY_FOR_CK`.

@@ -1,42 +1,56 @@
-# BSS-V2-006-01: Durable provider-work, reservation, and quota-window foundation
+# BSS-V2-006-01: Provider-work, reservation, quota-window and attempt foundation
 
 - **State:** `planned`
 - **Review batch:** `BSS-V2-BATCH-06-01`
 - **Dependencies:** BSS-V2-005-04 CK `PASS`; BSS-006; BSS-003 Bridge persistence/role boundary
 - **Parent:** [BSS-V2-006](BSS-V2-006-capability-admission-interactive-protection.md)
+- **Planning authority:** [Provider admission/staged semantic context](../../atlas-provider-admission-staged-semantic-pipeline-implementation-context.md) §§21.1-21.4
 
 ## Outcome
 
-Create the Bridge-owned durable operational substrate for waiting provider work, per-attempt RequestResourceEnvelope reservations, quota-domain runtime/window state, and deduplicated wakeups. No fairness policy or real provider call is released yet.
+Create Bridge-owned durable state for waiting provider work, explicit logical attempts, per-attempt RequestResourceEnvelope reservations, exact quota-window/refill state and deduplicated wakeups. No fairness or real provider call yet.
+
+## Required attempt/window state
+
+```text
+logical work
+  -> attempt N
+      -> waiting
+      -> reserved
+      -> dispatched / transport-may-have-started
+      -> terminal
+      -> reconciled
+```
+
+Window state derives only from the active DesiredAdmissionProfile's exact capacity/window-policy versions. Unknown reset semantics never become guessed refill behavior.
 
 ## Review Contract
 
 | Row | Required behavior | Binary closure oracle |
 | --- | --- | --- |
-| RC-BSSV2-00601-01 | Provider work registration is idempotent by logical work/attempt identity and persists process/quota/fairness/resource references without raw prompt/source bodies. | PASS iff duplicate registration yields one waiting work item and prohibited content/secrets are absent. |
-| RC-BSSV2-00601-02 | Quota-domain runtime state durably tracks active plan version, refill/window state, in-flight concurrency and cooldown metadata. | PASS iff restart preserves capacity state and stale/missing plan references fail closed. |
-| RC-BSSV2-00601-03 | Reservation records bind work identity, attempt, RequestResourceEnvelope and authorizing DesiredAdmissionProfile version. | PASS iff one attempt cannot hold duplicate live reservations and old reservations remain attributable after a plan change. |
-| RC-BSSV2-00601-04 | Waiting/admitted execution uses pg-boss only and can schedule one deduplicated future wakeup without a polling daemon. | PASS iff no Redis/second broker/process-local timer becomes durable authority and duplicate wakeup requests collapse safely. |
-| RC-BSSV2-00601-05 | Operational persistence remains Bridge-owned and cannot mutate Atlas trusted state. | PASS iff role tests keep `agents_bridge` in allowed operational schemas and deny trusted Atlas writes. |
+| RC-BSSV2-00601-01 | Work registration is idempotent by logical-work/attempt identity and persists process/quota/fairness/resource references without prompt/source bodies. | PASS iff duplicate registration yields one waiting attempt and secrets/content are absent. |
+| RC-BSSV2-00601-02 | Runtime state tracks active plan, exact per-dimension window/refill identity/state, in-flight concurrency and cooldown. | PASS iff restart preserves it, rollover/refill uses only referenced policy, and missing/unknown-required policy fails closed. |
+| RC-BSSV2-00601-03 | Reservation binds attempt, RequestResourceEnvelope and authorizing DesiredAdmissionProfile version. | PASS iff one attempt cannot hold duplicate live reservations and history remains attributable after plan change. |
+| RC-BSSV2-00601-04 | Attempt fencing distinguishes waiting/reserved/transport-may-have-started/terminal/reconciled. | PASS iff restart/replay cannot make uncertain transmitted work look definitely untransmitted or silently authorize a second attempt. |
+| RC-BSSV2-00601-05 | Waiting/admitted execution uses pg-boss only and supports deduplicated future/domain wakeup, including later plan-change attachment. | PASS iff no second broker/process-local timer is durable authority and duplicate wakeups collapse. |
+| RC-BSSV2-00601-06 | Operational persistence remains Bridge-owned and cannot mutate Atlas trusted state. | PASS iff role tests deny trusted Atlas writes. |
 
 ## Hard stop
 
-Persistence and deterministic state transitions exist, but no provider transport is authorized by this child.
+Persistence/state only. No fair admission or provider transport.
 
 ## Security Refactor Readiness
 
 **Status:** `applicable`.
 
-- **Inherited boundaries:** `BOUNDARY-BSSV2-00601-BRIDGE-OPS` restricts runtime state to Bridge operational schemas; `BOUNDARY-BSSV2-00601-PGBOSS` keeps pg-boss as the only broker/wakeup mechanism; `BOUNDARY-BSSV2-00601-PLAN` consumes exact active DesiredAdmissionProfile versions; `BOUNDARY-BSSV2-00601-ATLAS` denies trusted Atlas mutation.
-- **Trust boundary:** `TRUST-BSSV2-00601-WORK-REGISTRATION` accepts a consumer's logical work identity and validated resource/profile references into durable waiting state without accepting source/prompt bodies.
-- **Sensitive assets:** `ASSET-BSSV2-00601-CREDENTIAL-SOURCE` covers provider credentials, prompts, source bodies, and authorization headers, all prohibited from provider-work/reservation/window records and evidence.
-- **Identity context:** `IDENTITY-BSSV2-00601-ATTEMPT` binds logical work, attempt, process, quota domain, fairness key, RequestResourceEnvelope, desired-profile version, reservation, wakeup, and state version.
-- **Extension seams:** `SEAM-BSSV2-00601-WORK-STATE`, `SEAM-BSSV2-00601-RESERVATION`, `SEAM-BSSV2-00601-WINDOW`, `SEAM-BSSV2-00601-WAKEUP`, and `SEAM-BSSV2-00601-STATE-TRANSITION` retain later authorization/retention/observability attachment points.
-- **Prohibited couplings:** `COUPLING-BSSV2-00601-RAW-CONTENT`, `COUPLING-BSSV2-00601-DUPLICATE-RESERVATION`, `COUPLING-BSSV2-00601-SECOND-BROKER`, `COUPLING-BSSV2-00601-POLLING-AUTHORITY`, and `COUPLING-BSSV2-00601-ATLAS-WRITE` are forbidden.
-- **Verification seams:** `VERIFY-BSSV2-00601-IDEMPOTENCY`, `VERIFY-BSSV2-00601-RESTART`, `VERIFY-BSSV2-00601-ROLE`, `VERIFY-BSSV2-00601-REDACTION`, and `VERIFY-BSSV2-00601-WAKEUP-DEDUPE` cover each durable boundary.
-- **Unresolved security policy:** `SEC-GAP-BSSV2-00601-RETENTION` leaves future operational-state retention, incident response, and canonical audit policy unresolved.
-- **Review bindings:** `REV-READY-BSSV2-00601-01` verifies registration/attempt identity and sensitive-data exclusion; `REV-READY-BSSV2-00601-02` verifies restart-safe windows/reservations/plan attribution; `REV-READY-BSSV2-00601-03` verifies pg-boss-only wakeup and Bridge/Atlas restricted-role isolation.
+- **Trust boundary:** provider-work registration accepts only logical identity + validated profile/resource references.
+- **Sensitive assets:** credentials, prompts, source bodies, authorization headers stay out of work/reservation/window state.
+- **Identity context:** logical work, explicit attempt, process, quota domain, fairness key, envelope, plan/window versions, reservation, wakeup, state version.
+- **Extension seams:** work state, attempt fence, reservation, quota-window policy, wakeup, state transition.
+- **Prohibited couplings:** raw content, duplicate reservation, hidden attempt duplication, guessed refill, second broker, polling authority, Atlas write.
+- **Verification seams:** idempotency, restart/window rollover, attempt uncertainty, roles/redaction, wakeup dedupe.
+- **Review bindings:** CK verifies identity, restart-safe quota state and broker/role isolation.
 
 ## Workflow evidence
 
-Implementation must close every Review Contract row using migration, role, restart, idempotency, redaction, and wakeup-deduplication tests, record exact Compose commands/counts in a compact closure ledger, then reach `READY_FOR_CK`. This ticket grants no GO by itself.
+Close all rows with migration/window/restart/idempotency/attempt-fence/redaction/wakeup tests and `READY_FOR_CK`.

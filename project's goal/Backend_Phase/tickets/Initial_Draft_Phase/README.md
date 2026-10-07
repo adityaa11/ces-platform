@@ -101,10 +101,12 @@ documents do not authorize starting implementation automatically.
 | 29 | [IDSER-012-01](IDSER-012-01-fair-bounded-local-docling-perception.md) / umbrella | IDSER-012 | Non-executable local-perception partition |
 | 30 | [IDSER-012-01-01](IDSER-012-01-01-staged-fair-local-perception-admission-and-cutover.md) / IDSER-BATCH-12-01-01 | approved BSS-006, BSS-009/01/02, BSS-V2-004-01/02, IDSER-003/008/010-04/05 | Staged cutover, durable bundle fairness, JIT grants, and a race-safe two-permit Atlas gate |
 | 31 | [IDSER-012-01-02](IDSER-012-01-02-two-worker-docling-perception-composition.md) / IDSER-BATCH-12-01-02 | IDSER-012-01-01 CK PASS | Effective 2/2/2 local profile, accepted NormalizedDocument v1, and durable `perceived` stop |
-| 32 | [IDSER-012-02](IDSER-012-02-provider-admitted-multi-batch-semantic-extraction.md) / umbrella | IDSER-012-01-02; all BSS-V2-005/006 children; qualified BSS-V2-004 semantic route | Non-executable provider-admitted semantic partition; supersedes old BSS-V2-004-03-07 direct continuation |
-| 33 | [IDSER-012-02-01](IDSER-012-02-01-deterministic-semantic-batch-planning.md) / IDSER-BATCH-12-02-01 | IDSER-012-01-02; BSS-V2-004-03-01/02/03/05; BSS-V2-005/006 contracts CK PASS | Deterministic complete batch plan and per-request resource envelopes; no provider call |
-| 34 | [IDSER-012-02-02](IDSER-012-02-02-provider-admitted-semantic-batch-execution.md) / IDSER-BATCH-12-02-02 | IDSER-012-02-01; BSS-V2-006-04; BSS-V2-004-03-06 qualification PASS | BSS-V2-006-admitted provider-neutral batch execution and fenced staging |
-| 35 | [IDSER-012-02-03](IDSER-012-02-03-semantic-document-aggregation-ready-stop.md) / IDSER-BATCH-12-02-03 | IDSER-012-02-02 CK PASS | Exact aggregation, once-only Atlas acceptance, and durable `semantic_ready` stop with no reconciliation |
+| 32 | [IDSER-012-02](IDSER-012-02-provider-admitted-multi-batch-semantic-extraction.md) / umbrella | IDSER-012-01-02; all BSS-V2-005/006 children; BSS-V2-004-03-04/05 | Non-executable batch-aware semantic consumer partition; supersedes old BSS-V2-004-03-07 direct continuation |
+| 33 | [IDSER-012-02-01](IDSER-012-02-01-deterministic-semantic-batch-planning.md) / IDSER-BATCH-12-02-01 | IDSER-012-01-02; BSS-V2-004-03-01/02/03/05; BSS-V2-005-04; BSS-V2-006-04 | Deterministic owned/context batch plan, source-unit seam and RequestResourceEnvelope; no provider call |
+| 34 | [IDSER-012-02-02](IDSER-012-02-02-semantic-provider-profile-activation.md) / IDSER-BATCH-12-02-02 | IDSER-012-02-01; BSS-V2-005-04; BSS-V2-006-04 | Activate concrete semantic process/workload profile and DesiredAdmissionProfile; zero provider calls |
+| 35 | [BSS-V2-004-03-06](../Stack_Setup_V2/BSS-V2-004-03-06-live-anoman-extraction-qualification.md) / BSS-V2-BATCH-04.03-06 | IDSER-012-02-02; BSS-V2-004-03-01 through -05; BSS-V2-006-04 | Live-qualify exact batch-aware profile through shared provider admission |
+| 36 | [IDSER-012-02-03](IDSER-012-02-03-provider-admitted-semantic-batch-execution.md) / IDSER-BATCH-12-02-03 | IDSER-012-02-02; BSS-V2-004-03-06 qualification PASS | Provider-admitted explicit-attempt batch execution and fenced staging |
+| 37 | [IDSER-012-02-04](IDSER-012-02-04-semantic-document-aggregation-ready-stop.md) / IDSER-BATCH-12-02-04 | IDSER-012-02-03 CK PASS | Exact document aggregation, once-only Atlas acceptance, semantic_ready, zero reconciliation |
 
 Intermediate tickets are composable implementation checkpoints, not independent
 production rollouts. Route/worker tests may inject explicit bounded test doubles
@@ -116,31 +118,37 @@ full pipeline proof are required by IDSER-008/010/011.
 ## IDSER-012 staged dependency graph
 
 ```text
-IDSER-012-01-01 -> IDSER-012-01-02 -> perceived NormalizedDocument v1 --+
-                                                                        |
-BSS-V2-005-01 -> -02 -> -03 -> -04                                     |
-                              |                                         |
-                              v                                         |
-BSS-V2-006-01 -> -02 -> -03 -> -04 ------------------------------------+
-                                                                        |
-BSS-V2-004-03-04 -> -05 -> -06 qualification PASS ---------------------+
-                                                                        |
-                                                                        v
-                                                             IDSER-012-02-01
-                                                                        |
-                                                                        v
-                                                             IDSER-012-02-02
-                                                                        |
-                                                                        v
-                                                             IDSER-012-02-03
-                                                                        |
-                                                                        v
-                                                                  semantic_ready
-                                                                        |
-                                                                       STOP
+IDSER-012-01-01 -> IDSER-012-01-02 -> perceived ----------------------+
+                                                                       |
+BSS-V2-005-01 -> -02 -> -03 -> -04                                    |
+                              |                                        |
+                              v                                        |
+BSS-V2-006-01 -> -02 -> -03 -> -04 -----------------------------------+
+                                                                       |
+BSS-V2-004-03-04 -> -05 ----------------------------------------------+
+                                                                       |
+                                                                       v
+                                                            IDSER-012-02-01
+                                                                       |
+                                                                       v
+                                                            IDSER-012-02-02
+                                                                       |
+                                                                       v
+                                                    BSS-V2-004-03-06 live PASS
+                                                                       |
+                                                                       v
+                                                            IDSER-012-02-03
+                                                                       |
+                                                                       v
+                                                            IDSER-012-02-04
+                                                                       |
+                                                                       v
+                                                                 semantic_ready
+                                                                       |
+                                                                      STOP
 ```
 
-The old unimplemented BSS-V2-004-03-07 direct continuation is superseded before implementation and is not an executable predecessor. Reconciliation ready-order/keyed-writer work remains a later IDSER scope.
+The old unimplemented BSS-V2-004-03-07 direct continuation remains superseded-before-implementation. Planning-context §21 is authoritative for quota windows, explicit attempts, fairness rebasing, plan-change wakeups and owned/reference-context batching. Reconciliation remains later IDSER scope.
 
 ## Inspected implementation and planning decisions
 

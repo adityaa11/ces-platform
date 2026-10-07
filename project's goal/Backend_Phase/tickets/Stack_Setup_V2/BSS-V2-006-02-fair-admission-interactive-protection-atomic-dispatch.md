@@ -1,52 +1,53 @@
-# BSS-V2-006-02: Fair multi-resource admission, interactive protection, and atomic dispatch
+# BSS-V2-006-02: Fair multi-resource admission, interactive protection, and atomic single-attempt dispatch
 
 - **State:** `planned`
 - **Review batch:** `BSS-V2-BATCH-06-02`
 - **Dependencies:** BSS-V2-006-01 CK `PASS`
 - **Parent:** [BSS-V2-006](BSS-V2-006-capability-admission-interactive-protection.md)
+- **Planning authority:** [Provider admission/staged semantic context](../../atlas-provider-admission-staged-semantic-pipeline-implementation-context.md) §§21.2-21.3
 
 ## Outcome
 
-Implement the per-quota-domain admission transaction that enforces hard interactive reserve, weighted dominant-resource background fairness, caller fairness keys, resource fit, atomic reservation and pg-boss executable dispatch.
+Implement per-quota-domain admission with hard interactive reserve, weighted dominant-resource background fairness without historical borrowing debt, fairness keys, resource fit, atomic reservation and pg-boss dispatch.
 
 ## Required scheduling behavior
 
 - Background cannot consume hard interactive reserve.
 - Interactive checks global effective capacity and is not queued behind background fairness.
-- Background lane selection uses durable weighted dominant-resource virtual usage.
-- Within a lane use durable least-recently-admitted fairness key plus stable tie-break.
+- Background uses durable weighted dominant-resource virtual usage.
+- Quota-domain virtual time is based on currently backlogged eligible lanes; an idle lane becoming backlogged is rebased to at least that baseline.
+- Within a lane use durable least-recently-admitted fairness key + stable tie-break.
 - Temporarily unfit work may be skipped without losing eligibility.
-- Do not preempt active provider calls.
-- Admission, reservation, and job enqueue are one transaction.
+- No preemption of active provider calls.
+- One reservation authorizes at most one outbound transport attempt; hidden adapter/SDK retry is forbidden on an admitted path.
+- Admission + reservation + admitted state + pg-boss job enqueue are one transaction.
 
 ## Review Contract
 
 | Row | Required behavior | Binary closure oracle |
 | --- | --- | --- |
-| RC-BSSV2-00602-01 | No admitted work exceeds current global RPM/TPM/RPD/concurrency resource state. | PASS iff controlled boundaries deny one-more admission in each dimension and denied work never reaches executable transport. |
-| RC-BSSV2-00602-02 | Background saturation preserves the complete configured hard interactive reserve. | PASS iff a large background backlog cannot consume protected request/token/day/concurrency headroom and a protected interactive fixture can still reserve when global capacity is otherwise healthy. |
-| RC-BSSV2-00602-03 | Background processes receive durable weighted multi-resource fairness with work-conserving borrowing. | PASS iff request-heavy/token-heavy lane fixtures converge by weighted dominant cost, an idle lane wastes no background capacity, and no backlogged fitting lane starves. |
-| RC-BSSV2-00602-04 | One process cannot monopolize its lane across fairness keys. | PASS iff A(large backlog)/B(small)/C(small) fixtures rotate durable fairness keys while allowing elastic borrowing when competitors are absent. |
-| RC-BSSV2-00602-05 | Reservation + admitted state + pg-boss execution enqueue commit atomically. | PASS iff rollback exposes none, crash/retry cannot double-dispatch one attempt, and capacity is not released before durable terminal/reconcile state. |
+| RC-BSSV2-00602-01 | No admitted work exceeds RPM/TPM/RPD/concurrency state. | PASS iff each dimension denies one-more admission and denied work has zero transport. |
+| RC-BSSV2-00602-02 | Background saturation preserves full hard interactive reserve. | PASS iff healthy protected interactive work can reserve despite large background backlog. |
+| RC-BSSV2-00602-03 | Background lanes receive weighted multi-resource fairness with work-conserving borrowing and no historical borrowing debt. | PASS iff heavy/light lanes converge, idle capacity is borrowable, a late lane is rebased to domain virtual time, and no fitting lane starves. |
+| RC-BSSV2-00602-04 | One process cannot monopolize across fairness keys. | PASS iff A(large)/B(small)/C(small) rotate durable keys while borrowing remains elastic when competitors are absent. |
+| RC-BSSV2-00602-05 | One reservation/attempt authorizes at most one fake outbound transport attempt. | PASS iff any retry requires a new explicit attempt/reservation and a double-send under one reservation is rejected. |
+| RC-BSSV2-00602-06 | Reservation + admitted state + pg-boss enqueue commit atomically. | PASS iff rollback exposes none and crash/retry cannot double-dispatch. |
 
 ## Hard stop
 
-Use deterministic fake execution; do not yet claim correctness for actual provider usage reconciliation or 429/Retry-After adaptation.
+Deterministic fake execution only; no actual usage reconciliation or 429 adaptation yet.
 
 ## Security Refactor Readiness
 
 **Status:** `applicable`.
 
-- **Inherited boundaries:** `BOUNDARY-BSSV2-00602-DURABLE-STATE` consumes only BSS-V2-006-01 waiting/window/reservation state; `BOUNDARY-BSSV2-00602-DESIRED-PLAN` enforces the current plan ceiling; `BOUNDARY-BSSV2-00602-PGBOSS` authorizes executable work only through atomic pg-boss enqueue.
-- **Trust boundary:** `TRUST-BSSV2-00602-ADMISSION` is the sole transition from waiting work to a resource reservation and executable job under one quota-domain serialization transaction.
-- **Sensitive assets:** `ASSET-BSSV2-00602-CAPACITY-STATE` covers current windows, protected headroom, reservations, and fairness turns; access must remain operationally scoped and secret/source-free.
-- **Identity context:** `IDENTITY-BSSV2-00602-DECISION` binds quota domain, active plan, work/attempt, service class, process lane, fairness key/turn, resource envelope, reservation, and pg-boss job.
-- **Extension seams:** `SEAM-BSSV2-00602-SERIALIZATION`, `SEAM-BSSV2-00602-PROTECTION`, `SEAM-BSSV2-00602-DOMINANT-COST`, `SEAM-BSSV2-00602-FAIR-TURN`, and `SEAM-BSSV2-00602-ATOMIC-DISPATCH` preserve future policy attachment.
-- **Prohibited couplings:** `COUPLING-BSSV2-00602-ADMISSION-BYPASS` forbids executable transport without reservation; `COUPLING-BSSV2-00602-BACKGROUND-BORROW-RESERVE` forbids lending hard protection; `COUPLING-BSSV2-00602-FIFO-SCALAR` forbids one FIFO/magic resource scalar; `COUPLING-BSSV2-00602-PROCESS-LOCAL-FAIRNESS` forbids in-memory durable turns.
-- **Verification seams:** `VERIFY-BSSV2-00602-DIMENSION-BOUNDARIES`, `VERIFY-BSSV2-00602-INTERACTIVE-SATURATION`, `VERIFY-BSSV2-00602-MULTIRESOURCE-FAIRNESS`, `VERIFY-BSSV2-00602-KEY-FAIRNESS`, and `VERIFY-BSSV2-00602-ROLLBACK` cover the transaction and all scheduler invariants.
-- **Unresolved security policy:** `SEC-GAP-BSSV2-00602-PRODUCTION-POLICY` leaves numeric reserves, weights, caps, and fairness-scope selection to versioned profiles.
-- **Review bindings:** `REV-READY-BSSV2-00602-01` verifies the sole pre-transport transaction and per-dimension ceilings; `REV-READY-BSSV2-00602-02` verifies hard interactive protection and no background borrowing; `REV-READY-BSSV2-00602-03` verifies durable multi-resource/fairness-key scheduling, atomic rollback, and no bypass.
+- **Trust boundary:** sole waiting -> reservation -> executable-job transition.
+- **Identity context:** domain, active plan/fairness epoch, work/attempt, service class, lane, fairness key/turn, envelope, reservation, job.
+- **Extension seams:** serialization, protection, dominant cost, domain virtual time/rebase, key fairness, atomic dispatch.
+- **Prohibited couplings:** admission bypass, background borrow of hard reserve, FIFO/magic scalar, process-local fairness, hidden transport retry.
+- **Verification seams:** dimension boundaries, interactive saturation, late-join fairness, key fairness, single-attempt transport, rollback.
+- **Review bindings:** CK verifies the pre-transport transaction, hard protection, debt-free fairness and one-attempt rule.
 
 ## Workflow evidence
 
-Implementation must close every Review Contract row with deterministic controlled-load and rollback fixtures, record exact Compose commands/counts plus reservation/job observations in a compact closure ledger, then reach `READY_FOR_CK`. This ticket grants no GO by itself.
+Close all rows with deterministic load/late-join/borrow/retry-negative/rollback fixtures and `READY_FOR_CK`.
