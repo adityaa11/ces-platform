@@ -1,10 +1,13 @@
 # BSS-V2-004-03-07: D1 Docling-to-semantic continuation checkpoint
 
-- **State:** `planned`; **Review batch:** `BSS-V2-BATCH-04.03-07`
-- **Dependencies:** BSS-V2-004-03-06 CK `PASS` with qualification result `PASS`; BSS-V2-004-02 CK `PASS`; every -01 through -05 contract remains accepted; explicit `go`
+- **State:** `superseded-before-implementation`; **Review batch:** `BSS-V2-BATCH-04.03-07` (retained historical plan; not executable)
+- **Superseded by:** [IDSER-012-02](../Initial_Draft_Phase/IDSER-012-02-provider-admitted-multi-batch-semantic-extraction.md), which routes semantic provider work through BSS-V2-006 and stops at `semantic_ready`
+- **Former dependencies:** BSS-V2-004-03-06 CK `PASS` with qualification result `PASS`; BSS-V2-004-02 CK `PASS`; every -01 through -05 contract remains accepted
 - **Implementation context:** [Semantic V1 Zod + Anoman productionization context](../../atlas-semantic-v1-zod-anoman-productionization-implementation-context.md) §§2, 8–10, 12–16
 
 ## Outcome
+
+> **Supersession notice:** This unimplemented direct-continuation contract is preserved as planning history only. It must not receive GO or be used to bypass the BSS-V2-005/006 provider-admission authority. Provider route qualification remains with BSS-V2-004-03-06; production lifecycle release moved to IDSER-012-02.
 
 Release the deliberate BSS-V2-004-02 semantic stop only after production extraction qualification passes, then prove the current D1 lifecycle composes authorized Docling perception and provider-neutral semantic extraction through accepted `atlas.semantic.extract/v1` and stops before reconciliation.
 

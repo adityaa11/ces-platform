@@ -6,6 +6,7 @@
 - **Primary baseline:** [Atlas Backend Production Baseline V2](../../atlas-backend-production-baseline-v2.md)
 - **Implementation context:** [BSS V2 implementation context](../../atlas-bss-v2-implementation-context.md)
 - **Semantic extraction context:** [Semantic V1 Zod + Anoman productionization](../../atlas-semantic-v1-zod-anoman-productionization-implementation-context.md)
+- **Provider admission planning authority:** [Provider admission and staged semantic pipeline context](../../atlas-provider-admission-staged-semantic-pipeline-implementation-context.md)
 
 ## Purpose and compatibility
 
@@ -34,15 +35,23 @@ The completed substrate maps Atlas capabilities to explicitly qualified routes, 
 | 10 | [BSS-V2-004-03-04](BSS-V2-004-03-04-anoman-reasoning-adapter.md) | BSS-V2-BATCH-04.03-04 | 001 CK PASS; 002 route contract; 003 retained Gemini; explicit GO | Add a distinct Anoman adapter under the neutral reasoning capability; no live call. |
 | 11 | [BSS-V2-004-03-05](BSS-V2-004-03-05-deterministic-extraction-finalizer.md) | BSS-V2-BATCH-04.03-05 | 03-01 through 03-04 CK PASS; explicit GO | Compose deterministic extraction through the neutral worker while preserving the D1 stop. |
 | 12 | [BSS-V2-004-03-06](BSS-V2-004-03-06-live-anoman-extraction-qualification.md) | BSS-V2-BATCH-04.03-06 | 03-01 through 03-05 CK PASS; explicit opt-in GO and local gates | Qualify production extraction with a frozen, secret-safe Anoman run plan. |
-| 13 | [BSS-V2-004-03-07](BSS-V2-004-03-07-d1-docling-semantic-continuation.md) | BSS-V2-BATCH-04.03-07 | 03-06 CK PASS with qualification PASS; 004-02 CK PASS; explicit GO | Release the D1 semantic stop; prove extraction acceptance and stop before reconciliation. |
+| 13 | [BSS-V2-004-03-07](BSS-V2-004-03-07-d1-docling-semantic-continuation.md) | historical | superseded before implementation by IDSER-012-02 | Retained unimplemented planning history; must not bypass BSS-V2-006. |
 | 14 | BSS-V2-004-04 (planning placeholder) | later | separate from extraction; not frozen here | Semantic reconciliation live qualification remains independent from extraction. |
-| 15 | [BSS-V2-005](BSS-V2-005-quota-domain-capacity-foundation.md) | BSS-V2-BATCH-05 | 004-03 parent scope; follow-on contract not regenerated here | Are real external-provider quota domains and capacity profiles represented without product authority? |
-| 16 | [BSS-V2-006](BSS-V2-006-capability-admission-interactive-protection.md) | BSS-V2-BATCH-06 | 005 | Does admission protect interactive work and keep local processor controls distinct? |
-| 17 | [BSS-V2-007](BSS-V2-007-execution-usage-provenance-ledger.md) | BSS-V2-BATCH-07 | 004-03 parent scope; follow-on contract not regenerated here | Is external-provider usage/provenance persisted without inventing Docling economics? |
-| 18 | [BSS-V2-008](BSS-V2-008-price-profiles-shadow-cogs.md) | BSS-V2-BATCH-08 | 007 | Are external-provider prices and distinct actual/shadow costs calculated without billing? |
-| 19 | [BSS-V2-009](BSS-V2-009-privacy-preflight.md) | BSS-V2-BATCH-09 | 006, 008 | Does privacy compatibility fail before external-provider transmission? |
-| 20 | [BSS-V2-010](BSS-V2-010-qualified-fallback-route-state.md) | BSS-V2-BATCH-10 | 009 | Is fallback restricted to compatible, qualified routes with recorded selection? |
-| 21 | [BSS-V2-011](BSS-V2-011-integrated-reconciliation-checkpoint.md) | BSS-V2-BATCH-11 | 001–003, 004-02, 004-03, 004-04, 005–010 | Do frozen BSS V2 interfaces compose without reopening IDSER domain acceptance? |
+| 15 | [BSS-V2-005](BSS-V2-005-quota-domain-capacity-foundation.md) | umbrella | accepted BSS-005/006 and BSS-V2-001/002 | Non-executable provider-capacity planning partition. |
+| 16 | [BSS-V2-005-01](BSS-V2-005-01-external-quota-domain-provider-capacity-catalogue.md) | BSS-V2-BATCH-05-01 | BSS-V2-001/002 CK PASS; BSS-003 boundaries | Secret-free shared quota domains and versioned capacity profiles. |
+| 17 | [BSS-V2-005-02](BSS-V2-005-02-process-workload-envelope-catalogue.md) | BSS-V2-BATCH-05-02 | 005-01 CK PASS | Provider-dependent process and bounded workload-envelope contracts. |
+| 18 | [BSS-V2-005-03](BSS-V2-005-03-deterministic-multi-resource-capacity-planner.md) | BSS-V2-BATCH-05-03 | 005-01/02 CK PASS | Deterministic multi-resource planning with hard interactive reserve. |
+| 19 | [BSS-V2-005-04](BSS-V2-005-04-desired-admission-profile-publication.md) | BSS-V2-BATCH-05-04 | 005-03 CK PASS; BSS-003 boundaries | Immutable DesiredAdmissionProfile publication and atomic cutover. |
+| 20 | [BSS-V2-006](BSS-V2-006-capability-admission-interactive-protection.md) | umbrella | all 005 children CK PASS; BSS-006; BSS-V2-001/002 | Non-executable durable runtime-admission partition. |
+| 21 | [BSS-V2-006-01](BSS-V2-006-01-provider-work-reservation-window-foundation.md) | BSS-V2-BATCH-06-01 | 005-04 CK PASS; BSS-006/BSS-003 | Durable waiting work, reservation, quota-window, and wakeup foundation. |
+| 22 | [BSS-V2-006-02](BSS-V2-006-02-fair-admission-interactive-protection-atomic-dispatch.md) | BSS-V2-BATCH-06-02 | 006-01 CK PASS | Fair multi-resource admission, hard interactive protection, and atomic dispatch. |
+| 23 | [BSS-V2-006-03](BSS-V2-006-03-provider-usage-runtime-clamp-plan-convergence.md) | BSS-V2-BATCH-06-03 | 006-02 CK PASS; normalized adapter metadata | Usage reconciliation, runtime pressure clamp, and plan convergence. |
+| 24 | [BSS-V2-006-04](BSS-V2-006-04-integrated-provider-admission-runtime-checkpoint.md) | BSS-V2-BATCH-06-04 | 006-01 through -03 CK PASS | Integrated deterministic proof of the reusable admission authority. |
+| 25 | [BSS-V2-007](BSS-V2-007-execution-usage-provenance-ledger.md) | BSS-V2-BATCH-07 | 004-03 parent scope; later dependency realignment as needed | Is external-provider usage/provenance persisted without inventing Docling economics? |
+| 26 | [BSS-V2-008](BSS-V2-008-price-profiles-shadow-cogs.md) | BSS-V2-BATCH-08 | 007 | Are external-provider prices and distinct actual/shadow costs calculated without billing? |
+| 27 | [BSS-V2-009](BSS-V2-009-privacy-preflight.md) | BSS-V2-BATCH-09 | 006, 008 | Does privacy compatibility fail before external-provider transmission? |
+| 28 | [BSS-V2-010](BSS-V2-010-qualified-fallback-route-state.md) | BSS-V2-BATCH-10 | 009 | Is fallback restricted to compatible, qualified routes with recorded selection? |
+| 29 | [BSS-V2-011](BSS-V2-011-integrated-reconciliation-checkpoint.md) | BSS-V2-BATCH-11 | 001–003, 004-02, 004-03, 004-04, 005–010 | Do frozen BSS V2 interfaces compose without reopening IDSER domain acceptance? |
 
 ```text
 001 -> 002 -> 004-01 -> 004-02 -> STOP
@@ -50,15 +59,38 @@ The completed substrate maps Atlas capabilities to explicitly qualified routes, 
 
 004-02 -> 004-03-01 -> 004-03-02 -> 004-03-03 --+
                                 004-03-04 ------+-> 004-03-05 -> 004-03-06
-                                                                         |
-                                                                         v
-                                              004-02 + 004-03-06 PASS -> 004-03-07 -> STOP BEFORE RECONCILIATION
+                                                                         +------+
+                                                                                |
+004-03-07 is superseded-before-implementation; it is not executable.           |
 
 004-04 (semantic reconciliation) remains a separately qualified later scope.
 
-004-03 -> 005 -> 006 --+
-004-03 -> 007 -> 008 --+-> 009 -> 010 -> 011
-004-04 ----------------+
+005-01 -> 005-02 -> 005-03 -> 005-04
+                                  |
+                                  v
+006-01 -> 006-02 -> 006-03 -> 006-04 -------------------------------+
+                                                                       |
+IDSER-012-01-02 -> perceived -----------------------------------------+
+                                                                       |
+004-03-04 -> 004-03-05 -> 004-03-06 qualification PASS ---------------+
+                                                                       |
+                                                                       v
+                                                            IDSER-012-02-01
+                                                                       |
+                                                                       v
+                                                            IDSER-012-02-02
+                                                                       |
+                                                                       v
+                                                            IDSER-012-02-03
+                                                                       |
+                                                                       v
+                                                                 semantic_ready
+                                                                       |
+                                                                      STOP
+
+006-04 -------------------------+
+004-03 -> 007 -> 008 -----------+-> 009 -> 010 -> 011
+004-04 -------------------------+
 ```
 
 Dependencies are PASS gates: an `awaiting_review` predecessor is not permission to begin a dependent implementation.
@@ -150,4 +182,6 @@ Normal tests are deterministic or Compose-local. The local Docling tickets use r
 
 ## Completion and handoff
 
-The immediate executable milestone remains BSS-V2-004-02: Atlas accepts the IDSER D1 `NormalizedDocument v1`, then **STOP**. The productionization context freezes BSS-V2-004-03-01 through -07 as planned children, each requiring its own dependency PASS and explicit GO. The first five build and deterministically compose provider-neutral extraction; -06 is the only live qualification; -07 releases the D1 stop only after qualification and CK PASS, then **STOP BEFORE RECONCILIATION**. The historical Gemini mega-ticket remains superseded evidence. BSS-V2-004-04, BSS-V2-005 and later operational contracts remain separate and are not regenerated/frozen by this set. The broader BSS V2 phase later requires separately qualified external semantic routes plus capacity/admission, telemetry/cost, privacy, fallback, Compose and restricted-role controls; no ticket here grants full live IDSER acceptance.
+The accepted Docling milestone remains BSS-V2-004-02: Atlas accepts `NormalizedDocument v1`, then stops. BSS-V2-004-03-01 through -05 build the provider-neutral semantic route and -06 remains its only live qualification gate. The former -07 direct continuation is superseded before implementation.
+
+BSS-V2-005 now ends at an immutable active DesiredAdmissionProfile and performs no runtime admission. BSS-V2-006 then proves the reusable durable provider-admission authority without implementing a product consumer. IDSER-012-02 is the first production consumer after local `perceived` and semantic qualification gates pass; it stops at durable `semantic_ready` before reconciliation. BSS-V2-007 and later operational tickets may consume the new seams but are not expanded by this planning context. No generated ticket grants full IDSER, reconciliation, CES, chat, review, publication, billing, privacy, or fallback acceptance.

@@ -5,10 +5,11 @@
   approved at `9b36ee8`, IDSER-005 at `2707518`, IDSER-006 at `266f5a3`, and
   IDSER-007 at `c890410`, IDSER-008 at `ec1e973`, IDSER-009-02 at `64f7072`,
   IDSER-009-03 at `2a6a8f0`, and IDSER-009-04 at `286eaee`.
-- **Prefix:** `IDSER`; one bounded executable ticket per `IDSER-BATCH-XX`.
-  IDSER-009, IDSER-010 and IDSER-011 are umbrella partition records, not executable GO
+- **Prefix:** `IDSER`; one bounded executable ticket per review batch.
+  IDSER-009, IDSER-010, IDSER-011, IDSER-012, IDSER-012-01 and IDSER-012-02 are umbrella partition records, not executable GO
   targets; their child batches carry implementation and proof authority.
 - **Primary baseline:** [Initial Draft implementation context](../../atlas-initial-draft-semantic-extraction-reconciliation-implementation-context.md), sections 1-45, AC-01 through AC-44.
+- **Staged pipeline planning authority:** [Provider admission and staged semantic pipeline context](../../atlas-provider-admission-staged-semantic-pipeline-implementation-context.md), which supersedes the earlier staged-worker context where they conflict.
 - **Hard predecessor:** [PCC-006](../Project_Cards_Phase/PCC-006-project-card-creation-e2e-and-regression-checkpoint.md) `PASS`; the [PCC set](../Project_Cards_Phase/README.md) remains frozen.
 - **Planning inspection:** branch `codex/new-atlas-backend`, HEAD `1e2fb34db561f8b27d4a284ad2db2dba4b8ff183`, 2026-10-01. IDSER-011 was repartitioned against BSS-008/009, actual worker/provider/Atlas seams, the approved IDSER-010 series and current Compose harnesses.
 
@@ -26,6 +27,8 @@ PCC intake -> all DocumentStore writes -> one Atlas transaction + first job
  -> reconciliation -> validation/relationships -> D1 completed
  -> D2 ... DN -> completion validation -> Ready for review -> STOP
 ```
+
+That sequence remains historical authority for its reviewed implementation. For explicitly versioned future staged-policy bundles, IDSER-012 amends only the execution order: bundle-fair local perception stops each document at `perceived`, shared BSS-V2-005/006 admission governs bounded semantic batches, and one accepted document result stops at `semantic_ready` before any later reconciliation redesign. Legacy bundles are not silently adopted.
 
 Documents remain immutable evidence; Mistral reasons through Agents Bridge;
 pg-boss schedules; Atlas authorizes context, validates results, persists state,
@@ -94,6 +97,14 @@ documents do not authorize starting implementation automatically.
 | 25 | [IDSER-011-02](IDSER-011-02-live-first-document-production-path.md) / IDSER-BATCH-11-02 | IDSER-011-01 | D1 real OCR, semantic path, authenticated acceptance and persistence |
 | 26 | [IDSER-011-03](IDSER-011-03-live-incremental-sequencing-context.md) / IDSER-BATCH-11-03 | IDSER-011-02 | D2 real sequencing and Atlas-authorized bounded prior context |
 | 27 | [IDSER-011-04](IDSER-011-04-integrated-live-acceptance-checkpoint.md) / IDSER-BATCH-11-04 | IDSER-011-01, IDSER-011-02, IDSER-011-03 | Final Scenario I, lifecycle/card, AC-41–44 and negative-authority composition |
+| 28 | [IDSER-012](IDSER-012-staged-worker-pipeline-realignment.md) / umbrella | frozen historical IDSER behavior plus accepted BSS/Docling boundaries | Non-executable staged perception/provider-admitted semantic lifecycle amendment |
+| 29 | [IDSER-012-01](IDSER-012-01-fair-bounded-local-docling-perception.md) / umbrella | IDSER-012 | Non-executable local-perception partition |
+| 30 | [IDSER-012-01-01](IDSER-012-01-01-staged-fair-local-perception-admission-and-cutover.md) / IDSER-BATCH-12-01-01 | approved BSS-006, BSS-009/01/02, BSS-V2-004-01/02, IDSER-003/008/010-04/05 | Staged cutover, durable bundle fairness, JIT grants, and a race-safe two-permit Atlas gate |
+| 31 | [IDSER-012-01-02](IDSER-012-01-02-two-worker-docling-perception-composition.md) / IDSER-BATCH-12-01-02 | IDSER-012-01-01 CK PASS | Effective 2/2/2 local profile, accepted NormalizedDocument v1, and durable `perceived` stop |
+| 32 | [IDSER-012-02](IDSER-012-02-provider-admitted-multi-batch-semantic-extraction.md) / umbrella | IDSER-012-01-02; all BSS-V2-005/006 children; qualified BSS-V2-004 semantic route | Non-executable provider-admitted semantic partition; supersedes old BSS-V2-004-03-07 direct continuation |
+| 33 | [IDSER-012-02-01](IDSER-012-02-01-deterministic-semantic-batch-planning.md) / IDSER-BATCH-12-02-01 | IDSER-012-01-02; BSS-V2-004-03-01/02/03/05; BSS-V2-005/006 contracts CK PASS | Deterministic complete batch plan and per-request resource envelopes; no provider call |
+| 34 | [IDSER-012-02-02](IDSER-012-02-02-provider-admitted-semantic-batch-execution.md) / IDSER-BATCH-12-02-02 | IDSER-012-02-01; BSS-V2-006-04; BSS-V2-004-03-06 qualification PASS | BSS-V2-006-admitted provider-neutral batch execution and fenced staging |
+| 35 | [IDSER-012-02-03](IDSER-012-02-03-semantic-document-aggregation-ready-stop.md) / IDSER-BATCH-12-02-03 | IDSER-012-02-02 CK PASS | Exact aggregation, once-only Atlas acceptance, and durable `semantic_ready` stop with no reconciliation |
 
 Intermediate tickets are composable implementation checkpoints, not independent
 production rollouts. Route/worker tests may inject explicit bounded test doubles
@@ -101,6 +112,35 @@ for not-yet-implemented handlers. Production wiring must fail closed for an
 unavailable handler; it must never acknowledge, fabricate completion, consume
 work through TestRuntime, or mark a bundle ready. Cross-ticket activation and
 full pipeline proof are required by IDSER-008/010/011.
+
+## IDSER-012 staged dependency graph
+
+```text
+IDSER-012-01-01 -> IDSER-012-01-02 -> perceived NormalizedDocument v1 --+
+                                                                        |
+BSS-V2-005-01 -> -02 -> -03 -> -04                                     |
+                              |                                         |
+                              v                                         |
+BSS-V2-006-01 -> -02 -> -03 -> -04 ------------------------------------+
+                                                                        |
+BSS-V2-004-03-04 -> -05 -> -06 qualification PASS ---------------------+
+                                                                        |
+                                                                        v
+                                                             IDSER-012-02-01
+                                                                        |
+                                                                        v
+                                                             IDSER-012-02-02
+                                                                        |
+                                                                        v
+                                                             IDSER-012-02-03
+                                                                        |
+                                                                        v
+                                                                  semantic_ready
+                                                                        |
+                                                                       STOP
+```
+
+The old unimplemented BSS-V2-004-03-07 direct continuation is superseded before implementation and is not an executable predecessor. Reconciliation ready-order/keyed-writer work remains a later IDSER scope.
 
 ## Inspected implementation and planning decisions
 
@@ -242,8 +282,4 @@ review evidence. Use synthetic/non-confidential PDFs.
 
 ## Completion
 
-All twenty-two executable checkpoints must pass. The final system must reach review-ready state
-through both deterministic Compose tests and a real Mistral run, preserving
-conflicts, evidence, stable IDs, replay safety and empty Master. A successful
-planning pass, mocked run, or ready worker health check alone does not complete
-the implementation phase.
+The existing IDSER-001 through IDSER-011 checkpoints retain their historical completion requirements. IDSER-012 adds five separately reviewed executable children: two local-perception checkpoints and three provider-admitted semantic checkpoints. The generated set is complete only after all five and their BSS-V2-005/006 dependency children receive CK `PASS`, ending at durable `semantic_ready` with no reconciliation job. A planning pass, mocked run, or ready worker health check alone does not complete implementation.
