@@ -145,6 +145,9 @@ test("IDSER-007 selects a stable incoming neighborhood and atomically advances o
     assert.equal((await atlas.unsafe("SELECT count(*)::int AS count FROM atlas.document_perception_execution WHERE artifact_id=$1", [second]))[0].count, 0, "no successor execution, grant, or job is created without a staged permit");
     await atlas.unsafe("UPDATE atlas.document_perception_execution SET state='completed' WHERE id IN ($1,$2)", [`reconciliation-capacity-1-${suffix}`, `reconciliation-capacity-2-${suffix}`]);
     assert.equal((await atlas.unsafe("SELECT count(*)::int AS count FROM atlas.document_perception_execution WHERE state NOT IN ('completed','cancelled','failed')"))[0].count, 0, "releasing both permits leaves the shared staged gate capacity available");
+    // The foreign bundle is also pending. Mark it as previously served so the
+    // deterministic never-served ordering selects this continuation first.
+    await atlas.unsafe("UPDATE atlas.extraction_bundle SET last_perception_admission_turn=0 WHERE id=$1", [foreignBundle]);
     await atlas.begin((sql) => perception.admitStagedInTransaction(sql, perceptionQueue));
     assert.equal((await atlas.unsafe("SELECT state FROM atlas.extraction_bundle_document WHERE bundle_id=$1 AND document_id=$2", [bundle, second]))[0].state, "perception_queued", "the shared staged gate admits the pending successor only after capacity opens");
     assert.equal((await atlas.unsafe("SELECT completed_document_count FROM atlas.extraction_bundle WHERE id=$1", [bundle]))[0].completed_document_count, 1);
