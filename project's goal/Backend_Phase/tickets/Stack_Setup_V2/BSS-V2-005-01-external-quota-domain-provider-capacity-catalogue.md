@@ -1,7 +1,8 @@
 # BSS-V2-005-01: External quota-domain and provider-capacity catalogue
 
-- **State:** `awaiting_review`
-- **Review batch:** `BSS-V2-BATCH-05-01`
+- **State:** `approved` following CK `PASS` for reviewed commit `e8fa864`; **Review batch:** `BSS-V2-BATCH-05-01`.
+- **GO checkpoint:** [BSS-V2-BATCH-05-01-go.md](../../../feedback/BSS-V2-BATCH-05-01-go.md).
+- **CK verification:** [BSS-V2-BATCH-05-01-e8fa864-verification.md](../../../feedback/BSS-V2-BATCH-05-01-e8fa864-verification.md).
 - **Dependencies:** BSS-V2-001/002 CK `PASS`; BSS-003 role/migration boundaries
 - **Parent:** [BSS-V2-005](BSS-V2-005-quota-domain-capacity-foundation.md)
 - **Planning authority:** [Provider admission/staged semantic context](../../atlas-provider-admission-staged-semantic-pipeline-implementation-context.md) §21.1
