@@ -1,6 +1,6 @@
 # BSS-V2-005-01: External quota-domain and provider-capacity catalogue
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `BSS-V2-BATCH-05-01`
 - **Dependencies:** BSS-V2-001/002 CK `PASS`; BSS-003 role/migration boundaries
 - **Parent:** [BSS-V2-005](BSS-V2-005-quota-domain-capacity-foundation.md)

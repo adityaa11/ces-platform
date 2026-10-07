@@ -15,6 +15,7 @@
     "test:perception-authority": "jiti tests/perception-authority.integration.test.ts",
     "test:project-repository": "jiti tests/project-repository.integration.test.ts",
     "test:staged-perception-admission": "jiti tests/staged-perception-admission.integration.test.ts",
+    "test:provider-capacity-catalogue": "jiti tests/provider-capacity-catalogue.integration.test.ts",
     "test:semantic-foundation": "jiti tests/semantic-foundation.integration.test.ts",
     "test:semantic-authority": "jiti tests/semantic-authority.integration.test.ts",
     "test:extraction-acceptance": "jiti tests/extraction-acceptance.integration.test.ts",
