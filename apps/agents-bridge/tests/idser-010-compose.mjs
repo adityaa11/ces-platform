@@ -107,11 +107,16 @@ const create = async (label, texts, projectName = `IDSER 010 ${label}`) => {
 let projects = [];
 try {
   await run([...compose, "down", "-v"], true);
-  await run([...compose, "up", "-d", "postgres", "--wait"]);
-  await run([...compose, "exec", "-T", "postgres", "psql", "-U", "atlas", "-d", "atlas_dev", "-c", "CREATE ROLE agents_bridge LOGIN PASSWORD 'agents_bridge_local_dev_only'; CREATE ROLE atlas_app LOGIN PASSWORD 'atlas_app_local_dev_only'; GRANT ALL ON DATABASE atlas_dev TO agents_bridge, atlas_app"]);
-  await run([...compose, "run", "--rm", "--no-deps", "--workdir", "/workspace/apps/agents-bridge", "agents-bridge-worker", "node", "-e", "import('pg-boss').then(async ({ PgBoss }) => { const boss = new PgBoss({ connectionString: process.env.AGENTS_BRIDGE_DATABASE_URL, schema: 'pgboss', migrate: true, createSchema: true }); await boss.start(); await boss.stop(); })"]);
-  await run([...compose, "exec", "-T", "postgres", "psql", "-U", "atlas", "-d", "atlas_dev", "-c", "GRANT USAGE ON SCHEMA pgboss TO atlas_app; GRANT SELECT ON ALL TABLES IN SCHEMA pgboss TO atlas_app"]);
-  await run([...compose, "up", "-d", "--build", "--wait"]);
+  // The production Compose path owns its database authority: the Atlas
+  // migration service applies roles/schema grants, then the Bridge bootstrap
+  // initializes pg-boss and applies its narrow queue grants.
+  // Do not manufacture broader test-only privileges here.
+  // Exercise the real transactional producer while the isolated queue is
+  // empty and before a worker can consume the observation rows. This verifies
+  // the production roles/grants, not a hand-crafted test privilege model.
+  await run([...compose, "up", "-d", "--build", "--wait", "atlas", "agents-bridge", "docling-serve", "mistral-mock"]);
+  await run([...compose, "exec", "-T", "atlas", "corepack", "pnpm", "--filter", "@atlas/db", "test:staged-perception-admission"]);
+  await run([...compose, "up", "-d", "--wait", "agents-bridge-worker"]);
   const composeHealth = await run([...compose, "ps", "--format", "json"]);
   process.stdout.write(`IDSER-010 Compose service health: ${composeHealth.trim()}\n`);
   if (stagedRegression) {

@@ -11,9 +11,10 @@ services:
       DOCLING_SERVE_SHOW_VERSION_INFO: "true"
       DOCLING_SERVE_WORKERS: "1"
       DOCLING_DEVICE: cpu
-      # One local conversion at a time avoids CPU oversubscription; four
-      # threads is the bounded qualification setting for local development.
-      DOCLING_LOCAL_CONVERSION_CONCURRENCY: "1"
+      # The ticket-qualified local profile is two Atlas permits, two Bridge
+      # perception consumers and two Docling conversions. Uvicorn stays a
+      # single process so this is not mistaken for process-worker capacity.
+      DOCLING_LOCAL_CONVERSION_CONCURRENCY: "2"
       DOCLING_CPU_THREAD_RATIONALE: bounded-four-threads-for-local-cpu-qualification
       OMP_NUM_THREADS: ${DOCLING_CPU_THREADS:-4}
       MKL_NUM_THREADS: ${DOCLING_CPU_THREADS:-4}
@@ -45,6 +46,38 @@ services:
       retries: 10
       start_period: 10s
 
+  atlas-migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    init: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-atlas}:${POSTGRES_PASSWORD:-atlas_local_dev_only}@postgres:5432/${POSTGRES_DB:-atlas_dev}
+      ATLAS_APP_PASSWORD: ${ATLAS_APP_PASSWORD:-atlas_app_local_dev_only}
+      AGENTS_BRIDGE_PASSWORD: ${AGENTS_BRIDGE_PASSWORD:-agents_bridge_local_dev_only}
+    command: ["sh", "-c", "exec corepack pnpm --filter @atlas/db migrate"]
+
+  agents-bridge-pgboss-bootstrap:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    init: true
+    depends_on:
+      atlas-migrate:
+        condition: service_completed_successfully
+    environment:
+      AGENTS_BRIDGE_DATABASE_URL: postgresql://agents_bridge:${AGENTS_BRIDGE_PASSWORD:-agents_bridge_local_dev_only}@postgres:5432/${POSTGRES_DB:-atlas_dev}
+      AGENTS_BRIDGE_BACKGROUND_WORKER_CONCURRENCY: ${AGENTS_BRIDGE_BACKGROUND_WORKER_CONCURRENCY:-1}
+      AGENTS_BRIDGE_PERCEPTION_WORKER_CONCURRENCY: ${AGENTS_BRIDGE_PERCEPTION_WORKER_CONCURRENCY:-2}
+      AGENTS_BRIDGE_JOB_TIMEOUT_SECONDS: ${AGENTS_BRIDGE_JOB_TIMEOUT_SECONDS:-30}
+      AGENTS_BRIDGE_JOB_RETRY_LIMIT: ${AGENTS_BRIDGE_JOB_RETRY_LIMIT:-2}
+      AGENTS_BRIDGE_JOB_RETRY_DELAY_SECONDS: ${AGENTS_BRIDGE_JOB_RETRY_DELAY_SECONDS:-1}
+      AGENTS_BRIDGE_WORKER_SHUTDOWN_TIMEOUT_MS: ${AGENTS_BRIDGE_WORKER_SHUTDOWN_TIMEOUT_MS:-15000}
+    command: ["node", "apps/agents-bridge/node_modules/jiti/lib/jiti-cli.mjs", "apps/agents-bridge/src/pg-boss-bootstrap.ts"]
+
   atlas:
     build:
       context: .
@@ -52,8 +85,8 @@ services:
     init: true
     restart: unless-stopped
     depends_on:
-      postgres:
-        condition: service_healthy
+      agents-bridge-pgboss-bootstrap:
+        condition: service_completed_successfully
     environment:
       ATLAS_DOCKER: "true"
       DATABASE_URL: postgresql://${POSTGRES_USER:-atlas}:${POSTGRES_PASSWORD:-atlas_local_dev_only}@postgres:5432/${POSTGRES_DB:-atlas_dev}
@@ -87,8 +120,8 @@ services:
     init: true
     restart: unless-stopped
     depends_on:
-      postgres:
-        condition: service_healthy
+      agents-bridge-pgboss-bootstrap:
+        condition: service_completed_successfully
     environment:
       AGENTS_BRIDGE_HOST: 0.0.0.0
       AGENTS_BRIDGE_PORT: 3002
@@ -143,7 +176,10 @@ services:
       AGENTS_BRIDGE_MAX_SOURCE_BYTES: ${AGENTS_BRIDGE_MAX_SOURCE_BYTES:-20971520}
       AGENTS_BRIDGE_MAX_RESULT_BYTES: ${AGENTS_BRIDGE_MAX_RESULT_BYTES:-10485760}
       AGENTS_BRIDGE_ATLAS_TIMEOUT_MS: ${AGENTS_BRIDGE_ATLAS_TIMEOUT_MS:-30000}
-      AGENTS_BRIDGE_WORKER_CONCURRENCY: ${AGENTS_BRIDGE_WORKER_CONCURRENCY:-2}
+      # Provider/background capacity is deliberately separate from local
+      # perception capacity; no shared Bridge worker knob is accepted here.
+      AGENTS_BRIDGE_BACKGROUND_WORKER_CONCURRENCY: ${AGENTS_BRIDGE_BACKGROUND_WORKER_CONCURRENCY:-1}
+      AGENTS_BRIDGE_PERCEPTION_WORKER_CONCURRENCY: ${AGENTS_BRIDGE_PERCEPTION_WORKER_CONCURRENCY:-2}
       AGENTS_BRIDGE_JOB_TIMEOUT_SECONDS: ${AGENTS_BRIDGE_JOB_TIMEOUT_SECONDS:-30}
       AGENTS_BRIDGE_JOB_RETRY_LIMIT: ${AGENTS_BRIDGE_JOB_RETRY_LIMIT:-2}
       AGENTS_BRIDGE_JOB_RETRY_DELAY_SECONDS: ${AGENTS_BRIDGE_JOB_RETRY_DELAY_SECONDS:-1}

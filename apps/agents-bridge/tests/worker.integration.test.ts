@@ -42,15 +42,16 @@ const waitFor = async (predicate: () => Promise<boolean>, timeoutMs = 10000): Pr
 test("worker configuration has bounded defaults and rejects unsafe values", () => {
   assert.deepEqual(loadWorkerConfig({ AGENTS_BRIDGE_DATABASE_URL: "postgresql://bridge@localhost/atlas" }), {
     databaseUrl: "postgresql://bridge@localhost/atlas",
-    concurrency: 2,
+    backgroundConcurrency: 1,
+    perceptionConcurrency: 2,
     timeoutSeconds: 30,
     retryLimit: 2,
     retryDelaySeconds: 1,
     shutdownTimeoutMilliseconds: 15000,
   });
   assert.throws(
-    () => loadWorkerConfig({ AGENTS_BRIDGE_DATABASE_URL: "postgresql://bridge@localhost/atlas", AGENTS_BRIDGE_WORKER_CONCURRENCY: "0" }),
-    /AGENTS_BRIDGE_WORKER_CONCURRENCY/,
+    () => loadWorkerConfig({ AGENTS_BRIDGE_DATABASE_URL: "postgresql://bridge@localhost/atlas", AGENTS_BRIDGE_PERCEPTION_WORKER_CONCURRENCY: "3" }),
+    /AGENTS_BRIDGE_PERCEPTION_WORKER_CONCURRENCY/,
   );
   assert.throws(
     () => loadWorkerConfig({ AGENTS_BRIDGE_DATABASE_URL: "postgresql://bridge@localhost/atlas", AGENTS_BRIDGE_WORKER_SHUTDOWN_TIMEOUT_MS: "15001" }),
@@ -95,7 +96,8 @@ test("pg-boss commits enqueueing atomically, retries idempotently, and releases 
   };
   const config: WorkerConfig = {
     databaseUrl: bridgeUrl.toString(),
-    concurrency: 1,
+    backgroundConcurrency: 1,
+    perceptionConcurrency: 1,
     timeoutSeconds: 5,
     retryLimit: 1,
     retryDelaySeconds: 1,

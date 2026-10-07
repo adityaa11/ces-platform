@@ -122,17 +122,21 @@ export class PostgresPerceptionAuthority implements PerceptionAuthority {
   }
 
   async deliver(request: DocumentPerceptionRequest, result: NormalizedDocument): Promise<void> {
-    if (result.executionId !== request.executionId || result.provider.executionId !== request.executionId || result.artifactId !== request.artifact.id || result.sourceSha256 !== request.artifact.sourceSha256 || result.perception.capability !== request.perception.capability || result.perception.contractVersion !== request.perception.contractVersion) throw new Error("Perception result does not match its execution identity.");
+    // The Compose route is untrusted at this boundary. Re-parse even when the
+    // TypeScript caller claims this is a NormalizedDocument so persistence can
+    // never accept a structurally invalid result through an internal caller.
+    const accepted = parseNormalizedDocument(result);
+    if (accepted.executionId !== request.executionId || accepted.provider.executionId !== request.executionId || accepted.artifactId !== request.artifact.id || accepted.sourceSha256 !== request.artifact.sourceSha256 || accepted.perception.capability !== request.perception.capability || accepted.perception.contractVersion !== request.perception.contractVersion) throw new Error("Perception result does not match its execution identity.");
     const grantId = this.grants.verify(request.source.grant);
-    const digest = fingerprint(result);
+    const digest = fingerprint(accepted);
     await this.sql.begin(async (sql) => {
       const rows = await sql.unsafe("SELECT e.state, e.capability_identity, e.completion_fingerprint FROM atlas.document_perception_source_grant g JOIN atlas.document_perception_execution e ON e.id=g.execution_id WHERE g.grant_id=$1 AND g.execution_id=$2 AND g.artifact_id=$3 AND g.source_sha256=$4 AND g.mime_type=$5 AND g.byte_size=$6 AND g.expires_at>now() FOR UPDATE OF e", [grantId, request.executionId, request.artifact.id, request.artifact.sourceSha256, request.artifact.mimeType, request.artifact.byteSize]);
       if (!rows.length || rows[0].state === "cancelled" || rows[0].state === "failed") throw new Error("Perception result is stale or unauthorized.");
       if (rows[0].state === "completed") { if (rows[0].completion_fingerprint === digest) return; throw new Error("Perception result conflicts with completed execution."); }
       const identity = String(rows[0].capability_identity);
-      const key = cacheKey(result.sourceSha256, result.perception.contractVersion, result.perception.capability, identity);
-      const assets = result.pages.flatMap((page) => page.visualRegions.flatMap((region) => region.assetRef ? [region.assetRef] : []));
-      await sql.unsafe("INSERT INTO atlas.normalized_document_cache (cache_key, source_sha256, contract_version, capability, capability_identity, normalized_document, derived_assets) VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7::jsonb) ON CONFLICT (cache_key) DO UPDATE SET normalized_document=EXCLUDED.normalized_document, derived_assets=EXCLUDED.derived_assets, invalidated_at=NULL", [key, result.sourceSha256, result.perception.contractVersion, result.perception.capability, identity, JSON.stringify(result), JSON.stringify(assets)]);
+      const key = cacheKey(accepted.sourceSha256, accepted.perception.contractVersion, accepted.perception.capability, identity);
+      const assets = accepted.pages.flatMap((page) => page.visualRegions.flatMap((region) => region.assetRef ? [region.assetRef] : []));
+      await sql.unsafe("INSERT INTO atlas.normalized_document_cache (cache_key, source_sha256, contract_version, capability, capability_identity, normalized_document, derived_assets) VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7::jsonb) ON CONFLICT (cache_key) DO UPDATE SET normalized_document=EXCLUDED.normalized_document, derived_assets=EXCLUDED.derived_assets, invalidated_at=NULL", [key, accepted.sourceSha256, accepted.perception.contractVersion, accepted.perception.capability, identity, JSON.stringify(accepted), JSON.stringify(assets)]);
       for (const asset of assets) await sql.unsafe("INSERT INTO atlas.document_perception_derived_asset (id, cache_key, asset_ref) VALUES ($1,$2,$3) ON CONFLICT (cache_key, asset_ref) DO NOTHING", [randomUUID(), key, asset]);
       // IDSER-006 couples accepted perception, the extraction authority record,
       // and its pg-boss handoff in this one transaction.
@@ -144,6 +148,11 @@ export class PostgresPerceptionAuthority implements PerceptionAuthority {
         // enter the historical semantic continuation; the next ticket owns
         // the accepted `perceived` terminal state and worker composition.
         if (policy[0]?.perception_admission_policy === "staged-fair-local-v1") {
+          // This child is the terminal local-perception composition.  The
+          // normalized cache and execution complete atomically, but member
+          // lifecycle stops at perceived; semantic execution is explicitly a
+          // later-ticket concern.
+          await sql.unsafe("UPDATE atlas.extraction_bundle_document SET state='perceived', completed_at=now() WHERE bundle_id=$1 AND document_id=$2 AND perception_execution_id=$3 AND state IN ('perception_queued','perceiving')", [bundle.bundle_id, request.artifact.id, request.executionId]);
           await sql.unsafe("UPDATE atlas.document_perception_execution SET state='completed', completion_fingerprint=$2, updated_at=now() WHERE id=$1 AND state NOT IN ('completed','cancelled','failed')", [request.executionId, digest]);
           return;
         }

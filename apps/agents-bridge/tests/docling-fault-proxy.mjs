@@ -2,6 +2,12 @@ import http from "node:http";
 
 const upstream = process.env.DOCLING_FAULT_UPSTREAM ?? "http://docling-serve:5001";
 let mode = "pass";
+let holdConversions = false;
+let releaseCount = 0;
+let calls = 0;
+let active = 0;
+let peakActive = 0;
+let upstreamCalls = 0;
 
 const json = (response, status, body) => {
   response.writeHead(status, { "content-type": "application/json" });
@@ -21,11 +27,13 @@ const server = http.createServer(async (request, response) => {
     const chunks = [];
     for await (const chunk of request) chunks.push(chunk);
     const next = JSON.parse(Buffer.concat(chunks).toString("utf8"));
-    if (typeof next.mode !== "string") return json(response, 400, { error: "mode is required" });
-    mode = next.mode;
-    return json(response, 200, { mode });
+    if (typeof next.mode === "string") mode = next.mode;
+    if (typeof next.holdConversions === "boolean") holdConversions = next.holdConversions;
+    if (Number.isInteger(next.releaseCount) && next.releaseCount >= 0) releaseCount = next.releaseCount;
+    if (next.resetMetrics === true) { calls = 0; active = 0; peakActive = 0; upstreamCalls = 0; }
+    return json(response, 200, { mode, holdConversions, releaseCount, calls, active, peakActive, upstreamCalls });
   }
-  if (url.pathname === "/__fault") return json(response, 200, { mode });
+  if (url.pathname === "/__fault") return json(response, 200, { mode, holdConversions, releaseCount, calls, active, peakActive, upstreamCalls });
 
   const conversion = url.pathname === "/v1/convert/file";
   const readiness = url.pathname === "/health" || url.pathname === "/ready";
@@ -43,11 +51,20 @@ const server = http.createServer(async (request, response) => {
   try {
     const chunks = [];
     for await (const chunk of request) chunks.push(chunk);
+    if (conversion) { calls += 1; active += 1; peakActive = Math.max(peakActive, active); }
+    upstreamCalls += conversion ? 1 : 0;
     const upstreamResponse = await fetch(`${upstream}${url.pathname}${url.search}`, { method: request.method, headers: Object.fromEntries(Object.entries(request.headers).filter(([name]) => name !== "host")), body: chunks.length ? Buffer.concat(chunks) : undefined, duplex: "half" });
+    // This test-only proxy holds the real upstream response after the request
+    // reached Docling.  It lets the Compose worker prove bounded in-flight
+    // delivery without replacing or faking the Docling conversion.
+    while (conversion && holdConversions && releaseCount <= 0) await new Promise((resolve) => setTimeout(resolve, 25));
+    if (conversion && holdConversions && releaseCount > 0) releaseCount -= 1;
     response.writeHead(upstreamResponse.status, Object.fromEntries(upstreamResponse.headers));
     response.end(Buffer.from(await upstreamResponse.arrayBuffer()));
   } catch (error) {
     json(response, 502, { error: error instanceof Error ? error.message : "upstream failed" });
+  } finally {
+    if (conversion) active = Math.max(0, active - 1);
   }
 });
 

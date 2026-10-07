@@ -30,5 +30,5 @@ services:
       DOCLING_ALLOW_TEST_FAULT_PROXY: "true"
       # CFC-only: shorten only the per-request fault deadline.  Retry count
       # and backoff deliberately inherit the production Compose defaults.
-      DOCLING_TIMEOUT_MS: "5000"
+      DOCLING_TIMEOUT_MS: ${DOCLING_TIMEOUT_MS:-5000}
       AGENTS_BRIDGE_ATLAS_URL: http://atlas-fault:3001

@@ -13,11 +13,42 @@ export type BackgroundWorker = {
 };
 
 /**
+ * Bridge owns pg-boss tables and the deliberately narrow Atlas queue grants.
+ * Compose invokes this before Atlas opens its transactional producer, and the
+ * long-running worker reapplies it at every start so its effective queue
+ * policy remains observable and durable.
+ */
+export async function initializePgBossInfrastructure(boss: PgBoss, config: WorkerConfig, queueName = backgroundExecutionQueue, perceptionQueueName = documentPerceptionQueue, includePerceptionQueue = true): Promise<void> {
+  const queueOptions = {
+    retryLimit: config.retryLimit,
+    retryDelay: config.retryDelaySeconds,
+    retryBackoff: true,
+    expireInSeconds: config.timeoutSeconds,
+  };
+  await boss.createQueue(queueName, queueOptions);
+  await boss.updateQueue(queueName, queueOptions);
+  if (includePerceptionQueue) {
+    await boss.createQueue(perceptionQueueName, queueOptions);
+    await boss.updateQueue(perceptionQueueName, queueOptions);
+  }
+  await boss.getDb().executeSql("GRANT SELECT ON TABLE pgboss.version, pgboss.queue TO atlas_app");
+  // pg-boss 12 routes active queues through the partitioned `job` table;
+  // `job_common` remains present for compatibility. Its transactional send
+  // plan reads the relation while resolving a singleton insert, so Atlas gets
+  // read/insert access only--never queue management or job lifecycle writes.
+  await boss.getDb().executeSql("GRANT INSERT ON TABLE pgboss.job, pgboss.job_common TO atlas_app");
+  await boss.getDb().executeSql("GRANT SELECT ON TABLE pgboss.job TO atlas_app");
+  await boss.getDb().executeSql("GRANT SELECT (id) ON TABLE pgboss.job, pgboss.job_common TO atlas_app");
+}
+
+/**
  * The Bridge can execute perception only through an injected bounded handoff.
  * It deliberately has no Atlas repository or cache dependency.
  */
 export type DocumentPerceptionQueueHandler = (request: DocumentPerceptionRequest, signal: AbortSignal, context: { readonly idempotencyKey: string; readonly database: Db; readonly finalAttempt: boolean }) => Promise<void>;
 export type SemanticQueueHandler = (job: ReturnType<typeof parseSemanticBackgroundJob>, signal: AbortSignal, context: { readonly idempotencyKey: string; readonly database: Db; readonly leaseOwner: string; readonly leaseGeneration: number }) => Promise<void>;
+
+const wait = (milliseconds: number) => new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
 
 async function executeOnce(idempotencyKey: string, executionId: string, leaseSeconds: number, work: (lease: { readonly owner: string; readonly generation: number }) => Promise<void>, database: Db, afterCompletion?: (lease: { readonly owner: string; readonly generation: number }) => Promise<void>): Promise<void> {
   const owner = randomUUID();
@@ -26,14 +57,24 @@ async function executeOnce(idempotencyKey: string, executionId: string, leaseSec
     [idempotencyKey, executionId, owner, leaseSeconds],
   );
   if (!effect.rows.length) {
-    const existing = await database.executeSql("SELECT execution_id, status, lease_owner, lease_generation FROM bridge.background_effects WHERE idempotency_key = $1", [idempotencyKey]);
-    const current = existing.rows[0] as { execution_id: string; status: string; lease_owner: unknown; lease_generation: unknown } | undefined;
+    const existing = await database.executeSql("SELECT execution_id, status, lease_owner, lease_generation, GREATEST(0, CEIL(EXTRACT(EPOCH FROM lease_expires_at - now()) * 1000))::int AS retry_after_ms FROM bridge.background_effects WHERE idempotency_key = $1", [idempotencyKey]);
+    const current = existing.rows[0] as { execution_id: string; status: string; lease_owner: unknown; lease_generation: unknown; retry_after_ms: unknown } | undefined;
     if (current && current.execution_id !== executionId) throw new Error("Background idempotency key conflicts with an existing execution identity.");
     // Completion can commit before replay cleanup. If cleanup then faults, a
     // pg-boss retry must use the completed claimant's persisted fence rather
     // than treating the already-completed effect as a no-op forever.
     if (current?.status === "completed" && afterCompletion && typeof current.lease_owner === "string" && Number.isInteger(Number(current.lease_generation))) {
       await afterCompletion({ owner: current.lease_owner, generation: Number(current.lease_generation) });
+    }
+    // pg-boss can retry a job after a worker restart before that worker's
+    // durable execution lease expires. Treating that early replay as success
+    // strands the effect once the lease later expires: pg-boss has no job
+    // left to reclaim it. Wait only for the authoritative lease window, then
+    // claim through the same fenced INSERT/UPDATE path. A live predecessor
+    // can still complete first, in which case the recursive call is a no-op.
+    if (current?.status === "running" && Number.isSafeInteger(Number(current.retry_after_ms)) && Number(current.retry_after_ms) > 0) {
+      await wait(Number(current.retry_after_ms) + 25);
+      await executeOnce(idempotencyKey, executionId, leaseSeconds, work, database, afterCompletion);
     }
     return;
   }
@@ -63,7 +104,7 @@ export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningR
     connectionString: config.databaseUrl,
     schema: "pgboss",
     application_name: "agents-bridge-worker",
-    max: config.concurrency + 4,
+    max: Math.max(config.backgroundConcurrency, config.perceptionConcurrency) + 4,
     schedule: false,
     migrate: true,
     createSchema: false,
@@ -73,26 +114,14 @@ export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningR
     boss,
     async start() {
       await boss.start();
-      const queueOptions = {
-        retryLimit: config.retryLimit,
-        retryDelay: config.retryDelaySeconds,
-        retryBackoff: true,
-        expireInSeconds: config.timeoutSeconds,
-      };
-      await boss.createQueue(queueName, queueOptions);
-      // createQueue deliberately preserves an existing queue. Reapply policy on
-      // every worker start so deployed configuration changes are effective.
-      await boss.updateQueue(queueName, queueOptions);
-      await boss.getDb().executeSql("GRANT SELECT ON TABLE pgboss.version, pgboss.queue TO atlas_app");
-      await boss.getDb().executeSql("GRANT INSERT ON TABLE pgboss.job_common TO atlas_app");
-      await boss.getDb().executeSql("GRANT SELECT (id) ON TABLE pgboss.job_common TO atlas_app");
-      const workOptions = {
+      await initializePgBossInfrastructure(boss, config, queueName, perceptionQueueName, Boolean(documentPerception));
+      const backgroundWorkOptions = {
         transactional: false,
         includeMetadata: true as const,
-        localConcurrency: config.concurrency,
+        localConcurrency: config.backgroundConcurrency,
         pollingIntervalSeconds: 0.5,
       };
-      await boss.work(queueName, workOptions, async ([job]) => {
+      await boss.work(queueName, backgroundWorkOptions, async ([job]) => {
         const signal = AbortSignal.any([job.signal, shutdown.signal]);
         const backgroundJob = parseBackgroundExecutionJob(job.data);
         const isSemantic = backgroundJob.execution.skill.id.startsWith("atlas.semantic.");
@@ -116,9 +145,8 @@ export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningR
           : undefined);
       });
       if (documentPerception) {
-        await boss.createQueue(perceptionQueueName, queueOptions);
-        await boss.updateQueue(perceptionQueueName, queueOptions);
-        await boss.work(perceptionQueueName, workOptions, async ([job]) => {
+        const perceptionWorkOptions = { ...backgroundWorkOptions, localConcurrency: config.perceptionConcurrency };
+        await boss.work(perceptionQueueName, perceptionWorkOptions, async ([job]) => {
           const perceptionJob = parseDocumentPerceptionJob(job.data);
           const cleanup = () => boss.getDb().executeSql("DELETE FROM bridge.document_perception_result_delivery WHERE idempotency_key=$1 AND execution_id=$2", [perceptionJob.idempotencyKey, perceptionJob.request.executionId]).then(() => undefined);
           await executeOnce(perceptionJob.idempotencyKey, perceptionJob.request.executionId, config.timeoutSeconds, () => documentPerception(perceptionJob.request, job.signal, { idempotencyKey: perceptionJob.idempotencyKey, database: boss.getDb(), finalAttempt: job.retryCount >= job.retryLimit }), boss.getDb(), cleanup);

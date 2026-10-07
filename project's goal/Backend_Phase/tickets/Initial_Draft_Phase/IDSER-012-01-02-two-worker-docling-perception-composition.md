@@ -1,6 +1,6 @@
 # IDSER-012-01-02: Two-worker Docling perception composition and terminal NormalizedDocument v1
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `IDSER-BATCH-12-01-02`
 - **Dependencies:** IDSER-012-01-01 CK `PASS`; approved BSS-V2-004-01/02
 - **Parent:** [IDSER-012-01](IDSER-012-01-fair-bounded-local-docling-perception.md)
@@ -52,3 +52,31 @@ Run real warm two-concurrent repository-approved digital PDFs plus A/B/C lifecyc
 ## Workflow evidence
 
 Implementation must close every Review Contract row, record exact Compose health, image/profile identity, commands/counts, scoped DB/queue observations, and redacted resource evidence in a compact closure ledger, then reach `READY_FOR_CK`. This ticket grants no GO by itself.
+
+## Review Contract Closure
+
+| Row | Ticket authority and required proof | Evidence / validation | Status |
+| --- | --- | --- | --- |
+| RC-0120102-01 | Outcome and RC-01: effective profile is 2 Atlas permits / 2 Bridge perception consumers / 2 Docling local conversions / 1 Uvicorn worker; invalid profile fails. | `node apps/agents-bridge/tests/idser-012-01-02-qualification.mjs` (fresh isolated Compose) inspected `DOCLING_SERVE_WORKERS=1`, `DOCLING_LOCAL_CONVERSION_CONCURRENCY=2`, CPU-only and remote-services-disabled environment; Bridge profile was background 1 / perception 2; an attempted perception concurrency of 3 was rejected. | PROVEN |
+| RC-0120102-02 | RC-02: two real Docling calls may be held, with a third unadmitted until terminal release. | Qualification held two real upstream conversions: Atlas nonterminal 2, pg-boss active 2, proxy active/peak 2. The third member had no execution, grant, or job; one terminal completion refilled it while peak remained 2. | PROVEN |
+| RC-0120102-03 | RC-03: one parser-valid `NormalizedDocument v1`, durable `perceived`, processing card/read lifecycle, and no semantic execution/job. | Qualification observed each held success at `perceived` + completed perception, one accepted cache/result, parser-valid `v1` pages, bundle `processing`, and zero semantic executions/jobs. `tests/perception-integration.test.ts` and `tests/perception-negative.integration.test.ts` also passed. | PROVEN |
+| RC-0120102-04 | RC-04: acknowledgement loss, duplicate delivery, restart, terminal failure, and refill preserve once-only effects. | Qualification replayed acknowledgement loss then duplicate delivery with unchanged fingerprint and admission turn (5 -> 5); restart held at most two nonterminal executions and all three items converged; controlled terminal failure left exactly one `needs_attention` member and one unadmitted pending member, then a healthy bundle refilled to `perceived`. The isolated `test:staged-perception-admission` suite and worker atomicity integration passed. | PROVEN |
+| RC-0120102-05 | RC-05: approved PDFs stay materially deterministic under the exact profile, within warm-route boundary, with resource and infrastructure observations. | Qualification matched normalized material hashes for sequential and concurrent controls. Sequential durations were 4439ms/4720ms; concurrent calls were 4876ms/5088ms with 5089ms wall time and peak 2. Container observations show the private Docling service only; CUDA was unavailable. | PROVEN |
+
+Validation executed:
+
+```text
+node apps/agents-bridge/tests/idser-012-01-02-qualification.mjs
+docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/agents-bridge typecheck
+docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/db typecheck
+docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/db migration:check
+docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/agents-bridge exec jiti tests/worker.integration.test.ts
+docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/agents-bridge exec jiti tests/perception-integration.test.ts
+docker compose run --rm --build --no-deps atlas corepack pnpm --filter @atlas/agents-bridge exec jiti tests/perception-negative.integration.test.ts
+POSTGRES_PORT=15432 docker compose -p idser012-regression -f docker-compose.yml ... test:staged-perception-admission
+git diff --check
+```
+
+All listed commands passed. The staged-admission regression used a fresh Compose PostgreSQL volume and Bridge bootstrap so the singleton two-permit gate could not be affected by development-stack work.
+
+Internal readiness: READY_FOR_CK

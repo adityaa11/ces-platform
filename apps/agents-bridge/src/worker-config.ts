@@ -1,6 +1,9 @@
 export type WorkerConfig = {
   readonly databaseUrl: string;
-  readonly concurrency: number;
+  /** Unrelated background/provider work. It must not consume local Docling slots. */
+  readonly backgroundConcurrency: number;
+  /** The only Bridge limit for Atlas local document perception. */
+  readonly perceptionConcurrency: number;
   readonly timeoutSeconds: number;
   readonly retryLimit: number;
   readonly retryDelaySeconds: number;
@@ -18,7 +21,8 @@ export function loadWorkerConfig(environment: NodeJS.ProcessEnv = process.env): 
   if (!databaseUrl) throw new Error("AGENTS_BRIDGE_DATABASE_URL is required for the Bridge worker.");
   return {
     databaseUrl,
-    concurrency: boundedInteger(environment.AGENTS_BRIDGE_WORKER_CONCURRENCY, 2, "AGENTS_BRIDGE_WORKER_CONCURRENCY", 1, 16),
+    backgroundConcurrency: boundedInteger(environment.AGENTS_BRIDGE_BACKGROUND_WORKER_CONCURRENCY, 1, "AGENTS_BRIDGE_BACKGROUND_WORKER_CONCURRENCY", 1, 16),
+    perceptionConcurrency: boundedInteger(environment.AGENTS_BRIDGE_PERCEPTION_WORKER_CONCURRENCY, 2, "AGENTS_BRIDGE_PERCEPTION_WORKER_CONCURRENCY", 1, 2),
     timeoutSeconds: boundedInteger(environment.AGENTS_BRIDGE_JOB_TIMEOUT_SECONDS, 30, "AGENTS_BRIDGE_JOB_TIMEOUT_SECONDS", 5, 300),
     retryLimit: boundedInteger(environment.AGENTS_BRIDGE_JOB_RETRY_LIMIT, 2, "AGENTS_BRIDGE_JOB_RETRY_LIMIT", 0, 10),
     retryDelaySeconds: boundedInteger(environment.AGENTS_BRIDGE_JOB_RETRY_DELAY_SECONDS, 1, "AGENTS_BRIDGE_JOB_RETRY_DELAY_SECONDS", 1, 60),

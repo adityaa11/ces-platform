@@ -24,12 +24,21 @@ export type TransactionalQueueProducer = {
  * preventing Drizzle setup from mutating the caller's JSON serializers.
  */
 function drizzleTransaction(transaction: unknown): DrizzleTransactionLike {
-  const client = transaction as { unsafe(query: string, params?: readonly unknown[]): unknown };
+  const candidate = transaction as {
+    unsafe?: (query: string, params?: readonly unknown[]) => unknown;
+    session?: { client?: { unsafe?: (query: string, params?: readonly unknown[]) => unknown } };
+  };
+  // Queue producers are called from a Drizzle transaction. Its postgres.js
+  // client remains on the session, so unwrap only that client and retain the
+  // caller's transaction connection for pg-boss's enqueue statement.
+  const client = typeof candidate.unsafe === "function" ? candidate : candidate.session?.client;
+  if (!client || typeof client.unsafe !== "function") throw new Error("Transactional queue requires a postgres.js transaction client.");
+  const unsafe = client.unsafe.bind(client);
   const options = { parsers: {} as Record<string, unknown>, serializers: {} as Record<string, unknown> };
   const adapter = new Proxy(client, {
     get(target, property, receiver) {
       if (property === "options") return options;
-      if (property === "unsafe") return (query: string, params: readonly unknown[] = []) => target.unsafe(query, params);
+      if (property === "unsafe") return (query: string, params: readonly unknown[] = []) => unsafe(query, params);
       return Reflect.get(target, property, receiver);
     },
   });

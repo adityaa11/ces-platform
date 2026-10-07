@@ -8,7 +8,7 @@ type Sql = { unsafe(query: string, parameters?: readonly unknown[]): Promise<rea
 export type PerceptionKickoffQueue = { enqueue(transaction: Sql, job: { readonly idempotencyKey: string; readonly request: DocumentPerceptionRequest }): Promise<string | null> };
 
 const bundleStates = new Set<ExtractionBundleState>(["waiting", "processing", "ready_for_review", "needs_attention"]);
-const memberStates = new Set<ExtractionBundleDocumentState>(["pending", "perception_queued", "perceiving", "extracting", "reconciling", "completed", "needs_attention"]);
+const memberStates = new Set<ExtractionBundleDocumentState>(["pending", "perception_queued", "perceiving", "perceived", "extracting", "reconciling", "completed", "needs_attention"]);
 const integer = (value: unknown): number | null => {
   const parsed = typeof value === "number" ? value : Number(value);
   return Number.isSafeInteger(parsed) ? parsed : null;

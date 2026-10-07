@@ -19,7 +19,8 @@ if (!bridgeUrl || !databaseUrl || !appPassword) throw new Error("Compose reconci
 const runtime: ReasoningRuntime = { async *execute() { yield { type: "complete" }; } };
 const worker = createBackgroundWorker({
   databaseUrl: bridgeUrl,
-  concurrency: 1,
+  backgroundConcurrency: 1,
+  perceptionConcurrency: 1,
   timeoutSeconds: 15,
   retryLimit: 2,
   retryDelaySeconds: 1,

@@ -119,7 +119,7 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
   await admin.unsafe(`CREATE SEQUENCE ${cleanupFault} START 1`);
   await admin.unsafe(`CREATE FUNCTION ${cleanupFault}_fn() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public AS $$ BEGIN IF nextval('atlas.${cleanupFault}') = 1 THEN RAISE EXCEPTION 'synthetic replay cleanup loss'; END IF; RETURN OLD; END $$`);
   await admin.unsafe(`CREATE TRIGGER ${cleanupFault}_trigger BEFORE DELETE ON bridge.document_perception_result_delivery FOR EACH ROW EXECUTE FUNCTION ${cleanupFault}_fn()`);
-  const config: WorkerConfig = { databaseUrl: bridgeUrl.toString(), concurrency: 1, timeoutSeconds: 5, retryLimit: 8, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 };
+  const config: WorkerConfig = { databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 1, perceptionConcurrency: 1, timeoutSeconds: 5, retryLimit: 8, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 };
   const worker = createBackgroundWorker(config, { async *execute() { yield { type: "complete" as const }; } }, queueName, async (queuedRequest, signal, context) => {
     const persisted = createPerceptionResultReplay(context.database);
     const replay = {
@@ -249,7 +249,7 @@ test("the Compose perception worker exhausts retries, bounds expired grants, and
     const response = await routes.deliver(credential, body.request, body.result);
     return new Response(response.status === 204 ? null : JSON.stringify(response.body), { status: response.status, headers: { "content-type": response.contentType } });
   });
-  const worker = createBackgroundWorker({ databaseUrl: bridgeUrl.toString(), concurrency: 1, timeoutSeconds: 5, retryLimit: 2, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 }, { async *execute() { yield { type: "complete" as const }; } }, backgroundQueue, async (request, signal, context) => {
+  const worker = createBackgroundWorker({ databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 1, perceptionConcurrency: 1, timeoutSeconds: 5, retryLimit: 2, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 }, { async *execute() { yield { type: "complete" as const }; } }, backgroundQueue, async (request, signal, context) => {
     const replay = createPerceptionResultReplay(context.database);
     const provider = { perceive: async () => {
       if (request.executionId.includes("exhaustion")) throw new (await import("../src/providers/mistral.ts")).BridgeProviderError("timeout", "synthetic retryable provider timeout");
