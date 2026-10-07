@@ -34,6 +34,8 @@ export class CapacityCatalogueError extends Error {}
 
 const sources = new Set<CapacitySource>(["provider_api", "provider_docs", "operator_config", "qualified_observation"]);
 const nonEmpty = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0;
+const credentialShapedAlias = /^(?:sk|pk|rk|ak)[_-]/iu;
+const resetTime = /^(?:[01]\d|2[0-3]):[0-5]\d$/u;
 const object = (value: unknown, name: string): Record<string, unknown> => {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new CapacityCatalogueError(`${name} must be an object.`);
   return value as Record<string, unknown>;
@@ -74,7 +76,15 @@ function parseWindowPolicy(value: unknown, dimension: WindowedDimension): QuotaW
   if ((kind === "fixed_window" || kind === "rolling_window") && !positive("windowSeconds")) throw new CapacityCatalogueError(`${dimension} ${kind} policy requires positive windowSeconds.`);
   if (kind === "token_bucket" && (!positive("refillUnitsPerSecond") || !positive("burstUnits"))) throw new CapacityCatalogueError(`${dimension} token_bucket policy requires positive refillUnitsPerSecond and burstUnits.`);
   if (kind === "provider_reset_observation" && !nonEmpty(parameters?.resetObservationIdentity)) throw new CapacityCatalogueError(`${dimension} provider_reset_observation policy requires resetObservationIdentity.`);
-  if (kind === "daily_calendar" && (!nonEmpty(parameters?.timeZone) || !nonEmpty(parameters?.resetTime))) throw new CapacityCatalogueError(`${dimension} daily_calendar policy requires timeZone and resetTime.`);
+  if (kind === "daily_calendar") {
+    if (!nonEmpty(parameters?.timeZone) || !nonEmpty(parameters?.resetTime)) throw new CapacityCatalogueError(`${dimension} daily_calendar policy requires timeZone and resetTime.`);
+    try {
+      Intl.DateTimeFormat("en-US", { timeZone: parameters.timeZone });
+    } catch {
+      throw new CapacityCatalogueError(`${dimension} daily_calendar policy requires a recognized IANA timeZone.`);
+    }
+    if (!resetTime.test(parameters.resetTime)) throw new CapacityCatalogueError(`${dimension} daily_calendar policy requires resetTime in HH:mm format.`);
+  }
   if (kind === "conservative_fallback" && !nonEmpty(parameters?.fallbackReason)) throw new CapacityCatalogueError(`${dimension} conservative_fallback policy requires fallbackReason.`);
   if (kind !== "fixed_window" && kind !== "rolling_window" && kind !== "token_bucket" && kind !== "provider_reset_observation" && kind !== "daily_calendar" && kind !== "conservative_fallback" && kind !== "unknown") throw new CapacityCatalogueError(`${dimension} window policy kind is unsupported.`);
   return { policyId: input.policyId, policyVersion: input.policyVersion, source: input.source as CapacitySource, kind, ...(parameters ? { parameters } : {}) } as QuotaWindowPolicy;
@@ -90,7 +100,7 @@ export function parseProviderCapacityProfile(value: unknown): ProviderCapacityPr
   const quotaAccountingPolicyId = requiredString(input.quotaAccountingPolicyId, "quotaAccountingPolicyId");
   const sourceRef = requiredString(input.sourceRef, "sourceRef");
   const sourceVersion = requiredString(input.sourceVersion, "sourceVersion");
-  if (/api.?key|secret|credential|authorization|bearer|token/iu.test(nonSecretProviderAccountAlias)) throw new CapacityCatalogueError("nonSecretProviderAccountAlias must be an opaque non-secret alias.");
+  if (credentialShapedAlias.test(nonSecretProviderAccountAlias) || /api.?key|secret|credential|authorization|bearer|token/iu.test(nonSecretProviderAccountAlias)) throw new CapacityCatalogueError("nonSecretProviderAccountAlias must be an opaque non-secret alias.");
   if (!sources.has(input.capacitySource as CapacitySource)) throw new CapacityCatalogueError("capacitySource is not recognized.");
   const routesInput = input.associatedRoutes;
   if (!Array.isArray(routesInput) || routesInput.length === 0) throw new CapacityCatalogueError("associatedRoutes must contain at least one qualified external route.");
