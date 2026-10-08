@@ -8,6 +8,8 @@ playwright-report/
 .env*
 !.env.example
 .atlas-data/
+.atlas-perception-lab/
+artifacts/idser-012-01-03-01/
 apps/atlas/generated/
 apps/atlas/public/source-pdfs/
 apps/atlas/public/pdfjs/

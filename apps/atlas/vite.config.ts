@@ -8,6 +8,7 @@ import { createHash } from "node:crypto";
 import { completeSfeExtraction, failSfeExtraction, getFixtureScenario, type ProjectFixture, type SfeExtractionResult } from "../../packages/atlas-fixtures/src/index.ts";
 import { createAtlasPerceptionInternalPlugin } from "./perception-internal";
 import { createProjectCreationBoundary } from "./project-creation-boundary";
+import { createDerivedAssetResolver } from "./derived-asset-resolver";
 
 const SITE_CREATOR_PLACEHOLDER_DATABASE_ID =
   "00000000-0000-4000-8000-000000000000";
@@ -154,6 +155,7 @@ export default defineConfig(async () => {
     plugins: [
       localFixtureStore,
       createProjectCreationBoundary(),
+      createDerivedAssetResolver(),
       createAtlasPerceptionInternalPlugin(),
       vinext(),
       sites(),

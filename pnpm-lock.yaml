@@ -230,6 +230,9 @@ importers:
       '@atlas/core':
         specifier: workspace:*
         version: link:../atlas-core
+      '@atlas/document-store':
+        specifier: workspace:*
+        version: link:../document-store
       drizzle-orm:
         specifier: 0.45.2
         version: 0.45.2(kysely@0.29.5)(pg@8.23.0)(postgres@3.4.7)

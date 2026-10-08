@@ -1,0 +1,208 @@
+name: atlas-perception-lab
+
+x-docling-qualified-route: &docling-qualified-route >-
+  [{"routeId":"docling-digital-pdf","capability":"atlas.document.perceive","providerId":"docling","modelOrProcessorId":"docling-slim-2.132.0","adapterVersion":"docling-serve-adapter-v1","qualificationVersion":"bss-v2-004-01","qualificationRef":"qualification://bss-v2-004-01","workClass":"local_processor","enabled":true,"extensions":{"serviceVersion":"1.36.0","optionProfile":"atlas-digital-pdf-no-ocr-v1","imageDigest":"sha256:4ba36cb322283e3851d2a6c5f347dd1cc515d7afb8ea5cc1577da8b5bfe2fea7"}}]
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: atlas_perception_lab
+      POSTGRES_USER: atlas_lab_admin
+      POSTGRES_PASSWORD: ${LAB_POSTGRES_PASSWORD:?run scripts/perception-lab/setup-and-run.ps1 first}
+      LAB_READER_PASSWORD: ${LAB_READER_PASSWORD}
+    ports:
+      - "127.0.0.1:15432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U '$$POSTGRES_USER' -d '$$POSTGRES_DB'"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  docling-serve:
+    image: quay.io/docling-project/docling-serve-cpu:v1.36.0@sha256:4ba36cb322283e3851d2a6c5f347dd1cc515d7afb8ea5cc1577da8b5bfe2fea7
+    restart: unless-stopped
+    environment:
+      DOCLING_SERVE_ENABLE_UI: "false"
+      DOCLING_SERVE_ENABLE_REMOTE_SERVICES: "false"
+      DOCLING_SERVE_SHOW_VERSION_INFO: "true"
+      DOCLING_SERVE_WORKERS: "1"
+      DOCLING_DEVICE: cpu
+      DOCLING_LOCAL_CONVERSION_CONCURRENCY: "2"
+      DOCLING_CPU_THREAD_RATIONALE: bounded-four-threads-for-local-cpu-qualification
+      OMP_NUM_THREADS: "4"
+      MKL_NUM_THREADS: "4"
+    volumes:
+      - docling-models:/root/.cache
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5001/ready').read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  atlas-migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    init: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://atlas_lab_admin:${LAB_POSTGRES_PASSWORD}@postgres:5432/atlas_perception_lab
+      ATLAS_APP_PASSWORD: ${LAB_ATLAS_APP_PASSWORD}
+      AGENTS_BRIDGE_PASSWORD: ${LAB_AGENTS_BRIDGE_PASSWORD}
+    command: ["sh", "-c", "exec corepack pnpm --filter @atlas/db migrate"]
+
+  agents-bridge-pgboss-bootstrap:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    init: true
+    depends_on:
+      atlas-migrate:
+        condition: service_completed_successfully
+    environment:
+      AGENTS_BRIDGE_DATABASE_URL: postgresql://agents_bridge:${LAB_AGENTS_BRIDGE_PASSWORD}@postgres:5432/atlas_perception_lab
+      AGENTS_BRIDGE_BACKGROUND_WORKER_CONCURRENCY: "1"
+      AGENTS_BRIDGE_PERCEPTION_WORKER_CONCURRENCY: "2"
+      AGENTS_BRIDGE_JOB_TIMEOUT_SECONDS: "30"
+      AGENTS_BRIDGE_JOB_RETRY_LIMIT: "2"
+      AGENTS_BRIDGE_JOB_RETRY_DELAY_SECONDS: "1"
+      AGENTS_BRIDGE_WORKER_SHUTDOWN_TIMEOUT_MS: "15000"
+    command: ["node", "apps/agents-bridge/node_modules/jiti/lib/jiti-cli.mjs", "apps/agents-bridge/src/pg-boss-bootstrap.ts"]
+
+  atlas:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    init: true
+    restart: unless-stopped
+    depends_on:
+      agents-bridge-pgboss-bootstrap:
+        condition: service_completed_successfully
+    environment:
+      ATLAS_DOCKER: "true"
+      DATABASE_URL: postgresql://atlas_lab_admin:${LAB_POSTGRES_PASSWORD}@postgres:5432/atlas_perception_lab
+      ATLAS_DATABASE_URL: postgresql://atlas_app:${LAB_ATLAS_APP_PASSWORD}@postgres:5432/atlas_perception_lab
+      ATLAS_APP_PASSWORD: ${LAB_ATLAS_APP_PASSWORD}
+      AGENTS_BRIDGE_PASSWORD: ${LAB_AGENTS_BRIDGE_PASSWORD}
+      AGENTS_BRIDGE_SERVICE_CREDENTIAL: ${LAB_AGENTS_BRIDGE_SERVICE_CREDENTIAL}
+      ATLAS_DOCUMENT_STORE_ROOT: /workspace/.atlas-data
+      BETTER_AUTH_SECRET: ${LAB_BETTER_AUTH_SECRET}
+      # The app resolves its own session route over the Compose network; the
+      # browser-facing origin stays an explicit, narrowly trusted host port.
+      BETTER_AUTH_URL: http://atlas:3001
+      BETTER_AUTH_TRUSTED_ORIGINS: http://127.0.0.1:13011
+      ATLAS_D1_PERCEPTION_CAPABILITY_IDENTITY: docling-digital-pdf
+    # Vinext reads worker bindings from .dev.vars.  Generate that file only in
+    # this disposable container filesystem so the developer binding file is
+    # never used by, or modified for, the isolated lab.
+    command:
+      - sh
+      - -c
+      - >-
+        umask 077;
+        printf '%s\n'
+        "DATABASE_URL=$${DATABASE_URL}"
+        "BETTER_AUTH_SECRET=$${BETTER_AUTH_SECRET}"
+        "BETTER_AUTH_URL=$${BETTER_AUTH_URL}"
+        "BETTER_AUTH_TRUSTED_ORIGINS=$${BETTER_AUTH_TRUSTED_ORIGINS}"
+        > apps/atlas/.dev.vars;
+        corepack pnpm --filter @atlas/app run sources:sync &&
+        exec corepack pnpm --filter @atlas/app exec vinext dev --port 3001
+    ports:
+      - "127.0.0.1:13011:3001"
+    volumes:
+      - atlas-data:/workspace/.atlas-data
+      - lab-evidence:/lab-evidence
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  agents-bridge:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    init: true
+    restart: unless-stopped
+    depends_on:
+      agents-bridge-pgboss-bootstrap:
+        condition: service_completed_successfully
+    environment:
+      AGENTS_BRIDGE_HOST: 0.0.0.0
+      AGENTS_BRIDGE_PORT: 3002
+      AGENTS_BRIDGE_VERSION: 0.1.0
+      AGENTS_BRIDGE_DEPLOYMENT_PROFILE: development
+      AGENTS_BRIDGE_QUALIFIED_ROUTES: *docling-qualified-route
+    command: ["sh", "-c", "exec corepack pnpm --filter @atlas/agents-bridge start"]
+    ports:
+      - "127.0.0.1:13012:3002"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3002/readyz').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  agents-bridge-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    init: true
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      atlas:
+        condition: service_healthy
+      agents-bridge:
+        condition: service_healthy
+      docling-serve:
+        condition: service_healthy
+    environment:
+      AGENTS_BRIDGE_DATABASE_URL: postgresql://agents_bridge:${LAB_AGENTS_BRIDGE_PASSWORD}@postgres:5432/atlas_perception_lab
+      AGENTS_BRIDGE_ATLAS_URL: http://atlas:3001
+      AGENTS_BRIDGE_SERVICE_CREDENTIAL: ${LAB_AGENTS_BRIDGE_SERVICE_CREDENTIAL}
+      AGENTS_BRIDGE_ATLAS_SOURCE_PATH: /internal/perception/source
+      AGENTS_BRIDGE_ATLAS_RESULT_PATH: /internal/perception/result
+      AGENTS_BRIDGE_MAX_SOURCE_BYTES: "20971520"
+      AGENTS_BRIDGE_MAX_RESULT_BYTES: "10485760"
+      AGENTS_BRIDGE_ATLAS_TIMEOUT_MS: "30000"
+      AGENTS_BRIDGE_BACKGROUND_WORKER_CONCURRENCY: "1"
+      AGENTS_BRIDGE_PERCEPTION_WORKER_CONCURRENCY: "2"
+      AGENTS_BRIDGE_JOB_TIMEOUT_SECONDS: "30"
+      AGENTS_BRIDGE_JOB_RETRY_LIMIT: "2"
+      AGENTS_BRIDGE_JOB_RETRY_DELAY_SECONDS: "1"
+      AGENTS_BRIDGE_WORKER_SHUTDOWN_TIMEOUT_MS: "15000"
+      AGENTS_BRIDGE_DEPLOYMENT_PROFILE: development
+      AGENTS_BRIDGE_QUALIFIED_ROUTES: *docling-qualified-route
+      DOCLING_BASE_URL: http://docling-serve:5001
+      DOCLING_SLIM_VERSION: 2.132.0
+      DOCLING_SERVE_VERSION: 1.36.0
+      DOCLING_OPTION_PROFILE: atlas-digital-pdf-no-ocr-v1
+      DOCLING_TIMEOUT_MS: "20000"
+      DOCLING_MAX_DOCUMENT_BYTES: "20971520"
+      DOCLING_MAX_RESPONSE_BYTES: "10485760"
+    command: ["node", "apps/agents-bridge/node_modules/jiti/lib/jiti-cli.mjs", "apps/agents-bridge/src/worker-main.ts"]
+    stop_grace_period: 20s
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/agents-bridge-worker.ready"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+volumes:
+  postgres-data:
+  atlas-data:
+  docling-models:
+  lab-evidence:

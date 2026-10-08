@@ -1,9 +1,54 @@
 # IDSER-012-01-03-02: Atlas derived-asset handoff, replay, and authorized resolution
 
-- **State:** `planned`; planning only, not GO.
+- **State:** `awaiting_review`; GO implementation and qualification complete, pending CK.
 - **Review batch:** `IDSER-BATCH-12-01-03-02`.
 - **Dependencies:** `IDSER-012-01-03-01` CK `PASS`.
 - **Parent:** [IDSER-012-01-03](IDSER-012-01-03-docling-evidence-preservation-and-semantic-handoff.md)
+
+## Planning authority
+
+- **2026-10-09, human planning authorization:** This ticket may use only the
+  existing Atlas-owned persistent local filesystem infrastructure and Compose
+  storage volume to persist and qualify derived images. The implementation may
+  introduce a narrow derived-asset storage abstraction and `derived/`
+  namespace, separate from immutable `documents/` keys. It must preserve the
+  existing source-key validator, Atlas storage ownership, and authorization
+  boundaries. Agents Bridge receives no filesystem access, database privilege,
+  storage credential, or general storage grant. The abstraction must preserve
+  future S3/R2-compatible portability, but this ticket must not add S3, R2,
+  MinIO, another storage service, or another infrastructure component, and
+  must not represent local qualification as cloud-storage readiness.
+- This resolves `SEC-GAP-012010302-PRODUCTION-BACKEND` only for this ticket's
+  local implementation and qualification scope. The production
+  S3-compatible adapter remains deferred to separately authorized work.
+- The preceding local-storage authorization intentionally left
+  `SEC-GAP-012010302-RETENTION` unresolved; the later bounded decision below
+  supplies that policy without altering any existing Review Contract row.
+- **2026-10-09, human planning authorization — derived-evidence retention:**
+  `SEC-GAP-012010302-RETENTION` is resolved for this bounded ticket as follows.
+  Accepted derived assets are immutable and remain retrievable while any
+  retained current or historical accepted evidence references them. Cache
+  validity and evidence retention are separate lifecycle concerns: cache
+  invalidation, profile changes, later perception runs, and newer accepted
+  document versions must not automatically delete historical evidence bytes.
+  Historical references remain resolvable only under the original document's
+  authorization scope.
+- An unaccepted derived asset may be reused only when source, profile, locator,
+  content hash, and every required identity binding match. It is eligible for
+  cleanup no sooner than seven days after becoming an orphan, and only after
+  authoritative verification that no accepted manifest, active execution,
+  pending replay, retry, staging record, or other recovery dependency still
+  references it. Cleanup must remain safe under concurrent execution and
+  replay. If reachability cannot be reliably established, retain the bytes.
+  The seven-day period is a minimum eligibility boundary, not authority to
+  delete referenced evidence or to add a background cleanup service.
+- An accepted reference must never knowingly name missing or unverified bytes;
+  availability metadata must reflect storage-integrity and lifecycle state.
+  Silent deletion, overwrite, and historical-reference invalidation are
+  forbidden. General project deletion, user-data erasure, organization-wide
+  expiration, and storage-provider lifecycle rules remain deferred. This
+  authorization preserves all existing Review Contract rows, including
+  `RC-012010302-06`.
 
 ## Outcome
 

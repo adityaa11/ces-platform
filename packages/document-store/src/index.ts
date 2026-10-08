@@ -1,1 +1,1 @@
-export { DocumentAlreadyExistsError, LocalFilesystemDocumentStore, createDocumentStorageKey, type DocumentStore, type PutDocumentInput, type StoredDocument } from "./local-filesystem-document-store.js";
+export { DocumentAlreadyExistsError, LocalFilesystemDocumentStore, createDerivedAssetRef, createDocumentStorageKey, type DerivedAssetStore, type DocumentStore, type PutDocumentInput, type StoredDocument } from "./local-filesystem-document-store.js";

@@ -16,6 +16,7 @@ type DocumentStoreModule = typeof import("../../packages/document-store/src/loca
 const sourcePath = "/internal/perception/source";
 const resultPath = "/internal/perception/result";
 const perceptionFailurePath = "/internal/perception/failure";
+const derivedAssetPath = "/internal/perception/derived";
 const semanticContextPath = "/internal/semantic/context";
 const semanticResultPath = "/internal/semantic/result";
 const semanticFailurePath = "/internal/semantic/failure";
@@ -41,6 +42,14 @@ async function readJson(request: AsyncIterable<Uint8Array | string>, contentLeng
     chunks.push(bytes);
   }
   return JSON.parse(Buffer.concat(chunks.map((chunk) => Buffer.from(chunk))).toString("utf8"));
+}
+
+async function readBytes(request: AsyncIterable<Uint8Array | string>, contentLength: string | string[] | undefined, maximumBytes: number): Promise<Uint8Array> {
+  const declared = typeof contentLength === "string" && /^\d+$/u.test(contentLength) ? Number(contentLength) : undefined;
+  if (declared !== undefined && declared > maximumBytes) throw new Error("Request body exceeds its configured limit.");
+  const chunks: Buffer[] = []; let size = 0;
+  for await (const chunk of request) { const bytes = typeof chunk === "string" ? Buffer.from(chunk) : Buffer.from(chunk); size += bytes.byteLength; if (size > maximumBytes) throw new Error("Request body exceeds its configured limit."); chunks.push(bytes); }
+  return new Uint8Array(Buffer.concat(chunks));
 }
 
 function sendJson(response: { statusCode: number; setHeader(name: string, value: string | number): void; end(body?: string): void }, status: number, body: unknown): void {
@@ -89,8 +98,8 @@ export function createAtlasPerceptionInternalPlugin(): Plugin {
       // pg-boss's Drizzle transaction type is narrower than the Atlas
       // persistence port, while both adapters receive this same SQL transaction.
       const atlasSemanticQueue = { enqueue: (transaction: unknown, job: BackgroundExecutionJob) => semanticQueue.enqueue(transaction as never, job) };
-      const authority = new database.PostgresPerceptionAuthority(sql, new core.PerceptionSourceGrantIssuer(credential), atlasSemanticQueue, process.env.ATLAS_D1_PERCEPTION_CAPABILITY_IDENTITY, perceptionQueue);
       const sources = new documentStore.LocalFilesystemDocumentStore(process.env.ATLAS_DOCUMENT_STORE_ROOT ?? resolve(process.cwd(), ".atlas-data"));
+      const authority = new database.PostgresPerceptionAuthority(sql, new core.PerceptionSourceGrantIssuer(credential), atlasSemanticQueue, process.env.ATLAS_D1_PERCEPTION_CAPABILITY_IDENTITY, perceptionQueue, sources);
       const routes = core.createPerceptionInternalRoutes({ authority, sources, serviceCredential: credential, maximumSourceBytes: sourceLimit, maximumResultBytes: resultLimit });
       const semanticAuthority = new semanticDatabase.PostgresSemanticAuthority(sql, new reconciliationSelector.PostgresReconciliationSelector(sql));
       const extractionHandler = new extractionAcceptance.PostgresExtractionAcceptanceHandler(atlasSemanticQueue);
@@ -111,9 +120,18 @@ export function createAtlasPerceptionInternalPlugin(): Plugin {
           sendJson(response, 200, { observations: semanticResultObservations });
           return;
         }
-        if (pathname !== sourcePath && pathname !== resultPath && pathname !== perceptionFailurePath && pathname !== semanticContextPath && pathname !== semanticResultPath && pathname !== semanticFailurePath) return next();
+        if (pathname !== sourcePath && pathname !== resultPath && pathname !== perceptionFailurePath && pathname !== derivedAssetPath && pathname !== semanticContextPath && pathname !== semanticResultPath && pathname !== semanticFailurePath) return next();
         if (request.method !== "POST") { response.statusCode = 405; response.setHeader("allow", "POST"); response.end(); return; }
         try {
+          if (pathname === derivedAssetPath) {
+            const encoded = request.headers["x-atlas-derived-metadata"];
+            if (typeof encoded !== "string" || bridgeCredential(request) !== credential || request.headers["content-type"]?.split(";", 1)[0] !== "image/png") { sendJson(response, 400, { error: "Invalid derived asset handoff." }); return; }
+            const metadata = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8")) as { request?: unknown; descriptor?: unknown };
+            const requestValue = core.parseDocumentPerceptionRequest(metadata.request);
+            const descriptor = metadata.descriptor as import("../../packages/atlas-core/src/perception-authority").DerivedAssetDescriptor;
+            const asset = await authority.handoffDerived(requestValue, descriptor, await readBytes(request, request.headers["content-length"], resultLimit));
+            sendJson(response, 200, asset); return;
+          }
           const body = await readJson(request, request.headers["content-length"], pathname === sourcePath || pathname === semanticContextPath || pathname === semanticFailurePath ? requestLimit : resultLimit + requestLimit);
           const credentialValue = bridgeCredential(request);
           if (pathname === semanticContextPath) { const result = await semanticRoutes.context(credentialValue, body); sendJson(response, result.status, result.body); return; }

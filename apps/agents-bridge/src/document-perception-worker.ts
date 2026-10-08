@@ -1,10 +1,10 @@
 import { normalizePerceptionResult } from "@atlas/core";
 import type { DocumentPerceptionRequest, DocumentPerceptionTechnicalFailure, NormalizedDocument } from "@atlas/contracts";
 import { AtlasPerceptionClientError } from "./atlas-perception-client.js";
-import { BridgeProviderError, type DocumentPerceptionProvider } from "./provider-capabilities.js";
+import { BridgeProviderError, type DocumentPerceptionProvider, type TransientDerivedVisual } from "./provider-capabilities.js";
 
 export type SourceGrantClient = { redeem(request: DocumentPerceptionRequest, signal: AbortSignal): Promise<{ readonly bytes: Uint8Array; readonly mimeType: "application/pdf" }> };
-export type PerceptionResultClient = { deliver(request: DocumentPerceptionRequest, result: NormalizedDocument, signal: AbortSignal): Promise<void>; fail?(failure: DocumentPerceptionTechnicalFailure, signal: AbortSignal): Promise<void> };
+export type PerceptionResultClient = { deliver(request: DocumentPerceptionRequest, result: NormalizedDocument, signal: AbortSignal): Promise<void>; handoffDerived?(request: DocumentPerceptionRequest, descriptor: TransientDerivedVisual, signal: AbortSignal): Promise<{ readonly assetRef: string }>; fail?(failure: DocumentPerceptionTechnicalFailure, signal: AbortSignal): Promise<void> };
 export type PerceptionResultReplay = { load(idempotencyKey: string, executionId: string): Promise<NormalizedDocument | undefined>; stage(idempotencyKey: string, executionId: string, result: NormalizedDocument): Promise<void>; acknowledge(idempotencyKey: string, executionId: string): Promise<void> };
 
 class RetryableReplayError extends Error {
@@ -18,6 +18,10 @@ function terminalFailure(error: unknown, finalAttempt: boolean): DocumentPercept
   if (error instanceof RetryableReplayError) return undefined;
   if (error instanceof AtlasPerceptionClientError) {
     if (error.operation === "source") return /unavailable|cancelled/u.test(error.message) ? undefined : "source_grant_expired";
+    // A rejected raw handoff is a deterministic integrity/binding failure;
+    // leaving it as an acknowledgement retry would strand the execution in
+    // fetching_source and consume a staged admission slot indefinitely.
+    if (error.operation === "derived") return /unavailable|cancelled/u.test(error.message) ? undefined : "integrity_validation";
     // A result may already be committed when its acknowledgement is lost, so
     // the existing replay/queue path must retain ownership of that retry.
     return undefined;
@@ -56,8 +60,16 @@ export async function runDocumentPerception(request: DocumentPerceptionRequest, 
     if (signal.aborted) throw new Error("Document perception was cancelled.");
     const perceived = await provider.perceive({ bytes: input.bytes, mimeType: input.mimeType, sourceSha256: request.artifact.sourceSha256 }, signal);
     if (signal.aborted) throw new Error("Document perception was cancelled.");
-    if (perceived.requiresAssetHandoff) throw new BridgeProviderError("malformed_response", "RUN-003 visual capture is not activatable until Atlas-derived asset handoff is qualified.");
-    const normalized = normalizePerceptionResult({ executionId: request.executionId, artifactId: request.artifact.id, sourceSha256: request.artifact.sourceSha256, provider: { provider: perceived.provenance.provider, processor: perceived.provenance.model, executionId: request.executionId, processedAt: new Date().toISOString() }, result: perceived.providerResult as { pages: readonly unknown[] } });
+    let providerResult = perceived.providerResult;
+    if (perceived.requiresAssetHandoff) {
+      if (!results.handoffDerived || !perceived.transientVisualDescriptors?.length) throw new BridgeProviderError("malformed_response", "RUN-003 visual capture has no qualified Atlas-derived asset handoff.");
+      const references = new Map<string, string>();
+      for (const descriptor of perceived.transientVisualDescriptors) references.set(descriptor.locatorId, (await results.handoffDerived(request, descriptor, signal)).assetRef);
+      const pages = (providerResult.pages as readonly Record<string, unknown>[] | undefined)?.map((page) => ({ ...page, visual_regions: (page.visual_regions as readonly Record<string, unknown>[] | undefined)?.map((region) => ({ ...region, assetRef: references.get(String(region.id)) })) }));
+      if (!pages || pages.some((page) => (page.visual_regions as readonly Record<string, unknown>[] | undefined)?.some((region) => !region.assetRef))) throw new BridgeProviderError("malformed_response", "RUN-003 visual capture descriptors do not cover every visual region.");
+      providerResult = { pages };
+    }
+    const normalized = normalizePerceptionResult({ executionId: request.executionId, artifactId: request.artifact.id, sourceSha256: request.artifact.sourceSha256, provider: { provider: perceived.provenance.provider, processor: perceived.provenance.model, executionId: request.executionId, processedAt: new Date().toISOString() }, result: providerResult as { pages: readonly unknown[] } });
     if (signal.aborted) throw new Error("Document perception was cancelled.");
     if (replay) {
       try { await replay.store.stage(replay.idempotencyKey, request.executionId, normalized); }

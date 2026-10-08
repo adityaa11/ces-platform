@@ -13,7 +13,7 @@ export { normalizePerceptionResult, type PerceptionProviderResult, type Percepti
 export { PerceptionSourceGrantIssuer, type PerceptionSourceIdentity, type RedeemedPerceptionSource } from "./source-grant.js";
 export { readVerifiedPerceptionSource, type ImmutablePerceptionSource, type SourceReader } from "./source-handoff.js";
 export { AtlasPerceptionHandoff, type PerceptionOperation, type PerceptionOperationState, type StartPerceptionOperation } from "./perception-handoff.js";
-export { type PerceptionAuthority, type PerceptionExecutionInput, type AuthorityRedeemedPerceptionSource } from "./perception-authority.js";
+export { type PerceptionAuthority, type PerceptionExecutionInput, type AuthorityRedeemedPerceptionSource, type DerivedAssetAuthority, type DerivedAssetDescriptor } from "./perception-authority.js";
 export { createPerceptionInternalRoutes, type InternalPerceptionResponse } from "./perception-internal-route.js";
 export { SemanticAcceptanceRejection, type AuthorizedSemanticContext, type SemanticAcceptanceHandler, type SemanticAuthority, type SemanticExecutionRequest, type SemanticReconciliationSelectionPort } from "./semantic-authority.js";
 export { createSemanticInternalRoutes, type InternalSemanticResponse } from "./semantic-internal-route.js";

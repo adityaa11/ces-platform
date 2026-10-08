@@ -7,6 +7,8 @@ export type BridgeConfig = {
   readonly version: string;
   readonly deploymentProfile: DeploymentProfile;
   readonly qualifiedRoutes: readonly QualifiedRoute[];
+  /** Isolated qualification may exercise a gated route without enabling it for normal admission. */
+  readonly qualificationOnly: boolean;
   readonly mistral: {
     readonly apiKey?: string;
     readonly baseUrl: string;
@@ -69,6 +71,7 @@ export function loadBridgeConfig(environment: NodeJS.ProcessEnv = process.env): 
     version: environment.AGENTS_BRIDGE_VERSION ?? "0.1.0",
     deploymentProfile: parseDeploymentProfile(environment.AGENTS_BRIDGE_DEPLOYMENT_PROFILE),
     qualifiedRoutes: parseQualifiedRoutes(environment.AGENTS_BRIDGE_QUALIFIED_ROUTES),
+    qualificationOnly: environment.AGENTS_BRIDGE_QUALIFICATION_ONLY === "true",
     mistral: {
       apiKey: environment.MISTRAL_API_KEY || undefined,
       baseUrl: baseUrl.replace(/\/$/u, ""),

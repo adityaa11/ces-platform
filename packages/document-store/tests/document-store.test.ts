@@ -3,7 +3,7 @@ import { mkdtemp, readdir, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { DocumentAlreadyExistsError, LocalFilesystemDocumentStore, createDocumentStorageKey } from "../src/index.ts";
+import { DocumentAlreadyExistsError, LocalFilesystemDocumentStore, createDerivedAssetRef, createDocumentStorageKey } from "../src/index.ts";
 
 test("local store preserves bytes and returns storage metadata without a local path", async () => {
   const root = await mkdtemp(join(tmpdir(), "atlas-document-store-"));
@@ -52,5 +52,22 @@ test("local store rejects a documents-directory reparse point", async () => {
   } finally {
     await rm(root, { recursive: true, force: true });
     await rm(outside, { recursive: true, force: true });
+  }
+});
+
+test("derived evidence uses a separate immutable namespace and never exposes a path", async () => {
+  const root = await mkdtemp(join(tmpdir(), "atlas-derived-store-"));
+  try {
+    const store = new LocalFilesystemDocumentStore(root);
+    const assetRef = createDerivedAssetRef();
+    const stored = await store.putDerived({ bytes: new Uint8Array([137, 80, 78, 71]), mediaType: "image/png", storageKey: assetRef });
+    assert.match(stored.storageKey, /^derived\//);
+    assert.equal(stored.storageKey.includes(root), false);
+    assert.deepEqual(await store.readDerived(assetRef), new Uint8Array([137, 80, 78, 71]));
+    await assert.rejects(() => store.putDerived({ bytes: new Uint8Array([0]), mediaType: "image/png", storageKey: assetRef }), DocumentAlreadyExistsError);
+    await assert.rejects(() => store.readDerived("documents/00000000-0000-0000-0000-000000000000"), /generated derived UUID key/);
+    await assert.rejects(() => store.putDerived({ bytes: new Uint8Array([1]), mediaType: "image/png", storageKey: "derived/../../escape" }), /generated derived UUID key/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
   }
 });

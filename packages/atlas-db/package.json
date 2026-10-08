@@ -13,6 +13,7 @@
     "migration:check": "node scripts/migrate.mjs --check",
     "test:permissions": "node --test tests/permissions.test.mjs",
     "test:perception-authority": "jiti tests/perception-authority.integration.test.ts",
+    "test:derived-assets": "jiti tests/derived-assets.integration.test.ts",
     "test:project-repository": "jiti tests/project-repository.integration.test.ts",
     "test:staged-perception-admission": "jiti tests/staged-perception-admission.integration.test.ts",
     "test:provider-capacity-catalogue": "jiti tests/provider-capacity-catalogue.integration.test.ts",
@@ -24,6 +25,7 @@
   "dependencies": {
     "@atlas/contracts": "workspace:*",
     "@atlas/core": "workspace:*",
+    "@atlas/document-store": "workspace:*",
     "drizzle-orm": "0.45.2",
     "postgres": "3.4.7"
   },

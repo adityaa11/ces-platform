@@ -1,0 +1,27 @@
+# Additive, disposable override for IDSER-012-01-03-02 only.  It uses a
+# distinct Compose project name and host ports, leaving atlas-perception-lab
+# and its volumes untouched.
+services:
+  postgres:
+    ports: !override
+      - "127.0.0.1:35432:5432"
+  atlas:
+    ports: !override
+      - "127.0.0.1:33011:3001"
+    environment:
+      ATLAS_D1_PERCEPTION_CAPABILITY_IDENTITY: docling-digital-pdf:atlas-digital-pdf-run-003-capture-v1
+      BETTER_AUTH_TRUSTED_ORIGINS: http://127.0.0.1:33011
+  agents-bridge:
+    ports: !override
+      - "127.0.0.1:33012:3002"
+    environment:
+      AGENTS_BRIDGE_QUALIFICATION_ONLY: "true"
+      DOCLING_OPTION_PROFILE: atlas-digital-pdf-run-003-capture-v1
+      AGENTS_BRIDGE_QUALIFIED_ROUTES: >-
+        [{"routeId":"docling-run-003-capture","capability":"atlas.document.perceive","providerId":"docling","modelOrProcessorId":"docling-slim-2.132.0","adapterVersion":"docling-serve-adapter-v1","qualificationVersion":"idser-012-01-03-02-local","qualificationRef":"qualification://idser-012-01-03-02-local","workClass":"local_processor","enabled":true,"extensions":{"serviceVersion":"1.36.0","optionProfile":"atlas-digital-pdf-run-003-capture-v1","capabilityIdentity":"docling-digital-pdf:atlas-digital-pdf-run-003-capture-v1","imageDigest":"sha256:4ba36cb322283e3851d2a6c5f347dd1cc515d7afb8ea5cc1577da8b5bfe2fea7"}}]
+  agents-bridge-worker:
+    environment:
+      AGENTS_BRIDGE_QUALIFICATION_ONLY: "true"
+      AGENTS_BRIDGE_QUALIFIED_ROUTES: >-
+        [{"routeId":"docling-run-003-capture","capability":"atlas.document.perceive","providerId":"docling","modelOrProcessorId":"docling-slim-2.132.0","adapterVersion":"docling-serve-adapter-v1","qualificationVersion":"idser-012-01-03-02-local","qualificationRef":"qualification://idser-012-01-03-02-local","workClass":"local_processor","enabled":true,"extensions":{"serviceVersion":"1.36.0","optionProfile":"atlas-digital-pdf-run-003-capture-v1","capabilityIdentity":"docling-digital-pdf:atlas-digital-pdf-run-003-capture-v1","imageDigest":"sha256:4ba36cb322283e3851d2a6c5f347dd1cc515d7afb8ea5cc1577da8b5bfe2fea7"}}]
+      DOCLING_OPTION_PROFILE: atlas-digital-pdf-run-003-capture-v1

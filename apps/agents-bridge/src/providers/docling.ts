@@ -250,6 +250,6 @@ export class DoclingProvider implements DocumentPerceptionProvider {
     // Descriptors never enter replay JSON. Until -03-02, the worker rejects
     // this result before normalization/acceptance; the in-process mapping seam
     // is intentionally exposed only to the later Atlas-owned handoff.
-    return { providerResult: mapped, provenance, ...(capture ? { requiresAssetHandoff: true } : {}) };
+    return { providerResult: { pages: mapped.pages }, provenance, ...(capture ? { requiresAssetHandoff: true, transientVisualDescriptors: mapped.transientVisualDescriptors } : {}) };
   }
 }

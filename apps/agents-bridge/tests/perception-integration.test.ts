@@ -101,7 +101,10 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
       providerCalls.push(Date.now());
       if (signal.aborted) throw new Error("synthetic cancellation");
       return {
-        providerResult: { pages: [{ index: 0, markdown: "Synthetic PDF text", images: [{ id: "figure-1", label: "diagram", bbox: [1, 2, 11, 22], assetRef: "derived/integration/figure-1.png" }] }] },
+        // This generic OCR fixture is intentionally image-free.  RUN-003
+        // visual evidence must come through the authenticated Atlas handoff,
+        // never from a synthetic pre-ticket derived reference.
+        providerResult: { pages: [{ index: 0, markdown: "Synthetic PDF text" }] },
         provenance: { provider: "mistral" as const, model: "ocr-qualified", endpoint: "/v1/ocr" as const, latencyMilliseconds: 1, attempt: 1 },
       };
     },
@@ -167,12 +170,12 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
     assert.ok(delivered);
     assert.equal(delivered?.pages[0]?.number, 1);
     assert.equal(delivered?.pages[0]?.textBlocks[0]?.text, "Synthetic PDF text");
-    assert.equal(delivered?.pages[0]?.visualRegions[0]?.assetRef, "derived/integration/figure-1.png");
+    assert.deepEqual(delivered?.pages[0]?.visualRegions, []);
 
     const cacheRows = await atlas.unsafe("SELECT normalized_document, derived_assets FROM atlas.normalized_document_cache WHERE source_sha256=$1 AND capability_identity=$2 AND invalidated_at IS NULL", [sourceSha256, input.capabilityIdentity]);
     assert.equal(cacheRows.length, 1);
     const derivedAssets = typeof cacheRows[0]?.derived_assets === "string" ? JSON.parse(cacheRows[0].derived_assets) : cacheRows[0]?.derived_assets;
-    assert.deepEqual(derivedAssets, ["derived/integration/figure-1.png"]);
+    assert.deepEqual(derivedAssets, []);
     assert.equal((await bridge.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [input.idempotencyKey]))[0]?.status, "completed");
     assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.document_perception_result_delivery WHERE idempotency_key=$1", [input.idempotencyKey]))[0]?.count, 0, "the replay outbox is removed only after the successful acknowledgement");
     const queuedRows = await bridge.unsafe("SELECT data::text AS data FROM pgboss.job WHERE name=$1", [perceptionQueueName]);

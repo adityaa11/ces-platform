@@ -1,10 +1,12 @@
 import type { DocumentPerceptionRequest, DocumentPerceptionTechnicalFailure, NormalizedDocument } from "@atlas/contracts";
+import type { TransientDerivedVisual } from "./provider-capabilities.js";
 
 export type AtlasPerceptionClientConfig = {
   readonly baseUrl: string;
   readonly sourcePath: string;
   readonly resultPath: string;
   readonly failurePath: string;
+  readonly derivedAssetPath: string;
   readonly serviceCredential: string;
   readonly maximumSourceBytes: number;
   readonly maximumResultBytes: number;
@@ -14,7 +16,7 @@ export type AtlasPerceptionClientConfig = {
 type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 
 export class AtlasPerceptionClientError extends Error {
-  constructor(readonly operation: "source" | "result" | "failure", message: string) {
+  constructor(readonly operation: "source" | "result" | "failure" | "derived", message: string) {
     super(message);
     this.name = "AtlasPerceptionClientError";
   }
@@ -43,6 +45,7 @@ export function loadAtlasPerceptionClientConfig(environment: NodeJS.ProcessEnv =
     baseUrl: baseUrl.replace(/\/$/u, ""),
     sourcePath: internalPath(environment.AGENTS_BRIDGE_ATLAS_SOURCE_PATH, "/internal/perception/source", "AGENTS_BRIDGE_ATLAS_SOURCE_PATH"),
     resultPath: internalPath(environment.AGENTS_BRIDGE_ATLAS_RESULT_PATH, "/internal/perception/result", "AGENTS_BRIDGE_ATLAS_RESULT_PATH"), failurePath: internalPath(environment.AGENTS_BRIDGE_ATLAS_PERCEPTION_FAILURE_PATH, "/internal/perception/failure", "AGENTS_BRIDGE_ATLAS_PERCEPTION_FAILURE_PATH"),
+    derivedAssetPath: internalPath(environment.AGENTS_BRIDGE_ATLAS_DERIVED_ASSET_PATH, "/internal/perception/derived", "AGENTS_BRIDGE_ATLAS_DERIVED_ASSET_PATH"),
     serviceCredential,
     maximumSourceBytes: boundedPositiveInteger(environment.AGENTS_BRIDGE_MAX_SOURCE_BYTES, 20 * 1024 * 1024, "AGENTS_BRIDGE_MAX_SOURCE_BYTES", 20 * 1024 * 1024),
     maximumResultBytes: boundedPositiveInteger(environment.AGENTS_BRIDGE_MAX_RESULT_BYTES, 10 * 1024 * 1024, "AGENTS_BRIDGE_MAX_RESULT_BYTES", 10 * 1024 * 1024),
@@ -54,11 +57,11 @@ function endpoint(config: AtlasPerceptionClientConfig, path: string): string {
   return new URL(path, `${config.baseUrl}/`).toString();
 }
 
-function cancellationError(operation: "source" | "result" | "failure"): AtlasPerceptionClientError {
+function cancellationError(operation: "source" | "result" | "failure" | "derived"): AtlasPerceptionClientError {
   return new AtlasPerceptionClientError(operation, `Atlas ${operation} handoff was cancelled.`);
 }
 
-async function readBoundedBytes(response: Response, maximumBytes: number, operation: "source" | "result" | "failure", signal: AbortSignal): Promise<Uint8Array> {
+async function readBoundedBytes(response: Response, maximumBytes: number, operation: "source" | "result" | "failure" | "derived", signal: AbortSignal): Promise<Uint8Array> {
   const declaredLength = response.headers.get("content-length");
   if (declaredLength && (!/^\d+$/u.test(declaredLength) || Number(declaredLength) > maximumBytes)) throw new AtlasPerceptionClientError(operation, `Atlas ${operation} handoff exceeded its configured byte limit.`);
   if (!response.body) {
@@ -128,6 +131,25 @@ export function createAtlasPerceptionClients(config: AtlasPerceptionClientConfig
       },
     },
     results: {
+      async handoffDerived(perceptionRequest: DocumentPerceptionRequest, descriptor: TransientDerivedVisual, signal: AbortSignal): Promise<{ readonly assetRef: string }> {
+        if (descriptor.bytes.byteLength !== descriptor.byteLength || descriptor.byteLength > config.maximumResultBytes) throw new AtlasPerceptionClientError("derived", "Atlas derived handoff exceeded its configured byte limit.");
+        const metadata = { request: perceptionRequest, descriptor: { sourceSha256: descriptor.sourceSha256, profile: descriptor.profile, pageNumber: descriptor.pageNumber, locatorId: descriptor.locatorId, mediaType: descriptor.mediaType, width: descriptor.width, height: descriptor.height, byteLength: descriptor.byteLength, sha256: descriptor.sha256 } };
+        const deadline = AbortSignal.timeout(config.timeoutMilliseconds); const requestSignal = AbortSignal.any([signal, deadline]);
+        let response: Response;
+        try {
+          response = await fetcher(endpoint(config, config.derivedAssetPath), { method: "POST", headers: { authorization: `Bearer ${config.serviceCredential}`, "content-type": descriptor.mediaType, "x-atlas-derived-metadata": Buffer.from(JSON.stringify(metadata)).toString("base64url") }, body: Buffer.from(descriptor.bytes), signal: requestSignal });
+        } catch (error) {
+          // A transport break while Atlas is unavailable is retryable work,
+          // not a worker cancellation.  Conflating the two strands a
+          // half-delivered visual handoff outside the queue's replay path.
+          if (signal.aborted || deadline.aborted) throw cancellationError("derived");
+          throw new AtlasPerceptionClientError("derived", "Atlas derived handoff was unavailable.");
+        }
+        if (!response.ok) throw new AtlasPerceptionClientError("derived", response.status >= 500 ? "Atlas derived handoff was unavailable." : "Atlas derived handoff was rejected.");
+        const body = await response.json() as { assetRef?: unknown };
+        if (typeof body.assetRef !== "string" || !/^derived\//.test(body.assetRef)) throw new AtlasPerceptionClientError("derived", "Atlas derived handoff returned an invalid reference.");
+        return { assetRef: body.assetRef };
+      },
       async deliver(perceptionRequest: DocumentPerceptionRequest, result: NormalizedDocument, signal: AbortSignal): Promise<void> {
         const serialized = JSON.stringify({ request: perceptionRequest, result });
         if (Buffer.byteLength(serialized) > config.maximumResultBytes) throw new AtlasPerceptionClientError("result", "Atlas result handoff exceeded its configured byte limit.");
