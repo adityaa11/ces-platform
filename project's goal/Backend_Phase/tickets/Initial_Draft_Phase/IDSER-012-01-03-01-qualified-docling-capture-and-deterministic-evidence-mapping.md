@@ -1,6 +1,6 @@
 # IDSER-012-01-03-01: Qualified Docling capture and deterministic evidence mapping
 
-- **State:** `awaiting_review`.
+- **State:** `approved`.
 - **Review batch:** `IDSER-BATCH-12-01-03-01`.
 - **Dependencies:** `IDSER-012-01-02` CK `PASS`.
 - **Parent:** [IDSER-012-01-03](IDSER-012-01-03-docling-evidence-preservation-and-semantic-handoff.md)
