@@ -2,13 +2,13 @@
 
 - **State:** `planned`
 - **Type:** non-executable umbrella
-- **Dependencies:** IDSER-012-01-02 CK `PASS`; all BSS-V2-005/006 children CK `PASS`; BSS-V2-004-03-04/05 CK `PASS`
+- **Dependencies:** IDSER-012-01-03-02 CK `PASS`; all BSS-V2-005/006 children CK `PASS`; BSS-V2-004-03-04/05 CK `PASS`
 - **Parent:** [IDSER-012](IDSER-012-staged-worker-pipeline-realignment.md)
 - **Planning authority:** [Provider admission/staged semantic context](../../atlas-provider-admission-staged-semantic-pipeline-implementation-context.md) §§21.5-21.7
 
 ## Outcome
 
-Make Initial Draft semantic extraction the first production consumer of shared provider admission. One perceived document may generate multiple bounded provider requests while retaining exact owned-source accounting and bounded reference context; Atlas accepts exactly one complete document extraction result and stops at `semantic_ready`.
+Make Initial Draft semantic extraction the first production consumer of shared provider admission. One perceived document, including visual evidence available only through the Atlas-authorized derived-asset resolver, may generate multiple bounded provider requests while retaining exact owned-source accounting and bounded reference context; Atlas accepts exactly one complete document extraction result and stops at `semantic_ready`. This umbrella does not take ownership of derived-asset persistence or resolver authorization.
 
 ## Children
 

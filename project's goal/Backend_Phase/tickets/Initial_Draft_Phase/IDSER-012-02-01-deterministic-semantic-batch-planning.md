@@ -2,13 +2,13 @@
 
 - **State:** `planned`
 - **Review batch:** `IDSER-BATCH-12-02-01`
-- **Dependencies:** IDSER-012-01-02 CK `PASS`; BSS-V2-004-03-01/02/03/05 CK `PASS`; BSS-V2-005-04 and BSS-V2-006-04 CK `PASS`
+- **Dependencies:** IDSER-012-01-03-02 CK `PASS`; BSS-V2-004-03-01/02/03/05 CK `PASS`; BSS-V2-005-04 and BSS-V2-006-04 CK `PASS`
 - **Parent:** [IDSER-012-02](IDSER-012-02-provider-admitted-multi-batch-semantic-extraction.md)
 - **Planning authority:** [Provider admission/staged semantic context](../../atlas-provider-admission-staged-semantic-pipeline-implementation-context.md) §§21.5-21.7
 
 ## Outcome
 
-From one accepted/perceived `NormalizedDocument v1`, expose deterministic source-unit enumeration below the current whole-document packet seam and create a complete ordered batch plan. Every eligible source unit has exactly one owning batch; batches may include separately identified bounded authorized reference context. Build the exact request and RequestResourceEnvelope per batch without provider work.
+From one accepted/perceived `NormalizedDocument v1` whose `assetRef` values are resolvable only through the IDSER-012-01-03 Atlas-owned authority, expose deterministic source-unit enumeration below the current whole-document packet seam and create a complete ordered batch plan. Every eligible source unit has exactly one owning batch; batches may include separately identified bounded authorized reference context. Build the exact request and RequestResourceEnvelope per batch without provider work. This ticket neither owns nor bypasses derived-asset storage or resolver authorization.
 
 ## Required batch model
 

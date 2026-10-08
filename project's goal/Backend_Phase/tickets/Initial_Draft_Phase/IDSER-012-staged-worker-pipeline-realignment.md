@@ -31,13 +31,13 @@ For staged-policy bundles only, supersede immediate-D1 kickoff, D1-only percepti
 ## Children and gates
 
 ```text
-IDSER-012-01-01 -> IDSER-012-01-02
+IDSER-012-01-01 -> IDSER-012-01-02 -> IDSER-012-01-03-01 -> IDSER-012-01-03-02
 
 BSS-V2-005-01 -> -02 -> -03 -> -04
 BSS-V2-006-01 -> -02 -> -03 -> -04
 
 BSS-V2-004-03-04 -> -05
-IDSER-012-01-02 + BSS-V2-006-04 + 004-03-05
+IDSER-012-01-03-02 + BSS-V2-006-04 + 004-03-05
   -> IDSER-012-02-01
   -> IDSER-012-02-02
   -> BSS-V2-004-03-06 qualification PASS
