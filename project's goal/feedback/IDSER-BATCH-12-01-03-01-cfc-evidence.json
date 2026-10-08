@@ -1,0 +1,185 @@
+{
+  "ticket": "IDSER-012-01-03-01",
+  "profile": "atlas-digital-pdf-run-003-capture-v1",
+  "source": {
+    "sha256": "2f537e8bb7ea4f69fb906af03d0265e2a986a0f15c2dbedbbace5328cd40e7df",
+    "byteLength": 314167
+  },
+  "runtime": {
+    "doclingServeVersion": "1.36.0",
+    "doclingSlimVersion": "2.132.0",
+    "timeoutMilliseconds": 120000,
+    "maxResponseBytes": 10485760,
+    "localConversionConcurrency": 2,
+    "workers": 1,
+    "cpuThreads": 4
+  },
+  "fixture": {
+    "sourcePath": "/fixture/Safara_Buyer_Business_PRD_Professional.pdf",
+    "sourceSha256": "2f537e8bb7ea4f69fb906af03d0265e2a986a0f15c2dbedbbace5328cd40e7df",
+    "mappingSha256": "bd6b8dd6273fb66389e567facbd6bbf328d39e1e77e4022750e896a04ae874f2",
+    "textCount": 254,
+    "tableCount": 4,
+    "cellCount": 69,
+    "figurePages": [
+      3,
+      5,
+      7,
+      8,
+      10
+    ],
+    "captions": {
+      "3": "Gambar 1. Alur operasional administrasi jemaah umrah",
+      "5": "Gambar 2. Perbandingan kuota dan pendaftaran aktif",
+      "7": "Gambar 3. Perubahan status pemeriksaan pembayaran",
+      "8": "Gambar 4. Rancangan tampilan pemeriksaan dokumen jemaah",
+      "10": "Gambar 5. Keputusan masuk ke manifest final"
+    },
+    "normalizedDocumentV1": true,
+    "resolvedLocatorCount": 263,
+    "exactTextAndTableResolution": true,
+    "repeatedMappedOutputEqual": true,
+    "matchesCommittedFixture": true
+  },
+  "sequential": [
+    {
+      "label": "sequential-1",
+      "elapsedMilliseconds": 10088,
+      "doclingProcessingMilliseconds": 8039,
+      "responseBytes": 456495,
+      "mappingMilliseconds": 27,
+      "figureCorrespondence": [
+        {
+          "sourceReference": "#/pictures/0",
+          "locatorId": "docling-visual-p3-1",
+          "pageNumber": 3,
+          "width": 942,
+          "height": 485,
+          "byteLength": 59393,
+          "sha256": "afeb88b5cb0f53dbdaaa041e245f0060fe669e1d0286af4d30665568365a7431"
+        },
+        {
+          "sourceReference": "#/pictures/1",
+          "locatorId": "docling-visual-p5-2",
+          "pageNumber": 5,
+          "width": 887,
+          "height": 431,
+          "byteLength": 18252,
+          "sha256": "5c24f70e98908cfc024dd5a0b8c3d7815b9ef8a725eae9de945ada9c8f5529e1"
+        },
+        {
+          "sourceReference": "#/pictures/2",
+          "locatorId": "docling-visual-p7-3",
+          "pageNumber": 7,
+          "width": 873,
+          "height": 328,
+          "byteLength": 30526,
+          "sha256": "d97817f6d847ab700e4a5beaf4afc99429a0068a4e942039c472f49bf9b5a6e6"
+        },
+        {
+          "sourceReference": "#/pictures/3",
+          "locatorId": "docling-visual-p8-4",
+          "pageNumber": 8,
+          "width": 989,
+          "height": 548,
+          "byteLength": 70080,
+          "sha256": "20c44029b8561fc64214fe208ae7a8600dfcd4dd4de36d379e8719f6d383b67c"
+        },
+        {
+          "sourceReference": "#/pictures/4",
+          "locatorId": "docling-visual-p10-5",
+          "pageNumber": 10,
+          "width": 888,
+          "height": 311,
+          "byteLength": 31762,
+          "sha256": "6dba319cc17399e1609e7ed7f406fba57c001f1e6bb2dc8d087f58ec5a378f42"
+        }
+      ],
+      "requiresAssetHandoff": true,
+      "noDurablePointer": true
+    },
+    {
+      "label": "sequential-2",
+      "elapsedMilliseconds": 10273,
+      "doclingProcessingMilliseconds": 8060,
+      "responseBytes": 456494,
+      "mappingMilliseconds": 15,
+      "figureCorrespondence": [
+        {
+          "sourceReference": "#/pictures/0",
+          "locatorId": "docling-visual-p3-1",
+          "pageNumber": 3,
+          "width": 942,
+          "height": 485,
+          "byteLength": 59393,
+          "sha256": "afeb88b5cb0f53dbdaaa041e245f0060fe669e1d0286af4d30665568365a7431"
+        },
+        {
+          "sourceReference": "#/pictures/1",
+          "locatorId": "docling-visual-p5-2",
+          "pageNumber": 5,
+          "width": 887,
+          "height": 431,
+          "byteLength": 18252,
+          "sha256": "5c24f70e98908cfc024dd5a0b8c3d7815b9ef8a725eae9de945ada9c8f5529e1"
+        },
+        {
+          "sourceReference": "#/pictures/2",
+          "locatorId": "docling-visual-p7-3",
+          "pageNumber": 7,
+          "width": 873,
+          "height": 328,
+          "byteLength": 30526,
+          "sha256": "d97817f6d847ab700e4a5beaf4afc99429a0068a4e942039c472f49bf9b5a6e6"
+        },
+        {
+          "sourceReference": "#/pictures/3",
+          "locatorId": "docling-visual-p8-4",
+          "pageNumber": 8,
+          "width": 989,
+          "height": 548,
+          "byteLength": 70080,
+          "sha256": "20c44029b8561fc64214fe208ae7a8600dfcd4dd4de36d379e8719f6d383b67c"
+        },
+        {
+          "sourceReference": "#/pictures/4",
+          "locatorId": "docling-visual-p10-5",
+          "pageNumber": 10,
+          "width": 888,
+          "height": 311,
+          "byteLength": 31762,
+          "sha256": "6dba319cc17399e1609e7ed7f406fba57c001f1e6bb2dc8d087f58ec5a378f42"
+        }
+      ],
+      "requiresAssetHandoff": true,
+      "noDurablePointer": true
+    }
+  ],
+  "concurrent": {
+    "wallMilliseconds": 12090,
+    "observations": [
+      {
+        "label": "concurrent-1",
+        "elapsedMilliseconds": 12071,
+        "doclingProcessingMilliseconds": 11891,
+        "responseBytes": 456496
+      },
+      {
+        "label": "concurrent-2",
+        "elapsedMilliseconds": 12089,
+        "doclingProcessingMilliseconds": 11631,
+        "responseBytes": 456494
+      }
+    ]
+  },
+  "heldThird": {
+    "elapsedMilliseconds": 20118,
+    "probeAfter250Milliseconds": "held"
+  },
+  "isolatedScope": {
+    "atlasResultAcceptance": false,
+    "perceptionJobsCreated": false,
+    "semanticJobsCreated": false,
+    "durableAssetsCreated": false
+  }
+}

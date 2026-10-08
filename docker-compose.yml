@@ -1,5 +1,5 @@
 x-docling-qualified-route: &docling-qualified-route >-
-  [{"routeId":"docling-digital-pdf","capability":"atlas.document.perceive","providerId":"docling","modelOrProcessorId":"docling-slim-2.132.0","adapterVersion":"docling-serve-adapter-v1","qualificationVersion":"bss-v2-004-01","qualificationRef":"qualification://bss-v2-004-01","workClass":"local_processor","enabled":true,"extensions":{"serviceVersion":"1.36.0","optionProfile":"atlas-digital-pdf-no-ocr-v1","imageDigest":"sha256:4ba36cb322283e3851d2a6c5f347dd1cc515d7afb8ea5cc1577da8b5bfe2fea7"}}]
+  [{"routeId":"docling-digital-pdf","capability":"atlas.document.perceive","providerId":"docling","modelOrProcessorId":"docling-slim-2.132.0","adapterVersion":"docling-serve-adapter-v1","qualificationVersion":"bss-v2-004-01","qualificationRef":"qualification://bss-v2-004-01","workClass":"local_processor","enabled":true,"extensions":{"serviceVersion":"1.36.0","optionProfile":"atlas-digital-pdf-no-ocr-v1","capabilityIdentity":"docling-digital-pdf","imageDigest":"sha256:4ba36cb322283e3851d2a6c5f347dd1cc515d7afb8ea5cc1577da8b5bfe2fea7"}}]
 
 services:
   docling-serve:

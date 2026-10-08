@@ -1,6 +1,7 @@
 import { BridgeProviderError, type DocumentPerceptionProvider, type ProviderProvenance } from "../provider-capabilities.js";
 import { performance } from "node:perf_hooks";
 import { createHash } from "node:crypto";
+import { inflateSync } from "node:zlib";
 
 export const doclingServeVersion = "1.36.0";
 export const doclingSlimVersion = "2.132.0";
@@ -9,6 +10,11 @@ export const doclingOptionProfile = "atlas-digital-pdf-no-ocr-v1";
 /** Capture-only identity. It is deliberately not a normal staged-admission route
  * until IDSER-012-01-03-02 can issue an Atlas-owned asset manifest. */
 export const doclingRun003OptionProfile = "atlas-digital-pdf-run-003-capture-v1";
+export function doclingCapabilityIdentity(profile: string): string {
+  if (profile === doclingOptionProfile) return "docling-digital-pdf";
+  if (profile === doclingRun003OptionProfile) return "docling-digital-pdf:atlas-digital-pdf-run-003-capture-v1";
+  throw new Error("Docling cache identity requires a qualified option profile.");
+}
 
 export type DoclingProviderConfig = {
   readonly baseUrl: string;
@@ -78,18 +84,66 @@ function tableContent(candidate: Record<string, unknown>): string {
   // V2 contract or lossy flattening.
   return `${markdown}\n\n<!-- atlas-docling-grid-v1:${JSON.stringify(normalized)} -->`;
 }
-const validBox = (candidate: Record<string, unknown>, pageHeights: ReadonlyMap<number, number>): AtlasBox | undefined => {
+const crc32 = (bytes: Uint8Array): number => {
+  let crc = 0xffffffff;
+  for (const byte of bytes) { crc ^= byte; for (let bit = 0; bit < 8; bit += 1) crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0); }
+  return (crc ^ 0xffffffff) >>> 0;
+};
+
+/** Checks a complete, non-interlaced PNG stream and its decoded scanline size. */
+function validatedPng(bytes: Uint8Array): { readonly width: number; readonly height: number } | undefined {
+  const data = Buffer.from(bytes);
+  const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+  if (data.length < 45 || !data.subarray(0, 8).equals(signature)) return undefined;
+  let offset = 8; let width = 0; let height = 0; let bitDepth = 0; let colorType = -1; let sawHeader = false; let sawData = false; let sawPalette = false; let sawEnd = false;
+  const imageData: Buffer[] = [];
+  while (offset + 12 <= data.length) {
+    const length = data.readUInt32BE(offset); const end = offset + 12 + length;
+    if (end > data.length) return undefined;
+    const type = data.toString("ascii", offset + 4, offset + 8); const chunk = data.subarray(offset + 8, offset + 8 + length); const expectedCrc = data.readUInt32BE(offset + 8 + length);
+    if (crc32(data.subarray(offset + 4, offset + 8 + length)) !== expectedCrc) return undefined;
+    if (!sawHeader && type !== "IHDR") return undefined;
+    if (type === "IHDR") {
+      if (sawHeader || length !== 13) return undefined;
+      width = chunk.readUInt32BE(0); height = chunk.readUInt32BE(4); bitDepth = chunk[8]!; colorType = chunk[9]!;
+      if (!width || !height || chunk[10] !== 0 || chunk[11] !== 0 || chunk[12] !== 0) return undefined;
+      const allowedDepths: Readonly<Record<number, readonly number[]>> = { 0: [1, 2, 4, 8, 16], 2: [8, 16], 3: [1, 2, 4, 8], 4: [8, 16], 6: [8, 16] };
+      if (!allowedDepths[colorType]?.includes(bitDepth)) return undefined;
+      sawHeader = true;
+    } else if (type === "PLTE") { if (sawData || length === 0 || length % 3 !== 0 || length > 768) return undefined; sawPalette = true; }
+    else if (type === "IDAT") { if (sawEnd) return undefined; sawData = true; imageData.push(chunk); }
+    else if (type === "IEND") { if (length !== 0 || !sawData) return undefined; sawEnd = true; offset = end; break; }
+    else if ((data[offset + 4]! & 0x20) === 0) return undefined;
+    offset = end;
+  }
+  if (!sawHeader || !sawData || !sawEnd || offset !== data.length || (colorType === 3 && !sawPalette)) return undefined;
+  const channels: Readonly<Record<number, number>> = { 0: 1, 2: 3, 3: 1, 4: 2, 6: 4 };
+  const bytesPerPixel = Math.max(1, Math.ceil((channels[colorType]! * bitDepth) / 8)); const rowBytes = Math.ceil((width * channels[colorType]! * bitDepth) / 8);
+  try {
+    const decoded = inflateSync(Buffer.concat(imageData), { maxOutputLength: (rowBytes + 1) * height });
+    if (decoded.length !== (rowBytes + 1) * height) return undefined;
+    for (let row = 0; row < height; row += 1) if (decoded[row * (rowBytes + 1)]! > 4) return undefined;
+    return { width, height };
+  } catch { return undefined; }
+}
+
+const validBox = (candidate: Record<string, unknown>, pageSizes: ReadonlyMap<number, { readonly width: number; readonly height: number }>): AtlasBox | undefined => {
   const prov = record(array(candidate.prov)[0]); const box = record(prov?.bbox) ?? record(candidate.bbox);
   const left = number(box?.l ?? box?.left ?? box?.x); const top = number(box?.t ?? box?.top ?? box?.y);
   const right = number(box?.r ?? box?.right); const bottom = number(box?.b ?? box?.bottom);
-  const width = number(box?.width) ?? (right !== undefined && left !== undefined ? right - left : undefined);
-  const rawHeight = number(box?.height) ?? (bottom !== undefined && top !== undefined ? Math.abs(bottom - top) : undefined);
-  const page = number(prov?.page_no); const origin = text(box?.coord_origin);
-  if (left === undefined || top === undefined || width === undefined || rawHeight === undefined || left < 0 || width <= 0 || rawHeight <= 0) return undefined;
-  // Atlas uses PDF page coordinates with a TOPLEFT origin. Docling can report
-  // BOTTOMLEFT bounds, so conversion is explicit and requires page height.
-  const y = origin === "BOTTOMLEFT" ? (() => { const pageHeight = page === undefined ? undefined : pageHeights.get(page); return pageHeight === undefined ? undefined : pageHeight - top; })() : top;
-  return y !== undefined && y >= 0 ? { x: left, y, width, height: rawHeight } : undefined;
+  const page = number(prov?.page_no); const origin = text(box?.coord_origin); const size = page === undefined ? undefined : pageSizes.get(page);
+  if (!size || (origin !== "TOPLEFT" && origin !== "BOTTOMLEFT") || left === undefined || top === undefined) return undefined;
+  const width = number(box?.width) ?? (right !== undefined ? right - left : undefined);
+  const rawHeight = number(box?.height) ?? (bottom !== undefined ? (origin === "BOTTOMLEFT" ? top - bottom : bottom - top) : undefined);
+  if (width === undefined || rawHeight === undefined || left < 0 || width <= 0 || rawHeight <= 0 || left + width > size.width) return undefined;
+  // Atlas stores PDF-point coordinates from TOPLEFT. TOPLEFT uses y=top and
+  // height=bottom-top. BOTTOMLEFT uses y=pageHeight-top and height=top-bottom.
+  // Quantize all coordinates to 0.001 point to remove tiny inference jitter.
+  const y = origin === "BOTTOMLEFT" ? size.height - top : top;
+  if (y < 0 || y + rawHeight > size.height) return undefined;
+  const stable = (coordinate: number) => Number(coordinate.toFixed(3));
+  const normalized = { x: stable(left), y: stable(y), width: stable(width), height: stable(rawHeight) };
+  return normalized.x >= 0 && normalized.y >= 0 && normalized.width > 0 && normalized.height > 0 && normalized.x + normalized.width <= size.width && normalized.y + normalized.height <= size.height ? normalized : undefined;
 };
 
 /**
@@ -102,7 +156,6 @@ export function mapDoclingCapture(value: unknown, sourceSha256 = "0".repeat(64),
   if (envelope?.status !== "success" || !json) throw new BridgeProviderError("malformed_response", "Docling did not return a successful JSON document.");
   const pageSizes = new Map<number, { width: number; height: number }>();
   for (const item of collection(json.pages)) { const page = record(item); const size = record(page?.size); const pageNo = number(page?.page_no); const width = number(size?.width); const height = number(size?.height); if (!Number.isInteger(pageNo) || !width || !height || width <= 0 || height <= 0) throw new BridgeProviderError("malformed_response", "Docling page dimensions are invalid."); pageSizes.set(pageNo!, { width, height }); }
-  const pageHeights = new Map([...pageSizes].map(([page, size]) => [page, size.height]));
   const pages = new Map<number, { blocks: Record<string, unknown>[]; tables: Record<string, unknown>[]; visuals: Record<string, unknown>[] }>();
   const descriptors: TransientVisualCapture[] = [];
   const seenSourceReferences = new Set<string>();
@@ -120,25 +173,26 @@ export function mapDoclingCapture(value: unknown, sourceSha256 = "0".repeat(64),
     const id = profileId(type, page, index);
     if (type === "table") {
       const content = tableContent(candidate);
-      const boundingBox = validBox(candidate, pageHeights); if (!boundingBox && record(array(candidate.prov)[0])?.bbox) throw new BridgeProviderError("malformed_response", "Docling table geometry is invalid.");
+      const boundingBox = validBox(candidate, pageSizes); if (!boundingBox && (record(array(candidate.prov)[0])?.bbox || candidate.bbox)) throw new BridgeProviderError("malformed_response", "Docling table geometry is invalid.");
       target.tables.push({ id, content, ...(boundingBox ? { bbox: boundingBox } : {}) });
     } else {
       const content = text(candidate.text) ?? text(candidate.orig); if (!content) throw new BridgeProviderError("malformed_response", "Docling text has no source content.");
-      const boundingBox = validBox(candidate, pageHeights); if (!boundingBox && record(array(candidate.prov)[0])?.bbox) throw new BridgeProviderError("malformed_response", "Docling text geometry is invalid.");
+      const boundingBox = validBox(candidate, pageSizes); if (!boundingBox && (record(array(candidate.prov)[0])?.bbox || candidate.bbox)) throw new BridgeProviderError("malformed_response", "Docling text geometry is invalid.");
       target.blocks.push({ id, text: content, type: text(candidate.label) ?? "text", ...(boundingBox ? { bbox: boundingBox } : {}) });
     }
   };
   for (const [index, item] of array(json.texts).entries()) { const candidate = record(item); if (!candidate) throw new BridgeProviderError("malformed_response", "Docling text metadata is malformed."); add(candidate, "text", index); }
   for (const [index, item] of array(json.tables).entries()) { const candidate = record(item); if (!candidate) throw new BridgeProviderError("malformed_response", "Docling table metadata is malformed."); add(candidate, "table", index); }
   for (const [index, item] of array(json.pictures).entries()) {
-    const candidate = record(item); const page = candidate && pageFor(candidate, "picture", index); const box = candidate && validBox(candidate, pageHeights);
+    const candidate = record(item); const page = candidate && pageFor(candidate, "picture", index); const box = candidate && validBox(candidate, pageSizes);
     if (!candidate || page === undefined || !box || profile !== doclingRun003OptionProfile) throw new BridgeProviderError("malformed_response", "Docling picture lacks qualified page, geometry, or capture profile.");
     const data = record(candidate.data); const image = record(candidate.image); const encoded = text(data?.image ?? image?.uri ?? candidate.image); const mediaType = text(data?.mime_type ?? data?.media_type ?? image?.mimetype ?? candidate.mime_type);
     if (!encoded || mediaType !== "image/png") throw new BridgeProviderError("malformed_response", "Docling picture has unsupported image metadata.");
     let bytes: Uint8Array; try { bytes = Buffer.from(encoded.replace(/^data:[^,]+,/u, ""), "base64"); } catch { throw new BridgeProviderError("malformed_response", "Docling picture bytes are invalid."); }
     if (!bytes.byteLength || bytes.byteLength > 10 * 1024 * 1024) throw new BridgeProviderError("response_bound", "Docling picture bytes exceed the qualified bound.");
-    if (bytes.byteLength < 24 || !Buffer.from(bytes.subarray(0, 8)).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) throw new BridgeProviderError("malformed_response", "Docling picture bytes do not match PNG metadata.");
-    const decodedWidth = Buffer.from(bytes).readUInt32BE(16); const decodedHeight = Buffer.from(bytes).readUInt32BE(20);
+    const decoded = validatedPng(bytes);
+    if (!decoded) throw new BridgeProviderError("malformed_response", "Docling picture bytes are not a complete decodable PNG.");
+    const decodedWidth = decoded.width; const decodedHeight = decoded.height;
     const dimensions = record(data?.dimensions) ?? record(image?.size); const width = number(dimensions?.width ?? data?.width); const height = number(dimensions?.height ?? data?.height);
     if (!Number.isInteger(width) || !Number.isInteger(height) || width! < 1 || height! < 1 || width !== decodedWidth || height !== decodedHeight) throw new BridgeProviderError("malformed_response", "Docling picture dimensions are invalid.");
     const target = pages.get(page) ?? { blocks: [], tables: [], visuals: [] }; pages.set(page, target); const id = profileId("visual", page, index);
