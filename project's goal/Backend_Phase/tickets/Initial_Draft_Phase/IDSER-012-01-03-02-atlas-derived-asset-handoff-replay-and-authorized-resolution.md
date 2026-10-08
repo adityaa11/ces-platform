@@ -1,6 +1,6 @@
 # IDSER-012-01-03-02: Atlas derived-asset handoff, replay, and authorized resolution
 
-- **State:** `awaiting_review`; GO implementation and qualification complete, pending CK.
+- **State:** `approved` following CK `PASS` for reviewed commit `7d842ad`.
 - **Review batch:** `IDSER-BATCH-12-01-03-02`.
 - **Dependencies:** `IDSER-012-01-03-01` CK `PASS`.
 - **Parent:** [IDSER-012-01-03](IDSER-012-01-03-docling-evidence-preservation-and-semantic-handoff.md)
