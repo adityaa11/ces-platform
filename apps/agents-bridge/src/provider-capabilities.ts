@@ -20,7 +20,7 @@ export type StructuredReasoningProvider = {
 };
 
 export type DocumentPerceptionProvider = {
-  perceive(input: { readonly bytes: Uint8Array; readonly mimeType: string; readonly options?: { readonly includeBlocks?: boolean; readonly includeImageBase64?: boolean; readonly tableFormat?: "markdown" | "html"; readonly confidenceScoresGranularity?: "page" | "block" | "word"; readonly requireZeroDataRetention?: boolean } }, signal: AbortSignal): Promise<{ readonly providerResult: Readonly<Record<string, unknown>>; readonly provenance: ProviderProvenance }>;
+  perceive(input: { readonly bytes: Uint8Array; readonly mimeType: string; readonly sourceSha256?: string; readonly options?: { readonly includeBlocks?: boolean; readonly includeImageBase64?: boolean; readonly tableFormat?: "markdown" | "html"; readonly confidenceScoresGranularity?: "page" | "block" | "word"; readonly requireZeroDataRetention?: boolean } }, signal: AbortSignal): Promise<{ readonly providerResult: Readonly<Record<string, unknown>>; readonly provenance: ProviderProvenance; readonly requiresAssetHandoff?: boolean }>;
 };
 
 export type StreamingChatProvider = {

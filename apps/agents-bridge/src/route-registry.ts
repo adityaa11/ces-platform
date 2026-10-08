@@ -139,6 +139,7 @@ export function assertConfiguredRouteAdapter(route: QualifiedRoute, config: { re
   if (route.providerId === "mistral") return assertRouteAdapter(route, config.mistral);
   if (route.providerId === "gemini") return assertGeminiRouteAdapter(route, config.gemini);
   if (route.providerId === "docling") {
+    if (config.docling.optionProfile === "atlas-digital-pdf-run-003-capture-v1") throw new RouteResolutionError("invalid_route", "RUN-003 capture is gated pending Atlas-derived asset handoff qualification.");
     if (route.capability !== "atlas.document.perceive" || route.adapterVersion !== "docling-serve-adapter-v1" || route.modelOrProcessorId !== `docling-slim-${config.docling.doclingSlimVersion}` || route.extensions?.serviceVersion !== config.docling.serviceVersion || route.extensions?.optionProfile !== config.docling.optionProfile || route.extensions?.imageDigest !== "sha256:4ba36cb322283e3851d2a6c5f347dd1cc515d7afb8ea5cc1577da8b5bfe2fea7") throw new RouteResolutionError("invalid_route", `Route ${route.routeId} does not name the pinned qualified Docling service profile.`);
     return;
   }

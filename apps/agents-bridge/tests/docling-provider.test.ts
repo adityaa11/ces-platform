@@ -1,17 +1,41 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { DoclingProvider, doclingAdapterVersion, doclingOptionProfile, doclingServeVersion, doclingSlimVersion, mapDoclingDocument } from "../src/providers/docling.ts";
+import { DoclingProvider, doclingAdapterVersion, doclingOptionProfile, doclingRun003OptionProfile, doclingServeVersion, doclingSlimVersion, mapDoclingCapture, mapDoclingDocument } from "../src/providers/docling.ts";
 import { assertConfiguredRouteAdapter } from "../src/route-registry.ts";
 
 const config = { baseUrl: "http://docling-serve:5001", timeoutMilliseconds: 1_000, maxDocumentBytes: 32, maxResponseBytes: 10_000, serviceVersion: doclingServeVersion, doclingSlimVersion, optionProfile: doclingOptionProfile };
 
 test("Docling maps only source-grounded structural JSON with deterministic order", () => {
-  const mapped = mapDoclingDocument({ status: "success", document: { json_content: { texts: [{ self_ref: "#/texts/2", label: "text", text: "Second", prov: [{ page_no: 2 }] }, { self_ref: "#/texts/1", label: "section_header", text: "First", prov: [{ page_no: 1 }] }], tables: [{ self_ref: "#/tables/0", markdown: "| A |", prov: [{ page_no: 2 }] }] } } });
-  assert.deepEqual(mapped.pages, [{ page_number: 1, blocks: [{ id: "#/texts/1", text: "First", type: "section_header" }], tables: [] }, { page_number: 2, blocks: [{ id: "#/texts/2", text: "Second", type: "text" }], tables: [{ id: "#/tables/0", content: "| A |" }] }]);
-  const withoutPageProvenance = mapDoclingDocument({ status: "success", document: { json_content: { texts: [{ self_ref: "#/texts/missing", text: "No page", prov: [] }, { self_ref: "#/texts/malformed", text: "Bad page", prov: [{ page_no: "one" }] }, { self_ref: "#/texts/source", text: "Source page", prov: [{ page_no: 2 }] }] } } });
-  assert.deepEqual(withoutPageProvenance.pages, [{ page_number: 2, blocks: [{ id: "#/texts/source", text: "Source page", type: "text" }], tables: [] }]);
-  assert.throws(() => mapDoclingDocument({ status: "success", document: { json_content: { texts: [{ text: "No source page", prov: [] }] } } }), /no source-grounded/u);
+  const cell = { text: "A", row_span: 1, col_span: 1, column_header: true, row_header: false, row_section: false };
+  const mapped = mapDoclingDocument({ status: "success", document: { json_content: { texts: [{ self_ref: "#/texts/2", label: "text", text: "Second", prov: [{ page_no: 2 }] }, { self_ref: "#/texts/1", label: "section_header", text: "First", prov: [{ page_no: 1 }] }], tables: [{ self_ref: "#/tables/0", prov: [{ page_no: 2 }], data: { grid: [[cell]], table_cells: [cell] } }] } } });
+  assert.deepEqual(mapped.pages, [{ page_number: 1, blocks: [{ id: "docling-text-p1-2", text: "First", type: "section_header" }], tables: [], visual_regions: [] }, { page_number: 2, blocks: [{ id: "docling-text-p2-1", text: "Second", type: "text" }], tables: [{ id: "docling-table-p2-1", content: "| A |\n\n<!-- atlas-docling-grid-v1:[[{\"row\":0,\"column\":0,\"text\":\"A\",\"rowSpan\":1,\"columnSpan\":1,\"columnHeader\":true,\"rowHeader\":false,\"rowSection\":false}]] -->" }], visual_regions: [] }]);
+  assert.throws(() => mapDoclingDocument({ status: "success", document: { json_content: { texts: [{ self_ref: "#/texts/missing", text: "No page", prov: [] }] } } }), /invalid page provenance/u);
+  assert.throws(() => mapDoclingDocument({ status: "success", document: { json_content: { texts: [{ self_ref: "#/texts/same", text: "One", prov: [{ page_no: 2 }] }, { self_ref: "#/texts/same", text: "Two", prov: [{ page_no: 2 }] }] } } }), /duplicate source identity/u);
+  assert.throws(() => mapDoclingDocument({ status: "success", document: { json_content: { texts: [{ text: "No source page", prov: [] }] } } }), /invalid page provenance/u);
   assert.throws(() => mapDoclingDocument({ status: "partial_success", document: { json_content: {} } }), /successful JSON/u);
+});
+
+test("RUN-003 capture validates a transient PNG descriptor without an asset pointer", () => {
+  const png = Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,0,1,0,0,0,1]), Buffer.alloc(8)]).toString("base64");
+  const source = "a".repeat(64);
+  const raw = { status: "success", document: { json_content: { texts: [{ text: "Caption from source", prov: [{ page_no: 3 }] }], pictures: [{ self_ref: "#/pictures/0", prov: [{ page_no: 3, bbox: { l: 1, t: 2, r: 11, b: 22 } }], data: { image: png, mime_type: "image/png", dimensions: { width: 1, height: 1 } } }] } } };
+  const mapped = mapDoclingCapture(raw, source, doclingRun003OptionProfile);
+  assert.deepEqual(mapped.pages[0], { page_number: 3, blocks: [{ id: "docling-text-p3-1", text: "Caption from source", type: "text" }], tables: [], visual_regions: [{ id: "docling-visual-p3-1", bbox: { x: 1, y: 2, width: 10, height: 20 } }] });
+  assert.equal(mapped.transientVisualDescriptors.length, 1);
+  assert.equal(mapped.transientVisualDescriptors[0]?.sourceReference, "#/pictures/0");
+  assert.equal(JSON.stringify(mapped.pages).includes("derived/"), false);
+  assert.throws(() => mapDoclingCapture({ ...raw, document: { json_content: { ...raw.document.json_content, pictures: [{ ...raw.document.json_content.pictures[0], data: { ...raw.document.json_content.pictures[0].data, mime_type: "image/jpeg" } }] } } }, source, doclingRun003OptionProfile), /unsupported image metadata/u);
+  assert.throws(() => mapDoclingCapture({ ...raw, document: { json_content: { ...raw.document.json_content, pictures: [{ ...raw.document.json_content.pictures[0], prov: [{ page_no: 3, bbox: { l: -1, t: 2, r: 11, b: 22 } }] }] } } }, source, doclingRun003OptionProfile), /lacks qualified page, geometry/u);
+  assert.throws(() => mapDoclingCapture({ ...raw, document: { json_content: { ...raw.document.json_content, pictures: [{ ...raw.document.json_content.pictures[0], data: { ...raw.document.json_content.pictures[0].data, image: "not-base64" } }] } } }, source, doclingRun003OptionProfile), /PNG/u);
+  assert.throws(() => mapDoclingCapture(raw, source, doclingOptionProfile), /capture profile/u);
+});
+
+test("RUN-003 mapping fails closed for nonrepresentable table structures", () => {
+  const table = { self_ref: "#/tables/0", prov: [{ page_no: 1 }], data: { grid: [[{ text: "A", row_span: 1, col_span: 1 }]], table_cells: [{ text: "A", row_span: 1, col_span: 1 }] } };
+  const document = (candidate: unknown) => ({ status: "success", document: { json_content: { tables: [candidate] } } });
+  assert.throws(() => mapDoclingDocument(document({ ...table, data: { ...table.data, grid: [] } })), /no complete grid/u);
+  assert.throws(() => mapDoclingDocument(document({ ...table, data: { ...table.data, grid: [[{ text: "A", row_span: 0, col_span: 1 }]] } })), /malformed cell/u);
+  assert.throws(() => mapDoclingDocument(document({ ...table, data: { ...table.data, table_cells: [] } })), /no complete grid/u);
 });
 
 test("Docling adapter sends only PDF bytes and a fixed no-OCR JSON profile", async () => {
@@ -37,6 +61,7 @@ test("Docling route requires its immutable service, runtime, adapter, and profil
   const all = { mistral: { structuredModel: "s", chatModel: "c", ocrModel: "o" }, gemini: { structuredModel: "s", chatModel: "c", perceptionModel: "p" }, docling: config };
   assert.doesNotThrow(() => assertConfiguredRouteAdapter(route, all));
   assert.throws(() => assertConfiguredRouteAdapter({ ...route, extensions: { ...route.extensions, imageDigest: "latest" } }, all), /pinned qualified/u);
+  assert.throws(() => assertConfiguredRouteAdapter(route, { ...all, docling: { ...config, optionProfile: doclingRun003OptionProfile } }), /gated pending/u);
 });
 
 test("Docling fails closed for readiness loss, timeout, cancellation, malformed responses, and mapper rejection", async () => {
@@ -46,6 +71,7 @@ test("Docling fails closed for readiness loss, timeout, cancellation, malformed 
   await assert.rejects(() => withFetcher(async () => { throw new Error("network lost"); }).perceive({ bytes: new Uint8Array([1]), mimeType: "application/pdf" }, new AbortController().signal), /could not be reached/u);
   await assert.rejects(() => withFetcher(async (url) => url.endsWith("/version") ? new Response(JSON.stringify({ docling_serve: "wrong", docling: doclingSlimVersion })) : new Response("{}" )).perceive({ bytes: new Uint8Array([1]), mimeType: "application/pdf" }, new AbortController().signal), /runtime identity/u);
   await assert.rejects(() => withFetcher(async (url) => url.endsWith("/v1/convert/file") ? new Response("not-json") : url.endsWith("/version") ? new Response(JSON.stringify({ docling_serve: doclingServeVersion, docling: doclingSlimVersion })) : new Response("{}")).perceive({ bytes: new Uint8Array([1]), mimeType: "application/pdf" }, new AbortController().signal), /invalid JSON/u);
+  await assert.rejects(() => withFetcher(async (url) => url.endsWith("/v1/convert/file") ? new Response("x".repeat(10_001)) : url.endsWith("/version") ? new Response(JSON.stringify({ docling_serve: doclingServeVersion, docling: doclingSlimVersion })) : new Response("{}")).perceive({ bytes: new Uint8Array([1]), mimeType: "application/pdf" }, new AbortController().signal), /response exceeded/u);
   await assert.rejects(() => withFetcher(async (url) => url.endsWith("/v1/convert/file") ? new Response(JSON.stringify({ status: "success", document: { json_content: {} } })) : url.endsWith("/version") ? new Response(JSON.stringify({ docling_serve: doclingServeVersion, docling: doclingSlimVersion })) : new Response("{}")).perceive({ bytes: new Uint8Array([1]), mimeType: "application/pdf" }, new AbortController().signal), /no source-grounded/u);
   const aborted = new AbortController(); aborted.abort();
   await assert.rejects(() => withFetcher(async () => { throw new Error("aborted"); }).perceive({ bytes: new Uint8Array([1]), mimeType: "application/pdf" }, aborted.signal), /cancelled/u);

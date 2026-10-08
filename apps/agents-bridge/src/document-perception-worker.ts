@@ -54,8 +54,9 @@ export async function runDocumentPerception(request: DocumentPerceptionRequest, 
     if (staged) { trustedResult = true; await deliverStaged(request, staged, results, signal, replay); return; }
     const input = await source.redeem(request, signal);
     if (signal.aborted) throw new Error("Document perception was cancelled.");
-    const perceived = await provider.perceive({ bytes: input.bytes, mimeType: input.mimeType }, signal);
+    const perceived = await provider.perceive({ bytes: input.bytes, mimeType: input.mimeType, sourceSha256: request.artifact.sourceSha256 }, signal);
     if (signal.aborted) throw new Error("Document perception was cancelled.");
+    if (perceived.requiresAssetHandoff) throw new BridgeProviderError("malformed_response", "RUN-003 visual capture is not activatable until Atlas-derived asset handoff is qualified.");
     const normalized = normalizePerceptionResult({ executionId: request.executionId, artifactId: request.artifact.id, sourceSha256: request.artifact.sourceSha256, provider: { provider: perceived.provenance.provider, processor: perceived.provenance.model, executionId: request.executionId, processedAt: new Date().toISOString() }, result: perceived.providerResult as { pages: readonly unknown[] } });
     if (signal.aborted) throw new Error("Document perception was cancelled.");
     if (replay) {

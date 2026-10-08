@@ -1,0 +1,41 @@
+name: idser-012-01-03-01-qualification
+
+services:
+  docling-serve:
+    image: quay.io/docling-project/docling-serve-cpu:v1.36.0@sha256:4ba36cb322283e3851d2a6c5f347dd1cc515d7afb8ea5cc1577da8b5bfe2fea7
+    environment:
+      DOCLING_SERVE_ENABLE_UI: "false"
+      DOCLING_SERVE_ENABLE_REMOTE_SERVICES: "false"
+      DOCLING_SERVE_WORKERS: "1"
+      DOCLING_DEVICE: cpu
+      DOCLING_LOCAL_CONVERSION_CONCURRENCY: "2"
+      OMP_NUM_THREADS: "4"
+      MKL_NUM_THREADS: "4"
+    volumes:
+      - docling-models:/root/.cache
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5001/ready').read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  qualification:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    init: true
+    depends_on:
+      docling-serve:
+        condition: service_healthy
+    environment:
+      DOCLING_BASE_URL: http://docling-serve:5001
+      RUN003_QUALIFICATION_PDF: /fixture/Safara_Buyer_Business_PRD_Professional.pdf
+      RUN003_QUALIFICATION_EVIDENCE: /evidence/qualification.json
+    volumes:
+      - ./docs/example/Safara_Buyer_Business_PRD_Professional.pdf:/fixture/Safara_Buyer_Business_PRD_Professional.pdf:ro
+      - ./artifacts/idser-012-01-03-01:/evidence
+    command: ["node", "apps/agents-bridge/node_modules/jiti/lib/jiti-cli.mjs", "apps/agents-bridge/tests/idser-012-01-03-01-qualification.ts"]
+
+volumes:
+  docling-models:

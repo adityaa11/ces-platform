@@ -1,9 +1,17 @@
 # IDSER-012-01-03-01: Qualified Docling capture and deterministic evidence mapping
 
-- **State:** `planned`; planning only, not GO.
+- **State:** `awaiting_review`.
 - **Review batch:** `IDSER-BATCH-12-01-03-01`.
 - **Dependencies:** `IDSER-012-01-02` CK `PASS`.
 - **Parent:** [IDSER-012-01-03](IDSER-012-01-03-docling-evidence-preservation-and-semantic-handoff.md)
+
+## Planning clarification history
+
+- **2026-10-09, human planning authorization:** This amendment clarifies the
+  execution mechanism for existing `RC-012010301-05`; it does not add,
+  remove, renumber, or strengthen any Review Contract row. The active GO owns
+  the bounded qualification-only seam below and remains subject to every
+  existing outcome, forbidden-behavior, and activation-gate boundary.
 
 ## Outcome
 
@@ -40,6 +48,30 @@ No production rollout of the image-enabled route, Atlas derived-store write, Bri
 ## Required negatives and evidence
 
 Use the frozen RUN-002/RUN-003 artifacts for mapper fixtures and repository-approved digital PDFs for isolated real Compose proof. Cover missing/invalid pages, duplicate/invalid IDs, absent grid, malformed cells, unsupported complex layout, malformed figure bytes/metadata, bad bounds/coordinates, profile mismatch, profile cache collision, and over-limit raw response. Record profile identity, raw fixture hashes, item accounting, and zero semantic calls/jobs. Do not touch the shared developer DB.
+
+### Qualification-only RUN-003 execution seam
+
+The ticket owns the smallest isolated Compose/test entrypoint needed to execute
+the actual RUN-003 Docling adapter and deterministic mapper against real
+digital PDFs. It is qualification-only, never an ordinary production
+perception route. It uses the frozen CPU Docling configuration and preserves
+the approved 2/2/2/1 composition, timeouts, payload limits, and route
+identities.
+
+The entrypoint must exercise sequential conversion, two concurrent real
+conversions, and a held third request with observable real Docling concurrency
+and bounded resource behavior. It must not submit mapped results to Atlas
+perception-result acceptance, create production perception or semantic jobs,
+bypass or weaken the RUN-003 production activation gate, persist derived
+images, issue durable asset references, or implement `IDSER-012-01-03-02`.
+Use isolated resources only: do not modify the running `atlas-perception-lab`
+stack or shared developer database.
+
+This seam establishes direct Docling conversion-capacity evidence only. It
+does not independently prove the Atlas two-permit admission behavior already
+qualified by `IDSER-012-01-02`. Frozen RUN-003 fixtures remain the evidence
+for exact mapping fidelity; the real Compose run independently establishes
+runtime behavior.
 
 ## Security Refactor Readiness
 
