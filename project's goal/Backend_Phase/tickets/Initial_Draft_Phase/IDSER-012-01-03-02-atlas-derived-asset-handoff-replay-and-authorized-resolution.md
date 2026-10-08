@@ -11,6 +11,7 @@ Establish the Atlas-controlled derived-visual contract so an accepted `Normalize
 
 ## Owned behavior
 
+- Consume `-03-01`'s bounded visual-capture descriptors without re-conversion or a competing picture mapper. Issue `assetRef` only after verified durable Atlas persistence. Enable normal staged activation only after complete end-to-end qualification and CK PASS.
 - Define a narrow Atlas-owned derived-asset storage interface/`derived/` namespace alongside immutable `documents/` keys. Preserve the existing source-key validator and production S3-compatible portability; Bridge receives no document-store mount, database privilege, storage path, or general storage grant.
 - Validate bounded image transfer and decoded media type, actual bytes, dimensions, size, source/profile/page/locator identity, and SHA-256. Persist durable bytes first; read back and verify them; create an idempotent manifest/binding with media type, length, hash, and safe stable reference. Conflicting bytes for one identity fail closed.
 - Stage replayable normalized JSON only after every referenced asset is durable and verified. At acceptance, revalidate scope, manifest and integrity, then atomically commit cache, derived-asset metadata, execution completion, and member `perceived` state under current Atlas transaction semantics.
@@ -33,6 +34,8 @@ No direct Bridge write to Atlas storage, PostgreSQL image payload, base64/binary
 | RC-012010302-05 / RC-11 | Logical handoff is replay safe. | Each required crash/ack/duplicate/conflict/partial/outage case either converges idempotently or fails without accepted dangling reference or duplicate logical effect. |
 | RC-012010302-06 / RC-13 | Historical evidence is explicit. | Cache/profile invalidation and later-run fixtures retain or delete bytes only under a documented authorized retention boundary; metadata never falsely asserts availability. |
 | RC-012010302-07 / RC-14 | Resolver is bounded. | It verifies existence/hash/type/size/scope and rejects nonexistent, tampered, oversized, foreign, unsafe, and unsupported requests without paths or broad grants. |
+
+| RC-012010302-08 | End-to-end production activation gate. | Incomplete derived persistence cannot produce a normal staged accepted result; fully qualified image-enabled admission is activated only with durable verified assets and zero early semantic work. |
 
 ## Qualification matrix
 

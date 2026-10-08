@@ -47,4 +47,6 @@ IDSER-012-01-03-02 + BSS-V2-006-04 + 004-03-05
   -> STOP
 ```
 
+`-03-01` is profile/mapping qualification only and may not activate image-enabled normal staging before `-03-02` qualifies durable asset acceptance. `-02-01` must preserve truthful accounting for uninterpreted visuals without premature comprehension or `non_fact` status.
+
 No reconciliation implementation belongs here. Planning is not GO.

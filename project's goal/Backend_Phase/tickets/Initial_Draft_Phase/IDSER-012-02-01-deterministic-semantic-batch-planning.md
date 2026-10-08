@@ -8,7 +8,7 @@
 
 ## Outcome
 
-From one accepted/perceived `NormalizedDocument v1` whose `assetRef` values are resolvable only through the IDSER-012-01-03 Atlas-owned authority, expose deterministic source-unit enumeration below the current whole-document packet seam and create a complete ordered batch plan. Every eligible source unit has exactly one owning batch; batches may include separately identified bounded authorized reference context. Build the exact request and RequestResourceEnvelope per batch without provider work. This ticket neither owns nor bypasses derived-asset storage or resolver authorization.
+From one accepted/perceived `NormalizedDocument v1` whose `assetRef` values are resolvable only through the IDSER-012-01-03 Atlas-owned authority, expose deterministic source-unit enumeration below the current whole-document packet seam and create a complete ordered batch plan. Every eligible source unit has exactly one owning batch; batches may include separately identified bounded authorized reference context. Build the exact request and RequestResourceEnvelope per batch without provider work. This ticket neither owns nor bypasses derived-asset storage or resolver authorization. A readable `assetRef` is not proof its visual content was examined: unexamined meaningful visuals must not be counted as understood or `non_fact`; unsupported multimodal source ownership must fail closed or receive explicit downstream qualification.
 
 ## Required batch model
 
@@ -35,6 +35,8 @@ Reference context counts toward structural/token/resource bounds. Preserve appro
 | RC-0120201-04 | Every batch stays within structural/context/request bounds and payload distinguishes `source_slots` from `reference_context`. | PASS iff an individually unfit owned unit fails closed and no overflow/truncation occurs. |
 | RC-0120201-05 | Each batch gets a valid multi-resource RequestResourceEnvelope from exact request + versioned estimator/accounting/output/safety policy. | PASS iff resource vectors stay within planning ceiling and weighted billing never substitutes for TPM. |
 | RC-0120201-06 | No provider work/result/candidate materialization occurs. | PASS iff this ticket is deterministic preparation only. |
+
+| RC-0120201-07 | Visual evidence accounting remains truthful. | Batch/source-unit planning preserves visual ownership and resolver scope, and cannot count unexamined meaningful visuals as understood or `non_fact`; unsupported visual profiles fail closed before provider work. |
 
 ## Security Refactor Readiness
 

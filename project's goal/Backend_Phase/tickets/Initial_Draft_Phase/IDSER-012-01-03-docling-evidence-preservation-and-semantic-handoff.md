@@ -17,7 +17,7 @@ authorized source PDF -> RUN-003 capture -> complete V1 evidence
 
 ## Partition and gates
 
-`IDSER-012-01-03-01` qualifies the profile and deterministic source mapping. `IDSER-012-01-03-02` consumes that mapping to establish durable asset transfer, acceptance, replay, and bounded resolver behavior. Neither child independently establishes a production-complete pipeline.
+`IDSER-012-01-03-01` qualifies the profile and deterministic source mapping. `IDSER-012-01-03-02` consumes that mapping to establish durable asset transfer, acceptance, replay, and bounded resolver behavior. Neither child independently establishes a production-complete pipeline. `-03-01` exposes a bounded transient visual-capture descriptor carrying validated bytes, source/profile/page/locator/geometry and integrity metadata; `-03-02` consumes it for Atlas-controlled persistence and durable pointer issuance, without a second Docling parser. RUN-003 normal staged activation is forbidden until `-03-02` CK PASS; retain the previous approved route or fail closed.
 
 ```text
 IDSER-012-01-02 CK PASS

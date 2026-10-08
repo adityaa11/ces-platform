@@ -8,7 +8,7 @@
 
 ## Outcome
 
-Make Initial Draft semantic extraction the first production consumer of shared provider admission. One perceived document, including visual evidence available only through the Atlas-authorized derived-asset resolver, may generate multiple bounded provider requests while retaining exact owned-source accounting and bounded reference context; Atlas accepts exactly one complete document extraction result and stops at `semantic_ready`. This umbrella does not take ownership of derived-asset persistence or resolver authorization.
+Make Initial Draft semantic extraction the first production consumer of shared provider admission. One perceived document, including visual evidence available only through the Atlas-authorized derived-asset resolver, may generate multiple bounded provider requests while retaining exact owned-source accounting and bounded reference context; Atlas accepts exactly one complete document extraction result and stops at `semantic_ready`. This umbrella does not take ownership of derived-asset persistence or resolver authorization. Visual asset retrieval proves preservation only, not semantic interpretation; meaningful unexamined visuals must be accounted for honestly and cannot silently become `non_fact`.
 
 ## Children
 

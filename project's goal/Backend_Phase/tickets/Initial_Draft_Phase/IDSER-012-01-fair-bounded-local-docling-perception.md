@@ -16,4 +16,4 @@ For explicitly staged bundles, replace reconciliation-driven next-document perce
 PDF -> local admission -> Docling -> accepted NormalizedDocument v1 + verified derived visual assets -> perceived -> STOP
 ```
 
-No external-provider quota/runtime infrastructure belongs here.
+No external-provider quota/runtime infrastructure belongs here. Profile/mapping qualification at `-03-01` is not permission to roll out image-enabled staged perception before the durable derived-asset acceptance gate of `-03-02` passes.
