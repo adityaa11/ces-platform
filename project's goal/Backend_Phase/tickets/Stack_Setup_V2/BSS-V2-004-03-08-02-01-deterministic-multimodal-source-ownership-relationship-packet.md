@@ -1,6 +1,6 @@
 # BSS-V2-004-03-08-02-01: Deterministic multimodal source ownership/relationship packet
 
-- **Status:** `planned`; **GO authorization:** the user's explicit `go` for this leaf (or an explicitly authorized batch) after required predecessor CK PASS, with current frozen scope and review rows. **No preliminary HMN is required for ordinary GO.** HMN is reserved for a documented blocked decision, out-of-scope change, or a later remediation cycle.
+- **Status:** `awaiting_review`; **GO authorization:** the user's explicit `go` for this leaf (or an explicitly authorized batch) after required predecessor CK PASS, with current frozen scope and review rows. **No preliminary HMN is required for ordinary GO.** HMN is reserved for a documented blocked decision, out-of-scope change, or a later remediation cycle.
 - **Parent:** `BSS-V2-004-03-08` multimodal Semantic V1 v0.3.1 handoff, sizing amendment §§6–7.
 - **Workstream:** `BSS-V2-004-03-08-02` (non-executable group). This file is **one** proposed GO/CK unit, not authorization for successor leaves.
 - **Repository target:** `project's goal/Backend_Phase/tickets/Stack_Setup_V2/`.
@@ -50,8 +50,8 @@ CFC may remediate **only** human-authorized CK finding IDs and exact permitted f
 
 ## Pre-GO readiness checklist
 
-- [ ] Leaf ownership, prior approvals and dependencies verified at current HEAD.
-- [ ] Legacy baseline/impact matrix available, with no unauthorized snapshot updates.
-- [ ] RC binary oracles, negatives and exact stop conditions frozen before GO.
-- [ ] If `M+`, scope examined and no unresolved split/ownership conflict remains.
-- [ ] Review evidence format and CK reviewer independence agreed.
+- [x] Leaf ownership, prior approvals and dependencies verified at current HEAD.
+- [x] Legacy baseline/impact matrix available, with no unauthorized snapshot updates.
+- [x] RC binary oracles, negatives and exact stop conditions frozen before GO.
+- [x] If `M+`, scope examined and no unresolved split/ownership conflict remains.
+- [x] Review evidence format and CK reviewer independence agreed.
