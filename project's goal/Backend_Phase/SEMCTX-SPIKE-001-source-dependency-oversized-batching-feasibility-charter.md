@@ -1,0 +1,80 @@
+# SEMCTX-SPIKE-001 — Source-dependency and oversized-batch feasibility (frozen experiment charter)
+
+- **Charter state:** `PLANNING_FROZEN`; **execution:** `NOT_AUTHORIZED` until an explicit user authorization for this exact offline spike. This is not a BSS/IDSER implementation ticket, a GO/CK/CFC instruction, a schema approval, or a production rollout.
+- **Frozen on:** 2026-10-11.
+- **Inspected branch/reference:** `codex/new-atlas-backend` at `8988624aabe2abcf0d2d511fe8aafb8a9582292f`. Reconfirm HEAD, changed-file ownership, and baseline SHA before any execution; a later HEAD is not evidence of an unchanged contract.
+- **Related blocker:** `BSS-V2-004-03-08-01-02` CK `PASS` at `86d4938` approves its **assessment** only. HMN `HUMAN_DECISION_REQUIRED` leaves `SCHEMA_FIT_BLOCKED` open. This charter neither amends that decision nor authorizes `08-01-03`, `08-02-01`, `IDSER-012-02-01`, sidecar issuance, reconciliation changes, or production jobs.
+- **Comparison authority:** `BSS-V2-004-03-08-01-01` approved legacy baseline, existing `prompt-003/v1`, Semantic V1 and `NormalizedDocument V1`; no golden refresh.
+- **Status names below** (e.g. `SPIKE_UNFIT_DEPENDENCY`) are **experiment-only observations**, not new production enums.
+
+## 0. Frozen *reason* — why this experiment exists
+
+The newly recovered visual/table evidence establishes that Atlas currently has **no trusted inter-locator relationship** through which a visual title/legend may govern a table-owned semantic assertion. The current source packet enumerates whole-document text/table/labeled-visual units, has no reference-context channel and cannot interpret unlabeled verified image assets; extraction acceptance nevertheless requires complete accounting for normalized visual locators with `assetRef`. The existing reconciliation selector compares **semantic candidates**; it cannot prove missing source/table/image relationships after an ungrounded assertion has already been produced.
+
+An additive human-attested sidecar was considered, but **a relationship graph can connect more evidence than one bounded provider request can carry**. A sidecar alone does not solve batching, and treating an entire connected corpus as one atomic request risks an unavoidable oversized batch. Conversely, arbitrarily splitting that corpus risks losing the qualifying condition, legend, merged header, negation, or scope that gives a statement its meaning.
+
+**Unresolved planning question:** Can Atlas deterministically partition a connected source corpus into separately owned work units with *only explicitly authorized, meaning-essential reference context*, while preserving full evidence coverage and identifying cases that cannot safely fit? If not, what exact conditions must stop extraction or require a new human/structural trust contract?
+
+**Why now:** This answer must precede freezing the `08-01-02` sidecar design and `08-02-01` packet ownership; otherwise the chosen relationship authority may be unusable by `IDSER-012-02-01` resource-bounded planning and force costly rework. This spike tests whether structure-aware local grouping, candidate reconciliation and a narrow provenance contract suffice; **it does not assume they do**.
+
+**Established design precedents to evaluate, not automatically implement:** hierarchical/structure-aware chunking and table-header retention (Docling); bounded contextual augmentation (document layout parsing); independent extraction followed by separately governed semantic relationship synthesis (GraphRAG-style separation); entity/source/agent identity for annotation and provenance (W3C Web Annotation/PROV). None alone proves semantic completeness or authorizes a source relationship.
+
+## 1. Frozen hypotheses and falsifiers
+
+- **H1 — structure/locality:** Reusing current normalized page, text, and table source identity can produce deterministic complete atomic units without changing legacy Semantic V1 or baseline packet bytes. **Falsify** if identity/coverage/parity cannot be maintained; do not repair via invented locator IDs or refreshed gold.
+- **H2 — non-transitive dependency planning:** A connected graph need not fit in one request when each owned unit's *explicitly essential* context closure fits a finite envelope; optional, proposed and comparison-only edges do not silently become required context. **Falsify** if the partition omits essential dependencies, duplicates ownership or relies on unsupported transitive closure.
+- **H3 — fail-closed external context:** A table/legend relationship absent from accepted source metadata cannot acquire authority from document adjacency, equal page, image/text similarity, fixture pairing or a model suggestion. **Falsify** if any such proposed edge is propagated as trusted. A separate **mock-only** authorized-edge scenario may test planner mechanics but confers no production trust.
+- **H4 — irreducible overflow:** If one owned unit and all *required* verified context exceed a bound, planner returns an explicit scoped **block**; it must never silently truncate, summarize, manufacture context, call a provider, or mark the document complete. **Falsify** on any partial/truncated-success path.
+- **Non-hypotheses:** This spike cannot prove real-model semantic correctness, arbitrary document segmentation equivalence, real vision interpretation, production resource admission, that a human can establish the correct relationship, or that reconciliation repairs missing original evidence.
+
+## 2. Exact scope / permissible changes for a future separately authorized run
+
+**Read-only production baselines:** `packages/atlas-skills/src/semantic-source-packet.ts`, `packages/atlas-skills/src/semantic-prompt.ts`, `packages/atlas-contracts/src/semantic*.ts`, `packages/atlas-contracts/src/perception.ts`, `packages/atlas-db/src/extraction-acceptance.ts`, `packages/atlas-db/src/reconciliation-selector.ts`; existing approved `08-01-01` baseline. Inspect additional seams read-only if needed.
+
+**Spike-owned only:** a separate isolated offline folder, proposed `scripts/semctx-spike-001/`, containing a minimal deterministic planner simulator, its fixed synthetic fixtures, immutable expected outcomes, tests, README, and redacted test evidence. These paths are *proposed* only: create them only after explicit approval and exact changed-file inventory. If an existing file conflicts, STOP; do not overwrite. No production imports or writes from this harness into runtime authority. Frozen charter modifications require a new planning decision, not a silent edit.
+
+**Forbidden:** provider calls/API keys/paid retries, Docling conversion or derived image reads, live requests, semantic/perception jobs, queue/admission/reservations, DB writes/migrations, new `NormalizedDocument` or Semantic V1 canonical kinds/classifications, prompt/compiler changes, new production table-image links, untrusted-to-authorized relationship promotion, actual reconciliation execution, acceptance/publish/UI changes, and modifying historical evidence/fixtures. No document owner's private content in fixture data.
+
+## 3. Three frozen fixtures (including negative subcases)
+
+**F1 — existing compatible document (legacy parity):** synthetic `NormalizedDocument V1` with independent text and one table whose required header/qualifiers already reside in the table source. Assert repeatable enumeration/page/locator identity and one owner per eligible unit. Assert existing default legacy `buildSemanticSourcePacket()` output/hash remains exactly the approved `08-01-01` baseline. The test-only proposed partitioner may pack those units separately. No claim that semantic meaning was verified by an LLM.
+
+**F2 — table and external visual legend:** synthetic source contains table T, visual V (including unlabeled `assetRef` case), and unrelated paragraph P. Manifest/normalized metadata authorizes each individual source but contains no trusted T↔V link. Negative cases: same page, overlapping boxes, corresponding colors/text, explicitly paired *fixture-only* descriptors, foreign locator, replaced legend hash, missing/duplicate and revised/stale edges. In every unapproved case: no trusted link, no fabricated image-owned candidate, no `non_fact` evasion, and no false readiness for T if legend is essential. P remains separately plan-eligible. **Mock-only positive control:** in an isolated test, inject an explicitly marked hypothetical vetted edge to show the partitioner can bind exactly T + V; this is not a proposed issuer/validator approval.
+
+**F3 — connected but oversized corpus:** synthetic nodes A–F with fixed labeled directed edges. Include a long *connected component* larger than a synthetic budget, while each owned source's declared essential-context set is small enough for at least one partition. Optional/comparison-only edges and mere graph reachability do not force the entire connected component into the batch. Repeat authorized contexts if bounded; single source ownership remains exactly once. **Negative subcases:** (a) one owned unit plus mandatory context exceeds the budget, (b) a single oversized table with inseparable qualifiers / merged-header scope, (c) unsatisfied or cyclic essential dependencies that cannot fit, (d) claimed successful plan missing a source, duplicated owner, guessed edge, or context with wrong doc/locator/hash. Reject unsafe table-row splitting; no magic summarization.
+
+**Gold:** Before running the simulator, freeze an exact file inventory, SHA-256 for each fixture, expected owned source IDs, each authorized/forbidden edge, intended fit/unfit categories, and the source-to-original-locator trace. Review the fixtures independently of planner implementation. Fixtures test stated structural assumptions; they do not establish general semantic independence.
+
+## 4. Synthetic budget and measurable oracles
+
+- **Fixture-only budget:** serialized request payload **at most 4096 UTF-8 bytes** including test `source_slots`, `reference_context`, slot IDs and metadata, computed from the complete exact payload (no omitted optional fields for convenience). This is **not** a provider TPM estimate, effective production `RequestResourceEnvelope`, model context window or admission eligibility. Test size is intentionally small to force deterministic overflow branches. Bound max owned/context counts explicitly in test profile as finite, document them and include every supplied context byte in the count.
+- **O-01: baseline parity.** The untouched legacy builder/schema/prompt retain approved bytes and behavior on F1; separately execute relevant current tests and compare against the approved immutable `08-01-01` baseline.
+- **O-02: coverage/ownership.** Exactly one owner for every eligible original source; context-only references yield zero candidate/evidence ownership; unlabeled preserved visuals remain pending meaningful evidence, never silently dropped as `non_fact`.
+- **O-03: dependency trust.** No implied page/proximity/transitive/model/fixture-only join; negative F2/F3 links fail closed; mock-only authorized references must match scope, locator, role and source hash.
+- **O-04: resource and reproducibility.** Every successful synthetic request fits its complete 4096-byte payload, with no clipping; repeated execution (10 identical runs plus reordering of otherwise unordered input) produces identical normalized plan IDs, owner maps, request payloads and hashes. Where deterministic sorting cannot be justified, record incompatibility instead of rewriting baseline gold.
+- **O-05: overflow.** Every irreducible mandatory-context overflow is clearly blocked, with exact offending source/dependency set, and is never reported as a valid complete plan.
+- **O-06: isolation.** Zero provider attempts, zero image reads, zero jobs/reservations, zero DB writes and no production file edits. Prove by static dependency review plus instrumented test fakes with forbidden-call counters, not by unsupported assertion.
+- **O-07: result honesty.** No `semantic_ready`, no accepted partial `atlas.semantic.extract/v1`, no reconciliation result, no new canonical truth, and no claim of model semantic correctness.
+
+**Outcomes are differentiated, not a single rubber-stamp PASS:** `STRUCTURAL_PLAN_FEASIBLE` for qualified local pieces, `SOURCE_RELATIONSHIP_UNPROVEN` for missing external-link authority, `IRREDUCIBLE_CONTEXT_OVERFLOW` for indivisible overbudget units, and `INCONCLUSIVE` for missing evidence or non-reproducibility. These are spike-only labels. O-01–O-07 must all be observed for a qualified feasibility report, even when negative fixtures correctly produce blockers.
+
+## 5. Execution sequence after explicit authorization
+
+1. **Baseline & scope:** checkout exact approved branch, record full SHA, Node and pnpm versions, clean/dirty status, hash approved `08-01-01` baseline. Preserve unrelated untracked work. Verify execution uses isolated offline files; don't change production source.
+2. **Freeze inputs/oracles first:** write F1–F3 and negative subcases, then a checked SHA-256 manifest and independently readable gold. Review source assumptions before implementing any planner logic; changes require a documented amendment and independent re-review.
+3. **Implement minimum simulator only:** enumerate original source identities; ingest explicit *test-only* typed edges with trust flags; derive **non-transitive** essential dependencies per owned unit; deterministically attempt whole-unit packing; add bounded reference context; compute full UTF-8 payload; emit stable plan or explicit blocker. No provider/schema/DB code.
+4. **Execute exact baseline commands from repo root:** `corepack pnpm --filter @atlas/contracts test`; `corepack pnpm --filter @atlas/skills test`; run the isolated spike harness via its README's frozen, exact command (the new harness command must be pinned in its manifest; do not invent it as an existing repository script). Prefer the approved baseline's own commands and compare hashes.
+5. **Run negatives and verify isolation:** include shuffled ordering, replay/stable hash, over-limit, stale/foreign links, absent evidence, cycles, malformed table shape; record observed failure paths, not snapshots that merely redefine success.
+6. **Deliver evidence, not architecture approval:** commit spike-owned fixture/runner/output/README and a concise review handoff referencing reviewed SHA; independently reproduce the test results before a planning choice. Present the three possible next planning decisions: (A) structure-only qualified planning for supported local units, (B) explicit separately authorized source-relationship contract for genuinely external dependencies, (C) documented blocked/manual review for irreducible cases.
+
+## 6. Stop / escalation budget
+
+**No repeated speculative attempts.** One bounded simulator implementation pass; at most **one** targeted fix for a specific reproduced simulator defect with unchanged frozen gold. If the same underlying failure persists, if any semantic trust interpretation is missing, if reference-context transitivity is required to make the tests pass, or if the frozen oracle needs weakening, **STOP / `PLANNING_DECISION_REQUIRED`**. Do not pivot to a new LLM prompt/model, unapproved row split, embedding retrieval, recursive summary, wider context tier or a third iteration.
+
+The spike may correctly conclude **`INCONCLUSIVE`** or **`IRREDUCIBLE_CONTEXT_OVERFLOW`**. Those outcomes are useful evidence, not invitations to hide the limit.
+
+## 7. Decision ownership and handoff
+
+The user remains the architecture/planning decision owner. The experiment may **inform** whether to authorize an additive Atlas-authored sidecar or a refined source/context split. It cannot itself issue source relationship authority, close `SCHEMA_FIT_BLOCKED`, authorize subsequent BSS/IDSER work, or treat historical `08-01-02` CK PASS as implementation approval.
+
+**Explicit next action:** request separate execution authorization for `SEMCTX-SPIKE-001` with exact proposed files and review requirements. Until then, this charter freezes the **why/what/how-to-falsify** only.
