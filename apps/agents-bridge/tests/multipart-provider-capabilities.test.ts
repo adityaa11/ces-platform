@@ -135,49 +135,118 @@ test("unknown image TPM blocks resource-envelope construction without inventing 
   });
 });
 
-test("aborted, duplicate, restart and cancellation preflight cases stay replay-safe at observable fake boundaries", () => {
-  const fakeBoundary = {
-    semanticExecutions: [] as string[],
-    perceptionJobs: [] as string[],
-    permits: [] as string[],
-    reservations: [] as string[],
-    externalProviderAttempts: [] as string[],
-    persistedOrLoggableMetadata: [] as string[],
-    observePreflight(overrides: Partial<Parameters<typeof preflightMultimodalRequest>[0]> = {}) {
+const createInstrumentedFakeEffects = () => {
+  const semanticExecutions: string[] = [];
+  const perceptionJobs: string[] = [];
+  const permits: string[] = [];
+  const reservations: string[] = [];
+  const externalProviderAttempts: string[] = [];
+  return {
+    invokeSemanticExecution: (identity: string) => { semanticExecutions.push(identity); },
+    createPerceptionJob: (identity: string) => { perceptionJobs.push(identity); },
+    acquirePermit: (identity: string) => { permits.push(identity); },
+    reserveResources: (identity: string) => { reservations.push(identity); },
+    attemptExternalProvider: (identity: string) => { externalProviderAttempts.push(identity); },
+    snapshot: () => ({
+      semanticExecutions: [...semanticExecutions],
+      perceptionJobs: [...perceptionJobs],
+      permits: [...permits],
+      reservations: [...reservations],
+      externalProviderAttempts: [...externalProviderAttempts],
+    }),
+  };
+};
+
+type InstrumentedFakeEffects = ReturnType<typeof createInstrumentedFakeEffects>;
+
+const createFakeReplayAdmission = () => {
+  const admitted = new Set<string>();
+  const invocations: string[] = [];
+  return {
+    invocations,
+    admit: (identity: string) => {
+      invocations.push(identity);
+      if (admitted.has(identity)) return false;
+      admitted.add(identity);
+      return true;
+    },
+  };
+};
+
+type FakeReplayAdmission = ReturnType<typeof createFakeReplayAdmission>;
+
+const createInstrumentedFakeOrchestration = (effects: InstrumentedFakeEffects, replayAdmission: FakeReplayAdmission) => {
+  const persistedOrLoggableMetadata: string[] = [];
+  return {
+    persistedOrLoggableMetadata,
+    run: (overrides: Partial<Parameters<typeof preflightMultimodalRequest>[0]> = {}) => {
       const result = preflight(overrides);
-      this.persistedOrLoggableMetadata.push(JSON.stringify(result));
+      const identity = result.requestSpec.identity;
+      persistedOrLoggableMetadata.push(JSON.stringify(result));
+      if (!replayAdmission.admit(identity)) return result;
+      effects.acquirePermit(identity);
+      effects.reserveResources(identity);
+      effects.createPerceptionJob(identity);
+      effects.invokeSemanticExecution(identity);
+      effects.attemptExternalProvider(identity);
       return result;
     },
   };
+};
+
+test("aborted, duplicate, restart and cancellation preflight cases stay replay-safe at observable fake boundaries", () => {
+  const stoppedEffects = createInstrumentedFakeEffects();
+  const stoppedAdmission = createFakeReplayAdmission();
+  const stopped = createInstrumentedFakeOrchestration(stoppedEffects, stoppedAdmission);
   const aborted = controller();
   aborted.abort();
-  assert.throws(() => fakeBoundary.observePreflight({ signal: aborted.signal }), (error: unknown) => error instanceof BridgeProviderError && error.code === "cancelled");
-  assert.equal(fakeBoundary.persistedOrLoggableMetadata.length, 0);
-
-  const first = fakeBoundary.observePreflight();
-  const duplicate = fakeBoundary.observePreflight();
-  const afterRestart = fakeBoundary.observePreflight();
-  assert.equal(first.requestSpec.identity, duplicate.requestSpec.identity);
-  assert.equal(first.requestSpec.identity, afterRestart.requestSpec.identity);
+  assert.throws(() => stopped.run({ signal: aborted.signal }), (error: unknown) => error instanceof BridgeProviderError && error.code === "cancelled");
 
   const cancelled = controller();
   cancelled.abort();
-  assert.throws(() => fakeBoundary.observePreflight({ signal: cancelled.signal }), (error: unknown) => error instanceof BridgeProviderError && error.code === "cancelled");
-  assert.equal(fakeBoundary.persistedOrLoggableMetadata.length, 3);
-
-  assert.deepEqual({
-    semanticExecutions: fakeBoundary.semanticExecutions.length,
-    perceptionJobs: fakeBoundary.perceptionJobs.length,
-    permits: fakeBoundary.permits.length,
-    reservations: fakeBoundary.reservations.length,
-    externalProviderAttemptCount: fakeBoundary.externalProviderAttempts.length,
-  }, {
-    semanticExecutions: 0,
-    perceptionJobs: 0,
-    permits: 0,
-    reservations: 0,
-    externalProviderAttemptCount: 0,
+  assert.throws(() => stopped.run({ signal: cancelled.signal }), (error: unknown) => error instanceof BridgeProviderError && error.code === "cancelled");
+  assert.deepEqual(stoppedEffects.snapshot(), {
+    semanticExecutions: [],
+    perceptionJobs: [],
+    permits: [],
+    reservations: [],
+    externalProviderAttempts: [],
   });
-  const capturedMetadata = fakeBoundary.persistedOrLoggableMetadata.join("\n");
+  assert.deepEqual(stoppedAdmission.invocations, []);
+  assert.deepEqual(stopped.persistedOrLoggableMetadata, []);
+
+  const effects = createInstrumentedFakeEffects();
+  const replayAdmission = createFakeReplayAdmission();
+  const initialAttempt = createInstrumentedFakeOrchestration(effects, replayAdmission);
+  const first = initialAttempt.run();
+  const expectedAuthorizedEffects = {
+    semanticExecutions: [first.requestSpec.identity],
+    perceptionJobs: [first.requestSpec.identity],
+    permits: [first.requestSpec.identity],
+    reservations: [first.requestSpec.identity],
+    externalProviderAttempts: [first.requestSpec.identity],
+  };
+  assert.deepEqual(effects.snapshot(), expectedAuthorizedEffects, "positive control: every fake effect callback is live");
+  assert.deepEqual(replayAdmission.invocations, [first.requestSpec.identity], "positive control: fake replay admission is live");
+
+  const duplicate = initialAttempt.run();
+  assert.equal(first.requestSpec.identity, duplicate.requestSpec.identity);
+  assert.deepEqual(effects.snapshot(), expectedAuthorizedEffects, "duplicate admission must not invoke any additional fake effect callback");
+  assert.deepEqual(replayAdmission.invocations, [first.requestSpec.identity, first.requestSpec.identity]);
+
+  const restartedAttempt = createInstrumentedFakeOrchestration(effects, replayAdmission);
+  const afterRestart = restartedAttempt.run();
+  assert.equal(first.requestSpec.identity, duplicate.requestSpec.identity);
+  assert.equal(first.requestSpec.identity, afterRestart.requestSpec.identity);
+  assert.deepEqual(effects.snapshot(), expectedAuthorizedEffects, "restart admission must not create an additional external attempt or other effect");
+  assert.deepEqual(replayAdmission.invocations, [first.requestSpec.identity, first.requestSpec.identity, first.requestSpec.identity]);
+
+  const cancelledAfterReplay = controller();
+  cancelledAfterReplay.abort();
+  assert.throws(() => restartedAttempt.run({ signal: cancelledAfterReplay.signal }), (error: unknown) => error instanceof BridgeProviderError && error.code === "cancelled");
+  assert.deepEqual(effects.snapshot(), expectedAuthorizedEffects, "cancelled request must stop before every fake effect callback");
+  assert.deepEqual(replayAdmission.invocations, [first.requestSpec.identity, first.requestSpec.identity, first.requestSpec.identity]);
+
+  const capturedMetadata = [...initialAttempt.persistedOrLoggableMetadata, ...restartedAttempt.persistedOrLoggableMetadata].join("\n");
   assert.doesNotMatch(capturedMetadata, /inspect the attributed visual|retain source order|1,2,3|base64|credential|secret/iu);
 });
