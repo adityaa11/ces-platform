@@ -1,6 +1,6 @@
 # BSS-V2-004-03-08-02-05: Concrete Anoman multimodal transport conformance
 
-- **Status:** `planned`; **GO authorization:** the user's explicit `go` for this leaf (or an explicitly authorized batch) after required predecessor CK PASS, with current frozen scope and review rows. **No preliminary HMN is required for ordinary GO.** HMN is reserved for a documented blocked decision, out-of-scope change, or a later remediation cycle.
+- **Status:** `awaiting_review`; **GO authorization:** consumed from the user's explicit `GO BSS-V2-004-03-08-02-05` after required predecessor CK PASS, with current frozen scope and review rows. **No preliminary HMN is required for ordinary GO.** HMN is reserved for a documented blocked decision, out-of-scope change, or a later remediation cycle.
 - **Parent:** `BSS-V2-004-03-08` multimodal Semantic V1 v0.3.1 handoff, sizing amendment §§6–7.
 - **Workstream:** `BSS-V2-004-03-08-02` (non-executable group). This file is **one** proposed GO/CK unit, not authorization for successor leaves.
 - **Repository target:** `project's goal/Backend_Phase/tickets/Stack_Setup_V2/`.
@@ -13,6 +13,10 @@
 - **RC-02:** Existing Anoman text-only behavior, Gemini provider, routing, errors, usage metadata and credential redaction pass their owner-specific regressions at reviewed SHA; unsupported capability and oversized/invalid media fail without HTTP side effects.
 - **RC-03:** No actual Anoman call, zero retries/fallback and no semantic provider activation; documentation states transport *conformance* ≠ provider vision accuracy/qualification.
 - **GO terminal:** fake transport captures + vendor capability/provenance; **BLOCKED** until `03-04` ownership is resolved. If `03-04` is amended to own the transport, this leaf becomes **test/conformance only**, never a second implementation owner.
+
+This checkpoint establishes bounded **transport conformance only**. It neither
+claims nor qualifies Anoman vision/perception accuracy, live semantic execution,
+provider privacy/residency, admission, or image-cost policy.
 
 ## Security Refactor Readiness
 
