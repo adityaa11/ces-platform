@@ -97,6 +97,12 @@ IDSER-012-01-02 -> perceived --------------------------------------------+
 ```
 Dependencies are PASS gates: an `awaiting_review` predecessor is not permission to begin a dependent implementation.
 
+## Proposed BSS-V2-004-03-08 multimodal Semantic V1 family
+
+[BSS-V2-004-03-08](BSS-V2-004-03-08-multimodal-semantic-v1-ticket-set.md) is a planned, offline-only continuation after the existing `04-03` semantic seams. Its umbrella and `08-01`/`08-02`/`08-03` workstreams are non-executable; the linked set contains 13 independently authorized GO/CK leaves. It preserves the existing 03-01/02/03 contracts and does not bypass 03-04 adapter ownership, 03-05 finalizer ownership, BSS-V2-005/006 admission, or the later live qualification in 03-06.
+
+The first possible leaf is baseline-only `08-01-01`. Family completion is `08-03-03` CK PASS for an offline fake-provider architecture; it makes no live provider, real-PDF, privacy, admission, reconciliation, or publication claim.
+
 ## Docling local Docker execution model
 
 BSS-V2-004-01 and BSS-V2-004-02 use Docling as a **resident local conversion service**, not a one-shot Python process.
