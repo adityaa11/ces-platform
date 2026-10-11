@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { AnomanProvider, type AnomanProviderConfig } from "../src/providers/anoman.ts";
+import { AnomanProvider, anomanMultipartImageCapability, type AnomanProviderConfig } from "../src/providers/anoman.ts";
 import type { StructuredReasoningProvider } from "../src/provider-capabilities.ts";
 
 const config: AnomanProviderConfig = { apiKey: "anoman-test-secret", baseUrl: "https://api.anoman.io", structuredModel: "gemini-2.5-flash", maxRequestBytes: 100_000, maxResponseBytes: 50_000, timeoutMilliseconds: 1_000, zeroDataRetentionApproved: false };
@@ -30,6 +30,57 @@ test("Anoman captures only frozen object-mode transport and normalizes bounded p
   assert.deepEqual(result.provenance.usage, { inputTokens: 2, outputTokens: 3, cachedTokens: 1 });
   assert.deepEqual(result.provenance.metadata, { requestedModel: "gemini-2.5-flash", servedModel: "gemini-2.5-flash", system_fingerprint: "fp_test", service_tier: "default", cachedTokens: 1 });
   assert.doesNotMatch(JSON.stringify(result.provenance), /prepared packet|anoman-test-secret/u);
+});
+
+test("Anoman serializes authorized multipart parts in order through bounded fake transport", async () => {
+  let calls = 0;
+  let init: RequestInit | undefined;
+  const provider = new AnomanProvider(config, async (_input, request) => {
+    calls += 1;
+    init = request;
+    return response({ choices: [{ message: { content: "{}" } }] });
+  });
+  const image = new Uint8Array([1, 2, 3]);
+  await provider.structuredMultipart({
+    messages: [
+      { role: "system", parts: [{ type: "text", sourcePartId: "system-1", text: "prepared instructions" }] },
+      { role: "user", parts: [
+        { type: "text", sourcePartId: "source-1", text: "inspect this visual" },
+        { type: "image", sourcePartId: "source-2", media: { mimeType: "image/png", sha256: "a".repeat(64), byteLength: image.byteLength, width: 1, height: 1, bytes: image } },
+        { type: "text", sourcePartId: "source-3", text: "retain source order" },
+      ] },
+    ],
+    schema: { type: "object" },
+    signal: new AbortController().signal,
+  });
+  assert.equal(calls, 1);
+  const body = JSON.parse(String(init?.body)) as { readonly messages: readonly { readonly role: string; readonly content: readonly Record<string, unknown>[] }[]; readonly response_format: unknown; readonly temperature: unknown; readonly stream: unknown };
+  assert.deepEqual(body.messages.map((message) => [message.role, message.content.map((part) => part.type)]), [["system", ["text"]], ["user", ["text", "image_url", "text"]]]);
+  assert.equal(body.messages[1]?.content[0]?.text, "inspect this visual");
+  assert.equal((body.messages[1]?.content[1]?.image_url as { readonly url: string }).url, `data:image/png;base64,${Buffer.from(image).toString("base64")}`);
+  assert.equal(body.messages[1]?.content[2]?.text, "retain source order");
+  assert.deepEqual({ temperature: body.temperature, stream: body.stream, response_format: body.response_format }, { temperature: 0, stream: false, response_format: { type: "json_object" } });
+  assert.doesNotMatch(JSON.stringify(body), /sourcePartId|"schema"/u);
+});
+
+test("Anoman multipart capability rejects invalid media and cancellation before HTTP side effects", async () => {
+  assert.deepEqual(anomanMultipartImageCapability, { version: "v1", mediaTypes: ["image/png"], maxImageCount: 4, maxImageBytes: 512_000, maxImageWidth: 4_096, maxImageHeight: 4_096 });
+  for (const message of [
+    { role: "user" as const, parts: [{ type: "image" as const, sourcePartId: "bad-type", media: { mimeType: "image/jpeg" as "image/png", sha256: "b".repeat(64), byteLength: 1, width: 1, height: 1, bytes: new Uint8Array([1]) } }] },
+    { role: "user" as const, parts: [{ type: "image" as const, sourcePartId: "bad-length", media: { mimeType: "image/png" as const, sha256: "c".repeat(64), byteLength: 2, width: 1, height: 1, bytes: new Uint8Array([1]) } }] },
+  ]) {
+    let calls = 0;
+    const provider = new AnomanProvider(config, async () => { calls += 1; return response({}); });
+    await assert.rejects(() => provider.structuredMultipart({ messages: [message], schema: {}, signal: new AbortController().signal }), (error: unknown) => bridgeError(error, "invalid_request"));
+    assert.equal(calls, 0);
+  }
+
+  let calls = 0;
+  const provider = new AnomanProvider(config, async () => { calls += 1; return response({}); });
+  const controller = new AbortController();
+  controller.abort();
+  await assert.rejects(() => provider.structuredMultipart({ messages: [], schema: {}, signal: controller.signal }), (error: unknown) => bridgeError(error, "cancelled"));
+  assert.equal(calls, 0);
 });
 
 test("Anoman maps malformed, oversized, authentication, rate-limit, and provider failures without response-body leakage", async () => {

@@ -1,4 +1,4 @@
-import { BridgeProviderError, type ChatMessage, type ProviderProvenance, type ProviderUsage, type StructuredReasoningProvider } from "../provider-capabilities.js";
+import { BridgeProviderError, dispatchMultipartStructured, type ChatMessage, type MultipartChatMessage, type MultipartImageCapability, type ProviderProvenance, type ProviderUsage, type StructuredReasoningProvider } from "../provider-capabilities.js";
 
 export type AnomanProviderConfig = {
   readonly apiKey?: string;
@@ -12,6 +12,27 @@ export type AnomanProviderConfig = {
 
 type FetchLike = (input: string, init: RequestInit) => Promise<Response>;
 type JsonRecord = Readonly<Record<string, unknown>>;
+
+/**
+ * The only vendor capability introduced by this adapter.  These are transport
+ * limits, not semantic/image-understanding claims, and are negotiated before
+ * the fake or real transport can observe image bytes.
+ */
+export const anomanMultipartImageCapability: MultipartImageCapability = {
+  version: "v1",
+  mediaTypes: ["image/png"],
+  maxImageCount: 4,
+  maxImageBytes: 512_000,
+  maxImageWidth: 4_096,
+  maxImageHeight: 4_096,
+};
+
+export type AnomanMultipartStructuredInput = {
+  readonly messages: readonly MultipartChatMessage[];
+  readonly schema: Readonly<Record<string, unknown>>;
+  readonly signal: AbortSignal;
+  readonly requireZeroDataRetention?: boolean;
+};
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
 const boundedString = (value: unknown, maximum = 120): string | undefined => typeof value === "string" && value.length > 0 && value.length <= maximum ? value : undefined;
@@ -46,6 +67,15 @@ function metadataOf(payload: JsonRecord, requestedModel: string): Readonly<Recor
   const cachedTokens = usage && typeof usage.cached_tokens === "number" && Number.isFinite(usage.cached_tokens) && usage.cached_tokens >= 0 ? usage.cached_tokens : undefined;
   if (cachedTokens !== undefined) metadata.cachedTokens = cachedTokens;
   return metadata;
+}
+
+function multipartMessages(messages: readonly MultipartChatMessage[]): readonly { readonly role: MultipartChatMessage["role"]; readonly content: readonly ({ readonly type: "text"; readonly text: string } | { readonly type: "image_url"; readonly image_url: { readonly url: string } })[] }[] {
+  return messages.map((message) => ({
+    role: message.role,
+    content: message.parts.map((part) => part.type === "text"
+      ? { type: "text" as const, text: part.text }
+      : { type: "image_url" as const, image_url: { url: `data:${part.media.mimeType};base64,${Buffer.from(part.media.bytes).toString("base64")}` } }),
+  }));
 }
 
 /**
@@ -93,7 +123,7 @@ export class AnomanProvider implements StructuredReasoningProvider {
     throw new BridgeProviderError("malformed_response", "Anoman returned invalid JSON.");
   }
 
-  async structured(input: { readonly messages: readonly ChatMessage[]; readonly schema: Readonly<Record<string, unknown>>; readonly signal: AbortSignal; readonly requireZeroDataRetention?: boolean }): Promise<{ readonly value: unknown; readonly provenance: ProviderProvenance }> {
+  private async execute(input: { readonly messages: unknown; readonly signal: AbortSignal; readonly requireZeroDataRetention?: boolean }): Promise<{ readonly value: unknown; readonly provenance: ProviderProvenance }> {
     const model = this.preflight(input.requireZeroDataRetention);
     const body = { model, messages: input.messages, temperature: 0, stream: false, response_format: { type: "json_object" } };
     const serialized = JSON.stringify(body);
@@ -117,6 +147,27 @@ export class AnomanProvider implements StructuredReasoningProvider {
     try { value = JSON.parse(message.content); } catch { throw new BridgeProviderError("malformed_response", "Anoman structured content was not JSON."); }
     const servedModel = boundedString(payload.model) ?? model;
     return { value, provenance: { provider: "anoman", model: servedModel, endpoint: "/v1/chat/completions", latencyMilliseconds: Date.now() - started, attempt: 1, usage: usageOf(payload.usage), metadata: metadataOf(payload, model) } };
+  }
+
+  async structured(input: { readonly messages: readonly ChatMessage[]; readonly schema: Readonly<Record<string, unknown>>; readonly signal: AbortSignal; readonly requireZeroDataRetention?: boolean }): Promise<{ readonly value: unknown; readonly provenance: ProviderProvenance }> {
+    return this.execute(input);
+  }
+
+  /**
+   * Adapter-owned serialization for already-authorized neutral parts.  It is
+   * intentionally an opt-in seam: existing string-message callers continue
+   * through `structured`, and no worker/provider activation is added here.
+   */
+  async structuredMultipart(input: AnomanMultipartStructuredInput): Promise<{ readonly value: unknown; readonly provenance: ProviderProvenance }> {
+    return dispatchMultipartStructured({
+      messages: input.messages,
+      signal: input.signal,
+      capabilities: { image: anomanMultipartImageCapability },
+    }, async (messages) => this.execute({
+      messages: multipartMessages(messages),
+      signal: input.signal,
+      requireZeroDataRetention: input.requireZeroDataRetention,
+    }));
   }
 }
 
