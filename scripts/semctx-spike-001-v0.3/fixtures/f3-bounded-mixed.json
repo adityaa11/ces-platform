@@ -1,0 +1,24 @@
+{
+  "fixture_id": "F3",
+  "document": { "scope": "atlas/semctx/v0.3/f3", "sha256": "f3-document-sha256", "normalized_document_version": "NormalizedDocument V1" },
+  "sources": [
+    { "id": "F3-A", "kind": "paragraph", "page": 1, "locator": "p1:block:a", "text": "Independent safe paragraph A establishes the weekly review cadence.", "content_sha256": "a16146cea89d086932a7152f32d54d5317eb3ecdc51122fdbaee984f73a4db41", "verified": true, "eligibility": "independent_eligible" },
+    { "id": "F3-B", "kind": "paragraph", "page": 1, "locator": "p1:block:b", "text": "Independent safe paragraph B identifies the request register.", "content_sha256": "1704034f81e326926b64a16c5d8faaa1173cbf72fb00a458da0e5154c74c6c15", "verified": true, "eligibility": "independent_eligible" },
+    { "id": "F3-C", "kind": "table", "page": 2, "locator": "p2:table:large", "text": "MERGED HEADER AND SHARED CONDITION: This indivisible synthetic table lists category limits under a common qualifying condition. The table cannot be row-split because the merged header governs every row. ", "repeat": 20, "content_sha256": "07bce547593fc554b48bd302ba43ee136c9bf32b11b0711987ace9ccf5d7be4b", "verified": true, "indivisible": true, "eligibility": "independent_eligible" },
+    { "id": "F3-D", "kind": "paragraph", "page": 2, "locator": "p2:block:condition", "text": "For every request in the large table, the stated limit is per calendar week and applies even when processing is delegated.", "content_sha256": "c762365eba78b3b7732783dd13e01dabb82d1097aac027c839d4a74565b3299c", "verified": true, "eligibility": "independent_eligible", "independent_proposition": "The stated table limit applies per calendar week even when processing is delegated." },
+    { "id": "F3-E", "kind": "paragraph", "page": 3, "locator": "p3:block:e", "text": "Cycle member E is meaningful only with its linked exception.", "content_sha256": "a1960f08f2e54ff52a3503d6ca9d520a095f541b47cb260c251532be41877f1a", "verified": true, "eligibility": "independent_eligible" },
+    { "id": "F3-F", "kind": "paragraph", "page": 3, "locator": "p3:block:f", "text": "Cycle member F is meaningful only with its linked base rule.", "content_sha256": "09b761ec8fe7da54131774f7c8719df87eb0ba74b6f27ee3babef39a9fd49803", "verified": true, "eligibility": "independent_eligible" },
+    { "id": "F3-H", "kind": "paragraph", "page": 4, "locator": "p4:block:h", "text": "The listed exception applies only to requests already approved.", "content_sha256": "c97f28fd7852ce7955a49425ee06dcca69ea48f777436540673edecaedda9667", "verified": true, "eligibility": "independent_eligible" },
+    { "id": "F3-I", "kind": "paragraph", "page": 4, "locator": "p4:block:i", "text": "For this section, an approved request has a signed approval record.", "content_sha256": "a99b7d69176fb17075d3b0425419524702c566c8f200f33fd1a74e53dce99656", "verified": true, "eligibility": "independent_eligible" },
+    { "id": "F3-J", "kind": "paragraph", "page": 4, "locator": "p4:block:j", "text": "A signed approval record bears the designated approver signature.", "content_sha256": "dff253b0cf63166d52aadb5b3e7dd5b4581ea01108509c7716964e864139bf8f", "verified": true, "eligibility": "independent_eligible" }
+  ],
+  "dependencies": [
+    { "id": "F3-E-CD", "from": "F3-C", "to": "F3-D", "type": "essential", "authority": "authorized", "evidence_sha256": "f3-cd-evidence", "scope": "atlas/semctx/v0.3/f3" },
+    { "id": "F3-E-EF", "from": "F3-E", "to": "F3-F", "type": "essential", "authority": "authorized", "evidence_sha256": "f3-ef-evidence", "scope": "atlas/semctx/v0.3/f3" },
+    { "id": "F3-E-FE", "from": "F3-F", "to": "F3-E", "type": "essential", "authority": "authorized", "evidence_sha256": "f3-fe-evidence", "scope": "atlas/semctx/v0.3/f3" },
+    { "id": "F3-E-HI", "from": "F3-H", "to": "F3-I", "type": "essential", "authority": "authorized", "evidence_sha256": "f3-hi-evidence", "scope": "atlas/semctx/v0.3/f3" },
+    { "id": "F3-E-IJ", "from": "F3-I", "to": "F3-J", "type": "essential", "authority": "authorized", "evidence_sha256": "f3-ij-evidence", "scope": "atlas/semctx/v0.3/f3" },
+    { "id": "F3-COMP-AB", "from": "F3-A", "to": "F3-B", "type": "comparison", "authority": "authorized", "evidence_sha256": "f3-ab-comparison", "scope": "atlas/semctx/v0.3/f3" },
+    { "id": "F3-OPTIONAL-BC", "from": "F3-B", "to": "F3-C", "type": "optional", "authority": "authorized", "evidence_sha256": "f3-bc-optional", "scope": "atlas/semctx/v0.3/f3" }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "contract_version": "SEMCTX-SPIKE-001-v0.3-oracle-1",
+  "fixtures": {
+    "F1": {
+      "coverage": "complete",
+      "semantic_ready": false,
+      "accepted": false,
+      "plans": [
+        { "owner": "F1-P", "context": [], "payload_bytes": 305, "payload_sha256": "a2305825a001c7b3ab2afcaba71567096d4d7a470c392fb95a1861419e8d949a" },
+        { "owner": "F1-T", "context": [], "payload_bytes": 305, "payload_sha256": "c649b34aa6253f372d40c06d94622abacc8e461727621875f20b634b8f603c61" }
+      ],
+      "ledger": { "F1-P": { "state": "completed", "assertion_id": "F1-provisional-F1-P" }, "F1-T": { "state": "completed", "assertion_id": "F1-provisional-F1-T" } }
+    },
+    "F2": {
+      "coverage": "partial",
+      "semantic_ready": false,
+      "accepted": false,
+      "plans": [ { "owner": "F2-P", "context": [], "payload_bytes": 311, "payload_sha256": "5bb16f7f6834cad1768bfabaf50b905fbd865bc93ca5cc6b075375d46cd6f1e2" } ],
+      "ledger": {
+        "F2-P": { "state": "completed", "assertion_id": "F2-provisional-F2-P" },
+        "F2-T": { "state": "deferred", "reason": "SOURCE_RELATIONSHIP_UNPROVEN", "blocking_edges": ["F2-E-REJECTED"] },
+        "F2-V": { "state": "deferred", "reason": "MEANINGFUL_ASSET_UNINTERPRETED", "asset_ref": "asset://f2/legend-1", "interpreted": false, "non_fact": false }
+      }
+    },
+    "F3": {
+      "coverage": "partial",
+      "semantic_ready": false,
+      "accepted": false,
+      "plans": [
+        { "owner": "F3-A", "context": [], "payload_bytes": 333, "payload_sha256": "60558bdfe3243f0cc798d9556ea488cb89a26a2706085f67a2ef543d9014f037" },
+        { "owner": "F3-B", "context": [], "payload_bytes": 327, "payload_sha256": "63494b71b3de19e1cb9bf35dbcffcb7968de06806e29c9fe2fff97dd7f28adcf" },
+        { "owner": "F3-D", "context": [], "payload_bytes": 396, "payload_sha256": "2730591a975754ac62e185e3bf58146c66ffd6c23714a1d97f0d131e1010c42e" },
+        { "owner": "F3-H", "context": ["F3-I", "F3-J"], "payload_bytes": 652, "payload_sha256": "d69e01fe1793c483a85bc7230e67800cdfcca6ef2166e7614d659bf68992d6e8" },
+        { "owner": "F3-I", "context": ["F3-J"], "payload_bytes": 493, "payload_sha256": "05ef66366a49496497f233c20576028f058734017cf328b86eb14601a6261c1a" },
+        { "owner": "F3-J", "context": [], "payload_bytes": 331, "payload_sha256": "1c403ba9246ceeb7b34f86066acfbe3a8c804f2603f92522da37f564b8de4436" }
+      ],
+      "ledger": {
+        "F3-A": { "state": "completed", "assertion_id": "F3-provisional-F3-A" },
+        "F3-B": { "state": "completed", "assertion_id": "F3-provisional-F3-B" },
+        "F3-C": { "state": "deferred", "reason": "IRREDUCIBLE_ESSENTIAL_CLOSURE_OVERFLOW", "closure_members": ["F3-C", "F3-D"], "payload_bytes": 4551, "payload_sha256": "93e9b1c3a7b449bad5ef802fe137eb03ccc5e35dfdea85f05fa4541a2359947f" },
+        "F3-D": { "state": "completed", "assertion_id": "F3-provisional-F3-D", "proposition_asserted": "The stated table limit applies per calendar week even when processing is delegated." },
+        "F3-E": { "state": "deferred", "reason": "ESSENTIAL_DEPENDENCY_CYCLE", "closure_members": ["F3-E", "F3-F"] },
+        "F3-F": { "state": "deferred", "reason": "ESSENTIAL_DEPENDENCY_CYCLE", "closure_members": ["F3-E", "F3-F"] },
+        "F3-H": { "state": "completed", "assertion_id": "F3-provisional-F3-H", "closure_members": ["F3-H", "F3-I", "F3-J"] },
+        "F3-I": { "state": "completed", "assertion_id": "F3-provisional-F3-I", "closure_members": ["F3-I", "F3-J"] },
+        "F3-J": { "state": "completed", "assertion_id": "F3-provisional-F3-J" }
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "fixture_id": "F2",
+  "document": { "scope": "atlas/semctx/v0.3/f2", "sha256": "f2-document-sha256", "normalized_document_version": "NormalizedDocument V1" },
+  "sources": [
+    { "id": "F2-P", "kind": "paragraph", "page": 1, "locator": "p1:block:paragraph-1", "text": "Submit requests through the portal.", "content_sha256": "5298467667f1a1894feaa5bf675db1982c8350e711c8d063bcebf28fe8f0c3fb", "verified": true, "eligibility": "independent_eligible" },
+    { "id": "F2-T", "kind": "table", "page": 1, "locator": "p1:table:1", "text": "Request | Limit\nTravel | See legend", "content_sha256": "6c430b0daf52d3ee400702ec33c0da53a0ff2e8128781d3f809de3cbf601e96d", "verified": true, "indivisible": true, "eligibility": "independent_eligible" },
+    { "id": "F2-V", "kind": "visual", "page": 1, "locator": "p1:visual:legend-1", "asset_ref": "asset://f2/legend-1", "asset_sha256": "f2-legend-pixels-sha256", "content_sha256": "47b862e732f83f17a6d33cf8581c1129e3d618d197da1cb6f00edbd4d6a52d8a", "verified": true, "meaningful": true, "eligibility": "not_eligible", "eligibility_reason": "No visual semantic interpretation contract is in scope; the asset must remain explicitly uncovered." }
+  ],
+  "dependencies": [
+    { "id": "F2-E-REJECTED", "from": "F2-T", "to": "F2-V", "type": "essential", "authority": "rejected", "reason": "same-page overlap and pairing are not source-relationship authority", "evidence_sha256": "f2-stale-legend-hash", "scope": "atlas/semctx/v0.3/f2" }
+  ]
+}

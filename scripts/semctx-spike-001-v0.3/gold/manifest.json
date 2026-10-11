@@ -1,0 +1,16 @@
+{
+  "bundle_id": "SEMCTX-SPIKE-001-v0.3-oracle-1",
+  "hash_algorithm": "sha256",
+  "canonicalization": "JCS-UTF8-v1 as specified in gold/canonical-serialization.md",
+  "members": {
+    "fixtures/f1-complete.json": { "raw_sha256": "8767cb0221d539cb8aaeb2f0247bdc9e071c560ca8a36f878e4d9d34a450bead", "canonical_sha256": "f937287d312fe43f6bc3a01eafb10ecb0b6e9c6298a45db49f42a29745aa448a" },
+    "fixtures/f2-unproven-context.json": { "raw_sha256": "8c19eff25f25d62ceaf9472bb818091766e896c2fc6e701d974b105004295e68", "canonical_sha256": "c66c2a26d8374459db16bd05e098ee32ce6085b48367a30470ee4fd3cd42ab45" },
+    "fixtures/f3-bounded-mixed.json": { "raw_sha256": "dcfe87274d759262032d407c06b02f064a197d57caace1bbb21a4f02f052b8a1", "canonical_sha256": "f7ff3793313e0f8984f7bb94def775a541643c3e092969bfaa11c111afdd1e6f" },
+    "gold/profile.json": { "raw_sha256": "8eaf9b42e45a519b73c69db3d1d1fb2784af33a9d810a1b338b183b55118e0ff", "canonical_sha256": "2477c6987c4f3bf7b7b97c1697486f245fea1bfb200e4d304d046bd7ce5a35c9" },
+    "gold/expected-output.json": { "raw_sha256": "dc95c5eec79e657ddcf0271b35c067f482a707036268a83a5683e09de0893491", "canonical_sha256": "7e004e9e301e653dc52e03c3ca45f14570fafc2cd7dc2383c38e05850613b6e7" },
+    "gold/negative-cases.json": { "raw_sha256": "f3179db7f874cc5161c7a34c63714539cffaeebdb026cf4a87ba4cb348bca0de", "canonical_sha256": "98590d74b6754ad3e77ca23108b244a635998bd68e3d66ae855e94d4d6e97215" },
+    "gold/oracle-assertion-matrix.json": { "raw_sha256": "e40560bf1b7386e3a5ac119466b620172820390b7531ffc3aa6af3266d4024f3", "canonical_sha256": "e52477aa73e0b95a6337c61b31ba74ca3eaa581b864bb0a7ed1beafbfbd36369" },
+    "gold/canonical-serialization.md": { "raw_sha256": "f5f066ea84dc68c035f9f0d29e84f383bf54b51055b3d7aa1e050361d4a7db55" }
+  },
+  "manifest_sha256": "197cb2e827ce7d6825958954e09ef56b77fa6384cd2f9cc304e57c26b3796111"
+}

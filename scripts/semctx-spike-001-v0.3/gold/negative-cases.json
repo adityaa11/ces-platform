@@ -1,0 +1,14 @@
+{
+  "contract_version": "SEMCTX-SPIKE-001-v0.3-oracle-1",
+  "cases": [
+    { "id": "N-01", "mutation": "replace F1-P locator with malformed value", "expected": { "result": "INTEGRITY_REJECTED", "reason": "FORGED_LOCATOR", "plans_emitted": 0 } },
+    { "id": "N-02", "mutation": "change F2-E-REJECTED authority to authorized while retaining stale evidence hash", "expected": { "result": "INTEGRITY_REJECTED", "reason": "HASH_SUBSTITUTION", "plans_emitted": 0 } },
+    { "id": "N-03", "mutation": "reverse source input order only", "expected": { "result": "DETERMINISTIC_EQUAL", "canonical_output_sha256": "7e004e9e301e653dc52e03c3ca45f14570fafc2cd7dc2383c38e05850613b6e7" } },
+    { "id": "N-04", "mutation": "emit F3-D as context and owner in the F3-C request", "expected": { "result": "INTEGRITY_REJECTED", "reason": "CONTEXT_OWNER_OVERLAP" } },
+    { "id": "N-05", "mutation": "truncate F3-C content until the C+D request is below the budget", "expected": { "result": "INTEGRITY_REJECTED", "reason": "SOURCE_CONTENT_HASH_MISMATCH" } },
+    { "id": "N-06", "mutation": "plan F3-E without F3-F", "expected": { "result": "INTEGRITY_REJECTED", "reason": "ESSENTIAL_DEPENDENCY_CYCLE" } },
+    { "id": "N-07", "mutation": "mark F2-V completed, non_fact, accepted, or semantic_ready", "expected": { "result": "INTEGRITY_REJECTED", "reason": "COVERAGE_OR_ACCEPTANCE_MISREPRESENTATION" } },
+    { "id": "N-08", "mutation": "remove F2-V from its document ledger", "expected": { "result": "INTEGRITY_REJECTED", "reason": "INVENTORY_GAP" } },
+    { "id": "N-09", "mutation": "drop F3-J from F3-H multihop closure", "expected": { "result": "INTEGRITY_REJECTED", "reason": "ESSENTIAL_CLOSURE_INCOMPLETE" } }
+  ]
+}

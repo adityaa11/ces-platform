@@ -1,0 +1,9 @@
+{
+  "fixture_id": "F1",
+  "document": { "scope": "atlas/semctx/v0.3/f1", "sha256": "f1-document-sha256", "normalized_document_version": "NormalizedDocument V1" },
+  "sources": [
+    { "id": "F1-P", "kind": "paragraph", "page": 1, "locator": "p1:block:paragraph-1", "text": "Requests are reviewed weekly.", "content_sha256": "d35cb7bc07474a50ac263cde686df5d61c0fb836914722293e203e13c9ae5272", "verified": true, "eligibility": "independent_eligible" },
+    { "id": "F1-T", "kind": "table", "page": 1, "locator": "p1:table:1", "text": "Tier | Limit | Qualifier\nA | 10 | per week", "content_sha256": "0b7d37bfed5e78a1a6e78ac8ffcca1d5c1b5103d99d4393bc80895971df780f8", "verified": true, "indivisible": true, "eligibility": "independent_eligible" }
+  ],
+  "dependencies": []
+}
