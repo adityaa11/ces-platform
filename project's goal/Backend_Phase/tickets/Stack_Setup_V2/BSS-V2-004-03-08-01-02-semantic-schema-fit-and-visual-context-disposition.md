@@ -9,11 +9,11 @@
 ## Bounded outcome, prerequisites and Review Contract
 
 - **Size:** `M+` (decision risk, not coding volume); **dependencies:** `01-01` CK PASS, accepted Docling/derived evidence boundary; **owns:** truth-representation fit and a **single frozen decision** on title/legend/context-only provenance.
-- **RC-01:** Map six-case and independent diagram/table/chart stress oracles to existing V1 kinds/payload/evidence; enumerate positive/negative cases and gaps without inventing a seventeenth kind, provider-only truth or table-cell-per-candidate requirement.
-- **RC-02:** For context-only image title/legend, decide and explicitly authorize a trusted Atlas-side contextual-evidence/propagation sidecar with stable visual locator and non_fact classification semantics **or** prove that a schema amendment is necessary; no covert schema change or invented image-owned business candidate.
-- **RC-03:** Offline source relationship negatives reject unrelated text/image joins, lost synthetic scope, legend substitution and ungrounded references; explain what is and is not representable at canonical V1.
+- **RC-01:** Map original six-case and stress evidence to V1 only after retrieving reviewer-accessible original bytes, independently verifying SHA-256 and inventory; missing input is `FIXTURE_UNAVAILABLE_BLOCKED`. No fabricated sources/gold or seventeenth kind.
+- **RC-02:** GO proposes an evidenced Atlas-side title/legend/context-only relationship policy or documents a schema gap, naming issuer, validator, scope, retained provenance and `non_fact` disposition. **Only HMN authorizes** a new trusted sidecar/contract; CK verifies the decision. No fabricated image-owned candidate.
+- **RC-03:** Reject invalid table↔image joins, scope loss, substituted legends or inferred relations. NormalizedDocument V1 and derived manifests do not supply a trusted semantic table/image link; shared page, bounding box, pixel similarity and model conjecture are insufficient. Essential missing relation => `SOURCE_RELATIONSHIP_BLOCKED`.
 - **RC-04:** Record explicit `SCHEMA_FIT_BLOCKED` and **stop for HMN** if no faithful, auditable representation fits without a canonical change. CK may PASS the *documented blocker as a correct finding*, but downstream implementation is **blocked** until separate authorization closes it; blocked is not downstream-ready.
-- **GO terminal:** frozen fit/ownership decision + proposed sidecar/API interface (not implementation), exact fixture identities; no provider calls.
+- **GO terminal:** Evidence-backed relationship/schema-fit *proposal*, verified originals or `FIXTURE_UNAVAILABLE_BLOCKED`, explicit pending HMN decision and zero provider calls. CK approval of the assessment is not authorization for a new sidecar.
 
 ## Security Refactor Readiness
 

@@ -9,9 +9,9 @@
 ## Bounded outcome, prerequisites and Review Contract
 
 - **Size:** `M`; **dependencies:** `01-02` CK PASS; may proceed in parallel with `01-03/04` and `02-01`; **owns:** independent frozen semantic oracles and expected source mapping, **not** compiler/finalizer implementation.
-- **RC-01:** Freeze synthetic TXT, PNG, response and generated oracle SHA-256; map C01–C06 and original stress-pack meaning to canonical Semantic V1 without assuming one candidate per table cell/edge or pretending screenshot repetition is independent policy.
+- **RC-01:** Independently retrieve original synthetic TXT/PNG, raw v0.3.1 response/diagnostics and stress-pack source/gold with approved reviewer-accessible paths, bytes, SHA-256 and inventory before oracle freeze. These files are absent from commit `d6421dd`; otherwise `FIXTURE_UNAVAILABLE_BLOCKED`. Do not reconstruct originals or treat screenshot duplicate as independent policy.
 - **RC-02:** Separate M01–M13 human semantic assessment from strict raw parser/Zod acceptance; include temporal pending/negative/unknown/unavailable, source-native literals, synthetic scope, context-only source, primary-kind and no-invented-policy proofs.
-- **RC-03:** Publish adversarial independent negatives: reversed arrow, invented cell, wrong units, invalid source relationship, extra duplicate candidate, lost legend/scope and wrong missing-info clarification. Oracle authors do not edit expected output after seeing production test failures without HMN.
+- **RC-03:** Independent negatives for reversed arrows, fabricated cells/units, invalid relations, duplicate candidates, missing legends/scope, false clarification and instruction-looking document/table/image text attempting to override Atlas policy. Original oracles cannot be rewritten to match failures without HMN.
 - **GO terminal:** immutable oracle reference and hash ledger, no code or provider calls.
 
 ## Security Refactor Readiness

@@ -10,9 +10,9 @@
 
 - **Size:** `M+` (cross-contract review, no new feature owner); **dependencies:** `02-06` and `03-02` CK PASS, plus all antecedents and resolved HMN blockers; **owns:** integrated harness, terminal matrix and downstream interface handoff only.
 - **RC-01:** From accepted-shaped NormalizedDocument/manifest through versioned stepwise packet, verified synthetic image hydration, fake typed provider response and canonical finalizer, preserve trusted slot/page/table/visual evidence, modality context, M01–M13 oracle references and canonical result V1.
-- **RC-02:** Run failure injections for forged image context, missing/grant-invalid/corrupt asset, reversed graph edge, fabricated data, repeated slot, wrong raw JSON/enum, cancellation/replay and overflow; each ends in a **visible, attributed fail**, never a silent fallback/repair.
+- **RC-02:** Inject forged context, corrupt/foreign media, reversed edges, fabricated values, duplicate slots, invalid raw schema, replay/overflow and source-embedded instruction attempts. Require a visible failure or preserved system-instruction/data boundary, no silent repair; fake provider tests do not prove live-model injection immunity.
 - **RC-03:** At the **final reviewed HEAD**, rerun the exact parent-HEAD legacy baseline assertions and each impacted approved owner lane; old default prompt/section/provenance hashes, source packets, string-only transport, replay and perception remain compatible. Prior leaf CK PASS alone cannot substitute for this comparison.
-- **RC-04:** Prove zero real provider calls, zero provider reservations, zero semantic/perception jobs, zero new accepted truth/reconciliation/publication, byte-redacted artifacts and versioned RequestResourceEnvelope handoff. Declare real-model/real-PDF reliability explicitly **unqualified**.
+- **RC-04:** Zero real provider calls, reservations and semantic/perception jobs, no accepted truth/reconciliation/publication, redacted evidence and versioned *request-specification/resource-estimator inputs only*. The final exact per-batch `RequestResourceEnvelope` is owned by `IDSER-012-02-01`. Model/real-PDF reliability remains unqualified.
 - **GO terminal:** `READY_FOR_CK` on fully bounded final offline architecture, with no dependency-cycle change and no semantic production activation.
 
 ## Security Refactor Readiness

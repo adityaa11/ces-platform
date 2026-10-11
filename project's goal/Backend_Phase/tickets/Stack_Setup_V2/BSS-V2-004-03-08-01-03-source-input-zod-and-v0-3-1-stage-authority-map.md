@@ -10,9 +10,9 @@
 
 - **Size:** `M`; **dependencies:** `01-01` and `01-02` CK PASS with no open schema-fit blocker; **owns:** additive provider-neutral source-input `.describe()` and explicit eight-stage authority/ordering specification, **not** compiler implementation.
 - **RC-01:** Source modalities, authorized ownership vs reference context, image/title/legend/table semantics, temporal/aspectual negative-vs-not-yet-vs-unknown distinctions are represented by source-input Zod descriptions or separately identified reviewed static policy.
-- **RC-02:** Every step from §0.6 has a unique source-of-instruction owner: `ZOD_SEMANTIC`, `ZOD_SOURCE_INPUT`, `STATIC_POLICY`, or outside-model validator; no manually duplicated 16-kind taxonomy and no language-keyword hard-coding.
+- **RC-02:** Exactly one instruction authority per rendered *section* (ZOD_SEMANTIC, ZOD_SOURCE_INPUT or STATIC_POLICY), with independently owned/hashed sections composed within a stage and outside-model validators recorded separately. No copied 16-kind definitions or source-language hard-coding.
 - **RC-03:** The new contract remains additive and provider-independent; canonical semantic V1 and approved `prompt-003/v1` schema/bytes are unchanged against `01-01` baseline.
-- **RC-04:** Deterministic schema/description/source-stage-map tests and ambiguity/legend/temporal negatives pass offline; real image bytes, compiler integration and provider execution stay out of scope.
+- **RC-04:** Offline schema/section/stage determinism and temporal/legend/ambiguity **and source-as-instruction** negatives. Text/table/image labels are untrusted evidence and cannot override compiled system policy. No provider calls or image hydration.
 - **GO terminal:** new source-input authority + frozen step-to-authority matrix; independent CK, no preview-model qualification claim.
 
 ## Security Refactor Readiness

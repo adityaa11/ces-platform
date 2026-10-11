@@ -10,9 +10,9 @@
 
 - **Size:** `M+` (integration/resource uncertainty); **dependencies:** `02-03`/`02-04`/`02-05` CK PASS; **owns:** structural request limit preflight and privacy/replay-safe *interface* for future `IDSER-012-02-01`, not a new scheduler.
 - **RC-01:** Bound image count/bytes/dimensions, ordered parts, prompt bytes, effective profile/media capability, deadlines/cancellation; reject unknown route/profile or unsupported media **before** any provider call, authorization or side effect.
-- **RC-02:** Emit exact deterministic request-spec identity (schema/profile/slot map/asset refs/hashes, **not** bytes) and conservative externally approved resource-bound *interface*. If image TPM cost cannot be supported safely, set `RESOURCE_ENVELOPE_BLOCKED` pending HMN; never equate image bytes to tokens or pretend vendor weighted billing = TPM.
+- **RC-02:** Emit exact deterministic request-spec identity (schema/profile/slots/asset refs/hashes without bytes) and bounded resource-estimator *inputs/interface only*. `IDSER-012-02-01` constructs the actual exact per-batch `RequestResourceEnvelope` using estimator/accounting/safety policy. Unknown image TPM -> `RESOURCE_ENVELOPE_BLOCKED`.
 - **RC-03:** In fake aborted/duplicate/restart/cancel cases demonstrate no persistent base64 or leaked credentials, no fresh perception job/permit, no semantic execution or reservation, no duplicate external attempt and existing string-only behavior unchanged.
-- **GO terminal:** versioned resource-envelope input contract and replay/limit evidence; does **not** implement BSS-V2-005/006 admission or qualify pricing.
+- **GO terminal:** Versioned request-spec/resource-estimation input contract and replay/limits evidence, **not** a completed `RequestResourceEnvelope`, IDSER planner or BSS-V2-005/006 admission.
 
 ## Security Refactor Readiness
 

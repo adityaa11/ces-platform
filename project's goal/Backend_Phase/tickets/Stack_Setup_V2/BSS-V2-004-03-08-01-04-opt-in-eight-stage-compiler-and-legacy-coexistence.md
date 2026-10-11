@@ -11,7 +11,7 @@
 - **Size:** `M+` (shared frozen compiler risk); **dependencies:** `01-03` CK PASS and `01-01` baseline CK PASS; **owns:** versioned new profile, eight ordered stages, deterministic hashes/provenance and old/new coexistence.
 - **RC-01:** New profile deterministically compiles all eight prescribed stages in order from canonical and source-input Zod plus reviewed static sections; section/stage authority and hashes are inspectable. **No** provider ID, fallback, runtime prompt repair, hidden chain-of-thought or model calls.
 - **RC-02:** `compileExtractionPrompt()` legacy default, full bytes, schema, section order/ownership, provenance and old text-only packet stay identical to actual `01-01` parent baseline; frozen `crossFieldSemanticCompositionPolicy` and historical gold untouched.
-- **RC-03:** Two-build repeatability, old→new→old invocation, concurrent old/new isolation, unsupported profile rejection, no implicit activation and negative drift checks pass; no dynamic mutation of legacy imports/exports.
+- **RC-03:** Two-build/old→new→old reproducibility, concurrent profile isolation, unknown-profile rejection, legacy exact-byte parity and source-as-instruction negative tests. Untrusted source strings must not be interpolated into immutable system-policy sections. No automatic activation or altered legacy exports.
 - **RC-04:** Changed-file/contract impact matrix and same-environment baseline-vs-new test ledger prove `INTENDED_NEW_PROFILE_ONLY`; unexpected deviation -> `LEGACY_REGRESSION_BLOCKED` and no CK PASS.
 - **GO terminal:** immutable new-profile IDs/hashes and independently reproducible compiler/legacy test logs. **No images transmitted; no provider calls.**
 

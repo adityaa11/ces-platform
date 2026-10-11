@@ -1,6 +1,6 @@
 # BSS-V2-004-03-08: Multimodal Semantic V1 source-to-prompt integration
 
-- **State:** `planned`; **execution authority:** not granted.
+- **State:** `planned` (13 Markdown leaf drafts committed at `d6421dd`); **execution authority:** not granted. Source contract and missing-fixture audit recorded in master §0.8.
 - **Parent context:** [v0.3.1 implementation context](../../BSS-V2-004-03-08-v0.3.1-sized-ticket-bundle/BSS-V2-004-03-08-v0.3.1-implementation-context.md).
 - **Scope:** production-shaped, offline-only multimodal Semantic V1 request architecture. This family does not activate live semantic execution.
 - **Structure:** `08`, `08-01`, `08-02`, and `08-03` are non-executable planning headings. The 13 linked leaves are the only proposed GO/CK units.
@@ -9,9 +9,13 @@
 
 - Each leaf requires explicit HMN/GO approval after its current SHA and named CK predecessors are confirmed; a planning ticket never authorizes its successor.
 - The first eligible leaf is `08-01-01`, which captures an immutable legacy baseline only. `BASELINE_UNVERIFIED`, `SCHEMA_FIT_BLOCKED`, `LEGACY_REGRESSION_BLOCKED`, `RESOURCE_ENVELOPE_BLOCKED`, `OWNERSHIP_CONFLICT_BLOCKED`, and `CROSS_LEAF_SCOPE_BLOCKED` stop the affected work.
-- All leaves are zero-call: no provider request, retry/fallback, provider reservation, semantic/perception job, reconciliation, publication, or accepted truth.
+- All leaves are zero-call: no provider request, fallback/retry, reservation, semantic/perception job, reconciliation or publication.
+- NormalizedDocument V1 and its derived manifest do NOT authorize a table↔image relationship: `01-02` proposes a trusted source and HMN authorizes; `02-01` blocks essential unproven links as `SOURCE_RELATIONSHIP_BLOCKED`.
+- Original manual/stress files absent at `d6421dd`; verify unmodified originals and reviewer access or `FIXTURE_UNAVAILABLE_BLOCKED`.
+- Stepwise instruction authority is per-section, not one owner per whole stage; input document/table/image instructions are untrusted source data.
 - Existing Semantic V1 Zod, `prompt-003/v1`, text-only source packet, provider-neutral route boundary, finalizer ownership, and IDSER/BSS admission ownership remain authoritative.
-- Closure means only `08-03-03` CK PASS for the offline architecture. It does not qualify real-model accuracy, real-PDF image reasoning, privacy/ZDR, provider admission, or production activation.
+- `08-02-06` only hands off resource-estimator/request-spec inputs; exact `RequestResourceEnvelope` belongs to `IDSER-012-02-01`.
+- Closure means only `08-03-03` CK PASS for offline architecture, not real-model, PDF or admission qualification.
 
 ## Proposed leaves and dependencies
 

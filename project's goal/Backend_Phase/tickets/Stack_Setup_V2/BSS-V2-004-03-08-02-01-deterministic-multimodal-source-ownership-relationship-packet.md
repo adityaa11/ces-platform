@@ -9,8 +9,8 @@
 ## Bounded outcome, prerequisites and Review Contract
 
 - **Size:** `M`; **dependencies:** `01-02` and `01-04` CK PASS; **owns:** provider-neutral slot/locator/reference-context/image-part descriptors without reading image bytes.
-- **RC-01:** Each owned text/table/visual locator has one deterministic temporary slot; context-only material has attributed contextual origin without a fabricated business assertion; text/table/visual same-logical-source relationships derive from **authorized** normalized/manifest binding, not the manual fixture-hash pairing.
-- **RC-02:** Unlabeled image-bearing visuals are retained as *pending authorized media*, never silently treated as meaningless; missing/duplicate/foreign/unsupported relationships and over-bound context fail before transport.
+- **RC-01:** Each owned text/table/visual locator gets one deterministic temporary slot; context-only provenance never generates a false assertion. Actual NormalizedDocument V1 and derived manifest bind an image to a visual locator, **not to a table**. Consume only HMN-approved, Atlas-validated relationship provenance from `01-02`, never proximity, common page, pixels or the manual hash pairing. Essential unproven link -> `SOURCE_RELATIONSHIP_BLOCKED`, independent slots retained.
+- **RC-02:** Unlabeled image assets remain pending meaningful evidence, never silent `non_fact`; reject absent/duplicate/foreign/unsupported or guessed relationships and over-bound context before transport.
 - **RC-03:** Exact packet/source-spec/hash repeatability, reference-context nonownership and unchanged legacy text-only packet bytes/failure decisions demonstrated with frozen and negative fixtures.
 - **RC-04:** Explicitly document what must be supplied later by the resolver and resource planner; no bytes, no vendor API, no jobs and no invented media-token estimate.
 - **GO terminal:** deterministic *unhydrated* source packet + source-to-visual relationship mapping; CK on packet contract only.
