@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import test from "node:test";
 import { z } from "zod";
-import { atlasProviderExtractionProposalV1JsonSchema, atlasProviderExtractionProposalV1Schema, atlasSemanticSourceInputV031Schema, buildSemanticSourcePacket, canonicalSemanticV1AuthorityId, compileExtractionPrompt, crossFieldSemanticCompositionPolicy, semanticExtractionProfileId, semanticExtractionSkill, semanticReconciliationSkill, getProductionSemanticSkill, semanticSourceInputV031StageAuthorityMap, semanticSourceInputV031StageAuthorityMapSha256, semanticSourcePacketLimits, stepwiseMultimodalSemanticExtractionProfileId } from "../src/index.ts";
+import { atlasProviderExtractionProposalV1JsonSchema, atlasProviderExtractionProposalV1Schema, atlasSemanticSourceInputV031Schema, buildSemanticSourcePacket, buildUnhydratedMultimodalSourcePacket, canonicalSemanticV1AuthorityId, compileExtractionPrompt, crossFieldSemanticCompositionPolicy, semanticExtractionProfileId, semanticExtractionSkill, semanticReconciliationSkill, getProductionSemanticSkill, semanticSourceInputV031StageAuthorityMap, semanticSourceInputV031StageAuthorityMapSha256, semanticSourcePacketLimits, stepwiseMultimodalSemanticExtractionProfileId, unhydratedMultimodalPacketHandoffRequirements, unhydratedMultimodalSourcePacketVersion } from "../src/index.ts";
 import { validateJsonSchema } from "@atlas/contracts";
 
 test("only the two bounded model-neutral semantic skills are exported", () => { assert.equal(getProductionSemanticSkill("atlas.semantic.extract", "v1"), semanticExtractionSkill); assert.equal(getProductionSemanticSkill("atlas.semantic.reconcile", "v1"), semanticReconciliationSkill); assert.throws(() => getProductionSemanticSkill("atlas.semantic.extract", "v2")); assert.doesNotThrow(() => validateJsonSchema(semanticExtractionSkill.outputSchema, { version: "v1", candidate_assertions: [], source_statement_inventory: [], questions: [] })); });
@@ -230,6 +230,59 @@ test("source packets fail closed for duplicate, overflow, and byte-overflow sour
 test("source packet builder has no provider, classification, finalization, or persistence seam", async () => {
   const source = await readFile(resolve(import.meta.dirname, "../src/semantic-source-packet.ts"), "utf8");
   assert.ok(!/Anoman|Gemini|Mistral|DocumentStore|candidate_id|finaliz|providerId|fetch\(/.test(source));
+});
+
+const authorizedMultimodalFixture = () => {
+  const document = structuredClone(normalizedSourceFixture()) as { executionId: string; artifactId: string; sourceSha256: string; pages: { number: number; visualRegions: { id: string; label?: string; assetRef?: string }[] }[] };
+  document.pages.find((page) => page.number === 1)!.visualRegions[0]!.assetRef = "derived/figure-a";
+  document.pages.find((page) => page.number === 2)!.visualRegions.find((visual) => visual.id === "unlabeled")!.assetRef = "derived/unlabeled";
+  const authorizedRelationship = {
+      relationshipLineageId: "title-qualifies-table-a",
+      revisionHash: "b".repeat(64),
+      normalizedDocument: { executionId: document.executionId, artifactId: document.artifactId, sourceSha256: document.sourceSha256 },
+      ownedSource: { pageNumber: 1, locatorType: "table" as const, locatorId: "table-a" },
+      contextVisual: { pageNumber: 1, locatorId: "figure-a", assetRef: "derived/figure-a", derivedAssetSha256: "c".repeat(64) },
+      contextualRole: "title" as const,
+      necessity: "essential" as const,
+      authorization: { mechanismId: "atlas.fixture-attestation/v1", attestationId: "fixture-relationship-1" },
+    };
+  return { document, authorizedRelationships: [authorizedRelationship], relationshipRequirements: [{ ownedSource: authorizedRelationship.ownedSource, contextVisual: authorizedRelationship.contextVisual, contextualRole: authorizedRelationship.contextualRole, necessity: authorizedRelationship.necessity }] };
+};
+
+test("authorized multimodal packets are deterministic, unhydrated, and preserve pending media", () => {
+  const input = authorizedMultimodalFixture();
+  const legacyBefore = buildSemanticSourcePacket(input.document);
+  const first = buildUnhydratedMultimodalSourcePacket(input);
+  const second = buildUnhydratedMultimodalSourcePacket(input);
+  const legacyAfter = buildSemanticSourcePacket(input.document);
+  assert.deepEqual(first, second);
+  assert.equal(first.version, unhydratedMultimodalSourcePacketVersion);
+  assert.equal(first.semanticProfile, stepwiseMultimodalSemanticExtractionProfileId);
+  assert.equal(first.sourceSpecificationSha256, sha256(first.sourceSpecification));
+  assert.deepEqual(first.referenceContexts, [{ ownedSourceSlot: "slot-000002", contextSourceSlot: "slot-000003", relationshipLineageId: "title-qualifies-table-a", revisionHash: "b".repeat(64), contextualRole: "title", necessity: "essential", derivedAssetSha256: "c".repeat(64) }]);
+  assert.equal(first.sourceSlots.find((slot) => slot.locatorId === "table-a")?.role, "owned_source");
+  assert.equal(first.sourceSlots.find((slot) => slot.locatorId === "figure-a")?.role, "reference_context");
+  const unlabeled = first.sourceSlots.find((slot) => slot.locatorId === "unlabeled");
+  assert.equal(unlabeled?.role, "pending_authorized_media");
+  assert.equal(unlabeled?.content, undefined);
+  assert.ok(first.pendingAuthorizedMedia.some((part) => part.locatorId === "unlabeled" && part.assetRef === "derived/unlabeled"));
+  assert.ok(!first.sourceSpecification.includes("base64"));
+  assert.ok(!("userPrompt" in first));
+  assert.deepEqual(legacyAfter, legacyBefore, "The new packet must not change the text-only packet.");
+  assert.ok(unhydratedMultimodalPacketHandoffRequirements.resolver.every((requirement) => requirement.length > 0));
+  assert.ok(unhydratedMultimodalPacketHandoffRequirements.resourcePlanner.some((requirement) => requirement.includes("no media-token estimate")));
+});
+
+test("multimodal packets fail closed for foreign, malformed, duplicate, and unbound visual relationships", () => {
+  const input = authorizedMultimodalFixture();
+  const relationship = input.authorizedRelationships[0]!;
+  assert.throws(() => buildUnhydratedMultimodalSourcePacket({ ...input, authorizedRelationships: [{ ...relationship, normalizedDocument: { ...relationship.normalizedDocument, sourceSha256: "d".repeat(64) } }] }), /Foreign authorized source relationship binding/);
+  assert.throws(() => buildUnhydratedMultimodalSourcePacket({ ...input, authorizedRelationships: [{ ...relationship, contextVisual: { ...relationship.contextVisual, assetRef: "derived/foreign" } }] }), /SOURCE_RELATIONSHIP_BLOCKED/);
+  assert.throws(() => buildUnhydratedMultimodalSourcePacket({ ...input, authorizedRelationships: [relationship, relationship] }), /duplicate or over-bound/);
+  assert.throws(() => buildUnhydratedMultimodalSourcePacket({ ...input, authorizedRelationships: [{ ...relationship, contextVisual: { ...relationship.contextVisual, locatorId: "missing-visual" } }] }), /SOURCE_RELATIONSHIP_BLOCKED/);
+  assert.throws(() => buildUnhydratedMultimodalSourcePacket({ ...input, authorizedRelationships: [{ ...relationship, authorization: { mechanismId: "", attestationId: "fixture-relationship-1" } }] }), /Malformed authorized source relationship binding/);
+  assert.throws(() => buildUnhydratedMultimodalSourcePacket({ ...input, authorizedRelationships: [] }), /missing essential authorized source relationship/);
+  assert.throws(() => buildUnhydratedMultimodalSourcePacket({ ...input, authorizedRelationships: [{ ...relationship, contextualRole: "legend" }] }), /unsupported context relationship/);
 });
 
 test("v0.3.1 source-input descriptions preserve provenance, uncertainty, and language-agnostic states", () => {
