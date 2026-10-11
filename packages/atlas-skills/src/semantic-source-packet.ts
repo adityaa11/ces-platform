@@ -209,6 +209,8 @@ export function buildUnhydratedMultimodalSourcePacket(input: { readonly document
     if (binding.normalizedDocument.executionId !== document.executionId || binding.normalizedDocument.artifactId !== document.artifactId || binding.normalizedDocument.sourceSha256 !== document.sourceSha256) throw new Error("Foreign authorized source relationship binding.");
     const { owned, context, relationshipKey } = validateRelationshipTarget(binding);
     if (requiredRelationshipKeys.size > 0 && !requiredRelationshipKeys.has(relationshipKey)) throw new Error("SOURCE_RELATIONSHIP_BLOCKED: unsupported context relationship.");
+    const requirement = requiredRelationshipKeys.get(relationshipKey);
+    if (requirement && binding.necessity !== requirement.necessity) throw new Error("SOURCE_RELATIONSHIP_BLOCKED: authorized relationship necessity does not match its requirement.");
     if (relationshipKeys.has(relationshipKey)) throw new Error("SOURCE_RELATIONSHIP_BLOCKED: duplicate or over-bound context relationship.");
     relationshipKeys.add(relationshipKey);
     return { ownedSourceSlot: owned.slot, contextSourceSlot: context.slot, relationshipLineageId: binding.relationshipLineageId, revisionHash: binding.revisionHash, contextualRole: binding.contextualRole, necessity: binding.necessity, derivedAssetSha256: binding.contextVisual.derivedAssetSha256 };

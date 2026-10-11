@@ -273,6 +273,21 @@ test("authorized multimodal packets are deterministic, unhydrated, and preserve 
   assert.ok(unhydratedMultimodalPacketHandoffRequirements.resourcePlanner.some((requirement) => requirement.includes("no media-token estimate")));
 });
 
+test("multimodal packet blocks an optional binding for an essential relationship requirement", () => {
+  const input = authorizedMultimodalFixture();
+  const relationship = input.authorizedRelationships[0]!;
+  const essentialRequirement = input.relationshipRequirements[0]!;
+  assert.equal(essentialRequirement.necessity, "essential");
+  assert.equal(relationship.necessity, "essential");
+  assert.doesNotThrow(() => buildUnhydratedMultimodalSourcePacket(input));
+
+  assert.throws(() => buildUnhydratedMultimodalSourcePacket({
+    ...input,
+    authorizedRelationships: [{ ...relationship, necessity: "optional" }],
+    relationshipRequirements: [essentialRequirement],
+  }), /SOURCE_RELATIONSHIP_BLOCKED: authorized relationship necessity does not match its requirement/);
+});
+
 test("multimodal packets fail closed for foreign, malformed, duplicate, and unbound visual relationships", () => {
   const input = authorizedMultimodalFixture();
   const relationship = input.authorizedRelationships[0]!;
