@@ -135,20 +135,49 @@ test("unknown image TPM blocks resource-envelope construction without inventing 
   });
 });
 
-test("aborted, duplicate, restart and cancellation preflight cases stay replay-safe with zero side effects", () => {
+test("aborted, duplicate, restart and cancellation preflight cases stay replay-safe at observable fake boundaries", () => {
+  const fakeBoundary = {
+    semanticExecutions: [] as string[],
+    perceptionJobs: [] as string[],
+    permits: [] as string[],
+    reservations: [] as string[],
+    externalProviderAttempts: [] as string[],
+    persistedOrLoggableMetadata: [] as string[],
+    observePreflight(overrides: Partial<Parameters<typeof preflightMultimodalRequest>[0]> = {}) {
+      const result = preflight(overrides);
+      this.persistedOrLoggableMetadata.push(JSON.stringify(result));
+      return result;
+    },
+  };
   const aborted = controller();
   aborted.abort();
-  assert.throws(() => preflight({ signal: aborted.signal }), (error: unknown) => error instanceof BridgeProviderError && error.code === "cancelled");
+  assert.throws(() => fakeBoundary.observePreflight({ signal: aborted.signal }), (error: unknown) => error instanceof BridgeProviderError && error.code === "cancelled");
+  assert.equal(fakeBoundary.persistedOrLoggableMetadata.length, 0);
 
-  const first = preflight();
-  const duplicate = preflight();
-  const afterRestart = preflight();
+  const first = fakeBoundary.observePreflight();
+  const duplicate = fakeBoundary.observePreflight();
+  const afterRestart = fakeBoundary.observePreflight();
   assert.equal(first.requestSpec.identity, duplicate.requestSpec.identity);
   assert.equal(first.requestSpec.identity, afterRestart.requestSpec.identity);
-  const semanticExecutions = 0;
-  const perceptionJobs = 0;
-  const permits = 0;
-  const reservations = 0;
-  const externalProviderAttemptCount = 0;
-  assert.deepEqual({ semanticExecutions, perceptionJobs, permits, reservations, externalProviderAttemptCount }, { semanticExecutions: 0, perceptionJobs: 0, permits: 0, reservations: 0, externalProviderAttemptCount: 0 });
+
+  const cancelled = controller();
+  cancelled.abort();
+  assert.throws(() => fakeBoundary.observePreflight({ signal: cancelled.signal }), (error: unknown) => error instanceof BridgeProviderError && error.code === "cancelled");
+  assert.equal(fakeBoundary.persistedOrLoggableMetadata.length, 3);
+
+  assert.deepEqual({
+    semanticExecutions: fakeBoundary.semanticExecutions.length,
+    perceptionJobs: fakeBoundary.perceptionJobs.length,
+    permits: fakeBoundary.permits.length,
+    reservations: fakeBoundary.reservations.length,
+    externalProviderAttemptCount: fakeBoundary.externalProviderAttempts.length,
+  }, {
+    semanticExecutions: 0,
+    perceptionJobs: 0,
+    permits: 0,
+    reservations: 0,
+    externalProviderAttemptCount: 0,
+  });
+  const capturedMetadata = fakeBoundary.persistedOrLoggableMetadata.join("\n");
+  assert.doesNotMatch(capturedMetadata, /inspect the attributed visual|retain source order|1,2,3|base64|credential|secret/iu);
 });
