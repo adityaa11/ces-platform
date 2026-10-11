@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 /**
  * Bridge-owned provider capabilities. These contracts deliberately describe
  * only bounded inputs and normalized outputs; provider SDK and API shapes stay
@@ -43,8 +45,135 @@ export type MultipartStructuredRequest = {
   readonly capabilities: StructuredMessageCapabilities;
 };
 
+/**
+ * A replay-safe description of the request which can be handed to a future
+ * admission planner.  It intentionally contains hashes and bounds, never
+ * text, image bytes, base64, credentials, or a computed resource envelope.
+ */
+export type MultimodalRequestSpecPart = { readonly type: "text"; readonly sourcePartId: string; readonly textSha256: string; readonly byteLength: number } | { readonly type: "image"; readonly sourcePartId: string; readonly assetRef: string; readonly mimeType: "image/png"; readonly sha256: string; readonly byteLength: number; readonly width: number; readonly height: number };
+
+export type MultimodalRequestSpec = {
+  readonly version: "v1";
+  readonly identity: string;
+  readonly routeId: string;
+  readonly profileId: string;
+  readonly profileVersion: string;
+  readonly schemaSha256: string;
+  readonly deadlineEpochMilliseconds: number;
+  readonly promptBytes: number;
+  readonly parts: readonly MultimodalRequestSpecPart[];
+};
+
+export type ResourceEstimatorInput = {
+  readonly version: "v1";
+  readonly requestSpecIdentity: string;
+  readonly routeId: string;
+  readonly profileId: string;
+  readonly promptBytes: number;
+  readonly imageCount: number;
+  readonly imageBytes: number;
+  readonly imagePixels: number;
+  readonly imageTpm: { readonly state: "qualified"; readonly tokensPerImage: number } | { readonly state: "not_applicable" };
+};
+
+export type ResourceEnvelopeBlocked = {
+  readonly code: "RESOURCE_ENVELOPE_BLOCKED";
+  readonly routeId: string;
+  readonly profileId: string;
+  readonly reason: "unknown_image_tpm";
+};
+
+export type MultimodalRequestProfile = {
+  readonly version: "v1";
+  readonly routeId: string;
+  readonly profileId: string;
+  readonly profileVersion: string;
+  readonly image?: MultipartImageCapability;
+  readonly maxPromptBytes: number;
+  readonly maxDeadlineMilliseconds: number;
+  readonly imageTpm: { readonly state: "qualified"; readonly tokensPerImage: number } | { readonly state: "unknown" };
+};
+
+export type MultimodalRequestPreflightInput = {
+  readonly routes: readonly MultimodalRequestProfile[];
+  readonly routeId: string;
+  readonly profileId: string;
+  readonly messages: readonly MultipartChatMessage[];
+  readonly schema: Readonly<Record<string, unknown>>;
+  readonly signal: AbortSignal;
+  readonly deadlineEpochMilliseconds: number;
+  readonly nowEpochMilliseconds?: number;
+};
+
+export type MultimodalRequestPreflight = {
+  readonly requestSpec: MultimodalRequestSpec;
+  readonly resourceEstimatorInput: ResourceEstimatorInput | ResourceEnvelopeBlocked;
+};
+
 type RedactedMultipartPart = { readonly type: MultipartMessagePart["type"]; readonly sourcePartId: string; readonly media?: Omit<MultipartImagePart["media"], "bytes"> };
 export type RedactedMultipartRequest = { readonly messages: readonly { readonly role: MultipartChatMessage["role"]; readonly parts: readonly RedactedMultipartPart[] }[] };
+
+const sha256 = (value: Uint8Array | string): string => createHash("sha256").update(value).digest("hex");
+
+function canonicalJson(value: unknown): string {
+  if (value === null || typeof value === "boolean" || typeof value === "number" || typeof value === "string") return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  if (typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record[key])}`).join(",")}}`;
+  }
+  throw new BridgeProviderError("invalid_request", "The multipart schema must be JSON-serializable.");
+}
+
+function rejectPreflight(message: string): never {
+  throw new BridgeProviderError("invalid_request", message);
+}
+
+/**
+ * Performs the route/profile and structural checks before an authorization or
+ * provider transport can observe the request.  This function is deliberately
+ * provider-neutral and returns estimator inputs, not a RequestResourceEnvelope.
+ */
+export function preflightMultimodalRequest(input: MultimodalRequestPreflightInput): MultimodalRequestPreflight {
+  if (input.signal.aborted) throw new BridgeProviderError("cancelled", "The multipart request was cancelled before preflight.");
+  const profile = input.routes.find((candidate) => candidate.routeId === input.routeId && candidate.profileId === input.profileId);
+  if (!profile) rejectPreflight("The requested route/profile is not recognized.");
+  const now = input.nowEpochMilliseconds ?? Date.now();
+  if (!Number.isSafeInteger(input.deadlineEpochMilliseconds) || input.deadlineEpochMilliseconds <= now) throw new BridgeProviderError("cancelled", "The multipart request deadline has elapsed before preflight.");
+  if (input.deadlineEpochMilliseconds - now > profile.maxDeadlineMilliseconds) rejectPreflight("The multipart request deadline exceeds the effective profile bound.");
+
+  const parts: MultimodalRequestSpecPart[] = [];
+  let promptBytes = 0;
+  let imageCount = 0;
+  let imageBytes = 0;
+  let imagePixels = 0;
+  for (const message of input.messages) {
+    for (const part of message.parts) {
+      if (part.type === "text") {
+        const byteLength = Buffer.byteLength(part.text, "utf8");
+        promptBytes += byteLength;
+        parts.push({ type: "text", sourcePartId: part.sourcePartId, textSha256: sha256(part.text), byteLength });
+        continue;
+      }
+      const capability = profile.image;
+      if (!capability || capability.version !== "v1" || !capability.mediaTypes.includes(part.media.mimeType)) throw new BridgeProviderError("unsupported_capability", "The effective route/profile does not support this image media.");
+      if (!Number.isSafeInteger(part.media.byteLength) || part.media.byteLength <= 0 || part.media.byteLength !== part.media.bytes.byteLength || !Number.isSafeInteger(part.media.width) || part.media.width < 1 || !Number.isSafeInteger(part.media.height) || part.media.height < 1) rejectPreflight("The multipart image metadata is invalid.");
+      imageCount += 1;
+      imageBytes += part.media.byteLength;
+      imagePixels += part.media.width * part.media.height;
+      if (!Number.isSafeInteger(imagePixels) || imageCount > capability.maxImageCount || imageBytes > capability.maxImageBytes || part.media.width > capability.maxImageWidth || part.media.height > capability.maxImageHeight) rejectPreflight("The multipart image parts exceed the effective profile bounds.");
+      parts.push({ type: "image", sourcePartId: part.sourcePartId, assetRef: part.sourcePartId, mimeType: part.media.mimeType, sha256: part.media.sha256, byteLength: part.media.byteLength, width: part.media.width, height: part.media.height });
+    }
+  }
+  if (promptBytes > profile.maxPromptBytes) rejectPreflight("The multipart prompt exceeds the effective profile bound.");
+  if (input.signal.aborted) throw new BridgeProviderError("cancelled", "The multipart request was cancelled during preflight.");
+
+  const requestSpecWithoutIdentity = { version: "v1" as const, routeId: profile.routeId, profileId: profile.profileId, profileVersion: profile.profileVersion, schemaSha256: sha256(canonicalJson(input.schema)), deadlineEpochMilliseconds: input.deadlineEpochMilliseconds, promptBytes, parts };
+  const requestSpec: MultimodalRequestSpec = { ...requestSpecWithoutIdentity, identity: sha256(canonicalJson(requestSpecWithoutIdentity)) };
+  if (profile.imageTpm.state === "unknown" && imageCount > 0) return { requestSpec, resourceEstimatorInput: { code: "RESOURCE_ENVELOPE_BLOCKED", routeId: profile.routeId, profileId: profile.profileId, reason: "unknown_image_tpm" } };
+  const imageTpm = profile.imageTpm.state === "qualified" ? profile.imageTpm : { state: "not_applicable" as const };
+  return { requestSpec, resourceEstimatorInput: { version: "v1", requestSpecIdentity: requestSpec.identity, routeId: profile.routeId, profileId: profile.profileId, promptBytes, imageCount, imageBytes, imagePixels, imageTpm } };
+}
 
 /**
  * Deliberately preserves the established string-message contract. Multipart
