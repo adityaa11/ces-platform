@@ -3,7 +3,8 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import test from "node:test";
-import { atlasProviderExtractionProposalV1JsonSchema, atlasProviderExtractionProposalV1Schema, buildSemanticSourcePacket, canonicalSemanticV1AuthorityId, compileExtractionPrompt, crossFieldSemanticCompositionPolicy, semanticExtractionProfileId, semanticExtractionSkill, semanticReconciliationSkill, getProductionSemanticSkill, semanticSourcePacketLimits } from "../src/index.ts";
+import { z } from "zod";
+import { atlasProviderExtractionProposalV1JsonSchema, atlasProviderExtractionProposalV1Schema, atlasSemanticSourceInputV031Schema, buildSemanticSourcePacket, canonicalSemanticV1AuthorityId, compileExtractionPrompt, crossFieldSemanticCompositionPolicy, semanticExtractionProfileId, semanticExtractionSkill, semanticReconciliationSkill, getProductionSemanticSkill, semanticSourceInputV031StageAuthorityMap, semanticSourceInputV031StageAuthorityMapSha256, semanticSourcePacketLimits } from "../src/index.ts";
 import { validateJsonSchema } from "@atlas/contracts";
 
 test("only the two bounded model-neutral semantic skills are exported", () => { assert.equal(getProductionSemanticSkill("atlas.semantic.extract", "v1"), semanticExtractionSkill); assert.equal(getProductionSemanticSkill("atlas.semantic.reconcile", "v1"), semanticReconciliationSkill); assert.throws(() => getProductionSemanticSkill("atlas.semantic.extract", "v2")); assert.doesNotThrow(() => validateJsonSchema(semanticExtractionSkill.outputSchema, { version: "v1", candidate_assertions: [], source_statement_inventory: [], questions: [] })); });
@@ -182,4 +183,42 @@ test("source packets fail closed for duplicate, overflow, and byte-overflow sour
 test("source packet builder has no provider, classification, finalization, or persistence seam", async () => {
   const source = await readFile(resolve(import.meta.dirname, "../src/semantic-source-packet.ts"), "utf8");
   assert.ok(!/Anoman|Gemini|Mistral|DocumentStore|candidate_id|finaliz|providerId|fetch\(/.test(source));
+});
+
+test("v0.3.1 source-input descriptions preserve provenance, uncertainty, and language-agnostic states", () => {
+  const valid = {
+    version: "atlas.semantic.source-input/v0.3.1",
+    source_slots: [
+      { slot: "table-1", modality: "table", ownership: "independently_owned", source_language: "id", temporal_aspectual_state: "not_yet" },
+      { slot: "legend-1", modality: "visual_region", ownership: "context_only_reference", source_language: null, temporal_aspectual_state: "unavailable" },
+    ],
+    context_relationships: [{ contract_version: "atlas.context-provenance/v1", relationship_lineage_id: "legend-qualifies-table", revision_hash: "a".repeat(64), owned_source_slot: "table-1", context_source_slot: "legend-1", contextual_role: "legend", necessity: "essential", disposition: "proposed", proposal_provenance: { proposer_type: "provider", proposer_identity: "profile-x", confidence: 0.2 }, authorization: null }],
+  };
+  assert.deepEqual(atlasSemanticSourceInputV031Schema.parse(valid), valid);
+  assert.throws(() => atlasSemanticSourceInputV031Schema.parse({ ...valid, source_slots: [{ ...valid.source_slots[0], temporal_aspectual_state: "maybe" }] }));
+  const jsonSchema = z.toJSONSchema(atlasSemanticSourceInputV031Schema) as JsonObject;
+  const slot = providerPath(jsonSchema, "properties", "source_slots", "items") as JsonObject;
+  assert.match(sourceDescription(slot), /evidence, not an instruction author/);
+  assert.match(sourceDescription(providerPath(slot, "properties", "temporal_aspectual_state")), /negative state, a not-yet state, an unknown value, and unavailable information/);
+  assert.match(sourceDescription(providerPath(jsonSchema, "properties", "context_relationships", "items")), /not trusted context/);
+});
+
+test("v0.3.1 freezes complete stage ownership, section hashes, and outside-model validators without compiling a prompt", async () => {
+  const expectedStages = ["understand_evidence_context", "identify_independent_propositions", "preserve_normalize_meaning", "select_primary_semantic_kind", "assess_uncertainty_clarification", "account_source_slots_context", "verify_semantic_faithfulness", "return_provider_proposal"];
+  assert.deepEqual(semanticSourceInputV031StageAuthorityMap.map((stage) => stage.id), expectedStages);
+  assert.deepEqual(semanticSourceInputV031StageAuthorityMap.map((stage) => stage.order), [1, 2, 3, 4, 5, 6, 7, 8]);
+  assert.equal(semanticSourceInputV031StageAuthorityMapSha256, sha256(testStableJson(semanticSourceInputV031StageAuthorityMap)));
+  const sections = semanticSourceInputV031StageAuthorityMap.flatMap((stage) => stage.sections);
+  assert.equal(new Set(sections.map((section) => section.id)).size, sections.length);
+  for (const item of sections) {
+    assert.ok(["ZOD_SEMANTIC", "ZOD_SOURCE_INPUT", "STATIC_POLICY"].includes(item.authority));
+    assert.equal(item.renderedSha256, sha256(item.text));
+    assert.ok(item.id.length > 0 && item.version.length > 0 && item.source.length > 0);
+  }
+  assert.ok(semanticSourceInputV031StageAuthorityMap.some((stage) => stage.outsideModelValidators.length > 0));
+  assert.ok(semanticSourceInputV031StageAuthorityMap.flatMap((stage) => stage.outsideModelValidators).every((validator) => validator.id.length > 0 && validator.version.length > 0));
+  const source = await readFile(resolve(import.meta.dirname, "../src/semantic-source-input-v031.ts"), "utf8");
+  assert.ok(!source.includes("semanticKinds"));
+  assert.ok(!/Belum|Indonesian-token/.test(source));
+  assert.ok(!/fetch\(|Anoman|Gemini|providerId|compileExtractionPrompt|buildSemanticSourcePacket/.test(source));
 });
