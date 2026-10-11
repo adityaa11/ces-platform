@@ -29,6 +29,28 @@ class FakeAuthority implements DerivedImageGrantAuthority {
   }
 }
 
+class BlockingAuthority implements DerivedImageGrantAuthority {
+  calls = 0;
+  readonly entered: Promise<void>;
+  readonly #release: Promise<void>;
+  #enter!: () => void;
+  #unblock!: () => void;
+
+  constructor(private readonly expected: DerivedImageGrantScope) {
+    this.entered = new Promise((resolve) => { this.#enter = resolve; });
+    this.#release = new Promise((resolve) => { this.#unblock = resolve; });
+  }
+
+  async assertAuthorized(actual: DerivedImageGrantScope): Promise<void> {
+    this.calls += 1;
+    assert.deepEqual(actual, this.expected, "the authority receives the exact grant scope");
+    this.#enter();
+    await this.#release;
+  }
+
+  release(): void { this.#unblock(); }
+}
+
 test("service-only derived-image grants bind every manifest identity and consume one replay fence", async () => {
   const authority = new FakeAuthority(scope);
   const issuer = new DerivedImageGrantIssuer("s".repeat(32), scope.serviceIdentity, () => 1_000);
@@ -38,6 +60,43 @@ test("service-only derived-image grants bind every manifest identity and consume
   assert.deepEqual(await issuer.redeem({ grant: issued.grant, replayFenceId: issued.replayFenceId, scope }, authority), scope);
   await assert.rejects(() => issuer.redeem({ grant: issued.grant, replayFenceId: issued.replayFenceId, scope }, authority), /replay/i);
   assert.equal(authority.calls, 2, "authority is checked at issue and immediately before single-use redemption");
+});
+
+test("concurrent redemption claims a replay fence before awaiting authority validation", async () => {
+  const issuer = new DerivedImageGrantIssuer("s".repeat(32), scope.serviceIdentity, () => 1_000);
+  const issued = await issuer.issue(scope, new FakeAuthority(scope), 100);
+  const authority = new BlockingAuthority(scope);
+  const redemption = { grant: issued.grant, replayFenceId: issued.replayFenceId, scope };
+
+  const outcomesPromise = Promise.allSettled([
+    issuer.redeem(redemption, authority),
+    issuer.redeem(redemption, authority),
+  ]);
+  await authority.entered;
+  assert.equal(authority.calls, 1, "the overlapping loser is rejected before reaching asynchronous authority validation");
+  authority.release();
+
+  const outcomes = await outcomesPromise;
+  assert.equal(outcomes.filter((outcome) => outcome.status === "fulfilled").length, 1);
+  const rejected = outcomes.filter((outcome): outcome is PromiseRejectedResult => outcome.status === "rejected");
+  assert.equal(rejected.length, 1);
+  assert.match(String(rejected[0].reason), /replay/i);
+  assert.deepEqual(outcomes.find((outcome) => outcome.status === "fulfilled"), { status: "fulfilled", value: scope });
+  await assert.rejects(() => issuer.redeem(redemption, authority), /replay/i);
+  assert.equal(authority.calls, 1, "neither the concurrent loser nor a later attempt can obtain another authorization outcome");
+});
+
+test("failed authority recheck leaves the replay fence consumed", async () => {
+  const authority = new FakeAuthority(scope);
+  const issuer = new DerivedImageGrantIssuer("s".repeat(32), scope.serviceIdentity, () => 1_000);
+  const issued = await issuer.issue(scope, authority, 100);
+  const redemption = { grant: issued.grant, replayFenceId: issued.replayFenceId, scope };
+
+  authority.current = false;
+  await assert.rejects(() => issuer.redeem(redemption, authority), /no longer current/i);
+  authority.current = true;
+  await assert.rejects(() => issuer.redeem(redemption, authority), /replay/i);
+  assert.equal(authority.calls, 2, "the failed recheck does not reopen the grant for another authorization check");
 });
 
 test("a narrowly scoped offline grant is an alternative authority and expires fail-closed", async () => {

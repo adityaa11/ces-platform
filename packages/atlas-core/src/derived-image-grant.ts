@@ -139,8 +139,10 @@ export class DerivedImageGrantIssuer {
     if (record.expiresAt <= this.now()) { this.#grants.delete(grantId); throw new Error("Derived image grant is expired."); }
     if (record.consumed || record.replayFenceId !== candidate.replayFenceId) throw new Error("Derived image grant replay is blocked.");
     if (!equalScope(record.scope, scope)) throw new Error("Derived image grant scope mismatch.");
-    await authority.assertAuthorized(record.scope);
+    // Claim synchronously before authority validation yields to another redemption.
+    // A failed recheck deliberately leaves this in-memory replay fence consumed.
     record.consumed = true;
+    await authority.assertAuthorized(record.scope);
     return record.scope;
   }
 
