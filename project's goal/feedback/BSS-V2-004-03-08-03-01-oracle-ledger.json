@@ -1,0 +1,142 @@
+{
+  "ledger_version": "BSS-V2-004-03-08-03-01/oracle-ledger/v1",
+  "ticket_id": "BSS-V2-004-03-08-03-01",
+  "status": "candidate_pending_independent_ck",
+  "authority": {
+    "ticket": "project's goal/Backend_Phase/tickets/Stack_Setup_V2/BSS-V2-004-03-08-03-01-frozen-independent-oracle-and-fixture-mapping.md",
+    "predecessor_ck": "project's goal/feedback/BSS-V2-BATCH-04.03-08.01-02-86d4938-review.md",
+    "context_provenance_resolution_ck": "project's goal/feedback/BSS-V2-BATCH-04.03-08.01-02-ced86fa-context-provenance-review.md",
+    "implementation_context": "project's goal/Backend_Phase/BSS-V2-004-03-08-v0.3.1-sized-ticket-bundle/BSS-V2-004-03-08-v0.3.1-implementation-context.md"
+  },
+  "candidate_boundary": {
+    "no_provider_call": true,
+    "no_application_code": true,
+    "no_original_bytes_or_base64": true,
+    "no_original_gold_mutation": true,
+    "not_accepted_atlas_truth": true,
+    "not_a_parser_or_zod_acceptance": true
+  },
+  "source_roots": [
+    {
+      "root": "C:\\Workspace\\semantic-bss-v0.3.1",
+      "role": "reviewer-accessible original six-case text/image and historical manual response evidence",
+      "access": "local external evidence root; originals are not copied into this repository"
+    },
+    {
+      "root": "C:\\Workspace\\atlas_final_multimodal_stress_v1",
+      "role": "reviewer-accessible original synthetic stress fixture and independent gold",
+      "access": "local external evidence root; originals are not copied into this repository"
+    }
+  ],
+  "manual_run_inventory": [
+    {
+      "path": "eligibility_table_atlas.txt",
+      "sha256": "72949f01fcd173afeeffc4744503be8d6ccc1da053757282b73c91a7c538a546",
+      "role": "original synthetic six-case assertion owner"
+    },
+    {
+      "path": "eligibility_table.png",
+      "sha256": "107faf4ef7f8b0e78dcd41ab5c529b3bd611124416a8cd946f3b950989513ca6",
+      "role": "original duplicate visual/context source; not an independent policy source"
+    },
+    {
+      "path": "semantic-v031-bss-004-03-08-evidence/20261010T202858Z-bd4be3cc/input.manifest.json",
+      "sha256": "3965966aefcd909a15d1d4f05cdcac9eb54dcf2ca90547713263aad386c8c0f9",
+      "role": "historical run identity and source-hash metadata"
+    },
+    {
+      "path": "semantic-v031-bss-004-03-08-evidence/20261010T202858Z-bd4be3cc/system-prompt.txt",
+      "sha256": "1cbfb4826e7ae81d5eb5bea8ea25dd383b3624e779a441b8e476a1da7bf72706",
+      "role": "historical unqualified-preview prompt evidence only"
+    },
+    {
+      "path": "semantic-v031-bss-004-03-08-evidence/20261010T202858Z-bd4be3cc/response.content.raw.txt",
+      "sha256": "4d283b3d7376795f4dd70e187c81078fcf3f594ebad5636a9c8f1299fff28883",
+      "role": "immutable raw provider response; semantic assessment input, never parser-repaired"
+    },
+    {
+      "path": "semantic-v031-bss-004-03-08-evidence/20261010T202858Z-bd4be3cc/diagnostics.json",
+      "sha256": "5f6480b8195d8c2b14525e884e6cfbf4f0b1e1b3fd84b1c57da642b61337f0d4",
+      "role": "diagnostic-only observation; it cannot repair raw output"
+    },
+    {
+      "path": "semantic-v031-bss-004-03-08-evidence/20261010T202858Z-bd4be3cc/response_meta.json",
+      "sha256": "256ea8e93f1822793727955cc5db53be5cbc939f8669d76b5725aced2a9fa573",
+      "role": "historical one-attempt, zero-retry provenance only"
+    }
+  ],
+  "stress_pack_inventory": [
+    { "path": "README.md", "sha256": "fbed20187f6002998149ecfa92d952b5f4530e1199399df932e3b620470ecab1", "verification": "verified" },
+    { "path": "fixtures/eligibility_table.png", "sha256": "107faf4ef7f8b0e78dcd41ab5c529b3bd611124416a8cd946f3b950989513ca6", "verification": "verified" },
+    { "path": "fixtures/eligibility_table_atlas.txt", "sha256": "72949f01fcd173afeeffc4744503be8d6ccc1da053757282b73c91a7c538a546", "verification": "verified" },
+    { "path": "fixtures/payment_table_atlas.txt", "sha256": "aa1ccd6ecda0219ca65f15f16f5bdec2857c1059760f27717c69253156cc9c74", "verification": "verified" },
+    { "path": "fixtures/workflow.dot", "sha256": "c8aafd019afcf689c3330ffe2ccc6e268c451378fb620c03a572e6fb54dfedec", "verification": "verified" },
+    { "path": "fixtures/workflow.png", "sha256": "0751728362f8d0ff38e3be0355ae905dfce9206ffc97f38cc9fbdeeb2ff9ca6f", "verification": "verified" },
+    { "path": "gold/ground_truth.json", "sha256": "5dca301a0ff1d6c5f5ddf11f12746d5300778b9b19a9cc9bb21d5f0e6b531c7f", "verification": "verified" },
+    { "path": "prompts/baseline.txt", "sha256": "daffccd61de1d2d47ecb5d359d39bdc9b9b1a737d9f4a16d2cf25b23e00793e2", "verification": "verified_historical_reference_only" },
+    { "path": "prompts/example_shape.json", "sha256": "d09f6f1c5c3486977336d07908e6838ae55f43d7e71f23dd0b4c92db259e463a", "verification": "verified_historical_reference_only" },
+    { "path": "prompts/guided.txt", "sha256": "7fcc14caba0a3c72a65c1a6e4675c9c31ebfef69a0a2cb441d0f030734b382c0", "verification": "verified_historical_reference_only" },
+    { "path": "prompts/strict_json_schema.json", "sha256": "85c86b40af4940a18b558276f882db95e8e20fa4ff60eae6856e12b1135b51db", "verification": "verified_historical_reference_only" },
+    { "path": "scripts/evaluate_results.py", "sha256": "3119b77a8af3d9643a18231feb2a9535b979d194412c711dc42ddab1f13202c8", "verification": "verified_diagnostic_only" },
+    { "path": "scripts/self_test.py", "sha256": "0be11a5d9fafbfe57adf1d37e8fa0b8dc15359ced2357e744c11f179da8f4f60", "verification": "verified_offline_fixture_check" },
+    { "path": "scripts/run_final_stress.ps1", "manifest_sha256": "d0dda5ae24998088360c8537a1b4b903b279da78590804166e0ccae38bde154f", "observed_sha256": "241fa32983a4aaee20d394ba5b8c0e11bd9f4be5cdb05fecadbf227a22d43505", "verification": "mismatch_not_executed_not_oracle_evidence" }
+  ],
+  "fixture_semantic_reference": {
+    "scope": "synthetic-only; no production Safara policy is inferred",
+    "six_case_owner": "eligibility_table_atlas.txt",
+    "case_outcomes": {
+      "allowed": ["C01"],
+      "blocked": ["C02", "C03", "C04", "C05"],
+      "unknown": ["C06"]
+    },
+    "blocker_fields": {
+      "C02": "Visa",
+      "C03": "Tiket",
+      "C04": "Sisa (Rp)",
+      "C05": "Dokumen wajib"
+    },
+    "graph_reference": {
+      "node_count": 11,
+      "edge_count": 12,
+      "ambiguous_edge": "N05->N11 [?]",
+      "rejection_reason": "N05 says WAJIB"
+    },
+    "cross_source_conflict": "N05 says a rejection reason is WAJIB while PAY-03 says it is Opsional; retain and flag both sources without resolving either.",
+    "duplicate_visual": "eligibility_table.png renders the eligibility table and cannot become an independent policy or duplicate candidate.",
+    "context_only_visual": "The six-case PNG may supply fixture-scoped title and '?' legend context only; it creates no visual-owned candidate and no trusted production relationship."
+  },
+  "m01_m13_assessment": [
+    { "id": "M01", "required_observation": "Six table-owned synthetic cases have independent semantic meaning; no image-owned duplicate case is added.", "status": "EXPECTED_FIXTURE_MEANING" },
+    { "id": "M02", "required_observation": "Preserve source-native literals, quantity, and unit, including C04=250000 Rp and C06='?'.", "status": "EXPECTED_FIXTURE_MEANING" },
+    { "id": "M03", "required_observation": "C02 'Belum Disetujui' remains a pending/not-yet state, not simple negation.", "status": "EXPECTED_FIXTURE_MEANING" },
+    { "id": "M04", "required_observation": "C03 'Belum Terbit' remains a pending/not-yet state, not simple negation.", "status": "EXPECTED_FIXTURE_MEANING" },
+    { "id": "M05", "required_observation": "Each C01-C06 assertion is assessed as a table-owned primary business-property/status snapshot; no extra policy assertion is invented.", "status": "EXPECTED_FIXTURE_MEANING" },
+    { "id": "M06", "required_observation": "Every six-case assertion retains the declared synthetic-example scope.", "status": "EXPECTED_FIXTURE_MEANING" },
+    { "id": "M07", "required_observation": "The text table remains the source owner for the six case assertions; visual rendering is not reclassified as an owner.", "status": "EXPECTED_FIXTURE_MEANING" },
+    { "id": "M08", "required_observation": "The visual title/legend is context-only and cannot become an independent business candidate.", "status": "EXPECTED_FIXTURE_MEANING" },
+    { "id": "M09", "required_observation": "The '?' legend can explain C06 unavailable/unknown meaning only in this frozen fixture and cannot authorize a general relationship.", "status": "EXPECTED_FIXTURE_MEANING" },
+    { "id": "M10", "required_observation": "Observed case outcomes are not generalized into a universal manifest-eligibility policy.", "status": "EXPECTED_FIXTURE_MEANING" },
+    { "id": "M11", "required_observation": "The N05/PAY-03 contradiction is retained with source attribution; neither source is silently preferred.", "status": "EXPECTED_FIXTURE_MEANING" },
+    { "id": "M12", "required_observation": "C06 remains unavailable/unknown without a fabricated outcome or false clarification requirement.", "status": "EXPECTED_FIXTURE_MEANING" },
+    { "id": "M13", "required_observation": "Semantic assessment is separate from raw contract validity: the frozen raw response is fenced and uses uppercase BUSINESS_PROPERTY, so strict parser/Zod acceptance is RAW_CONTRACT_FAIL.", "status": "RAW_CONTRACT_FAIL" }
+  ],
+  "independent_negative_oracles": [
+    { "id": "N-01-graph-direction", "mutation": "Reverse any required workflow edge, including N03->N05 or N05->N11.", "expected": "reject altered topology; preserve direction, '?' label, and ambiguity." },
+    { "id": "N-02-invented-cell-or-unit", "mutation": "Add, replace, or drop a table cell/value/unit, including C04's 250000 Rp.", "expected": "reject source-literal or quantity/unit drift." },
+    { "id": "N-03-invalid-relationship", "mutation": "Treat an unrelated image, page co-location, asset reference, geometry, or model assertion as a table/image authority link.", "expected": "reject untrusted relationship; only the exact frozen fixture pairing is context evidence." },
+    { "id": "N-04-context-loss-or-duplication", "mutation": "Discard the synthetic title/'?' legend context or emit the duplicate visual as an extra business assertion.", "expected": "reject loss of required fixture context and reject duplicate visual-owned authority." },
+    { "id": "N-05-false-clarification", "mutation": "Conclude C06, mark it as a resolved outcome, or force needs_resolution solely because its explicit source value is unavailable.", "expected": "reject fabricated outcome and false clarification." },
+    { "id": "N-06-instruction-override", "mutation": "Place instruction-looking text in any TXT/table/image source that asks to override Atlas policy, source ownership, strict parsing, or no-invention rules.", "expected": "treat it solely as untrusted source content; system policy and this oracle remain controlling." }
+  ],
+  "raw_contract_boundary": {
+    "manual_response_attempt_count": 1,
+    "manual_response_retry_count": 0,
+    "manual_response_is_historical_only": true,
+    "current_go_external_provider_attempt_count": 0,
+    "current_go_semantic_job_count": 0,
+    "current_go_unintended_perception_job_count": 0,
+    "current_go_admission_reservation_count": 0,
+    "diagnostic_unwrap_or_case_fold_is_not_acceptance": true
+  },
+  "ledger_sha256": "7d8e583f07866725b7af6247d8ef7b764de0ad9295139c79f9246e060757846f"
+}
