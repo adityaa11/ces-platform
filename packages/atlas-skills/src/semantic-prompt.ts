@@ -1,11 +1,15 @@
 import { createHash } from "node:crypto";
 import { atlasSemanticCandidateV1Schema, atlasSemanticQuestionV1Schema, atlasSourceClassificationV1Schema, toAtlasJsonSchema } from "@atlas/contracts";
 import { z } from "zod";
+import { atlasSemanticSourceInputV031Schema, semanticSourceInputV031AuthorityId, semanticSourceInputV031StageAuthorityMap, semanticSourceInputV031StageAuthorityMapSha256 } from "./semantic-source-input-v031.js";
 
 export const semanticExtractionProfileId = "atlas.semantic.extract.prompt-003/v1" as const;
+/** Explicit-only eight-stage profile. The legacy prompt-003/v1 profile remains the default. */
+export const stepwiseMultimodalSemanticExtractionProfileId = "atlas.semantic.extract.stepwise_multimodal/v0.3.1" as const;
 /** CK-approved BSS-V2-004-03-01 canonical Semantic V1 authority. */
 export const canonicalSemanticV1AuthorityId = "472fd2ca2c002db2b47bdf16dc085a4f43629f20" as const;
 export const semanticPromptCompilerId = "@atlas/skills/semantic-prompt/v1" as const;
+export const stepwiseMultimodalSemanticPromptCompilerId = "@atlas/skills/semantic-prompt/stepwise-multimodal/v0.3.1" as const;
 
 const providerPayloadSchema = z.record(z.string().min(1).max(100), z.json()).superRefine((value, ctx) => {
   if (Object.keys(value).length > 100) ctx.addIssue({ code: "custom", message: "Provider semantic payload exceeds 100 properties." });
@@ -77,7 +81,8 @@ const outputRules = `- Return valid JSON only.
 - Do not emit markdown, code fences, commentary, or fields outside the supplied schema.`;
 
 /** No provider choice is accepted: this compiles Atlas semantic instruction only. */
-export function compileExtractionPrompt(profile = semanticExtractionProfileId, proposalSchema: Schema = atlasProviderExtractionProposalV1JsonSchema as Schema) {
+export function compileExtractionPrompt(profile: string = semanticExtractionProfileId, proposalSchema: Schema = atlasProviderExtractionProposalV1JsonSchema as Schema) {
+  if (profile === stepwiseMultimodalSemanticExtractionProfileId) return compileStepwiseMultimodalExtractionPrompt(proposalSchema);
   if (profile !== semanticExtractionProfileId) throw new Error("Unknown Atlas semantic extraction profile.");
   const sourceResults = property(proposalSchema, "source_results");
   const source = sourceResults.items!;
@@ -108,4 +113,83 @@ export function compileExtractionPrompt(profile = semanticExtractionProfileId, p
   const providerSchemaSha256 = sha(stableJson(providerSchema));
   const promptSha256 = sha(prompt);
   return { profile, prompt, providerSchema, provenance: { profile, canonicalAuthority: { id: canonicalSemanticV1AuthorityId, sha256: canonicalAuthoritySha256 }, compiler: { id: semanticPromptCompilerId, sha256: compilerSha256 }, sections: sections.map(({ title, text, ownership, source }) => ({ title, ownership, ...(source ? { source } : {}), renderedSha256: sha(text) })), providerSchemaSha256, promptSha256, crossFieldPolicySha256, artifactSha256: sha([canonicalAuthoritySha256, compilerSha256, crossFieldPolicySha256, providerSchemaSha256, promptSha256].join("\n")) } };
+}
+
+const stepwiseStageIds = ["understand_evidence_context", "identify_independent_propositions", "preserve_normalize_meaning", "select_primary_semantic_kind", "assess_uncertainty_clarification", "account_source_slots_context", "verify_semantic_faithfulness", "return_provider_proposal"] as const;
+const stepwiseCrossFieldSection = {
+  id: "legacy-cross-field-semantic-composition",
+  version: "prompt-003/v1",
+  authority: "STATIC_POLICY" as const,
+  source: "prompt-003/v1.crossFieldSemanticCompositionPolicy",
+  text: crossFieldSemanticCompositionPolicy,
+};
+
+function assertStepwiseAuthorityMap() {
+  if (sha(stableJson(semanticSourceInputV031StageAuthorityMap)) !== semanticSourceInputV031StageAuthorityMapSha256) throw new Error("Stepwise stage authority map does not match its frozen hash.");
+  if (semanticSourceInputV031StageAuthorityMap.length !== stepwiseStageIds.length) throw new Error("Stepwise stage authority map is incomplete.");
+  const stageIds = semanticSourceInputV031StageAuthorityMap.map(({ id, order }) => `${order}:${id}`);
+  if (stageIds.some((id, index) => id !== `${index + 1}:${stepwiseStageIds[index]}`)) throw new Error("Stepwise stage authority map has an unexpected order.");
+  const sectionIds = semanticSourceInputV031StageAuthorityMap.flatMap((stage) => stage.sections.map((section) => section.id));
+  if (new Set(sectionIds).size !== sectionIds.length) throw new Error("Stepwise stage authority map has duplicate section IDs.");
+  if (semanticSourceInputV031StageAuthorityMap.some((stage) => stage.sections.some((section) => !["ZOD_SEMANTIC", "ZOD_SOURCE_INPUT", "STATIC_POLICY"].includes(section.authority) || sha(section.text) !== section.renderedSha256))) throw new Error("Stepwise stage authority map has an invalid section authority or hash.");
+}
+
+/**
+ * Compiles the frozen v0.3.1 stage map only when callers explicitly select its
+ * profile. It has no source-content, provider, transport, or runtime input.
+ */
+function compileStepwiseMultimodalExtractionPrompt(proposalSchema: Schema) {
+  assertStepwiseAuthorityMap();
+  const canonicalSchema = atlasProviderExtractionProposalV1JsonSchema as Schema;
+  if (stableJson(proposalSchema) !== stableJson(canonicalSchema)) throw new Error("The stepwise_multimodal profile requires the canonical provider proposal schema.");
+  const sourceInputSchema = z.toJSONSchema(atlasSemanticSourceInputV031Schema);
+  const sourceInputSchemaText = stableJson(sourceInputSchema);
+  const providerSchemaText = stableJson(canonicalSchema);
+  const stages = semanticSourceInputV031StageAuthorityMap.map((stage) => {
+    const sections = [...stage.sections, ...(stage.id === "verify_semantic_faithfulness" ? [stepwiseCrossFieldSection] : [])].map((section) => {
+      const renderedText = [
+        section.text,
+        ...(section.id === "source-input-evidence-context" ? ["SOURCE-INPUT ZOD SCHEMA", sourceInputSchemaText] : []),
+        ...(section.id === "canonical-provider-proposal-schema" ? ["CANONICAL PROVIDER-PROPOSAL ZOD SCHEMA", providerSchemaText] : []),
+      ].join("\n\n");
+      return { ...section, policySha256: sha(section.text), renderedText, renderedSha256: sha(renderedText) };
+    });
+    return { id: stage.id, order: stage.order, sections, outsideModelValidators: stage.outsideModelValidators };
+  });
+  const prompt = stages.map((stage) => [
+    `STAGE ${stage.order}: ${stage.id}`,
+    ...stage.sections.map((section) => `${section.id} [${section.authority}]\n\n${section.renderedText}`),
+  ].join("\n\n")).join("\n\n");
+  const canonicalAuthoritySha256 = sha(canonicalSemanticV1AuthorityId);
+  const compilerSha256 = sha(stepwiseMultimodalSemanticPromptCompilerId);
+  const sourceInputAuthoritySha256 = sha(semanticSourceInputV031AuthorityId);
+  const providerSchemaSha256 = sha(providerSchemaText);
+  const sourceInputSchemaSha256 = sha(sourceInputSchemaText);
+  const promptSha256 = sha(prompt);
+  const artifactSha256 = sha([
+    stepwiseMultimodalSemanticExtractionProfileId,
+    canonicalAuthoritySha256,
+    compilerSha256,
+    sourceInputAuthoritySha256,
+    semanticSourceInputV031StageAuthorityMapSha256,
+    providerSchemaSha256,
+    sourceInputSchemaSha256,
+    promptSha256,
+  ].join("\n"));
+  return {
+    profile: stepwiseMultimodalSemanticExtractionProfileId,
+    prompt,
+    providerSchema: canonicalSchema as Record<string, unknown>,
+    provenance: {
+      profile: stepwiseMultimodalSemanticExtractionProfileId,
+      canonicalAuthority: { id: canonicalSemanticV1AuthorityId, sha256: canonicalAuthoritySha256 },
+      compiler: { id: stepwiseMultimodalSemanticPromptCompilerId, sha256: compilerSha256 },
+      sourceInputAuthority: { id: semanticSourceInputV031AuthorityId, sha256: sourceInputAuthoritySha256, schemaSha256: sourceInputSchemaSha256 },
+      stageAuthorityMapSha256: semanticSourceInputV031StageAuthorityMapSha256,
+      stages,
+      providerSchemaSha256,
+      promptSha256,
+      artifactSha256,
+    },
+  };
 }
