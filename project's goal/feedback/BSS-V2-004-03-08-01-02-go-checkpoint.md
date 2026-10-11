@@ -20,15 +20,19 @@ No path under `packages/` or `apps/` changed. The 01-01 parent-head manifest rem
 
 ## Fixture availability disposition
 
-The frozen implementation context identifies the required exact originals and their expected hashes, but explicitly states that they are absent from commit `d6421dd`: `fixtures/eligibility_table_atlas.txt`, `fixtures/eligibility_table.png`, raw v0.3.1 response/diagnostics, and the `atlas_final_multimodal_stress_v1` pack including `SHA256SUMS.txt`.
+The frozen implementation context identifies the required exact originals and their expected hashes. They are absent from commit `d6421dd`, but the user provided an accessible external evidence root: `C:\Workspace\semantic-bss-v0.3.1`.
 
-At the candidate SHA, the exact-name inventory command below returned no paths:
+Independent SHA-256 checks against that root reproduced the frozen six-case evidence exactly:
 
-```powershell
-rg --files -uu | rg '(^|/|\\)(eligibility_table_atlas\.txt|eligibility_table\.png|payment_table_atlas\.txt|workflow\.png|ground_truth\.json|SHA256SUMS\.txt|atlas_final_multimodal_stress_v1_powershell_fix\.zip)$'
-```
+| External original | Expected SHA-256 | Reproduced result |
+| --- | --- | --- |
+| `eligibility_table_atlas.txt` | `72949f01fcd173afeeffc4744503be8d6ccc1da053757282b73c91a7c538a546` | exact match |
+| `eligibility_table.png` (60,408 bytes) | `107faf4ef7f8b0e78dcd41ab5c529b3bd611124416a8cd946f3b950989513ca6` | exact match |
+| `semantic-v031-bss-004-03-08-evidence/20261010T202858Z-bd4be3cc/response.content.raw.txt` | `4d283b3d7376795f4dd70e187c81078fcf3f594ebad5636a9c8f1299fff28883` | exact match |
 
-Therefore neither the expected table hash `72949f01fcd173afeeffc4744503be8d6ccc1da053757282b73c91a7c538a546`, the expected PNG hash `107faf4ef7f8b0e78dcd41ab5c529b3bd611124416a8cd946f3b950989513ca6`, nor a complete manifest/inventory can be independently reproduced. There is also no reviewer-accessible source location recorded in the repository. This is `FIXTURE_UNAVAILABLE_BLOCKED`; no source, gold, raw response, or diagnostic result was reconstructed from the planning document's hash strings.
+The matching HTTP-success evidence manifest records one provider attempt and zero retries; this checkpoint made no new call. Its manually declared table/image relationship is expressly fixture-only and not production authority.
+
+The same recursive inventory found no `atlas_final_multimodal_stress_v1` archive, `SHA256SUMS.txt`, `workflow.png`, `payment_table_atlas.txt`, or `ground_truth.json`. Thus the six-case original-fixture portion is verified, while the separately required stress-pack inventory and oracle remain `FIXTURE_UNAVAILABLE_BLOCKED`. No source, gold, raw response, or diagnostic result was reconstructed from planning-document hash strings.
 
 ## Existing-schema fit and relationship boundary
 
@@ -39,6 +43,10 @@ Inspection of `packages/atlas-contracts/src/perception.ts` establishes that a `N
 The only conditional fit identified by the incorporated context is an **Atlas-authored, validated, versioned context-provenance sidecar** outside canonical candidates. If separately authorized, it would need at least: a bounded context role; source slot/page/visual locator and asset hash; the owned candidate references governed by that context; and an Atlas-issued relationship with a validator and scope. It must preserve the visual unit's `non_fact` candidate-inventory disposition without treating meaningful context as discarded. This checkpoint neither defines nor authorizes that interface; HMN is the only authority named by the frozen ticket to accept such a new trust contract.
 
 Accordingly, the current schema has no faithful, auditable representation for propagating an image title/legend to a table-owned assertion without a new trust contract. This checkpoint records `SCHEMA_FIT_BLOCKED` and requests the bounded HMN decision specified by the ticket. It does not add a seventeenth kind, a third source classification, a provider-owned relationship, or a fabricated image-owned business candidate.
+
+### Verified six-case fit ledger
+
+The verified table's C01–C06 rows are table-owned and fit existing `business_property` candidates with a trusted table evidence locator. C02 (`Belum Disetujui`) and C03 (`Belum Terbit`) retain not-yet temporal state in source wording/payload rather than becoming plain negation; C04 retains the `250000` / Rp quantity; C05 retains the expired-document condition; and C06 retains `?` and unavailable/unknown meaning without inventing an outcome. These are candidate-level facets, not a need for a new canonical kind. The PNG contributes no duplicate row candidate. Its title/legend can only be retained as conditional context through the unapproved sidecar described above.
 
 ## Negative-case disposition
 
@@ -60,9 +68,9 @@ The following commands ran locally at the candidate SHA. They use deterministic 
 
 | Row | Ticket authority and required proof | Evidence/test locator and exact outcome | Status |
 | --- | --- | --- | --- |
-| `RC-01` | Original six-case and stress evidence must have reviewer-accessible bytes, independently verified SHA-256, and complete inventory; missing input is `FIXTURE_UNAVAILABLE_BLOCKED`. | Exact-name inventory found none of the required originals, stress pack, or manifest. The incorporated context confirms their absence at the base commit and supplies no reviewer-accessible location. No evidence was fabricated. | `BLOCKED_ENVIRONMENT` — `FIXTURE_UNAVAILABLE_BLOCKED` |
+| `RC-01` | Original six-case and stress evidence must have reviewer-accessible bytes, independently verified SHA-256, and complete inventory; missing input is `FIXTURE_UNAVAILABLE_BLOCKED`. | User-provided external root supplies verified six-case table/PNG and raw-response originals; all three frozen hashes match. The stress-pack archive, `SHA256SUMS`, workflow/payment originals, and gold are absent. No evidence was fabricated. | `BLOCKED_ENVIRONMENT` — stress-pack portion remains `FIXTURE_UNAVAILABLE_BLOCKED` |
 | `RC-02` | Propose an evidenced Atlas-side title/legend/context relationship policy or document a schema gap, naming the authority boundary and `non_fact` disposition; GO cannot authorize a sidecar. | Semantic V1, NormalizedDocument V1, and source-packet seam inspection shows no durable relation between visual context and governed table candidate. This checkpoint records the conditional sidecar shape and pending HMN authority without implementing it. | `PROVEN` — schema gap documented; authorization pending |
-| `RC-03` | Reject unrelated joins, scope loss, legend substitution, and ungrounded references; no trusted relation arises from NormalizedDocument/derived manifests. | Existing seam inspection establishes no table↔image link and this checkpoint freezes the four required rejection cases. Fixture-dependent executions cannot run because the originals and manifest are absent. | `BLOCKED_ENVIRONMENT` — `FIXTURE_UNAVAILABLE_BLOCKED`; essential links remain `SOURCE_RELATIONSHIP_BLOCKED` |
+| `RC-03` | Reject unrelated joins, scope loss, legend substitution, and ungrounded references; no trusted relation arises from NormalizedDocument/derived manifests. | Existing seam inspection establishes no table↔image link and this checkpoint freezes the four required rejection cases. The verified fixture's manual relation is explicitly non-production authority; stress-pack-dependent execution remains unavailable. | `BLOCKED_ENVIRONMENT` — `FIXTURE_UNAVAILABLE_BLOCKED`; essential links remain `SOURCE_RELATIONSHIP_BLOCKED` |
 | `RC-04` | If no faithful auditable fit exists without canonical change, record `SCHEMA_FIT_BLOCKED` and stop for HMN. | The existing binary source-accounting model has no trusted contextual-provenance relation, and a new sidecar is outside GO authority. `SCHEMA_FIT_BLOCKED` is recorded above. | `PROVEN` |
 
 **Blocked disposition:** `FIXTURE_UNAVAILABLE_BLOCKED` and `SCHEMA_FIT_BLOCKED`. No `READY_FOR_CK` claim is made because RC-01 and RC-03 lack their required fixture harness and observation. A CK review may verify that this documented blocker is correct; it cannot authorize the sidecar or permit downstream implementation.
