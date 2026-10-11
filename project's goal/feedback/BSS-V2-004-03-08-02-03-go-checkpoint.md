@@ -4,6 +4,7 @@
 - **Ticket authority:** `project's goal/Backend_Phase/tickets/Stack_Setup_V2/BSS-V2-004-03-08-02-03-verified-ephemeral-image-hydration.md`
 - **State:** `awaiting_review`
 - **Reviewed base:** `1124db0` (`docs(bss): approve scoped derived image grants`)
+- **Implementation commit / CK review target:** `fe78815` (`feat(atlas): hydrate verified derived images`)
 - **Prerequisite consumed:** `project's goal/feedback/BSS-V2-BATCH-04.03-08.02-02-b6f7063-verification.md` — CK `PASS` for the approved scoped derived-image grant.
 - **Runtime:** Node `v24.19.0`; pnpm `11.19.0`; deterministic in-process fake authority and retained-asset reader only.
 
