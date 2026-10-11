@@ -68,6 +68,11 @@ test("Anoman multipart capability rejects invalid media and cancellation before 
   for (const message of [
     { role: "user" as const, parts: [{ type: "image" as const, sourcePartId: "bad-type", media: { mimeType: "image/jpeg" as "image/png", sha256: "b".repeat(64), byteLength: 1, width: 1, height: 1, bytes: new Uint8Array([1]) } }] },
     { role: "user" as const, parts: [{ type: "image" as const, sourcePartId: "bad-length", media: { mimeType: "image/png" as const, sha256: "c".repeat(64), byteLength: 2, width: 1, height: 1, bytes: new Uint8Array([1]) } }] },
+    { role: "user" as const, parts: [{ type: "image" as const, sourcePartId: "empty-bytes", media: { mimeType: "image/png" as const, sha256: "d".repeat(64), byteLength: 0, width: 1, height: 1, bytes: new Uint8Array() } }] },
+    { role: "user" as const, parts: [{ type: "image" as const, sourcePartId: "zero-width", media: { mimeType: "image/png" as const, sha256: "e".repeat(64), byteLength: 1, width: 0, height: 1, bytes: new Uint8Array([1]) } }] },
+    { role: "user" as const, parts: [{ type: "image" as const, sourcePartId: "negative-width", media: { mimeType: "image/png" as const, sha256: "f".repeat(64), byteLength: 1, width: -1, height: 1, bytes: new Uint8Array([1]) } }] },
+    { role: "user" as const, parts: [{ type: "image" as const, sourcePartId: "zero-height", media: { mimeType: "image/png" as const, sha256: "0".repeat(64), byteLength: 1, width: 1, height: 0, bytes: new Uint8Array([1]) } }] },
+    { role: "user" as const, parts: [{ type: "image" as const, sourcePartId: "negative-height", media: { mimeType: "image/png" as const, sha256: "1".repeat(64), byteLength: 1, width: 1, height: -1, bytes: new Uint8Array([1]) } }] },
   ]) {
     let calls = 0;
     const provider = new AnomanProvider(config, async () => { calls += 1; return response({}); });

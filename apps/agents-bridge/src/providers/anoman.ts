@@ -159,6 +159,12 @@ export class AnomanProvider implements StructuredReasoningProvider {
    * through `structured`, and no worker/provider activation is added here.
    */
   async structuredMultipart(input: AnomanMultipartStructuredInput): Promise<{ readonly value: unknown; readonly provenance: ProviderProvenance }> {
+    // The shared neutral capability establishes the upper bounds.  This
+    // transport keeps its own lower-bound guard at its serialization seam so
+    // malformed image metadata never reaches the Anoman fetcher.
+    if (!input.signal.aborted && input.messages.some((message) => message.parts.some((part) => part.type === "image" && (part.media.byteLength === 0 || part.media.width < 1 || part.media.height < 1)))) {
+      throw new BridgeProviderError("invalid_request", "Anoman multipart images must have non-empty bytes and positive dimensions.");
+    }
     return dispatchMultipartStructured({
       messages: input.messages,
       signal: input.signal,
