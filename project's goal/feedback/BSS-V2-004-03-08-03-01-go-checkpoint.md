@@ -3,7 +3,8 @@
 - **Ticket:** `BSS-V2-004-03-08-03-01`
 - **Ticket authority:** `project's goal/Backend_Phase/tickets/Stack_Setup_V2/BSS-V2-004-03-08-03-01-frozen-independent-oracle-and-fixture-mapping.md`
 - **State:** `awaiting_review`
-- **Reviewed base / candidate HEAD:** `0e6048b5da13a701e68606a63a4af47b55ba9d80`
+- **Reviewed base:** `0e6048b5da13a701e68606a63a4af47b55ba9d80`
+- **Submitted implementation / CK review target:** `3ca9abf33cacfdae5af367c831f569fc4c56c466` (`docs(bss): freeze multimodal oracle ledger`). This commit contains the frozen ticket transition, candidate ledger, and original GO checkpoint. This later documentation-only correction does not change the reviewed target.
 - **Prerequisite consumed:** `project's goal/feedback/BSS-V2-BATCH-04.03-08.01-02-86d4938-review.md` — CK `PASS`; its later context-provenance resolution is independently approved by `...-ced86fa-context-provenance-review.md`.
 - **Scope owner:** frozen semantic assessment, fixture hashes, and adversarial oracle definitions only. No compiler, finalizer, packet, provider, or runtime behavior changes.
 
