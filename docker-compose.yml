@@ -142,6 +142,13 @@ services:
       MISTRAL_TIMEOUT_MS: ${MISTRAL_TIMEOUT_MS:-30000}
       MISTRAL_RETRY_MAX_ATTEMPTS: ${MISTRAL_RETRY_MAX_ATTEMPTS:-2}
       MISTRAL_RETRY_DELAY_MS: ${MISTRAL_RETRY_DELAY_MS:-250}
+      # This credential is optional until the separately qualified semantic
+      # route is activated; it remains available only to the Bridge process.
+      ANOMAN_API_KEY: ${ANOMAN_API_KEY:-}
+      ANOMAN_ZDR_APPROVED: ${ANOMAN_ZDR_APPROVED:-false}
+      ANOMAN_MAX_REQUEST_BYTES: ${ANOMAN_MAX_REQUEST_BYTES:-2097152}
+      ANOMAN_MAX_RESPONSE_BYTES: ${ANOMAN_MAX_RESPONSE_BYTES:-10485760}
+      ANOMAN_TIMEOUT_MS: ${ANOMAN_TIMEOUT_MS:-30000}
     command: ["sh", "-c", "exec corepack pnpm --filter @atlas/agents-bridge start"]
     ports:
       - "127.0.0.1:${AGENTS_BRIDGE_PORT:-3002}:3002"
@@ -208,6 +215,11 @@ services:
       MISTRAL_TIMEOUT_MS: ${MISTRAL_TIMEOUT_MS:-30000}
       MISTRAL_RETRY_MAX_ATTEMPTS: ${MISTRAL_RETRY_MAX_ATTEMPTS:-2}
       MISTRAL_RETRY_DELAY_MS: ${MISTRAL_RETRY_DELAY_MS:-250}
+      ANOMAN_API_KEY: ${ANOMAN_API_KEY:-}
+      ANOMAN_ZDR_APPROVED: ${ANOMAN_ZDR_APPROVED:-false}
+      ANOMAN_MAX_REQUEST_BYTES: ${ANOMAN_MAX_REQUEST_BYTES:-2097152}
+      ANOMAN_MAX_RESPONSE_BYTES: ${ANOMAN_MAX_RESPONSE_BYTES:-10485760}
+      ANOMAN_TIMEOUT_MS: ${ANOMAN_TIMEOUT_MS:-30000}
     # Run the Node worker directly so Docker SIGTERM reaches its shutdown handler.
     command: ["node", "apps/agents-bridge/node_modules/jiti/lib/jiti-cli.mjs", "apps/agents-bridge/src/worker-main.ts"]
     stop_grace_period: 20s

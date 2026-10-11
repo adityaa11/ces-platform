@@ -1,6 +1,6 @@
 # BSS-V2-004-03-04: Anoman reference StructuredReasoningProvider adapter
 
-- **State:** `planned`; **Review batch:** `BSS-V2-BATCH-04.03-04`
+- **State:** `awaiting_review`; **Review batch:** `BSS-V2-BATCH-04.03-04`
 - **Dependencies:** BSS-V2-001 CK `PASS`; BSS-V2-002 route-registry contract; BSS-V2-003 retained Gemini adapter; explicit `go`
 - **Implementation context:** [Semantic V1 Zod + Anoman productionization context](../../atlas-semantic-v1-zod-anoman-productionization-implementation-context.md) §§3, 7, 9.04, 10, 12–13
 - **Qualification reference:** [SPIKE-004 ticket](../Anoman_Spike_Phase/SEM-ANM-SPIKE-004-prompt003-live-semantic-qualification.md) and [bounded GO evidence](../../../feedback/SEM-ANM-SPIKE-004-prompt003-live-semantic-qualification.md) record two-call terminal `FAIL`; this is historical evidence and does not authorize activation or alter this adapter contract.

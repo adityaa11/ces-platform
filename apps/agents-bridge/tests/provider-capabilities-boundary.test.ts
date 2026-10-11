@@ -9,7 +9,7 @@ const compositionPaths = ["../src/main.ts", "../src/worker-main.ts"];
 test("generic execution paths depend on Bridge capabilities, never concrete provider types", async () => {
   for (const relativePath of genericPaths) {
     const source = await readFile(fileURLToPath(new URL(relativePath, import.meta.url)), "utf8");
-    assert.doesNotMatch(source, /providers\/mistral|MistralProvider|MistralChatRuntime|Gemini/u, relativePath);
+    assert.doesNotMatch(source, /providers\/mistral|MistralProvider|MistralChatRuntime|Gemini|Anoman/u, relativePath);
     assert.match(source, /provider-capabilities/u, relativePath);
   }
 });
@@ -21,7 +21,9 @@ test("composition roots inject capabilities without naming concrete provider cla
     assert.match(source, /route-registry/u, relativePath);
     assert.match(source, /createRouteRegistry/u, relativePath);
     assert.match(source, /deploymentProfile === "test"[\s\S]*?new TestRuntime/u, relativePath);
+    assert.doesNotMatch(source, /AnomanProvider|GeminiProvider/u, relativePath);
     if (relativePath.endsWith("worker-main.ts")) {
+      assert.match(source, /createAnomanCapabilities\(config\.anoman\)/u, relativePath);
       assert.match(source, /registry\.resolve\("atlas\.document\.perceive"\)/u, relativePath);
       assert.match(source, /registry\.resolve\(capabilityForSkill\(job\.skill\.id\)\)/u, relativePath);
     }

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { assertRouteAdapter, createRouteRegistry, parseDeploymentProfile, parseQualifiedRoutes, RouteResolutionError, type QualifiedRoute } from "../src/route-registry.ts";
+import { assertAnomanRouteAdapter, assertRouteAdapter, createRouteRegistry, parseDeploymentProfile, parseQualifiedRoutes, RouteResolutionError, type QualifiedRoute } from "../src/route-registry.ts";
 import { QualifiedRouteRuntime } from "../src/runtime.ts";
 
 const route = (overrides: Record<string, unknown> = {}): QualifiedRoute => ({
@@ -49,6 +49,15 @@ test("pinned route identity must match an available adapter and configured model
   assert.throws(() => assertRouteAdapter(route({ providerId: "unknown" }), models), /unavailable adapter/);
   assert.throws(() => assertRouteAdapter(route({ adapterVersion: "mistral-adapter-latest" }), models), /unavailable adapter version/);
   assert.throws(() => assertRouteAdapter(route({ modelOrProcessorId: "mistral-small-latest" }), models), /does not match pinned adapter configuration/);
+});
+
+test("the distinct Anoman semantic adapter is pinned but cannot activate before its live qualification", () => {
+  const anoman = route({ routeId: "anoman-semantic-extract-v1", capability: "atlas.semantic.extract", providerId: "anoman", modelOrProcessorId: "gemini-2.5-flash", adapterVersion: "anoman-adapter-v1", enabled: false });
+  assert.doesNotThrow(() => assertAnomanRouteAdapter(anoman, "gemini-2.5-flash"));
+  assert.throws(() => assertAnomanRouteAdapter({ ...anoman, enabled: true }, "gemini-2.5-flash"), /before BSS-V2-004-03-06 qualification/u);
+  assert.throws(() => assertAnomanRouteAdapter({ ...anoman, modelOrProcessorId: "other" }, "gemini-2.5-flash"), /pinned Anoman semantic adapter/u);
+  const registry = createRouteRegistry([anoman], "development", new Set(["anoman"]));
+  assert.throws(() => registry.resolve("atlas.semantic.extract"), /No enabled qualified route/u);
 });
 
 test("interactive route selection comes from the server capability mapping, not caller vendor fields", async () => {

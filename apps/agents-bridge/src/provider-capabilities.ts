@@ -10,7 +10,7 @@ export class BridgeProviderError extends Error {
 }
 
 export type ProviderUsage = { readonly inputTokens?: number; readonly outputTokens?: number; readonly cachedTokens?: number; readonly processedPages?: number; readonly raw?: Readonly<Record<string, unknown>> };
-export type ProviderProvenance = { readonly provider: string; readonly model: string; readonly endpoint: string; readonly latencyMilliseconds: number; readonly attempt: number; readonly usage?: ProviderUsage };
+export type ProviderProvenance = { readonly provider: string; readonly model: string; readonly endpoint: string; readonly latencyMilliseconds: number; readonly attempt: number; readonly usage?: ProviderUsage; readonly metadata?: Readonly<Record<string, string | number | boolean>> };
 export type TransientDerivedVisual = { readonly sourceSha256: string; readonly profile: string; readonly pageNumber: number; readonly locatorId: string; readonly mediaType: "image/png"; readonly width: number; readonly height: number; readonly byteLength: number; readonly sha256: string; readonly bytes: Uint8Array };
 export type ChatMessage = { readonly role: "system" | "user" | "assistant" | "tool"; readonly content: string };
 export type MultipartTextPart = { readonly type: "text"; readonly sourcePartId: string; readonly text: string };

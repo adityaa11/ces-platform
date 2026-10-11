@@ -1,5 +1,6 @@
 import { parseDeploymentProfile, parseQualifiedRoutes, type DeploymentProfile, type QualifiedRoute } from "./route-registry.js";
 import { doclingOptionProfile, doclingServeVersion, doclingSlimVersion, type DoclingProviderConfig } from "./providers/docling.js";
+import type { AnomanProviderConfig } from "./providers/anoman.js";
 
 export type BridgeConfig = {
   readonly host: string;
@@ -37,6 +38,7 @@ export type BridgeConfig = {
     readonly timeoutMilliseconds: number;
     readonly zeroDataRetentionApproved: boolean;
   };
+  readonly anoman: AnomanProviderConfig;
   readonly docling: DoclingProviderConfig;
 };
 
@@ -99,6 +101,15 @@ export function loadBridgeConfig(environment: NodeJS.ProcessEnv = process.env): 
       maxStreamBytes: boundedPositiveInteger(environment.GEMINI_MAX_STREAM_BYTES, 10 * 1024 * 1024, "GEMINI_MAX_STREAM_BYTES"),
       timeoutMilliseconds: boundedPositiveInteger(environment.GEMINI_TIMEOUT_MS, 30_000, "GEMINI_TIMEOUT_MS"),
       zeroDataRetentionApproved: environment.GEMINI_ZDR_APPROVED === "true",
+    },
+    anoman: {
+      apiKey: environment.ANOMAN_API_KEY || undefined,
+      baseUrl: "https://api.anoman.io",
+      structuredModel: "gemini-2.5-flash",
+      maxRequestBytes: boundedPositiveInteger(environment.ANOMAN_MAX_REQUEST_BYTES, 2 * 1024 * 1024, "ANOMAN_MAX_REQUEST_BYTES"),
+      maxResponseBytes: boundedPositiveInteger(environment.ANOMAN_MAX_RESPONSE_BYTES, 10 * 1024 * 1024, "ANOMAN_MAX_RESPONSE_BYTES"),
+      timeoutMilliseconds: boundedPositiveInteger(environment.ANOMAN_TIMEOUT_MS, 30_000, "ANOMAN_TIMEOUT_MS"),
+      zeroDataRetentionApproved: environment.ANOMAN_ZDR_APPROVED === "true",
     },
     docling: { baseUrl: doclingBaseUrl.replace(/\/$/u, ""), timeoutMilliseconds: boundedPositiveInteger(environment.DOCLING_TIMEOUT_MS, 20_000, "DOCLING_TIMEOUT_MS"), maxDocumentBytes: boundedPositiveInteger(environment.DOCLING_MAX_DOCUMENT_BYTES, 20 * 1024 * 1024, "DOCLING_MAX_DOCUMENT_BYTES"), maxResponseBytes: boundedPositiveInteger(environment.DOCLING_MAX_RESPONSE_BYTES, 10 * 1024 * 1024, "DOCLING_MAX_RESPONSE_BYTES"), serviceVersion: environment.DOCLING_SERVE_VERSION ?? doclingServeVersion, doclingSlimVersion: environment.DOCLING_SLIM_VERSION ?? doclingSlimVersion, optionProfile: environment.DOCLING_OPTION_PROFILE ?? doclingOptionProfile },
   };

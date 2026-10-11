@@ -31,6 +31,14 @@ test("the provider endpoint remains HTTPS except for the explicit local smoke pr
   assert.equal(loadBridgeConfig({ MISTRAL_API_BASE_URL: "http://mistral-mock:3100", MISTRAL_ALLOW_INSECURE_LOCAL: "true" }).mistral.baseUrl, "http://mistral-mock:3100");
 });
 
+test("Anoman configuration keeps its credential deployment-only and route identity frozen", () => {
+  const config = loadBridgeConfig({ ANOMAN_API_KEY: "test-only-secret" });
+  assert.equal(config.anoman.apiKey, "test-only-secret");
+  assert.equal(config.anoman.baseUrl, "https://api.anoman.io");
+  assert.equal(config.anoman.structuredModel, "gemini-2.5-flash");
+  assert.equal(config.anoman.maxRequestBytes, 2 * 1024 * 1024);
+});
+
 test("interactive execution emits ordered SSE events and closes", async () => {
   const app = createBridgeApp({ runtime: new TestRuntime(), version: "test" });
   try {

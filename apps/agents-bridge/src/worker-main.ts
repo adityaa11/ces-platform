@@ -1,6 +1,7 @@
 import { readFile, rm, writeFile } from "node:fs/promises";
 import { createMistralCapabilities } from "./providers/mistral.js";
 import { createGeminiCapabilities } from "./providers/gemini.js";
+import { createAnomanCapabilities } from "./providers/anoman.js";
 import { DoclingProvider } from "./providers/docling.js";
 import { QualifiedRouteRuntime, TestRuntime } from "./runtime.js";
 import { loadWorkerConfig } from "./worker-config.js";
@@ -23,14 +24,16 @@ const config = loadBridgeConfig();
 const availableAdapters = new Set<string>();
 if (config.mistral.apiKey) availableAdapters.add("mistral");
 if (config.gemini.apiKey) availableAdapters.add("gemini");
+if (config.anoman.apiKey) availableAdapters.add("anoman");
 if (config.qualifiedRoutes.some((route) => route.enabled && route.providerId === "docling")) availableAdapters.add("docling");
 const registry = createRouteRegistry(config.qualifiedRoutes, config.deploymentProfile, availableAdapters);
 for (const route of config.qualifiedRoutes.filter((candidate) => candidate.enabled)) assertConfiguredRouteAdapter(route, config);
 if (config.deploymentProfile === "live" && !registry.ready) throw new Error("Agents Bridge worker live deployment profile is not ready.");
 const mistral = createMistralCapabilities(config.mistral);
 const gemini = createGeminiCapabilities(config.gemini);
+const anoman = createAnomanCapabilities(config.anoman);
 const docling = new DoclingProvider(config.docling);
-const capabilities = { mistral, gemini, docling: { perception: docling } };
+const capabilities = { mistral, gemini, anoman, docling: { perception: docling } };
 if (config.qualifiedRoutes.some((route) => route.enabled && route.providerId === "docling")) {
   // This repository-owned, non-confidential PDF initializes precisely the
   // fixed no-OCR request profile before the worker publishes its ready marker.
@@ -48,7 +51,7 @@ const worker = createBackgroundWorker(loadWorkerConfig(), runtime, undefined, as
 }, undefined, async (job, signal, context) => {
   const route = registry.resolve(capabilityForSkill(job.skill.id));
   assertConfiguredRouteAdapter(route, config);
-  await runSemanticJob(job, capabilities[route.providerId as "mistral" | "gemini"].structured, semanticClient, createSemanticResultReplay(context.database), context.idempotencyKey, signal, { owner: context.leaseOwner, generation: context.leaseGeneration });
+  await runSemanticJob(job, capabilities[route.providerId as "mistral" | "gemini" | "anoman"].structured, semanticClient, createSemanticResultReplay(context.database), context.idempotencyKey, signal, { owner: context.leaseOwner, generation: context.leaseGeneration });
 });
 await worker.start();
 await writeFile(readinessPath, "ready\n");
