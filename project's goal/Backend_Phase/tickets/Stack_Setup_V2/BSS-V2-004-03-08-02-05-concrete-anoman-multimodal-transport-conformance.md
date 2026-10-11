@@ -1,6 +1,6 @@
 # BSS-V2-004-03-08-02-05: Concrete Anoman multimodal transport conformance
 
-- **Status:** `awaiting_review`; **GO authorization:** consumed from the user's explicit `GO BSS-V2-004-03-08-02-05` after required predecessor CK PASS, with current frozen scope and review rows. **No preliminary HMN is required for ordinary GO.** HMN is reserved for a documented blocked decision, out-of-scope change, or a later remediation cycle.
+- **Status:** `approved` following CK `PASS` for remediation commit `0339f158660eb14ea7705989a68e1105d99fc0e2`; **Review batch:** `BSS-V2-BATCH-04.03-08.02-05`. **GO authorization:** consumed from the user's explicit `GO BSS-V2-004-03-08-02-05` after required predecessor CK PASS, with current frozen scope and review rows. **No preliminary HMN is required for ordinary GO.** HMN is reserved for a documented blocked decision, out-of-scope change, or a later remediation cycle.
 - **Parent:** `BSS-V2-004-03-08` multimodal Semantic V1 v0.3.1 handoff, sizing amendment §§6–7.
 - **Workstream:** `BSS-V2-004-03-08-02` (non-executable group). This file is **one** proposed GO/CK unit, not authorization for successor leaves.
 - **Repository target:** `project's goal/Backend_Phase/tickets/Stack_Setup_V2/`.
