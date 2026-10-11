@@ -1,6 +1,6 @@
 # BSS-V2-004-03-08-02-06: Multimodal request bounds, replay/redaction and resource interface
 
-- **Status:** `planned`; **GO authorization:** the user's explicit `go` for this leaf (or an explicitly authorized batch) after required predecessor CK PASS, with current frozen scope and review rows. **No preliminary HMN is required for ordinary GO.** HMN is reserved for a documented blocked decision, out-of-scope change, or a later remediation cycle.
+- **Status:** `awaiting_review`; **GO authorization:** consumed from the user's explicit `GO BSS-V2-004-03-08-02-06` after required predecessor CK PASS, with current frozen scope and review rows. **No preliminary HMN is required for ordinary GO.** HMN is reserved for a documented blocked decision, out-of-scope change, or a later remediation cycle.
 - **Parent:** `BSS-V2-004-03-08` multimodal Semantic V1 v0.3.1 handoff, sizing amendment §§6–7.
 - **Workstream:** `BSS-V2-004-03-08-02` (non-executable group). This file is **one** proposed GO/CK unit, not authorization for successor leaves.
 - **Repository target:** `project's goal/Backend_Phase/tickets/Stack_Setup_V2/`.
@@ -13,6 +13,10 @@
 - **RC-02:** Emit exact deterministic request-spec identity (schema/profile/slots/asset refs/hashes without bytes) and bounded resource-estimator *inputs/interface only*. `IDSER-012-02-01` constructs the actual exact per-batch `RequestResourceEnvelope` using estimator/accounting/safety policy. Unknown image TPM -> `RESOURCE_ENVELOPE_BLOCKED`.
 - **RC-03:** In fake aborted/duplicate/restart/cancel cases demonstrate no persistent base64 or leaked credentials, no fresh perception job/permit, no semantic execution or reservation, no duplicate external attempt and existing string-only behavior unchanged.
 - **GO terminal:** Versioned request-spec/resource-estimation input contract and replay/limits evidence, **not** a completed `RequestResourceEnvelope`, IDSER planner or BSS-V2-005/006 admission.
+
+This checkpoint creates a provider-neutral, in-memory preflight seam only. It
+does not activate a route, make an authorization decision, construct an
+admission envelope, or persist a request specification.
 
 ## Security Refactor Readiness
 
