@@ -1,13 +1,13 @@
 # BSS-V2-004-03-08: Multimodal Semantic V1 source-to-prompt integration
 
-- **State:** `planned` (13 Markdown leaf drafts committed at `d6421dd`); **execution authority:** not granted. Source contract and missing-fixture audit recorded in master §0.8.
+- **State:** `planned` (13 committed leaf tickets since `d6421dd`); **direct GO eligibility:** explicit user `go` naming one dependency-ready leaf authorizes its initial implementation. No preliminary HMN is required for ordinary frozen-scope GO. Source and missing-fixture audit in master §0.8.
 - **Parent context:** [v0.3.1 implementation context](../../BSS-V2-004-03-08-v0.3.1-sized-ticket-bundle/BSS-V2-004-03-08-v0.3.1-implementation-context.md).
 - **Scope:** production-shaped, offline-only multimodal Semantic V1 request architecture. This family does not activate live semantic execution.
 - **Structure:** `08`, `08-01`, `08-02`, and `08-03` are non-executable planning headings. The 13 linked leaves are the only proposed GO/CK units.
 
 ## Family guardrails
 
-- Each leaf requires explicit HMN/GO approval after its current SHA and named CK predecessors are confirmed; a planning ticket never authorizes its successor.
+- Each leaf may start on the user's explicit `go` for that leaf (or a specifically authorized batch) after its current SHA, frozen requirements and predecessor CK PASS are verified. **HMN is not a routine prerequisite**; invoke it only for a blocked ticket requiring a new architectural/policy/scope decision or permitted post-CK/CFC continuation. A leaf GO never automatically authorizes its successor.
 - The first eligible leaf is `08-01-01`, which captures an immutable legacy baseline only. `BASELINE_UNVERIFIED`, `SCHEMA_FIT_BLOCKED`, `LEGACY_REGRESSION_BLOCKED`, `RESOURCE_ENVELOPE_BLOCKED`, `OWNERSHIP_CONFLICT_BLOCKED`, and `CROSS_LEAF_SCOPE_BLOCKED` stop the affected work.
 - All leaves are zero-call: no provider request, fallback/retry, reservation, semantic/perception job, reconciliation or publication.
 - NormalizedDocument V1 and its derived manifest do NOT authorize a table↔image relationship: `01-02` proposes a trusted source and HMN authorizes; `02-01` blocks essential unproven links as `SOURCE_RELATIONSHIP_BLOCKED`.

@@ -1,6 +1,6 @@
 # BSS-V2-004-03-08-01-01: Legacy baseline and contract-impact ledger
 
-- **Status:** `draft_planning_only`; **implementation authority:** NOT GRANTED; HMN must approve this specific leaf, its current dependencies and frozen review rows before GO.
+- **Status:** `planned`; **GO authorization:** the user's explicit `go` for this leaf (or an explicitly authorized batch) after required predecessor CK PASS, with current frozen scope and review rows. **No preliminary HMN is required for ordinary GO.** HMN is reserved for a documented blocked decision, out-of-scope change, or a later remediation cycle.
 - **Parent:** `BSS-V2-004-03-08` multimodal Semantic V1 v0.3.1 handoff, sizing amendment §§6–7.
 - **Workstream:** `BSS-V2-004-03-08-01` (non-executable group). This file is **one** proposed GO/CK unit, not authorization for successor leaves.
 - **Repository target:** `project's goal/Backend_Phase/tickets/Stack_Setup_V2/`.
@@ -8,7 +8,7 @@
 
 ## Bounded outcome, prerequisites and Review Contract
 
-- **Size:** `S–M`; **GO prerequisites:** approved `03-01/02/03` and exact accessible immutable base HEAD; **owns:** reproducible parent-HEAD baseline capture only, not production modification.
+- **Size:** `S–M`; **GO prerequisites:** approved `03-01/02/03` and exact accessible immutable base HEAD; **owns:** reproducible parent-HEAD baseline capture only, not production modification. This leaf needs no experimental image fixtures, new context-sidecar policy, or HMN architectural authorization to start its read-only baseline capture.
 - **RC-01:** At the untouched base SHA, capture canonical/proposal schema, legacy `prompt-003/v1` bytes, ordered sections and hashes, default APIs, source-packet slot order/failure behavior and focused tests with actual commands/versions; if reproducibility is blocked, **`BASELINE_UNVERIFIED`**.
 - **RC-02:** Record all existing approved-contract owners and a proposed changed-file→contract→regression matrix; distinguish pre-existing test failure from future regression without updating snapshots.
 - **RC-03:** Manifest/artifacts are immutable, checkable by CK from the same SHA and reproducible offline with **zero** provider calls, image reads, jobs and repository runtime changes.
@@ -29,7 +29,7 @@
 
 ## Permitted GO / terminal evidence
 
-1. Verify human authorization for **this exact leaf**, prerequisite CK PASS references, repo branch/HEAD and scope owner. Confirm source fixtures/profile hashes and baseline execution environment where relevant.
+1. Verify the user's explicit `go` authorization for **this exact leaf** (or an explicitly authorized batch), prerequisite CK PASS references, repo branch/HEAD and scope owner. Confirm source fixtures/profile hashes and baseline execution environment where relevant.
 2. Name permitted changed files and all approved predecessor contracts they can affect. Inspect exact seams before coding; for `M+` size, if >1 independently mutable authority/trust transition is unavoidable, **STOP and seek HMN split**.
 3. Execute only this leaf's positive/negative deterministic tests. Rerun all **impacted legacy** tests with unchanged gold at candidate HEAD; record exact commands, observed results, original/candidate SHA and any pre-existing failures.
 4. Submit `READY_FOR_CK` **only** when every listed RC has observable evidence. Include `external_provider_attempt_count = 0` and zero unauthorized semantic/perception jobs/reservations (grounded by the relevant test harness). No live Anoman call, hidden model retry, reconciliation, or accepted-truth publishing.
@@ -47,7 +47,7 @@ CFC may remediate **only** human-authorized CK finding IDs and exact permitted f
 - Never preserve image base64/bytes or API keys in logs, SQL, request snapshots or review artifacts. Use hashes and bound metadata for traceable evidence.
 - Each leaf owns only its specified handoff to successor CK; whole-family offline completion is **`08-03-03` CK PASS**, not this leaf alone.
 
-## Ready-for-human checklist
+## Pre-GO readiness checklist
 
 - [ ] Leaf ownership, prior approvals and dependencies verified at current HEAD.
 - [ ] Legacy baseline/impact matrix available, with no unauthorized snapshot updates.
