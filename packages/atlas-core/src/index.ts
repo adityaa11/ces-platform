@@ -12,6 +12,7 @@ export interface TransactionRunner {
 export { normalizePerceptionResult, type PerceptionProviderResult, type PerceptionProvenance } from "./document-perception.js";
 export { PerceptionSourceGrantIssuer, type PerceptionSourceIdentity, type RedeemedPerceptionSource } from "./source-grant.js";
 export { DerivedImageGrantIssuer, type DerivedImageGrantAuthority, type DerivedImageGrantAuthorization, type DerivedImageGrantScope, type IssuedDerivedImageGrant } from "./derived-image-grant.js";
+export { EphemeralDerivedImageHydrator, createDerivedImageManifestSha256, type DerivedImageAssetReader, type DerivedImageManifest, type HydratedDerivedImage } from "./ephemeral-derived-image-hydrator.js";
 export { readVerifiedPerceptionSource, type ImmutablePerceptionSource, type SourceReader } from "./source-handoff.js";
 export { AtlasPerceptionHandoff, type PerceptionOperation, type PerceptionOperationState, type StartPerceptionOperation } from "./perception-handoff.js";
 export { type PerceptionAuthority, type PerceptionExecutionInput, type AuthorityRedeemedPerceptionSource, type DerivedAssetAuthority, type DerivedAssetDescriptor } from "./perception-authority.js";
