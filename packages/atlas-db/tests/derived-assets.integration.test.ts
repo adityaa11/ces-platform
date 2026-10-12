@@ -39,27 +39,53 @@ test("derived assets persist before acceptance and remain scoped, immutable, and
 
     const descriptor = { sourceSha256, profile: "atlas-digital-pdf-run-003-capture-v1", pageNumber: 1, locatorId: "visual-1", mediaType: "image/png" as const, width: 1, height: 1, byteLength: png.byteLength, sha256: createHash("sha256").update(png).digest("hex") };
     const first = await authority.handoffDerived(request, descriptor, png);
+    const secondDescriptor = { ...descriptor, locatorId: "visual-2" };
+    const second = await authority.handoffDerived(request, secondDescriptor, png);
     const orphanDescriptor = { ...descriptor, locatorId: "visual-orphan" };
     const orphan = await authority.handoffDerived(request, orphanDescriptor, png);
+    assert.notEqual(second.assetRef, first.assetRef, "each visual locator receives a distinct immutable asset reference");
     assert.notEqual(orphan.assetRef, first.assetRef, "a distinct locator never aliases an unaccepted asset");
     const restarted = new PostgresPerceptionAuthority(sql, new PerceptionSourceGrantIssuer("d".repeat(32)), undefined, input.capabilityIdentity, undefined, new LocalFilesystemDocumentStore(root));
     assert.deepEqual(await restarted.handoffDerived(request, descriptor, png), first, "restart/retry sees the already verified immutable handoff");
+    assert.deepEqual(await restarted.handoffDerived(request, secondDescriptor, png), second, "restart/retry preserves the second page/locator-bound handoff");
     assert.deepEqual(await restarted.handoffDerived(request, orphanDescriptor, png), orphan, "an unaccepted manifest can only be replayed for its exact complete identity");
     await assert.rejects(() => restarted.handoffDerived(request, { ...descriptor, sha256: "0".repeat(64) }, png), /integrity|conflicts/i, "a conflicting retry cannot replace verified bytes");
+    await assert.rejects(() => restarted.handoffDerived(request, { ...descriptor, byteLength: descriptor.byteLength + 1 }, png), /metadata|conflicts/i, "a length mismatch cannot replace verified bytes");
+    await assert.rejects(() => restarted.handoffDerived(request, { ...descriptor, pageNumber: 2 }, png), /conflicts/i, "a page mismatch cannot replace the original binding");
+    await assert.rejects(() => restarted.handoffDerived(request, { ...descriptor, sourceSha256: "f".repeat(64) }, png), /metadata|source/i, "a foreign source digest cannot write an asset");
     await assert.rejects(() => restarted.handoffDerived(request, { ...descriptor, mediaType: "image/jpeg" as never }, png), /metadata is invalid/i, "unsupported media is rejected before persistence");
     const oversized = new Uint8Array(10 * 1024 * 1024 + 1);
     await assert.rejects(() => restarted.handoffDerived(request, { ...descriptor, byteLength: oversized.byteLength, sha256: createHash("sha256").update(oversized).digest("hex") }, oversized), /metadata is invalid/i, "oversized binary transfer is rejected before persistence");
     const [grantId, signature] = request.source.grant.split(".");
     await assert.rejects(() => restarted.handoffDerived({ ...request, source: { grant: `${grantId}.${signature![0] === "a" ? "b" : "a"}${signature!.slice(1)}` } }, descriptor, png), /invalid|unauthorized/i, "a malformed grant cannot write derived bytes");
 
-    const good = { version: "v1" as const, executionId, artifactId, sourceSha256, perception: request.perception, provider: { name: "docling", processor: "capture", executionId, processedAt: "2026-10-09T00:00:00.000Z" }, pages: [{ number: 1, textBlocks: [], tables: [], visualRegions: [{ id: "visual-1", assetRef: first.assetRef }] }] };
+    const good = { version: "v1" as const, executionId, artifactId, sourceSha256, perception: request.perception, provider: { name: "docling", processor: "capture", executionId, processedAt: "2026-10-09T00:00:00.000Z" }, pages: [{ number: 1, textBlocks: [], tables: [], visualRegions: [{ id: "visual-1", assetRef: first.assetRef }, { id: "visual-2", assetRef: second.assetRef }] }] };
+    const assertNoAssetAccepted = async (label: string) => assert.equal((await sql.unsafe("SELECT count(*)::int AS count FROM atlas.document_perception_derived_manifest WHERE execution_id=$1 AND accepted_at IS NOT NULL", [executionId]))[0]?.count, 0, label);
     await assert.rejects(() => restarted.deliver(request, { ...good, pages: [{ ...good.pages[0]!, visualRegions: [{ id: "wrong-locator", assetRef: first.assetRef }] }] }), /misbound|dangling/i);
-    assert.equal((await sql.unsafe("SELECT accepted_at FROM atlas.document_perception_derived_manifest WHERE execution_id=$1", [executionId]))[0]?.accepted_at, null, "a rejected result cannot accept a staged asset");
+    await assertNoAssetAccepted("a misbound locator cannot accept any staged asset");
+    await assert.rejects(() => restarted.deliver(request, { ...good, sourceSha256: "f".repeat(64) }), /source|identity|invalid/i, "foreign source evidence cannot be accepted");
+    await assertNoAssetAccepted("foreign source evidence leaves every staged asset unaccepted");
+    await assert.rejects(() => restarted.deliver(request, { ...good, pages: [{ ...good.pages[0]!, visualRegions: [{ id: "visual-1", assetRef: first.assetRef }, { id: "visual-2", assetRef: first.assetRef }] }] }), /reuses|misbound|dangling/i, "a duplicated asset reference cannot cover two visuals");
+    await assertNoAssetAccepted("a duplicate reference leaves every staged asset unaccepted");
+    await assert.rejects(() => restarted.deliver(request, ({ ...good, pages: [{ ...good.pages[0]!, visualRegions: [{ id: "visual-1" }, good.pages[0]!.visualRegions[1]!] }] } as never)), /assetRef|invalid|undefined|required|verified derived asset/i, "a missing asset reference cannot be accepted");
+    await assertNoAssetAccepted("missing assetRef leaves every staged asset unaccepted");
+    await assert.rejects(() => restarted.deliver(request, { ...good, pages: [{ ...good.pages[0]!, number: 2 }] }), /misbound|dangling/i, "a wrong page binding cannot be accepted");
+    await assertNoAssetAccepted("a wrong page binding leaves every staged asset unaccepted");
+    await writeFile(join(root, first.assetRef), Buffer.from("tampered-before-acceptance"));
+    await assert.rejects(() => restarted.deliver(request, good), /integrity/i, "altered bytes cannot be accepted");
+    await assertNoAssetAccepted("altered bytes leave every staged asset unaccepted");
+    await writeFile(join(root, first.assetRef), png);
     await restarted.deliver(request, good);
     await restarted.deliver(request, good);
     assert.equal((await sql.unsafe("SELECT state FROM atlas.document_perception_execution WHERE id=$1", [executionId]))[0]?.state, "completed");
     assert.equal((await sql.unsafe("SELECT count(*)::int AS count FROM atlas.semantic_execution WHERE document_id=$1", [artifactId]))[0]?.count, 0, "derived evidence admission does not create semantic execution");
+    const acceptedManifests = await sql.unsafe("SELECT locator_id, page_number, asset_ref, media_type, byte_size::integer AS byte_size, sha256, verified_at IS NOT NULL AS verified, accepted_at IS NOT NULL AS accepted FROM atlas.document_perception_derived_manifest WHERE execution_id=$1 AND accepted_at IS NOT NULL ORDER BY locator_id", [executionId]);
+    assert.deepEqual(Array.from(acceptedManifests), [
+      { locator_id: "visual-1", page_number: 1, asset_ref: first.assetRef, media_type: "image/png", byte_size: png.byteLength, sha256: descriptor.sha256, verified: true, accepted: true },
+      { locator_id: "visual-2", page_number: 1, asset_ref: second.assetRef, media_type: "image/png", byte_size: png.byteLength, sha256: secondDescriptor.sha256, verified: true, accepted: true },
+    ], "each visual has its own verified and accepted page/locator-bound manifest");
     assert.deepEqual((await restarted.resolveDerived({ callerUserId: owner, artifactId, sourceSha256, locatorId: descriptor.locatorId, assetRef: first.assetRef })).bytes, new Uint8Array(png));
+    assert.deepEqual((await restarted.resolveDerived({ callerUserId: owner, artifactId, sourceSha256, locatorId: secondDescriptor.locatorId, assetRef: second.assetRef })).bytes, new Uint8Array(png));
     await assert.rejects(() => restarted.resolveDerived({ callerUserId: foreign, artifactId, sourceSha256, locatorId: descriptor.locatorId, assetRef: first.assetRef }), /unavailable|unauthorized/i);
     await assert.rejects(() => restarted.resolveDerived({ callerUserId: owner, artifactId, sourceSha256, locatorId: "other-locator", assetRef: first.assetRef }), /unavailable|unauthorized/i, "wrong locator binding cannot retrieve bytes");
     await assert.rejects(() => restarted.resolveDerived({ callerUserId: owner, artifactId, sourceSha256: "f".repeat(64), locatorId: descriptor.locatorId, assetRef: first.assetRef }), /unavailable|unauthorized/i, "wrong source binding cannot retrieve bytes");
@@ -67,7 +93,7 @@ test("derived assets persist before acceptance and remain scoped, immutable, and
     await assert.rejects(() => restarted.resolveDerived({ callerUserId: owner, artifactId, sourceSha256, locatorId: "../unsafe", assetRef: first.assetRef }), /reference is invalid/i, "path traversal is rejected before storage access");
     await restarted.invalidateCache({ sourceSha256, perception: request.perception, capabilityIdentity: input.capabilityIdentity });
     assert.equal((await restarted.resolveDerived({ callerUserId: owner, artifactId, sourceSha256, locatorId: descriptor.locatorId, assetRef: first.assetRef })).byteLength, png.byteLength, "cache invalidation retains accepted historical bytes");
-    assert.equal((await sql.unsafe("SELECT count(*)::int AS count FROM atlas.document_perception_derived_manifest WHERE execution_id=$1 AND accepted_at IS NOT NULL", [executionId]))[0]?.count, 1, "cache invalidation cannot orphan or delete accepted evidence");
+    assert.equal((await sql.unsafe("SELECT count(*)::int AS count FROM atlas.document_perception_derived_manifest WHERE execution_id=$1 AND accepted_at IS NOT NULL", [executionId]))[0]?.count, 2, "cache invalidation cannot orphan or delete either accepted visual asset");
     await sql.unsafe("UPDATE atlas.document_perception_derived_manifest SET created_at=now()-interval '8 days' WHERE execution_id=$1 AND asset_ref=$2", [executionId, orphan.assetRef]);
     assert.deepEqual(await new LocalFilesystemDocumentStore(root).readDerived(orphan.assetRef), new Uint8Array(png), "an unaccepted orphan remains retained when no authoritative cleanup sweep has proven it safe to delete");
     await writeFile(join(root, first.assetRef), Buffer.from("tampered"));

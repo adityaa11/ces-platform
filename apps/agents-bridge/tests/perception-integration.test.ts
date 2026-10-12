@@ -51,8 +51,9 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
   const controlStored = await store.put({ bytes: controlBytes, mediaType: "application/pdf" });
   const controlSourceSha256 = createHash("sha256").update(controlBytes).digest("hex");
   const sourceSha256 = createHash("sha256").update(bytes).digest("hex");
-  const input = { executionId, artifactId, storageKey: stored.storageKey, sourceSha256, mimeType: "application/pdf" as const, byteSize: bytes.byteLength, idempotencyKey: `perception-integration-${randomUUID()}`, capabilityIdentity: "mistral-ocr:test-config" };
-  const controlInput = { executionId: controlExecutionId, artifactId: controlArtifactId, storageKey: controlStored.storageKey, sourceSha256: controlSourceSha256, mimeType: "application/pdf" as const, byteSize: controlBytes.byteLength, idempotencyKey: `perception-integration-control-${randomUUID()}`, capabilityIdentity: "mistral-ocr:test-config" };
+  const run003Identity = "docling-digital-pdf:atlas-digital-pdf-run-003-capture-v1";
+  const input = { executionId, artifactId, storageKey: stored.storageKey, sourceSha256, mimeType: "application/pdf" as const, byteSize: bytes.byteLength, idempotencyKey: `perception-integration-${randomUUID()}`, capabilityIdentity: run003Identity };
+  const controlInput = { executionId: controlExecutionId, artifactId: controlArtifactId, storageKey: controlStored.storageKey, sourceSha256: controlSourceSha256, mimeType: "application/pdf" as const, byteSize: controlBytes.byteLength, idempotencyKey: `perception-integration-control-${randomUUID()}`, capabilityIdentity: run003Identity };
   const owner = `perception-integration-owner-${randomUUID()}`; const project = `perception-integration-project-${randomUUID()}`; const workspace = `perception-integration-workspace-${randomUUID()}`; const bundle = `perception-integration-bundle-${randomUUID()}`; const controlBundle = `perception-integration-control-bundle-${randomUUID()}`;
   const authority = new PostgresPerceptionAuthority(atlas, new PerceptionSourceGrantIssuer(serviceCredential), { enqueue: async () => randomUUID() });
   const request = await authority.create(input);
@@ -61,10 +62,10 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
   await atlas.unsafe("INSERT INTO atlas.project (id,stable_id,name,created_by_user_id) VALUES ($1,$2,'perception integration',$3)", [project, `perception-integration-${randomUUID().slice(0, 12)}`, owner]);
   await atlas.unsafe("INSERT INTO atlas.workspace (id,project_id,kind,state,display_name) VALUES ($1,$2,'initial_draft','draft','Draft')", [workspace, project]);
   await atlas.unsafe("INSERT INTO atlas.document (id,project_id,workspace_id,original_filename,storage_key,source_sha256,byte_size,media_type,created_by_user_id) VALUES ($1,$2,$3,'source.pdf',$4,$5,$6,'application/pdf',$7)", [artifactId, project, workspace, stored.storageKey, sourceSha256, bytes.byteLength, owner]);
-  await atlas.unsafe("INSERT INTO atlas.extraction_bundle (id,project_id,workspace_id,state,semantic_contract_version,reconciliation_contract_version,expected_document_count) VALUES ($1,$2,$3,'waiting','v1','v1',1)", [bundle, project, workspace]);
+  await atlas.unsafe("INSERT INTO atlas.extraction_bundle (id,project_id,workspace_id,state,semantic_contract_version,reconciliation_contract_version,expected_document_count,perception_admission_policy) VALUES ($1,$2,$3,'waiting','v1','v1',1,'staged-fair-local-v1')", [bundle, project, workspace]);
   await atlas.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id,document_id,project_id,workspace_id,sequence,state,perception_execution_id) VALUES ($1,$2,$3,$4,1,'perception_queued',$5)", [bundle, artifactId, project, workspace, executionId]);
   await atlas.unsafe("INSERT INTO atlas.document (id,project_id,workspace_id,original_filename,storage_key,source_sha256,byte_size,media_type,created_by_user_id) VALUES ($1,$2,$3,'control.pdf',$4,$5,$6,'application/pdf',$7)", [controlArtifactId, project, workspace, controlStored.storageKey, controlSourceSha256, controlBytes.byteLength, owner]);
-  await atlas.unsafe("INSERT INTO atlas.extraction_bundle (id,project_id,workspace_id,state,semantic_contract_version,reconciliation_contract_version,expected_document_count) VALUES ($1,$2,$3,'waiting','v1','v1',1)", [controlBundle, project, workspace]);
+  await atlas.unsafe("INSERT INTO atlas.extraction_bundle (id,project_id,workspace_id,state,semantic_contract_version,reconciliation_contract_version,expected_document_count,perception_admission_policy) VALUES ($1,$2,$3,'waiting','v1','v1',1,'staged-fair-local-v1')", [controlBundle, project, workspace]);
   await atlas.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id,document_id,project_id,workspace_id,sequence,state,perception_execution_id) VALUES ($1,$2,$3,$4,1,'perception_queued',$5)", [controlBundle, controlArtifactId, project, workspace, controlExecutionId]);
   const routes = createPerceptionInternalRoutes({ authority, sources: store, serviceCredential, maximumSourceBytes: 20 * 1024 * 1024, maximumResultBytes: 10 * 1024 * 1024 });
   let delivered: NormalizedDocument | undefined;
@@ -101,11 +102,12 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
       providerCalls.push(Date.now());
       if (signal.aborted) throw new Error("synthetic cancellation");
       return {
-        // This generic OCR fixture is intentionally image-free.  RUN-003
-        // visual evidence must come through the authenticated Atlas handoff,
-        // never from a synthetic pre-ticket derived reference.
-        providerResult: { pages: [{ index: 0, markdown: "Synthetic PDF text" }] },
-        provenance: { provider: "mistral" as const, model: "ocr-qualified", endpoint: "/v1/ocr" as const, latencyMilliseconds: 1, attempt: 1 },
+        // Offline Docling-shaped RUN-003 capture fixture: preserve source
+        // text/table structure and exercise the zero-visual handoff branch.
+        providerResult: { pages: [{ page_number: 1, blocks: [{ id: "run003-text-1", text: "Synthetic RUN-003 PDF text" }], tables: [{ id: "run003-table-1", content: "| Key | Value |\n| --- | --- |\n| mode | offline |" }], visual_regions: [] }] },
+        requiresAssetHandoff: true,
+        transientVisualDescriptors: [],
+        provenance: { provider: "docling" as const, model: "docling-slim-2.132.0/docling-serve-1.36.0/atlas-digital-pdf-run-003-capture-v1", endpoint: "compose-private:/v1/convert/file" as const, latencyMilliseconds: 1, attempt: 1 },
       };
     },
   };
@@ -116,10 +118,10 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
   // re-reading the source or invoking the provider a second time.
   const completionFault = `pcf_${randomUUID().replace(/-/gu, "").slice(0, 16)}`;
   const cleanupFault = `pcf_${randomUUID().replace(/-/gu, "").slice(0, 16)}`;
-  await admin.unsafe(`CREATE SEQUENCE ${completionFault} START 1`);
+  await admin.unsafe(`CREATE SEQUENCE atlas.${completionFault} START 1`);
   await admin.unsafe(`CREATE FUNCTION ${completionFault}_fn() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public AS $$ BEGIN IF NEW.status = 'completed' AND nextval('atlas.${completionFault}') = 1 THEN RAISE EXCEPTION 'synthetic completion update loss'; END IF; RETURN NEW; END $$`);
   await admin.unsafe(`CREATE TRIGGER ${completionFault}_trigger BEFORE UPDATE ON bridge.background_effects FOR EACH ROW EXECUTE FUNCTION ${completionFault}_fn()`);
-  await admin.unsafe(`CREATE SEQUENCE ${cleanupFault} START 1`);
+  await admin.unsafe(`CREATE SEQUENCE atlas.${cleanupFault} START 1`);
   await admin.unsafe(`CREATE FUNCTION ${cleanupFault}_fn() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public AS $$ BEGIN IF nextval('atlas.${cleanupFault}') = 1 THEN RAISE EXCEPTION 'synthetic replay cleanup loss'; END IF; RETURN OLD; END $$`);
   await admin.unsafe(`CREATE TRIGGER ${cleanupFault}_trigger BEFORE DELETE ON bridge.document_perception_result_delivery FOR EACH ROW EXECUTE FUNCTION ${cleanupFault}_fn()`);
   const config: WorkerConfig = { databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 1, perceptionConcurrency: 1, timeoutSeconds: 5, retryLimit: 8, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 };
@@ -151,6 +153,7 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
     assert.equal((await routes.redeem(serviceCredential, { ...request, artifact: { ...request.artifact, sourceSha256: "b".repeat(64) } })).status, 400, "a hash mismatch cannot redeem source bytes");
     assert.equal((await routes.redeem(serviceCredential, { ...request, artifact: { ...request.artifact, byteSize: request.artifact.byteSize + 1 } })).status, 400, "a size mismatch cannot redeem source bytes");
     assert.equal((await routes.redeem(serviceCredential, { ...request, artifact: { ...request.artifact, mimeType: "text/plain" } })).status, 400, "a MIME mismatch cannot redeem source bytes");
+    const sourceDocumentCountBeforeDelivery = (await atlas.unsafe("SELECT count(*)::int AS count FROM atlas.document"))[0]?.count;
     await worker.start();
     await worker.boss.send(perceptionQueueName, { idempotencyKey: input.idempotencyKey, request }, { singletonKey: input.idempotencyKey });
     const retryable = async (label: string) => {
@@ -169,13 +172,22 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
     assert.equal(providerCalls.length, 1, "post-delivery completion and cleanup retries replay staged output without a second provider call");
     assert.ok(delivered);
     assert.equal(delivered?.pages[0]?.number, 1);
-    assert.equal(delivered?.pages[0]?.textBlocks[0]?.text, "Synthetic PDF text");
+    assert.equal(delivered?.pages[0]?.textBlocks[0]?.text, "Synthetic RUN-003 PDF text");
+    assert.equal(delivered?.pages[0]?.tables[0]?.content, "| Key | Value |\n| --- | --- |\n| mode | offline |");
     assert.deepEqual(delivered?.pages[0]?.visualRegions, []);
 
     const cacheRows = await atlas.unsafe("SELECT normalized_document, derived_assets FROM atlas.normalized_document_cache WHERE source_sha256=$1 AND capability_identity=$2 AND invalidated_at IS NULL", [sourceSha256, input.capabilityIdentity]);
     assert.equal(cacheRows.length, 1);
     const derivedAssets = typeof cacheRows[0]?.derived_assets === "string" ? JSON.parse(cacheRows[0].derived_assets) : cacheRows[0]?.derived_assets;
     assert.deepEqual(derivedAssets, []);
+    const cachedDocument = typeof cacheRows[0]?.normalized_document === "string" ? JSON.parse(cacheRows[0].normalized_document) : cacheRows[0]?.normalized_document;
+    assert.equal(cachedDocument.pages[0].textBlocks[0].text, "Synthetic RUN-003 PDF text");
+    assert.equal(cachedDocument.pages[0].tables[0].content, "| Key | Value |\n| --- | --- |\n| mode | offline |");
+    const member = (await atlas.unsafe("SELECT state FROM atlas.extraction_bundle_document WHERE bundle_id=$1 AND document_id=$2", [bundle, artifactId]))[0];
+    assert.equal(member?.state, "perceived", "accepted zero-visual RUN-003 leaves the staged bundle member perceived");
+    assert.equal((await atlas.unsafe("SELECT count(*)::int AS count FROM atlas.semantic_execution WHERE document_id=$1", [artifactId]))[0]?.count, 0, "zero-visual perception does not create semantic executions");
+    assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM pgboss.job WHERE name=$1", ["bridge-background-execution-v1"]))[0]?.count, 0, "zero-visual perception does not enqueue semantic/background jobs");
+    assert.equal((await atlas.unsafe("SELECT count(*)::int AS count FROM atlas.document"))[0]?.count, sourceDocumentCountBeforeDelivery, "RUN-003 acceptance creates no additional source documents");
     assert.equal((await bridge.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [input.idempotencyKey]))[0]?.status, "completed");
     assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.document_perception_result_delivery WHERE idempotency_key=$1", [input.idempotencyKey]))[0]?.count, 0, "the replay outbox is removed only after the successful acknowledgement");
     const queuedRows = await bridge.unsafe("SELECT data::text AS data FROM pgboss.job WHERE name=$1", [perceptionQueueName]);
@@ -185,6 +197,9 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
     assert.equal(persistedRows.length, 0, "the replay row is eventually removed after a transient cleanup failure");
 
     assert.equal((await routes.deliver(serviceCredential, request, delivered)).status, 204, "acknowledgement replay must remain idempotent");
+    assert.equal((await atlas.unsafe("SELECT count(*)::int AS count FROM atlas.document"))[0]?.count, sourceDocumentCountBeforeDelivery, "repeated RUN-003 delivery creates no additional source documents");
+    assert.equal((await atlas.unsafe("SELECT count(*)::int AS count FROM atlas.semantic_execution WHERE document_id=$1", [artifactId]))[0]?.count, 0, "repeated delivery remains free of semantic executions");
+    assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM pgboss.job WHERE name=$1", ["bridge-background-execution-v1"]))[0]?.count, 0, "repeated delivery remains free of semantic/background jobs");
     await authority.invalidateCache({ sourceSha256, perception: request.perception, capabilityIdentity: input.capabilityIdentity });
     assert.equal(await authority.getCached({ sourceSha256, perception: request.perception, capabilityIdentity: input.capabilityIdentity }), undefined);
   } finally {
@@ -206,9 +221,9 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
     await admin.unsafe(`DROP TRIGGER IF EXISTS ${cleanupFault}_trigger ON bridge.document_perception_result_delivery`).catch(() => undefined);
     await bridge.unsafe("DELETE FROM bridge.document_perception_result_delivery WHERE idempotency_key=$1", [input.idempotencyKey]).catch(() => undefined);
     await admin.unsafe(`DROP FUNCTION IF EXISTS ${completionFault}_fn()`).catch(() => undefined);
-    await admin.unsafe(`DROP SEQUENCE IF EXISTS ${completionFault}`).catch(() => undefined);
+    await admin.unsafe(`DROP SEQUENCE IF EXISTS atlas.${completionFault}`).catch(() => undefined);
     await admin.unsafe(`DROP FUNCTION IF EXISTS ${cleanupFault}_fn()`).catch(() => undefined);
-    await admin.unsafe(`DROP SEQUENCE IF EXISTS ${cleanupFault}`).catch(() => undefined);
+    await admin.unsafe(`DROP SEQUENCE IF EXISTS atlas.${cleanupFault}`).catch(() => undefined);
     await atlas.unsafe("DELETE FROM atlas.workspace WHERE id=$1", [workspace]).catch(() => undefined);
     await atlas.unsafe("DELETE FROM atlas.project WHERE id=$1", [project]).catch(() => undefined);
     await admin.unsafe('DELETE FROM auth."user" WHERE id=$1', [owner]).catch(() => undefined);
