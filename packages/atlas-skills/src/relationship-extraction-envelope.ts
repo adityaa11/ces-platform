@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { atlasProviderExtractionProposalV1Schema } from "./semantic-prompt.js";
 import { relationshipContractVersion, relationshipSha256, type ContextSourceRelationshipRevisionV1, type MaterializedRelationshipProposalSet, type ProviderProvenance, type ProvisionalRelationshipRepository, type RelationshipPacketIdentity, type RelationshipSourceLocator, type TrustedFinalizationSlot } from "./relationship-provenance.js";
+import type { ProvisionalRelationshipPacketExtensionV1 } from "./provisional-relationship-packet.js";
 
 const slot = z.string().min(1).max(200);
 const sha256 = z.string().regex(/^[a-f0-9]{64}$/);
@@ -25,6 +26,11 @@ export const atlasProviderRelationshipExtractionEnvelopeV1Schema = z.strictObjec
   semantic_proposal: atlasProviderExtractionProposalV1Schema,
   relationship_proposals: z.array(relationshipProposalSchema).max(10_000),
 });
+
+/** Additive opt-in request body. The provisional extension is context only, beside the normal source slots. */
+export function buildRelationshipExtractionRequestPacket(input: { readonly sourceSlots: readonly TrustedFinalizationSlot[]; readonly provisionalRelationships: ProvisionalRelationshipPacketExtensionV1 }) {
+  return { source_slots: input.sourceSlots, provisional_relationships: input.provisionalRelationships } as const;
+}
 
 function reject(message: string): never { throw new Error(`Provisional relationship materialization failed: ${message}`); }
 function sourceLocator(source: TrustedFinalizationSlot): RelationshipSourceLocator {
