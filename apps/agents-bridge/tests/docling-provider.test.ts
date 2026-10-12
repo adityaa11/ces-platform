@@ -113,7 +113,10 @@ test("Docling route requires its immutable service, runtime, adapter, and profil
   assert.throws(() => assertConfiguredRouteAdapter({ ...route, extensions: { ...route.extensions, imageDigest: "latest" } }, all), /pinned qualified/u);
   assert.throws(() => assertConfiguredRouteAdapter({ ...route, extensions: { ...route.extensions, capabilityIdentity: doclingCapabilityIdentity(doclingRun003OptionProfile) } }, all), /cache identity/u);
   assert.notEqual(doclingCapabilityIdentity(doclingRun003OptionProfile), doclingCapabilityIdentity(doclingOptionProfile));
-  assert.throws(() => assertConfiguredRouteAdapter(route, { ...all, docling: { ...config, optionProfile: doclingRun003OptionProfile } }), /gated pending/u);
+  const run003Route = { ...route, routeId: "docling-run-003-capture", qualificationVersion: "idser-012-01-03-02-local", qualificationRef: "qualification://idser-012-01-03-02-local", extensions: { ...route.extensions, optionProfile: doclingRun003OptionProfile, capabilityIdentity: doclingCapabilityIdentity(doclingRun003OptionProfile) } };
+  const run003Config = { ...all, docling: { ...config, optionProfile: doclingRun003OptionProfile } };
+  assert.doesNotThrow(() => assertConfiguredRouteAdapter(run003Route, run003Config));
+  assert.throws(() => assertConfiguredRouteAdapter({ ...run003Route, extensions: { ...run003Route.extensions, capabilityIdentity: doclingCapabilityIdentity(doclingOptionProfile) } }, run003Config), /cache identity/u);
 });
 
 test("RUN-003 adapter sends the complete pinned capture request and records the profile identity", async () => {

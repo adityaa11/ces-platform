@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { assertAnomanRouteAdapter, assertRouteAdapter, createRouteRegistry, parseDeploymentProfile, parseQualifiedRoutes, RouteResolutionError, type QualifiedRoute } from "../src/route-registry.ts";
+import { fileURLToPath } from "node:url";
+import { assertAnomanRouteAdapter, assertConfiguredRouteAdapter, assertRouteAdapter, createRouteRegistry, parseDeploymentProfile, parseQualifiedRoutes, RouteResolutionError, type QualifiedRoute } from "../src/route-registry.ts";
 import { QualifiedRouteRuntime } from "../src/runtime.ts";
 
 const route = (overrides: Record<string, unknown> = {}): QualifiedRoute => ({
@@ -58,6 +60,44 @@ test("the distinct Anoman semantic adapter is pinned but cannot activate before 
   assert.throws(() => assertAnomanRouteAdapter({ ...anoman, modelOrProcessorId: "other" }, "gemini-2.5-flash"), /pinned Anoman semantic adapter/u);
   const registry = createRouteRegistry([anoman], "development", new Set(["anoman"]));
   assert.throws(() => registry.resolve("atlas.semantic.extract"), /No enabled qualified route/u);
+});
+
+test("canonical Compose exposes only the approved normal RUN-003 perception route", async () => {
+  const compose = await readFile(fileURLToPath(new URL("../../../docker-compose.yml", import.meta.url)), "utf8");
+  const routeMatch = compose.match(/x-docling-qualified-route:\s*&docling-qualified-route\s*>-\s*\r?\n\s*(\[[^\r\n]+\])/u);
+  assert.ok(routeMatch, "normal Compose must define its qualified perception route");
+  const routes = parseQualifiedRoutes(routeMatch[1]);
+  assert.equal(routes.length, 1);
+  const [run003] = routes;
+  assert.equal(run003?.routeId, "docling-run-003-capture");
+  assert.equal(run003?.capability, "atlas.document.perceive");
+  assert.equal(run003?.providerId, "docling");
+  assert.equal(run003?.qualificationRef, "qualification://idser-012-01-03-02-local");
+  assert.equal(run003?.extensions?.optionProfile, "atlas-digital-pdf-run-003-capture-v1");
+  assert.equal(run003?.extensions?.capabilityIdentity, "docling-digital-pdf:atlas-digital-pdf-run-003-capture-v1");
+  assert.match(compose, /ATLAS_D1_PERCEPTION_CAPABILITY_IDENTITY:\s*docling-digital-pdf:atlas-digital-pdf-run-003-capture-v1/u);
+  assert.match(compose, /DOCLING_OPTION_PROFILE:\s*atlas-digital-pdf-run-003-capture-v1/u);
+  assert.equal((compose.match(/AGENTS_BRIDGE_QUALIFIED_ROUTES:\s*\*docling-qualified-route/gu) ?? []).length, 2);
+  assert.equal(compose.includes("AGENTS_BRIDGE_QUALIFICATION_ONLY"), false);
+  assert.equal(compose.includes("atlas-digital-pdf-no-ocr-v1"), false);
+});
+
+test("normal RUN-003 admission permits only its exact pinned route identity", () => {
+  const run003 = route({
+    routeId: "docling-run-003-capture",
+    capability: "atlas.document.perceive",
+    providerId: "docling",
+    modelOrProcessorId: "docling-slim-2.132.0",
+    adapterVersion: "docling-serve-adapter-v1",
+    qualificationVersion: "idser-012-01-03-02-local",
+    qualificationRef: "qualification://idser-012-01-03-02-local",
+    workClass: "local_processor",
+    extensions: { serviceVersion: "1.36.0", optionProfile: "atlas-digital-pdf-run-003-capture-v1", capabilityIdentity: "docling-digital-pdf:atlas-digital-pdf-run-003-capture-v1", imageDigest: "sha256:4ba36cb322283e3851d2a6c5f347dd1cc515d7afb8ea5cc1577da8b5bfe2fea7" },
+  });
+  const config = { mistral: { structuredModel: "s", chatModel: "c", ocrModel: "o" }, gemini: { structuredModel: "s", chatModel: "c", perceptionModel: "p" }, anoman: { structuredModel: "gemini-2.5-flash" as const }, docling: { serviceVersion: "1.36.0", doclingSlimVersion: "2.132.0", optionProfile: "atlas-digital-pdf-run-003-capture-v1" } };
+  assert.doesNotThrow(() => assertConfiguredRouteAdapter(run003, config));
+  assert.throws(() => assertConfiguredRouteAdapter({ ...run003, extensions: { ...run003.extensions, capabilityIdentity: "docling-digital-pdf" } }, config), /cache identity/u);
+  assert.throws(() => assertConfiguredRouteAdapter({ ...run003, extensions: { ...run003.extensions, optionProfile: "atlas-digital-pdf-no-ocr-v1" } }, config), /cache identity/u);
 });
 
 test("interactive route selection comes from the server capability mapping, not caller vendor fields", async () => {
