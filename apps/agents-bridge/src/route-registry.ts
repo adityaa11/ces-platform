@@ -149,6 +149,7 @@ export function assertConfiguredRouteAdapter(route: QualifiedRoute, config: { re
   if (route.providerId === "anoman") return assertAnomanRouteAdapter(route, config.anoman.structuredModel);
   if (route.providerId === "docling") {
     if (route.capability !== "atlas.document.perceive" || route.adapterVersion !== "docling-serve-adapter-v1" || route.modelOrProcessorId !== `docling-slim-${config.docling.doclingSlimVersion}` || route.extensions?.serviceVersion !== config.docling.serviceVersion || route.extensions?.optionProfile !== config.docling.optionProfile || route.extensions?.capabilityIdentity !== doclingCapabilityIdentity(config.docling.optionProfile) || route.extensions?.imageDigest !== "sha256:4ba36cb322283e3851d2a6c5f347dd1cc515d7afb8ea5cc1577da8b5bfe2fea7") throw new RouteResolutionError("invalid_route", `Route ${route.routeId} does not name the pinned qualified Docling service profile and cache identity.`);
+    if (config.qualificationOnly !== true && (route.qualificationVersion !== "idser-012-01-03-02-local" || route.qualificationRef !== "qualification://idser-012-01-03-02-local")) throw new RouteResolutionError("invalid_route", `Route ${route.routeId} does not name the approved RUN-003 qualification.`);
     return;
   }
   throw new RouteResolutionError("invalid_route", `Route ${route.routeId} names an unavailable adapter.`);

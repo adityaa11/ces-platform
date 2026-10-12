@@ -94,10 +94,14 @@ test("normal RUN-003 admission permits only its exact pinned route identity", ()
     workClass: "local_processor",
     extensions: { serviceVersion: "1.36.0", optionProfile: "atlas-digital-pdf-run-003-capture-v1", capabilityIdentity: "docling-digital-pdf:atlas-digital-pdf-run-003-capture-v1", imageDigest: "sha256:4ba36cb322283e3851d2a6c5f347dd1cc515d7afb8ea5cc1577da8b5bfe2fea7" },
   });
-  const config = { mistral: { structuredModel: "s", chatModel: "c", ocrModel: "o" }, gemini: { structuredModel: "s", chatModel: "c", perceptionModel: "p" }, anoman: { structuredModel: "gemini-2.5-flash" as const }, docling: { serviceVersion: "1.36.0", doclingSlimVersion: "2.132.0", optionProfile: "atlas-digital-pdf-run-003-capture-v1" } };
+  const config = { mistral: { structuredModel: "s", chatModel: "c", ocrModel: "o" }, gemini: { structuredModel: "s", chatModel: "c", perceptionModel: "p" }, anoman: { structuredModel: "gemini-2.5-flash" as const }, docling: { serviceVersion: "1.36.0", doclingSlimVersion: "2.132.0", optionProfile: "atlas-digital-pdf-run-003-capture-v1" }, qualificationOnly: false };
   assert.doesNotThrow(() => assertConfiguredRouteAdapter(run003, config));
+  assert.throws(() => assertConfiguredRouteAdapter({ ...run003, qualificationVersion: "idser-012-01-03-01-local" }, config), (error: unknown) => error instanceof RouteResolutionError && error.code === "invalid_route");
+  assert.throws(() => assertConfiguredRouteAdapter({ ...run003, qualificationRef: "qualification://idser-012-01-03-01-local" }, config), (error: unknown) => error instanceof RouteResolutionError && error.code === "invalid_route");
+  assert.throws(() => assertConfiguredRouteAdapter({ ...run003, qualificationVersion: "idser-012-01-03-01-local", qualificationRef: "qualification://idser-012-01-03-01-local" }, config), (error: unknown) => error instanceof RouteResolutionError && error.code === "invalid_route");
   assert.throws(() => assertConfiguredRouteAdapter({ ...run003, extensions: { ...run003.extensions, capabilityIdentity: "docling-digital-pdf" } }, config), /cache identity/u);
   assert.throws(() => assertConfiguredRouteAdapter({ ...run003, extensions: { ...run003.extensions, optionProfile: "atlas-digital-pdf-no-ocr-v1" } }, config), /cache identity/u);
+  assert.throws(() => assertConfiguredRouteAdapter({ ...run003, extensions: { ...run003.extensions, imageDigest: "sha256:latest" } }, config), /pinned qualified Docling/u);
 });
 
 test("interactive route selection comes from the server capability mapping, not caller vendor fields", async () => {
