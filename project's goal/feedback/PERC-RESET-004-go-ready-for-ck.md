@@ -3,8 +3,9 @@
 - **Ticket:** `PERC-RESET-004` — First clean canonical Compose boot
 - **Batch:** `PERC-RESET`
 - **Authorized checkpoint:** `GO PERC-RESET-004`
-- **HMN authority:** `HMN-PERC-RESET-004-001` (`RETURN_TO_GO`), clarified by
-  user-authorized `HMN-PERC-RESET-004-002`
+- **HMN authority:** `HMN-PERC-RESET-004-001` (`RETURN_TO_GO`)
+- **Ticket amendment:** `PERC-RESET-004-ticket-amendment-001.md` (user-authorized)
+- **Review target commit:** `e03e3dca6eae79a35a02f2f7fa399c8da911e`
 - **Starting authority commit:** `15d1dd0`
 - **Date:** 2026-10-13
 - **Canonical project:** `atlas-canonical-perception`
@@ -159,7 +160,7 @@ manual run.
 | --- | --- | --- | --- | --- |
 | RC-PERC-RESET-004-01 | Actions 1–2 | One canonical project, explicit effective services/volumes, no obsolete co-running project | Effective Compose config; `docker compose ls`; only canonical containers; only `atlas-data` and `postgres-data` canonical volumes | PROVEN |
 | RC-PERC-RESET-004-02 | Actions 2, 4; context §6 | One normal RUN-003 route, `qualificationOnly=false`, matching D1/Bridge/worker/Docling identity | Effective config plus live Bridge/worker route parse: one enabled `docling-run-003-capture`, RUN-003 identity and exact digest | PROVEN |
-| RC-PERC-RESET-004-03 | Actions 3, 6; HMN-001/002 | Immutable image-embedded baseline, successful offline no-network warmup, no model download, post-start equality | Exact image/path/count/size/original fingerprint before and after; disposable `--network none` warmup readiness `200`; offline and canonical no-download logs | PROVEN |
+| RC-PERC-RESET-004-03 | Actions 3, 6; ticket amendment 001 | Immutable image-embedded baseline, successful offline no-network warmup, no model download, post-start equality | Exact image/path/count/size/original fingerprint before and after; disposable `--network none` warmup readiness `200`; offline and canonical no-download logs | PROVEN |
 | RC-PERC-RESET-004-04 | Actions 3–5 | Healthy normal services, migrations, pg-boss, fresh DB, no historical runtime state | Compose status: five healthy long-running services; migrations/bootstrap exit `0`; 25 migrations, two queues, zero jobs, all listed persisted-state counts zero | PROVEN |
 | RC-PERC-RESET-004-05 | Action 6; binary oracle | Models visible/readable to canonical Docling and warmup uses them; no false cache preservation evidence | In-container artifact path/fingerprint equality, model-load/no-download logs, no `/root/.cache` files and no `docling-models` volume | PROVEN |
 
