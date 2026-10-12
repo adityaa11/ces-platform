@@ -3,32 +3,42 @@
 - **Ticket:** `PERC-RESET-003` — RUN-003 zero-visual validity and exact asset coverage
 - **Batch:** `PERC-RESET`
 - **Predecessor:** `PERC-RESET-002` is approved after independent CK `PASS` in `PERC-RESET-BATCH-02-9a0ef58-verification.md`.
+- **Implementation base:** `23a6102471d3374558ed211e088e53cc2102cb5a`
 - **Checkpoint state:** `BLOCKED`
-- **Review target:** pending a restored workspace dependency layout and focused-test execution.
+- **Blockers:** The complete Atlas authority integration evidence requires a database, but `DATABASE_URL` is unset. Bridge typecheck remains nonzero because of nine unchanged `@atlas/skills` errors outside this ticket.
 
 ## Bounded implementation
 
-- `apps/agents-bridge/src/document-perception-worker.ts` now treats zero visual regions and zero descriptors as a valid RUN-003 result. It makes no derived-asset handoff in that case. Where visual regions exist, it requires an exact one-to-one page/locator descriptor mapping, source-SHA match, unique locator bindings, and distinct returned asset references before staging normalized output.
-- `packages/atlas-db/src/perception-authority.ts` now permits a RUN-003 normalized result with no visual regions and caches `derivedAssets=[]`. For any visual region it rejects a missing asset reference, then preserves the existing unique-ref, manifest page/locator, PNG, byte-length, hash, and derived-store readback checks before acceptance.
-- Focused worker and authority accounting tests were added. No Compose service, Docker resource, semantic queue, source document, profile, grant, replay path, or storage backend was changed.
+- In `apps/agents-bridge/src/document-perception-worker.ts`, the visual-region loop copies each `region.locatorId` to a local, validates it as a nonempty string, then uses the narrowed local for page/locator uniqueness tracking. Invalid values continue to raise `BridgeProviderError("malformed_response", ...)`. No assertion, `any`, suppression, compiler setting, zero-visual flow, replay, derived-asset handoff, or Atlas acceptance behavior changed.
+- Added focused worker assertions for wrong-page and extra descriptors, plus colliding returned asset references. Existing checks for missing, foreign-source, duplicate descriptors and zero-visual table/text behavior remain.
+- `packages/atlas-db/src/perception-authority.ts` and the visual-bearing manifest/readback protections were not modified. The existing exact identity cache key, `derivedAssets=[]` handling for zero visuals, and staged terminal `perceived` path remain unchanged by this correction.
+- No Docker, Compose, PostgreSQL setup, unrelated skills source, semantic work, or successor ticket was changed.
 
 ## Review Contract Closure
 
-| Row | Ticket authority | Required proof | Evidence / validation locator | Status |
-|---|---|---|---|---|
-| R3-01 | `PERC-RESET-003` Binary review contract R3-01 | Text blocks with zero visual regions and zero descriptors normalize successfully with zero handoff calls | `apps/agents-bridge/tests/document-perception-worker.test.ts`, `RUN-003 accepts text and tables with zero visual regions without a derived-asset handoff`; required focused command cannot load workspace aliases | `BLOCKED_ENVIRONMENT` |
-| R3-02 | `PERC-RESET-003` Binary review contract R3-02 | Tables with zero pictures remain structural output with no visual evidence requirement | Same worker test asserts a retained table and `visualRegions=[]`; required focused command cannot load workspace aliases | `BLOCKED_ENVIRONMENT` |
-| R3-03 | `PERC-RESET-003` Binary review contract R3-03 | Every captured visual has one unique page/locator-bound descriptor, reference, and verified asset | Worker mapping guard in `document-perception-worker.ts`; existing authority manifest/readback logic retained; focused tests in `document-perception-worker.test.ts` and `packages/atlas-db/tests/perception-authority-asset-accounting.test.ts` cannot execute | `BLOCKED_ENVIRONMENT` |
-| R3-04 | `PERC-RESET-003` Binary review contract R3-04 | Missing descriptor/reference and foreign/colliding bindings reject before accepted `perceived` | Worker negative test covers missing, foreign, and duplicate descriptors; authority accounting test covers missing asset reference; full authority manifest/readback negatives remain in `derived-assets.integration.test.ts`; commands cannot execute | `BLOCKED_ENVIRONMENT` |
-| R3-05 | `PERC-RESET-003` Binary review contract R3-05 | Accepted zero-visual result uses existing RUN-003 cache identity and has no semantic jobs or new source documents | Existing cache insert and staged terminal `perceived` branch are unchanged; focused authority path must execute to prove the observation | `BLOCKED_ENVIRONMENT` |
+| Row | Ticket authority | Required proof | Evidence / validation locator | Exact validation and outcome | Status |
+|---|---|---|---|---|---|
+| R3-01 | `PERC-RESET-003` Binary review contract R3-01 | Text blocks with zero visual regions and zero descriptors normalize successfully with no derived-asset handoff calls | `apps/agents-bridge/tests/document-perception-worker.test.ts`, `RUN-003 accepts text and tables with zero visual regions without a derived-asset handoff` | `corepack pnpm --filter @atlas/agents-bridge exec jiti tests/document-perception-worker.test.ts` — exit 0; 12 passed, 0 failed, 0 skipped | `PROVEN` |
+| R3-02 | `PERC-RESET-003` Binary review contract R3-02 | Tables with zero pictures remain structural output without forced visual evidence | Same worker test asserts retained table and `visualRegions=[]` | Same worker command — exit 0; 12 passed | `PROVEN` |
+| R3-03 | `PERC-RESET-003` Binary review contract R3-03 | N captured visuals produce N unique page/locator-bound descriptors/references and exactly verified associated assets, without collision or cross-document mismatch | Worker mapping and collision assertions pass. Authority manifest, byte/hash, and readback behavior is covered by `packages/atlas-db/tests/derived-assets.integration.test.ts`, which requires PostgreSQL. `packages/atlas-db/src/perception-authority.ts` was unchanged. | `corepack pnpm --filter @atlas/db exec jiti tests/perception-authority-asset-accounting.test.ts` — exit 0; 2 passed. `corepack pnpm --filter @atlas/db exec jiti tests/derived-assets.integration.test.ts` — exit 0, 1 skipped because `DATABASE_URL` is unset; not a pass. | `BLOCKED_ENVIRONMENT` |
+| R3-04 | `PERC-RESET-003` Binary review contract R3-04 | Missing descriptor/reference, foreign SHA, wrong page/locator, altered bytes, hash/length/media mismatch reject before accepted `perceived`, without silent dropping | Worker negative assertions cover missing, foreign, duplicate, wrong-page, and extra descriptors; collision rejection has its own test. Authority integrity and binding cases are in the DB integration harness, which did not execute. | Worker command — exit 0; 12 passed. `corepack pnpm --filter @atlas/db exec jiti tests/perception-authority-asset-accounting.test.ts` — exit 0; 2 passed. Derived-assets integration — exit 0, 1 skipped (no `DATABASE_URL`); not a pass. | `BLOCKED_ENVIRONMENT` |
+| R3-05 | `PERC-RESET-003` Binary review contract R3-05 | Accepted result remains cached by exact RUN-003 identity with no semantic jobs or new source documents | Existing `apps/agents-bridge/tests/perception-integration.test.ts` observes `derived_assets=[]`, while DB-backed assertions cover cache and lifecycle. Both integration cases require a database. Relevant authority cache key and terminal branch were inspected and left unchanged. | `corepack pnpm --filter @atlas/agents-bridge exec jiti tests/perception-integration.test.ts` — exit 0, 2 skipped because `DATABASE_URL` is unset; not a pass. | `BLOCKED_ENVIRONMENT` |
 
 ## Validation record
 
-- `node node_modules/.pnpm/jiti@2.7.0/node_modules/jiti/lib/jiti-cli.mjs apps/agents-bridge/tests/document-perception-worker.test.ts` — **BLOCKED_ENVIRONMENT**: `MODULE_NOT_FOUND: @atlas/core` from the existing worker import.
-- `node node_modules/.pnpm/jiti@2.7.0/node_modules/jiti/lib/jiti-cli.mjs packages/atlas-db/tests/perception-authority-asset-accounting.test.ts` — **BLOCKED_ENVIRONMENT**: `MODULE_NOT_FOUND: @atlas/core` from the existing authority import.
-- `pnpm --filter @atlas/agents-bridge typecheck` and `pnpm --filter @atlas/db typecheck` — **BLOCKED_ENVIRONMENT**: pnpm attempts its dependency relink and fails with `EACCES` while opening existing package metadata under `node_modules/.pnpm`.
-- Direct TypeScript commands also cannot resolve the pre-existing workspace aliases, Node types, or package dependencies because the workspace links are absent.
-- `git diff --check` — **PASS**.
-- `docker compose ps` was read-only and showed no services. No Docker startup, pull, build, or reset was run; PERC-RESET-004 remains unstarted.
+- `corepack pnpm --filter @atlas/agents-bridge exec jiti tests/document-perception-worker.test.ts` — **exit 0**, 12 passed, 0 failed, 0 skipped.
+- `corepack pnpm --filter @atlas/db exec jiti tests/perception-authority-asset-accounting.test.ts` — **exit 0**, 2 passed, 0 failed, 0 skipped.
+- `corepack pnpm --filter @atlas/agents-bridge typecheck` — **exit 1** (`tsc` reports exit status 2). No diagnostic references `document-perception-worker.ts`; it reports only nine errors at `packages/atlas-skills/src/provisional-relationship-packet.ts` lines 82, 83, and 87: TS18048 (`owned`/`context` possibly undefined) and TS2345 (`TrustedFinalizationSlot | undefined` not assignable to `TrustedFinalizationSlot`).
+- `corepack pnpm --filter @atlas/db typecheck` — **exit 0**, no diagnostics.
+- `corepack pnpm --filter @atlas/skills typecheck` — **exit 1** (`tsc` reports exit status 2), reproducing the same nine diagnostics independently.
+- Unchanged-source evidence: `git hash-object packages/atlas-skills/src/provisional-relationship-packet.ts` and the blob hashes from `git show 744ca752a5d3b4f512769af7678420751648a634:packages/atlas-skills/src/provisional-relationship-packet.ts` and `git show 23a6102471d3374558ed211e088e53cc2102cb5a:packages/atlas-skills/src/provisional-relationship-packet.ts` all equal `9e59e08ec5b558d2841d2cd49daccf63e4d3abe3`. The file remains unmodified and is outside current authorization.
+- `corepack pnpm --filter @atlas/db exec jiti tests/derived-assets.integration.test.ts` — **exit 0, 1 skipped** because `DATABASE_URL` is unset; skipped is not PASS.
+- `corepack pnpm --filter @atlas/agents-bridge exec jiti tests/perception-integration.test.ts` — **exit 0, 2 skipped** because `DATABASE_URL` is unset; skipped is not PASS.
+- `DATABASE_URL` is unset. No Docker or database setup was attempted, per the ticket continuation.
+- `git diff --check` — **exit 0**, no whitespace diagnostics for the authorized correction and checkpoint.
 
-Internal readiness: **NOT_READY — BLOCKED_ENVIRONMENT**. This checkpoint does not issue a CK result or advance the ticket to `awaiting_review`. Restore the repository's workspace dependency links without changing PERC-RESET scope, then rerun the named focused worker and authority tests plus the relevant existing derived-asset integration harness before a READY_FOR_CK handoff.
+## Handoff state
+
+`Internal readiness: NOT_READY — BLOCKED_ENVIRONMENT`.
+
+The worker correction and its focused evidence are complete. Do not set `READY_FOR_CK` or `awaiting_review`: R3-03 through R3-05 still lack required database-backed observations, and the Bridge package typecheck is nonzero due to unchanged, unrelated `atlas-skills` diagnostics. Request separate bounded authority before touching `packages/atlas-skills/src/provisional-relationship-packet.ts`.

@@ -78,10 +78,12 @@ export async function runDocumentPerception(request: DocumentPerceptionRequest, 
         throw new BridgeProviderError("malformed_response", "RUN-003 visual capture has an invalid source, page, or locator binding.");
       }
       for (const region of visualRegions) {
-        const key = keyOf(region.pageNumber, region.locatorId);
-        if (regionKeys.has(key) || locatorIds.has(region.locatorId)) throw new BridgeProviderError("malformed_response", "RUN-003 visual capture reuses a page/locator binding.");
+        const locatorId = region.locatorId;
+        if (typeof locatorId !== "string" || !locatorId) throw new BridgeProviderError("malformed_response", "RUN-003 visual capture has an invalid source, page, or locator binding.");
+        const key = keyOf(region.pageNumber, locatorId);
+        if (regionKeys.has(key) || locatorIds.has(locatorId)) throw new BridgeProviderError("malformed_response", "RUN-003 visual capture reuses a page/locator binding.");
         regionKeys.add(key);
-        locatorIds.add(region.locatorId);
+        locatorIds.add(locatorId);
       }
       for (const descriptor of descriptors) {
         const key = keyOf(descriptor.pageNumber, descriptor.locatorId);
