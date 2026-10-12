@@ -4,8 +4,8 @@ import type { AddressInfo } from "node:net";
 import test from "node:test";
 import Fastify from "fastify";
 import postgres from "postgres";
-import { createSemanticInternalRoutes } from "@atlas/core";
-import { PostgresExtractionAcceptanceHandler, PostgresSemanticAuthority } from "@atlas/db";
+import { createSemanticInternalRoutes, SemanticAcceptanceRejection } from "@atlas/core";
+import { PostgresSemanticAuthority } from "@atlas/db";
 import { semanticLimits } from "@atlas/contracts";
 import { MistralProvider } from "../src/providers/mistral.ts";
 import { createAtlasSemanticClient } from "../src/atlas-semantic-client.ts";
@@ -152,8 +152,7 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
         const { executionId } = input;
         if (handlerUnavailable && executionId === executions.unavailable) throw new Error("synthetic acceptance handler unavailable");
         if (executionId === executions.acceptanceRejected) {
-          await new PostgresExtractionAcceptanceHandler().accept(input, transaction);
-          return;
+          throw new SemanticAcceptanceRejection("synthetic deterministic acceptance rejection");
         }
         accepted.set(executionId, (accepted.get(executionId) ?? 0) + 1);
       },
@@ -215,37 +214,27 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
   mistralApp.post("/v1/chat/completions", async (request, response) => {
     const body = request.body as { messages?: Array<{ content?: string }>; response_format?: { json_schema?: { schema?: Record<string, unknown> } } };
     providerCallCount += 1;
-    const requested = JSON.parse(body.messages?.at(-1)?.content ?? "{}") as { scope?: { executionId?: string } };
-    if (requested.scope?.executionId) providerCalls.set(requested.scope.executionId, (providerCalls.get(requested.scope.executionId) ?? 0) + 1);
-    if (requested.scope?.executionId === executions.rejected) return response.code(401).send({ error: "credential rejected" });
-    if (requested.scope?.executionId === executions.malformed) return { model: "semantic-integration-model", choices: [{ message: { content: "{" } }] };
-    if (requested.scope?.executionId === executions.schemaInvalid) return { model: "semantic-integration-model", choices: [{ message: { content: JSON.stringify({ version: "v1", candidate_assertions: "not-an-array" }) } }] };
-    if (requested.scope?.executionId === executions.providerTimeout) return response.code(504).send({ error: "synthetic provider timeout" });
-    if (requested.scope?.executionId === executions.cancellation) {
+    const requested = JSON.parse(body.messages?.at(-1)?.content ?? "{}") as { scope?: { executionId?: string }; source_slots?: Array<{ slot?: string; content?: string }> };
+    const extractionExecutionId = requested.source_slots?.map((source) => source.content).find((content): content is string => typeof content === "string" && content.startsWith("Synthetic execution "))?.slice("Synthetic execution ".length, -1);
+    const executionId = extractionExecutionId ?? requested.scope?.executionId;
+    if (executionId) providerCalls.set(executionId, (providerCalls.get(executionId) ?? 0) + 1);
+    if (executionId === executions.rejected) return response.code(401).send({ error: "credential rejected" });
+    if (executionId === executions.malformed) return { model: "semantic-integration-model", choices: [{ message: { content: "{" } }] };
+    if (executionId === executions.schemaInvalid) return { model: "semantic-integration-model", choices: [{ message: { content: JSON.stringify({ version: "v1", source_results: "not-an-array" }) } }] };
+    if (executionId === executions.providerTimeout) return response.code(504).send({ error: "synthetic provider timeout" });
+    if (executionId === executions.cancellation) {
       cancellationProviderStarted = true;
       cancellationProviderCalls += 1;
       if (cancellationProviderCalls === 1) await new Promise((resolve) => setTimeout(resolve, 5_000));
     }
     const schema = body.response_format?.json_schema?.schema;
     const reconciliation = Boolean(schema?.properties && "relationships" in schema.properties);
-    const value = requested.scope?.executionId === executions.acceptanceRejected
-      ? {
-          version: "v1",
-          candidate_assertions: [{ local_candidate_id: "invalid-evidence", semantic_key: "invalid.evidence", kind: "rule", payload: {}, normalized_meaning: "Invalid evidence must fail closed.", needs_resolution: false, evidence_refs: [{ page_number: 1, locator_type: "text_block", locator_id: "invented", excerpt: "not present" }] }],
-          source_statement_inventory: [{ source_unit_id: "source-real", page_number: 1, locator_type: "text_block", locator_id: "real", classification: "candidate", destination_local_candidate_ids: ["invalid-evidence"] }],
-          questions: [],
-        }
-      : requested.scope?.executionId === executions.resultBound
-      ? {
-          version: "v1",
-          candidate_assertions: Array.from({ length: 20 }, (_, index) => ({ local_candidate_id: `bound-${index}`, semantic_key: `bound-${index}`, kind: "rule", payload: "x".repeat(16_384), normalized_meaning: "y".repeat(8_000), needs_resolution: false, evidence_refs: [{ page_number: 1, locator_type: "text_block", locator_id: `bound-${index}`, excerpt: "z" }] })),
-          source_statement_inventory: Array.from({ length: 20 }, (_, index) => ({ source_unit_id: `source-${index}`, page_number: 1, locator_type: "text_block", locator_id: `bound-${index}`, classification: "candidate", destination_local_candidate_ids: [`bound-${index}`] })),
-          questions: [],
-        }
+    const value = executionId === executions.resultBound
+      ? { version: "v1", source_results: (requested.source_slots ?? []).map((source) => ({ slot: source.slot, classification: "candidate", candidates: Array.from({ length: 20 }, (_, index) => ({ semantic_key: `bound-${index}`, kind: "rule", payload: "x".repeat(16_384), normalized_meaning: "y".repeat(8_000), needs_resolution: false })), non_fact_reason: null, questions: [] })) }
       : reconciliation
       ? { version: "v1", relationships: [], questions: [] }
-      : { version: "v1", candidate_assertions: [], source_statement_inventory: [], questions: [] };
-    const usage = requested.scope?.executionId === executions.resultBound
+      : { version: "v1", source_results: (requested.source_slots ?? []).map((source) => ({ slot: source.slot, classification: "non_fact", candidates: [], non_fact_reason: "Synthetic integration fixture.", questions: [] })) };
+    const usage = executionId === executions.resultBound
       ? Object.fromEntries(Array.from({ length: 100 }, (_, index) => [`usage-${index}`, "u".repeat(16_384)]))
       : undefined;
     return { model: "semantic-integration-model", ...(usage ? { usage } : {}), choices: [{ message: { content: JSON.stringify(value) } }] };
@@ -263,7 +252,7 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
       await atlas.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id,document_id,project_id,workspace_id,sequence,state,perception_execution_id,semantic_extraction_execution_id) VALUES ($1,$2,$3,$4,1,'pending',$5,$6)", [resource.bundle, resource.document, project, workspace, resource.perception, executionId]);
       await atlas.unsafe("INSERT INTO atlas.document_perception_execution (id,artifact_id,document_storage_key,source_sha256,mime_type,byte_size,contract_version,state,idempotency_key,capability_identity) VALUES ($1,$2,'private/semantic-worker',$3,'application/pdf',1,'v1','completed',$4,$5)", [resource.perception, resource.document, resource.sourceSha256, `semantic-worker-perception-key-${label}-${suffix}`, resource.capabilityIdentity]);
       const document = normalized(resource.perception, resource.document, resource.sourceSha256);
-      if (label === "acceptanceRejected") document.pages[0].textBlocks.push({ id: "real", text: "A real normalized source unit." });
+      if (stage === "extraction") document.pages[0].textBlocks.push({ id: "execution-marker", text: `Synthetic execution ${executionId}.` });
       await atlas.unsafe("INSERT INTO atlas.normalized_document_cache (cache_key,source_sha256,contract_version,capability,capability_identity,normalized_document) VALUES ($1,$2,'v1','atlas.document.perceive',$3,$4::jsonb)", [resource.cache, resource.sourceSha256, resource.capabilityIdentity, JSON.stringify(document)]);
       await atlas.unsafe("INSERT INTO atlas.semantic_execution (id,project_id,workspace_id,bundle_id,document_id,stage,contract_version,skill_version,logical_identity,lifecycle,authorized_context_identity,authorized_context_fingerprint,capability_valid_until) VALUES ($1,$2,$3,$4,$5,$6,'v1','v1',$1,'queued','context',$7,now()+interval '1 hour')", [executionId, project, workspace, resource.bundle, resource.document, stage, capabilityFingerprint]);
     }

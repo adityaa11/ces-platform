@@ -1,8 +1,9 @@
-import { parseSemanticBackgroundJob, parseSemanticExtractionResult, parseSemanticReconciliationResult, semanticContractVersion, type SemanticBackgroundJob } from "@atlas/contracts";
-import { getProductionSemanticSkill } from "@atlas/skills";
+import { parseSemanticBackgroundJob, parseSemanticExtractionContext, parseSemanticReconciliationResult, semanticContractVersion, type SemanticBackgroundJob } from "@atlas/contracts";
+import { buildSemanticSourcePacket, getProductionSemanticSkill } from "@atlas/skills";
 import { BridgeProviderError, type StructuredReasoningProvider } from "./provider-capabilities.js";
 import { AtlasSemanticClientError } from "./atlas-semantic-client.js";
 import { SemanticReplayLeaseLostError } from "./semantic-result-replay.js";
+import { finalizeExtractionProposal } from "./semantic-extraction-finalizer.js";
 
 export type SemanticClient = { context(job: SemanticBackgroundJob, signal: AbortSignal): Promise<unknown>; deliver(envelope: unknown, signal: AbortSignal): Promise<void>; fail(failure: unknown, signal: AbortSignal): Promise<void> };
 export type SemanticReplay = { load(idempotencyKey: string, executionId: string): Promise<unknown | undefined>; stage(idempotencyKey: string, executionId: string, envelope: unknown, lease: { readonly owner: string; readonly generation: number }): Promise<unknown>; acknowledge(idempotencyKey: string, executionId: string): Promise<void> };
@@ -21,9 +22,13 @@ export async function runSemanticJob(jobValue: unknown, provider: StructuredReas
   try {
     context = await client.context(job, signal) as { readonly scope: Record<string, string> };
     if (signal.aborted) throw new BridgeProviderError("cancelled", "Semantic execution was cancelled.");
-    const skill = getProductionSemanticSkill(job.skill.id, job.skill.version);
-    const response = await provider.structured({ messages: [{ role: "system", content: skill.promptTemplate }, { role: "user", content: JSON.stringify(context) }], schema: skill.outputSchema, signal });
-    const result = job.skill.id === "atlas.semantic.extract" ? parseSemanticExtractionResult(response.value) : parseSemanticReconciliationResult(response.value);
+    const extractionContext = job.skill.id === "atlas.semantic.extract" ? parseSemanticExtractionContext(context) : undefined;
+    const skill = extractionContext ? undefined : getProductionSemanticSkill(job.skill.id, job.skill.version);
+    const packet = extractionContext ? buildSemanticSourcePacket(extractionContext.normalizedDocument) : undefined;
+    const response = await provider.structured(extractionContext
+      ? { messages: [{ role: "system", content: packet!.systemPrompt }, { role: "user", content: packet!.userPrompt }], schema: packet!.providerProposalJsonSchema, signal }
+      : { messages: [{ role: "system", content: skill!.promptTemplate }, { role: "user", content: JSON.stringify(context) }], schema: skill!.outputSchema, signal });
+    const result = extractionContext ? finalizeExtractionProposal({ proposal: response.value, sourceSlots: packet!.sourceSlotMap }) : parseSemanticReconciliationResult(response.value);
     const envelope = { version: semanticContractVersion, scope: context.scope, skill: job.skill, provider: response.provenance, result };
     const winningEnvelope = await replay.stage(idempotencyKey, job.executionId, envelope, lease);
     trustedStage = true;
