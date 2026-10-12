@@ -1,6 +1,6 @@
 # Perception Reset Phase
 
-This Backend Phase ticket set establishes the canonical local Atlas perception baseline through durable `perceived`, using the already qualified RUN-003 capture and derived-asset path. The binding source context is [00-PERCEPTION-RESET-IMPLEMENTATION-CONTEXT.md](00-PERCEPTION-RESET-IMPLEMENTATION-CONTEXT.md). Each implementation requires its own explicit `GO` and independent review where specified. PERC-RESET-001 is `approved` under evidence-contract amendment v1; PERC-RESET-002 is `approved` after independent CK `PASS` (`PERC-RESET-BATCH-02-9a0ef58-verification.md`); PERC-RESET-003 is `approved` after independent CK `PASS` (`PERC-RESET-BATCH-03-888b7ca-verification.md`); later successors remain `planned`. This authoring pass makes no Docker or application changes.
+This Backend Phase ticket set establishes the canonical local Atlas perception baseline through durable `perceived`, using the already qualified RUN-003 capture and derived-asset path. The binding source context is [00-PERCEPTION-RESET-IMPLEMENTATION-CONTEXT.md](00-PERCEPTION-RESET-IMPLEMENTATION-CONTEXT.md). Each implementation requires its own explicit `GO` and independent review where specified. PERC-RESET-001 is `approved` under evidence-contract amendment v1; PERC-RESET-002 is `approved` after independent CK `PASS` (`PERC-RESET-BATCH-02-9a0ef58-verification.md`); PERC-RESET-003 is `approved` after independent CK `PASS` (`PERC-RESET-BATCH-03-888b7ca-verification.md`); PERC-RESET-004 is `approved` after independent CK `PASS` (`PERC-RESET-BATCH-04-e03e3dc-review.md`); PERC-RESET-005–008 remain `planned`.
 
 ## Ticket sequence
 
@@ -9,7 +9,7 @@ This Backend Phase ticket set establishes the canonical local Atlas perception b
 | 1 | [PERC-RESET-001](PERC-RESET-001-docker-inventory-and-full-reset.md) | Inventory and reset obsolete Docker state while preserving verified non-empty Docling model cache; local Serve image optional | Parent context v1.2, amended by HMN-PERC-RESET-001-002 |
 | 2 | [PERC-RESET-002](PERC-RESET-002-normal-run003-route-activation.md) | Make RUN-003 the sole normal perception route with aligned runtime identities | 001 |
 | 3 | [PERC-RESET-003](PERC-RESET-003-zero-visual-and-verified-asset-accounting.md) | Accept valid zero-visual PDFs and enforce exact integrity for captured assets | 002 |
-| 4 | [PERC-RESET-004](PERC-RESET-004-clean-canonical-compose-boot.md) | Bring up one canonical Compose project reusing the preserved Docling cache | 001–003 reviewed |
+| 4 | [PERC-RESET-004](PERC-RESET-004-clean-canonical-compose-boot.md) | Approved: canonical Compose project using the amended image-embedded model baseline and one RUN-003 route | 001–003 reviewed |
 | 5 | [PERC-RESET-005](PERC-RESET-005-professional-project-creation-master-initial-draft.md) | Create authenticated Project A and verify empty Master / Initial Draft boundaries | 004 |
 | 6 | [PERC-RESET-006](PERC-RESET-006-professional-multimodal-perception-e2e.md) | Accept source-grounded RUN-003 text, table, and captured visual evidence for Project A | 005 |
 | 7 | [PERC-RESET-007](PERC-RESET-007-three-pdf-run003-admission-and-perception.md) | Process three ordered PDFs in Project B through the same RUN-003 route | 006 |

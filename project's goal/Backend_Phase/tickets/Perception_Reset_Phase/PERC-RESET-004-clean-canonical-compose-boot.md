@@ -2,6 +2,8 @@
 
 **Stage:** 4/8 · **Type:** one-environment bring-up · **Dependencies:** 001–003 reviewed · **GO:** `GO PERC-RESET-004` only.
 
+**Status:** `approved` after independent CK `PASS` for reviewed commit `e03e3dca6eae79a35a02f2f7fa3999c8da911e` ([review record](../../../feedback/PERC-RESET-BATCH-04-e03e3dc-review.md)).
+
 ## Outcome
 
 Reconstruct **one and only one** canonical Atlas local Compose stack after the reset **while reusing the already downloaded Docling model cache**. Other application/DB/source/derived images and volumes may be fresh. Do not recreate any prior test/qualification Compose project. This stack must remain for the user's later manual run.
