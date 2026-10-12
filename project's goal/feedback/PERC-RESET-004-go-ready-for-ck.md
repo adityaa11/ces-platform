@@ -25,7 +25,7 @@
 | Fingerprint | `01ba86056ff361a5b5efb51a570ea8041e9c48acb2ed1e4107e3265a662ccf45` |
 | Unmounted `/root/.cache` files | `0` |
 
-The fingerprint command is the precise HMN-002 serialization contract:
+The sorted per-file fingerprint command used for the approved baseline is:
 
 ```sh
 find "$DOCLING_SERVE_ARTIFACTS_PATH" -type f -exec sha256sum {} + | LC_ALL=C sort | sha256sum
