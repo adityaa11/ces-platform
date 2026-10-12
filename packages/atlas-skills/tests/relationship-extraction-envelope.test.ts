@@ -70,12 +70,19 @@ test("REL-01 rejects malformed, foreign, authority-bearing, and unresolvable pro
   const mutations: readonly [string, (value: any) => unknown, ReadonlyArray<TrustedFinalizationSlot>?][] = [
     ["unknown field", (value) => ({ ...value, accepted: true })],
     ["fenced response", () => "```json\\n{}\\n```"],
+    ["malformed decoded envelope object", (value) => ({ ...value, relationship_proposals: [null] })],
     ["noncanonical enum", (value) => ({ ...value, relationship_proposals: [{ ...value.relationship_proposals[0], necessity: "accepted" }] })],
+    ["missing relationship slot", (value) => {
+      const { context_source_slot: _omitted, ...proposal } = value.relationship_proposals[0];
+      return { ...value, relationship_proposals: [proposal] };
+    }],
     ["foreign source", (value) => ({ ...value, relationship_proposals: [{ ...value.relationship_proposals[0], context_source_slot: "foreign", source_evidence_slots: ["slot-000001", "foreign"] }] })],
     ["wrong evidence pair", (value) => ({ ...value, relationship_proposals: [{ ...value.relationship_proposals[0], source_evidence_slots: ["slot-000002", "slot-000001"] }] })],
     ["dangling candidate", (value) => ({ ...value, relationship_proposals: [{ ...value.relationship_proposals[0], candidate_refs: [{ source_slot: "slot-000001", candidate_index: 4 }] }] })],
     ["forged predecessor", (value) => ({ ...value, relationship_proposals: [{ ...value.relationship_proposals[0], predecessor: { relationship_revision_hash: "c".repeat(64), relation: "refines" } }] })],
     ["accepted claim", (value) => ({ ...value, relationship_proposals: [{ ...value.relationship_proposals[0], disposition: "accepted" }] })],
+    ["confirmed claim", (value) => ({ ...value, relationship_proposals: [{ ...value.relationship_proposals[0], disposition: "confirmed" }] })],
+    ["published claim", (value) => ({ ...value, relationship_proposals: [{ ...value.relationship_proposals[0], disposition: "published" }] })],
     ["duplicate relationship", (value) => ({ ...value, relationship_proposals: [value.relationship_proposals[0], value.relationship_proposals[0]] })],
     ["duplicate source slots", (value) => value, [sourceSlots[0]!, sourceSlots[0]!]],
     ["source SHA mismatch", (value) => value, [{ ...sourceSlots[0]!, sourceSha256: "d".repeat(64) }, sourceSlots[1]!]],
