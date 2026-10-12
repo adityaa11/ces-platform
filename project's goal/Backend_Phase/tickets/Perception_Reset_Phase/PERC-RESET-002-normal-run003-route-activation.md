@@ -2,6 +2,8 @@
 
 **Stage:** 2/8 · **Type:** small configuration/route cutover · **Dependency:** 001 complete · **GO:** `GO PERC-RESET-002` only.
 
+**Workflow state:** `approved` — independent CK `PASS` is recorded in `project's goal/feedback/PERC-RESET-BATCH-02-9a0ef58-verification.md`.
+
 ## Outcome
 
 Make the ordinary `docker-compose.yml` the canonical configuration for exactly **one** enabled `atlas.document.perceive` route, backed by `atlas-digital-pdf-run-003-capture-v1` with no qualification-only override or legacy fallback. This will be the profile used in manual runs after canonical boot.
