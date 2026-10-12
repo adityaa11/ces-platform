@@ -1,6 +1,6 @@
 # BSS-V2-004-03-05: Deterministic extraction finalizer and provider-neutral worker composition
 
-- **State:** `planned`; **Review batch:** `BSS-V2-BATCH-04.03-05`; **realignment:** documentation only — not implementation GO, CK PASS, or successor GO.
+- **State:** `awaiting_review`; **Review batch:** `BSS-V2-BATCH-04.03-05`; **realignment:** documentation only — not implementation GO, CK PASS, or successor GO.
 - **Dependencies:** BSS-V2-004-03-01 through -04 CK `PASS`; BSS-V2-001/002/003 and BSS-V2-004-02 accepted boundaries; explicit `go BSS-V2-004-03-05`. Consume approved BSS-V2-004-03-08-01-01 through BSS-V2-004-03-08-02-06 interfaces without reopening their owners.
 - **Implementation context:** [Semantic V1 Zod + Anoman productionization context](../../atlas-semantic-v1-zod-anoman-productionization-implementation-context.md) §§8–9.05, 10, 12–16
 - **Current seam:** `apps/agents-bridge/src/semantic-worker.ts` currently sends serialized context with the skill prompt and validates the returned final extraction/reconciliation result directly. This child replaces only extraction execution/finalization; reconciliation remains unchanged.
