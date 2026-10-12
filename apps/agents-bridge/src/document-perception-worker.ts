@@ -62,11 +62,42 @@ export async function runDocumentPerception(request: DocumentPerceptionRequest, 
     if (signal.aborted) throw new Error("Document perception was cancelled.");
     let providerResult = perceived.providerResult;
     if (perceived.requiresAssetHandoff) {
-      if (!results.handoffDerived || !perceived.transientVisualDescriptors?.length) throw new BridgeProviderError("malformed_response", "RUN-003 visual capture has no qualified Atlas-derived asset handoff.");
+      const sourcePages = providerResult.pages as readonly Record<string, unknown>[] | undefined;
+      if (!sourcePages) throw new BridgeProviderError("malformed_response", "RUN-003 visual capture has no page collection.");
+      const visualRegions = sourcePages.flatMap((page) => {
+        const pageNumber = page.page_number;
+        const regions = page.visual_regions as readonly Record<string, unknown>[] | undefined;
+        return (regions ?? []).map((region) => ({ pageNumber, locatorId: region.id }));
+      });
+      const descriptors = perceived.transientVisualDescriptors ?? [];
+      const keyOf = (pageNumber: unknown, locatorId: unknown) => `${String(pageNumber)}:${String(locatorId)}`;
+      const regionKeys = new Set<string>();
+      const descriptorKeys = new Set<string>();
+      const locatorIds = new Set<string>();
+      if (visualRegions.some((region) => !Number.isInteger(region.pageNumber) || typeof region.locatorId !== "string" || !region.locatorId) || descriptors.some((descriptor) => descriptor.sourceSha256 !== request.artifact.sourceSha256 || !Number.isInteger(descriptor.pageNumber) || !descriptor.locatorId)) {
+        throw new BridgeProviderError("malformed_response", "RUN-003 visual capture has an invalid source, page, or locator binding.");
+      }
+      for (const region of visualRegions) {
+        const key = keyOf(region.pageNumber, region.locatorId);
+        if (regionKeys.has(key) || locatorIds.has(region.locatorId)) throw new BridgeProviderError("malformed_response", "RUN-003 visual capture reuses a page/locator binding.");
+        regionKeys.add(key);
+        locatorIds.add(region.locatorId);
+      }
+      for (const descriptor of descriptors) {
+        const key = keyOf(descriptor.pageNumber, descriptor.locatorId);
+        if (descriptorKeys.has(key) || !regionKeys.has(key)) throw new BridgeProviderError("malformed_response", "RUN-003 visual capture descriptors do not exactly match visual regions.");
+        descriptorKeys.add(key);
+      }
+      if (descriptors.length !== visualRegions.length || descriptors.length !== descriptorKeys.size) throw new BridgeProviderError("malformed_response", "RUN-003 visual capture descriptors do not cover every visual region.");
+      if (descriptors.length > 0 && !results.handoffDerived) throw new BridgeProviderError("malformed_response", "RUN-003 visual capture has no qualified Atlas-derived asset handoff.");
       const references = new Map<string, string>();
-      for (const descriptor of perceived.transientVisualDescriptors) references.set(descriptor.locatorId, (await results.handoffDerived(request, descriptor, signal)).assetRef);
-      const pages = (providerResult.pages as readonly Record<string, unknown>[] | undefined)?.map((page) => ({ ...page, visual_regions: (page.visual_regions as readonly Record<string, unknown>[] | undefined)?.map((region) => ({ ...region, assetRef: references.get(String(region.id)) })) }));
-      if (!pages || pages.some((page) => (page.visual_regions as readonly Record<string, unknown>[] | undefined)?.some((region) => !region.assetRef))) throw new BridgeProviderError("malformed_response", "RUN-003 visual capture descriptors do not cover every visual region.");
+      for (const descriptor of descriptors) {
+        const assetRef = (await results.handoffDerived!(request, descriptor, signal)).assetRef;
+        if (!assetRef || [...references.values()].includes(assetRef)) throw new BridgeProviderError("malformed_response", "RUN-003 visual capture produced colliding derived asset references.");
+        references.set(keyOf(descriptor.pageNumber, descriptor.locatorId), assetRef);
+      }
+      const pages = sourcePages.map((page) => ({ ...page, visual_regions: (page.visual_regions as readonly Record<string, unknown>[] | undefined)?.map((region) => ({ ...region, assetRef: references.get(keyOf(page.page_number, region.id)) })) }));
+      if (pages.some((page) => (page.visual_regions as readonly Record<string, unknown>[] | undefined)?.some((region) => !region.assetRef))) throw new BridgeProviderError("malformed_response", "RUN-003 visual capture descriptors do not cover every visual region.");
       providerResult = { pages };
     }
     const normalized = normalizePerceptionResult({ executionId: request.executionId, artifactId: request.artifact.id, sourceSha256: request.artifact.sourceSha256, provider: { provider: perceived.provenance.provider, processor: perceived.provenance.model, executionId: request.executionId, processedAt: new Date().toISOString() }, result: providerResult as { pages: readonly unknown[] } });

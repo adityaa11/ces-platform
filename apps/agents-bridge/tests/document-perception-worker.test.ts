@@ -55,6 +55,26 @@ test("RUN-003 hands raw descriptors to Atlas before staging an opaque asset refe
   assert.equal(JSON.stringify(staged).includes("AQIDBA"), false, "replayable output contains no image bytes");
 });
 
+test("RUN-003 accepts text and tables with zero visual regions without a derived-asset handoff", async () => {
+  let handoffs = 0;
+  let delivered: import("@atlas/contracts").NormalizedDocument | undefined;
+  const provider = { perceive: async () => ({ providerResult: { pages: [{ page_number: 1, blocks: [{ id: "text-1", text: "Digital text" }], tables: [{ id: "table-1", content: "| A |" }], visual_regions: [] }] }, transientVisualDescriptors: [], requiresAssetHandoff: true, provenance: { provider: "docling" as const, model: "capture", endpoint: "/v1/convert/file", latencyMilliseconds: 1, attempt: 1 } }) };
+  await runDocumentPerception(request, provider as never, { redeem: async () => ({ bytes: new Uint8Array([1]), mimeType: "application/pdf" as const }) }, { handoffDerived: async () => { handoffs += 1; return { assetRef: "derived/unused" }; }, deliver: async (_request, result) => { delivered = result; } }, new AbortController().signal);
+  assert.equal(handoffs, 0);
+  assert.deepEqual(delivered?.pages[0]?.visualRegions, []);
+  assert.equal(delivered?.pages[0]?.tables[0]?.id, "table-1");
+});
+
+test("RUN-003 rejects missing, foreign, and duplicate visual descriptor bindings before staging", async () => {
+  const descriptor = { sourceSha256: request.artifact.sourceSha256, profile: "atlas-digital-pdf-run-003-capture-v1", pageNumber: 1, locatorId: "visual-1", mediaType: "image/png" as const, width: 1, height: 1, byteLength: 1, sha256: "b".repeat(64), bytes: new Uint8Array([1]) };
+  const source = { redeem: async () => ({ bytes: new Uint8Array([1]), mimeType: "application/pdf" as const }) };
+  const results = { handoffDerived: async () => ({ assetRef: "derived/123e4567-e89b-12d3-a456-426614174000" }), deliver: async () => assert.fail("invalid capture must not deliver") };
+  const providerFor = (descriptors: readonly typeof descriptor[]) => ({ perceive: async () => ({ providerResult: { pages: [{ page_number: 1, visual_regions: [{ id: "visual-1" }] }] }, transientVisualDescriptors: descriptors, requiresAssetHandoff: true, provenance: { provider: "docling" as const, model: "capture", endpoint: "/v1", latencyMilliseconds: 1, attempt: 1 } }) });
+  await assert.rejects(() => runDocumentPerception(request, providerFor([]) as never, source, results, new AbortController().signal), /descriptors/i);
+  await assert.rejects(() => runDocumentPerception(request, providerFor([{ ...descriptor, sourceSha256: "f".repeat(64) }]) as never, source, results, new AbortController().signal), /source.*binding/i);
+  await assert.rejects(() => runDocumentPerception(request, providerFor([descriptor, descriptor]) as never, source, results, new AbortController().signal), /descriptors/i);
+});
+
 test("transient Atlas source and replay-store faults remain with the queue instead of reporting terminal failure", async () => {
   let failures = 0;
   const results = { deliver: async () => undefined, fail: async () => { failures += 1; } };

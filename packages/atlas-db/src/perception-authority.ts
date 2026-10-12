@@ -20,6 +20,12 @@ const canonicalize = (value: unknown): unknown => {
 const fingerprint = (value: unknown) => createHash("sha256").update(JSON.stringify(canonicalize(value))).digest("hex");
 const requestFrom = (input: PerceptionExecutionInput, grant: string): DocumentPerceptionRequest => parseDocumentPerceptionRequest({ version: documentPerceptionContractVersion, executionId: input.executionId, artifact: { id: input.artifactId, sourceSha256: input.sourceSha256, mimeType: input.mimeType, byteSize: input.byteSize }, source: { grant }, perception: { capability: "atlas.document.perceive", contractVersion: documentPerceptionContractVersion } });
 
+export function collectVerifiedRun003Assets(pages: NormalizedDocument["pages"]): readonly { readonly assetRef: string; readonly locatorId: string; readonly pageNumber: number }[] {
+  const visualRegions = pages.flatMap((page) => page.visualRegions.map((region) => ({ assetRef: region.assetRef, locatorId: region.id, pageNumber: page.number })));
+  if (visualRegions.some((region) => !region.assetRef)) throw new Error("RUN-003 acceptance requires one verified derived asset for every visual region.");
+  return visualRegions as readonly { readonly assetRef: string; readonly locatorId: string; readonly pageNumber: number }[];
+}
+
 /** PostgreSQL adapter; only the Atlas process is given this connection. */
 export class PostgresPerceptionAuthority implements PerceptionAuthority, DerivedAssetAuthority {
   constructor(private readonly sql: Sql, private readonly grants: GrantSigner, private readonly semanticQueue?: SemanticKickoffQueue, private readonly terminalCapabilityIdentity?: string, private readonly stagedQueue?: PerceptionKickoffQueue, private readonly derivedStore?: DerivedAssetStore) {}
@@ -171,19 +177,21 @@ export class PostgresPerceptionAuthority implements PerceptionAuthority, Derived
       if (rows[0].state === "completed") { if (rows[0].completion_fingerprint === digest) return; throw new Error("Perception result conflicts with completed execution."); }
       const identity = String(rows[0].capability_identity);
       const key = cacheKey(accepted.sourceSha256, accepted.perception.contractVersion, accepted.perception.capability, identity);
-      const assets = accepted.pages.flatMap((page) => page.visualRegions.flatMap((region) => region.assetRef ? [{ assetRef: region.assetRef, locatorId: region.id, pageNumber: page.number }] : []));
+      const assets = identity.includes("atlas-digital-pdf-run-003-capture-v1") ? collectVerifiedRun003Assets(accepted.pages) : accepted.pages.flatMap((page) => page.visualRegions.flatMap((region) => region.assetRef ? [{ assetRef: region.assetRef, locatorId: region.id, pageNumber: page.number }] : []));
       if (identity.includes("atlas-digital-pdf-run-003-capture-v1")) {
-        if (!this.derivedStore || !assets.length) throw new Error("RUN-003 acceptance requires verified derived assets.");
-        const uniqueAssets = [...new Set(assets.map((asset) => asset.assetRef))];
-        if (uniqueAssets.length !== assets.length) throw new Error("Accepted normalized document reuses a derived asset reference.");
-        const manifests = await sql.unsafe("SELECT asset_ref, locator_id, page_number, byte_size, sha256, media_type FROM atlas.document_perception_derived_manifest WHERE execution_id=$1 AND artifact_id=$2 AND asset_ref = ANY($3::text[]) FOR UPDATE", [request.executionId, request.artifact.id, uniqueAssets]);
-        const manifestByReference = new Map(manifests.map((manifest) => [String(manifest.asset_ref), manifest]));
-        if (manifests.length !== uniqueAssets.length || manifests.some((manifest) => manifest.media_type !== "image/png") || assets.some((asset) => { const manifest = manifestByReference.get(asset.assetRef); return !manifest || manifest.locator_id !== asset.locatorId || Number(manifest.page_number) !== asset.pageNumber; })) throw new Error("Accepted normalized document has a dangling or misbound derived asset reference.");
-        for (const manifest of manifests) {
-          const persisted = await this.derivedStore.readDerived(String(manifest.asset_ref));
-          if (persisted.byteLength !== Number(manifest.byte_size) || createHash("sha256").update(persisted).digest("hex") !== manifest.sha256) throw new Error("Accepted derived asset failed storage-integrity verification.");
+        if (assets.length > 0) {
+          if (!this.derivedStore) throw new Error("RUN-003 acceptance requires derived asset storage when visual regions are present.");
+          const uniqueAssets = [...new Set(assets.map((asset) => asset.assetRef))];
+          if (uniqueAssets.length !== assets.length) throw new Error("Accepted normalized document reuses a derived asset reference.");
+          const manifests = await sql.unsafe("SELECT asset_ref, locator_id, page_number, byte_size, sha256, media_type FROM atlas.document_perception_derived_manifest WHERE execution_id=$1 AND artifact_id=$2 AND asset_ref = ANY($3::text[]) FOR UPDATE", [request.executionId, request.artifact.id, uniqueAssets]);
+          const manifestByReference = new Map(manifests.map((manifest) => [String(manifest.asset_ref), manifest]));
+          if (manifests.length !== uniqueAssets.length || manifests.some((manifest) => manifest.media_type !== "image/png") || assets.some((asset) => { const manifest = manifestByReference.get(asset.assetRef); return !manifest || manifest.locator_id !== asset.locatorId || Number(manifest.page_number) !== asset.pageNumber; })) throw new Error("Accepted normalized document has a dangling or misbound derived asset reference.");
+          for (const manifest of manifests) {
+            const persisted = await this.derivedStore.readDerived(String(manifest.asset_ref));
+            if (persisted.byteLength !== Number(manifest.byte_size) || createHash("sha256").update(persisted).digest("hex") !== manifest.sha256) throw new Error("Accepted derived asset failed storage-integrity verification.");
+          }
+          await sql.unsafe("UPDATE atlas.document_perception_derived_manifest SET accepted_at=now() WHERE execution_id=$1 AND artifact_id=$2 AND asset_ref = ANY($3::text[])", [request.executionId, request.artifact.id, uniqueAssets]);
         }
-        await sql.unsafe("UPDATE atlas.document_perception_derived_manifest SET accepted_at=now() WHERE execution_id=$1 AND artifact_id=$2 AND asset_ref = ANY($3::text[])", [request.executionId, request.artifact.id, uniqueAssets]);
       }
       const assetReferences = assets.map((asset) => asset.assetRef);
       await sql.unsafe("INSERT INTO atlas.normalized_document_cache (cache_key, source_sha256, contract_version, capability, capability_identity, normalized_document, derived_assets) VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7::jsonb) ON CONFLICT (cache_key) DO UPDATE SET normalized_document=EXCLUDED.normalized_document, derived_assets=EXCLUDED.derived_assets, invalidated_at=NULL", [key, accepted.sourceSha256, accepted.perception.contractVersion, accepted.perception.capability, identity, JSON.stringify(accepted), JSON.stringify(assetReferences)]);
