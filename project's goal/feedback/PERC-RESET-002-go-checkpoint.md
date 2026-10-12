@@ -5,6 +5,7 @@
 - **State:** `awaiting_review`
 - **Dependency:** PERC-RESET-001 CK `PASS` under its amendment-v1 qualification (`PERC-RESET-BATCH-01-a653008-verification.md`)
 - **Consumed approved interfaces:** `IDSER-012-01-03-01` RUN-003 capture/mapping and `IDSER-012-01-03-02` Atlas-owned derived-asset handoff, both approved. Their scopes were not reopened.
+- **Review target commit:** `c9c4a2ff7cf641f624f6d31a3a9698752442e1fd` (frozen PERC-RESET-002 ticket and committed RUN-003 implementation)
 - **Review target:** this bounded GO checkpoint and its committed source/config/test changes
 
 ## Bounded implementation
