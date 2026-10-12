@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash, randomUUID } from "node:crypto";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import test from "node:test";
@@ -38,6 +38,9 @@ test("derived assets persist before acceptance and remain scoped, immutable, and
     await authority.redeem(request);
 
     const descriptor = { sourceSha256, profile: "atlas-digital-pdf-run-003-capture-v1", pageNumber: 1, locatorId: "visual-1", mediaType: "image/png" as const, width: 1, height: 1, byteLength: png.byteLength, sha256: createHash("sha256").update(png).digest("hex") };
+    await assert.rejects(() => authority.handoffDerived(request, { ...descriptor, profile: "atlas-digital-pdf-run-002-capture-v1" }, png), /RUN-003.*profile/i, "a syntactically valid but unapproved profile is rejected at handoff");
+    assert.equal((await sql.unsafe("SELECT count(*)::int AS count FROM atlas.document_perception_derived_manifest WHERE execution_id=$1", [executionId]))[0]?.count, 0, "rejected profile creates no manifest");
+    assert.deepEqual(await readdir(root), [], "rejected profile stores no derived asset bytes");
     const first = await authority.handoffDerived(request, descriptor, png);
     const secondDescriptor = { ...descriptor, locatorId: "visual-2" };
     const second = await authority.handoffDerived(request, secondDescriptor, png);
@@ -61,6 +64,11 @@ test("derived assets persist before acceptance and remain scoped, immutable, and
 
     const good = { version: "v1" as const, executionId, artifactId, sourceSha256, perception: request.perception, provider: { name: "docling", processor: "capture", executionId, processedAt: "2026-10-09T00:00:00.000Z" }, pages: [{ number: 1, textBlocks: [], tables: [], visualRegions: [{ id: "visual-1", assetRef: first.assetRef }, { id: "visual-2", assetRef: second.assetRef }] }] };
     const assertNoAssetAccepted = async (label: string) => assert.equal((await sql.unsafe("SELECT count(*)::int AS count FROM atlas.document_perception_derived_manifest WHERE execution_id=$1 AND accepted_at IS NOT NULL", [executionId]))[0]?.count, 0, label);
+    const assertDeliveryUncommitted = async (label: string) => {
+      await assertNoAssetAccepted(label);
+      assert.notEqual((await sql.unsafe("SELECT state FROM atlas.document_perception_execution WHERE id=$1", [executionId]))[0]?.state, "completed", `${label}: execution remains incomplete`);
+      assert.equal((await sql.unsafe("SELECT count(*)::int AS count FROM atlas.normalized_document_cache WHERE source_sha256=$1 AND capability_identity=$2", [sourceSha256, input.capabilityIdentity]))[0]?.count, 0, `${label}: normalized cache is not committed`);
+    };
     await assert.rejects(() => restarted.deliver(request, { ...good, pages: [{ ...good.pages[0]!, visualRegions: [{ id: "wrong-locator", assetRef: first.assetRef }] }] }), /misbound|dangling/i);
     await assertNoAssetAccepted("a misbound locator cannot accept any staged asset");
     await assert.rejects(() => restarted.deliver(request, { ...good, sourceSha256: "f".repeat(64) }), /source|identity|invalid/i, "foreign source evidence cannot be accepted");
@@ -75,14 +83,22 @@ test("derived assets persist before acceptance and remain scoped, immutable, and
     await assert.rejects(() => restarted.deliver(request, good), /integrity/i, "altered bytes cannot be accepted");
     await assertNoAssetAccepted("altered bytes leave every staged asset unaccepted");
     await writeFile(join(root, first.assetRef), png);
+    await sql.unsafe("UPDATE atlas.document_perception_derived_manifest SET profile=$3 WHERE execution_id=$1 AND asset_ref=$2", [executionId, first.assetRef, "atlas-digital-pdf-run-002-capture-v1"]);
+    await assert.rejects(() => restarted.deliver(request, good), /profile|source binding/i, "an existing candidate manifest with a wrong profile cannot be accepted");
+    await assertDeliveryUncommitted("wrong-profile manifest rejection");
+    await sql.unsafe("UPDATE atlas.document_perception_derived_manifest SET profile=$3 WHERE execution_id=$1 AND asset_ref=$2", [executionId, first.assetRef, descriptor.profile]);
+    await sql.unsafe("UPDATE atlas.document_perception_derived_manifest SET source_sha256=$3 WHERE execution_id=$1 AND asset_ref=$2", [executionId, first.assetRef, "f".repeat(64)]);
+    await assert.rejects(() => restarted.deliver(request, good), /profile|source binding/i, "a candidate manifest with a foreign source digest cannot be accepted");
+    await assertDeliveryUncommitted("wrong-source manifest rejection");
+    await sql.unsafe("UPDATE atlas.document_perception_derived_manifest SET source_sha256=$3 WHERE execution_id=$1 AND asset_ref=$2", [executionId, first.assetRef, sourceSha256]);
     await restarted.deliver(request, good);
     await restarted.deliver(request, good);
     assert.equal((await sql.unsafe("SELECT state FROM atlas.document_perception_execution WHERE id=$1", [executionId]))[0]?.state, "completed");
     assert.equal((await sql.unsafe("SELECT count(*)::int AS count FROM atlas.semantic_execution WHERE document_id=$1", [artifactId]))[0]?.count, 0, "derived evidence admission does not create semantic execution");
-    const acceptedManifests = await sql.unsafe("SELECT locator_id, page_number, asset_ref, media_type, byte_size::integer AS byte_size, sha256, verified_at IS NOT NULL AS verified, accepted_at IS NOT NULL AS accepted FROM atlas.document_perception_derived_manifest WHERE execution_id=$1 AND accepted_at IS NOT NULL ORDER BY locator_id", [executionId]);
+    const acceptedManifests = await sql.unsafe("SELECT locator_id, profile, page_number, asset_ref, media_type, byte_size::integer AS byte_size, sha256, verified_at IS NOT NULL AS verified, accepted_at IS NOT NULL AS accepted FROM atlas.document_perception_derived_manifest WHERE execution_id=$1 AND accepted_at IS NOT NULL ORDER BY locator_id", [executionId]);
     assert.deepEqual(Array.from(acceptedManifests), [
-      { locator_id: "visual-1", page_number: 1, asset_ref: first.assetRef, media_type: "image/png", byte_size: png.byteLength, sha256: descriptor.sha256, verified: true, accepted: true },
-      { locator_id: "visual-2", page_number: 1, asset_ref: second.assetRef, media_type: "image/png", byte_size: png.byteLength, sha256: secondDescriptor.sha256, verified: true, accepted: true },
+      { locator_id: "visual-1", profile: descriptor.profile, page_number: 1, asset_ref: first.assetRef, media_type: "image/png", byte_size: png.byteLength, sha256: descriptor.sha256, verified: true, accepted: true },
+      { locator_id: "visual-2", profile: descriptor.profile, page_number: 1, asset_ref: second.assetRef, media_type: "image/png", byte_size: png.byteLength, sha256: secondDescriptor.sha256, verified: true, accepted: true },
     ], "each visual has its own verified and accepted page/locator-bound manifest");
     assert.deepEqual((await restarted.resolveDerived({ callerUserId: owner, artifactId, sourceSha256, locatorId: descriptor.locatorId, assetRef: first.assetRef })).bytes, new Uint8Array(png));
     assert.deepEqual((await restarted.resolveDerived({ callerUserId: owner, artifactId, sourceSha256, locatorId: secondDescriptor.locatorId, assetRef: second.assetRef })).bytes, new Uint8Array(png));

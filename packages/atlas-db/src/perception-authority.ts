@@ -18,6 +18,9 @@ const canonicalize = (value: unknown): unknown => {
   return value;
 };
 const fingerprint = (value: unknown) => createHash("sha256").update(JSON.stringify(canonicalize(value))).digest("hex");
+const run003CapabilityMarker = "atlas-digital-pdf-run-003-capture-v1";
+const run003AssetProfile = "atlas-digital-pdf-run-003-capture-v1";
+const isRun003Identity = (identity: string) => identity.includes(run003CapabilityMarker);
 const requestFrom = (input: PerceptionExecutionInput, grant: string): DocumentPerceptionRequest => parseDocumentPerceptionRequest({ version: documentPerceptionContractVersion, executionId: input.executionId, artifact: { id: input.artifactId, sourceSha256: input.sourceSha256, mimeType: input.mimeType, byteSize: input.byteSize }, source: { grant }, perception: { capability: "atlas.document.perceive", contractVersion: documentPerceptionContractVersion } });
 
 export function collectVerifiedRun003Assets(pages: NormalizedDocument["pages"]): readonly { readonly assetRef: string; readonly locatorId: string; readonly pageNumber: number }[] {
@@ -37,8 +40,9 @@ export class PostgresPerceptionAuthority implements PerceptionAuthority, Derived
     if (actualHash !== descriptor.sha256) throw new Error("Derived asset handoff integrity check failed.");
     const grantId = this.grants.verify(request.source.grant);
     return this.sql.begin(async (sql) => {
-      const authorized = await sql.unsafe("SELECT e.id FROM atlas.document_perception_source_grant g JOIN atlas.document_perception_execution e ON e.id=g.execution_id WHERE g.grant_id=$1 AND g.execution_id=$2 AND g.artifact_id=$3 AND g.source_sha256=$4 AND g.mime_type=$5 AND g.byte_size=$6 AND g.expires_at>now() AND e.state NOT IN ('completed','cancelled','failed') FOR UPDATE OF e", [grantId, request.executionId, request.artifact.id, request.artifact.sourceSha256, request.artifact.mimeType, request.artifact.byteSize]);
+      const authorized = await sql.unsafe("SELECT e.id, e.capability_identity FROM atlas.document_perception_source_grant g JOIN atlas.document_perception_execution e ON e.id=g.execution_id WHERE g.grant_id=$1 AND g.execution_id=$2 AND g.artifact_id=$3 AND g.source_sha256=$4 AND g.mime_type=$5 AND g.byte_size=$6 AND g.expires_at>now() AND e.state NOT IN ('completed','cancelled','failed') FOR UPDATE OF e", [grantId, request.executionId, request.artifact.id, request.artifact.sourceSha256, request.artifact.mimeType, request.artifact.byteSize]);
       if (!authorized.length) throw new Error("Derived asset handoff is stale or unauthorized.");
+      if (isRun003Identity(String(authorized[0].capability_identity)) && descriptor.profile !== run003AssetProfile) throw new Error("RUN-003 derived asset profile does not match the authorized capture profile.");
       const existing = await sql.unsafe("SELECT asset_ref, source_sha256, profile, page_number, media_type, width, height, byte_size, sha256 FROM atlas.document_perception_derived_manifest WHERE execution_id=$1 AND locator_id=$2 FOR UPDATE", [request.executionId, descriptor.locatorId]);
       if (existing.length) {
         const prior = existing[0];
@@ -172,20 +176,22 @@ export class PostgresPerceptionAuthority implements PerceptionAuthority, Derived
     const grantId = this.grants.verify(request.source.grant);
     const digest = fingerprint(accepted);
     await this.sql.begin(async (sql) => {
-      const rows = await sql.unsafe("SELECT e.state, e.capability_identity, e.completion_fingerprint FROM atlas.document_perception_source_grant g JOIN atlas.document_perception_execution e ON e.id=g.execution_id WHERE g.grant_id=$1 AND g.execution_id=$2 AND g.artifact_id=$3 AND g.source_sha256=$4 AND g.mime_type=$5 AND g.byte_size=$6 AND g.expires_at>now() FOR UPDATE OF e", [grantId, request.executionId, request.artifact.id, request.artifact.sourceSha256, request.artifact.mimeType, request.artifact.byteSize]);
+      const rows = await sql.unsafe("SELECT e.state, e.capability_identity, e.source_sha256, e.completion_fingerprint FROM atlas.document_perception_source_grant g JOIN atlas.document_perception_execution e ON e.id=g.execution_id WHERE g.grant_id=$1 AND g.execution_id=$2 AND g.artifact_id=$3 AND g.source_sha256=$4 AND g.mime_type=$5 AND g.byte_size=$6 AND g.expires_at>now() FOR UPDATE OF e", [grantId, request.executionId, request.artifact.id, request.artifact.sourceSha256, request.artifact.mimeType, request.artifact.byteSize]);
       if (!rows.length || rows[0].state === "cancelled" || rows[0].state === "failed") throw new Error("Perception result is stale or unauthorized.");
       if (rows[0].state === "completed") { if (rows[0].completion_fingerprint === digest) return; throw new Error("Perception result conflicts with completed execution."); }
       const identity = String(rows[0].capability_identity);
       const key = cacheKey(accepted.sourceSha256, accepted.perception.contractVersion, accepted.perception.capability, identity);
-      const assets = identity.includes("atlas-digital-pdf-run-003-capture-v1") ? collectVerifiedRun003Assets(accepted.pages) : accepted.pages.flatMap((page) => page.visualRegions.flatMap((region) => region.assetRef ? [{ assetRef: region.assetRef, locatorId: region.id, pageNumber: page.number }] : []));
-      if (identity.includes("atlas-digital-pdf-run-003-capture-v1")) {
+      const isRun003 = isRun003Identity(identity);
+      const assets = isRun003 ? collectVerifiedRun003Assets(accepted.pages) : accepted.pages.flatMap((page) => page.visualRegions.flatMap((region) => region.assetRef ? [{ assetRef: region.assetRef, locatorId: region.id, pageNumber: page.number }] : []));
+      if (isRun003) {
         if (assets.length > 0) {
           if (!this.derivedStore) throw new Error("RUN-003 acceptance requires derived asset storage when visual regions are present.");
           const uniqueAssets = [...new Set(assets.map((asset) => asset.assetRef))];
           if (uniqueAssets.length !== assets.length) throw new Error("Accepted normalized document reuses a derived asset reference.");
-          const manifests = await sql.unsafe("SELECT asset_ref, locator_id, page_number, byte_size, sha256, media_type FROM atlas.document_perception_derived_manifest WHERE execution_id=$1 AND artifact_id=$2 AND asset_ref = ANY($3::text[]) FOR UPDATE", [request.executionId, request.artifact.id, uniqueAssets]);
+          const manifests = await sql.unsafe("SELECT asset_ref, source_sha256, profile, locator_id, page_number, byte_size, sha256, media_type FROM atlas.document_perception_derived_manifest WHERE execution_id=$1 AND artifact_id=$2 AND asset_ref = ANY($3::text[]) FOR UPDATE", [request.executionId, request.artifact.id, uniqueAssets]);
           const manifestByReference = new Map(manifests.map((manifest) => [String(manifest.asset_ref), manifest]));
           if (manifests.length !== uniqueAssets.length || manifests.some((manifest) => manifest.media_type !== "image/png") || assets.some((asset) => { const manifest = manifestByReference.get(asset.assetRef); return !manifest || manifest.locator_id !== asset.locatorId || Number(manifest.page_number) !== asset.pageNumber; })) throw new Error("Accepted normalized document has a dangling or misbound derived asset reference.");
+          if (manifests.some((manifest) => manifest.profile !== run003AssetProfile || manifest.source_sha256 !== rows[0].source_sha256)) throw new Error("Accepted RUN-003 derived asset profile or source binding does not match the authorized execution.");
           for (const manifest of manifests) {
             const persisted = await this.derivedStore.readDerived(String(manifest.asset_ref));
             if (persisted.byteLength !== Number(manifest.byte_size) || createHash("sha256").update(persisted).digest("hex") !== manifest.sha256) throw new Error("Accepted derived asset failed storage-integrity verification.");
