@@ -13,7 +13,7 @@ This Backend Phase ticket set establishes the canonical local Atlas perception b
 | 5 | [PERC-RESET-005](PERC-RESET-005-professional-project-creation-master-initial-draft.md) | Create authenticated Project A and verify empty Master / Initial Draft boundaries | 004 |
 | 6 | [PERC-RESET-006](PERC-RESET-006-professional-multimodal-perception-e2e.md) | Accept source-grounded RUN-003 text, table, and captured visual evidence for Project A | 005 |
 | 7 | [PERC-RESET-007](PERC-RESET-007-three-pdf-run003-admission-and-perception.md) | Process three ordered PDFs in Project B through the same RUN-003 route | 006 |
-| 8 | [PERC-RESET-008](PERC-RESET-008-restart-manual-baseline-and-legacy-retirement.md) | Prove restart/replay behavior and freeze the RUN-003 successor regression baseline | 007 |
+| 8 | [PERC-RESET-008](PERC-RESET-008-restart-manual-baseline-and-legacy-retirement.md) | Prove restart/replay behavior and freeze the RUN-003 successor regression baseline (`awaiting_review`; `PERC-RESET-008-go-ready-for-ck.md`) | 007 |
 
 The ticket sequence ends at `perceived`. It does not authorize semantic extraction, provider calls, Master publication, REL work, or automatic execution of a successor ticket. PERC-RESET-001's Docker reset is separately scoped by the binding context's explicit Docling cache/image exception; the cache must be tied to its actual mount and contents before any deletion.
 
