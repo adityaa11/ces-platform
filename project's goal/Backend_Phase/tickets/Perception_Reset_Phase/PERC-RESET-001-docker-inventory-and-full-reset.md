@@ -2,7 +2,7 @@
 
 **Stage:** 1/8 · **Type:** destructive environmental reset with explicit model-cache exception · **Dependency:** parent context v1.2 · **GO:** only explicit `GO PERC-RESET-001`.
 
-**Workflow state:** `awaiting_review` — GO execution closure is recorded in `project's goal/feedback/PERC-RESET-001-go-closure.md`; it consumes `HMN-PERC-RESET-001-001` and `HMN-PERC-RESET-001-002`.
+**Workflow state:** `approved` — CK `PASS` under evidence-contract amendment v1; see `project's goal/feedback/PERC-RESET-BATCH-01-a653008-verification.md`. The original CK review remains unchanged, and historical evidence gaps remain accepted gaps.
 
 ## Outcome
 

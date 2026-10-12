@@ -1,6 +1,6 @@
 # Perception Reset Phase
 
-This Backend Phase ticket set establishes the canonical local Atlas perception baseline through durable `perceived`, using the already qualified RUN-003 capture and derived-asset path. The binding source context is [00-PERCEPTION-RESET-IMPLEMENTATION-CONTEXT.md](00-PERCEPTION-RESET-IMPLEMENTATION-CONTEXT.md). Each implementation requires its own explicit `GO` and independent review where specified. PERC-RESET-001 is `awaiting_review`; all successors remain `planned`. This authoring pass makes no Docker or application changes.
+This Backend Phase ticket set establishes the canonical local Atlas perception baseline through durable `perceived`, using the already qualified RUN-003 capture and derived-asset path. The binding source context is [00-PERCEPTION-RESET-IMPLEMENTATION-CONTEXT.md](00-PERCEPTION-RESET-IMPLEMENTATION-CONTEXT.md). Each implementation requires its own explicit `GO` and independent review where specified. PERC-RESET-001 is `approved` under evidence-contract amendment v1; all successors remain `planned`. This authoring pass makes no Docker or application changes.
 
 ## Ticket sequence
 
