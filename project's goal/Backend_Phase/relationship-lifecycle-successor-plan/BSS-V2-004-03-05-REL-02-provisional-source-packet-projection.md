@@ -1,6 +1,6 @@
 # BSS-V2-004-03-05-REL-02 — provisional source-packet projection
 
-**State:** `awaiting_review`.
+**State:** `APPROVED` — CK returned `PASS` for reviewed commit `78573a3a10978a8ae60c78ae69d430fe23f124d1`. Verification: `project's goal/feedback/BSS-V2-004-03-05-REL-02-78573a3-review.md`.
 
 **Dependencies:** REL-01 CK PASS; existing `08-02-01` source/slot/asset identity contract. REL-02 does not depend on accepted `AuthorizedSourceRelationshipBinding`, `08-01-03`, a reviewer, or an acceptance registry.
 
