@@ -8,6 +8,7 @@
 - **Starting authority commit:** `15d1dd0`
 - **Date:** 2026-10-13
 - **Canonical project:** `atlas-canonical-perception`
+- **Ticket state:** `awaiting_review`
 - **Scope boundary:** perception-only; no semantic execution and no
   PERC-RESET-005 work.
 
