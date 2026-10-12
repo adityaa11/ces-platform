@@ -5,7 +5,8 @@
 - **Predecessor:** `PERC-RESET-002` is approved after independent CK `PASS` in `PERC-RESET-BATCH-02-9a0ef58-verification.md`.
 - **Implementation base:** `23a6102471d3374558ed211e088e53cc2102cb5a`
 - **Checkpoint state:** `BLOCKED`
-- **Blockers:** The complete Atlas authority integration evidence requires a database, but `DATABASE_URL` is unset. Bridge typecheck remains nonzero because of nine unchanged `@atlas/skills` errors outside this ticket.
+- **Ancillary authorization:** `HMN-PERC-RESET-003-001` authorized one bounded terminating-guard type-safety correction in `packages/atlas-skills/src/provisional-relationship-packet.ts`; details and validation are recorded in `HMN-PERC-RESET-003-001-remediation.md`.
+- **Blockers:** R3-03 through R3-05 still require database-backed qualification, but `DATABASE_URL` is unset. This HMN did not authorize starting Docker/PostgreSQL or using an existing database.
 
 ## Bounded implementation
 
@@ -28,10 +29,14 @@
 
 - `corepack pnpm --filter @atlas/agents-bridge exec jiti tests/document-perception-worker.test.ts` — **exit 0**, 12 passed, 0 failed, 0 skipped.
 - `corepack pnpm --filter @atlas/db exec jiti tests/perception-authority-asset-accounting.test.ts` — **exit 0**, 2 passed, 0 failed, 0 skipped.
-- `corepack pnpm --filter @atlas/agents-bridge typecheck` — **exit 1** (`tsc` reports exit status 2). No diagnostic references `document-perception-worker.ts`; it reports only nine errors at `packages/atlas-skills/src/provisional-relationship-packet.ts` lines 82, 83, and 87: TS18048 (`owned`/`context` possibly undefined) and TS2345 (`TrustedFinalizationSlot | undefined` not assignable to `TrustedFinalizationSlot`).
+- `git diff --check` — **exit 0**, no whitespace diagnostics. `git status --short` was inspected; unrelated pre-existing tracked and untracked work remains untouched.
+- `corepack pnpm --filter @atlas/agents-bridge typecheck` — **exit 0**, no diagnostics after the authorized ancillary guard correction.
 - `corepack pnpm --filter @atlas/db typecheck` — **exit 0**, no diagnostics.
-- `corepack pnpm --filter @atlas/skills typecheck` — **exit 1** (`tsc` reports exit status 2), reproducing the same nine diagnostics independently.
-- Unchanged-source evidence: `git hash-object packages/atlas-skills/src/provisional-relationship-packet.ts` and the blob hashes from `git show 744ca752a5d3b4f512769af7678420751648a634:packages/atlas-skills/src/provisional-relationship-packet.ts` and `git show 23a6102471d3374558ed211e088e53cc2102cb5a:packages/atlas-skills/src/provisional-relationship-packet.ts` all equal `9e59e08ec5b558d2841d2cd49daccf63e4d3abe3`. The file remains unmodified and is outside current authorization.
+- `corepack pnpm --filter @atlas/skills typecheck` — **exit 0**, no diagnostics; the nine TS18048/TS2345 errors are resolved.
+- `corepack pnpm --filter @atlas/skills exec jiti tests/provisional-relationship-packet.test.ts` — **exit 0**, 3 passed, 0 failed, 0 skipped.
+- Baseline source evidence: before remediation, the current file and both cited commit blobs had hash `9e59e08ec5b558d2841d2cd49daccf63e4d3abe3`. HMN-authorized change is limited to returning the existing `reject(...)` call from the missing-slot guard; error text and runtime rejection remain unchanged.
+- `corepack pnpm --filter @atlas/agents-bridge exec jiti tests/document-perception-worker.test.ts` — **exit 0**, 12 passed, 0 failed, 0 skipped.
+- `corepack pnpm --filter @atlas/db exec jiti tests/perception-authority-asset-accounting.test.ts` — **exit 0**, 2 passed, 0 failed, 0 skipped.
 - `corepack pnpm --filter @atlas/db exec jiti tests/derived-assets.integration.test.ts` — **exit 0, 1 skipped** because `DATABASE_URL` is unset; skipped is not PASS.
 - `corepack pnpm --filter @atlas/agents-bridge exec jiti tests/perception-integration.test.ts` — **exit 0, 2 skipped** because `DATABASE_URL` is unset; skipped is not PASS.
 - `DATABASE_URL` is unset. No Docker or database setup was attempted, per the ticket continuation.
@@ -41,4 +46,4 @@
 
 `Internal readiness: NOT_READY — BLOCKED_ENVIRONMENT`.
 
-The worker correction and its focused evidence are complete. Do not set `READY_FOR_CK` or `awaiting_review`: R3-03 through R3-05 still lack required database-backed observations, and the Bridge package typecheck is nonzero due to unchanged, unrelated `atlas-skills` diagnostics. Request separate bounded authority before touching `packages/atlas-skills/src/provisional-relationship-packet.ts`.
+The worker and authorized ancillary type-safety corrections are complete, and the required typechecks and focused tests pass. Do not set `READY_FOR_CK` or `awaiting_review`: R3-03 through R3-05 still lack required database-backed observations. PostgreSQL qualification remains blocked pending separate authorization; no database environment was started or reused.

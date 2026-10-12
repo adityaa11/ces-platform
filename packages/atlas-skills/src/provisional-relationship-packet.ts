@@ -78,7 +78,7 @@ function validateRevision(revision: ContextSourceRelationshipRevisionV1, snapsho
   if (revision.disposition !== "proposed" && (revision.disposition as string) !== "unresolved") reject("revision disposition is unsupported; accepted records are not provisional.");
   const owned = slots.get(revision.ownedSource.slot);
   const context = slots.get(revision.contextSource.slot);
-  if (!owned || !context) reject("revision locator or asset does not match the current source slots.");
+  if (!owned || !context) return reject("revision locator or asset does not match the current source slots.");
   if (owned.slot === context.slot || !sameJson(revision.ownedSource, stableSlot(owned)) || !sameJson(revision.contextSource, stableSlot(context))) reject("revision locator or asset does not match the current source slots.");
   if ((owned.role ?? "owned_source") !== "owned_source") reject("revision owned source is not independently owned.");
   if (revision.relationship.type !== "context_qualifies" || revision.relationship.direction !== "context_to_owned") reject("revision relationship is unsupported.");
