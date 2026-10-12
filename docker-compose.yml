@@ -8,6 +8,10 @@ services:
     environment:
       DOCLING_SERVE_ENABLE_UI: "false"
       DOCLING_SERVE_ENABLE_REMOTE_SERVICES: "false"
+      # The approved RUN-003 baseline is embedded in the digest-pinned image;
+      # do not shadow it with a blank Compose cache volume.
+      DOCLING_SERVE_ARTIFACTS_PATH: /opt/app-root/src/.cache/docling/models
+      DOCLING_SERVE_LOAD_MODELS_AT_BOOT: "true"
       DOCLING_SERVE_SHOW_VERSION_INFO: "true"
       DOCLING_SERVE_WORKERS: "1"
       DOCLING_DEVICE: cpu
@@ -18,8 +22,6 @@ services:
       DOCLING_CPU_THREAD_RATIONALE: bounded-four-threads-for-local-cpu-qualification
       OMP_NUM_THREADS: ${DOCLING_CPU_THREADS:-4}
       MKL_NUM_THREADS: ${DOCLING_CPU_THREADS:-4}
-    volumes:
-      - docling-models:/root/.cache
     # No ports: only services on this Compose network can contact Docling.
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5001/ready').read()"]
@@ -130,6 +132,9 @@ services:
       # D1 resolves this exact server-controlled route before it redeems a
       # BSS-009 source grant or contacts Docling.
       AGENTS_BRIDGE_QUALIFIED_ROUTES: *docling-qualified-route
+      DOCLING_SERVE_VERSION: "1.36.0"
+      DOCLING_SLIM_VERSION: "2.132.0"
+      DOCLING_OPTION_PROFILE: atlas-digital-pdf-run-003-capture-v1
       MISTRAL_API_KEY: ${MISTRAL_API_KEY:-}
       MISTRAL_STRUCTURED_MODEL: ${MISTRAL_STRUCTURED_MODEL:-mistral-large-3-25-12}
       MISTRAL_CHAT_MODEL: ${MISTRAL_CHAT_MODEL:-mistral-small-4-0-26-03}
@@ -233,4 +238,3 @@ services:
 volumes:
   postgres-data:
   atlas-data:
-  docling-models:
