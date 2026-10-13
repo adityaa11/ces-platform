@@ -2,7 +2,7 @@
 
 - **Ticket:** `SEM-CUTOVER-005-INTEROPERABILITY`
 - **Authorization:** `HMN-SEM-CUTOVER-005-INTEROPERABILITY-003`
-- **State:** `awaiting_review`
+- **State:** `approved` after independent CK `PASS` for reviewed remediation commit `d7a0345455828fe29fc8ef495b50944ac133586d` ([verification record](SEM-CUTOVER-005-INTEROPERABILITY-d7a0345-verification.md))
 - **Scope:** the five-row frozen matrix in `SEM-CUTOVER-005-INTEROPERABILITY-hmn-003.md`; no runtime, provider, repository, staging, database, worker, publication, or acceptance effects.
 
 ## Review Contract Closure
