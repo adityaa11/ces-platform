@@ -1,6 +1,6 @@
 # SEM-CUTOVER-005 — Provisional semantic accounting and replay-safe handoff
 
-**Status:** `planned` · **Size:** M · **Owner:** separate provisional result/sidecar contract, not Master truth · **Dependencies:** 004 independent CK PASS, 002 approved sidecar ownership. Explicit `GO` required.
+**Status:** `approved` after independent CK `PASS` for reviewed remediation commit `0c3d4a6ae45f9a8115bb40b98397eb1738fc58e5` ([verification record](../../../feedback/SEM-CUTOVER-005-0c3d4a6-verification.md)). · **Size:** M · **Owner:** separate provisional result/sidecar contract, not Master truth · **Dependencies:** 004 independent CK PASS, 002 approved sidecar ownership. Explicit `GO` required.
 
 ## Exact objective
 
