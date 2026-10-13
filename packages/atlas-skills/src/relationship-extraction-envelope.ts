@@ -54,14 +54,40 @@ function validateTrustedSlots(sourceSlots: readonly TrustedFinalizationSlot[], p
   return slots;
 }
 
-/** Strictly validates and persists provider proposals; it has no provider, job, reservation, or finalization dependency. */
-export async function materializeProvisionalRelationshipRevisions(input: {
+function sameSourceSnapshot(left: RelationshipPacketIdentity, right: RelationshipPacketIdentity) {
+  return left.projectId === right.projectId && left.workspaceId === right.workspaceId && left.bundleId === right.bundleId && left.documentId === right.documentId && left.sourceSha256 === right.sourceSha256;
+}
+
+/**
+ * Validates the repository-selected predecessor snapshot before it is used as
+ * relationship evidence.  This boundary deliberately identifies prior revisions
+ * as provisional records, never as accepted authorization.
+ */
+function validateTrustedPriorRevisions(priorRevisions: readonly ContextSourceRelationshipRevisionV1[], packetIdentity: RelationshipPacketIdentity) {
+  const hashes = new Set<string>();
+  for (const revision of priorRevisions) {
+    if (revision.contractVersion !== relationshipContractVersion || !sameSourceSnapshot(revision.scope, packetIdentity)) reject("a trusted prior revision is outside the exact source snapshot.");
+    if (revision.normalizedDocument.executionId !== revision.scope.executionId || revision.normalizedDocument.artifactId !== revision.scope.artifactId || revision.normalizedDocument.sourceSha256 !== revision.scope.sourceSha256) reject("a trusted prior revision has an inconsistent normalized-document identity.");
+    const { revisionHash, ...immutable } = revision;
+    if (revisionHash !== relationshipSha256(immutable)) reject("a trusted prior revision hash is malformed.");
+    if (hashes.has(revisionHash)) reject("trusted prior revisions contain a duplicate revision hash.");
+    hashes.add(revisionHash);
+  }
+  return hashes;
+}
+
+/**
+ * Pure REL-01 preparation boundary. `trustedPriorRevisions` must be supplied
+ * by an exact-source-snapshot authority (for example, the repository adapter);
+ * these provisional records are predecessor identities only, not acceptance.
+ */
+export function prepareProvisionalRelationshipRevisions(input: {
   readonly envelope: unknown;
   readonly packetIdentity: RelationshipPacketIdentity;
   readonly sourceSlots: readonly TrustedFinalizationSlot[];
   readonly providerProvenance: ProviderProvenance;
-  readonly repository: ProvisionalRelationshipRepository;
-}): Promise<MaterializedRelationshipProposalSet> {
+  readonly trustedPriorRevisions: readonly ContextSourceRelationshipRevisionV1[];
+}): MaterializedRelationshipProposalSet {
   validatePacketIdentity(input.packetIdentity);
   const envelope = atlasProviderRelationshipExtractionEnvelopeV1Schema.parse(input.envelope);
   const slots = validateTrustedSlots(input.sourceSlots, input.packetIdentity);
@@ -73,8 +99,7 @@ export async function materializeProvisionalRelationshipRevisions(input: {
   }
   const expectedProviderIdentity = [input.providerProvenance.provider, input.providerProvenance.model, input.providerProvenance.endpoint].join(":");
   if (!input.providerProvenance.provider || !input.providerProvenance.model || !input.providerProvenance.endpoint || !Number.isSafeInteger(input.providerProvenance.attempt) || input.providerProvenance.attempt < 1) reject("provider provenance is malformed.");
-  const priorRevisions = await input.repository.loadForSnapshot({ projectId: input.packetIdentity.projectId, workspaceId: input.packetIdentity.workspaceId, bundleId: input.packetIdentity.bundleId, documentId: input.packetIdentity.documentId, sourceSha256: input.packetIdentity.sourceSha256 });
-  const priorHashes = new Set(priorRevisions.map((revision) => revision.revisionHash));
+  const priorHashes = validateTrustedPriorRevisions(input.trustedPriorRevisions, input.packetIdentity);
   const relationshipKeys = new Set<string>();
   const revisions = envelope.relationship_proposals.map((proposal, providerRelationshipOrdinal) => {
     const owned = slots.get(proposal.owned_source_slot);
@@ -104,7 +129,20 @@ export async function materializeProvisionalRelationshipRevisions(input: {
     return { ...immutable, revisionHash: relationshipSha256(immutable) } satisfies ContextSourceRelationshipRevisionV1;
   });
   if (new Set(revisions.map((revision) => revision.revisionHash)).size !== revisions.length) reject("duplicate relationship revision conflict.");
-  const persisted = await input.repository.appendForExecution({ executionId: input.packetIdentity.executionId, sourceSnapshot: input.packetIdentity, revisions });
-  if (persisted.length !== revisions.length || persisted.some((revision, index) => revision.revisionHash !== revisions[index]?.revisionHash)) reject("repository returned a conflicting relationship revision.");
-  return { semanticProposal: envelope.semantic_proposal, revisions: persisted };
+  return { semanticProposal: envelope.semantic_proposal, revisions };
+}
+
+/** Strictly validates and persists provider proposals; it has no provider, job, reservation, or finalization dependency. */
+export async function materializeProvisionalRelationshipRevisions(input: {
+  readonly envelope: unknown;
+  readonly packetIdentity: RelationshipPacketIdentity;
+  readonly sourceSlots: readonly TrustedFinalizationSlot[];
+  readonly providerProvenance: ProviderProvenance;
+  readonly repository: ProvisionalRelationshipRepository;
+}): Promise<MaterializedRelationshipProposalSet> {
+  const priorRevisions = await input.repository.loadForSnapshot({ projectId: input.packetIdentity.projectId, workspaceId: input.packetIdentity.workspaceId, bundleId: input.packetIdentity.bundleId, documentId: input.packetIdentity.documentId, sourceSha256: input.packetIdentity.sourceSha256 });
+  const prepared = prepareProvisionalRelationshipRevisions({ envelope: input.envelope, packetIdentity: input.packetIdentity, sourceSlots: input.sourceSlots, providerProvenance: input.providerProvenance, trustedPriorRevisions: priorRevisions });
+  const persisted = await input.repository.appendForExecution({ executionId: input.packetIdentity.executionId, sourceSnapshot: input.packetIdentity, revisions: prepared.revisions });
+  if (persisted.length !== prepared.revisions.length || persisted.some((revision, index) => revision.revisionHash !== prepared.revisions[index]?.revisionHash)) reject("repository returned a conflicting relationship revision.");
+  return { semanticProposal: prepared.semanticProposal, revisions: persisted };
 }

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { materializeProvisionalRelationshipRevisions } from "../src/relationship-extraction-envelope.ts";
+import { materializeProvisionalRelationshipRevisions, prepareProvisionalRelationshipRevisions } from "../src/relationship-extraction-envelope.ts";
 import type { ContextSourceRelationshipRevisionV1, ProvisionalRelationshipRepository, ProvisionalRelationshipStageV1, RelationshipPacketIdentity, TrustedFinalizationSlot } from "../src/relationship-provenance.ts";
 
 const sourceSha256 = "a".repeat(64);
@@ -46,6 +46,7 @@ class InMemoryRepository implements ProvisionalRelationshipRepository {
 }
 
 const materialize = (repository = new InMemoryRepository(), envelope: unknown = validEnvelope(), slots = sourceSlots) => materializeProvisionalRelationshipRevisions({ envelope, packetIdentity, sourceSlots: slots, providerProvenance: { provider: "offline", model: "fixture", endpoint: "test", attempt: 1, runId: "run-1" }, repository });
+const prepare = (trustedPriorRevisions: readonly ContextSourceRelationshipRevisionV1[] = [], envelope: unknown = validEnvelope(), identity = packetIdentity, slots = sourceSlots) => prepareProvisionalRelationshipRevisions({ envelope, packetIdentity: identity, sourceSlots: slots, providerProvenance: { provider: "offline", model: "fixture", endpoint: "test", attempt: 1, runId: "run-1" }, trustedPriorRevisions });
 
 test("REL-01 materializes deterministic, source-verified proposed revisions without authority", async () => {
   const repository = new InMemoryRepository();
@@ -64,6 +65,57 @@ test("REL-01 materializes deterministic, source-verified proposed revisions with
   const stage: ProvisionalRelationshipStageV1 = { executionId: packetIdentity.executionId, idempotencyKey: "same-request", sidecarHash: revision.revisionHash, revisions: first.revisions };
   assert.deepEqual(await repository.stageSidecar(stage), await repository.stageSidecar(stage));
   assert.equal((await repository.loadStagedSidecar({ executionId: packetIdentity.executionId, idempotencyKey: "same-request" }))?.sidecarHash, revision.revisionHash);
+});
+
+test("REL-01 pure preparation is byte-for-byte equivalent to materialization for first extraction", async () => {
+  const repository = new InMemoryRepository();
+  const prepared = prepare();
+  const materialized = await materialize(repository);
+  assert.deepEqual(prepared, materialized);
+  assert.equal(repository.appendCalls, 1);
+  assert.equal(prepared.revisions[0]?.relationshipLineageId, materialized.revisions[0]?.relationshipLineageId);
+  assert.equal(prepared.revisions[0]?.revisionHash, materialized.revisions[0]?.revisionHash);
+  assert.deepEqual(prepared.revisions[0]?.proposalProvenance, materialized.revisions[0]?.proposalProvenance);
+  assert.deepEqual(prepared.revisions[0]?.ownedSource, materialized.revisions[0]?.ownedSource);
+  assert.deepEqual(prepared.revisions[0]?.contextSource, materialized.revisions[0]?.contextSource);
+});
+
+test("REL-01 pure preparation accepts only trusted exact-source predecessor revisions", async () => {
+  const repository = new InMemoryRepository();
+  const previous = (await materialize(repository)).revisions[0]!;
+  const successorEnvelope = validEnvelope();
+  successorEnvelope.relationship_proposals[0]!.predecessor = { relationship_revision_hash: previous.revisionHash, relation: "refines" };
+  const prepared = prepare([previous], successorEnvelope);
+  const materialized = await materialize(repository, successorEnvelope);
+  assert.deepEqual(prepared, materialized);
+  assert.equal(prepared.revisions[0]?.predecessor?.relationshipRevisionHash, previous.revisionHash);
+
+  await assert.throws(() => prepare([], successorEnvelope), /forged predecessor/);
+  await assert.throws(() => prepare([{ ...previous, scope: { ...previous.scope, sourceSha256: "f".repeat(64) } }], successorEnvelope), /exact source snapshot/);
+  await assert.throws(() => prepare([{ ...previous, revisionHash: "e".repeat(64) }], successorEnvelope), /hash is malformed/);
+});
+
+test("REL-01 pure preparation has no repository effect boundary", () => {
+  const prepared = prepare();
+  assert.equal(prepared.revisions.length, 1);
+  assert.equal(prepared.revisions[0]?.authorization, null);
+  assert.equal(prepared.revisions[0]?.proposalProvenance.providerRelationshipOrdinal, 0);
+});
+
+test("REL-01 materializer retains replay and repository-conflict behavior after delegation", async () => {
+  const replayRepository = new InMemoryRepository();
+  const first = await materialize(replayRepository);
+  const replay = await materialize(replayRepository);
+  assert.deepEqual(replay, first);
+  assert.equal(replayRepository.appendCalls, 2);
+
+  const conflictRepository: ProvisionalRelationshipRepository = {
+    appendForExecution: async ({ revisions }) => revisions.map((revision) => ({ ...revision, revisionHash: "f".repeat(64) })),
+    loadForSnapshot: async () => [],
+    stageSidecar: async (stage) => stage,
+    loadStagedSidecar: async () => undefined,
+  };
+  await assert.rejects(materialize(conflictRepository), /repository returned a conflicting relationship revision/);
 });
 
 test("REL-01 rejects malformed, foreign, authority-bearing, and unresolvable provider values before append", async () => {
@@ -90,7 +142,9 @@ test("REL-01 rejects malformed, foreign, authority-bearing, and unresolvable pro
   ];
   for (const [name, mutate, slots] of mutations) {
     const repository = new InMemoryRepository();
-    await assert.rejects(materialize(repository, mutate(validEnvelope()), slots ?? sourceSlots), name);
+    const malformed = mutate(validEnvelope());
+    assert.throws(() => prepare([], malformed, packetIdentity, slots ?? sourceSlots), name);
+    await assert.rejects(materialize(repository, malformed, slots ?? sourceSlots), name);
     assert.equal(repository.appendCalls, 0, `${name} reached append`);
   }
 });
