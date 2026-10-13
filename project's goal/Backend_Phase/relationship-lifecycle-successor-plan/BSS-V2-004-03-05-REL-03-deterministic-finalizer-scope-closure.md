@@ -1,6 +1,6 @@
 # BSS-V2-004-03-05-REL-03 — deterministic finalizer successor
 
-**State:** `awaiting_review`.
+**State:** `approved`.
 
 **Dependencies:** REL-02 CK PASS. `298021d` is the retained implementation baseline, not a historical-ticket closure. The historical `03-05` CK remains unchanged.
 
