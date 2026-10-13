@@ -1,6 +1,6 @@
 # SEM-CUTOVER-004 — One versioned stepwise extraction request and response envelope
 
-**Status:** `planned` · **Size:** M · **Owner:** offline request/response specification and compiler selection, not live dispatch · **Dependency:** 003 independent CK PASS + 002 approved authority. Explicit `GO` required.
+**Status:** `approved` after independent CK `PASS` for reviewed commit `1f4519ec292b2a5ef6fa326116d5f85d0887b7cf` ([review record](../../../feedback/SEM-CUTOVER-004-1f4519e-review.md)). · **Size:** M · **Owner:** offline request/response specification and compiler selection, not live dispatch · **Dependency:** 003 independent CK PASS + 002 approved authority. Explicit `GO` required.
 
 ## Exact objective
 
