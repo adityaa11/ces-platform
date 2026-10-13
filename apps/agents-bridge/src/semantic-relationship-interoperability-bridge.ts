@@ -24,7 +24,7 @@ export function projectStepwiseSlotsForRel03(request: StepwiseRelationshipEnvelo
     slots.add(slot.slot);
     const base = { slot: slot.slot, pageNumber: slot.pageNumber, locatorType: slot.locatorType, locatorId: slot.locatorId, sourceSha256: request.sourceSnapshot.sourceSha256, ...(slot.assetIdentity === undefined ? {} : { assetIdentity: slot.assetIdentity }) } as const;
     if (slot.role === "owned_source" && slot.ownership === "independently_owned" && slot.status === "ready") projected.push({ ...base, role: "owned_source" });
-    else if (slot.role === "context_only_reference" && slot.ownership === "context_only_reference" && slot.status === "ready") projected.push({ ...base, role: "reference_context" });
+    else if (slot.role === "context_only_reference" && slot.ownership === "context_only_reference" && (slot.status === "ready" || (slot.status === "pending_unexamined_visual" && slot.locatorType === "visual_region" && slot.assetIdentity !== undefined))) projected.push({ ...base, role: "reference_context" });
     else if (slot.role === "pending_authorized_media" && slot.ownership === "independently_owned" && slot.status === "pending_unexamined_visual" && slot.locatorType === "visual_region") projected.push({ ...base, role: "pending_authorized_media" });
     else reject(`stepwise role/status/ownership combination is not trusted for ${slot.slot}.`);
   }
