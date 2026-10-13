@@ -14,7 +14,7 @@ const relationshipRequest = () => {
   const revisionBase = {
     contractVersion: relationshipContractVersion,
     relationshipLineageId,
-    scope: { projectId: scope.projectId, workspaceId: scope.workspaceId, bundleId: scope.bundleId, documentId: scope.documentId, executionId: scope.executionId, artifactId: snapshot.artifactId, sourceSha256 },
+    scope: { projectId: scope.projectId, workspaceId: scope.workspaceId, bundleId: scope.bundleId, documentId: scope.documentId, executionId: snapshot.executionId, artifactId: snapshot.artifactId, sourceSha256 },
     normalizedDocument: snapshot,
     ownedSource: { slot: "slot-000001", pageNumber: 1, locatorType: "text_block" as const, locatorId: "text-1", sourceSha256 },
     contextSource: { slot: "slot-000002", pageNumber: 1, locatorType: "text_block" as const, locatorId: "text-2", sourceSha256 },
