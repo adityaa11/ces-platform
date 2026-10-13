@@ -4,7 +4,11 @@
 - **Batch:** `BSS-V2-004-03-05 relationship-lifecycle successor plan`
 - **Authorization:** `HMN-BSS-V2-004-03-05-REL-03-008`
 - **Frozen authority:** `project's goal/Backend_Phase/relationship-lifecycle-successor-plan/REL-03-pure-interface-handoff.md` and `project's goal/feedback/BSS-V2-004-03-05-REL-03-hmn-008.md`
-- **Base HEAD:** `393589b72ec015966bca1025c6e817fef35b46a6`
+- **Frozen ticket:** `project's goal/Backend_Phase/relationship-lifecycle-successor-plan/BSS-V2-004-03-05-REL-03-deterministic-finalizer-scope-closure.md`
+- **Ticket state:** `awaiting_review`
+- **Implementation commit:** `19343d7a3585bb1ba7ec54d24370a3c3fcec2421`
+- **Candidate tree SHA:** `5758d78e5a244a31c9feaa98351b94cbe7831c42`
+- **Base:** `393589b72ec015966bca1025c6e817fef35b46a6`
 - **Checkpoint state:** `awaiting_review`
 
 ## Bounded change
