@@ -1,6 +1,6 @@
 # SEM-CUTOVER-001 — Actual-HEAD inventory and frozen conflict ledger
 
-**Status:** `planned` · **Size:** S · **Work class:** read-only contract/evidence inventory · **Dependency:** accessible current local repository and PERC-RESET-008 decision evidence. **GO:** explicit `GO SEM-CUTOVER-001` only.
+**Status:** `approved` · **Size:** S · **Work class:** read-only contract/evidence inventory · **Dependency:** accessible current local repository and PERC-RESET-008 decision evidence. **GO:** explicit `GO SEM-CUTOVER-001` only.
 
 ## Exact objective
 
