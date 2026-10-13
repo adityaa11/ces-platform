@@ -1,0 +1,38 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { buildStepwiseRelationshipEnvelopeRequest, buildStepwiseSourcePacket, prepareProvisionalSemanticCompositeAccounting } from "@atlas/skills";
+import { prepareStepwiseRel03Interoperability, projectStepwiseSlotsForRel03 } from "../src/semantic-relationship-interoperability-bridge.js";
+
+const sourceSha256 = "a".repeat(64);
+const relationshipScope = { projectId: "project", workspaceId: "workspace", bundleId: "bundle", documentId: "document", executionId: "perception-execution", artifactId: "document", sourceSha256 };
+const semanticScope = { projectId: "project", workspaceId: "workspace", bundleId: "bundle", documentId: "document", executionId: "semantic-execution", sourceSha256 };
+const request = () => buildStepwiseRelationshipEnvelopeRequest(buildStepwiseSourcePacket({ document: { version: "v1", executionId: relationshipScope.executionId, artifactId: "document", sourceSha256, perception: { capability: "atlas.document.perceive", contractVersion: "v1" }, provider: { name: "docling", processor: "pdf", executionId: relationshipScope.executionId, processedAt: "2026-10-13T00:00:00.000Z" }, pages: [{ number: 1, textBlocks: [{ id: "a-owned", text: "Owned fact." }, { id: "z-context", text: "Context." }], tables: [], visualRegions: [] }] } }));
+const canonical = (candidateAssertions: readonly unknown[], inventory: readonly unknown[]) => ({ version: "v1", candidate_assertions: candidateAssertions, source_statement_inventory: inventory, questions: [] });
+const candidate = (id: string, locator: string) => ({ local_candidate_id: id, semantic_key: id, kind: "business_object", normalized_meaning: id, needs_resolution: false, payload: {}, evidence_refs: [{ page_number: 1, locator_type: "text_block", locator_id: locator, excerpt: locator }] });
+const raw = (relationship: boolean, ownedCandidates = 1) => ({ contract_version: "atlas.relationship-extraction-envelope/v1", semantic_proposal: { version: "v1", source_results: [{ slot: "slot-000001", classification: ownedCandidates === 0 ? "non_fact" : "candidate", candidates: Array.from({ length: ownedCandidates }, (_, index) => ({ semantic_key: `owned-${index}`, kind: "business_object", payload: {}, normalized_meaning: `Owned ${index}`, needs_resolution: false })), non_fact_reason: ownedCandidates === 0 ? "No candidate." : null, questions: [] }, { slot: "slot-000002", classification: "candidate", candidates: [{ semantic_key: "context-candidate", kind: "business_object", payload: {}, normalized_meaning: "Context candidate", needs_resolution: false }], non_fact_reason: null, questions: [] }] }, relationship_proposals: relationship ? [{ owned_source_slot: "slot-000001", context_source_slot: "slot-000002", source_evidence_slots: ["slot-000001", "slot-000002"], relationship_type: "context_qualifies", direction: "context_to_owned", contextual_role: "legend", necessity: "essential", uncertainty: "medium", proposed_meaning: "Context qualifies owned.", source_language: "en", candidate_refs: [{ source_slot: "slot-000001", candidate_index: 0 }], predecessor: null }] : [] });
+const bridge = (response: unknown) => prepareStepwiseRel03Interoperability({ request: request(), rawResponse: response, relationshipScope, providerProvenance: { provider: "offline", model: "fixture", endpoint: "test", attempt: 1, runId: "run" }, trustedPriorRevisions: [] });
+
+test("RC-INT-001: independent extraction composes with distinct executions", () => {
+  const prepared = bridge(raw(false, 0)); const req = request();
+  const composite = prepareProvisionalSemanticCompositeAccounting({ scope: semanticScope, request: req, canonicalResult: canonical([candidate("context", "z-context")], [{ source_unit_id: "owned", page_number: 1, locator_type: "text_block", locator_id: "a-owned", classification: "non_fact", destination_local_candidate_ids: [], non_fact_reason: "No candidate." }, { source_unit_id: "context", page_number: 1, locator_type: "text_block", locator_id: "z-context", classification: "candidate", destination_local_candidate_ids: ["context"] }]), relationshipRevisions: [], currentResponseRelationshipRevisions: prepared.currentResponseRevisions, providerCandidateTuples: [{ sourceSlot: "slot-000002", candidateIndex: 0 }], independentCandidateTuples: prepared.qualified.independent_candidate_tuples.map((item) => ({ sourceSlot: item.source_slot, candidateIndex: item.candidate_index })), optionalRelationshipTuples: [], canonicalCandidateTuples: [{ sourceSlot: "slot-000002", candidateIndex: 0, canonicalCandidateId: "context" }], deferredInterpretations: [] });
+  assert.equal(composite.scope.executionId, "semantic-execution"); assert.equal(prepared.currentResponseRevisions.length, 0);
+});
+
+test("RC-INT-002/003: genuine REL-01 revisions and REL-03 IDs reach composite accounting unchanged", () => {
+  const prepared = bridge(raw(true, 2)); const req = request(); const deferred = prepared.qualified.deferred_interpretations[0]!;
+  const composite = prepareProvisionalSemanticCompositeAccounting({ scope: semanticScope, request: req, canonicalResult: canonical([candidate("independent", "a-owned"), candidate("context", "z-context")], [{ source_unit_id: "owned", page_number: 1, locator_type: "text_block", locator_id: "a-owned", classification: "candidate", destination_local_candidate_ids: ["independent"] }, { source_unit_id: "context", page_number: 1, locator_type: "text_block", locator_id: "z-context", classification: "candidate", destination_local_candidate_ids: ["context"] }]), relationshipRevisions: [], currentResponseRelationshipRevisions: prepared.currentResponseRevisions, providerCandidateTuples: [{ sourceSlot: "slot-000001", candidateIndex: 0 }, { sourceSlot: "slot-000001", candidateIndex: 1 }, { sourceSlot: "slot-000002", candidateIndex: 0 }], independentCandidateTuples: prepared.qualified.independent_candidate_tuples.map((item) => ({ sourceSlot: item.source_slot, candidateIndex: item.candidate_index })), optionalRelationshipTuples: [], canonicalCandidateTuples: [{ sourceSlot: "slot-000001", candidateIndex: 1, canonicalCandidateId: "independent" }, { sourceSlot: "slot-000002", candidateIndex: 0, canonicalCandidateId: "context" }], deferredInterpretations: prepared.qualified.deferred_interpretations });
+  assert.equal(composite.deferredInterpretations[0]?.deferred_interpretation_id, deferred.deferred_interpretation_id); assert.equal(composite.relationshipDependencies[0]?.scope.executionId, relationshipScope.executionId);
+});
+
+test("RC-INT-004: current-response revisions remain separate from prior request projection", () => {
+  const prepared = bridge(raw(true));
+  assert.equal(request().provisionalRelationships.relationships.length, 0);
+  assert.equal(prepared.currentResponseRevisions.length, 1);
+  assert.equal(prepared.currentResponseRevisions[0]?.normalizedDocument.executionId, relationshipScope.executionId);
+});
+
+test("RC-INT-005: forged source identity and malformed slot state reject before composition", () => {
+  assert.throws(() => prepareStepwiseRel03Interoperability({ request: request(), rawResponse: raw(true), relationshipScope: { ...relationshipScope, sourceSha256: "b".repeat(64) }, providerProvenance: { provider: "offline", model: "fixture", endpoint: "test", attempt: 1 }, trustedPriorRevisions: [] }), /source snapshot/);
+  const invalid = { ...request(), sourceSlots: request().sourceSlots.map((slot) => slot.slot === "slot-000001" ? { ...slot, role: "owned_source" as const, status: "pending_unexamined_visual" as const } : slot) };
+  assert.throws(() => projectStepwiseSlotsForRel03(invalid), /role\/status\/ownership/);
+});

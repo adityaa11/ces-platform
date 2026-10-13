@@ -118,24 +118,30 @@ const immutableRevision = (revision: ProvisionalRelationshipRevisionReference) =
 };
 const exactLocator = (slot: StepwiseRelationshipEnvelopeRequest["sourceSlots"][number], sourceSha256: string) => stableJson(sourceLocator(slot, sourceSha256));
 
-function validateRelationshipDependencies(input: { readonly scope: ProvisionalSemanticScope; readonly request: StepwiseRelationshipEnvelopeRequest; readonly relationshipRevisions: readonly ProvisionalRelationshipRevisionReference[] }) {
+function validateRelationshipDependencies(input: { readonly scope: ProvisionalSemanticScope; readonly request: StepwiseRelationshipEnvelopeRequest; readonly relationshipRevisions: readonly ProvisionalRelationshipRevisionReference[]; readonly currentResponseRelationshipRevisions?: readonly ProvisionalRelationshipRevisionReference[] }) {
   const slots = new Map(input.request.sourceSlots.map((slot) => [slot.slot, slot]));
   if (slots.size !== input.request.sourceSlots.length) reject("request has duplicate source slots.");
   const extension = input.request.provisionalRelationships.relationships;
-  const revisionByHash = new Map(input.relationshipRevisions.map((revision) => [revision.revisionHash, revision]));
-  if (revisionByHash.size !== input.relationshipRevisions.length) reject("relationship revision references are duplicated.");
+  const currentResponseRelationshipRevisions = input.currentResponseRelationshipRevisions ?? [];
+  const allRevisions = [...input.relationshipRevisions, ...currentResponseRelationshipRevisions];
+  const revisionByHash = new Map(allRevisions.map((revision) => [revision.revisionHash, revision]));
+  if (revisionByHash.size !== allRevisions.length) reject("relationship revision references are duplicated.");
+  if (input.relationshipRevisions.length !== extension.length) reject("a supplied relationship revision is not represented in the request extension.");
+  const validateRevision = (revision: ProvisionalRelationshipRevisionReference) => {
+    if (!isHash(revision.revisionHash) || revision.contractVersion !== relationshipContractVersion || revision.revisionHash !== relationshipSha256(immutableRevision(revision))) reject("relationship dependency immutable provenance is malformed.");
+    if (stableJson(revision.normalizedDocument) !== stableJson(input.request.sourceSnapshot) || revision.scope.projectId !== input.scope.projectId || revision.scope.workspaceId !== input.scope.workspaceId || revision.scope.bundleId !== input.scope.bundleId || revision.scope.documentId !== input.scope.documentId || revision.scope.artifactId !== input.request.sourceSnapshot.artifactId || revision.scope.sourceSha256 !== input.request.sourceSnapshot.sourceSha256 || (revision.scope.executionId !== input.scope.executionId && revision.scope.executionId !== revision.normalizedDocument.executionId)) reject("relationship dependency belongs to a foreign source snapshot.");
+    const owned = slots.get(revision.ownedSource.slot) ?? reject("relationship dependency does not match request slots.");
+    const context = slots.get(revision.contextSource.slot) ?? reject("relationship dependency does not match request slots.");
+    if (stableJson(revision.ownedSource) !== exactLocator(owned, input.request.sourceSnapshot.sourceSha256) || stableJson(revision.contextSource) !== exactLocator(context, input.request.sourceSnapshot.sourceSha256) || revision.authorization !== null) reject("relationship dependency provenance does not match exact request source slots.");
+  };
+  for (const revision of allRevisions) validateRevision(revision);
   for (const relationship of extension) {
     const revision = revisionByHash.get(relationship.revision_hash) ?? reject("relationship dependency is foreign or missing.");
-    if (!isHash(revision.revisionHash)) reject("relationship dependency is foreign or missing.");
-    if (revision.contractVersion !== relationshipContractVersion || revision.revisionHash !== relationshipSha256(immutableRevision(revision))) reject("relationship dependency immutable provenance is malformed.");
     if (revision.relationshipLineageId !== relationship.relationship_lineage_id || revision.relationship.contextualRole !== relationship.contextual_role || revision.relationship.necessity !== relationship.necessity || revision.uncertainty !== relationship.uncertainty || revision.disposition !== relationship.disposition) reject("relationship dependency does not match the request extension.");
-    if (stableJson(revision.normalizedDocument) !== stableJson(input.request.sourceSnapshot) || revision.scope.projectId !== input.scope.projectId || revision.scope.workspaceId !== input.scope.workspaceId || revision.scope.bundleId !== input.scope.bundleId || revision.scope.documentId !== input.scope.documentId || revision.scope.executionId !== input.scope.executionId || revision.scope.artifactId !== input.request.sourceSnapshot.artifactId || revision.scope.sourceSha256 !== input.request.sourceSnapshot.sourceSha256) reject("relationship dependency belongs to a foreign source snapshot.");
     const owned = slots.get(relationship.owned_source_slot) ?? reject("relationship dependency does not match request slots.");
     const context = slots.get(relationship.context_source_slot) ?? reject("relationship dependency does not match request slots.");
     if (relationship.source_evidence_slots[0] !== owned.slot || relationship.source_evidence_slots[1] !== context.slot) reject("relationship dependency does not match request slots.");
-    if (stableJson(revision.ownedSource) !== exactLocator(owned, input.request.sourceSnapshot.sourceSha256) || stableJson(revision.contextSource) !== exactLocator(context, input.request.sourceSnapshot.sourceSha256) || revision.authorization !== null) reject("relationship dependency provenance does not match exact request source slots.");
   }
-  if (revisionByHash.size !== extension.length) reject("a supplied relationship revision is not represented in the request extension.");
   return { slots, revisionByHash };
 }
 
@@ -193,6 +199,8 @@ export function prepareProvisionalSemanticCompositeAccounting(input: {
   readonly request: StepwiseRelationshipEnvelopeRequest;
   readonly canonicalResult: unknown;
   readonly relationshipRevisions: readonly ProvisionalRelationshipRevisionReference[];
+  /** Revisions prepared from the current parsed response are distinct from request-projected history. */
+  readonly currentResponseRelationshipRevisions?: readonly ProvisionalRelationshipRevisionReference[];
   readonly providerCandidateTuples: readonly ProviderCandidateTuple[];
   readonly independentCandidateTuples: readonly ProviderCandidateTuple[];
   readonly optionalRelationshipTuples: readonly ProviderCandidateTuple[];
@@ -235,7 +243,8 @@ export function prepareProvisionalSemanticCompositeAccounting(input: {
     const key = tupleKey(tuple);
     const source = owned.get(tuple.sourceSlot);
     const revision = revisionByHash.get(deferred.relationship_revision_hash);
-    if (!source || !universe.has(key) || classifications.has(key) || deferredByTuple.has(key) || deferredIds.has(deferred.deferred_interpretation_id) || !revision || deferred.deferred_interpretation_id !== provisionalSemanticDeferredInterpretationId(input.scope, tuple, deferred.relationship_revision_hash) || deferred.reason !== "essential_provisional_relationship" || deferred.canonical_candidate_id !== null || !["low", "medium", "high", "unknown"].includes(deferred.uncertainty) || deferred.proposed_candidate_meaning === undefined || stableJson(deferred.source?.owned_source) !== exactLocator(source, input.scope.sourceSha256) || stableJson(deferred.source?.context_source) !== stableJson(revision.contextSource) || revision.relationship.necessity !== "essential" || !revision.candidateRefs.some((candidate) => tupleKey(candidate) === key)) reject("deferred descriptor is foreign, malformed, duplicated, or lacks an immutable essential dependency.");
+    const expectedRel03Id = revision === undefined ? undefined : relationshipSha256({ scope: revision.scope, sourceSlot: tuple.sourceSlot, candidateIndex: tuple.candidateIndex, relationshipRevisionHash: deferred.relationship_revision_hash });
+    if (!source || !universe.has(key) || classifications.has(key) || deferredByTuple.has(key) || deferredIds.has(deferred.deferred_interpretation_id) || !revision || deferred.deferred_interpretation_id !== expectedRel03Id || deferred.reason !== "essential_provisional_relationship" || deferred.canonical_candidate_id !== null || !["low", "medium", "high", "unknown"].includes(deferred.uncertainty) || deferred.proposed_candidate_meaning === undefined || stableJson(deferred.source?.owned_source) !== exactLocator(source, input.scope.sourceSha256) || stableJson(deferred.source?.context_source) !== stableJson(revision.contextSource) || revision.relationship.necessity !== "essential" || !revision.candidateRefs.some((candidate) => tupleKey(candidate) === key)) reject("deferred descriptor is foreign, malformed, duplicated, or lacks an immutable essential dependency.");
     classifications.set(key, "essential_dependent_deferred"); deferredByTuple.set(key, deferred); deferredIds.add(deferred.deferred_interpretation_id);
   }
   if (classifications.size !== universe.size) reject("provider candidate tuple is missing composite accounting.");
