@@ -21,11 +21,15 @@ test("zero visual and empty provisional relationships need no verifier", () => {
 });
 
 test("fake fenced staging is replay-stable and rejects mismatches", () => {
-  const sidecar = prepareProvisionalSemanticSidecar({ scope, request: request(), canonicalResult: canonical, relationshipRevisions: [] }); const repository = new InMemoryProvisionalSemanticSidecarRepository();
+  const built = request();
+  const sidecar = prepareProvisionalSemanticSidecar({ scope, request: built, canonicalResult: canonical, relationshipRevisions: [] }); const repository = new InMemoryProvisionalSemanticSidecarRepository();
   const first = repository.acquireLease(scope, "key-1"); const winner = repository.stage({ sidecar, idempotencyKey: "key-1", lease: first });
   assert.throws(() => repository.acknowledge({ sidecar: winner, idempotencyKey: "key-1", failAfterCommit: true }), /ACK_LOSS_SIMULATED/);
   const replay = repository.acquireLease(scope, "key-1"); assert.equal(repository.stage({ sidecar, idempotencyKey: "key-1", lease: replay }).sidecarHash, winner.sidecarHash);
   assert.throws(() => repository.stage({ sidecar: { ...sidecar, sidecarHash: "b".repeat(64) }, idempotencyKey: "key-1", lease: replay }), /staged winner/);
   assert.throws(() => repository.stage({ sidecar, idempotencyKey: "key-1", lease: first }), /stale lease/);
-  assert.throws(() => prepareProvisionalSemanticSidecar({ scope: { ...scope, sourceSha256: "b".repeat(64) }, request: request(), canonicalResult: canonical, relationshipRevisions: [] }), /source SHA/);
+  assert.throws(() => prepareProvisionalSemanticSidecar({ scope: { ...scope, sourceSha256: "b".repeat(64) }, request: built, canonicalResult: canonical, relationshipRevisions: [] }), /source SHA/);
+  const foreign = { revisionHash: "c".repeat(64), sourceSnapshot: built.sourceSnapshot };
+  assert.throws(() => prepareProvisionalSemanticSidecar({ scope, request: built, canonicalResult: canonical, relationshipRevisions: [foreign] }), /not represented/);
+  assert.throws(() => prepareProvisionalSemanticSidecar({ scope, request: built, canonicalResult: canonical, relationshipRevisions: [foreign, foreign] }), /duplicated/);
 });
