@@ -2,9 +2,10 @@
 
 - **Ticket:** `SEM-CUTOVER-005-SUCCESSOR-COMPOSITE-ACCOUNTING` — additive companion-contract extension
 - **Batch:** `SEM-CUTOVER`
+- **Status:** `approved` after CK `PASS` for reviewed remediation commit `7e647cb867d51b811547a0b6edce69c2cc8e847f` (verification: `project's goal/feedback/SEM-CUTOVER-005-7e647cb-verification.md`)
 - **HMN authorization ID:** `HMN-SEM-CUTOVER-005-001`
 - **Invocation:** explicit user `hmn` delegation; human decision `APPROVE — bounded successor composite-accounting contract planning only`.
-- **Current workflow state:** the historical `SEM-CUTOVER-005` is independently closed by CK `PASS`; REL-03's isolated pure descriptor interface is independently closed by CK `PASS`. This successor is planning-complete but has no implementation checkpoint.
+- **Current workflow state:** the historical `SEM-CUTOVER-005` is independently closed by CK `PASS`; REL-03's isolated pure descriptor interface is independently closed by CK `PASS`; this successor is approved after its bounded implementation CK `PASS`.
 
 ## Frozen ticket reference
 
