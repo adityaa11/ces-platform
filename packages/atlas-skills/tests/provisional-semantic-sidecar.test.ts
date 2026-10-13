@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildStepwiseRelationshipEnvelopeRequest, buildStepwiseSourcePacket, InMemoryProvisionalSemanticSidecarRepository, prepareProvisionalSemanticSidecar } from "../src/index.ts";
+import { buildStepwiseRelationshipEnvelopeRequest, buildStepwiseSourcePacket, InMemoryProvisionalSemanticSidecarRepository, prepareProvisionalSemanticCompositeAccounting, prepareProvisionalSemanticSidecar } from "../src/index.ts";
 import { relationshipContractVersion, relationshipSha256 } from "../src/relationship-provenance.ts";
 
 const sourceSha256 = "a".repeat(64);
@@ -77,4 +77,50 @@ test("fake fenced staging is replay-stable and rejects mismatches", () => {
   const foreign = { revisionHash: "c".repeat(64), sourceSnapshot: built.sourceSnapshot };
   assert.throws(() => prepareProvisionalSemanticSidecar({ scope, request: built, canonicalResult: canonical, relationshipRevisions: [foreign] }), /not represented/);
   assert.throws(() => prepareProvisionalSemanticSidecar({ scope, request: built, canonicalResult: canonical, relationshipRevisions: [foreign, foreign] }), /duplicated/);
+});
+
+test("composite accounting keeps independent tuples and pending visuals in their existing truthful lanes", () => {
+  const built = request();
+  const input = { scope, request: built, canonicalResult: canonical, relationshipRevisions: [], providerCandidateTuples: [{ sourceSlot: "slot-000001", candidateIndex: 0 }], independentCandidateTuples: [{ sourceSlot: "slot-000001", candidateIndex: 0 }], optionalRelationshipTuples: [], canonicalCandidateTuples: [{ sourceSlot: "slot-000001", candidateIndex: 0, canonicalCandidateId: "candidate-1" }], deferredInterpretations: [] } as const;
+  const composite = prepareProvisionalSemanticCompositeAccounting(input);
+  assert.equal(composite.tupleCoverage[0]?.disposition, "independently_finalized");
+  assert.equal(composite.sourceCoverage.find((item) => item.slot === "slot-000002")?.disposition, "pending_unexamined_visual");
+  assert.equal(prepareProvisionalSemanticCompositeAccounting(input).compositeHash, composite.compositeHash);
+});
+
+test("composite accounting represents fully deferred source meaning without a fabricated V1 candidate", () => {
+  const built = relationshipRequest();
+  const deferred = { deferred_interpretation_id: "d".repeat(64), relationship_revision_hash: built.revision.revisionHash, provider_candidate_tuple: { source_slot: "slot-000001", candidate_index: 0 }, source: { owned_source: built.revision.ownedSource, context_source: built.revision.contextSource }, uncertainty: "medium" as const, proposed_candidate_meaning: { meaning: "Requires its legend." }, reason: "essential_provisional_relationship" as const, canonical_candidate_id: null };
+  const input = { scope, request: built.request, canonicalResult: { version: "v1", candidate_assertions: [], source_statement_inventory: [], questions: [] }, relationshipRevisions: [built.revision], providerCandidateTuples: [{ sourceSlot: "slot-000001", candidateIndex: 0 }], independentCandidateTuples: [], optionalRelationshipTuples: [], canonicalCandidateTuples: [], deferredInterpretations: [deferred] } as const;
+  const composite = prepareProvisionalSemanticCompositeAccounting(input);
+  assert.deepEqual(composite.sourceCoverage, [{ slot: "slot-000001", disposition: "essential_dependent_deferred" }]);
+  assert.equal(composite.tupleCoverage[0]?.deferredInterpretationId, deferred.deferred_interpretation_id);
+});
+
+test("composite accounting combines fully deferred and independently finalized sources, including optional tuples", () => {
+  const built = relationshipRequest();
+  const requestWithTwoOwnedSources = { ...built.request, sourceSlots: built.request.sourceSlots.map((slot) => slot.slot === "slot-000002" ? { ...slot, role: "owned_source" as const, status: "ready" as const } : slot) };
+  const deferred = { deferred_interpretation_id: "d".repeat(64), relationship_revision_hash: built.revision.revisionHash, provider_candidate_tuple: { source_slot: "slot-000001", candidate_index: 0 }, source: { owned_source: built.revision.ownedSource, context_source: built.revision.contextSource }, uncertainty: "medium" as const, proposed_candidate_meaning: { meaning: "Requires its legend." }, reason: "essential_provisional_relationship" as const, canonical_candidate_id: null };
+  const canonicalSecondSource = { version: "v1", candidate_assertions: [{ ...canonical.candidate_assertions[0], local_candidate_id: "candidate-2", evidence_refs: [{ page_number: 1, locator_type: "text_block", locator_id: "text-2", excerpt: "Legend." }] }], source_statement_inventory: [{ source_unit_id: "source-2", page_number: 1, locator_type: "text_block", locator_id: "text-2", classification: "candidate", destination_local_candidate_ids: ["candidate-2"] }], questions: [] };
+  const composite = prepareProvisionalSemanticCompositeAccounting({ scope, request: requestWithTwoOwnedSources, canonicalResult: canonicalSecondSource, relationshipRevisions: [built.revision], providerCandidateTuples: [{ sourceSlot: "slot-000001", candidateIndex: 0 }, { sourceSlot: "slot-000002", candidateIndex: 0 }], independentCandidateTuples: [], optionalRelationshipTuples: [{ sourceSlot: "slot-000002", candidateIndex: 0 }], canonicalCandidateTuples: [{ sourceSlot: "slot-000002", candidateIndex: 0, canonicalCandidateId: "candidate-2" }], deferredInterpretations: [deferred] });
+  assert.deepEqual(composite.tupleCoverage.map((item) => item.disposition), ["essential_dependent_deferred", "optional_relationship_but_independent"]);
+  assert.deepEqual(composite.sourceCoverage, [{ slot: "slot-000001", disposition: "essential_dependent_deferred" }, { slot: "slot-000002", disposition: "canonical_semantic_v1" }]);
+});
+
+test("composite accounting retains a genuine non_fact source without inventing deferred meaning", () => {
+  const built = request();
+  const nonFact = { version: "v1", candidate_assertions: [], source_statement_inventory: [{ source_unit_id: "source-1", page_number: 1, locator_type: "text_block", locator_id: "text-1", classification: "non_fact", destination_local_candidate_ids: [], non_fact_reason: "Page decoration only." }], questions: [] };
+  const composite = prepareProvisionalSemanticCompositeAccounting({ scope, request: built, canonicalResult: nonFact, relationshipRevisions: [], providerCandidateTuples: [], independentCandidateTuples: [], optionalRelationshipTuples: [], canonicalCandidateTuples: [], deferredInterpretations: [] });
+  assert.equal(composite.sourceCoverage.find((item) => item.slot === "slot-000001")?.disposition, "canonical_semantic_v1");
+  assert.equal(composite.deferredInterpretations.length, 0);
+});
+
+test("composite accounting rejects double ownership, missing revision identity, false non_fact, and partial-result detachment", () => {
+  const built = relationshipRequest();
+  const deferred = { deferred_interpretation_id: "d".repeat(64), relationship_revision_hash: built.revision.revisionHash, provider_candidate_tuple: { source_slot: "slot-000001", candidate_index: 0 }, source: { owned_source: built.revision.ownedSource, context_source: built.revision.contextSource }, uncertainty: "medium" as const, proposed_candidate_meaning: { meaning: "Requires its legend." }, reason: "essential_provisional_relationship" as const, canonical_candidate_id: null };
+  const base = { scope, request: built.request, canonicalResult: { version: "v1", candidate_assertions: [], source_statement_inventory: [], questions: [] }, relationshipRevisions: [built.revision], providerCandidateTuples: [{ sourceSlot: "slot-000001", candidateIndex: 0 }], independentCandidateTuples: [], optionalRelationshipTuples: [], canonicalCandidateTuples: [], deferredInterpretations: [deferred] } as const;
+  assert.throws(() => prepareProvisionalSemanticCompositeAccounting({ ...base, independentCandidateTuples: [{ sourceSlot: "slot-000001", candidateIndex: 0 }] }), /duplicated|represented more than once|immutable essential dependency/);
+  assert.throws(() => prepareProvisionalSemanticCompositeAccounting({ ...base, deferredInterpretations: [{ ...deferred, relationship_revision_hash: "b".repeat(64) }] }), /immutable essential dependency/);
+  assert.throws(() => prepareProvisionalSemanticCompositeAccounting({ ...base, canonicalResult: { version: "v1", candidate_assertions: [], source_statement_inventory: [{ source_unit_id: "source-1", page_number: 1, locator_type: "text_block", locator_id: "text-1", classification: "non_fact", destination_local_candidate_ids: [], non_fact_reason: "Decorative only." }], questions: [] } }), /non_fact conflicts/);
+  assert.throws(() => prepareProvisionalSemanticCompositeAccounting({ ...base, deferredInterpretations: [] }), /missing composite accounting/);
 });
