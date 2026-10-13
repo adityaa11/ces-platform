@@ -31,3 +31,9 @@ Freeze one **canonical offline semantic successor** beginning at PERC-RESET-008 
 At least: profile ID, method/version, prompt/JSON schema/response envelope hashes, accepted packet/source map, provisional relationship and staged replay identity, effective CK target, review commands/outcomes, semantic V1 finalizer authority, foreign/zero-visual negative evidence, no-live counts, limitations, old-compatibility retirement list, future ownership by 08-03-02/03/IDSER-012-02 and real reviewer/publish workflow.
 
 **HARD STOP:** If 03-05 has not independently passed, mark this leaf `BLOCKED` and DO NOT issue canonical semantic successor baseline. If any pre-existing local REL-03 candidate might be overwritten, stop. On pass, publish approved baseline with an explicit `EFFECTIVE_AFTER=03-05 independent CK PASS` statement—not a self-approved value.
+
+---
+
+## Binding final CK sequence
+
+SEM-006 component CK PASS -> SEM-007 integrated CK PASS (with separately reviewed durable composite replay) -> **independent consolidated BSS-V2-004-03-05 CK re-review** at exact candidate SHA -> SEM-008 baseline record/review. The full 03-05 verdict is a within-008 checkpoint, not a presumed already-satisfied prerequisite for gathering read-only evidence. Only a separate actual PASS closes CK-001.a/b and allows EFFECTIVE_AFTER=03-05 independent CK PASS. Otherwise leave the baseline NOT EFFECTIVE and return to the named owner. Retain historical 03-05 CHANGES_REQUIRED unchanged.

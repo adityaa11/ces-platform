@@ -31,3 +31,11 @@ Replace the legacy **extraction** invocation in `apps/agents-bridge/src/semantic
 Compose tests must use isolated resources only, never accepted `atlas-canonical-perception` DB/volumes. Zero external calls. Verify source/packet/provider/finalizer imports, resource bounds, service credentials, replay and strict trace. If fulfilling this requires scope crossing provider-neutral API/REL-03 DB ownership, stop `OWNERSHIP_CONFLICT_BLOCKED` and request a narrow sub-ticket.
 
 **Terminal:** `READY_FOR_CK` after positive/negative tests; independent CK PASS unlocks final 03-05 review, not live provider enablement.
+
+---
+
+## Hard REL-03 GO prerequisite and ordered effects
+
+Before SEM-007 GO, an independently CK-approved REL-03/persistence interface must support one fenced atomic/idempotent semantic-result + relationship-revisions + pending-sidecar staged winner (or explicitly CK-qualified equivalent recovery). Existing Bridge semantic-result-replay currently stages only the ordinary envelope, so fake sidecar counters alone are insufficient. Stop for a separately authorized narrow REL integration if the local protected candidate lacks this port; never modify it implicitly.
+
+Execution order: RUN-003 source/grants -> exact stepwise packet/profile -> authorized ephemeral visual bytes, typed provider-neutral transport and qualified fake preflight -> strict response envelope -> pure canonical finalizer -> prepare relationship revisions and pending companion ledger -> validate entire composite -> commit one fenced winner. Do not call append-producing REL-01 materialization ahead of finalization. Use isolated real durable-store tests in addition to non-inert fake counters: finalizer failure after valid envelope, crash before/after commit, lease loss, stale claimant, duplicate retry, ack-loss and sidecar hash conflict cannot leave orphaned or mismatched states. If only fake tests exist, RC-007-04 and full 03-05 replay must remain blocked. Normal D1 remains perceived; zero external provider calls.

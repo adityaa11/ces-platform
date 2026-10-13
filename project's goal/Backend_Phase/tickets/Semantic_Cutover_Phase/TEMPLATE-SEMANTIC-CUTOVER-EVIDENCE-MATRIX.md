@@ -22,3 +22,17 @@
 **Current hard limitations:** ____ **Verified expected limitations:** ____ **Failed reviewer clauses:** ____ **STOP condition:** ____
 
 `READY_FOR_CK` may only be stated after test evidence exists. `PASS` belongs only to independent CK. Never repair expected values or historical oracle bytes to turn a failure green.
+
+---
+
+## Required supplemental evidence
+
+| Oracle | Positive | Negative | Proof classification |
+| --- | --- | --- | --- |
+| Composite source coverage | Exclusive V1+sidecar account of owned/context/pending locators | Image-only, unknown legend, unexamined visual, false non_fact, duplicate owner | PURE/FAKE |
+| Accepted-context authority | Trusted verifier/redemption bound to revision/source/grant | Forged-looking object, stale/revoked/foreign decision | COMPONENT |
+| Validation-before-effects | Complete proposal/finalizer/sidecar validated before append | Valid REL response then finalizer failure leaves zero durable effects | DURABLE |
+| Atomic replay | One fenced composite result+revisions+sidecar winner | Crash, stale lease, ack-loss, repeated retry, sidecar mismatch | DURABLE |
+| Full 03-05 CK | Independent reviewer checks finalizer and worker after 007 | Component CK alone not treated as entire 03-05 PASS | INDEPENDENT CK |
+
+Record distinct reviewed SHAs for SEM-006 CK, SEM-007 CK, full original 03-05 CK and SEM-008 baseline. Human relationship confirmation remains downstream, not required for extraction.

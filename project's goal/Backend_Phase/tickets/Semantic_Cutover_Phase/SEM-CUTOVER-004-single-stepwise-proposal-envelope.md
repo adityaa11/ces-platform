@@ -33,3 +33,11 @@ Own a narrowly new request composition module (e.g. `packages/atlas-skills/src/s
 | RC-004-05 | One logical request; zero external provider calls/jobs/permits/reservations | Model stages do not cause eight provider invocations |
 
 **Stop:** `PROFILE_ID_COLLISION`, `OWNERSHIP_CONFLICT_BLOCKED`, new Zod contract authority required, missing source integrity. **Terminal:** independent CK PASS on exact request/schema/provenance fixtures.
+
+---
+
+## Response-profile identity and pure parsing
+
+Frozen v0.3.1 step 8 expects the ordinary semantic proposal, but this successor requires a strict REL envelope containing semantic_proposal and relationship_proposals. If instruction, schema or request bytes change, freeze a distinct successor profile ID/version and hashes while retaining the eight-stage methodology. Do not silently reuse immutable v0.3.1 identity.
+
+This ticket parses/validates without side effects, including semantic proposal and relationship candidate coordinates matched to the exact supplied slot map. Current REL-01 materializer calls appendForExecution and MUST NOT be used with durable repository effects before finalizer validation. SEM-005 owns preparation ordering; persistent commit belongs to separately approved REL/worker ownership.

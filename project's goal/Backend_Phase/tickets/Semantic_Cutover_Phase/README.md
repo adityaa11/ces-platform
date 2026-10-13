@@ -77,3 +77,13 @@ reviewBindings:
 ## Explicit limits
 
 This phase does not prove live-model semantic correctness, broad multilingual/OCR coverage, diagram understanding, real image-token admission, provider privacy posture, production scheduling, user-verification UI, chatbot decisions, Master publication, CES behavior, or commercial release.
+
+---
+
+## Binding amendment — dependency and review order (2026-10-13)
+
+The external planning ZIP is background only; the committed repository and independent CK evidence govern. PERC-RESET-008 PASS is confirmed in feedback/PERC-RESET-BATCH-08-9f31026-review.md.
+
+Keep ticket order 001–008, with one critical added prerequisite: SEM-001 inventories the protected local REL-03 candidate; SEM-002 assigns persistence ownership; a separately approved/CK-qualified durable composite staging boundary (or narrowly authorized REL-03 integration) is required **before 007 GO**. SEM-005 proves pure/fake sidecar contracts only, not SQL durability.
+
+SEM-006 CK = finalizer-component qualification, not entire original 03-05 PASS. SEM-007 CK = offline worker + durable replay integration. Then request a **separate full BSS-V2-004-03-05 CK** on exact final implementation SHA. Only after its PASS may SEM-008 freeze an effective successor baseline. Unverified relationships remain provisional without halting independent extraction; human confirmation is deferred to explicit authorized Master review or chatbot-assisted confirmation.

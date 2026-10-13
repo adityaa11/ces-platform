@@ -31,3 +31,13 @@ Prefer new sidecar interface, deterministic revision-hash functions and fake rep
 Use deterministic in-memory fake repository with tested positive-effect controls. No real DB mutation, real provider, admission or semantic queue. If fully atomic staging requires changes to REL-03 or DB owner, stop at exact handoff, create reviewable interface/evidence and obtain separate GO/HMN rather than violating REL-03 protection.
 
 **Terminal:** independent CK PASS of contract and fake replay behavior, or explicit `SCHEMA_FIT_BLOCKED` with a bounded alternative decision request.
+
+---
+
+## Composite preparation and real persistence boundary
+
+The companion state must preserve all eligible RUN-003 source locators, exact supplied-owned-slot set, legitimate V1 candidates/non_fact, meaningful unexamined visuals, conditional interpretations, relationship revisions, source/execution/profile hashes and review dependencies. No source can disappear or count twice as independently owned.
+
+**Pure preparation before durable effects:** parse strict envelope, check source/asset/relation identity, finalize canonical Semantic V1, prepare (do not yet append) immutable revisions and companion records, validate cross-artifact coverage. A finalizer error after a valid relationship envelope must cause zero append, sidecar stage or result stage. Existing REL-01 materialization is append-producing: an additional pure preparation port, if required, belongs to a separately authorized REL owner.
+
+**Durable owner:** only a separate approved persistence seam may stage a fenced atomic/idempotent composite winner (semantic result+revisions+sidecar) or CK-proven equivalent recovery protocol. Require crash-before/after-commit, stale lease, duplicate retry, ack-loss, and hash-mismatch negatives. This ticket's terminal CK proves pure/fake behavior only, NOT durable SQL consistency or final 03-05 replay PASS. Resolve the protected REL-03 integration before SEM-007.

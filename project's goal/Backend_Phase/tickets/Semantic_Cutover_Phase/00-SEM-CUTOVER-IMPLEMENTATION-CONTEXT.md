@@ -143,3 +143,15 @@ The program completes only if independent reviewers prove:
 - `project's goal/feedback/BSS-V2-BATCH-04.03-05-298021d-review.md` (CK-001.a/b).
 - Frozen `BSS-V2-004-03-05`, `08-01-04`, `08-02-01`, `08-03-02`, `08-03-03`, and IDSER-012-02-01 ticket texts.
 - REL-01 CK PASS and REL-02 CK PASS records; REL-03 local candidate existence noted but not remote-verified.
+
+---
+
+## Binding planning clarification — verification, accounting, and replay (2026-10-13)
+
+Subject to SEM-CUTOVER-002 HMN approval, missing *human* relationship verification never blocks independently supported extraction. Atlas records revision-bound provisional relationships and conditional dependent interpretations; only their promotion into accepted contextual evidence or published meaning is withheld. Forged/foreign references, invalid schemas, broken grants, and corrupted assets still fail at the affected technical boundary. Later Master publication review or explicit authenticated chatbot confirmation must be revision-bound; merely chatting or clicking Publish is not acceptance.
+
+Maintain a complete source-coverage ledger across canonical Semantic V1 and a separately governed pending/provisional companion record. Distinguish independently supplied owned slots, contextual reuse, and pending/unexamined meaningful visuals. pending_authorized_media is a transport state, not proof of understanding or justification for non_fact. Exact proposal coverage applies to slots actually supplied as owned; composite accounting covers every eligible RUN-003 locator. Image-only, zero-visual, and unresolved table/legend cases are mandatory.
+
+REL-01's materializer appends revisions while Bridge replay stages result separately. Validate the entire response, finalizer, and companion accounting before any durable effect; stage one fenced, atomic/idempotent composite winner (result, revisions, pending dependencies, source/profile hashes), or independently qualify an equivalent recovery protocol. In-memory fakes do not prove durable SQL integration. The locally protected REL-03 owner must be inventoried and separately approved before SEM-CUTOVER-007 GO. Do not write to canonical RUN-003 data.
+
+SEM-CUTOVER-006 CK verifies the finalizer component only. SEM-CUTOVER-007 CK verifies worker and actual durable integration. A separate consolidated independent BSS-V2-004-03-05 CK re-review must follow 007 and precede effective baseline freeze in 008. Original CK-001.a/b remain open until that full review passes. PERC-RESET-008 independent PASS is recorded in feedback/PERC-RESET-BATCH-08-9f31026-review.md (reviewed 9f31026).

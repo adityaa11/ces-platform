@@ -31,3 +31,11 @@ Expected: `apps/agents-bridge/src/semantic-extraction-finalizer.ts` and *focused
 **Special review rule:** Do not reclassify `CK-001.a/b` as non-findings or silently narrow the original CK oracle. If successor contract realignment changes the expected outcome, reference the **approved additive amendment**, show original-vs-successor mapping, test both retained security invariants and new nonblocking behavior, and request independent re-review of the **exact candidate SHA**.
 
 **Terminal:** bounded `READY_FOR_CK` after actual code/tests or `OWNERSHIP_CONFLICT_BLOCKED`; only independent CK can close findings.
+
+---
+
+## Trusted verifier boundary and CK identity
+
+An accepted-looking caller-supplied record with authorization, lineage or hashes is not proof. Consume an Atlas-validated verifier/redemption decision checked against exact current scope, relationship revision, source SHA, owned/context locators, asset hash, necessity, grant and revocation/expiry. A controlled fake verifier tests legitimate and forged/revoked/foreign negatives; it does not implement human confirmation or issue production authorization.
+
+Provisional/missing relationships never acquire trusted contextual evidence. Their dependent meaning remains in approved provisional companion state while independently supported facts continue; do not stage false complete V1 coverage. SEM-006 CK verifies only the 03-05 finalizer repair component for CK-001.a/b. The independent **full** original 03-05 CK, including worker composition/replay, occurs after SEM-007 CK.

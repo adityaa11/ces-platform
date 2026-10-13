@@ -21,3 +21,13 @@
 - [ ] Explicit unresolved questions handled as bounded STOP/ASK, not assumed answered.
 
 **Recommended gate:** `HMN_APPROVED_FOR_BOUNDED_SUCCESSOR_PLAN` unlocks only the named next leaf GO after independent precondition review. It does not auto-approve any source changes or issue CK PASS.
+
+---
+
+## Additional decisions required for approval
+
+Approve nonblocking independent semantic work with proposed/unresolved relationships and explicitly conditional dependent interpretations. Human confirmation occurs at later authenticated, revision-bound Master review/publish or chatbot-assisted decision; neither surface is implemented here. No user verification is demanded on the extraction critical path.
+
+Approve versioned composite V1 plus pending/provisional sidecar coverage, without adding unapproved V1 inventory values or mislabeling meaningful unexamined visuals non_fact. An accepted-looking object supplied by a caller does not prove relationship authorization: trusted context requires an Atlas-controlled verifier/redemption decision matched to current scope, revision, source/asset hash and validity.
+
+Freeze pure validation and finalization **before** durable append/stage, and a fenced atomic/idempotent composite winner or separately qualified recovery equivalent. Identify protected REL-03 ownership; require separate approved/CK-qualified persistence integration before SEM-007, while allowing SEM-005 to finish pure/fake contract testing. SEM-006 CK is component only; the full original 03-05 independent CK follows 007 CK and precedes 008 baseline effectiveness. All changes remain PROPOSED until explicitly approved.
