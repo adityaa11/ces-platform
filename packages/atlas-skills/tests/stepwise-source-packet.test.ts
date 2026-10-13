@@ -48,6 +48,32 @@ test("zero-visual RUN-003 input is deterministic and starts with an empty provis
   assert.deepEqual(first.sourceSlots.filter((slot) => slot.locatorType === "table").map((slot) => slot.locatorId), ["table-a", "table-b"]);
 });
 
+test("image-only input remains constructible with exact pending visual identities", () => {
+  const document = {
+    ...normalizedSourceFixture(),
+    pages: [{
+      number: 1,
+      textBlocks: [],
+      tables: [],
+      visualRegions: [
+        { id: "legend", label: "Legend for table A", assetRef: "derived/legend" },
+        { id: "diagram", label: "Account hierarchy", assetRef: "derived/diagram" },
+      ],
+    }],
+  };
+  const packet = buildStepwiseSourcePacket({ document, assetIdentities: imageAssets });
+
+  assert.equal(packet.sourceSlots.filter((slot) => slot.locatorType === "text_block" || slot.locatorType === "table").length, 0);
+  assert.deepEqual(packet.sourceSlots.map((slot) => ({ locatorId: slot.locatorId, locatorType: slot.locatorType, assetIdentity: slot.assetIdentity, role: slot.role, status: slot.status, pendingReason: slot.pendingReason })), [
+    { locatorId: "diagram", locatorType: "visual_region", assetIdentity: { assetRef: "derived/diagram", sha256: "c".repeat(64), sourceSha256 }, role: "pending_authorized_media", status: "pending_unexamined_visual", pendingReason: "visual_not_examined" },
+    { locatorId: "legend", locatorType: "visual_region", assetIdentity: { assetRef: "derived/legend", sha256: "b".repeat(64), sourceSha256 }, role: "pending_authorized_media", status: "pending_unexamined_visual", pendingReason: "visual_not_examined" },
+  ]);
+  assert.deepEqual(packet.pendingVisuals.map((visual) => ({ locatorId: visual.locatorId, assetIdentity: visual.assetIdentity, reason: visual.reason })), [
+    { locatorId: "diagram", assetIdentity: { assetRef: "derived/diagram", sha256: "c".repeat(64), sourceSha256 }, reason: "visual_not_examined" },
+    { locatorId: "legend", assetIdentity: { assetRef: "derived/legend", sha256: "b".repeat(64), sourceSha256 }, reason: "visual_not_examined" },
+  ]);
+});
+
 test("image-bearing input preserves exact asset identity, pending visual state, and provisional relationship lineage", () => {
   const document = normalizedSourceFixture();
   const first = buildStepwiseSourcePacket({ document, assetIdentities: imageAssets, provisionalRelationships: [provisionalLegend(document)] });
