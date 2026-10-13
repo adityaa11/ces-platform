@@ -3,7 +3,7 @@
 - **Ticket:** `SEM-CUTOVER-005` — Provisional semantic accounting and replay-safe handoff
 - **Batch:** `SEM-CUTOVER`
 - **Frozen ticket:** `project's goal/Backend_Phase/tickets/Semantic_Cutover_Phase/SEM-CUTOVER-005-provisional-accounting-and-replay-handoff.md`
-- **Implementation commit:** `c197e9ef2c620b39aad792fbb7fb21c1346af62e` (`feat(sem-cutover): add provisional sidecar accounting`)
+- **Implementation commits:** `c197e9ef2c620b39aad792fbb7fb21c1346af62e` (`feat(sem-cutover): add provisional sidecar accounting`), followed by `40e06c26a085a4abb1c7b7914ea887e19f25b684` (`test(sem-cutover): cover sidecar replay negatives`)
 - **Ticket/checkpoint state:** `awaiting_review`
 - **Authority consumed:** explicit user `GO SEM-CUTOVER-005`; predecessor SEM-CUTOVER-004 independent CK `PASS` (`project's goal/feedback/SEM-CUTOVER-004-1f4519e-review.md`) and SEM-CUTOVER-002 approved sidecar ownership.
 
