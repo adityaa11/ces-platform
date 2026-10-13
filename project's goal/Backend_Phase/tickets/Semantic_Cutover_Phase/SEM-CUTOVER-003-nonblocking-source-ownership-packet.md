@@ -1,6 +1,6 @@
 # SEM-CUTOVER-003 — Nonblocking stepwise source ownership packet
 
-**Status:** `planned` · **Size:** M · **Owner:** source packet construction only · **Dependencies:** SEM-CUTOVER-002 approved, current ownership check; explicit separate `GO SEM-CUTOVER-003`.
+**Status:** `approved` · **Size:** M · **Owner:** source packet construction only · **Dependencies:** SEM-CUTOVER-002 approved, current ownership check; explicit separate `GO SEM-CUTOVER-003`.
 
 ## Exact objective
 
