@@ -97,6 +97,13 @@ function assertScope(scope: ProvisionalSemanticScope, request: StepwiseRelations
 
 const slotKey = (slot: { readonly pageNumber: number; readonly locatorType: string; readonly locatorId: string }) => `${slot.pageNumber}\u0000${slot.locatorType}\u0000${slot.locatorId}`;
 const tupleKey = (tuple: ProviderCandidateTuple) => `${tuple.sourceSlot}\u0000${tuple.candidateIndex}`;
+/** Structural REL-03 companion identity; it does not create a durable record. */
+export const provisionalSemanticDeferredInterpretationId = (scope: ProvisionalSemanticScope, tuple: ProviderCandidateTuple, relationshipRevisionHash: string) => sha256({
+  version: "atlas.semantic.provisional-deferred-interpretation/v1",
+  scope,
+  providerCandidateTuple: tuple,
+  relationshipRevisionHash,
+});
 const sourceLocator = (slot: StepwiseRelationshipEnvelopeRequest["sourceSlots"][number], sourceSha256: string) => ({
   slot: slot.slot,
   pageNumber: slot.pageNumber,
@@ -200,6 +207,12 @@ export function prepareProvisionalSemanticCompositeAccounting(input: {
   const inventoryByLocator = new Map(canonicalResult.source_statement_inventory.map((item) => [`${item.page_number}\u0000${item.locator_type}\u0000${item.locator_id}`, item]));
   if (inventoryByLocator.size !== canonicalResult.source_statement_inventory.length) reject("canonical result repeats a source inventory locator.");
   const canonicalSourceSlots = [...inventoryByLocator].map(([locator]) => [...owned.values()].find((slot) => slotKey(slot) === locator)?.slot ?? reject("canonical result accounts a foreign, pending, or contextual source slot.")).sort();
+  const sourceSlotForEvidence = (evidence: { readonly page_number: number; readonly locator_type: string; readonly locator_id: string }) => [...owned.values()].find((slot) => slotKey(slot) === `${evidence.page_number}\u0000${evidence.locator_type}\u0000${evidence.locator_id}`)?.slot;
+  for (const [kind, records] of [["candidate", canonicalResult.candidate_assertions], ["question", canonicalResult.questions]] as const) {
+    for (const record of records) for (const evidence of record.evidence_refs ?? []) {
+      if (!sourceSlotForEvidence(evidence)) reject(`${kind} evidence does not match an exact canonical request source slot.`);
+    }
+  }
   const universe = new Map<string, ProviderCandidateTuple>();
   for (const tuple of input.providerCandidateTuples) {
     if (!owned.has(tuple.sourceSlot) || !Number.isSafeInteger(tuple.candidateIndex) || tuple.candidateIndex < 0 || universe.has(tupleKey(tuple))) reject("provider candidate tuple is foreign, malformed, or duplicated.");
@@ -216,13 +229,14 @@ export function prepareProvisionalSemanticCompositeAccounting(input: {
   addClassification(input.independentCandidateTuples, "independently_finalized");
   addClassification(input.optionalRelationshipTuples, "optional_relationship_but_independent");
   const deferredByTuple = new Map<string, DeferredDependentInterpretationDescriptor>();
+  const deferredIds = new Set<string>();
   for (const deferred of input.deferredInterpretations) {
     const tuple = { sourceSlot: deferred.provider_candidate_tuple?.source_slot, candidateIndex: deferred.provider_candidate_tuple?.candidate_index };
     const key = tupleKey(tuple);
     const source = owned.get(tuple.sourceSlot);
     const revision = revisionByHash.get(deferred.relationship_revision_hash);
-    if (!source || !universe.has(key) || classifications.has(key) || deferredByTuple.has(key) || !isHash(deferred.deferred_interpretation_id) || !revision || deferred.reason !== "essential_provisional_relationship" || deferred.canonical_candidate_id !== null || !["low", "medium", "high", "unknown"].includes(deferred.uncertainty) || deferred.proposed_candidate_meaning === undefined || stableJson(deferred.source?.owned_source) !== exactLocator(source, input.scope.sourceSha256) || stableJson(deferred.source?.context_source) !== stableJson(revision.contextSource) || revision.relationship.necessity !== "essential") reject("deferred descriptor is foreign, malformed, duplicated, or lacks an immutable essential dependency.");
-    classifications.set(key, "essential_dependent_deferred"); deferredByTuple.set(key, deferred);
+    if (!source || !universe.has(key) || classifications.has(key) || deferredByTuple.has(key) || deferredIds.has(deferred.deferred_interpretation_id) || !revision || deferred.deferred_interpretation_id !== provisionalSemanticDeferredInterpretationId(input.scope, tuple, deferred.relationship_revision_hash) || deferred.reason !== "essential_provisional_relationship" || deferred.canonical_candidate_id !== null || !["low", "medium", "high", "unknown"].includes(deferred.uncertainty) || deferred.proposed_candidate_meaning === undefined || stableJson(deferred.source?.owned_source) !== exactLocator(source, input.scope.sourceSha256) || stableJson(deferred.source?.context_source) !== stableJson(revision.contextSource) || revision.relationship.necessity !== "essential" || !revision.candidateRefs.some((candidate) => tupleKey(candidate) === key)) reject("deferred descriptor is foreign, malformed, duplicated, or lacks an immutable essential dependency.");
+    classifications.set(key, "essential_dependent_deferred"); deferredByTuple.set(key, deferred); deferredIds.add(deferred.deferred_interpretation_id);
   }
   if (classifications.size !== universe.size) reject("provider candidate tuple is missing composite accounting.");
   const canonicalBindings = new Map<string, CanonicalCandidateTupleBinding>();
@@ -232,12 +246,24 @@ export function prepareProvisionalSemanticCompositeAccounting(input: {
     canonicalBindings.set(key, binding);
   }
   for (const [key, disposition] of classifications) if (disposition !== "essential_dependent_deferred" && !canonicalBindings.has(key)) reject("independent or optional candidate tuple is not represented canonically.");
+  const bindingsByCandidate = new Map<string, CanonicalCandidateTupleBinding[]>();
+  for (const binding of canonicalBindings.values()) bindingsByCandidate.set(binding.canonicalCandidateId, [...(bindingsByCandidate.get(binding.canonicalCandidateId) ?? []), binding]);
+  for (const candidate of canonicalResult.candidate_assertions) {
+    const bindings = bindingsByCandidate.get(candidate.local_candidate_id);
+    if (!bindings || bindings.length === 0 || !candidate.evidence_refs || candidate.evidence_refs.length === 0) reject("canonical candidate is detached from its tuple or exact source evidence.");
+    const bindingSources = new Set(bindings!.map((binding) => binding.sourceSlot));
+    for (const evidence of candidate.evidence_refs) if (!bindingSources.has(sourceSlotForEvidence(evidence) ?? "")) reject("canonical candidate evidence does not match its bound tuple source.");
+  }
+  for (const [slot, item] of [...inventoryByLocator].map(([locator, item]) => [[...owned.values()].find((candidate) => slotKey(candidate) === locator)!.slot, item] as const)) {
+    if (item.classification === "candidate" && (!item.destination_local_candidate_ids.length || item.destination_local_candidate_ids.some((id) => !bindingsByCandidate.get(id)?.some((binding) => binding.sourceSlot === slot)))) reject("canonical inventory destination is detached from a canonical tuple binding.");
+  }
   const canonicalTupleSources = new Set([...canonicalBindings.values()].map((binding) => binding.sourceSlot));
   for (const sourceSlot of canonicalTupleSources) if (!canonicalSourceSlots.includes(sourceSlot)) reject("canonical candidate tuple source is absent from canonical inventory.");
   for (const slot of canonicalSourceSlots) {
     const item = inventoryByLocator.get(slotKey(owned.get(slot)!))!;
     if (item.classification === "non_fact" && (canonicalTupleSources.has(slot) || [...deferredByTuple.values()].some((deferred) => deferred.provider_candidate_tuple.source_slot === slot))) reject("canonical non_fact conflicts with meaningful candidate tuple.");
   }
+  for (const slot of owned.values()) if (!canonicalSourceSlots.includes(slot.slot) && ![...universe.values()].some((tuple) => tuple.sourceSlot === slot.slot)) reject("ready owned source is absent from canonical and tuple accounting.");
   const sourceCoverage: { slot: string; disposition: "canonical_semantic_v1" | "essential_dependent_deferred" | "pending_unexamined_visual" }[] = [...owned.values()].filter((slot) => canonicalSourceSlots.includes(slot.slot) || [...deferredByTuple.values()].some((deferred) => deferred.provider_candidate_tuple.source_slot === slot.slot)).map((slot) => ({ slot: slot.slot, disposition: canonicalSourceSlots.includes(slot.slot) ? "canonical_semantic_v1" as const : "essential_dependent_deferred" as const }));
   for (const slot of input.request.sourceSlots.filter((slot) => slot.status === "pending_unexamined_visual")) sourceCoverage.push({ slot: slot.slot, disposition: "pending_unexamined_visual" });
   sourceCoverage.sort((left, right) => left.slot.localeCompare(right.slot));
