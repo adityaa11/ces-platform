@@ -1,6 +1,6 @@
 # SEM-CUTOVER-002 — Successor semantic baseline and deferred verification HMN
 
-**Status:** `planned / HUMAN DECISION REQUIRED` · **Size:** S/M (contract decisions only) · **Dependency:** SEM-CUTOVER-001 independent CK PASS. **Not executable source GO.**
+**Status:** `approved` after independent CK `PASS` for reviewed commit `330eae8b1f63dd69855f307e2ac0df1444a2e3dd` ([review record](../../../feedback/SEM-CUTOVER-002-330eae8-verification.md)). · **Size:** S/M (contract decisions only) · **Dependency:** SEM-CUTOVER-001 independent CK PASS. **Not executable source GO.**
 
 ## Exact objective
 
