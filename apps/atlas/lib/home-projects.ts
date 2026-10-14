@@ -33,6 +33,10 @@ export function toProjectCardViewModel(project: AccessibleAtlasProject): Project
     } else if (lifecycle.bundleState === "ready_for_review") {
       if (completed !== documentCount || lifecycle.memberFacts.some((member) => member.state !== "completed")) return null;
       state = "ready-for-review";
+    } else if (lifecycle.bundleState === "qualified_deferred") {
+      if (project.initialDraftWorkspaceState !== "draft" || !lifecycle.memberFacts.some((member) => member.state === "qualified_deferred")) return null;
+      state = "needs-attention";
+      attentionReason = "Semantic interpretation is deferred for review.";
     } else return null;
   }
   const progressPercent = Math.floor(100 * completed / documentCount);

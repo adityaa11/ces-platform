@@ -19,6 +19,7 @@ const perceptionFailurePath = "/internal/perception/failure";
 const derivedAssetPath = "/internal/perception/derived";
 const semanticContextPath = "/internal/semantic/context";
 const semanticResultPath = "/internal/semantic/result";
+const semanticQualifiedResultPath = "/internal/semantic/qualified-result";
 const semanticFailurePath = "/internal/semantic/failure";
 const requestLimit = 16 * 1024;
 const sourceLimit = 20 * 1024 * 1024;
@@ -104,7 +105,7 @@ export function createAtlasPerceptionInternalPlugin(): Plugin {
       const semanticAuthority = new semanticDatabase.PostgresSemanticAuthority(sql, new reconciliationSelector.PostgresReconciliationSelector(sql));
       const extractionHandler = new extractionAcceptance.PostgresExtractionAcceptanceHandler(atlasSemanticQueue);
       const reconciliationHandler = new reconciliationAcceptance.PostgresReconciliationAcceptanceHandler({ authority, queue: perceptionQueue });
-      const semanticRoutes = core.createSemanticInternalRoutes({ authority: semanticAuthority, serviceCredential: credential, handler: { accept: async (input, transaction) => {
+      const semanticRoutes = core.createSemanticInternalRoutes({ authority: semanticAuthority, serviceCredential: credential, qualifiedHandler: extractionHandler, handler: { accept: async (input, transaction) => {
         const skill = (input.envelope as { skill?: { id?: string } }).skill?.id;
         if (skill === "atlas.semantic.extract") await extractionHandler.accept(input, transaction);
         else if (skill === "atlas.semantic.reconcile") await reconciliationHandler.accept(input, transaction);
@@ -120,7 +121,7 @@ export function createAtlasPerceptionInternalPlugin(): Plugin {
           sendJson(response, 200, { observations: semanticResultObservations });
           return;
         }
-        if (pathname !== sourcePath && pathname !== resultPath && pathname !== perceptionFailurePath && pathname !== derivedAssetPath && pathname !== semanticContextPath && pathname !== semanticResultPath && pathname !== semanticFailurePath) return next();
+        if (pathname !== sourcePath && pathname !== resultPath && pathname !== perceptionFailurePath && pathname !== derivedAssetPath && pathname !== semanticContextPath && pathname !== semanticResultPath && pathname !== semanticQualifiedResultPath && pathname !== semanticFailurePath) return next();
         if (request.method !== "POST") { response.statusCode = 405; response.setHeader("allow", "POST"); response.end(); return; }
         try {
           if (pathname === derivedAssetPath) {
@@ -144,6 +145,7 @@ export function createAtlasPerceptionInternalPlugin(): Plugin {
             } else sendJson(response, result.status, result.body);
             return;
           }
+          if (pathname === semanticQualifiedResultPath) { const result = await semanticRoutes.deliverQualified(credentialValue, body); if (result.status === 204) { response.statusCode = 204; response.end(); } else sendJson(response, result.status, result.body); return; }
           if (pathname === semanticFailurePath) { const result = await semanticRoutes.fail(credentialValue, body); if (result.status === 204) { response.statusCode = 204; response.end(); } else sendJson(response, result.status, result.body); return; }
           if (pathname === sourcePath) {
             const result = await routes.redeem(credentialValue, body);

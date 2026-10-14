@@ -7,8 +7,8 @@ type Row = Record<string, unknown>;
 type Sql = { unsafe(query: string, parameters?: readonly unknown[]): Promise<readonly Row[]>; begin<T>(work: (transaction: Sql) => Promise<T>): Promise<T> };
 export type PerceptionKickoffQueue = { enqueue(transaction: Sql, job: { readonly idempotencyKey: string; readonly request: DocumentPerceptionRequest }): Promise<string | null> };
 
-const bundleStates = new Set<ExtractionBundleState>(["waiting", "processing", "ready_for_review", "needs_attention"]);
-const memberStates = new Set<ExtractionBundleDocumentState>(["pending", "perception_queued", "perceiving", "perceived", "extracting", "reconciling", "completed", "needs_attention"]);
+const bundleStates = new Set<ExtractionBundleState>(["waiting", "processing", "ready_for_review", "qualified_deferred", "needs_attention"]);
+const memberStates = new Set<ExtractionBundleDocumentState>(["pending", "perception_queued", "perceiving", "perceived", "extracting", "reconciling", "completed", "qualified_deferred", "needs_attention"]);
 const integer = (value: unknown): number | null => {
   const parsed = typeof value === "number" ? value : Number(value);
   return Number.isSafeInteger(parsed) ? parsed : null;
@@ -132,6 +132,7 @@ export class PostgresAtlasProjectRepository implements AtlasProjectRepository {
       const validState = bundleState === "waiting" && draftState === "draft" && masterState === "empty" && completed === completedFacts && failedFacts === 0 && waitingMembers
         || bundleState === "processing" && draftState === "draft" && masterState === "empty" && completed === completedFacts && failedFacts === 0
         || bundleState === "ready_for_review" && complete && masterState === "empty" && row.initial_draft_workspace_state === "ready_for_review"
+        || bundleState === "qualified_deferred" && draftState === "draft" && masterState === "empty" && completed === completedFacts && memberFacts.every((member) => member.state === "completed" || member.state === "qualified_deferred")
         || bundleState === "needs_attention" && draftState === "draft" && masterState === "empty" && completed === completedFacts && failedFacts > 0;
       if (!validState) continue;
       const lifecycle = bundleState === "needs_attention"

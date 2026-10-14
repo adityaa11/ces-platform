@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
-import { parseNormalizedDocument, parseSemanticExtractionResult } from "@atlas/contracts";
-import { SemanticAcceptanceRejection, type SemanticAcceptanceHandler } from "@atlas/core";
+import { parseNormalizedDocument, parseSemanticExtractionResult, type QualifiedStepwiseAcceptanceInput } from "@atlas/contracts";
+import { SemanticAcceptanceRejection, type QualifiedStepwiseAcceptanceHandler, type SemanticAcceptanceHandler } from "@atlas/core";
 
 type Row = Record<string, unknown>;
 type Sql = { unsafe(query: string, parameters?: readonly unknown[]): Promise<readonly Row[]> };
@@ -15,10 +15,14 @@ const json = (value: unknown) => typeof value === "string" ? JSON.parse(value) :
 /** IDSER-006 Atlas-side extraction validator and materializer.  It deliberately
  * receives the authority transaction so result rows and execution completion
  * cannot become separately visible. */
-export class PostgresExtractionAcceptanceHandler implements SemanticAcceptanceHandler {
+export class PostgresExtractionAcceptanceHandler implements SemanticAcceptanceHandler, QualifiedStepwiseAcceptanceHandler {
   constructor(private readonly semanticQueue?: SemanticKickoffQueue) {}
 
   async accept(input: { readonly executionId: string; readonly completionFingerprint: string; readonly envelope: unknown }, transaction?: unknown): Promise<void> {
+    await this.acceptInternal(input, transaction, undefined);
+  }
+
+  private async acceptInternal(input: { readonly executionId: string; readonly completionFingerprint: string; readonly envelope: unknown }, transaction: unknown, qualified: QualifiedStepwiseAcceptanceInput | undefined): Promise<void> {
     const sql = transaction as Sql | undefined;
     if (!sql) throw new Error("Extraction acceptance requires the authority transaction.");
     const envelope = input.envelope as { skill?: { id?: string }; scope?: Record<string, string>; provider?: unknown; result?: unknown };
@@ -36,7 +40,9 @@ export class PostgresExtractionAcceptanceHandler implements SemanticAcceptanceHa
       for (const visual of page.visualRegions) if (visual.label?.trim() || visual.assetRef) locators.set(`${page.number}:visual_region:${visual.id}`, {});
     }
     const inventory = new Set(result.source_statement_inventory.map((item) => `${item.page_number}:${item.locator_type}:${item.locator_id}`));
-    if (inventory.size !== locators.size || [...locators.keys()].some((key) => !inventory.has(key))) throw new SemanticAcceptanceRejection("Extraction result does not account for normalized source units.");
+    const deferred = new Set<string>();
+    if (qualified) for (const item of qualified.deferredCoverage) { const key = `${item.page_number}:${item.locator_type}:${item.locator_id}`; if (deferred.has(key) || inventory.has(key) || !locators.has(key)) throw new SemanticAcceptanceRejection("Deferred source coverage is not an exact canonical partition."); deferred.add(key); }
+    if (inventory.size + deferred.size !== locators.size || [...locators.keys()].some((key) => !inventory.has(key) && !deferred.has(key))) throw new SemanticAcceptanceRejection("Extraction result does not account for normalized source units.");
     const evidenceKeys = (evidence: readonly Evidence[]) => new Set(evidence.map((item) => `${item.page_number}:${item.locator_type}:${item.locator_id}`));
     const validateEvidence = (evidence: readonly Evidence[]) => {
       const seen = new Set<string>();
@@ -67,6 +73,7 @@ export class PostgresExtractionAcceptanceHandler implements SemanticAcceptanceHa
       await sql.unsafe("INSERT INTO atlas.semantic_candidate_identity_map (semantic_candidate_id, canonical_semantic_id, local_candidate_id, extraction_execution_id) VALUES ($1,$2,$3,$4)", [id, semanticId, candidate.local_candidate_id, input.executionId]);
       for (const evidence of candidate.evidence_refs) await sql.unsafe("INSERT INTO atlas.semantic_evidence (id, semantic_candidate_id, document_id, page_number, locator_type, locator_id, excerpt) VALUES ($1,$2,$3,$4,$5,$6,$7)", [randomUUID(), id, scope.documentId, evidence.page_number, evidence.locator_type, evidence.locator_id, evidence.excerpt ?? null]);
     }
+    if (qualified) await this.persistDeferred(sql, input.executionId, input.completionFingerprint, qualified, scope, source[0].source_sha256);
     const reconciliationExecutionId = randomUUID();
     const reconciliationCapability = randomUUID();
     const reconciliationLogicalIdentity = `reconcile:${scope.bundleId}:${scope.documentId}:v1`;
@@ -79,5 +86,35 @@ export class PostgresExtractionAcceptanceHandler implements SemanticAcceptanceHa
       if (queued === null) throw new Error("Semantic reconciliation queue was deduplicated before extraction committed.");
     }
     await sql.unsafe("UPDATE atlas.extraction_bundle_document SET state='reconciling', semantic_reconciliation_execution_id=$3 WHERE bundle_id=$1 AND document_id=$2", [scope.bundleId, scope.documentId, actualReconciliationExecutionId]);
+  }
+
+  async acceptQualified(input: { readonly executionId: string; readonly completionFingerprint: string; readonly acceptance: QualifiedStepwiseAcceptanceInput }, transaction?: unknown): Promise<void> {
+    const sql = transaction as Sql | undefined;
+    if (!sql) throw new Error("Qualified extraction acceptance requires the authority transaction.");
+    const { acceptance } = input;
+    if (acceptance.outcome === "partial_accepted") {
+      if (!acceptance.canonical || acceptance.canonical.result.candidate_assertions.length === 0) throw new SemanticAcceptanceRejection("Partial acceptance requires materialized canonical candidates.");
+      await this.acceptInternal({ executionId: input.executionId, completionFingerprint: input.completionFingerprint, envelope: { version: "v1", scope: acceptance.scope, skill: { id: "atlas.semantic.extract", version: "v1" }, provider: acceptance.canonical.provider, result: acceptance.canonical.result } }, transaction, acceptance);
+      return;
+    }
+    const source = await sql.unsafe("SELECT d.source_sha256 FROM atlas.document d JOIN atlas.extraction_bundle_document m ON m.document_id=d.id WHERE d.id=$1 AND d.project_id=$2 AND d.workspace_id=$3 AND m.bundle_id=$4 AND m.semantic_extraction_execution_id=$5 FOR UPDATE", [acceptance.scope.documentId, acceptance.scope.projectId, acceptance.scope.workspaceId, acceptance.scope.bundleId, input.executionId]);
+    if (source.length !== 1) throw new Error("Qualified deferred source is unavailable.");
+    const normalized = await sql.unsafe("SELECT c.normalized_document FROM atlas.extraction_bundle_document m JOIN atlas.document d ON d.id=m.document_id JOIN atlas.document_perception_execution p ON p.id=m.perception_execution_id JOIN atlas.normalized_document_cache c ON c.source_sha256=d.source_sha256 AND c.capability_identity=p.capability_identity AND c.invalidated_at IS NULL WHERE m.bundle_id=$1 AND m.document_id=$2 FOR UPDATE", [acceptance.scope.bundleId, acceptance.scope.documentId]);
+    if (normalized.length !== 1) throw new Error("Qualified deferred normalized source is unavailable.");
+    const document = parseNormalizedDocument(json(normalized[0].normalized_document));
+    const eligible = new Set(document.pages.flatMap((page) => [...page.textBlocks.filter((item) => item.text.trim()).map((item) => `${page.number}:text_block:${item.id}`), ...page.tables.filter((item) => item.content.trim()).map((item) => `${page.number}:table:${item.id}`), ...page.visualRegions.filter((item) => item.label?.trim() || item.assetRef).map((item) => `${page.number}:visual_region:${item.id}`)]));
+    const covered = new Set(acceptance.deferredCoverage.map((item) => `${item.page_number}:${item.locator_type}:${item.locator_id}`));
+    if (covered.size !== acceptance.deferredCoverage.length || covered.size !== eligible.size || [...eligible].some((item) => !covered.has(item))) throw new SemanticAcceptanceRejection("Qualified deferred coverage is not exact.");
+    await this.persistDeferred(sql, input.executionId, input.completionFingerprint, acceptance, acceptance.scope, source[0].source_sha256);
+    await sql.unsafe("UPDATE atlas.extraction_bundle_document SET state='qualified_deferred', completed_at=now() WHERE bundle_id=$1 AND document_id=$2 AND state='extracting'", [acceptance.scope.bundleId, acceptance.scope.documentId]);
+    const states = await sql.unsafe("SELECT state FROM atlas.extraction_bundle_document WHERE bundle_id=$1 FOR UPDATE", [acceptance.scope.bundleId]);
+    if (states.length && states.every((row) => row.state === "completed" || row.state === "qualified_deferred")) await sql.unsafe("UPDATE atlas.extraction_bundle SET state='qualified_deferred', completed_at=now() WHERE id=$1 AND state='processing'", [acceptance.scope.bundleId]);
+  }
+
+  private async persistDeferred(sql: Sql, executionId: string, completionFingerprint: string, acceptance: QualifiedStepwiseAcceptanceInput, scope: Record<string, string>, sourceSha: unknown): Promise<void> {
+    const coverageHash = createHash("sha256").update(JSON.stringify(acceptance.deferredCoverage)).digest("hex");
+    const existing = await sql.unsafe("SELECT completion_fingerprint FROM atlas.semantic_deferred_acceptance WHERE execution_id=$1 FOR UPDATE", [executionId]);
+    if (existing.length) { if (String(existing[0].completion_fingerprint) === completionFingerprint) return; throw new Error("Qualified deferred acceptance conflicts with existing materialization."); }
+    await sql.unsafe("INSERT INTO atlas.semantic_deferred_acceptance (execution_id,project_id,workspace_id,bundle_id,document_id,source_sha256,outcome,composite_hash,relationship_revision_set_hash,provisional_sidecar_hash,deferred_coverage,coverage_hash,completion_fingerprint) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12,$13)", [executionId, scope.projectId, scope.workspaceId, scope.bundleId, scope.documentId, sourceSha, acceptance.outcome, acceptance.composite.compositeHash, acceptance.composite.relationshipRevisionSetHash, acceptance.composite.provisionalSidecarHash, acceptance.deferredCoverage, coverageHash, completionFingerprint]);
   }
 }

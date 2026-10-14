@@ -1,4 +1,4 @@
-import type { SemanticBackgroundJob, SemanticSkillId } from "@atlas/contracts";
+import type { QualifiedStepwiseAcceptanceInput, SemanticBackgroundJob, SemanticSkillId } from "@atlas/contracts";
 
 /** A parsed, current semantic result failed Atlas deterministic acceptance. */
 export class SemanticAcceptanceRejection extends Error {}
@@ -21,6 +21,9 @@ export type SemanticAcceptanceHandler = {
   /** Must commit all trusted effects before resolving. */
   accept(input: { readonly executionId: string; readonly completionFingerprint: string; readonly envelope: unknown }, transaction?: unknown): Promise<void>;
 };
+export type QualifiedStepwiseAcceptanceHandler = {
+  acceptQualified(input: { readonly executionId: string; readonly completionFingerprint: string; readonly acceptance: QualifiedStepwiseAcceptanceInput }, transaction?: unknown): Promise<void>;
+};
 
 /** IDSER-007 owns neighborhood policy. IDSER-004 only persists its bounded result. */
 export type SemanticReconciliationSelectionPort = {
@@ -32,5 +35,6 @@ export interface SemanticAuthority {
   redeem(request: SemanticExecutionRequest): Promise<AuthorizedSemanticContext>;
   /** An unavailable downstream handler must reject rather than acknowledge. */
   deliver(envelope: unknown, handler: SemanticAcceptanceHandler): Promise<void>;
+  deliverQualified(input: QualifiedStepwiseAcceptanceInput, handler: QualifiedStepwiseAcceptanceHandler): Promise<void>;
   fail(failure: unknown): Promise<void>;
 }

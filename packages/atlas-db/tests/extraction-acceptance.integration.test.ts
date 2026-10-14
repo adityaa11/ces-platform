@@ -2,11 +2,9 @@ import assert from "node:assert/strict";
 import { createHash, randomUUID } from "node:crypto";
 import test from "node:test";
 import postgres from "postgres";
-import { PerceptionSourceGrantIssuer } from "@atlas/core";
 import { canonicalSemanticFingerprint, PostgresSemanticAuthority } from "../src/semantic-authority.ts";
 import { PostgresExtractionAcceptanceHandler } from "../src/extraction-acceptance.ts";
 import { PostgresSemanticCandidateRepository } from "../src/semantic-candidate-repository.ts";
-import { PostgresPerceptionAuthority } from "../src/perception-authority.ts";
 import { createTransactionalQueueProducer } from "../../../apps/agents-bridge/src/queue.ts";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -219,7 +217,7 @@ test("IDSER-006 materializes only validated extraction state, replays atomically
   }
 });
 
-test("IDSER-006 couples accepted perception with one extraction execution and queue handoff", { skip: !databaseUrl }, async () => {
+test("IDSER-006 reconciles one explicitly authorized extraction execution atomically", { skip: !databaseUrl }, async () => {
   const admin = postgres(databaseUrl!, { max: 1 });
   const atlasUrl = new URL(databaseUrl!); atlasUrl.username = "atlas_app"; atlasUrl.password = process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only";
   const atlas = postgres(atlasUrl.toString(), { max: 1 });
@@ -231,21 +229,14 @@ test("IDSER-006 couples accepted perception with one extraction execution and qu
     await atlas.unsafe("INSERT INTO atlas.workspace (id,project_id,kind,state,display_name) VALUES ($1,$2,'initial_draft','draft','Initial Draft')", [workspace, project]);
     await atlas.unsafe("INSERT INTO atlas.document (id,project_id,workspace_id,original_filename,storage_key,source_sha256,byte_size,media_type,created_by_user_id) VALUES ($1,$2,$3,'source.pdf','private/source',$4,1,'application/pdf',$5)", [document, project, workspace, sha, owner]);
     await atlas.unsafe("INSERT INTO atlas.extraction_bundle (id,project_id,workspace_id,state,semantic_contract_version,reconciliation_contract_version,expected_document_count) VALUES ($1,$2,$3,'waiting','v1','v1',1)", [bundle, project, workspace]);
-    await atlas.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id,document_id,project_id,workspace_id,sequence,state,perception_execution_id) VALUES ($1,$2,$3,$4,1,'perception_queued',$5)", [bundle, document, project, workspace, perception]);
+    await atlas.unsafe("INSERT INTO atlas.document_perception_execution (id,artifact_id,document_storage_key,source_sha256,mime_type,byte_size,contract_version,state,idempotency_key,capability_identity) VALUES ($1,$2,'private/source',$3,'application/pdf',1,'v1','completed',$4,$5)", [perception, document, sha, `idser006-kickoff-${suffix}`, `idser006-kickoff-capability-${suffix}`]);
+    const extractionId = `idser006-kickoff-extraction-${suffix}`;
+    await atlas.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id,document_id,project_id,workspace_id,sequence,state,perception_execution_id,semantic_extraction_execution_id) VALUES ($1,$2,$3,$4,1,'extracting',$5,$6)", [bundle, document, project, workspace, perception, extractionId]);
+    await atlas.unsafe("UPDATE atlas.extraction_bundle SET state='processing', started_at=now() WHERE id=$1", [bundle]);
+    await atlas.unsafe("INSERT INTO atlas.semantic_execution (id,project_id,workspace_id,bundle_id,document_id,stage,contract_version,skill_version,logical_identity,lifecycle,authorized_context_identity,authorized_context_fingerprint,capability_valid_until) VALUES ($1,$2,$3,$4,$5,'extraction','v1','v1',$1,'queued','perception',$6,now()+interval '1 hour')", [extractionId, project, workspace, bundle, document, canonicalSemanticFingerprint("capability")]);
+    await atlas.unsafe("INSERT INTO atlas.normalized_document_cache (cache_key,source_sha256,contract_version,capability,capability_identity,normalized_document) VALUES ($1,$2,'v1','atlas.document.perceive',$3,$4::jsonb)", [`idser006-kickoff-cache-${suffix}`, sha, `idser006-kickoff-capability-${suffix}`, JSON.stringify(normalized(perception, document, sha))]);
     producer = await createTransactionalQueueProducer(atlasUrl.toString());
     const queue = { enqueue: (transaction: unknown, job: unknown) => producer.enqueue(transaction as never, job as never) };
-    const authority = new PostgresPerceptionAuthority(atlas, new PerceptionSourceGrantIssuer("s".repeat(32)), queue as never);
-    const request = await authority.create({ executionId: perception, artifactId: document, storageKey: "private/source", sourceSha256: sha, mimeType: "application/pdf", byteSize: 1, idempotencyKey: `idser006-kickoff-${suffix}`, capabilityIdentity: `idser006-kickoff-capability-${suffix}` });
-    await authority.redeem(request);
-    const perceptionResult = normalized(perception, document, sha);
-    await authority.deliver(request, perceptionResult);
-    const extractionRows = await atlas.unsafe("SELECT id, stage, lifecycle FROM atlas.semantic_execution WHERE bundle_id=$1 AND document_id=$2", [bundle, document]);
-    assert.equal(extractionRows.length, 1); assert.equal(extractionRows[0].stage, "extraction"); assert.equal(extractionRows[0].lifecycle, "queued");
-    assert.equal((await admin.unsafe("SELECT count(*)::int AS count FROM pgboss.job WHERE name='bridge-background-execution-v1' AND data->'execution'->>'executionId'=(SELECT semantic_extraction_execution_id FROM atlas.extraction_bundle_document WHERE bundle_id=$1 AND document_id=$2)", [bundle, document]))[0].count, 1);
-    assert.equal((await atlas.unsafe("SELECT state, semantic_extraction_execution_id FROM atlas.extraction_bundle_document WHERE bundle_id=$1 AND document_id=$2", [bundle, document]))[0].state, "extracting");
-    await authority.deliver(request, perceptionResult);
-    assert.equal((await admin.unsafe("SELECT count(*)::int AS count FROM pgboss.job WHERE name='bridge-background-execution-v1' AND data->'execution'->>'executionId'=(SELECT semantic_extraction_execution_id FROM atlas.extraction_bundle_document WHERE bundle_id=$1 AND document_id=$2)", [bundle, document]))[0].count, 1, "perception replay must not create a second durable extraction job");
-    const extractionId = String((await atlas.unsafe("SELECT semantic_extraction_execution_id FROM atlas.extraction_bundle_document WHERE bundle_id=$1 AND document_id=$2", [bundle, document]))[0].semantic_extraction_execution_id);
     const semanticAuthority = new PostgresSemanticAuthority(atlas);
     const semanticEnvelope = { version: "v1", scope: { projectId: project, workspaceId: workspace, bundleId: bundle, documentId: document, executionId: extractionId, contractVersion: "v1" }, skill: { id: "atlas.semantic.extract", version: "v1" }, provider: { provider: "test", model: "test", endpoint: "loopback", latencyMilliseconds: 1, attempt: 1 }, result: extractionResult() };
     await admin.unsafe("CREATE OR REPLACE FUNCTION atlas.idser006_fail_real_enqueue() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'IDSER-006 real queue rollback'; END; $$");

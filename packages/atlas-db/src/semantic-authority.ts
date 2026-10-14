@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import { parseNormalizedDocument, parseSemanticExtractionContext, parseSemanticReconciliationContext, semanticContractVersion, type SemanticSkillId } from "@atlas/contracts";
-import type { AuthorizedSemanticContext, SemanticAcceptanceHandler, SemanticAuthority, SemanticExecutionRequest, SemanticReconciliationSelectionPort } from "@atlas/core";
+import { parseNormalizedDocument, parseQualifiedStepwiseAcceptance, parseSemanticExtractionContext, parseSemanticReconciliationContext, semanticContractVersion, type QualifiedStepwiseAcceptanceInput, type SemanticSkillId } from "@atlas/contracts";
+import type { AuthorizedSemanticContext, QualifiedStepwiseAcceptanceHandler, SemanticAcceptanceHandler, SemanticAuthority, SemanticExecutionRequest, SemanticReconciliationSelectionPort } from "@atlas/core";
 
 type Row = Record<string, unknown>;
 type Sql = { unsafe(query: string, parameters?: readonly unknown[]): Promise<readonly Row[]>; begin<T>(work: (transaction: Sql) => Promise<T>): Promise<T> };
@@ -73,6 +73,22 @@ export class PostgresSemanticAuthority implements SemanticAuthority {
     });
   }
 
+  async deliverQualified(value: QualifiedStepwiseAcceptanceInput, handler: QualifiedStepwiseAcceptanceHandler): Promise<void> {
+    const acceptance = parseQualifiedStepwiseAcceptance(value);
+    const completionFingerprint = digest(acceptance);
+    await this.sql.begin(async (sql) => {
+      const scope = acceptance.scope;
+      const rows = await sql.unsafe("SELECT id,project_id,workspace_id,bundle_id,document_id,stage,skill_version,lifecycle,completion_fingerprint,capability_valid_until FROM atlas.semantic_execution WHERE id=$1 FOR UPDATE", [scope.executionId]);
+      if (rows.length !== 1) throw new Error("Qualified acceptance execution is unavailable.");
+      const row = rows[0];
+      if (String(row.project_id) !== scope.projectId || String(row.workspace_id) !== scope.workspaceId || String(row.bundle_id) !== scope.bundleId || String(row.document_id) !== scope.documentId || row.stage !== "extraction" || row.skill_version !== "v1") throw new Error("Qualified acceptance scope mismatch.");
+      if (row.lifecycle === "completed") { if (row.completion_fingerprint === completionFingerprint) return; throw new Error("Qualified acceptance conflicts with completed execution."); }
+      if (row.lifecycle === "failed" || row.lifecycle === "cancelled" || new Date(String(row.capability_valid_until)).getTime() <= Date.now()) throw new Error("Qualified acceptance execution is not accepting results.");
+      await handler.acceptQualified({ executionId: scope.executionId, completionFingerprint, acceptance }, sql);
+      await sql.unsafe("UPDATE atlas.semantic_execution SET lifecycle='completed', completion_fingerprint=$2, completed_at=now() WHERE id=$1 AND lifecycle IN ('queued','running')", [scope.executionId, completionFingerprint]);
+    });
+  }
+
   async fail(failure: unknown): Promise<void> {
     const scope = (failure as { scope?: Record<string, unknown> }).scope; if (!scope) throw new Error("Invalid semantic failure.");
     await this.sql.begin(async (sql) => {
@@ -83,8 +99,8 @@ export class PostgresSemanticAuthority implements SemanticAuthority {
       // A terminal authenticated technical failure is lifecycle truth.  The
       // bridge retains its retry/effect ledger if this transaction cannot
       // commit, so an outage is never misrepresented as persisted attention.
-      await sql.unsafe("UPDATE atlas.extraction_bundle_document SET state='needs_attention', last_failure_code=$3, last_failure_at=now() WHERE bundle_id=$1 AND document_id=$2 AND state <> 'completed'", [rows[0].bundle_id, rows[0].document_id, code]);
-      await sql.unsafe("UPDATE atlas.extraction_bundle SET state='needs_attention', last_failure_code=$2, last_failure_at=now() WHERE id=$1 AND state <> 'ready_for_review'", [rows[0].bundle_id, code]);
+      await sql.unsafe("UPDATE atlas.extraction_bundle_document SET state='needs_attention', last_failure_code=$3, last_failure_at=now() WHERE bundle_id=$1 AND document_id=$2 AND state NOT IN ('completed','qualified_deferred')", [rows[0].bundle_id, rows[0].document_id, code]);
+      await sql.unsafe("UPDATE atlas.extraction_bundle SET state='needs_attention', last_failure_code=$2, last_failure_at=now() WHERE id=$1 AND state NOT IN ('ready_for_review','qualified_deferred')", [rows[0].bundle_id, code]);
     });
   }
 }

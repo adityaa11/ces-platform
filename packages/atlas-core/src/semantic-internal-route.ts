@@ -1,6 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
-import { parseSemanticBackgroundJob, parseSemanticResultEnvelope, parseSemanticTechnicalFailure, semanticLimits } from "@atlas/contracts";
-import { SemanticAcceptanceRejection, type SemanticAcceptanceHandler, type SemanticAuthority } from "./semantic-authority.js";
+import { parseQualifiedStepwiseAcceptance, parseSemanticBackgroundJob, parseSemanticResultEnvelope, parseSemanticTechnicalFailure, semanticLimits } from "@atlas/contracts";
+import { SemanticAcceptanceRejection, type QualifiedStepwiseAcceptanceHandler, type SemanticAcceptanceHandler, type SemanticAuthority } from "./semantic-authority.js";
 
 export type InternalSemanticResponse = { readonly status: number; readonly body: unknown; readonly contentType: "application/json" };
 const equal = (actual: string | undefined, expected: string) => {
@@ -11,7 +11,7 @@ const equal = (actual: string | undefined, expected: string) => {
 const bounded = (value: unknown, maximum: number) => { try { return Buffer.byteLength(JSON.stringify(value)) <= maximum; } catch { return false; } };
 
 /** Framework-neutral Bridge-only semantic boundary. All failures are redacted. */
-export function createSemanticInternalRoutes(options: { readonly authority: SemanticAuthority; readonly handler: SemanticAcceptanceHandler; readonly serviceCredential: string }) {
+export function createSemanticInternalRoutes(options: { readonly authority: SemanticAuthority; readonly handler: SemanticAcceptanceHandler; readonly qualifiedHandler?: QualifiedStepwiseAcceptanceHandler; readonly serviceCredential: string }) {
   if (Buffer.byteLength(options.serviceCredential) < 32) throw new Error("Bridge service credential must be at least 32 bytes.");
   const unauthorized = (): InternalSemanticResponse => ({ status: 401, body: { error: "Unauthorized internal service request." }, contentType: "application/json" });
   const invalid = (): InternalSemanticResponse => ({ status: 400, body: { error: "Invalid semantic internal request." }, contentType: "application/json" });
@@ -30,6 +30,11 @@ export function createSemanticInternalRoutes(options: { readonly authority: Sema
     async deliver(credential: string | undefined, body: unknown): Promise<InternalSemanticResponse> {
       if (!equal(credential, options.serviceCredential)) return unauthorized();
       try { if (!bounded(body, semanticLimits.resultEnvelopeBytes)) return invalid(); await options.authority.deliver(parseSemanticResultEnvelope(body), options.handler); return { status: 204, body: null, contentType: "application/json" }; } catch (error) { return error instanceof SemanticAcceptanceRejection ? rejected() : unavailable(); }
+    },
+    async deliverQualified(credential: string | undefined, body: unknown): Promise<InternalSemanticResponse> {
+      if (!equal(credential, options.serviceCredential)) return unauthorized();
+      if (!options.qualifiedHandler) return unavailable();
+      try { if (!bounded(body, semanticLimits.resultEnvelopeBytes)) return invalid(); await options.authority.deliverQualified(parseQualifiedStepwiseAcceptance(body), options.qualifiedHandler); return { status: 204, body: null, contentType: "application/json" }; } catch (error) { return error instanceof SemanticAcceptanceRejection ? rejected() : unavailable(); }
     },
     async fail(credential: string | undefined, body: unknown): Promise<InternalSemanticResponse> {
       if (!equal(credential, options.serviceCredential)) return unauthorized();

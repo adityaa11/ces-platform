@@ -16,6 +16,7 @@ test("IDSER-009-02 maps every valid persisted lifecycle state without deriving p
     [{ ...base, lifecycle: bundle("waiting", 0, ["pending", "perception_queued"]) }, "waiting-for-extraction", "0 of 2 PRDs processed", 0],
     [{ ...base, lifecycle: bundle("processing", 1, ["completed", "extracting"]) }, "extracting", "1 of 2 PRDs processed", 50],
     [{ ...base, lifecycle: { kind: "technical_failure", bundleId: "bundle", expectedDocumentCount: 2, completedDocumentCount: 0, memberFacts: members(["needs_attention", "pending"], [0]) } }, "needs-attention", "0 of 2 PRDs processed", 0],
+    [{ ...base, lifecycle: bundle("qualified_deferred", 0, ["qualified_deferred", "qualified_deferred"]) }, "needs-attention", "0 of 2 PRDs processed", 0],
     [{ ...base, initialDraftWorkspaceState: null, lifecycle: bundle("ready_for_review", 2, ["completed", "completed"]) }, "ready-for-review", "2 of 2 PRDs processed", 100],
   ];
   for (const [project, state, label, percent] of cases) {
@@ -29,8 +30,10 @@ test("IDSER-009-02 maps every valid persisted lifecycle state without deriving p
     assert.deepEqual(card?.action, { label: "Workspace unavailable", unavailableReason: "A production workspace is not available yet." });
   }
   assert.equal(toProjectCardViewModel(cases[3][0])?.attentionReason, "Processing needs attention.");
+  assert.equal(toProjectCardViewModel(cases[4][0])?.attentionReason, "Semantic interpretation is deferred for review.");
   const thirds = toProjectCardViewModel({ ...base, initialDraftDocumentCount: 3, lifecycle: { kind: "bundle", bundleId: "bundle-3", bundleState: "processing", expectedDocumentCount: 3, completedDocumentCount: 1, memberFacts: members(["completed", "extracting", "pending"]) } });
   assert.deepEqual(thirds?.initialDraft, { processedLabel: "1 of 3 PRDs processed", progressPercent: 33 }, "partial progress floors from persisted X/N");
+  assert.equal(toProjectCardViewModel({ ...base, lifecycle: bundle("processing", 0, ["qualified_deferred", "extracting"]) })?.state, "extracting", "a mixed deferred bundle remains processing rather than a technical failure");
 });
 
 test("IDSER-009-03-01 carries semantic uncertainty without changing lifecycle or progress", () => {
