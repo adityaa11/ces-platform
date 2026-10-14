@@ -1,6 +1,6 @@
 # SEM-ACV-001 — Accepted-context decision verifier
 
-**Status:** `awaiting_review` by `HMN-SEM-ACV-001-001` · **Size:** S · **Owner:** pure provider-neutral decision-verification boundary · **Dependencies:** committed readiness diagnostic `e686049`; explicit `GO SEM-ACV-001`. This ticket is a prerequisite for, not an amendment of, `SEM-CUTOVER-006`.
+**Status:** `approved` after independent CK `PASS` for reviewed remediation commit `06657cc7a550a518b95a7e0cb37e20851795fa97` ([verification record](../../../feedback/SEM-ACV-001-06657cc-verification.md)). · **Size:** S · **Owner:** pure provider-neutral decision-verification boundary · **Dependencies:** committed readiness diagnostic `e686049`; explicit `GO SEM-ACV-001`. This ticket is a prerequisite for, not an amendment of, `SEM-CUTOVER-006`.
 
 ## Exact objective
 
