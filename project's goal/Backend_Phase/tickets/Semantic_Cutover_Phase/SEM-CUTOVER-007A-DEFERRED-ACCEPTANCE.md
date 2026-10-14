@@ -1,6 +1,6 @@
 # SEM-CUTOVER-007A-DEFERRED-ACCEPTANCE — Qualified deferred semantic acceptance
 
-**Status:** `frozen` — **Size:** M, bounded prerequisite — **Batch:** `SEM-CUTOVER` — **Owner:** Atlas semantic acceptance and lifecycle only. **Order:** after `SEM-CUTOVER-007` independent CK `PASS`; before `SEM-CUTOVER-007A` GO. **Authority:** user HMN approval `HMN-SEM-CUTOVER-007A-001`, including revisions 001 and 002 (`RC-007A-E2E`).
+**Status:** `approved` — **Size:** M, bounded prerequisite — **Batch:** `SEM-CUTOVER` — **Owner:** Atlas semantic acceptance and lifecycle only. **Order:** after `SEM-CUTOVER-007` independent CK `PASS`; before `SEM-CUTOVER-007A` GO. **Authority:** user HMN approval `HMN-SEM-CUTOVER-007A-001`, including revisions 001 and 002 (`RC-007A-E2E`).
 
 ## Outcome
 
