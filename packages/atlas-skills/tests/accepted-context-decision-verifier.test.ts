@@ -29,6 +29,12 @@ test("forged, foreign, mismatched, duplicate, malformed, unsupported, and missin
   assert.throws(() => verify({ expectedBinding: { ...binding, contextAsset: { ...binding.contextAsset, assetSha256: "d".repeat(64) } } }), /exactly bind/);
   assert.throws(() => verify({ expectedBinding: { ...binding, contextSource: binding.ownedSource } }), /malformed verifier input/);
   assert.throws(() => verify({ expectedBinding: { ...binding, sourceSha256: "not-a-sha" } }), /malformed verifier input/);
+  assert.throws(() => verify({ rawDecision: signed({ ...decision, binding: { ...binding, contextualRole: "unsupported-role" } }) }), /exactly bind/);
+  assert.throws(() => verify({ rawDecision: signed({ ...decision, binding: { ...binding, necessity: "unsupported-necessity" } }) }), /exactly bind/);
+  assert.throws(() => verify({ expectedBinding: { ...binding, contextualRole: "unsupported-role" } }), /malformed verifier input/);
+  assert.throws(() => verify({ expectedBinding: { ...binding, necessity: "unsupported-necessity" } }), /malformed verifier input/);
+  assert.throws(() => verify({ rawDecision: signed({ ...decision, binding: { ...binding, contextualRole: undefined } }) }), /exactly bind/);
+  assert.throws(() => verify({ rawDecision: signed({ ...decision, binding: { ...binding, necessity: undefined } }) }), /exactly bind/);
   assert.throws(() => verify({ rawDecision: signed({ ...decision, version: "unknown" }) }), /unsupported/);
   assert.throws(() => verify({ rawAuthorityState: undefined }), /not authenticated/);
 });

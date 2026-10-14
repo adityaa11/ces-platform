@@ -71,16 +71,21 @@ const nonEmpty = (value: unknown): value is string => typeof value === "string" 
 const timestamp = (value: unknown): number | undefined => nonEmpty(value) && Number.isFinite(Date.parse(value)) ? Date.parse(value) : undefined;
 const same = (left: unknown, right: unknown) => JSON.stringify(left) === JSON.stringify(right);
 const sha256 = (value: string) => /^[a-f0-9]{64}$/.test(value);
+const contextualRoles = new Set<AcceptedContextBinding["contextualRole"]>(["title", "legend", "scope", "interpretation"]);
+const necessities = new Set<AcceptedContextBinding["necessity"]>(["essential", "optional"]);
 
-function validBinding(binding: AcceptedContextBinding): boolean {
-  const strings = [binding.projectId, binding.workspaceId, binding.bundleId, binding.documentId, binding.sourceSha256, binding.perceptionExecutionId, binding.relationshipLineageId, binding.relationshipRevisionHash, binding.ownedSource.slot, binding.ownedSource.canonicalLocator, binding.contextSource.slot, binding.contextSource.canonicalLocator, binding.contextAsset.assetId, binding.contextAsset.assetSourceId, binding.contextAsset.assetSha256];
+function validBinding(binding: unknown): binding is AcceptedContextBinding {
+  if (!binding || typeof binding !== "object") return false;
+  const candidate = binding as AcceptedContextBinding;
+  if (!contextualRoles.has(candidate.contextualRole) || !necessities.has(candidate.necessity)) return false;
+  const strings = [candidate.projectId, candidate.workspaceId, candidate.bundleId, candidate.documentId, candidate.sourceSha256, candidate.perceptionExecutionId, candidate.relationshipLineageId, candidate.relationshipRevisionHash, candidate.ownedSource.slot, candidate.ownedSource.canonicalLocator, candidate.contextSource.slot, candidate.contextSource.canonicalLocator, candidate.contextAsset.assetId, candidate.contextAsset.assetSourceId, candidate.contextAsset.assetSha256];
   return strings.every(nonEmpty)
-    && sha256(binding.sourceSha256)
-    && sha256(binding.relationshipRevisionHash)
-    && sha256(binding.contextAsset.assetSha256)
-    && binding.ownedSource.slot !== binding.contextSource.slot
-    && binding.ownedSource.canonicalLocator !== binding.contextSource.canonicalLocator
-    && (!binding.semanticExecutionId || nonEmpty(binding.semanticExecutionId));
+    && sha256(candidate.sourceSha256)
+    && sha256(candidate.relationshipRevisionHash)
+    && sha256(candidate.contextAsset.assetSha256)
+    && candidate.ownedSource.slot !== candidate.contextSource.slot
+    && candidate.ownedSource.canonicalLocator !== candidate.contextSource.canonicalLocator
+    && (!candidate.semanticExecutionId || nonEmpty(candidate.semanticExecutionId));
 }
 
 /**
