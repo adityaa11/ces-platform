@@ -1,6 +1,6 @@
 # SEM-CUTOVER-006 — BSS-V2-004-03-05 CK-001.a/b contextual trust remediation
 
-**Status:** `planned` · **Size:** M · **Owner:** 03-05 deterministic finalizer only, bounded independent CK findings · **Dependencies:** 005 CK PASS plus **specific HMN/CFC authorization** for existing `BSS-V2-BATCH-04.03-05-298021d-review.md` `CK-001.a/b`. **GO is not implied by this ZIP**.
+**Status:** `approved` after independent CK `PASS` for reviewed remediation commit `0d8a8a13a3ee968923a543de915dc7c681fbfd37` ([verification record](../../../feedback/SEM-CUTOVER-006-0d8a8a1-verification.md)). · **Size:** M · **Owner:** 03-05 deterministic finalizer only, bounded independent CK findings · **Dependencies:** 005 CK PASS plus **specific HMN/CFC authorization** for existing `BSS-V2-BATCH-04.03-05-298021d-review.md` `CK-001.a/b`. **GO is not implied by this ZIP**.
 
 ## Exact objective
 
