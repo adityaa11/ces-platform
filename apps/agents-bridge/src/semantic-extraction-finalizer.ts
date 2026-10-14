@@ -7,8 +7,10 @@ import {
   type AcceptedContextVerificationMechanism,
   type ContextSourceRelationshipRevisionV1,
   type ProvisionalSemanticCompositeAccounting,
+  type CanonicalCandidateTupleBinding,
   type SourceLocatorType,
 } from "@atlas/skills";
+import type { DeferredDependentInterpretationV1 } from "./semantic-relationship-sidecar.js";
 
 /** Atlas-resolved finalization input. Extra identity fields are required only for contextual trust. */
 export type TrustedFinalizationSlot = {
@@ -142,6 +144,39 @@ function finalize(input: ExtractionFinalizationInput, contextualEvidence: Readon
 export function finalizeExtractionProposal(input: ExtractionFinalizationInput): SemanticExtractionResult {
   if ("acceptedContextEvidence" in input) fail("SOURCE_RELATIONSHIP_BLOCKED: caller-supplied contextual slot pairs are not authority.");
   return finalize(input, new Map(), new Set(), false)!;
+}
+
+/**
+ * Projects only REL-03-qualified deferred tuples.  It is intentionally pure:
+ * strict proposal parsing and tuple identity remain the source of truth, and
+ * no contextual authority is issued or consulted here.
+ */
+export function projectQualifiedStepwiseSemanticResult(input: {
+  readonly proposal: unknown;
+  readonly sourceSlots: readonly TrustedFinalizationSlot[];
+  readonly qualifiedDeferredInterpretations: readonly DeferredDependentInterpretationV1[];
+}): { readonly canonicalResult: SemanticExtractionResult | null; readonly canonicalCandidateTuples: readonly CanonicalCandidateTupleBinding[] } {
+  const proposal = atlasProviderExtractionProposalV1Schema.parse(input.proposal);
+  const slots = validateTrustedSlots(input.sourceSlots);
+  const owned = new Set(input.sourceSlots.filter((slot) => (slot.role ?? "owned_source") === "owned_source").map((slot) => slot.slot));
+  const proposalTuples = new Set<string>();
+  for (const result of proposal.source_results) {
+    if (!owned.has(result.slot)) fail(`qualified projection proposal supplied a foreign source slot ${result.slot}.`);
+    for (const [index] of result.candidates.entries()) proposalTuples.add(tupleKey(result.slot, index));
+  }
+  for (const slot of slots.values()) if ((slot.role ?? "owned_source") === "owned_source" && !proposal.source_results.some((result) => result.slot === slot.slot)) fail(`qualified projection proposal omitted owned source slot ${slot.slot}.`);
+  const deferred = new Set<string>();
+  for (const descriptor of input.qualifiedDeferredInterpretations) {
+    const key = tupleKey(descriptor.provider_candidate_tuple.source_slot, descriptor.provider_candidate_tuple.candidate_index);
+    if (deferred.has(key) || !proposalTuples.has(key) || descriptor.reason !== "essential_provisional_relationship" || descriptor.canonical_candidate_id !== null) fail("qualified deferred descriptor is duplicate, foreign, or malformed.");
+    deferred.add(key);
+  }
+  const canonicalResult = finalize({ proposal, sourceSlots: input.sourceSlots }, new Map(), deferred, true);
+  const canonicalCandidateTuples: CanonicalCandidateTupleBinding[] = [];
+  for (const result of proposal.source_results) for (const [index] of result.candidates.entries()) {
+    if (!deferred.has(tupleKey(result.slot, index))) canonicalCandidateTuples.push({ sourceSlot: result.slot, candidateIndex: index, canonicalCandidateId: candidateId(result.slot, index) });
+  }
+  return { canonicalResult, canonicalCandidateTuples };
 }
 
 /** Finalizer-only trusted path: consume, never issue, context authority or provisional accounting. */

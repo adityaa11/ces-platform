@@ -1,7 +1,7 @@
 import { parseSemanticExtractionResult, type SemanticExtractionResult } from "@atlas/contracts";
 import { createHash } from "node:crypto";
 import { relationshipContractVersion, relationshipSha256, type ContextSourceRelationshipRevisionV1 } from "./relationship-provenance.js";
-import { stepwiseRelationshipEnvelopeExtractionProfileId, stepwiseRelationshipEnvelopeProfileSha256, type StepwiseRelationshipEnvelopeRequest } from "./stepwise-extraction-request.js";
+import { stepwiseRelationshipEnvelopeExtractionProfileId, stepwiseRelationshipEnvelopeProfileSha256, type ParsedStepwiseRelationshipEnvelope, type StepwiseRelationshipEnvelopeRequest } from "./stepwise-extraction-request.js";
 
 /** Offline-only companion record. It is deliberately not a Semantic V1 field. */
 export const provisionalSemanticSidecarVersion = "atlas.semantic.provisional-sidecar/v1" as const;
@@ -282,6 +282,55 @@ export function prepareProvisionalSemanticCompositeAccounting(input: {
   });
   const body = { version: provisionalSemanticCompositeAccountingVersion, scope: input.scope, semanticProfile: input.request.profile, semanticProfileSha256: input.request.profileSha256, requestSha256: input.request.requestSha256, canonicalResultSha256: sha256(canonicalResult), canonicalSourceSlots, sourceCoverage, tupleCoverage, deferredInterpretations: [...input.deferredInterpretations].sort((left, right) => left.deferred_interpretation_id.localeCompare(right.deferred_interpretation_id)), relationshipDependencies: [...revisionByHash.values()].sort((left, right) => left.revisionHash.localeCompare(right.revisionHash)), authority: { acceptedRelationshipAuthority: null, masterMutation: false, publishing: false, reconciliationTruth: false } as const };
   return { ...body, compositeHash: sha256(body) };
+}
+
+/**
+ * The durable-preparation entry point.  Caller-owned arrays are deliberately
+ * absent: candidate and source universes are re-derived from the exact
+ * request and the strictly parsed provider proposal before legacy accounting
+ * is allowed to validate the resulting complete partition.
+ */
+export function prepareQualifiedStepwiseSemanticCompositeAccounting(input: {
+  readonly scope: ProvisionalSemanticScope;
+  readonly request: StepwiseRelationshipEnvelopeRequest;
+  readonly providerProposal: ParsedStepwiseRelationshipEnvelope["semanticProposal"];
+  readonly relationshipRevisions: readonly ProvisionalRelationshipRevisionReference[];
+  readonly currentResponseRelationshipRevisions: readonly ProvisionalRelationshipRevisionReference[];
+  readonly qualifiedRelationshipResult: {
+    readonly independent_candidate_tuples: readonly { source_slot: string; candidate_index: number }[];
+    readonly optional_relationship_tuples: readonly { source_slot: string; candidate_index: number }[];
+    readonly deferred_interpretations: readonly DeferredDependentInterpretationDescriptor[];
+  };
+  readonly canonicalProjection: {
+    readonly canonicalResult: SemanticExtractionResult | null;
+    readonly canonicalCandidateTuples: readonly CanonicalCandidateTupleBinding[];
+  };
+}): ProvisionalSemanticCompositeAccounting {
+  const proposal = input.providerProposal;
+  const ownedSlots = new Set(input.request.sourceSlots.filter((slot) => slot.role === "owned_source" && slot.status === "ready").map((slot) => slot.slot));
+  const seenSources = new Set<string>();
+  const providerCandidateTuples: ProviderCandidateTuple[] = [];
+  for (const result of proposal.source_results) {
+    if (!ownedSlots.has(result.slot) || seenSources.has(result.slot)) reject("strict provider proposal has a foreign or duplicate source result.");
+    seenSources.add(result.slot);
+    for (const [candidateIndex] of result.candidates.entries()) providerCandidateTuples.push({ sourceSlot: result.slot, candidateIndex });
+  }
+  for (const slot of ownedSlots) if (!seenSources.has(slot)) reject("strict provider proposal omits an exact ready owned request source.");
+  const canonicalResult = input.canonicalProjection.canonicalResult ?? { version: "v1" as const, candidate_assertions: [], source_statement_inventory: [], questions: [] };
+  if (input.canonicalProjection.canonicalResult === null) {
+    const deferred = new Set(input.qualifiedRelationshipResult.deferred_interpretations.map((item) => tupleKey({ sourceSlot: item.provider_candidate_tuple.source_slot, candidateIndex: item.provider_candidate_tuple.candidate_index })));
+    if (providerCandidateTuples.length === 0 || providerCandidateTuples.some((tuple) => !deferred.has(tupleKey(tuple)))) reject("null canonical result is permitted only for entirely essential-deferred provider meaning.");
+  }
+  return prepareProvisionalSemanticCompositeAccounting({
+    scope: input.scope, request: input.request, canonicalResult,
+    relationshipRevisions: input.relationshipRevisions,
+    currentResponseRelationshipRevisions: input.currentResponseRelationshipRevisions,
+    providerCandidateTuples,
+    independentCandidateTuples: input.qualifiedRelationshipResult.independent_candidate_tuples.map((tuple) => ({ sourceSlot: tuple.source_slot, candidateIndex: tuple.candidate_index })),
+    optionalRelationshipTuples: input.qualifiedRelationshipResult.optional_relationship_tuples.map((tuple) => ({ sourceSlot: tuple.source_slot, candidateIndex: tuple.candidate_index })),
+    canonicalCandidateTuples: input.canonicalProjection.canonicalCandidateTuples,
+    deferredInterpretations: input.qualifiedRelationshipResult.deferred_interpretations,
+  });
 }
 
 /** Deterministic fake only; it models the fenced winner/replay contract, not SQL durability. */

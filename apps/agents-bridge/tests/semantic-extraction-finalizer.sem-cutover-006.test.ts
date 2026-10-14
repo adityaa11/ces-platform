@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import test from "node:test";
 import { relationshipSha256, type AcceptedContextBinding, type AcceptedContextVerificationMechanism, type ContextSourceRelationshipRevisionV1, type ProvisionalSemanticCompositeAccounting } from "@atlas/skills";
-import { finalizeVerifiedExtractionProposal } from "../src/semantic-extraction-finalizer.ts";
+import { finalizeVerifiedExtractionProposal, projectQualifiedStepwiseSemanticResult } from "../src/semantic-extraction-finalizer.ts";
 
 const sourceSha256 = "a".repeat(64);
 const trustScope = { projectId: "project-1", workspaceId: "workspace-1", bundleId: "bundle-1", documentId: "document-1", sourceSha256, perceptionExecutionId: "perception-1", semanticExecutionId: "semantic-1" } as const;
@@ -80,4 +80,12 @@ test("RC-006-02/03: qualified composite accounting preserves essential deferred 
   assert.equal(outcome.kind, "provisional_companion"); if (outcome.kind !== "provisional_companion") throw new Error("expected provisional companion");
   assert.equal(outcome.provisionalCompositeAccounting, accounting);
   assert.deepEqual(outcome.canonicalResult?.candidate_assertions.map((candidate) => candidate.local_candidate_id), ["candidate-slot-000001-002"]);
+});
+
+test("HMN-006: qualified projection retains independent meaning and rejects a forged deferred tuple", () => {
+  const qualified = [{ deferred_interpretation_id: "d".repeat(64), relationship_revision_hash: revision().revisionHash, provider_candidate_tuple: { source_slot: "slot-000001", candidate_index: 0 }, source: { owned_source: ownedSource, context_source: contextSource }, uncertainty: "medium" as const, proposed_candidate_meaning: proposal.source_results[0]!.candidates[0], reason: "essential_provisional_relationship" as const, canonical_candidate_id: null }];
+  const outcome = projectQualifiedStepwiseSemanticResult({ proposal, sourceSlots: slots, qualifiedDeferredInterpretations: qualified });
+  assert.deepEqual(outcome.canonicalResult?.candidate_assertions.map((candidate) => candidate.local_candidate_id), ["candidate-slot-000001-002"]);
+  assert.deepEqual(outcome.canonicalCandidateTuples, [{ sourceSlot: "slot-000001", candidateIndex: 1, canonicalCandidateId: "candidate-slot-000001-002" }]);
+  assert.throws(() => projectQualifiedStepwiseSemanticResult({ proposal, sourceSlots: slots, qualifiedDeferredInterpretations: [{ ...qualified[0]!, provider_candidate_tuple: { source_slot: "slot-000001", candidate_index: 9 } }] }), /foreign/);
 });

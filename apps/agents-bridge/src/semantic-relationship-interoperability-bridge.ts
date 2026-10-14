@@ -60,3 +60,23 @@ export function prepareStepwiseRel03Interoperability(input: {
   });
   return { parsed, currentResponseRevisions: prepared.revisions, qualified };
 }
+
+/**
+ * Immutable REL-03 handoff for the separately owned semantic-composite
+ * preparation.  This deliberately wraps, rather than recreates, REL-03.
+ */
+export type QualifiedStepwiseSemanticPreparation = Readonly<{
+  parsed: ParsedStepwiseRelationshipEnvelope;
+  currentResponseRevisions: readonly ContextSourceRelationshipRevisionV1[];
+  qualified: PreparedDeferredDependentInterpretations;
+}>;
+
+export function prepareQualifiedStepwiseSemanticPreparation(input: {
+  readonly request: StepwiseRelationshipEnvelopeRequest;
+  readonly rawResponse: unknown;
+  readonly relationshipScope: RelationshipPacketIdentity;
+  readonly providerProvenance: ProviderProvenance;
+  readonly trustedPriorRevisions: readonly ContextSourceRelationshipRevisionV1[];
+}): QualifiedStepwiseSemanticPreparation {
+  return prepareStepwiseRel03Interoperability(input);
+}
