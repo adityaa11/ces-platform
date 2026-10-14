@@ -65,7 +65,10 @@ export type ProvisionalSemanticCompositeAccounting = {
   readonly semanticProfile: string;
   readonly semanticProfileSha256: string;
   readonly requestSha256: string;
-  readonly canonicalResultSha256: string;
+  /** Null is a genuine entirely-deferred outcome, never an empty V1 stand-in. */
+  readonly canonicalResultSha256: string | null;
+  /** Exact immutable input retained so a later verifier can re-derive both universes. */
+  readonly preparationContext?: { readonly request: StepwiseRelationshipEnvelopeRequest; readonly providerProposal: ParsedStepwiseRelationshipEnvelope["semanticProposal"] };
   readonly canonicalSourceSlots: readonly string[];
   readonly sourceCoverage: readonly { readonly slot: string; readonly disposition: "canonical_semantic_v1" | "essential_dependent_deferred" | "pending_unexamined_visual" }[];
   readonly tupleCoverage: readonly { readonly sourceSlot: string; readonly candidateIndex: number; readonly disposition: "independently_finalized" | "optional_relationship_but_independent" | "essential_dependent_deferred"; readonly canonicalCandidateId?: string; readonly deferredInterpretationId?: string; readonly relationshipRevisionHash?: string }[];
@@ -316,12 +319,14 @@ export function prepareQualifiedStepwiseSemanticCompositeAccounting(input: {
     for (const [candidateIndex] of result.candidates.entries()) providerCandidateTuples.push({ sourceSlot: result.slot, candidateIndex });
   }
   for (const slot of ownedSlots) if (!seenSources.has(slot)) reject("strict provider proposal omits an exact ready owned request source.");
+  // The legacy validator is used only to check the all-deferred partition; its
+  // empty value is not persisted or exposed as a canonical result.
   const canonicalResult = input.canonicalProjection.canonicalResult ?? { version: "v1" as const, candidate_assertions: [], source_statement_inventory: [], questions: [] };
   if (input.canonicalProjection.canonicalResult === null) {
     const deferred = new Set(input.qualifiedRelationshipResult.deferred_interpretations.map((item) => tupleKey({ sourceSlot: item.provider_candidate_tuple.source_slot, candidateIndex: item.provider_candidate_tuple.candidate_index })));
     if (providerCandidateTuples.length === 0 || providerCandidateTuples.some((tuple) => !deferred.has(tupleKey(tuple)))) reject("null canonical result is permitted only for entirely essential-deferred provider meaning.");
   }
-  return prepareProvisionalSemanticCompositeAccounting({
+  const prepared = prepareProvisionalSemanticCompositeAccounting({
     scope: input.scope, request: input.request, canonicalResult,
     relationshipRevisions: input.relationshipRevisions,
     currentResponseRelationshipRevisions: input.currentResponseRelationshipRevisions,
@@ -331,6 +336,13 @@ export function prepareQualifiedStepwiseSemanticCompositeAccounting(input: {
     canonicalCandidateTuples: input.canonicalProjection.canonicalCandidateTuples,
     deferredInterpretations: input.qualifiedRelationshipResult.deferred_interpretations,
   });
+  const { compositeHash: ignoredHash, ...withoutHash } = prepared;
+  const body = {
+    ...withoutHash,
+    canonicalResultSha256: input.canonicalProjection.canonicalResult === null ? null : prepared.canonicalResultSha256,
+    preparationContext: { request: input.request, providerProposal: input.providerProposal },
+  };
+  return { ...body, compositeHash: sha256(body) };
 }
 
 /** Deterministic fake only; it models the fenced winner/replay contract, not SQL durability. */

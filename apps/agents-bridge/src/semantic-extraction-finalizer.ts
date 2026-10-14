@@ -155,6 +155,8 @@ export function projectQualifiedStepwiseSemanticResult(input: {
   readonly proposal: unknown;
   readonly sourceSlots: readonly TrustedFinalizationSlot[];
   readonly qualifiedDeferredInterpretations: readonly DeferredDependentInterpretationV1[];
+  /** REL-03 revisions are supplied by the immutable handoff, not reconstructed here. */
+  readonly qualifiedRelationshipRevisions?: readonly ContextSourceRelationshipRevisionV1[];
 }): { readonly canonicalResult: SemanticExtractionResult | null; readonly canonicalCandidateTuples: readonly CanonicalCandidateTupleBinding[] } {
   const proposal = atlasProviderExtractionProposalV1Schema.parse(input.proposal);
   const slots = validateTrustedSlots(input.sourceSlots);
@@ -166,9 +168,14 @@ export function projectQualifiedStepwiseSemanticResult(input: {
   }
   for (const slot of slots.values()) if ((slot.role ?? "owned_source") === "owned_source" && !proposal.source_results.some((result) => result.slot === slot.slot)) fail(`qualified projection proposal omitted owned source slot ${slot.slot}.`);
   const deferred = new Set<string>();
+  const revisions = new Map((input.qualifiedRelationshipRevisions ?? []).map((revision) => [revision.revisionHash, revision]));
   for (const descriptor of input.qualifiedDeferredInterpretations) {
     const key = tupleKey(descriptor.provider_candidate_tuple.source_slot, descriptor.provider_candidate_tuple.candidate_index);
-    if (deferred.has(key) || !proposalTuples.has(key) || descriptor.reason !== "essential_provisional_relationship" || descriptor.canonical_candidate_id !== null) fail("qualified deferred descriptor is duplicate, foreign, or malformed.");
+    const revision = revisions.get(descriptor.relationship_revision_hash);
+    const ownedSlot = slots.get(descriptor.source.owned_source.slot);
+    const contextSlot = slots.get(descriptor.source.context_source.slot);
+    const expectedId = revision === undefined ? undefined : relationshipSha256({ scope: revision.scope, sourceSlot: descriptor.provider_candidate_tuple.source_slot, candidateIndex: descriptor.provider_candidate_tuple.candidate_index, relationshipRevisionHash: revision.revisionHash });
+    if (deferred.has(key) || !proposalTuples.has(key) || !revision || !ownedSlot || !contextSlot || descriptor.reason !== "essential_provisional_relationship" || descriptor.canonical_candidate_id !== null || descriptor.deferred_interpretation_id !== expectedId || revision.relationship.necessity !== "essential" || !revision.candidateRefs.some((candidate) => tupleKey(candidate.sourceSlot, candidate.candidateIndex) === key) || JSON.stringify(descriptor.source.owned_source) !== JSON.stringify(revision.ownedSource) || JSON.stringify(descriptor.source.context_source) !== JSON.stringify(revision.contextSource) || descriptor.uncertainty !== revision.uncertainty || descriptor.proposed_candidate_meaning === undefined) fail("qualified deferred descriptor is duplicate, foreign, malformed, or detached from its REL-03 revision.");
     deferred.add(key);
   }
   const canonicalResult = finalize({ proposal, sourceSlots: input.sourceSlots }, new Map(), deferred, true);

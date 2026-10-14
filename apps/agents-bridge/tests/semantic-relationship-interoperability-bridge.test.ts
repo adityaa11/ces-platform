@@ -85,13 +85,15 @@ test("HMN-006: strict REL-03 handoff, SEM-006 null projection, and SEM-005 quali
   const req = request();
   const handoff = prepareQualifiedStepwiseSemanticPreparation({ request: req, rawResponse: raw(true, 1), relationshipScope, providerProvenance: { provider: "offline", model: "fixture", endpoint: "test", attempt: 1, runId: "run-1" }, trustedPriorRevisions: [] });
   const finalizationSlots = projectStepwiseSlotsForRel03(req).map((slot) => slot.slot === "slot-000001" ? { ...slot, content: "Owned fact." } : slot);
-  const projection = projectQualifiedStepwiseSemanticResult({ proposal: handoff.parsed.semanticProposal, sourceSlots: finalizationSlots, qualifiedDeferredInterpretations: handoff.qualified.deferred_interpretations });
+  const projection = projectQualifiedStepwiseSemanticResult({ proposal: handoff.parsed.semanticProposal, sourceSlots: finalizationSlots, qualifiedDeferredInterpretations: handoff.qualified.deferred_interpretations, qualifiedRelationshipRevisions: handoff.currentResponseRevisions });
   assert.equal(projection.canonicalResult, null);
   assert.deepEqual(projection.canonicalCandidateTuples, []);
   const first = prepareQualifiedStepwiseSemanticCompositeAccounting({ scope: semanticScope, request: req, providerProposal: handoff.parsed.semanticProposal, relationshipRevisions: [], currentResponseRelationshipRevisions: handoff.currentResponseRevisions, qualifiedRelationshipResult: handoff.qualified, canonicalProjection: projection });
   const second = prepareQualifiedStepwiseSemanticCompositeAccounting({ scope: semanticScope, request: req, providerProposal: handoff.parsed.semanticProposal, relationshipRevisions: [], currentResponseRelationshipRevisions: handoff.currentResponseRevisions, qualifiedRelationshipResult: handoff.qualified, canonicalProjection: projection });
   assert.equal(first.compositeHash, second.compositeHash);
   assert.equal(first.tupleCoverage[0]?.disposition, "essential_dependent_deferred");
+  assert.equal(first.canonicalResultSha256, null);
+  assert.equal(first.preparationContext?.request, req);
   assert.equal(first.relationshipDependencies[0]?.proposalProvenance.providerRun, "run-1");
   assert.throws(() => prepareQualifiedStepwiseSemanticCompositeAccounting({ scope: semanticScope, request: req, providerProposal: { ...handoff.parsed.semanticProposal, source_results: [] }, relationshipRevisions: [], currentResponseRelationshipRevisions: handoff.currentResponseRevisions, qualifiedRelationshipResult: handoff.qualified, canonicalProjection: projection }), /omits an exact ready owned request source/);
 });
