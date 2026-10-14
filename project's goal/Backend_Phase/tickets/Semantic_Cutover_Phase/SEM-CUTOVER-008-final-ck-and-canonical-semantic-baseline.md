@@ -1,6 +1,6 @@
 # SEM-CUTOVER-008 — Final BSS-V2-004-03-05 CK and canonical semantic baseline
 
-**Status:** `planned` · **Size:** M (review/evidence/cutover gate) · **Owner:** independent review package, successor baseline record, no new implementation feature · **Dependencies:** 007 CK PASS plus explicit approved HMN amendments and resolved 03-05 CK-001.a/b. Explicit GO required.
+**Status:** `planned` · **Size:** M (review/evidence/cutover gate) · **Owner:** independent review package, successor baseline record, no new implementation feature · **Dependencies:** 007 and 007A independent CK PASS, plus explicit approved HMN amendments and independent consolidated 03-05 CK closure on exact final SHA. Explicit GO required.
 
 ## Exact objective
 
@@ -37,3 +37,7 @@ At least: profile ID, method/version, prompt/JSON schema/response envelope hashe
 ## Binding final CK sequence
 
 SEM-006 component CK PASS -> SEM-007 integrated CK PASS (with separately reviewed durable composite replay) -> **independent consolidated BSS-V2-004-03-05 CK re-review** at exact candidate SHA -> SEM-008 baseline record/review. The full 03-05 verdict is a within-008 checkpoint, not a presumed already-satisfied prerequisite for gathering read-only evidence. Only a separate actual PASS closes CK-001.a/b and allows EFFECTIVE_AFTER=03-05 independent CK PASS. Otherwise leave the baseline NOT EFFECTIVE and return to the named owner. Retain historical 03-05 CHANGES_REQUIRED unchanged.
+
+## Binding pre-GO correction — executable retirement prerequisite (2026-10-15)
+
+SEM-CUTOVER-007A must receive **independent CK PASS before SEM-008 GO**. Its reviewed implementation must prove that ordinary `atlas.semantic.extract` execution uses the approved versioned stepwise packet, combined REL envelope and shared fake/real-adapter engine without a test-only injection, and that legacy `prompt-003/v1` and `buildSemanticSourcePacket()` cannot dispatch or replay as the canonical extraction result. `RC-008-02` requires direct proof from that actual runtime cutover, not only the policy decision or offline fake integration. Maintain all original 008 RCs, the consolidated independent BSS-V2-004-03-05 CK re-review, the protected RUN-003 `perceived` boundary, and zero unsolicited provider requests. No SEM-008 implementation expansion is authorized by this dependency correction.
