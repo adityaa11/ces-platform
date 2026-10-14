@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
+import { createServer } from "node:http";
 import test from "node:test";
 import postgres from "postgres";
+import { createJiti } from "jiti";
 import { createSemanticInternalRoutes } from "@atlas/core";
 import { canonicalSemanticFingerprint, PostgresSemanticAuthority } from "../src/semantic-authority.ts";
 import { PostgresExtractionAcceptanceHandler } from "../src/extraction-acceptance.ts";
@@ -123,6 +125,87 @@ test("SEM-CUTOVER-007A qualified-result route rejects stale, foreign, and malfor
     await fixture.cleanup();
   }
 });
+
+test("SEM-CUTOVER-007A mounted qualified-result route proves redaction and the frozen negative matrix", { skip: !databaseUrl }, async () => {
+  const partial = await createFixture("mounted-partial");
+  const fullyDeferred = await createFixture("mounted-fully-deferred");
+  const server = await mountQualifiedRoute(partial.atlasUrl);
+  try {
+    const partialInput = { version: "v1" as const, scope: partial.scope, outcome: "partial_accepted" as const, composite: hashes, deferredCoverage: deferred(), canonical: canonical() };
+    const deferredInput = { version: "v1" as const, scope: fullyDeferred.scope, outcome: "qualified_deferred" as const, composite: hashes, deferredCoverage: allDeferred() };
+
+    assertRedacted(await server.post(partialInput), 401, { error: "Unauthorized internal service request." });
+    assertRedacted(await server.post({ malformed: true }, credential), 409, { error: "Semantic delivery cannot be accepted." });
+    assert.equal((await server.post(partialInput, credential)).status, 204, "the mounted Atlas route accepts partial truth");
+    assert.deepEqual(await partial.counts(), { deferred: 1, results: 1, candidates: 1, evidence: 1, knowledge: 1, reconciliation: 1, jobs: 1 });
+    assert.equal((await server.post(deferredInput, credential)).status, 204, "the mounted Atlas route accepts fully deferred truth");
+    assert.deepEqual(await fullyDeferred.counts(), { deferred: 1, results: 0, candidates: 0, evidence: 0, knowledge: 0, reconciliation: 0, jobs: 0 });
+
+    assertRedacted(await server.post({ ...partialInput, composite: { ...hashes, relationshipRevisionSetHash: "d".repeat(64) } }, credential), 409, { error: "Semantic delivery cannot be accepted." });
+    assertRedacted(await server.post({ ...partialInput, deferredCoverage: deferred().map((item, index) => index === 0 ? { ...item, source_unit_id: "changed-coverage" } : item) }, credential), 409, { error: "Semantic delivery cannot be accepted." });
+
+    const negative = await createFixture("mounted-negatives");
+    try {
+      const valid = { version: "v1" as const, scope: negative.scope, outcome: "partial_accepted" as const, composite: hashes, deferredCoverage: deferred(), canonical: canonical() };
+      const zero = { deferred: 0, results: 0, candidates: 0, evidence: 0, knowledge: 0, reconciliation: 0, jobs: 0 };
+      const rejected = [
+        { input: { ...valid, scope: { ...negative.scope, executionId: randomUUID() } }, status: 409, body: { error: "Semantic delivery cannot be accepted." } },
+        { input: { ...valid, scope: { ...negative.scope, documentId: randomUUID() } }, status: 409, body: { error: "Semantic delivery cannot be accepted." } },
+        { input: { ...valid, deferredCoverage: [deferred()[0], deferred()[0], deferred()[1]] }, status: 422, body: { error: "Semantic result failed deterministic validation." } },
+        { input: { ...valid, deferredCoverage: [{ ...deferred()[0], locator_id: "unknown" }, deferred()[1]] }, status: 422, body: { error: "Semantic result failed deterministic validation." } },
+        { input: { ...valid, deferredCoverage: [deferred()[0]] }, status: 422, body: { error: "Semantic result failed deterministic validation." } },
+        { input: { ...valid, deferredCoverage: [{ ...deferred()[0], classification: "candidate" }, deferred()[1]] }, status: 409, body: { error: "Semantic delivery cannot be accepted." } },
+        { input: { ...valid, deferredCoverage: [{ ...deferred()[0], locator_type: "text_block", locator_id: "block-1" }, deferred()[1]] }, status: 422, body: { error: "Semantic result failed deterministic validation." } },
+      ];
+      for (const rejection of rejected) {
+        assertRedacted(await server.post(rejection.input, credential), rejection.status, rejection.body);
+        assert.deepEqual(await negative.counts(), zero);
+        assert.deepEqual((await negative.atlas.unsafe("SELECT lifecycle FROM atlas.semantic_execution WHERE id=$1", [negative.execution]))[0], { lifecycle: "queued" });
+      }
+      await negative.atlas.unsafe("UPDATE atlas.semantic_execution SET capability_valid_until=now()-interval '1 second' WHERE id=$1", [negative.execution]);
+      assertRedacted(await server.post(valid, credential), 409, { error: "Semantic delivery cannot be accepted." });
+      assert.deepEqual(await negative.counts(), zero);
+    } finally { await negative.cleanup(); }
+  } finally {
+    await server.close();
+    await Promise.all([partial.cleanup(), fullyDeferred.cleanup()]);
+  }
+});
+
+function assertRedacted(response: { status: number; body: unknown }, status: number, body: unknown) {
+  assert.equal(response.status, status);
+  assert.deepEqual(response.body, body);
+  assert.doesNotMatch(JSON.stringify(response.body), /postgres|sql|source\.pdf|credential|provider|stack/i);
+}
+
+async function mountQualifiedRoute(database: URL) {
+  const original = { database: process.env.ATLAS_DATABASE_URL, credential: process.env.AGENTS_BRIDGE_SERVICE_CREDENTIAL };
+  process.env.ATLAS_DATABASE_URL = database.toString();
+  process.env.AGENTS_BRIDGE_SERVICE_CREDENTIAL = credential;
+  let middleware: ((request: import("node:http").IncomingMessage, response: import("node:http").ServerResponse, next: () => void) => Promise<void>) | undefined;
+  const jiti = createJiti(import.meta.url);
+  const { createAtlasPerceptionInternalPlugin } = await jiti.import<typeof import("../../../apps/atlas/perception-internal.ts")>("../../../apps/atlas/perception-internal.ts");
+  const listener = createServer((request, response) => {
+    if (!middleware) throw new Error("qualified route middleware was not registered");
+    void middleware(request, response, () => { response.statusCode = 404; response.end(); });
+  });
+  const viteServer = { httpServer: listener, middlewares: { use(handler: typeof middleware) { middleware = handler; } } };
+  await createAtlasPerceptionInternalPlugin().configureServer!(viteServer as never);
+  await new Promise<void>((resolve) => listener.listen(0, "127.0.0.1", () => resolve()));
+  const address = listener.address();
+  if (!address || typeof address === "string") throw new Error("qualified route listener did not bind a TCP port");
+  return {
+    async post(body: unknown, bearer?: string) {
+      const response = await fetch(`http://127.0.0.1:${address.port}/internal/semantic/qualified-result`, { method: "POST", headers: { "content-type": "application/json", ...(bearer ? { authorization: `Bearer ${bearer}` } : {}) }, body: JSON.stringify(body) });
+      return { status: response.status, body: response.status === 204 ? null : await response.json() };
+    },
+    async close() {
+      await new Promise<void>((resolve, reject) => listener.close((error) => error ? reject(error) : resolve()));
+      if (original.database === undefined) delete process.env.ATLAS_DATABASE_URL; else process.env.ATLAS_DATABASE_URL = original.database;
+      if (original.credential === undefined) delete process.env.AGENTS_BRIDGE_SERVICE_CREDENTIAL; else process.env.AGENTS_BRIDGE_SERVICE_CREDENTIAL = original.credential;
+    },
+  };
+}
 
 async function createFixture(label: string, expectedDocuments = 1) {
   const admin = postgres(databaseUrl!, { max: 1 });

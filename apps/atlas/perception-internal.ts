@@ -96,6 +96,9 @@ export function createAtlasPerceptionInternalPlugin(): Plugin {
       const sql = postgres(databaseUrl, { max: 4 });
       const semanticQueue = await backgroundQueue.createTransactionalQueueProducer(databaseUrl);
       const perceptionQueue = await backgroundQueue.createTransactionalPerceptionQueueProducer(databaseUrl);
+      server.httpServer?.once("close", () => {
+        void Promise.allSettled([semanticQueue.close(), perceptionQueue.close(), sql.end({ timeout: 1 })]);
+      });
       // pg-boss's Drizzle transaction type is narrower than the Atlas
       // persistence port, while both adapters receive this same SQL transaction.
       const atlasSemanticQueue = { enqueue: (transaction: unknown, job: BackgroundExecutionJob) => semanticQueue.enqueue(transaction as never, job) };
