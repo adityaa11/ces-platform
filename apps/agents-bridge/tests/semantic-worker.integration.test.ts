@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import type { AddressInfo } from "node:net";
 import test from "node:test";
@@ -7,9 +8,12 @@ import postgres from "postgres";
 import { createSemanticInternalRoutes, SemanticAcceptanceRejection } from "@atlas/core";
 import { PostgresSemanticAuthority } from "@atlas/db";
 import { semanticLimits } from "@atlas/contracts";
+import { buildStepwiseRelationshipEnvelopeRequest, buildStepwiseSourcePacket } from "@atlas/skills";
 import { MistralProvider } from "../src/providers/mistral.ts";
 import { createAtlasSemanticClient } from "../src/atlas-semantic-client.ts";
 import { createSemanticResultReplay } from "../src/semantic-result-replay.ts";
+import { createSemanticCompositeReplay } from "../src/semantic-composite-replay.ts";
+import { runOfflineStepwiseComposition, type OfflineStepwiseQualificationContext } from "../src/semantic-offline-stepwise-composition.ts";
 import { runSemanticJob } from "../src/semantic-worker.ts";
 import { TestRuntime } from "../src/runtime.ts";
 import { createBackgroundWorker } from "../src/worker.ts";
@@ -17,6 +21,7 @@ import type { WorkerConfig } from "../src/worker-config.ts";
 
 const databaseUrl = process.env.DATABASE_URL;
 const skip = !databaseUrl;
+const sem007Only = Boolean(process.env.SEM007_ONLY);
 const credential = "semantic-integration-service-credential-32-bytes";
 const capability = "semantic-integration-capability";
 const capabilityFingerprint = createHash("sha256").update(JSON.stringify(capability)).digest("hex");
@@ -40,7 +45,300 @@ const normalized = (executionId: string, documentId: string, sourceSha256: strin
   pages: [{ number: 1, textBlocks: [], tables: [], visualRegions: [] }],
 });
 
-test("the production semantic worker uses pg-boss, Bridge replay, configured HTTP Mistral, and Atlas routes", { skip }, async () => {
+test("SEM-007 composes the injected stepwise worker path into isolated PostgreSQL composite staging and recovery", { skip: skip || Boolean(process.env.SEM007_CHILD_MODE) }, async () => {
+  const admin = postgres(databaseUrl!, { max: 3 });
+  const bridgeUrl = new URL(databaseUrl!); bridgeUrl.username = "agents_bridge"; bridgeUrl.password = process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only";
+  const bridge = postgres(bridgeUrl.toString(), { max: 4 });
+  const suffix = randomUUID().replace(/-/gu, "");
+  const queueName = `sem007-worker-${suffix}`;
+  const effectTable = `sem007_effects_${suffix}`;
+  const syncTable = `sem007_sync_${suffix}`;
+  const triggerFunction = `sem007_cancel_${suffix}`;
+  const fixtures = new Map<string, OfflineStepwiseQualificationContext>();
+  const keys = new Map<string, string>();
+  const deliveryModes = new Map<string, "none" | "delivery-failure" | "ack-loss">();
+  const jobCounts = new Map<string, number>();
+  const providerStructuredCalls = new Map<string, number>();
+  const observations: string[] = [];
+  let worker: ReturnType<typeof createBackgroundWorker> | undefined;
+  const fixture = (label: string, mode: Sem007FixtureMode, withImage: boolean) => {
+    const executionId = `sem007-${label}-${suffix}`;
+    const value = sem007Fixture(mode, executionId, withImage);
+    fixtures.set(executionId, value); keys.set(executionId, `sem007-key-${label}-${suffix}`); deliveryModes.set(executionId, "none");
+    return executionId;
+  };
+  const textOnlyExecution = fixture("text-only", "ordinary", false);
+  const ordinaryExecution = fixture("ordinary", "ordinary", true);
+  const mixedExecution = fixture("mixed", "mixed", true);
+  const deferredExecution = fixture("deferred", "deferred", true);
+  const deliveryFailureExecution = fixture("delivery-failure", "ordinary", false);
+  const acknowledgementLossExecution = fixture("ack-loss", "ordinary", false);
+  const crashExecution = fixture("crash", "mixed", true);
+  const cancellationExecution = fixture("cancel", "ordinary", true);
+  const staleExecution = fixture("stale", "ordinary", false);
+  const safeIdentifier = (value: string) => { if (!/^[a-z0-9_]+$/u.test(value)) throw new Error(`Unsafe SEM-007 identifier: ${value}`); return value; };
+  safeIdentifier(effectTable); safeIdentifier(syncTable); safeIdentifier(triggerFunction);
+  const effect = async (key: string, kind: string, committed: boolean): Promise<number> => {
+    const rows = await bridge.unsafe(`INSERT INTO bridge.${effectTable} (effect_key, effect_kind, attempts, committed) VALUES ($1,$2,1,$3) ON CONFLICT (effect_key,effect_kind) DO UPDATE SET attempts=bridge.${effectTable}.attempts+1 RETURNING attempts`, [key, kind, committed]);
+    return Number(rows[0]?.attempts);
+  };
+  const effectRow = async (key: string, kind: string) => (await admin.unsafe(`SELECT attempts, committed FROM bridge.${effectTable} WHERE effect_key=$1 AND effect_kind=$2`, [key, kind]))[0] as { attempts: number; committed: boolean } | undefined;
+  const enqueue = async (executionId: string) => {
+    const key = keys.get(executionId)!;
+    await worker!.boss.send(queueName, { idempotencyKey: key, execution: { version: "v1", executionId, mode: "background", skill: { id: "atlas.semantic.extract", version: "v1" }, input: { contextCapability: "sem007-offline-authorized-context" }, context: { boundary: "sem007-offline-worker", items: [] } } }, { singletonKey: `${key}-${randomUUID()}` });
+  };
+  const child = (executionId: string, childMode: "cancel" | "crash", owner: string, generation: number) => {
+    const key = keys.get(executionId)!; const selected = fixtures.get(executionId)!;
+    const packageCwd = /[\\/]apps[\\/]agents-bridge$/u.test(process.cwd());
+    const childApplicationName = `sem007-child-${childMode}-${suffix}`;
+    const childProcess = spawn(process.execPath, [packageCwd ? "node_modules/jiti/lib/jiti-cli.mjs" : "apps/agents-bridge/node_modules/jiti/lib/jiti-cli.mjs", packageCwd ? "tests/semantic-worker.integration.test.ts" : "apps/agents-bridge/tests/semantic-worker.integration.test.ts"], {
+      cwd: process.cwd(),
+      env: { ...process.env, DATABASE_URL: databaseUrl!, SEM007_CHILD_MODE: childMode, SEM007_CHILD_APP: childApplicationName, SEM007_CHILD_KEY: key, SEM007_CHILD_EXECUTION: executionId, SEM007_CHILD_FIXTURE: childMode === "cancel" ? "ordinary" : "mixed", SEM007_CHILD_IMAGE: String(selected.assetIdentities.length > 0), SEM007_CHILD_OWNER: owner, SEM007_CHILD_GENERATION: String(generation), SEM007_EFFECT_TABLE: effectTable },
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    let stdout = ""; let stderr = ""; let closed = false; let closeCode: number | null = null; let closeSignal: NodeJS.Signals | null = null;
+    childProcess.stdout.on("data", (chunk: Buffer) => { stdout += chunk.toString(); });
+    childProcess.stderr.on("data", (chunk: Buffer) => { stderr += chunk.toString(); });
+    const closedPromise = new Promise<void>((resolve, reject) => {
+      childProcess.once("error", reject);
+      childProcess.once("close", (code, signal) => { closed = true; closeCode = code; closeSignal = signal; resolve(); });
+    });
+    const waitMarker = async (marker: string) => {
+      await waitFor(async () => { if (closed) throw new Error(`SEM-007 child exited before ${marker}; code=${closeCode}; signal=${closeSignal}; stdout=${stdout}; stderr=${stderr}`); return stdout.includes(marker); }, `SEM-007 child marker ${marker}`, 30_000);
+      observations.push(`child:${childMode}:${marker}:code=${String(closeCode)}:signal=${String(closeSignal)}`);
+    };
+    return { childProcess, closedPromise, waitMarker, diagnostics: () => ({ stdout, stderr, closeCode, closeSignal }) };
+  };
+  try {
+    const [databaseIdentity] = await admin.unsafe("SELECT current_database() AS database, current_user AS user_name, current_setting('server_version') AS server_version");
+    assert.ok(databaseIdentity?.database, "the worker proof records an actual PostgreSQL database identity");
+    assert.equal((await admin.unsafe("SELECT count(*)::int AS count FROM atlas.schema_migrations WHERE name='0025_rel03_semantic_composite_stage'"))[0]?.count, 1, "the approved registered durable-composite migration is applied");
+    await admin.unsafe(`CREATE TABLE bridge.${effectTable} (effect_key text NOT NULL, effect_kind text NOT NULL, attempts integer NOT NULL, committed boolean NOT NULL, PRIMARY KEY (effect_key,effect_kind))`);
+    await admin.unsafe(`GRANT SELECT, INSERT, UPDATE ON bridge.${effectTable} TO agents_bridge`);
+    await admin.unsafe(`CREATE TABLE bridge.${syncTable} (effect_key text PRIMARY KEY, observed_at timestamptz NOT NULL DEFAULT now())`);
+    await admin.unsafe(`GRANT SELECT, INSERT ON bridge.${syncTable} TO agents_bridge`);
+    const workerConfig: WorkerConfig = { databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 1, perceptionConcurrency: 1, timeoutSeconds: 20, retryLimit: 0, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 5_000 };
+    worker = createBackgroundWorker(workerConfig, new TestRuntime(), queueName, undefined, undefined, async (job, signal, context) => {
+      const selected = fixtures.get(job.executionId);
+      if (!selected) throw new Error(`SEM-007 fixture is missing for ${job.executionId}`);
+      jobCounts.set(job.executionId, (jobCounts.get(job.executionId) ?? 0) + 1);
+      const replay = createSemanticCompositeReplay(context.database);
+      const client = {
+        context: async () => sem007ContextResponse(selected),
+        deliver: async () => {
+          const key = context.idempotencyKey; const attempt = await effect(key, "delivery", false); const mode = deliveryModes.get(job.executionId) ?? "none";
+          if (mode === "delivery-failure" && attempt === 1) throw new Error("SEM007_NON_INERT_DELIVERY_FAILURE");
+          if (mode === "ack-loss" && attempt === 1) { await bridge.unsafe(`UPDATE bridge.${effectTable} SET committed=true WHERE effect_key=$1 AND effect_kind='delivery'`, [key]); throw new Error("SEM007_ACKNOWLEDGEMENT_LOSS"); }
+          await bridge.unsafe(`UPDATE bridge.${effectTable} SET committed=true WHERE effect_key=$1 AND effect_kind='delivery'`, [key]);
+        },
+        fail: async (failure: unknown) => { observations.push(`worker-failure:${job.executionId}:${JSON.stringify(failure)}`); },
+      };
+      const selection = { context: selected, dependencies: { database: context.database, routes: [sem007Route], routeId: sem007Route.routeId, profileId: sem007Route.profileId, nowEpochMilliseconds: 1_000, dispatch: async (messages: readonly unknown[]) => { const imageParts = messages.flatMap((message) => (message as { parts?: readonly { type: string; sourcePartId: string; media?: { sha256: string; bytes: Uint8Array } }[] }).parts ?? []).filter((part) => part.type === "image"); if (selected.assetIdentities.length > 0) { assert.equal(imageParts.length, 1, "the image fixture reaches the neutral multipart fake exactly once"); assert.equal(imageParts[0]?.sourcePartId, selected.assetIdentities[0]?.assetRef); assert.equal(imageParts[0]?.media?.sha256, selected.assetIdentities[0]?.sha256); assert.equal(sem007Hash(imageParts[0]!.media!.bytes), selected.assetIdentities[0]?.sha256); } else assert.equal(imageParts.length, 0, "the text-only fixture does not invent media"); await effect(context.idempotencyKey, "provider", true); return selected.rawResponse; } } } as const;
+      const provider = { structured: async () => { providerStructuredCalls.set(job.executionId, (providerStructuredCalls.get(job.executionId) ?? 0) + 1); throw new Error("SEM-007 ordinary provider path was invoked."); } };
+      await runSemanticJob(job, provider, client, { load: replay.load, stage: async () => { throw new Error("SEM-007 worker must stage through composite replay."); }, acknowledge: async () => undefined }, context.idempotencyKey, signal, { owner: context.leaseOwner, generation: context.leaseGeneration }, selection);
+    });
+    await worker.start();
+    for (const executionId of [textOnlyExecution, ordinaryExecution, mixedExecution, deferredExecution, deliveryFailureExecution, acknowledgementLossExecution]) await enqueue(executionId);
+    for (const executionId of [textOnlyExecution, ordinaryExecution, mixedExecution, deferredExecution, deliveryFailureExecution, acknowledgementLossExecution]) {
+      const key = keys.get(executionId)!;
+      await waitFor(async () => (await admin.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [key]))[0]?.status === "completed", `SEM-007 worker stage completion ${executionId}`);
+      assert.equal((await admin.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_composite_stage WHERE idempotency_key=$1", [key]))[0]?.count, 1, `actual composite winner persisted for ${executionId}`);
+    }
+    const stagedRows = await admin.unsafe("SELECT idempotency_key, execution_id, canonical_result, source_snapshot, provisional_sidecar, composite_hash, revision_set_hash, sidecar_hash FROM bridge.semantic_composite_stage WHERE idempotency_key = ANY($1::text[]) ORDER BY idempotency_key", [[...keys.values()]]) as Array<Record<string, unknown>>;
+    const stagedByExecution = new Map(stagedRows.map((row) => [String(row.execution_id), row]));
+    const ordinaryRow = stagedByExecution.get(ordinaryExecution)!; const mixedRow = stagedByExecution.get(mixedExecution)!; const deferredRow = stagedByExecution.get(deferredExecution)!;
+    assert.ok(ordinaryRow.canonical_result, "ordinary qualified output persists a canonical result");
+    assert.ok(mixedRow.canonical_result, "mixed qualified output persists its independently finalizable result");
+    assert.equal(deferredRow.canonical_result, null, "fully deferred qualified output persists SQL NULL");
+    for (const executionId of [ordinaryExecution, mixedExecution, deferredExecution]) {
+      const winner = await createSemanticCompositeReplay(sem007SqlAdapter(bridge)).load(keys.get(executionId)!, executionId);
+      const row = stagedByExecution.get(executionId)!;
+      assert.ok(winner);
+      assert.equal(winner?.compositeHash, row.composite_hash, `exact persisted composite hash for ${executionId}`);
+      assert.equal(winner?.revisionSetHash, row.revision_set_hash, `exact persisted revision-set hash for ${executionId}`);
+      assert.equal(winner?.sidecarHash, row.sidecar_hash, `exact persisted sidecar hash for ${executionId}`);
+      assert.deepEqual(winner?.sourceSnapshot, row.source_snapshot, `exact persisted source snapshot for ${executionId}`);
+      assert.deepEqual(winner?.provisionalSidecar, row.provisional_sidecar, `exact persisted sidecar for ${executionId}`);
+      assert.equal(JSON.stringify(winner?.provisionalSidecar).includes("preparationContext"), false, "persisted sidecar excludes transient provider/source evidence");
+    }
+    const providerBeforeReplay = (await effectRow(keys.get(ordinaryExecution)!, "provider"))?.attempts;
+    let replayDeliveries = 0;
+    const ordinaryWinnerReplay = createSemanticCompositeReplay(sem007SqlAdapter(bridge));
+    await runSemanticJob(sem007Job(ordinaryExecution), { structured: async () => { throw new Error("SEM-007 replay called the provider."); } }, { context: async () => sem007ContextResponse(fixtures.get(ordinaryExecution)!), deliver: async () => { replayDeliveries += 1; }, fail: async () => { throw new Error("SEM-007 replay unexpectedly failed."); } }, { load: ordinaryWinnerReplay.load, stage: async () => { throw new Error("SEM-007 replay attempted a second stage."); }, acknowledge: async () => undefined }, keys.get(ordinaryExecution)!, new AbortController().signal, { owner: "replay-owner", generation: 1 });
+    assert.equal(replayDeliveries, 1, "immutable worker replay delivers the persisted winner");
+    assert.equal((await effectRow(keys.get(ordinaryExecution)!, "provider"))?.attempts, providerBeforeReplay, "immutable replay does not repeat fake provider execution");
+    assert.equal(providerStructuredCalls.get(ordinaryExecution) ?? 0, 0, "ordinary provider adapter remains unused by the injected path");
+    assert.ok((jobCounts.get(textOnlyExecution) ?? 0) > 0, "positive worker effect counter is non-inert");
+    assert.ok((await effectRow(keys.get(textOnlyExecution)!, "provider"))?.attempts > 0, "positive provider effect counter is non-inert");
+
+    for (const [executionId, mode] of [[deliveryFailureExecution, "delivery-failure"], [acknowledgementLossExecution, "ack-loss"]] as const) {
+      const key = keys.get(executionId)!; deliveryModes.set(executionId, mode);
+      await bridge.unsafe("UPDATE bridge.background_effects SET status='pending', lease_expires_at=now(), last_error=NULL WHERE idempotency_key=$1", [key]);
+      await enqueue(executionId);
+      await waitFor(async () => Boolean((await admin.unsafe("SELECT last_error FROM bridge.background_effects WHERE idempotency_key=$1", [key]))[0]?.last_error), `SEM-007 ${mode} observation`);
+      const firstEffect = await effectRow(key, "delivery"); assert.ok(firstEffect?.attempts === 1, `non-inert ${mode} effect attempt is recorded`);
+      if (mode === "ack-loss") assert.equal(firstEffect?.committed, true, "acknowledgement loss occurs after the durable effect"); else assert.equal(firstEffect?.committed, false, "delivery failure occurs before acknowledgement");
+      deliveryModes.set(executionId, "none");
+      await enqueue(executionId);
+      await waitFor(async () => (await admin.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [key]))[0]?.status === "completed", `SEM-007 ${mode} recovery`);
+      const recoveredEffect = await effectRow(key, "delivery"); assert.ok((recoveredEffect?.attempts ?? 0) >= 2, `non-inert ${mode} recovery has a second effect attempt`); assert.equal(recoveredEffect?.committed, true);
+      assert.equal((await effectRow(key, "provider"))?.attempts, 1, `recovered ${mode} never repeats provider execution`);
+    }
+
+    const staleKey = keys.get(staleExecution)!; const staleOwner = `sem007-stale-owner-${suffix}`;
+    await bridge.unsafe("INSERT INTO bridge.background_effects (idempotency_key, execution_id, status, lease_owner, lease_generation, lease_expires_at) VALUES ($1,$2,'running',$3,1,now()+interval '5 minutes')", [staleKey, staleExecution, staleOwner]);
+    await assert.rejects(() => runOfflineStepwiseComposition(fixtures.get(staleExecution)!, { database: sem007SqlAdapter(bridge), idempotencyKey: staleKey, lease: { owner: staleOwner, generation: 1 }, routes: [sem007Route], routeId: sem007Route.routeId, profileId: sem007Route.profileId, nowEpochMilliseconds: 1_000, dispatch: async () => { await bridge.unsafe("UPDATE bridge.background_effects SET lease_owner='sem007-successor', lease_generation=2 WHERE idempotency_key=$1", [staleKey]); return fixtures.get(staleExecution)!.rawResponse; } }), (error: unknown) => error instanceof Error && error.name === "SemanticCompositeLeaseLostError", "stale worker lease is rejected by the approved composite stage");
+    assert.equal((await admin.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_composite_stage WHERE idempotency_key=$1", [staleKey]))[0]?.count, 0, "stale lease cannot persist a composite winner");
+
+    const cancellationKey = keys.get(cancellationExecution)!; const cancellationOwner = `sem007-cancel-owner-${suffix}`;
+    await bridge.unsafe("INSERT INTO bridge.background_effects (idempotency_key, execution_id, status, lease_owner, lease_generation, lease_expires_at) VALUES ($1,$2,'running',$3,1,now()+interval '5 minutes')", [cancellationKey, cancellationExecution, cancellationOwner]);
+    await admin.unsafe(`CREATE FUNCTION bridge.${triggerFunction}() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.idempotency_key = '${cancellationKey}' THEN INSERT INTO bridge.${syncTable} (effect_key) VALUES (NEW.idempotency_key) ON CONFLICT DO NOTHING; PERFORM pg_sleep(30); END IF; RETURN NEW; END $$`);
+    await admin.unsafe(`CREATE TRIGGER ${triggerFunction}_trigger BEFORE INSERT ON bridge.semantic_composite_stage FOR EACH ROW EXECUTE FUNCTION bridge.${triggerFunction}()`);
+    const cancellationChild = child(cancellationExecution, "cancel", cancellationOwner, 1);
+    await cancellationChild.waitMarker("SEM007_PROVIDER_DISPATCH");
+    const cancellationApplicationName = `sem007-child-cancel-${suffix}`;
+    await waitFor(async () => Number((await admin.unsafe("SELECT count(*)::int AS count FROM pg_stat_activity WHERE application_name=$1 AND query LIKE '%semantic_composite_stage%'", [cancellationApplicationName]))[0]?.count) === 1, "SEM-007 child trigger-confirmed pre-commit SQL boundary");
+    cancellationChild.childProcess.kill("SIGTERM"); await cancellationChild.closedPromise;
+    const cancellationDiagnostics = cancellationChild.diagnostics(); observations.push(`cancel-child:code=${String(cancellationDiagnostics.closeCode)}:signal=${String(cancellationDiagnostics.closeSignal)}:stderr=${cancellationDiagnostics.stderr.slice(0, 500)}`);
+    assert.equal((await admin.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_composite_stage WHERE idempotency_key=$1", [cancellationKey]))[0]?.count, 0, "genuine child interruption rolls back the pre-commit composite stage");
+    await admin.unsafe(`DROP TRIGGER ${triggerFunction}_trigger ON bridge.semantic_composite_stage`); await admin.unsafe(`DROP FUNCTION bridge.${triggerFunction}()`);
+
+    const crashKey = keys.get(crashExecution)!; const crashOwner = `sem007-crash-owner-${suffix}`;
+    await bridge.unsafe("INSERT INTO bridge.background_effects (idempotency_key, execution_id, status, lease_owner, lease_generation, lease_expires_at) VALUES ($1,$2,'running',$3,1,now()+interval '5 minutes')", [crashKey, crashExecution, crashOwner]);
+    const crashChild = child(crashExecution, "crash", crashOwner, 1); await crashChild.waitMarker("SEM007_COMMITTED");
+    assert.equal((await admin.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_composite_stage WHERE idempotency_key=$1", [crashKey]))[0]?.count, 1, "child diagnostic marks the durable winner after commit");
+    crashChild.childProcess.kill("SIGTERM"); await crashChild.closedPromise;
+    const crashDiagnostics = crashChild.diagnostics(); observations.push(`crash-child:code=${String(crashDiagnostics.closeCode)}:signal=${String(crashDiagnostics.closeSignal)}:stderr=${crashDiagnostics.stderr.slice(0, 500)}`);
+    const recoveredAfterRestart = await createSemanticCompositeReplay(sem007SqlAdapter(bridge)).load(crashKey, crashExecution); assert.ok(recoveredAfterRestart, "fresh replay object recovers the post-commit winner");
+    await bridge.unsafe("UPDATE bridge.background_effects SET status='pending', lease_expires_at=now(), last_error=NULL WHERE idempotency_key=$1", [crashKey]);
+    await enqueue(crashExecution);
+    await waitFor(async () => (await admin.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [crashKey]))[0]?.status === "completed", "SEM-007 post-commit restart delivery");
+    assert.equal((await effectRow(crashKey, "provider"))?.attempts, 1, "post-commit restart recovery does not repeat fake provider execution");
+    assert.equal((await effectRow(crashKey, "delivery"))?.committed, true, "post-commit restart delivers the recovered winner");
+    assert.ok(observations.some((value) => value.includes("child:cancel:SEM007_PROVIDER_DISPATCH")), "cancellation synchronization is recorded from child diagnostics");
+    assert.ok(observations.some((value) => value.includes("child:crash:SEM007_COMMITTED")), "post-commit synchronization is recorded from child diagnostics");
+
+    let deniedDispatches = 0;
+    const denied = fixtures.get(textOnlyExecution)!;
+    await assert.rejects(() => runOfflineStepwiseComposition(denied, { database: sem007SqlAdapter(bridge), idempotencyKey: `sem007-denied-${suffix}`, lease: { owner: "denied", generation: 1 }, routes: [], routeId: "denied-route", profileId: "denied-profile", nowEpochMilliseconds: 1_000, dispatch: async () => { deniedDispatches += 1; return denied.rawResponse; } }), /recognized|route\/profile/iu);
+    const substitutedDocument = { ...denied.normalizedDocument, pages: [{ ...denied.normalizedDocument.pages[0]!, textBlocks: [{ id: "forged", text: "substituted" }], tables: [], visualRegions: [] }] };
+    let substitutionFailures = 0;
+    const substitutionKey = `sem007-substitution-${suffix}`;
+    const substitutionReplay = createSemanticCompositeReplay(sem007SqlAdapter(bridge));
+    await runSemanticJob(sem007Job(denied.scope.executionId), { structured: async () => { throw new Error("SEM-007 substituted context reached the ordinary provider."); } }, { context: async () => sem007ContextResponse({ ...denied, normalizedDocument: substitutedDocument }), deliver: async () => undefined, fail: async () => { substitutionFailures += 1; } }, { load: substitutionReplay.load, stage: async () => { throw new Error("SEM-007 substituted context reached durable staging."); }, acknowledge: async () => undefined }, substitutionKey, new AbortController().signal, { owner: "denied", generation: 1 }, { context: denied, dependencies: { database: sem007SqlAdapter(bridge), routes: [sem007Route], routeId: sem007Route.routeId, profileId: sem007Route.profileId, nowEpochMilliseconds: 1_000, dispatch: async () => { deniedDispatches += 1; return denied.rawResponse; } } });
+    assert.equal(substitutionFailures, 1, "a substituted redeemed document is converted to the bounded integrity failure path");
+    const imageDenied = fixtures.get(ordinaryExecution)!;
+    await assert.rejects(() => runOfflineStepwiseComposition(imageDenied, { database: sem007SqlAdapter(bridge), idempotencyKey: `sem007-unknown-tpm-${suffix}`, lease: { owner: "denied", generation: 1 }, routes: [{ ...sem007Route, imageTpm: { state: "unknown" as const } }], routeId: sem007Route.routeId, profileId: sem007Route.profileId, nowEpochMilliseconds: 1_000, dispatch: async () => { deniedDispatches += 1; return imageDenied.rawResponse; } }), /RESOURCE_ENVELOPE_BLOCKED|recognized|route/iu);
+    assert.equal(deniedDispatches, 0, "denied provider-neutral routes have zero provider effects");
+    assert.equal((await admin.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_composite_stage WHERE idempotency_key LIKE $1", [`sem007-denied-%-${suffix}`]))[0]?.count, 0, "denied routes have zero durable-job effects");
+    assert.ok((jobCounts.get(textOnlyExecution) ?? 0) > 0 && (await effectRow(keys.get(textOnlyExecution)!, "provider"))?.attempts === 1, "positive job/provider controls are non-inert");
+    observations.push(`database=${String(databaseIdentity?.database)} user=${String(databaseIdentity?.user_name)} server=${String(databaseIdentity?.server_version)}`);
+    observations.push(`worker-jobs=${JSON.stringify(Object.fromEntries(jobCounts))}`);
+    observations.push(`provider-structured=${JSON.stringify(Object.fromEntries(providerStructuredCalls))}`);
+    console.log(`SEM007_EVIDENCE ${JSON.stringify(observations)}`);
+    assert.equal(providerStructuredCalls.size, 0, "all SEM-007 worker fixtures bypass ordinary provider execution");
+  } catch (error) {
+    console.error("SEM007_FAILURE", error, observations, await admin.unsafe("SELECT idempotency_key,status,lease_owner,lease_generation,last_error FROM bridge.background_effects WHERE idempotency_key LIKE $1", [`sem007-key-%-${suffix}`]), await admin.unsafe("SELECT name,state,output FROM pgboss.job WHERE name=$1", [queueName]));
+    throw error;
+  } finally {
+    await worker?.stop().catch(() => undefined);
+    await admin.unsafe(`DROP TRIGGER IF EXISTS ${triggerFunction}_trigger ON bridge.semantic_composite_stage`).catch(() => undefined);
+    await admin.unsafe(`DROP FUNCTION IF EXISTS bridge.${triggerFunction}()`).catch(() => undefined);
+    await admin.unsafe(`DROP TABLE IF EXISTS bridge.${syncTable}`).catch(() => undefined);
+    await admin.unsafe(`DROP TABLE IF EXISTS bridge.${effectTable}`).catch(() => undefined);
+    await bridge.unsafe("DELETE FROM bridge.semantic_composite_stage WHERE idempotency_key LIKE $1", [`sem007-key-%-${suffix}`]).catch(() => undefined);
+    await bridge.unsafe("DELETE FROM bridge.background_effects WHERE idempotency_key LIKE $1", [`sem007-key-%-${suffix}`]).catch(() => undefined);
+    await admin.unsafe("DELETE FROM pgboss.job WHERE name=$1", [queueName]).catch(() => undefined);
+    await Promise.all([admin.end(), bridge.end()]);
+  }
+});
+
+const sem007Hash = (value: string | Uint8Array) => createHash("sha256").update(value).digest("hex");
+const sem007Route = {
+  version: "v1" as const,
+  routeId: "sem007-offline-route",
+  profileId: "sem007-offline-profile",
+  profileVersion: "sem007-offline-profile-v1",
+  maxPromptBytes: 256_000,
+  maxDeadlineMilliseconds: 30_000,
+  image: { version: "v1" as const, mediaTypes: ["image/png" as const], maxImageCount: 4, maxImageBytes: 1_000_000, maxImageWidth: 1024, maxImageHeight: 1024 },
+  imageTpm: { state: "qualified" as const, tokensPerImage: 64 },
+};
+const sem007SqlAdapter = (client: ReturnType<typeof postgres>) => ({
+  executeSql: async (query: string, parameters?: readonly unknown[]) => {
+    const values = query.includes("$5::jsonb") && parameters ? parameters.map((value, index) => index >= 4 && index <= 9 && typeof value === "string" ? JSON.parse(value) : value) : parameters;
+    return { rows: await client.unsafe(query, values as readonly (string | number | null | object)[] | undefined) };
+  },
+});
+type Sem007FixtureMode = "ordinary" | "mixed" | "deferred";
+
+function sem007Fixture(mode: Sem007FixtureMode, semanticExecutionId: string, withImage: boolean): OfflineStepwiseQualificationContext {
+  const sourceSha256 = sem007Hash(`sem007-source-${semanticExecutionId}`);
+  const perceptionExecutionId = `perception-${semanticExecutionId}`;
+  const documentId = `sem007-document-${semanticExecutionId}`;
+  const assetBytes = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10, 1, 2, 3, 4]);
+  const assetSha256 = sem007Hash(assetBytes);
+  const asset = { assetRef: `derived/${semanticExecutionId}/visual-1`, sha256: assetSha256, sourceSha256 } as const;
+  const document = {
+    version: "v1" as const,
+    executionId: perceptionExecutionId,
+    artifactId: documentId,
+    sourceSha256,
+    perception: { capability: "atlas.document.perceive" as const, contractVersion: "v1" as const },
+    provider: { name: "docling", processor: "docling-slim", executionId: perceptionExecutionId, processedAt: "2026-10-14T00:00:00.000Z" },
+    pages: [{ number: 1, textBlocks: [{ id: "owned-1", text: `SEM-007 owned fact for ${semanticExecutionId}.` }], tables: [], visualRegions: withImage ? [{ id: "visual-1", label: "SEM-007 controlled visual context.", assetRef: asset.assetRef }] : [] }],
+  };
+  const candidates = mode === "mixed" ? 2 : 1;
+  const hasRelationship = mode !== "ordinary";
+  const rawResponse = {
+    contract_version: "atlas.relationship-extraction-envelope/v1",
+    semantic_proposal: { version: "v1", source_results: [{ slot: "slot-000001", classification: "candidate", candidates: Array.from({ length: candidates }, (_, index) => ({ semantic_key: `sem007-candidate-${index}`, kind: "business_object", payload: { mode }, normalized_meaning: `SEM-007 meaning ${index}`, needs_resolution: false })), non_fact_reason: null, questions: [] }] },
+    relationship_proposals: hasRelationship ? [{ owned_source_slot: "slot-000001", context_source_slot: "slot-000002", source_evidence_slots: ["slot-000001", "slot-000002"], relationship_type: "context_qualifies", direction: "context_to_owned", contextual_role: "legend", necessity: "essential", uncertainty: "medium", proposed_meaning: "The controlled context qualifies the owned fact.", source_language: "en", candidate_refs: [{ source_slot: "slot-000001", candidate_index: 0 }], predecessor: null }] : [],
+  };
+  const scope = { projectId: `sem007-project-${semanticExecutionId}`, workspaceId: `sem007-workspace-${semanticExecutionId}`, bundleId: `sem007-bundle-${semanticExecutionId}`, documentId, executionId: semanticExecutionId, sourceSha256 };
+  return {
+    scope,
+    normalizedDocument: document,
+    assetIdentities: withImage ? [{ pageNumber: 1, locatorId: "visual-1", ...asset }] : [],
+    media: withImage ? new Map([[asset.assetRef, { assetRef: asset.assetRef, sha256: asset.sha256, sourceSha256, mimeType: "image/png" as const, width: 2, height: 2, bytes: assetBytes }]]) : new Map(),
+    relationshipScope: { projectId: scope.projectId, workspaceId: scope.workspaceId, bundleId: scope.bundleId, documentId, executionId: perceptionExecutionId, artifactId: documentId, sourceSha256 },
+    trustedPriorRevisions: [],
+    rawResponse,
+    providerProvenance: { provider: "offline", model: "sem007-controlled-fake", endpoint: "test://sem007", latencyMilliseconds: 1, attempt: 1, runId: `sem007-run-${semanticExecutionId}` },
+  };
+}
+
+const sem007ContextResponse = (fixture: OfflineStepwiseQualificationContext) => ({ version: "v1" as const, skill: "atlas.semantic.extract" as const, scope: { projectId: fixture.scope.projectId, workspaceId: fixture.scope.workspaceId, bundleId: fixture.scope.bundleId, documentId: fixture.scope.documentId, executionId: fixture.scope.executionId, contractVersion: "v1" as const }, normalizedDocument: fixture.normalizedDocument });
+const sem007Job = (executionId: string) => ({ version: "v1" as const, executionId, skill: { id: "atlas.semantic.extract" as const, version: "v1" as const }, contextCapability: "sem007-offline-authorized-context" });
+
+async function runSem007Child(): Promise<void> {
+  const childDatabaseUrl = process.env.DATABASE_URL;
+  const childMode = process.env.SEM007_CHILD_MODE;
+  if (!childDatabaseUrl || !childMode) throw new Error("SEM-007 child diagnostics require DATABASE_URL and SEM007_CHILD_MODE.");
+  const bridgeUrl = new URL(childDatabaseUrl); bridgeUrl.username = "agents_bridge"; bridgeUrl.password = process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only";
+  const bridge = postgres(bridgeUrl.toString(), { max: 1, connection: { application_name: process.env.SEM007_CHILD_APP ?? "sem007-child" } });
+  const idempotencyKey = process.env.SEM007_CHILD_KEY!;
+  const executionId = process.env.SEM007_CHILD_EXECUTION!;
+  const mode = process.env.SEM007_CHILD_FIXTURE as Sem007FixtureMode;
+  const fixture = sem007Fixture(mode, executionId, process.env.SEM007_CHILD_IMAGE === "true");
+  const table = process.env.SEM007_EFFECT_TABLE!;
+  if (!/^[a-z0-9_]+$/u.test(table)) throw new Error("SEM-007 effect table is invalid.");
+  const replay = createSemanticCompositeReplay(sem007SqlAdapter(bridge));
+  const owner = process.env.SEM007_CHILD_OWNER!;
+  const generation = Number(process.env.SEM007_CHILD_GENERATION);
+  const selection = { context: fixture, dependencies: { database: sem007SqlAdapter(bridge), routes: [sem007Route], routeId: sem007Route.routeId, profileId: sem007Route.profileId, nowEpochMilliseconds: 1_000, dispatch: async () => { await bridge.unsafe(`INSERT INTO bridge.${table} (effect_key, effect_kind, attempts, committed) VALUES ($1,'provider',1,false) ON CONFLICT (effect_key,effect_kind) DO UPDATE SET attempts=bridge.${table}.attempts+1`, [idempotencyKey]); process.stdout.write("SEM007_PROVIDER_DISPATCH\n"); return fixture.rawResponse; } } } as const;
+  const semanticReplay = { load: replay.load, stage: async () => { throw new Error("SEM-007 child must stage through the offline composition."); }, acknowledge: async () => undefined };
+  try {
+    if (childMode === "crash") await runOfflineStepwiseComposition(fixture, { ...selection.dependencies, idempotencyKey, lease: { owner, generation } });
+    else await runSemanticJob(sem007Job(executionId), { structured: async () => { throw new Error("SEM-007 offline child invoked the ordinary provider."); } }, { context: async () => sem007ContextResponse(fixture), deliver: async () => undefined, fail: async (failure: unknown) => { throw new Error(`SEM-007 child unexpectedly failed: ${JSON.stringify(failure)}`); } }, semanticReplay, idempotencyKey, new AbortController().signal, { owner, generation }, selection);
+    process.stdout.write("SEM007_COMMITTED\n");
+    if (childMode === "crash") await new Promise<void>(() => undefined);
+  } finally { await bridge.end(); }
+}
+
+if (process.env.SEM007_CHILD_MODE) await runSem007Child();
+
+test("the production semantic worker uses pg-boss, Bridge replay, configured HTTP Mistral, and Atlas routes", { skip: skip || Boolean(process.env.SEM007_CHILD_MODE) || sem007Only }, async () => {
   const admin = postgres(databaseUrl!, { max: 2 });
   const atlasUrl = new URL(databaseUrl!); atlasUrl.username = "atlas_app"; atlasUrl.password = process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only";
   const bridgeUrl = new URL(databaseUrl!); bridgeUrl.username = "agents_bridge"; bridgeUrl.password = process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only";

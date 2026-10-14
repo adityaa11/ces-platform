@@ -4,13 +4,17 @@ import { BridgeProviderError, type StructuredReasoningProvider } from "./provide
 import { AtlasSemanticClientError } from "./atlas-semantic-client.js";
 import { SemanticReplayLeaseLostError } from "./semantic-result-replay.js";
 import { finalizeExtractionProposal } from "./semantic-extraction-finalizer.js";
+import { runOfflineStepwiseComposition, type OfflineStepwiseDependencies, type OfflineStepwiseQualificationContext } from "./semantic-offline-stepwise-composition.js";
 
 export type SemanticClient = { context(job: SemanticBackgroundJob, signal: AbortSignal): Promise<unknown>; deliver(envelope: unknown, signal: AbortSignal): Promise<void>; fail(failure: unknown, signal: AbortSignal): Promise<void> };
 export type SemanticReplay = { load(idempotencyKey: string, executionId: string): Promise<unknown | undefined>; stage(idempotencyKey: string, executionId: string, envelope: unknown, lease: { readonly owner: string; readonly generation: number }): Promise<unknown>; acknowledge(idempotencyKey: string, executionId: string): Promise<void> };
 const failureCode = (error: unknown) => error instanceof BridgeProviderError ? (error.code === "timeout" ? "provider_timeout" : error.code === "malformed_response" || error.code === "response_bound" ? "malformed_output" : "provider_unavailable") : "integrity_validation";
 const isReplayLeaseLost = (error: unknown): error is SemanticReplayLeaseLostError => error instanceof SemanticReplayLeaseLostError || (error instanceof Error && error.name === "SemanticReplayLeaseLostError");
 
-export async function runSemanticJob(jobValue: unknown, provider: StructuredReasoningProvider, client: SemanticClient, replay: SemanticReplay, idempotencyKey: string, signal: AbortSignal, lease = { owner: "unit-test", generation: 1 }): Promise<void> {
+/** Test-selectable only: never supplied by worker-main's normal D1 callback. */
+export type OfflineStepwiseSelection = Readonly<{ readonly context: OfflineStepwiseQualificationContext; readonly dependencies: Omit<OfflineStepwiseDependencies, "idempotencyKey" | "lease"> }>;
+
+export async function runSemanticJob(jobValue: unknown, provider: StructuredReasoningProvider, client: SemanticClient, replay: SemanticReplay, idempotencyKey: string, signal: AbortSignal, lease = { owner: "unit-test", generation: 1 }, offlineStepwise?: OfflineStepwiseSelection): Promise<void> {
   const job = parseSemanticBackgroundJob(jobValue);
   const staged = await replay.load(idempotencyKey, job.executionId);
   if (staged) { await client.deliver(staged, signal); return; }
@@ -23,6 +27,15 @@ export async function runSemanticJob(jobValue: unknown, provider: StructuredReas
     context = await client.context(job, signal) as { readonly scope: Record<string, string> };
     if (signal.aborted) throw new BridgeProviderError("cancelled", "Semantic execution was cancelled.");
     const extractionContext = job.skill.id === "atlas.semantic.extract" ? parseSemanticExtractionContext(context) : undefined;
+    if (extractionContext && offlineStepwise) {
+      const offlineScope = offlineStepwise.context.scope;
+      const contextScope = extractionContext.scope;
+      if (contextScope.projectId !== offlineScope.projectId || contextScope.workspaceId !== offlineScope.workspaceId || contextScope.bundleId !== offlineScope.bundleId || contextScope.documentId !== offlineScope.documentId || contextScope.executionId !== offlineScope.executionId || JSON.stringify(extractionContext.normalizedDocument) !== JSON.stringify(offlineStepwise.context.normalizedDocument)) {
+        throw new Error("OFFLINE_CONTEXT_BLOCKED: the redeemed extraction context was substituted after offline qualification.");
+      }
+      await runOfflineStepwiseComposition(offlineStepwise.context, { ...offlineStepwise.dependencies, idempotencyKey, lease });
+      return;
+    }
     const skill = extractionContext ? undefined : getProductionSemanticSkill(job.skill.id, job.skill.version);
     const packet = extractionContext ? buildSemanticSourcePacket(extractionContext.normalizedDocument) : undefined;
     const response = await provider.structured(extractionContext

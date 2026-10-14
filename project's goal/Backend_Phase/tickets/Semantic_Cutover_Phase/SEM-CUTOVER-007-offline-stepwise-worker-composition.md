@@ -2,7 +2,7 @@
 
 **Explicit human-authorized amendment (2026-10-14):** This bounded planning amendment resolves the repeated D1 authority and offline-composition blockers recorded in `project's goal/feedback/SEM-CUTOVER-007-go-blocked-002.md`, after `HMN-SEM-CUTOVER-007-001` and `HMN-SEM-CUTOVER-007-002`. It is not GO, CK, CFC, production implementation, or upstream-owner authorization.
 
-**Status:** `planned` · **Size:** M · **Owner:** extraction-specific worker/composition seam, offline fake only · **Dependencies:** independently CK-approved SEM-006, the CK-qualified SEM-005 / SEM-006 / REL-03 predecessor preparation at `f95747a`, and independently CK-approved `REL-03-DURABLE-001`. Explicit GO is required; this ticket realignment is not implementation authorization.
+**Status:** `awaiting_review` · **Size:** M · **Owner:** extraction-specific worker/composition seam, offline fake only · **Dependencies:** independently CK-approved SEM-006, the CK-qualified SEM-005 / SEM-006 / REL-03 predecessor preparation at `f95747a`, and independently CK-approved `REL-03-DURABLE-001`. Explicit GO is required; this ticket realignment is not implementation authorization.
 
 ## Exact objective
 
@@ -235,4 +235,4 @@ Do not reopen `REL-03-DURABLE-001`, SEM-005, SEM-006, or the source-authority im
 
 After this explicitly authorized ticket-only amendment, the terminal planning decision is **`SEM_007_GO_READY_AMENDED`**: the ticket expressly covers the offline fixture seam, canonical staged-D1 interpretation, exact fixture boundary, ownership prohibitions, and executable evidence methods for all six preserved RC rows. This is not implementation readiness evidence, GO, CK, CFC, or PASS.
 
-Keep SEM-CUTOVER-007 `planned` until separately invoked GO and independent acceptance. No automatic GO, CFC, or CK is authorized by this ticket amendment.
+Keep SEM-CUTOVER-007 `awaiting_review` pending separately invoked independent CK acceptance. No automatic GO, CFC, or CK is authorized by this ticket amendment.
