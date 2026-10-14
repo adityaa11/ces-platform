@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildStepwiseRelationshipEnvelopeRequest, buildStepwiseSourcePacket, prepareProvisionalSemanticCompositeAccounting, prepareQualifiedStepwiseSemanticCompositeAccounting, relationshipSha256 } from "@atlas/skills";
+import { buildStepwiseRelationshipEnvelopeRequest, buildStepwiseSourcePacket, prepareProvisionalSemanticCompositeAccounting, prepareQualifiedStepwiseSemanticCompositeAccounting, relationshipSha256, verifyQualifiedStepwiseSemanticPreparation } from "@atlas/skills";
 import { projectQualifiedStepwiseSemanticResult } from "../src/semantic-extraction-finalizer.js";
 import { prepareQualifiedStepwiseSemanticPreparation, prepareStepwiseRel03Interoperability, projectStepwiseSlotsForRel03 } from "../src/semantic-relationship-interoperability-bridge.js";
 
@@ -95,5 +95,23 @@ test("HMN-006: strict REL-03 handoff, SEM-006 null projection, and SEM-005 quali
   assert.equal(first.canonicalResultSha256, null);
   assert.equal(first.preparationContext?.request, req);
   assert.equal(first.relationshipDependencies[0]?.proposalProvenance.providerRun, "run-1");
+  verifyQualifiedStepwiseSemanticPreparation({ accounting: first, request: req, providerProposal: handoff.parsed.semanticProposal });
+  assert.throws(() => verifyQualifiedStepwiseSemanticPreparation({ accounting: first, request: req, providerProposal: { ...handoff.parsed.semanticProposal, source_results: [{ ...handoff.parsed.semanticProposal.source_results[0]!, candidates: [{ ...handoff.parsed.semanticProposal.source_results[0]!.candidates[0]!, normalized_meaning: "recomputed mutation" }] }] } }), /immutable preparation context|provider tuple/);
   assert.throws(() => prepareQualifiedStepwiseSemanticCompositeAccounting({ scope: semanticScope, request: req, providerProposal: { ...handoff.parsed.semanticProposal, source_results: [] }, relationshipRevisions: [], currentResponseRelationshipRevisions: handoff.currentResponseRevisions, qualifiedRelationshipResult: handoff.qualified, canonicalProjection: projection }), /omits an exact ready owned request source/);
+  assert.throws(() => prepareQualifiedStepwiseSemanticCompositeAccounting({ scope: semanticScope, request: req, providerProposal: { ...handoff.parsed.semanticProposal, source_results: [handoff.parsed.semanticProposal.source_results[0]!, handoff.parsed.semanticProposal.source_results[0]!] }, relationshipRevisions: [], currentResponseRelationshipRevisions: handoff.currentResponseRevisions, qualifiedRelationshipResult: handoff.qualified, canonicalProjection: projection }), /foreign or duplicate/);
+});
+
+test("HMN-009: qualified entry points observe ordinary and mixed projections without fabricated deferred state", () => {
+  const req = request(); const slots = projectStepwiseSlotsForRel03(req).map((slot) => slot.slot === "slot-000001" ? { ...slot, content: "Owned fact." } : slot);
+  const ordinary = prepareQualifiedStepwiseSemanticPreparation({ request: req, rawResponse: raw(false, 1), relationshipScope, providerProvenance: { provider: "offline", model: "fixture", endpoint: "test", attempt: 1, runId: "ordinary" }, trustedPriorRevisions: [] });
+  const ordinaryProjection = projectQualifiedStepwiseSemanticResult({ proposal: ordinary.parsed.semanticProposal, sourceSlots: slots, qualifiedDeferredInterpretations: ordinary.qualified.deferred_interpretations, qualifiedRelationshipRevisions: ordinary.currentResponseRevisions });
+  assert.equal(ordinaryProjection.canonicalResult?.candidate_assertions.length, 1);
+  assert.deepEqual(ordinaryProjection.canonicalCandidateTuples, [{ sourceSlot: "slot-000001", candidateIndex: 0, canonicalCandidateId: "candidate-slot-000001-001" }]);
+  const mixed = prepareQualifiedStepwiseSemanticPreparation({ request: req, rawResponse: raw(true, 2), relationshipScope, providerProvenance: { provider: "offline", model: "fixture", endpoint: "test", attempt: 1, runId: "mixed" }, trustedPriorRevisions: [] });
+  const mixedProjection = projectQualifiedStepwiseSemanticResult({ proposal: mixed.parsed.semanticProposal, sourceSlots: slots, qualifiedDeferredInterpretations: mixed.qualified.deferred_interpretations, qualifiedRelationshipRevisions: mixed.currentResponseRevisions });
+  assert.equal(mixedProjection.canonicalResult?.candidate_assertions.length, 1);
+  assert.deepEqual(mixedProjection.canonicalCandidateTuples, [{ sourceSlot: "slot-000001", candidateIndex: 1, canonicalCandidateId: "candidate-slot-000001-002" }]);
+  const missingAsset = { ...req, sourceSlots: req.sourceSlots.map((slot) => slot.slot === "slot-000002" ? { ...slot, assetIdentity: undefined } : slot) };
+  assert.throws(() => prepareQualifiedStepwiseSemanticPreparation({ request: missingAsset, rawResponse: raw(true, 1), relationshipScope, providerProvenance: { provider: "offline", model: "fixture", endpoint: "test", attempt: 1, runId: "missing-asset" }, trustedPriorRevisions: [] }), /asset|source slot|relationship/i);
+  assert.throws(() => prepareQualifiedStepwiseSemanticPreparation({ request: req, rawResponse: raw(true, 1), relationshipScope, providerProvenance: { provider: "offline", model: "fixture", endpoint: "test", attempt: 1, runId: "" }, trustedPriorRevisions: [] }), /provider|provenance|run/i);
 });

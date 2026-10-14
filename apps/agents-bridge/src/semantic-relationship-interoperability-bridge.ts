@@ -43,6 +43,7 @@ export function prepareStepwiseRel03Interoperability(input: {
   readonly qualified: PreparedDeferredDependentInterpretations;
 } {
   const slots = projectStepwiseSlotsForRel03(input.request);
+  if (!input.providerProvenance.provider || !input.providerProvenance.model || !input.providerProvenance.endpoint || !Number.isSafeInteger(input.providerProvenance.attempt) || input.providerProvenance.attempt < 1 || (input.providerProvenance.runId !== undefined && !input.providerProvenance.runId.trim())) reject("provider provenance is malformed.");
   if (input.relationshipScope.executionId !== input.request.sourceSnapshot.executionId || input.relationshipScope.artifactId !== input.request.sourceSnapshot.artifactId || input.relationshipScope.sourceSha256 !== input.request.sourceSnapshot.sourceSha256) reject("relationship scope does not match the exact current request source snapshot.");
   const parsed = parseStepwiseRelationshipEnvelope(input.request, input.rawResponse);
   const prepared = prepareProvisionalRelationshipRevisions({
