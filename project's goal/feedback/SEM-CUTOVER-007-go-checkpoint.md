@@ -5,7 +5,7 @@
 - **Frozen ticket:** `project's goal/Backend_Phase/tickets/Semantic_Cutover_Phase/SEM-CUTOVER-007-offline-stepwise-worker-composition.md`
 - **Authority consumed:** continued initial `GO SEM-CUTOVER-007`, citing `HMN-SEM-CUTOVER-007-002` (`RETURN_TO_GO`)
 - **Ticket/checkpoint state:** `awaiting_review`
-- **Implementation commit:** current `HEAD` (`test(sem-007): prove composed worker durable staging`); the final immutable hash is reported in the handoff below
+- **Implementation commit:** `2ffda7904300f802a9dc772f6da0fe6880e72a8b` (`test(sem-007): prove composed worker durable staging`)
 
 ## Bounded implementation
 
