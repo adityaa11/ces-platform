@@ -1,8 +1,8 @@
 # REL-03-DURABLE-001 - Fenced durable composite staging and replay
 
-**State:** `awaiting_review` under additive migration-registration authorization `HMN-REL-03-DURABLE-001-002`; GO checkpoint `REL-03-DURABLE-001-go-665b744.md`.
+**Status:** `approved` after independent CK `PASS` for reviewed remediation commit `7657d92eff2cb0d624814d08512f025f758b2da4` ([verification record](../../../feedback/REL-03-DURABLE-001-7657d92-verification.md)). GO checkpoint: `REL-03-DURABLE-001-go-665b744.md`.
 **Owner:** REL-03 durable integration / Bridge persistence only.
-**Dependency:** `SEM-CUTOVER-007` remains planned and blocked until this prerequisite achieves independent CK `PASS`.
+**Dependency:** `SEM-CUTOVER-007` remains planned and requires its own independent workflow authority; this prerequisite has achieved independent CK `PASS`.
 
 ## Outcome
 
