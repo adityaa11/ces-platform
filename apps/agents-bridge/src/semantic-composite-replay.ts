@@ -17,6 +17,35 @@ function canonicalJson(value: unknown): string {
 const digest = (value: unknown) => createHash("sha256").update(canonicalJson(value)).digest("hex");
 const requireHash = (value: unknown, label: string): string => { if (typeof value !== "string" || !sha256.test(value)) throw new Error(`Invalid ${label}.`); return value; };
 const sameJson = (left: unknown, right: unknown) => canonicalJson(left) === canonicalJson(right);
+const isIntegerAtLeast = (value: unknown, minimum: number): value is number => typeof value === "number" && Number.isSafeInteger(value) && value >= minimum;
+const hasOnlyKeys = (value: Record<string, unknown>, keys: readonly string[]) => Object.keys(value).every((key) => keys.includes(key)) && keys.every((key) => key in value);
+const relationshipVocabulary = {
+  contextualRole: new Set(["title", "legend", "scope", "interpretation"]),
+  necessity: new Set(["essential", "optional"]),
+  uncertainty: new Set(["low", "medium", "high", "unknown"]),
+} as const;
+
+function validLocator(value: unknown, sourceSha256: string): value is Record<string, unknown> {
+  if (!isRecord(value) || !hasOnlyKeys(value, value.assetIdentity === undefined ? ["slot", "pageNumber", "locatorType", "locatorId", "sourceSha256"] : ["slot", "pageNumber", "locatorType", "locatorId", "sourceSha256", "assetIdentity"])) return false;
+  if (!nonEmpty(value.slot) || !isIntegerAtLeast(value.pageNumber, 1) || !["text_block", "table", "visual_region"].includes(String(value.locatorType)) || !nonEmpty(value.locatorId) || value.sourceSha256 !== sourceSha256) return false;
+  if (value.locatorType !== "visual_region" && value.assetIdentity !== undefined) return false;
+  if (value.locatorType === "visual_region" && value.assetIdentity !== undefined) {
+    if (!isRecord(value.assetIdentity) || !hasOnlyKeys(value.assetIdentity, ["assetRef", "sha256", "sourceSha256"]) || !nonEmpty(value.assetIdentity.assetRef) || !sha256.test(String(value.assetIdentity.sha256)) || value.assetIdentity.sourceSha256 !== sourceSha256) return false;
+  }
+  return true;
+}
+
+function validRevision(revision: Record<string, unknown>, input: SemanticCompositeStageInput, source: SemanticCompositeStageInput["sourceSnapshot"]): void {
+  if (!hasOnlyKeys(revision, ["contractVersion", "relationshipLineageId", "scope", "normalizedDocument", "ownedSource", "contextSource", "relationship", "disposition", "uncertainty", "proposedMeaning", "sourceLanguage", "candidateRefs", "proposalProvenance", "predecessor", "authorization", "revisionHash"]) || revision.contractVersion !== relationshipContractVersion || !sha256.test(String(revision.relationshipLineageId)) || !isRecord(revision.scope) || !sameJson(revision.scope, source) || !isRecord(revision.normalizedDocument) || !sameJson(revision.normalizedDocument, { executionId: input.executionId, artifactId: source.artifactId, sourceSha256: source.sourceSha256 }) || !validLocator(revision.ownedSource, source.sourceSha256) || !validLocator(revision.contextSource, source.sourceSha256) || sameJson(revision.ownedSource, revision.contextSource)) throw new Error("Composite relationship revision is unqualified or malformed.");
+  if (!isRecord(revision.relationship) || !hasOnlyKeys(revision.relationship, ["type", "direction", "contextualRole", "necessity"]) || revision.relationship.type !== "context_qualifies" || revision.relationship.direction !== "context_to_owned" || !relationshipVocabulary.contextualRole.has(String(revision.relationship.contextualRole)) || !relationshipVocabulary.necessity.has(String(revision.relationship.necessity)) || !["proposed", "unresolved"].includes(String(revision.disposition)) || !relationshipVocabulary.uncertainty.has(String(revision.uncertainty)) || !nonEmpty(revision.proposedMeaning) || (revision.sourceLanguage !== null && !nonEmpty(revision.sourceLanguage))) throw new Error("Composite relationship revision is unqualified or malformed.");
+  if (!Array.isArray(revision.candidateRefs) || revision.candidateRefs.length === 0 || !isRecord(revision.proposalProvenance) || !hasOnlyKeys(revision.proposalProvenance, ["providerIdentity", "providerRun", "providerRelationshipOrdinal", "confidence"]) || !nonEmpty(revision.proposalProvenance.providerIdentity) || !sha256.test(String(revision.proposalProvenance.providerRun)) || !isIntegerAtLeast(revision.proposalProvenance.providerRelationshipOrdinal, 0) || revision.proposalProvenance.confidence !== null || revision.authorization !== null) throw new Error("Composite relationship revision is unqualified or malformed.");
+  const tuples = new Set<string>();
+  for (const candidate of revision.candidateRefs) {
+    if (!isRecord(candidate) || !hasOnlyKeys(candidate, ["sourceSlot", "candidateIndex"]) || candidate.sourceSlot !== revision.ownedSource.slot || !isIntegerAtLeast(candidate.candidateIndex, 0) || tuples.has(`${candidate.sourceSlot}:${candidate.candidateIndex}`)) throw new Error("Composite relationship revision is unqualified or malformed.");
+    tuples.add(`${candidate.sourceSlot}:${candidate.candidateIndex}`);
+  }
+  if (revision.predecessor !== null && (!isRecord(revision.predecessor) || !hasOnlyKeys(revision.predecessor, ["relationshipRevisionHash", "relation"]) || !sha256.test(String(revision.predecessor.relationshipRevisionHash)) || !["refines", "challenges", "replaces"].includes(String(revision.predecessor.relation)))) throw new Error("Composite relationship revision is unqualified or malformed.");
+}
 
 export class SemanticCompositeLeaseLostError extends Error {
   constructor(message = "Semantic composite claimant lease was superseded or expired.") { super(message); this.name = "SemanticCompositeLeaseLostError"; }
@@ -53,8 +82,8 @@ function validate(input: SemanticCompositeStageInput): ValidComposite {
   if (!Array.isArray(input.provisionalRelationshipRevisions)) throw new Error("Composite relationship revisions are invalid.");
   const revisionHashes = new Set<string>();
   for (const revision of input.provisionalRelationshipRevisions) {
-    if (!isRecord(revision) || !isRecord(revision.scope) || revision.contractVersion !== relationshipContractVersion || !nonEmpty(revision.relationshipLineageId) || !isRecord(revision.normalizedDocument) || !isRecord(revision.ownedSource) || !isRecord(revision.contextSource) || !isRecord(revision.relationship) || !Array.isArray(revision.candidateRefs) || !isRecord(revision.proposalProvenance) || revision.authorization !== null || !["proposed", "unresolved"].includes(String(revision.disposition)) || !["low", "medium", "high", "unknown"].includes(String(revision.uncertainty)) || !nonEmpty(revision.proposedMeaning) || (revision.sourceLanguage !== null && !nonEmpty(revision.sourceLanguage))) throw new Error("Composite relationship revision is unqualified or malformed.");
-    if (revision.scope.executionId !== input.executionId || revision.scope.sourceSha256 !== source.sourceSha256 || revision.scope.documentId !== source.documentId || revision.scope.artifactId !== source.artifactId || revision.scope.projectId !== source.projectId || revision.scope.workspaceId !== source.workspaceId || revision.scope.bundleId !== source.bundleId || revision.normalizedDocument.executionId !== input.executionId || revision.normalizedDocument.artifactId !== source.artifactId || revision.normalizedDocument.sourceSha256 !== source.sourceSha256) throw new Error("Composite relationship revision is foreign or malformed.");
+    if (!isRecord(revision)) throw new Error("Composite relationship revision is unqualified or malformed.");
+    validRevision(revision, input, source);
     const immutable = { ...revision }; delete immutable.revisionHash;
     const revisionHash = requireHash(revision.revisionHash, "relationship revision hash"); if (revisionHash !== relationshipSha256(immutable) || revisionHashes.has(revisionHash)) throw new Error("Composite relationship revision hash is tampered or duplicated."); revisionHashes.add(revisionHash);
   }
@@ -63,12 +92,12 @@ function validate(input: SemanticCompositeStageInput): ValidComposite {
   if (!sameJson(input.provisionalSidecar.relationshipDependencies, input.provisionalRelationshipRevisions) || input.provisionalSidecar.canonicalResultSha256 !== digest(canonicalResult) || requireHash(sidecarCompositeHash, "provisional sidecar composite hash") !== digest(sidecarBody)) throw new Error("Composite provisional sidecar is tampered or inconsistent.");
   const deferredIds = new Set<string>();
   for (const item of input.provisionalSidecar.deferredInterpretations) {
-    if (!isRecord(item) || !isRecord(item.provider_candidate_tuple) || !isRecord(item.source) || !isRecord(item.source.owned_source) || !isRecord(item.source.context_source) || item.reason !== "essential_provisional_relationship" || item.canonical_candidate_id !== null || item.proposed_candidate_meaning === undefined || !["low", "medium", "high", "unknown"].includes(String(item.uncertainty))) throw new Error("Composite deferred interpretation is unqualified or invalid.");
+    if (!isRecord(item) || !hasOnlyKeys(item, ["deferred_interpretation_id", "relationship_revision_hash", "provider_candidate_tuple", "source", "uncertainty", "proposed_candidate_meaning", "reason", "canonical_candidate_id"]) || !isRecord(item.provider_candidate_tuple) || !hasOnlyKeys(item.provider_candidate_tuple, ["source_slot", "candidate_index"]) || !nonEmpty(item.provider_candidate_tuple.source_slot) || !isIntegerAtLeast(item.provider_candidate_tuple.candidate_index, 0) || !isRecord(item.source) || !hasOnlyKeys(item.source, ["owned_source", "context_source"]) || item.reason !== "essential_provisional_relationship" || item.canonical_candidate_id !== null || item.proposed_candidate_meaning === undefined || !relationshipVocabulary.uncertainty.has(String(item.uncertainty))) throw new Error("Composite deferred interpretation is unqualified or invalid.");
     const id = requireHash(item.deferred_interpretation_id, "deferred interpretation identity");
     const revisionHash = requireHash(item.relationship_revision_hash, "deferred relationship revision hash");
     const tuple = item.provider_candidate_tuple;
     const revision = input.provisionalRelationshipRevisions.find((candidate: Record<string, unknown>) => candidate.revisionHash === revisionHash);
-    if (!revision || deferredIds.has(id) || !Array.isArray(revision.candidateRefs) || !revision.candidateRefs.some((candidate: unknown) => isRecord(candidate) && candidate.sourceSlot === tuple.source_slot && candidate.candidateIndex === tuple.candidate_index) || !sameJson(item.source.context_source, revision.contextSource) || id !== relationshipSha256({ scope: revision.scope, sourceSlot: tuple.source_slot, candidateIndex: tuple.candidate_index, relationshipRevisionHash: revisionHash })) throw new Error("Composite deferred interpretation is foreign or duplicated."); deferredIds.add(id);
+    if (!revision || deferredIds.has(id) || !Array.isArray(revision.candidateRefs) || !revision.candidateRefs.some((candidate: unknown) => isRecord(candidate) && candidate.sourceSlot === tuple.source_slot && candidate.candidateIndex === tuple.candidate_index) || !sameJson(item.source.owned_source, revision.ownedSource) || !sameJson(item.source.context_source, revision.contextSource) || id !== relationshipSha256({ scope: revision.scope, sourceSlot: tuple.source_slot, candidateIndex: tuple.candidate_index, relationshipRevisionHash: revisionHash })) throw new Error("Composite deferred interpretation is foreign or duplicated."); deferredIds.add(id);
   }
   if (canonicalResult === null && deferredIds.size === 0) throw new Error("A fully deferred composite requires qualified deferred meaning; non_fact cannot be fabricated.");
   const revisionSetHash = digest(input.provisionalRelationshipRevisions);
