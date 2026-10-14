@@ -18,17 +18,16 @@ const sourceSlots = [
 ] as const;
 const candidate = { semantic_key: "account activation", kind: "rule", payload: { status: "active" }, normalized_meaning: "An account must be active.", needs_resolution: false } as const;
 
-test("deterministic extraction finalizer derives Atlas-owned IDs and trusted evidence without mutating proposal meaning", () => {
+test("deterministic extraction finalizer derives Atlas-owned IDs and source evidence without mutating proposal meaning", () => {
   const input = { version: "v1", source_results: [{ slot: "slot-000001", classification: "candidate", candidates: [candidate], non_fact_reason: null, questions: [{ question: "Which accounts?", reason: "The scope is not specified." }] }] };
-  const first = finalizeExtractionProposal({ proposal: input, sourceSlots, acceptedContextEvidence: [{ ownedSourceSlot: "slot-000001", contextSourceSlot: "slot-000002" }] });
-  const second = finalizeExtractionProposal({ proposal: input, sourceSlots, acceptedContextEvidence: [{ ownedSourceSlot: "slot-000001", contextSourceSlot: "slot-000002" }] });
+  const first = finalizeExtractionProposal({ proposal: input, sourceSlots });
+  const second = finalizeExtractionProposal({ proposal: input, sourceSlots });
   assert.deepEqual(first, second);
   assert.deepEqual(first.candidate_assertions[0], {
     local_candidate_id: "candidate-slot-000001-001", semantic_key: candidate.semantic_key, kind: candidate.kind, payload: candidate.payload,
     normalized_meaning: candidate.normalized_meaning, source_wording: sourceSlots[0].content, needs_resolution: false,
     evidence_refs: [
       { page_number: 1, locator_type: "table", locator_id: "table-1", excerpt: sourceSlots[0].content },
-      { page_number: 1, locator_type: "visual_region", locator_id: "legend-1" },
     ],
   });
   assert.equal(first.source_statement_inventory[0]?.source_unit_id, "source-unit-slot-000001");
@@ -42,6 +41,7 @@ test("deterministic extraction finalizer rejects malformed, foreign, missing, du
   assert.throws(() => finalizeExtractionProposal({ proposal: { version: "v1", source_results: [{ slot: "slot-000001", ...validSource }, { slot: "slot-000001", ...validSource }] }, sourceSlots }), /duplicate source result/);
   assert.throws(() => finalizeExtractionProposal({ proposal: { version: "v1", source_results: [{ slot: "slot-000002", ...validSource }] }, sourceSlots }), /non-owned, foreign, or dangling/);
   assert.throws(() => finalizeExtractionProposal({ proposal: { version: "v1", source_results: [{ slot: "slot-000001", ...validSource, candidates: [{ ...candidate, kind: "RULE" }] }] }, sourceSlots }), /invalid|expected/i);
+  assert.throws(() => finalizeExtractionProposal({ proposal: { version: "v1", source_results: [{ slot: "slot-000001", ...validSource }] }, sourceSlots, acceptedContextEvidence: [] } as never), /caller-supplied contextual slot pairs/);
 });
 
 test("semantic worker invokes the production structured boundary, stages before delivery, and replays without another provider call", async () => {
