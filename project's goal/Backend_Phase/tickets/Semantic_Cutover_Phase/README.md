@@ -15,10 +15,11 @@ The package is based on the reviewed source materials in `Backend_Phase/Atlas_Se
 | 5 | [SEM-CUTOVER-005](SEM-CUTOVER-005-provisional-accounting-and-replay-handoff.md) | Honest provisional accounting and replay-safe sidecar handoff | 004 independent CK `PASS` |
 | 6 | [SEM-CUTOVER-006](SEM-CUTOVER-006-03-05-context-trust-remediation.md) | Bounded repair of 03-05 CK-001.a/b contextual trust findings | 005 independent CK `PASS` and specific CFC/HMN authorization |
 | 7 | [SEM-CUTOVER-007](SEM-CUTOVER-007-offline-stepwise-worker-composition.md) | One offline fake-provider worker composition with replay | 006 independent CK `PASS` |
+| 7A | [SEM-CUTOVER-007A](SEM-CUTOVER-007A-canonical-stepwise-extraction-runtime-cutover.md) | Sole executable stepwise extraction; real/fake neutral adapter; old extraction dispatch retired | 007 independent CK `PASS` and explicit GO |
 | 8 | [SEM-CUTOVER-008](SEM-CUTOVER-008-final-ck-and-canonical-semantic-baseline.md) | Independent 03-05 CK closure and successor-baseline freeze | 007 independent CK `PASS` |
 
 ```text
-001 -> 002 -> 003 -> 004 -> 005 -> 006 -> 007 -> 008
+001 -> 002 -> 003 -> 004 -> 005 -> 006 -> 007 -> 007A -> 008
 ```
 
 Every executable leaf needs its own explicit GO. `SEM-CUTOVER-002` is a human decision checkpoint, not coding permission; `SEM-CUTOVER-008` cannot self-approve the final 03-05 CK.
@@ -26,6 +27,7 @@ Every executable leaf needs its own explicit GO. `SEM-CUTOVER-002` is a human de
 ## Program guardrails
 
 - RUN-003 remains the sole canonical upstream perception identity, and normal D1 work still stops at `perceived`.
+- SEM-007A must independently CK-PASS the executable stepwise-only runtime dispatch before SEM-008 can become effective. Historical extraction must not remain selectable even though canonical D1 scheduling remains at `perceived`.
 - The successor has one stepwise methodology and one selected versioned profile. A changed prompt, request or response schema requires a new profile/hash; legacy `prompt-003/v1` cannot be a fallback.
 - Technical integrity failures fail closed at the affected boundary. Unverified relationships limit only dependent trusted interpretation; independent source extraction must remain attributable and provisional where needed.
 - Proposals and unresolved relationships never become accepted contextual evidence. Existing `CK-001.a/b` remain genuine findings until independently closed.
@@ -87,3 +89,9 @@ The external planning ZIP is background only; the committed repository and indep
 Keep ticket order 001–008, with one critical added prerequisite: SEM-001 inventories the protected local REL-03 candidate; SEM-002 assigns persistence ownership; a separately approved/CK-qualified durable composite staging boundary (or narrowly authorized REL-03 integration) is required **before 007 GO**. SEM-005 proves pure/fake sidecar contracts only, not SQL durability.
 
 SEM-006 CK = finalizer-component qualification, not entire original 03-05 PASS. SEM-007 CK = offline worker + durable replay integration. Then request a **separate full BSS-V2-004-03-05 CK** on exact final implementation SHA. Only after its PASS may SEM-008 freeze an effective successor baseline. Unverified relationships remain provisional without halting independent extraction; human confirmation is deferred to explicit authorized Master review or chatbot-assisted confirmation.
+
+## Binding runtime-cutover correction (2026-10-15)
+
+The SEM-002 canonical-methodology decision was not fulfilled by the SEM-007 fake-only injection: at HEAD `5471b25`, ordinary semantic worker extraction could still use `buildSemanticSourcePacket()` and legacy `prompt-003/v1` when `offlineStepwise` was absent. **SEM-CUTOVER-007A** owns actual extraction dispatch retirement and one provider-neutral stepwise engine shared by fake and real transport. An actual adapter may be exercised through loopback HTTP during CK without paid provider calls. Ordinary staged RUN-003 D1 remains `perceived`; scheduling/admission is outside the 007A code scope. This amendment does not rewrite earlier CK verdicts.
+
+**Hard stop:** no `GO SEM-CUTOVER-008`, effective semantic baseline, or downstream semantic batch implementation based on a legacy packet until 007A independent CK `PASS`. Final BSS-V2-004-03-05 CK must still independently pass at the exact final reviewed implementation SHA. Explicit user GO and the existing workflow contract remain required.
