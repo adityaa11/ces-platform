@@ -176,7 +176,6 @@ export function createAtlasPerceptionInternalPlugin(): Plugin {
           sendJson(response, 400, { error: "Invalid perception internal request." });
         }
       });
-      server.httpServer?.once("close", () => { void semanticQueue.close(); void perceptionQueue.close(); void sql.end(); });
     },
   };
 }

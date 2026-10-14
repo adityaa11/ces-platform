@@ -131,6 +131,7 @@ test("SEM-CUTOVER-007A mounted qualified-result route proves redaction and the f
   const fullyDeferred = await createFixture("mounted-fully-deferred");
   const server = await mountQualifiedRoute(partial.atlasUrl);
   try {
+    assert.equal(server.shutdownHandlerCount, 1, "the mounted Atlas plugin owns one HTTP close handler");
     const partialInput = { version: "v1" as const, scope: partial.scope, outcome: "partial_accepted" as const, composite: hashes, deferredCoverage: deferred(), canonical: canonical() };
     const deferredInput = { version: "v1" as const, scope: fullyDeferred.scope, outcome: "qualified_deferred" as const, composite: hashes, deferredCoverage: allDeferred() };
 
@@ -195,6 +196,7 @@ async function mountQualifiedRoute(database: URL) {
   const address = listener.address();
   if (!address || typeof address === "string") throw new Error("qualified route listener did not bind a TCP port");
   return {
+    shutdownHandlerCount: listener.listenerCount("close"),
     async post(body: unknown, bearer?: string) {
       const response = await fetch(`http://127.0.0.1:${address.port}/internal/semantic/qualified-result`, { method: "POST", headers: { "content-type": "application/json", ...(bearer ? { authorization: `Bearer ${bearer}` } : {}) }, body: JSON.stringify(body) });
       return { status: response.status, body: response.status === 204 ? null : await response.json() };
