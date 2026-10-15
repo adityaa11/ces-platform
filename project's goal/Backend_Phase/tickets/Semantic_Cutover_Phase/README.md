@@ -1,3 +1,7 @@
+**BINDING PROSPECTIVE INDEX CORRECTION (2026-10-15):** SEM-CUTOVER-008's old consolidated `03-05 CK PASS` prerequisite is now **SUPERSEDED_BEFORE_GO** under user-authorized winner realignment. The historical sequence below is retained as a planning record, not GO/CK authority for reviving 03-05, 08-03-02/03 or REL-04. Sole executable extraction is SEM-007A stepwise REL-envelope v0.4.0; keep preserved security/oracle obligations and original CK/HMN histories. See `project's goal/feedback/SEM-CUTOVER-WINNER-REALIGNMENT-20261015.md`.
+
+---
+
 # Semantic Cutover Phase
 
 This ticket set establishes the proposed `SEM-CUTOVER` path from the approved RUN-003 perception baseline to a single, independently qualified, **offline** stepwise semantic-extraction successor. The binding planning context is [00-SEM-CUTOVER-IMPLEMENTATION-CONTEXT.md](00-SEM-CUTOVER-IMPLEMENTATION-CONTEXT.md). It is a planning package only: it does not issue a `GO`, HMN decision, CFC authorization, CK `PASS`, production semantic job, provider call, admission reservation, or Master mutation.
