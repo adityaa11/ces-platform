@@ -4,6 +4,7 @@
 - **Dependencies:** approved IDSER-012-01-03-02 + PERC-RESET-008 perception predecessor; independently qualified SEM-CUTOVER-007A engine and qualified deferred acceptance; BSS-V2-005/006 actual planner/admission CK; separate BSS-V2-004-03-06 semantic meaning PASS before outbound runtime. No retired BSS-V2-004-03-05 or IDSER-011 PASS.
 - **Parent:** [IDSER-012](IDSER-012-staged-worker-pipeline-realignment.md)
 - **Planning context:** [provider admission/staged semantic context](../../atlas-provider-admission-staged-semantic-pipeline-implementation-context.md) §22 (prospective correction; earlier §21 historic where conflicting).
+- **Binding consumer handoff integration context:** [IDSER-012-02 BSS consumer integration context](../../IDSER-012-02-BSS-CONSUMER-INTEGRATION-CONTEXT.md); applies to all prospective -02-01..03 implementation; does not resolve OPEN-A or grant GO.
 
 **Successor precedence:** [SEM-CUTOVER October 15 winner](../../../feedback/SEM-CUTOVER-WINNER-REALIGNMENT-20261015.md); [IDSER semantic authority map](../../../feedback/IDSER-SEMANTIC-SUCCESSOR-AUTHORITY-MAP-20261015.md); [PERC-RESET-008 canonical perception](../../../feedback/CANONICAL-PERCEPTION-BASELINE-v1.md). No retroactive CK/HMN reclassification.
 
@@ -18,6 +19,12 @@ Exactly **one** shared stepwise methodology (eight-stage v0.3.1) and one `atlas.
 First implement/qualify `IDSER-012-02-01` as a **capacity-aware Semantic Batch Planner**, consuming BSS-V2-005 quota/workload/desired policy and an explicitly qualified BSS-V2-006 effective safety/eligibility constraint. Output is one immutable full-document owned-source partition and **one durable `PlannedSemanticCorpusHandoff` per semantic batch**. It stops before SEM execution, provider work or reconciliation. BSS-V2-005-05 prospectively extends registration and automatic desired-plan convergence to new process kinds; BSS-V2-006 continues generic dynamic demand/admission, not semantic-specific allocation. The later `-02-02` process activation uses a qualified inactive planning workload bootstrap instead of assuming that the unimplemented semantic consumer is already active.
 
 After the planner stop, SEM-CUTOVER owns versioned corpus-slot intake, **per-batch Qualified Semantic Handoff**, and the inherited strict semantic truth boundary. Reconciliation preparation is later independently queued per qualified batch, while only workspace reconciliation state is single-writer. The older `-02-04` document-level aggregation/acceptance design is **still OPEN-A** and needs a separately authorized prospective re-scope; it cannot block eligible independent batch preparation by default or override approved SEM deferred acceptance. [Decision ledger](../../../feedback/IDSER-SEMANTIC-PLANNER-HARD-STOP-20261016.md).
+
+## BSS consumer hard stops and execution gates (prospective 2026-10-16)
+
+The **approved** BSS-V2-005-04 hard stop is immutable active `DesiredAdmissionProfile` publication, not a ready-made IDSER budget API. BSS-V2-005-05 must CK-qualify authenticated **read-only `CapacityPlanningSnapshot/v1`** and process/workload convergence. BSS-V2-006-04 must CK-qualify both the non-reserving **`RuntimeCapacityConstraint/v1`** view and the executable **`ProviderWorkAdmission/v1`** operational attempts/feedback service. These labels are **proposed**, not running TS APIs. The first feeds -02-01 corpus size/partition with no reservations; the second enforces -02-03 SEM batch transport, 429/cooldown and unknown usage, always one BSS reservation per attempt. -02-02 binds the planning-only prospective semantic workload to an actually qualified active version, with zero provider work.
+
+GO/CK must prove real consumer-boundary reads/admission, not infer readiness from BSS internals or hard-stop prose. The -02-03 non-truth staged fragment remains distinct from later Qualified Semantic Batch Handoff; OPEN-A remains a separate unresolved Atlas/SEM acceptance and reconciliation-preparation ownership gate. See [IDSER-012-02 BSS consumer integration context](../../IDSER-012-02-BSS-CONSUMER-INTEGRATION-CONTEXT.md).
 
 ## Child ownership and gates
 

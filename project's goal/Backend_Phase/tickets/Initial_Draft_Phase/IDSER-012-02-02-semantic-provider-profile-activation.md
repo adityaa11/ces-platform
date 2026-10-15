@@ -4,6 +4,7 @@
 - **Batch:** `IDSER-BATCH-12-02-02`
 - **Dependencies:** IDSER-012-02-01, BSS-V2-005-04 and BSS-V2-006-04 independent CK PASS; a version/hash-qualified SEM-007A stepwise route. No retired BSS-V2-004-03-05 or IDSER-011 PASS.
 - **Parent:** [IDSER-012-02](IDSER-012-02-provider-admitted-multi-batch-semantic-extraction.md)
+- **Bound consumer implementation context:** [IDSER-012-02 BSS consumer integration context](../../IDSER-012-02-BSS-CONSUMER-INTEGRATION-CONTEXT.md) §4, §6; qualified planning-only read is not process activation and activation is not provider admission.
 
 **Binding prospective authority:** [SEM-CUTOVER winner](../../../feedback/SEM-CUTOVER-WINNER-REALIGNMENT-20261015.md) and [IDSER semantic successor map](../../../feedback/IDSER-SEMANTIC-SUCCESSOR-AUTHORITY-MAP-20261015.md). The sole extraction engine is SEM-CUTOVER-007A eight-stage stepwise v0.3.1 with `atlas.semantic.extract.stepwise_multimodal.relationship-envelope/v0.4.0`, strict combined `semantic_proposal + relationship_proposals`, REL-03 → SEM-006 → SEM-005 qualification and fenced composite replay. PERC-RESET-008/approved IDSER-012-01 own the accepted RUN-003 `NormalizedDocument v1` and derived assets. BSS-V2-005 owns generic external-provider planning; BSS-V2-006 owns durable admitted attempts. Retired BSS-V2-004-03-05 consolidated CK and legacy `prompt-003/v1` packet/byte parity are **not** successor dependencies.
 
@@ -23,6 +24,7 @@ The activation must be real persisted plan publication/resolution, not a synthet
 | `RC-0120202-04` | Plan activation makes the BSS-V2-006 active resolver see the new version through one durable deduplicated change wakeup without restart/manual polling; counters prove zero semantic work and outbound transport. |
 | `RC-0120202-05` | Route/quota mapping remains server controlled and provider neutral: no semantic-specific limiter, direct-call bypass, fallback or external quota for local Docling. |
 | `RC-0120202-06` | Changed qualified media profile, route, schema/REL hash or resource estimator invalidates incompatible waiting work; no unqualified image route silently activates. |
+| `RC-0120202-07` | BSS-005-05 planning-only inactive workload snapshot promotes **only through explicit authorized activation** to an actually versioned active process and desired plan, with BSS-006 resolver observing the matching revision. Fake consumer, replay, stale/foreign/route tests show **zero** BSS attempts/reservations/provider transport and no implicit semantic execution. |
 
 ## Prospective process-registry and bootstrap amendment (2026-10-16)
 

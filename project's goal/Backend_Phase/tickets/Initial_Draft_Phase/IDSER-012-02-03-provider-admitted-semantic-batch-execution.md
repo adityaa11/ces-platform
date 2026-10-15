@@ -4,6 +4,7 @@
 - **Batch:** `IDSER-BATCH-12-02-03`
 - **Dependencies:** IDSER-012-02-01/02 independent CK PASS, BSS-V2-006-04 admission CK PASS, BSS-V2-004-03-06 review CK PASS AND semantic meaning result PASS. Neither alone suffices.
 - **Parent:** [IDSER-012-02](IDSER-012-02-provider-admitted-multi-batch-semantic-extraction.md)
+- **Bound consumer implementation context:** [IDSER-012-02 BSS consumer integration context](../../IDSER-012-02-BSS-CONSUMER-INTEGRATION-CONTEXT.md) §5–7; BSS owns operational retry/pressure, SEM owns semantic qualification, Atlas owns later acceptance.
 
 **Binding prospective authority:** [SEM-CUTOVER winner](../../../feedback/SEM-CUTOVER-WINNER-REALIGNMENT-20261015.md) and [IDSER semantic successor map](../../../feedback/IDSER-SEMANTIC-SUCCESSOR-AUTHORITY-MAP-20261015.md). The sole extraction engine is SEM-CUTOVER-007A eight-stage stepwise v0.3.1 with `atlas.semantic.extract.stepwise_multimodal.relationship-envelope/v0.4.0`, strict combined `semantic_proposal + relationship_proposals`, REL-03 → SEM-006 → SEM-005 qualification and fenced composite replay. PERC-RESET-008/approved IDSER-012-01 own the accepted RUN-003 `NormalizedDocument v1` and derived assets. BSS-V2-005 owns generic external-provider planning; BSS-V2-006 owns durable admitted attempts. Retired BSS-V2-004-03-05 consolidated CK and legacy `prompt-003/v1` packet/byte parity are **not** successor dependencies.
 
@@ -38,6 +39,7 @@ This ticket is a **consumer of the BSS-V2-006-04 qualified `ProviderWorkAdmissio
 | ID | PASS iff / failing negative |
 | --- | --- |
 | `RC-0120203-08` | Actual SEM consumer seam binds to the independently CK-qualified **BSS-V2-006-04** runtime API, not direct provider dispatch or a copied planning snapshot; deterministic 429/unknown-usage/deadline tests prove typed pressure vs semantic-failure separation, new attempt/new reservation for retries and **zero calls on denied work**. |
+| `RC-0120203-09` | Two semantic batches from one PDF admit/retry **independently** under BSS (one reserved attempt per outbound transport), preserving exact planned corpus/REL/media hashes and staged non-truth output; 429 with/without metadata cannot create unsolicited retries or wait for another batch, and malformed/meaning-invalid success is SEM-qualified failure **not** BSS rate-limit recovery. Staging does **not** claim Qualified Semantic Batch Handoff or reconciliation authority while OPEN-A remains blocked. |
 
 ## Security, required evidence and stop
 

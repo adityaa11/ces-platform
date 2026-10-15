@@ -5,6 +5,7 @@
 - **Parent:** [IDSER-012-02](IDSER-012-02-provider-admitted-multi-batch-semantic-extraction.md)
 - **Dependencies:** accepted PERC-RESET-008 / IDSER-012-01-03-02 NormalizedDocument V1 and granted asset identities; BSS-V2-005-01..04 genuine CK-qualified capacity/workload/DesiredAdmissionProfile contracts; BSS-V2-006-01..04 **when** runtime effective-constraint eligibility is required, with separately proven read-only interface; identified SEM-CUTOVER-007A methodology/profile and an explicit versioned future-consumer handoff shape. Implemented SEM batch-corpus intake and complete wire-compatibility proof belong to a **later SEM-owned checkpoint, not planner-only CK**. Process registration and automatic plan convergence are a prospective separate [BSS-V2-005-05](../Stack_Setup_V2/BSS-V2-005-05-process-agnostic-registry-and-plan-convergence.md) obligation, not an assumed approved capability.
 - **Decision record:** [October 16 hard-stop and process-agnostic plan](../../../feedback/IDSER-SEMANTIC-PLANNER-HARD-STOP-20261016.md). [SEM winner](../../../feedback/SEM-CUTOVER-WINNER-REALIGNMENT-20261015.md) remains the sole semantic-methodology authority.
+- **Bound consumer implementation context:** [IDSER-012-02 BSS consumer integration context](../../IDSER-012-02-BSS-CONSUMER-INTEGRATION-CONTEXT.md) §3, §6–7; capacity read is **not** provider work authorization.
 
 ## Single owned responsibility: plan semantic corpus, then STOP
 
@@ -58,6 +59,7 @@ Context-only source can repeat across batches but never owns or emits `source_re
 | `RC-0120201-10` | Isolated persisted handoff survives restart, cancellation, plan invalidation and duplicate delivery; matching hashes resume exactly, altered plan/scope/revision/fence cannot be redeemed. |
 | `RC-0120201-11` | Provider policy suddenly reduces a verified structural per-request limit: old oversize batch plans become ineligible, a newly versioned authorized replan preserves exact once-only owned coverage and bounded context, or a single indivisible source is explicitly BLOCKED; an ordinary temporary cooldown/remaining-RPM reduction does **not** trigger silent re-batching. |
 | `RC-0120201-12` | Planner reads the **same versioned BSS-V2-005-05 planning snapshot contract** qualified by an independent fixture, rejects stale/foreign/unknown limits and preserves interactive reserve. Reading creates **zero reservations, quota/window mutations or provider jobs**; later BSS-V2-006 eligibility does not silently resplit stable batches. |
+| `RC-0120201-13` | An authorized prospective inactive semantic workload can size corpus through the BSS-005-05 policy read without process activation. Where selected GO scope requires BSS-006 current constraints, read its qualified **non-reserving** effective status as a separate versioned check; 429/depleted windows delay admission, not resize immutable owned/context corpus. Positive and negative controls prove **zero** outgoing attempts and preserved complete owned coverage. |
 
 ## Capacity consumer seam (prospective 2026-10-16)
 

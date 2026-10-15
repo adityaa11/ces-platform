@@ -34,6 +34,10 @@ The only genuine future IDSER executable children are `IDSER-012-02-01..04`, **a
 
 **Blocking OPEN-A:** SEM-007A accepted `partial_accepted` may enqueue reconciliation when canonical candidates materialize; earlier IDSER demanded unconditional `semantic_ready`/zero reconciliation. `qualified_deferred` has no Semantic V1 result or reconciliation, and is **not** semantic_ready. IDSER-012-02-04 GO requires an explicit bounded Atlas/SEM staged lifecycle/acceptance decision, with full/partial/deferred/legacy integration tests; no planning cleanup has authorized new behavior. Earlier text below describing exactly one always-full result or unconditional `semantic_ready` is historic, not an operative successor contract.
 
+## Binding BSS consumer integration seam (2026-10-16, prospective)
+
+The [BSS reusable consumer contracts](../../bss-provider-consumer-contract-checkpoint-20261016.md) are connected to IDSER by the [IDSER-012-02 BSS consumer integration context](../../IDSER-012-02-BSS-CONSUMER-INTEGRATION-CONTEXT.md). `IDSER-012-02-01` consumes the future BSS-V2-005-05 **read-only capacity planning snapshot**, with qualified BSS-V2-006 constraints when its GO scope requires them, and stops at durable `PlannedSemanticCorpusHandoff` per batch with **zero** reservations/provider traffic. `-02-02` explicitly activates the exact qualified background process/workload version, without dispatch. `-02-03` consumes the future BSS-V2-006-04 operational admitted-attempt contract: per attempt BSS reservation, provider-pressure/429/cooldown accounting and feedback; SEM strict meaning qualification remains distinct and stages **non-truth** batch fragments. The **Qualified Semantic Batch Handoff → independent reconciliation preparation** remains an OPEN-A/SEM/Atlas successor decision, not an implication of BSS readiness. BSS-V2-005-04 is approved; BSS-005-05/006-01..04 and the IDSER leaves are still planned, not runnable merely because context is written.
+
 ## Outcome and authority
 
 Extend production project creation into one durable, ordered extraction bundle.
