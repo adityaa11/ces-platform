@@ -1,7 +1,8 @@
 # BSS-V2-006-02: Fair multi-resource admission, interactive protection, and atomic single-attempt dispatch
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `BSS-V2-BATCH-06-02`
+- **GO checkpoint:** [BSS-V2-BATCH-06-02-go.md](../../../feedback/BSS-V2-BATCH-06-02-go.md)
 - **Dependencies:** BSS-V2-006-01 CK `PASS`
 - **Parent:** [BSS-V2-006](BSS-V2-006-capability-admission-interactive-protection.md)
 - **Planning authority:** [Provider admission/staged semantic context](../../atlas-provider-admission-staged-semantic-pipeline-implementation-context.md) §§21.2-21.3
