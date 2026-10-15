@@ -4,7 +4,7 @@
 - **Batch:** `BSS-V2-BATCH-06-03`
 - **Ticket authority:** `project's goal/Backend_Phase/tickets/Stack_Setup_V2/BSS-V2-006-03-provider-usage-runtime-clamp-plan-convergence.md`
 - **Dependencies consumed:** BSS-V2-006-02 CK PASS (`51765ba`); BSS-V2-001 provider-neutral capability boundary.
-- **Review target commit:** recorded immediately after this checkpoint is committed.
+- **Review target commit:** `9aac0ae` (`feat(admission): implement BSS 006-03 feedback convergence`).
 
 ## Bounded implementation
 
