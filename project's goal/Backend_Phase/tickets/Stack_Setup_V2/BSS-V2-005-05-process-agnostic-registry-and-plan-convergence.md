@@ -2,7 +2,7 @@
 
 - **State:** `planned`; new prospective executable child, **not** GO, CFC authority or CK PASS.
 - **Parent:** [BSS-V2-005](BSS-V2-005-quota-domain-capacity-foundation.md)
-- **Dependencies:** BSS-V2-005-01..04 independent CK PASS; BSS-V2-006 plan-change/wakeup contracts for integrated activation proof; exact server-authorized process/workload definitions. Existing approved BSS-V2-005-01..04 contracts and review outcomes are preserved.
+- **Dependencies:** BSS-V2-005-01..04 independent CK PASS; **BSS-V2-006-03 CK PASS for actual plan-wakeup/convergence integration**; exact server-authorized process/workload definitions. The BSS-V2-005 read-only contract itself may be built and independently tested against approved -005-04 before -006-03 is implemented, but final -005-05 CK cannot claim the durable BSS-006 wakeup until -006-03 is CK-qualified. **BSS-V2-006-01..03 must not depend on BSS-V2-005-05** (avoid cyclic authority). Approved BSS-V2-005-01..04 records and CK outcomes remain untouched.
 - **Motivation:** [October 16 process-neutral/planner handoff decision](../../../feedback/IDSER-SEMANTIC-PLANNER-HARD-STOP-20261016.md)
 
 ## Outcome
@@ -30,6 +30,16 @@ Confirmed **already implemented and CK-approved** in BSS-V2-005-02/03: `ServiceC
 
 Future `chat` request-response work must register via server-governed **interactive** profile and defined reserve/service target; semantic batch work is **background**. Neither the user's request metadata nor the generic registry may upgrade arbitrary work to interactive. This ticket extends process-kind registration and desired-plan convergence **without changing** the service-class meaning, vector subtraction, or hard-reserve non-lending; BSS-V2-006 owns time-bounded interactive admission/cancellation. Streaming/HTTP response handling and the actual chatbot integration remain a separate consumer responsibility.
 
+## Consumer-facing Hard Stop A — authenticated CapacityPlanningSnapshot/v1 (planned)
+
+In addition to the already approved BSS-V2-005-04 **immutable active `DesiredAdmissionProfile` publish/read hard stop**, this child must expose a stable, **read-only consumer contract** for independent processes, not only internal catalogue records. [Frozen consumer boundary and independent tests](../../bss-provider-consumer-contract-checkpoint-20261016.md).
+
+A versioned and source-attributed snapshot must bind server-authorized process/workload/eligible route and quota domain, `serviceClass`, policy/activation revision, RPM/TPM/RPD/concurrency known/zero/unknown + window semantics, qualified **per-request** structural bounds (bytes, input/output tokens, media estimator), headroom, protected interactive reserve, safe background allowance and exact estimator/accounting/safety versions. Expose typed `qualified / inactive / unknown / unfit / stale` reason; do not collapse rate, structural and actual remaining-window capacity into a guessed single "available tokens" number. Cross-domain/forged interactive process reads fail closed; snapshot contains no provider secret/raw PRD and requires no direct Atlas role access to Bridge tables.
+
+The snapshot may be used to size a stable semantic corpus, but **is never admission permission**, never decrements runtime quota and must not report live remaining RPM/RPD as a deterministic planning input. An explicitly eligible **inactive/prospective workload planning view** can break IDSER-012-02-01/-02-02 bootstrap without activating an unqualified semantic route; this view cannot authorize any provider job. Version change invalidates incompatible consumer snapshots; runtime eligibility remains solely BSS-V2-006-owned.
+
+**Hard stop of -005-05:** independently qualified snapshot read + process-registration/immutable-plan convergence, **zero BSS reservations/provider transport/consumer truth effects**. BSS-V2-006-04 later proves actual admitted consumer execution; BSS-V2-005-05 must not depend on SEM-CUTOVER implementation to CK its planning surface.
+
 ## Binary review contract
 
 | ID | PASS iff / direct negative |
@@ -45,5 +55,9 @@ Future `chat` request-response work must register via server-governed **interact
 | `RC-00505-08` | Domain/version-scoped downgraded structural constraints invalidate affected consumer request envelopes for explicit versioned replan; unrelated domains/eligible jobs remain live, and BSS never touches document corpus/Atlas truth. |
 
 | `RC-00505-09` | Register an interactive `chat` consumer and background semantic consumer using generic server-authorized process/workload profiles; the **existing** planner emits identical hard reserve/background subtraction under registry extension, rejects background→interactive privilege forgery and requires no chatbot-specific allocation branch. |
+
+| `RC-00505-10` | An **external read-only fixture consumer** obtains the coherent BSS-V2-005 `CapacityPlanningSnapshot/v1` with process/workload/route/quota-domain/active-revision/structural/estimator/output/media, independent resource and protection version bindings. Second distinct qualified process uses the same API without changes to the capacity algorithm. Counters prove **zero quota mutation, reservations, provider jobs and transports**. |
+| `RC-00505-11` | Forged foreign quota/process scope, inactive or prospective-unqualified route dispatch, missing/stale plan, unknown/zero quota and outdated estimator fail conservatively. A specifically authorized **inactive planning view** can size a synthetic request but cannot activate a route or reserve work; active and prospective snapshots cannot be confused. |
+| `RC-00505-12` | BSS-V2-005-05 final CK proves process or qualified provider-capacity revision → deterministic new immutable desired plan → **real BSS-V2-006-03** durable deduplicated wakeup; no cyclic dependency on -005-05 in BSS-V2-006-01..03, no false claim of -006-04 production admission. |
 
 **STOP** if the new registry bypasses existing route/quota authorization, creates a second planner/broker, changes previously approved profile semantics without a version, or relies on BSS-V2-006 behavior not yet CK-qualified. Preserve original BSS-V2-005 leaf approvals; this new leaf needs explicit GO and independent CK.
