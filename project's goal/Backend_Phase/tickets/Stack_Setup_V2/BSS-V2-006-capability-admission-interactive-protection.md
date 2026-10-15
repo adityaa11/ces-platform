@@ -2,7 +2,7 @@
 
 - **State:** `planned`
 - **Type:** non-executable umbrella
-- **Dependencies:** all BSS-V2-005 children CK `PASS`; BSS-006; BSS-V2-001/002
+- **Dependencies (staged, non-cyclic):** BSS-V2-006-01..03 consume approved BSS-V2-005-04 CK `PASS` plus BSS-006 and BSS-V2-001/002; **only BSS-V2-006-04** additionally requires BSS-V2-005-05 CK `PASS` (after its -006-03 wakeup/convergence proof). No 006-01..03 predecessor may require -005-05 CK.
 - **Planning authority:** [Provider admission and staged semantic pipeline context](../../atlas-provider-admission-staged-semantic-pipeline-implementation-context.md), including §21 amendments
 
 ## Outcome
