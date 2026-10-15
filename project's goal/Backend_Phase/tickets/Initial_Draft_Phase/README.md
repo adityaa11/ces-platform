@@ -24,6 +24,14 @@ The legacy D1→reconciliation→D2 sequence and old `IDSER-011` Mistral OCR acc
 
 The [terminal disposition register](../../../feedback/IDSER-PERCEPTION-TICKET-DISPOSITION-20261015.md) resolves the previous misleading `planned` statuses. `IDSER-011-01..04`: **superseded-unimplemented, never CK PASS, do not GO**. `IDSER-011` umbrella: **superseded-non-executable**. `IDSER-012-01` and `IDSER-012-01-03`: **coverage-complete-non-executable** with four already approved perception children and PERC-RESET-008 CK PASS; no new implementation or parent CK is inferred. `IDSER-012` and `IDSER-012-02`: **planned-semantic-remainder**; their four `IDSER-012-02-01..04` leaves remain genuinely `planned` (not ready for GO until semantic authority reconciliation). Historical approved IDSER-001..010 work is unchanged. The original Section 40/AC-41..44 Mistral and Ready-for-Review responsibility rows further below remain *archival ownership history*, not live successor proof; future full-reconciliation coverage remains explicitly unassigned.
 
+## Effective semantic-extraction successor (October 15, 2026)
+
+For all **future staged** IDSER semantic work, the sole extraction authority is SEM-CUTOVER-007A: eight-stage stepwise v0.3.1 and the exact `atlas.semantic.extract.stepwise_multimodal.relationship-envelope/v0.4.0` combined `semantic_proposal + relationship_proposals` profile, qualified REL-03 / SEM-006 / SEM-005 and fenced composite replay. See the [SEM winner](../../../feedback/SEM-CUTOVER-WINNER-REALIGNMENT-20261015.md), [IDSER successor authority map](../../../feedback/IDSER-SEMANTIC-SUCCESSOR-AUTHORITY-MAP-20261015.md) and [completed contract realignment ledger](../../../feedback/IDSER-SEMANTIC-TICKET-REALIGNMENT-20261015.md). Historical `prompt-003/v1`, `buildSemanticSourcePacket()`, legacy packet-byte parity and BSS-V2-004-03-05 consolidated CK PASS are **not** live predecessor conditions. Retired IDSER-011 cannot be a GO gate.
+
+The only genuine future IDSER executable children are `IDSER-012-02-01..04`, **all still planned and independently unapproved**. They own deterministic stepwise batching, BSS-V2-005 process/plan activation, BSS-V2-006 reservation-backed neutral attempts, and Atlas-owned document aggregation. A separately qualified BSS-V2-004-03-06 development-only live semantic meaning gate must have BOTH experiment CK PASS and semantic result PASS before -02-03. M01–M13 independent meaning oracles are not inferred from infrastructure CK PASS.
+
+**Blocking OPEN-A:** SEM-007A accepted `partial_accepted` may enqueue reconciliation when canonical candidates materialize; earlier IDSER demanded unconditional `semantic_ready`/zero reconciliation. `qualified_deferred` has no Semantic V1 result or reconciliation, and is **not** semantic_ready. IDSER-012-02-04 GO requires an explicit bounded Atlas/SEM staged lifecycle/acceptance decision, with full/partial/deferred/legacy integration tests; no planning cleanup has authorized new behavior. Earlier text below describing exactly one always-full result or unconditional `semantic_ready` is historic, not an operative successor contract.
+
 ## Outcome and authority
 
 Extend production project creation into one durable, ordered extraction bundle.
@@ -39,12 +47,9 @@ PCC intake -> all DocumentStore writes -> one Atlas transaction + first job
  -> D2 ... DN -> completion validation -> Ready for review -> STOP
 ```
 
-That sequence remains historical authority for its reviewed implementation. For explicitly versioned future staged-policy bundles, IDSER-012 amends only the execution order: bundle-fair local perception stops each document at `perceived`, shared BSS-V2-005/006 admission governs bounded semantic batches, and one accepted document result stops at `semantic_ready` before any later reconciliation redesign. Legacy bundles are not silently adopted. The evidence-preservation `-01-03` children are prerequisites of semantic planning.
+That sequence remains historical authority for its reviewed implementation. For explicitly versioned future staged-policy bundles, PERC-RESET-008/approved IDSER-012-01 stop at `perceived`; SEM-CUTOVER-007A owns the sole qualified stepwise extraction algorithm and IDSER-012-02 orchestrates provider-admitted batches. Document acceptance is **canonical / partial_accepted / qualified_deferred** according to explicit authorized Atlas semantics, not unconditional `semantic_ready`. The zero-reconciliation staged policy remains a named open gate for -02-04; historical bundles are not silently adopted.
 
-Documents remain immutable evidence; Mistral reasons through Agents Bridge;
-pg-boss schedules; Atlas authorizes context, validates results, persists state,
-indexes, and controls progress. All semantics remain incoming candidates and
-reviewable relationship proposals. Master stays empty.
+Documents remain immutable evidence; the qualified provider-neutral SEM-007A stepwise engine (not a mandatory Mistral perception/semantic route) executes admitted semantic work through Agents Bridge; pg-boss schedules; Atlas authorizes context, validates results, persists state/index and controls lifecycle. Deferred meanings stay deferred rather than becoming candidates. Master stays empty.
 
 No review projections, Main Workflow/Project Facts/CES population, review
 decisions, resolved knowledge, publication, revisions, HEAD movement, Pull from,
@@ -115,12 +120,12 @@ documents do not authorize starting implementation automatically.
 | 35 | [IDSER-012-01-03](IDSER-012-01-03-docling-evidence-preservation-and-semantic-handoff.md) / umbrella | IDSER-012-01-02 CK PASS | **COVERAGE COMPLETE**; Non-executable RUN-003 preservation partition (non-executable; children CK approved) |
 | 36 | [IDSER-012-01-03-01](IDSER-012-01-03-01-qualified-docling-capture-and-deterministic-evidence-mapping.md) / IDSER-BATCH-12-01-03-01 | IDSER-012-01-02 CK PASS | Qualified mapping and bounded transient figure descriptors; no early activation |
 | 37 | [IDSER-012-01-03-02](IDSER-012-01-03-02-atlas-derived-asset-handoff-replay-and-authorized-resolution.md) / IDSER-BATCH-12-01-03-02 | IDSER-012-01-03-01 CK PASS | Durable image handoff, replay, retrieval, no recursion and safe activation |
-| 35 | [IDSER-012-02](IDSER-012-02-provider-admitted-multi-batch-semantic-extraction.md) / umbrella | IDSER-012-01-03-02 CK PASS; all BSS-V2-005/006 children; BSS-V2-004-03-04/05 | **SEMANTIC REMAINDER PLANNED**; Non-executable batch-aware semantic consumer partition; supersedes old BSS-V2-004-03-07 direct continuation |
-| 36 | [IDSER-012-02-01](IDSER-012-02-01-deterministic-semantic-batch-planning.md) / IDSER-BATCH-12-02-01 | IDSER-012-01-03-02 CK PASS; BSS-V2-004-03-01/02/03/05; BSS-V2-005-04; BSS-V2-006-04 | Deterministic owned/context batch plan, source-unit seam and RequestResourceEnvelope; no provider call |
-| 37 | [IDSER-012-02-02](IDSER-012-02-02-semantic-provider-profile-activation.md) / IDSER-BATCH-12-02-02 | IDSER-012-02-01; BSS-V2-005-04; BSS-V2-006-04 | Activate concrete semantic process/workload profile and DesiredAdmissionProfile; zero provider calls |
-| 38 | [BSS-V2-004-03-06](../Stack_Setup_V2/BSS-V2-004-03-06-live-anoman-extraction-qualification.md) / BSS-V2-BATCH-04.03-06 | IDSER-012-02-02; BSS-V2-004-03-01 through -05; BSS-V2-006-04 | Live-qualify exact batch-aware profile through shared provider admission |
-| 39 | [IDSER-012-02-03](IDSER-012-02-03-provider-admitted-semantic-batch-execution.md) / IDSER-BATCH-12-02-03 | IDSER-012-02-02; BSS-V2-004-03-06 qualification PASS | Provider-admitted explicit-attempt batch execution and fenced staging |
-| 40 | [IDSER-012-02-04](IDSER-012-02-04-semantic-document-aggregation-ready-stop.md) / IDSER-BATCH-12-02-04 | IDSER-012-02-03 CK PASS | Exact document aggregation, once-only Atlas acceptance, semantic_ready, zero reconciliation |
+| 35 | [IDSER-012-02](IDSER-012-02-provider-admitted-multi-batch-semantic-extraction.md) / umbrella | approved RUN-003 IDSER-012-01/PERC-RESET; qualified SEM-007A; BSS-V2-005/006; separate live meaning gate | **SEMANTIC REMAINDER PLANNED**; no GO on umbrella, canonical/deferred outcomes require exact authority |
+| 36 | [IDSER-012-02-01](IDSER-012-02-01-deterministic-semantic-batch-planning.md) / IDSER-BATCH-12-02-01 | qualified SEM-007A shared stepwise engine; approved IDSER-012-01-03-02; BSS-V2-005 resource envelope interfaces; bounded cross-batch REL design | **PLANNED / GO BLOCKED**; deterministic shared stepwise requests, ownership/deferred plan and RequestResourceEnvelope; zero call |
+| 37 | [IDSER-012-02-02](IDSER-012-02-02-semantic-provider-profile-activation.md) / IDSER-BATCH-12-02-02 | IDSER-012-02-01 CK PASS; BSS-V2-005-04/006-04 CK PASS | **PLANNED**; activate exact v0.4.0 profile and real active DesiredAdmissionProfile; zero provider work |
+| 38 | [BSS-V2-004-03-06](../Stack_Setup_V2/BSS-V2-004-03-06-live-anoman-extraction-qualification.md) / BSS-V2-BATCH-04.03-06 | IDSER-012-02-01/02 CK PASS; SEM-007A; BSS-V2-005/006 CK PASS; explicit development-only budget/privacy GO | **PLANNED**; qualify exact shared stepwise profile and M01–M13 meaning independently; NO legacy 03-05 CK gate |
+| 39 | [IDSER-012-02-03](IDSER-012-02-03-provider-admitted-semantic-batch-execution.md) / IDSER-BATCH-12-02-03 | IDSER-012-02-01/02 CK PASS; BSS-V2-004-03-06 CK PASS AND semantic PASS | **PLANNED**; each BSS-reserved attempt uses sole SEM-007A; non-truth staged fragments |
+| 40 | [IDSER-012-02-04](IDSER-012-02-04-semantic-document-aggregation-ready-stop.md) / IDSER-BATCH-12-02-04 | IDSER-012-02-03 CK PASS; explicit Atlas/SEM staged reconciliation/acceptance decision OPEN-A | **PLANNED / GO BLOCKED**; truthful canonical / partial_accepted / qualified_deferred coverage; no invented semantic_ready/zero-job guarantee |
 
 `IDSER-012-01-03-01` is a mapping qualification checkpoint, not an active figure-preservation route. Activate normal image-enabled staging only after `-03-02` passes durable storage, replay, admission and authorization qualification. Semantic planning must not conflate an available figure pointer with provider understanding.
 
@@ -130,41 +135,36 @@ for not-yet-implemented handlers. Production wiring must fail closed for an
 unavailable handler; it must never acknowledge, fabricate completion, consume
 work through TestRuntime, or mark a bundle ready. The historical full-pipeline evidence was scoped by IDSER-008/010/011. For future staged work, retired IDSER-011 is not an executable gate: accepted PERC-RESET-008 and explicitly authorized semantic/reconciliation successors own the applicable proofs.
 
-## IDSER-012 staged dependency graph
+## IDSER-012 future staged dependency graph (prospective)
 
 ```text
-IDSER-012-01-01 -> IDSER-012-01-02 -> IDSER-012-01-03-01
-                                      -> IDSER-012-01-03-02 -> perceived --+
-                                                                       |
-BSS-V2-005-01 -> -02 -> -03 -> -04                                    |
-                              |                                        |
-                              v                                        |
-BSS-V2-006-01 -> -02 -> -03 -> -04 -----------------------------------+
-                                                                       |
-BSS-V2-004-03-04 -> -05 ----------------------------------------------+
-                                                                       |
-                                                                       v
-                                                            IDSER-012-02-01
-                                                                       |
-                                                                       v
-                                                            IDSER-012-02-02
-                                                                       |
-                                                                       v
-                                                    BSS-V2-004-03-06 live PASS
-                                                                       |
-                                                                       v
-                                                            IDSER-012-02-03
-                                                                       |
-                                                                       v
-                                                            IDSER-012-02-04
-                                                                       |
-                                                                       v
-                                                                 semantic_ready
-                                                                       |
-                                                                      STOP
+PERC-RESET-008 CK PASS + IDSER-012-01 approved -> perceived
+                         |
+SEM-CUTOVER-007A sole stepwise engine / qualified deferred acceptance
+                         |
+BSS-V2-005-04 active plan + BSS-V2-006-04 real durable reservation
+                         |
+                         v
+           IDSER-012-02-01 (stepwise owned/context/deferred planner) CK PASS
+                         |
+                         v
+           IDSER-012-02-02 (actual semantic DesiredAdmissionProfile) CK PASS
+                         |
+                         v
+           BSS-V2-004-03-06 (separate CK PASS + semantic meaning PASS)
+                         |
+                         v
+           IDSER-012-02-03 (one reserved attempt per call; shared SEM engine) CK PASS
+                         |
+                         v
+           IDSER-012-02-04 (exact document accepted canonical/deferred coverage)
+                         |
+                         v
+           BLOCKED until OPEN-A: approved staged lifecycle/reconciliation policy
 ```
 
-The old unimplemented BSS-V2-004-03-07 direct continuation remains superseded-before-implementation. Planning-context §21 is authoritative for quota windows, explicit attempts, fairness rebasing, plan-change wakeups and owned/reference-context batching. Reconciliation remains later IDSER scope.
+This graph is future planning, not evidence that a predecessor has passed or that any semantic provider is production approved. Legacy BSS-V2-004-03-05 CK and retired IDSER-011 are excluded. An accepted partial canonical result is not a complete ordinary reconciliation; a fully qualified-deferred member is not semantic_ready.
+
 
 ## Inspected implementation and planning decisions
 
