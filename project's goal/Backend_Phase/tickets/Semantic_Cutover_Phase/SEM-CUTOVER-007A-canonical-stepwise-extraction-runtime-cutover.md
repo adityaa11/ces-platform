@@ -1,6 +1,6 @@
 # SEM-CUTOVER-007A — Canonical stepwise extraction runtime cutover (retire legacy dispatch)
 
-**Status:** `planned` — **Size:** L, bounded executable cutover — **Batch:** `SEM-CUTOVER` — **Owner:** semantic extraction runtime selection, stepwise composition, neutral provider transport, and focused proofs. **Order:** after `SEM-CUTOVER-007` independent CK PASS, before `SEM-CUTOVER-008`. A separate explicit `GO SEM-CUTOVER-007A` is required for implementation. This ticket is an authorized planning correction, NOT implementation GO, CK PASS, live-provider spending permission, or production job activation.
+**Status:** `approved` — **Size:** L, bounded executable cutover — **Batch:** `SEM-CUTOVER` — **Owner:** semantic extraction runtime selection, stepwise composition, neutral provider transport, and focused proofs. **Order:** after `SEM-CUTOVER-007` independent CK PASS, before `SEM-CUTOVER-008`. A separate explicit `GO SEM-CUTOVER-007A` is required for implementation. This ticket is an authorized planning correction, NOT implementation GO, CK PASS, live-provider spending permission, or production job activation.
 
 ## Why this ticket exists (program-level gap, not a new methodology)
 
