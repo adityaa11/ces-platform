@@ -1,6 +1,6 @@
 # BSS-V2-005-03: Deterministic multi-resource provider capacity planner
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `BSS-V2-BATCH-05-03`
 - **GO checkpoint:** [BSS-V2-BATCH-05-03-go.md](../../../feedback/BSS-V2-BATCH-05-03-go.md)
 - **Dependencies:** BSS-V2-005-01 and -02 CK `PASS`
