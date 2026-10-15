@@ -1,3 +1,7 @@
+> **AUTHORITATIVE PROSPECTIVE SUPERSESSION (2026-10-15): `SUPERSEDED_BEFORE_GO`.** Historical 008's second consolidated original-03-05 CK and `EFFECTIVE_AFTER=03-05 CK PASS` requirement are prospectively superseded by the explicit 2026-10-15 winner realignment. No old CK artifact is rewritten or retrospectively passed. Actual canonical extraction winner is SEM-002..007A at profile `relationship-envelope/v0.4.0`; carry forward source trust, strict negative, replay, redaction, no activation and M01–M13 unproven quality boundaries through actual successor/consumer owners. Do not run this legacy gate or freeze a fictional production baseline. Decision and bounded owner ledger: `project's goal/feedback/SEM-CUTOVER-WINNER-REALIGNMENT-20261015.md`. This is documentation-only and not a retrospective CK PASS or new implementation GO.
+
+## Historical frozen plan — archival reference only, NOT GO/CK authority
+
 # SEM-CUTOVER-008 — Final BSS-V2-004-03-05 CK and canonical semantic baseline
 
 **Status:** `planned` · **Size:** M (review/evidence/cutover gate) · **Owner:** independent review package, successor baseline record, no new implementation feature · **Dependencies:** 007 and 007A independent CK PASS, plus explicit approved HMN amendments and independent consolidated 03-05 CK closure on exact final SHA. Explicit GO required.
