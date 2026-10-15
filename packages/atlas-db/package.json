@@ -21,6 +21,7 @@
     "test:desired-admission-profile-publication": "jiti tests/desired-admission-profile-publication.integration.test.ts",
     "test:provider-work-reservation-window": "jiti tests/provider-work-reservation-window.integration.test.ts",
     "test:fair-admission-atomic-dispatch": "jiti tests/fair-admission-atomic-dispatch.integration.test.ts",
+    "test:provider-feedback-pressure-plan-convergence": "jiti tests/provider-feedback-pressure-plan-convergence.integration.test.ts",
     "test:semantic-foundation": "jiti tests/semantic-foundation.integration.test.ts",
     "test:semantic-authority": "jiti tests/semantic-authority.integration.test.ts",
     "test:qualified-deferred-acceptance": "jiti tests/qualified-deferred-acceptance.integration.test.ts",

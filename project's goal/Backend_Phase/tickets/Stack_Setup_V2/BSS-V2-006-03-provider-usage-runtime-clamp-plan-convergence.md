@@ -1,6 +1,6 @@
 # BSS-V2-006-03: Provider feedback, usage reconciliation, runtime clamp and plan convergence
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `BSS-V2-BATCH-06-03`
 - **Dependencies:** BSS-V2-006-02 CK `PASS`; BSS-V2-001 provider-neutral capability boundary
 - **Parent:** [BSS-V2-006](BSS-V2-006-capability-admission-interactive-protection.md)
