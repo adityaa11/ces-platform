@@ -1,6 +1,6 @@
 # BSS-V2-006-02: Fair multi-resource admission, interactive protection, and atomic single-attempt dispatch
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `BSS-V2-BATCH-06-02`
 - **GO checkpoint:** [BSS-V2-BATCH-06-02-go.md](../../../feedback/BSS-V2-BATCH-06-02-go.md)
 - **Dependencies:** BSS-V2-006-01 CK `PASS`
