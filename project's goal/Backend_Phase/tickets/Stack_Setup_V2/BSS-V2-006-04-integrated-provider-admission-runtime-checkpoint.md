@@ -12,7 +12,7 @@ Prove one reusable external-provider admission authority before semantic extract
 
 ## Required deterministic scenario
 
-Use one shared synthetic quota domain with hard interactive work, request-heavy/token-heavy background lanes, multiple fairness keys, explicit RPM/TPM/RPD/concurrency window policies and a single-attempt fake transport. Exercise saturation, borrowing, a late lane, interactive arrival, plan increase/decrease, weight-change rebase, actual under/over usage, unknown usage after possible transport, 429/Retry-After, restart, ack loss and deduplicated wakeup.
+Use one shared synthetic quota domain with hard interactive work, request-heavy/token-heavy background lanes, multiple fairness keys, explicit RPM/TPM/RPD/concurrency window policies and a single-attempt fake transport. Exercise saturation, borrowing, a late lane, interactive arrival, plan increase/decrease, weight-change rebase, actual under/over usage, unknown usage after possible transport, 429/Retry-After, restart, ack loss and deduplicated wakeup. **Also inject provider-limit drift while work is queued/in-flight:** credible dimension-specific RPM/TPM/RPD downgrade, ambiguous 429 without rate headers, stale/wrong-domain feedback, changed structural per-request maximum, observed recovery, and a trusted persistent downgrade leading to BSS-V2-005 profile-version publication. Assert exact future-call counts and isolated quota-domain effects rather than only checking a status string.
 
 ## Review Contract
 
@@ -24,6 +24,13 @@ Use one shared synthetic quota domain with hard interactive work, request-heavy/
 | RC-BSSV2-00604-04 | Plan/provider-pressure changes alter future admissions dynamically. | PASS iff activation itself wakes sleeping backlog, vN -> vN+1 changes admissions without preemption, weight change rebases fairness and clamp survives restart. |
 | RC-BSSV2-00604-05 | Runtime observations never exceed active plan and analytics stay BSS-V2-007-owned. | PASS iff higher observed limits cannot raise capacity and only operational-minimum metadata is persisted. |
 | RC-BSSV2-00604-06 | Local Docling and Atlas trusted state remain outside this authority. | PASS iff no local perception route needs quota metadata and Bridge roles cannot mutate Atlas truth. |
+
+## Additional integration closure (prospective 2026-10-16)
+
+| ID | PASS iff / direct negative |
+| --- | --- |
+| `RC-BSSV2-00604-07` | A vendor unexpectedly lowers a verified dimension during execution: BSS-V2-006 immediately persists the lower effective clamp and future admission obeys it; 429 without usable metadata leads to bounded conservative hold and one-reservation-per-probe, with another domain unaffected. |
+| `RC-BSSV2-00604-08` | Proven persistent lower provider ceiling versions through BSS-V2-005 and changes desired plan with a deduplicated wakeup; stale/conflicting higher observations cannot increase policy. Waiting old requests that remain within the new structural envelope resume by fair admission, while oversized batch corpus is explicitly invalidated for a versioned planner replan; none silently truncate or spin forever. |
 
 ## Hard stop
 

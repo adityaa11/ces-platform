@@ -9,7 +9,7 @@
 
 Make the **existing** capacity catalogue, `deriveDesiredAdmissionProfile`, and immutable plan-publication seam extensible to any **server-registered process kind**, rather than a fixed TypeScript enum requiring edits to the capacity algorithm for new process types. The registry selects capability, qualified route/quota domain, service class, fairness scope, versioned workload/request estimator/output reservation, configured protection/weights/caps, eligibility and activation policy. Admission resources are still independently measured as RPM/TPM/RPD/concurrency. The registry must not grant capabilities, credentials, source access, model-quality acceptance or provider quotas on the basis of an arbitrary name.
 
-Process/workload configuration changes affecting an eligible quota domain cause **durable deduplicated recalculation, validation and immutable publication/activation of a new `DesiredAdmissionProfile` version**, followed by BSS-V2-006 plan-change notification. Do not update prior versions or overwrite in-flight reservation references. Unknown/unqualified process, inactive workload, route, quota source or estimator **fails closed**; no automatic activation of a provider/model simply because a process was registered.
+Process/workload configuration changes **and qualified, authorized BSS-V2-005 provider-capacity-profile revisions** affecting an eligible quota domain cause **durable deduplicated recalculation, validation and immutable publication/activation of a new `DesiredAdmissionProfile` version**, followed by BSS-V2-006 plan-change notification. Do not update prior versions or overwrite in-flight reservation references. Unknown/unqualified process, inactive workload, route, quota source or estimator **fails closed**; no automatic activation of a provider/model simply because a process was registered.
 
 ## Process-neutral versus demand-driven responsibilities
 
@@ -17,6 +17,12 @@ Process/workload configuration changes affecting an eligible quota domain cause 
 - **BSS-V2-006:** run-time actual work/attempt admission, per-domain pressure/cooldown, fair borrowing among backlogged eligible lanes, and one reservation per outbound attempt. Unused background allocation may be borrowed as permitted; **hard interactive reserve is never lent to background**. New queue activity can shift who gets admitted without constantly regenerating or rewriting the DesiredAdmissionProfile.
 - **Consumers (including IDSER planner):** ask for an authenticated bounded budget/constraint view through versioned provider-neutral interfaces; they may size a request but not publish a capacity plan or reserve/dispatch provider work.
 - **Policy:** dynamic adaptation is bounded by configured source-of-truth limits and explicit protection. No fabricated provider limits, implicit equal fairness, unbounded adaptive priority, or learned weights without approved policy.
+
+## Provider policy drift, separate from runtime pressure (prospective 2026-10-16)
+
+The source of truth for an updated *lasting* external limit belongs to the existing **BSS-V2-005-01** immutable capacity catalogue; this prospective child only connects **valid new version activation** (whether triggered by operator/provider API/documented source or a BSS-V2-006 qualified lower-limit observation) to deterministic DesiredAdmissionProfile recomputation and durable runtime wakeup. Lower feedback is an immediate **BSS-V2-006 clamp**, not automatic license to overwrite capacity truth. Provider responses may expose no trusted numeric ceiling; in that case BSS-V2-006 holds/cools down conservatively while BSS-V2-005 retains its prior provenance-bound profile. Never use live queue depth or a guessed 429-derived RPM/RPD as deterministic BSS-V2-005 planner inputs.
+
+If a newly qualified per-request limit makes a persisted semantic corpus physically unfit, notify the owning consumer to invalidate/replan **only under a versioned authority**; BSS cannot modify semantic content or perform source splitting itself.
 
 ## Binary review contract
 
@@ -28,5 +34,8 @@ Process/workload configuration changes affecting an eligible quota domain cause 
 | `RC-00505-04` | Planner preserves independent quota dimensions, versioned estimator/output/media/structural constraints, explicit weights/caps/headroom and hard interactive protection. Unknown/zero required capacity fails closed. |
 | `RC-00505-05` | One BSS-V2-006 durable plan-change wakeup observes the revised desired profile; in-flight reservations keep old identity, waiting work sees new policy, no provider transport or semantic/Atlas truth effects occur in BSS-V2-005. |
 | `RC-00505-06` | Transient queue depth/usage/cooldown causes no immutable plan churn: runtime BSS-V2-006 alone changes next-admitted work. Source/secret bytes absent from registry, plan and wakeup metadata. |
+
+| `RC-00505-07` | New **authorized** lower provider-capacity profile version, not only a changed process set, causes deterministic immutable desired-plan recomputation/activation and BSS-V2-006 wakeup; unknown/unattributable 429 never invents numeric BSS-V2-005 limits. |
+| `RC-00505-08` | Domain/version-scoped downgraded structural constraints invalidate affected consumer request envelopes for explicit versioned replan; unrelated domains/eligible jobs remain live, and BSS never touches document corpus/Atlas truth. |
 
 **STOP** if the new registry bypasses existing route/quota authorization, creates a second planner/broker, changes previously approved profile semantics without a version, or relies on BSS-V2-006 behavior not yet CK-qualified. Preserve original BSS-V2-005 leaf approvals; this new leaf needs explicit GO and independent CK.

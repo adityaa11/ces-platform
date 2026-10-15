@@ -53,3 +53,15 @@ Future `IDSER-012-02-04` original document-level acceptance must be explicitly r
 ## Explicit exclusions
 
 No provider/model activation or spending, no new capacity policy value invented, no guessed dynamic fairness weights, no unsafe runtime re-batching on transient quota use, no schema/prompt profile mutation, no changed SQL/worker/code, no early candidate/semantic truth/qualified handoff or reconciliation, no Master/publication/projection changes, no fake CK PASS.
+
+## Verified runtime policy drift (2026-10-16 bounded addendum)
+
+**Actual source review:** `apps/agents-bridge/src/providers/anoman.ts` currently maps HTTP 429 to `BridgeProviderError("rate_limited")` and does **not** parse `Retry-After`, typed lower-limit/remaining/reset headers, or durable BSS-006 pressure; generic `provider-capabilities.ts` likewise currently contains no typed normalized runtime pressure contract. `apps/agents-bridge/src/capacity-planner.ts` plans only from an immutable provider-capacity and active process/workload catalogue; it has intentionally no runtime usage authority. BSS-V2-006-01..04 remain **planned**, not functioning production adaptation. This addendum **does not** claim the current Anoman endpoint has any specific rate-limit header or published numeric RPM/RPD.
+
+**Precise separation:** a BSS-V2-005 policy snapshot can be stale because the provider changes its limits without notice. BSS-V2-006-03 must immediately apply durable typed lower-limit clamps or bounded 429 cooldown, keep per-window usage pessimistic when unknown, limit probes with fresh attempts/reservations and preserve scoped queues across restart. Feedback scope (quota domain/route) and dimension cannot be guessed. The first rejected request cannot always be prevented.
+
+**Long-lived provider downgrade:** trusted/qualified limit source becomes a **new immutable BSS-V2-005-01 capacity profile**; the prospective BSS-V2-005-05 convergence child now explicitly handles capacity-profile revision (not just registered-process changes), produces new desired policy, and wakes BSS-V2-006. Repeated untyped 429 alone is **not proof of a numeric provider limit**. Existing profile may stay authoritative while BSS-006 imposes a stricter temporary runtime clamp.
+
+**Corpus boundary:** decrease of RPM/RPD or a temporary TPM *window* never automatically changes a planned semantic batch; BSS-006 admission waits. If a verified *per-request structural maximum* falls below the old immutable `RequestResourceEnvelope`, the IDSER planner must perform an explicit **new plan version/repartition** from authorized NormalizedDocument V1, or report an individually unfit source. No automatic prompt truncation, source loss, or permanent busy-spin of unfit work.
+
+**Review changes (prospective only):** BSS-V2-006-03 RC-07..10 and BSS-V2-006-04 RC-07..08 enforce midflight provider drift and a bounded unknown 429 recovery. BSS-V2-005-05 RC-07..08 prove authorized provider-policy-version convergence. IDSER-012-02-01 RC-11 proves valid structural replan, versus temporary wait. Approved BSS-V2-005-01..04, SEM-CUTOVER/REL contracts and prior CK histories remain unchanged.
