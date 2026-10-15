@@ -1,3 +1,7 @@
+> **AUTHORITATIVE PROSPECTIVE SUPERSESSION (2026-10-15): `SUPERSEDED_BEFORE_GO`.** Original REL-04 fake-only qualification and RELQ-08 legacy byte parity are no longer executable gates after SEM-007/007A. The RELQ-01..07 security/defer/replay requirements remain valid where mapped to qualified successor evidence; RELQ-06 later-extraction prior-provisional projection into the outbound provider request is still an **open integration-evidence gap**, not PASS. It belongs to a narrowly scoped successor SEM runtime owner if needed, never old REL-04 or legacy packet. No REL-04 CK PASS is claimed. Decision and bounded owner ledger: `project's goal/feedback/SEM-CUTOVER-WINNER-REALIGNMENT-20261015.md`. This is documentation-only and not a retrospective CK PASS or new implementation GO.
+
+## Historical frozen plan — archival reference only, NOT GO/CK authority
+
 # BSS-V2-004-03-05-REL-04 — offline relationship qualification
 
 **State:** `PENDING_REL-03_CK_PASS`.
