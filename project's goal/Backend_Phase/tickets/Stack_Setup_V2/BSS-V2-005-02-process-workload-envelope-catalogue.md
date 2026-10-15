@@ -1,7 +1,8 @@
 # BSS-V2-005-02: Provider-dependent process and bounded workload-envelope catalogue
 
-- **State:** `awaiting_review` at GO review target (recorded in [BSS-V2-BATCH-05-02-go.md](../../../feedback/BSS-V2-BATCH-05-02-go.md))
-- **Review batch:** `BSS-V2-BATCH-05-02`
+- **State:** `approved` following CK `PASS` for reviewed commit `38787e1`; **Review batch:** `BSS-V2-BATCH-05-02`.
+- **GO checkpoint:** [BSS-V2-BATCH-05-02-go.md](../../../feedback/BSS-V2-BATCH-05-02-go.md).
+- **CK review:** [BSS-V2-BATCH-05-02-38787e1-review.md](../../../feedback/BSS-V2-BATCH-05-02-38787e1-review.md).
 - **Dependencies:** BSS-V2-005-01 CK `PASS`; BSS-V2-001 capability contracts
 - **Parent:** [BSS-V2-005](BSS-V2-005-quota-domain-capacity-foundation.md)
 - **Post-generation planning amendment:** [Provider admission/staged semantic context](../../atlas-provider-admission-staged-semantic-pipeline-implementation-context.md) §21
