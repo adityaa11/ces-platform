@@ -1,3 +1,7 @@
+> **AUTHORITATIVE PROSPECTIVE SUPERSESSION (2026-10-15): `SUPERSEDED_HISTORICAL_CK`.** Original CK `CHANGES_REQUIRED` at `298021d` remains historical. For future semantic extraction, REL-01..03 and SEM-005/006/007/007A own the strict source/relationship trust, deferred outcome, worker and replay. No legacy `prompt-003/v1`, legacy source packet, legacy byte parity, or consolidated old-03-05 CK is a future GO/CK prerequisite. Preserve all `CK-001.a/b` security invariants and independently qualified successor evidence; do not claim original CK PASS. Decision and bounded owner ledger: `project's goal/feedback/SEM-CUTOVER-WINNER-REALIGNMENT-20261015.md`. This is documentation-only and not a retrospective CK PASS or new implementation GO.
+
+## Historical frozen plan — archival reference only, NOT GO/CK authority
+
 # BSS-V2-004-03-05: Deterministic extraction finalizer and provider-neutral worker composition
 
 - **State:** `awaiting_review`; **Review batch:** `BSS-V2-BATCH-04.03-05`; **realignment:** documentation only — not implementation GO, CK PASS, or successor GO.
