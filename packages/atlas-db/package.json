@@ -18,6 +18,7 @@
     "test:staged-perception-admission": "jiti tests/staged-perception-admission.integration.test.ts",
     "test:provider-capacity-catalogue": "jiti tests/provider-capacity-catalogue.integration.test.ts",
     "test:process-workload-catalogue": "jiti tests/process-workload-catalogue.integration.test.ts",
+    "test:desired-admission-profile-publication": "jiti tests/desired-admission-profile-publication.integration.test.ts",
     "test:semantic-foundation": "jiti tests/semantic-foundation.integration.test.ts",
     "test:semantic-authority": "jiti tests/semantic-authority.integration.test.ts",
     "test:qualified-deferred-acceptance": "jiti tests/qualified-deferred-acceptance.integration.test.ts",

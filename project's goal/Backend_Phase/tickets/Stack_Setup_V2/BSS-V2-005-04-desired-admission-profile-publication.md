@@ -1,7 +1,8 @@
 # BSS-V2-005-04: Versioned DesiredAdmissionProfile publication and cutover
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `BSS-V2-BATCH-05-04`
+- **GO checkpoint:** [BSS-V2-BATCH-05-04-go.md](../../../feedback/BSS-V2-BATCH-05-04-go.md)
 - **Dependencies:** BSS-V2-005-03 CK `PASS`; BSS-003 Bridge operational persistence boundary
 - **Parent:** [BSS-V2-005](BSS-V2-005-quota-domain-capacity-foundation.md)
 - **Planning authority:** [Provider admission/staged semantic context](../../atlas-provider-admission-staged-semantic-pipeline-implementation-context.md) §21.4
