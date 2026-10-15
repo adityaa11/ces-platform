@@ -1,3 +1,7 @@
+**BINDING PROSPECTIVE INDEX CORRECTION (2026-10-15):** The legacy family terminal `08-03-03 CK PASS` and its predecessor `08-03-02` are **SUPERSEDED_BEFORE_GO** for future extraction. SEM-CUTOVER-002..007A is the sole semantic extraction path; old `prompt-003/v1` and legacy byte-parity are archival only, not a GO/CK requirement. Keep historical leaf PASS artifacts and independently authored `08-03-01` M01–M13 quality oracle. BSS-V2-005/006 remain generic provider infrastructure; IDSER consumes them and stepwise. See `project's goal/feedback/SEM-CUTOVER-WINNER-REALIGNMENT-20261015.md`.
+
+---
+
 # BSS-V2-004-03-08: Multimodal Semantic V1 source-to-prompt integration
 
 - **State:** `planned` (13 committed leaf tickets since `d6421dd`); **direct GO eligibility:** explicit user `go` naming one dependency-ready leaf authorizes its initial implementation. No preliminary HMN is required for ordinary frozen-scope GO. Source and missing-fixture audit in master §0.8.
