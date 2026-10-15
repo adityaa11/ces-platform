@@ -1,3 +1,7 @@
+> **AUTHORITATIVE PROSPECTIVE SUPERSESSION (2026-10-15): `SUPERSEDED_BEFORE_GO`.** Old parser/finalizer executable CK plan and dependency on original 03-05 CK are retired. SEM-004/006/007/007A own strict REL-envelope parse and Atlas-owned finalization on the sole `relationship-envelope/v0.4.0` profile. Preserve exact schema/slot/source/asset/authority negatives and M01–M13 quality oracle expectations, but do not repeat old proposal-only or legacy differential as a new execution gate. No CK PASS for this historical leaf is claimed. Decision and bounded owner ledger: `project's goal/feedback/SEM-CUTOVER-WINNER-REALIGNMENT-20261015.md`. This is documentation-only and not a retrospective CK PASS or new implementation GO.
+
+## Historical frozen plan — archival reference only, NOT GO/CK authority
+
 # BSS-V2-004-03-08-03-02: Strict proposal parser and canonical-finalizer qualification
 
 - **Status:** `planned`; **GO authorization:** the user's explicit `go` for this leaf (or an explicitly authorized batch) after required predecessor CK PASS, with current frozen scope and review rows. **No preliminary HMN is required for ordinary GO.** HMN is reserved for a documented blocked decision, out-of-scope change, or a later remediation cycle.
