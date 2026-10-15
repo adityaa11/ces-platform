@@ -7,8 +7,12 @@ const databaseUrl = process.env.DATABASE_URL;
 test("BSS-V2-006-01 persists idempotent work, fenced reservations, exact windows, cancellation and deduplicated wakeups", { skip: !databaseUrl }, async () => {
   const bridgeUrl = new URL(databaseUrl!); bridgeUrl.username = "agents_bridge"; bridgeUrl.password = process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only";
   const atlasUrl = new URL(databaseUrl!); atlasUrl.username = "atlas_app"; atlasUrl.password = process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only";
-  const bridge = postgres(bridgeUrl.toString(), { max: 1 }); const atlas = postgres(atlasUrl.toString(), { max: 1 });
+  let bridge = postgres(bridgeUrl.toString(), { max: 1 }); const atlas = postgres(atlasUrl.toString(), { max: 1 });
   const domain = `provider-work-${Date.now()}`;
+  const interactive1 = `interactive-1-${domain}`;
+  const interactive2 = `interactive-2-${domain}`;
+  const interactive3 = `interactive-3-${domain}`;
+  const interactive4 = `interactive-4-${domain}`;
   let rejectionNumber = 0;
   const rejects = async (action: () => Promise<unknown>, expected: RegExp) => {
     const savepoint = `expected_failure_${rejectionNumber++}`;
@@ -22,7 +26,7 @@ test("BSS-V2-006-01 persists idempotent work, fenced reservations, exact windows
   );
   try {
     await bridge.unsafe("BEGIN");
-    await bridge.unsafe("INSERT INTO bridge.provider_capacity_profile (quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES ($1,'capacity-v1','account','[{\"routeId\":\"route-a\"}]','{}','{\"requests\":{\"kind\":\"fixed\"}}','quota-v1','provider_docs','provider-docs://limits','v1',now(),now())", [domain]);
+    await bridge.unsafe("INSERT INTO bridge.provider_capacity_profile (quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES ($1,'capacity-v1','account','[{\"routeId\":\"route-a\"}]','{}','{\"requests\":{\"kind\":\"fixed\",\"windowSeconds\":60,\"limitUnits\":5}}','quota-v1','provider_docs','provider-docs://limits','v1',now(),now())", [domain]);
     await bridge.unsafe("INSERT INTO bridge.workload_envelope_profile (workload_id,profile_version,active,compatible_process_kinds,structural_bound,estimator,quota_accounting_policy_id,output_reservation,safety_policy) VALUES ($1,'v1',true,'[\"chat\"]','{}','{}','quota-v1','{}','{}')", [domain]);
     await bridge.unsafe("INSERT INTO bridge.provider_process_profile (process_id,profile_version,process_kind,capability,service_class,fairness_scope,allocation_policy,active,eligible_route_ids,workload_id,workload_profile_version) VALUES ($1,'v1','chat','atlas.chat.respond','interactive','{}','{}',true,'[]',$1,'v1')", [domain]);
     await bridge.unsafe("INSERT INTO bridge.desired_admission_profile (quota_domain_id,profile_version,provider_capacity_profile_version,planner_version,effective_from,profile) VALUES ($1,'plan-v1','capacity-v1','planner-v1',now(),'{}')", [domain]);
@@ -30,56 +34,62 @@ test("BSS-V2-006-01 persists idempotent work, fenced reservations, exact windows
     await bridge.unsafe("SELECT * FROM bridge.activate_desired_admission_profile($1,'plan-v1')", [domain]);
 
     const deadline = new Date(Date.now() + 60_000).toISOString();
-    await work("interactive-1", 1, deadline); await work("interactive-1", 1, deadline);
-    assert.equal((await bridge.unsafe("SELECT count(*)::integer AS count FROM bridge.provider_work_attempt WHERE logical_work_id='interactive-1'"))[0].count, 1);
-    const [registered] = await bridge.unsafe("SELECT state,admission_deadline_at > now() AS deadline_is_future,cancellation_requested_at IS NULL AS not_cancelled,(state <> 'waiting' OR (admission_deadline_at IS NOT NULL AND admission_deadline_at <= now()) OR cancellation_requested_at IS NOT NULL) AS blocked FROM bridge.provider_work_attempt WHERE logical_work_id='interactive-1'");
+    await work(interactive1, 1, deadline); await work(interactive1, 1, deadline);
+    assert.equal((await bridge.unsafe("SELECT count(*)::integer AS count FROM bridge.provider_work_attempt WHERE logical_work_id=$1", [interactive1]))[0].count, 1);
+    const [registered] = await bridge.unsafe("SELECT state,admission_deadline_at > now() AS deadline_is_future,cancellation_requested_at IS NULL AS not_cancelled,(state <> 'waiting' OR (admission_deadline_at IS NOT NULL AND admission_deadline_at <= now()) OR cancellation_requested_at IS NOT NULL) AS blocked FROM bridge.provider_work_attempt WHERE logical_work_id=$1", [interactive1]);
     assert.deepEqual({ state: registered.state, deadlineIsFuture: registered.deadline_is_future, notCancelled: registered.not_cancelled, blocked: registered.blocked }, { state: "waiting", deadlineIsFuture: true, notCancelled: true, blocked: false });
-    await rejects(() => bridge.unsafe("SELECT bridge.register_provider_work_attempt('interactive-1',1,$1,$1,'v1','different-fairness','{}','plan-v1',1,$2,NULL)", [domain, deadline]), /identity conflicts/i);
-    await rejects(() => bridge.unsafe("SELECT bridge.register_provider_work_attempt('interactive-1',1,$1,$1,'v1','fairness-a','{\"units\":1}','plan-v1',1,$2,NULL)", [domain, deadline]), /identity conflicts/i);
-    await rejects(() => bridge.unsafe("SELECT bridge.register_provider_work_attempt('interactive-1',1,$1,$1,'v1','fairness-a','{}','plan-v1',1,$2,NULL)", [domain, new Date(Date.now() + 120_000).toISOString()]), /identity conflicts/i);
+    await rejects(() => bridge.unsafe("SELECT bridge.register_provider_work_attempt($1,1,$2,$2,'v1','different-fairness','{}','plan-v1',1,$3,NULL)", [interactive1, domain, deadline]), /identity conflicts/i);
+    await rejects(() => bridge.unsafe("SELECT bridge.register_provider_work_attempt($1,1,$2,$2,'v1','fairness-a','{\"units\":1}','plan-v1',1,$3,NULL)", [interactive1, domain, deadline]), /identity conflicts/i);
+    await rejects(() => bridge.unsafe("SELECT bridge.register_provider_work_attempt($1,1,$2,$2,'v1','fairness-a','{}','plan-v1',1,$3,NULL)", [interactive1, domain, new Date(Date.now() + 120_000).toISOString()]), /identity conflicts/i);
     for (const sensitive of ["prompt", "sourceBody", "tokenizedQuestion", "authorizationHeader", "credential", "connectionId"]) {
       await rejects(() => bridge.unsafe("SELECT bridge.register_provider_work_attempt($1,99,$2,$2,'v1','fairness-a',jsonb_build_object($3::text,'sentinel'),'plan-v1',1,$4,NULL)", [`sensitive-${sensitive}`, domain, sensitive, deadline]), /metadata must not contain/i);
     }
     assert.equal((await bridge.unsafe("SELECT count(*)::integer AS count FROM bridge.provider_work_attempt WHERE request_resource_envelope::text LIKE '%sentinel%'"))[0].count, 0);
-    const [reservationResult] = await bridge.unsafe("SELECT row_to_json(bridge.reserve_provider_work_attempt('interactive-1',1)) AS reservation");
+    const [allowedMetadata] = await bridge.unsafe("SELECT bridge.provider_work_metadata_is_safe('{\"requestUnits\":1,\"tokenUnits\":2,\"dayUnits\":1,\"concurrencyUnits\":1}') AS safe");
+    assert.equal(allowedMetadata.safe, true);
+    const allowedWorkId = `allowed-resource-metadata-${domain}`;
+    await bridge.unsafe("SELECT bridge.register_provider_work_attempt($1,1,$2,$2,'v1','fairness-a',jsonb_build_object('requestUnits',1,'tokenUnits',2,'dayUnits',1,'concurrencyUnits',1),'plan-v1',1,$3,NULL)", [allowedWorkId, domain, deadline]);
+    const [persistedAllowedMetadata] = await bridge.unsafe("SELECT request_resource_envelope FROM bridge.provider_work_attempt WHERE logical_work_id=$1", [allowedWorkId]);
+    assert.deepEqual(persistedAllowedMetadata.request_resource_envelope, { requestUnits: 1, tokenUnits: 2, dayUnits: 1, concurrencyUnits: 1 });
+    const [reservationResult] = await bridge.unsafe("SELECT row_to_json(bridge.reserve_provider_work_attempt($1,1)) AS reservation", [interactive1]);
     assert.equal(reservationResult.reservation.desired_profile_version, "plan-v1");
     await bridge.unsafe("SAVEPOINT duplicate_reservation");
-    await assert.rejects(() => bridge.unsafe("SELECT bridge.reserve_provider_work_attempt('interactive-1',1)"), /not reservable|live reservation/);
+    await assert.rejects(() => bridge.unsafe("SELECT bridge.reserve_provider_work_attempt($1,1)", [interactive1]), /not reservable|live reservation/);
     await bridge.unsafe("ROLLBACK TO SAVEPOINT duplicate_reservation");
-    const [{ state_version: reservedVersion }] = await bridge.unsafe("SELECT state_version FROM bridge.provider_work_attempt WHERE logical_work_id='interactive-1'");
-    await bridge.unsafe("SELECT bridge.mark_provider_work_transport_may_have_started('interactive-1',1,$1)", [reservedVersion]);
-    assert.equal((await bridge.unsafe("SELECT bridge.cancel_provider_work_attempt('interactive-1',1,'caller_cancelled') AS result"))[0].result, "transport_usage_remains_unknown");
-    assert.equal((await bridge.unsafe("SELECT state FROM bridge.provider_work_reservation WHERE logical_work_id='interactive-1'"))[0].state, "consumed_unknown");
+    const [{ state_version: reservedVersion }] = await bridge.unsafe("SELECT state_version FROM bridge.provider_work_attempt WHERE logical_work_id=$1", [interactive1]);
+    await bridge.unsafe("SELECT bridge.mark_provider_work_transport_may_have_started($1,1,$2)", [interactive1, reservedVersion]);
+    assert.equal((await bridge.unsafe("SELECT bridge.cancel_provider_work_attempt($1,1,'caller_cancelled') AS result", [interactive1]))[0].result, "transport_usage_remains_unknown");
+    assert.equal((await bridge.unsafe("SELECT state FROM bridge.provider_work_reservation WHERE logical_work_id=$1", [interactive1]))[0].state, "consumed_unknown");
 
-    await work("interactive-2", 1, deadline);
-    assert.equal((await bridge.unsafe("SELECT bridge.cancel_provider_work_attempt('interactive-2',1,'expired') AS result"))[0].result, "terminal_without_reservation");
-    assert.equal((await bridge.unsafe("SELECT count(*)::integer AS count FROM bridge.provider_work_reservation WHERE logical_work_id='interactive-2'"))[0].count, 0);
+    await work(interactive2, 1, deadline);
+    assert.equal((await bridge.unsafe("SELECT bridge.cancel_provider_work_attempt($1,1,'expired') AS result", [interactive2]))[0].result, "terminal_without_reservation");
+    assert.equal((await bridge.unsafe("SELECT count(*)::integer AS count FROM bridge.provider_work_reservation WHERE logical_work_id=$1", [interactive2]))[0].count, 0);
     await bridge.unsafe("SAVEPOINT expired_reservation");
-    await assert.rejects(() => bridge.unsafe("SELECT bridge.reserve_provider_work_attempt('interactive-2',1)"), /not reservable/);
+    await assert.rejects(() => bridge.unsafe("SELECT bridge.reserve_provider_work_attempt($1,1)", [interactive2]), /not reservable/);
     await bridge.unsafe("ROLLBACK TO SAVEPOINT expired_reservation");
 
-    await work("interactive-3", 1, deadline);
-    await bridge.unsafe("SELECT bridge.reserve_provider_work_attempt('interactive-3',1)");
-    assert.equal((await bridge.unsafe("SELECT bridge.cancel_provider_work_attempt('interactive-3',1,'caller_cancelled') AS result"))[0].result, "released_before_transport");
-    assert.equal((await bridge.unsafe("SELECT state FROM bridge.provider_work_reservation WHERE logical_work_id='interactive-3'"))[0].state, "released");
+    await work(interactive3, 1, deadline);
+    await bridge.unsafe("SELECT bridge.reserve_provider_work_attempt($1,1)", [interactive3]);
+    assert.equal((await bridge.unsafe("SELECT bridge.cancel_provider_work_attempt($1,1,'caller_cancelled') AS result", [interactive3]))[0].result, "released_before_transport");
+    assert.equal((await bridge.unsafe("SELECT state FROM bridge.provider_work_reservation WHERE logical_work_id=$1", [interactive3]))[0].state, "released");
     await bridge.unsafe("SAVEPOINT released_dispatch");
-    await assert.rejects(() => bridge.unsafe("SELECT bridge.mark_provider_work_transport_may_have_started('interactive-3',1,2)"), /stale|cancelled|expired/i);
+    await assert.rejects(() => bridge.unsafe("SELECT bridge.mark_provider_work_transport_may_have_started($1,1,2)", [interactive3]), /stale|cancelled|expired/i);
     await bridge.unsafe("ROLLBACK TO SAVEPOINT released_dispatch");
-    const [{ state_version: terminalVersion }] = await bridge.unsafe("SELECT state_version FROM bridge.provider_work_attempt WHERE logical_work_id='interactive-3'");
-    await bridge.unsafe("SELECT bridge.reconcile_provider_work_attempt('interactive-3',1,$1)", [terminalVersion]);
+    const [{ state_version: terminalVersion }] = await bridge.unsafe("SELECT state_version FROM bridge.provider_work_attempt WHERE logical_work_id=$1", [interactive3]);
+    await bridge.unsafe("SELECT bridge.reconcile_provider_work_attempt($1,1,$2)", [interactive3, terminalVersion]);
     await bridge.unsafe("SAVEPOINT stale_callback");
-    await assert.rejects(() => bridge.unsafe("SELECT bridge.reconcile_provider_work_attempt('interactive-3',1,$1)", [terminalVersion]), /stale|cannot be reconciled/i);
+    await assert.rejects(() => bridge.unsafe("SELECT bridge.reconcile_provider_work_attempt($1,1,$2)", [interactive3, terminalVersion]), /stale|cannot be reconciled/i);
     await bridge.unsafe("ROLLBACK TO SAVEPOINT stale_callback");
 
-    await work("interactive-4", 1, deadline);
-    await bridge.unsafe("SELECT bridge.reserve_provider_work_attempt('interactive-4',1)");
-    await bridge.unsafe("UPDATE bridge.provider_work_attempt SET execution_deadline_at=now() - interval '1 second' WHERE logical_work_id='interactive-4'");
-    const [{ state_version: expiredReservedVersion }] = await bridge.unsafe("SELECT state_version FROM bridge.provider_work_attempt WHERE logical_work_id='interactive-4'");
+    await work(interactive4, 1, deadline);
+    await bridge.unsafe("SELECT bridge.reserve_provider_work_attempt($1,1)", [interactive4]);
+    await bridge.unsafe("UPDATE bridge.provider_work_attempt SET execution_deadline_at=now() - interval '1 second' WHERE logical_work_id=$1", [interactive4]);
+    const [{ state_version: expiredReservedVersion }] = await bridge.unsafe("SELECT state_version FROM bridge.provider_work_attempt WHERE logical_work_id=$1", [interactive4]);
     await bridge.unsafe("SAVEPOINT execution_expiry");
-    await assert.rejects(() => bridge.unsafe("SELECT bridge.mark_provider_work_transport_may_have_started('interactive-4',1,$1)", [expiredReservedVersion]), /stale|cancelled|expired/i);
+    await assert.rejects(() => bridge.unsafe("SELECT bridge.mark_provider_work_transport_may_have_started($1,1,$2)", [interactive4, expiredReservedVersion]), /stale|cancelled|expired/i);
     await bridge.unsafe("ROLLBACK TO SAVEPOINT execution_expiry");
 
-    await bridge.unsafe("INSERT INTO bridge.provider_quota_window_state (quota_domain_id,desired_profile_version,activation_revision,provider_capacity_profile_version,dimension_id,window_policy_identity,window_state) VALUES ($1,'plan-v1',1,'capacity-v1','requests','{\"kind\":\"fixed\"}','{\"remaining\":4}')", [domain]);
+    await bridge.unsafe("INSERT INTO bridge.provider_quota_window_state (quota_domain_id,desired_profile_version,activation_revision,provider_capacity_profile_version,dimension_id,window_policy_identity,window_state) VALUES ($1,'plan-v1',1,'capacity-v1','requests','{\"kind\":\"fixed\",\"windowSeconds\":60,\"limitUnits\":5}','{\"remaining\":4}')", [domain]);
     const [window] = await bridge.unsafe("SELECT reset_semantics_known,reset_at,window_state FROM bridge.provider_quota_window_state WHERE quota_domain_id=$1", [domain]);
     assert.deepEqual({ known: window.reset_semantics_known, reset: window.reset_at, state: window.window_state }, { known: false, reset: null, state: { remaining: 4 } });
     await bridge.unsafe("SAVEPOINT unknown_reset");
@@ -88,6 +98,9 @@ test("BSS-V2-006-01 persists idempotent work, fenced reservations, exact windows
     await rejects(() => bridge.unsafe("INSERT INTO bridge.provider_quota_window_state (quota_domain_id,desired_profile_version,activation_revision,provider_capacity_profile_version,dimension_id,window_policy_identity,window_state) VALUES ($1,'plan-v1',1,'MISSING-CAPACITY','requests','{\"kind\":\"fixed\"}','{}')", [domain]), /active desired admission profile/i);
     await rejects(() => bridge.unsafe("SELECT bridge.put_provider_quota_window_state($1,'unknown','{}')", [domain]), /missing or has unknown/i);
     await bridge.unsafe("SELECT (bridge.put_provider_quota_window_state($1,'requests','{\"remaining\":3}',true,now())).*", [domain]);
+    const [fixedRollover] = await bridge.unsafe("SELECT window_state,reset_semantics_known FROM bridge.advance_provider_quota_window_state($1,'requests',now() + interval '2 minutes')", [domain]);
+    assert.deepEqual(fixedRollover.window_state.remaining, 5);
+    assert.equal(fixedRollover.reset_semantics_known, true);
 
     await bridge.unsafe("SELECT * FROM bridge.request_provider_work_wakeup($1,'window:requests',now() + interval '5 minutes','plan-v1',1)", [domain]);
     await bridge.unsafe("SELECT * FROM bridge.request_provider_work_wakeup($1,'window:requests',now() + interval '10 minutes','plan-v1',1)", [domain]);
@@ -95,15 +108,35 @@ test("BSS-V2-006-01 persists idempotent work, fenced reservations, exact windows
     await bridge.unsafe("SAVEPOINT stale_wakeup");
     await assert.rejects(() => bridge.unsafe("SELECT * FROM bridge.request_provider_work_wakeup($1,'window:stale',now(),'missing-plan',999)", [domain]), /active desired admission/i);
     await bridge.unsafe("ROLLBACK TO SAVEPOINT stale_wakeup");
-    await bridge.unsafe("INSERT INTO bridge.provider_capacity_profile (quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES ($1,'capacity-v2','account','[{\"routeId\":\"route-a\"}]','{}','{\"requests\":{\"kind\":\"rolling\"}}','quota-v2','provider_docs','provider-docs://limits','v2',now(),now())", [domain]);
+    await bridge.unsafe("INSERT INTO bridge.provider_capacity_profile (quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES ($1,'capacity-v2','account','[{\"routeId\":\"route-a\"}]','{}','{\"requests\":{\"kind\":\"rolling\",\"windowSeconds\":60,\"limitUnits\":4}}','quota-v2','provider_docs','provider-docs://limits','v2',now(),now())", [domain]);
     await bridge.unsafe("INSERT INTO bridge.desired_admission_profile (quota_domain_id,profile_version,provider_capacity_profile_version,planner_version,effective_from,profile) VALUES ($1,'plan-v2','capacity-v2','planner-v2',now(),'{}')", [domain]);
     await bridge.unsafe("INSERT INTO bridge.desired_admission_profile_input (quota_domain_id,desired_profile_version,process_id,process_profile_version,workload_id,workload_profile_version) VALUES ($1,'plan-v2',$1,'v1',$1,'v1')", [domain]);
     await bridge.unsafe("SELECT * FROM bridge.activate_desired_admission_profile($1,'plan-v2')", [domain]);
     await bridge.unsafe("SELECT * FROM bridge.request_provider_work_wakeup($1,'window:requests',now() + interval '10 minutes','plan-v2',2)", [domain]);
     const [attachedWakeup] = await bridge.unsafe("SELECT desired_profile_version,activation_revision FROM bridge.provider_work_wakeup_request WHERE quota_domain_id=$1 AND wakeup_key='window:requests'", [domain]);
     assert.deepEqual(attachedWakeup, { desired_profile_version: "plan-v2", activation_revision: "2" });
+    await bridge.unsafe("SELECT bridge.put_provider_quota_window_state($1,'requests',jsonb_build_object('requestStartedAt',jsonb_build_array((now() - interval '2 minutes')::text,now()::text)),true,now())", [domain]);
+    const [rollingRollover] = await bridge.unsafe("SELECT window_state FROM bridge.advance_provider_quota_window_state($1,'requests',now())", [domain]);
+    assert.deepEqual(rollingRollover.window_state.remaining, 3);
+    await bridge.unsafe("INSERT INTO bridge.provider_capacity_profile (quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES ($1,'capacity-v3','account','[{\"routeId\":\"route-a\"}]','{}','{\"requests\":{\"kind\":\"refill\",\"limitUnits\":5,\"refillUnits\":2,\"refillIntervalSeconds\":10}}','quota-v3','provider_docs','provider-docs://limits','v3',now(),now())", [domain]);
+    await bridge.unsafe("INSERT INTO bridge.desired_admission_profile (quota_domain_id,profile_version,provider_capacity_profile_version,planner_version,effective_from,profile) VALUES ($1,'plan-v3','capacity-v3','planner-v3',now(),'{}')", [domain]);
+    await bridge.unsafe("INSERT INTO bridge.desired_admission_profile_input (quota_domain_id,desired_profile_version,process_id,process_profile_version,workload_id,workload_profile_version) VALUES ($1,'plan-v3',$1,'v1',$1,'v1')", [domain]);
+    await bridge.unsafe("SELECT * FROM bridge.activate_desired_admission_profile($1,'plan-v3')", [domain]);
+    await bridge.unsafe("SELECT bridge.put_provider_quota_window_state($1,'requests','{\"remaining\":1}',true,now() - interval '11 seconds')", [domain]);
+    const [refillRollover] = await bridge.unsafe("SELECT window_state FROM bridge.advance_provider_quota_window_state($1,'requests',now())", [domain]);
+    assert.deepEqual(refillRollover.window_state.remaining, 5);
     await assert.rejects(() => atlas.unsafe("SELECT * FROM bridge.provider_work_attempt"), /permission denied/i);
-    await assert.rejects(() => atlas.unsafe("SELECT bridge.reserve_provider_work_attempt('interactive-1',1)"), /permission denied/i);
+    await assert.rejects(() => atlas.unsafe("SELECT bridge.reserve_provider_work_attempt($1,1)", [interactive1]), /permission denied/i);
+    await bridge.unsafe("COMMIT");
+    await bridge.end();
+    bridge = postgres(bridgeUrl.toString(), { max: 1 });
+    await bridge.unsafe("BEGIN");
+    const [restartedWindow] = await bridge.unsafe("SELECT window_state,provider_capacity_profile_version,reset_semantics_known FROM bridge.provider_quota_window_state WHERE quota_domain_id=$1 AND desired_profile_version='plan-v3' AND dimension_id='requests'", [domain]);
+    assert.deepEqual(restartedWindow, { window_state: { remaining: 5 }, provider_capacity_profile_version: "capacity-v3", reset_semantics_known: true });
+    const [restartedAttempt] = await bridge.unsafe("SELECT state,state_version FROM bridge.provider_work_attempt WHERE logical_work_id=$1", [interactive3]);
+    assert.equal(restartedAttempt.state, "reconciled");
+    await rejects(() => bridge.unsafe("SELECT bridge.reserve_provider_work_attempt($1,1)", [interactive3]), /not reservable/);
+    await rejects(() => bridge.unsafe("SELECT bridge.reconcile_provider_work_attempt($1,1,$2)", [interactive3, restartedAttempt.state_version]), /stale|cannot be reconciled/i);
   } finally {
     await bridge.unsafe("ROLLBACK").catch(() => undefined);
     await Promise.all([bridge.end(), atlas.end()]);
