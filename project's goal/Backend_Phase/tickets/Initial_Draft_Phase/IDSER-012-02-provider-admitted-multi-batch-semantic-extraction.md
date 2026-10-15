@@ -1,36 +1,39 @@
-# IDSER-012-02: Provider-admitted multi-batch semantic extraction to semantic_ready
+# IDSER-012-02 — Stepwise provider-admitted multi-batch semantic extraction (umbrella)
 
-- **State:** `planned-semantic-remainder` (non-executable; four semantic children still planned)
-- **Type:** non-executable umbrella
-- **Dependencies:** IDSER-012-01-03-02 CK `PASS`; all BSS-V2-005/006 children CK `PASS`; BSS-V2-004-03-04/05 CK `PASS`
+- **State:** `planned-semantic-remainder`; **non-executable umbrella**; four real unimplemented leaf tickets remain `planned` with successor-specific GO guards.
+- **Dependencies:** approved IDSER-012-01-03-02 + PERC-RESET-008 perception predecessor; independently qualified SEM-CUTOVER-007A engine and qualified deferred acceptance; BSS-V2-005/006 actual planner/admission CK; separate BSS-V2-004-03-06 semantic meaning PASS before outbound runtime. No retired BSS-V2-004-03-05 or IDSER-011 PASS.
 - **Parent:** [IDSER-012](IDSER-012-staged-worker-pipeline-realignment.md)
-- **Planning authority:** [Provider admission/staged semantic context](../../atlas-provider-admission-staged-semantic-pipeline-implementation-context.md) §§21.5-21.7
+- **Planning context:** [provider admission/staged semantic context](../../atlas-provider-admission-staged-semantic-pipeline-implementation-context.md) §22 (prospective correction; earlier §21 historic where conflicting).
 
+**Successor precedence:** [SEM-CUTOVER October 15 winner](../../../feedback/SEM-CUTOVER-WINNER-REALIGNMENT-20261015.md); [IDSER semantic authority map](../../../feedback/IDSER-SEMANTIC-SUCCESSOR-AUTHORITY-MAP-20261015.md); [PERC-RESET-008 canonical perception](../../../feedback/CANONICAL-PERCEPTION-BASELINE-v1.md). No retroactive CK/HMN reclassification.
 
-## Frozen perception input and non-authority — 2026-10-15
+## Preserved boundary / implementation worthiness
 
-**Prospective perception authority:** [PERC-RESET-008 CK PASS](../../../feedback/PERC-RESET-BATCH-08-9f31026-review.md), [CANONICAL-PERCEPTION-BASELINE-v1](../../../feedback/CANONICAL-PERCEPTION-BASELINE-v1.md), and [IDSER perception winner map](../../../feedback/IDSER-PERCEPTION-WINNER-AUTHORITY-MAP-20261015.md). This is a 2026-10-15 perception-only amendment; historical evidence/approved IDSER and BSS contracts are unchanged. The only currently qualified ordinary digital-PDF perception route is `docling-run-003-capture` / `atlas-digital-pdf-run-003-capture-v1`, which yields source-bound `NormalizedDocument v1` and verified derived assets where captured, then stops at durable `perceived`. A valid zero-visual digital PDF follows this same route. No Mistral OCR or image-disabled Docling route, qualification-only selector, or automatic fallback is an allowed future canonical staged-perception option. Scanned/OCR-only PDFs and visual semantic interpretation remain unsupported without separate qualification.
+This remains valuable **future semantic orchestration work**; PERC-RESET stops at `perceived` and SEM-007A provides the **sole** semantic algorithm, not batching or external-provider admission. Consume accepted RUN-003 `NormalizedDocument v1` and granted derived image identities, never another OCR/Docling perception fallback. Batches have one owned-source partition and bounded authorized context-only references; a visual pointer proves evidence retention, **not** meaning comprehension. A known SEM provider-facing provisional-revision context gap is an explicit bounded SEM-owner decision when a cross-batch dependency needs it.
 
-The only qualified staged semantic input is the accepted `NormalizedDocument v1` and source-scoped, Atlas-authorized derived-asset references produced by the PERC-RESET-008 normal RUN-003 baseline and approved IDSER-012-01 implementation. A visual `assetRef` proves **evidence retention**, not semantic understanding. Batching may not re-run original perception through Mistral OCR, a second Docling profile, legacy qualification overlays, or silently create/recursively admit derived assets. Exact text/table/zero-visual and captured-visual fixture cases remain mandatory; missing/foreign/tampered asset manifests fail closed. Provider request batching/qualified partial-deferred aggregation and BSS-V2-005/006 integration are **separately pending** under the semantic winner map; this amendment does not grant GO for any `IDSER-012-02` child.
+Exactly **one** shared stepwise methodology (eight-stage v0.3.1) and one `atlas.semantic.extract.stepwise_multimodal.relationship-envelope/v0.4.0` strict REL envelope, qualified composite/sidecar, Atlas-only canonical/deferred acceptance and fenced replay. Not a new `prompt-003/v1` compiler, standalone extractor/finalizer, old packet byte-parity oracle or independent provider quota limiter. BSS-V2-005 owns process/workload catalogue, planning and published active `DesiredAdmissionProfile`; BSS-V2-006 owns attempts/reservations/cooldown/usage/fairness. Live meaning oracles remain separately BSS-V2-004-03-06-owned.
 
-## Implementation-worthiness disposition (2026-10-15)
-
-This work is **not superseded by PERC-RESET**: perception ends at `perceived` and supplies no semantic batching, BSS-V2-005/006 admission or deferred-capable aggregation. `IDSER-012-02-01..04` remain real but **not GO-ready**; the sole SEM-007A engine, obsolete BSS-V2-004-03-05 predecessor and qualified-deferred versus staged `semantic_ready` lifecycle conflict require separate correction. No IDSER-011 CK PASS or alternate perception route is a prerequisite. See [the disposition register](../../../feedback/IDSER-PERCEPTION-TICKET-DISPOSITION-20261015.md).
-
-## Outcome
-
-Make Initial Draft semantic extraction the first production consumer of shared provider admission. One perceived document, including visual evidence available only through the Atlas-authorized derived-asset resolver, may generate multiple bounded provider requests while retaining exact owned-source accounting and bounded reference context; Atlas accepts exactly one complete document extraction result and stops at `semantic_ready`. This umbrella does not take ownership of derived-asset persistence or resolver authorization. Visual asset retrieval proves preservation only, not semantic interpretation; meaningful unexamined visuals must be accounted for honestly and cannot silently become `non_fact`.
-
-## Children
+## Child ownership and gates
 
 ```text
-IDSER-012-02-01 owned/context batch plan + RequestResourceEnvelope
-IDSER-012-02-02 concrete semantic process/workload profile activation
-BSS-V2-004-03-06 exact batch-aware live qualification through BSS-V2-006
-IDSER-012-02-03 provider-admitted batch execution/staging
-IDSER-012-02-04 complete document aggregation + semantic_ready
+APPROVED: PERC-RESET-008 / IDSER-012-01 -> perceived + verified derived source
+SEM-007A sole ordinary qualified stepwise engine / DA acceptance
+BSS-V2-005 planner + BSS-V2-006 durable admission predecessors
+   |
+   v
+IDSER-012-02-01  owned/context/REL/deferred stepwise batch plans + exact resource envelopes
+   -> CK PASS
+IDSER-012-02-02  immutable semantic process/workload + active DesiredAdmissionProfile
+   -> CK PASS
+BSS-V2-004-03-06 independent CK PASS AND semantic meaning PASS (development qualification)
+   |
+   v
+IDSER-012-02-03  reserved explicit attempts through SAME SEM engine -> fenced non-truth fragments
+   -> CK PASS
+IDSER-012-02-04  authorized hash-bound canonical/deferred document aggregation
+   -> BLOCKED until staged reconciliation/acceptance policy is explicitly resolved
 ```
 
-## Historical realignment
+**Do not assert all final documents become non-null Semantic V1/`semantic_ready`.** A valid `partial_accepted` is canonical subset + exact deferred coverage; a fully `qualified_deferred` document has **no** result/candidate/evidence/index/reconcile and is not ready-for-review. Approved SEM-007A-DEFERRED-ACCEPTANCE permits reconciliation for materialized canonical candidates, whereas earlier IDSER §21 required zero jobs at `semantic_ready`. This **OPEN-A** conflict is not resolved in this umbrella; a bounded Atlas/SEM lifecycle decision precedes -02-04 GO. The separate ordinary `atlas.semantic.reconcile` remains maintained but is not extraction fallback.
 
-This umbrella supersedes unimplemented BSS-V2-004-03-07 direct continuation. BSS-V2-004-03-06 remains the live qualification owner but now qualifies the exact batch-aware, provider-admitted request profile after IDSER-012-02-02. No production batch execution begins without semantic qualification `PASS`.
+No Master, publication, CES/chat, automatic live provider activation or automatic D1 semantic job is authorized here. All four leaves remain unapproved until independent CK; this parent has no GO or fake CK PASS.
