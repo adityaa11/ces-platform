@@ -1,6 +1,6 @@
 # BSS-V2-006-01: Provider-work, reservation, quota-window and attempt foundation
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `BSS-V2-BATCH-06-01`
 - **GO checkpoint:** [BSS-V2-BATCH-06-01-go.md](../../../feedback/BSS-V2-BATCH-06-01-go.md)
 - **Dependencies:** BSS-V2-005-04 CK `PASS`; BSS-006; BSS-003 Bridge persistence/role boundary
