@@ -1,6 +1,6 @@
 # IDSER-011-04: Integrated live acceptance and authority checkpoint
 
-- **State:** `planned`; **Review batch:** `IDSER-BATCH-11-04`.
+- **State:** `superseded-unimplemented` — non-executable; no independent CK `PASS` was obtained; **Review batch:** `IDSER-BATCH-11-04`.
 - **Predecessors:** IDSER-011-01, IDSER-011-02 and IDSER-011-03 at CK `PASS`; all executable IDSER-010 children through IDSER-010-06 remain frozen `PASS` dependencies.
 - **Consumes:** approved child evidence as frozen interfaces and IDSER-010 deterministic A-H proof. A defect in a child-owned contract is not silently repaired here.
 - **Execution environment:** real Compose services, a fresh real-Mistral synthetic two-or-more-PDF scenario, authenticated Atlas read/browser observation and secret-safe evidence capture.
@@ -14,6 +14,16 @@
 - **RC-011-04-02: REHOME** all-N reconciled `ready_for_review` and project-card completion to an explicitly future reconciliation/lifecycle owner. The present local perception checkpoint stops at `perceived`, and cannot claim review-ready success from OCR or extraction alone.
 - **RC-011-04-04: KEEP** no Master/publication/conversation/CES effects, Bridge truth separation, full scope and secret-safe negative assertions. Apply them to each actual successor checkpoint.
 - **Execution guard:** This child remains `planned`; the rest of its real semantic live-acceptance and full-completion contract is still awaiting separate realignment. Do not turn historical full-pipeline obligations into PERC-RESET compatibility tests or silently issue PASS to unfinished IDSER-011 children.
+
+## Terminal prospective implementation disposition — 2026-10-15
+
+**RETIRE the whole original executable ticket; do not implement it as written.** Authority: [PERC-RESET-008 CK PASS](../../../feedback/PERC-RESET-BATCH-08-9f31026-review.md), [SEM-CUTOVER winner](../../../feedback/SEM-CUTOVER-WINNER-REALIGNMENT-20261015.md), and the [prospective disposition register](../../../feedback/IDSER-PERCEPTION-TICKET-DISPOSITION-20261015.md). A final Mistral Scenario I with old OCR and all-N reconciliation is not a perception regression required after PERC-RESET-008. New SEM-CUTOVER/IDSER-012/BSS qualification supersedes the old semantic path. Actual full reconciliation and Ready-for-Review composition remain UNPROVEN and need a separately authorized later owner, not a false CK PASS here.
+
+**KEEP / REHOME:** Exact fresh-runtime/identity/provenance proof, scoped Atlas accepted results, negative Master/publication/CES effects, secret-safe evidence, and eventual truthful full-lifecycle acceptance must be retained in the applicable successors.
+
+**PROHIBITED:** No historic IDSER-011 child PASS chain can gate PERC-RESET or be represented as completed. GO, CFC and CK must not execute the original retired `IDSER-BATCH-11-04` as the future staged path. Future quality/security checks still require named successor CK proof; neither this status nor PERC-RESET alone proves semantic or reconciliation completion.
+
+**Archival note:** All original review rows, Mistral-specific descriptions and procedural checkpoints below remain unmodified *historical planning text*, never an authorized future GO or a source of inherited CK PASS.
 
 ## Authority and bounded outcome
 

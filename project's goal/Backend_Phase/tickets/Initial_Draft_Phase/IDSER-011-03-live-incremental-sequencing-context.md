@@ -1,6 +1,6 @@
 # IDSER-011-03: Live incremental sequencing and bounded prior context
 
-- **State:** `planned`; **Review batch:** `IDSER-BATCH-11-03`.
+- **State:** `superseded-unimplemented` — non-executable; no independent CK `PASS` was obtained; **Review batch:** `IDSER-BATCH-11-03`.
 - **Predecessors:** IDSER-011-02 `PASS`.
 - **Consumes:** frozen IDSER-010-02 selector/sequencing evidence and IDSER-011-02 approved real D1 path. It does not reopen either.
 - **Execution environment:** a new real Compose scenario with at least two related synthetic/non-confidential PDFs in one authenticated project/bundle.
@@ -14,6 +14,16 @@
 - **RC-011-03-01: NOT a perception predecessor gate.** D1 reconciliation completion is not required before staged D2 local perception. Its historical strict D1→D2 semantic/reconciliation sequence is not a current staged execution requirement; independently authorized future reconciliation orchestration remains separate.
 - **RC-011-03-03 / RC-011-03-04: KEEP / REHOME** scoped, bounded and temporal source/context integrity; exact references, no foreign-bundle reads and no order-as-truth. These are future semantic/reconciliation obligations, not permission for a second local or remote perception engine.
 - **Execution guard:** This remains `planned`; old D1/D2 Mistral and sequencing RC text below is historical pending the separate semantic/lifecycle realignment. No claimed child CK PASS or live-provider authorization.
+
+## Terminal prospective implementation disposition — 2026-10-15
+
+**RETIRE the whole original executable ticket; do not implement it as written.** Authority: [PERC-RESET-008 CK PASS](../../../feedback/PERC-RESET-BATCH-08-9f31026-review.md), [SEM-CUTOVER winner](../../../feedback/SEM-CUTOVER-WINNER-REALIGNMENT-20261015.md), and the [prospective disposition register](../../../feedback/IDSER-PERCEPTION-TICKET-DISPOSITION-20261015.md). The required D2 Mistral OCR and D1-reconciliation-before-D2 perception gate are superseded for staged work. PERC-RESET-007/008 already prove independently admitted local multi-PDF perception; staged semantic progress belongs to IDSER-012-02 and future full reconciliation is not yet assigned.
+
+**KEEP / REHOME:** Same-bundle authorized context, bounded byte/count/overflow, temporal/source integrity, cross-scope negatives and no document-order truth promotion remain required downstream.
+
+**PROHIBITED:** No Mistral OCR fallback or automatic restoration of the sequential perception gate. GO, CFC and CK must not execute the original retired `IDSER-BATCH-11-03` as the future staged path. Future quality/security checks still require named successor CK proof; neither this status nor PERC-RESET alone proves semantic or reconciliation completion.
+
+**Archival note:** All original review rows, Mistral-specific descriptions and procedural checkpoints below remain unmodified *historical planning text*, never an authorized future GO or a source of inherited CK PASS.
 
 ## Authority and bounded outcome
 

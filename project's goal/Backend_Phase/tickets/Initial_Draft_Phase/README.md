@@ -18,7 +18,11 @@
 
 For future staged-policy work, **PERC-RESET-008 has independent CK PASS** and its [RUN-003 Canonical Perception Baseline](../../../feedback/CANONICAL-PERCEPTION-BASELINE-v1.md) is the sole normal local digital-PDF perception/normalized-evidence regression predecessor. See the [perception winner ledger](../../../feedback/IDSER-PERCEPTION-WINNER-AUTHORITY-MAP-20261015.md). Local perception is `docling-run-003-capture` / `atlas-digital-pdf-run-003-capture-v1`, private Docling CPU (no OCR), verified derived assets for captured visuals, valid zero-visual results, staged fair local admission, and durable `perceived` with **zero unsolicited semantic jobs**. Approved `IDSER-012-01` children remain frozen accepted implementation proofs. Old image-disabled Docling, qualification-only or Mistral OCR perception is not a selectable normal fallback or a future regression gate.
 
-The legacy D1→reconciliation→D2 sequence and old `IDSER-011` Mistral OCR acceptance entries below are **historical** for current staged perception. `IDSER-011-01..04` remain unapproved; their future perception clauses are prospectively superseded, while legitimate external-provider/semantic/reconciliation quality, privacy, scope and integrity obligations await separate alignment under the [semantic winner ledger](../../../feedback/IDSER-SEMANTIC-SUCCESSOR-AUTHORITY-MAP-20261015.md). The current scoped edit does not silently PASS or execute those four tickets and does not alter approved historical tests. This is **not** an OCR/scanned-PDF or visual-meaning qualification.
+The legacy D1→reconciliation→D2 sequence and old `IDSER-011` Mistral OCR acceptance entries below are **historical** for current staged perception. `IDSER-011-01..04` are now `superseded-unimplemented` (the whole original Mistral-first batches are retired); their future perception clauses are superseded, while legitimate external-provider/semantic/reconciliation quality, privacy, scope and integrity obligations await separate alignment under the [semantic winner ledger](../../../feedback/IDSER-SEMANTIC-SUCCESSOR-AUTHORITY-MAP-20261015.md). The current scoped edit does not silently PASS or execute those four tickets and does not alter approved historical tests. This is **not** an OCR/scanned-PDF or visual-meaning qualification.
+
+## Audited future implementation status (2026-10-15)
+
+The [terminal disposition register](../../../feedback/IDSER-PERCEPTION-TICKET-DISPOSITION-20261015.md) resolves the previous misleading `planned` statuses. `IDSER-011-01..04`: **superseded-unimplemented, never CK PASS, do not GO**. `IDSER-011` umbrella: **superseded-non-executable**. `IDSER-012-01` and `IDSER-012-01-03`: **coverage-complete-non-executable** with four already approved perception children and PERC-RESET-008 CK PASS; no new implementation or parent CK is inferred. `IDSER-012` and `IDSER-012-02`: **planned-semantic-remainder**; their four `IDSER-012-02-01..04` leaves remain genuinely `planned` (not ready for GO until semantic authority reconciliation). Historical approved IDSER-001..010 work is unchanged. The original Section 40/AC-41..44 Mistral and Ready-for-Review responsibility rows further below remain *archival ownership history*, not live successor proof; future full-reconciliation coverage remains explicitly unassigned.
 
 ## Outcome and authority
 
@@ -99,19 +103,19 @@ documents do not authorize starting implementation automatically.
 | 20 | [IDSER-010-04](IDSER-010-04-concurrent-bundle-identity-isolation.md) / IDSER-BATCH-10-04 | IDSER-010-03-02 | Scenario F concurrent identity, context/result and consumer isolation |
 | 21 | [IDSER-010-05](IDSER-010-05-staged-result-replay-restart.md) / IDSER-BATCH-10-05 | IDSER-010-04 | Scenario H staged replay, restart and lease/fingerprint fencing |
 | 22 | [IDSER-010-06](IDSER-010-06-integrated-deterministic-compose-regression-checkpoint.md) / IDSER-BATCH-10-06 | IDSER-010-01, -02, -03-01, -03-02, -04 and -05 | Final deterministic A-H, AC ledger, regression and negative-authority composition |
-| 23 | [IDSER-011](IDSER-011-live-mistral-acceptance-checkpoint.md) / umbrella | all executable IDSER-010 children through IDSER-010-06 | Non-executable lossless live-provider ownership record |
-| 24 | [IDSER-011-01](IDSER-011-01-live-runtime-credential-qualification.md) / IDSER-BATCH-11-01 | all executable IDSER-010 children through IDSER-010-06 | Real runtime/credential qualification with secret-safe Compose evidence |
-| 25 | [IDSER-011-02](IDSER-011-02-live-first-document-production-path.md) / IDSER-BATCH-11-02 | IDSER-011-01 | D1 real OCR, semantic path, authenticated acceptance and persistence |
-| 26 | [IDSER-011-03](IDSER-011-03-live-incremental-sequencing-context.md) / IDSER-BATCH-11-03 | IDSER-011-02 | D2 real sequencing and Atlas-authorized bounded prior context |
-| 27 | [IDSER-011-04](IDSER-011-04-integrated-live-acceptance-checkpoint.md) / IDSER-BATCH-11-04 | IDSER-011-01, IDSER-011-02, IDSER-011-03 | Final Scenario I, lifecycle/card, AC-41–44 and negative-authority composition |
-| 28 | [IDSER-012](IDSER-012-staged-worker-pipeline-realignment.md) / umbrella | frozen historical IDSER behavior plus accepted BSS/Docling boundaries | Non-executable staged perception/provider-admitted semantic lifecycle amendment |
-| 29 | [IDSER-012-01](IDSER-012-01-fair-bounded-local-docling-perception.md) / umbrella | IDSER-012 | Non-executable local-perception partition |
+| 23 | [IDSER-011](IDSER-011-live-mistral-acceptance-checkpoint.md) / umbrella | all executable IDSER-010 children through IDSER-010-06 | **SUPERSEDED — no GO**; Non-executable lossless live-provider ownership record (historical only) |
+| 24 | [IDSER-011-01](IDSER-011-01-live-runtime-credential-qualification.md) / IDSER-BATCH-11-01 | all executable IDSER-010 children through IDSER-010-06 | **SUPERSEDED — no GO**; Real runtime/credential qualification with secret-safe Compose evidence (historical only) |
+| 25 | [IDSER-011-02](IDSER-011-02-live-first-document-production-path.md) / IDSER-BATCH-11-02 | IDSER-011-01 | **SUPERSEDED — no GO**; D1 real OCR, semantic path, authenticated acceptance and persistence (historical only) |
+| 26 | [IDSER-011-03](IDSER-011-03-live-incremental-sequencing-context.md) / IDSER-BATCH-11-03 | IDSER-011-02 | **SUPERSEDED — no GO**; D2 real sequencing and Atlas-authorized bounded prior context (historical only) |
+| 27 | [IDSER-011-04](IDSER-011-04-integrated-live-acceptance-checkpoint.md) / IDSER-BATCH-11-04 | IDSER-011-01, IDSER-011-02, IDSER-011-03 | **SUPERSEDED — no GO**; Final Scenario I, lifecycle/card, AC-41–44 and negative-authority composition (historical only) |
+| 28 | [IDSER-012](IDSER-012-staged-worker-pipeline-realignment.md) / umbrella | frozen historical IDSER behavior plus accepted BSS/Docling boundaries | **SEMANTIC REMAINDER PLANNED**; Non-executable staged perception/provider-admitted semantic lifecycle amendment |
+| 29 | [IDSER-012-01](IDSER-012-01-fair-bounded-local-docling-perception.md) / umbrella | IDSER-012 | **COVERAGE COMPLETE**; Non-executable local-perception partition (non-executable; children CK approved) |
 | 30 | [IDSER-012-01-01](IDSER-012-01-01-staged-fair-local-perception-admission-and-cutover.md) / IDSER-BATCH-12-01-01 | approved BSS-006, BSS-009/01/02, BSS-V2-004-01/02, IDSER-003/008/010-04/05 | Staged cutover, durable bundle fairness, JIT grants, and a race-safe two-permit Atlas gate |
 | 31 | [IDSER-012-01-02](IDSER-012-01-02-two-worker-docling-perception-composition.md) / IDSER-BATCH-12-01-02 | IDSER-012-01-01 CK PASS | Effective 2/2/2 local profile, accepted NormalizedDocument v1, and durable `perceived` stop |
-| 35 | [IDSER-012-01-03](IDSER-012-01-03-docling-evidence-preservation-and-semantic-handoff.md) / umbrella | IDSER-012-01-02 CK PASS | Non-executable RUN-003 preservation partition |
+| 35 | [IDSER-012-01-03](IDSER-012-01-03-docling-evidence-preservation-and-semantic-handoff.md) / umbrella | IDSER-012-01-02 CK PASS | **COVERAGE COMPLETE**; Non-executable RUN-003 preservation partition (non-executable; children CK approved) |
 | 36 | [IDSER-012-01-03-01](IDSER-012-01-03-01-qualified-docling-capture-and-deterministic-evidence-mapping.md) / IDSER-BATCH-12-01-03-01 | IDSER-012-01-02 CK PASS | Qualified mapping and bounded transient figure descriptors; no early activation |
 | 37 | [IDSER-012-01-03-02](IDSER-012-01-03-02-atlas-derived-asset-handoff-replay-and-authorized-resolution.md) / IDSER-BATCH-12-01-03-02 | IDSER-012-01-03-01 CK PASS | Durable image handoff, replay, retrieval, no recursion and safe activation |
-| 35 | [IDSER-012-02](IDSER-012-02-provider-admitted-multi-batch-semantic-extraction.md) / umbrella | IDSER-012-01-03-02 CK PASS; all BSS-V2-005/006 children; BSS-V2-004-03-04/05 | Non-executable batch-aware semantic consumer partition; supersedes old BSS-V2-004-03-07 direct continuation |
+| 35 | [IDSER-012-02](IDSER-012-02-provider-admitted-multi-batch-semantic-extraction.md) / umbrella | IDSER-012-01-03-02 CK PASS; all BSS-V2-005/006 children; BSS-V2-004-03-04/05 | **SEMANTIC REMAINDER PLANNED**; Non-executable batch-aware semantic consumer partition; supersedes old BSS-V2-004-03-07 direct continuation |
 | 36 | [IDSER-012-02-01](IDSER-012-02-01-deterministic-semantic-batch-planning.md) / IDSER-BATCH-12-02-01 | IDSER-012-01-03-02 CK PASS; BSS-V2-004-03-01/02/03/05; BSS-V2-005-04; BSS-V2-006-04 | Deterministic owned/context batch plan, source-unit seam and RequestResourceEnvelope; no provider call |
 | 37 | [IDSER-012-02-02](IDSER-012-02-02-semantic-provider-profile-activation.md) / IDSER-BATCH-12-02-02 | IDSER-012-02-01; BSS-V2-005-04; BSS-V2-006-04 | Activate concrete semantic process/workload profile and DesiredAdmissionProfile; zero provider calls |
 | 38 | [BSS-V2-004-03-06](../Stack_Setup_V2/BSS-V2-004-03-06-live-anoman-extraction-qualification.md) / BSS-V2-BATCH-04.03-06 | IDSER-012-02-02; BSS-V2-004-03-01 through -05; BSS-V2-006-04 | Live-qualify exact batch-aware profile through shared provider admission |
@@ -124,8 +128,7 @@ Intermediate tickets are composable implementation checkpoints, not independent
 production rollouts. Route/worker tests may inject explicit bounded test doubles
 for not-yet-implemented handlers. Production wiring must fail closed for an
 unavailable handler; it must never acknowledge, fabricate completion, consume
-work through TestRuntime, or mark a bundle ready. Cross-ticket activation and
-full pipeline proof are required by IDSER-008/010/011.
+work through TestRuntime, or mark a bundle ready. The historical full-pipeline evidence was scoped by IDSER-008/010/011. For future staged work, retired IDSER-011 is not an executable gate: accepted PERC-RESET-008 and explicitly authorized semantic/reconciliation successors own the applicable proofs.
 
 ## IDSER-012 staged dependency graph
 
@@ -207,10 +210,7 @@ schemas and the selection policy against these defaults, with boundary tests.
 
 ## Acceptance traceability
 
-The primary owner implements the requirement. IDSER-010 verifies deterministic
-coverage across owners; the IDSER-011 children additionally prove the actual
-provider path. IDSER-011-04 is final integration owner for AC-41–44 and the
-parent's live-acceptance ledger; it does not replace its children's proof.
+The primary owner implements the historical requirement. IDSER-010 supplied reviewed deterministic coverage; the original IDSER-011 live-provider/final AC-41–44 ownership table is now **archival only** because those children were superseded-unimplemented, NOT CK PASS. New live semantic qualification belongs to BSS-V2-004-03-06 with the sole SEM-CUTOVER-007A engine; future full-reconciliation/Ready-for-Review ownership remains unassigned. Do not silently treat this historic ledger as successor proof.
 
 | Context AC | Primary owner(s) |
 |---|---|
@@ -271,8 +271,7 @@ composition -> 011-04.
 
 Follow [Backend rules](../../README.md) and the current [GO](../../../../.agents/skills/go/SKILL.md),
 [CK](../../../../.agents/skills/ck/SKILL.md), [CFC](../../../../.agents/skills/cfc/SKILL.md), and
-[HMN](../../../../.agents/skills/hmn/SKILL.md) workflow when implementation is requested. Keep every ticket `planned` until
-authorized. Record implementation commit and validation, then `awaiting_review`.
+[HMN](../../../../.agents/skills/hmn/SKILL.md) workflow when implementation is requested. Keep eligible future executable tickets `planned` until authorized; do not GO an expressly `superseded-unimplemented` child or a coverage-complete/non-executable umbrella. Record implementation commit and validation, then `awaiting_review`.
 Use one consolidated CK feedback file and the bounded remediation workflow; a further remediation after a stalled verification needs an explicit user `hmn` delegation.
 This authoring pass does not claim CK approval.
 
@@ -294,13 +293,10 @@ commands. Do not cite nonexistent script names as executed evidence. Record
 HEAD, service health, migration outcome, commands, test counts, skips and
 limitations. Host edits are permitted; host runnable checks are diagnostic only.
 
-The mandatory final live checkpoint requires a real `MISTRAL_API_KEY` supplied
-through the existing Compose secret/environment boundary. Deterministic tests
-remain secret-free. Missing credentials or unavailable provider access yields
-`BLOCKED`/`FAIL` as appropriate, never a skipped live test plus phase completion.
+The original IDSER-011 Mistral live checkpoint (which required `MISTRAL_API_KEY`) is **superseded as an executable dependency**, not a current required live gate. Future live semantic quality/provider access must be separately qualified by its actual successor, with bounded credentials, privacy and spend; deterministic tests remain secret-free. An unavailable required qualified provider must be reported honestly as `BLOCKED`/`FAIL`, never a mock or skipped check plus phase completion.
 No secret, source prompt, or full semantic payload belongs in ordinary logs or
 review evidence. Use synthetic/non-confidential PDFs.
 
 ## Completion
 
-The existing IDSER-001 through IDSER-011 checkpoints retain their historical completion requirements. IDSER-012 comprises eight executable children: four local-perception checkpoints (`-01-01`, `-01-02`, `-01-03-01`, `-01-03-02`) and four semantic checkpoints (`-02-01` through `-02-04`). The set is complete only after all eight and the required BSS-V2-005/006 dependency children plus BSS-V2-004-03-06 live qualification receive CK/qualification `PASS`, ending at durable `semantic_ready` with no reconciliation job. A planning pass, mocked run, or ready worker health check alone does not complete implementation.
+Historical approved IDSER-001..010 CK evidence is unchanged. Original IDSER-011 was never CK PASS and is now superseded-unimplemented, so its Mistral live path is not an executable prerequisite. The four IDSER-012-01 perception children are approved and PERC-RESET-008 independently qualified the canonical RUN-003 baseline. The remaining four IDSER-012-02 semantic children still require their own re-aligned GO/CK, BSS-V2-005/006 integration and separate semantic live qualification; neither semantic_ready nor reconciliation behavior may be assumed resolved until its conflicting deferred-acceptance contract is explicitly reconciled. A planning pass, mocked run or healthy worker alone does not complete that future implementation.

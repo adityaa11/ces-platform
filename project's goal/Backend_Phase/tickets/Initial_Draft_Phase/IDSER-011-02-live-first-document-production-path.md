@@ -1,6 +1,6 @@
 # IDSER-011-02: Live first-document production path
 
-- **State:** `planned`; **Review batch:** `IDSER-BATCH-11-02`.
+- **State:** `superseded-unimplemented` — non-executable; no independent CK `PASS` was obtained; **Review batch:** `IDSER-BATCH-11-02`.
 - **Predecessors:** IDSER-011-01 `PASS`.
 - **Consumes:** the approved live runtime qualification; frozen authenticated creation, BSS-009 perception, semantic dispatcher/worker, internal Atlas handoffs and IDSER persistence acceptance.
 - **Execution environment:** fresh, real Compose scenario identifiers; real Mistral only; synthetic/non-confidential single-PDF input.
@@ -14,6 +14,16 @@
 - **RC-011-02-01 / RC-011-02-03: KEEP** fresh authenticated creation, immutable source/project/bundle identity, grant/scope integrity, complete accountable result/evidence references, Atlas-only trusted acceptance and redacted observations. These do not restore the old route.
 - **RC-011-02-04 and the semantic/reconciliation half of RC-011-02-02: REHOME / NOT YET REALIGNED.** Immediate D1 reconciliation and D1-completion gating are not requirements for the current staged `perceived` endpoint. Later semantic execution belongs to the sole SEM-CUTOVER-007A successor and BSS-V2-005/006 consumer; later reconciliation/completion needs its own future contract.
 - **Execution guard:** `planned` remains unchanged. Do not run this historical all-stage GO or evaluate its obsolete OCR/reconciliation wording as a current staged-pipeline CK oracle before the separate semantic/lifecycle realignment. No real-provider request is authorized here.
+
+## Terminal prospective implementation disposition — 2026-10-15
+
+**RETIRE the whole original executable ticket; do not implement it as written.** Authority: [PERC-RESET-008 CK PASS](../../../feedback/PERC-RESET-BATCH-08-9f31026-review.md), [SEM-CUTOVER winner](../../../feedback/SEM-CUTOVER-WINNER-REALIGNMENT-20261015.md), and the [prospective disposition register](../../../feedback/IDSER-PERCEPTION-TICKET-DISPOSITION-20261015.md). The mandatory D1 MistralProvider.perceive OCR → legacy extraction → immediate reconciliation workflow is superseded as ONE implementation ticket. The perception portion is already CK-qualified by PERC-RESET-008 and approved IDSER-012-01. Sole extraction moves to SEM-CUTOVER-007A plus IDSER-012-02/BSS admission. Full D1 reconciliation/completion needs a separately authorized later checkpoint.
+
+**KEEP / REHOME:** Authenticated project/source creation, document grants/hashes, result provenance, exact candidate/evidence/reference/source accounting, Atlas-only acceptance and replay remain successor obligations.
+
+**PROHIBITED:** Never interpret perceived or qualified semantic evidence as D1 reconciliation completion. GO, CFC and CK must not execute the original retired `IDSER-BATCH-11-02` as the future staged path. Future quality/security checks still require named successor CK proof; neither this status nor PERC-RESET alone proves semantic or reconciliation completion.
+
+**Archival note:** All original review rows, Mistral-specific descriptions and procedural checkpoints below remain unmodified *historical planning text*, never an authorized future GO or a source of inherited CK PASS.
 
 ## Authority and bounded outcome
 

@@ -1,6 +1,6 @@
 # IDSER-011-01: Live Mistral runtime and credential qualification
 
-- **State:** `planned`; **Review batch:** `IDSER-BATCH-11-01`.
+- **State:** `superseded-unimplemented` — non-executable; no independent CK `PASS` was obtained; **Review batch:** `IDSER-BATCH-11-01`.
 - **Predecessors:** every executable IDSER-010 child through IDSER-010-06 at CK `PASS`.
 - **Consumes:** frozen BSS-008 provider configuration/secret boundary, BSS-009 worker route, Compose topology, and approved IDSER-010 deterministic evidence. It does not reopen them.
 - **Execution environment:** the real four-service Compose stack and a deliberately configured real Mistral deployment secret. No mock overlay qualifies.
@@ -13,6 +13,16 @@
 - **RC-011-01-01 / RC-011-01-03 (perception portions): RETIRED as future perception gates.** Requiring Mistral OCR model/endpoint configuration, a Mistral-only worker or Mistral OCR provenance cannot gate or replace already-qualified RUN-003 local perception. BSS-008 Mistral configuration may remain independently useful historical or future *external semantic-provider* qualification, not a second `atlas.document.perceive` route.
 - **KEEP / REHOME:** immutable reviewed service/image/route provenance, true configured/actual identity, deployment-only external-provider credentials, secret-safe redaction, honest ZDR/limit claims and provider preflight failure classification survive as security/quality obligations for a separately authorized semantic-provider qualification owner. Normal RUN-003 Docling does not require a Mistral credential.
 - **Execution guard:** This child remains `planned`; its historical Mistral-specific text and RCs below cannot be used for future staged-perception GO/CK. Its remaining external semantic live-provider purpose awaits separate semantic-contract realignment. Do not report CK PASS, activate a provider, or silently replace the canonical local perception baseline.
+
+## Terminal prospective implementation disposition — 2026-10-15
+
+**RETIRE the whole original executable ticket; do not implement it as written.** Authority: [PERC-RESET-008 CK PASS](../../../feedback/PERC-RESET-BATCH-08-9f31026-review.md), [SEM-CUTOVER winner](../../../feedback/SEM-CUTOVER-WINNER-REALIGNMENT-20261015.md), and the [prospective disposition register](../../../feedback/IDSER-PERCEPTION-TICKET-DISPOSITION-20261015.md). The proposed Mistral-only credential/runtime qualification is NOT an additional local-perception implementation after PERC-RESET-008. Its separate external-provider function is covered by future bounded live stepwise qualification (BSS-V2-004-03-06) and an as-yet-unassigned official-provider privacy/deployment decision.
+
+**KEEP / REHOME:** Credential isolation, reviewed image and configured-versus-actual provider identity, ZDR/limits truthfulness, failed-access classification and redacted evidence remain required for their actual external-provider owner.
+
+**PROHIBITED:** No Mistral OCR key/endpoint or alternate route may gate ordinary RUN-003 Docling. GO, CFC and CK must not execute the original retired `IDSER-BATCH-11-01` as the future staged path. Future quality/security checks still require named successor CK proof; neither this status nor PERC-RESET alone proves semantic or reconciliation completion.
+
+**Archival note:** All original review rows, Mistral-specific descriptions and procedural checkpoints below remain unmodified *historical planning text*, never an authorized future GO or a source of inherited CK PASS.
 
 ## Authority and bounded outcome
 

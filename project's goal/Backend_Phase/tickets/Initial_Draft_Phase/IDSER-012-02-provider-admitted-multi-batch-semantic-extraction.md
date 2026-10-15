@@ -1,6 +1,6 @@
 # IDSER-012-02: Provider-admitted multi-batch semantic extraction to semantic_ready
 
-- **State:** `planned`
+- **State:** `planned-semantic-remainder` (non-executable; four semantic children still planned)
 - **Type:** non-executable umbrella
 - **Dependencies:** IDSER-012-01-03-02 CK `PASS`; all BSS-V2-005/006 children CK `PASS`; BSS-V2-004-03-04/05 CK `PASS`
 - **Parent:** [IDSER-012](IDSER-012-staged-worker-pipeline-realignment.md)
@@ -12,6 +12,10 @@
 **Prospective perception authority:** [PERC-RESET-008 CK PASS](../../../feedback/PERC-RESET-BATCH-08-9f31026-review.md), [CANONICAL-PERCEPTION-BASELINE-v1](../../../feedback/CANONICAL-PERCEPTION-BASELINE-v1.md), and [IDSER perception winner map](../../../feedback/IDSER-PERCEPTION-WINNER-AUTHORITY-MAP-20261015.md). This is a 2026-10-15 perception-only amendment; historical evidence/approved IDSER and BSS contracts are unchanged. The only currently qualified ordinary digital-PDF perception route is `docling-run-003-capture` / `atlas-digital-pdf-run-003-capture-v1`, which yields source-bound `NormalizedDocument v1` and verified derived assets where captured, then stops at durable `perceived`. A valid zero-visual digital PDF follows this same route. No Mistral OCR or image-disabled Docling route, qualification-only selector, or automatic fallback is an allowed future canonical staged-perception option. Scanned/OCR-only PDFs and visual semantic interpretation remain unsupported without separate qualification.
 
 The only qualified staged semantic input is the accepted `NormalizedDocument v1` and source-scoped, Atlas-authorized derived-asset references produced by the PERC-RESET-008 normal RUN-003 baseline and approved IDSER-012-01 implementation. A visual `assetRef` proves **evidence retention**, not semantic understanding. Batching may not re-run original perception through Mistral OCR, a second Docling profile, legacy qualification overlays, or silently create/recursively admit derived assets. Exact text/table/zero-visual and captured-visual fixture cases remain mandatory; missing/foreign/tampered asset manifests fail closed. Provider request batching/qualified partial-deferred aggregation and BSS-V2-005/006 integration are **separately pending** under the semantic winner map; this amendment does not grant GO for any `IDSER-012-02` child.
+
+## Implementation-worthiness disposition (2026-10-15)
+
+This work is **not superseded by PERC-RESET**: perception ends at `perceived` and supplies no semantic batching, BSS-V2-005/006 admission or deferred-capable aggregation. `IDSER-012-02-01..04` remain real but **not GO-ready**; the sole SEM-007A engine, obsolete BSS-V2-004-03-05 predecessor and qualified-deferred versus staged `semantic_ready` lifecycle conflict require separate correction. No IDSER-011 CK PASS or alternate perception route is a prerequisite. See [the disposition register](../../../feedback/IDSER-PERCEPTION-TICKET-DISPOSITION-20261015.md).
 
 ## Outcome
 
