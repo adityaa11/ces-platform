@@ -17,7 +17,7 @@ const isDeterministicAtlasRejection = (error: unknown): boolean => {
 };
 
 /** Test-selectable only: never supplied by worker-main's normal D1 callback. */
-export type OfflineStepwiseSelection = Readonly<{ readonly context: OfflineStepwiseQualificationContext; readonly dependencies: Omit<OfflineStepwiseDependencies, "idempotencyKey" | "lease"> }>;
+export type OfflineStepwiseSelection = Readonly<{ readonly context: OfflineStepwiseQualificationContext; readonly dependencies: Omit<OfflineStepwiseDependencies, "idempotencyKey" | "lease" | "signal"> }>;
 export type OrdinaryStepwiseSelection = Readonly<{ readonly dependencies: StepwiseRuntimeDependencies }>;
 
 export async function runSemanticJob(jobValue: unknown, provider: StructuredReasoningProvider, client: SemanticClient, replay: SemanticReplay, idempotencyKey: string, signal: AbortSignal, lease = { owner: "unit-test", generation: 1 }, offlineStepwise?: OfflineStepwiseSelection, ordinaryStepwise?: OrdinaryStepwiseSelection): Promise<void> {
@@ -57,7 +57,7 @@ export async function runSemanticJob(jobValue: unknown, provider: StructuredReas
       if (contextScope.projectId !== offlineScope.projectId || contextScope.workspaceId !== offlineScope.workspaceId || contextScope.bundleId !== offlineScope.bundleId || contextScope.documentId !== offlineScope.documentId || contextScope.executionId !== offlineScope.executionId || JSON.stringify(extractionContext.normalizedDocument) !== JSON.stringify(offlineStepwise.context.normalizedDocument)) {
         throw new Error("OFFLINE_CONTEXT_BLOCKED: the redeemed extraction context was substituted after offline qualification.");
       }
-      const executed = await runOfflineStepwiseComposition(offlineStepwise.context, { ...offlineStepwise.dependencies, idempotencyKey, lease });
+      const executed = await runOfflineStepwiseComposition(offlineStepwise.context, { ...offlineStepwise.dependencies, idempotencyKey, lease, signal });
       trustedStage = true;
       await client.deliverQualified(executed.acceptance, signal);
       return;

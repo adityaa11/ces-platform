@@ -46,7 +46,7 @@ export async function initializePgBossInfrastructure(boss: PgBoss, config: Worke
  * It deliberately has no Atlas repository or cache dependency.
  */
 export type DocumentPerceptionQueueHandler = (request: DocumentPerceptionRequest, signal: AbortSignal, context: { readonly idempotencyKey: string; readonly database: Db; readonly finalAttempt: boolean }) => Promise<void>;
-export type SemanticQueueHandler = (job: ReturnType<typeof parseSemanticBackgroundJob>, signal: AbortSignal, context: { readonly idempotencyKey: string; readonly database: Db; readonly leaseOwner: string; readonly leaseGeneration: number }) => Promise<void>;
+export type SemanticQueueHandler = (job: ReturnType<typeof parseSemanticBackgroundJob>, signal: AbortSignal, context: { readonly idempotencyKey: string; readonly database: Db; readonly leaseOwner: string; readonly leaseGeneration: number; readonly deadlineEpochMilliseconds: number }) => Promise<void>;
 
 const wait = (milliseconds: number) => new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
 
@@ -129,7 +129,7 @@ export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningR
           if (isSemantic) {
             if (!semantic) throw new Error("Production semantic dispatcher is unavailable.");
             const semanticJob = parseSemanticBackgroundJob({ version: backgroundJob.execution.version, executionId: backgroundJob.execution.executionId, skill: backgroundJob.execution.skill, ...backgroundJob.execution.input });
-            await semantic(semanticJob, signal, { idempotencyKey: backgroundJob.idempotencyKey, database: boss.getDb(), leaseOwner: lease.owner, leaseGeneration: lease.generation });
+            await semantic(semanticJob, signal, { idempotencyKey: backgroundJob.idempotencyKey, database: boss.getDb(), leaseOwner: lease.owner, leaseGeneration: lease.generation, deadlineEpochMilliseconds: Date.now() + config.timeoutSeconds * 1_000 });
             return;
           }
           for await (const event of runtime.execute(backgroundJob.execution, { signal })) {

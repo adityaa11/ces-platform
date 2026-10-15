@@ -28,8 +28,6 @@ export type OfflineStepwiseQualificationContext = Readonly<{
   readonly media: ReadonlyMap<string, { readonly assetRef: string; readonly sha256: string; readonly sourceSha256: string; readonly mimeType: "image/png"; readonly width: number; readonly height: number; readonly bytes: Uint8Array }>;
   readonly relationshipScope: RelationshipPacketIdentity;
   readonly trustedPriorRevisions: readonly ContextSourceRelationshipRevisionV1[];
-  readonly rawResponse: unknown;
-  readonly providerProvenance: ProviderProvenance;
 }>;
 
 export type OfflineStepwiseDependencies = Readonly<{
@@ -40,12 +38,14 @@ export type OfflineStepwiseDependencies = Readonly<{
   readonly routeId: string;
   readonly profileId: string;
   readonly nowEpochMilliseconds: number;
-  readonly dispatch: (messages: readonly MultipartChatMessage[]) => Promise<unknown>;
+  readonly deadlineEpochMilliseconds: number;
+  readonly signal: AbortSignal;
+  readonly dispatch: (input: { readonly messages: readonly MultipartChatMessage[]; readonly signal: AbortSignal }) => Promise<{ readonly value: unknown; readonly provenance: ProviderProvenance }>;
 }>;
 
 /** The promoted provider-neutral engine input.  Neither adapter response nor
  * provenance may be placed here by a caller; both arrive from `transport`. */
-export type StepwiseCompositionContext = Omit<OfflineStepwiseQualificationContext, "rawResponse" | "providerProvenance">;
+export type StepwiseCompositionContext = OfflineStepwiseQualificationContext;
 export type StepwiseCompositionDependencies = Readonly<{
   readonly database: Database;
   readonly idempotencyKey: string;
@@ -54,6 +54,7 @@ export type StepwiseCompositionDependencies = Readonly<{
   readonly routeId: string;
   readonly profileId: string;
   readonly nowEpochMilliseconds: number;
+  readonly deadlineEpochMilliseconds: number;
   readonly signal: AbortSignal;
   readonly transport: (input: { readonly messages: readonly MultipartChatMessage[]; readonly schema: Readonly<Record<string, unknown>>; readonly signal: AbortSignal }) => Promise<{ readonly value: unknown; readonly provenance: ProviderProvenance }>;
 }>;
@@ -91,7 +92,7 @@ export async function runStepwiseSemanticComposition(context: StepwiseCompositio
     { role: "system", parts: [{ type: "text", sourcePartId: "system", text: request.systemPrompt }] },
     { role: "user", parts: [{ type: "text", sourcePartId: "source-specification", text: request.sourceSpecification }, ...imageParts] },
   ];
-  const preflight = preflightMultimodalRequest({ routes: dependencies.routes, routeId: dependencies.routeId, profileId: dependencies.profileId, messages, schema: request.responseSchema, signal: dependencies.signal, deadlineEpochMilliseconds: dependencies.nowEpochMilliseconds + 1_000, nowEpochMilliseconds: dependencies.nowEpochMilliseconds });
+  const preflight = preflightMultimodalRequest({ routes: dependencies.routes, routeId: dependencies.routeId, profileId: dependencies.profileId, messages, schema: request.responseSchema, signal: dependencies.signal, deadlineEpochMilliseconds: dependencies.deadlineEpochMilliseconds, nowEpochMilliseconds: dependencies.nowEpochMilliseconds });
   if ("code" in preflight.resourceEstimatorInput) throw new Error(preflight.resourceEstimatorInput.code);
   const response = await dependencies.transport({ messages, schema: request.responseSchema, signal: dependencies.signal });
   const relationshipQualification = { request, rawResponse: response.value, relationshipScope: context.relationshipScope, providerProvenance: response.provenance, trustedPriorRevisions: context.trustedPriorRevisions } as const;
@@ -115,13 +116,10 @@ export async function runOfflineStepwiseComposition(context: OfflineStepwiseQual
   assertContext(context);
   const existing = await createSemanticCompositeReplay(dependencies.database).load(dependencies.idempotencyKey, context.scope.executionId);
   if (existing) return { winner: existing, acceptance: qualifiedAcceptanceFromWinner(existing) };
-  const signal = new AbortController().signal;
   const result = await runStepwiseSemanticComposition(context, {
     ...dependencies,
-    signal,
     transport: async ({ messages, signal: transportSignal }) => ({
-      value: await dispatchMultipartStructured({ messages, capabilities: { image: dependencies.routes.find((route) => route.routeId === dependencies.routeId && route.profileId === dependencies.profileId)?.image }, signal: transportSignal }, dependencies.dispatch),
-      provenance: context.providerProvenance,
+      ...(await dispatchMultipartStructured({ messages, capabilities: { image: dependencies.routes.find((route) => route.routeId === dependencies.routeId && route.profileId === dependencies.profileId)?.image }, signal: transportSignal }, (dispatchedMessages) => dependencies.dispatch({ messages: dispatchedMessages, signal: transportSignal }))),
     }),
   });
   return result;

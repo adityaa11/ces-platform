@@ -57,6 +57,7 @@ const worker = createBackgroundWorker(loadWorkerConfig(), runtime, undefined, as
       routes: [{ version: "v1" as const, routeId: route.routeId, profileId: "atlas.semantic.extract.stepwise_multimodal.relationship-envelope/v0.4.0", profileVersion: route.qualificationVersion, maxPromptBytes: 1024 * 1024, maxDeadlineMilliseconds: 30_000, imageTpm: { state: "unknown" as const } }],
       routeId: route.routeId,
       profileId: "atlas.semantic.extract.stepwise_multimodal.relationship-envelope/v0.4.0",
+      deadlineEpochMilliseconds: context.deadlineEpochMilliseconds,
     },
   };
   await runSemanticJob(job, capabilities[route.providerId as "mistral" | "gemini" | "anoman"].structured, semanticClient, createSemanticResultReplay(context.database), context.idempotencyKey, signal, { owner: context.leaseOwner, generation: context.leaseGeneration }, undefined, stepwise);

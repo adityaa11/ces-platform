@@ -30,6 +30,9 @@ export type MultipartImagePart = {
 };
 export type MultipartMessagePart = MultipartTextPart | MultipartImagePart;
 export type MultipartChatMessage = { readonly role: ChatMessage["role"]; readonly parts: readonly MultipartMessagePart[] };
+/** A pre-redemption request carries only grant-authorized image metadata. */
+export type PreflightMultipartMessagePart = MultipartTextPart | Omit<MultipartImagePart, "media"> & { readonly media: Omit<MultipartImagePart["media"], "bytes"> };
+export type PreflightMultipartChatMessage = { readonly role: ChatMessage["role"]; readonly parts: readonly PreflightMultipartMessagePart[] };
 export type MultipartImageCapability = {
   readonly version: "v1";
   readonly mediaTypes: readonly MultipartImagePart["media"]["mimeType"][];
@@ -98,7 +101,7 @@ export type MultimodalRequestPreflightInput = {
   readonly routes: readonly MultimodalRequestProfile[];
   readonly routeId: string;
   readonly profileId: string;
-  readonly messages: readonly MultipartChatMessage[];
+  readonly messages: readonly PreflightMultipartChatMessage[];
   readonly schema: Readonly<Record<string, unknown>>;
   readonly signal: AbortSignal;
   readonly deadlineEpochMilliseconds: number;
@@ -157,7 +160,7 @@ export function preflightMultimodalRequest(input: MultimodalRequestPreflightInpu
       }
       const capability = profile.image;
       if (!capability || capability.version !== "v1" || !capability.mediaTypes.includes(part.media.mimeType)) throw new BridgeProviderError("unsupported_capability", "The effective route/profile does not support this image media.");
-      if (!Number.isSafeInteger(part.media.byteLength) || part.media.byteLength <= 0 || part.media.byteLength !== part.media.bytes.byteLength || !Number.isSafeInteger(part.media.width) || part.media.width < 1 || !Number.isSafeInteger(part.media.height) || part.media.height < 1) rejectPreflight("The multipart image metadata is invalid.");
+      if (!Number.isSafeInteger(part.media.byteLength) || part.media.byteLength <= 0 || ("bytes" in part.media && (!(part.media.bytes instanceof Uint8Array) || part.media.byteLength !== part.media.bytes.byteLength)) || !Number.isSafeInteger(part.media.width) || part.media.width < 1 || !Number.isSafeInteger(part.media.height) || part.media.height < 1) rejectPreflight("The multipart image metadata is invalid.");
       imageCount += 1;
       imageBytes += part.media.byteLength;
       imagePixels += part.media.width * part.media.height;

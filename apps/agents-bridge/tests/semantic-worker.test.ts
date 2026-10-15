@@ -100,11 +100,11 @@ test("offline stepwise composition rejects a forged media grant before provider 
     assetIdentities: [{ pageNumber: 1, locatorId: "visual", assetRef: "asset-1", sha256: "b".repeat(64), sourceSha256: "a".repeat(64) }],
     media: new Map([["asset-1", { assetRef: "asset-1", sha256: "b".repeat(64), sourceSha256: "a".repeat(64), mimeType: "image/png" as const, width: 1, height: 1, bytes }]]),
     relationshipScope: { projectId: "offline-project", workspaceId: "offline-workspace", bundleId: "offline-bundle", documentId: "offline-document", executionId: "perception-offline", artifactId: "offline-document", sourceSha256: "a".repeat(64) },
-    trustedPriorRevisions: [], rawResponse: {}, providerProvenance: { provider: "offline", model: "fixture", endpoint: "test", latencyMilliseconds: 1, attempt: 1 },
+    trustedPriorRevisions: [],
   }, {
     database: { executeSql: async () => { sqlCalls += 1; return { rows: [] }; } }, idempotencyKey: "offline-media-forgery", lease: { owner: "offline-test", generation: 1 },
-    routes: [], routeId: "offline", profileId: "offline", nowEpochMilliseconds: 0,
-    dispatch: async () => { dispatches += 1; return {}; },
+    routes: [], routeId: "offline", profileId: "offline", nowEpochMilliseconds: 0, deadlineEpochMilliseconds: 1_000, signal: new AbortController().signal,
+    dispatch: async () => { dispatches += 1; return { value: {}, provenance: { provider: "offline", model: "fixture", endpoint: "test", latencyMilliseconds: 1, attempt: 1 } }; },
   }), /OFFLINE_CONTEXT_BLOCKED/);
   assert.equal(dispatches, 0); assert.equal(sqlCalls, 0);
 });

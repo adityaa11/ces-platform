@@ -1,6 +1,6 @@
 import { parseStepwiseSemanticExtractionContext, type SemanticBackgroundJob, type StepwiseSemanticExtractionContext } from "@atlas/contracts";
-import { type ContextSourceRelationshipRevisionV1, type RelationshipPacketIdentity } from "@atlas/skills";
-import { BridgeProviderError, type MultipartChatMessage, type MultimodalRequestProfile, type ProviderProvenance, type StructuredReasoningProvider } from "./provider-capabilities.js";
+import { buildStepwiseRelationshipEnvelopeRequest, buildStepwiseSourcePacket, type ContextSourceRelationshipRevisionV1, type RelationshipPacketIdentity } from "@atlas/skills";
+import { BridgeProviderError, preflightMultimodalRequest, type MultipartChatMessage, type MultimodalRequestProfile, type ProviderProvenance, type StructuredReasoningProvider } from "./provider-capabilities.js";
 import { type AtlasSemanticClientConfig } from "./atlas-semantic-client.js";
 import { PostgresProvisionalRelationshipRepository } from "./postgres-provisional-relationship-repository.js";
 import { runStepwiseSemanticComposition, type StepwiseCompositionDependencies, type StepwiseCompositionResult } from "./semantic-offline-stepwise-composition.js";
@@ -14,6 +14,7 @@ export type StepwiseRuntimeDependencies = Readonly<{
   readonly routeId: string;
   readonly profileId: string;
   readonly nowEpochMilliseconds?: number;
+  readonly deadlineEpochMilliseconds: number;
 }>;
 
 function relationshipScope(context: StepwiseSemanticExtractionContext): RelationshipPacketIdentity {
@@ -23,6 +24,17 @@ function relationshipScope(context: StepwiseSemanticExtractionContext): Relation
 async function media(context: StepwiseSemanticExtractionContext, client: StepwiseSemanticClient, signal: AbortSignal) {
   const resolved = await Promise.all(context.stepwise.assets.map(async (asset) => [asset.assetRef, { assetRef: asset.assetRef, sha256: asset.sha256, sourceSha256: asset.sourceSha256, mimeType: asset.mimeType, width: asset.width, height: asset.height, bytes: await client.media(asset.media, signal) }] as const));
   return new Map(resolved);
+}
+
+function preflightAuthorizedMedia(context: StepwiseSemanticExtractionContext, input: Pick<StepwiseRuntimeDependencies, "routes" | "routeId" | "profileId" | "nowEpochMilliseconds" | "deadlineEpochMilliseconds"> & { readonly signal: AbortSignal }): void {
+  const assets = context.stepwise.assets.map((asset) => ({ assetRef: asset.assetRef, sha256: asset.sha256, sourceSha256: asset.sourceSha256, pageNumber: asset.pageNumber, locatorId: asset.locatorId }));
+  const request = buildStepwiseRelationshipEnvelopeRequest(buildStepwiseSourcePacket({ document: context.normalizedDocument, assetIdentities: assets }));
+  const messages = [
+    { role: "system" as const, parts: [{ type: "text" as const, sourcePartId: "system", text: request.systemPrompt }] },
+    { role: "user" as const, parts: [{ type: "text" as const, sourcePartId: "source-specification", text: request.sourceSpecification }, ...context.stepwise.assets.map((asset) => ({ type: "image" as const, sourcePartId: asset.assetRef, media: { mimeType: asset.mimeType, sha256: asset.sha256, byteLength: asset.byteLength, width: asset.width, height: asset.height } }))] },
+  ];
+  const preflight = preflightMultimodalRequest({ ...input, messages, schema: request.responseSchema });
+  if ("code" in preflight.resourceEstimatorInput) throw new Error(preflight.resourceEstimatorInput.code);
 }
 
 function transport(provider: MultipartStructuredProvider) {
@@ -50,9 +62,10 @@ export async function runOrdinaryStepwiseSemanticExtraction(input: {
 }): Promise<StepwiseCompositionResult> {
   const context = parseStepwiseSemanticExtractionContext(input.redeemedContext);
   if (context.scope.executionId !== input.job.executionId || context.stepwise.profileId !== "atlas.semantic.extract.stepwise_multimodal.relationship-envelope/v0.4.0") throw new Error("STEPWISE_CONTEXT_BLOCKED: execution or profile identity is invalid.");
+  preflightAuthorizedMedia(context, { ...input.dependencies, signal: input.signal });
   const scope = relationshipScope(context);
   const prior: readonly ContextSourceRelationshipRevisionV1[] = await new PostgresProvisionalRelationshipRepository(input.dependencies.database).loadForSnapshot(scope);
   const assets = context.stepwise.assets.map((asset) => ({ assetRef: asset.assetRef, sha256: asset.sha256, sourceSha256: asset.sourceSha256, pageNumber: asset.pageNumber, locatorId: asset.locatorId }));
-  const composition: StepwiseCompositionDependencies = { database: input.dependencies.database, idempotencyKey: input.idempotencyKey, lease: input.lease, routes: input.dependencies.routes, routeId: input.dependencies.routeId, profileId: input.dependencies.profileId, nowEpochMilliseconds: input.dependencies.nowEpochMilliseconds ?? Date.now(), signal: input.signal, transport: transport(input.provider) };
+  const composition: StepwiseCompositionDependencies = { database: input.dependencies.database, idempotencyKey: input.idempotencyKey, lease: input.lease, routes: input.dependencies.routes, routeId: input.dependencies.routeId, profileId: input.dependencies.profileId, nowEpochMilliseconds: input.dependencies.nowEpochMilliseconds ?? Date.now(), deadlineEpochMilliseconds: input.dependencies.deadlineEpochMilliseconds, signal: input.signal, transport: transport(input.provider) };
   return runStepwiseSemanticComposition({ scope: { projectId: scope.projectId, workspaceId: scope.workspaceId, bundleId: scope.bundleId, documentId: scope.documentId, executionId: input.job.executionId, sourceSha256: scope.sourceSha256 }, normalizedDocument: context.normalizedDocument, assetIdentities: assets, media: await media(context, input.client, input.signal), relationshipScope: scope, trustedPriorRevisions: prior }, composition);
 }

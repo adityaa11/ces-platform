@@ -136,7 +136,7 @@ test("SEM-007 composes the injected stepwise worker path into isolated PostgreSQ
         deliverQualified: deliver,
         fail: async (failure: unknown) => { observations.push(`worker-failure:${job.executionId}:${JSON.stringify(failure)}`); },
       };
-      const selection = { context: selected, dependencies: { database: context.database, routes: [sem007Route], routeId: sem007Route.routeId, profileId: sem007Route.profileId, nowEpochMilliseconds: 1_000, dispatch: async (messages: readonly unknown[]) => { const imageParts = messages.flatMap((message) => (message as { parts?: readonly { type: string; sourcePartId: string; media?: { sha256: string; bytes: Uint8Array } }[] }).parts ?? []).filter((part) => part.type === "image"); if (selected.assetIdentities.length > 0) { assert.equal(imageParts.length, 1, "the image fixture reaches the neutral multipart fake exactly once"); assert.equal(imageParts[0]?.sourcePartId, selected.assetIdentities[0]?.assetRef); assert.equal(imageParts[0]?.media?.sha256, selected.assetIdentities[0]?.sha256); assert.equal(sem007Hash(imageParts[0]!.media!.bytes), selected.assetIdentities[0]?.sha256); } else assert.equal(imageParts.length, 0, "the text-only fixture does not invent media"); await effect(context.idempotencyKey, "provider", true); return selected.rawResponse; } } } as const;
+      const selection = { context: selected, dependencies: { database: context.database, routes: [sem007Route], routeId: sem007Route.routeId, profileId: sem007Route.profileId, nowEpochMilliseconds: 1_000, deadlineEpochMilliseconds: 20_000, dispatch: async ({ messages, signal: transportSignal }: { readonly messages: readonly unknown[]; readonly signal: AbortSignal }) => { assert.equal(transportSignal, signal, "the fake transport observes the supplied worker signal"); const imageParts = messages.flatMap((message) => (message as { parts?: readonly { type: string; sourcePartId: string; media?: { sha256: string; bytes: Uint8Array } }[] }).parts ?? []).filter((part) => part.type === "image"); if (selected.assetIdentities.length > 0) { assert.equal(imageParts.length, 1, "the image fixture reaches the neutral multipart fake exactly once"); assert.equal(imageParts[0]?.sourcePartId, selected.assetIdentities[0]?.assetRef); assert.equal(imageParts[0]?.media?.sha256, selected.assetIdentities[0]?.sha256); assert.equal(sem007Hash(imageParts[0]!.media!.bytes), selected.assetIdentities[0]?.sha256); } else assert.equal(imageParts.length, 0, "the text-only fixture does not invent media"); await effect(context.idempotencyKey, "provider", true); return sem007FakeTransport(selected); } } } as const;
       const provider = { structured: async () => { providerStructuredCalls.set(job.executionId, (providerStructuredCalls.get(job.executionId) ?? 0) + 1); throw new Error("SEM-007 ordinary provider path was invoked."); } };
       await runSemanticJob(job, provider, client, { load: replay.load, stage: async () => { throw new Error("SEM-007 worker must stage through composite replay."); }, acknowledge: async () => undefined }, context.idempotencyKey, signal, { owner: context.leaseOwner, generation: context.leaseGeneration }, selection);
     });
@@ -190,7 +190,7 @@ test("SEM-007 composes the injected stepwise worker path into isolated PostgreSQ
 
     const staleKey = keys.get(staleExecution)!; const staleOwner = `sem007-stale-owner-${suffix}`;
     await bridge.unsafe("INSERT INTO bridge.background_effects (idempotency_key, execution_id, status, lease_owner, lease_generation, lease_expires_at) VALUES ($1,$2,'running',$3,1,now()+interval '5 minutes')", [staleKey, staleExecution, staleOwner]);
-    await assert.rejects(() => runOfflineStepwiseComposition(fixtures.get(staleExecution)!, { database: sem007SqlAdapter(bridge), idempotencyKey: staleKey, lease: { owner: staleOwner, generation: 1 }, routes: [sem007Route], routeId: sem007Route.routeId, profileId: sem007Route.profileId, nowEpochMilliseconds: 1_000, dispatch: async () => { await bridge.unsafe("UPDATE bridge.background_effects SET lease_owner='sem007-successor', lease_generation=2 WHERE idempotency_key=$1", [staleKey]); return fixtures.get(staleExecution)!.rawResponse; } }), (error: unknown) => error instanceof Error && error.name === "SemanticCompositeLeaseLostError", "stale worker lease is rejected by the approved composite stage");
+    await assert.rejects(() => runOfflineStepwiseComposition(fixtures.get(staleExecution)!, { database: sem007SqlAdapter(bridge), idempotencyKey: staleKey, lease: { owner: staleOwner, generation: 1 }, routes: [sem007Route], routeId: sem007Route.routeId, profileId: sem007Route.profileId, nowEpochMilliseconds: 1_000, deadlineEpochMilliseconds: 20_000, signal: new AbortController().signal, dispatch: async () => { await bridge.unsafe("UPDATE bridge.background_effects SET lease_owner='sem007-successor', lease_generation=2 WHERE idempotency_key=$1", [staleKey]); return sem007FakeTransport(fixtures.get(staleExecution)!); } }), (error: unknown) => error instanceof Error && error.name === "SemanticCompositeLeaseLostError", "stale worker lease is rejected by the approved composite stage");
     assert.equal((await admin.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_composite_stage WHERE idempotency_key=$1", [staleKey]))[0]?.count, 0, "stale lease cannot persist a composite winner");
 
     const cancellationKey = keys.get(cancellationExecution)!; const cancellationOwner = `sem007-cancel-owner-${suffix}`;
@@ -223,17 +223,24 @@ test("SEM-007 composes the injected stepwise worker path into isolated PostgreSQ
 
     let deniedDispatches = 0;
     const denied = fixtures.get(textOnlyExecution)!;
-    await assert.rejects(() => runOfflineStepwiseComposition(denied, { database: sem007SqlAdapter(bridge), idempotencyKey: `sem007-denied-${suffix}`, lease: { owner: "denied", generation: 1 }, routes: [], routeId: "denied-route", profileId: "denied-profile", nowEpochMilliseconds: 1_000, dispatch: async () => { deniedDispatches += 1; return denied.rawResponse; } }), /recognized|route\/profile/iu);
+    await assert.rejects(() => runOfflineStepwiseComposition(denied, { database: sem007SqlAdapter(bridge), idempotencyKey: `sem007-denied-${suffix}`, lease: { owner: "denied", generation: 1 }, routes: [], routeId: "denied-route", profileId: "denied-profile", nowEpochMilliseconds: 1_000, deadlineEpochMilliseconds: 20_000, signal: new AbortController().signal, dispatch: async () => { deniedDispatches += 1; return sem007FakeTransport(denied); } }), /recognized|route\/profile/iu);
     const substitutedDocument = { ...denied.normalizedDocument, pages: [{ ...denied.normalizedDocument.pages[0]!, textBlocks: [{ id: "forged", text: "substituted" }], tables: [], visualRegions: [] }] };
     let substitutionFailures = 0;
     const substitutionKey = `sem007-substitution-${suffix}`;
     const substitutionReplay = createSemanticCompositeReplay(sem007SqlAdapter(bridge));
-    await runSemanticJob(sem007Job(denied.scope.executionId), { structured: async () => { throw new Error("SEM-007 substituted context reached the ordinary provider."); } }, { context: async () => sem007ContextResponse({ ...denied, normalizedDocument: substitutedDocument }), media: async () => { throw new Error("SEM-007 substituted context must not redeem media."); }, deliver: async () => undefined, deliverQualified: async () => undefined, fail: async () => { substitutionFailures += 1; } }, { load: substitutionReplay.load, stage: async () => { throw new Error("SEM-007 substituted context reached durable staging."); }, acknowledge: async () => undefined }, substitutionKey, new AbortController().signal, { owner: "denied", generation: 1 }, { context: denied, dependencies: { database: sem007SqlAdapter(bridge), routes: [sem007Route], routeId: sem007Route.routeId, profileId: sem007Route.profileId, nowEpochMilliseconds: 1_000, dispatch: async () => { deniedDispatches += 1; return denied.rawResponse; } } });
+    await runSemanticJob(sem007Job(denied.scope.executionId), { structured: async () => { throw new Error("SEM-007 substituted context reached the ordinary provider."); } }, { context: async () => sem007ContextResponse({ ...denied, normalizedDocument: substitutedDocument }), media: async () => { throw new Error("SEM-007 substituted context must not redeem media."); }, deliver: async () => undefined, deliverQualified: async () => undefined, fail: async () => { substitutionFailures += 1; } }, { load: substitutionReplay.load, stage: async () => { throw new Error("SEM-007 substituted context reached durable staging."); }, acknowledge: async () => undefined }, substitutionKey, new AbortController().signal, { owner: "denied", generation: 1 }, { context: denied, dependencies: { database: sem007SqlAdapter(bridge), routes: [sem007Route], routeId: sem007Route.routeId, profileId: sem007Route.profileId, nowEpochMilliseconds: 1_000, deadlineEpochMilliseconds: 20_000, dispatch: async () => { deniedDispatches += 1; return sem007FakeTransport(denied); } } });
     assert.equal(substitutionFailures, 1, "a substituted redeemed document is converted to the bounded integrity failure path");
     const imageDenied = fixtures.get(ordinaryExecution)!;
-    await assert.rejects(() => runOfflineStepwiseComposition(imageDenied, { database: sem007SqlAdapter(bridge), idempotencyKey: `sem007-unknown-tpm-${suffix}`, lease: { owner: "denied", generation: 1 }, routes: [{ ...sem007Route, imageTpm: { state: "unknown" as const } }], routeId: sem007Route.routeId, profileId: sem007Route.profileId, nowEpochMilliseconds: 1_000, dispatch: async () => { deniedDispatches += 1; return imageDenied.rawResponse; } }), /RESOURCE_ENVELOPE_BLOCKED|recognized|route/iu);
+    await assert.rejects(() => runOfflineStepwiseComposition(imageDenied, { database: sem007SqlAdapter(bridge), idempotencyKey: `sem007-unknown-tpm-${suffix}`, lease: { owner: "denied", generation: 1 }, routes: [{ ...sem007Route, imageTpm: { state: "unknown" as const } }], routeId: sem007Route.routeId, profileId: sem007Route.profileId, nowEpochMilliseconds: 1_000, deadlineEpochMilliseconds: 20_000, signal: new AbortController().signal, dispatch: async () => { deniedDispatches += 1; return sem007FakeTransport(imageDenied); } }), /RESOURCE_ENVELOPE_BLOCKED|recognized|route/iu);
     assert.equal(deniedDispatches, 0, "denied provider-neutral routes have zero provider effects");
     assert.equal((await admin.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_composite_stage WHERE idempotency_key LIKE $1", [`sem007-denied-%-${suffix}`]))[0]?.count, 0, "denied routes have zero durable-job effects");
+    const cancelledSignal = new AbortController(); cancelledSignal.abort();
+    let boundaryDispatches = 0;
+    const boundaryFixture = fixtures.get(textOnlyExecution)!;
+    await assert.rejects(() => runOfflineStepwiseComposition(boundaryFixture, { database: sem007SqlAdapter(bridge), idempotencyKey: `sem007-cancelled-${suffix}`, lease: { owner: "cancelled", generation: 1 }, routes: [sem007Route], routeId: sem007Route.routeId, profileId: sem007Route.profileId, nowEpochMilliseconds: 1_000, deadlineEpochMilliseconds: 20_000, signal: cancelledSignal.signal, dispatch: async () => { boundaryDispatches += 1; return sem007FakeTransport(boundaryFixture); } }), /cancelled/iu);
+    await assert.rejects(() => runOfflineStepwiseComposition(boundaryFixture, { database: sem007SqlAdapter(bridge), idempotencyKey: `sem007-deadline-${suffix}`, lease: { owner: "deadline", generation: 1 }, routes: [sem007Route], routeId: sem007Route.routeId, profileId: sem007Route.profileId, nowEpochMilliseconds: 1_000, deadlineEpochMilliseconds: 1_000, signal: new AbortController().signal, dispatch: async () => { boundaryDispatches += 1; return sem007FakeTransport(boundaryFixture); } }), /deadline has elapsed/iu);
+    assert.equal(boundaryDispatches, 0, "cancelled or expired injected work has no fake dispatch effect");
+    assert.equal((await admin.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_composite_stage WHERE idempotency_key IN ($1,$2)", [`sem007-cancelled-${suffix}`, `sem007-deadline-${suffix}`]))[0]?.count, 0, "cancelled or expired injected work has no durable staging effect");
     assert.ok((jobCounts.get(textOnlyExecution) ?? 0) > 0 && (await effectRow(keys.get(textOnlyExecution)!, "provider"))?.attempts === 1, "positive job/provider controls are non-inert");
     observations.push(`database=${String(databaseIdentity?.database)} user=${String(databaseIdentity?.user_name)} server=${String(databaseIdentity?.server_version)}`);
     observations.push(`worker-jobs=${JSON.stringify(Object.fromEntries(jobCounts))}`);
@@ -295,13 +302,6 @@ function sem007Fixture(mode: Sem007FixtureMode, semanticExecutionId: string, wit
     provider: { name: "docling", processor: "docling-slim", executionId: perceptionExecutionId, processedAt: "2026-10-14T00:00:00.000Z" },
     pages: [{ number: 1, textBlocks: [{ id: "owned-1", text: `SEM-007 owned fact for ${semanticExecutionId}.` }], tables: [], visualRegions: withImage ? [{ id: "visual-1", label: "SEM-007 controlled visual context.", assetRef: asset.assetRef }] : [] }],
   };
-  const candidates = mode === "mixed" ? 2 : 1;
-  const hasRelationship = mode !== "ordinary";
-  const rawResponse = {
-    contract_version: "atlas.relationship-extraction-envelope/v1",
-    semantic_proposal: { version: "v1", source_results: [{ slot: "slot-000001", classification: "candidate", candidates: Array.from({ length: candidates }, (_, index) => ({ semantic_key: `sem007-candidate-${index}`, kind: "business_object", payload: { mode }, normalized_meaning: `SEM-007 meaning ${index}`, needs_resolution: false })), non_fact_reason: null, questions: [] }] },
-    relationship_proposals: hasRelationship ? [{ owned_source_slot: "slot-000001", context_source_slot: "slot-000002", source_evidence_slots: ["slot-000001", "slot-000002"], relationship_type: "context_qualifies", direction: "context_to_owned", contextual_role: "legend", necessity: "essential", uncertainty: "medium", proposed_meaning: "The controlled context qualifies the owned fact.", source_language: "en", candidate_refs: [{ source_slot: "slot-000001", candidate_index: 0 }], predecessor: null }] : [],
-  };
   const scope = { projectId: `sem007-project-${semanticExecutionId}`, workspaceId: `sem007-workspace-${semanticExecutionId}`, bundleId: `sem007-bundle-${semanticExecutionId}`, documentId, executionId: semanticExecutionId, sourceSha256 };
   return {
     scope,
@@ -310,8 +310,20 @@ function sem007Fixture(mode: Sem007FixtureMode, semanticExecutionId: string, wit
     media: withImage ? new Map([[asset.assetRef, { assetRef: asset.assetRef, sha256: asset.sha256, sourceSha256, mimeType: "image/png" as const, width: 2, height: 2, bytes: assetBytes }]]) : new Map(),
     relationshipScope: { projectId: scope.projectId, workspaceId: scope.workspaceId, bundleId: scope.bundleId, documentId, executionId: perceptionExecutionId, artifactId: documentId, sourceSha256 },
     trustedPriorRevisions: [],
-    rawResponse,
-    providerProvenance: { provider: "offline", model: "sem007-controlled-fake", endpoint: "test://sem007", latencyMilliseconds: 1, attempt: 1, runId: `sem007-run-${semanticExecutionId}` },
+  };
+}
+
+function sem007FakeTransport(fixture: OfflineStepwiseQualificationContext) {
+  const mode: Sem007FixtureMode = fixture.scope.executionId.includes("-mixed-") ? "mixed" : fixture.scope.executionId.includes("-deferred-") ? "deferred" : "ordinary";
+  const candidates = mode === "mixed" ? 2 : 1;
+  const hasRelationship = mode !== "ordinary";
+  return {
+    value: {
+    contract_version: "atlas.relationship-extraction-envelope/v1",
+    semantic_proposal: { version: "v1", source_results: [{ slot: "slot-000001", classification: "candidate", candidates: Array.from({ length: candidates }, (_, index) => ({ semantic_key: `sem007-candidate-${index}`, kind: "business_object", payload: { mode }, normalized_meaning: `SEM-007 meaning ${index}`, needs_resolution: false })), non_fact_reason: null, questions: [] }] },
+    relationship_proposals: hasRelationship ? [{ owned_source_slot: "slot-000001", context_source_slot: "slot-000002", source_evidence_slots: ["slot-000001", "slot-000002"], relationship_type: "context_qualifies", direction: "context_to_owned", contextual_role: "legend", necessity: "essential", uncertainty: "medium", proposed_meaning: "The controlled context qualifies the owned fact.", source_language: "en", candidate_refs: [{ source_slot: "slot-000001", candidate_index: 0 }], predecessor: null }] : [],
+    },
+    provenance: { provider: "offline", model: "sem007-controlled-fake", endpoint: "test://sem007", latencyMilliseconds: 1, attempt: 1, metadata: { executionId: fixture.scope.executionId } },
   };
 }
 
@@ -333,10 +345,10 @@ async function runSem007Child(): Promise<void> {
   const replay = createSemanticCompositeReplay(sem007SqlAdapter(bridge));
   const owner = process.env.SEM007_CHILD_OWNER!;
   const generation = Number(process.env.SEM007_CHILD_GENERATION);
-  const selection = { context: fixture, dependencies: { database: sem007SqlAdapter(bridge), routes: [sem007Route], routeId: sem007Route.routeId, profileId: sem007Route.profileId, nowEpochMilliseconds: 1_000, dispatch: async () => { await bridge.unsafe(`INSERT INTO bridge.${table} (effect_key, effect_kind, attempts, committed) VALUES ($1,'provider',1,false) ON CONFLICT (effect_key,effect_kind) DO UPDATE SET attempts=bridge.${table}.attempts+1`, [idempotencyKey]); process.stdout.write("SEM007_PROVIDER_DISPATCH\n"); return fixture.rawResponse; } } } as const;
+  const selection = { context: fixture, dependencies: { database: sem007SqlAdapter(bridge), routes: [sem007Route], routeId: sem007Route.routeId, profileId: sem007Route.profileId, nowEpochMilliseconds: 1_000, deadlineEpochMilliseconds: 20_000, dispatch: async () => { await bridge.unsafe(`INSERT INTO bridge.${table} (effect_key, effect_kind, attempts, committed) VALUES ($1,'provider',1,false) ON CONFLICT (effect_key,effect_kind) DO UPDATE SET attempts=bridge.${table}.attempts+1`, [idempotencyKey]); process.stdout.write("SEM007_PROVIDER_DISPATCH\n"); return sem007FakeTransport(fixture); } } } as const;
   const semanticReplay = { load: replay.load, stage: async () => { throw new Error("SEM-007 child must stage through the offline composition."); }, acknowledge: async () => undefined };
   try {
-    if (childMode === "crash") await runOfflineStepwiseComposition(fixture, { ...selection.dependencies, idempotencyKey, lease: { owner, generation } });
+    if (childMode === "crash") await runOfflineStepwiseComposition(fixture, { ...selection.dependencies, idempotencyKey, lease: { owner, generation }, signal: new AbortController().signal });
     else await runSemanticJob(sem007Job(executionId), { structured: async () => { throw new Error("SEM-007 offline child invoked the ordinary provider."); } }, { context: async () => sem007ContextResponse(fixture), media: async () => { throw new Error("SEM-007 child must not redeem media."); }, deliver: async () => undefined, deliverQualified: async () => undefined, fail: async (failure: unknown) => { throw new Error(`SEM-007 child unexpectedly failed: ${JSON.stringify(failure)}`); } }, semanticReplay, idempotencyKey, new AbortController().signal, { owner, generation }, selection);
     process.stdout.write("SEM007_COMMITTED\n");
     if (childMode === "crash") await new Promise<void>(() => undefined);
@@ -359,6 +371,7 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
   const executions = {
     extract: `semantic-worker-extract-${suffix}`,
     image: `semantic-worker-image-${suffix}`,
+    imageDenied: `semantic-worker-image-denied-${suffix}`,
     unavailable: `semantic-worker-unavailable-${suffix}`,
     outage: `semantic-worker-outage-${suffix}`,
     timeout: `semantic-worker-timeout-${suffix}`,
@@ -395,6 +408,7 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
   const failed = new Map<string, number>();
   const providerCalls = new Map<string, number>();
   const providerWires = new Map<string, { readonly system: string; readonly sourceSpecification: string; readonly responseFormat: unknown; readonly imageUrls: readonly string[] }>();
+  const derivedMediaRedemptions = new Map<string, number>();
   const imageBytes = Uint8Array.from(Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAF/gL+ZK2mXQAAAABJRU5ErkJggg==", "base64"));
   const imageSha256 = createHash("sha256").update(imageBytes).digest("hex");
   const imageAssets = new Map<string, Uint8Array>();
@@ -517,6 +531,8 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
   });
   atlasApp.post("/internal/semantic/derived-media", async (request, response) => {
     try {
+      const executionId = (request.body as { scope?: { authorization?: { executionId?: string } } })?.scope?.authorization?.executionId;
+      if (executionId) derivedMediaRedemptions.set(executionId, (derivedMediaRedemptions.get(executionId) ?? 0) + 1);
       const image = await derivedHydrator.hydrate(request.body, new AbortController().signal);
       return response.code(200).type(image.mediaType).send(Buffer.from(image.bytes));
     } catch {
@@ -661,7 +677,7 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
       await atlas.unsafe("INSERT INTO atlas.document_perception_execution (id,artifact_id,document_storage_key,source_sha256,mime_type,byte_size,contract_version,state,idempotency_key,capability_identity) VALUES ($1,$2,'private/semantic-worker',$3,'application/pdf',1,'v1','completed',$4,$5)", [resource.perception, resource.document, resource.sourceSha256, `semantic-worker-perception-key-${label}-${suffix}`, resource.capabilityIdentity]);
       const document = normalized(resource.perception, resource.document, resource.sourceSha256);
       if (stage === "extraction") document.pages[0].textBlocks.push({ id: "execution-marker", text: `Synthetic execution ${executionId}.` });
-      if (label === "image") {
+      if (label === "image" || label === "imageDenied") {
         const assetRef = `derived/${randomUUID()}`;
         imageAssetRefs.set(executionId, assetRef);
         imageAssets.set(assetRef, imageBytes);
@@ -685,9 +701,9 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     const provider = new AnomanProvider({ apiKey: "synthetic-provider-key", baseUrl: `http://127.0.0.1:${anomanPort}`, structuredModel: "gemini-2.5-flash", maxRequestBytes: 2 * 1024 * 1024, maxResponseBytes: 10 * 1024 * 1024, zeroDataRetentionApproved: false, timeoutMilliseconds: 10_000 });
     const client = createAtlasSemanticClient({ baseUrl: `http://127.0.0.1:${atlasPort}`, contextPath: "/internal/semantic/context", mediaPath: "/internal/semantic/derived-media", resultPath: "/internal/semantic/result", qualifiedResultPath: "/internal/semantic/qualified-result", failurePath: "/internal/semantic/failure", serviceCredential: credential, timeoutMilliseconds: 100 });
     const config: WorkerConfig = { databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 1, perceptionConcurrency: 1, timeoutSeconds: 5, retryLimit: 3, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 };
-    const createWorker = () => createBackgroundWorker(config, new TestRuntime(), queueName, undefined, undefined, async (job, signal, context) => {
+    const createWorker = (stepwiseRoute = sem007Route) => createBackgroundWorker(config, new TestRuntime(), queueName, undefined, undefined, async (job, signal, context) => {
       try {
-        await runSemanticJob(job, provider, client, createSemanticResultReplay(context.database), context.idempotencyKey, signal, { owner: context.leaseOwner, generation: context.leaseGeneration }, undefined, { dependencies: { database: context.database, routes: [sem007Route], routeId: sem007Route.routeId, profileId: sem007Route.profileId } });
+        await runSemanticJob(job, provider, client, createSemanticResultReplay(context.database), context.idempotencyKey, signal, { owner: context.leaseOwner, generation: context.leaseGeneration }, undefined, { dependencies: { database: context.database, routes: [stepwiseRoute], routeId: stepwiseRoute.routeId, profileId: stepwiseRoute.profileId, deadlineEpochMilliseconds: context.deadlineEpochMilliseconds } });
       } catch (error) {
         const errors = thrownErrors.get(job.executionId) ?? [];
         errors.push(error);
@@ -720,6 +736,14 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     // injected offline lane. Atlas issues an authenticated image grant from
     // its accepted manifest, Bridge redeems it through the internal media
     // route, and the configured Anoman adapter serializes one multipart image.
+    await worker.stop(); worker = createWorker({ ...sem007Route, imageTpm: { state: "unknown" } }); await worker.start();
+    await enqueue("imageDenied", "atlas.semantic.extract");
+    await waitFor(async () => (await atlas.unsafe("SELECT lifecycle FROM atlas.semantic_execution WHERE id=$1", [executions.imageDenied]))[0]?.lifecycle === "failed", "ordinary denied-image preflight");
+    assert.equal(derivedMediaRedemptions.get(executions.imageDenied) ?? 0, 0, "unknown image TPM rejects before consuming the Atlas media grant");
+    assert.equal(providerCalls.get(executions.imageDenied) ?? 0, 0, "unknown image TPM rejects before provider dispatch");
+    assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_composite_stage WHERE idempotency_key=$1", [keys.imageDenied]))[0]?.count, 0, "unknown image TPM creates no durable composite stage");
+    assert.equal(failed.get(executions.imageDenied), 1, "ordinary denied image records the bounded resource failure");
+    await worker.stop(); worker = createWorker(); await worker.start();
     await enqueue("image", "atlas.semantic.extract");
     await waitFor(async () => (await bridge.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [keys.image]))[0]?.status === "completed", "image extraction completion");
     const imageWire = providerWires.get(executions.image);
@@ -735,6 +759,7 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     assert.equal(createHash("sha256").update(imageWire!.sourceSpecification).digest("hex"), imageRequest.sourceSpecificationSha256, "Anoman source-specification hash matches the REL request");
     assert.equal(createHash("sha256").update(JSON.stringify(imageRequest.responseSchema)).digest("hex"), createHash("sha256").update(JSON.stringify(buildStepwiseRelationshipEnvelopeRequest(imagePacket).responseSchema)).digest("hex"), "the recorded REL-envelope schema hash is deterministic");
     assert.deepEqual(imageWire?.responseFormat, { type: "json_object" }, "Anoman preserves bounded JSON object mode on the wire");
+    assert.equal(derivedMediaRedemptions.get(executions.image), 1, "qualified image work redeems its exact Atlas grant once after preflight");
     assert.equal(accepted.get(executions.image), 1, "the ordinary image result is delivered through qualified acceptance once");
     console.log(`SEM007A_ANOMAN_WIRE_EVIDENCE ${JSON.stringify({ systemPromptSha256: createHash("sha256").update(imageWire!.system).digest("hex"), sourceSpecificationSha256: createHash("sha256").update(imageWire!.sourceSpecification).digest("hex"), responseSchemaSha256: createHash("sha256").update(JSON.stringify(imageRequest.responseSchema)).digest("hex"), image: { assetRef: imageAssetRef, sha256: imageSha256, byteLength: imageBytes.byteLength, wireDataUrlSha256: createHash("sha256").update(imageWire!.imageUrls[0]!).digest("hex") }, responseFormat: imageWire!.responseFormat, providerCalls: providerCalls.get(executions.image) })}`);
 
