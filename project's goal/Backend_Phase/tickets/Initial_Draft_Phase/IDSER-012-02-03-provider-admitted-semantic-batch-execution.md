@@ -27,6 +27,10 @@ Stage one fenced non-authoritative batch fragment with exact plan, slot ownershi
 | `RC-0120203-06` | Unknown usage, expiry, terminal provider failure and late response are handled under BSS-V2-006 conservative once-only capacity accounting; no false document success. |
 | `RC-0120203-07` | Cross-batch relationship and image/no-image fixtures use the sole SEM engine with exact QUALIFIED profile and explicit deferred/canonical identities; no payload shape fallback. |
 
+## Planned Corpus consumption (prospective, 2026-10-16)
+
+Consume exactly **one durable planner `PlannedSemanticCorpusHandoff` per semantic work item**, binding `batchId`, plan/source/perception hash, owned/context/REL/asset references, resource envelope and active compatible process/workload/desired-plan version. SEM-CUTOVER must redeem **only the planned corpus slots** through its separately authorized batch-intake seam; a provider cannot receive the entire PDF by accidentally calling the historical whole-document builder. Admission may wait under BSS-V2-006 runtime pressure, but cannot silently re-size an immutable corpus or dispatch without a new reserved attempt. On qualified result, downstream identity is **per-batch Qualified Semantic Handoff**, distinct from document-wide accounting. This ticket remains a non-truth stage, with no premature reconciliation preparation. If the batch SEM intake/acceptance version is not separately approved and proven, STOP `SEM_BATCH_CORPUS_INTAKE_GAP` rather than assuming v0.4.0 bytes can change. [Decision](../../../feedback/IDSER-SEMANTIC-PLANNER-HARD-STOP-20261016.md).
+
 ## Security, required evidence and stop
 
 Trust boundary is Atlas-granted source/media→SEM-007A; BSS-V2-005 active plan→BSS-V2-006 reservation→one HTTP attempt; untrusted response→strict composite→non-truth stage. Never send raw credentials or PRD content to queue/CK logs. Require loopback fake plus isolated PostgreSQL lifecycle/replay with **non-inert** zero/one counters. No automatic D1 semantic activation is implied. **STOP** on unproven provisional context reuse, unqualified image model or missing live semantic PASS; do not reroute extraction to legacy.

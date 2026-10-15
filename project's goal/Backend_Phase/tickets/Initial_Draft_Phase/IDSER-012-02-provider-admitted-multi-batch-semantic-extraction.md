@@ -13,6 +13,12 @@ This remains valuable **future semantic orchestration work**; PERC-RESET stops a
 
 Exactly **one** shared stepwise methodology (eight-stage v0.3.1) and one `atlas.semantic.extract.stepwise_multimodal.relationship-envelope/v0.4.0` strict REL envelope, qualified composite/sidecar, Atlas-only canonical/deferred acceptance and fenced replay. Not a new `prompt-003/v1` compiler, standalone extractor/finalizer, old packet byte-parity oracle or independent provider quota limiter. BSS-V2-005 owns process/workload catalogue, planning and published active `DesiredAdmissionProfile`; BSS-V2-006 owns attempts/reservations/cooldown/usage/fairness. Live meaning oracles remain separately BSS-V2-004-03-06-owned.
 
+## Prospective planner-first hard stop and process-neutral BSS (2026-10-16)
+
+First implement/qualify `IDSER-012-02-01` as a **capacity-aware Semantic Batch Planner**, consuming BSS-V2-005 quota/workload/desired policy and an explicitly qualified BSS-V2-006 effective safety/eligibility constraint. Output is one immutable full-document owned-source partition and **one durable `PlannedSemanticCorpusHandoff` per semantic batch**. It stops before SEM execution, provider work or reconciliation. BSS-V2-005-05 prospectively extends registration and automatic desired-plan convergence to new process kinds; BSS-V2-006 continues generic dynamic demand/admission, not semantic-specific allocation. The later `-02-02` process activation uses a qualified inactive planning workload bootstrap instead of assuming that the unimplemented semantic consumer is already active.
+
+After the planner stop, SEM-CUTOVER owns versioned corpus-slot intake, **per-batch Qualified Semantic Handoff**, and the inherited strict semantic truth boundary. Reconciliation preparation is later independently queued per qualified batch, while only workspace reconciliation state is single-writer. The older `-02-04` document-level aggregation/acceptance design is **still OPEN-A** and needs a separately authorized prospective re-scope; it cannot block eligible independent batch preparation by default or override approved SEM deferred acceptance. [Decision ledger](../../../feedback/IDSER-SEMANTIC-PLANNER-HARD-STOP-20261016.md).
+
 ## Child ownership and gates
 
 ```text
