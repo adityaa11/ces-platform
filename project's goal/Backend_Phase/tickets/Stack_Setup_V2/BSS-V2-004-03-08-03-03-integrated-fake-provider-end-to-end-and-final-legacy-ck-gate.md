@@ -1,3 +1,7 @@
+> **AUTHORITATIVE PROSPECTIVE SUPERSESSION (2026-10-15): `SUPERSEDED_BEFORE_GO`.** Old terminal fake-E2E leaf and mandatory `08-03-03` CK PASS are retired for the current semantic extraction path. SEM-007/007A own shared engine fake/adapter-loopback/SQL replay qualification. RC-03's old prompt/packet/default/byte differential is explicitly superseded; retain successor profile/hash, no-legacy-dispatch/replay negatives, source/asset/proposal trust, redaction and zero unsolicited effects. Independently authored semantic quality oracles remain live obligations; do not claim model quality or historical CK PASS. Decision and bounded owner ledger: `project's goal/feedback/SEM-CUTOVER-WINNER-REALIGNMENT-20261015.md`. This is documentation-only and not a retrospective CK PASS or new implementation GO.
+
+## Historical frozen plan — archival reference only, NOT GO/CK authority
+
 # BSS-V2-004-03-08-03-03: Integrated fake-provider end-to-end and final legacy CK gate
 
 - **Status:** `planned`; **GO authorization:** the user's explicit `go` for this leaf (or an explicitly authorized batch) after required predecessor CK PASS, with current frozen scope and review rows. **No preliminary HMN is required for ordinary GO.** HMN is reserved for a documented blocked decision, out-of-scope change, or a later remediation cycle.
