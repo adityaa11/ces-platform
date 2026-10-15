@@ -1,6 +1,6 @@
 # BSS-V2-005-02: Provider-dependent process and bounded workload-envelope catalogue
 
-- **State:** `planned`
+- **State:** `awaiting_review` at GO review target (recorded in [BSS-V2-BATCH-05-02-go.md](../../../feedback/BSS-V2-BATCH-05-02-go.md))
 - **Review batch:** `BSS-V2-BATCH-05-02`
 - **Dependencies:** BSS-V2-005-01 CK `PASS`; BSS-V2-001 capability contracts
 - **Parent:** [BSS-V2-005](BSS-V2-005-quota-domain-capacity-foundation.md)
