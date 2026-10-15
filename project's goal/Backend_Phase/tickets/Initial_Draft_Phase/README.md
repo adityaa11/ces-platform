@@ -14,6 +14,12 @@
 - **Hard predecessor:** [PCC-006](../Project_Cards_Phase/PCC-006-project-card-creation-e2e-and-regression-checkpoint.md) `PASS`; the [PCC set](../Project_Cards_Phase/README.md) remains frozen.
 - **Planning inspection:** branch `codex/new-atlas-backend`, HEAD `1e2fb34db561f8b27d4a284ad2db2dba4b8ff183`, 2026-10-01. IDSER-011 was repartitioned against BSS-008/009, actual worker/provider/Atlas seams, the approved IDSER-010 series and current Compose harnesses.
 
+## Current normal perception predecessor (2026-10-15)
+
+For future staged-policy work, **PERC-RESET-008 has independent CK PASS** and its [RUN-003 Canonical Perception Baseline](../../../feedback/CANONICAL-PERCEPTION-BASELINE-v1.md) is the sole normal local digital-PDF perception/normalized-evidence regression predecessor. See the [perception winner ledger](../../../feedback/IDSER-PERCEPTION-WINNER-AUTHORITY-MAP-20261015.md). Local perception is `docling-run-003-capture` / `atlas-digital-pdf-run-003-capture-v1`, private Docling CPU (no OCR), verified derived assets for captured visuals, valid zero-visual results, staged fair local admission, and durable `perceived` with **zero unsolicited semantic jobs**. Approved `IDSER-012-01` children remain frozen accepted implementation proofs. Old image-disabled Docling, qualification-only or Mistral OCR perception is not a selectable normal fallback or a future regression gate.
+
+The legacy D1→reconciliation→D2 sequence and old `IDSER-011` Mistral OCR acceptance entries below are **historical** for current staged perception. `IDSER-011-01..04` remain unapproved; their future perception clauses are prospectively superseded, while legitimate external-provider/semantic/reconciliation quality, privacy, scope and integrity obligations await separate alignment under the [semantic winner ledger](../../../feedback/IDSER-SEMANTIC-SUCCESSOR-AUTHORITY-MAP-20261015.md). The current scoped edit does not silently PASS or execute those four tickets and does not alter approved historical tests. This is **not** an OCR/scanned-PDF or visual-meaning qualification.
+
 ## Outcome and authority
 
 Extend production project creation into one durable, ordered extraction bundle.

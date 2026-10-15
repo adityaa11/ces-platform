@@ -5,6 +5,16 @@
 - **Consumes:** frozen IDSER-010-02 selector/sequencing evidence and IDSER-011-02 approved real D1 path. It does not reopen either.
 - **Execution environment:** a new real Compose scenario with at least two related synthetic/non-confidential PDFs in one authenticated project/bundle.
 
+
+## Prospective perception-route supersession — 2026-10-15
+
+**Prospective perception authority:** [PERC-RESET-008 CK PASS](../../../feedback/PERC-RESET-BATCH-08-9f31026-review.md), [CANONICAL-PERCEPTION-BASELINE-v1](../../../feedback/CANONICAL-PERCEPTION-BASELINE-v1.md), and [IDSER perception winner map](../../../feedback/IDSER-PERCEPTION-WINNER-AUTHORITY-MAP-20261015.md). This is a 2026-10-15 perception-only amendment; historical evidence/approved IDSER and BSS contracts are unchanged. The only currently qualified ordinary digital-PDF perception route is `docling-run-003-capture` / `atlas-digital-pdf-run-003-capture-v1`, which yields source-bound `NormalizedDocument v1` and verified derived assets where captured, then stops at durable `perceived`. A valid zero-visual digital PDF follows this same route. No Mistral OCR or image-disabled Docling route, qualification-only selector, or automatic fallback is an allowed future canonical staged-perception option. Scanned/OCR-only PDFs and visual semantic interpretation remain unsupported without separate qualification.
+
+- **RC-011-03-02 (perception): RETIRED for future staged work.** A second document must not use required Mistral OCR or a provider-specific alternate perception route; both D1 and D2 consume the same independent, bundle-fair RUN-003 path. The PERC-RESET-007/008 three-document proof and approved IDSER-012-01 children supply the successor local perception baseline.
+- **RC-011-03-01: NOT a perception predecessor gate.** D1 reconciliation completion is not required before staged D2 local perception. Its historical strict D1→D2 semantic/reconciliation sequence is not a current staged execution requirement; independently authorized future reconciliation orchestration remains separate.
+- **RC-011-03-03 / RC-011-03-04: KEEP / REHOME** scoped, bounded and temporal source/context integrity; exact references, no foreign-bundle reads and no order-as-truth. These are future semantic/reconciliation obligations, not permission for a second local or remote perception engine.
+- **Execution guard:** This remains `planned`; old D1/D2 Mistral and sequencing RC text below is historical pending the separate semantic/lifecycle realignment. No claimed child CK PASS or live-provider authorization.
+
 ## Authority and bounded outcome
 
 Answer one question: **does the live multi-document run preserve Atlas's bounded incremental reconciliation authority?** Prove D1 validated reconciliation completion gates D2 semantic advancement; D2 runs real OCR, extraction and reconciliation; and D2 receives only Atlas-authorized bounded same-bundle D1/current-D2 semantic context. The scenario must use related synthetic statements capable of exercising a prior-neighborhood handoff, but it must not require a particular model relationship sentence.

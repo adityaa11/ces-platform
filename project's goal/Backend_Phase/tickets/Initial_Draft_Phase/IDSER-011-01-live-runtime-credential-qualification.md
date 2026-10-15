@@ -5,6 +5,15 @@
 - **Consumes:** frozen BSS-008 provider configuration/secret boundary, BSS-009 worker route, Compose topology, and approved IDSER-010 deterministic evidence. It does not reopen them.
 - **Execution environment:** the real four-service Compose stack and a deliberately configured real Mistral deployment secret. No mock overlay qualifies.
 
+
+## Prospective perception-route supersession — 2026-10-15
+
+**Prospective perception authority:** [PERC-RESET-008 CK PASS](../../../feedback/PERC-RESET-BATCH-08-9f31026-review.md), [CANONICAL-PERCEPTION-BASELINE-v1](../../../feedback/CANONICAL-PERCEPTION-BASELINE-v1.md), and [IDSER perception winner map](../../../feedback/IDSER-PERCEPTION-WINNER-AUTHORITY-MAP-20261015.md). This is a 2026-10-15 perception-only amendment; historical evidence/approved IDSER and BSS contracts are unchanged. The only currently qualified ordinary digital-PDF perception route is `docling-run-003-capture` / `atlas-digital-pdf-run-003-capture-v1`, which yields source-bound `NormalizedDocument v1` and verified derived assets where captured, then stops at durable `perceived`. A valid zero-visual digital PDF follows this same route. No Mistral OCR or image-disabled Docling route, qualification-only selector, or automatic fallback is an allowed future canonical staged-perception option. Scanned/OCR-only PDFs and visual semantic interpretation remain unsupported without separate qualification.
+
+- **RC-011-01-01 / RC-011-01-03 (perception portions): RETIRED as future perception gates.** Requiring Mistral OCR model/endpoint configuration, a Mistral-only worker or Mistral OCR provenance cannot gate or replace already-qualified RUN-003 local perception. BSS-008 Mistral configuration may remain independently useful historical or future *external semantic-provider* qualification, not a second `atlas.document.perceive` route.
+- **KEEP / REHOME:** immutable reviewed service/image/route provenance, true configured/actual identity, deployment-only external-provider credentials, secret-safe redaction, honest ZDR/limit claims and provider preflight failure classification survive as security/quality obligations for a separately authorized semantic-provider qualification owner. Normal RUN-003 Docling does not require a Mistral credential.
+- **Execution guard:** This child remains `planned`; its historical Mistral-specific text and RCs below cannot be used for future staged-perception GO/CK. Its remaining external semantic live-provider purpose awaits separate semantic-contract realignment. Do not report CK PASS, activate a provider, or silently replace the canonical local perception baseline.
+
 ## Authority and bounded outcome
 
 Answer one question only: **is the approved production Mistral runtime available through the existing secret boundary, with a reviewable non-secret qualification record?** Add only the smallest live-harness/configuration/evidence capability needed to preflight the real worker route and record configured/actual non-secret provider identities. The child neither creates a project nor processes a document.

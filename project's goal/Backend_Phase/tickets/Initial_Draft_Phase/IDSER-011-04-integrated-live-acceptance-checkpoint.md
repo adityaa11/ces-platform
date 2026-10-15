@@ -5,6 +5,16 @@
 - **Consumes:** approved child evidence as frozen interfaces and IDSER-010 deterministic A-H proof. A defect in a child-owned contract is not silently repaired here.
 - **Execution environment:** real Compose services, a fresh real-Mistral synthetic two-or-more-PDF scenario, authenticated Atlas read/browser observation and secret-safe evidence capture.
 
+
+## Prospective perception-route supersession — 2026-10-15
+
+**Prospective perception authority:** [PERC-RESET-008 CK PASS](../../../feedback/PERC-RESET-BATCH-08-9f31026-review.md), [CANONICAL-PERCEPTION-BASELINE-v1](../../../feedback/CANONICAL-PERCEPTION-BASELINE-v1.md), and [IDSER perception winner map](../../../feedback/IDSER-PERCEPTION-WINNER-AUTHORITY-MAP-20261015.md). This is a 2026-10-15 perception-only amendment; historical evidence/approved IDSER and BSS contracts are unchanged. The only currently qualified ordinary digital-PDF perception route is `docling-run-003-capture` / `atlas-digital-pdf-run-003-capture-v1`, which yields source-bound `NormalizedDocument v1` and verified derived assets where captured, then stops at durable `perceived`. A valid zero-visual digital PDF follows this same route. No Mistral OCR or image-disabled Docling route, qualification-only selector, or automatic fallback is an allowed future canonical staged-perception option. Scanned/OCR-only PDFs and visual semantic interpretation remain unsupported without separate qualification.
+
+- **RC-011-04-01 / RC-011-04-03 (predecessor composition): RETIRED as future perception gates** to the extent they demand `IDSER-011-01..03` old Mistral OCR CK PASS or the original Mistral Scenario I as the only upstream perception evidence. The already CK-qualified PERC-RESET-008 RUN-003 baseline is the mandatory perception predecessor.
+- **RC-011-04-02: REHOME** all-N reconciled `ready_for_review` and project-card completion to an explicitly future reconciliation/lifecycle owner. The present local perception checkpoint stops at `perceived`, and cannot claim review-ready success from OCR or extraction alone.
+- **RC-011-04-04: KEEP** no Master/publication/conversation/CES effects, Bridge truth separation, full scope and secret-safe negative assertions. Apply them to each actual successor checkpoint.
+- **Execution guard:** This child remains `planned`; the rest of its real semantic live-acceptance and full-completion contract is still awaiting separate realignment. Do not turn historical full-pipeline obligations into PERC-RESET compatibility tests or silently issue PASS to unfinished IDSER-011 children.
+
 ## Authority and bounded outcome
 
 Own one final composition question: **do the approved deterministic A-H interfaces and the approved live Scenario I interfaces compose into a complete, reviewable—but not reviewed or published—bundle?** This final checkpoint re-observes only composed final facts: N/N and 100%, bundle completion validation, workspace `ready_for_review`, Project Card `Ready for review`, retained addressable results, Master/downstream absence, and the complete evidence/AC ledger. It does not redo child implementation proof.

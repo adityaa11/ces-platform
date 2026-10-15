@@ -5,6 +5,13 @@
 - **Review family:** `IDSER-BATCH-12`
 - **Planning authority:** [Provider admission and staged semantic pipeline context](../../atlas-provider-admission-staged-semantic-pipeline-implementation-context.md), including §21 amendments
 
+
+## Binding perception predecessor — 2026-10-15
+
+**Prospective perception authority:** [PERC-RESET-008 CK PASS](../../../feedback/PERC-RESET-BATCH-08-9f31026-review.md), [CANONICAL-PERCEPTION-BASELINE-v1](../../../feedback/CANONICAL-PERCEPTION-BASELINE-v1.md), and [IDSER perception winner map](../../../feedback/IDSER-PERCEPTION-WINNER-AUTHORITY-MAP-20261015.md). This is a 2026-10-15 perception-only amendment; historical evidence/approved IDSER and BSS contracts are unchanged. The only currently qualified ordinary digital-PDF perception route is `docling-run-003-capture` / `atlas-digital-pdf-run-003-capture-v1`, which yields source-bound `NormalizedDocument v1` and verified derived assets where captured, then stops at durable `perceived`. A valid zero-visual digital PDF follows this same route. No Mistral OCR or image-disabled Docling route, qualification-only selector, or automatic fallback is an allowed future canonical staged-perception option. Scanned/OCR-only PDFs and visual semantic interpretation remain unsupported without separate qualification.
+
+The `IDSER-012-01` sequence remains the approved local staged-admission and evidence-ownership implementation, and PERC-RESET-008 is its **current normal-route and regression winner**. Do not treat the RUN-003 choice as configurable between old/new pipelines, automatically fall back to image-disabled Docling, or make D2/D3 local perception wait on D1 semantic reconciliation. Perception success terminates at `perceived`; semantic provider work and any downstream stage require their **separate** explicit authority. The current semantic successor and its unresolved acceptance/lifecycle questions are tracked in [the semantic winner map](../../../feedback/IDSER-SEMANTIC-SUCCESSOR-AUTHORITY-MAP-20261015.md), not resolved by this perception-only edit.
+
 ## Outcome
 
 Amend only future staged Initial Draft execution so local perception progresses independently across bundle members, external semantic work consumes shared BSS-V2-005/006 admission, and extraction stops durably before reconciliation. Historical IDSER sequencing evidence remains historical.

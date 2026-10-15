@@ -6,6 +6,13 @@
 - **Parent:** [IDSER-012-01](IDSER-012-01-fair-bounded-local-docling-perception.md)
 - **Planning authority:** [RUN-003 evidence-preservation context](../../IDSER-012-01-03-docling-evidence-preservation-implementation-context.md).
 
+
+## Effective RUN-003 activation / historical diagnostic note — 2026-10-15
+
+**Prospective perception authority:** [PERC-RESET-008 CK PASS](../../../feedback/PERC-RESET-BATCH-08-9f31026-review.md), [CANONICAL-PERCEPTION-BASELINE-v1](../../../feedback/CANONICAL-PERCEPTION-BASELINE-v1.md), and [IDSER perception winner map](../../../feedback/IDSER-PERCEPTION-WINNER-AUTHORITY-MAP-20261015.md). This is a 2026-10-15 perception-only amendment; historical evidence/approved IDSER and BSS contracts are unchanged. The only currently qualified ordinary digital-PDF perception route is `docling-run-003-capture` / `atlas-digital-pdf-run-003-capture-v1`, which yields source-bound `NormalizedDocument v1` and verified derived assets where captured, then stops at durable `perceived`. A valid zero-visual digital PDF follows this same route. No Mistral OCR or image-disabled Docling route, qualification-only selector, or automatic fallback is an allowed future canonical staged-perception option. Scanned/OCR-only PDFs and visual semantic interpretation remain unsupported without separate qualification.
+
+The pre-implementation diagnostics in `Frozen evidence and planning reconciliation` below (for example `include_images=false` and placeholder-only output), and the instruction to retain a previous approved route *until* `-03-02` passes, describe **earlier stage gates**, not present runtime requirements. Both `IDSER-012-01-03-01` and `-03-02` are approved, and PERC-RESET-008 independently qualified RUN-003 as the current normal path. Never invoke the historical `atlas-digital-pdf-no-ocr-v1` fallback on a zero-visual or missing-asset case: zero captured visuals are accepted under RUN-003; missing/mismatched assets for actual visuals fail closed. The preapproved Atlas derived-asset resolver/source authorization, replay, no-recursive-admission and `perceived` stop remain mandatory; no approved child or historical CK evidence is rewritten.
+
 ## Outcome
 
 For an already authorized original PDF, preserve the qualified RUN-003 text, table, and picture evidence through a complete `NormalizedDocument v1`, Atlas-owned durable derived-image storage, and an authorized offline retrieval seam.  The terminal state remains `perceived`; no semantic job, provider call, aggregation, UI, or new source admission occurs.
