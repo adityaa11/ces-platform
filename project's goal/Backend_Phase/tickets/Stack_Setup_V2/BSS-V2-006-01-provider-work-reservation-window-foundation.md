@@ -35,6 +35,19 @@ Window state derives only from the active DesiredAdmissionProfile's exact capaci
 | RC-BSSV2-00601-05 | Waiting/admitted execution uses pg-boss only and supports deduplicated future/domain wakeup, including later plan-change attachment. | PASS iff no second broker/process-local timer is durable authority and duplicate wakeups collapse. |
 | RC-BSSV2-00601-06 | Operational persistence remains Bridge-owned and cannot mutate Atlas trusted state. | PASS iff role tests deny trusted Atlas writes. |
 
+## Prospective interactive request lifetime contract (2026-10-16)
+
+BSS-V2-005 already expresses `interactive` / `background` service class and protects interactive capacity; this child must preserve the **lifetime of a caller-waited interactive request**, not create another queue or a special chatbot scheduler. For each interactive logical work item, preserve an **authenticated server-selected service class**, bounded admission deadline, execution deadline/cancellation linkage, and a stable per-attempt fence. No client-supplied label may escalate background work to protected interactive. The deadlines/limits are policy inputs, not invented constants or guarantees of provider success.
+
+- When a waiting request expires or the caller cancels **before reservation**, mark it terminal and do not create a reservation/provider job.
+- If canceled **after reservation but definitely before any transport**, atomically release its eligible reservation and prohibit dispatch. If transport may have started, preserve BSS-V2-006-03's conservative unknown-usage/request-window accounting and do not refund as if it never ran.
+- Persist and reconcile cancellation/expiry across worker restart, lost ack and race with admission/dispatch; a stale queued callback cannot resurrect an expired interactive call. No prompt, tokenized user question or connection identifiers in quota metadata.
+- Long-lived background work retains its existing durable waiting semantics; consumer disconnect is not an automatic cancellation of an unrelated background batch.
+
+| ID | PASS iff / direct negative |
+| --- | --- |
+| `RC-BSSV2-00601-07` | Server-authorized interactive work carries bounded deadline/cancellation and attempt identity; expiry/disconnect before reservation produces **zero reservation/job/transport**; canceled pre-transport reservations are released once, while possibly transmitted work retains conservative accounting. Expiry/restart races cannot resurrect work. |
+
 ## Hard stop
 
 Persistence/state only. No fair admission or provider transport.

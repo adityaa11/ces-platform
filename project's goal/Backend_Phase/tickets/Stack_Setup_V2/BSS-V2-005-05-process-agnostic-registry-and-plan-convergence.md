@@ -24,6 +24,12 @@ The source of truth for an updated *lasting* external limit belongs to the exist
 
 If a newly qualified per-request limit makes a persisted semantic corpus physically unfit, notify the owning consumer to invalidate/replan **only under a versioned authority**; BSS cannot modify semantic content or perform source splitting itself.
 
+## Preserve existing interactive/background contract (prospective 2026-10-16)
+
+Confirmed **already implemented and CK-approved** in BSS-V2-005-02/03: `ServiceClass = interactive | background`; per-process service-class assignment; versioned `hardInteractiveProtection`; `PlannerPolicy.interactiveReserveTargets`; and planner derivation of `hardInteractiveReserve` plus `backgroundCapacity = usableGlobalCapacity - hardInteractiveReserve`. Existing `apps/agents-bridge/tests/capacity-planner.test.ts` checks that reserve is separated from background. **No new interactive quota algorithm is authorized here.**
+
+Future `chat` request-response work must register via server-governed **interactive** profile and defined reserve/service target; semantic batch work is **background**. Neither the user's request metadata nor the generic registry may upgrade arbitrary work to interactive. This ticket extends process-kind registration and desired-plan convergence **without changing** the service-class meaning, vector subtraction, or hard-reserve non-lending; BSS-V2-006 owns time-bounded interactive admission/cancellation. Streaming/HTTP response handling and the actual chatbot integration remain a separate consumer responsibility.
+
 ## Binary review contract
 
 | ID | PASS iff / direct negative |
@@ -37,5 +43,7 @@ If a newly qualified per-request limit makes a persisted semantic corpus physica
 
 | `RC-00505-07` | New **authorized** lower provider-capacity profile version, not only a changed process set, causes deterministic immutable desired-plan recomputation/activation and BSS-V2-006 wakeup; unknown/unattributable 429 never invents numeric BSS-V2-005 limits. |
 | `RC-00505-08` | Domain/version-scoped downgraded structural constraints invalidate affected consumer request envelopes for explicit versioned replan; unrelated domains/eligible jobs remain live, and BSS never touches document corpus/Atlas truth. |
+
+| `RC-00505-09` | Register an interactive `chat` consumer and background semantic consumer using generic server-authorized process/workload profiles; the **existing** planner emits identical hard reserve/background subtraction under registry extension, rejects background→interactive privilege forgery and requires no chatbot-specific allocation branch. |
 
 **STOP** if the new registry bypasses existing route/quota authorization, creates a second planner/broker, changes previously approved profile semantics without a version, or relies on BSS-V2-006 behavior not yet CK-qualified. Preserve original BSS-V2-005 leaf approvals; this new leaf needs explicit GO and independent CK.

@@ -33,6 +33,17 @@ Implement per-quota-domain admission with hard interactive reserve, weighted dom
 | RC-BSSV2-00602-05 | One reservation/attempt authorizes at most one fake outbound transport attempt. | PASS iff any retry requires a new explicit attempt/reservation and a double-send under one reservation is rejected. |
 | RC-BSSV2-00602-06 | Reservation + admitted state + pg-boss enqueue commit atomically. | PASS iff rollback exposes none and crash/retry cannot double-dispatch. |
 
+## Prospective interactive admission deadline proof (2026-10-16)
+
+**This is an extension of existing service-class-aware scheduling, not a new interactive priority algorithm.** `BSS-V2-005-02` already declares interactive/background, `BSS-V2-005-03` already reserves an independent RPM/TPM/RPD/concurrency vector, and existing `RC-BSSV2-00602-02` requires an interactive request to reserve despite saturated background. Keep these rules unchanged: **background never borrows the hard interactive reserve**, and interactive is not queued behind background fairness. Eligible interactive requests may borrow unprotected idle background capacity within their governing plan; do not preempt in-flight transports.
+
+For user-waited requests, **admission time must be bounded by a server-authorized caller deadline**. Evaluate eligibility, active plan, current conservative BSS-V2-006 pressure and reservation availability without creating an indefinitely queued HTTP/chat interaction. Admit atomically if fitting now; otherwise return a bounded, explicit `waiting / unavailable / deadline_expired` decision to its caller according to the approved consumer policy; never claim provider success or fabricate a completed response. A waiting interactive request may be durable only if its consumer contract can honor the deadline and cancellation, not merely because background jobs may wait indefinitely. The caller's disconnect/cancel prevents any *not-yet-started* transport; race with dispatched/maybe-started transport obeys BSS-V2-006-03 accounting. UI streaming versus one-response transport remains **consumer-owned**, not a BSS scheduler special case.
+
+| ID | PASS iff / direct negative |
+| --- | --- |
+| `RC-BSSV2-00602-07` | Under saturated background queues, an authorized fitting interactive request admits through the existing protected multi-resource vector without waiting on background fairness, while no request exceeds active provider capacity; unfitting/expired interactive work returns a bounded non-success state with **zero late transport**, including a full concurrency reserve case. |
+| `RC-BSSV2-00602-08` | A forged interactive label, stale/expired deadline, canceled-before-send request, or re-admission under a duplicate worker/restart never obtains protected capacity, produces a late provider call, or skips the one-reservation-per-attempt boundary; independent background throughput/fairness still works. |
+
 ## Hard stop
 
 Deterministic fake execution only; no actual usage reconciliation or 429 adaptation yet.

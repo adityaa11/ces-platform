@@ -54,6 +54,14 @@ Raw headers/provider bodies remain adapter-local. Existing legacy paths may reta
 | `RC-BSSV2-00603-09` | Qualified permanent lower provider policy enters **BSS-V2-005** as a new authorized version, republishing desired policy and waking BSS-V2-006. Old reservations remain auditable; future admissions obey lower limits. Untyped/untrusted or increased raw observation cannot rewrite active policy. |
 | `RC-BSSV2-00603-10` | Stale, malformed, wrong-domain, duplicate or out-of-order pressure/usage signals cannot lift clamps, double-reconcile consumption, transfer another route's unproven quota domain, or leave permanently structurally unfit waiting work retry-spinning; versioned replan is requested from its owner where applicable. |
 
+## Interactive behavior under provider pressure (prospective 2026-10-16)
+
+A runtime clamp/429 may render even the protected interactive reserve temporarily **unavailable**; reserve is a scheduling protection, **not** a guarantee that the provider will answer. Honor the interactive request's bounded admission/execution deadline and propagate a typed unavailable/expired outcome to its consumer without holding an open caller indefinitely or automatically retrying after disconnect. Background attempts can remain durably waiting for a safe window; no penalty-free retry for interactive. A genuinely transmitted/uncertain interactive attempt still participates in normal exact/unknown usage reconciliation. Use the existing generic BSS response contract, not Anoman-specific chatbot handling.
+
+| ID | PASS iff / direct negative |
+| --- | --- |
+| `RC-BSSV2-00603-11` | Inject a mid-conversation 429/limit clamp with pending interactive and background work: interactive either admits under a genuinely safe active quota/deadline or reports bounded unavailable/expired; background waits; no expired/canceled chat attempt is dispatched during probe/wakeup, and unknown transmitted usage is not refunded as zero. |
+
 ## Security Refactor Readiness
 
 **Status:** `applicable`.

@@ -32,6 +32,15 @@ Use one shared synthetic quota domain with hard interactive work, request-heavy/
 | `RC-BSSV2-00604-07` | A vendor unexpectedly lowers a verified dimension during execution: BSS-V2-006 immediately persists the lower effective clamp and future admission obeys it; 429 without usable metadata leads to bounded conservative hold and one-reservation-per-probe, with another domain unaffected. |
 | `RC-BSSV2-00604-08` | Proven persistent lower provider ceiling versions through BSS-V2-005 and changes desired plan with a deduplicated wakeup; stale/conflicting higher observations cannot increase policy. Waiting old requests that remain within the new structural envelope resume by fair admission, while oversized batch corpus is explicitly invalidated for a versioned planner replan; none silently truncate or spin forever. |
 
+## Prospective service-class / user-waited closure (2026-10-16)
+
+Existing `RC-BSSV2-00604-02` already verifies hard interactive protection; do not open a second scheduler or demand a vendor-specific chatbot route. Add **end-to-end fake transport / isolated PostgreSQL** proof of the *interactive request lifecycle* alongside established background admission, including queue saturation, independent RPM/TPM/RPD/concurrency headroom, caller deadline/cancellation, provider clamp, plan change, restart and late ack. Preserve pg-boss as sole broker, one reservation per attempt, and consumer-owned HTTP/streaming UX; tests must not claim a guaranteed user-response SLA from an exhausted provider.
+
+| ID | PASS iff / direct negative |
+| --- | --- |
+| `RC-BSSV2-00604-09` | Authorized interactive work (representing synchronous chatbot usage) is never blocked behind a saturated background fairness queue when protected capacity actually fits; if provider quota/concurrency/clamp makes it unfit, a bounded non-success/expiry outcome occurs without a late outbound call. Concurrent background admission still respects reserve and fairness. |
+| `RC-BSSV2-00604-10` | Caller cancellation, timeout, restart, late delivery and mid-run 429 cannot resurrect an expired interactive work item, double-dispatch a reserved attempt, prematurely refund possibly transmitted usage or strand its consumer indefinitely; fake provider counters and persisted state prove each path. |
+
 ## Hard stop
 
 After PASS, BSS-V2-006 is shared infrastructure. No semantic/reconciliation/CES/chat product behavior here.
