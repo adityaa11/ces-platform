@@ -1860,90 +1860,52 @@ BSS-V2-005-04 exposes a monotonic active-plan revision/change seam. BSS-V2-006 w
 
 A plan increase/decrease must affect existing waiting work without requiring a new user request, worker restart, or unrelated completion event. A decrease never preempts running work.
 
-## 21.5 Semantic batching separates owned source from reference context
+## 21.5 Semantic batching consumes the single SEM-CUTOVER stepwise engine (amended 2026-10-15)
 
-A multi-batch document cannot assume source coverage alone preserves cross-unit meaning. The semantic batch plan distinguishes:
-
-```text
-owned source_slots
-  -> exactly one owning batch per eligible source unit
-  -> only these may produce source_results/candidates/evidence
-
-reference_context
-  -> optional bounded authorized context
-  -> may repeat across batches
-  -> never owns candidate/evidence output in the consuming batch
-```
-
-Reference context is deterministic, bounded, versioned, and part of the RequestResourceEnvelope. The provider payload keeps `source_slots` distinct from `reference_context`; canonical Semantic V1 truth schema remains unchanged.
-
-The current whole-document `buildSemanticSourcePacket()` seam must be refactored additively so deterministic source-unit enumeration exists below packet construction. Existing approved single-packet behavior remains a regression oracle.
-
-The initial context policy is structurally bounded and deterministic (for example an ordered adjacent context window defined by the workload profile). Do not claim arbitrary-document semantic equivalence. BSS-V2-004-03-06 must live-qualify the exact batch-aware request profile, including a cross-batch reference/condition fixture, before production batch execution.
-
-## 21.6 Revised semantic-consumer partition
+Each perceived RUN-003 document is eligible for a **deterministic batch plan**, not a new batch-specific semantic methodology. The sole executable `atlas.semantic.extract` is SEM-CUTOVER-007A (eight-stage stepwise v0.3.1 and exact `atlas.semantic.extract.stepwise_multimodal.relationship-envelope/v0.4.0`, one combined `semantic_proposal + relationship_proposals`). `IDSER-012-02-01` must reuse its existing `buildStepwiseSourcePacket()` → `buildStepwiseRelationshipEnvelopeRequest()`, strict parsing, SEM/REL qualification, composite and replay—not restore historical `buildSemanticSourcePacket()` or old single-packet byte parity. Earlier draft §15 preserves history only.
 
 ```text
-IDSER-012-02-01
-  owned/context semantic batch plan
-  + lower-level source-unit seam
-  + RequestResourceEnvelope
-  -> no provider work
-
-IDSER-012-02-02
-  concrete semantic ProviderProcessProfile
-  + WorkloadEnvelopeProfile
-  + fairnessScope = stable bundle ID
-  + publish/activate DesiredAdmissionProfile
-  -> no provider call
-
-BSS-V2-004-03-06
-  live-qualify exact batch-aware profile through BSS-V2-006
-  -> PASS required
-
-IDSER-012-02-03
-  register/admit/execute/stage production semantic batches
-
-IDSER-012-02-04
-  exact document aggregation
-  -> one Atlas extraction acceptance
-  -> semantic_ready
-  -> zero reconciliation work
+owned_source -> each eligible locator exactly one batch; only owner emits source_results
+context_only_reference -> repeat only within authorized bounded profile; no output ownership
+provisional/REL/accepted context -> trust/lineage/version checks per SEM-006/REL
+canonical / qualified deferred -> explicit exact source partition at Atlas acceptance
 ```
 
-The old generated IDSER-012-02-02 and -03 files were unimplemented planning artifacts and may be replaced/renamed.
+Context and meaningful visuals require current Atlas source/media/relationship authorization and an image-capable qualified route. Structural proximity is not proof that cross-batch title, legend, condition or dependent source retains semantic meaning. Prior provisional revisions loaded by ordinary SEM code are not yet shown as provider-facing stepwise packet context in the winner ledger; stop under a bounded SEM owner decision if batching needs that feature. No unexamined meaningful visual can become `non_fact`.
 
-## 21.7 Revised dependency shape
+The current whole-document stepwise builder needs an **orchestration-level** source-unit/relationship-preserving adaptation, not a second compiler or a mutated frozen prompt. Per-batch system/user/schema/image bytes and the exact versioned BSS-V2-005 estimator/accounting/output/safety policy determine the RequestResourceEnvelope; do not equate billing weight with TPM. No -02-01 provider work or materialization.
+
+## 21.6 Revised semantic-consumer partition (supersedes original unconditional outcome)
 
 ```text
-IDSER-012-01-01 -> IDSER-012-01-02 -> perceived
-
-BSS-V2-005-01 -> -02 -> -03 -> -04
-                                  |
-                                  v
-BSS-V2-006-01 -> -02 -> -03 -> -04
-                                  |
-                                  +--------------------------+
-                                                             |
-BSS-V2-004-03-04 -> BSS-V2-004-03-05                       |
-                         |                                   |
-                         +--------------+                    |
-                                        v                    v
-                                  IDSER-012-02-01 -> IDSER-012-02-02
-                                                          |
-                                                          v
-                                            BSS-V2-004-03-06 live PASS
-                                                          |
-                                                          v
-                                  IDSER-012-02-03 -> IDSER-012-02-04
-                                                          |
-                                                          v
-                                                    semantic_ready
-                                                          |
-                                                         STOP
+APPROVED PERC-RESET-008 / IDSER-012-01 -> perceived RUN-003 NormalizedDocument v1
+SEM-CUTOVER-007A -> sole stepwise source/relationship/extraction/composite
+BSS-V2-005 active plan + BSS-V2-006 actual durable reservation
+   |
+   v
+IDSER-012-02-01 -> deterministic stepwise owned/context/REL/deferred batch plan + envelopes
+IDSER-012-02-02 -> immutable process/workload + BSS-V2-005 DesiredAdmissionProfile
+BSS-V2-004-03-06 -> bounded live same-engine experiment CK PASS AND semantic meaning PASS
+IDSER-012-02-03 -> one reservation per actual attempt; shared SEM engine; fenced non-truth fragments
+IDSER-012-02-04 -> exact Atlas-authenticated canonical / partial_accepted / qualified_deferred
+                  -> explicit staged lifecycle/reconciliation policy OPEN-A before GO
 ```
 
-BSS-V2-004-03-07 remains superseded-before-implementation.
+BSS-V2-004-03-05's old consolidated CK PASS is retired as a future dependency; the original CHANGES_REQUIRED review remains historical. BSS-V2-004-03-06 qualifies exact SEM successor semantics, not the original old finalizer or a separate Anoman extraction implementation. An experiment CK PASS with semantic FAIL cannot unblock production semantic work.
+
+## 21.7 Current dependency shape and acceptance stop
+
+```text
+PERC-RESET-008 + approved IDSER-012-01 + SEM-007A qualified shared engine
+           + BSS-V2-005-04 / BSS-V2-006-04 genuine CK PASS
+                     -> IDSER-012-02-01 CK PASS
+                     -> IDSER-012-02-02 CK PASS
+                     -> BSS-V2-004-03-06 CK PASS + semantic PASS
+                     -> IDSER-012-02-03 CK PASS
+                     -> IDSER-012-02-04 BLOCKED until policy OPEN-A resolved
+```
+
+Accepted SEM-CUTOVER-007A-DEFERRED-ACCEPTANCE permits reconciliation on partially accepted canonical candidates and preserves full-canonical historical reconciliation. The earlier unconditional staged `semantic_ready` / zero-reconciliation plan is **not authorized** as an override. A qualified fully deferred result has no Semantic V1 or reconciliation effects and is a separate reviewable terminal state. A bounded Atlas/SEM policy decision must distinguish full/partial/deferred and historical flows before any `IDSER-012-02-04` GO. See §22 for the governing prospective owner/stop and test requirements. `BSS-V2-004-03-07` and the original IDSER-011 Mistral live series remain superseded-before-implementation.
 
 ---
 
