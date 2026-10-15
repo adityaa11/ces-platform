@@ -1,7 +1,8 @@
 # BSS-V2-006-01: Provider-work, reservation, quota-window and attempt foundation
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `BSS-V2-BATCH-06-01`
+- **GO checkpoint:** [BSS-V2-BATCH-06-01-go.md](../../../feedback/BSS-V2-BATCH-06-01-go.md)
 - **Dependencies:** BSS-V2-005-04 CK `PASS`; BSS-006; BSS-003 Bridge persistence/role boundary
 - **Parent:** [BSS-V2-006](BSS-V2-006-capability-admission-interactive-protection.md)
 - **Planning authority:** [Provider admission/staged semantic context](../../atlas-provider-admission-staged-semantic-pipeline-implementation-context.md) §§21.1-21.4
