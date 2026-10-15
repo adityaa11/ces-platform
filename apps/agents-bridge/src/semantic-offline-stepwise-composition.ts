@@ -8,8 +8,9 @@ import {
   type RelationshipPacketIdentity,
   type StepwiseSourceAssetIdentity,
 } from "@atlas/skills";
+import { type QualifiedStepwiseAcceptanceInput } from "@atlas/contracts";
 import { dispatchMultipartStructured, preflightMultimodalRequest, type MultipartChatMessage, type MultimodalRequestProfile, type ProviderProvenance } from "./provider-capabilities.js";
-import { createSemanticCompositeReplay, semanticCompositeHash, type QualifiedSemanticCompositePreparation, type SemanticCompositeWinner } from "./semantic-composite-replay.js";
+import { createSemanticCompositeReplay, qualifiedAcceptanceFromWinner, semanticCompositeHash, type QualifiedSemanticCompositePreparation, type SemanticCompositeWinner } from "./semantic-composite-replay.js";
 import { projectQualifiedStepwiseSemanticResult } from "./semantic-extraction-finalizer.js";
 import { prepareQualifiedStepwiseSemanticPreparation, projectStepwiseSlotsForRel03 } from "./semantic-relationship-interoperability-bridge.js";
 
@@ -42,7 +43,23 @@ export type OfflineStepwiseDependencies = Readonly<{
   readonly dispatch: (messages: readonly MultipartChatMessage[]) => Promise<unknown>;
 }>;
 
-function assertContext(context: OfflineStepwiseQualificationContext): void {
+/** The promoted provider-neutral engine input.  Neither adapter response nor
+ * provenance may be placed here by a caller; both arrive from `transport`. */
+export type StepwiseCompositionContext = Omit<OfflineStepwiseQualificationContext, "rawResponse" | "providerProvenance">;
+export type StepwiseCompositionDependencies = Readonly<{
+  readonly database: Database;
+  readonly idempotencyKey: string;
+  readonly lease: { readonly owner: string; readonly generation: number };
+  readonly routes: readonly MultimodalRequestProfile[];
+  readonly routeId: string;
+  readonly profileId: string;
+  readonly nowEpochMilliseconds: number;
+  readonly signal: AbortSignal;
+  readonly transport: (input: { readonly messages: readonly MultipartChatMessage[]; readonly schema: Readonly<Record<string, unknown>>; readonly signal: AbortSignal }) => Promise<{ readonly value: unknown; readonly provenance: ProviderProvenance }>;
+}>;
+export type StepwiseCompositionResult = Readonly<{ readonly winner: SemanticCompositeWinner; readonly acceptance: QualifiedStepwiseAcceptanceInput }>;
+
+function assertContext(context: StepwiseCompositionContext): void {
   const document = context.normalizedDocument;
   if (document.executionId === context.scope.executionId || document.artifactId !== context.scope.documentId || document.sourceSha256 !== context.scope.sourceSha256) throw new Error("OFFLINE_CONTEXT_BLOCKED: fixture execution or source scope is inconsistent.");
   if (context.relationshipScope.executionId !== document.executionId || context.relationshipScope.artifactId !== document.artifactId || context.relationshipScope.sourceSha256 !== document.sourceSha256) throw new Error("OFFLINE_CONTEXT_BLOCKED: relationship scope is not bound to the fixture source.");
@@ -52,12 +69,15 @@ function assertContext(context: OfflineStepwiseQualificationContext): void {
   }
 }
 
-/** Runs the single SEM-007 fake-provider path and stages only an immutable durable composite winner. */
-export async function runOfflineStepwiseComposition(context: OfflineStepwiseQualificationContext, dependencies: OfflineStepwiseDependencies): Promise<SemanticCompositeWinner> {
+/**
+ * Sole stepwise execution engine.  Offline tests and ordinary Bridge work both
+ * use this function; transports supply their own returned value/provenance.
+ */
+export async function runStepwiseSemanticComposition(context: StepwiseCompositionContext, dependencies: StepwiseCompositionDependencies): Promise<StepwiseCompositionResult> {
   assertContext(context);
   const replay = createSemanticCompositeReplay(dependencies.database);
   const existing = await replay.load(dependencies.idempotencyKey, context.scope.executionId);
-  if (existing) return existing;
+  if (existing) throw new Error("STEPWISE_REPLAY_REQUIRES_BOUND_DELIVERY: a persisted stepwise winner must be recovered through its bound delivery.");
 
   const packet = buildStepwiseSourcePacket({ document: context.normalizedDocument, assetIdentities: context.assetIdentities });
   const request = buildStepwiseRelationshipEnvelopeRequest(packet);
@@ -71,10 +91,10 @@ export async function runOfflineStepwiseComposition(context: OfflineStepwiseQual
     { role: "system", parts: [{ type: "text", sourcePartId: "system", text: request.systemPrompt }] },
     { role: "user", parts: [{ type: "text", sourcePartId: "source-specification", text: request.sourceSpecification }, ...imageParts] },
   ];
-  const preflight = preflightMultimodalRequest({ routes: dependencies.routes, routeId: dependencies.routeId, profileId: dependencies.profileId, messages, schema: request.responseSchema, signal: new AbortController().signal, deadlineEpochMilliseconds: dependencies.nowEpochMilliseconds + 1_000, nowEpochMilliseconds: dependencies.nowEpochMilliseconds });
+  const preflight = preflightMultimodalRequest({ routes: dependencies.routes, routeId: dependencies.routeId, profileId: dependencies.profileId, messages, schema: request.responseSchema, signal: dependencies.signal, deadlineEpochMilliseconds: dependencies.nowEpochMilliseconds + 1_000, nowEpochMilliseconds: dependencies.nowEpochMilliseconds });
   if ("code" in preflight.resourceEstimatorInput) throw new Error(preflight.resourceEstimatorInput.code);
-  const rawResponse = await dispatchMultipartStructured({ messages, capabilities: { image: dependencies.routes.find((route) => route.routeId === dependencies.routeId && route.profileId === dependencies.profileId)?.image, }, signal: new AbortController().signal }, dependencies.dispatch);
-  const relationshipQualification = { request, rawResponse, relationshipScope: context.relationshipScope, providerProvenance: context.providerProvenance, trustedPriorRevisions: context.trustedPriorRevisions } as const;
+  const response = await dependencies.transport({ messages, schema: request.responseSchema, signal: dependencies.signal });
+  const relationshipQualification = { request, rawResponse: response.value, relationshipScope: context.relationshipScope, providerProvenance: response.provenance, trustedPriorRevisions: context.trustedPriorRevisions } as const;
   const qualified = prepareQualifiedStepwiseSemanticPreparation(relationshipQualification);
   const sourceSlots = projectStepwiseSlotsForRel03(request).map((slot) => {
     const original = request.sourceSlots.find((candidate) => candidate.slot === slot.slot);
@@ -85,5 +105,24 @@ export async function runOfflineStepwiseComposition(context: OfflineStepwiseQual
   verifyQualifiedStepwiseSemanticPreparation({ accounting, request, providerProposal: qualified.parsed.semanticProposal });
   const preparation: QualifiedSemanticCompositePreparation = { accounting, request, providerProposal: qualified.parsed.semanticProposal, canonicalResult: projection.canonicalResult, relationshipQualification };
   const stage = { idempotencyKey: dependencies.idempotencyKey, executionId: context.scope.executionId, lease: dependencies.lease, preparation };
-  return replay.stage({ ...stage, compositeHash: semanticCompositeHash(stage) });
+  const bound = await replay.stageAndBindDelivery({ ...stage, compositeHash: semanticCompositeHash(stage) });
+  return { winner: bound.winner, acceptance: qualifiedAcceptanceFromWinner(bound.winner) };
+}
+
+/** Offline qualification remains a transport fixture only; business execution
+ * is delegated to the promoted common engine above. */
+export async function runOfflineStepwiseComposition(context: OfflineStepwiseQualificationContext, dependencies: OfflineStepwiseDependencies): Promise<StepwiseCompositionResult> {
+  assertContext(context);
+  const existing = await createSemanticCompositeReplay(dependencies.database).load(dependencies.idempotencyKey, context.scope.executionId);
+  if (existing) return { winner: existing, acceptance: qualifiedAcceptanceFromWinner(existing) };
+  const signal = new AbortController().signal;
+  const result = await runStepwiseSemanticComposition(context, {
+    ...dependencies,
+    signal,
+    transport: async ({ messages, signal: transportSignal }) => ({
+      value: await dispatchMultipartStructured({ messages, capabilities: { image: dependencies.routes.find((route) => route.routeId === dependencies.routeId && route.profileId === dependencies.profileId)?.image }, signal: transportSignal }, dependencies.dispatch),
+      provenance: context.providerProvenance,
+    }),
+  });
+  return result;
 }

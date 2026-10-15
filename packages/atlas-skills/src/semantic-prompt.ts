@@ -81,7 +81,12 @@ const outputRules = `- Return valid JSON only.
 - Do not emit markdown, code fences, commentary, or fields outside the supplied schema.`;
 
 /** No provider choice is accepted: this compiles Atlas semantic instruction only. */
-export function compileExtractionPrompt(profile: string = semanticExtractionProfileId, proposalSchema: Schema = atlasProviderExtractionProposalV1JsonSchema as Schema) {
+/**
+ * Compile an explicitly selected extraction profile.  The historical
+ * prompt-003 profile remains available for archival regression fixtures, but
+ * callers must name it: no runtime surface may silently select it.
+ */
+export function compileExtractionPrompt(profile: string, proposalSchema: Schema = atlasProviderExtractionProposalV1JsonSchema as Schema) {
   if (profile === stepwiseMultimodalSemanticExtractionProfileId) return compileStepwiseMultimodalExtractionPrompt(proposalSchema);
   if (profile !== semanticExtractionProfileId) throw new Error("Unknown Atlas semantic extraction profile.");
   const sourceResults = property(proposalSchema, "source_results");

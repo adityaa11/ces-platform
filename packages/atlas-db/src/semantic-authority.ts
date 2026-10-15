@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { parseNormalizedDocument, parseQualifiedStepwiseAcceptance, parseSemanticExtractionContext, parseSemanticReconciliationContext, semanticContractVersion, type QualifiedStepwiseAcceptanceInput, type SemanticSkillId } from "@atlas/contracts";
-import type { AuthorizedSemanticContext, QualifiedStepwiseAcceptanceHandler, SemanticAcceptanceHandler, SemanticAuthority, SemanticExecutionRequest, SemanticReconciliationSelectionPort } from "@atlas/core";
+import { createDerivedImageManifestSha256, type AuthorizedSemanticContext, type DerivedImageAssetReader, type DerivedImageGrantAuthority, type DerivedImageGrantScope, type DerivedImageManifest, type QualifiedStepwiseAcceptanceHandler, type SemanticAcceptanceHandler, type SemanticAuthority, type SemanticExecutionRequest, type SemanticReconciliationSelectionPort } from "@atlas/core";
+import type { DerivedAssetStore } from "@atlas/document-store";
 
 type Row = Record<string, unknown>;
 type Sql = { unsafe(query: string, parameters?: readonly unknown[]): Promise<readonly Row[]>; begin<T>(work: (transaction: Sql) => Promise<T>): Promise<T> };
@@ -14,9 +15,60 @@ const digest = canonicalSemanticFingerprint;
 const stageSkill = (stage: unknown): SemanticSkillId => stage === "extraction" ? "atlas.semantic.extract" : "atlas.semantic.reconcile";
 const json = (value: unknown) => typeof value === "string" ? JSON.parse(value) : value;
 
+/**
+ * Atlas-only service authority for ephemeral semantic media reads.  It uses
+ * the accepted derived manifest as the one source of asset truth and never
+ * exposes a storage key to Bridge.
+ */
+export class PostgresSemanticDerivedImageAuthority implements DerivedImageGrantAuthority, DerivedImageAssetReader {
+  constructor(private readonly sql: Sql, private readonly store: DerivedAssetStore) {}
+
+  async assertAuthorized(scope: DerivedImageGrantScope): Promise<void> {
+    if (scope.authorization.kind !== "semantic_execution") throw new Error("Derived media authority requires a semantic execution.");
+    const rows = await this.sql.unsafe(`SELECT 1
+      FROM atlas.semantic_execution semantic
+      JOIN atlas.extraction_bundle_document member
+        ON member.bundle_id=semantic.bundle_id AND member.document_id=semantic.document_id
+        AND member.semantic_extraction_execution_id=semantic.id
+      JOIN atlas.document_perception_execution perception ON perception.id=member.perception_execution_id
+      JOIN atlas.document_perception_derived_manifest manifest
+        ON manifest.execution_id=perception.id AND manifest.artifact_id=semantic.document_id
+      WHERE semantic.id=$1
+        AND semantic.id=$2
+        AND semantic.project_id=$3 AND semantic.workspace_id=$4
+        AND semantic.document_id=$5
+        AND semantic.lifecycle IN ('queued','running')
+        AND perception.id=$6
+        AND manifest.asset_ref=$7 AND manifest.source_sha256=$8 AND manifest.profile=$9
+        AND manifest.page_number=$10 AND manifest.locator_id=$11 AND manifest.media_type=$12
+        AND manifest.sha256=$13 AND manifest.width=$14 AND manifest.height=$15 AND manifest.byte_size=$16
+        AND manifest.accepted_at IS NOT NULL`, [scope.authorization.executionId, scope.authorization.executionId, scope.projectId, scope.workspaceId, scope.documentId, scope.perceptionExecutionId, scope.assetRef, scope.sourceSha256, scope.profile, scope.pageNumber, scope.locatorId, scope.mediaType, scope.imageSha256, scope.width, scope.height, scope.byteLength]);
+    if (rows.length !== 1) throw new Error("Derived media grant is stale or unauthorized.");
+  }
+
+  async read(scope: DerivedImageGrantScope, signal: AbortSignal): Promise<{ readonly manifest: DerivedImageManifest; readonly bytes: Uint8Array }> {
+    if (signal.aborted) throw new Error("Derived media read was cancelled.");
+    await this.assertAuthorized(scope);
+    const rows = await this.sql.unsafe(`SELECT manifest.asset_ref, manifest.source_sha256, manifest.profile, manifest.page_number, manifest.locator_id, manifest.media_type, manifest.width, manifest.height, manifest.byte_size, manifest.sha256
+      FROM atlas.document_perception_derived_manifest manifest
+      WHERE manifest.execution_id=$1 AND manifest.artifact_id=$2 AND manifest.asset_ref=$3
+        AND manifest.source_sha256=$4 AND manifest.profile=$5 AND manifest.page_number=$6
+        AND manifest.locator_id=$7 AND manifest.media_type=$8 AND manifest.sha256=$9
+        AND manifest.width=$10 AND manifest.height=$11 AND manifest.byte_size=$12 AND manifest.accepted_at IS NOT NULL`, [scope.perceptionExecutionId, scope.documentId, scope.assetRef, scope.sourceSha256, scope.profile, scope.pageNumber, scope.locatorId, scope.mediaType, scope.imageSha256, scope.width, scope.height, scope.byteLength]);
+    if (rows.length !== 1 || signal.aborted) throw new Error("Derived media is unavailable.");
+    const row = rows[0];
+    const identity = { projectId: scope.projectId, workspaceId: scope.workspaceId, documentId: scope.documentId, perceptionExecutionId: scope.perceptionExecutionId, sourceSha256: String(row.source_sha256), profile: String(row.profile), pageNumber: Number(row.page_number), locatorId: String(row.locator_id), assetRef: String(row.asset_ref), mediaType: "image/png" as const, width: Number(row.width), height: Number(row.height), byteLength: Number(row.byte_size), sha256: String(row.sha256) };
+    const manifest: DerivedImageManifest = { ...identity, manifestSha256: createDerivedImageManifestSha256(identity) };
+    if (manifest.manifestSha256 !== scope.manifestSha256) throw new Error("Derived media manifest binding is invalid.");
+    const bytes = await this.store.readDerived(manifest.assetRef);
+    if (signal.aborted) throw new Error("Derived media read was cancelled.");
+    return { manifest, bytes };
+  }
+}
+
 /** Atlas-only SQL adapter. Bridge receives contexts, never this connection. */
 export class PostgresSemanticAuthority implements SemanticAuthority {
-  constructor(private readonly sql: Sql, private readonly reconciliationSelection?: SemanticReconciliationSelectionPort) {}
+  constructor(private readonly sql: Sql, private readonly reconciliationSelection?: SemanticReconciliationSelectionPort, private readonly stepwiseMedia?: { readonly serviceIdentity: string; issue(scope: DerivedImageGrantScope): Promise<{ readonly grant: string; readonly replayFenceId: string; readonly expiresAt: number }> }) {}
 
   async redeem(request: SemanticExecutionRequest): Promise<AuthorizedSemanticContext> {
     return this.sql.begin(async (sql) => {
@@ -39,7 +91,27 @@ export class PostgresSemanticAuthority implements SemanticAuthority {
     if (!cached.length) throw new Error("Normalized document is unavailable.");
     const normalized = parseNormalizedDocument(json(cached[0].normalized_document));
     if (normalized.executionId !== cached[0].perception_execution_id || normalized.artifactId !== scope.documentId || normalized.sourceSha256 !== row.source_sha256) throw new Error("Normalized document binding failed.");
-    return parseSemanticExtractionContext({ version: semanticContractVersion, skill: "atlas.semantic.extract", scope, normalizedDocument: normalized });
+    const referencedAssets = new Set(normalized.pages.flatMap((page) => page.visualRegions.map((region) => region.assetRef).filter((asset): asset is string => Boolean(asset))));
+    // This legacy-shaped projection is retained only for direct historical
+    // authority tests that do not compose the media capability. The production
+    // internal plugin always supplies `stepwiseMedia`, including text-only
+    // executions, so it cannot select the old worker path.
+    if (!this.stepwiseMedia && referencedAssets.size === 0) return parseSemanticExtractionContext({ version: semanticContractVersion, skill: "atlas.semantic.extract", scope, normalizedDocument: normalized });
+    if (referencedAssets.size && !this.stepwiseMedia) throw new Error("Stepwise semantic media authority is unavailable.");
+    const manifests = referencedAssets.size
+      ? await sql.unsafe("SELECT asset_ref, source_sha256, profile, page_number, locator_id, media_type, width, height, byte_size, sha256 FROM atlas.document_perception_derived_manifest WHERE execution_id=$1 AND artifact_id=$2 AND accepted_at IS NOT NULL AND asset_ref = ANY($3::text[]) FOR UPDATE", [cached[0].perception_execution_id, scope.documentId, [...referencedAssets]])
+      : [];
+    if (manifests.length !== referencedAssets.size) throw new Error("Accepted derived media is unavailable.");
+    const assets = await Promise.all(manifests.map(async (manifest) => {
+      if (manifest.media_type !== "image/png" || manifest.source_sha256 !== row.source_sha256) throw new Error("Accepted derived media binding failed.");
+      const identity = { projectId: scope.projectId, workspaceId: scope.workspaceId, documentId: scope.documentId, perceptionExecutionId: String(cached[0].perception_execution_id), sourceSha256: String(manifest.source_sha256), profile: String(manifest.profile), pageNumber: Number(manifest.page_number), locatorId: String(manifest.locator_id), assetRef: String(manifest.asset_ref), mediaType: "image/png" as const, width: Number(manifest.width), height: Number(manifest.height), byteLength: Number(manifest.byte_size), sha256: String(manifest.sha256) };
+      const manifestSha256 = createDerivedImageManifestSha256(identity);
+      const { sha256: imageSha256, ...grantIdentity } = identity;
+      const grantScope: DerivedImageGrantScope = { serviceIdentity: this.stepwiseMedia!.serviceIdentity, ...grantIdentity, manifestSha256, imageSha256, authorization: { kind: "semantic_execution", executionId: scope.executionId } };
+      const media = await this.stepwiseMedia!.issue(grantScope);
+      return { assetRef: identity.assetRef, sourceSha256: identity.sourceSha256, profile: identity.profile, pageNumber: identity.pageNumber, locatorId: identity.locatorId, mimeType: identity.mediaType, width: identity.width, height: identity.height, byteLength: identity.byteLength, sha256: identity.sha256, manifestSha256, media: { ...media, scope: grantScope } };
+    }));
+    return parseSemanticExtractionContext({ version: semanticContractVersion, skill: "atlas.semantic.extract", scope, normalizedDocument: normalized, stepwise: { profileId: "atlas.semantic.extract.stepwise_multimodal.relationship-envelope/v0.4.0", perceptionExecutionId: String(cached[0].perception_execution_id), assets } });
   }
 
   private async reconciliationContext(sql: Sql, row: Row, scope: AuthorizedSemanticContext["scope"]): Promise<unknown> {

@@ -17,10 +17,10 @@ export type DerivedImageGrantAuthorization =
  */
 export type DerivedImageGrantScope = {
   readonly serviceIdentity: string;
-  readonly tenantId: string;
   readonly projectId: string;
+  readonly workspaceId: string;
   readonly documentId: string;
-  readonly documentVersion: string;
+  readonly perceptionExecutionId: string;
   readonly sourceSha256: string;
   readonly profile: string;
   readonly pageNumber: number;
@@ -28,6 +28,10 @@ export type DerivedImageGrantScope = {
   readonly assetRef: string;
   readonly manifestSha256: string;
   readonly mediaType: "image/png";
+  readonly imageSha256: string;
+  readonly width: number;
+  readonly height: number;
+  readonly byteLength: number;
   readonly authorization: DerivedImageGrantAuthorization;
 };
 
@@ -75,18 +79,20 @@ function parseAuthorization(value: unknown): DerivedImageGrantAuthorization {
 
 function parseScope(value: unknown): DerivedImageGrantScope {
   const candidate = object(value, "Derived image grant scope is invalid.");
-  exactKeys(candidate, ["serviceIdentity", "tenantId", "projectId", "documentId", "documentVersion", "sourceSha256", "profile", "pageNumber", "locatorId", "assetRef", "manifestSha256", "mediaType", "authorization"], "Derived image grant scope is invalid.");
+  exactKeys(candidate, ["serviceIdentity", "projectId", "workspaceId", "documentId", "perceptionExecutionId", "sourceSha256", "profile", "pageNumber", "locatorId", "assetRef", "manifestSha256", "mediaType", "imageSha256", "width", "height", "byteLength", "authorization"], "Derived image grant scope is invalid.");
   if (typeof candidate.serviceIdentity !== "string" || !serviceIdentity.test(candidate.serviceIdentity)) throw new Error("Derived image grant service identity is invalid.");
   if (typeof candidate.sourceSha256 !== "string" || !sha256.test(candidate.sourceSha256) || typeof candidate.manifestSha256 !== "string" || !sha256.test(candidate.manifestSha256)) throw new Error("Derived image grant hash identity is invalid.");
   if (typeof candidate.assetRef !== "string" || !assetRef.test(candidate.assetRef)) throw new Error("Derived image grant asset reference is invalid.");
   if (candidate.mediaType !== "image/png") throw new Error("Derived image grant media type is unsupported.");
+  if (typeof candidate.imageSha256 !== "string" || !sha256.test(candidate.imageSha256)) throw new Error("Derived image grant image hash is invalid.");
   if (typeof candidate.pageNumber !== "number" || !Number.isInteger(candidate.pageNumber) || candidate.pageNumber < 1) throw new Error("Derived image grant page identity is invalid.");
+  if (typeof candidate.width !== "number" || !Number.isInteger(candidate.width) || candidate.width < 1 || typeof candidate.height !== "number" || !Number.isInteger(candidate.height) || candidate.height < 1 || typeof candidate.byteLength !== "number" || !Number.isInteger(candidate.byteLength) || candidate.byteLength < 1) throw new Error("Derived image grant image dimensions are invalid.");
   return {
     serviceIdentity: candidate.serviceIdentity,
-    tenantId: requiredIdentifier(candidate.tenantId, "Derived image grant tenant identity is invalid."),
     projectId: requiredIdentifier(candidate.projectId, "Derived image grant project identity is invalid."),
+    workspaceId: requiredIdentifier(candidate.workspaceId, "Derived image grant workspace identity is invalid."),
     documentId: requiredIdentifier(candidate.documentId, "Derived image grant document identity is invalid."),
-    documentVersion: requiredIdentifier(candidate.documentVersion, "Derived image grant document version is invalid."),
+    perceptionExecutionId: requiredIdentifier(candidate.perceptionExecutionId, "Derived image grant perception execution identity is invalid."),
     sourceSha256: candidate.sourceSha256,
     profile: requiredIdentifier(candidate.profile, "Derived image grant profile identity is invalid."),
     pageNumber: candidate.pageNumber,
@@ -94,6 +100,10 @@ function parseScope(value: unknown): DerivedImageGrantScope {
     assetRef: candidate.assetRef,
     manifestSha256: candidate.manifestSha256,
     mediaType: candidate.mediaType,
+    imageSha256: candidate.imageSha256,
+    width: candidate.width,
+    height: candidate.height,
+    byteLength: candidate.byteLength,
     authorization: parseAuthorization(candidate.authorization),
   };
 }

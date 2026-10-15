@@ -72,7 +72,7 @@ const proveZodSourceRendering = (proposalSchema: JsonObject) => {
 const providerPath = (schema: JsonObject, ...keys: string[]) => keys.reduce<unknown>((value, key) => (value as JsonObject)[key], schema);
 
 test("production prompt has the frozen PROMPT-003 structure and static policy", async () => {
-  const first = compileExtractionPrompt(); const second = compileExtractionPrompt();
+  const first = compileExtractionPrompt(semanticExtractionProfileId); const second = compileExtractionPrompt(semanticExtractionProfileId);
   assert.equal(first.profile, semanticExtractionProfileId); assert.equal(first.prompt, second.prompt); assert.deepEqual(first.providerSchema, second.providerSchema); assert.deepEqual(first.provenance, second.provenance);
   const qualifiedPrompt = await readFile(resolve(import.meta.dirname, "../../../scripts/sem-anm-prompt003/generated/system-prompt.txt"), "utf8");
   const qualifiedSections = extractSections(qualifiedPrompt);
@@ -126,7 +126,7 @@ test("compiler keeps prompt and portable schema coherent for the supplied schema
 });
 
 test("artifact identity binds authority, compiler, frozen policy, schema, and prompt", () => {
-  const output = compileExtractionPrompt(); const { canonicalAuthority, compiler, crossFieldPolicySha256, providerSchemaSha256, promptSha256, artifactSha256 } = output.provenance;
+  const output = compileExtractionPrompt(semanticExtractionProfileId); const { canonicalAuthority, compiler, crossFieldPolicySha256, providerSchemaSha256, promptSha256, artifactSha256 } = output.provenance;
   assert.equal(artifactSha256, sha256([canonicalAuthority.sha256, compiler.sha256, crossFieldPolicySha256, providerSchemaSha256, promptSha256].join("\n"))); assert.equal(output.provenance.canonicalAuthority.id, canonicalSemanticV1AuthorityId);
 });
 
@@ -161,12 +161,12 @@ test("explicit stepwise_multimodal profile compiles the frozen eight stages with
 });
 
 test("legacy prompt-003/v1 remains byte-identical and isolated before, during, and after stepwise compilation", async () => {
-  const before = compileExtractionPrompt();
+  const before = compileExtractionPrompt(semanticExtractionProfileId);
   const [legacyDuring, stepwiseDuring] = await Promise.all([
-    Promise.resolve().then(() => compileExtractionPrompt()),
+    Promise.resolve().then(() => compileExtractionPrompt(semanticExtractionProfileId)),
     Promise.resolve().then(() => compileExtractionPrompt(stepwiseMultimodalSemanticExtractionProfileId)),
   ]);
-  const after = compileExtractionPrompt();
+  const after = compileExtractionPrompt(semanticExtractionProfileId);
   assert.equal(before.profile, semanticExtractionProfileId);
   assert.equal(before.prompt, after.prompt);
   assert.equal(before.prompt, legacyDuring.prompt);
@@ -174,7 +174,7 @@ test("legacy prompt-003/v1 remains byte-identical and isolated before, during, a
   assert.equal(sha256(before.prompt), "a79ac1174807a635f6a8820ea6cc8073457fba7534a61b55014cde76fa287458");
   assert.equal(stepwiseDuring.profile, stepwiseMultimodalSemanticExtractionProfileId);
   assert.notEqual(stepwiseDuring.prompt, before.prompt);
-  assert.equal(buildSemanticSourcePacket(normalizedSourceFixture()).semanticProfile, semanticExtractionProfileId);
+  assert.equal(buildSemanticSourcePacket(normalizedSourceFixture(), semanticExtractionProfileId).semanticProfile, semanticExtractionProfileId);
 });
 
 test("portable provider schema is weaker than canonical local Zod for cross-field rules", () => {
@@ -191,8 +191,8 @@ const normalizedSourceFixture = () => ({ version: "v1", executionId: "perception
 ] }) as const;
 
 test("normalized documents build deterministic complete provider-neutral source packets", () => {
-  const first = buildSemanticSourcePacket(normalizedSourceFixture());
-  const second = buildSemanticSourcePacket(normalizedSourceFixture());
+  const first = buildSemanticSourcePacket(normalizedSourceFixture(), semanticExtractionProfileId);
+  const second = buildSemanticSourcePacket(normalizedSourceFixture(), semanticExtractionProfileId);
   assert.deepEqual(first, second);
   assert.deepEqual(first.sourceSlotMap.map(({ slot, pageNumber, locatorType, locatorId }) => [slot, pageNumber, locatorType, locatorId]), [
     ["slot-000001", 1, "text_block", "text-a"], ["slot-000002", 1, "table", "table-a"], ["slot-000003", 1, "visual_region", "figure-a"], ["slot-000004", 2, "text_block", "text-b"], ["slot-000005", 2, "table", "table-b"], ["slot-000006", 2, "visual_region", "figure"],
@@ -210,13 +210,13 @@ test("normalized documents build deterministic complete provider-neutral source 
 test("source packets fail closed for duplicate, overflow, and byte-overflow source material", () => {
   const duplicate = normalizedSourceFixture() as { pages: { textBlocks: { id: string; text: string }[]; tables: unknown[]; visualRegions: unknown[]; number: number }[] };
   duplicate.pages[0]!.textBlocks.push({ id: "text-b", text: "duplicate" });
-  assert.throws(() => buildSemanticSourcePacket(duplicate), /Duplicate normalized source locator/);
+  assert.throws(() => buildSemanticSourcePacket(duplicate, semanticExtractionProfileId), /Duplicate normalized source locator/);
   const overflow = normalizedSourceFixture() as { pages: { textBlocks: { id: string; text: string }[] }[] };
   overflow.pages[0]!.textBlocks = Array.from({ length: semanticSourcePacketLimits.maxSourceUnits + 1 }, (_, index) => ({ id: `source-${index}`, text: "x" }));
-  assert.throws(() => buildSemanticSourcePacket(overflow), /exceeds 10000 source units/);
+  assert.throws(() => buildSemanticSourcePacket(overflow, semanticExtractionProfileId), /exceeds 10000 source units/);
   const bytes = normalizedSourceFixture() as { pages: { textBlocks: { id: string; text: string }[] }[] };
   bytes.pages[0]!.textBlocks = [{ id: "large", text: "x".repeat(semanticSourcePacketLimits.maxUserPromptBytes) }];
-  assert.throws(() => buildSemanticSourcePacket(bytes), /UTF-8 bytes/);
+  assert.throws(() => buildSemanticSourcePacket(bytes, semanticExtractionProfileId), /UTF-8 bytes/);
   const visualBoundaryCount = 1_000;
   const visualPayloadBytes = (content: string) => Buffer.byteLength(JSON.stringify({ version: "v1", source_slots: Array.from({ length: visualBoundaryCount }, (_, index) => ({ slot: `slot-${String(index + 1).padStart(6, "0")}`, content })) }), "utf8");
   const trimmedVisualContent = "x".repeat(Math.floor((semanticSourcePacketLimits.maxUserPromptBytes - visualPayloadBytes("")) / visualBoundaryCount));
@@ -224,7 +224,7 @@ test("source packets fail closed for duplicate, overflow, and byte-overflow sour
   assert.ok(visualPayloadBytes(trimmedVisualContent) <= semanticSourcePacketLimits.maxUserPromptBytes);
   assert.ok(visualPayloadBytes(visualBoundaryLabel) > semanticSourcePacketLimits.maxUserPromptBytes);
   const visualBoundary = { ...normalizedSourceFixture(), pages: [{ number: 1, textBlocks: [], tables: [], visualRegions: Array.from({ length: visualBoundaryCount }, (_, index) => ({ id: `visual-boundary-${index}`, label: visualBoundaryLabel })) }] };
-  assert.throws(() => buildSemanticSourcePacket(visualBoundary), /UTF-8 bytes/);
+  assert.throws(() => buildSemanticSourcePacket(visualBoundary, semanticExtractionProfileId), /UTF-8 bytes/);
 });
 
 test("source packet builder has no provider, classification, finalization, or persistence seam", async () => {
@@ -251,10 +251,10 @@ const authorizedMultimodalFixture = () => {
 
 test("authorized multimodal packets are deterministic, unhydrated, and preserve pending media", () => {
   const input = authorizedMultimodalFixture();
-  const legacyBefore = buildSemanticSourcePacket(input.document);
+  const legacyBefore = buildSemanticSourcePacket(input.document, semanticExtractionProfileId);
   const first = buildUnhydratedMultimodalSourcePacket(input);
   const second = buildUnhydratedMultimodalSourcePacket(input);
-  const legacyAfter = buildSemanticSourcePacket(input.document);
+  const legacyAfter = buildSemanticSourcePacket(input.document, semanticExtractionProfileId);
   assert.deepEqual(first, second);
   assert.equal(first.version, unhydratedMultimodalSourcePacketVersion);
   assert.equal(first.semanticProfile, stepwiseMultimodalSemanticExtractionProfileId);
@@ -342,7 +342,7 @@ test("v0.3.1 treats adversarial source content as evidence without mutating fixe
   const before = semanticSourceInputV031StageAuthorityMap.flatMap((stage) => stage.sections).map(({ id, authority, text, renderedSha256 }) => ({ id, authority, text, renderedSha256 }));
   const source = normalizedSourceFixture() as { pages: { number: number; textBlocks: { id: string; text: string }[]; tables: { id: string; content: string }[]; visualRegions: { id: string; label?: string }[] }[] };
   source.pages[0]!.textBlocks.push({ id: "adversarial-instructions", text: adversarialSource });
-  const packet = buildSemanticSourcePacket(source);
+  const packet = buildSemanticSourcePacket(source, semanticExtractionProfileId);
   const payload = JSON.parse(packet.userPrompt) as { source_slots: readonly { content: string }[] };
   const after = semanticSourceInputV031StageAuthorityMap.flatMap((stage) => stage.sections).map(({ id, authority, text, renderedSha256 }) => ({ id, authority, text, renderedSha256 }));
   assert.ok(payload.source_slots.some((slot) => slot.content === adversarialSource));

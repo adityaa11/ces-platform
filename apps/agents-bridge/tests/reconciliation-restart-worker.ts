@@ -55,9 +55,13 @@ await worker.start();
 console.log("COMPOSE_RECONCILIATION_WORKER_READY");
 
 let stopping = false;
-process.once("SIGTERM", async () => {
+const stop = async () => {
   if (stopping) return;
   stopping = true;
   await worker.stop();
   process.exit(0);
+};
+process.once("SIGTERM", stop);
+process.once("message", (message) => {
+  if (message === "shutdown") void stop();
 });

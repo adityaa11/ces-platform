@@ -18,6 +18,7 @@ const resultPath = "/internal/perception/result";
 const perceptionFailurePath = "/internal/perception/failure";
 const derivedAssetPath = "/internal/perception/derived";
 const semanticContextPath = "/internal/semantic/context";
+const semanticMediaPath = "/internal/semantic/derived-media";
 const semanticResultPath = "/internal/semantic/result";
 const semanticQualifiedResultPath = "/internal/semantic/qualified-result";
 const semanticFailurePath = "/internal/semantic/failure";
@@ -105,7 +106,11 @@ export function createAtlasPerceptionInternalPlugin(): Plugin {
       const sources = new documentStore.LocalFilesystemDocumentStore(process.env.ATLAS_DOCUMENT_STORE_ROOT ?? resolve(process.cwd(), ".atlas-data"));
       const authority = new database.PostgresPerceptionAuthority(sql, new core.PerceptionSourceGrantIssuer(credential), atlasSemanticQueue, process.env.ATLAS_D1_PERCEPTION_CAPABILITY_IDENTITY, perceptionQueue, sources);
       const routes = core.createPerceptionInternalRoutes({ authority, sources, serviceCredential: credential, maximumSourceBytes: sourceLimit, maximumResultBytes: resultLimit });
-      const semanticAuthority = new semanticDatabase.PostgresSemanticAuthority(sql, new reconciliationSelector.PostgresReconciliationSelector(sql));
+      const semanticMediaIdentity = "atlas.semantic-bridge/v1";
+      const semanticMediaAuthority = new semanticDatabase.PostgresSemanticDerivedImageAuthority(sql, sources);
+      const semanticMediaGrants = new core.DerivedImageGrantIssuer(credential, semanticMediaIdentity);
+      const semanticMediaHydrator = new core.EphemeralDerivedImageHydrator(semanticMediaGrants, semanticMediaAuthority, semanticMediaAuthority);
+      const semanticAuthority = new semanticDatabase.PostgresSemanticAuthority(sql, new reconciliationSelector.PostgresReconciliationSelector(sql), { serviceIdentity: semanticMediaIdentity, issue: (scope) => semanticMediaGrants.issue(scope, semanticMediaAuthority) });
       const extractionHandler = new extractionAcceptance.PostgresExtractionAcceptanceHandler(atlasSemanticQueue);
       const reconciliationHandler = new reconciliationAcceptance.PostgresReconciliationAcceptanceHandler({ authority, queue: perceptionQueue });
       const semanticRoutes = core.createSemanticInternalRoutes({ authority: semanticAuthority, serviceCredential: credential, qualifiedHandler: extractionHandler, handler: { accept: async (input, transaction) => {
@@ -124,7 +129,7 @@ export function createAtlasPerceptionInternalPlugin(): Plugin {
           sendJson(response, 200, { observations: semanticResultObservations });
           return;
         }
-        if (pathname !== sourcePath && pathname !== resultPath && pathname !== perceptionFailurePath && pathname !== derivedAssetPath && pathname !== semanticContextPath && pathname !== semanticResultPath && pathname !== semanticQualifiedResultPath && pathname !== semanticFailurePath) return next();
+        if (pathname !== sourcePath && pathname !== resultPath && pathname !== perceptionFailurePath && pathname !== derivedAssetPath && pathname !== semanticContextPath && pathname !== semanticMediaPath && pathname !== semanticResultPath && pathname !== semanticQualifiedResultPath && pathname !== semanticFailurePath) return next();
         if (request.method !== "POST") { response.statusCode = 405; response.setHeader("allow", "POST"); response.end(); return; }
         try {
           if (pathname === derivedAssetPath) {
@@ -139,6 +144,17 @@ export function createAtlasPerceptionInternalPlugin(): Plugin {
           const body = await readJson(request, request.headers["content-length"], pathname === sourcePath || pathname === semanticContextPath || pathname === semanticFailurePath ? requestLimit : resultLimit + requestLimit);
           const credentialValue = bridgeCredential(request);
           if (pathname === semanticContextPath) { const result = await semanticRoutes.context(credentialValue, body); sendJson(response, result.status, result.body); return; }
+          if (pathname === semanticMediaPath) {
+            if (credentialValue !== credential) { response.statusCode = 401; response.end(); return; }
+            const image = await semanticMediaHydrator.hydrate(body, new AbortController().signal);
+            response.statusCode = 200;
+            response.setHeader("content-type", image.mediaType);
+            response.setHeader("content-length", image.byteLength);
+            response.setHeader("cache-control", "no-store");
+            response.setHeader("x-content-type-options", "nosniff");
+            response.end(Buffer.from(image.bytes));
+            return;
+          }
           if (pathname === semanticResultPath) {
             const result = await semanticRoutes.deliver(credentialValue, body);
             if (result.status === 204) {

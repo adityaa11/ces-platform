@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { parseSemanticExtractionResult, type SemanticExtractionResult } from "@atlas/contracts";
+import { parseSemanticExtractionResult, semanticContractVersion, type QualifiedStepwiseAcceptanceInput, type SemanticExtractionResult } from "@atlas/contracts";
 import {
   provisionalSemanticCompositeAccountingVersion,
   prepareQualifiedStepwiseSemanticCompositeAccounting,
@@ -68,6 +68,8 @@ type ValidComposite = Readonly<{
   readonly compositeHash: string;
   readonly revisionSetHash: string;
   readonly sidecarHash: string;
+  readonly providerProvenance: Record<string, unknown>;
+  readonly deliveryBindingHash: string | null;
 }>;
 export type SemanticCompositeWinner = ValidComposite;
 
@@ -107,15 +109,22 @@ function derive(input: Omit<SemanticCompositeStageInput, "compositeHash">): Omit
   const profile = { id: accounting.semanticProfile, hash: accounting.semanticProfileSha256 };
   const requestIdentity = { id: accounting.requestSha256, hash: accounting.requestSha256 };
   const provisionalRelationshipRevisions = accounting.relationshipDependencies as readonly Record<string, unknown>[];
-  const provisionalSidecar = persistableAccounting(accounting);
-  return { idempotencyKey: input.idempotencyKey, executionId: input.executionId, lease: input.lease, sourceSnapshot, profile, request: requestIdentity, canonicalResult, provisionalRelationshipRevisions, provisionalSidecar };
+  const qualifiedDeferredCoverage = accounting.sourceCoverage.filter((coverage) => coverage.disposition === "essential_dependent_deferred").map((coverage) => {
+    const slot = request.sourceSlots.find((candidate) => candidate.slot === coverage.slot);
+    if (!slot) throw new Error("Qualified deferred source coverage is detached from the request.");
+    return { source_unit_id: `source-unit-${slot.slot}`, page_number: slot.pageNumber, locator_type: slot.locatorType, locator_id: slot.locatorId, classification: "essential_dependent_deferred" as const };
+  });
+  const provisionalSidecar = { ...persistableAccounting(accounting), qualifiedDeferredCoverage };
+  const provenance = relationshipQualification.providerProvenance;
+  if (!isRecord(provenance) || !nonEmpty(provenance.provider) || !nonEmpty(provenance.model) || !nonEmpty(provenance.endpoint) || !Number.isSafeInteger(provenance.attempt) || provenance.attempt < 1) throw new Error("Qualified provider provenance is malformed.");
+  return { idempotencyKey: input.idempotencyKey, executionId: input.executionId, lease: input.lease, sourceSnapshot, profile, request: requestIdentity, canonicalResult, provisionalRelationshipRevisions, provisionalSidecar, providerProvenance: provenance, deliveryBindingHash: null };
 }
 
 function validate(input: SemanticCompositeStageInput): ValidComposite {
   const material = derive(input);
   const revisionSetHash = digest(material.provisionalRelationshipRevisions);
   const sidecarHash = digest(material.provisionalSidecar);
-  const expectedCompositeHash = digest({ idempotencyKey: material.idempotencyKey, executionId: material.executionId, sourceSnapshot: material.sourceSnapshot, profile: material.profile, request: material.request, canonicalResult: material.canonicalResult, provisionalRelationshipRevisions: material.provisionalRelationshipRevisions, provisionalSidecar: material.provisionalSidecar, revisionSetHash, sidecarHash });
+  const expectedCompositeHash = digest({ idempotencyKey: material.idempotencyKey, executionId: material.executionId, sourceSnapshot: material.sourceSnapshot, profile: material.profile, request: material.request, canonicalResult: material.canonicalResult, provisionalRelationshipRevisions: material.provisionalRelationshipRevisions, provisionalSidecar: material.provisionalSidecar, providerProvenance: material.providerProvenance, revisionSetHash, sidecarHash });
   if (input.compositeHash !== expectedCompositeHash) throw new Error("Composite hash does not match the complete immutable winner.");
   return { ...material, compositeHash: input.compositeHash, revisionSetHash, sidecarHash };
 }
@@ -124,13 +133,28 @@ function validate(input: SemanticCompositeStageInput): ValidComposite {
 export function semanticCompositeHash(input: Omit<SemanticCompositeStageInput, "compositeHash">): string {
   const material = derive(input);
   const revisionSetHash = digest(material.provisionalRelationshipRevisions); const sidecarHash = digest(material.provisionalSidecar);
-  return digest({ idempotencyKey: material.idempotencyKey, executionId: material.executionId, sourceSnapshot: material.sourceSnapshot, profile: material.profile, request: material.request, canonicalResult: material.canonicalResult, provisionalRelationshipRevisions: material.provisionalRelationshipRevisions, provisionalSidecar: material.provisionalSidecar, revisionSetHash, sidecarHash });
+  return digest({ idempotencyKey: material.idempotencyKey, executionId: material.executionId, sourceSnapshot: material.sourceSnapshot, profile: material.profile, request: material.request, canonicalResult: material.canonicalResult, provisionalRelationshipRevisions: material.provisionalRelationshipRevisions, provisionalSidecar: material.provisionalSidecar, providerProvenance: material.providerProvenance, revisionSetHash, sidecarHash });
+}
+
+export function semanticDeliveryBindingHash(input: { readonly compositeHash: string; readonly envelope: unknown }): string {
+  return digest({ compositeHash: input.compositeHash, envelope: input.envelope });
+}
+
+/** Rebuilds the already-validated lifecycle handoff from the immutable winner.
+ * It has no provider-response, media, or raw prompt dependency. */
+export function qualifiedAcceptanceFromWinner(value: SemanticCompositeWinner): QualifiedStepwiseAcceptanceInput {
+  const coverage = value.provisionalSidecar.qualifiedDeferredCoverage;
+  if (!Array.isArray(coverage)) throw new Error("Stepwise winner lacks its qualified deferred coverage projection.");
+  const base = { version: semanticContractVersion, scope: { projectId: value.sourceSnapshot.projectId, workspaceId: value.sourceSnapshot.workspaceId, bundleId: value.sourceSnapshot.bundleId, documentId: value.sourceSnapshot.documentId, executionId: value.executionId, contractVersion: semanticContractVersion }, composite: { compositeHash: value.compositeHash, relationshipRevisionSetHash: value.revisionSetHash, provisionalSidecarHash: value.sidecarHash }, deferredCoverage: coverage } as const;
+  return value.canonicalResult === null
+    ? { ...base, outcome: "qualified_deferred" }
+    : { ...base, outcome: "partial_accepted", canonical: { provider: value.providerProvenance, result: value.canonicalResult } };
 }
 
 function winner(row: Record<string, unknown>): SemanticCompositeWinner {
-  return { idempotencyKey: String(row.idempotency_key), executionId: String(row.execution_id), lease: { owner: String(row.lease_owner), generation: Number(row.lease_generation) }, sourceSnapshot: row.source_snapshot as ValidComposite["sourceSnapshot"], profile: row.profile_identity as ValidComposite["profile"], request: row.request_identity as ValidComposite["request"], canonicalResult: row.canonical_result as SemanticExtractionResult | null, provisionalRelationshipRevisions: row.provisional_relationship_revisions as readonly Record<string, unknown>[], provisionalSidecar: row.provisional_sidecar as PersistedSidecar, compositeHash: String(row.composite_hash), revisionSetHash: String(row.revision_set_hash), sidecarHash: String(row.sidecar_hash) };
+  return { idempotencyKey: String(row.idempotency_key), executionId: String(row.execution_id), lease: { owner: String(row.lease_owner), generation: Number(row.lease_generation) }, sourceSnapshot: row.source_snapshot as ValidComposite["sourceSnapshot"], profile: row.profile_identity as ValidComposite["profile"], request: row.request_identity as ValidComposite["request"], canonicalResult: row.canonical_result as SemanticExtractionResult | null, provisionalRelationshipRevisions: row.provisional_relationship_revisions as readonly Record<string, unknown>[], provisionalSidecar: row.provisional_sidecar as PersistedSidecar, compositeHash: String(row.composite_hash), revisionSetHash: String(row.revision_set_hash), sidecarHash: String(row.sidecar_hash), providerProvenance: (row.provider_provenance ?? {}) as Record<string, unknown>, deliveryBindingHash: row.delivery_binding_hash === null || row.delivery_binding_hash === undefined ? null : String(row.delivery_binding_hash) };
 }
-const columns = "idempotency_key, execution_id, lease_owner, lease_generation, source_snapshot, profile_identity, request_identity, canonical_result, provisional_relationship_revisions, provisional_sidecar, composite_hash, revision_set_hash, sidecar_hash";
+const columns = "idempotency_key, execution_id, lease_owner, lease_generation, source_snapshot, profile_identity, request_identity, canonical_result, provisional_relationship_revisions, provisional_sidecar, composite_hash, revision_set_hash, sidecar_hash, provider_provenance, delivery_binding_hash";
 
 /** Bridge-only, immutable composite staging. It neither publishes nor acknowledges semantic output. */
 export function createSemanticCompositeReplay(database: Database) {
@@ -142,10 +166,26 @@ export function createSemanticCompositeReplay(database: Database) {
     load,
     async stage(raw: SemanticCompositeStageInput): Promise<SemanticCompositeWinner> {
       const input = validate(raw);
-      const values = [input.idempotencyKey, input.executionId, input.lease.owner, input.lease.generation, JSON.stringify(input.sourceSnapshot), JSON.stringify(input.profile), JSON.stringify(input.request), input.canonicalResult === null ? null : JSON.stringify(input.canonicalResult), JSON.stringify(input.provisionalRelationshipRevisions), JSON.stringify(input.provisionalSidecar), input.compositeHash, input.revisionSetHash, input.sidecarHash];
-      const statement = `WITH claimant AS (SELECT 1 FROM bridge.background_effects WHERE idempotency_key=$1 AND execution_id=$2 AND status='running' AND lease_owner=$3 AND lease_generation=$4 AND lease_expires_at > now() FOR UPDATE), staged AS (INSERT INTO bridge.semantic_composite_stage (${columns}) SELECT $1,$2,$3,$4,$5::jsonb,$6::jsonb,$7::jsonb,$8::jsonb,$9::jsonb,$10::jsonb,$11,$12,$13 FROM claimant ON CONFLICT (idempotency_key) DO UPDATE SET idempotency_key=bridge.semantic_composite_stage.idempotency_key WHERE bridge.semantic_composite_stage.execution_id=EXCLUDED.execution_id AND bridge.semantic_composite_stage.source_snapshot=EXCLUDED.source_snapshot AND bridge.semantic_composite_stage.profile_identity=EXCLUDED.profile_identity AND bridge.semantic_composite_stage.request_identity=EXCLUDED.request_identity AND bridge.semantic_composite_stage.canonical_result IS NOT DISTINCT FROM EXCLUDED.canonical_result AND bridge.semantic_composite_stage.provisional_relationship_revisions=EXCLUDED.provisional_relationship_revisions AND bridge.semantic_composite_stage.provisional_sidecar=EXCLUDED.provisional_sidecar AND bridge.semantic_composite_stage.composite_hash=EXCLUDED.composite_hash AND bridge.semantic_composite_stage.revision_set_hash=EXCLUDED.revision_set_hash AND bridge.semantic_composite_stage.sidecar_hash=EXCLUDED.sidecar_hash RETURNING ${columns}) SELECT * FROM staged`;
+      const values = [input.idempotencyKey, input.executionId, input.lease.owner, input.lease.generation, JSON.stringify(input.sourceSnapshot), JSON.stringify(input.profile), JSON.stringify(input.request), input.canonicalResult === null ? null : JSON.stringify(input.canonicalResult), JSON.stringify(input.provisionalRelationshipRevisions), JSON.stringify(input.provisionalSidecar), input.compositeHash, input.revisionSetHash, input.sidecarHash, JSON.stringify(input.providerProvenance), input.deliveryBindingHash];
+      const statement = `WITH claimant AS (SELECT 1 FROM bridge.background_effects WHERE idempotency_key=$1 AND execution_id=$2 AND status='running' AND lease_owner=$3 AND lease_generation=$4 AND lease_expires_at > now() FOR UPDATE), staged AS (INSERT INTO bridge.semantic_composite_stage (${columns}) SELECT $1,$2,$3,$4,$5::jsonb,$6::jsonb,$7::jsonb,$8::jsonb,$9::jsonb,$10::jsonb,$11,$12,$13,$14::jsonb,$15 FROM claimant ON CONFLICT (idempotency_key) DO UPDATE SET idempotency_key=bridge.semantic_composite_stage.idempotency_key WHERE bridge.semantic_composite_stage.execution_id=EXCLUDED.execution_id AND bridge.semantic_composite_stage.source_snapshot=EXCLUDED.source_snapshot AND bridge.semantic_composite_stage.profile_identity=EXCLUDED.profile_identity AND bridge.semantic_composite_stage.request_identity=EXCLUDED.request_identity AND bridge.semantic_composite_stage.canonical_result IS NOT DISTINCT FROM EXCLUDED.canonical_result AND bridge.semantic_composite_stage.provisional_relationship_revisions=EXCLUDED.provisional_relationship_revisions AND bridge.semantic_composite_stage.provisional_sidecar=EXCLUDED.provisional_sidecar AND bridge.semantic_composite_stage.composite_hash=EXCLUDED.composite_hash AND bridge.semantic_composite_stage.revision_set_hash=EXCLUDED.revision_set_hash AND bridge.semantic_composite_stage.sidecar_hash=EXCLUDED.sidecar_hash AND bridge.semantic_composite_stage.provider_provenance=EXCLUDED.provider_provenance RETURNING ${columns}) SELECT * FROM staged`;
       const result = await database.executeSql(statement, values);
       if (result.rows[0]) return winner(result.rows[0]);
+      const current = await database.executeSql("SELECT 1 FROM bridge.background_effects WHERE idempotency_key=$1 AND execution_id=$2 AND status='running' AND lease_owner=$3 AND lease_generation=$4 AND lease_expires_at > now()", values.slice(0, 4));
+      if (!current.rows.length) throw new SemanticCompositeLeaseLostError();
+      throw new SemanticCompositeConflictError();
+    },
+    /** Atomically stores the stepwise winner and its qualified Atlas handoff.
+     * Both partial acceptance and qualified deferral are lifecycle outcomes,
+     * so each needs a replayable, composite-bound delivery. */
+    async stageAndBindDelivery(raw: SemanticCompositeStageInput): Promise<{ readonly winner: SemanticCompositeWinner; readonly envelope: unknown }> {
+      const validated = validate(raw);
+      const envelope = qualifiedAcceptanceFromWinner(validated);
+      const binding = semanticDeliveryBindingHash({ compositeHash: validated.compositeHash, envelope });
+      const input = { ...validated, deliveryBindingHash: binding };
+      const values = [input.idempotencyKey, input.executionId, input.lease.owner, input.lease.generation, JSON.stringify(input.sourceSnapshot), JSON.stringify(input.profile), JSON.stringify(input.request), input.canonicalResult === null ? null : JSON.stringify(input.canonicalResult), JSON.stringify(input.provisionalRelationshipRevisions), JSON.stringify(input.provisionalSidecar), input.compositeHash, input.revisionSetHash, input.sidecarHash, JSON.stringify(input.providerProvenance), binding, JSON.stringify(envelope)];
+      const statement = `WITH claimant AS (SELECT 1 FROM bridge.background_effects WHERE idempotency_key=$1 AND execution_id=$2 AND status='running' AND lease_owner=$3 AND lease_generation=$4 AND lease_expires_at > now() FOR UPDATE), staged AS (INSERT INTO bridge.semantic_composite_stage (${columns}) SELECT $1,$2,$3,$4,$5::jsonb,$6::jsonb,$7::jsonb,$8::jsonb,$9::jsonb,$10::jsonb,$11,$12,$13,$14::jsonb,$15 FROM claimant ON CONFLICT (idempotency_key) DO UPDATE SET idempotency_key=bridge.semantic_composite_stage.idempotency_key WHERE bridge.semantic_composite_stage.execution_id=EXCLUDED.execution_id AND bridge.semantic_composite_stage.source_snapshot=EXCLUDED.source_snapshot AND bridge.semantic_composite_stage.profile_identity=EXCLUDED.profile_identity AND bridge.semantic_composite_stage.request_identity=EXCLUDED.request_identity AND bridge.semantic_composite_stage.canonical_result IS NOT DISTINCT FROM EXCLUDED.canonical_result AND bridge.semantic_composite_stage.provisional_relationship_revisions=EXCLUDED.provisional_relationship_revisions AND bridge.semantic_composite_stage.provisional_sidecar=EXCLUDED.provisional_sidecar AND bridge.semantic_composite_stage.composite_hash=EXCLUDED.composite_hash AND bridge.semantic_composite_stage.revision_set_hash=EXCLUDED.revision_set_hash AND bridge.semantic_composite_stage.sidecar_hash=EXCLUDED.sidecar_hash AND bridge.semantic_composite_stage.provider_provenance=EXCLUDED.provider_provenance AND bridge.semantic_composite_stage.delivery_binding_hash IS NOT DISTINCT FROM EXCLUDED.delivery_binding_hash RETURNING ${columns}), delivery AS (INSERT INTO bridge.semantic_result_delivery (idempotency_key,execution_id,stage,validated_envelope,provenance,completion_fingerprint,lease_owner,lease_generation,composite_hash,delivery_binding_hash) SELECT $1,$2,'extraction',$16::jsonb,$14::jsonb,'staged',$3,$4,$11,$15 FROM staged ON CONFLICT (idempotency_key) DO UPDATE SET idempotency_key=bridge.semantic_result_delivery.idempotency_key WHERE bridge.semantic_result_delivery.execution_id=EXCLUDED.execution_id AND bridge.semantic_result_delivery.composite_hash=EXCLUDED.composite_hash AND bridge.semantic_result_delivery.delivery_binding_hash=EXCLUDED.delivery_binding_hash AND bridge.semantic_result_delivery.validated_envelope=EXCLUDED.validated_envelope RETURNING idempotency_key) SELECT * FROM staged`;
+      const result = await database.executeSql(statement, values);
+      if (result.rows[0]) return { winner: winner(result.rows[0]), envelope };
       const current = await database.executeSql("SELECT 1 FROM bridge.background_effects WHERE idempotency_key=$1 AND execution_id=$2 AND status='running' AND lease_owner=$3 AND lease_generation=$4 AND lease_expires_at > now()", values.slice(0, 4));
       if (!current.rows.length) throw new SemanticCompositeLeaseLostError();
       throw new SemanticCompositeConflictError();

@@ -131,7 +131,7 @@ test("foreign, duplicate, expired, and mismatched relationships or assets fail c
 
 test("existing accepted and legacy packet boundaries remain unchanged", () => {
   const document = normalizedSourceFixture();
-  assert.equal(buildSemanticSourcePacket(document).semanticProfile, semanticExtractionProfileId);
+  assert.equal(buildSemanticSourcePacket(document, semanticExtractionProfileId).semanticProfile, semanticExtractionProfileId);
   assert.throws(() => buildUnhydratedMultimodalSourcePacket({ document, authorizedRelationships: [], relationshipRequirements: [{ ownedSource: { pageNumber: 1, locatorType: "table", locatorId: "table-a" }, contextVisual: { pageNumber: 1, locatorId: "legend", assetRef: "derived/legend", derivedAssetSha256: "b".repeat(64) }, contextualRole: "legend", necessity: "essential" }] }), /missing essential authorized source relationship/);
 });
 

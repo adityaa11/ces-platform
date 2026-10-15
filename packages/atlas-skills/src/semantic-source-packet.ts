@@ -111,7 +111,13 @@ const sha256Pattern = /^[a-f0-9]{64}$/;
  * Converts only accepted NormalizedDocument material into temporary provider slots.
  * Slot names are packet-local and never become Atlas semantic identities.
  */
-export function buildSemanticSourcePacket(input: NormalizedDocument): SemanticSourcePacket {
+/**
+ * Historical text-only packet builder.  It is retained solely for archived
+ * prompt-003 regression fixtures; callers must select that profile explicitly
+ * so it cannot become an implicit extraction runtime default.
+ */
+export function buildSemanticSourcePacket(input: NormalizedDocument, profile: typeof semanticExtractionProfileId): SemanticSourcePacket {
+  if (profile !== semanticExtractionProfileId) throw new Error("Historical semantic source packet requires the explicit prompt-003 profile.");
   const document = parseNormalizedDocument(input);
   const candidates: CandidateSource[] = [];
   const rejected: RejectedSemanticSourceUnit[] = [];
@@ -147,7 +153,7 @@ export function buildSemanticSourcePacket(input: NormalizedDocument): SemanticSo
   const userPrompt = JSON.stringify(userPayload);
   if (utf8Bytes(userPrompt) > semanticSourcePacketLimits.maxUserPromptBytes) throw new Error(`Semantic source packet exceeds ${semanticSourcePacketLimits.maxUserPromptBytes} UTF-8 bytes.`);
 
-  const compiled = compileExtractionPrompt();
+  const compiled = compileExtractionPrompt(profile);
   return {
     semanticProfile: semanticExtractionProfileId,
     systemPrompt: compiled.prompt,

@@ -12,7 +12,11 @@ const databaseUrl = process.env.DATABASE_URL;
 const hash = (value: string) => value.repeat(64).slice(0, 64);
 
 const sqlAdapter = (client: ReturnType<typeof postgres>) => ({ executeSql: async (query: string, parameters?: readonly unknown[]) => {
-  const values = query.includes("$5::jsonb") && parameters ? parameters.map((value, index) => index >= 4 && index <= 9 && typeof value === "string" ? JSON.parse(value) : value) : parameters;
+  // `postgres` serializes plain strings as JSON strings for `jsonb` parameters.
+  // Keep this test adapter aligned with every explicit `::jsonb` placeholder
+  // in the Bridge write statements, including the new provenance/envelope fields.
+  const jsonIndexes = new Set([4, 5, 6, 7, 8, 9, 13, 15]);
+  const values = query.includes("$5::jsonb") && parameters ? parameters.map((value, index) => jsonIndexes.has(index) && typeof value === "string" ? JSON.parse(value) : value) : parameters;
   return { rows: await client.unsafe(query, values as readonly (string | number | null | object)[] | undefined) };
 } });
 
@@ -97,6 +101,31 @@ if (process.env.REL03_COMPOSITE_CHILD_MODE) {
     assert.deepEqual(await replay.stage(ordinary), ordinaryWinner, "identical retry returns immutable winner");
     assert.deepEqual(await createSemanticCompositeReplay(sqlAdapter(bridge)).load(ordinary.idempotencyKey, ordinary.executionId), ordinaryWinner, "fresh replay object retrieves winner");
 
+    // RC-007A-E2E handoff boundary: the durable composite and its qualified
+    // Atlas delivery have to appear together for both lifecycle outcomes.
+    const bound = inputFor(`rel03-bound-${suffix}`, `semantic-bound-${suffix}`, "mixed", owner);
+    const boundDeferred = inputFor(`rel03-bound-deferred-${suffix}`, `semantic-bound-deferred-${suffix}`, "deferred", owner);
+    await Promise.all([lease(bound), lease(boundDeferred)]);
+    const boundResult = await replay.stageAndBindDelivery(bound);
+    assert.ok(boundResult.envelope, "partially accepted winner has one durable acceptance envelope");
+    assert.ok(boundResult.winner.deliveryBindingHash, "winner records the exact delivery binding hash");
+    const boundDelivery = await bridge.unsafe("SELECT composite_hash, delivery_binding_hash, validated_envelope FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [bound.idempotencyKey]);
+    assert.equal(boundDelivery.length, 1, "ordinary qualified delivery is atomically persisted exactly once");
+    assert.equal(boundDelivery[0]?.composite_hash, boundResult.winner.compositeHash, "delivery binds its immutable composite");
+    assert.equal(boundDelivery[0]?.delivery_binding_hash, boundResult.winner.deliveryBindingHash, "delivery binding hash agrees on both durable records");
+    assert.deepEqual(await replay.stageAndBindDelivery(bound), boundResult, "identical handoff retry preserves the one winner and delivery");
+    const boundDeferredResult = await replay.stageAndBindDelivery(boundDeferred);
+    assert.ok(boundDeferredResult.envelope, "fully deferred winner has a qualified delivery envelope");
+    assert.ok(boundDeferredResult.winner.deliveryBindingHash, "fully deferred winner binds its qualified delivery");
+    assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [boundDeferred.idempotencyKey]))[0]?.count, 1, "fully deferred winner writes one qualified delivery row");
+
+    const atomicFailure = inputFor(`rel03-atomic-failure-${suffix}`, `semantic-atomic-failure-${suffix}`, "ordinary", owner); await lease(atomicFailure); const handoffTrigger = `rel03_handoff_${suffix}`;
+    await admin.unsafe(`CREATE FUNCTION bridge.${handoffTrigger}() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.idempotency_key = '${atomicFailure.idempotencyKey}' THEN RAISE EXCEPTION 'injected delivery handoff failure'; END IF; RETURN NEW; END $$`); await admin.unsafe(`CREATE TRIGGER ${handoffTrigger}_trigger BEFORE INSERT ON bridge.semantic_result_delivery FOR EACH ROW EXECUTE FUNCTION bridge.${handoffTrigger}()`);
+    await assert.rejects(() => replay.stageAndBindDelivery(atomicFailure), /injected delivery handoff failure/);
+    assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_composite_stage WHERE idempotency_key=$1", [atomicFailure.idempotencyKey]))[0]?.count, 0, "delivery failure rolls back the companion composite");
+    assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [atomicFailure.idempotencyKey]))[0]?.count, 0, "delivery failure leaves no partial handoff row");
+    await admin.unsafe(`DROP TRIGGER ${handoffTrigger}_trigger ON bridge.semantic_result_delivery`); await admin.unsafe(`DROP FUNCTION bridge.${handoffTrigger}()`);
+
     let validationSqlCalls = 0; const preSql = createSemanticCompositeReplay({ executeSql: async () => { validationSqlCalls += 1; return { rows: [] }; } });
     const alteredProposal = { ...mixed.preparation.providerProposal, source_results: mixed.preparation.providerProposal.source_results.map((result) => ({ ...result, candidates: result.candidates.map((candidate, index) => index === 0 ? { ...candidate, normalized_meaning: "forged" } : candidate) })) };
     await assert.rejects(() => preSql.stage({ ...mixed, preparation: { ...mixed.preparation, providerProposal: alteredProposal } }), /Qualified preparation evidence|immutable preparation context|candidate content/, "forged candidate meaning rejects before SQL");
@@ -132,6 +161,6 @@ if (process.env.REL03_COMPOSITE_CHILD_MODE) {
     await child("deliver", recovery); await assert.rejects(() => child("ack", recovery, "ack"), /INJECTED_ACK_LOSS_AT_BOUNDARY/); assert.equal((await admin.unsafe(`SELECT count(*)::int AS count FROM bridge.${effects} WHERE idempotency_key=$1 AND effect='ack_attempt'`, [recovery.idempotencyKey]))[0]?.count, 1, "acknowledgement attempt boundary is observed"); await child("ack", recovery); assert.equal((await admin.unsafe(`SELECT count(*)::int AS count FROM bridge.${effects} WHERE idempotency_key=$1 AND effect='ack_effect'`, [recovery.idempotencyKey]))[0]?.count, 1, "acknowledgement effect is non-inert and retry-safe"); assert.deepEqual(await replay.load(recovery.idempotencyKey, recovery.executionId), await createSemanticCompositeReplay(sqlAdapter(bridge)).load(recovery.idempotencyKey, recovery.executionId), "delivery/ack recovery never deletes or changes winner");
     await assert.rejects(() => atlas.unsafe("SELECT * FROM bridge.semantic_composite_stage LIMIT 1"), /permission denied/i, "atlas_app has no Bridge staging access");
   } finally {
-    await admin.unsafe(`DROP TRIGGER IF EXISTS rel03_cancel_${suffix}_trigger ON bridge.semantic_composite_stage`).catch(() => undefined); await admin.unsafe(`DROP FUNCTION IF EXISTS bridge.rel03_cancel_${suffix}()`).catch(() => undefined); await admin.unsafe(`DROP TRIGGER IF EXISTS rel03_fault_${suffix}_trigger ON bridge.semantic_composite_stage`).catch(() => undefined); await admin.unsafe(`DROP FUNCTION IF EXISTS bridge.rel03_fault_${suffix}()`).catch(() => undefined); await admin.unsafe(`DROP TABLE IF EXISTS bridge.${effects}`).catch(() => undefined); await bridge.unsafe("DELETE FROM bridge.semantic_composite_stage WHERE idempotency_key LIKE $1", [`rel03-%-${suffix}`]).catch(() => undefined); await bridge.unsafe("DELETE FROM bridge.background_effects WHERE idempotency_key LIKE $1", [`rel03-%-${suffix}`]).catch(() => undefined); await Promise.all([admin.end(), bridge.end(), atlas.end()]);
+    await admin.unsafe(`DROP TRIGGER IF EXISTS rel03_handoff_${suffix}_trigger ON bridge.semantic_result_delivery`).catch(() => undefined); await admin.unsafe(`DROP FUNCTION IF EXISTS bridge.rel03_handoff_${suffix}()`).catch(() => undefined); await admin.unsafe(`DROP TRIGGER IF EXISTS rel03_cancel_${suffix}_trigger ON bridge.semantic_composite_stage`).catch(() => undefined); await admin.unsafe(`DROP FUNCTION IF EXISTS bridge.rel03_cancel_${suffix}()`).catch(() => undefined); await admin.unsafe(`DROP TRIGGER IF EXISTS rel03_fault_${suffix}_trigger ON bridge.semantic_composite_stage`).catch(() => undefined); await admin.unsafe(`DROP FUNCTION IF EXISTS bridge.rel03_fault_${suffix}()`).catch(() => undefined); await admin.unsafe(`DROP TABLE IF EXISTS bridge.${effects}`).catch(() => undefined); await bridge.unsafe("DELETE FROM bridge.semantic_composite_stage WHERE idempotency_key LIKE $1", [`rel03-%-${suffix}`]).catch(() => undefined); await bridge.unsafe("DELETE FROM bridge.semantic_result_delivery WHERE idempotency_key LIKE $1", [`rel03-%-${suffix}`]).catch(() => undefined); await bridge.unsafe("DELETE FROM bridge.background_effects WHERE idempotency_key LIKE $1", [`rel03-%-${suffix}`]).catch(() => undefined); await Promise.all([admin.end(), bridge.end(), atlas.end()]);
   }
 });

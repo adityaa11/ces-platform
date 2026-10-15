@@ -4,10 +4,10 @@ import { DerivedImageGrantIssuer, type DerivedImageGrantAuthority, type DerivedI
 
 const scope: DerivedImageGrantScope = {
   serviceIdentity: "atlas.semantic-hydrator/v1",
-  tenantId: "tenant-a",
   projectId: "project-a",
+  workspaceId: "workspace-a",
   documentId: "document-a",
-  documentVersion: "normalized-v1",
+  perceptionExecutionId: "perception-a",
   sourceSha256: "a".repeat(64),
   profile: "atlas-stepwise-multimodal-v031",
   pageNumber: 2,
@@ -15,6 +15,10 @@ const scope: DerivedImageGrantScope = {
   assetRef: "derived/11111111-1111-4111-8111-111111111111",
   manifestSha256: "b".repeat(64),
   mediaType: "image/png",
+  imageSha256: "c".repeat(64),
+  width: 1,
+  height: 1,
+  byteLength: 1,
   authorization: { kind: "semantic_execution", executionId: "semantic-execution-a" },
 };
 
@@ -118,7 +122,7 @@ test("fake authority denies scope, credential, stale, replay, tamper, cookie, an
   const issue = () => issuer.issue(scope, authority, 100);
 
   const foreign = await issue();
-  await assert.rejects(() => issuer.redeem({ grant: foreign.grant, replayFenceId: foreign.replayFenceId, scope: { ...scope, tenantId: "tenant-b" } }, authority), /scope mismatch/i);
+  await assert.rejects(() => issuer.redeem({ grant: foreign.grant, replayFenceId: foreign.replayFenceId, scope: { ...scope, workspaceId: "workspace-b" } }, authority), /scope mismatch/i);
   const wrongProject = await issue();
   await assert.rejects(() => issuer.redeem({ grant: wrongProject.grant, replayFenceId: wrongProject.replayFenceId, scope: { ...scope, projectId: "project-b" } }, authority), /scope mismatch/i);
   const wrongDocument = await issue();

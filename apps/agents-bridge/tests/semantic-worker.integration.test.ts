@@ -5,11 +5,11 @@ import type { AddressInfo } from "node:net";
 import test from "node:test";
 import Fastify from "fastify";
 import postgres from "postgres";
-import { createSemanticInternalRoutes, SemanticAcceptanceRejection } from "@atlas/core";
-import { PostgresSemanticAuthority } from "@atlas/db";
+import { createSemanticInternalRoutes, DerivedImageGrantIssuer, EphemeralDerivedImageHydrator, SemanticAcceptanceRejection } from "@atlas/core";
+import { PostgresSemanticAuthority, PostgresSemanticDerivedImageAuthority } from "@atlas/db";
 import { semanticLimits } from "@atlas/contracts";
 import { buildStepwiseRelationshipEnvelopeRequest, buildStepwiseSourcePacket } from "@atlas/skills";
-import { MistralProvider } from "../src/providers/mistral.ts";
+import { AnomanProvider } from "../src/providers/anoman.ts";
 import { createAtlasSemanticClient } from "../src/atlas-semantic-client.ts";
 import { createSemanticResultReplay } from "../src/semantic-result-replay.ts";
 import { createSemanticCompositeReplay } from "../src/semantic-composite-replay.ts";
@@ -45,7 +45,7 @@ const normalized = (executionId: string, documentId: string, sourceSha256: strin
   pages: [{ number: 1, textBlocks: [], tables: [], visualRegions: [] }],
 });
 
-test("SEM-007 composes the injected stepwise worker path into isolated PostgreSQL composite staging and recovery", { skip: skip || Boolean(process.env.SEM007_CHILD_MODE) }, async () => {
+test("SEM-007 composes the injected stepwise worker path into isolated PostgreSQL composite staging and recovery", { skip: skip || Boolean(process.env.SEM007_CHILD_MODE) || Boolean(process.env.SEM007_SKIP) }, async () => {
   const admin = postgres(databaseUrl!, { max: 3 });
   const bridgeUrl = new URL(databaseUrl!); bridgeUrl.username = "agents_bridge"; bridgeUrl.password = process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only";
   const bridge = postgres(bridgeUrl.toString(), { max: 4 });
@@ -123,14 +123,17 @@ test("SEM-007 composes the injected stepwise worker path into isolated PostgreSQ
       if (!selected) throw new Error(`SEM-007 fixture is missing for ${job.executionId}`);
       jobCounts.set(job.executionId, (jobCounts.get(job.executionId) ?? 0) + 1);
       const replay = createSemanticCompositeReplay(context.database);
+      const deliver = async () => {
+        const key = context.idempotencyKey; const attempt = await effect(key, "delivery", false); const mode = deliveryModes.get(job.executionId) ?? "none";
+        if (mode === "delivery-failure" && attempt === 1) throw new Error("SEM007_NON_INERT_DELIVERY_FAILURE");
+        if (mode === "ack-loss" && attempt === 1) { await bridge.unsafe(`UPDATE bridge.${effectTable} SET committed=true WHERE effect_key=$1 AND effect_kind='delivery'`, [key]); throw new Error("SEM007_ACKNOWLEDGEMENT_LOSS"); }
+        await bridge.unsafe(`UPDATE bridge.${effectTable} SET committed=true WHERE effect_key=$1 AND effect_kind='delivery'`, [key]);
+      };
       const client = {
         context: async () => sem007ContextResponse(selected),
-        deliver: async () => {
-          const key = context.idempotencyKey; const attempt = await effect(key, "delivery", false); const mode = deliveryModes.get(job.executionId) ?? "none";
-          if (mode === "delivery-failure" && attempt === 1) throw new Error("SEM007_NON_INERT_DELIVERY_FAILURE");
-          if (mode === "ack-loss" && attempt === 1) { await bridge.unsafe(`UPDATE bridge.${effectTable} SET committed=true WHERE effect_key=$1 AND effect_kind='delivery'`, [key]); throw new Error("SEM007_ACKNOWLEDGEMENT_LOSS"); }
-          await bridge.unsafe(`UPDATE bridge.${effectTable} SET committed=true WHERE effect_key=$1 AND effect_kind='delivery'`, [key]);
-        },
+        media: async () => { throw new Error("SEM-007 offline fixture must not redeem Atlas media."); },
+        deliver,
+        deliverQualified: deliver,
         fail: async (failure: unknown) => { observations.push(`worker-failure:${job.executionId}:${JSON.stringify(failure)}`); },
       };
       const selection = { context: selected, dependencies: { database: context.database, routes: [sem007Route], routeId: sem007Route.routeId, profileId: sem007Route.profileId, nowEpochMilliseconds: 1_000, dispatch: async (messages: readonly unknown[]) => { const imageParts = messages.flatMap((message) => (message as { parts?: readonly { type: string; sourcePartId: string; media?: { sha256: string; bytes: Uint8Array } }[] }).parts ?? []).filter((part) => part.type === "image"); if (selected.assetIdentities.length > 0) { assert.equal(imageParts.length, 1, "the image fixture reaches the neutral multipart fake exactly once"); assert.equal(imageParts[0]?.sourcePartId, selected.assetIdentities[0]?.assetRef); assert.equal(imageParts[0]?.media?.sha256, selected.assetIdentities[0]?.sha256); assert.equal(sem007Hash(imageParts[0]!.media!.bytes), selected.assetIdentities[0]?.sha256); } else assert.equal(imageParts.length, 0, "the text-only fixture does not invent media"); await effect(context.idempotencyKey, "provider", true); return selected.rawResponse; } } } as const;
@@ -164,7 +167,7 @@ test("SEM-007 composes the injected stepwise worker path into isolated PostgreSQ
     const providerBeforeReplay = (await effectRow(keys.get(ordinaryExecution)!, "provider"))?.attempts;
     let replayDeliveries = 0;
     const ordinaryWinnerReplay = createSemanticCompositeReplay(sem007SqlAdapter(bridge));
-    await runSemanticJob(sem007Job(ordinaryExecution), { structured: async () => { throw new Error("SEM-007 replay called the provider."); } }, { context: async () => sem007ContextResponse(fixtures.get(ordinaryExecution)!), deliver: async () => { replayDeliveries += 1; }, fail: async () => { throw new Error("SEM-007 replay unexpectedly failed."); } }, { load: ordinaryWinnerReplay.load, stage: async () => { throw new Error("SEM-007 replay attempted a second stage."); }, acknowledge: async () => undefined }, keys.get(ordinaryExecution)!, new AbortController().signal, { owner: "replay-owner", generation: 1 });
+    await runSemanticJob(sem007Job(ordinaryExecution), { structured: async () => { throw new Error("SEM-007 replay called the provider."); } }, { context: async () => sem007ContextResponse(fixtures.get(ordinaryExecution)!), media: async () => { throw new Error("SEM-007 replay must not redeem media."); }, deliver: async () => { replayDeliveries += 1; }, deliverQualified: async () => { replayDeliveries += 1; }, fail: async () => { throw new Error("SEM-007 replay unexpectedly failed."); } }, { load: ordinaryWinnerReplay.load, stage: async () => { throw new Error("SEM-007 replay attempted a second stage."); }, acknowledge: async () => undefined }, keys.get(ordinaryExecution)!, new AbortController().signal, { owner: "replay-owner", generation: 1 });
     assert.equal(replayDeliveries, 1, "immutable worker replay delivers the persisted winner");
     assert.equal((await effectRow(keys.get(ordinaryExecution)!, "provider"))?.attempts, providerBeforeReplay, "immutable replay does not repeat fake provider execution");
     assert.equal(providerStructuredCalls.get(ordinaryExecution) ?? 0, 0, "ordinary provider adapter remains unused by the injected path");
@@ -172,7 +175,7 @@ test("SEM-007 composes the injected stepwise worker path into isolated PostgreSQ
     assert.ok((await effectRow(keys.get(textOnlyExecution)!, "provider"))?.attempts > 0, "positive provider effect counter is non-inert");
 
     for (const [executionId, mode] of [[deliveryFailureExecution, "delivery-failure"], [acknowledgementLossExecution, "ack-loss"]] as const) {
-      const key = keys.get(executionId)!; deliveryModes.set(executionId, mode);
+      const key = keys.get(executionId)!; await admin.unsafe(`DELETE FROM bridge.${effectTable} WHERE effect_key=$1 AND effect_kind='delivery'`, [key]); deliveryModes.set(executionId, mode);
       await bridge.unsafe("UPDATE bridge.background_effects SET status='pending', lease_expires_at=now(), last_error=NULL WHERE idempotency_key=$1", [key]);
       await enqueue(executionId);
       await waitFor(async () => Boolean((await admin.unsafe("SELECT last_error FROM bridge.background_effects WHERE idempotency_key=$1", [key]))[0]?.last_error), `SEM-007 ${mode} observation`);
@@ -225,7 +228,7 @@ test("SEM-007 composes the injected stepwise worker path into isolated PostgreSQ
     let substitutionFailures = 0;
     const substitutionKey = `sem007-substitution-${suffix}`;
     const substitutionReplay = createSemanticCompositeReplay(sem007SqlAdapter(bridge));
-    await runSemanticJob(sem007Job(denied.scope.executionId), { structured: async () => { throw new Error("SEM-007 substituted context reached the ordinary provider."); } }, { context: async () => sem007ContextResponse({ ...denied, normalizedDocument: substitutedDocument }), deliver: async () => undefined, fail: async () => { substitutionFailures += 1; } }, { load: substitutionReplay.load, stage: async () => { throw new Error("SEM-007 substituted context reached durable staging."); }, acknowledge: async () => undefined }, substitutionKey, new AbortController().signal, { owner: "denied", generation: 1 }, { context: denied, dependencies: { database: sem007SqlAdapter(bridge), routes: [sem007Route], routeId: sem007Route.routeId, profileId: sem007Route.profileId, nowEpochMilliseconds: 1_000, dispatch: async () => { deniedDispatches += 1; return denied.rawResponse; } } });
+    await runSemanticJob(sem007Job(denied.scope.executionId), { structured: async () => { throw new Error("SEM-007 substituted context reached the ordinary provider."); } }, { context: async () => sem007ContextResponse({ ...denied, normalizedDocument: substitutedDocument }), media: async () => { throw new Error("SEM-007 substituted context must not redeem media."); }, deliver: async () => undefined, deliverQualified: async () => undefined, fail: async () => { substitutionFailures += 1; } }, { load: substitutionReplay.load, stage: async () => { throw new Error("SEM-007 substituted context reached durable staging."); }, acknowledge: async () => undefined }, substitutionKey, new AbortController().signal, { owner: "denied", generation: 1 }, { context: denied, dependencies: { database: sem007SqlAdapter(bridge), routes: [sem007Route], routeId: sem007Route.routeId, profileId: sem007Route.profileId, nowEpochMilliseconds: 1_000, dispatch: async () => { deniedDispatches += 1; return denied.rawResponse; } } });
     assert.equal(substitutionFailures, 1, "a substituted redeemed document is converted to the bounded integrity failure path");
     const imageDenied = fixtures.get(ordinaryExecution)!;
     await assert.rejects(() => runOfflineStepwiseComposition(imageDenied, { database: sem007SqlAdapter(bridge), idempotencyKey: `sem007-unknown-tpm-${suffix}`, lease: { owner: "denied", generation: 1 }, routes: [{ ...sem007Route, imageTpm: { state: "unknown" as const } }], routeId: sem007Route.routeId, profileId: sem007Route.profileId, nowEpochMilliseconds: 1_000, dispatch: async () => { deniedDispatches += 1; return imageDenied.rawResponse; } }), /RESOURCE_ENVELOPE_BLOCKED|recognized|route/iu);
@@ -235,6 +238,9 @@ test("SEM-007 composes the injected stepwise worker path into isolated PostgreSQ
     observations.push(`database=${String(databaseIdentity?.database)} user=${String(databaseIdentity?.user_name)} server=${String(databaseIdentity?.server_version)}`);
     observations.push(`worker-jobs=${JSON.stringify(Object.fromEntries(jobCounts))}`);
     observations.push(`provider-structured=${JSON.stringify(Object.fromEntries(providerStructuredCalls))}`);
+    const fakeFixture = fixtures.get(ordinaryExecution)!;
+    const fakeRequest = buildStepwiseRelationshipEnvelopeRequest(buildStepwiseSourcePacket({ document: fakeFixture.normalizedDocument, assetIdentities: fakeFixture.assetIdentities }));
+    console.log(`SEM007_FAKE_WIRE_EVIDENCE ${JSON.stringify({ systemPromptSha256: sem007Hash(fakeRequest.systemPrompt), sourceSpecificationSha256: fakeRequest.sourceSpecificationSha256, responseSchemaSha256: sem007Hash(JSON.stringify(fakeRequest.responseSchema)), image: { assetRef: fakeFixture.assetIdentities[0]?.assetRef, sha256: fakeFixture.assetIdentities[0]?.sha256, byteLength: fakeFixture.media.get(fakeFixture.assetIdentities[0]?.assetRef ?? "")?.bytes.byteLength ?? 0 }, providerStructuredCalls: providerStructuredCalls.size })}`);
     console.log(`SEM007_EVIDENCE ${JSON.stringify(observations)}`);
     assert.equal(providerStructuredCalls.size, 0, "all SEM-007 worker fixtures bypass ordinary provider execution");
   } catch (error) {
@@ -266,7 +272,8 @@ const sem007Route = {
 };
 const sem007SqlAdapter = (client: ReturnType<typeof postgres>) => ({
   executeSql: async (query: string, parameters?: readonly unknown[]) => {
-    const values = query.includes("$5::jsonb") && parameters ? parameters.map((value, index) => index >= 4 && index <= 9 && typeof value === "string" ? JSON.parse(value) : value) : parameters;
+    const jsonIndexes = new Set([4, 5, 6, 7, 8, 9, 13, 15]);
+    const values = query.includes("$5::jsonb") && parameters ? parameters.map((value, index) => jsonIndexes.has(index) && typeof value === "string" ? JSON.parse(value) : value) : parameters;
     return { rows: await client.unsafe(query, values as readonly (string | number | null | object)[] | undefined) };
   },
 });
@@ -330,7 +337,7 @@ async function runSem007Child(): Promise<void> {
   const semanticReplay = { load: replay.load, stage: async () => { throw new Error("SEM-007 child must stage through the offline composition."); }, acknowledge: async () => undefined };
   try {
     if (childMode === "crash") await runOfflineStepwiseComposition(fixture, { ...selection.dependencies, idempotencyKey, lease: { owner, generation } });
-    else await runSemanticJob(sem007Job(executionId), { structured: async () => { throw new Error("SEM-007 offline child invoked the ordinary provider."); } }, { context: async () => sem007ContextResponse(fixture), deliver: async () => undefined, fail: async (failure: unknown) => { throw new Error(`SEM-007 child unexpectedly failed: ${JSON.stringify(failure)}`); } }, semanticReplay, idempotencyKey, new AbortController().signal, { owner, generation }, selection);
+    else await runSemanticJob(sem007Job(executionId), { structured: async () => { throw new Error("SEM-007 offline child invoked the ordinary provider."); } }, { context: async () => sem007ContextResponse(fixture), media: async () => { throw new Error("SEM-007 child must not redeem media."); }, deliver: async () => undefined, deliverQualified: async () => undefined, fail: async (failure: unknown) => { throw new Error(`SEM-007 child unexpectedly failed: ${JSON.stringify(failure)}`); } }, semanticReplay, idempotencyKey, new AbortController().signal, { owner, generation }, selection);
     process.stdout.write("SEM007_COMMITTED\n");
     if (childMode === "crash") await new Promise<void>(() => undefined);
   } finally { await bridge.end(); }
@@ -338,7 +345,7 @@ async function runSem007Child(): Promise<void> {
 
 if (process.env.SEM007_CHILD_MODE) await runSem007Child();
 
-test("the production semantic worker uses pg-boss, Bridge replay, configured HTTP Mistral, and Atlas routes", { skip: skip || Boolean(process.env.SEM007_CHILD_MODE) || sem007Only }, async () => {
+test("the production semantic worker uses pg-boss, Bridge replay, configured HTTP Anoman, and Atlas routes", { skip: skip || Boolean(process.env.SEM007_CHILD_MODE) || sem007Only }, async () => {
   const admin = postgres(databaseUrl!, { max: 2 });
   const atlasUrl = new URL(databaseUrl!); atlasUrl.username = "atlas_app"; atlasUrl.password = process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only";
   const bridgeUrl = new URL(databaseUrl!); bridgeUrl.username = "agents_bridge"; bridgeUrl.password = process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only";
@@ -351,6 +358,7 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
   const master = `semantic-worker-master-${suffix}`;
   const executions = {
     extract: `semantic-worker-extract-${suffix}`,
+    image: `semantic-worker-image-${suffix}`,
     unavailable: `semantic-worker-unavailable-${suffix}`,
     outage: `semantic-worker-outage-${suffix}`,
     timeout: `semantic-worker-timeout-${suffix}`,
@@ -386,6 +394,12 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
   const accepted = new Map<string, number>();
   const failed = new Map<string, number>();
   const providerCalls = new Map<string, number>();
+  const providerWires = new Map<string, { readonly system: string; readonly sourceSpecification: string; readonly responseFormat: unknown; readonly imageUrls: readonly string[] }>();
+  const imageBytes = Uint8Array.from(Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAF/gL+ZK2mXQAAAABJRU5ErkJggg==", "base64"));
+  const imageSha256 = createHash("sha256").update(imageBytes).digest("hex");
+  const imageAssets = new Map<string, Uint8Array>();
+  const imageAssetRefs = new Map<string, string>();
+  const normalizedByExecution = new Map<string, ReturnType<typeof normalized>>();
   const routeResponses = new Map<string, string[]>();
   const thrownErrors = new Map<string, unknown[]>();
   let providerCallCount = 0;
@@ -439,8 +453,30 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     for (const error of errors) assertRedacted(executionId, error);
     return errors;
   };
+  const semanticMediaIdentity = "atlas.semantic-bridge/v1";
+  const derivedStore = {
+    putDerived: async (input: { readonly bytes: Uint8Array; readonly mediaType: string; readonly storageKey?: string }) => {
+      if (!input.storageKey) throw new Error("image integration fixtures require an Atlas-owned asset reference");
+      imageAssets.set(input.storageKey, input.bytes);
+      return { storageKey: input.storageKey, contentHash: `sha256:${createHash("sha256").update(input.bytes).digest("hex")}`, byteSize: input.bytes.byteLength, mediaType: input.mediaType };
+    },
+    readDerived: async (assetRef: string) => {
+      const bytes = imageAssets.get(assetRef);
+      if (!bytes) throw new Error("image fixture asset is unavailable");
+      return bytes;
+    },
+  };
+  const derivedAuthority = new PostgresSemanticDerivedImageAuthority(atlas, derivedStore);
+  const derivedGrants = new DerivedImageGrantIssuer(credential, semanticMediaIdentity);
+  const derivedHydrator = new EphemeralDerivedImageHydrator(derivedGrants, derivedAuthority, derivedAuthority);
   const authority = new PostgresSemanticAuthority(atlas, {
     select: async (scope) => ({ version: "v1" as const, skill: "atlas.semantic.reconcile" as const, scope, currentCandidates: [], priorCandidates: [], selection: { policy: "semantic-worker-integration", version: "v1" as const, overflow: false, selectedCount: 0, currentCount: 0, totalCount: 0, byteLimit: semanticLimits.contextBytes, byteCount: 0, omittedPriorCount: 0 } }),
+  }, {
+    // Even the text-only ordinary-worker fixture must receive the current
+    // stepwise context. Image fixtures replace this issuer with the same
+    // Atlas-owned grant seam; neither case can select the old context shape.
+    serviceIdentity: semanticMediaIdentity,
+    issue: async (scope) => derivedGrants.issue(scope, derivedAuthority),
   });
   const routes = createSemanticInternalRoutes({
     serviceCredential: credential,
@@ -455,9 +491,15 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
         accepted.set(executionId, (accepted.get(executionId) ?? 0) + 1);
       },
     },
+    qualifiedHandler: {
+      acceptQualified: async (input) => {
+        if (input.executionId === executions.acceptanceRejected) throw new SemanticAcceptanceRejection("synthetic deterministic acceptance rejection");
+        accepted.set(input.executionId, (accepted.get(input.executionId) ?? 0) + 1);
+      },
+    },
   });
   const atlasApp = Fastify();
-  const reply = async (operation: "context" | "deliver" | "fail", authorization: string | undefined, body: unknown) => {
+  const reply = async (operation: "context" | "deliver" | "deliverQualified" | "fail", authorization: string | undefined, body: unknown) => {
     const response = await routes[operation](authorization?.replace(/^Bearer /u, ""), body);
     return response;
   };
@@ -472,6 +514,14 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     const result = await reply("context", request.headers.authorization, request.body);
     recordRouteResponse(executionId, "context", result.status, result.body);
     return response.code(result.status).type(result.contentType).send(result.body);
+  });
+  atlasApp.post("/internal/semantic/derived-media", async (request, response) => {
+    try {
+      const image = await derivedHydrator.hydrate(request.body, new AbortController().signal);
+      return response.code(200).type(image.mediaType).send(Buffer.from(image.bytes));
+    } catch {
+      return response.code(400).send({ error: "Invalid semantic derived-media request." });
+    }
   });
   atlasApp.post("/internal/semantic/result", async (request, response) => {
     const executionId = (request.body as { scope?: { executionId?: string } })?.scope?.executionId;
@@ -501,6 +551,34 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     }
     return response.code(result.status).type(result.contentType).send(result.body);
   });
+  atlasApp.post("/internal/semantic/qualified-result", async (request, response) => {
+    const executionId = (request.body as { scope?: { executionId?: string } })?.scope?.executionId;
+    if (executionId === executions.outage && deliveryOutage) {
+      deliveryOutage = false;
+      return response.code(503).send({ error: "synthetic qualified delivery outage" });
+    }
+    if (executionId === executions.conflictWinner && conflictDeliveryUnavailable) {
+      return response.code(503).send({ error: "synthetic conflicting qualified delivery outage" });
+    }
+    if (executionId === executions.timeout && deliveryTimeout) {
+      deliveryTimeout = false;
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      return response.code(503).send({ error: "synthetic qualified delivery timeout" });
+    }
+    if (executionId === executions.stopPostStage && stopPostStageDelivery) {
+      stopPostStageDelivery = false;
+      stopPostStageDeliveryStarted = true;
+      await new Promise((resolve) => setTimeout(resolve, 5_000));
+    }
+    if (executionId === executions.resultBound) resultDeliveryAttempts += 1;
+    const result = await reply("deliverQualified", request.headers.authorization, request.body);
+    recordRouteResponse(executionId, "qualified-result", result.status, result.body);
+    if (executionId === executions.extract && loseAcknowledgement && result.status === 204) {
+      loseAcknowledgement = false;
+      return response.code(503).send({ error: "synthetic qualified acknowledgement loss" });
+    }
+    return response.code(result.status).type(result.contentType).send(result.body);
+  });
   atlasApp.post("/internal/semantic/failure", async (request, response) => {
     const executionId = (request.body as { scope?: { executionId?: string } })?.scope?.executionId;
     if (executionId) failed.set(executionId, (failed.get(executionId) ?? 0) + 1);
@@ -508,14 +586,28 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     recordRouteResponse(executionId, "failure", result.status, result.body);
     return response.code(result.status).type(result.contentType).send(result.body);
   });
-  const mistralApp = Fastify();
-  mistralApp.post("/v1/chat/completions", async (request, response) => {
-    const body = request.body as { messages?: Array<{ content?: string }>; response_format?: { json_schema?: { schema?: Record<string, unknown> } } };
+  const anomanApp = Fastify();
+  anomanApp.post("/v1/chat/completions", async (request, response) => {
+    const body = request.body as { messages?: Array<{ role?: string; content?: string | Array<{ type?: string; text?: string; image_url?: { url?: string } }> }>; response_format?: { type?: string } };
     providerCallCount += 1;
-    const requested = JSON.parse(body.messages?.at(-1)?.content ?? "{}") as { scope?: { executionId?: string }; source_slots?: Array<{ slot?: string; content?: string }> };
-    const extractionExecutionId = requested.source_slots?.map((source) => source.content).find((content): content is string => typeof content === "string" && content.startsWith("Synthetic execution "))?.slice("Synthetic execution ".length, -1);
+    const userContent = body.messages?.find((message) => message.role === "user")?.content;
+    const systemContent = body.messages?.find((message) => message.role === "system")?.content;
+    const systemText = typeof systemContent === "string" ? systemContent : systemContent?.find((part) => part.type === "text")?.text ?? "";
+    const userText = typeof userContent === "string" ? userContent : userContent?.find((part) => part.type === "text")?.text;
+    const imageUrls = typeof userContent === "string" ? [] : userContent?.flatMap((part) => part.type === "image_url" && typeof part.image_url?.url === "string" ? [part.image_url.url] : []) ?? [];
+    const requested = JSON.parse(userText ?? "{}") as { profile?: string; scope?: { executionId?: string }; source_slots?: Array<{ slot?: string; content?: string; role?: string }>; sourceSlots?: Array<{ slot?: string; content?: string; role?: string }>; currentCandidates?: unknown[]; priorCandidates?: unknown[] };
+    const sourceSlots = requested.sourceSlots ?? requested.source_slots ?? [];
+    const extractionExecutionId = sourceSlots.map((source) => source.content).find((content): content is string => typeof content === "string" && content.startsWith("Synthetic execution "))?.slice("Synthetic execution ".length, -1);
     const executionId = extractionExecutionId ?? requested.scope?.executionId;
-    if (executionId) providerCalls.set(executionId, (providerCalls.get(executionId) ?? 0) + 1);
+    if (executionId) {
+      providerCalls.set(executionId, (providerCalls.get(executionId) ?? 0) + 1);
+      providerWires.set(executionId, {
+        system: systemText,
+        sourceSpecification: userText ?? "",
+        responseFormat: body.response_format,
+        imageUrls,
+      });
+    }
     if (executionId === executions.rejected) return response.code(401).send({ error: "credential rejected" });
     if (executionId === executions.malformed) return { model: "semantic-integration-model", choices: [{ message: { content: "{" } }] };
     if (executionId === executions.schemaInvalid) return { model: "semantic-integration-model", choices: [{ message: { content: JSON.stringify({ version: "v1", source_results: "not-an-array" }) } }] };
@@ -525,17 +617,35 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
       cancellationProviderCalls += 1;
       if (cancellationProviderCalls === 1) await new Promise((resolve) => setTimeout(resolve, 5_000));
     }
-    const schema = body.response_format?.json_schema?.schema;
-    const reconciliation = Boolean(schema?.properties && "relationships" in schema.properties);
+    const reconciliation = Array.isArray(requested.currentCandidates) || Array.isArray(requested.priorCandidates);
+    const ownedSlots = sourceSlots.filter((source) => source.role === "owned_source");
+    const stepwiseEnvelope = { contract_version: "atlas.relationship-extraction-envelope/v1", semantic_proposal: { version: "v1", source_results: ownedSlots.map((source) => ({ slot: source.slot, classification: "non_fact", candidates: [], non_fact_reason: "Synthetic integration fixture.", questions: [] })) }, relationship_proposals: [] };
+    const oversizedStepwiseEnvelope = {
+      contract_version: "atlas.relationship-extraction-envelope/v1",
+      semantic_proposal: {
+        version: "v1",
+        source_results: ownedSlots.map((source, sourceIndex) => ({
+          slot: source.slot,
+          classification: "candidate",
+          candidates: Array.from({ length: 12 }, (_, index) => ({
+            semantic_key: `bound-${sourceIndex}-${index}`,
+            kind: "rule",
+            payload: Object.fromEntries(Array.from({ length: 100 }, (_, payloadIndex) => [`detail_${payloadIndex}`, "x".repeat(2_048)])),
+            normalized_meaning: `Synthetic oversized candidate ${sourceIndex}-${index}.`,
+            needs_resolution: false,
+          })),
+          non_fact_reason: null,
+          questions: [],
+        })),
+      },
+      relationship_proposals: [],
+    };
     const value = executionId === executions.resultBound
-      ? { version: "v1", source_results: (requested.source_slots ?? []).map((source) => ({ slot: source.slot, classification: "candidate", candidates: Array.from({ length: 20 }, (_, index) => ({ semantic_key: `bound-${index}`, kind: "rule", payload: "x".repeat(16_384), normalized_meaning: "y".repeat(8_000), needs_resolution: false })), non_fact_reason: null, questions: [] })) }
+      ? oversizedStepwiseEnvelope
       : reconciliation
       ? { version: "v1", relationships: [], questions: [] }
-      : { version: "v1", source_results: (requested.source_slots ?? []).map((source) => ({ slot: source.slot, classification: "non_fact", candidates: [], non_fact_reason: "Synthetic integration fixture.", questions: [] })) };
-    const usage = executionId === executions.resultBound
-      ? Object.fromEntries(Array.from({ length: 100 }, (_, index) => [`usage-${index}`, "u".repeat(16_384)]))
-      : undefined;
-    return { model: "semantic-integration-model", ...(usage ? { usage } : {}), choices: [{ message: { content: JSON.stringify(value) } }] };
+      : stepwiseEnvelope;
+    return { model: "semantic-integration-model", choices: [{ message: { content: JSON.stringify(value) } }] };
   });
   let worker: ReturnType<typeof createBackgroundWorker> | undefined;
   try {
@@ -551,6 +661,14 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
       await atlas.unsafe("INSERT INTO atlas.document_perception_execution (id,artifact_id,document_storage_key,source_sha256,mime_type,byte_size,contract_version,state,idempotency_key,capability_identity) VALUES ($1,$2,'private/semantic-worker',$3,'application/pdf',1,'v1','completed',$4,$5)", [resource.perception, resource.document, resource.sourceSha256, `semantic-worker-perception-key-${label}-${suffix}`, resource.capabilityIdentity]);
       const document = normalized(resource.perception, resource.document, resource.sourceSha256);
       if (stage === "extraction") document.pages[0].textBlocks.push({ id: "execution-marker", text: `Synthetic execution ${executionId}.` });
+      if (label === "image") {
+        const assetRef = `derived/${randomUUID()}`;
+        imageAssetRefs.set(executionId, assetRef);
+        imageAssets.set(assetRef, imageBytes);
+        document.pages[0].visualRegions.push({ id: "image-marker", assetRef });
+        await atlas.unsafe("INSERT INTO atlas.document_perception_derived_manifest (id,execution_id,artifact_id,source_sha256,profile,page_number,locator_id,asset_ref,media_type,width,height,byte_size,sha256,verified_at,accepted_at) VALUES ($1,$2,$3,$4,'semantic-worker-image-profile',1,'image-marker',$5,'image/png',1,1,$6,$7,now(),now())", [randomUUID(), resource.perception, resource.document, resource.sourceSha256, assetRef, imageBytes.byteLength, imageSha256]);
+      }
+      normalizedByExecution.set(executionId, document);
       await atlas.unsafe("INSERT INTO atlas.normalized_document_cache (cache_key,source_sha256,contract_version,capability,capability_identity,normalized_document) VALUES ($1,$2,'v1','atlas.document.perceive',$3,$4::jsonb)", [resource.cache, resource.sourceSha256, resource.capabilityIdentity, JSON.stringify(document)]);
       await atlas.unsafe("INSERT INTO atlas.semantic_execution (id,project_id,workspace_id,bundle_id,document_id,stage,contract_version,skill_version,logical_identity,lifecycle,authorized_context_identity,authorized_context_fingerprint,capability_valid_until) VALUES ($1,$2,$3,$4,$5,$6,'v1','v1',$1,'queued','context',$7,now()+interval '1 hour')", [executionId, project, workspace, resource.bundle, resource.document, stage, capabilityFingerprint]);
     }
@@ -561,15 +679,15 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     await admin.unsafe(`CREATE FUNCTION ${cleanupFault}_fn() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public AS $$ BEGIN IF nextval('atlas.${cleanupFault}') = 1 THEN RAISE EXCEPTION 'synthetic fenced cleanup loss'; END IF; RETURN OLD; END $$`);
     await admin.unsafe(`CREATE TRIGGER ${cleanupFault}_trigger BEFORE DELETE ON bridge.semantic_result_delivery FOR EACH ROW EXECUTE FUNCTION ${cleanupFault}_fn()`);
     await atlasApp.listen({ host: "127.0.0.1", port: 0 });
-    await mistralApp.listen({ host: "127.0.0.1", port: 0 });
+    await anomanApp.listen({ host: "127.0.0.1", port: 0 });
     const atlasPort = (atlasApp.server.address() as AddressInfo).port;
-    const mistralPort = (mistralApp.server.address() as AddressInfo).port;
-    const provider = new MistralProvider({ apiKey: "synthetic-provider-key", baseUrl: `http://127.0.0.1:${mistralPort}`, structuredModel: "semantic-integration-model", chatModel: "unused", ocrModel: "unused", maxDocumentBytes: 1, zeroDataRetentionApproved: false, timeoutMilliseconds: 10_000, retryMaxAttempts: 1 });
-    const client = createAtlasSemanticClient({ baseUrl: `http://127.0.0.1:${atlasPort}`, contextPath: "/internal/semantic/context", resultPath: "/internal/semantic/result", failurePath: "/internal/semantic/failure", serviceCredential: credential, timeoutMilliseconds: 100 });
+    const anomanPort = (anomanApp.server.address() as AddressInfo).port;
+    const provider = new AnomanProvider({ apiKey: "synthetic-provider-key", baseUrl: `http://127.0.0.1:${anomanPort}`, structuredModel: "gemini-2.5-flash", maxRequestBytes: 2 * 1024 * 1024, maxResponseBytes: 10 * 1024 * 1024, zeroDataRetentionApproved: false, timeoutMilliseconds: 10_000 });
+    const client = createAtlasSemanticClient({ baseUrl: `http://127.0.0.1:${atlasPort}`, contextPath: "/internal/semantic/context", mediaPath: "/internal/semantic/derived-media", resultPath: "/internal/semantic/result", qualifiedResultPath: "/internal/semantic/qualified-result", failurePath: "/internal/semantic/failure", serviceCredential: credential, timeoutMilliseconds: 100 });
     const config: WorkerConfig = { databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 1, perceptionConcurrency: 1, timeoutSeconds: 5, retryLimit: 3, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 };
     const createWorker = () => createBackgroundWorker(config, new TestRuntime(), queueName, undefined, undefined, async (job, signal, context) => {
       try {
-        await runSemanticJob(job, provider, client, createSemanticResultReplay(context.database), context.idempotencyKey, signal, { owner: context.leaseOwner, generation: context.leaseGeneration });
+        await runSemanticJob(job, provider, client, createSemanticResultReplay(context.database), context.idempotencyKey, signal, { owner: context.leaseOwner, generation: context.leaseGeneration }, undefined, { dependencies: { database: context.database, routes: [sem007Route], routeId: sem007Route.routeId, profileId: sem007Route.profileId } });
       } catch (error) {
         const errors = thrownErrors.get(job.executionId) ?? [];
         errors.push(error);
@@ -586,17 +704,44 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
 
     await enqueue("extract", "atlas.semantic.extract");
     await waitFor(async () => (await bridge.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [keys.extract]))[0]?.status === "pending", "Atlas acceptance before completion restart boundary");
-    await waitFor(async () => (await bridge.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [keys.extract]))[0]?.status === "completed", "extraction completion");
+    try {
+      await waitFor(async () => (await bridge.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [keys.extract]))[0]?.status === "completed", "extraction completion");
+    } catch (error) {
+      console.error("SEM007A_EXTRACTION_COMPLETION_DIAGNOSTIC", await effectFor(keys.extract), await replayFor(keys.extract), thrownErrors.get(executions.extract), routeResponses.get(executions.extract));
+      throw error;
+    }
     await waitFor(async () => (await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [keys.extract]))[0]?.count === 0, "fenced replay cleanup");
     assert.equal(providerCallCount, 1, "acknowledgement loss, completion retry, and cleanup retry replay one immutable provider result");
     assert.equal(accepted.get(executions.extract), 1, "Atlas accepts one logical effect despite the lost acknowledgement");
     assert.ok(Number((await bridge.unsafe("SELECT lease_generation FROM bridge.background_effects WHERE idempotency_key=$1", [keys.extract]))[0]?.lease_generation) >= 2, "completion retry acquires a later fenced lease");
     assert.equal((await atlas.unsafe("SELECT lifecycle FROM atlas.semantic_execution WHERE id=$1", [executions.extract]))[0]?.lifecycle, "completed");
 
+    // RC-007A-04/05: this is the ordinary pg-boss worker path, not the
+    // injected offline lane. Atlas issues an authenticated image grant from
+    // its accepted manifest, Bridge redeems it through the internal media
+    // route, and the configured Anoman adapter serializes one multipart image.
+    await enqueue("image", "atlas.semantic.extract");
+    await waitFor(async () => (await bridge.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [keys.image]))[0]?.status === "completed", "image extraction completion");
+    const imageWire = providerWires.get(executions.image);
+    const imageAssetRef = imageAssetRefs.get(executions.image);
+    const imagePacket = buildStepwiseSourcePacket({ document: normalizedByExecution.get(executions.image)!, assetIdentities: [{ pageNumber: 1, locatorId: "image-marker", assetRef: imageAssetRef!, sha256: imageSha256, sourceSha256: resources.image.sourceSha256 }] });
+    const imageRequest = buildStepwiseRelationshipEnvelopeRequest(imagePacket);
+    assert.ok(imageWire, "Anoman loopback records the ordinary image request wire");
+    assert.ok(imageAssetRef, "the Atlas-issued image grant retains its accepted asset identity");
+    assert.equal(imageWire?.imageUrls.length, 1, "Anoman receives exactly one multipart image part");
+    assert.equal(imageWire?.imageUrls[0], `data:image/png;base64,${Buffer.from(imageBytes).toString("base64")}`, "Anoman receives exactly the Atlas-authorized image bytes");
+    assert.equal(imageWire?.system, imageRequest.systemPrompt, "Anoman receives the exact canonical stepwise system prompt");
+    assert.equal(imageWire?.sourceSpecification, imageRequest.sourceSpecification, "Anoman receives the exact source specification bound to the Atlas asset");
+    assert.equal(createHash("sha256").update(imageWire!.sourceSpecification).digest("hex"), imageRequest.sourceSpecificationSha256, "Anoman source-specification hash matches the REL request");
+    assert.equal(createHash("sha256").update(JSON.stringify(imageRequest.responseSchema)).digest("hex"), createHash("sha256").update(JSON.stringify(buildStepwiseRelationshipEnvelopeRequest(imagePacket).responseSchema)).digest("hex"), "the recorded REL-envelope schema hash is deterministic");
+    assert.deepEqual(imageWire?.responseFormat, { type: "json_object" }, "Anoman preserves bounded JSON object mode on the wire");
+    assert.equal(accepted.get(executions.image), 1, "the ordinary image result is delivered through qualified acceptance once");
+    console.log(`SEM007A_ANOMAN_WIRE_EVIDENCE ${JSON.stringify({ systemPromptSha256: createHash("sha256").update(imageWire!.system).digest("hex"), sourceSpecificationSha256: createHash("sha256").update(imageWire!.sourceSpecification).digest("hex"), responseSchemaSha256: createHash("sha256").update(JSON.stringify(imageRequest.responseSchema)).digest("hex"), image: { assetRef: imageAssetRef, sha256: imageSha256, byteLength: imageBytes.byteLength, wireDataUrlSha256: createHash("sha256").update(imageWire!.imageUrls[0]!).digest("hex") }, responseFormat: imageWire!.responseFormat, providerCalls: providerCalls.get(executions.image) })}`);
+
     handlerUnavailable = true;
     await enqueue("unavailable", "atlas.semantic.reconcile");
     await waitFor(async () => (await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [keys.unavailable]))[0]?.count === 1, "retryable unavailable handler replay");
-    await waitFor(async () => providerCallCount === 2, "single provider call before retryable handler failure");
+    await waitFor(async () => providerCallCount === 3, "single provider call before retryable handler failure");
     assert.notEqual((await bridge.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [keys.unavailable]))[0]?.status, "completed", "an unavailable Atlas acceptance handler cannot complete Bridge work");
     assert.notEqual((await atlas.unsafe("SELECT lifecycle FROM atlas.semantic_execution WHERE id=$1", [executions.unavailable]))[0]?.lifecycle, "completed");
     handlerUnavailable = false;
@@ -604,7 +749,7 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     await bridge.unsafe("UPDATE bridge.background_effects SET status='running', lease_owner='expired-worker', lease_generation=lease_generation+1, lease_expires_at=now()-interval '1 second' WHERE idempotency_key=$1", [keys.unavailable]);
     await enqueue("unavailable", "atlas.semantic.reconcile");
     await waitFor(async () => (await bridge.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [keys.unavailable]))[0]?.status === "completed", "stale claimant delivery");
-    assert.equal(providerCallCount, 2, "a real stale successor redelivers the stored winner without Mistral");
+    assert.equal(providerCallCount, 3, "a real stale successor redelivers the stored winner without reinvoking Anoman");
     assert.equal(accepted.get(executions.unavailable), 1, "the stored winner reaches one Atlas logical effect");
     assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [keys.unavailable]))[0]?.count, 0, "only the completed successor fence cleans the winner replay row");
 
@@ -617,7 +762,7 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     await waitFor(async () => (await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [keys.outage]))[0]?.count === 0, "outage replay cleanup");
     assert.equal(accepted.get(executions.outage), 1, "delivery outage reaches one Atlas logical effect after replay");
     assert.equal(failed.get(executions.outage) ?? 0, 0, "a staged outage is never terminally failed");
-    assert.equal(providerCallCount, 3, "delivery outage reuses one staged provider result");
+    assert.equal(providerCallCount, 4, "delivery outage reuses one staged provider result");
 
     // This timeout reaches the post-stage delivery catch boundary. It is the
     // regression for preserving a durable envelope when Atlas transport cancels.
@@ -627,14 +772,14 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     await waitFor(async () => (await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [keys.timeout]))[0]?.count === 0, "timeout replay cleanup");
     assert.equal(accepted.get(executions.timeout), 1, "Atlas timeout reaches one logical effect after staged replay");
     assert.equal(failed.get(executions.timeout) ?? 0, 0, "a timed-out staged result is never terminally failed");
-    assert.equal(providerCallCount, 4, "Atlas timeout reuses one staged provider result");
+    assert.equal(providerCallCount, 5, "Atlas timeout reuses one staged provider result");
 
     // Separate duplicate queue messages share one Bridge idempotency record.
     await Promise.all([enqueue("duplicate", "atlas.semantic.extract"), enqueue("duplicate", "atlas.semantic.extract")]);
     await waitFor(async () => (await bridge.unsafe("SELECT status FROM bridge.background_effects WHERE idempotency_key=$1", [keys.duplicate]))[0]?.status === "completed", "duplicate job completion");
     assert.equal(accepted.get(executions.duplicate), 1, "duplicate queue jobs create one Atlas logical effect");
     assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [keys.duplicate]))[0]?.count, 0, "duplicate completion leaves no replay row");
-    assert.equal(providerCallCount, 5, "duplicate jobs invoke Mistral once for their shared execution");
+    assert.equal(providerCallCount, 6, "duplicate jobs invoke Anoman once for their shared execution");
 
     // Pre-stage provider failures use the real worker, HTTP adapter, Atlas
     // failure route, and Bridge effect ledger; none creates a trusted replay.
@@ -655,7 +800,12 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     // not replayable delivery work.  It uses the established failure route,
     // rolling back the untrusted result and containing only its own member.
     await enqueue("acceptanceRejected", "atlas.semantic.extract");
-    await waitFor(async () => (await atlas.unsafe("SELECT lifecycle FROM atlas.semantic_execution WHERE id=$1", [executions.acceptanceRejected]))[0]?.lifecycle === "failed", "deterministic acceptance rejection failure");
+    try {
+      await waitFor(async () => (await atlas.unsafe("SELECT lifecycle FROM atlas.semantic_execution WHERE id=$1", [executions.acceptanceRejected]))[0]?.lifecycle === "failed", "deterministic acceptance rejection failure");
+    } catch (error) {
+      console.error("SEM007A_ACCEPTANCE_REJECTION_DIAGNOSTIC", await effectFor(keys.acceptanceRejected), await replayFor(keys.acceptanceRejected), thrownErrors.get(executions.acceptanceRejected), routeResponses.get(executions.acceptanceRejected));
+      throw error;
+    }
     assert.equal(accepted.get(executions.acceptanceRejected) ?? 0, 0, "a deterministically rejected result has no trusted acceptance");
     assert.equal(failed.get(executions.acceptanceRejected), 1, "a deterministically rejected result uses one terminal failure handoff");
     assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [keys.acceptanceRejected]))[0]?.count, 0, "terminal failure cleanup removes the rejected staged envelope");
@@ -669,7 +819,7 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
 
     const missingQueue = `${queueName}-missing`;
     const missingWorker = createBackgroundWorker(config, new TestRuntime(), missingQueue, undefined, undefined, async (job, signal, context) => {
-      const missingProvider = new MistralProvider({ apiKey: undefined, baseUrl: `http://127.0.0.1:${mistralPort}`, structuredModel: "semantic-integration-model", chatModel: "unused", ocrModel: "unused", maxDocumentBytes: 1, zeroDataRetentionApproved: false, timeoutMilliseconds: 100, retryMaxAttempts: 1 });
+      const missingProvider = new AnomanProvider({ apiKey: undefined, baseUrl: `http://127.0.0.1:${anomanPort}`, structuredModel: "gemini-2.5-flash", maxRequestBytes: 2 * 1024 * 1024, maxResponseBytes: 10 * 1024 * 1024, zeroDataRetentionApproved: false, timeoutMilliseconds: 100 });
       await runSemanticJob(job, missingProvider, client, createSemanticResultReplay(context.database), context.idempotencyKey, signal, { owner: context.leaseOwner, generation: context.leaseGeneration });
     });
     try {
@@ -684,7 +834,7 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     for (const [label, bounds] of [["requestBound", { maxRequestBytes: 1 }], ["responseBound", { maxResponseBytes: 1 }]] as const) {
       const boundedQueue = `${queueName}-${label}`;
       const boundedWorker = createBackgroundWorker(config, new TestRuntime(), boundedQueue, undefined, undefined, async (job, signal, context) => {
-        const boundedProvider = new MistralProvider({ apiKey: "synthetic-provider-key", baseUrl: `http://127.0.0.1:${mistralPort}`, structuredModel: "semantic-integration-model", chatModel: "unused", ocrModel: "unused", maxDocumentBytes: 1, zeroDataRetentionApproved: false, timeoutMilliseconds: 100, retryMaxAttempts: 1, ...bounds });
+        const boundedProvider = new AnomanProvider({ apiKey: "synthetic-provider-key", baseUrl: `http://127.0.0.1:${anomanPort}`, structuredModel: "gemini-2.5-flash", maxRequestBytes: 2 * 1024 * 1024, maxResponseBytes: 10 * 1024 * 1024, zeroDataRetentionApproved: false, timeoutMilliseconds: 100, ...bounds });
         await runSemanticJob(job, boundedProvider, client, createSemanticResultReplay(context.database), context.idempotencyKey, signal, { owner: context.leaseOwner, generation: context.leaseGeneration });
       });
       try {
@@ -703,7 +853,7 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     await waitFor(async () => contextBoundRequests > 0, "oversized Atlas context request");
     await waitFor(async () => Boolean((await bridge.unsafe("SELECT last_error FROM bridge.background_effects WHERE idempotency_key=$1", [keys.contextBound]))[0]?.last_error), "bounded context failure ledger entry");
     const contextEffect = await effectFor(keys.contextBound);
-    assert.equal(providerCalls.get(executions.contextBound) ?? 0, 0, "an oversized Atlas context never reaches Mistral");
+    assert.equal(providerCalls.get(executions.contextBound) ?? 0, 0, "an oversized Atlas context never reaches Anoman");
     assert.equal(accepted.get(executions.contextBound) ?? 0, 0);
     assert.equal(await lifecycleFor(executions.contextBound), "queued", "the oversized synthetic response cannot advance the Atlas execution lifecycle");
     assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [keys.contextBound]))[0]?.count, 0);
@@ -715,31 +865,24 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     await assertQueuedJobRedacted(executions.contextBound);
     assert.ok(assertThrownErrorsRedacted(executions.contextBound).length > 0, "the actual context-bound thrown error is captured and checked");
 
-    // A schema-valid result can still exceed the result-envelope transport
-    // limit because provenance is preserved. It stages before the bounded
-    // handoff rejects it, and remains immutable/retryable rather than being
-    // converted into a terminal Atlas failure.
+    // Anoman preserves only bounded provenance. A large but otherwise valid
+    // provider proposal therefore hits Atlas's canonical-result limit before
+    // it can become a durable qualified handoff.
     const providerBeforeResultBound = providerCallCount;
     await enqueue("resultBound", "atlas.semantic.extract");
-    await waitFor(async () => (await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [keys.resultBound]))[0]?.count === 1, "oversized immutable result replay");
-    const oversizedReplayBefore = await replayFor(keys.resultBound);
-    await waitFor(async () => Boolean((await effectFor(keys.resultBound))?.last_error), "bounded Atlas handoff rejection");
+    await waitFor(async () => (await atlas.unsafe("SELECT lifecycle FROM atlas.semantic_execution WHERE id=$1", [executions.resultBound]))[0]?.lifecycle === "failed", "bounded canonical-result failure");
     const oversizedEffect = await effectFor(keys.resultBound);
-    const oversizedReplayAfter = await replayFor(keys.resultBound);
     assert.equal(accepted.get(executions.resultBound) ?? 0, 0);
-    assert.equal(failed.get(executions.resultBound) ?? 0, 0, "a staged oversized result is never terminally failed");
-    assert.equal(providerCallCount, providerBeforeResultBound + 1, "the oversized retry retains one provider result");
-    assert.equal(providerCalls.get(executions.resultBound), 1, "the oversized handoff has exactly one provider call");
-    assert.equal(resultDeliveryAttempts, 0, "the Atlas client rejects the oversized envelope before public delivery");
-    assert.equal(await lifecycleFor(executions.resultBound), "running", "the staged result remains an in-progress Atlas execution for retry");
-    assert.notEqual(oversizedEffect?.status, "completed", "Atlas transport rejection cannot complete the Bridge effect");
-    assert.ok(oversizedEffect?.lease_owner, "the retained oversized effect keeps its fence owner");
-    assert.ok(Number(oversizedEffect?.lease_generation) >= 1, "the staged oversized result retains a fenced Bridge lease record");
-    assert.deepEqual(oversizedReplayAfter?.validated_envelope, oversizedReplayBefore?.validated_envelope, "the rejected handoff cannot replace the persisted replay envelope");
-    assert.equal(oversizedReplayAfter?.execution_id, executions.resultBound, "the retained replay belongs to the original execution identity");
-    assertRedacted(executions.resultBound, oversizedEffect?.last_error);
+    assert.equal(failed.get(executions.resultBound), 1, "an oversized canonical result uses the bounded failure route");
+    assert.equal(providerCallCount, providerBeforeResultBound + 1, "the oversized result reaches Anoman once");
+    assert.equal(providerCalls.get(executions.resultBound), 1, "the oversized result has exactly one provider call");
+    assert.equal(resultDeliveryAttempts, 0, "a canonical-result bound failure never reaches the public delivery route");
+    assert.equal(await lifecycleFor(executions.resultBound), "failed", "the untrusted oversized result is terminally contained");
+    assert.equal(oversizedEffect?.status, "completed", "the bounded failure completes the Bridge effect");
+    assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [keys.resultBound]))[0]?.count, 0, "a pre-stage canonical-result bound failure creates no replay row");
+    assertRedacted(executions.resultBound, oversizedEffect?.last_error, routeResponses.get(executions.resultBound));
     await assertQueuedJobRedacted(executions.resultBound);
-    assert.ok(assertThrownErrorsRedacted(executions.resultBound).length > 0, "the actual post-stage handoff error is captured and checked");
+    assert.equal(assertThrownErrorsRedacted(executions.resultBound).length, 0, "the bounded pre-stage failure is handled without an uncaught worker error");
 
     // Stopping a real worker while its configured provider request is active
     // must leave no trusted result. A successor is then free to retry.
@@ -764,7 +907,7 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     await assertQueuedJobRedacted(executions.cancellation);
     const cancellationErrors = assertThrownErrorsRedacted(executions.cancellation);
     assert.ok(cancellationErrors.length > 0, "the actual cancellation thrown by runSemanticJob is captured");
-    assert.ok(cancellationErrors.every((error) => error instanceof Error && error.message === "Provider request was cancelled."), "pre-stage cancellation exposes only its bounded typed provider-cancellation outcome");
+    assert.ok(cancellationErrors.every((error) => error instanceof Error && error.message === "Anoman request was cancelled."), "pre-stage cancellation exposes only its bounded typed provider-cancellation outcome");
     worker = createWorker(); await worker.start();
     // Explicitly submit the existing idempotency identity to the fresh real
     // pg-boss worker.  This observes successor recovery without depending on
@@ -776,7 +919,7 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
 
     // This stop happens while the real result route is in flight, after the
     // immutable replay row exists. The fresh worker must redeliver that row
-    // rather than invoke Mistral a second time.
+    // rather than invoke Anoman a second time.
     const providerBeforePostStageStop = providerCallCount;
     await enqueue("stopPostStage", "atlas.semantic.extract");
     await waitFor(async () => stopPostStageDeliveryStarted && (await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.semantic_result_delivery WHERE idempotency_key=$1", [keys.stopPostStage]))[0]?.count === 1, "active post-stage delivery boundary");
@@ -817,7 +960,7 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     const winnerReplay = await replayFor(conflictKey);
     await enqueue("conflictLoser", "atlas.semantic.extract", conflictKey);
     await waitFor(async () => Boolean((await bridge.unsafe("SELECT last_error FROM bridge.background_effects WHERE idempotency_key=$1", [conflictKey]))[0]?.last_error), "conflicting idempotency rejection");
-    assert.equal(providerCallCount, callsBeforeConflict + 1, "only the staged winner reaches Mistral");
+    assert.equal(providerCallCount, callsBeforeConflict + 1, "only the staged winner reaches Anoman");
     assert.equal(providerCalls.get(executions.conflictWinner), 1, "winner A reaches the provider exactly once");
     assert.equal(providerCalls.get(executions.conflictLoser) ?? 0, 0, "loser B never reaches the provider");
     assert.deepEqual((await replayFor(conflictKey))?.validated_envelope, winnerReplay?.validated_envelope, "the losing execution cannot replace the immutable envelope");
@@ -852,7 +995,7 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
   } finally {
     await worker?.stop().catch(() => undefined);
     await atlasApp.close().catch(() => undefined);
-    await mistralApp.close().catch(() => undefined);
+    await anomanApp.close().catch(() => undefined);
     await admin.unsafe(`DROP TRIGGER IF EXISTS ${completionFault}_trigger ON bridge.background_effects`).catch(() => undefined);
     await admin.unsafe(`DROP FUNCTION IF EXISTS ${completionFault}_fn()`).catch(() => undefined);
     await admin.unsafe(`DROP SEQUENCE IF EXISTS ${completionFault}`).catch(() => undefined);
@@ -863,6 +1006,7 @@ test("the production semantic worker uses pg-boss, Bridge replay, configured HTT
     await bridge.unsafe("DELETE FROM bridge.background_effects WHERE idempotency_key = ANY($1::text[])", [[...Object.values(keys), conflictKey]]).catch(() => undefined);
     await atlas.unsafe("DELETE FROM atlas.semantic_execution_context WHERE execution_id = ANY($1::text[])", [Object.values(executions)]).catch(() => undefined);
     await atlas.unsafe("DELETE FROM atlas.semantic_execution WHERE id = ANY($1::text[])", [Object.values(executions)]).catch(() => undefined);
+    await atlas.unsafe("DELETE FROM atlas.document_perception_derived_manifest WHERE execution_id = ANY($1::text[])", [Object.values(resources).map((resource) => resource.perception)]).catch(() => undefined);
     for (const resource of Object.values(resources)) {
       await atlas.unsafe("DELETE FROM atlas.normalized_document_cache WHERE cache_key=$1", [resource.cache]).catch(() => undefined);
       await atlas.unsafe("DELETE FROM atlas.document_perception_execution WHERE id=$1", [resource.perception]).catch(() => undefined);

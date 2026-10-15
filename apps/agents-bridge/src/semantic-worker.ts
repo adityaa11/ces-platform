@@ -1,23 +1,47 @@
-import { parseSemanticBackgroundJob, parseSemanticExtractionContext, parseSemanticReconciliationResult, semanticContractVersion, type SemanticBackgroundJob } from "@atlas/contracts";
-import { buildSemanticSourcePacket, getProductionSemanticSkill } from "@atlas/skills";
+import { parseSemanticBackgroundJob, parseSemanticExtractionContext, parseSemanticReconciliationResult, semanticContractVersion, type SemanticBackgroundJob, type StepwiseDerivedMediaRedemption } from "@atlas/contracts";
+import { getProductionSemanticSkill } from "@atlas/skills";
 import { BridgeProviderError, type StructuredReasoningProvider } from "./provider-capabilities.js";
-import { AtlasSemanticClientError } from "./atlas-semantic-client.js";
 import { SemanticReplayLeaseLostError } from "./semantic-result-replay.js";
-import { finalizeExtractionProposal } from "./semantic-extraction-finalizer.js";
+import { createSemanticCompositeReplay, qualifiedAcceptanceFromWinner } from "./semantic-composite-replay.js";
+import { runOrdinaryStepwiseSemanticExtraction, type StepwiseRuntimeDependencies } from "./semantic-stepwise-runtime.js";
 import { runOfflineStepwiseComposition, type OfflineStepwiseDependencies, type OfflineStepwiseQualificationContext } from "./semantic-offline-stepwise-composition.js";
 
-export type SemanticClient = { context(job: SemanticBackgroundJob, signal: AbortSignal): Promise<unknown>; deliver(envelope: unknown, signal: AbortSignal): Promise<void>; fail(failure: unknown, signal: AbortSignal): Promise<void> };
+export type SemanticClient = { context(job: SemanticBackgroundJob, signal: AbortSignal): Promise<unknown>; media(redemption: StepwiseDerivedMediaRedemption, signal: AbortSignal): Promise<Uint8Array>; deliver(envelope: unknown, signal: AbortSignal): Promise<void>; deliverQualified(acceptance: unknown, signal: AbortSignal): Promise<void>; fail(failure: unknown, signal: AbortSignal): Promise<void> };
 export type SemanticReplay = { load(idempotencyKey: string, executionId: string): Promise<unknown | undefined>; stage(idempotencyKey: string, executionId: string, envelope: unknown, lease: { readonly owner: string; readonly generation: number }): Promise<unknown>; acknowledge(idempotencyKey: string, executionId: string): Promise<void> };
 const failureCode = (error: unknown) => error instanceof BridgeProviderError ? (error.code === "timeout" ? "provider_timeout" : error.code === "malformed_response" || error.code === "response_bound" ? "malformed_output" : "provider_unavailable") : "integrity_validation";
 const isReplayLeaseLost = (error: unknown): error is SemanticReplayLeaseLostError => error instanceof SemanticReplayLeaseLostError || (error instanceof Error && error.name === "SemanticReplayLeaseLostError");
+const isDeterministicAtlasRejection = (error: unknown): boolean => {
+  if (!error || typeof error !== "object") return false;
+  const clientError = error as { readonly operation?: unknown; readonly status?: unknown };
+  return (clientError.operation === "result" || clientError.operation === "qualified_result") && clientError.status === 422;
+};
 
 /** Test-selectable only: never supplied by worker-main's normal D1 callback. */
 export type OfflineStepwiseSelection = Readonly<{ readonly context: OfflineStepwiseQualificationContext; readonly dependencies: Omit<OfflineStepwiseDependencies, "idempotencyKey" | "lease"> }>;
+export type OrdinaryStepwiseSelection = Readonly<{ readonly dependencies: StepwiseRuntimeDependencies }>;
 
-export async function runSemanticJob(jobValue: unknown, provider: StructuredReasoningProvider, client: SemanticClient, replay: SemanticReplay, idempotencyKey: string, signal: AbortSignal, lease = { owner: "unit-test", generation: 1 }, offlineStepwise?: OfflineStepwiseSelection): Promise<void> {
+export async function runSemanticJob(jobValue: unknown, provider: StructuredReasoningProvider, client: SemanticClient, replay: SemanticReplay, idempotencyKey: string, signal: AbortSignal, lease = { owner: "unit-test", generation: 1 }, offlineStepwise?: OfflineStepwiseSelection, ordinaryStepwise?: OrdinaryStepwiseSelection): Promise<void> {
   const job = parseSemanticBackgroundJob(jobValue);
-  const staged = await replay.load(idempotencyKey, job.executionId);
-  if (staged) { await client.deliver(staged, signal); return; }
+  if (job.skill.id !== "atlas.semantic.extract") {
+    const staged = await replay.load(idempotencyKey, job.executionId);
+    if (staged) { await client.deliver(staged, signal); return; }
+  }
+  // SEM-007's injected qualification lane supplies its composite replay
+  // directly. It is not reachable from worker-main, which always provides an
+  // ordinary stepwise selection. Only a composite winner may use this path;
+  // historical Semantic V1 envelopes remain blocked below.
+  if (job.skill.id === "atlas.semantic.extract" && !offlineStepwise && !ordinaryStepwise) {
+    const injectedWinner = await replay.load(idempotencyKey, job.executionId);
+    if (injectedWinner && typeof injectedWinner === "object" && !Array.isArray(injectedWinner) && "compositeHash" in injectedWinner) { await client.deliver(injectedWinner, signal); return; }
+  }
+  // The atomic composite is the durable extraction handoff. On an Atlas
+  // acknowledgement loss the execution can already be completed, so context
+  // redemption is no longer permitted; replay directly from that immutable
+  // winner instead of falling back to legacy delivery or re-running a model.
+  if (job.skill.id === "atlas.semantic.extract" && ordinaryStepwise) {
+    const existing = await createSemanticCompositeReplay(ordinaryStepwise.dependencies.database).load(idempotencyKey, job.executionId);
+    if (existing) { await client.deliverQualified(qualifiedAcceptanceFromWinner(existing), signal); return; }
+  }
   let context: { readonly scope: Record<string, string> } | undefined;
   // A persisted envelope is the authoritative result for this execution.  A
   // delivery transport failure after this point must return to pg-boss for a
@@ -33,15 +57,30 @@ export async function runSemanticJob(jobValue: unknown, provider: StructuredReas
       if (contextScope.projectId !== offlineScope.projectId || contextScope.workspaceId !== offlineScope.workspaceId || contextScope.bundleId !== offlineScope.bundleId || contextScope.documentId !== offlineScope.documentId || contextScope.executionId !== offlineScope.executionId || JSON.stringify(extractionContext.normalizedDocument) !== JSON.stringify(offlineStepwise.context.normalizedDocument)) {
         throw new Error("OFFLINE_CONTEXT_BLOCKED: the redeemed extraction context was substituted after offline qualification.");
       }
-      await runOfflineStepwiseComposition(offlineStepwise.context, { ...offlineStepwise.dependencies, idempotencyKey, lease });
+      const executed = await runOfflineStepwiseComposition(offlineStepwise.context, { ...offlineStepwise.dependencies, idempotencyKey, lease });
+      trustedStage = true;
+      await client.deliverQualified(executed.acceptance, signal);
       return;
     }
-    const skill = extractionContext ? undefined : getProductionSemanticSkill(job.skill.id, job.skill.version);
-    const packet = extractionContext ? buildSemanticSourcePacket(extractionContext.normalizedDocument) : undefined;
-    const response = await provider.structured(extractionContext
-      ? { messages: [{ role: "system", content: packet!.systemPrompt }, { role: "user", content: packet!.userPrompt }], schema: packet!.providerProposalJsonSchema, signal }
-      : { messages: [{ role: "system", content: skill!.promptTemplate }, { role: "user", content: JSON.stringify(context) }], schema: skill!.outputSchema, signal });
-    const result = extractionContext ? finalizeExtractionProposal({ proposal: response.value, sourceSlots: packet!.sourceSlotMap }) : parseSemanticReconciliationResult(response.value);
+    if (extractionContext) {
+      if (!ordinaryStepwise) throw new Error("STEPWISE_RUNTIME_UNAVAILABLE: ordinary extraction has no canonical stepwise runtime.");
+      const composites = createSemanticCompositeReplay(ordinaryStepwise.dependencies.database);
+      const existing = await composites.load(idempotencyKey, job.executionId);
+      if (existing) {
+        trustedStage = true;
+        await client.deliverQualified(qualifiedAcceptanceFromWinner(existing), signal);
+        return;
+      }
+      const historical = await replay.load(idempotencyKey, job.executionId);
+      if (historical) throw new Error("LEGACY_REPLAY_CONFLICT: legacy extraction delivery has no stepwise composite binding.");
+      const executed = await runOrdinaryStepwiseSemanticExtraction({ job, redeemedContext: extractionContext, client, provider, idempotencyKey, lease, signal, dependencies: ordinaryStepwise.dependencies });
+      trustedStage = true;
+      await client.deliverQualified(executed.acceptance, signal);
+      return;
+    }
+    const skill = getProductionSemanticSkill(job.skill.id, job.skill.version);
+    const response = await provider.structured({ messages: [{ role: "system", content: skill.promptTemplate }, { role: "user", content: JSON.stringify(context) }], schema: skill.outputSchema, signal });
+    const result = parseSemanticReconciliationResult(response.value);
     const envelope = { version: semanticContractVersion, scope: context.scope, skill: job.skill, provider: response.provenance, result };
     const winningEnvelope = await replay.stage(idempotencyKey, job.executionId, envelope, lease);
     trustedStage = true;
@@ -53,7 +92,7 @@ export async function runSemanticJob(jobValue: unknown, provider: StructuredReas
       throw error;
     }
     if (trustedStage) {
-      if (context && error instanceof AtlasSemanticClientError && error.operation === "result" && error.status === 422) {
+      if (context && isDeterministicAtlasRejection(error)) {
         await client.fail({ version: semanticContractVersion, scope: context.scope, code: "integrity_validation", message: "Semantic execution failed before a trusted result was delivered." }, signal);
         return;
       }

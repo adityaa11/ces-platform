@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { runSemanticJob } from "../src/semantic-worker.ts";
 import { finalizeExtractionProposal } from "../src/semantic-extraction-finalizer.ts";
@@ -45,16 +46,14 @@ test("deterministic extraction finalizer rejects malformed, foreign, missing, du
   assert.throws(() => finalizeExtractionProposal({ proposal: { version: "v1", source_results: [{ slot: "slot-000001", ...validSource }] }, sourceSlots, acceptedContextEvidence: [] } as never), /caller-supplied contextual slot pairs/);
 });
 
-test("semantic worker invokes the production structured boundary, stages before delivery, and replays without another provider call", async () => {
-  let calls = 0; const staged: unknown[] = []; const delivered: unknown[] = [];
+test("ordinary extraction without canonical stepwise wiring fails before provider, staging, or delivery", async () => {
+  let calls = 0; const staged: unknown[] = []; const delivered: unknown[] = []; const failures: unknown[] = [];
   const replay = { load: async () => staged[0], stage: async (_key: string, _execution: string, value: unknown) => { staged.push(value); }, acknowledge: async () => {} };
-  const client = { context: async () => context, deliver: async (value: unknown) => { delivered.push(value); }, fail: async () => { throw new Error("unexpected failure"); } };
+  const client = { context: async () => context, deliver: async (value: unknown) => { delivered.push(value); }, fail: async (value: unknown) => { failures.push(value); } };
   const provider = { structured: async () => { calls += 1; return { value: proposal, provenance: { provider: "mistral" as const, model: "configured", endpoint: "/v1/chat/completions" as const, latencyMilliseconds: 1, attempt: 1 } }; } };
   await runSemanticJob(job, provider as never, client, replay, "semantic-key", new AbortController().signal);
-  assert.equal(calls, 1); assert.equal(staged.length, 1); assert.equal(delivered.length, 1);
-  await runSemanticJob(job, provider as never, client, replay, "semantic-key", new AbortController().signal);
-  assert.equal(calls, 1, "a durable staged envelope is delivered unchanged without a second provider call");
-  assert.equal(delivered.length, 2);
+  assert.equal(calls, 0); assert.equal(staged.length, 0); assert.equal(delivered.length, 0);
+  assert.equal(failures.length, 1);
 });
 
 test("semantic worker fails closed for unavailable and malformed production work", async () => {
@@ -65,25 +64,25 @@ test("semantic worker fails closed for unavailable and malformed production work
   await assert.rejects(() => runSemanticJob({ ...job, skill: { id: "atlas.semantic.unknown", version: "v1" } } as never, provider as never, { context: async () => context, deliver: async () => {}, fail: async () => {} }, { load: async () => undefined, stage: async () => {}, acknowledge: async () => {} }, "semantic-key-unknown", new AbortController().signal));
 });
 
-test("a stale semantic claimant redelivers an immutable winning stage instead of reporting a terminal failure", async () => {
+test("a legacy extraction delivery without a stepwise composite is never redelivered", async () => {
   const winning = { version: "v1", scope, skill: job.skill, provider: { provider: "mistral", model: "winning", endpoint: "/v1/chat/completions", latencyMilliseconds: 1, attempt: 1 }, result };
   const delivered: unknown[] = []; const failures: unknown[] = [];
   let loads = 0;
   await runSemanticJob(job, { structured: async () => ({ value: proposal, provenance: { provider: "mistral" as const, model: "stale", endpoint: "/v1/chat/completions" as const, latencyMilliseconds: 1, attempt: 1 } }) } as never, { context: async () => context, deliver: async (value: unknown) => { delivered.push(value); }, fail: async (value: unknown) => { failures.push(value); } }, { load: async () => (++loads === 1 ? undefined : winning), stage: async () => { throw new SemanticReplayLeaseLostError("superseded"); }, acknowledge: async () => {} }, "semantic-key-race", new AbortController().signal, { owner: "stale-worker", generation: 2 });
-  assert.deepEqual(delivered, [winning]); assert.equal(failures.length, 0);
+  assert.deepEqual(delivered, []); assert.equal(failures.length, 1);
 });
 
-test("a post-stage delivery failure remains retryable and never reports the durable result as failed", async () => {
+test("legacy extraction cannot reach a post-stage delivery path", async () => {
   const failures: unknown[] = [];
-  await assert.rejects(() => runSemanticJob(
+  await runSemanticJob(
     job,
     { structured: async () => ({ value: proposal, provenance: { provider: "mistral" as const, model: "configured", endpoint: "/v1/chat/completions" as const, latencyMilliseconds: 1, attempt: 1 } }) } as never,
     { context: async () => context, deliver: async () => { throw new Error("Atlas result transport timed out"); }, fail: async (failure: unknown) => { failures.push(failure); } },
     { load: async () => undefined, stage: async (_key: string, _execution: string, value: unknown) => value, acknowledge: async () => {} },
     "semantic-key-post-stage-timeout",
     new AbortController().signal,
-  ));
-  assert.equal(failures.length, 0);
+  );
+  assert.equal(failures.length, 1);
 });
 
 test("a deterministic post-stage validation rejection uses the existing terminal failure path", async () => {
@@ -108,4 +107,18 @@ test("offline stepwise composition rejects a forged media grant before provider 
     dispatch: async () => { dispatches += 1; return {}; },
   }), /OFFLINE_CONTEXT_BLOCKED/);
   assert.equal(dispatches, 0); assert.equal(sqlCalls, 0);
+});
+
+test("ordinary extraction has no legacy packet or implicit prompt compiler selection", async () => {
+  const [worker, main, legacyPrompt, legacyPacket] = await Promise.all([
+    readFile(new URL("../src/semantic-worker.ts", import.meta.url), "utf8"),
+    readFile(new URL("../src/worker-main.ts", import.meta.url), "utf8"),
+    readFile(new URL("../../../packages/atlas-skills/src/semantic-prompt.ts", import.meta.url), "utf8"),
+    readFile(new URL("../../../packages/atlas-skills/src/semantic-source-packet.ts", import.meta.url), "utf8"),
+  ]);
+  assert.doesNotMatch(worker, /buildSemanticSourcePacket|compileExtractionPrompt|finalizeExtractionProposal/u);
+  assert.doesNotMatch(main, /buildSemanticSourcePacket|compileExtractionPrompt|prompt-003\/v1/u);
+  assert.match(legacyPrompt, /compileExtractionPrompt\(profile: string/u);
+  assert.match(legacyPacket, /buildSemanticSourcePacket\(input: NormalizedDocument, profile: typeof semanticExtractionProfileId\)/u);
+  assert.match(legacyPacket, /Historical text-only packet builder/u);
 });

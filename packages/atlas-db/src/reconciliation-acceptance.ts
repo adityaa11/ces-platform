@@ -41,10 +41,12 @@ export class PostgresReconciliationAcceptanceHandler implements SemanticAcceptan
     const policy = await sql.unsafe("SELECT perception_admission_policy FROM atlas.extraction_bundle WHERE id=$1 FOR UPDATE", [scope.bundleId]);
     if (policy[0]?.perception_admission_policy === "staged-fair-local-v1") {
       if (!this.nextPerception) throw new Error("Next-document perception authority is unavailable.");
+      const next = await sql.unsafe("SELECT 1 FROM atlas.extraction_bundle_document WHERE bundle_id=$1 AND sequence=$2 AND state='pending' FOR UPDATE", [scope.bundleId, Number(member[0].sequence) + 1]);
       // Reconciliation makes pending staged work eligible but never admits it
       // itself. The shared gate owns capacity, durable fairness, execution,
       // grant, queue job, and member transition in this same transaction.
       await this.nextPerception.authority.admitStagedInTransaction(sql, this.nextPerception.queue);
+      if (!next.length) await this.completeBundle(sql, scope.bundleId, scope.projectId, scope.workspaceId);
       return;
     }
     const next = await sql.unsafe("SELECT 1 FROM atlas.extraction_bundle_document WHERE bundle_id=$1 AND sequence=$2 AND state='pending' FOR UPDATE", [scope.bundleId, Number(member[0].sequence) + 1]);

@@ -15,11 +15,12 @@ The package is based on the reviewed source materials in `Backend_Phase/Atlas_Se
 | 5 | [SEM-CUTOVER-005](SEM-CUTOVER-005-provisional-accounting-and-replay-handoff.md) | Honest provisional accounting and replay-safe sidecar handoff | 004 independent CK `PASS` |
 | 6 | [SEM-CUTOVER-006](SEM-CUTOVER-006-03-05-context-trust-remediation.md) | Bounded repair of 03-05 CK-001.a/b contextual trust findings | 005 independent CK `PASS` and specific CFC/HMN authorization |
 | 7 | [SEM-CUTOVER-007](SEM-CUTOVER-007-offline-stepwise-worker-composition.md) | One offline fake-provider worker composition with replay | 006 independent CK `PASS` |
-| 7A | [SEM-CUTOVER-007A](SEM-CUTOVER-007A-canonical-stepwise-extraction-runtime-cutover.md) | Sole executable stepwise extraction; real/fake neutral adapter; old extraction dispatch retired | 007 independent CK `PASS` and explicit GO |
+| 7A-a | [SEM-CUTOVER-007A-DEFERRED-ACCEPTANCE](SEM-CUTOVER-007A-DEFERRED-ACCEPTANCE.md) | Hash-bound partial and fully deferred semantic acceptance lifecycle | SEM-007 independent CK `PASS` and HMN-SEM-CUTOVER-007A-001 approval |
+| 7A | [SEM-CUTOVER-007A](SEM-CUTOVER-007A-canonical-stepwise-extraction-runtime-cutover.md) | Sole executable stepwise extraction; real/fake neutral adapter; old extraction dispatch retired | 7A-a independent CK `PASS` and explicit GO |
 | 8 | [SEM-CUTOVER-008](SEM-CUTOVER-008-final-ck-and-canonical-semantic-baseline.md) | Independent 03-05 CK closure and successor-baseline freeze | 007 independent CK `PASS` |
 
 ```text
-001 -> 002 -> 003 -> 004 -> 005 -> 006 -> 007 -> 007A -> 008
+001 -> 002 -> 003 -> 004 -> 005 -> 006 -> 007 -> 007A-a -> 007A -> 008
 ```
 
 Every executable leaf needs its own explicit GO. `SEM-CUTOVER-002` is a human decision checkpoint, not coding permission; `SEM-CUTOVER-008` cannot self-approve the final 03-05 CK.

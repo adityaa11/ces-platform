@@ -51,7 +51,15 @@ const worker = createBackgroundWorker(loadWorkerConfig(), runtime, undefined, as
 }, undefined, async (job, signal, context) => {
   const route = registry.resolve(capabilityForSkill(job.skill.id));
   assertConfiguredRouteAdapter(route, config);
-  await runSemanticJob(job, capabilities[route.providerId as "mistral" | "gemini" | "anoman"].structured, semanticClient, createSemanticResultReplay(context.database), context.idempotencyKey, signal, { owner: context.leaseOwner, generation: context.leaseGeneration });
+  const stepwise = job.skill.id !== "atlas.semantic.extract" ? undefined : {
+    dependencies: {
+      database: context.database,
+      routes: [{ version: "v1" as const, routeId: route.routeId, profileId: "atlas.semantic.extract.stepwise_multimodal.relationship-envelope/v0.4.0", profileVersion: route.qualificationVersion, maxPromptBytes: 1024 * 1024, maxDeadlineMilliseconds: 30_000, imageTpm: { state: "unknown" as const } }],
+      routeId: route.routeId,
+      profileId: "atlas.semantic.extract.stepwise_multimodal.relationship-envelope/v0.4.0",
+    },
+  };
+  await runSemanticJob(job, capabilities[route.providerId as "mistral" | "gemini" | "anoman"].structured, semanticClient, createSemanticResultReplay(context.database), context.idempotencyKey, signal, { owner: context.leaseOwner, generation: context.leaseGeneration }, undefined, stepwise);
 });
 await worker.start();
 await writeFile(readinessPath, "ready\n");

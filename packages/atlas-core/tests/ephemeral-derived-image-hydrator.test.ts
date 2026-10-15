@@ -5,8 +5,10 @@ import { DerivedImageGrantIssuer, EphemeralDerivedImageHydrator, createDerivedIm
 
 const png = Uint8Array.from(Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAF/gL+ZK2mXQAAAABJRU5ErkJggg==", "base64"));
 const baseManifest = {
+  projectId: "project-a",
+  workspaceId: "workspace-a",
   documentId: "document-a",
-  documentVersion: "normalized-v1",
+  perceptionExecutionId: "perception-a",
   sourceSha256: "a".repeat(64),
   profile: "atlas-stepwise-multimodal-v031",
   pageNumber: 2,
@@ -21,10 +23,10 @@ const baseManifest = {
 const manifest: DerivedImageManifest = { ...baseManifest, manifestSha256: createDerivedImageManifestSha256(baseManifest) };
 const scope: DerivedImageGrantScope = {
   serviceIdentity: "atlas.semantic-hydrator/v1",
-  tenantId: "tenant-a",
   projectId: "project-a",
+  workspaceId: "workspace-a",
   documentId: manifest.documentId,
-  documentVersion: manifest.documentVersion,
+  perceptionExecutionId: manifest.perceptionExecutionId,
   sourceSha256: manifest.sourceSha256,
   profile: manifest.profile,
   pageNumber: manifest.pageNumber,
@@ -32,6 +34,10 @@ const scope: DerivedImageGrantScope = {
   assetRef: manifest.assetRef,
   manifestSha256: manifest.manifestSha256,
   mediaType: manifest.mediaType,
+  imageSha256: manifest.sha256,
+  width: manifest.width,
+  height: manifest.height,
+  byteLength: manifest.byteLength,
   authorization: { kind: "semantic_execution", executionId: "semantic-execution-a" },
 };
 

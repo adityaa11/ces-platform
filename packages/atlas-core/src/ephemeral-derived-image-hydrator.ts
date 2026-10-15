@@ -5,8 +5,10 @@ const maximumDerivedImageBytes = 10 * 1024 * 1024;
 const pngSignature = Uint8Array.from([137, 80, 78, 71, 13, 10, 26, 10]);
 
 export type DerivedImageManifest = {
+  readonly projectId: string;
+  readonly workspaceId: string;
   readonly documentId: string;
-  readonly documentVersion: string;
+  readonly perceptionExecutionId: string;
   readonly sourceSha256: string;
   readonly profile: string;
   readonly pageNumber: number;
@@ -37,8 +39,10 @@ export type HydratedDerivedImage = {
 
 function canonicalManifest(manifest: Omit<DerivedImageManifest, "manifestSha256">): string {
   return JSON.stringify({
+    projectId: manifest.projectId,
+    workspaceId: manifest.workspaceId,
     documentId: manifest.documentId,
-    documentVersion: manifest.documentVersion,
+    perceptionExecutionId: manifest.perceptionExecutionId,
     sourceSha256: manifest.sourceSha256,
     profile: manifest.profile,
     pageNumber: manifest.pageNumber,
@@ -72,15 +76,21 @@ function pngDimensions(bytes: Uint8Array): { readonly width: number; readonly he
 }
 
 function matchesScope(manifest: DerivedImageManifest, scope: DerivedImageGrantScope): boolean {
-  return manifest.documentId === scope.documentId
-    && manifest.documentVersion === scope.documentVersion
+  return manifest.projectId === scope.projectId
+    && manifest.workspaceId === scope.workspaceId
+    && manifest.documentId === scope.documentId
+    && manifest.perceptionExecutionId === scope.perceptionExecutionId
     && manifest.sourceSha256 === scope.sourceSha256
     && manifest.profile === scope.profile
     && manifest.pageNumber === scope.pageNumber
     && manifest.locatorId === scope.locatorId
     && manifest.assetRef === scope.assetRef
     && manifest.manifestSha256 === scope.manifestSha256
-    && manifest.mediaType === scope.mediaType;
+    && manifest.mediaType === scope.mediaType
+    && manifest.sha256 === scope.imageSha256
+    && manifest.width === scope.width
+    && manifest.height === scope.height
+    && manifest.byteLength === scope.byteLength;
 }
 
 /**
@@ -118,7 +128,7 @@ export class EphemeralDerivedImageHydrator {
     } catch (error) {
       if (signal.aborted) throw new Error("Ephemeral image hydration was cancelled.");
       // Do not expose grant, storage, manifest, or image details across this seam.
-      throw new Error("Ephemeral image hydration failed.");
+      throw new Error("Ephemeral image hydration failed.", { cause: error });
     }
   }
 }
