@@ -1,6 +1,20 @@
 # BSS-V2-006-03A — Route-bound operational feedback, quota accounting, pressure and plan convergence
 
-- **State:** `planned` — newly re-anchored executable contract for explicit `GO BSS-V2-006-03A`; no GO/CK has been executed. GO must perform prerequisite/source preflight and stop at an actual incompatible approved interface rather than invent authority.
+> **State: superseded by a connected ticket series before CK.** This document is
+> retained as the source traceability contract only. It does not authorize GO,
+> CK, CFC, or HMN as one oversized unit, and its `planned` state below is
+> historical. The executable replacements are `BSS-V2-006-03A-01` through
+> `BSS-V2-006-03A-06`, in that order. A downstream dependency on “03A CK PASS”
+> means every child has its own CK `PASS`; an `awaiting_review` child is not a
+> substitute for series completion.
+>
+> The split preserves the original RC traceability as follows: 01 → RC01–04,
+> 02 → RC05–06, 03 → RC07–09, 04 → RC10–12, 05 → RC13, 06 → RC14 plus the
+> cross-ticket restart, role, redaction, migration, and regression evidence.
+> Each child has a bounded handoff contract; none may silently absorb a failed
+> predecessor or reopen BSS-V2-005-01..04 or BSS-V2-006-01/02.
+
+- **State:** `superseded_before_go` — retained traceability only; no GO/CK has been executed against this parent. Explicit GO targets only the replacement children.
 - **Review batch:** `BSS-V2-BATCH-06-03A`.
 - **Supersedes:** withdrawn `BSS-V2-006-03` **as a newly frozen prospective contract**, not as a CFC continuation, restoration, or adoption of its CK oracles.
 - **Required CK-PASS predecessors:** BSS-V2-001/002 qualified provider-neutral routing; BSS-V2-005-01..04 quota catalogue, process/workload envelopes, deterministic plan and immutable publication; BSS-V2-006-01/02 durable attempt/window/reservation and fair atomic dispatch.

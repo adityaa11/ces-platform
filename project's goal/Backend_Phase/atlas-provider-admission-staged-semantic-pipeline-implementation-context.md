@@ -1469,7 +1469,7 @@ Codex generates ticket-local readiness after materializing the frozen draft.
 
 ## 15.13 BSS-V2-006-03 withdrawal and new 006-03A contract
 
-The BSS-V2-006-03 executable draft, ticket, implementation, and active review artifacts were withdrawn by explicit user direction. This context supplies no reusable authority for provider-feedback, runtime-pressure, reconciliation, or plan-convergence work. The separately defined [BSS-V2-006-03A ticket](tickets/Stack_Setup_V2/BSS-V2-006-03A-provider-feedback-accounting-pressure-convergence.md) is the new prospective contract and needs its own explicit GO and independent CK; this withdrawn text gives it no authority.
+The BSS-V2-006-03 executable draft, ticket, implementation, and active review artifacts were withdrawn by explicit user direction. This context supplies no reusable authority for provider-feedback, runtime-pressure, reconciliation, or plan-convergence work. The former 03A parent is traceability-only; its connected 03A-01..06 children are the prospective contracts and each needs explicit GO and independent CK. This withdrawn text gives them no authority.
 
 ---
 
@@ -1481,7 +1481,7 @@ The BSS-V2-006-03 executable draft, ticket, implementation, and active review ar
 
 - State: `planned`
 - Review batch: `BSS-V2-BATCH-06-04`
-- Dependencies: BSS-V2-006-01/02 CK `PASS`; BSS-V2-006-03A CK PASS CK `PASS`
+- Dependencies: BSS-V2-006-01/02 CK `PASS`; BSS-V2-006-03A-01..06 CK `PASS`
 
 ### Outcome
 
@@ -1921,7 +1921,7 @@ BSS-V2-005's versioned capacity profile is *not* a promise that Anoman or any fu
 - **Prospective immediate enforcement = a newly planned, independently qualified BSS-V2-006 runtime-feedback successor:** normalize only trusted feedback; persist scoped lower-limit clamps/cooldowns/unknown-usage pessimism per quota domain/window; deny future inadmissible work with zero transport; bounded, newly reserved probes only. Ambiguous 429 cannot be treated as proof of numeric RPM/RPD, a particular window or account scope. Do not promise to prevent the first silently induced 429.
 - **Lasting policy update = BSS-V2-005 authority:** a qualified new provider-capacity/profile version (authorized operator, API/docs or trustworthy qualified observation) causes deterministic DesiredAdmissionProfile re-publication and BSS-V2-006 plan-change wakeup under proposed BSS-V2-005-05. BSS-V2-006 cannot directly rewrite plan truth or increase it from a provider raw observation.
 - **Planner coupling:** BSS-V2-006 transient remaining quota, 429/cooldown or RPM/RPD depletion makes an already valid semantic batch *wait*, never silently re-batches it. A proven per-request structural downgrade makes affected immutable requests ineligible; IDSER-012-02-01 re-plans into a **new versioned owned/context partition** from authenticated source, or fails with the exact unfit owned unit. No prompt truncation.
-- **Evidence:** BSS-V2-006-03 is withdrawn and supplies no review contract; a newly planned BSS-V2-006-03A requires independent CK PASS before BSS-V2-006-04 may rely on runtime provider-policy drift handling. BSS-V2-005-05 RC-07..08 and IDSER-012-02-01 RC-11 remain prospective, not independently CK-qualified. Approved earlier BSS-V2-005 children and prior GO/CK artifacts remain untouched.
+- **Evidence:** BSS-V2-006-03 is withdrawn and supplies no review contract; every 03A-01..06 child requires independent CK PASS before BSS-V2-006-04 may rely on runtime provider-policy drift handling. BSS-V2-005-05 RC-07..08 and IDSER-012-02-01 RC-11 remain prospective, not independently CK-qualified. Approved earlier BSS-V2-005 children and prior GO/CK artifacts remain untouched.
 
 ## 25. October 16, 2026 verified interactive/background foundation and consumer-latency seam (prospective)
 
@@ -1935,4 +1935,4 @@ BSS-V2-005's versioned capacity profile is *not* a promise that Anoman or any fu
 
 [Consumer-contract checkpoint](bss-provider-consumer-contract-checkpoint-20261016.md) owns the distinction between **approved BSS-V2-005-04 immutable DesiredAdmissionProfile publication**, the **planned BSS-V2-005-05 authenticated read-only `CapacityPlanningSnapshot/v1`**, and **planned BSS-V2-006-04 `RuntimeCapacityConstraint/v1` read plus `ProviderWorkAdmission/v1` durable operational API**. These are proposed interface labels, not source-code implementations or CK PASS evidence. -005-05 must prove structural/workload/profile/active-plan versions and exact service-class/headroom/reserve without any quota mutation. -006-04 must prove read-vs-reservation isolation, per-attempt fenced admission, typed provider-pressure feedback and conservative accounting across restart through two independent fake background/interactive consumers.
 
-**Non-cyclic dependency sequence (current):** approved BSS-V2-005-04 → approved BSS-V2-006-01/02 → [newly planned BSS-V2-006-03A with independent CK PASS] → BSS-V2-005-05 final registry/read/convergence CK → BSS-V2-006-04 integrated shared-service CK. The BSS-V2-005-05 read-only snapshot may be developed/tested against approved -005-04 before the successor, but its **final** CK must prove durable wakeup against the newly qualified 006-03A, not the withdrawn -03. IDSER-012-02-01 consumes immutable read constraints with zero reservation and retains per-batch Planned Corpus hard stop; SEM-007A batch runtime via IDSER-012-02-03 consumes **actual BSS-V2-006-04 admitted attempts**, not merely the capacity snapshot. No provider call is justified by reading either snapshot. Any SEM batch corpus intake, qualified handoff, reconciliation preparation or semantic JSON-meaning retry remains separately authorized.
+**Non-cyclic dependency sequence (current):** approved BSS-V2-005-04 → approved BSS-V2-006-01/02 → [03A-01 → 03A-02 → 03A-03 → 03A-04 → 03A-05 → 03A-06, each CK PASS] → BSS-V2-005-05 final registry/read/convergence CK → BSS-V2-006-04 integrated shared-service CK. The BSS-V2-005-05 read-only snapshot may be developed/tested against approved -005-04 before the series, but its **final** CK must prove durable wakeup against the qualified child series, not withdrawn -03. IDSER-012-02-01 consumes immutable read constraints with zero reservation and retains per-batch Planned Corpus hard stop; SEM-007A batch runtime via IDSER-012-02-03 consumes **actual BSS-V2-006-04 admitted attempts**, not merely the capacity snapshot. No provider call is justified by reading either snapshot. Any SEM batch corpus intake, qualified handoff, reconciliation preparation or semantic JSON-meaning retry remains separately authorized.

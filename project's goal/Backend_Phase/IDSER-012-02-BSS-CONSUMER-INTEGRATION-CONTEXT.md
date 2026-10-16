@@ -95,8 +95,8 @@ Bind semantic profile/source/REL/schema/prompt/estimator/request-envelope identi
 | Owner/checkpoint | Direct evidence required; never a historical surrogate |
 | --- | --- |
 | BSS-V2-005-04 (approved) | Active `DesiredAdmissionProfile` immutable publication/read, no provider work; accepted predecessor, not evidence for a new consumer snapshot |
-| BSS-V2-006-01/02 approved + BSS-V2-006-03A planned | Durable exact windows, single-reservation dispatch, fair interactive protection, typed usage/429/cooldown and wakeup; no dependency on 005-05 CK |
-| BSS-V2-005-05 (planned) | Authenticated `CapacityPlanningSnapshot/v1` read-only external fixture plus process registry and genuine BSS-006-03A plan wakeup; final CK only after 006-03A CK |
+| BSS-V2-006-01/02 approved + BSS-V2-006-03A-01..06 planned | Durable exact windows, single-reservation dispatch, fair interactive protection, typed usage/429/cooldown and wakeup; no dependency on 005-05 CK |
+| BSS-V2-005-05 (planned) | Authenticated `CapacityPlanningSnapshot/v1` read-only external fixture plus process registry and genuine 03A child-series plan wakeup; final CK only after 03A-01..06 CK |
 | BSS-V2-006-04 (planned) | `RuntimeCapacityConstraint/v1` read + `ProviderWorkAdmission/v1` real isolated BSS consumer test with independent background/interactive fake callers; requires 005-05 CK, no actual semantic implementation |
 | IDSER-012-02-01 (planned) | Qualified planner read, exact partition/replay, capacity-version hard stop and **non-inert zero** provider BSS attempt/reservation/job/transport counters. If runtime constraint read is mandatory for its selected scope, gate on 006-04 CK; no SEM provider invocation |
 | IDSER-012-02-02 (planned) | Real background profile/route activation; frozen SEM-profile schema/source/REL hashes; BSS durable wakeup; **zero** provider transport and semantic result |

@@ -2,7 +2,7 @@
 
 - **State:** `planned`
 - **Review batch:** `BSS-V2-BATCH-06-04`
-- **Dependencies:** BSS-V2-006-01/02, BSS-V2-005-05, and BSS-V2-006-03A must each have CK `PASS`. BSS-V2-006-01/02 qualify against existing approved BSS-V2-005-04 so this integrated consumer gate does **not** create a dependency cycle.
+- **Dependencies:** BSS-V2-006-01/02, BSS-V2-005-05, and every BSS-V2-006-03A-01..06 child must have CK `PASS`. The 03A parent is traceability-only and cannot satisfy this gate. BSS-V2-006-01/02 qualify against existing approved BSS-V2-005-04 so this integrated consumer gate does **not** create a dependency cycle.
 - **Parent:** [BSS-V2-006](BSS-V2-006-capability-admission-interactive-protection.md)
 - **Planning authority:** [Provider admission/staged semantic context](../../atlas-provider-admission-staged-semantic-pipeline-implementation-context.md) §21
 
@@ -43,7 +43,7 @@ Existing `RC-BSSV2-00604-02` already verifies hard interactive protection; do no
 
 ## Consumer-facing Hard Stop B — reusable runtime capacity/read and provider work/admission service (planned)
 
-**Explicit handoff:** `006-03A` owns the internal pg-boss admitted-job consumer, actual transport fence, operational feedback/accounting/pressure, and active-plan wakeup. This ticket MUST **reuse** those components without cloning any scheduler, feedback engine, quota ledger or probe path. Its distinct GO/CK target is the authenticated, versioned **consumer-facing** reads/commands and independent external-consumer composition below; it may introduce the necessary API projections without creating a second internal runtime.
+**Explicit handoff:** the completed `006-03A-01..06` series owns the internal pg-boss admitted-job consumer, actual transport fence, operational feedback/accounting/pressure, and active-plan wakeup. This ticket MUST **reuse** those components without cloning any scheduler, feedback engine, quota ledger or probe path. Its distinct GO/CK target is the authenticated, versioned **consumer-facing** reads/commands and independent external-consumer composition below; it may introduce the necessary API projections without creating a second internal runtime.
 
 BSS-V2-006-04 must independently prove a versioned **`RuntimeCapacityConstraint/v1`** read-only interface *and* a separate **`ProviderWorkAdmission/v1`** operational interface. These names are prospective contract labels rather than claims of existing TS exports. [Full consumer interface matrix and execution ordering](../../bss-provider-consumer-contract-checkpoint-20261016.md).
 

@@ -47,13 +47,19 @@ The dependency column and graph are authoritative GO order. Numeric ticket-famil
 | 20 | [BSS-V2-006](BSS-V2-006-capability-admission-interactive-protection.md) | umbrella | all 005 children CK PASS; BSS-006; BSS-V2-001/002 | Non-executable durable runtime-admission partition. |
 | 21 | [BSS-V2-006-01](BSS-V2-006-01-provider-work-reservation-window-foundation.md) | BSS-V2-BATCH-06-01 | 005-04 CK PASS; BSS-006/BSS-003 | Durable waiting work, reservation, quota-window, and wakeup foundation. |
 | 22 | [BSS-V2-006-02](BSS-V2-006-02-fair-admission-interactive-protection-atomic-dispatch.md) | BSS-V2-BATCH-06-02 | 006-01 CK PASS | Debt-free multi-resource fairness, hard interactive protection, atomic reservation and single-attempt dispatch. |
-| 23 | [BSS-V2-006-03A](BSS-V2-006-03A-provider-feedback-accounting-pressure-convergence.md) (replacement; original 006-03 withdrawn) | BSS-V2-BATCH-06-03A | 006-02 CK PASS; BSS-V2-001/002 and 005-01..04 CK PASS | New internal admitted-job worker + route-bound feedback, per-window accounting, scoped pressure and plan-wakeup contract; independent GO/CK required; no legacy 006-03 authority, no consumer API. |
-| 24 | [BSS-V2-006-04](BSS-V2-006-04-integrated-provider-admission-runtime-checkpoint.md) | BSS-V2-BATCH-06-04 | 006-01/02 CK PASS; 006-03A CK PASS; BSS-V2-005-05 CK PASS | Integrated deterministic proof of the reusable admission authority. |
-| 25 | [BSS-V2-007](BSS-V2-007-execution-usage-provenance-ledger.md) | BSS-V2-BATCH-07 | 004-03 parent scope; later dependency realignment as needed | Is external-provider usage/provenance persisted without inventing Docling economics? |
-| 26 | [BSS-V2-008](BSS-V2-008-price-profiles-shadow-cogs.md) | BSS-V2-BATCH-08 | 007 | Are external-provider prices and distinct actual/shadow costs calculated without billing? |
-| 27 | [BSS-V2-009](BSS-V2-009-privacy-preflight.md) | BSS-V2-BATCH-09 | 006, 008 | Does privacy compatibility fail before external-provider transmission? |
-| 28 | [BSS-V2-010](BSS-V2-010-qualified-fallback-route-state.md) | BSS-V2-BATCH-10 | 009 | Is fallback restricted to compatible, qualified routes with recorded selection? |
-| 29 | [BSS-V2-011](BSS-V2-011-integrated-reconciliation-checkpoint.md) | BSS-V2-BATCH-11 | 001–003, 004-02, 004-03, 004-04, 005–010 | Do frozen BSS V2 interfaces compose without reopening IDSER domain acceptance? |
+| 23 | [BSS-V2-006-03A split map](BSS-V2-006-03A-provider-feedback-accounting-pressure-convergence.md) | superseded before CK | 006-02 CK PASS; BSS-V2-001/002 and 005-01..04 CK PASS | Traceability-only parent for the six connected internal-runtime children below. |
+| 24 | [BSS-V2-006-03A-01](BSS-V2-006-03A-01-route-bound-admitted-execution.md) | BSS-V2-BATCH-06-03A-01 | 006-02 CK PASS; BSS-V2-001/002 and 005-01..04 CK PASS | Route binding, real admitted-job worker, claim and typed redacted ingress. |
+| 25 | [BSS-V2-006-03A-02](BSS-V2-006-03A-02-exact-window-reconciliation.md) | BSS-V2-BATCH-06-03A-02 | 03A-01 CK PASS | Exact physical-window reconciliation and conservative unknown usage. |
+| 26 | [BSS-V2-006-03A-03](BSS-V2-006-03A-03-scoped-pressure-and-probe-recovery.md) | BSS-V2-BATCH-06-03A-03 | 03A-01/02 CK PASS | Scoped pressure, policy-bound cooldown/probe, and recovery. |
+| 27 | [BSS-V2-006-03A-04](BSS-V2-006-03A-04-plan-wakeup-and-replan-intents.md) | BSS-V2-BATCH-06-03A-04 | 03A-01..03 CK PASS | Active-plan wakeup/revalidation and bounded convergence intents. |
+| 28 | [BSS-V2-006-03A-05](BSS-V2-006-03A-05-background-route-aware-admission.md) | BSS-V2-BATCH-06-03A-05 | 03A-01..04 CK PASS | Common background admission while preserving interactive protection. |
+| 29 | [BSS-V2-006-03A-06](BSS-V2-006-03A-06-operational-resilience-and-boundary-closure.md) | BSS-V2-BATCH-06-03A-06 | 03A-01..05 CK PASS | Composed resilience, role/redaction, migration and final internal boundary evidence. |
+| 30 | [BSS-V2-006-04](BSS-V2-006-04-integrated-provider-admission-runtime-checkpoint.md) | BSS-V2-BATCH-06-04 | 006-01/02 CK PASS; 03A-01..06 CK PASS; BSS-V2-005-05 CK PASS | Integrated deterministic proof of the reusable admission authority. |
+| 31 | [BSS-V2-007](BSS-V2-007-execution-usage-provenance-ledger.md) | BSS-V2-BATCH-07 | 004-03 parent scope; later dependency realignment as needed | Is external-provider usage/provenance persisted without inventing Docling economics? |
+| 32 | [BSS-V2-008](BSS-V2-008-price-profiles-shadow-cogs.md) | BSS-V2-BATCH-08 | 007 | Are external-provider prices and distinct actual/shadow costs calculated without billing? |
+| 33 | [BSS-V2-009](BSS-V2-009-privacy-preflight.md) | BSS-V2-BATCH-09 | 006, 008 | Does privacy compatibility fail before external-provider transmission? |
+| 34 | [BSS-V2-010](BSS-V2-010-qualified-fallback-route-state.md) | BSS-V2-BATCH-10 | 009 | Is fallback restricted to compatible, qualified routes with recorded selection? |
+| 35 | [BSS-V2-011](BSS-V2-011-integrated-reconciliation-checkpoint.md) | BSS-V2-BATCH-11 | 001–003, 004-02, 004-03, 004-04, 005–010 | Do frozen BSS V2 interfaces compose without reopening IDSER domain acceptance? |
 
 ```text
 001 -> 002 -> 004-01 -> 004-02 -> STOP
@@ -65,7 +71,7 @@ The dependency column and graph are authoritative GO order. Numeric ticket-famil
 005-01 -> 005-02 -> 005-03 -> 005-04                                    |
                                   |                                       |
                                   v                                       |
-006-01 -> 006-02 -> 006-03A -> 006-04 -------+
+006-01 -> 006-02 -> 03A-01 -> 03A-02 -> 03A-03 -> 03A-04 -> 03A-05 -> 03A-06 -> 006-04 -------+
                                                                           |
 IDSER-012-01-02 -> perceived --------------------------------------------+
                                                                           |
