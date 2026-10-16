@@ -20,10 +20,17 @@ migrations.push("0052_bssv200603a_legacy_admission_compatibility");
 migrations.push("0053_bssv200603a_legacy_window_reservation_compatibility");
 migrations.push("0054_bssv200603a_legacy_usage_compatibility");
 migrations.push("0049_bssv200603a_pressure_wakeup_convergence");
+migrations.push("0057_bssv200603a_wakeup_schema_convergence");
 migrations.push("0050_bssv200603a_route_pressure_admission");
 migrations.push("0051_bssv200603a_route_pressure_admission_forward_fix");
 migrations.push("0051_bssv200603a_pressure_cfc_closure");
 migrations.push("0056_bssv200603a_post_cooldown_domain_pressure_clamp");
+migrations.push("0055_bssv200603a_durable_wakeup_consumer");
+migrations.push("0058_bssv200603a_pressure_signature_convergence");
+migrations.push("0059_bssv200603a_pressure_nullability_convergence");
+migrations.push("0060_bssv200603a_pressure_policy_shape_convergence");
+migrations.push("0061_bssv200603a_pressure_runtime_convergence");
+migrations.push("0062_bssv200603a_wakeup_fairness_convergence");
 const readMigration = async (name) => {
   let migration = await readFile(new URL(`../migrations/${name}.sql`, import.meta.url), "utf8");
   for (const [token, value] of Object.entries(replacements)) migration = migration.replaceAll(token, value.replaceAll("'", "''"));

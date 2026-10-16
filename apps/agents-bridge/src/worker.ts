@@ -6,8 +6,10 @@ import { documentPerceptionQueue, parseDocumentPerceptionJob } from "./perceptio
 import { parseSemanticBackgroundJob } from "@atlas/contracts";
 import type { WorkerConfig } from "./worker-config.js";
 import { parseProviderAdmittedJob, type ProviderAdmittedExecutionHandler } from "./provider-admitted-worker.js";
+import { parseProviderWakeupJob, type ProviderWakeupHandler } from "./provider-wakeup-worker.js";
 
 export const providerAdmittedExecutionQueue = "bridge-provider-admitted-execution-v1";
+export const providerWakeupQueue = "bridge-provider-work-wakeup-v1";
 
 export type BackgroundWorker = {
   start(): Promise<void>;
@@ -38,6 +40,8 @@ export async function initializePgBossInfrastructure(boss: PgBoss, config: Worke
   // queue declaration that makes its durable consumer eligible after restart.
   await boss.createQueue(providerAdmittedExecutionQueue, queueOptions);
   await boss.updateQueue(providerAdmittedExecutionQueue, queueOptions);
+  await boss.createQueue(providerWakeupQueue, queueOptions);
+  await boss.updateQueue(providerWakeupQueue, queueOptions);
   await boss.getDb().executeSql("GRANT SELECT ON TABLE pgboss.version, pgboss.queue TO atlas_app");
   // pg-boss 12 routes active queues through the partitioned `job` table;
   // `job_common` remains present for compatibility. Its transactional send
@@ -104,7 +108,7 @@ async function executeOnce(idempotencyKey: string, executionId: string, leaseSec
   }
 }
 
-export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningRuntime, queueName = backgroundExecutionQueue, documentPerception?: DocumentPerceptionQueueHandler, perceptionQueueName = documentPerceptionQueue, semantic?: SemanticQueueHandler, providerAdmitted?: ProviderAdmittedExecutionHandler): BackgroundWorker {
+export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningRuntime, queueName = backgroundExecutionQueue, documentPerception?: DocumentPerceptionQueueHandler, perceptionQueueName = documentPerceptionQueue, semantic?: SemanticQueueHandler, providerAdmitted?: ProviderAdmittedExecutionHandler, providerWakeup?: ProviderWakeupHandler): BackgroundWorker {
   let stopping = false;
   const shutdown = new AbortController();
   const boss = new PgBoss({
@@ -163,6 +167,12 @@ export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningR
         await boss.work(providerAdmittedExecutionQueue, backgroundWorkOptions, async ([job]) => {
           const admitted = parseProviderAdmittedJob(job.data);
           await providerAdmitted(admitted, { database: boss.getDb(), signal: AbortSignal.any([job.signal, shutdown.signal]) });
+        });
+      }
+      if (providerWakeup) {
+        await boss.work(providerWakeupQueue, backgroundWorkOptions, async ([job]) => {
+          const wakeup = parseProviderWakeupJob(job.data);
+          await providerWakeup(wakeup, { database: boss.getDb(), signal: AbortSignal.any([job.signal, shutdown.signal]) });
         });
       }
     },

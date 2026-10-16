@@ -104,7 +104,7 @@ test("BSS-V2-006-01 persists idempotent work, fenced reservations, exact windows
 
     await bridge.unsafe("SELECT * FROM bridge.request_provider_work_wakeup($1,'window:requests',now() + interval '5 minutes','plan-v1',1)", [domain]);
     await bridge.unsafe("SELECT * FROM bridge.request_provider_work_wakeup($1,'window:requests',now() + interval '10 minutes','plan-v1',1)", [domain]);
-    assert.equal((await bridge.unsafe("SELECT count(*)::integer AS count FROM bridge.provider_work_wakeup_request WHERE quota_domain_id=$1", [domain]))[0].count, 1);
+    assert.equal((await bridge.unsafe("SELECT count(*)::integer AS count FROM bridge.provider_work_wakeup_request WHERE quota_domain_id=$1 AND wakeup_key='window:requests'", [domain]))[0].count, 1);
     await bridge.unsafe("SAVEPOINT stale_wakeup");
     await assert.rejects(() => bridge.unsafe("SELECT * FROM bridge.request_provider_work_wakeup($1,'window:stale',now(),'missing-plan',999)", [domain]), /active desired admission/i);
     await bridge.unsafe("ROLLBACK TO SAVEPOINT stale_wakeup");

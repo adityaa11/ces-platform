@@ -1,6 +1,6 @@
 # BSS-V2-006-03A-04 — Plan-activation wakeup and bounded convergence intents
 
-- **State:** `planned`; explicit GO required after 03A-03 CK `PASS`.
+- **State:** `awaiting_review`; GO implementation completed after 03A-03 CK `PASS`.
 - **Batch:** `BSS-V2-BATCH-06-03A-04`.
 - **Depends on:** 03A-01..03 CK `PASS`; existing BSS-V2-005-04 active-plan interface.
 - **Original traceability:** RC10–12, E06 and applicable E08–09.
