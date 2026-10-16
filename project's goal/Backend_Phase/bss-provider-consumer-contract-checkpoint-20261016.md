@@ -25,6 +25,8 @@ A caller may **estimate/partition corpus** from this immutable, versioned *struc
 
 ## Hard Stop B — BSS-V2-006 generic operational service (proposed `RuntimeCapacityConstraint/v1` + `ProviderWorkAdmission/v1`)
 
+**Implementation ownership clarification (2026-10-16):** `BSS-V2-006-03A` must complete only the internal admitted-job pg-boss consumer, route-bound transport claim, normalized feedback, per-window accounting, scoped pressure/probe and active-plan wakeup. `BSS-V2-005-05` owns new immutable plan **publication** and planning snapshot. `BSS-V2-006-04` then projects and tests the authenticated external operational/read contracts against **the same 03A engine**. No independent BSS-006-04 scheduler or fake-only accounting path is authorized.
+
 BSS-V2-006 consumes the active, versioned BSS-V2-005 desired plan. Its consumer-facing surface has **two different modes**:
 
 ### 1. Read-only effective constraint/eligibility snapshot

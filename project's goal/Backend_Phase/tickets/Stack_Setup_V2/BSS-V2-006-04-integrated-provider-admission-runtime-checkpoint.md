@@ -43,6 +43,8 @@ Existing `RC-BSSV2-00604-02` already verifies hard interactive protection; do no
 
 ## Consumer-facing Hard Stop B — reusable runtime capacity/read and provider work/admission service (planned)
 
+**Explicit handoff:** `006-03A` owns the internal pg-boss admitted-job consumer, actual transport fence, operational feedback/accounting/pressure, and active-plan wakeup. This ticket MUST **reuse** those components without cloning any scheduler, feedback engine, quota ledger or probe path. Its distinct GO/CK target is the authenticated, versioned **consumer-facing** reads/commands and independent external-consumer composition below; it may introduce the necessary API projections without creating a second internal runtime.
+
 BSS-V2-006-04 must independently prove a versioned **`RuntimeCapacityConstraint/v1`** read-only interface *and* a separate **`ProviderWorkAdmission/v1`** operational interface. These names are prospective contract labels rather than claims of existing TS exports. [Full consumer interface matrix and execution ordering](../../bss-provider-consumer-contract-checkpoint-20261016.md).
 
 - **Read** validates server-authorized process/route/quota-domain, active desired plan and effective constraint revisions, exact structural versus transient pressure status, safe scoped cooldown/window/clamp and interactive/background eligibility. No reservation, no quota counter mutation and no guarantee that a subsequent call will be admitted. Unknown/stale/unavailable state fails conservatively, never a fictitious positive current "available token" budget. A planning-only consumer can inspect without acquiring provider capacity.

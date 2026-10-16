@@ -9,7 +9,7 @@
 
 ## 1. Consumer readiness is NOT the same as a documented hard stop
 
-**BSS-V2-005-04: approved** immutable `DesiredAdmissionProfile` publish/activate/read hard stop. **BSS-V2-005-05: planned** `CapacityPlanningSnapshot/v1` read-only, process-agnostic authenticated consumer seam and registered-process/capacity policy convergence. **BSS-V2-006-01..03: planned** internal provider-work/window, fair atomic attempt dispatch and feedback/clamp foundation. **BSS-V2-006-04: planned** validated `RuntimeCapacityConstraint/v1` read plus `ProviderWorkAdmission/v1` durable consumer service. The three versioned names are **proposed contract labels**, not existing source exports or a claimed executable API.
+**BSS-V2-005-04: approved** immutable `DesiredAdmissionProfile` publish/activate/read hard stop. **BSS-V2-005-05: planned** `CapacityPlanningSnapshot/v1` read-only, process-agnostic authenticated consumer seam and registered-process/capacity policy convergence. **BSS-V2-006-01/02: CK-approved** provider-work/window and fair atomic attempt dispatch foundations; **BSS-V2-006-03 original: withdrawn**; **BSS-V2-006-03A: planned** internal admitted-job, feedback/accounting, scoped pressure and wakeup successor. **BSS-V2-006-04: planned** validated `RuntimeCapacityConstraint/v1` read plus `ProviderWorkAdmission/v1` durable consumer service. The three versioned names are **proposed contract labels**, not existing source exports or a claimed executable API.
 
 A ticket may reference these future interfaces **now**, but real IDSER admission or source sizing must stop on missing consumer implementation and independent CK evidence. A read snapshot is **never** a reservation, a quota decrement or outbound-send permission.
 
@@ -95,8 +95,8 @@ Bind semantic profile/source/REL/schema/prompt/estimator/request-envelope identi
 | Owner/checkpoint | Direct evidence required; never a historical surrogate |
 | --- | --- |
 | BSS-V2-005-04 (approved) | Active `DesiredAdmissionProfile` immutable publication/read, no provider work; accepted predecessor, not evidence for a new consumer snapshot |
-| BSS-V2-006-01..03 (planned) | Durable exact windows, single-reservation dispatch, fair interactive protection, typed usage/429/cooldown and wakeup; no dependency on 005-05 CK |
-| BSS-V2-005-05 (planned) | Authenticated `CapacityPlanningSnapshot/v1` read-only external fixture plus process registry and genuine BSS-006-03 plan wakeup; final CK only after 006-03 CK |
+| BSS-V2-006-01/02 approved + BSS-V2-006-03A planned | Durable exact windows, single-reservation dispatch, fair interactive protection, typed usage/429/cooldown and wakeup; no dependency on 005-05 CK |
+| BSS-V2-005-05 (planned) | Authenticated `CapacityPlanningSnapshot/v1` read-only external fixture plus process registry and genuine BSS-006-03A plan wakeup; final CK only after 006-03A CK |
 | BSS-V2-006-04 (planned) | `RuntimeCapacityConstraint/v1` read + `ProviderWorkAdmission/v1` real isolated BSS consumer test with independent background/interactive fake callers; requires 005-05 CK, no actual semantic implementation |
 | IDSER-012-02-01 (planned) | Qualified planner read, exact partition/replay, capacity-version hard stop and **non-inert zero** provider BSS attempt/reservation/job/transport counters. If runtime constraint read is mandatory for its selected scope, gate on 006-04 CK; no SEM provider invocation |
 | IDSER-012-02-02 (planned) | Real background profile/route activation; frozen SEM-profile schema/source/REL hashes; BSS durable wakeup; **zero** provider transport and semantic result |

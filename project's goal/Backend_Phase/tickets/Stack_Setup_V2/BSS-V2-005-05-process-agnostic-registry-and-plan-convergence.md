@@ -20,6 +20,8 @@ Process/workload configuration changes **and qualified, authorized BSS-V2-005 pr
 
 ## Provider policy drift, separate from runtime pressure (prospective 2026-10-16)
 
+**Handoff from 006-03A:** the completed internal runtime must already consume approved `005-04` active-plan revisions through a durable, deduplicated wakeup and revalidate waiting work. This ticket alone owns generic process/capacity change detection, immutable recalculation, authorized publication/activation and read-only `CapacityPlanningSnapshot/v1`. Reuse that preexisting runtime wakeup; never add an alternate internal provider admission/job/feedback mechanism to make registry convergence tests pass.
+
 The source of truth for an updated *lasting* external limit belongs to the existing **BSS-V2-005-01** immutable capacity catalogue; this prospective child only connects **valid new version activation** (whether triggered by operator/provider API/documented source or a BSS-V2-006 qualified lower-limit observation) to deterministic DesiredAdmissionProfile recomputation and durable runtime wakeup. Lower feedback is an immediate **BSS-V2-006 clamp**, not automatic license to overwrite capacity truth. Provider responses may expose no trusted numeric ceiling; in that case BSS-V2-006 holds/cools down conservatively while BSS-V2-005 retains its prior provenance-bound profile. Never use live queue depth or a guessed 429-derived RPM/RPD as deterministic BSS-V2-005 planner inputs.
 
 If a newly qualified per-request limit makes a persisted semantic corpus physically unfit, notify the owning consumer to invalidate/replan **only under a versioned authority**; BSS cannot modify semantic content or perform source splitting itself.
