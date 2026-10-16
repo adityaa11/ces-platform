@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import postgres from "postgres";
+import { PgBoss } from "pg-boss";
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error("DATABASE_URL is required");
@@ -8,6 +9,7 @@ const replacements = {
   "{{AGENTS_BRIDGE_PASSWORD}}": process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only",
 };
 const migrations = ["0000_bss003_boundaries", "0001_bss004_better_auth", "0002_bss006_pgboss", "0003_bss009_document_perception", "0004_bss006_atomic_idempotency_amendment", "0005_bss009_atlas_perception_authority", "0006_bss009_bridge_result_replay", "0007_pcc001_atlas_project_domain", "0008_pcc001_document_workspace_integrity", "0009_idser001_domain_persistence_foundation", "0010_idser001_manifest_trigger_fix", "0011_idser001_manifest_trigger_delete_fix", "0012_idser001_bundle_document_cleanup", "0013_idser001_scope_and_lifecycle_remediation", "0014_idser001_cross_scope_reference_integrity", "0015_idser004_semantic_context_authority", "0016_idser004_cancelled_semantic_execution", "0017_idser005_semantic_replay_fencing", "0018_idser006_candidate_identity_map", "0019_idser007_reconciliation_retrieval", "0020_idser008_bundle_completion_lifecycle", "0021_idser012_staged_perception_admission", "0022_idser012_perceived_terminal", "0023_bssv200501_provider_capacity_catalogue", "0024_idser012_derived_assets", "0025_rel03_semantic_composite_stage", "0026_semantic_qualified_deferred_acceptance", "0027_semantic_stepwise_delivery_handoff", "0028_bssv200502_process_workload_catalogue", "0029_bssv200504_desired_admission_profile_publication", "0030_bssv200601_provider_work_reservation_window_foundation", "0031_bssv200601_closure_remediation", "0032_bssv200601_redaction_metadata_fix", "0033_bssv200601_window_transition_and_restart_fence", "0034_bssv200601_metadata_validator_forward_fix", "0035_bssv200602_fair_admission_atomic_dispatch", "0036_bssv200602_cfc_fair_admission_closure"];
+migrations.push("0037_bssv200603a_route_bound_operational_runtime");
 const readMigration = async (name) => {
   let migration = await readFile(new URL(`../migrations/${name}.sql`, import.meta.url), "utf8");
   for (const [token, value] of Object.entries(replacements)) migration = migration.replaceAll(token, value.replaceAll("'", "''"));
@@ -20,6 +22,25 @@ const getAppliedMigrations = async () => {
   return new Set(rows.map(({ name }) => String(name)));
 };
 const sql = postgres(connectionString, { max: 1 });
+const initializePgBoss = async () => {
+  const bridgeUrl = new URL(connectionString);
+  bridgeUrl.username = "agents_bridge";
+  bridgeUrl.password = replacements["{{AGENTS_BRIDGE_PASSWORD}}"];
+  const boss = new PgBoss({
+    connectionString: bridgeUrl.toString(),
+    schema: "pgboss",
+    application_name: "atlas-db-migrate-pgboss-bootstrap",
+    migrate: true,
+    createSchema: false,
+    schedule: false,
+    max: 2,
+  });
+  try {
+    await boss.start();
+  } finally {
+    await boss.stop({ graceful: false }).catch(() => undefined);
+  }
+};
 try {
   const applied = await getAppliedMigrations();
   if (process.argv.includes("--check")) {
@@ -29,6 +50,10 @@ try {
   } else {
     const pending = migrations.filter((name) => !applied.has(name));
     for (const name of pending) {
+      // 0035 is the first Atlas migration that calls pg-boss SQL directly.
+      // A pristine database has only the schema/role from 0002 at this point;
+      // initialize pg-boss as its owning Bridge role before applying it.
+      if (name === "0035_bssv200602_fair_admission_atomic_dispatch") await initializePgBoss();
       await sql.unsafe(await readMigration(name));
       applied.add(name);
     }
