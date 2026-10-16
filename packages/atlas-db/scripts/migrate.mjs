@@ -24,6 +24,7 @@ migrations.push("0050_bssv200603a_route_pressure_admission");
 migrations.push("0051_bssv200603a_route_pressure_admission_forward_fix");
 migrations.push("0051_bssv200603a_pressure_cfc_closure");
 migrations.push("0056_bssv200603a_post_cooldown_domain_pressure_clamp");
+migrations.push("0055_bssv200603a_durable_wakeup_consumer");
 const readMigration = async (name) => {
   let migration = await readFile(new URL(`../migrations/${name}.sql`, import.meta.url), "utf8");
   for (const [token, value] of Object.entries(replacements)) migration = migration.replaceAll(token, value.replaceAll("'", "''"));

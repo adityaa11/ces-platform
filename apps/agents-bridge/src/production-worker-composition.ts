@@ -1,6 +1,7 @@
 import type { ReasoningRuntime } from "@atlas/contracts";
 import type { ProviderOutboundTransport } from "./provider-operational-runtime.js";
 import { createProviderAdmittedExecutionHandler } from "./provider-operational-runtime.js";
+import { createProviderWakeupHandler } from "./provider-wakeup-worker.js";
 import type { DocumentPerceptionQueueHandler, SemanticQueueHandler } from "./worker.js";
 import { createBackgroundWorker, type BackgroundWorker } from "./worker.js";
 import type { WorkerConfig } from "./worker-config.js";
@@ -26,5 +27,6 @@ export function createProductionBridgeWorker(input: Readonly<{
     undefined,
     input.semantic,
     createProviderAdmittedExecutionHandler(input.providerOutboundTransport),
+    createProviderWakeupHandler(),
   );
 }
