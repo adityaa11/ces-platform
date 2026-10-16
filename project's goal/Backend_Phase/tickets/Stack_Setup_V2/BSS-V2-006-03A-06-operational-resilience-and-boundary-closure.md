@@ -1,6 +1,6 @@
 # BSS-V2-006-03A-06 — Operational resilience and boundary closure
 
-- **State:** `planned`; explicit GO required after 03A-05 CK `PASS`.
+- **State:** `awaiting_review`; GO checkpoint recorded in `project's goal/feedback/BSS-V2-BATCH-06-03A-06-go.md`.
 - **Batch:** `BSS-V2-BATCH-06-03A-06`.
 - **Depends on:** 03A-01..05 CK `PASS`.
 - **Original traceability:** RC14, E08–09, and cross-ticket final evidence for RC01–13.
