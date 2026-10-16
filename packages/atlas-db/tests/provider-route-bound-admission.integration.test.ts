@@ -33,6 +33,17 @@ test("BSS-V2-006-03A-01 binds a qualified server route before reservation and ac
       jobs: Number((await sql.unsafe("SELECT count(*)::integer AS count FROM pgboss.job WHERE data->>'logicalWorkId'=$1", [work]))[0].count),
       claims: Number((await sql.unsafe("SELECT count(*)::integer AS count FROM bridge.provider_transport_claim WHERE logical_work_id=$1", [work]))[0].count),
     });
+    const [bindingSurface] = await sql.unsafe(`
+      SELECT
+        to_regprocedure('bridge.bind_provider_work_route(text,integer,text,text,text,text)') IS NULL AS legacy_absent,
+        has_function_privilege(
+          current_user,
+          'bridge.bind_provider_work_route(text,integer,text)',
+          'EXECUTE'
+        ) AS resolver_binding_executable
+    `);
+    assert.equal(bindingSurface.legacy_absent, true);
+    assert.equal(bindingSurface.resolver_binding_executable, true);
     await sql.unsafe("SAVEPOINT forged_route");
     await assert.rejects(() => sql.unsafe("SELECT bridge.bind_provider_work_route($1,1,$2)", [work, "forged-route"]), /not published|eligible|associated/i);
     await sql.unsafe("ROLLBACK TO SAVEPOINT forged_route");
