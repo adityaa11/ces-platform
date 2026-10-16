@@ -6,7 +6,7 @@
 - **Original CK artifact:** `project's goal/feedback/BSS-V2-BATCH-06-03A-03-ace06af-review.md`
 - **Post-CFC CK artifact:** `project's goal/feedback/BSS-V2-BATCH-06-03A-03-c07a802-verification.md`
 - **Reviewed base:** `c07a80285dd6010d4e2041fce1b176f0b505b248`
-- **Bounded remediation commit:** `bb3b514` — `fix(admission): retain unrecovered domain pressure after cooldown`
+- **Bounded remediation commit:** `bb3b5142108e2accb39c63046dd58e1f93404e23` — `fix(admission): retain unrecovered domain pressure after cooldown`
 - **HMN authorization consumed:** `HMN-BSS-V2-006-03A-03-001` from `project's goal/feedback/BSS-V2-BATCH-06-03A-03-hmn-001.md`
 - **Authorized clause:** `CK-001.d` only
 
