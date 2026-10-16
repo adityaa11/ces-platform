@@ -1,6 +1,6 @@
 # BSS-V2-006-03A-01 — Route-bound admitted execution and authoritative feedback ingress
 
-- **State:** `awaiting_review`; implemented by the explicit `GO BSS-V2-006-03A-01` checkpoint below.
+- **State:** `approved`; accepted by CK `PASS` in `project's goal/feedback/BSS-V2-BATCH-06-03A-01-29c7ef3-verification.md`.
 - **Batch:** `BSS-V2-BATCH-06-03A-01`.
 - **Depends on:** BSS-V2-001/002, BSS-V2-005-01..04, and BSS-V2-006-01/02 CK `PASS`.
 - **Original traceability:** 03A RC01–04 (only their route/claim/ingress portions), E01, E08, E09.
