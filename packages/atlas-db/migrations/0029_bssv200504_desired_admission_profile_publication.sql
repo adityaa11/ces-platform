@@ -118,11 +118,11 @@ BEGIN
     JOIN bridge.workload_envelope_profile w ON (w.workload_id, w.profile_version) = (i.workload_id, i.workload_profile_version)
     WHERE i.quota_domain_id = p_quota_domain_id AND i.desired_profile_version = p_desired_profile_version
   ) THEN RAISE EXCEPTION 'desired admission profile %:% has no valid version-bound process/workload inputs', p_quota_domain_id, p_desired_profile_version; END IF;
-  IF EXISTS (SELECT 1 FROM bridge.desired_admission_profile_activation WHERE quota_domain_id = p_quota_domain_id AND desired_profile_version = p_desired_profile_version) THEN
+  IF EXISTS (SELECT 1 FROM bridge.desired_admission_profile_activation activation WHERE activation.quota_domain_id = p_quota_domain_id AND activation.desired_profile_version = p_desired_profile_version) THEN
     RAISE EXCEPTION 'desired admission profile %:% was already activated', p_quota_domain_id, p_desired_profile_version;
   END IF;
-  SELECT COALESCE(max(activation_revision), 0) + 1 INTO next_revision
-    FROM bridge.desired_admission_profile_activation WHERE quota_domain_id = p_quota_domain_id;
+  SELECT COALESCE(max(activation.activation_revision), 0) + 1 INTO next_revision
+    FROM bridge.desired_admission_profile_activation activation WHERE activation.quota_domain_id = p_quota_domain_id;
   INSERT INTO bridge.desired_admission_profile_activation (quota_domain_id, activation_revision, desired_profile_version, effective_from)
     VALUES (p_quota_domain_id, next_revision, p_desired_profile_version, profile_effective_from);
   INSERT INTO bridge.active_desired_admission_profile (quota_domain_id, desired_profile_version, activation_revision, effective_from)

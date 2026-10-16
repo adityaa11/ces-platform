@@ -957,7 +957,7 @@ BSS-V2-005                       provider planning umbrella
 BSS-V2-006                       durable runtime umbrella
   BSS-V2-006-01                  durable provider-work/reservation/window foundation
   BSS-V2-006-02                  fair admission + hard interactive protection + atomic dispatch
-  BSS-V2-006-03                  actual-usage reconciliation + provider-pressure clamp + plan convergence
+  BSS-V2-006-03                  withdrawn; no active ticket or implementation (any successor requires fresh planning)
   BSS-V2-006-04                  integrated deterministic runtime checkpoint
 
 IDSER-012-02                     semantic-consumer umbrella
@@ -1465,33 +1465,9 @@ Codex generates ticket-local readiness after materializing the frozen draft.
 
 ---
 
-## 15.13 BSS-V2-006-03 executable draft
+## 15.13 BSS-V2-006-03 withdrawal
 
-### Title
-
-`BSS-V2-006-03: Provider usage reconciliation, runtime pressure clamp, and plan convergence`
-
-- State: `planned`
-- Review batch: `BSS-V2-BATCH-06-03`
-- Dependencies: BSS-V2-006-02 CK `PASS`; normalized provider usage/failure metadata from qualified capability adapters
-
-### Outcome
-
-Close the runtime feedback loop: reconcile reservations against actual usage, durably react to provider capacity pressure, schedule safe wakeups, and adopt new DesiredAdmissionProfile versions without preempting in-flight calls.
-
-### Review Contract
-
-| Row | Required behavior | Binary closure oracle |
-| --- | --- | --- |
-| RC-BSSV2-00603-01 | Actual normalized provider usage reconciles reserved quota resources exactly once. | PASS iff under-use refunds bounded capacity, over-use records debt/deficit, duplicate result/replay cannot double-refund, and transmitted request/RPD units remain conservatively counted. |
-| RC-BSSV2-00603-02 | Retry-After and explicit lower provider-limit observations produce durable temporary cooldown/clamps that never exceed the active plan. | PASS iff new calls stop/defer until permitted, waiting work is retained, and restart preserves the clamp. |
-| RC-BSSV2-00603-03 | 429 without usable limit metadata enters bounded conservative cooldown/probe behavior rather than provider hammering. | PASS iff repeated pressure cannot create a busy retry loop or unlimited pg-boss churn. |
-| RC-BSSV2-00603-04 | Plan decrease converges by blocking new admissions, not killing/relabeling existing reservations; plan increase becomes available on the next admission boundary. | PASS iff in-flight work remains bound to its authorizing version and new reservations use the new effective profile only. |
-| RC-BSSV2-00603-05 | Runtime observations cannot permanently raise configured capacity and do not become the historical analytics/cost ledger. | PASS iff a higher observed limit is ignored above plan ceiling and BSS-V2-007 ownership remains intact. |
-
-### Security section
-
-Codex generates ticket-local readiness after materializing the frozen draft.
+The BSS-V2-006-03 executable draft, ticket, implementation, and active review artifacts were withdrawn by explicit user direction. This context supplies no reusable authority for provider-feedback, runtime-pressure, reconciliation, or plan-convergence work. Any future effort must begin with a new planning decision, a newly defined ticket contract, and independent review.
 
 ---
 
@@ -1503,7 +1479,7 @@ Codex generates ticket-local readiness after materializing the frozen draft.
 
 - State: `planned`
 - Review batch: `BSS-V2-BATCH-06-04`
-- Dependencies: BSS-V2-006-01 through -03 CK `PASS`
+- Dependencies: BSS-V2-006-01/02 CK `PASS`; an independently qualified successor newly planned after withdrawn BSS-V2-006-03 CK `PASS`
 
 ### Outcome
 
@@ -1943,7 +1919,7 @@ BSS-V2-005's versioned capacity profile is *not* a promise that Anoman or any fu
 - **Immediate enforcement = BSS-V2-006 runtime:** normalize only trusted feedback; persist scoped lower-limit clamps/cooldowns/unknown-usage pessimism per quota domain/window; deny future inadmissible work with zero transport; bounded, newly reserved probes only. Ambiguous 429 cannot be treated as proof of numeric RPM/RPD, a particular window or account scope. Do not promise to prevent the first silently induced 429.
 - **Lasting policy update = BSS-V2-005 authority:** a qualified new provider-capacity/profile version (authorized operator, API/docs or trustworthy qualified observation) causes deterministic DesiredAdmissionProfile re-publication and BSS-V2-006 plan-change wakeup under proposed BSS-V2-005-05. BSS-V2-006 cannot directly rewrite plan truth or increase it from a provider raw observation.
 - **Planner coupling:** BSS-V2-006 transient remaining quota, 429/cooldown or RPM/RPD depletion makes an already valid semantic batch *wait*, never silently re-batches it. A proven per-request structural downgrade makes affected immutable requests ineligible; IDSER-012-02-01 re-plans into a **new versioned owned/context partition** from authenticated source, or fails with the exact unfit owned unit. No prompt truncation.
-- **Evidence:** BSS-V2-006-03 RC-07..10, BSS-V2-006-04 RC-07..08, BSS-V2-005-05 RC-07..08 and IDSER-012-02-01 RC-11 are prospective, not independently CK-qualified. Approved earlier BSS-V2-005 children and prior GO/CK artifacts remain untouched.
+- **Evidence:** BSS-V2-006-03 is withdrawn and supplies no review contract; a newly planned, independently reviewed successor is required before BSS-V2-006-04 may rely on runtime provider-policy drift handling. BSS-V2-005-05 RC-07..08 and IDSER-012-02-01 RC-11 remain prospective, not independently CK-qualified. Approved earlier BSS-V2-005 children and prior GO/CK artifacts remain untouched.
 
 ## 25. October 16, 2026 verified interactive/background foundation and consumer-latency seam (prospective)
 

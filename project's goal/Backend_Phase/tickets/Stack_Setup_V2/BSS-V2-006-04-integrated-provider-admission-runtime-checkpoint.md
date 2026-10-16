@@ -2,7 +2,7 @@
 
 - **State:** `planned`
 - **Review batch:** `BSS-V2-BATCH-06-04`
-- **Dependencies:** BSS-V2-006-01 through -03 **and BSS-V2-005-05** independent CK `PASS`. BSS-V2-006-01..03 qualify against existing approved BSS-V2-005-04 so this integrated consumer gate does **not** create a dependency cycle.
+- **Dependencies:** BSS-V2-006-01/02, BSS-V2-005-05, and an independently qualified successor newly planned after withdrawn BSS-V2-006-03 must each have CK `PASS`. BSS-V2-006-01/02 qualify against existing approved BSS-V2-005-04 so this integrated consumer gate does **not** create a dependency cycle.
 - **Parent:** [BSS-V2-006](BSS-V2-006-capability-admission-interactive-protection.md)
 - **Planning authority:** [Provider admission/staged semantic context](../../atlas-provider-admission-staged-semantic-pipeline-implementation-context.md) §21
 
