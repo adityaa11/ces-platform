@@ -19,6 +19,9 @@ migrations.push("0048_bssv200603a_interactive_physical_window_admission");
 migrations.push("0052_bssv200603a_legacy_admission_compatibility");
 migrations.push("0053_bssv200603a_legacy_window_reservation_compatibility");
 migrations.push("0054_bssv200603a_legacy_usage_compatibility");
+migrations.push("0049_bssv200603a_pressure_wakeup_convergence");
+migrations.push("0050_bssv200603a_route_pressure_admission");
+migrations.push("0051_bssv200603a_route_pressure_admission_forward_fix");
 const readMigration = async (name) => {
   let migration = await readFile(new URL(`../migrations/${name}.sql`, import.meta.url), "utf8");
   for (const [token, value] of Object.entries(replacements)) migration = migration.replaceAll(token, value.replaceAll("'", "''"));
