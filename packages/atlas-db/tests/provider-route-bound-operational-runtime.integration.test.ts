@@ -2,13 +2,13 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import postgres from "postgres";
 import { bindProviderWorkRouteFromResolver } from "../../../apps/agents-bridge/src/provider-operational-runtime.ts";
-import { createRouteRegistry } from "../../../apps/agents-bridge/src/route-registry.ts";
+import { createRouteRegistry, type AtlasCapability } from "../../../apps/agents-bridge/src/route-registry.ts";
 
 const databaseUrl = process.env.DATABASE_URL;
 
-const routeResolver = (routeId: string) => createRouteRegistry([{
+const routeResolver = (routeId: string, capability: AtlasCapability = "atlas.chat.default") => createRouteRegistry([{
   routeId,
-  capability: "atlas.chat.default",
+  capability,
   providerId: "fixture",
   modelOrProcessorId: "fixture-model",
   adapterVersion: "adapter-v1",
@@ -18,10 +18,10 @@ const routeResolver = (routeId: string) => createRouteRegistry([{
   enabled: true,
 }], "development", new Set(["fixture"]));
 
-async function bindFromResolver(sql: postgres.Sql, routeId: string, work: string) {
+async function bindFromResolver(sql: postgres.Sql, routeId: string, work: string, capability: AtlasCapability = "atlas.chat.default") {
   await bindProviderWorkRouteFromResolver({
     executeSql: async (query: string, values?: readonly unknown[]) => ({ rows: await sql.unsafe(query, values as unknown[] | undefined) }),
-  }, routeResolver(routeId), { logicalWorkId: work, attemptNumber: 1 });
+  }, routeResolver(routeId, capability), { logicalWorkId: work, attemptNumber: 1 });
 }
 
 test("BSS-V2-006-03A binds the selected route before admission and fences terminal feedback", { skip: !databaseUrl }, async () => {
@@ -200,16 +200,109 @@ test("BSS-V2-006-03A settles mixed usage conservatively and honors the durable c
   } finally { await sql.unsafe("ROLLBACK").catch(() => undefined); await sql.end(); }
 });
 
+test("BSS-V2-006-03A-03 scopes pressure across server-selected shared and independent domains", { skip: !databaseUrl }, async () => {
+  const bridgeUrl = new URL(databaseUrl!); bridgeUrl.username = "agents_bridge"; bridgeUrl.password = process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only";
+  const sql = postgres(bridgeUrl.toString(), { max: 1 });
+  const shared = `03a-pressure-shared-${Date.now()}`; const independent = `${shared}-independent`; const missing = `${shared}-missing`;
+  const routeA = `${shared}-a`; const routeB = `${shared}-b`; const routeC = `${independent}-c`; const routeD = `${missing}-d`;
+  const profile = { usableGlobalCapacity: { rpm: 10, tpm: 20, rpd: 10, concurrency: 2 }, hardInteractiveReserve: { rpm: 1, tpm: 2, rpd: 1, concurrency: 1 }, backgroundCapacity: { rpm: 9, tpm: 18, rpd: 9, concurrency: 1 }, backgroundLanes: [] };
+  const capacityPolicy = { rpm: { kind: "fixed", windowSeconds: 60, limitUnits: 10 }, tpm: { kind: "fixed", windowSeconds: 60, limitUnits: 20 }, rpd: { kind: "fixed", windowSeconds: 86400, limitUnits: 10 }, concurrency: { kind: "fixed", windowSeconds: 60, limitUnits: 2 } };
+  const configure = async (domain: string, routes: readonly { route: string; capability: AtlasCapability }[]) => {
+    await sql.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'cap-v1','fixture',$2,'{}',$3,'quota','operator_config','fixture','v1',now(),now())", [domain, routes.map(({ route }) => ({ routeId: route })), capacityPolicy]);
+    await sql.unsafe("INSERT INTO bridge.desired_admission_profile(quota_domain_id,profile_version,provider_capacity_profile_version,planner_version,effective_from,profile) VALUES($1,'plan-v1','cap-v1','fixture',now(),$2)", [domain, profile]);
+    for (const { route, capability } of routes) {
+      const processId = `${domain}-${capability}-process`; const workloadId = `${domain}-${capability}-workload`;
+      await sql.unsafe("INSERT INTO bridge.workload_envelope_profile(workload_id,profile_version,active,compatible_process_kinds,structural_bound,estimator,quota_accounting_policy_id,output_reservation,safety_policy) VALUES($1,'v1',true,'[\"chat\"]','{}','{}','quota','{}','{}')", [workloadId]);
+      await sql.unsafe("INSERT INTO bridge.provider_process_profile(process_id,profile_version,process_kind,capability,service_class,fairness_scope,allocation_policy,active,eligible_route_ids,workload_id,workload_profile_version) VALUES($1,'v1','chat',$2,'interactive','{}','{}',true,$3,$4,'v1')", [processId, capability, [route], workloadId]);
+      await sql.unsafe("INSERT INTO bridge.desired_admission_profile_input(quota_domain_id,desired_profile_version,process_id,process_profile_version,workload_id,workload_profile_version) VALUES($1,'plan-v1',$2,'v1',$3,'v1')", [domain, processId, workloadId]);
+    }
+    await sql.unsafe("SELECT bridge.activate_desired_admission_profile($1,'plan-v1')", [domain]);
+  };
+  const register = async (domain: string, route: string, capability: AtlasCapability, suffix: string) => {
+    const work = `${domain}-${suffix}`; const processId = `${domain}-${capability}-process`;
+    await sql.unsafe("SELECT bridge.register_provider_work_attempt($1,1,$2,$3,'v1','fixture',$4,'plan-v1',1,now()+interval '1 minute',now()+interval '1 minute')", [work, domain, processId, { rpm: 1, tpm: 3, rpd: 1, concurrency: 1 }]);
+    await bindFromResolver(sql, route, work, capability);
+    return { work, admission: (await sql.unsafe("SELECT * FROM bridge.admit_interactive_provider_work_attempt($1,1)", [work]))[0] };
+  };
+  try {
+    await sql.unsafe("BEGIN");
+    await configure(shared, [{ route: routeA, capability: "atlas.chat.default" }, { route: routeB, capability: "atlas.chat.deep" }]);
+    await configure(independent, [{ route: routeC, capability: "atlas.addendum.compose" }]);
+    await configure(missing, [{ route: routeD, capability: "atlas.chat.default" }]);
+    await sql.unsafe("INSERT INTO bridge.runtime_pressure_safety_policy(policy_id,version,quota_domain_id,maximum_accepted_retry_after_seconds,metadata_free_cooldown_seconds,probe_eligibility_seconds) VALUES($1,'v1',$2,60,7,60)", [`${shared}-policy`, shared]);
+    const [routeIncident] = await sql.unsafe("SELECT bridge.record_provider_429_pressure($1,$2,$3,2,'route','qualified','rpm',$4,NULL) AS incident", [shared, routeA, `${shared}-route-429`, `${shared}-rpm`]);
+    const blockedA = await register(shared, routeA, "atlas.chat.default", "route-blocked");
+    const permittedB = await register(shared, routeB, "atlas.chat.deep", "route-permitted");
+    const permittedIndependent = await register(independent, routeC, "atlas.addendum.compose", "independent-permitted");
+    assert.equal(blockedA.admission.decision, "pressure_limited");
+    assert.equal(blockedA.admission.reservation_id, null, "route pressure must not reserve or send");
+    assert.equal(permittedB.admission.decision, "admitted");
+    assert.equal(permittedIndependent.admission.decision, "admitted", "shared-domain pressure must not leak into an independent domain");
+    const [claimedB] = await sql.unsafe("SELECT bridge.claim_provider_admitted_transport($1) AS claimed", [permittedB.admission.reservation_id]);
+    const [claimedIndependent] = await sql.unsafe("SELECT bridge.claim_provider_admitted_transport($1) AS claimed", [permittedIndependent.admission.reservation_id]);
+    assert.equal(claimedB.claimed.routeId, routeB); assert.equal(claimedIndependent.claimed.routeId, routeC);
+    await sql.unsafe("SELECT bridge.record_provider_429_pressure($1,$2,$3,1,'domain','qualified','rpm',$4,1)", [missing, routeD, `${missing}-429`, `${missing}-rpm`]);
+    const missingPolicyAdmission = await register(missing, routeD, "atlas.chat.default", "missing-policy");
+    assert.equal(missingPolicyAdmission.admission.decision, "pressure_limited");
+    assert.equal(missingPolicyAdmission.admission.reservation_id, null, "missing policy must not create a reservation or transport path");
+    const [routeRecovered] = await sql.unsafe("SELECT bridge.recover_provider_pressure_incident($1,$2,$3,'route','rpm',$4,'qualified',clock_timestamp()) AS recovered", [shared, routeA, `${shared}-route-recovery`, `${shared}-rpm`]);
+    assert.equal(routeRecovered.recovered, true);
+    await sql.unsafe("SELECT bridge.record_provider_429_pressure($1,$2,$3,2,'domain','qualified','tpm',$4,0)", [shared, routeA, `${shared}-domain-429`, `${shared}-tpm`]);
+    const blockedByDomainA = await register(shared, routeA, "atlas.chat.default", "domain-blocked-a");
+    const blockedByDomainB = await register(shared, routeB, "atlas.chat.deep", "domain-blocked-b");
+    assert.equal(blockedByDomainA.admission.decision, "unavailable");
+    assert.equal(blockedByDomainB.admission.decision, "unavailable");
+    const incidents = await sql.unsafe("SELECT scope_kind,route_id,numeric_remaining_units FROM bridge.provider_operational_pressure_incident WHERE quota_domain_id=$1 ORDER BY scope_kind", [shared]);
+    assert.deepEqual(incidents.map((row) => [row.scope_kind, row.route_id, row.numeric_remaining_units]), [["domain", null, "0"], ["route", routeA, null]], "only the canonical shared-domain incident may own a numeric clamp");
+    await sql.unsafe("ROLLBACK");
+  } finally { await sql.unsafe("ROLLBACK").catch(() => undefined); await sql.end(); }
+});
+
+test("BSS-V2-006-03A-03 retains one consumed probe across a fresh runtime connection", { skip: !databaseUrl }, async () => {
+  const bridgeUrl = new URL(databaseUrl!); bridgeUrl.username = "agents_bridge"; bridgeUrl.password = process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only";
+  const domain = `03a-pressure-restart-${Date.now()}`; const route = `${domain}-route`; const dimension = `${domain}-rpm`;
+  let before = postgres(bridgeUrl.toString(), { max: 1 });
+  try {
+    await before.unsafe("INSERT INTO bridge.runtime_pressure_safety_policy(policy_id,version,quota_domain_id,maximum_accepted_retry_after_seconds,metadata_free_cooldown_seconds,probe_eligibility_seconds) VALUES($1,'v1',$2,60,7,60)", [`${domain}-policy`, domain]);
+    const [incident] = await before.unsafe("SELECT bridge.record_provider_429_pressure($1,$2,$3,1,'route','qualified','rpm',$4,NULL) AS incident", [domain, route, `${domain}-429`, dimension]);
+    await before.unsafe("UPDATE bridge.provider_operational_pressure_incident SET cooldown_until=clock_timestamp()-interval '1 second' WHERE incident_id=$1", [incident.incident]);
+    const [jobsBefore] = await before.unsafe("SELECT count(*)::integer AS count FROM pgboss.job WHERE name='bridge-provider-admitted-execution-v1'");
+    const [firstClaim] = await before.unsafe("SELECT bridge.claim_provider_pressure_probe($1,$2) AS claimed", [domain, route]);
+    assert.equal(firstClaim.claimed, true);
+    await before.end();
+    const after = postgres(bridgeUrl.toString(), { max: 1 });
+    try {
+      const [secondClaim] = await after.unsafe("SELECT bridge.claim_provider_pressure_probe($1,$2) AS claimed", [domain, route]);
+      const [persisted] = await after.unsafe("SELECT incident_id,probe_claimed_at,recovered_at FROM bridge.provider_operational_pressure_incident WHERE incident_id=$1", [incident.incident]);
+      const [jobsAfter] = await after.unsafe("SELECT count(*)::integer AS count FROM pgboss.job WHERE name='bridge-provider-admitted-execution-v1'");
+      assert.equal(secondClaim.claimed, false, "a failed/no-recovery probe has no second claim after restart");
+      assert.equal(persisted.incident_id, incident.incident); assert.notEqual(persisted.probe_claimed_at, null); assert.equal(persisted.recovered_at, null);
+      assert.equal(jobsAfter.count, jobsBefore.count, "claiming or failing a probe cannot recursively schedule provider transport");
+    } finally {
+      await after.unsafe("DELETE FROM bridge.provider_operational_pressure_incident WHERE quota_domain_id=$1", [domain]);
+      await after.unsafe("DELETE FROM bridge.runtime_pressure_safety_policy WHERE quota_domain_id=$1", [domain]);
+      await after.end();
+    }
+  } finally { await before.end().catch(() => undefined); }
+});
+
 test("BSS-V2-006-03A-03 fences scoped pressure, consumes one probe, and permits only matching recovery", { skip: !databaseUrl }, async () => {
   const bridgeUrl = new URL(databaseUrl!); bridgeUrl.username = "agents_bridge"; bridgeUrl.password = process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only";
   const sql = postgres(bridgeUrl.toString(), { max: 1 });
-  const domain = `03a-pressure-${Date.now()}`; const routeA = `${domain}-a`; const routeB = `${domain}-b`;
+  const domain = `03a-pressure-${Date.now()}`; const routeA = `${domain}-a`; const routeB = `${domain}-b`; const routeC = `${domain}-c`;
   try {
     await sql.unsafe("BEGIN");
-    await sql.unsafe("INSERT INTO bridge.runtime_pressure_safety_policy(policy_id,version,quota_domain_id,maximum_accepted_retry_after_seconds,metadata_free_cooldown_seconds,probe_eligibility_seconds) VALUES($1,'v1',$2,60,1,60)", [`${domain}-policy`, domain]);
-    const [routeIncident] = await sql.unsafe("SELECT bridge.record_provider_429_pressure($1,$2,$3,1,'route','qualified','rpm',$4,NULL) AS incident", [domain, routeA, `${domain}-429`, `${domain}-rpm`]);
-    const [routeReplay] = await sql.unsafe("SELECT bridge.record_provider_429_pressure($1,$2,$3,1,'route','qualified','rpm',$4,NULL) AS incident", [domain, routeA, `${domain}-429-replay`, `${domain}-rpm`]);
+    await sql.unsafe("INSERT INTO bridge.runtime_pressure_safety_policy(policy_id,version,quota_domain_id,maximum_accepted_retry_after_seconds,metadata_free_cooldown_seconds,probe_eligibility_seconds) VALUES($1,'v1',$2,60,7,60)", [`${domain}-policy`, domain]);
+    const [routeIncident] = await sql.unsafe("SELECT bridge.record_provider_429_pressure($1,$2,$3,2,'route','qualified','rpm',$4,NULL) AS incident", [domain, routeA, `${domain}-429`, `${domain}-rpm`]);
+    const [routeReplay] = await sql.unsafe("SELECT bridge.record_provider_429_pressure($1,$2,$3,2,'route','qualified','rpm',$4,NULL) AS incident", [domain, routeA, `${domain}-429-replay`, `${domain}-rpm`]);
     assert.equal(routeReplay.incident, routeIncident.incident, "a repeated 429 retains one stable route incident");
+    const [metadataFreeIncident] = await sql.unsafe("SELECT bridge.record_provider_429_pressure($1,$2,$3,NULL,'route','qualified','rpm',$4,NULL) AS incident", [domain, routeC, `${domain}-no-header`, `${domain}-rpm`]);
+    const cooldowns = await sql.unsafe("SELECT incident_id,safety_policy_version,scope_kind,route_id,EXTRACT(EPOCH FROM cooldown_until-created_at) AS seconds FROM bridge.provider_operational_pressure_incident WHERE incident_id IN ($1,$2) ORDER BY route_id", [routeIncident.incident, metadataFreeIncident.incident]);
+    const byRoute = new Map(cooldowns.map((row) => [row.route_id, row]));
+    assert.equal(byRoute.get(routeA)?.safety_policy_version, "v1"); assert.equal(byRoute.get(routeC)?.safety_policy_version, "v1");
+    assert.equal(byRoute.get(routeA)?.scope_kind, "route"); assert.equal(byRoute.get(routeC)?.scope_kind, "route");
+    assert.ok(Number(byRoute.get(routeA)?.seconds) >= 1.9 && Number(byRoute.get(routeA)?.seconds) <= 2.1, "trusted Retry-After must select its bounded cooldown");
+    assert.ok(Number(byRoute.get(routeC)?.seconds) >= 6.9 && Number(byRoute.get(routeC)?.seconds) <= 7.1, "missing Retry-After must select the metadata-free cooldown");
     const [routeBlocked] = await sql.unsafe("SELECT bridge.provider_pressure_blocks_admission($1,$2) AS blocked", [domain, routeA]);
     const [otherRoute] = await sql.unsafe("SELECT bridge.provider_pressure_blocks_admission($1,$2) AS blocked", [domain, routeB]);
     assert.equal(routeBlocked.blocked, true); assert.equal(otherRoute.blocked, false, "route-only pressure cannot become a shared numeric/domain hold");
@@ -217,21 +310,39 @@ test("BSS-V2-006-03A-03 fences scoped pressure, consumes one probe, and permits 
     const [firstProbe] = await sql.unsafe("SELECT bridge.claim_provider_pressure_probe($1,$2) AS claimed", [domain, routeA]);
     const [secondProbe] = await sql.unsafe("SELECT bridge.claim_provider_pressure_probe($1,$2) AS claimed", [domain, routeA]);
     assert.equal(firstProbe.claimed, true); assert.equal(secondProbe.claimed, false, "the persisted incident has exactly one probe budget");
+    const [staleRouteRecovery] = await sql.unsafe("SELECT bridge.recover_provider_pressure_incident($1,$2,$3,'route','rpm',$4,'qualified','1970-01-01T00:00:00.000Z') AS recovered", [domain, routeA, `${domain}-stale-route-recovery`, `${domain}-rpm`]);
+    assert.equal(staleRouteRecovery.recovered, false, "stale recovery cannot lift an active route incident");
+    await sql.unsafe("SAVEPOINT malformed_route_recovery");
+    await assert.rejects(() => sql.unsafe("SELECT bridge.recover_provider_pressure_incident($1,$2,NULL,'route','rpm',$3,'qualified',clock_timestamp())", [domain, routeA, `${domain}-rpm`]), /not trusted/i);
+    await sql.unsafe("ROLLBACK TO SAVEPOINT malformed_route_recovery");
     const [unrelatedRecovery] = await sql.unsafe("SELECT bridge.recover_provider_pressure_incident($1,$2,$3,'route','rpm',$4,'qualified',clock_timestamp()) AS recovered", [domain, routeB, `${domain}-wrong-recovery`, `${domain}-rpm`]);
     assert.equal(unrelatedRecovery.recovered, false);
     const [recovered] = await sql.unsafe("SELECT bridge.recover_provider_pressure_incident($1,$2,$3,'route','rpm',$4,'qualified',clock_timestamp()) AS recovered", [domain, routeA, `${domain}-recovery`, `${domain}-rpm`]);
     assert.equal(recovered.recovered, true);
+    const [repeatedRecovery] = await sql.unsafe("SELECT bridge.recover_provider_pressure_incident($1,$2,$3,'route','rpm',$4,'qualified',clock_timestamp()) AS recovered", [domain, routeA, `${domain}-repeat-recovery`, `${domain}-rpm`]);
+    assert.equal(repeatedRecovery.recovered, false, "repeated recovery cannot rewrite a recovered incident");
     const [domainIncident] = await sql.unsafe("SELECT bridge.record_provider_429_pressure($1,$2,$3,1,'domain','qualified','tpm',$4,3) AS incident", [domain, routeA, `${domain}-domain-429`, `${domain}-tpm`]);
     const [clamped] = await sql.unsafe("SELECT bridge.apply_domain_pressure_clamps($1,$2::jsonb,$3::jsonb) AS capacity", [domain, { rpm: 1, tpm: 7, rpd: 1, concurrency: 1 }, { rpm: 10, tpm: 20, rpd: 10, concurrency: 2 }]);
     assert.equal(clamped.capacity.tpm, 10, "trusted remaining capacity lowers the sole shared-domain ceiling");
     await sql.unsafe("SELECT bridge.record_provider_429_pressure($1,$2,$3,1,'domain','qualified','tpm',$4,99)", [domain, routeA, `${domain}-higher`, `${domain}-tpm`]);
     const [stillClamped] = await sql.unsafe("SELECT bridge.apply_domain_pressure_clamps($1,$2::jsonb,$3::jsonb) AS capacity", [domain, { rpm: 1, tpm: 7, rpd: 1, concurrency: 1 }, { rpm: 10, tpm: 20, rpd: 10, concurrency: 2 }]);
     assert.equal(stillClamped.capacity.tpm, 10, "higher later feedback cannot raise a clamp");
+    const [staleDomainRecovery] = await sql.unsafe("SELECT bridge.recover_provider_pressure_incident($1,$2,$3,'domain','tpm',$4,'qualified','1970-01-01T00:00:00.000Z') AS recovered", [domain, routeA, `${domain}-stale-domain-recovery`, `${domain}-tpm`]);
+    assert.equal(staleDomainRecovery.recovered, false, "stale recovery cannot lift a domain clamp");
+    await sql.unsafe("SAVEPOINT malformed_pressure_feedback");
+    await assert.rejects(() => sql.unsafe("SELECT bridge.record_provider_429_pressure($1,$2,$3,1,'invalid','qualified','tpm',$4,0)", [domain, routeA, `${domain}-malformed`, `${domain}-tpm`]), /scope is invalid/i);
+    await sql.unsafe("ROLLBACK TO SAVEPOINT malformed_pressure_feedback");
+    const [matchingDomainRecovery] = await sql.unsafe("SELECT bridge.recover_provider_pressure_incident($1,$2,$3,'domain','tpm',$4,'qualified',clock_timestamp()) AS recovered", [domain, routeA, `${domain}-domain-recovery`, `${domain}-tpm`]);
+    assert.equal(matchingDomainRecovery.recovered, true, "only matching qualified recovery clears the matching domain incident");
+    const [repeatedDomainRecovery] = await sql.unsafe("SELECT bridge.recover_provider_pressure_incident($1,$2,$3,'domain','tpm',$4,'qualified',clock_timestamp()) AS recovered", [domain, routeA, `${domain}-domain-repeat-recovery`, `${domain}-tpm`]);
+    assert.equal(repeatedDomainRecovery.recovered, false);
     const missingDomain = `${domain}-missing`;
     await sql.unsafe("SELECT bridge.record_provider_429_pressure($1,$2,$3,1,'domain','qualified','rpm',$4,1)", [missingDomain, `${missingDomain}-route`, `${missingDomain}-429`, `${missingDomain}-rpm`]);
     const [missingBlocked] = await sql.unsafe("SELECT bridge.provider_pressure_blocks_admission($1,$2) AS blocked", [missingDomain, `${missingDomain}-route`]);
     const [missingProbe] = await sql.unsafe("SELECT bridge.claim_provider_pressure_probe($1,$2) AS claimed", [missingDomain, `${missingDomain}-route`]);
     assert.equal(missingBlocked.blocked, true); assert.equal(missingProbe.claimed, false, "missing operator policy fails closed without a probe");
+    const [missingIncident] = await sql.unsafe("SELECT policy_available,safety_policy_version,probe_claimed_at FROM bridge.provider_operational_pressure_incident WHERE quota_domain_id=$1", [missingDomain]);
+    assert.deepEqual(missingIncident, { policy_available: false, safety_policy_version: null, probe_claimed_at: null });
     await sql.unsafe("ROLLBACK");
   } finally { await sql.unsafe("ROLLBACK").catch(() => undefined); await sql.end(); }
 });
