@@ -4,6 +4,7 @@
 - **Batch:** `BSS-V2-BATCH-06-03A-06`
 - **Authority:** explicit user command `GO BSS-V2-006-03A-06`; frozen ticket at `project's goal/Backend_Phase/tickets/Stack_Setup_V2/BSS-V2-006-03A-06-operational-resilience-and-boundary-closure.md`.
 - **Predecessors:** 03A-01 through 03A-05 are CK `PASS`; 03A-05 is recorded in `project's goal/feedback/BSS-V2-BATCH-06-03A-05-46e46d3-review.md`.
+- **Implementation commit:** `36246f2` (`feat(admission): close 03A operational resilience`).
 - **State:** `awaiting_review`; this checkpoint is GO evidence, not a CK decision.
 
 ## Bounded implementation
