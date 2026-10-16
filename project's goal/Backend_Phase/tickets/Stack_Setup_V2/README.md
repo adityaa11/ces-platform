@@ -47,8 +47,8 @@ The dependency column and graph are authoritative GO order. Numeric ticket-famil
 | 20 | [BSS-V2-006](BSS-V2-006-capability-admission-interactive-protection.md) | umbrella | all 005 children CK PASS; BSS-006; BSS-V2-001/002 | Non-executable durable runtime-admission partition. |
 | 21 | [BSS-V2-006-01](BSS-V2-006-01-provider-work-reservation-window-foundation.md) | BSS-V2-BATCH-06-01 | 005-04 CK PASS; BSS-006/BSS-003 | Durable waiting work, reservation, quota-window, and wakeup foundation. |
 | 22 | [BSS-V2-006-02](BSS-V2-006-02-fair-admission-interactive-protection-atomic-dispatch.md) | BSS-V2-BATCH-06-02 | 006-01 CK PASS | Debt-free multi-resource fairness, hard interactive protection, atomic reservation and single-attempt dispatch. |
-| 23 | BSS-V2-006-03 (withdrawn) | — | No active ticket or implementation; any successor requires fresh planning and independent review. | Historical provider-feedback scope was withdrawn and is not reusable authority. |
-| 24 | [BSS-V2-006-04](BSS-V2-006-04-integrated-provider-admission-runtime-checkpoint.md) | BSS-V2-BATCH-06-04 | 006-01/02 CK PASS; a newly planned successor to withdrawn 006-03 CK PASS; BSS-V2-005-05 CK PASS | Integrated deterministic proof of the reusable admission authority. |
+| 23 | [BSS-V2-006-03A](BSS-V2-006-03A-provider-feedback-accounting-pressure-convergence.md) (replacement; original 006-03 withdrawn) | BSS-V2-BATCH-06-03A | 006-02 CK PASS; BSS-V2-001/002 and 005-01..04 CK PASS | New frozen route-bound feedback, per-window accounting, scoped pressure and plan-convergence ticket; independent GO/CK required; no legacy 006-03 authority. |
+| 24 | [BSS-V2-006-04](BSS-V2-006-04-integrated-provider-admission-runtime-checkpoint.md) | BSS-V2-BATCH-06-04 | 006-01/02 CK PASS; 006-03A CK PASS; BSS-V2-005-05 CK PASS | Integrated deterministic proof of the reusable admission authority. |
 | 25 | [BSS-V2-007](BSS-V2-007-execution-usage-provenance-ledger.md) | BSS-V2-BATCH-07 | 004-03 parent scope; later dependency realignment as needed | Is external-provider usage/provenance persisted without inventing Docling economics? |
 | 26 | [BSS-V2-008](BSS-V2-008-price-profiles-shadow-cogs.md) | BSS-V2-BATCH-08 | 007 | Are external-provider prices and distinct actual/shadow costs calculated without billing? |
 | 27 | [BSS-V2-009](BSS-V2-009-privacy-preflight.md) | BSS-V2-BATCH-09 | 006, 008 | Does privacy compatibility fail before external-provider transmission? |
@@ -65,7 +65,7 @@ The dependency column and graph are authoritative GO order. Numeric ticket-famil
 005-01 -> 005-02 -> 005-03 -> 005-04                                    |
                                   |                                       |
                                   v                                       |
-006-01 -> 006-02 -> [newly planned successor required] -> 006-04 -------+
+006-01 -> 006-02 -> 006-03A -> 006-04 -------+
                                                                           |
 IDSER-012-01-02 -> perceived --------------------------------------------+
                                                                           |

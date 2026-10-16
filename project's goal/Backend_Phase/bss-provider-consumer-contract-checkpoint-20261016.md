@@ -49,9 +49,9 @@ BSS-V2-006 consumes the active, versioned BSS-V2-005 desired plan. Its consumer-
 ## Dependency order and release gates — avoid cyclic approval
 
 1. Existing BSS-V2-005-01..04 CK PASS provides immutable policy/publishing foundation.
-2. BSS-V2-006-01..03 qualify generic work, fair admission, and plan-wakeup/pressure using the approved 005-04 active-policy interface; **they must not depend on BSS-V2-005-05 CK**.
-3. BSS-V2-005-05 qualifies general registry, consumer `CapacityPlanningSnapshot/v1` and true plan-convergence/wakeup only against an independently qualified successor newly planned after withdrawn BSS-V2-006-03. **No SEM-CUTOVER dependency.**
-4. BSS-V2-006-04 integrates both BSS-V2-006-01..03 and BSS-V2-005-05 CK PASS and independently proves its read-only runtime and durable admission consumer APIs. Until then its promised hard stop is **planned**, not ready for production consumption.
+2. BSS-V2-006-01/02 and newly planned BSS-V2-006-03A qualify generic work, fair admission, and plan-wakeup/pressure using the approved 005-04 active-policy interface; **they must not depend on BSS-V2-005-05 CK**.
+3. BSS-V2-005-05 qualifies general registry, consumer `CapacityPlanningSnapshot/v1` and true plan-convergence/wakeup only against BSS-V2-006-03A CK PASS. **No SEM-CUTOVER dependency.**
+4. BSS-V2-006-04 integrates BSS-V2-006-01/02, BSS-V2-006-03A and BSS-V2-005-05 CK PASS and independently proves its read-only runtime and durable admission consumer APIs. Until then its promised hard stop is **planned**, not ready for production consumption.
 5. IDSER-012-02-01 consumes **BSS-V2-005-05 planning read** (and BSS-V2-006 qualified effective-constraint read when such eligibility is required) and ends at **per-batch PlannedSemanticCorpusHandoff**. It never calls a provider, creates a reservation or depends on live SEM corpus intake for planner-only CK.
 6. IDSER-012-02-03 / SEM-CUTOVER execution must consume **BSS-V2-006-04** runtime work/admission service, not merely `DesiredAdmissionProfile` data; SEM's separately authorized batch intake and qualified outcome remain additional blocking gates. Future chat/CES may reuse the same contracts after their own qualification.
 
