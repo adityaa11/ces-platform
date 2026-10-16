@@ -1,6 +1,6 @@
 # BSS-V2-006-03A-05 — Background route-aware admission with interactive protection
 
-- **State:** `planned`; explicit GO required after 03A-04 CK `PASS`.
+- **State:** `awaiting_review`; GO implementation recorded in `project's goal/feedback/BSS-V2-BATCH-06-03A-05-go.md`.
 - **Batch:** `BSS-V2-BATCH-06-03A-05`.
 - **Depends on:** 03A-01..04 CK `PASS`.
 - **Original traceability:** RC13, E07 and applicable E08.

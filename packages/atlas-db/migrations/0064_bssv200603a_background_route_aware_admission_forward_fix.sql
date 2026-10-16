@@ -1,0 +1,166 @@
+-- BSS-V2-006-03A-05: retain the approved fair selector, but make every
+-- reservation flow through one route-bound operational admission authority.
+-- The selector owns ordering only; this function owns all fences and the
+-- reservation/job transaction for both service classes.
+
+CREATE OR REPLACE FUNCTION bridge.background_admission_capacity(
+  p_profile jsonb, p_used jsonb, p_clamped_global jsonb
+) RETURNS jsonb LANGUAGE sql IMMUTABLE AS $$
+  SELECT jsonb_build_object(
+    'rpm', LEAST((p_profile->'backgroundCapacity'->>'rpm')::numeric, GREATEST(0, (p_clamped_global->>'rpm')::numeric - (p_profile->'hardInteractiveReserve'->>'rpm')::numeric)),
+    'tpm', LEAST((p_profile->'backgroundCapacity'->>'tpm')::numeric, GREATEST(0, (p_clamped_global->>'tpm')::numeric - (p_profile->'hardInteractiveReserve'->>'tpm')::numeric)),
+    'rpd', LEAST((p_profile->'backgroundCapacity'->>'rpd')::numeric, GREATEST(0, (p_clamped_global->>'rpd')::numeric - (p_profile->'hardInteractiveReserve'->>'rpd')::numeric)),
+    'concurrency', LEAST((p_profile->'backgroundCapacity'->>'concurrency')::numeric, GREATEST(0, (p_clamped_global->>'concurrency')::numeric - (p_profile->'hardInteractiveReserve'->>'concurrency')::numeric))
+  )
+$$;
+
+CREATE OR REPLACE FUNCTION bridge.admit_route_aware_provider_work_attempt(
+  p_logical_work_id text, p_attempt_number integer, p_expected_service_class text DEFAULT NULL
+) RETURNS TABLE(decision text,logical_work_id text,attempt_number integer,reservation_id uuid,job_id uuid) LANGUAGE plpgsql AS $$
+DECLARE domain_id text; active record; profile jsonb; work bridge.provider_work_attempt;
+  binding bridge.provider_work_route_binding; used jsonb; clamped_global jsonb; limit_vector jsonb;
+  reservation bridge.provider_work_reservation; dispatch_job uuid;
+BEGIN
+  SELECT w0.quota_domain_id INTO domain_id FROM bridge.provider_work_attempt w0
+    WHERE w0.logical_work_id=p_logical_work_id AND w0.attempt_number=p_attempt_number;
+  IF NOT FOUND THEN
+    RETURN QUERY SELECT 'unavailable'::text,p_logical_work_id,p_attempt_number,NULL::uuid,NULL::uuid;
+    RETURN;
+  END IF;
+  PERFORM pg_advisory_xact_lock(hashtextextended(domain_id, 602));
+  SELECT * INTO work FROM bridge.provider_work_attempt
+    WHERE logical_work_id=p_logical_work_id AND attempt_number=p_attempt_number FOR UPDATE;
+  IF p_expected_service_class IS NOT NULL AND work.service_class<>p_expected_service_class THEN
+    RETURN QUERY SELECT 'unavailable'::text,work.logical_work_id,work.attempt_number,NULL::uuid,NULL::uuid;
+    RETURN;
+  END IF;
+  IF work.state<>'waiting' OR work.cancellation_requested_at IS NOT NULL THEN
+    RETURN QUERY SELECT 'unavailable'::text,work.logical_work_id,work.attempt_number,NULL::uuid,NULL::uuid;
+    RETURN;
+  END IF;
+  IF (work.admission_deadline_at IS NOT NULL AND work.admission_deadline_at<=clock_timestamp())
+    OR (work.execution_deadline_at IS NOT NULL AND work.execution_deadline_at<=clock_timestamp()) THEN
+    RETURN QUERY SELECT 'deadline_expired'::text,work.logical_work_id,work.attempt_number,NULL::uuid,NULL::uuid;
+    RETURN;
+  END IF;
+  SELECT * INTO binding FROM bridge.provider_work_route_binding
+    WHERE logical_work_id=work.logical_work_id AND attempt_number=work.attempt_number;
+  IF NOT FOUND THEN
+    RETURN QUERY SELECT 'unavailable'::text,work.logical_work_id,work.attempt_number,NULL::uuid,NULL::uuid;
+    RETURN;
+  END IF;
+  SELECT * INTO active FROM bridge.resolve_active_desired_admission_profile(work.quota_domain_id);
+  IF NOT FOUND OR work.desired_profile_version<>active.desired_profile_version OR work.activation_revision<>active.activation_revision THEN
+    RETURN QUERY SELECT 'unavailable'::text,work.logical_work_id,work.attempt_number,NULL::uuid,NULL::uuid;
+    RETURN;
+  END IF;
+  IF bridge.provider_pressure_blocks_admission(work.quota_domain_id,binding.selected_route_id,false) THEN
+    RETURN QUERY SELECT 'pressure_limited'::text,work.logical_work_id,work.attempt_number,NULL::uuid,NULL::uuid;
+    RETURN;
+  END IF;
+  profile:=active.profile;
+  IF NOT (profile ? 'usableGlobalCapacity' AND profile ? 'hardInteractiveReserve' AND profile ? 'backgroundCapacity') THEN
+    RETURN QUERY SELECT 'unavailable'::text,work.logical_work_id,work.attempt_number,NULL::uuid,NULL::uuid;
+    RETURN;
+  END IF;
+  BEGIN
+    used:=bridge.current_provider_operational_usage(work.quota_domain_id,active.provider_capacity_profile_version);
+  EXCEPTION WHEN others THEN
+    RETURN QUERY SELECT 'unavailable'::text,work.logical_work_id,work.attempt_number,NULL::uuid,NULL::uuid;
+    RETURN;
+  END;
+  clamped_global:=bridge.apply_domain_pressure_clamps(work.quota_domain_id,used,profile->'usableGlobalCapacity');
+  limit_vector:=CASE WHEN work.service_class='background'
+    THEN bridge.background_admission_capacity(profile,used,clamped_global)
+    ELSE clamped_global END;
+  IF NOT bridge.admission_vector_fits(used,work.request_resource_envelope,limit_vector) THEN
+    RETURN QUERY SELECT 'unavailable'::text,work.logical_work_id,work.attempt_number,NULL::uuid,NULL::uuid;
+    RETURN;
+  END IF;
+  UPDATE bridge.provider_work_attempt SET state='reserved',state_version=state_version+1,updated_at=clock_timestamp()
+    WHERE logical_work_id=work.logical_work_id AND attempt_number=work.attempt_number;
+  INSERT INTO bridge.provider_work_reservation(logical_work_id,attempt_number,desired_profile_version,activation_revision,request_resource_envelope)
+    VALUES(work.logical_work_id,work.attempt_number,work.desired_profile_version,work.activation_revision,work.request_resource_envelope)
+    RETURNING * INTO reservation;
+  PERFORM bridge.reserve_provider_operational_windows(reservation.reservation_id);
+  INSERT INTO pgboss.job(name,data,policy,singleton_key)
+    VALUES('bridge-provider-admitted-execution-v1',jsonb_build_object('logicalWorkId',work.logical_work_id,'attemptNumber',work.attempt_number,'reservationId',reservation.reservation_id),'short',work.logical_work_id||':'||work.attempt_number)
+    RETURNING id INTO dispatch_job;
+  INSERT INTO bridge.provider_work_dispatch VALUES(work.logical_work_id,work.attempt_number,reservation.reservation_id,dispatch_job);
+  UPDATE bridge.provider_work_attempt SET state='dispatched',state_version=state_version+1,updated_at=clock_timestamp()
+    WHERE logical_work_id=work.logical_work_id AND attempt_number=work.attempt_number;
+  RETURN QUERY SELECT 'admitted'::text,work.logical_work_id,work.attempt_number,reservation.reservation_id,dispatch_job;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION bridge.admit_interactive_provider_work_attempt(
+  p_logical_work_id text, p_attempt_number integer
+) RETURNS TABLE(decision text,logical_work_id text,attempt_number integer,reservation_id uuid,job_id uuid) LANGUAGE sql AS $$
+  SELECT * FROM bridge.admit_route_aware_provider_work_attempt($1,$2,'interactive')
+$$;
+
+CREATE OR REPLACE FUNCTION bridge.admit_next_provider_work_attempt(p_quota_domain_id text)
+RETURNS TABLE(logical_work_id text,attempt_number integer,reservation_id uuid,job_id uuid) LANGUAGE plpgsql AS $$
+DECLARE active record; profile jsonb; epoch text; candidate bridge.provider_work_attempt; used jsonb;
+  clamped_global jsonb; background_limit jsonb; lane jsonb; weight numeric; dominant numeric;
+  domain_state bridge.provider_admission_domain_state; admitted record;
+BEGIN
+  PERFORM pg_advisory_xact_lock(hashtextextended(p_quota_domain_id, 602));
+  SELECT * INTO active FROM bridge.resolve_active_desired_admission_profile(p_quota_domain_id);
+  IF NOT FOUND THEN RAISE EXCEPTION 'active desired admission profile is required'; END IF;
+  profile:=active.profile;
+  IF NOT (profile ? 'usableGlobalCapacity' AND profile ? 'hardInteractiveReserve' AND profile ? 'backgroundCapacity') THEN
+    RAISE EXCEPTION 'desired admission profile lacks BSS-V2-006-02 resource vectors';
+  END IF;
+  epoch:=active.desired_profile_version||':'||active.activation_revision;
+  INSERT INTO bridge.provider_admission_domain_state(quota_domain_id,fairness_epoch) VALUES(p_quota_domain_id,epoch)
+    ON CONFLICT(quota_domain_id) DO UPDATE SET fairness_epoch=EXCLUDED.fairness_epoch,
+      virtual_time=CASE WHEN bridge.provider_admission_domain_state.fairness_epoch<>EXCLUDED.fairness_epoch THEN 0 ELSE bridge.provider_admission_domain_state.virtual_time END;
+  SELECT * INTO domain_state FROM bridge.provider_admission_domain_state WHERE quota_domain_id=p_quota_domain_id FOR UPDATE;
+  BEGIN used:=bridge.current_provider_operational_usage(p_quota_domain_id,active.provider_capacity_profile_version); EXCEPTION WHEN others THEN RETURN; END;
+  clamped_global:=bridge.apply_domain_pressure_clamps(p_quota_domain_id,used,profile->'usableGlobalCapacity');
+  background_limit:=bridge.background_admission_capacity(profile,used,clamped_global);
+  SELECT w.* INTO candidate FROM bridge.provider_work_attempt w
+    JOIN bridge.provider_work_route_binding b ON b.logical_work_id=w.logical_work_id AND b.attempt_number=w.attempt_number
+    WHERE w.quota_domain_id=p_quota_domain_id AND w.desired_profile_version=active.desired_profile_version AND w.activation_revision=active.activation_revision
+      AND w.state='waiting' AND w.service_class='interactive' AND w.cancellation_requested_at IS NULL
+      AND (w.admission_deadline_at IS NULL OR w.admission_deadline_at>clock_timestamp()) AND (w.execution_deadline_at IS NULL OR w.execution_deadline_at>clock_timestamp())
+      AND NOT bridge.provider_pressure_blocks_admission(w.quota_domain_id,b.selected_route_id,false)
+      AND bridge.admission_vector_fits(used,w.request_resource_envelope,clamped_global)
+    ORDER BY w.admission_deadline_at NULLS LAST,w.logical_work_id,w.attempt_number LIMIT 1 FOR UPDATE OF w SKIP LOCKED;
+  IF NOT FOUND THEN
+    SELECT w.* INTO candidate FROM bridge.provider_work_attempt w
+      JOIN bridge.provider_work_route_binding b ON b.logical_work_id=w.logical_work_id AND b.attempt_number=w.attempt_number
+      JOIN LATERAL (SELECT e FROM jsonb_array_elements(profile->'backgroundLanes') e WHERE e->>'processId'=w.process_id AND e->>'profileVersion'=w.process_profile_version) l ON true
+      LEFT JOIN bridge.provider_admission_key_state ks ON (ks.quota_domain_id=w.quota_domain_id AND ks.fairness_epoch=epoch AND ks.process_id=w.process_id AND ks.process_profile_version=w.process_profile_version AND ks.fairness_key=w.fairness_key)
+      LEFT JOIN bridge.provider_admission_lane_state ls ON (ls.quota_domain_id=w.quota_domain_id AND ls.fairness_epoch=epoch AND ls.process_id=w.process_id AND ls.process_profile_version=w.process_profile_version)
+      WHERE w.quota_domain_id=p_quota_domain_id AND w.desired_profile_version=active.desired_profile_version AND w.activation_revision=active.activation_revision
+        AND w.state='waiting' AND w.service_class='background' AND w.cancellation_requested_at IS NULL
+        AND (w.admission_deadline_at IS NULL OR w.admission_deadline_at>clock_timestamp()) AND (w.execution_deadline_at IS NULL OR w.execution_deadline_at>clock_timestamp())
+        AND NOT bridge.provider_pressure_blocks_admission(w.quota_domain_id,b.selected_route_id,false)
+        AND bridge.admission_vector_fits(used,w.request_resource_envelope,background_limit)
+        AND COALESCE(ks.last_admission_turn,0)=(SELECT min(COALESCE(k2.last_admission_turn,0)) FROM bridge.provider_work_attempt w2 LEFT JOIN bridge.provider_admission_key_state k2 ON(k2.quota_domain_id=w2.quota_domain_id AND k2.fairness_epoch=epoch AND k2.process_id=w2.process_id AND k2.process_profile_version=w2.process_profile_version AND k2.fairness_key=w2.fairness_key) WHERE w2.quota_domain_id=w.quota_domain_id AND w2.process_id=w.process_id AND w2.process_profile_version=w.process_profile_version AND w2.desired_profile_version=active.desired_profile_version AND w2.activation_revision=active.activation_revision AND w2.state='waiting' AND w2.service_class='background')
+      ORDER BY COALESCE(ls.virtual_usage,domain_state.virtual_time)/NULLIF((l.e->>'normalizedWeight')::numeric,0),w.fairness_key,w.logical_work_id,w.attempt_number LIMIT 1 FOR UPDATE OF w SKIP LOCKED;
+  END IF;
+  IF NOT FOUND THEN RETURN; END IF;
+  SELECT * INTO admitted FROM bridge.admit_route_aware_provider_work_attempt(candidate.logical_work_id,candidate.attempt_number,NULL);
+  IF admitted.decision<>'admitted' THEN RETURN; END IF;
+  IF candidate.service_class='background' THEN
+    SELECT e INTO lane FROM jsonb_array_elements(profile->'backgroundLanes') e WHERE e->>'processId'=candidate.process_id AND e->>'profileVersion'=candidate.process_profile_version;
+    weight:=(lane->>'normalizedWeight')::numeric;
+    dominant:=GREATEST(COALESCE((candidate.request_resource_envelope->>'rpm')::numeric,0)/NULLIF((background_limit->>'rpm')::numeric,0),COALESCE((candidate.request_resource_envelope->>'tpm')::numeric,0)/NULLIF((background_limit->>'tpm')::numeric,0),COALESCE((candidate.request_resource_envelope->>'rpd')::numeric,0)/NULLIF((background_limit->>'rpd')::numeric,0),COALESCE((candidate.request_resource_envelope->>'concurrency')::numeric,0)/NULLIF((background_limit->>'concurrency')::numeric,0));
+    INSERT INTO bridge.provider_admission_lane_state(quota_domain_id,fairness_epoch,process_id,process_profile_version,virtual_usage,last_admission_turn) VALUES(p_quota_domain_id,epoch,candidate.process_id,candidate.process_profile_version,domain_state.virtual_time+dominant/weight,domain_state.next_turn) ON CONFLICT(quota_domain_id,fairness_epoch,process_id,process_profile_version) DO UPDATE SET virtual_usage=GREATEST(bridge.provider_admission_lane_state.virtual_usage,domain_state.virtual_time)+dominant/weight,last_admission_turn=domain_state.next_turn;
+    INSERT INTO bridge.provider_admission_key_state VALUES(p_quota_domain_id,epoch,candidate.process_id,candidate.process_profile_version,candidate.fairness_key,domain_state.next_turn) ON CONFLICT(quota_domain_id,fairness_epoch,process_id,process_profile_version,fairness_key) DO UPDATE SET last_admission_turn=EXCLUDED.last_admission_turn;
+    UPDATE bridge.provider_admission_domain_state SET virtual_time=GREATEST(virtual_time,domain_state.virtual_time+dominant/weight),next_turn=next_turn+1 WHERE quota_domain_id=p_quota_domain_id;
+  END IF;
+  RETURN QUERY SELECT admitted.logical_work_id,admitted.attempt_number,admitted.reservation_id,admitted.job_id;
+END;
+$$;
+
+ALTER FUNCTION bridge.background_admission_capacity(jsonb,jsonb,jsonb) OWNER TO agents_bridge;
+ALTER FUNCTION bridge.admit_route_aware_provider_work_attempt(text,integer,text) OWNER TO agents_bridge;
+ALTER FUNCTION bridge.admit_interactive_provider_work_attempt(text,integer) OWNER TO agents_bridge;
+ALTER FUNCTION bridge.admit_next_provider_work_attempt(text) OWNER TO agents_bridge;
+REVOKE ALL ON FUNCTION bridge.background_admission_capacity(jsonb,jsonb,jsonb),bridge.admit_route_aware_provider_work_attempt(text,integer,text),bridge.admit_interactive_provider_work_attempt(text,integer),bridge.admit_next_provider_work_attempt(text) FROM PUBLIC,atlas_app;
+GRANT EXECUTE ON FUNCTION bridge.admit_route_aware_provider_work_attempt(text,integer,text),bridge.admit_interactive_provider_work_attempt(text,integer),bridge.admit_next_provider_work_attempt(text) TO agents_bridge;
+INSERT INTO atlas.schema_migrations(name) VALUES('0064_bssv200603a_background_route_aware_admission_forward_fix') ON CONFLICT DO NOTHING;

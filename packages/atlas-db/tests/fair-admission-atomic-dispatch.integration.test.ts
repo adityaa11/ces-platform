@@ -8,25 +8,39 @@ test("BSS-V2-006-02 CFC closes fair admission and atomic dispatch oracles", { sk
   const url = new URL(databaseUrl!); url.username = "agents_bridge"; url.password = process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only";
   const sql = postgres(url.toString(), { max: 1 });
   const domain = `fair-cfc-${Date.now()}`;
+  const route = `${domain}-route`;
   const profile = { usableGlobalCapacity: { rpm: 4, tpm: 40, rpd: 4, concurrency: 2 }, hardInteractiveReserve: { rpm: 1, tpm: 10, rpd: 1, concurrency: 1 }, backgroundCapacity: { rpm: 3, tpm: 30, rpd: 3, concurrency: 1 }, backgroundLanes: [{ processId: `${domain}-a`, profileVersion: "v1", normalizedWeight: .5 }, { processId: `${domain}-b`, profileVersion: "v1", normalizedWeight: .25 }, { processId: `${domain}-c`, profileVersion: "v1", normalizedWeight: .25 }] };
+  const physicalWindows = { rpm: { kind: "fixed", windowSeconds: 60, limitUnits: 4 }, tpm: { kind: "fixed", windowSeconds: 60, limitUnits: 40 }, rpd: { kind: "fixed", windowSeconds: 86_400, limitUnits: 4 }, concurrency: { kind: "fixed", windowSeconds: 60, limitUnits: 2 } };
   const future = () => new Date(Date.now() + 60_000).toISOString();
   const vector = (dimension: string, value: number) => ({ rpm: 0, tpm: 0, rpd: 0, concurrency: 0, [dimension]: value });
   const addProcess = async (id: string, serviceClass: "interactive" | "background") => {
     await sql.unsafe("INSERT INTO bridge.workload_envelope_profile(workload_id,profile_version,active,compatible_process_kinds,structural_bound,estimator,quota_accounting_policy_id,output_reservation,safety_policy) VALUES($1,'v1',true,'[\"chat\"]','{}','{}','quota','{}','{}')", [id]);
-    await sql.unsafe("INSERT INTO bridge.provider_process_profile(process_id,profile_version,process_kind,capability,service_class,fairness_scope,allocation_policy,active,eligible_route_ids,workload_id,workload_profile_version) VALUES($1,'v1','chat','cap',$2,'{}','{}',true,'[]',$1,'v1')", [id, serviceClass]);
+    await sql.unsafe("INSERT INTO bridge.provider_process_profile(process_id,profile_version,process_kind,capability,service_class,fairness_scope,allocation_policy,active,eligible_route_ids,workload_id,workload_profile_version) VALUES($1,'v1','chat','cap',$2,'{}','{}',true,$3,$1,'v1')", [id, serviceClass, [route]]);
   };
-  const register = (id: string, process: string, key: string, envelope = { rpm: 1, tpm: 10, rpd: 1, concurrency: 1 }, deadline = future(), attempt = 1) => sql.unsafe("SELECT bridge.register_provider_work_attempt($1,$2,$3,$4,'v1',$5,$6,'plan-v1',1,$7,$7)", [id, attempt, domain, process, key, envelope, deadline]);
+  const register = async (id: string, process: string, key: string, envelope = { rpm: 1, tpm: 10, rpd: 1, concurrency: 1 }, deadline = future(), attempt = 1) => {
+    await sql.unsafe("SELECT bridge.register_provider_work_attempt($1,$2,$3,$4,'v1',$5,$6,'plan-v1',1,$7,$7)", [id, attempt, domain, process, key, envelope, deadline]);
+    await sql.unsafe("SELECT bridge.bind_provider_work_route($1,$2,$3)", [id, attempt, route]);
+  };
   const admit = async () => { const rows = await sql.unsafe("SELECT * FROM bridge.admit_next_provider_work_attempt($1)", [domain]); assert.equal(rows.length, 1); return rows[0]; };
   const decision = async (id: string, attempt = 1) => (await sql.unsafe("SELECT * FROM bridge.admit_interactive_provider_work_attempt($1,$2)", [id, attempt]))[0];
-  const finish = async (row: { reservation_id: string; logical_work_id: string; attempt_number: number }) => { await sql.unsafe("UPDATE bridge.provider_work_reservation SET state='released',released_at=now() WHERE reservation_id=$1", [row.reservation_id]); await sql.unsafe("UPDATE bridge.provider_work_attempt SET state='terminal',terminal_reason='done' WHERE logical_work_id=$1 AND attempt_number=$2", [row.logical_work_id, row.attempt_number]); };
+  const finish = async (row: { reservation_id: string; logical_work_id: string; attempt_number: number }, sent = false) => {
+    await sql.unsafe("SELECT bridge.ingest_provider_operational_feedback($1::jsonb)", [{
+      feedbackId: `${row.logical_work_id}:${row.attempt_number}:finish`, reservationId: row.reservation_id,
+      attemptId: `${row.logical_work_id}:${row.attempt_number}`, routeId: route, quotaDomainId: domain,
+      desiredProfileVersion: "plan-v1", qualificationVersion: "qualification-v1", observationSource: "qualified_adapter",
+      observationTrust: "qualified", observedAt: new Date().toISOString(), transportDisposition: sent ? "terminal_confirmed" : "definitely_not_sent",
+      ...(sent ? { usage: { rpm: 1, tpm: 1, rpd: 1 } } : {}),
+    }]);
+  };
   const dispatches = async (id: string, attempt = 1) => (await sql.unsafe("SELECT count(*)::int AS count FROM bridge.provider_work_dispatch WHERE logical_work_id=$1 AND attempt_number=$2", [id, attempt]))[0].count;
   try {
     await sql.unsafe("BEGIN");
-    await sql.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'cap-v1','account','[{\"routeId\":\"r\"}]','{}','{}','quota','provider_docs','ref','v1',now(),now())", [domain]);
+    await sql.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'cap-v1','account',$2,'{}',$3,'quota','provider_docs','ref','v1',now(),now())", [domain, [{ routeId: route }], physicalWindows]);
     for (const [id, service] of [[`${domain}-interactive`, "interactive"], [`${domain}-a`, "background"], [`${domain}-b`, "background"], [`${domain}-c`, "background"]] as const) await addProcess(id, service);
     await sql.unsafe("INSERT INTO bridge.desired_admission_profile(quota_domain_id,profile_version,provider_capacity_profile_version,planner_version,effective_from,profile) VALUES($1,'plan-v1','cap-v1','planner',now(),$2)", [domain, profile]);
     for (const process of [`${domain}-interactive`, `${domain}-a`, `${domain}-b`, `${domain}-c`]) await sql.unsafe("INSERT INTO bridge.desired_admission_profile_input(quota_domain_id,desired_profile_version,process_id,process_profile_version,workload_id,workload_profile_version) VALUES($1,'plan-v1',$2,'v1',$2,'v1')", [domain, process]);
     await sql.unsafe("SELECT bridge.activate_desired_admission_profile($1,'plan-v1')", [domain]);
+    await sql.unsafe("SELECT bridge.publish_qualified_provider_route_authority($1,'cap','adapter-v1','qualification-v1')", [route]);
 
     // CK-002.a: each capacity dimension independently denies one more request with zero dispatch.
     for (const [dimension, limit] of Object.entries(profile.usableGlobalCapacity)) {
@@ -71,8 +85,8 @@ test("BSS-V2-006-02 CFC closes fair admission and atomic dispatch oracles", { sk
     }
     // A worker replay cannot transport twice, and retry needs a new explicit attempt and reservation.
     const retry = `${domain}-retry`; await register(retry, `${domain}-interactive`, "retry"); const first = await decision(retry); await sql.unsafe("SELECT bridge.claim_fake_provider_transport($1)", [first.reservation_id]); await sql.unsafe("SAVEPOINT duplicate_transport"); await assert.rejects(() => sql.unsafe("SELECT bridge.claim_fake_provider_transport($1)", [first.reservation_id]), /already authorized/); await sql.unsafe("ROLLBACK TO SAVEPOINT duplicate_transport"); assert.equal((await sql.unsafe("SELECT * FROM bridge.admit_next_provider_work_attempt($1)", [domain])).length, 0);
-    await sql.unsafe("UPDATE bridge.provider_work_reservation SET state='released',released_at=now() WHERE reservation_id=$1", [first.reservation_id]); await sql.unsafe("UPDATE bridge.provider_work_attempt SET state='terminal',terminal_reason='retry' WHERE logical_work_id=$1", [retry]);
-    await register(retry, `${domain}-interactive`, "retry", undefined, future(), 2); const second = await decision(retry, 2); assert.notEqual(second.reservation_id, first.reservation_id); await sql.unsafe("SELECT bridge.claim_fake_provider_transport($1)", [second.reservation_id]); assert.equal(await dispatches(retry), 1); assert.equal(await dispatches(retry, 2), 1); await finish(second);
+    await finish(first, true);
+    await register(retry, `${domain}-interactive`, "retry", undefined, future(), 2); const second = await decision(retry, 2); assert.notEqual(second.reservation_id, first.reservation_id); await sql.unsafe("SELECT bridge.claim_fake_provider_transport($1)", [second.reservation_id]); assert.equal(await dispatches(retry), 1); assert.equal(await dispatches(retry, 2), 1); await finish(second, true);
 
     // CK-002.d: caller-facing bounded decisions and all protected-capacity negative cases have zero late transport.
     const expired = `${domain}-expired`; await register(expired, `${domain}-interactive`, "expired", undefined, new Date(Date.now() - 1_000).toISOString()); assert.equal((await decision(expired)).decision, "deadline_expired");
