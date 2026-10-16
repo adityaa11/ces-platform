@@ -1,6 +1,6 @@
 # BSS-V2-006-03A-03 — Scoped runtime pressure and bounded probe recovery
 
-- **State:** `planned`; explicit GO required after 03A-02 CK `PASS`.
+- **State:** `approved`; accepted by CK `PASS` in `project's goal/feedback/BSS-V2-BATCH-06-03A-03-bb3b514-verification.md`.
 - **Batch:** `BSS-V2-BATCH-06-03A-03`.
 - **Depends on:** 03A-01/02 CK `PASS`.
 - **Original traceability:** RC07–09, E01, E04–05, and applicable E08.
