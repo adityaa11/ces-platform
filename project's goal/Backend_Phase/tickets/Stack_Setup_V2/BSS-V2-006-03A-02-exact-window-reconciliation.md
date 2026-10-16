@@ -1,6 +1,6 @@
 # BSS-V2-006-03A-02 — Exact physical-window reconciliation
 
-- **State:** `planned`; explicit GO required after 03A-01 CK `PASS`.
+- **State:** `awaiting_review`; implemented under explicit GO after 03A-01 CK `PASS`.
 - **Batch:** `BSS-V2-BATCH-06-03A-02`.
 - **Depends on:** 03A-01 CK `PASS` and its handoff contract.
 - **Original traceability:** RC05–06, E02–03 and applicable E08 restart proof.

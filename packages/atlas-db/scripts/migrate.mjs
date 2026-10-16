@@ -12,6 +12,13 @@ const migrations = ["0000_bss003_boundaries", "0001_bss004_better_auth", "0002_b
 migrations.push("0037_bssv200603a_route_bound_operational_runtime");
 migrations.push("0038_bssv200603a_claim_identity_forward_fix");
 migrations.push("0038_bssv200603a_legacy_route_binding_closure");
+migrations.push("0047_bssv200603a_physical_window_accounting");
+migrations.push("0048_bssv200603a_interactive_physical_window_admission");
+// These compatibility corrections belong to exact-window reconciliation.
+// Keep them ahead of the separately authorized pressure/wakeup migrations.
+migrations.push("0052_bssv200603a_legacy_admission_compatibility");
+migrations.push("0053_bssv200603a_legacy_window_reservation_compatibility");
+migrations.push("0054_bssv200603a_legacy_usage_compatibility");
 const readMigration = async (name) => {
   let migration = await readFile(new URL(`../migrations/${name}.sql`, import.meta.url), "utf8");
   for (const [token, value] of Object.entries(replacements)) migration = migration.replaceAll(token, value.replaceAll("'", "''"));

@@ -64,7 +64,7 @@ test("BSS-V2-006-03A-01 binds a qualified server route before reservation and ac
     await assert.rejects(() => sql.unsafe("SELECT bridge.ingest_provider_operational_feedback($1::jsonb)", [{ ...feedback, feedbackId: `${suffix}-stale`, observedAt: "1970-01-01T00:00:00.000Z" }]), /stale/i);
     await sql.unsafe("ROLLBACK TO SAVEPOINT stale_feedback");
     await sql.unsafe("SAVEPOINT wrong_route_feedback");
-    await assert.rejects(() => sql.unsafe("SELECT bridge.ingest_provider_operational_feedback($1::jsonb)", [{ ...feedback, feedbackId: `${suffix}-wrong-route`, routeId: "forged" }]), /route, domain, plan, or qualification/i);
+    await assert.rejects(() => sql.unsafe("SELECT bridge.ingest_provider_operational_feedback($1::jsonb)", [{ ...feedback, feedbackId: `${suffix}-wrong-route`, routeId: "forged" }]), /route, domain, plan, qualification(?:, or attempt)?/i);
     await sql.unsafe("ROLLBACK TO SAVEPOINT wrong_route_feedback");
     await sql.unsafe("SAVEPOINT raw_feedback");
     await assert.rejects(() => sql.unsafe("SELECT bridge.ingest_provider_operational_feedback($1::jsonb)", [{ ...feedback, feedbackId: `${suffix}-raw`, raw: "forbidden" }]), /redacted/i);
