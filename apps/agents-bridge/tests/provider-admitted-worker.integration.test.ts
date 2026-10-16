@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import postgres from "postgres";
-import { bindProviderWorkRouteFromResolver, createProviderAdmittedExecutionHandler } from "../src/provider-operational-runtime.ts";
+import { bindProviderWorkRouteFromResolver } from "../src/provider-operational-runtime.ts";
 import { TestRuntime } from "../src/runtime.ts";
 import { createRouteRegistry } from "../src/route-registry.ts";
 import { createBackgroundWorker, providerAdmittedExecutionQueue } from "../src/worker.ts";
+import { createProductionBridgeWorker } from "../src/production-worker-composition.ts";
 
 const databaseUrl = process.env.DATABASE_URL;
 // pg-boss polling is the durable delivery mechanism for this queue.  Keep
@@ -38,6 +39,27 @@ async function waitForDurableDelivery(sql: postgres.Sql, worker: ReturnType<type
   assert.fail(`admitted worker did not durably reconcile within ${deliveryTimeoutMilliseconds}ms: ${JSON.stringify(snapshot)}`);
 }
 
+async function waitForRejectedReplay(sql: postgres.Sql, jobId: string) {
+  const deadline = Date.now() + deliveryTimeoutMilliseconds;
+  while (Date.now() < deadline) {
+    const [job] = await sql.unsafe("SELECT state FROM pgboss.job WHERE id=$1", [jobId]);
+    if (job?.state === "failed") return;
+    await sleep(25);
+  }
+  assert.fail(`duplicate admitted-job replay did not fail within ${deliveryTimeoutMilliseconds}ms`);
+}
+
+async function waitForClaimedOutcome(sql: postgres.Sql, worker: ReturnType<typeof createBackgroundWorker>, jobId: string, reservationId: string, work: string) {
+  const deadline = Date.now() + deliveryTimeoutMilliseconds;
+  let snapshot = await readDeliverySnapshot(sql, worker, jobId, reservationId, work);
+  while (Date.now() < deadline) {
+    if (snapshot.claims === 1 && snapshot.outcomes === 1 && snapshot.attempt?.state === "reconciled") return snapshot;
+    await sleep(25);
+    snapshot = await readDeliverySnapshot(sql, worker, jobId, reservationId, work);
+  }
+  assert.fail(`crash-after-claim fixture did not persist its durable outcome within ${deliveryTimeoutMilliseconds}ms: ${JSON.stringify(snapshot)}`);
+}
+
 test("BSS-V2-006-03A consumes an admitted pg-boss job once and feeds the production ingress", { skip: !databaseUrl }, async () => {
   const bridgeUrl = new URL(databaseUrl!);
   bridgeUrl.username = "agents_bridge";
@@ -54,12 +76,17 @@ test("BSS-V2-006-03A consumes an admitted pg-boss job once and feeds the product
     backgroundLanes: [],
   };
   let sends = 0;
-  const admittedHandler = createProviderAdmittedExecutionHandler(async (input) => {
+  let crashAfterClaim = false;
+  const providerOutboundTransport = async (input: { routeId: string; payloadReference: { kind: "bss-v2-006-03a-operational-fixture" } }) => {
     assert.equal(input.routeId, route);
     assert.equal(input.payloadReference.kind, "bss-v2-006-03a-operational-fixture");
     sends += 1;
+    if (crashAfterClaim) {
+      crashAfterClaim = false;
+      throw new Error("fixture transport crashed after the durable claim");
+    }
     return { feedbackId: `${suffix}-feedback`, transportDisposition: "terminal_confirmed", usage: { rpm: 1, tpm: 5, rpd: 1 } };
-  });
+  };
   const routes = createRouteRegistry([{
     routeId: route,
     capability: "atlas.chat.default",
@@ -71,15 +98,13 @@ test("BSS-V2-006-03A consumes an admitted pg-boss job once and feeds the product
     workClass: "interactive",
     enabled: true,
   }], "development", new Set(["fixture"]));
-  const worker = createBackgroundWorker(
-    { databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 1, perceptionConcurrency: 1, timeoutSeconds: 5, retryLimit: 0, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 },
-    new TestRuntime(),
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    admittedHandler,
-  );
+  const worker = createProductionBridgeWorker({
+    config: { databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 1, perceptionConcurrency: 1, timeoutSeconds: 5, retryLimit: 0, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 },
+    runtime: new TestRuntime(),
+    documentPerception: async () => undefined,
+    semantic: async () => undefined,
+    providerOutboundTransport,
+  });
   let fixtureCommitted = false;
   try {
     await worker.start();
@@ -110,6 +135,28 @@ test("BSS-V2-006-03A consumes an admitted pg-boss job once and feeds the product
     assert.equal(delivered.claims, 1);
     assert.equal(delivered.outcomes, 1);
     assert.deepEqual(delivered.attempt, { state: "reconciled", terminal_reason: "reconciled_operational_feedback" });
+
+    const duplicateJobId = await worker.boss.send(providerAdmittedExecutionQueue, { logicalWorkId: work, attemptNumber: 1, reservationId: admitted.reservation_id });
+    assert.ok(duplicateJobId, "the duplicate delivery fixture must enqueue the same durable identity");
+    await waitForRejectedReplay(sql, duplicateJobId as string);
+    assert.equal(sends, 1, "a duplicate delivery or claim replay must not invoke a second outbound send");
+
+    const crashWork = `${suffix}-crash-after-claim`;
+    await sql.unsafe("SELECT bridge.register_provider_work_attempt($1,1,$2,$3,'v1','fixture',$4,'plan-v1',1,now()+interval '1 minute',now()+interval '1 minute')", [crashWork, domain, `${suffix}-process`, { rpm: 1, tpm: 10, rpd: 1, concurrency: 1 }]);
+    await bindProviderWorkRouteFromResolver({
+      executeSql: async (query: string, values?: readonly unknown[]) => ({ rows: await sql.unsafe(query, values as unknown[] | undefined) }),
+    }, routes, { logicalWorkId: crashWork, attemptNumber: 1 });
+    crashAfterClaim = true;
+    const [crashAdmitted] = await sql.unsafe("SELECT * FROM bridge.admit_interactive_provider_work_attempt($1,1)", [crashWork]);
+    assert.equal(crashAdmitted.decision, "admitted");
+    const crashDelivered = await waitForClaimedOutcome(sql, worker, crashAdmitted.job_id, crashAdmitted.reservation_id, crashWork);
+    assert.equal(sends, 2, "the fixture must reach the one outbound call before its simulated crash");
+    assert.equal(crashDelivered.claims, 1);
+    assert.equal(crashDelivered.outcomes, 1, "a crash after claim must persist one may-have-started ingress outcome");
+    const crashReplayJobId = await worker.boss.send(providerAdmittedExecutionQueue, { logicalWorkId: crashWork, attemptNumber: 1, reservationId: crashAdmitted.reservation_id });
+    assert.ok(crashReplayJobId);
+    await waitForRejectedReplay(sql, crashReplayJobId as string);
+    assert.equal(sends, 2, "a crash-after-claim replay must not issue another outbound send");
   } finally {
     await worker.stop().catch(() => undefined);
     if (!fixtureCommitted) await sql.unsafe("ROLLBACK").catch(() => undefined);

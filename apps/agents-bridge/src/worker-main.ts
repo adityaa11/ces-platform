@@ -5,7 +5,6 @@ import { createAnomanCapabilities } from "./providers/anoman.js";
 import { DoclingProvider } from "./providers/docling.js";
 import { QualifiedRouteRuntime, TestRuntime } from "./runtime.js";
 import { loadWorkerConfig } from "./worker-config.js";
-import { createBackgroundWorker } from "./worker.js";
 import { createAtlasPerceptionClients, loadAtlasPerceptionClientConfig } from "./atlas-perception-client.js";
 import { runDocumentPerception } from "./document-perception-worker.js";
 import { createPerceptionResultReplay } from "./perception-result-replay.js";
@@ -14,6 +13,8 @@ import { createAtlasSemanticClient, loadAtlasSemanticClientConfig } from "./atla
 import { createSemanticResultReplay } from "./semantic-result-replay.js";
 import { runSemanticJob } from "./semantic-worker.js";
 import { assertConfiguredRouteAdapter, capabilityForSkill, createRouteRegistry } from "./route-registry.js";
+import type { ProviderOutboundTransport } from "./provider-operational-runtime.js";
+import { createProductionBridgeWorker } from "./production-worker-composition.js";
 
 const readinessPath = "/tmp/agents-bridge-worker.ready";
 // A container can be restarted without its writable layer being discarded.
@@ -43,12 +44,19 @@ if (config.qualifiedRoutes.some((route) => route.enabled && route.providerId ===
 }
 const semanticClient = createAtlasSemanticClient(loadAtlasSemanticClientConfig());
 const runtime = config.deploymentProfile === "test" ? new TestRuntime() : new QualifiedRouteRuntime((capability) => registry.resolve(capability), { mistral: mistral.streaming, gemini: gemini.streaming });
-const worker = createBackgroundWorker(loadWorkerConfig(), runtime, undefined, async (request, signal, context) => {
+// This vertical slice owns the durable claim and feedback boundary, but not a
+// provider-specific payload contract. Keep the production port fail-closed
+// until a later ticket supplies that separately-qualified transport; tests
+// replace only this port to exercise the real worker composition.
+const providerOutboundTransport: ProviderOutboundTransport = async () => {
+  throw new Error("No qualified provider outbound transport is configured for the admitted-execution slice.");
+};
+const worker = createProductionBridgeWorker({ config: loadWorkerConfig(), runtime, documentPerception: async (request, signal, context) => {
   const route = registry.resolve("atlas.document.perceive");
   assertConfiguredRouteAdapter(route, config);
   const store = createPerceptionResultReplay(context.database);
   await runDocumentPerception(request, capabilities[route.providerId as "mistral" | "gemini" | "docling"].perception, clients.source, clients.results, signal, { idempotencyKey: context.idempotencyKey, store, finalAttempt: context.finalAttempt });
-}, undefined, async (job, signal, context) => {
+}, semantic: async (job, signal, context) => {
   const route = registry.resolve(capabilityForSkill(job.skill.id));
   assertConfiguredRouteAdapter(route, config);
   const stepwise = job.skill.id !== "atlas.semantic.extract" ? undefined : {
@@ -61,7 +69,7 @@ const worker = createBackgroundWorker(loadWorkerConfig(), runtime, undefined, as
     },
   };
   await runSemanticJob(job, capabilities[route.providerId as "mistral" | "gemini" | "anoman"].structured, semanticClient, createSemanticResultReplay(context.database), context.idempotencyKey, signal, { owner: context.leaseOwner, generation: context.leaseGeneration }, undefined, stepwise);
-});
+}, providerOutboundTransport });
 await worker.start();
 await writeFile(readinessPath, "ready\n");
 

@@ -67,8 +67,12 @@ export async function bindProviderWorkRouteFromResolver(
   const route = resolver.resolve(capability as AtlasCapability);
   if (route.capability !== capability) throw new Error("Qualified route resolver returned a mismatched capability.");
   await database.executeSql(
-    "SELECT bridge.bind_provider_work_route($1,$2,$3,$4,$5,$6)",
-    [input.logicalWorkId, input.attemptNumber, route.routeId, route.capability, route.adapterVersion, route.qualificationVersion],
+    "SELECT bridge.publish_qualified_provider_route_authority($1,$2,$3,$4)",
+    [route.routeId, route.capability, route.adapterVersion, route.qualificationVersion],
+  );
+  await database.executeSql(
+    "SELECT bridge.bind_provider_work_route($1,$2,$3)",
+    [input.logicalWorkId, input.attemptNumber, route.routeId],
   );
 }
 

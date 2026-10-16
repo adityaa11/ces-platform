@@ -28,7 +28,19 @@ test("BSS-V2-006-03A-01 binds a qualified server route before reservation and ac
     await sql.unsafe("SAVEPOINT missing_route_binding");
     await assert.rejects(() => sql.unsafe("SELECT * FROM bridge.admit_interactive_provider_work_attempt($1,1)", [work]), /route binding/i);
     await sql.unsafe("ROLLBACK TO SAVEPOINT missing_route_binding");
+    const artifacts = async () => ({
+      reservations: Number((await sql.unsafe("SELECT count(*)::integer AS count FROM bridge.provider_work_reservation WHERE logical_work_id=$1", [work]))[0].count),
+      jobs: Number((await sql.unsafe("SELECT count(*)::integer AS count FROM pgboss.job WHERE data->>'logicalWorkId'=$1", [work]))[0].count),
+      claims: Number((await sql.unsafe("SELECT count(*)::integer AS count FROM bridge.provider_transport_claim WHERE logical_work_id=$1", [work]))[0].count),
+    });
+    await sql.unsafe("SAVEPOINT forged_route");
+    await assert.rejects(() => sql.unsafe("SELECT bridge.bind_provider_work_route($1,1,$2)", [work, "forged-route"]), /not published|eligible|associated/i);
+    await sql.unsafe("ROLLBACK TO SAVEPOINT forged_route");
+    assert.deepEqual(await artifacts(), { reservations: 0, jobs: 0, claims: 0 });
     await bindProviderWorkRouteFromResolver({ executeSql: async (query, values) => ({ rows: await sql.unsafe(query, values as unknown[] | undefined) }) }, resolver, { logicalWorkId: work, attemptNumber: 1 });
+    await sql.unsafe("SAVEPOINT contradictory_binding");
+    await assert.rejects(() => sql.unsafe("SELECT bridge.bind_provider_work_route($1,1,$2)", [work, "client-chosen-route"]), /not published|conflicts/i);
+    await sql.unsafe("ROLLBACK TO SAVEPOINT contradictory_binding");
     const [admitted] = await sql.unsafe("SELECT * FROM bridge.admit_interactive_provider_work_attempt($1,1)", [work]);
     assert.equal(admitted.decision, "admitted");
     const [claim] = await sql.unsafe("SELECT bridge.claim_provider_admitted_transport($1) AS claimed", [admitted.reservation_id]);
