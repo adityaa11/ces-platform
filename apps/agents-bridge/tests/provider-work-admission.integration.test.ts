@@ -95,7 +95,7 @@ test("RC-BSSV2-00604-01/12a/14a drive authenticated background admission through
       sends: number;
       claims: number;
       feedback?: Readonly<{ disposition: "terminal_confirmed" | "may_have_started"; operationalOutcome?: "success" | "provider_failure" | "rate_limited" }>;
-      ledger?: Readonly<Record<string, Readonly<{ state: string; heldUnits: string; spentUnits: string }>>>;
+      ledger: Readonly<Record<string, Readonly<{ state: string; heldUnits: string; spentUnits: string }>>>;
     }>) => {
       const publicOutcome = await outcome(input.logicalWorkId, input.attemptNumber);
       assert.equal(publicOutcome.state, input.publicState, `${input.label}: public admission outcome is durable`);
@@ -131,10 +131,14 @@ test("RC-BSSV2-00604-01/12a/14a drive authenticated background admission through
       assert.deepEqual(Array.from(feedbackRows), input.feedback ? [{ transport_disposition: input.feedback.disposition, operational_outcome: input.feedback.operationalOutcome ?? null }] : [], `${input.label}: normalized feedback row is bounded and exact`);
       const ledgerRows = await sql.unsafe(`SELECT dimension_id, state, held_units::text AS held_units, spent_units::text AS spent_units
         FROM bridge.provider_window_usage_ledger WHERE reservation_id=$1 ORDER BY dimension_id`, [input.reservationId]);
-      if (input.ledger) {
-        assert.deepEqual(Object.fromEntries(ledgerRows.map((row) => [row.dimension_id, { state: row.state, heldUnits: row.held_units, spentUnits: row.spent_units }])), input.ledger, `${input.label}: durable per-dimension usage ledger is exact`);
-      }
+      assert.deepEqual(Object.fromEntries(ledgerRows.map((row) => [row.dimension_id, { state: row.state, heldUnits: row.held_units, spentUnits: row.spent_units }])), input.ledger, `${input.label}: durable per-dimension usage ledger is exact`);
       return { chain, ledgerRows };
+    };
+    const settledUsageLedger = {
+      concurrency: { state: "settled", heldUnits: "0", spentUnits: "0" },
+      rpd: { state: "settled", heldUnits: "0", spentUnits: "1" },
+      rpm: { state: "settled", heldUnits: "0", spentUnits: "1" },
+      tpm: { state: "settled", heldUnits: "0", spentUnits: "5" },
     };
     // This independent semantic-like background fixture knows only the public
     // versioned HTTP boundary. Its direct-adapter counter is a prohibited-path
@@ -277,7 +281,7 @@ test("RC-BSSV2-00604-01/12a/14a drive authenticated background admission through
       (SELECT count(*)::int FROM bridge.provider_operational_pressure_incident WHERE quota_domain_id=$2) AS pressure_incidents
       FROM bridge.provider_operational_feedback_event
       WHERE reservation_id=$1`, [providerFailureOutcome.reservationId, domain]))[0], { operational_outcome: "provider_failure", pressure_incidents: 0 }, "provider failure retains a redacted durable feedback outcome only");
-    await assertDurableCase({ label: "provider-failure", logicalWorkId: providerFailure.logicalWorkId, attemptNumber: 1, reservationId: providerFailureOutcome.reservationId!, jobId: providerFailureOutcome.jobId!, publicState: "terminal_provider_failure", sends: 1, claims: 1, feedback: { disposition: "terminal_confirmed", operationalOutcome: "provider_failure" } });
+    await assertDurableCase({ label: "provider-failure", logicalWorkId: providerFailure.logicalWorkId, attemptNumber: 1, reservationId: providerFailureOutcome.reservationId!, jobId: providerFailureOutcome.jobId!, publicState: "terminal_provider_failure", sends: 1, claims: 1, feedback: { disposition: "terminal_confirmed", operationalOutcome: "provider_failure" }, ledger: settledUsageLedger });
     // A 429 without Retry-After is also a provider operational result, but
     // must use the approved metadata-free cooldown rather than inventing a
     // recursive retry or interpreting provider output.
@@ -312,8 +316,8 @@ test("RC-BSSV2-00604-01/12a/14a drive authenticated background admission through
     while (Date.now() < metadataFreeRetryDeadline && sends !== 4) await sleep(25);
     assert.equal((await outcome(metadataFree.logicalWorkId, 2)).state, "terminal_success");
     assert.notEqual(metadataFreeRetry.reservationId, metadataFreeAdmission.reservationId, "metadata-free recovery retry receives a distinct explicit reservation");
-    await assertDurableCase({ label: "metadata-free-429", logicalWorkId: metadataFree.logicalWorkId, attemptNumber: 1, reservationId: metadataFreeAdmission.reservationId!, jobId: metadataFreeAdmission.jobId!, publicState: "pressure_limited", sends: 1, claims: 1, feedback: { disposition: "terminal_confirmed", operationalOutcome: "rate_limited" } });
-    await assertDurableCase({ label: "metadata-free-explicit-retry", logicalWorkId: metadataFree.logicalWorkId, attemptNumber: 2, reservationId: metadataFreeRetry.reservationId!, jobId: metadataFreeRetry.jobId!, publicState: "terminal_success", sends: 1, claims: 1, feedback: { disposition: "terminal_confirmed", operationalOutcome: "success" } });
+    await assertDurableCase({ label: "metadata-free-429", logicalWorkId: metadataFree.logicalWorkId, attemptNumber: 1, reservationId: metadataFreeAdmission.reservationId!, jobId: metadataFreeAdmission.jobId!, publicState: "pressure_limited", sends: 1, claims: 1, feedback: { disposition: "terminal_confirmed", operationalOutcome: "rate_limited" }, ledger: settledUsageLedger });
+    await assertDurableCase({ label: "metadata-free-explicit-retry", logicalWorkId: metadataFree.logicalWorkId, attemptNumber: 2, reservationId: metadataFreeRetry.reservationId!, jobId: metadataFreeRetry.jobId!, publicState: "terminal_success", sends: 1, claims: 1, feedback: { disposition: "terminal_confirmed", operationalOutcome: "success" }, ledger: settledUsageLedger });
 
     // A separate qualified route lets the same isolated Bridge fixture prove
     // the independent Retry-After path without reopening the recovered
@@ -352,8 +356,8 @@ test("RC-BSSV2-00604-01/12a/14a drive authenticated background admission through
     while (Date.now() < retryDeadline && sends !== 6) await sleep(25);
     assert.equal((await outcome(rateLimited.logicalWorkId, 2)).state, "terminal_success");
     assert.notEqual(retry.reservationId, rateAdmission.reservationId, "retry has a distinct explicit reservation");
-    await assertDurableCase({ label: "retry-after-429", logicalWorkId: rateLimited.logicalWorkId, attemptNumber: 1, reservationId: rateAdmission.reservationId!, jobId: rateAdmission.jobId!, publicState: "pressure_limited", sends: 1, claims: 1, feedback: { disposition: "terminal_confirmed", operationalOutcome: "rate_limited" } });
-    await assertDurableCase({ label: "retry-after-explicit-retry", logicalWorkId: rateLimited.logicalWorkId, attemptNumber: 2, reservationId: retry.reservationId!, jobId: retry.jobId!, publicState: "terminal_success", sends: 1, claims: 1, feedback: { disposition: "terminal_confirmed", operationalOutcome: "success" } });
+    await assertDurableCase({ label: "retry-after-429", logicalWorkId: rateLimited.logicalWorkId, attemptNumber: 1, reservationId: rateAdmission.reservationId!, jobId: rateAdmission.jobId!, publicState: "pressure_limited", sends: 1, claims: 1, feedback: { disposition: "terminal_confirmed", operationalOutcome: "rate_limited" }, ledger: settledUsageLedger });
+    await assertDurableCase({ label: "retry-after-explicit-retry", logicalWorkId: rateLimited.logicalWorkId, attemptNumber: 2, reservationId: retry.reservationId!, jobId: retry.jobId!, publicState: "terminal_success", sends: 1, claims: 1, feedback: { disposition: "terminal_confirmed", operationalOutcome: "success" }, ledger: settledUsageLedger });
 
     // A named timeout after the durable claim means the transport acknowledgement
     // is lost. It is conservative: it consumes or retains unknown capacity and
