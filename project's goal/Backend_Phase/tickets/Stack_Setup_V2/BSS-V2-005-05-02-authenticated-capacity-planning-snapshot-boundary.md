@@ -1,7 +1,6 @@
 # BSS-V2-005-05-02 — Authenticated capacity-planning snapshot boundary
 
-- **State:** `awaiting_review`; implemented under [HMN-BSSV2-005-05-02-001](../../../feedback/BSS-V2-BATCH-05-05-02-hmn-001.md) (`RETURN_TO_GO`) and recorded in the [GO checkpoint](../../../feedback/BSS-V2-BATCH-05-05-02-go.md). This is not a CK PASS or CFC authority.
-- **Review batch:** `BSS-V2-BATCH-05-05-02`.
+- **State:** `approved` following CK `PASS` for remediation commit `067a06d`; **Review batch:** `BSS-V2-BATCH-05-05-02`.
 - **Parent and frozen family authority:** [BSS-V2-005-05 split map](BSS-V2-005-05-process-agnostic-registry-and-plan-convergence.md).
 - **Dependencies:** BSS-V2-005-05-01 CK `PASS`; BSS-V2-005-04 CK `PASS`; exact server-authorized consumer identities. It does not depend on BSS-V2-006-03A or BSS-V2-006-04.
 - **Frozen planning authorization:** [BSS-V2-BATCH-05-05-02 HMN-001](../../../feedback/BSS-V2-BATCH-05-05-02-hmn-001.md) binds the two fixture principals, their server-selected registry identities, the fixture-only capacity-route association, read scope, and prospective view. It is directly incorporated for initial GO only and does not amend either Review Contract row.
