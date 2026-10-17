@@ -36,6 +36,7 @@ migrations.push("0064_bssv200603a_background_route_aware_admission_forward_fix")
 migrations.push("0065_bssv200603a_background_route_aware_lookup_fix");
 migrations.push("0066_bssv200603a_missing_route_binding_closure");
 migrations.push("0067_bssv20050503_authorized_desired_plan_convergence");
+migrations.push("0068_bssv20060401_runtime_capacity_constraint_read");
 const readMigration = async (name) => {
   let migration = await readFile(new URL(`../migrations/${name}.sql`, import.meta.url), "utf8");
   for (const [token, value] of Object.entries(replacements)) migration = migration.replaceAll(token, value.replaceAll("'", "''"));
