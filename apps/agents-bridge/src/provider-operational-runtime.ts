@@ -38,10 +38,28 @@ export type ProviderOutboundTransport = (input: Readonly<{
   capability: string;
   adapterVersion: string;
   qualificationVersion: string;
-  /** BSS-03A has no source/prompt authority; this is deliberately content-free. */
-  payloadReference: Readonly<{ kind: "bss-v2-006-03a-operational-fixture" }>;
+  /** Hydrated only after the durable 03A transport claim. */
+  payloadReference: unknown;
   signal: AbortSignal;
 }>) => Promise<ProviderOperationalOutcome>;
+
+export type ProviderAdmittedPayloadAdapter = Readonly<{
+  hydrate(input: Readonly<{ logicalWorkId: string; attemptNumber: number; payloadReference: string; payloadHash: string; signal: AbortSignal }>): Promise<unknown>;
+}>;
+
+const unavailablePayloadAdapter: ProviderAdmittedPayloadAdapter = {
+  hydrate: async () => { throw new Error("No qualified payload adapter is configured for the admitted provider-work boundary."); },
+};
+
+const claimedPayload = async (database: Db, reservationId: string): Promise<Readonly<{ logicalWorkId: string; attemptNumber: number; payloadReference: string; payloadHash: string }> | undefined> => {
+  const result = await database.executeSql("SELECT bridge.read_claimed_provider_work_admission_payload_v1($1) AS payload", [reservationId]);
+  const payload = (result.rows[0] as { payload?: unknown } | undefined)?.payload;
+  if (payload === null || payload === undefined) return undefined;
+  if (typeof payload !== "object" || Array.isArray(payload)) throw new Error("Admitted transport has no claimed immutable payload reference.");
+  const value = payload as Record<string, unknown>;
+  if (typeof value.logicalWorkId !== "string" || !Number.isInteger(value.attemptNumber) || typeof value.payloadReference !== "string" || typeof value.payloadHash !== "string") throw new Error("Claimed provider-work payload identity is invalid.");
+  return value as Readonly<{ logicalWorkId: string; attemptNumber: number; payloadReference: string; payloadHash: string }>;
+};
 
 /**
  * Bind an attempt from the configured, server-owned resolver.  Callers never
@@ -107,12 +125,19 @@ const ingress = async (database: Db, claimed: ClaimedTransport, outcome: Provide
  * conservatively persisted as may-have-started: it can never cause a replay
  * to issue another send for the same reservation.
  */
-export function createProviderAdmittedExecutionHandler(transport: ProviderOutboundTransport): ProviderAdmittedExecutionHandler {
+export function createProviderAdmittedExecutionHandler(transport: ProviderOutboundTransport, payloadAdapter: ProviderAdmittedPayloadAdapter = unavailablePayloadAdapter): ProviderAdmittedExecutionHandler {
   return async (job: ProviderAdmittedJob, { database, signal }) => {
     const claimed = await claim(database, job.reservationId);
     if (claimed.logicalWorkId !== job.logicalWorkId || claimed.attemptNumber !== job.attemptNumber || claimed.reservationId !== job.reservationId) throw new Error("Admitted job identity does not match its durable reservation claim.");
     try {
-      const outcome = await transport({ routeId: claimed.routeId, capability: claimed.capability, adapterVersion: claimed.adapterVersion, qualificationVersion: claimed.qualificationVersion, payloadReference: { kind: "bss-v2-006-03a-operational-fixture" }, signal });
+      const payloadIdentity = await claimedPayload(database, claimed.reservationId);
+      const payloadReference = payloadIdentity
+        ? await (async () => {
+          if (payloadIdentity.logicalWorkId !== claimed.logicalWorkId || payloadIdentity.attemptNumber !== claimed.attemptNumber) throw new Error("Claimed provider-work payload does not match the claimed transport.");
+          return payloadAdapter.hydrate({ ...payloadIdentity, signal });
+        })()
+        : { kind: "bss-v2-006-03a-operational-fixture" };
+      const outcome = await transport({ routeId: claimed.routeId, capability: claimed.capability, adapterVersion: claimed.adapterVersion, qualificationVersion: claimed.qualificationVersion, payloadReference, signal });
       await ingress(database, claimed, outcome);
     } catch (error) {
       await ingress(database, claimed, { transportDisposition: "may_have_started" });

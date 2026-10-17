@@ -1,9 +1,15 @@
 import Fastify from "fastify";
 import { parseExecutionRequest, type ReasoningRuntime } from "@atlas/contracts";
 import type { RuntimeCapacityConstraintRead, RuntimeCapacityConstraint } from "./runtime-capacity-constraint.js";
+import { parseProviderWorkAdmissionRequest, type ProviderWorkAdmissionOutcome } from "./provider-work-admission.js";
 
 type RuntimeCapacityConstraintReader = Readonly<{
   read(credential: string, request?: RuntimeCapacityConstraintRead): Promise<RuntimeCapacityConstraint>;
+}>;
+
+type ProviderWorkAdmissionService = Readonly<{
+  admit(credential: string, request: ReturnType<typeof parseProviderWorkAdmissionRequest>): Promise<ProviderWorkAdmissionOutcome>;
+  cancel(credential: string, logicalWorkId: string, attemptNumber: number): Promise<ProviderWorkAdmissionOutcome>;
 }>;
 
 const unavailableRuntimeConstraint = (): RuntimeCapacityConstraint => ({
@@ -23,6 +29,7 @@ export function createBridgeApp(options: {
   readonly version: string;
   readonly ready?: () => boolean;
   readonly runtimeCapacityConstraintReader?: RuntimeCapacityConstraintReader;
+  readonly providerWorkAdmissionService?: ProviderWorkAdmissionService;
 }) {
   const app = Fastify({ logger: false });
   app.get("/healthz", async () => ({ status: "ok" }));
@@ -40,6 +47,21 @@ export function createBridgeApp(options: {
     }
     return (options.runtimeCapacityConstraintReader ?? { read: async () => unavailableRuntimeConstraint() })
       .read(credential, expectedEffectiveConstraintRevision === undefined ? undefined : { expectedEffectiveConstraintRevision });
+  });
+  app.post("/v1/provider-work-admissions", async (request, reply) => {
+    const credential = bearerCredential(request.headers.authorization);
+    if (!credential) return { apiVersion: "ProviderWorkAdmission/v1", state: "policy_or_resource_unfit" };
+    try {
+      const admission = parseProviderWorkAdmissionRequest(request.body);
+      return (options.providerWorkAdmissionService ?? { admit: async () => ({ apiVersion: "ProviderWorkAdmission/v1" as const, state: "policy_or_resource_unfit" as const }) }).admit(credential, admission);
+    } catch (error) { return reply.code(400).send({ error: error instanceof Error ? error.message : "Invalid provider work admission request." }); }
+  });
+  app.post("/v1/provider-work-admissions/:logicalWorkId/:attemptNumber/cancel", async (request, reply) => {
+    const credential = bearerCredential(request.headers.authorization);
+    const params = request.params as { logicalWorkId?: unknown; attemptNumber?: unknown };
+    const attemptNumber = Number(params.attemptNumber);
+    if (!credential || !nonEmptyRouteParam(params.logicalWorkId) || !Number.isInteger(attemptNumber) || attemptNumber < 1) return { apiVersion: "ProviderWorkAdmission/v1", state: "policy_or_resource_unfit" };
+    return (options.providerWorkAdmissionService ?? { cancel: async () => ({ apiVersion: "ProviderWorkAdmission/v1" as const, state: "policy_or_resource_unfit" as const }) }).cancel(credential, params.logicalWorkId, attemptNumber);
   });
   app.post("/v1/interactive/execute", async (request, reply) => {
     let execution;
@@ -63,3 +85,5 @@ export function createBridgeApp(options: {
   });
   return app;
 }
+
+function nonEmptyRouteParam(value: unknown): value is string { return typeof value === "string" && value.length > 0; }

@@ -13,7 +13,7 @@ import { createAtlasSemanticClient, loadAtlasSemanticClientConfig } from "./atla
 import { createSemanticResultReplay } from "./semantic-result-replay.js";
 import { runSemanticJob } from "./semantic-worker.js";
 import { assertConfiguredRouteAdapter, capabilityForSkill, createRouteRegistry } from "./route-registry.js";
-import type { ProviderOutboundTransport } from "./provider-operational-runtime.js";
+import type { ProviderAdmittedPayloadAdapter, ProviderOutboundTransport } from "./provider-operational-runtime.js";
 import { createProductionBridgeWorker } from "./production-worker-composition.js";
 
 const readinessPath = "/tmp/agents-bridge-worker.ready";
@@ -51,6 +51,9 @@ const runtime = config.deploymentProfile === "test" ? new TestRuntime() : new Qu
 const providerOutboundTransport: ProviderOutboundTransport = async () => {
   throw new Error("No qualified provider outbound transport is configured for the admitted-execution slice.");
 };
+const providerPayloadAdapter: ProviderAdmittedPayloadAdapter = {
+  hydrate: async () => { throw new Error("No qualified provider-work payload adapter is configured for the admitted-execution slice."); },
+};
 const worker = createProductionBridgeWorker({ config: loadWorkerConfig(), runtime, documentPerception: async (request, signal, context) => {
   const route = registry.resolve("atlas.document.perceive");
   assertConfiguredRouteAdapter(route, config);
@@ -69,7 +72,7 @@ const worker = createProductionBridgeWorker({ config: loadWorkerConfig(), runtim
     },
   };
   await runSemanticJob(job, capabilities[route.providerId as "mistral" | "gemini" | "anoman"].structured, semanticClient, createSemanticResultReplay(context.database), context.idempotencyKey, signal, { owner: context.leaseOwner, generation: context.leaseGeneration }, undefined, stepwise);
-}, providerOutboundTransport });
+}, providerOutboundTransport, providerPayloadAdapter });
 await worker.start();
 await writeFile(readinessPath, "ready\n");
 

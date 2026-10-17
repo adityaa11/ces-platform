@@ -6,6 +6,7 @@ import { QualifiedRouteRuntime, TestRuntime } from "./runtime.js";
 import { assertConfiguredRouteAdapter, createRouteRegistry } from "./route-registry.js";
 import postgres from "postgres";
 import { createRuntimeCapacityConstraintReader } from "./runtime-capacity-constraint.js";
+import { createProviderWorkAdmissionService } from "./provider-work-admission.js";
 
 const config = loadBridgeConfig();
 const availableAdapters = new Set<string>();
@@ -27,7 +28,13 @@ const runtimeCapacityConstraintReader = config.runtimeCapacityConstraint && runt
     { authenticate: (credential) => config.runtimeCapacityConstraint?.bindings.find((binding) => binding.credential === credential) ?? null },
   )
   : undefined;
-const app = createBridgeApp({ runtime, version: config.version, ready: () => registry.ready, runtimeCapacityConstraintReader });
+const providerWorkAdmissionService = config.runtimeCapacityConstraint && runtimeConstraintDatabase
+  ? createProviderWorkAdmissionService(
+    { executeSql: async (statement, values) => ({ rows: await runtimeConstraintDatabase.unsafe(statement, values as never[]) }) },
+    { authenticate: (credential) => config.runtimeCapacityConstraint?.bindings.find((binding) => binding.credential === credential) ?? null },
+  )
+  : undefined;
+const app = createBridgeApp({ runtime, version: config.version, ready: () => registry.ready, runtimeCapacityConstraintReader, providerWorkAdmissionService });
 const stop = async () => { await app.close(); await runtimeConstraintDatabase?.end(); process.exit(0); };
 process.once("SIGINT", stop);
 process.once("SIGTERM", stop);
