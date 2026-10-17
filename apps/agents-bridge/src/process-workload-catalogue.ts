@@ -1,6 +1,11 @@
 import { atlasCapabilities, type AtlasCapability } from "./route-registry.js";
 
-export type ProcessKind = "semantic" | "reconciliation" | "chat" | "ces" | "addendum";
+/**
+ * Process kinds are server-registered identifiers.  The legacy parser below
+ * remains intentionally conservative, while the registry is the only path
+ * that can introduce an additional identifier.
+ */
+export type ProcessKind = string;
 export type ServiceClass = "interactive" | "background";
 export type WorkloadProfileReference = Readonly<{ workloadId: string; profileVersion: string }>;
 export type RequestResourceEnvelope = Readonly<{
@@ -38,9 +43,37 @@ export type WorkloadEnvelopeProfile = Readonly<{
   safetyPolicy: Readonly<{ policyId: string; policyVersion: string }>;
 }>;
 
+export type RegisteredProcessPolicy = Readonly<{
+  registryId: string;
+  registryVersion: string;
+  quotaDomainId: string;
+  process: ProviderProcessProfile;
+}>;
+
+export type ServerProcessRegistry = Readonly<{
+  registryId: string;
+  registryVersion: string;
+  policies: readonly RegisteredProcessPolicy[];
+}>;
+
+export type RegisteredProcessReference = Readonly<{
+  registryId: string;
+  registryVersion: string;
+  quotaDomainId: string;
+  processId: string;
+  profileVersion: string;
+}>;
+
+export type RegisteredProcessAuthorities = Readonly<{
+  qualifiedQuotaDomainIds: ReadonlySet<string>;
+  qualifiedRouteIds: ReadonlySet<string>;
+  workloads: readonly WorkloadEnvelopeProfile[];
+  quotaAccountingPolicyIds: ReadonlySet<string>;
+}>;
+
 export class ProcessWorkloadCatalogueError extends Error {}
 
-const processKinds = new Set<ProcessKind>(["semantic", "reconciliation", "chat", "ces", "addendum"]);
+const legacyProcessKinds = new Set<ProcessKind>(["semantic", "reconciliation", "chat", "ces", "addendum"]);
 const serviceClasses = new Set<ServiceClass>(["interactive", "background"]);
 const scopeKinds = new Set(["bundle", "project", "conversation", "global"]);
 const nonEmpty = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0;
@@ -65,13 +98,13 @@ const nonNegativeSafeInteger = (value: unknown, name: string): number => {
 };
 
 /** Parses operational policy only; entitlement, billing, and customer-plan fields are intentionally not accepted. */
-export function parseProviderProcessProfile(value: unknown): ProviderProcessProfile {
+export function parseProviderProcessProfile(value: unknown, registeredProcessKinds: ReadonlySet<ProcessKind> = legacyProcessKinds): ProviderProcessProfile {
   const input = object(value, "process profile");
   rejectUnexpected(input, ["processId", "profileVersion", "processKind", "capability", "serviceClass", "fairnessScope", "allocationPolicy", "active", "eligibleRouteIds", "workloadProfile"], "process profile");
   const processKind = input.processKind;
   const capability = input.capability;
   const serviceClass = input.serviceClass;
-  if (!processKinds.has(processKind as ProcessKind) || !atlasCapabilities.includes(capability as AtlasCapability) || !serviceClasses.has(serviceClass as ServiceClass)) throw new ProcessWorkloadCatalogueError("process profile has an unknown process kind, capability, or service class.");
+  if (!registeredProcessKinds.has(processKind as ProcessKind) || !atlasCapabilities.includes(capability as AtlasCapability) || !serviceClasses.has(serviceClass as ServiceClass)) throw new ProcessWorkloadCatalogueError("process profile has an unknown process kind, capability, or service class.");
   if (typeof input.active !== "boolean") throw new ProcessWorkloadCatalogueError("process profile active must be boolean.");
   const scope = object(input.fairnessScope, "fairnessScope");
   rejectUnexpected(scope, ["kind", "identityVersion"], "fairnessScope");
@@ -96,10 +129,10 @@ export function parseProviderProcessProfile(value: unknown): ProviderProcessProf
 }
 
 /** Requires an actual structural bound and versioned estimator/accounting/safety identities; averages are not a bound. */
-export function parseWorkloadEnvelopeProfile(value: unknown): WorkloadEnvelopeProfile {
+export function parseWorkloadEnvelopeProfile(value: unknown, registeredProcessKinds: ReadonlySet<ProcessKind> = legacyProcessKinds): WorkloadEnvelopeProfile {
   const input = object(value, "workload envelope profile");
   rejectUnexpected(input, ["workloadId", "profileVersion", "active", "compatibleProcessKinds", "structuralBound", "estimator", "quotaAccountingPolicyId", "outputReservation", "safetyPolicy"], "workload envelope profile");
-  if (typeof input.active !== "boolean" || !Array.isArray(input.compatibleProcessKinds) || input.compatibleProcessKinds.length === 0 || input.compatibleProcessKinds.some((kind) => !processKinds.has(kind as ProcessKind)) || new Set(input.compatibleProcessKinds).size !== input.compatibleProcessKinds.length) throw new ProcessWorkloadCatalogueError("workload profile requires known compatible process kinds.");
+  if (typeof input.active !== "boolean" || !Array.isArray(input.compatibleProcessKinds) || input.compatibleProcessKinds.length === 0 || input.compatibleProcessKinds.some((kind) => !registeredProcessKinds.has(kind as ProcessKind)) || new Set(input.compatibleProcessKinds).size !== input.compatibleProcessKinds.length) throw new ProcessWorkloadCatalogueError("workload profile requires known compatible process kinds.");
   const bound = object(input.structuralBound, "structuralBound"); rejectUnexpected(bound, ["identity", "version", "maxRequestBytes", "maxInputTokens"], "structuralBound");
   const estimator = object(input.estimator, "estimator"); rejectUnexpected(estimator, ["identity", "version"], "estimator");
   const output = object(input.outputReservation, "outputReservation"); rejectUnexpected(output, ["policyId", "policyVersion", "maxOutputTokens"], "outputReservation");
@@ -128,4 +161,59 @@ export function validateProcessWorkloadCatalogue(processes: readonly ProviderPro
     if (process.active && (!workload.active || process.eligibleRouteIds.some((routeId) => !qualifiedRouteIds.has(routeId)))) throw new ProcessWorkloadCatalogueError(`active process ${key} has an inactive workload or unknown route.`);
   }
   for (const workload of workloads) if (!quotaAccountingPolicyIds.has(workload.quotaAccountingPolicyId)) throw new ProcessWorkloadCatalogueError(`workload ${workload.workloadId}:${workload.profileVersion} has no explicit quota-accounting authority.`);
+}
+
+/**
+ * Parses the server-owned registration document.  It is policy data, not a
+ * consumer request: every process kind in the document becomes known only in
+ * this particular versioned registry and all other fields stay within the
+ * already-approved process/workload vocabulary.
+ */
+export function parseServerProcessRegistry(value: unknown): ServerProcessRegistry {
+  const input = object(value, "server process registry");
+  rejectUnexpected(input, ["registryId", "registryVersion", "policies"], "server process registry");
+  const registryId = requiredString(input.registryId, "registryId");
+  const registryVersion = requiredString(input.registryVersion, "registryVersion");
+  if (!Array.isArray(input.policies) || input.policies.length === 0) throw new ProcessWorkloadCatalogueError("server process registry requires policies.");
+  const kinds = new Set<ProcessKind>();
+  for (const rawPolicy of input.policies) {
+    const policy = object(rawPolicy, "registered process policy");
+    const process = object(policy.process, "registered process policy process");
+    const kind = requiredString(process.processKind, "registered process policy processKind");
+    kinds.add(kind);
+  }
+  const policyKeys = new Set<string>();
+  const policies = input.policies.map((rawPolicy) => {
+    const policy = object(rawPolicy, "registered process policy");
+    rejectUnexpected(policy, ["quotaDomainId", "process"], "registered process policy");
+    const process = parseProviderProcessProfile(policy.process, kinds);
+    const policyKey = `${requiredString(policy.quotaDomainId, "quotaDomainId")}:${process.processId}:${process.profileVersion}`;
+    if (policyKeys.has(policyKey)) throw new ProcessWorkloadCatalogueError(`duplicate registered process policy ${policyKey}.`);
+    policyKeys.add(policyKey);
+    return { registryId, registryVersion, quotaDomainId: requiredString(policy.quotaDomainId, "quotaDomainId"), process };
+  });
+  return { registryId, registryVersion, policies };
+}
+
+/** Parses a consumer-supplied identity without permitting it to select a route or service class. */
+export function parseRegisteredProcessReference(value: unknown): RegisteredProcessReference {
+  const input = object(value, "registered process reference");
+  rejectUnexpected(input, ["registryId", "registryVersion", "quotaDomainId", "processId", "profileVersion"], "registered process reference");
+  return {
+    registryId: requiredString(input.registryId, "registryId"),
+    registryVersion: requiredString(input.registryVersion, "registryVersion"),
+    quotaDomainId: requiredString(input.quotaDomainId, "quotaDomainId"),
+    processId: requiredString(input.processId, "processId"),
+    profileVersion: requiredString(input.profileVersion, "profileVersion"),
+  };
+}
+
+/** Resolves a registered process only against the server-supplied registry and already-qualified authority sets. */
+export function resolveRegisteredProcessPolicy(registry: ServerProcessRegistry, reference: RegisteredProcessReference, authorities: RegisteredProcessAuthorities): ProviderProcessProfile {
+  if (reference.registryId !== registry.registryId || reference.registryVersion !== registry.registryVersion) throw new ProcessWorkloadCatalogueError("foreign or stale process registry identity.");
+  const policy = registry.policies.find((candidate) => candidate.quotaDomainId === reference.quotaDomainId && candidate.process.processId === reference.processId && candidate.process.profileVersion === reference.profileVersion);
+  if (!policy) throw new ProcessWorkloadCatalogueError("registered process policy is unknown for the quota domain.");
+  if (!authorities.qualifiedQuotaDomainIds.has(policy.quotaDomainId)) throw new ProcessWorkloadCatalogueError("registered process policy has an unqualified quota domain.");
+  validateProcessWorkloadCatalogue([policy.process], authorities.workloads, authorities.qualifiedRouteIds, authorities.quotaAccountingPolicyIds);
+  return policy.process;
 }
