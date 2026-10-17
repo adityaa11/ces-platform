@@ -4,7 +4,7 @@
 - **Batch:** BSS-V2-BATCH-05-05-02
 - **State:** `awaiting_review`
 - **HMN authorization:** `HMN-BSSV2-005-05-02-001` (`RETURN_TO_GO`)
-- **Review target commit:** pending GO commit
+- **Review target commit:** `e35c2b1c06227e65cb8b2cdbaaa7e9460b1820da` (`test(admission): prove authenticated planning snapshots`)
 - **Dependencies consumed:** BSS-V2-005-04 CK `PASS` (immutable active DesiredAdmissionProfile read seam) and BSS-V2-005-05-01 CK `PASS` (server-qualified process/workload/route capability boundary).
 
 ## Bounded implementation
