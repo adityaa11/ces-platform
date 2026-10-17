@@ -5,7 +5,7 @@
 - **State:** `awaiting_review`
 - **Date:** 2026-10-17
 - **Dependencies:** BSS-V2-005-01..04 are independently CK-approved. This checkpoint consumes only their accepted catalogue, process/workload, generic planner, and immutable-publication boundaries.
-- **Review target commit:** `23e9a6470decd4eb8cdf77ac3dfc5ab04b10f69c` (`feat(admission): register generic process policies`).
+- **Review target commit:** `89f60e292f7db2d398ff7fcbc48681691ed76a2d` (`feat(admission): register generic process policies`).
 
 ## Bounded implementation
 
