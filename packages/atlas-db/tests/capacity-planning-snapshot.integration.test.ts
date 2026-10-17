@@ -25,20 +25,22 @@ const chat: Binding = {
 class CapacityPlanningSnapshotV1Fixture {
   constructor(private readonly bridge: ReturnType<typeof postgres>, private readonly domain: string) {}
 
-  async read(credential: string, assertions: Partial<Pick<Binding, "processId" | "routeId" | "serviceClass">> & { activationRevision?: string; intent?: string } = {}): Promise<Result> {
+  async read(credential: string, assertions: Partial<Pick<Binding, "processId" | "routeId" | "serviceClass">> & { quotaDomain?: string; activationRevision?: string; intent?: string } = {}): Promise<Result> {
     const binding = [semantic, chat].find((candidate) => candidate.credential === credential);
     if (!binding) return { status: "inactive", reason: "unauthorized_principal" };
-    if (assertions.intent && assertions.intent !== "planning_read") return { status: "inactive", reason: "planning_snapshot_is_not_dispatch" };
-    if (assertions.processId && assertions.processId !== binding.processId || assertions.routeId && assertions.routeId !== binding.routeId || assertions.serviceClass && assertions.serviceClass !== binding.serviceClass) {
+    if (assertions.processId && assertions.processId !== binding.processId || assertions.routeId && assertions.routeId !== binding.routeId || assertions.serviceClass && assertions.serviceClass !== binding.serviceClass || assertions.quotaDomain && assertions.quotaDomain !== this.domain) {
       return { status: "inactive", reason: "server_binding_assertion_mismatch" };
     }
     const active = await this.bridge.unsafe("SELECT * FROM bridge.resolve_active_desired_admission_profile($1)", [this.domain]);
     if (!active[0]) return { status: "stale", reason: "active_plan_missing" };
     if (assertions.activationRevision && assertions.activationRevision !== String(active[0].activation_revision)) return { status: "stale", reason: "activation_revision_stale" };
     const capacity = await this.bridge.unsafe("SELECT * FROM bridge.provider_capacity_profile WHERE quota_domain_id=$1 AND profile_version=$2", [this.domain, active[0].provider_capacity_profile_version]);
-    const process = await this.bridge.unsafe("SELECT * FROM bridge.provider_process_profile WHERE process_id=$1 AND profile_version='v1'", [binding.processId]);
-    const workload = process[0] && await this.bridge.unsafe("SELECT * FROM bridge.workload_envelope_profile WHERE workload_id=$1 AND profile_version=$2", [process[0].workload_id, process[0].workload_profile_version]);
+    const input = await this.bridge.unsafe("SELECT * FROM bridge.desired_admission_profile_input WHERE quota_domain_id=$1 AND desired_profile_version=$2 AND process_id=$3", [this.domain, active[0].desired_profile_version, binding.processId]);
+    const process = input[0] && await this.bridge.unsafe("SELECT * FROM bridge.provider_process_profile WHERE process_id=$1 AND profile_version=$2", [binding.processId, input[0].process_profile_version]);
+    const workload = process?.[0] && await this.bridge.unsafe("SELECT * FROM bridge.workload_envelope_profile WHERE workload_id=$1 AND profile_version=$2", [process[0].workload_id, process[0].workload_profile_version]);
     if (!capacity[0] || !process[0] || !workload?.[0] || !process[0].active || !workload[0].active) return { status: "inactive", reason: "unqualified_or_inactive_policy" };
+    if (workload[0].estimator.version !== "v2") return { status: "stale", reason: "estimator_version_outdated" };
+    if (assertions.intent && assertions.intent !== "planning_read") return { status: "inactive", reason: "planning_snapshot_is_not_dispatch" };
     const routes = capacity[0].associated_routes as readonly { routeId: string; providerId: string }[];
     if (!routes.some((route) => route.routeId === binding.routeId) || !(process[0].eligible_route_ids as readonly string[]).includes(binding.routeId) || process[0].capability !== binding.capability) return { status: "inactive", reason: "route_or_capability_unqualified" };
     const limits = capacity[0].limits as Record<string, { state: string; value?: number }>;
@@ -50,9 +52,10 @@ class CapacityPlanningSnapshotV1Fixture {
         apiVersion: "CapacityPlanningSnapshot/v1", principal: binding.principal,
         registry: { id: "server-processes", version: "v1" },
         process: { id: process[0].process_id, profileVersion: process[0].profile_version, capability: process[0].capability, serviceClass: process[0].service_class, eligibleRouteIds: process[0].eligible_route_ids },
-        workload: { id: workload[0].workload_id, profileVersion: workload[0].profile_version, structuralBound: workload[0].structural_bound, estimator: workload[0].estimator, outputReservation: workload[0].output_reservation, safetyPolicy: workload[0].safety_policy, quotaAccountingPolicyId: workload[0].quota_accounting_policy_id },
+        workload: { id: workload[0].workload_id, profileVersion: workload[0].profile_version, structuralBound: workload[0].structural_bound, estimator: workload[0].estimator, mediaEstimator: workload[0].estimator.media, outputReservation: workload[0].output_reservation, safetyPolicy: workload[0].safety_policy, quotaAccountingPolicyId: workload[0].quota_accounting_policy_id },
         quotaDomain: this.domain, route: binding.routeId, capacity: { profileVersion: capacity[0].profile_version, limits, windowPolicies: capacity[0].window_policies, quotaAccountingPolicyId: capacity[0].quota_accounting_policy_id },
-        plan: { profileVersion: active[0].desired_profile_version, activationRevision: String(active[0].activation_revision), plannerVersion: active[0].planner_version, effectiveFrom: active[0].effective_from, policy: active[0].profile },
+        protection: process[0].allocation_policy.hardInteractiveProtection,
+        plan: { profileVersion: active[0].desired_profile_version, activationRevision: String(active[0].activation_revision), plannerVersion: active[0].planner_version, effectiveFrom: active[0].effective_from, policyVersion: active[0].profile.policyVersion, activationVersion: active[0].profile.activationVersion, policy: active[0].profile },
       },
     };
   }
@@ -92,13 +95,20 @@ test("RC-00505-10/11 authenticate two server-bound planning readers without admi
     );
     for (const binding of [semantic, chat]) {
       const id = processId(binding); const workloadId = `${id}-workload`;
-      await bridge.unsafe("INSERT INTO bridge.workload_envelope_profile(workload_id,profile_version,active,compatible_process_kinds,structural_bound,estimator,quota_accounting_policy_id,output_reservation,safety_policy) VALUES($1,'v1',true,$2::jsonb,$3::jsonb,$4::jsonb,'quota-v1',$5::jsonb,$6::jsonb)", [workloadId, [binding.processId.startsWith("semantic") ? "semantic" : "chat"], { identity: `${binding.processId}-bound`, version: "v1", maxRequestBytes: 10_000, maxInputTokens: binding === semantic ? 4_000 : 500 }, { identity: `${binding.processId}-estimator`, version: "v2" }, { policyId: `${binding.processId}-output`, policyVersion: "v1", maxOutputTokens: 100 }, { policyId: `${binding.processId}-safety`, policyVersion: "v1" }]);
+      await bridge.unsafe("INSERT INTO bridge.workload_envelope_profile(workload_id,profile_version,active,compatible_process_kinds,structural_bound,estimator,quota_accounting_policy_id,output_reservation,safety_policy) VALUES($1,'v1',true,$2::jsonb,$3::jsonb,$4::jsonb,'quota-v1',$5::jsonb,$6::jsonb)", [workloadId, [binding.processId.startsWith("semantic") ? "semantic" : "chat"], { identity: `${binding.processId}-bound`, version: "v1", maxRequestBytes: 10_000, maxInputTokens: binding === semantic ? 4_000 : 500 }, { identity: `${binding.processId}-estimator`, version: "v2", media: { identity: `${binding.processId}-media-estimator`, version: "v1" } }, { policyId: `${binding.processId}-output`, policyVersion: "v1", maxOutputTokens: 100 }, { policyId: `${binding.processId}-safety`, policyVersion: "v1" }]);
       await bridge.unsafe("INSERT INTO bridge.provider_process_profile(process_id,profile_version,process_kind,capability,service_class,fairness_scope,allocation_policy,active,eligible_route_ids,workload_id,workload_profile_version) VALUES($1,'v1',$2,$3,$4,'{}',$5::jsonb,true,$6::jsonb,$7,'v1')", [id, binding.processId.startsWith("semantic") ? "semantic" : "chat", binding.capability, binding.serviceClass, binding.serviceClass === "background" ? { background: { weight: 1, mayBorrowIdleCapacity: true, capPolicyId: "semantic-cap" }, hardInteractiveProtection: { policyId: "reserve", policyVersion: "v1" } } : { hardInteractiveProtection: { policyId: "reserve", policyVersion: "v1" } }, [binding.routeId], workloadId]);
     }
-    for (const version of ["plan-v1", "plan-zero", "plan-unknown"]) {
+    const semanticWorkloadId = `${semantic.processId}-workload`;
+    const semanticAllocationPolicy = { background: { weight: 1, mayBorrowIdleCapacity: true, capPolicyId: "semantic-cap" }, hardInteractiveProtection: { policyId: "reserve", policyVersion: "v1" } };
+    await bridge.unsafe("INSERT INTO bridge.workload_envelope_profile(workload_id,profile_version,active,compatible_process_kinds,structural_bound,estimator,quota_accounting_policy_id,output_reservation,safety_policy) VALUES($1,'stale-estimator-v1',true,'[\"semantic\"]'::jsonb,$2::jsonb,$3::jsonb,'quota-v1',$4::jsonb,$5::jsonb)", [semanticWorkloadId, { identity: `${semantic.processId}-bound`, version: "v1", maxRequestBytes: 10_000, maxInputTokens: 4_000 }, { identity: `${semantic.processId}-estimator`, version: "v1", media: { identity: `${semantic.processId}-media-estimator`, version: "v1" } }, { policyId: `${semantic.processId}-output`, policyVersion: "v1", maxOutputTokens: 100 }, { policyId: `${semantic.processId}-safety`, policyVersion: "v1" }]);
+    await bridge.unsafe("INSERT INTO bridge.provider_process_profile(process_id,profile_version,process_kind,capability,service_class,fairness_scope,allocation_policy,active,eligible_route_ids,workload_id,workload_profile_version) VALUES($1,'inactive-v1','semantic',$2,'background','{}',$3::jsonb,false,'[\"shared-route\"]'::jsonb,$4,'v1'),($1,'outdated-estimator-v1','semantic',$2,'background','{}',$3::jsonb,true,'[\"shared-route\"]'::jsonb,$4,'stale-estimator-v1')", [semantic.processId, semantic.capability, semanticAllocationPolicy, semanticWorkloadId]);
+    for (const version of ["plan-v1", "plan-zero", "plan-unknown", "plan-inactive", "plan-outdated-estimator"]) {
       const capacityVersion = version === "plan-zero" ? "zero-v1" : version === "plan-unknown" ? "unknown-v1" : "v1";
       await bridge.unsafe("INSERT INTO bridge.desired_admission_profile(quota_domain_id,profile_version,provider_capacity_profile_version,planner_version,effective_from,profile) VALUES($1,$2,$3,'planner-v1',now(),$4::jsonb)", [domain, version, capacityVersion, plan(version)]);
-      for (const binding of [semantic, chat]) await bridge.unsafe("INSERT INTO bridge.desired_admission_profile_input(quota_domain_id,desired_profile_version,process_id,process_profile_version,workload_id,workload_profile_version) VALUES($1,$2,$3,'v1',$4,'v1')", [domain, version, processId(binding), `${processId(binding)}-workload`]);
+      for (const binding of [semantic, chat]) {
+        const semanticVersion = version === "plan-inactive" ? "inactive-v1" : version === "plan-outdated-estimator" ? "outdated-estimator-v1" : "v1";
+        await bridge.unsafe("INSERT INTO bridge.desired_admission_profile_input(quota_domain_id,desired_profile_version,process_id,process_profile_version,workload_id,workload_profile_version) VALUES($1,$2,$3,$4,$5,$6)", [domain, version, processId(binding), binding === semantic ? semanticVersion : "v1", `${processId(binding)}-workload`, binding === semantic && version === "plan-outdated-estimator" ? "stale-estimator-v1" : "v1"]);
+      }
     }
     await bridge.unsafe("SELECT bridge.activate_desired_admission_profile($1,'plan-v1')", [domain]);
     const fixture = new CapacityPlanningSnapshotV1Fixture(bridge, domain);
@@ -111,8 +121,20 @@ test("RC-00505-10/11 authenticate two server-bound planning readers without admi
     assert.equal(semanticRead.snapshot!.apiVersion, chatRead.snapshot!.apiVersion);
     assert.equal((semanticRead.snapshot!.plan as { activationRevision: string }).activationRevision, (chatRead.snapshot!.plan as { activationRevision: string }).activationRevision);
     assert.equal((semanticRead.snapshot!.process as { serviceClass: string }).serviceClass, "background"); assert.equal((chatRead.snapshot!.process as { serviceClass: string }).serviceClass, "interactive");
-    assert.match(JSON.stringify(semanticRead.snapshot), /semantic:v1-estimator/); assert.match(JSON.stringify(chatRead.snapshot), /chat:v1-estimator/);
+    for (const [binding, read] of [[semantic, semanticRead], [chat, chatRead]] as const) {
+      const snapshot = read.snapshot!;
+      assert.deepEqual(snapshot.registry, { id: "server-processes", version: "v1" });
+      assert.deepEqual(snapshot.process, { id: binding.processId, profileVersion: "v1", capability: binding.capability, serviceClass: binding.serviceClass, eligibleRouteIds: [binding.routeId] });
+      assert.deepEqual(snapshot.workload, { id: `${binding.processId}-workload`, profileVersion: "v1", structuralBound: { identity: `${binding.processId}-bound`, version: "v1", maxRequestBytes: 10_000, maxInputTokens: binding === semantic ? 4_000 : 500 }, estimator: { identity: `${binding.processId}-estimator`, version: "v2", media: { identity: `${binding.processId}-media-estimator`, version: "v1" } }, mediaEstimator: { identity: `${binding.processId}-media-estimator`, version: "v1" }, outputReservation: { policyId: `${binding.processId}-output`, policyVersion: "v1", maxOutputTokens: 100 }, safetyPolicy: { policyId: `${binding.processId}-safety`, policyVersion: "v1" }, quotaAccountingPolicyId: "quota-v1" });
+      assert.deepEqual(snapshot.protection, { policyId: "reserve", policyVersion: "v1" });
+      assert.deepEqual(snapshot.capacity, { profileVersion: "v1", limits: capacity(), windowPolicies: windows, quotaAccountingPolicyId: "quota-v1" });
+      assert.deepEqual(snapshot.plan, { profileVersion: "plan-v1", activationRevision: "1", plannerVersion: "planner-v1", effectiveFrom: (snapshot.plan as { effectiveFrom: string }).effectiveFrom, policyVersion: "planning-policy-v1", activationVersion: "plan-v1", policy: plan("plan-v1") });
+    }
+    assert.equal(semanticRead.snapshot!.quotaDomain, domain); assert.equal(chatRead.snapshot!.quotaDomain, domain);
+    assert.equal(semanticRead.snapshot!.route, semantic.routeId); assert.equal(chatRead.snapshot!.route, chat.routeId);
     assert.equal((await fixture.read(semantic.credential, { routeId: "chat-route" })).reason, "server_binding_assertion_mismatch");
+    assert.equal((await fixture.read(semantic.credential, { processId: chat.processId })).reason, "server_binding_assertion_mismatch");
+    assert.equal((await fixture.read(semantic.credential, { quotaDomain: "foreign-quota-domain" })).reason, "server_binding_assertion_mismatch");
     assert.equal((await fixture.read(semantic.credential, { serviceClass: "interactive" })).reason, "server_binding_assertion_mismatch");
     assert.equal((await fixture.read("forged-credential")).reason, "unauthorized_principal");
     assert.equal((await fixture.read(semantic.credential, { activationRevision: "0" })).status, "stale");
@@ -123,6 +145,10 @@ test("RC-00505-10/11 authenticate two server-bound planning readers without admi
     assert.equal((await fixture.readProspective(semantic.credential, { bytes: 10_001, inputTokens: 100 })).status, "unfit");
     const [afterProviderJobs] = await admin.unsafe("SELECT count(*)::integer AS count FROM pgboss.job WHERE name='bridge-provider-admitted-execution-v1'");
     assert.equal(afterProviderJobs.count, beforeProviderJobs.count, "planning reads must not enqueue provider jobs");
+    await bridge.unsafe("SELECT bridge.activate_desired_admission_profile($1,'plan-inactive')", [domain]);
+    assert.deepEqual(await fixture.read(semantic.credential, { intent: "dispatch" }), { status: "inactive", reason: "unqualified_or_inactive_policy" });
+    await bridge.unsafe("SELECT bridge.activate_desired_admission_profile($1,'plan-outdated-estimator')", [domain]);
+    assert.deepEqual(await fixture.read(semantic.credential), { status: "stale", reason: "estimator_version_outdated" });
     await bridge.unsafe("SELECT bridge.activate_desired_admission_profile($1,'plan-zero')", [domain]); assert.deepEqual(await fixture.read(semantic.credential), { status: "unfit", reason: "required_quota_dimension_zero" });
     await bridge.unsafe("SELECT bridge.activate_desired_admission_profile($1,'plan-unknown')", [domain]); assert.deepEqual(await fixture.read(semantic.credential), { status: "unknown", reason: "required_quota_dimension_unknown" });
     await bridge.unsafe("DELETE FROM bridge.active_desired_admission_profile WHERE quota_domain_id=$1", [domain]); assert.deepEqual(await fixture.read(semantic.credential), { status: "stale", reason: "active_plan_missing" });
