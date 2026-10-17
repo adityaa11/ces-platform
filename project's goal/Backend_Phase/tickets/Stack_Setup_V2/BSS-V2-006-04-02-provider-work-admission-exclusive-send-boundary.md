@@ -1,7 +1,6 @@
 # BSS-V2-006-04-02 — Provider work admission and exclusive send boundary
 
-- **State:** `awaiting_review`
-- **Review batch:** `BSS-V2-BATCH-06-04-02`
+- **State:** `approved` following CK `PASS` for remediation commit `6d00987e`; **Review batch:** `BSS-V2-BATCH-06-04-02`.
 - **Parent:** [BSS-V2-006-04 split map](BSS-V2-006-04-integrated-provider-admission-runtime-checkpoint.md)
 - **Dependencies:** `BSS-V2-006-04-01` CK `PASS` and parent family dependencies.
 
