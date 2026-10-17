@@ -1,7 +1,6 @@
 # BSS-V2-006-04-01 — Runtime capacity-constraint read boundary
 
-- **State:** `awaiting_review`
-- **Review batch:** `BSS-V2-BATCH-06-04-01`
+- **State:** `approved` following CK `PASS` for remediation commit `3ae601f`; **Review batch:** `BSS-V2-BATCH-06-04-01`.
 - **Parent:** [BSS-V2-006-04 split map](BSS-V2-006-04-integrated-provider-admission-runtime-checkpoint.md)
 - **Dependencies:** family dependencies in the parent; no 006-04 child predecessor.
 
