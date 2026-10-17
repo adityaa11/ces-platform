@@ -1,7 +1,6 @@
 # BSS-V2-005-05-03 — Authorized desired-plan convergence
 
-- **State:** `awaiting_review`; GO implementation recorded at `445c6366a8ca5483cdb8950d2e82b184881e4733`, pending independent CK.
-- **Review batch:** `BSS-V2-BATCH-05-05-03`.
+- **State:** `approved` following CK `PASS` for remediation commit `e4d07b5`; **Review batch:** `BSS-V2-BATCH-05-05-03`.
 - **GO checkpoint:** [BSS-V2-BATCH-05-05-03-go-checkpoint](../../../feedback/BSS-V2-BATCH-05-05-03-go-checkpoint.md).
 - **Parent and frozen family authority:** [BSS-V2-005-05 split map](BSS-V2-005-05-process-agnostic-registry-and-plan-convergence.md).
 - **Dependencies:** BSS-V2-005-05-01 and BSS-V2-005-05-02 CK `PASS`; BSS-V2-005-01..04 CK `PASS`; separately authorized provenance-bound BSS-V2-005-01 capacity-profile versions. It does not claim durable BSS-V2-006 wakeup consumption.
