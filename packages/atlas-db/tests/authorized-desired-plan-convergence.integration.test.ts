@@ -16,6 +16,9 @@ test("RC-00505-03a/07a/08 converge qualified effective inputs without runtime po
   const domain = `${suffix}-domain`;
   const bridgeUrl = new URL(databaseUrl!); bridgeUrl.username = "agents_bridge"; bridgeUrl.password = process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only";
   const bridge = postgres(bridgeUrl.toString(), { max: 1 });
+  const writerA = postgres(bridgeUrl.toString(), { max: 1 });
+  const writerB = postgres(bridgeUrl.toString(), { max: 1 });
+  const gate = postgres(bridgeUrl.toString(), { max: 1 });
   const admin = postgres(databaseUrl!, { max: 1 });
   const profile = (capacityVersion: string, semanticVersion: string, semanticTokens: number) => planDesiredAdmissionProfile(
     { quotaDomainId: domain, profileVersion: capacityVersion, limits: limits(capacityVersion === "capacity-v2" ? 5_000 : 10_000) },
@@ -33,12 +36,11 @@ test("RC-00505-03a/07a/08 converge qualified effective inputs without runtime po
     { processId: `${suffix}-semantic`, processProfileVersion: semanticVersion, workloadId: `${suffix}-semantic-workload`, workloadProfileVersion: semanticVersion },
     { processId: `${suffix}-chat`, processProfileVersion: "v1", workloadId: `${suffix}-chat-workload`, workloadProfileVersion: "v1" },
   ];
-  const publish = (expected: number | null, capacityVersion: string, semanticVersion: string, semanticTokens: number) => bridge.unsafe(
+  const publish = (sql: postgres.Sql, expected: number | null, capacityVersion: string, semanticVersion: string, semanticTokens: number) => sql.unsafe(
     "SELECT * FROM bridge.publish_converged_desired_admission_profile($1,$2,$3,'planner-v1','2026-10-17T00:00:00.000Z',$4::jsonb,$5::jsonb)",
     [domain, expected, capacityVersion, profile(capacityVersion, semanticVersion, semanticTokens), inputs(semanticVersion)],
   );
   try {
-    await bridge.unsafe("BEGIN");
     for (const [version, tpm] of [["capacity-v1", 10_000], ["capacity-v2", 5_000], ["capacity-v3", 7_000], ["capacity-v4", 8_000]] as const) {
       await bridge.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,$2,'fixture',$3::jsonb,$4::jsonb,$5::jsonb,'quota-v1','qualified_observation','fixture://qualified-capacity',$2,now(),now())", [domain, version, [{ routeId: "semantic-route", providerId: "anoman" }, { routeId: "chat-route", providerId: "anoman" }], limits(tpm), windows]);
     }
@@ -53,29 +55,47 @@ test("RC-00505-03a/07a/08 converge qualified effective inputs without runtime po
     await insertProcess(`${suffix}-unselected`, "v1", "semantic", "background", "semantic-route", `${suffix}-semantic-workload`, "v1");
     assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.active_desired_admission_profile WHERE quota_domain_id=$1", [domain]))[0].count, 0);
 
-    const [first] = await publish(null, "capacity-v1", "v1", 4_000);
+    const [first] = await publish(bridge, null, "capacity-v1", "v1", 4_000);
     assert.equal(first.status, "published"); assert.equal(first.activation_revision, "1");
     const [same] = await bridge.unsafe("SELECT * FROM bridge.publish_converged_desired_admission_profile($1,$2,$3,'planner-v1','2026-10-17T00:00:00.000Z',$4::jsonb,$5::jsonb)", [domain, null, "capacity-v1", profile("capacity-v1", "v1", 4_000), inputs("v1").reverse()]);
     assert.deepEqual({ status: same.status, revision: same.activation_revision }, { status: "unchanged", revision: "1" });
     assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.desired_admission_profile_activation WHERE quota_domain_id=$1", [domain]))[0].count, 1);
 
-    const [lower] = await publish(1, "capacity-v2", "v2", 100);
+    const [lower] = await publish(bridge, 1, "capacity-v2", "v2", 100);
     assert.equal(lower.status, "published"); assert.equal(lower.activation_revision, "2");
     assert.deepEqual((await bridge.unsafe("SELECT status,reason FROM bridge.resolve_versioned_planning_envelope($1,$2,1,$3,'v1',100,100)", [domain, first.desired_profile_version, `${suffix}-semantic`]))[0], { status: "stale", reason: "planning_identity_superseded" });
     assert.deepEqual((await bridge.unsafe("SELECT status,reason FROM bridge.resolve_versioned_planning_envelope($1,$2,2,$3,'v2',100,101)", [domain, lower.desired_profile_version, `${suffix}-semantic`]))[0], { status: "unfit", reason: "request_exceeds_versioned_structural_bound" });
     assert.deepEqual((await bridge.unsafe("SELECT status,reason FROM bridge.resolve_versioned_planning_envelope($1,$2,2,$3,'v1',100,100)", [domain, lower.desired_profile_version, `${suffix}-chat`]))[0], { status: "qualified", reason: "within_versioned_structural_bound" });
-    await bridge.unsafe("SAVEPOINT operational_intent_is_not_capacity");
-    await assert.rejects(() => publish(2, "capacity_revision_request", "v2", 100), /qualified capacity profile.*missing/i);
-    await bridge.unsafe("ROLLBACK TO SAVEPOINT operational_intent_is_not_capacity");
+    await bridge.begin(async (transaction) => {
+      await assert.rejects(() => publish(transaction, 2, "capacity_revision_request", "v2", 100), /qualified capacity profile.*missing/i);
+      throw new Error("rollback negative-case fixture");
+    }).catch((error) => {
+      if (!(error instanceof Error) || error.message !== "rollback negative-case fixture") throw error;
+    });
 
     const [beforeAttempts] = await admin.unsafe("SELECT count(*)::int AS count FROM bridge.provider_work_attempt WHERE quota_domain_id=$1", [domain]);
-    const concurrent = await Promise.all([publish(2, "capacity-v3", "v2", 100), publish(2, "capacity-v4", "v2", 100)]);
-    assert.deepEqual(concurrent.map(([row]) => row.status).sort(), ["published", "stale"]);
+    const [[writerAPid], [writerBPid]] = await Promise.all([writerA.unsafe("SELECT pg_backend_pid() AS pid"), writerB.unsafe("SELECT pg_backend_pid() AS pid")]);
+    await gate.unsafe("SELECT pg_advisory_lock(hashtextextended($1, 0))", [domain]);
+    const concurrent = Promise.all([publish(writerA, 2, "capacity-v3", "v2", 100), publish(writerB, 2, "capacity-v4", "v2", 100)]);
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      const [{ waiting }] = await admin.unsafe("SELECT count(*)::int AS waiting FROM pg_stat_activity WHERE pid = ANY($1::int[]) AND wait_event_type = 'Lock'", [[writerAPid.pid, writerBPid.pid]]);
+      if (waiting === 2) break;
+      if (attempt === 19) assert.fail("both independent writers must block at the per-domain advisory fence");
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+    await gate.unsafe("SELECT pg_advisory_unlock(hashtextextended($1, 0))", [domain]);
+    const results = await concurrent;
+    assert.notEqual(writerAPid.pid, writerBPid.pid, "the competing writers must use independent database connections");
+    const concurrentResults = results;
+    assert.deepEqual(concurrentResults.map(([row]) => row.status).sort(), ["published", "stale"]);
     assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.desired_admission_profile_activation WHERE quota_domain_id=$1", [domain]))[0].count, 3);
+    const [active] = await bridge.unsafe("SELECT desired_profile_version,activation_revision FROM bridge.active_desired_admission_profile WHERE quota_domain_id=$1", [domain]);
+    const [winner] = concurrentResults.flat().filter((row) => row.status === "published");
+    assert.deepEqual({ version: active.desired_profile_version, revision: active.activation_revision }, { version: winner.desired_profile_version, revision: winner.activation_revision });
     const [afterAttempts] = await admin.unsafe("SELECT count(*)::int AS count FROM bridge.provider_work_attempt WHERE quota_domain_id=$1", [domain]);
     assert.equal(afterAttempts.count, beforeAttempts.count, "planning convergence must not create runtime attempts");
   } finally {
-    await bridge.unsafe("ROLLBACK").catch(() => undefined);
-    await Promise.all([bridge.end(), admin.end()]);
+    await gate.unsafe("SELECT pg_advisory_unlock_all()").catch(() => undefined);
+    await Promise.all([bridge.end(), writerA.end(), writerB.end(), gate.end(), admin.end()]);
   }
 });
