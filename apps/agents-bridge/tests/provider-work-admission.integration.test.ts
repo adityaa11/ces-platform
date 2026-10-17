@@ -28,27 +28,38 @@ test("RC-BSSV2-00604-01/12a/14a drive authenticated background admission through
   let sends = 0;
   let payloadHydrations = 0;
   let directAdapterSends = 0;
-  let throwAfterSend = false;
+  const transportFailures = new Map<string, "ack_loss" | "timeout">();
   const transportOutcomes: Array<{ operationalOutcome?: "success" | "provider_failure" | "rate_limited"; retryAfterSeconds?: number }> = [];
-  const outboundPayloads: unknown[] = [];
-  const worker = createProductionBridgeWorker({
+  const outboundPayloads: Array<{ logicalWorkId: string; attemptNumber: number; payloadReference: unknown }> = [];
+  const sendsByAttempt = new Map<string, number>();
+  const createWorker = () => createProductionBridgeWorker({
     config: { databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 1, perceptionConcurrency: 1, timeoutSeconds: 5, retryLimit: 0, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 },
     runtime: new TestRuntime(), documentPerception: async () => undefined, semantic: async () => undefined,
     providerPayloadAdapter: { hydrate: async (input) => {
       const [claim] = await sql.unsafe("SELECT count(*)::int AS count FROM bridge.provider_transport_claim WHERE logical_work_id=$1 AND attempt_number=$2", [input.logicalWorkId, input.attemptNumber]);
       assert.equal(claim.count, 1, "payload hydration is fenced behind the durable claim");
       payloadHydrations += 1;
-      return { opaqueReference: input.payloadReference, hash: input.payloadHash };
+      return { logicalWorkId: input.logicalWorkId, attemptNumber: input.attemptNumber, opaqueReference: input.payloadReference, hash: input.payloadHash };
     } },
     providerOutboundTransport: async (input) => {
-      assert.deepEqual(input.payloadReference, { opaqueReference: `${suffix}-payload`, hash: "a".repeat(64) });
-      outboundPayloads.push(input.payloadReference);
+      const payloadReference = input.payloadReference as { logicalWorkId: string; attemptNumber: number; opaqueReference: string; hash: string };
+      assert.equal(typeof payloadReference.logicalWorkId, "string");
+      assert.deepEqual(payloadReference, { logicalWorkId: payloadReference.logicalWorkId, attemptNumber: payloadReference.attemptNumber, opaqueReference: `${suffix}-payload`, hash: "a".repeat(64) });
+      const logicalWorkId = payloadReference.logicalWorkId;
+      const attemptKey = `${logicalWorkId}:${payloadReference.attemptNumber}`;
+      outboundPayloads.push({ logicalWorkId, attemptNumber: payloadReference.attemptNumber, payloadReference: input.payloadReference });
+      sendsByAttempt.set(attemptKey, (sendsByAttempt.get(attemptKey) ?? 0) + 1);
       sends += 1;
-      if (throwAfterSend) { throwAfterSend = false; throw new Error("fixture ack lost after possible transport start"); }
+      const failure = transportFailures.get(logicalWorkId);
+      if (failure) {
+        transportFailures.delete(logicalWorkId);
+        throw new Error(`fixture deterministic ${failure === "timeout" ? "transport timeout" : "ack loss"} after possible transport start`);
+      }
       const feedback = transportOutcomes.shift() ?? { operationalOutcome: "success" as const };
       return { feedbackId: `${suffix}-feedback-${sends}`, transportDisposition: "terminal_confirmed", usage: { rpm: 1, tpm: 5, rpd: 1 }, ...feedback };
     },
   });
+  let worker = createWorker();
   const app = createBridgeApp({ runtime: new TestRuntime(), version: "provider-work-admission-fixture", runtimeCapacityConstraintReader: reader, providerWorkAdmissionService: admission });
   try {
     await sql.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'cap-v1','fixture',$2::jsonb,'{}'::jsonb,$3::jsonb,'quota-v1','operator_config','fixture','v1',now(),now())", [domain, [{ routeId: route }, { routeId: secondaryRoute }], { rpm: { kind: "fixed", windowSeconds: 60 }, tpm: { kind: "fixed", windowSeconds: 60 }, rpd: { kind: "fixed", windowSeconds: 60 }, concurrency: { kind: "fixed", windowSeconds: 60 } }]);
@@ -74,6 +85,57 @@ test("RC-BSSV2-00604-01/12a/14a drive authenticated background admission through
     const request = { logicalWorkId: `${suffix}-work`, attemptNumber: 1, idempotencyKey: `${suffix}-idempotency`, payloadReference: `${suffix}-payload`, payloadHash: "a".repeat(64), requestResourceEnvelope: { rpm: 1, tpm: 5, rpd: 1, concurrency: 1 }, expectedEffectiveConstraintRevision: constraint.effectiveConstraintRevision };
     const post = async (body: unknown) => (await fetch(`${base}/v1/provider-work-admissions`, { method: "POST", headers: { authorization: `Bearer ${principal.credential}`, "content-type": "application/json" }, body: JSON.stringify(body) })).json() as Promise<ProviderWorkAdmissionOutcome>;
     const outcome = async (logicalWorkId: string, attemptNumber: number) => (await fetch(`${base}/v1/provider-work-admissions/${encodeURIComponent(logicalWorkId)}/${attemptNumber}`, { headers: { authorization: `Bearer ${principal.credential}` } })).json() as Promise<ProviderWorkAdmissionOutcome>;
+    const assertDurableCase = async (input: Readonly<{
+      label: string;
+      logicalWorkId: string;
+      attemptNumber: number;
+      reservationId: string;
+      jobId: string;
+      publicState: ProviderWorkAdmissionOutcome["state"];
+      sends: number;
+      claims: number;
+      feedback?: Readonly<{ disposition: "terminal_confirmed" | "may_have_started"; operationalOutcome?: "success" | "provider_failure" | "rate_limited" }>;
+      ledger?: Readonly<Record<string, Readonly<{ state: string; heldUnits: string; spentUnits: string }>>>;
+    }>) => {
+      const publicOutcome = await outcome(input.logicalWorkId, input.attemptNumber);
+      assert.equal(publicOutcome.state, input.publicState, `${input.label}: public admission outcome is durable`);
+      assert.equal(publicOutcome.reservationId, input.reservationId, `${input.label}: public outcome retains its reservation identity`);
+      assert.equal(publicOutcome.jobId, input.jobId, `${input.label}: public outcome retains its pg-boss dispatch identity`);
+      const [chain] = await sql.unsafe(`SELECT
+        work.logical_work_id, work.attempt_number, reservation.reservation_id,
+        dispatch.job_id, reservation.state AS reservation_state,
+        (SELECT count(*)::int FROM bridge.provider_transport_claim WHERE reservation_id=reservation.reservation_id) AS claims,
+        (SELECT count(*)::int FROM bridge.provider_operational_feedback_event WHERE reservation_id=reservation.reservation_id) AS feedback_events
+        FROM bridge.provider_work_attempt work
+        JOIN bridge.provider_work_reservation reservation USING(logical_work_id,attempt_number)
+        JOIN bridge.provider_work_dispatch dispatch USING(logical_work_id,attempt_number,reservation_id)
+        WHERE work.logical_work_id=$1 AND work.attempt_number=$2`, [input.logicalWorkId, input.attemptNumber]);
+      assert.deepEqual({
+        logical_work_id: chain.logical_work_id,
+        attempt_number: chain.attempt_number,
+        reservation_id: chain.reservation_id,
+        job_id: chain.job_id,
+        claims: chain.claims,
+        feedback_events: chain.feedback_events,
+      }, {
+        logical_work_id: input.logicalWorkId,
+        attempt_number: input.attemptNumber,
+        reservation_id: input.reservationId,
+        job_id: input.jobId,
+        claims: input.claims,
+        feedback_events: input.feedback ? 1 : 0,
+      }, `${input.label}: logical work, reservation, pg-boss job, claim, and feedback rows remain correlated`);
+      assert.equal(sendsByAttempt.get(`${input.logicalWorkId}:${input.attemptNumber}`) ?? 0, input.sends, `${input.label}: fake outbound sends remain once-only`);
+      const feedbackRows = await sql.unsafe(`SELECT transport_disposition, normalized_feedback->>'operationalOutcome' AS operational_outcome
+        FROM bridge.provider_operational_feedback_event WHERE reservation_id=$1`, [input.reservationId]);
+      assert.deepEqual(Array.from(feedbackRows), input.feedback ? [{ transport_disposition: input.feedback.disposition, operational_outcome: input.feedback.operationalOutcome ?? null }] : [], `${input.label}: normalized feedback row is bounded and exact`);
+      const ledgerRows = await sql.unsafe(`SELECT dimension_id, state, held_units::text AS held_units, spent_units::text AS spent_units
+        FROM bridge.provider_window_usage_ledger WHERE reservation_id=$1 ORDER BY dimension_id`, [input.reservationId]);
+      if (input.ledger) {
+        assert.deepEqual(Object.fromEntries(ledgerRows.map((row) => [row.dimension_id, { state: row.state, heldUnits: row.held_units, spentUnits: row.spent_units }])), input.ledger, `${input.label}: durable per-dimension usage ledger is exact`);
+      }
+      return { chain, ledgerRows };
+    };
     // This independent semantic-like background fixture knows only the public
     // versioned HTTP boundary. Its direct-adapter counter is a prohibited-path
     // observation: registration must not call it.
@@ -108,7 +170,7 @@ test("RC-BSSV2-00604-01/12a/14a drive authenticated background admission through
     assert.equal(sends, 1, "the only fake outbound call follows one durable reservation, job, and claim");
     assert.equal((await outcome(request.logicalWorkId, 1)).state, "terminal_success", "the public outcome projects the redacted operational success, not provider content");
     assert.equal(payloadHydrations, 1);
-    assert.deepEqual(outboundPayloads, [{ opaqueReference: `${suffix}-payload`, hash: "a".repeat(64) }], "the claimed lane makes the one permitted generic outbound send");
+    assert.deepEqual(outboundPayloads.map(({ payloadReference }) => payloadReference), [{ logicalWorkId: request.logicalWorkId, attemptNumber: 1, opaqueReference: `${suffix}-payload`, hash: "a".repeat(64) }], "the claimed lane makes the one permitted generic outbound send");
     assert.equal(directAdapterSends, 0, "the semantic-like consumer made zero direct adapter sends");
     const [positive] = await sql.unsafe(`SELECT work.logical_work_id,work.attempt_number,
       reservation.reservation_id,dispatch.job_id,claim.reservation_id AS claim_reservation_id,
@@ -134,6 +196,23 @@ test("RC-BSSV2-00604-01/12a/14a drive authenticated background admission through
       (SELECT count(*)::int FROM bridge.provider_work_dispatch WHERE logical_work_id=$1) AS dispatches,
       (SELECT count(*)::int FROM bridge.provider_transport_claim WHERE logical_work_id=$1) AS claims`, [request.logicalWorkId]);
     assert.deepEqual(positiveCounts, { attempts: 1, reservations: 1, dispatches: 1, claims: 1 }, "replay and hash conflict add no durable identity to the admitted work");
+    await assertDurableCase({
+      label: "exact-success",
+      logicalWorkId: request.logicalWorkId,
+      attemptNumber: 1,
+      reservationId: accepted.reservationId!,
+      jobId: accepted.jobId!,
+      publicState: "terminal_success",
+      sends: 1,
+      claims: 1,
+      feedback: { disposition: "terminal_confirmed", operationalOutcome: "success" },
+      ledger: {
+        concurrency: { state: "settled", heldUnits: "0", spentUnits: "0" },
+        rpd: { state: "settled", heldUnits: "0", spentUnits: "1" },
+        rpm: { state: "settled", heldUnits: "0", spentUnits: "1" },
+        tpm: { state: "settled", heldUnits: "0", spentUnits: "5" },
+      },
+    });
     const malformedQualification = semanticLikeBackgroundConsumer.qualifyProviderOutput("{");
     assert.deepEqual(malformedQualification, { state: "consumer_qualification_failure", reason: "malformed_output" }, "a malformed semantic-like output is returned only by the consumer qualification seam");
     assert.equal((await outcome(request.logicalWorkId, 1)).state, "terminal_success", "consumer qualification never relabels a successful BSS operational outcome");
@@ -143,7 +222,8 @@ test("RC-BSSV2-00604-01/12a/14a drive authenticated background admission through
 
     await worker.stop();
     const cancelled = { ...request, logicalWorkId: `${suffix}-cancelled`, idempotencyKey: `${suffix}-cancelled-key`, attemptNumber: 2 };
-    assert.equal((await post(cancelled)).state, "dispatched_or_may_have_started");
+    const cancelledAdmission = await post(cancelled);
+    assert.equal(cancelledAdmission.state, "dispatched_or_may_have_started");
     assert.equal((await fetch(`${base}/v1/provider-work-admissions/${encodeURIComponent(cancelled.logicalWorkId)}/2/cancel`, { method: "POST", headers: { authorization: `Bearer ${principal.credential}` } })).status, 200);
     assert.equal((await sql.unsafe("SELECT state FROM bridge.provider_work_attempt WHERE logical_work_id=$1 AND attempt_number=2", [cancelled.logicalWorkId]))[0].state, "terminal", "pre-send cancellation reaches the durable attempt before a worker can claim it");
     assert.equal(sends, 1, "the cancelled work has zero transport sends");
@@ -154,6 +234,22 @@ test("RC-BSSV2-00604-01/12a/14a drive authenticated background admission through
       (SELECT count(*)::int FROM bridge.provider_work_dispatch WHERE logical_work_id=$1) AS dispatches,
       (SELECT count(*)::int FROM bridge.provider_transport_claim WHERE logical_work_id=$1) AS claims`, [cancelled.logicalWorkId]);
     assert.deepEqual(cancelledCounts, { attempts: 1, reservations: 1, dispatches: 1, claims: 0 }, "pre-send cancellation creates no claim or send identity");
+    await assertDurableCase({
+      label: "pre-send-cancellation",
+      logicalWorkId: cancelled.logicalWorkId,
+      attemptNumber: 2,
+      reservationId: cancelledAdmission.reservationId!,
+      jobId: cancelledAdmission.jobId!,
+      publicState: "terminal_cancelled",
+      sends: 0,
+      claims: 0,
+      ledger: {
+        concurrency: { state: "released", heldUnits: "0", spentUnits: "0" },
+        rpd: { state: "released", heldUnits: "0", spentUnits: "0" },
+        rpm: { state: "released", heldUnits: "0", spentUnits: "0" },
+        tpm: { state: "released", heldUnits: "0", spentUnits: "0" },
+      },
+    });
     const stale = await post({ ...request, logicalWorkId: `${suffix}-stale`, idempotencyKey: `${suffix}-stale-key`, attemptNumber: 3, expectedEffectiveConstraintRevision: "stale" });
     assert.equal(stale.state, "policy_or_resource_unfit");
     const [staleCounts] = await sql.unsafe(`SELECT
@@ -181,6 +277,7 @@ test("RC-BSSV2-00604-01/12a/14a drive authenticated background admission through
       (SELECT count(*)::int FROM bridge.provider_operational_pressure_incident WHERE quota_domain_id=$2) AS pressure_incidents
       FROM bridge.provider_operational_feedback_event
       WHERE reservation_id=$1`, [providerFailureOutcome.reservationId, domain]))[0], { operational_outcome: "provider_failure", pressure_incidents: 0 }, "provider failure retains a redacted durable feedback outcome only");
+    await assertDurableCase({ label: "provider-failure", logicalWorkId: providerFailure.logicalWorkId, attemptNumber: 1, reservationId: providerFailureOutcome.reservationId!, jobId: providerFailureOutcome.jobId!, publicState: "terminal_provider_failure", sends: 1, claims: 1, feedback: { disposition: "terminal_confirmed", operationalOutcome: "provider_failure" } });
     // A 429 without Retry-After is also a provider operational result, but
     // must use the approved metadata-free cooldown rather than inventing a
     // recursive retry or interpreting provider output.
@@ -207,6 +304,7 @@ test("RC-BSSV2-00604-01/12a/14a drive authenticated background admission through
     assert.equal((await post({ ...metadataFree, attemptNumber: 2, idempotencyKey: `${suffix}-metadata-free-429-retry`, expectedEffectiveConstraintRevision: metadataFreeBlockedConstraint.effectiveConstraintRevision })).state, "pressure_limited", "BSS does not recursively retry a metadata-free 429");
     assert.equal((await sql.unsafe("SELECT count(*)::int AS count FROM bridge.provider_work_attempt WHERE logical_work_id=$1", [metadataFree.logicalWorkId]))[0].count, 1, "pressure rejection reserves no implicit retry attempt");
     assert.equal((await sql.unsafe("SELECT bridge.recover_provider_pressure_incident($1,$2,$3,'route',NULL,NULL,'qualified',clock_timestamp()) AS recovered", [domain, route, `${suffix}-metadata-free-recovery`]))[0].recovered, true);
+    assert.deepEqual((await sql.unsafe("SELECT recovered_at IS NOT NULL AS recovered, recovery_feedback_id FROM bridge.provider_operational_pressure_incident WHERE quota_domain_id=$1 AND route_id=$2", [domain, route]))[0], { recovered: true, recovery_feedback_id: `${suffix}-metadata-free-recovery` }, "metadata-free 429 records its matched durable pressure recovery");
     const metadataFreeRetryConstraint = await (await fetch(`${base}/v1/runtime-capacity-constraint`, { headers: { authorization: `Bearer ${principal.credential}` } })).json() as { effectiveConstraintRevision: string };
     const metadataFreeRetry = await post({ ...metadataFree, attemptNumber: 2, idempotencyKey: `${suffix}-metadata-free-429-retry`, expectedEffectiveConstraintRevision: metadataFreeRetryConstraint.effectiveConstraintRevision });
     assert.equal(metadataFreeRetry.state, "dispatched_or_may_have_started");
@@ -214,6 +312,8 @@ test("RC-BSSV2-00604-01/12a/14a drive authenticated background admission through
     while (Date.now() < metadataFreeRetryDeadline && sends !== 4) await sleep(25);
     assert.equal((await outcome(metadataFree.logicalWorkId, 2)).state, "terminal_success");
     assert.notEqual(metadataFreeRetry.reservationId, metadataFreeAdmission.reservationId, "metadata-free recovery retry receives a distinct explicit reservation");
+    await assertDurableCase({ label: "metadata-free-429", logicalWorkId: metadataFree.logicalWorkId, attemptNumber: 1, reservationId: metadataFreeAdmission.reservationId!, jobId: metadataFreeAdmission.jobId!, publicState: "pressure_limited", sends: 1, claims: 1, feedback: { disposition: "terminal_confirmed", operationalOutcome: "rate_limited" } });
+    await assertDurableCase({ label: "metadata-free-explicit-retry", logicalWorkId: metadataFree.logicalWorkId, attemptNumber: 2, reservationId: metadataFreeRetry.reservationId!, jobId: metadataFreeRetry.jobId!, publicState: "terminal_success", sends: 1, claims: 1, feedback: { disposition: "terminal_confirmed", operationalOutcome: "success" } });
 
     // A separate qualified route lets the same isolated Bridge fixture prove
     // the independent Retry-After path without reopening the recovered
@@ -238,11 +338,13 @@ test("RC-BSSV2-00604-01/12a/14a drive authenticated background admission through
     assert.equal(pressure.active, true);
     assert.ok(pressure.seconds <= 12 && pressure.seconds >= 9, "usable Retry-After bounds the durable cooldown");
     await worker.stop();
+    worker = createWorker();
     await worker.start();
     assert.equal((await outcome(rateLimited.logicalWorkId, 1)).state, "pressure_limited", "restart preserves the operational outcome");
     const blockedConstraint = await (await fetch(`${base}/v1/runtime-capacity-constraint`, { headers: { authorization: `Bearer ${principal.credential}` } })).json() as { effectiveConstraintRevision: string };
     assert.equal((await post({ ...rateLimited, attemptNumber: 2, idempotencyKey: `${suffix}-rate-retry`, expectedEffectiveConstraintRevision: blockedConstraint.effectiveConstraintRevision })).state, "pressure_limited", "BSS never recursively retries a rate outcome");
     assert.equal((await sql.unsafe("SELECT bridge.recover_provider_pressure_incident($1,$2,$3,'route',NULL,NULL,'qualified',clock_timestamp()) AS recovered", [domain, secondaryRoute, `${suffix}-recovery`]))[0].recovered, true);
+    assert.deepEqual((await sql.unsafe("SELECT recovered_at IS NOT NULL AS recovered, recovery_feedback_id FROM bridge.provider_operational_pressure_incident WHERE quota_domain_id=$1 AND route_id=$2", [domain, secondaryRoute]))[0], { recovered: true, recovery_feedback_id: `${suffix}-recovery` }, "Retry-After 429 records its matched durable pressure recovery");
     const retryConstraint = await (await fetch(`${base}/v1/runtime-capacity-constraint`, { headers: { authorization: `Bearer ${principal.credential}` } })).json() as { effectiveConstraintRevision: string };
     const retry = await post({ ...rateLimited, attemptNumber: 2, idempotencyKey: `${suffix}-rate-retry`, expectedEffectiveConstraintRevision: retryConstraint.effectiveConstraintRevision });
     assert.equal(retry.state, "dispatched_or_may_have_started");
@@ -250,18 +352,44 @@ test("RC-BSSV2-00604-01/12a/14a drive authenticated background admission through
     while (Date.now() < retryDeadline && sends !== 6) await sleep(25);
     assert.equal((await outcome(rateLimited.logicalWorkId, 2)).state, "terminal_success");
     assert.notEqual(retry.reservationId, rateAdmission.reservationId, "retry has a distinct explicit reservation");
+    await assertDurableCase({ label: "retry-after-429", logicalWorkId: rateLimited.logicalWorkId, attemptNumber: 1, reservationId: rateAdmission.reservationId!, jobId: rateAdmission.jobId!, publicState: "pressure_limited", sends: 1, claims: 1, feedback: { disposition: "terminal_confirmed", operationalOutcome: "rate_limited" } });
+    await assertDurableCase({ label: "retry-after-explicit-retry", logicalWorkId: rateLimited.logicalWorkId, attemptNumber: 2, reservationId: retry.reservationId!, jobId: retry.jobId!, publicState: "terminal_success", sends: 1, claims: 1, feedback: { disposition: "terminal_confirmed", operationalOutcome: "success" } });
 
-    // A post-send ack loss is conservative: it consumes/holds the unknown
-    // usage and remains a replayable may-have-started outcome. A new attempt
-    // would still have to traverse the explicit admission boundary.
-    throwAfterSend = true;
+    // A named timeout after the durable claim means the transport acknowledgement
+    // is lost. It is conservative: it consumes or retains unknown capacity and
+    // remains a replayable may-have-started outcome. A fresh production worker
+    // must not issue another send.
     const unknownConstraint = await (await fetch(`${base}/v1/runtime-capacity-constraint`, { headers: { authorization: `Bearer ${principal.credential}` } })).json() as { effectiveConstraintRevision: string };
-    const unknown = await post({ ...request, logicalWorkId: `${suffix}-ack-loss`, idempotencyKey: `${suffix}-ack-loss`, expectedEffectiveConstraintRevision: unknownConstraint.effectiveConstraintRevision });
+    const timeout = { ...request, logicalWorkId: `${suffix}-timeout-ack-loss`, idempotencyKey: `${suffix}-timeout-ack-loss`, expectedEffectiveConstraintRevision: unknownConstraint.effectiveConstraintRevision };
+    transportFailures.set(timeout.logicalWorkId, "timeout");
+    const unknown = await post(timeout);
     assert.equal(unknown.state, "dispatched_or_may_have_started");
     const unknownDeadline = Date.now() + 10_000;
     while (Date.now() < unknownDeadline && sends !== 7) await sleep(25);
-    assert.equal((await outcome(`${suffix}-ack-loss`, 1)).state, "dispatched_or_may_have_started");
-    assert.deepEqual((await sql.unsafe("SELECT state,held_units,spent_units FROM bridge.provider_window_usage_ledger WHERE reservation_id=$1 AND dimension_id='tpm'", [unknown.reservationId]))[0], { state: "held_unknown", held_units: "5", spent_units: "0" }, "ack loss is conservative unknown usage, never an optimistic refund");
+    const timeoutFeedbackDeadline = Date.now() + 10_000;
+    while (Date.now() < timeoutFeedbackDeadline && (await sql.unsafe("SELECT count(*)::int AS count FROM bridge.provider_operational_feedback_event WHERE reservation_id=$1", [unknown.reservationId]))[0].count !== 1) await sleep(25);
+    await worker.stop();
+    worker = createWorker();
+    await worker.start();
+    const timeoutReplay = await post(timeout);
+    assert.deepEqual(timeoutReplay, unknown, "timeout replay retains the original durable API identity after fresh-worker restart");
+    await assertDurableCase({
+      label: "timeout-ack-loss-unknown-after-restart",
+      logicalWorkId: timeout.logicalWorkId,
+      attemptNumber: 1,
+      reservationId: unknown.reservationId!,
+      jobId: unknown.jobId!,
+      publicState: "dispatched_or_may_have_started",
+      sends: 1,
+      claims: 1,
+      feedback: { disposition: "may_have_started" },
+      ledger: {
+        concurrency: { state: "held_unknown", heldUnits: "1", spentUnits: "0" },
+        rpd: { state: "held_unknown", heldUnits: "0", spentUnits: "1" },
+        rpm: { state: "held_unknown", heldUnits: "0", spentUnits: "1" },
+        tpm: { state: "held_unknown", heldUnits: "5", spentUnits: "0" },
+      },
+    });
 
   } finally { await worker.stop().catch(() => undefined); await app.close(); await sql.end(); }
 });
