@@ -16,7 +16,7 @@ export type ProviderWorkAdmissionRequest = Readonly<{
 
 export type ProviderWorkAdmissionOutcome = Readonly<{
   apiVersion: "ProviderWorkAdmission/v1";
-  state: "waiting" | "reserved" | "dispatched_or_may_have_started" | "terminal_cancelled" | "terminal_provider_failure" | "pressure_limited" | "policy_or_resource_unfit";
+  state: "waiting" | "reserved" | "dispatched_or_may_have_started" | "terminal_success" | "terminal_cancelled" | "terminal_provider_failure" | "pressure_limited" | "policy_or_resource_unfit";
   logicalWorkId?: string;
   attemptNumber?: number;
   reservationId?: string;
@@ -69,6 +69,7 @@ export function createProviderWorkAdmissionService(
 ): Readonly<{
   admit(credential: string, request: ProviderWorkAdmissionRequest): Promise<ProviderWorkAdmissionOutcome>;
   cancel(credential: string, logicalWorkId: string, attemptNumber: number): Promise<ProviderWorkAdmissionOutcome>;
+  outcome(credential: string, logicalWorkId: string, attemptNumber: number): Promise<ProviderWorkAdmissionOutcome>;
 }> {
   return {
     async admit(credential, request) {
@@ -84,7 +85,7 @@ export function createProviderWorkAdmissionService(
         const outcome = (result.rows[0] as { outcome?: unknown } | undefined)?.outcome;
         if (!outcome || typeof outcome !== "object" || Array.isArray(outcome)) return unavailable();
         const value = outcome as Record<string, unknown>;
-        if (value.apiVersion !== "ProviderWorkAdmission/v1" || !["waiting", "reserved", "dispatched_or_may_have_started", "terminal_cancelled", "terminal_provider_failure", "pressure_limited", "policy_or_resource_unfit"].includes(String(value.state))) return unavailable();
+        if (value.apiVersion !== "ProviderWorkAdmission/v1" || !["waiting", "reserved", "dispatched_or_may_have_started", "terminal_success", "terminal_cancelled", "terminal_provider_failure", "pressure_limited", "policy_or_resource_unfit"].includes(String(value.state))) return unavailable();
         return value as ProviderWorkAdmissionOutcome;
       } catch { return unavailable(); }
     },
@@ -93,6 +94,15 @@ export function createProviderWorkAdmissionService(
       if (!principal || principal.serviceClass !== "background" || !nonEmpty(logicalWorkId) || !Number.isInteger(attemptNumber) || attemptNumber < 1) return unavailable();
       try {
         const result = await database.executeSql("SELECT bridge.cancel_provider_work_admission_v1($1,$2,$3) AS outcome", [principal.principalId, logicalWorkId, attemptNumber]);
+        const outcome = (result.rows[0] as { outcome?: unknown } | undefined)?.outcome;
+        return outcome && typeof outcome === "object" && !Array.isArray(outcome) ? outcome as ProviderWorkAdmissionOutcome : unavailable();
+      } catch { return unavailable(); }
+    },
+    async outcome(credential, logicalWorkId, attemptNumber) {
+      const principal = authenticator.authenticate(credential);
+      if (!principal || principal.serviceClass !== "background" || !nonEmpty(logicalWorkId) || !Number.isInteger(attemptNumber) || attemptNumber < 1) return unavailable();
+      try {
+        const result = await database.executeSql("SELECT bridge.read_provider_work_admission_v1_outcome($1,$2,$3) AS outcome", [principal.principalId, logicalWorkId, attemptNumber]);
         const outcome = (result.rows[0] as { outcome?: unknown } | undefined)?.outcome;
         return outcome && typeof outcome === "object" && !Array.isArray(outcome) ? outcome as ProviderWorkAdmissionOutcome : unavailable();
       } catch { return unavailable(); }

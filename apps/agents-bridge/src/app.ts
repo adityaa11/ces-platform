@@ -10,6 +10,7 @@ type RuntimeCapacityConstraintReader = Readonly<{
 type ProviderWorkAdmissionService = Readonly<{
   admit(credential: string, request: ReturnType<typeof parseProviderWorkAdmissionRequest>): Promise<ProviderWorkAdmissionOutcome>;
   cancel(credential: string, logicalWorkId: string, attemptNumber: number): Promise<ProviderWorkAdmissionOutcome>;
+  outcome(credential: string, logicalWorkId: string, attemptNumber: number): Promise<ProviderWorkAdmissionOutcome>;
 }>;
 
 const unavailableRuntimeConstraint = (): RuntimeCapacityConstraint => ({
@@ -62,6 +63,13 @@ export function createBridgeApp(options: {
     const attemptNumber = Number(params.attemptNumber);
     if (!credential || !nonEmptyRouteParam(params.logicalWorkId) || !Number.isInteger(attemptNumber) || attemptNumber < 1) return { apiVersion: "ProviderWorkAdmission/v1", state: "policy_or_resource_unfit" };
     return (options.providerWorkAdmissionService ?? { cancel: async () => ({ apiVersion: "ProviderWorkAdmission/v1" as const, state: "policy_or_resource_unfit" as const }) }).cancel(credential, params.logicalWorkId, attemptNumber);
+  });
+  app.get("/v1/provider-work-admissions/:logicalWorkId/:attemptNumber", async (request) => {
+    const credential = bearerCredential(request.headers.authorization);
+    const params = request.params as { logicalWorkId?: unknown; attemptNumber?: unknown };
+    const attemptNumber = Number(params.attemptNumber);
+    if (!credential || !nonEmptyRouteParam(params.logicalWorkId) || !Number.isInteger(attemptNumber) || attemptNumber < 1) return { apiVersion: "ProviderWorkAdmission/v1", state: "policy_or_resource_unfit" };
+    return (options.providerWorkAdmissionService ?? { outcome: async () => ({ apiVersion: "ProviderWorkAdmission/v1" as const, state: "policy_or_resource_unfit" as const }) }).outcome(credential, params.logicalWorkId, attemptNumber);
   });
   app.post("/v1/interactive/execute", async (request, reply) => {
     let execution;

@@ -1,6 +1,6 @@
 # BSS-V2-006-04-03 — Operational outcome and feedback recovery projection
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `BSS-V2-BATCH-06-04-03`
 - **Parent:** [BSS-V2-006-04 split map](BSS-V2-006-04-integrated-provider-admission-runtime-checkpoint.md)
 - **Dependencies:** `BSS-V2-006-04-02` CK `PASS` and parent family dependencies.

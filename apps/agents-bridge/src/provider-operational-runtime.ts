@@ -29,6 +29,10 @@ type ClaimedTransport = Readonly<{
 export type ProviderOperationalOutcome = Readonly<{
   feedbackId?: string;
   transportDisposition: "terminal_confirmed" | "may_have_started" | "definitely_not_sent";
+  /** Bounded provider operation result; never semantic or consumer qualification. */
+  operationalOutcome?: "success" | "provider_failure" | "rate_limited";
+  /** Only meaningful for a provider rate-limit result. */
+  retryAfterSeconds?: number;
   usage?: Readonly<{ rpm?: number; tpm?: number; rpd?: number }>;
 }>;
 
@@ -116,6 +120,8 @@ const ingress = async (database: Db, claimed: ClaimedTransport, outcome: Provide
     observationTrust: "qualified",
     observedAt: new Date().toISOString(),
     transportDisposition: outcome.transportDisposition,
+    ...(outcome.operationalOutcome ? { operationalOutcome: outcome.operationalOutcome } : {}),
+    ...(outcome.retryAfterSeconds !== undefined ? { retryAfterSeconds: outcome.retryAfterSeconds } : {}),
     ...(outcome.usage ? { usage: outcome.usage } : {}),
   })]);
 };
