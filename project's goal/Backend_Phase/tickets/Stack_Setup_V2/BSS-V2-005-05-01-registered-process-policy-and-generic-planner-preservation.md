@@ -1,7 +1,6 @@
 # BSS-V2-005-05-01 — Registered process policy and generic planner preservation
 
-- **State:** `awaiting_review`; GO implementation is complete and awaits independent CK review. This is not a CK `PASS`.
-- **Review batch:** `BSS-V2-BATCH-05-05-01`.
+- **State:** `approved` following CK `PASS` for remediation commit `1520341`; **Review batch:** `BSS-V2-BATCH-05-05-01`.
 - **GO checkpoint:** [BSS-V2-BATCH-05-05-01-go.md](../../../feedback/BSS-V2-BATCH-05-05-01-go.md).
 - **Parent and frozen family authority:** [BSS-V2-005-05 split map](BSS-V2-005-05-process-agnostic-registry-and-plan-convergence.md).
 - **Dependencies:** BSS-V2-005-01..04 CK `PASS`; exact server-authorized process/workload definitions. It does not depend on BSS-V2-006-03A or BSS-V2-006-04.
