@@ -1,7 +1,6 @@
 # BSS-V2-005-05-04 — Durable wakeup convergence integration
 
-- **State:** `awaiting_review` following GO implementation commit `e76e43f`; CK decision pending.
-- **Review batch:** `BSS-V2-BATCH-05-05-04`.
+- **State:** `approved` following CK `PASS` for reviewed commit `e76e43f`; **Review batch:** `BSS-V2-BATCH-05-05-04`.
 - **GO checkpoint:** [BSS-V2-BATCH-05-05-04-go](../../../feedback/BSS-V2-BATCH-05-05-04-go.md).
 - **Parent and frozen family authority:** [BSS-V2-005-05 split map](BSS-V2-005-05-process-agnostic-registry-and-plan-convergence.md).
 - **Dependencies:** BSS-V2-005-05-01, `-02`, and `-03` CK `PASS`; BSS-V2-006-03A-01..06 CK `PASS`; BSS-V2-005-01..04 CK `PASS`. BSS-V2-006-04 remains a downstream consumer and is not a dependency.
