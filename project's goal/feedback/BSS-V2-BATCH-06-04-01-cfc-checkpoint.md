@@ -5,7 +5,7 @@
 - **Remediation base:** `ad76fbaf4e9e5cf4e451b607d8fc0daa72bb6cc1`
 - **Frozen CK artifact:** `project's goal/feedback/BSS-V2-BATCH-06-04-01-ad76fba-review.md`
 - **Authorized clause:** `CK-001.a` only
-- **Bounded remediation commit:** `PENDING` — replaced with the final remediation commit before handoff.
+- **Bounded remediation commit:** `3ae601f5a3dd1f2a01ac915b66d9edee95b109d1` — `fix(admission): expose runtime constraint read`.
 - **Checkpoint state:** `awaiting_review`
 
 ## CFC working progress view
