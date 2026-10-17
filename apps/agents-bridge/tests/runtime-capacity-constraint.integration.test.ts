@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import postgres from "postgres";
 import { createRuntimeCapacityConstraintReader, type RuntimeCapacityConstraintPrincipal } from "../src/runtime-capacity-constraint.js";
+import { createBridgeApp } from "../src/app.js";
+import { TestRuntime } from "../src/runtime.js";
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -29,6 +31,7 @@ test("RC-BSSV2-00604-11 exposes an authenticated, conservative runtime read with
     { executeSql: async (statement, values) => ({ rows: await bridge.unsafe(statement, values as never[]) }) },
     { authenticate: (credential) => principals.get(credential) ?? null },
   );
+  const app = createBridgeApp({ runtime: new TestRuntime(), version: "runtime-constraint-fixture", runtimeCapacityConstraintReader: reader });
   const counters = async () => {
     const [row] = await bridge.unsafe(`SELECT
       (SELECT count(*)::int FROM bridge.provider_work_attempt WHERE quota_domain_id=$1) AS attempts,
@@ -39,6 +42,15 @@ test("RC-BSSV2-00604-11 exposes an authenticated, conservative runtime read with
     return { ...row, sends };
   };
   try {
+    await app.listen({ host: "127.0.0.1", port: 0 });
+    const address = app.server.address();
+    assert.ok(address && typeof address !== "string");
+    const readThroughBridge = async (credential: string, expectedEffectiveConstraintRevision?: string) => {
+      const query = expectedEffectiveConstraintRevision === undefined ? "" : `?expectedEffectiveConstraintRevision=${encodeURIComponent(expectedEffectiveConstraintRevision)}`;
+      const response = await fetch(`http://127.0.0.1:${address.port}/v1/runtime-capacity-constraint${query}`, { headers: { authorization: `Bearer ${credential}` } });
+      assert.equal(response.status, 200);
+      return await response.json() as Record<string, unknown>;
+    };
     const profile = { usableGlobalCapacity: { rpm: 10, tpm: 100, rpd: 10, concurrency: 2 }, hardInteractiveReserve: { rpm: 2, tpm: 20, rpd: 2, concurrency: 1 }, backgroundCapacity: { rpm: 8, tpm: 80, rpd: 8, concurrency: 1 } };
     const windows = { rpm: { kind: "fixed", windowSeconds: 60 }, tpm: { kind: "fixed", windowSeconds: 60 }, rpd: { kind: "fixed", windowSeconds: 60 }, concurrency: { kind: "fixed", windowSeconds: 60 } };
     await bridge.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'capacity-v1','fixture',$2::jsonb,'{}'::jsonb,$3::jsonb,'quota-v1','operator_config','fixture','v1',now(),now())", [domain, [{ routeId: background.routeId }, { routeId: interactive.routeId }], windows]);
@@ -62,7 +74,9 @@ test("RC-BSSV2-00604-11 exposes an authenticated, conservative runtime read with
     const before = await counters();
     assert.deepEqual(before, { attempts: 1, reservations: 1, jobs: 1, claims: 1, quota_mutations: 4, sends: 0 }, "the read must be tested against live runtime state, not an inert database");
 
-    const [backgroundRead, interactiveRead] = await Promise.all([reader.read(background.credential), reader.read(interactive.credential)]);
+    // These fake consumers know only an opaque credential and the Bridge URL;
+    // identity is resolved by the composed server route, never from request scope.
+    const [backgroundRead, interactiveRead] = await Promise.all([readThroughBridge(background.credential), readThroughBridge(interactive.credential)]);
     assert.equal(backgroundRead.reason, "eligible_in_principle");
     assert.equal(interactiveRead.reason, "eligible_in_principle");
     assert.equal(backgroundRead.apiVersion, "RuntimeCapacityConstraint/v1");
@@ -76,26 +90,26 @@ test("RC-BSSV2-00604-11 exposes an authenticated, conservative runtime read with
     assert.equal("numericRemainingUnits" in backgroundRead, false, "the public projection never exposes raw counters");
     assert.deepEqual(await counters(), before, "a read creates no attempt, reservation, job, claim, send, or quota mutation");
 
-    assert.equal((await reader.read("forged-credential")).reason, "inactive_or_unauthorized");
-    assert.equal((await reader.read(`${suffix}-foreign-domain`)).reason, "inactive_or_unauthorized");
-    assert.equal((await reader.read(`${suffix}-forged-class`)).reason, "inactive_or_unauthorized");
-    assert.equal((await reader.read(`${suffix}-forged-route`)).reason, "inactive_or_unauthorized");
+    assert.equal((await readThroughBridge("forged-credential")).reason, "inactive_or_unauthorized");
+    assert.equal((await readThroughBridge(`${suffix}-foreign-domain`)).reason, "inactive_or_unauthorized");
+    assert.equal((await readThroughBridge(`${suffix}-forged-class`)).reason, "inactive_or_unauthorized");
+    assert.equal((await readThroughBridge(`${suffix}-forged-route`)).reason, "inactive_or_unauthorized");
     assert.deepEqual(await counters(), before, "negative reads are equally non-mutating");
 
     await bridge.unsafe("INSERT INTO bridge.runtime_pressure_safety_policy(policy_id,version,quota_domain_id,maximum_accepted_retry_after_seconds,metadata_free_cooldown_seconds,probe_eligibility_seconds) VALUES($1,'v1',$2,60,30,60)", [`${suffix}-policy`, domain]);
     await bridge.unsafe("SELECT bridge.record_provider_429_pressure($1,$2,$3,30,'route','qualified','rpm',$4,NULL)", [domain, background.routeId, `${suffix}-cooldown`, `${suffix}-window`]);
-    const cooldownRead = await reader.read(background.credential);
+    const cooldownRead = await readThroughBridge(background.credential);
     assert.equal(cooldownRead.reason, "temporarily_pressure_blocked");
     assert.equal((cooldownRead.cooldown as { active: boolean }).active, true);
-    assert.equal((await reader.read(background.credential, { expectedEffectiveConstraintRevision: String(backgroundRead.effectiveConstraintRevision) })).reason, "unknown_policy_blocked", "a stale constraint revision never remains eligible");
+    assert.equal((await readThroughBridge(background.credential, String(backgroundRead.effectiveConstraintRevision))).reason, "unknown_policy_blocked", "a stale constraint revision never remains eligible");
     await bridge.unsafe("UPDATE bridge.provider_operational_pressure_incident SET recovered_at=clock_timestamp() WHERE quota_domain_id=$1", [domain]);
     await bridge.unsafe("UPDATE bridge.runtime_pressure_safety_policy SET active=false WHERE quota_domain_id=$1", [domain]);
     await bridge.unsafe("SELECT bridge.record_provider_429_pressure($1,$2,$3,30,'route','qualified','tpm',$4,NULL)", [domain, background.routeId, `${suffix}-unavailable`, `${suffix}-unavailable-window`]);
-    assert.equal((await reader.read(background.credential)).reason, "unknown_policy_blocked", "unavailable pressure policy fails closed");
+    assert.equal((await readThroughBridge(background.credential)).reason, "unknown_policy_blocked", "unavailable pressure policy fails closed");
     await bridge.unsafe("DELETE FROM bridge.provider_quota_window_state WHERE quota_domain_id=$1 AND dimension_id='tpm'", [domain]);
-    assert.equal((await reader.read(background.credential)).reason, "unknown_policy_blocked", "a missing runtime window fails closed");
+    assert.equal((await readThroughBridge(background.credential)).reason, "unknown_policy_blocked", "a missing runtime window fails closed");
     await assert.rejects(() => atlas.unsafe("SELECT bridge.read_runtime_capacity_constraint($1,$2,$3,$4,$5)", [domain, background.processId, "v1", background.routeId, "background"]), /permission denied/i);
   } finally {
-    await Promise.all([bridge.end(), atlas.end()]);
+    await Promise.all([app.close(), bridge.end(), atlas.end()]);
   }
 });
