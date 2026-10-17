@@ -22,13 +22,23 @@ const policy = (processId: string, processKind: string, capability: string, serv
 const registry = (overrides: readonly unknown[] = [
   policy("synthetic", "synthetic-index", "atlas.semantic.extract", "background", "synthetic"),
   policy("semantic", "semantic", "atlas.semantic.extract", "background", "semantic"),
-  policy("chat", "chat", "atlas.chat.default", "interactive", "chat"),
+  policy("chat", "chat", "atlas.chat.default", "interactive", "chat", "shared", true, "v1", "v1", "chat-route"),
   policy("isolated", "synthetic-index", "atlas.semantic.extract", "background", "synthetic", "isolated"),
 ]) => parseServerProcessRegistry({ registryId: "server-processes", registryVersion: "v1", policies: overrides });
 
 const workloads = [workload("synthetic", ["synthetic-index"]), workload("semantic", ["semantic"]), workload("chat", ["chat"])] as const;
 const plannerPolicy: PlannerPolicy = { plannerVersion: "planner-v1", effectiveFrom: "2026-10-17T00:00:00.000Z", headroomPolicy: { policyId: "headroom", policyVersion: "v1", reserve: { rpm: 10, tpm: 1_000, rpd: 100, concurrency: 1 } }, interactiveReserveTargets: [{ processId: "chat", profileVersion: "v1", serviceTargetId: "chat-slo", reserve: { rpm: 20, tpm: 2_000, rpd: 200, concurrency: 2 } }], backgroundCaps: [{ processId: "synthetic", profileVersion: "v1", cap: { rpm: 40, tpm: 4_000, rpd: 400, concurrency: 4 } }] };
-const authorities = { qualifiedQuotaDomainIds: new Set(["shared", "isolated"]), qualifiedRouteIds: new Set(["shared-route", "isolated-route"]), workloads, quotaAccountingPolicyIds: new Set(["quota-v1"]) };
+const authorities = {
+  qualifiedQuotaDomainIds: new Set(["shared", "isolated"]),
+  qualifiedRouteIds: new Set(["shared-route", "chat-route", "isolated-route"]),
+  qualifiedRouteCapabilities: new Map([
+    ["shared-route", "atlas.semantic.extract"],
+    ["chat-route", "atlas.chat.default"],
+    ["isolated-route", "atlas.semantic.extract"],
+  ] as const),
+  workloads,
+  quotaAccountingPolicyIds: new Set(["quota-v1"]),
+};
 const reference = (processId: string, quotaDomainId = "shared", profileVersion = "v1") => parseRegisteredProcessReference({ registryId: "server-processes", registryVersion: "v1", quotaDomainId, processId, profileVersion });
 
 test("RC-00505-01 registers a synthetic process without widening the legacy parser and fails closed for foreign or unqualified identity", () => {
@@ -38,6 +48,12 @@ test("RC-00505-01 registers a synthetic process without widening the legacy pars
   assert.throws(() => resolveRegisteredProcessPolicy(serverRegistry, { ...reference("synthetic"), registryVersion: "foreign" }, authorities), /foreign or stale/);
   assert.throws(() => resolveRegisteredProcessPolicy(serverRegistry, reference("synthetic"), { ...authorities, qualifiedRouteIds: new Set() }), /unknown route/);
   assert.throws(() => parseServerProcessRegistry({ registryId: "x", registryVersion: "v1", policies: [policy("bad", "synthetic-index", "foreign.capability", "background", "synthetic")] }), /unknown process kind, capability/);
+  const crossCapabilityRoute = registry([policy("chat", "chat", "atlas.chat.default", "interactive", "chat")]);
+  assert.throws(() => resolveRegisteredProcessPolicy(crossCapabilityRoute, reference("chat"), authorities), /not qualified for its capability/);
+  assert.equal(resolveRegisteredProcessPolicy(crossCapabilityRoute, reference("chat"), {
+    ...authorities,
+    qualifiedRouteCapabilities: new Map([["shared-route", "atlas.chat.default"] as const]),
+  }).capability, "atlas.chat.default");
 });
 
 test("RC-00505-02 keeps shared-domain processes deterministic and an isolated domain unreachable", () => {
@@ -47,15 +63,20 @@ test("RC-00505-02 keeps shared-domain processes deterministic and an isolated do
   const second = planDesiredAdmissionProfile(capacity("shared"), shared.slice().reverse(), workloads.slice().reverse(), plannerPolicy);
   assert.equal(JSON.stringify(first), JSON.stringify(second));
   assert.throws(() => resolveRegisteredProcessPolicy(serverRegistry, reference("isolated", "shared"), authorities), /unknown for the quota domain/);
-  const inactive = registry([policy("chat", "chat", "atlas.chat.default", "interactive", "chat"), policy("semantic", "semantic", "atlas.semantic.extract", "background", "semantic", "shared", false)]);
+  const inactive = registry([policy("chat", "chat", "atlas.chat.default", "interactive", "chat", "shared", true, "v1", "v1", "chat-route"), policy("semantic", "semantic", "atlas.semantic.extract", "background", "semantic", "shared", false)]);
   const recomputed = planDesiredAdmissionProfile(capacity("shared"), [resolveRegisteredProcessPolicy(inactive, reference("chat"), authorities), resolveRegisteredProcessPolicy(inactive, reference("semantic"), authorities)], workloads, { ...plannerPolicy, backgroundCaps: [] });
   assert.deepEqual(recomputed.backgroundLanes, []);
   const semanticV2 = workload("semantic", ["semantic"], true, "v2");
   const updatedRegistry = parseServerProcessRegistry({ registryId: "server-processes", registryVersion: "v2", policies: [
     policy("semantic", "semantic", "atlas.semantic.extract", "background", "semantic", "shared", true, "v2", "v2", "shared-route-v2"),
-    policy("chat", "chat", "atlas.chat.default", "interactive", "chat"),
+    policy("chat", "chat", "atlas.chat.default", "interactive", "chat", "shared", true, "v1", "v1", "chat-route"),
   ] });
-  const updatedAuthorities = { ...authorities, workloads: [semanticV2, workloads[2]] as const, qualifiedRouteIds: new Set(["shared-route-v2", "shared-route"]) };
+  const updatedAuthorities = {
+    ...authorities,
+    workloads: [semanticV2, workloads[2]] as const,
+    qualifiedRouteIds: new Set(["shared-route-v2", "chat-route"]),
+    qualifiedRouteCapabilities: new Map([["shared-route-v2", "atlas.semantic.extract"], ["chat-route", "atlas.chat.default"]] as const),
+  };
   const updated = [
     resolveRegisteredProcessPolicy(updatedRegistry, parseRegisteredProcessReference({ registryId: "server-processes", registryVersion: "v2", quotaDomainId: "shared", processId: "semantic", profileVersion: "v2" }), updatedAuthorities),
     resolveRegisteredProcessPolicy(updatedRegistry, parseRegisteredProcessReference({ registryId: "server-processes", registryVersion: "v2", quotaDomainId: "shared", processId: "chat", profileVersion: "v1" }), updatedAuthorities),

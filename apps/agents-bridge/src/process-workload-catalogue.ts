@@ -67,6 +67,8 @@ export type RegisteredProcessReference = Readonly<{
 export type RegisteredProcessAuthorities = Readonly<{
   qualifiedQuotaDomainIds: ReadonlySet<string>;
   qualifiedRouteIds: ReadonlySet<string>;
+  /** Server-qualified route identity, including the capability it is qualified to serve. */
+  qualifiedRouteCapabilities: ReadonlyMap<string, AtlasCapability>;
   workloads: readonly WorkloadEnvelopeProfile[];
   quotaAccountingPolicyIds: ReadonlySet<string>;
 }>;
@@ -215,5 +217,8 @@ export function resolveRegisteredProcessPolicy(registry: ServerProcessRegistry, 
   if (!policy) throw new ProcessWorkloadCatalogueError("registered process policy is unknown for the quota domain.");
   if (!authorities.qualifiedQuotaDomainIds.has(policy.quotaDomainId)) throw new ProcessWorkloadCatalogueError("registered process policy has an unqualified quota domain.");
   validateProcessWorkloadCatalogue([policy.process], authorities.workloads, authorities.qualifiedRouteIds, authorities.quotaAccountingPolicyIds);
+  if (policy.process.active && policy.process.eligibleRouteIds.some((routeId) => authorities.qualifiedRouteCapabilities.get(routeId) !== policy.process.capability)) {
+    throw new ProcessWorkloadCatalogueError("registered process policy has a route not qualified for its capability.");
+  }
   return policy.process;
 }
