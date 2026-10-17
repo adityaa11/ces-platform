@@ -59,7 +59,13 @@ The dependency column and graph are authoritative GO order. Numeric ticket-famil
 | 27 | [BSS-V2-006-03A-04](BSS-V2-006-03A-04-plan-wakeup-and-replan-intents.md) | BSS-V2-BATCH-06-03A-04 | 03A-01..03 CK PASS | Active-plan wakeup/revalidation and bounded convergence intents. |
 | 28 | [BSS-V2-006-03A-05](BSS-V2-006-03A-05-background-route-aware-admission.md) | BSS-V2-BATCH-06-03A-05 | 03A-01..04 CK PASS | Common background admission while preserving interactive protection. |
 | 29 | [BSS-V2-006-03A-06](BSS-V2-006-03A-06-operational-resilience-and-boundary-closure.md) | BSS-V2-BATCH-06-03A-06 | 03A-01..05 CK PASS | Composed resilience, role/redaction, migration and final internal boundary evidence. |
-| 30 | [BSS-V2-006-04](BSS-V2-006-04-integrated-provider-admission-runtime-checkpoint.md) | BSS-V2-BATCH-06-04 | 006-01/02 CK PASS; 03A-01..06 CK PASS; BSS-V2-005-05-04 CK PASS | Integrated deterministic proof of the reusable admission authority. |
+| 30 | [BSS-V2-006-04](BSS-V2-006-04-integrated-provider-admission-runtime-checkpoint.md) | traceability map | non-executable; see 30a–30f | Split map for the reusable admission-authority checkpoint. |
+| 30a | [BSS-V2-006-04-01](BSS-V2-006-04-01-runtime-capacity-constraint-read-boundary.md) | BSS-V2-BATCH-06-04-01 | 006-01/02 CK PASS; 03A-01..06 CK PASS; BSS-V2-005-05-04 CK PASS | Authenticated, non-mutating effective-constraint read. |
+| 30b | [BSS-V2-006-04-02](BSS-V2-006-04-02-provider-work-admission-exclusive-send-boundary.md) | BSS-V2-BATCH-06-04-02 | 30a CK PASS | Provider work admission and one exclusive send boundary. |
+| 30c | [BSS-V2-006-04-03](BSS-V2-006-04-03-operational-outcome-feedback-recovery-projection.md) | BSS-V2-BATCH-06-04-03 | 30b CK PASS | Public feedback/outcome and recovery projection. |
+| 30d | [BSS-V2-006-04-04](BSS-V2-006-04-04-interactive-admitted-work-lifecycle.md) | BSS-V2-BATCH-06-04-04 | 30c CK PASS | Interactive admitted-work lifecycle. |
+| 30e | [BSS-V2-006-04-05](BSS-V2-006-04-05-constraint-convergence-structural-replan-projection.md) | BSS-V2-BATCH-06-04-05 | 30d CK PASS | Plan/pressure convergence and structural-replan outcomes. |
+| 30f | [BSS-V2-006-04-06](BSS-V2-006-04-06-generic-multi-consumer-compatibility-closure.md) | BSS-V2-BATCH-06-04-06 | 30a–30e CK PASS | Generic multi-consumer compatibility and terminal closure. |
 | 31 | [BSS-V2-007](BSS-V2-007-execution-usage-provenance-ledger.md) | BSS-V2-BATCH-07 | 004-03 parent scope; later dependency realignment as needed | Is external-provider usage/provenance persisted without inventing Docling economics? |
 | 32 | [BSS-V2-008](BSS-V2-008-price-profiles-shadow-cogs.md) | BSS-V2-BATCH-08 | 007 | Are external-provider prices and distinct actual/shadow costs calculated without billing? |
 | 33 | [BSS-V2-009](BSS-V2-009-privacy-preflight.md) | BSS-V2-BATCH-09 | 006, 008 | Does privacy compatibility fail before external-provider transmission? |

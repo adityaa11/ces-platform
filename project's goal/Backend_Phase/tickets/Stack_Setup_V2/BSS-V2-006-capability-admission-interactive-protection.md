@@ -2,7 +2,7 @@
 
 - **State:** `planned`
 - **Type:** non-executable umbrella
-- **Dependencies (staged, non-cyclic):** BSS-V2-006-01/02 consume approved BSS-V2-005-04 CK `PASS` plus BSS-006 and BSS-V2-001/002; **BSS-V2-006-04** additionally requires BSS-V2-005-05 CK `PASS` and every BSS-V2-006-03A-01..06 CK `PASS`. No 006-01/02 predecessor may require -005-05 CK.
+- **Dependencies (staged, non-cyclic):** BSS-V2-006-01/02 consume approved BSS-V2-005-04 CK `PASS` plus BSS-006 and BSS-V2-001/002; the **BSS-V2-006-04-01..06 family** additionally requires BSS-V2-005-05-04 CK `PASS` and every BSS-V2-006-03A-01..06 CK `PASS`. No 006-01/02 predecessor may require -005-05 CK.
 - **Planning authority:** [Provider admission and staged semantic pipeline context](../../atlas-provider-admission-staged-semantic-pipeline-implementation-context.md), including §21 amendments
 
 ## Outcome
@@ -17,7 +17,7 @@ One reservation authorizes at most one outbound provider attempt. Provider retri
 BSS-V2-006-01 durable provider work + reservation/window/attempt foundation
 BSS-V2-006-02 fair admission + hard interactive protection + atomic single-attempt dispatch
 BSS-V2-006-03 WITHDRAWN; 03A parent is traceability-only, with 03A-01 through 03A-06 as connected, individually GO/CK-gated replacements
-BSS-V2-006-04 integrated deterministic runtime checkpoint
+BSS-V2-006-04 traceability split map; 04-01 through 04-06 are individually GO/CK-gated runtime-contract children
 ```
 
 Local Docling continues to use its separate local-capacity seam. Each child is a separate GO/CK target and requires predecessor CK `PASS`.
@@ -30,4 +30,4 @@ The Semantic Batch Planner requires a **read-only, versioned enforceable-capacit
 
 ## Consumer-facing hard stop qualification (2026-10-16 prospective)
 
-[Two distinct generic consumer contracts](../../bss-provider-consumer-contract-checkpoint-20261016.md) are mandatory for integrated BSS-V2-006-04: (1) versioned **read-only** effective eligibility/pressure snapshot, with zero reservations; (2) work/attempt admission/feedback API with one atomic BSS reservation per outbound transport. They must be demonstrated through independent synthetic background and interactive consumers, not inspection of internal schedulers alone. BSS-V2-006-01/02 depend only on the already approved BSS-V2-005-04 active plan; BSS-V2-005-05 and BSS-V2-006-04 require every BSS-V2-006-03A-01..06 CK PASS, plus the stated CK gates. This prevents circular approval and does not prematurely claim runtime implementation. Consumer failures in semantic meaning or chat UX stay outside BSS.
+[Two distinct generic consumer contracts](../../bss-provider-consumer-contract-checkpoint-20261016.md) are mandatory across BSS-V2-006-04-01..06: (1) versioned **read-only** effective eligibility/pressure snapshot, with zero reservations; (2) work/attempt admission/feedback API with one atomic BSS reservation per outbound transport. They must be demonstrated through independent synthetic background and interactive consumers, not inspection of internal schedulers alone. BSS-V2-006-01/02 depend only on the already approved BSS-V2-005-04 active plan; BSS-V2-005-05 and the 006-04 family require every BSS-V2-006-03A-01..06 CK PASS, plus the stated CK gates. This prevents circular approval and does not prematurely claim runtime implementation. Consumer failures in semantic meaning or chat UX stay outside BSS.
