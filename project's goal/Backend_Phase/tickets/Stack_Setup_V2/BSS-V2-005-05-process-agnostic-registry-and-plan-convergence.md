@@ -1,8 +1,16 @@
-# BSS-V2-005-05 — Process-agnostic registry and automatic desired-plan convergence
+# BSS-V2-005-05 — Process-agnostic registry and automatic desired-plan convergence (split map)
 
-- **State:** `planned`; new prospective executable child, **not** GO, CFC authority or CK PASS.
+- **State:** `planned`; non-executable family/traceability map. It is **not** GO, CFC authority or CK PASS.
 - **Parent:** [BSS-V2-005](BSS-V2-005-quota-domain-capacity-foundation.md)
-- **Dependencies:** BSS-V2-005-01..04 independent CK PASS; BSS-V2-006-03A-01..06 CK `PASS` for actual plan-wakeup/convergence integration; exact server-authorized process/workload definitions. The BSS-V2-005 read-only contract itself may be built and independently tested against approved -005-04, but final -005-05 CK cannot claim a durable BSS-006 wakeup until that full child series is CK-qualified. **BSS-V2-006-01/02 must not depend on BSS-V2-005-05** (avoid cyclic authority). Approved BSS-V2-005-01..04 records and CK outcomes remain untouched.
+- **Split rationale:** The original executable leaf combined registry authority, pure-planner preservation, external authenticated reads, durable publication convergence, and real pg-boss wakeup consumption. Those are distinct implementation and proof seams; a single GO → CK → CFC → HMN cycle could not isolate a repair without reopening unrelated evidence.
+- **Executable children:**
+  1. [BSS-V2-005-05-01 — Registered process policy and generic planner preservation](BSS-V2-005-05-01-registered-process-policy-and-generic-planner-preservation.md): `RC-00505-01`, `02`, `04`, `06`, `09`.
+  2. [BSS-V2-005-05-02 — Authenticated capacity-planning snapshot boundary](BSS-V2-005-05-02-authenticated-capacity-planning-snapshot-boundary.md): `RC-00505-10`, `11`.
+  3. [BSS-V2-005-05-03 — Authorized desired-plan convergence](BSS-V2-005-05-03-authorized-desired-plan-convergence.md): publication/input portions `RC-00505-03a`, `07a`, and complete `RC-00505-08`.
+  4. [BSS-V2-005-05-04 — Durable wakeup convergence integration](BSS-V2-005-05-04-durable-wakeup-convergence-integration.md): terminal closure of full `RC-00505-03`, `05`, `07`, `12` through the real 03A worker.
+- **Family completion:** only `BSS-V2-005-05-04` CK `PASS`, after its three sibling CK `PASS` records and BSS-V2-006-03A-01..06 CK `PASS`, closes this family and satisfies the BSS-V2-006-04 dependency.
+- **Authority preservation:** every clause below remains frozen family authority. `-05-03` establishes only the expressly scoped publication/input portions of `RC-00505-03` and `07`; `-05-04` alone proves their complete original end-to-end oracles, including real durable wakeup consumption. No clause is deleted or weakened, and the duplicate-looking identifiers are implementation-precondition versus terminal-closure evidence, not separate acceptance conditions.
+- **Dependencies:** BSS-V2-005-01..04 independent CK PASS; exact server-authorized process/workload definitions. Only `-05-04` additionally depends on BSS-V2-006-03A-01..06 CK `PASS` for actual plan-wakeup/convergence integration. **BSS-V2-006-01/02 must not depend on this family** (avoid cyclic authority). Approved BSS-V2-005-01..04 records and CK outcomes remain untouched.
 - **Motivation:** [October 16 process-neutral/planner handoff decision](../../../feedback/IDSER-SEMANTIC-PLANNER-HARD-STOP-20261016.md)
 
 ## Outcome
