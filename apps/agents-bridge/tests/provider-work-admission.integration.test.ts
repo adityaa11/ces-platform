@@ -3,7 +3,7 @@ import test from "node:test";
 import postgres from "postgres";
 import { createBridgeApp } from "../src/app.ts";
 import { createProductionBridgeWorker } from "../src/production-worker-composition.ts";
-import { createProviderWorkAdmissionService } from "../src/provider-work-admission.ts";
+import { createProviderWorkAdmissionService, type ProviderWorkAdmissionOutcome } from "../src/provider-work-admission.ts";
 import { createRuntimeCapacityConstraintReader } from "../src/runtime-capacity-constraint.ts";
 import { TestRuntime } from "../src/runtime.ts";
 
@@ -26,6 +26,8 @@ test("RC-BSSV2-00604-01/12a/14a drive authenticated background admission through
   const admission = createProviderWorkAdmissionService(database, authenticator);
   let sends = 0;
   let payloadHydrations = 0;
+  let directAdapterSends = 0;
+  const outboundPayloads: unknown[] = [];
   const worker = createProductionBridgeWorker({
     config: { databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 1, perceptionConcurrency: 1, timeoutSeconds: 5, retryLimit: 0, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 },
     runtime: new TestRuntime(), documentPerception: async () => undefined, semantic: async () => undefined,
@@ -37,6 +39,7 @@ test("RC-BSSV2-00604-01/12a/14a drive authenticated background admission through
     } },
     providerOutboundTransport: async (input) => {
       assert.deepEqual(input.payloadReference, { opaqueReference: `${suffix}-payload`, hash: "a".repeat(64) });
+      outboundPayloads.push(input.payloadReference);
       sends += 1;
       return { feedbackId: `${suffix}-feedback-${sends}`, transportDisposition: "terminal_confirmed", usage: { rpm: 1, tpm: 5, rpd: 1 } };
     },
@@ -63,19 +66,55 @@ test("RC-BSSV2-00604-01/12a/14a drive authenticated background admission through
     const constraint = await (await fetch(`${base}/v1/runtime-capacity-constraint`, { headers: { authorization: `Bearer ${principal.credential}` } })).json() as { effectiveConstraintRevision: string; reason: string };
     assert.equal(constraint.reason, "eligible_in_principle");
     const request = { logicalWorkId: `${suffix}-work`, attemptNumber: 1, idempotencyKey: `${suffix}-idempotency`, payloadReference: `${suffix}-payload`, payloadHash: "a".repeat(64), requestResourceEnvelope: { rpm: 1, tpm: 5, rpd: 1, concurrency: 1 }, expectedEffectiveConstraintRevision: constraint.effectiveConstraintRevision };
-    const post = async (body: unknown) => (await fetch(`${base}/v1/provider-work-admissions`, { method: "POST", headers: { authorization: `Bearer ${principal.credential}`, "content-type": "application/json" }, body: JSON.stringify(body) })).json() as Promise<Record<string, unknown>>;
-    const directAccepted = await admission.admit(principal.credential, request);
-    assert.equal(directAccepted.state, "dispatched_or_may_have_started");
-    const accepted = await post(request);
+    const post = async (body: unknown) => (await fetch(`${base}/v1/provider-work-admissions`, { method: "POST", headers: { authorization: `Bearer ${principal.credential}`, "content-type": "application/json" }, body: JSON.stringify(body) })).json() as Promise<ProviderWorkAdmissionOutcome>;
+    // This independent semantic-like background fixture knows only the public
+    // versioned HTTP boundary. Its direct-adapter counter is a prohibited-path
+    // observation: registration must not call it.
+    const semanticLikeBackgroundConsumer = {
+      register: async (body: unknown) => post(body),
+      directAdapterSend: async () => { directAdapterSends += 1; },
+    };
+    const accepted = await semanticLikeBackgroundConsumer.register(request);
+    assert.equal(accepted.apiVersion, "ProviderWorkAdmission/v1");
     assert.equal(accepted.state, "dispatched_or_may_have_started");
-    assert.equal(await post(request).then((result) => result.state), "dispatched_or_may_have_started", "exact replay returns its durable identity without a new reservation");
+    assert.equal(accepted.logicalWorkId, request.logicalWorkId);
+    assert.equal(accepted.attemptNumber, request.attemptNumber);
+    assert.ok(accepted.reservationId, "the API outcome identifies the durable reservation");
+    assert.ok(accepted.jobId, "the API outcome identifies the pg-boss dispatch");
+    const replay = await semanticLikeBackgroundConsumer.register(request);
+    assert.equal(replay.state, "dispatched_or_may_have_started", "exact replay returns its durable identity without a new reservation");
+    assert.deepEqual(replay, accepted, "replay returns the same typed durable identity");
     assert.equal(await post({ ...request, payloadHash: "b".repeat(64) }).then((result) => result.state), "policy_or_resource_unfit", "payload hash is immutable under an idempotency key");
-    assert.equal((await sql.unsafe("SELECT count(*)::int AS count FROM bridge.provider_work_reservation WHERE logical_work_id=$1", [request.logicalWorkId]))[0].count, 1);
     const deadline = Date.now() + 10_000;
     while (Date.now() < deadline && sends !== 1) await sleep(25);
     assert.equal(sends, 1, "the only fake outbound call follows one durable reservation, job, and claim");
     assert.equal(payloadHydrations, 1);
-    assert.equal((await sql.unsafe("SELECT count(*)::int AS count FROM bridge.provider_transport_claim WHERE logical_work_id=$1", [request.logicalWorkId]))[0].count, 1);
+    assert.deepEqual(outboundPayloads, [{ opaqueReference: `${suffix}-payload`, hash: "a".repeat(64) }], "the claimed lane makes the one permitted generic outbound send");
+    assert.equal(directAdapterSends, 0, "the semantic-like consumer made zero direct adapter sends");
+    const [positive] = await sql.unsafe(`SELECT work.logical_work_id,work.attempt_number,
+      reservation.reservation_id,dispatch.job_id,claim.reservation_id AS claim_reservation_id,
+      job.id AS boss_job_id,job.data AS boss_job_data
+      FROM bridge.provider_work_attempt work
+      JOIN bridge.provider_work_reservation reservation USING(logical_work_id,attempt_number)
+      JOIN bridge.provider_work_dispatch dispatch USING(logical_work_id,attempt_number,reservation_id)
+      JOIN pgboss.job job ON job.id=dispatch.job_id
+      JOIN bridge.provider_transport_claim claim USING(reservation_id)
+      WHERE work.logical_work_id=$1 AND work.attempt_number=$2`, [request.logicalWorkId, request.attemptNumber]);
+    assert.deepEqual(positive, {
+      logical_work_id: accepted.logicalWorkId,
+      attempt_number: accepted.attemptNumber,
+      reservation_id: accepted.reservationId,
+      job_id: accepted.jobId,
+      claim_reservation_id: accepted.reservationId,
+      boss_job_id: accepted.jobId,
+      boss_job_data: { logicalWorkId: accepted.logicalWorkId, attemptNumber: accepted.attemptNumber, reservationId: accepted.reservationId },
+    }, "one API identity maps exactly to one work, reservation, pg-boss job, claim, and fake send");
+    const [positiveCounts] = await sql.unsafe(`SELECT
+      (SELECT count(*)::int FROM bridge.provider_work_attempt WHERE logical_work_id=$1) AS attempts,
+      (SELECT count(*)::int FROM bridge.provider_work_reservation WHERE logical_work_id=$1) AS reservations,
+      (SELECT count(*)::int FROM bridge.provider_work_dispatch WHERE logical_work_id=$1) AS dispatches,
+      (SELECT count(*)::int FROM bridge.provider_transport_claim WHERE logical_work_id=$1) AS claims`, [request.logicalWorkId]);
+    assert.deepEqual(positiveCounts, { attempts: 1, reservations: 1, dispatches: 1, claims: 1 }, "replay and hash conflict add no durable identity to the admitted work");
 
     await worker.stop();
     const cancelled = { ...request, logicalWorkId: `${suffix}-cancelled`, idempotencyKey: `${suffix}-cancelled-key`, attemptNumber: 2 };
@@ -83,8 +122,22 @@ test("RC-BSSV2-00604-01/12a/14a drive authenticated background admission through
     assert.equal((await fetch(`${base}/v1/provider-work-admissions/${encodeURIComponent(cancelled.logicalWorkId)}/2/cancel`, { method: "POST", headers: { authorization: `Bearer ${principal.credential}` } })).status, 200);
     assert.equal((await sql.unsafe("SELECT state FROM bridge.provider_work_attempt WHERE logical_work_id=$1 AND attempt_number=2", [cancelled.logicalWorkId]))[0].state, "terminal", "pre-send cancellation reaches the durable attempt before a worker can claim it");
     assert.equal(sends, 1, "the cancelled work has zero transport sends");
+    assert.equal(directAdapterSends, 0, "the cancelled work also has zero direct adapter sends");
+    const [cancelledCounts] = await sql.unsafe(`SELECT
+      (SELECT count(*)::int FROM bridge.provider_work_attempt WHERE logical_work_id=$1) AS attempts,
+      (SELECT count(*)::int FROM bridge.provider_work_reservation WHERE logical_work_id=$1) AS reservations,
+      (SELECT count(*)::int FROM bridge.provider_work_dispatch WHERE logical_work_id=$1) AS dispatches,
+      (SELECT count(*)::int FROM bridge.provider_transport_claim WHERE logical_work_id=$1) AS claims`, [cancelled.logicalWorkId]);
+    assert.deepEqual(cancelledCounts, { attempts: 1, reservations: 1, dispatches: 1, claims: 0 }, "pre-send cancellation creates no claim or send identity");
     const stale = await post({ ...request, logicalWorkId: `${suffix}-stale`, idempotencyKey: `${suffix}-stale-key`, attemptNumber: 3, expectedEffectiveConstraintRevision: "stale" });
     assert.equal(stale.state, "policy_or_resource_unfit");
-    assert.equal((await sql.unsafe("SELECT count(*)::int AS count FROM bridge.provider_work_attempt WHERE logical_work_id=$1", [`${suffix}-stale`]))[0].count, 0, "stale read-to-admit input creates no attempt or reservation");
+    const [staleCounts] = await sql.unsafe(`SELECT
+      (SELECT count(*)::int FROM bridge.provider_work_attempt WHERE logical_work_id=$1) AS attempts,
+      (SELECT count(*)::int FROM bridge.provider_work_reservation WHERE logical_work_id=$1) AS reservations,
+      (SELECT count(*)::int FROM bridge.provider_work_dispatch WHERE logical_work_id=$1) AS dispatches,
+      (SELECT count(*)::int FROM bridge.provider_transport_claim WHERE logical_work_id=$1) AS claims`, [`${suffix}-stale`]);
+    assert.deepEqual(staleCounts, { attempts: 0, reservations: 0, dispatches: 0, claims: 0 }, "stale read-to-admit input creates no durable or transport identity");
+    assert.equal(sends, 1, "stale admission has zero transport sends");
+    assert.equal(directAdapterSends, 0, "replay, conflict, stale, and cancellation have zero direct adapter sends");
   } finally { await worker.stop().catch(() => undefined); await app.close(); await sql.end(); }
 });
