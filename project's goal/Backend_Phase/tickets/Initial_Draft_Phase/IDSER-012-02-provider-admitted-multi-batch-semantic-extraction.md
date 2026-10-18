@@ -1,6 +1,10 @@
 # IDSER-012-02 — Stepwise provider-admitted multi-batch semantic extraction (umbrella)
 
-- **State:** `planned-semantic-remainder`; **non-executable umbrella**; four real unimplemented leaf tickets remain `planned` with successor-specific GO guards.
+> **SUPERSEDED — NON-EXECUTABLE (2026-10-19).** Planning family archived; IDSER-012-03 replaces only the fixture-fed planner-to-durable-handoff subset. Activation, execution and acceptance await separate future authorities.
+> **Successor:** [IDSER-012-03](IDSER-012-03-semantic-batch-planner-ghr-contract-hard-stop.md); [complete original RC disposition](IDSER-012-03-requirement-disposition.md). Original body below is archival context, NOT an active GO/CK/authority. Approved IDSER-012-01 and historic evidence unchanged.
+
+
+- **State:** `superseded` (2026-10-19); archived historical specification, not executable.
 - **Dependencies:** approved IDSER-012-01-03-02 + PERC-RESET-008 perception predecessor; independently qualified SEM-CUTOVER-007A engine and qualified deferred acceptance; BSS-V2-005/006 actual planner/admission CK; separate BSS-V2-004-03-06 semantic meaning PASS before outbound runtime. No retired BSS-V2-004-03-05 or IDSER-011 PASS.
 - **Parent:** [IDSER-012](IDSER-012-staged-worker-pipeline-realignment.md)
 - **Planning context:** [provider admission/staged semantic context](../../atlas-provider-admission-staged-semantic-pipeline-implementation-context.md) §22 (prospective correction; earlier §21 historic where conflicting).

@@ -1,6 +1,10 @@
 # IDSER-012-02-03 — BSS-admitted execution using sole SEM-007A stepwise engine
 
-- **State:** `planned`; **GO BLOCKED** until -02-02 and independent BSS-V2-004-03-06 CK PASS **plus separate semantic qualification PASS** for the exact route.
+> **SUPERSEDED — NON-EXECUTABLE (2026-10-19).** Scope deferred to future GHR/SEM batch-intake and BSS-admitted execution successors, not IDSER-012-03.
+> **Successor:** [IDSER-012-03](IDSER-012-03-semantic-batch-planner-ghr-contract-hard-stop.md); [complete original RC disposition](IDSER-012-03-requirement-disposition.md). Original body below is archival context, NOT an active GO/CK/authority. Approved IDSER-012-01 and historic evidence unchanged.
+
+
+- **State:** `superseded` (2026-10-19); archived historical specification, not executable.
 - **Batch:** `IDSER-BATCH-12-02-03`
 - **Dependencies:** IDSER-012-02-01/02 independent CK PASS, BSS-V2-006-04 admission CK PASS, BSS-V2-004-03-06 review CK PASS AND semantic meaning result PASS. Neither alone suffices.
 - **Parent:** [IDSER-012-02](IDSER-012-02-provider-admitted-multi-batch-semantic-extraction.md)

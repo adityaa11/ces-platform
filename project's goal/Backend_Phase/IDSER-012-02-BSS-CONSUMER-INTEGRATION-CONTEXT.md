@@ -1,5 +1,8 @@
 # IDSER-012-02 — BSS planning/read and admitted-runtime consumer integration context
 
+> **ARCHIVED/SUPERSEDED planning context (2026-10-19).** This 2026-10-16/18 text references superseded IDSER-012-02 and historical BSS states. The new active planning authority is [IDSER-012-03](tickets/Initial_Draft_Phase/IDSER-012-03-semantic-batch-planner-ghr-contract-hard-stop.md) and [RC disposition](tickets/Initial_Draft_Phase/IDSER-012-03-requirement-disposition.md): actual accepted NormalizedDocument V1 via GHR-compatible body fixture/parser and Atlas read-only resolver, BSS-effective planning, durable batch handoff, then **STOP before GHR/SEM/provider work**. Approved BSS-V2-006-04 and -05 leaves must be read as newer evidence. Everything below is retained only as historical handoff reasoning, not GO/CK authorization.
+
+
 - **Status:** `prospective / contract-aligned / NOT_IMPLEMENTED`; authored 2026-10-16 for future GO, CFC and CK. This file does **not** authorize implementation, provider calls, live spending, a model/route activation, or CK PASS.
 - **Owner:** IDSER-012-02 orchestration; no transfer of ownership of BSS resource policy, SEM-CUTOVER extraction methodology, Atlas semantic acceptance or reconciliation.
 - **BSS source contract:** [BSS provider consumer hard-stop checkpoint](bss-provider-consumer-contract-checkpoint-20261016.md).

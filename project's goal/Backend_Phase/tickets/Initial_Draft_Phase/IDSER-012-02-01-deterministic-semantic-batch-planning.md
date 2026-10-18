@@ -1,6 +1,10 @@
 # IDSER-012-02-01 — Capacity-aware Semantic Batch Planner and durable Planned Corpus hard stop
 
-- **State:** `planned`; **GO BLOCKED** until exact BSS-V2-005/006 capacity interfaces, source/REL continuity and SEM corpus-compatibility prerequisites are demonstrably authorized. This prospective rewrite is **not** an implementation GO, CK PASS, or permission to activate semantic/provider work.
+> **SUPERSEDED — NON-EXECUTABLE (2026-10-19).** Replaced by IDSER-012-03-01..03: strict five-field GHR body receiver, accepted source resolver, BSS-effective planner and durable handoff.
+> **Successor:** [IDSER-012-03](IDSER-012-03-semantic-batch-planner-ghr-contract-hard-stop.md); [complete original RC disposition](IDSER-012-03-requirement-disposition.md). Original body below is archival context, NOT an active GO/CK/authority. Approved IDSER-012-01 and historic evidence unchanged.
+
+
+- **State:** `superseded` (2026-10-19); archived historical specification, not executable.
 - **Batch:** `IDSER-BATCH-12-02-01`
 - **Parent:** [IDSER-012-02](IDSER-012-02-provider-admitted-multi-batch-semantic-extraction.md)
 - **Dependencies:** accepted PERC-RESET-008 / IDSER-012-01-03-02 NormalizedDocument V1 and granted asset identities; BSS-V2-005-01..04 genuine CK-qualified capacity/workload/DesiredAdmissionProfile contracts; BSS-V2-006-01..04 **when** runtime effective-constraint eligibility is required, with separately proven read-only interface; identified SEM-CUTOVER-007A methodology/profile and an explicit versioned future-consumer handoff shape. Implemented SEM batch-corpus intake and complete wire-compatibility proof belong to a **later SEM-owned checkpoint, not planner-only CK**. Process registration and automatic plan convergence are a prospective separate [BSS-V2-005-05](../Stack_Setup_V2/BSS-V2-005-05-process-agnostic-registry-and-plan-convergence.md) obligation, not an assumed approved capability.

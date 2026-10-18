@@ -1,6 +1,10 @@
 # IDSER-012-02-04 — Qualified stepwise document aggregation and truthful lifecycle
 
-- **State:** `planned`; **GO BLOCKED: ACCEPTANCE_POLICY_DECISION_REQUIRED**. Do not implement an unconditional `semantic_ready` or zero-reconciliation outcome.
+> **SUPERSEDED — NON-EXECUTABLE (2026-10-19).** Scope deferred to Atlas/SEM accepted-lifecycle successor; OPEN-A still blocks, not IDSER-012-03.
+> **Successor:** [IDSER-012-03](IDSER-012-03-semantic-batch-planner-ghr-contract-hard-stop.md); [complete original RC disposition](IDSER-012-03-requirement-disposition.md). Original body below is archival context, NOT an active GO/CK/authority. Approved IDSER-012-01 and historic evidence unchanged.
+
+
+- **State:** `superseded` (2026-10-19); archived historical specification, not executable.
 - **Batch:** `IDSER-BATCH-12-02-04`
 - **Dependencies:** IDSER-012-02-03 independent CK PASS; valid source/plan/REL/deferred composite; bounded explicitly authorized staged reconciliation/acceptance policy reconciled with SEM-CUTOVER-007A-DEFERRED-ACCEPTANCE.
 - **Parent:** [IDSER-012-02](IDSER-012-02-provider-admitted-multi-batch-semantic-extraction.md)

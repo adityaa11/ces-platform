@@ -1,6 +1,10 @@
 # IDSER-012-02-02 — Exact stepwise semantic consumer/workload activation
 
-- **State:** `planned`; **GO BLOCKED** until -02-01 and actual BSS-V2-005/006 predecessor CK PASS.
+> **SUPERSEDED — NON-EXECUTABLE (2026-10-19).** Scope deferred to a separate future activation successor, not implemented by IDSER-012-03.
+> **Successor:** [IDSER-012-03](IDSER-012-03-semantic-batch-planner-ghr-contract-hard-stop.md); [complete original RC disposition](IDSER-012-03-requirement-disposition.md). Original body below is archival context, NOT an active GO/CK/authority. Approved IDSER-012-01 and historic evidence unchanged.
+
+
+- **State:** `superseded` (2026-10-19); archived historical specification, not executable.
 - **Batch:** `IDSER-BATCH-12-02-02`
 - **Dependencies:** IDSER-012-02-01, BSS-V2-005-04 and BSS-V2-006-04 independent CK PASS; a version/hash-qualified SEM-007A stepwise route. No retired BSS-V2-004-03-05 or IDSER-011 PASS.
 - **Parent:** [IDSER-012-02](IDSER-012-02-provider-admitted-multi-batch-semantic-extraction.md)
