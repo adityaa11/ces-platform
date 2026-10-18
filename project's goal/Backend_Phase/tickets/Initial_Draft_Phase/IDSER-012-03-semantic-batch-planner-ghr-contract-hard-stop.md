@@ -15,7 +15,7 @@ Existing accepted NormalizedDocument v1 in Atlas, durable perceived
   -> STRICT receiver-owned SemanticBatchPlanInput/v1 parser
   -> Atlas-authorized read-only normalizedDocumentRef resolver
   -> verified document, source/perception/hash/grants/REL/media
-  -> read real BSS-005 effective capacity/structural policy; optional qualified BSS-006 read
+  -> read real BSS-005 effective capacity/structural policy; no BSS-006 runtime read or reservation
   -> IDSER semantic corpus partition (owned/context/REL/deferred) + resource envelopes
   -> atomic durable document plan + N immutable PlannedSemanticCorpusHandoff
   -> non-delivering, strict SemanticBatchPlanReady/v1 compatibility receiver
@@ -67,6 +67,6 @@ Each child needs explicit GO, evidence and independent CK. Parent is **never** a
 
 ## GO/CK prerequisites and downstream ownership
 
-`-03-01` requires demonstrably authorized real accepted-document read and evidence provenance; `-03-02` requires a **callable** BSS-005 effective planning read with legitimate prospective inactive-workload identity (if absent STOP `BSS_CAPACITY_CONSUMER_READ_GAP` / `CAPACITY_PROFILE_BOOTSTRAP_GAP`, owned by BSS), not an isolated BSS fixture. BSS-006 runtime constraint read is only mandatory if frozen GO makes it so; it is never a permit. `-03-03` proves restart/rollback/duplicates/cancellation/conflicting hashes/foreign media/structural replan and exact forbidden zero effects. No predecessor CK grants future execution.
+`-03-01` requires demonstrably authorized real accepted-document read and evidence provenance; `-03-02` requires a **callable** BSS-005 effective planning read with legitimate prospective inactive-workload identity (if absent STOP `BSS_CAPACITY_CONSUMER_READ_GAP` / `CAPACITY_PROFILE_BOOTSTRAP_GAP`, owned by BSS), not an isolated BSS fixture. Do not add a BSS-006 runtime-window/constraint read to this **planner-only** scope: current depletion and admission eligibility belong to future BSS execution, not corpus sizing. `-03-03` proves restart/rollback/duplicates/cancellation/conflicting hashes/foreign media/structural replan and exact forbidden zero effects. No predecessor CK grants future execution.
 
 Future separate GO/CK: GHR `semantic/batch-plan` real delivery and `semantic/batch-execution-intake` output delivery; SEM-owned batch intake/qualified stepwise engine; semantic BSS workload activation; one BSS-V2-006 per-attempt admitted outbound lane (no duplicate ordinary SEM provider sender); qualified batch acceptance/reconciliation preparation under unresolved `OPEN-A`. Superseded `IDSER-012-02-02..04` obligations are **deferred** to these future owners, not incorporated into the present planner scope.
