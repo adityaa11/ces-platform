@@ -1,42 +1,93 @@
-# BSS-V2-007 — Reusable receiving-work authorization boundary
+# BSS-V2-007 — Authenticated internal receiving boundary (narrow reusable contract)
 
-- **State:** `planned`; not GO/CFC/CK authority.
+- **State:** `planned`; implementation is NOT authorized by this planning document. Separate GO / CK required.
 - **Review batch:** `BSS-V2-BATCH-07`.
-- **Dependencies:** approved Atlas internal-service/perception authority and its session-independent background handoff pattern; `IDSER-012-03-01-02` CK `PASS` as an *existing accepted-document resolver consumer*, not an invitation to reopen that review. No running GHR is required.
-- **Owner:** shared BSS/Atlas receiving-authentication contract and common verifier. The resource owner retains all document/media/semantic authorization, and GHR retains issuance, route selection, ordering, delivery and acknowledgement.
-- **First downstream consumer:** planned `IDSER-012-03-01-03` (semantic/batch-plan resolver binding). Future SEM and reconciliation receivers reuse this contract with their own policy adapters.
+- **Dependency:** current approved Atlas perception/semantic internal HTTP authentication convention. Neither GHR nor IDSER-012-03-01-03 implementation is a prerequisite for qualifying this BSS library.
+- **Downstream:** `IDSER-012-03-01-03` owns the first domain-specific accepted-document read; `BSS-V2-008` is separately planned and NOT activated/implemented here.
 
-## Outcome
+## Frozen policy decision — 2026-10-19
 
-Provide **one reusable, fail-closed receiver authorization boundary** for handoff-driven background processing. A receiver must prove both (a) an authenticated, allowed internal service/receiving identity and (b) an Atlas-authorized work identity for a *specific purpose, route and resource scope*; neither receipt of a JSON body nor knowledge of a resource ref grants access. The mechanism is shared; the route's permission and resource validation remain domain-owned. Browser logout must not invalidate independently authorized durable background work.
+The BSS component authenticates an internal caller **before** executing a **server-wired, domain-owned authorized resource operation**. It does NOT issue a transferable principal, generic work token, permission object or delivery receipt. No client-selected route/operation/policy is accepted. The server selects the credential and domain callback when composing the receiver. A successful credential check **alone is never a resource grant**; authorization to act on each resource is part of the domain callback, which must be exercised and proved in its downstream ticket.
 
-## Frozen trust model and scope
+The current first service is `agents-bridge`, authenticated by the existing `AGENTS_BRIDGE_SERVICE_CREDENTIAL` mechanism. No universal secret is introduced or shared with unrelated services. This component neither starts work nor decides whether a document is accepted.
 
-1. Keep independent meanings for **service authentication**, **work authorization**, **GHR delivery provenance**, and **resource-owner authorization**. Define typed, server-verified `ReceivingPrincipal` and `AuthorizedReceivingWork` context with registered service identity, allowed receiver/route-purpose, immutable work identity, project/workspace/bundle/document scope where applicable, source/version binding, lifecycle/cancellation/revocation provenance and policy version. Route-specific fields are **policy adapters**, not requirements on all receiving routes.
-2. Explicitly model interactive-user and authenticated-background-service principals as **disjoint variants**. Only interactive access depends on Better Auth session; a background caller must have its own service authentication and server-derived work authority. A caller-supplied `kind:"background"`, a copied user ID, a shared secret alone or the GHR body itself may never elevate an unverified context.
-3. Reuse qualified Atlas/Bridge internal service-authentication conventions and Atlas-owned persisted work/source authority. Service credentials **remain service-scoped**: `AGENTS_BRIDGE_SERVICE_CREDENTIAL` is not centralized into a universal Atlas key, and does not by itself authorize a resource. No duplication of sessions, universal impersonation, Bridge read/write access to `atlas.*`, broad cache enumeration, or new parallel resource resolver.
-4. Publish one small generic verifier/policy-adapter interface, typed success/deny outcomes, server-derived purpose/scope, bounded validation, origin/replay/staleness checking and deny-by-default behavior. The generic boundary must **not** parse domain payloads or know NormalizedDocument, semantic batches, provider quotas or future reconciliation schema.
-5. A **trusted local delivery-context fixture** exercises the receiver in absence of active GHR. It cannot forge an issuer identity, pretend a real GHR route has delivered, mint a work permit from body values, or put bearer secrets/source bytes in handoff metadata.
-6. Coordinate with `BSS-V2-008` via matching versioned principal/purpose/scope provenance concepts, but **do not** make the receiver trust a sender assertion alone. Final GHR delivery issuer/receipt binding will be a later GHR-owned integration; BSS-007 does not create an outbox, route registry, dispatcher or acknowledgement.
+**Explicit chosen first-consumer access policy:** an authenticated Atlas-managed Bridge processing service may redeem any `SemanticBatchPlanInput/v1` that matches an *eligible accepted* persisted perception operation; this is a **service-wide constrained read**, NOT proof that an individual GHR task was assigned. GHR delivery/job assignment is separately future-owned. Do not claim per-job sender/receipt authentication or infer it from a hash/ref.
 
-## Frozen Review Contract
+## Exact public TypeScript API
 
-| ID | PASS iff |
+**New module:** `packages/atlas-core/src/internal-receiving-boundary.ts`; export it from `packages/atlas-core/src/index.ts`.
+
+```typescript
+import { timingSafeEqual } from "node:crypto";
+
+export class InternalReceivingUnauthorizedError extends Error {
+  constructor() {
+    super("Unauthorized internal service request.");
+    this.name = "InternalReceivingUnauthorizedError";
+  }
+}
+
+export type InternalReceivingBoundary<TInput, TResult> = Readonly<{
+  receive(
+    presentedCredential: string | undefined,
+    rawBody: string
+  ): Promise<TResult>;
+}>;
+
+export function createInternalReceivingBoundary<TInput, TResult>(
+  options: Readonly<{
+    serviceCredential: string;
+    parseBody(rawBody: string): TInput;
+    redeem(input: TInput): Promise<TResult>;
+  }>
+): InternalReceivingBoundary<TInput, TResult> {
+  const expected = Buffer.from(options.serviceCredential, "utf8");
+  if (expected.byteLength < 32) {
+    throw new Error("Internal service credential must be at least 32 bytes.");
+  }
+  return {
+    async receive(presentedCredential, rawBody) {
+      if (typeof presentedCredential !== "string") {
+        throw new InternalReceivingUnauthorizedError();
+      }
+      const actual = Buffer.from(presentedCredential, "utf8");
+      if (
+        actual.byteLength !== expected.byteLength ||
+        !timingSafeEqual(actual, expected)
+      ) {
+        throw new InternalReceivingUnauthorizedError();
+      }
+      const parsed = options.parseBody(rawBody);
+      return options.redeem(parsed);
+    },
+  };
+}
+```
+
+The block above is the **binding implementation shape**, not pseudocode. Only mechanical formatting/import amendments are permitted during GO. `parseBody` is receiver-owned strict validation; `redeem` is the server-wired domain authorization **and** resource operation. Its caller supplies no `serviceId`, `routeId`, `policyId`, bypass flag or trusted scope. The receiver must never export the configured credential in errors or response. `receive` is the only entry; no unprotected variant or helper that returns an authorization token.
+
+This BSS library does not define wire status codes: each host maps `InternalReceivingUnauthorizedError` to an existing redacted 401; domain parser failures to a bounded invalid request; ineligible resource and infrastructure errors to separate closed failure responses. The HTTP host **must cap request bytes before** constructing `rawBody`.
+
+## Ownership and forbidden implementation
+
+- BSS-V2-007: this one module, public export, tests of credential validation/order and reuse across two domain callbacks. No SQL and no workspace/project/document fields.
+- IDSER-012-03-01-03: compose it with strict `parseSemanticBatchPlanInputV1` and Atlas-owned `PostgresAcceptedSemanticBatchPlanDocumentResolver.resolveBackground` (new background entry, existing document validation).
+- Existing interactive `resolve(scope,input)` retains Better Auth session/membership checks. It must **never** call `resolveBackground` as a fallback when the user session is expired.
+- Existing `createPerceptionInternalRoutes` and `createSemanticInternalRoutes` remain behaviorally frozen. Their credential comparison is the existing qualified pattern; BSS-007 need not refactor those existing reviewed paths merely to demonstrate reuse.
+- No GHR issuer/outbox/dispatcher, message queue, planning worker, body envelope, service identity registry, authorization SQL table/migration, global key, source-grant reuse, provider admission, SEM result, truth/publication effect, or new credential rotation policy.
+
+## CK Review Contract
+
+| ID | Exact proof |
 | --- | --- |
-| RC-BSSV2-007-01 | A reusable typed receiving principal/work contract and single verifier support independently authorized background service identity without an active user session, with exact allowed route/purpose and scope. No domain-specific parser or second resolver is introduced. |
-| RC-BSSV2-007-02 | Non-inert positive authorized fixture passes; missing/forged/cross-service/foreign-route/foreign-project/cross-document/stale/replayed-out-of-policy/cancelled/revoked or unsupported principal/work fails closed with no resource contents. |
-| RC-BSSV2-007-03 | Expired/logout interactive sessions are rejected; a qualified independently authorized background work remains eligible despite logout, while revoked work and invalid service authentication are denied. No implicit background work grant is minted from an interactive session or the body. |
-| RC-BSSV2-007-04 | Resource access is still gated by the **resource owner**; a verified receiver cannot read an arbitrary accepted document or media, and cannot derive an accepted semantic truth or send permit merely from generic authorization. |
-| RC-BSSV2-007-05 | Existing Docling/perception and `IDSER-012-03-01-02` behavior has no direct regression; no GHR issuance/delivery, BSS admission, SEM execution, provider send, truth write or new runtime queue; positive and negative side-effect oracles are non-inert. |
+| RC-BSSV2-007-01 | Public function/type and unauthorized error are implemented exactly as above, with fail-fast secret length validation and timing-safe equality for equal-length candidates. |
+| RC-BSSV2-007-02 | Wrong/missing credential calls neither `parseBody` nor `redeem`; correct credential invokes each exactly once in order; no returned permit/context/token is created. |
+| RC-BSSV2-007-03 | Two different real test receiving callbacks with distinct strict parsers and authoritative authorization behavior use the *same* BSS function without semantic/document assumptions. An invalid work request is rejected by the owning callback without returning protected data. |
+| RC-BSSV2-007-04 | Replay of an authorized read may be verified again; no BSS TTL/grant/replay ledger invented. The generic guard is not claimed to enforce per-job assignment, revocation or GHR delivery. |
+| RC-BSSV2-007-05 | Direct perception/semantic internal-route regressions remain PASS; no migrations, direct Bridge Atlas DB access, provider requests, queue publication or persisted Atlas truth mutations. Tests prove their side-effect counters are active, not inert mocks. |
 
-## Security Refactor Readiness
+## Security readiness and handoff
 
-- **Status:** `applicable`.
-- **Inherited boundary:** `BOUNDARY-BSSV2-007-ATLAS-WORK` — the Atlas owner decides durable work eligibility and resource scope; generic BSS receiving authentication is **not** a document/read grant.
-- **Trust transition:** `SEAM-BSSV2-007-VERIFIED-RECEIVER` — internal credential verification and server-derived work/purpose authorization must both succeed before entering the receiving domain.
-- **Prohibited coupling:** `COUPLING-BSSV2-007-UNIVERSAL-SERVICE-KEY` — no global Bridge credential, requester-chosen principal, or payload reference can imply resource authority.
-- **Review bindings:** `REV-READY-BSSV2-007-01` confirms session-independent approved background access and expired-interactive rejection; `REV-READY-BSSV2-007-02` confirms revoked/foreign work denial; `REV-READY-BSSV2-007-03` confirms no GHR, BSS, SEM or provider effects.
+**Applicable.** The trust transition is external/internal presented credential → authenticated server-composed receiver → domain `redeem` resource authority. A credential is necessary but not sufficient. In `IDSER-012-03-01-03`, the production document eligibility check must use the exact accepted perception/member/bundle/cache/source/fingerprint/media evidence, with redacted failure and positive persisted-record proof. A separate per-job authorization requirement is a **future GHR work assignment policy**, not silently present in BSS-V2-007.
 
-## Review and handoff
-
-Record principal derivation, durable work/source authority, verification policy, replay/revocation disposition and exact exercised fixture. Explicitly STOP `RECEIVING_WORK_AUTHORITY_GAP` when a qualified server-derived work permit for a receiving domain is missing; BSS must not invent an Atlas truth grant. CK `PASS` qualifies only the **shared mechanism**. `IDSER-012-03-01-03` alone owns the next semantic/batch-plan **domain adapter and existing resolver integration**; future SEM/reconciliation routes retain separate GO/CK. No current live GHR is asserted.
+On CK PASS, publish only the reusable boundary. **HARD STOP** before a GHR route, any new live worker, or IDSER resolver changes.
