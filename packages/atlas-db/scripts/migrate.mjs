@@ -46,6 +46,9 @@ migrations.push("0074_bssv20060404_interactive_admitted_work_lifecycle");
 migrations.push("0075_bssv20060405_constraint_convergence_structural_replan_projection");
 migrations.push("0076_bssv200501_anoman_capacity_profile");
 migrations.push("0077_bssv20060501_authorized_enforcement_policy_provenance");
+migrations.push("0078_bssv20060502_effective_plan_publication_convergence");
+migrations.push("0079_bssv20060502_effective_plan_timestamp_canonicalization");
+migrations.push("0080_bssv20060502_effective_plan_canonicalizer_execute");
 const readMigration = async (name) => {
   let migration = await readFile(new URL(`../migrations/${name}.sql`, import.meta.url), "utf8");
   for (const [token, value] of Object.entries(replacements)) migration = migration.replaceAll(token, value.replaceAll("'", "''"));
