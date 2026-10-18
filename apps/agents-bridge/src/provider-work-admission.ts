@@ -12,6 +12,8 @@ export type ProviderWorkAdmissionRequest = Readonly<{
   payloadHash: string;
   requestResourceEnvelope: Readonly<Record<string, number>>;
   expectedEffectiveConstraintRevision: string;
+  /** Required by interactive principals; evaluated and persisted by BSS. */
+  deadlineEpochMilliseconds?: number;
 }>;
 
 export type ProviderWorkAdmissionOutcome = Readonly<{
@@ -47,6 +49,9 @@ export function parseProviderWorkAdmissionRequest(value: unknown): ProviderWorkA
   if (Object.keys(envelope).length !== dimensions.length || dimensions.some((dimension) => !Number.isInteger(envelope[dimension]) || Number(envelope[dimension]) < 1)) {
     throw new Error("Provider work admission request must provide positive integer rpm, tpm, rpd, and concurrency values.");
   }
+  if (input.deadlineEpochMilliseconds !== undefined && (!Number.isInteger(input.deadlineEpochMilliseconds) || Number(input.deadlineEpochMilliseconds) < 1)) {
+    throw new Error("Provider work admission request has an invalid deadlineEpochMilliseconds.");
+  }
   return {
     logicalWorkId: input.logicalWorkId as string,
     attemptNumber: Number(input.attemptNumber),
@@ -55,6 +60,7 @@ export function parseProviderWorkAdmissionRequest(value: unknown): ProviderWorkA
     payloadHash: input.payloadHash as string,
     requestResourceEnvelope: Object.fromEntries(dimensions.map((dimension) => [dimension, Number(envelope[dimension])])),
     expectedEffectiveConstraintRevision: input.expectedEffectiveConstraintRevision as string,
+    ...(input.deadlineEpochMilliseconds === undefined ? {} : { deadlineEpochMilliseconds: Number(input.deadlineEpochMilliseconds) }),
   };
 }
 
@@ -74,13 +80,13 @@ export function createProviderWorkAdmissionService(
   return {
     async admit(credential, request) {
       const principal = authenticator.authenticate(credential);
-      if (!principal || principal.serviceClass !== "background") return unavailable();
+      if (!principal) return unavailable();
       try {
         const result = await database.executeSql(
           "SELECT bridge.admit_provider_work_admission_v1($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb) AS outcome",
           [principal.principalId, principal.quotaDomainId, principal.processId, principal.processProfileVersion, principal.routeId, principal.serviceClass,
             request.logicalWorkId, request.attemptNumber, request.idempotencyKey, request.payloadReference, request.payloadHash,
-            { requestResourceEnvelope: request.requestResourceEnvelope, expectedEffectiveConstraintRevision: request.expectedEffectiveConstraintRevision }],
+            { requestResourceEnvelope: request.requestResourceEnvelope, expectedEffectiveConstraintRevision: request.expectedEffectiveConstraintRevision, ...(request.deadlineEpochMilliseconds === undefined ? {} : { deadlineEpochMilliseconds: request.deadlineEpochMilliseconds }) }],
         );
         const outcome = (result.rows[0] as { outcome?: unknown } | undefined)?.outcome;
         if (!outcome || typeof outcome !== "object" || Array.isArray(outcome)) return unavailable();
@@ -91,7 +97,7 @@ export function createProviderWorkAdmissionService(
     },
     async cancel(credential, logicalWorkId, attemptNumber) {
       const principal = authenticator.authenticate(credential);
-      if (!principal || principal.serviceClass !== "background" || !nonEmpty(logicalWorkId) || !Number.isInteger(attemptNumber) || attemptNumber < 1) return unavailable();
+      if (!principal || !nonEmpty(logicalWorkId) || !Number.isInteger(attemptNumber) || attemptNumber < 1) return unavailable();
       try {
         const result = await database.executeSql("SELECT bridge.cancel_provider_work_admission_v1($1,$2,$3) AS outcome", [principal.principalId, logicalWorkId, attemptNumber]);
         const outcome = (result.rows[0] as { outcome?: unknown } | undefined)?.outcome;
@@ -100,7 +106,7 @@ export function createProviderWorkAdmissionService(
     },
     async outcome(credential, logicalWorkId, attemptNumber) {
       const principal = authenticator.authenticate(credential);
-      if (!principal || principal.serviceClass !== "background" || !nonEmpty(logicalWorkId) || !Number.isInteger(attemptNumber) || attemptNumber < 1) return unavailable();
+      if (!principal || !nonEmpty(logicalWorkId) || !Number.isInteger(attemptNumber) || attemptNumber < 1) return unavailable();
       try {
         const result = await database.executeSql("SELECT bridge.read_provider_work_admission_v1_outcome($1,$2,$3) AS outcome", [principal.principalId, logicalWorkId, attemptNumber]);
         const outcome = (result.rows[0] as { outcome?: unknown } | undefined)?.outcome;
