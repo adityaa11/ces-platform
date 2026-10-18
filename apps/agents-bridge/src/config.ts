@@ -2,10 +2,12 @@ import { parseDeploymentProfile, parseQualifiedRoutes, type DeploymentProfile, t
 import { doclingOptionProfile, doclingServeVersion, doclingSlimVersion, type DoclingProviderConfig } from "./providers/docling.js";
 import type { AnomanProviderConfig } from "./providers/anoman.js";
 import type { RuntimeCapacityConstraintPrincipal } from "./runtime-capacity-constraint.js";
+import type { CapacityPlanningSnapshotPrincipal } from "./capacity-planning-snapshot.js";
 
 export type RuntimeCapacityConstraintBinding = RuntimeCapacityConstraintPrincipal & Readonly<{
   credential: string;
 }>;
+export type CapacityPlanningSnapshotBinding = CapacityPlanningSnapshotPrincipal & Readonly<{ credential: string }>;
 
 export type BridgeConfig = {
   readonly host: string;
@@ -50,6 +52,8 @@ export type BridgeConfig = {
     databaseUrl: string;
     bindings: readonly RuntimeCapacityConstraintBinding[];
   }>;
+  /** Server-owned registrations for the BSS-V2-005 planning-only read API. */
+  readonly capacityPlanningSnapshot?: Readonly<{ databaseUrl: string; bindings: readonly CapacityPlanningSnapshotBinding[] }>;
 };
 
 function boundedPositiveInteger(value: string | undefined, fallback: number, name: string): number {
@@ -77,6 +81,26 @@ function runtimeCapacityConstraintBindings(value: string | undefined): readonly 
   });
 }
 
+function capacityPlanningSnapshotBindings(value: string | undefined): readonly CapacityPlanningSnapshotBinding[] | undefined {
+  if (value === undefined || value === "") return undefined;
+  let input: unknown;
+  try { input = JSON.parse(value); } catch { throw new Error("AGENTS_BRIDGE_CAPACITY_PLANNING_SNAPSHOT_PRINCIPALS must be valid JSON."); }
+  if (!Array.isArray(input) || input.length === 0) throw new Error("AGENTS_BRIDGE_CAPACITY_PLANNING_SNAPSHOT_PRINCIPALS must be a non-empty array.");
+  const credentials = new Set<string>();
+  return input.map((candidate, index) => {
+    if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) throw new Error(`Capacity planning snapshot principal ${index} must be an object.`);
+    const principal = candidate as Record<string, unknown>;
+    const fields = ["credential", "principalId", "quotaDomainId", "processId", "processProfileVersion", "routeId"] as const;
+    for (const field of fields) if (typeof principal[field] !== "string" || principal[field].length === 0) throw new Error(`Capacity planning snapshot principal ${index} has an invalid ${field}.`);
+    if (principal.serviceClass !== "background" && principal.serviceClass !== "interactive") throw new Error(`Capacity planning snapshot principal ${index} has an invalid serviceClass.`);
+    if (principal.prospective !== undefined && typeof principal.prospective !== "boolean") throw new Error(`Capacity planning snapshot principal ${index} has an invalid prospective flag.`);
+    const credential = principal.credential as string;
+    if (credentials.has(credential)) throw new Error("Capacity planning snapshot credentials must be unique.");
+    credentials.add(credential);
+    return { credential, principalId: principal.principalId as string, quotaDomainId: principal.quotaDomainId as string, processId: principal.processId as string, processProfileVersion: principal.processProfileVersion as string, routeId: principal.routeId as string, serviceClass: principal.serviceClass, prospective: principal.prospective === true };
+  });
+}
+
 export function loadBridgeConfig(environment: NodeJS.ProcessEnv = process.env): BridgeConfig {
   const port = Number(environment.AGENTS_BRIDGE_PORT ?? "3002");
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error("AGENTS_BRIDGE_PORT must be a valid TCP port.");
@@ -97,8 +121,9 @@ export function loadBridgeConfig(environment: NodeJS.ProcessEnv = process.env): 
   const testFaultProxy = environment.DOCLING_ALLOW_TEST_FAULT_PROXY === "true" && parsedDoclingUrl.hostname === "docling-fault";
   if (parsedDoclingUrl.protocol !== "http:" || (!testFaultProxy && parsedDoclingUrl.hostname !== "docling-serve") || parsedDoclingUrl.username || parsedDoclingUrl.password || parsedDoclingUrl.search || parsedDoclingUrl.hash) throw new Error("DOCLING_BASE_URL must be the credential-free Compose-private http://docling-serve endpoint.");
   const runtimeConstraintBindings = runtimeCapacityConstraintBindings(environment.AGENTS_BRIDGE_RUNTIME_CAPACITY_CONSTRAINT_PRINCIPALS);
+  const planningSnapshotBindings = capacityPlanningSnapshotBindings(environment.AGENTS_BRIDGE_CAPACITY_PLANNING_SNAPSHOT_PRINCIPALS);
   const runtimeConstraintDatabaseUrl = environment.AGENTS_BRIDGE_DATABASE_URL;
-  if (runtimeConstraintBindings && !runtimeConstraintDatabaseUrl) throw new Error("AGENTS_BRIDGE_DATABASE_URL is required when runtime capacity constraint principals are configured.");
+  if ((runtimeConstraintBindings || planningSnapshotBindings) && !runtimeConstraintDatabaseUrl) throw new Error("AGENTS_BRIDGE_DATABASE_URL is required when capacity-read principals are configured.");
   return {
     host: environment.AGENTS_BRIDGE_HOST ?? "0.0.0.0",
     port,
@@ -145,5 +170,6 @@ export function loadBridgeConfig(environment: NodeJS.ProcessEnv = process.env): 
     },
     docling: { baseUrl: doclingBaseUrl.replace(/\/$/u, ""), timeoutMilliseconds: boundedPositiveInteger(environment.DOCLING_TIMEOUT_MS, 20_000, "DOCLING_TIMEOUT_MS"), maxDocumentBytes: boundedPositiveInteger(environment.DOCLING_MAX_DOCUMENT_BYTES, 20 * 1024 * 1024, "DOCLING_MAX_DOCUMENT_BYTES"), maxResponseBytes: boundedPositiveInteger(environment.DOCLING_MAX_RESPONSE_BYTES, 10 * 1024 * 1024, "DOCLING_MAX_RESPONSE_BYTES"), serviceVersion: environment.DOCLING_SERVE_VERSION ?? doclingServeVersion, doclingSlimVersion: environment.DOCLING_SLIM_VERSION ?? doclingSlimVersion, optionProfile: environment.DOCLING_OPTION_PROFILE ?? doclingOptionProfile },
     runtimeCapacityConstraint: runtimeConstraintBindings && runtimeConstraintDatabaseUrl ? { databaseUrl: runtimeConstraintDatabaseUrl, bindings: runtimeConstraintBindings } : undefined,
+    capacityPlanningSnapshot: planningSnapshotBindings && runtimeConstraintDatabaseUrl ? { databaseUrl: runtimeConstraintDatabaseUrl, bindings: planningSnapshotBindings } : undefined,
   };
 }

@@ -2,6 +2,7 @@ import Fastify from "fastify";
 import { parseExecutionRequest, type ReasoningRuntime } from "@atlas/contracts";
 import type { RuntimeCapacityConstraintRead, RuntimeCapacityConstraint } from "./runtime-capacity-constraint.js";
 import { parseProviderWorkAdmissionRequest, type ProviderWorkAdmissionOutcome } from "./provider-work-admission.js";
+import type { CapacityPlanningSnapshot, CapacityPlanningSnapshotRead } from "./capacity-planning-snapshot.js";
 
 type RuntimeCapacityConstraintReader = Readonly<{
   read(credential: string, request?: RuntimeCapacityConstraintRead): Promise<RuntimeCapacityConstraint>;
@@ -12,6 +13,9 @@ type ProviderWorkAdmissionService = Readonly<{
   cancel(credential: string, logicalWorkId: string, attemptNumber: number): Promise<ProviderWorkAdmissionOutcome>;
   outcome(credential: string, logicalWorkId: string, attemptNumber: number): Promise<ProviderWorkAdmissionOutcome>;
 }>;
+type CapacityPlanningSnapshotReader = Readonly<{ read(credential: string, request?: CapacityPlanningSnapshotRead): Promise<CapacityPlanningSnapshot> }>;
+
+const unavailablePlanningSnapshot = (): CapacityPlanningSnapshot => ({ apiVersion: "CapacityPlanningSnapshot/v1", status: "inactive", reason: "inactive_or_unauthorized", readIsNotAdmissionPermit: true });
 
 const unavailableRuntimeConstraint = (): RuntimeCapacityConstraint => ({
   apiVersion: "RuntimeCapacityConstraint/v1",
@@ -30,6 +34,7 @@ export function createBridgeApp(options: {
   readonly version: string;
   readonly ready?: () => boolean;
   readonly runtimeCapacityConstraintReader?: RuntimeCapacityConstraintReader;
+  readonly capacityPlanningSnapshotReader?: CapacityPlanningSnapshotReader;
   readonly providerWorkAdmissionService?: ProviderWorkAdmissionService;
 }) {
   const app = Fastify({ logger: false });
@@ -48,6 +53,18 @@ export function createBridgeApp(options: {
     }
     return (options.runtimeCapacityConstraintReader ?? { read: async () => unavailableRuntimeConstraint() })
       .read(credential, expectedEffectiveConstraintRevision === undefined ? undefined : { expectedEffectiveConstraintRevision });
+  });
+  app.get("/v1/capacity-planning-snapshot", async (request, reply) => {
+    const credential = bearerCredential(request.headers.authorization);
+    if (!credential) return unavailablePlanningSnapshot();
+    const query = request.query as { prospective?: unknown; requestBytes?: unknown; inputTokens?: unknown };
+    const parseOptionalInteger = (value: unknown) => value === undefined ? undefined : typeof value === "string" && /^\d+$/u.test(value) ? Number(value) : null;
+    const requestBytes = parseOptionalInteger(query.requestBytes);
+    const inputTokens = parseOptionalInteger(query.inputTokens);
+    if ((query.prospective !== undefined && query.prospective !== "true" && query.prospective !== "false") || requestBytes === null || inputTokens === null) {
+      return reply.code(400).send({ error: "prospective must be true or false and sizing values must be non-negative integers." });
+    }
+    return (options.capacityPlanningSnapshotReader ?? { read: async () => unavailablePlanningSnapshot() }).read(credential, { prospective: query.prospective === "true", requestBytes, inputTokens });
   });
   app.post("/v1/provider-work-admissions", async (request, reply) => {
     const credential = bearerCredential(request.headers.authorization);
