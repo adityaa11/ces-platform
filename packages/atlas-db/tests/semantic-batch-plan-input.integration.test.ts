@@ -83,6 +83,9 @@ test("accepted RUN-003 facts derive the sole canonical semantic-batch input with
     await sql.unsafe("UPDATE atlas.document_perception_execution SET state='cancelled' WHERE id=$1", [executionId]);
     await assert.rejects(() => resolver.resolve(scope, fixture.input), /unavailable|unauthorized/i, "a cancelled accepted execution fails closed");
     await sql.unsafe("UPDATE atlas.document_perception_execution SET state='completed' WHERE id=$1", [executionId]);
+    await sql.unsafe("UPDATE atlas.extraction_bundle_document SET state='perception_queued' WHERE bundle_id=$1 AND document_id=$2", [bundle, documentId]);
+    await assert.rejects(() => resolver.resolve(scope, fixture.input), /unavailable|unauthorized/i, "an otherwise-valid unaccepted member lifecycle fails closed without leaking a planner result");
+    await sql.unsafe("UPDATE atlas.extraction_bundle_document SET state='perceived' WHERE bundle_id=$1 AND document_id=$2", [bundle, documentId]);
     await sql.unsafe("UPDATE atlas.document_perception_derived_manifest SET accepted_at=NULL WHERE execution_id=$1 AND asset_ref=$2", [executionId, asset.assetRef]);
     await assert.rejects(() => resolver.resolve(scope, fixture.input), /media.*unavailable|unauthorized/i, "missing accepted media fails closed without leaking the normalized document");
     await sql.unsafe("UPDATE atlas.document_perception_derived_manifest SET accepted_at=now() WHERE execution_id=$1 AND asset_ref=$2", [executionId, asset.assetRef]);
