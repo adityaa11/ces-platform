@@ -1,6 +1,6 @@
 # IDSER-012-03-01-03 — Background accepted-document read via BSS-V2-007
 
-- **State:** `awaiting_review`; GO implementation is complete and pending CK review.
+- **State:** `approved`; CK PASS recorded for reviewed commit `719b9d121340a5388805d284d6263c2a549a6790`.
 - **Batch:** `IDSER-BATCH-12-03-01-03`.
 - **Dependencies:** `IDSER-012-03-01-01`, `IDSER-012-03-01-02` CK PASS (historically preserved); `BSS-V2-007` CK PASS. `BSS-V2-008` and live GHR remain future and are **not** needed to qualify this non-delivering resolver.
 - **Parent:** [IDSER-012-03-01](IDSER-012-03-01-ghr-body-contract-accepted-document-resolver.md).
