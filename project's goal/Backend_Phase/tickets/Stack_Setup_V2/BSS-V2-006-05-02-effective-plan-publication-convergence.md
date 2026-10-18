@@ -1,6 +1,6 @@
 # BSS-V2-006-05-02 — Effective-plan publication convergence
 
-- **State:** `awaiting_review`; executable leaf, not GO/CFC/HMN authority or CK PASS.
+- **State:** `approved` following CK `PASS` for remediation commit `a54af78`; executable leaf.
 - **Review batch:** `BSS-V2-BATCH-06-05-02`.
 - **Parent:** [BSS-V2-006-05 split map](BSS-V2-006-05-policy-driven-optional-capacity-dimensions-anoman.md).
 - **Dependencies:** parent predecessors and `BSS-V2-006-05-01` CK `PASS`; consume its effective policy only.
