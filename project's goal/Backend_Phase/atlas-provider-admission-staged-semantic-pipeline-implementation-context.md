@@ -1,6 +1,6 @@
 # Atlas Provider Admission and Staged Semantic Pipeline Implementation Context
 
-> **SUCCESSOR PRECEDENCE NOTE (2026-10-19).** This long architecture document contains archived `IDSER-012-02` drafts and historical `semantic_ready` / direct-continuation proposals. All five `IDSER-012-02` ticket files are now `superseded`. Current narrowly authorized *planning* direction: [IDSER-012-03](tickets/Initial_Draft_Phase/IDSER-012-03-semantic-batch-planner-ghr-contract-hard-stop.md) real accepted NormDoc → GHR-body fixture/parser → Atlas read-only resolver → BSS-effective capacity fit → durable planned handoffs, **STOP before GHR, SEM intake, provider work**. `IDSER-012-01` remains approved; real GHR, activation, BSS-admitted SEM and qualified lifecycle/OPEN-A are future independently gated work. When this historical context conflicts with the 012-03 ticket or the approved SEM-CUTOVER winner, defer to those newer owners; never run its old `IDSER-012-02` task graph.
+> **Current BSS-V2 authorization-first numbering (2026-10-19):** see [BSS-V2-007–013 checkpoint](BSS-V2-007-013-handoff-auth-renumbering-checkpoint-20261019.md). New BSS-V2-007 = reusable receiving authorization; new BSS-V2-008 = reusable sender authorization; archived planned usage/economics/privacy/fallback/checkpoint 007–011 are now 009–013. All older numeric references in this implementation history are subordinate to the checkpoint. This does not modify approved BSS-V2-005/006 outcomes or the separate legacy BSS-009 perception/source-grant authority. Future GHR owns issuing, routing and delivery, not these BSS shared authorization seams.\n\n> **SUCCESSOR PRECEDENCE NOTE (2026-10-19).** This long architecture document contains archived `IDSER-012-02` drafts and historical `semantic_ready` / direct-continuation proposals. All five `IDSER-012-02` ticket files are now `superseded`. Current narrowly authorized *planning* direction: [IDSER-012-03](tickets/Initial_Draft_Phase/IDSER-012-03-semantic-batch-planner-ghr-contract-hard-stop.md) real accepted NormDoc → GHR-body fixture/parser → Atlas read-only resolver → BSS-effective capacity fit → durable planned handoffs, **STOP before GHR, SEM intake, provider work**. `IDSER-012-01` remains approved; real GHR, activation, BSS-admitted SEM and qualified lifecycle/OPEN-A are future independently gated work. When this historical context conflicts with the 012-03 ticket or the approved SEM-CUTOVER winner, defer to those newer owners; never run its old `IDSER-012-02` task graph.
 
 
 **Status:** Authorized planning context for ticket generation; no GO authorization is implied.  
@@ -741,13 +741,13 @@ Runtime observation must never permanently increase configured capacity.
 
 A confirmed permanent provider-limit change belongs in BSS-V2-005 catalogue/planner input and yields a new DesiredAdmissionProfile version.
 
-### 9.8 BSS-V2-007 boundary
+### 9.8 BSS-V2-009 boundary
 
 BSS-V2-006 may persist only the operational usage/reservation state required for correct admission.
 
-BSS-V2-007 remains the owner of richer historical execution usage/provenance telemetry.
+BSS-V2-009 remains the owner of richer historical execution usage/provenance telemetry.
 
-Do not turn BSS-V2-006 into the final analytics/cost ledger, and do not block correct admission on BSS-V2-007 being implemented first.
+Do not turn BSS-V2-006 into the final analytics/cost ledger, and do not block correct admission on BSS-V2-009 being implemented first.
 
 ---
 
@@ -1693,7 +1693,7 @@ BSS-V2-004-03-04 -> 03-05 -> 03-06 qualification PASS         |
 
 `BSS-V2-004-03-07` old direct-continuation plan is superseded before implementation and must not remain shown as an executable predecessor that bypasses BSS-V2-006.
 
-BSS-V2-007 and later BSS tickets may consume the new admission/provenance seams later; they are not pulled into this implementation context unless their dependencies need mechanical README realignment.
+BSS-V2-007/008 generic receiving/sender authorization may reuse the existing internal-service/accepted-work pattern; BSS-V2-009 and later operational tickets may consume admission/provenance seams; they are not pulled into this implementation context unless their dependencies need mechanical README realignment.
 
 ---
 
@@ -1739,7 +1739,7 @@ Addendum provider integration
 customer subscription/plan entitlement
 customer usage allowance
 billing/pricing/COGS
-BSS-V2-007 historical telemetry ledger beyond runtime-minimum reservation state
+BSS-V2-009 historical telemetry ledger beyond runtime-minimum reservation state
 privacy/legal/residency baseline
 fallback routing policy
 multi-host distributed Docling scheduling

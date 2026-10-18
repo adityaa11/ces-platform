@@ -3,7 +3,7 @@
 - **State:** `planned`; GO requires IDSER-012-03-03-01 CK `PASS`.
 - **Batch:** `IDSER-BATCH-12-03-03-02`.
 - **Parent:** [IDSER-012-03-03 split map](IDSER-012-03-03-durable-batch-handoff-ghr-output-compatibility.md).
-- **Dependencies:** CK `PASS` for every preceding `IDSER-012-03-01-01`, `-01-02`, `-02-01`, `-02-02`, `-02-03`, and `-03-01` executable child.
+- **Dependencies:** CK `PASS` for every preceding `IDSER-012-03-01-01`, `-01-02`, `-01-03`, `-02-01`, `-02-02`, `-02-03`, and `-03-01` executable child.
 
 ## Outcome
 

@@ -1,9 +1,9 @@
 # IDSER-012-03-02-02 — Conservative corpus demand estimator
 
-- **State:** `planned`; GO requires IDSER-012-03-01-02 CK `PASS`.
+- **State:** `planned`; GO requires IDSER-012-03-01-03 CK `PASS`.
 - **Batch:** `IDSER-BATCH-12-03-02-02`.
 - **Parent:** [IDSER-012-03-02 split map](IDSER-012-03-02-bss-effective-capacity-corpus-partition.md).
-- **Dependencies:** `-03-01-02` CK `PASS`; a pinned qualified BSS workload-estimator identity supplied by `-03-02-01` evidence or an already approved equivalent.
+- **Dependencies:** `-03-01-03` CK `PASS` (with approved `-03-01-01/02` retained); a pinned qualified BSS workload-estimator identity supplied by `-03-02-01` evidence or an already approved equivalent.
 
 ## Outcome
 

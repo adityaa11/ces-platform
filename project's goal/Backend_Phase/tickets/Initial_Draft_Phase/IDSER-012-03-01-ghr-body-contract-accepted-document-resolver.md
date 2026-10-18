@@ -1,5 +1,7 @@
 # IDSER-012-03-01 — Exact GHR body contract and authorized accepted-document resolver — split map
 
+> **Additive consumer successor (2026-10-19):** `-03-01-01` and `-03-01-02` CK PASS are historical and stay closed. [`-03-01-03`](IDSER-012-03-01-03-background-receiver-authorization-consumer.md) adds the background receiving-work authorization binding using reusable `BSS-V2-007` after its CK PASS; no reopening of frozen `-01-02` evidence. A server-authorized fixture replaces only future GHR delivery, not Atlas work authority. `BSS-V2-008` separately owns the reusable sender seam.
+
 - **State:** `planned`; non-executable family/traceability map; GO not authorized.
 - **Batch:** `IDSER-BATCH-12-03-01`.
 - **Parent:** [IDSER-012-03](IDSER-012-03-semantic-batch-planner-ghr-contract-hard-stop.md).
@@ -15,7 +17,7 @@ The original leaf combines a body-contract/fixture seam with an Atlas authorizat
 | 1 | [IDSER-012-03-01-01](IDSER-012-03-01-01-strict-input-body-and-accepted-fixture.md) | Exact bounded five-field receiver parser and reproducible fixture derivation from persisted accepted facts | RC-0120301-01, RC-0120301-02, fixture/replacement portion of RC-0120301-04 |
 | 2 | [IDSER-012-03-01-02](IDSER-012-03-01-02-authorized-accepted-document-resolver.md) | Atlas-owned authenticated scoped redemption, lifecycle/grant verification, and real parser-to-resolver closure | RC-0120301-03, non-side-effect portion of RC-0120301-04, RC-0120301-05 |
 
-`-01-02` requires `-01-01` CK `PASS`; only its CK `PASS` closes this family. CFC repairs only the child owning the finding. HMN may resolve a specifically missing Atlas authority, never replace it with Bridge privilege or waive real persisted-fixture evidence.
+`-01-02` requires `-01-01` CK PASS; both historical checkpoints remain closed at their reviewed scope. The **additional required background consumer integration** is `-01-03` after `BSS-V2-007` CK PASS; until its CK PASS, downstream planner GO is blocked. CFC repairs only the child owning the finding. HMN may resolve a specifically missing Atlas authority, never replace it with Bridge privilege or waive real persisted-fixture evidence.
 
 ## Security Readiness
 

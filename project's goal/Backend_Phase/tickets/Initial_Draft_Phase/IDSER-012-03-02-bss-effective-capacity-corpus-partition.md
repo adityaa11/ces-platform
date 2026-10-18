@@ -1,5 +1,7 @@
 # IDSER-012-03-02 — BSS-effective-capacity semantic corpus partition — split map
 
+> **Current GO dependency:** the approved interactive resolver `-03-01-02` is preserved; both `-03-02-01` and `-03-02-02` now require successor `IDSER-012-03-01-03` CK PASS, which binds reusable `BSS-V2-007` receiving authorization to the same Atlas document resolver. No browser-session assumption in background planning; future GHR route remains inactive.
+
 - **State:** `planned`; non-executable family/traceability map. GO is not authorized.
 - **Batch:** `IDSER-BATCH-12-03-02`.
 - **Parent:** [IDSER-012-03](IDSER-012-03-semantic-batch-planner-ghr-contract-hard-stop.md).
@@ -15,7 +17,7 @@ This leaf combines an external BSS authenticated-read integration, a semantic so
 | 2 | [IDSER-012-03-02-02](IDSER-012-03-02-02-conservative-corpus-demand-estimator.md) | Pure canonical source-unit/locator handling and conservative request-demand estimator | RC-0120302-03 source fidelity, RC-0120302-04 estimator/envelope portions |
 | 3 | [IDSER-012-03-02-03](IDSER-012-03-02-03-structural-fit-corpus-partition-proposal.md) | Deterministic structural-fit partition/replan proposal composed only from the two approved surfaces | Remaining RC-0120302-01 through RC-0120302-06 |
 
-`-02-01` and `-02-02` each require `-03-01-02` CK `PASS` and may run independently. `-02-03` requires both to pass and is the only family closure. It reuses, never reimplements, the reader and estimator. CFC returns a read or estimator defect to its owning child; HMN may resolve only a named BSS/Atlas authority gap.
+`-02-01` and `-02-02` each require **`-03-01-03` CK PASS**, in addition to approved `-03-01-01/02`, and may run independently. `-02-03` requires both to pass and is the only family closure. It reuses, never reimplements, the reader and estimator. CFC returns a read or estimator defect to its owning child; HMN may resolve only a named BSS/Atlas authority gap.
 
 ## Security Readiness
 

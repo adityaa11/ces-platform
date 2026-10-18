@@ -1,6 +1,6 @@
 # Atlas BSS V2 Implementation Context
 
-Status: Authorized implementation context for remaining BSS V2 realignment and ticket decomposition
+> **Binding authorization-first BSS V2 precedence (2026-10-19):** this long implementation context contains archived `BSS-V2-007..011` planning descriptions. The new [BSS-V2-007–013 renumbering checkpoint](BSS-V2-007-013-handoff-auth-renumbering-checkpoint-20261019.md) and current ticket headers are authoritative: `BSS-V2-007` = reusable receiving authorization, `BSS-V2-008` = reusable sender authorization, former `007/008/009/010/011` = `009/010/011/012/013`. **These are planned, not CK PASS.** The distinct historical `BSS-009` Docling/source-authority family (no V2) is unchanged. Sender/receiver mechanisms are shared; GHR owns issuance/routing/delivery; Atlas and each domain own their resources and work eligibility. See [IDSER-012-03-01-03](tickets/Initial_Draft_Phase/IDSER-012-03-01-03-background-receiver-authorization-consumer.md) for the first receiving consumer. Earlier architecture flowcharts/sequence prose are historic until explicitly reconciled by this overlay.\n\nStatus: Authorized implementation context for remaining BSS V2 realignment and ticket decomposition
 Phase name: Backend Stack Setup V2 Reconciliation
 Ticket-set prefix: BSS-V2
 Repository: adityaa11/ces-platform
@@ -579,7 +579,7 @@ existing superseded BSS-V2-004 planned artifact
 existing BSS-V2-004 blocker/evidence artifacts
 SEM-ANM-PROMPT-003 approved artifacts/history
 SEM-ANM-SPIKE-004 CK PASS review artifact and historical runner result
-existing planned BSS-V2-005 through BSS-V2-011 artifacts until explicitly regenerated
+existing planned BSS-V2-005 through BSS-V2-013 artifacts until explicitly regenerated
 ```
 
 The old BSS-V2-004 concept bundled Gemini perception, extraction, reconciliation, and development activation. It is no longer the executable next plan under the current V3/Baseline V2 authority.
@@ -1061,7 +1061,15 @@ external provider quota/capacity admission
 
 while keeping them distinct.
 
-## BSS-V2-007 - Execution telemetry and provenance ledger
+## BSS-V2-007 - Reusable receiving-work authorization
+
+A registered receiver authenticates its service principal and verifies a **durable authorized work/purpose/resource scope** before calling the domain resource owner. Better Auth sessions remain mandatory only for interactive reads; logout does not invalidate independently authorized background work. The mechanism is generic and explicitly **does not** mint GHR delivery, interpret semantic bodies, bypass Atlas accepted-document authority or expand a credential into a universal resource permit. [Current ticket](tickets/Stack_Setup_V2/BSS-V2-007-reusable-receiving-authorization-boundary.md).
+
+## BSS-V2-008 - Reusable sender/producer authorization
+
+A registered producer proves a committed eligible event/work transition bound to intended route/purpose and immutable body reference/version/digest. This is a **verified proposed handoff intent**, not a GHR issuer/route/queue/outbox/delivery. The producing domain owns its event authority. [Current ticket](tickets/Stack_Setup_V2/BSS-V2-008-reusable-sender-authorization-boundary.md).
+
+## BSS-V2-009 - Execution telemetry and provenance ledger
 
 Broaden the planned wording from provider-only telemetry to executor-aware telemetry.
 
@@ -1079,7 +1087,7 @@ External direct-provider/gateway execution additionally records tokens, gateway/
 
 No raw source/prompt/secret material is persisted.
 
-## BSS-V2-008 - Effective-dated external provider price profiles and shadow COGS
+## BSS-V2-010 - Effective-dated external provider price profiles and shadow COGS
 
 Provider economics only.
 
@@ -1087,13 +1095,13 @@ Do not invent token/page provider billing for local Docling.
 
 Local infrastructure cost may be measured later through a separate product/economic decision.
 
-## BSS-V2-009 - External-provider privacy preflight
+## BSS-V2-011 - External-provider privacy preflight
 
 Applies before external transmission.
 
 Local Docling still obeys source authorization and local data-handling/redaction rules, but it does not receive fake provider training/retention classifications.
 
-## BSS-V2-010 - Qualified fallback and route-state foundation
+## BSS-V2-012 - Qualified fallback and route-state foundation
 
 Fallback remains capability-compatible and qualification-bound.
 
@@ -1101,7 +1109,7 @@ A perception fallback is optional; no second perception executor is required mer
 
 A blocked Mistral route is not live fallback.
 
-## BSS-V2-011 - Integrated BSS V2 checkpoint
+## BSS-V2-013 - Integrated BSS V2 checkpoint
 
 This remains the final broader operational composition checkpoint after the perception and reasoning qualifications plus the applicable capacity/telemetry/privacy work.
 
@@ -1163,23 +1171,23 @@ Direct Gemini adapter            Persistent Docling service
                                   +--------------+--------------+
                                                  |
                                                  v
-                                           BSS-V2-007
+                                           BSS-V2-009
                                       telemetry/provenance
                                                  |
                                                  v
-                                           BSS-V2-008
+                                           BSS-V2-010
                                       price/shadow COGS
                                                  |
                                                  v
-                                           BSS-V2-009
+                                           BSS-V2-011
                                       external privacy preflight
                                                  |
                                                  v
-                                           BSS-V2-010
+                                           BSS-V2-012
                                       qualified fallback
                                                  |
                                                  v
-                                           BSS-V2-011
+                                           BSS-V2-013
                                       integrated checkpoint
 ```
 
@@ -1190,7 +1198,7 @@ Important sequencing rules:
 3. BSS-V2-004-03-02 depends on the PROMPT-003 qualification authority and existing IDSER semantic contracts; it may be developed against injected provider proposals.
 4. BSS-V2-004-03-03 depends on both -03-01 and -03-02 CK PASS and is the first child that qualifies the real production extraction composition.
 5. BSS-V2-004-04 depends on -03-03 CK PASS but has independent reconciliation acceptance.
-6. BSS-V2-005 and BSS-V2-007 should depend on BSS-V2-004-03-03 PASS because that is the first production-shaped external extraction route whose capacity and telemetry they operationalize. They need not wait for reconciliation unless their frozen scope explicitly consumes it.
+6. BSS-V2-005 and BSS-V2-009 should depend on BSS-V2-004-03-03 PASS because that is the first production-shaped external extraction route whose capacity and telemetry they operationalize. They need not wait for reconciliation unless their frozen scope explicitly consumes it.
 7. Dependencies must correspond to real consumed interfaces, not ticket-number ordering.
 
 ---
@@ -1533,19 +1541,25 @@ BSS-V2-005  low to medium
 BSS-V2-006  medium
     admission bypass and interactive/background isolation
 
-BSS-V2-007  medium
+BSS-V2-007  medium to high
+    receiving service/work auth must remain scope/route bound, reject logout only for interactive context, and deny revoked background work
+
+BSS-V2-008  medium to high
+    sender proof must bind committed event, route/purpose/body digest without minting GHR delivery or a universal credential
+
+BSS-V2-009  medium
     usage telemetry must exclude source content and secrets; Bridge DB authority remains bounded
 
-BSS-V2-008  minimal to low
+BSS-V2-010  minimal to low
     cost-profile integrity; no accidental billing/customer authority
 
-BSS-V2-009  medium to high
+BSS-V2-011  medium to high
     fail-before-network privacy enforcement; no silent downgrade
 
-BSS-V2-010  medium
+BSS-V2-012  medium
     fallback cannot bypass qualification/privacy/capability rules
 
-BSS-V2-011  low to medium
+BSS-V2-013  low to medium
     composition verifies inherited boundaries; does not re-audit the whole system
 ```
 
@@ -1701,7 +1715,20 @@ COUPLING-BSSV2-CAPACITY-LOCAL
 Local Docling must not be assigned fake RPM/TPM/RPD or quota-domain semantics.
 ```
 
-### BSS-V2-007
+### BSS-V2-007 / BSS-V2-008
+
+```text
+SEAM-BSSV2-RECEIVING-WORK-AUTH
+A service-authenticated, route/purpose-allowed, Atlas-verified work scope is required before a receiving domain may ask its resource owner for data.
+
+SEAM-BSSV2-SENDER-EVENT-AUTH
+A proposed handoff comes only from a verified eligible producer event and route/body binding; GHR exclusively owns later issuance and delivery.
+
+COUPLING-BSSV2-AUTH-UNIVERSAL-SECRET
+No single shared service credential or handoff body grants arbitrary Atlas document/media/provider access.
+```
+
+### BSS-V2-009
 
 ```text
 SEAM-BSSV2-USAGE-REDACTION
@@ -1711,7 +1738,7 @@ BOUNDARY-BSSV2-USAGE-DB
 Bridge telemetry persistence does not grant Bridge trusted Atlas write authority.
 ```
 
-### BSS-V2-009
+### BSS-V2-011
 
 ```text
 SEAM-BSSV2-PRIVACY-PREFLIGHT
@@ -1723,7 +1750,7 @@ No external route may silently lower privacy requirements to obtain a successful
 
 Local Docling remains subject to source authorization and local data-handling/redaction rules rather than external provider training/retention classes.
 
-### BSS-V2-010
+### BSS-V2-012
 
 ```text
 SEAM-BSSV2-FALLBACK-QUALIFIED
@@ -2369,9 +2396,9 @@ publication
 
 After CK PASS, stop before reconciliation unless BSS-V2-004-04 is explicitly started.
 
-## 31.3 Broader BSS V2 checkpoint - BSS-V2-011
+## 31.3 Broader BSS V2 checkpoint - BSS-V2-013
 
-After the later semantic qualification and applicable external-provider operational tickets, BSS-V2-011 proves the full execution substrate composes.
+After the new BSS-V2-007/008 receiving/sender authorization gates, later semantic qualification and applicable external-provider operational tickets, BSS-V2-013 proves the full execution substrate composes.
 
 It should establish:
 
@@ -2446,7 +2473,7 @@ When this implementation context is supplied for remaining-ticket regeneration, 
 12. Generate BSS-V2-004-03 as child tickets -03-01, -03-02, and -03-03; do not regenerate it as one mega-ticket.
 13. Keep BSS-V2-004-04 independent from extraction and do not assume PROMPT-003 is its reconciliation prompt.
 14. Update the existing `Stack_Setup_V2/README.md` and revise remaining planned BSS-V2-005 through -011 dependencies to match the new graph.
-15. Make BSS-V2-005 and BSS-V2-007 consume BSS-V2-004-03-03 PASS as their first production external-route predecessor unless a narrower real dependency is explicitly proven.
+15. Make BSS-V2-005 and BSS-V2-009 consume BSS-V2-004-03-03 PASS as their first production external-route predecessor unless a narrower real dependency is explicitly proven.
 16. Do not modify approved BSS-V2-001/002/003/004-01/004-02 ticket content or review history.
 17. Do not implement production code during ticket regeneration.
 18. Do not silently mark the historical BSS-V2-004 blocker evidence PASS.
