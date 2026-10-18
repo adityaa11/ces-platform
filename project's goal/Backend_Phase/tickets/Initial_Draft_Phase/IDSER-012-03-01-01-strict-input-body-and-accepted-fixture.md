@@ -1,6 +1,6 @@
 # IDSER-012-03-01-01 — Strict input body and accepted-fixture derivation
 
-- **State:** `awaiting_review`; GO implementation is complete and requires independent CK verification.
+- **State:** `approved`; independent CK review passed at `81c19e61b6e248f64542fddaf1e5be963c1bf7d5`.
 - **Batch:** `IDSER-BATCH-12-03-01-01`.
 - **Parent:** [IDSER-012-03-01 split map](IDSER-012-03-01-ghr-body-contract-accepted-document-resolver.md).
 - **Dependencies:** approved IDSER-012-01 / PERC-RESET-008 accepted `NormalizedDocument v1` authority and one qualified isolated accepted RUN-003 record or authorized read-only existing fixture record.
