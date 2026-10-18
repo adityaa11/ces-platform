@@ -1,10 +1,33 @@
-# IDSER-012-03-01 — Exact GHR body contract and authorized accepted-document resolver
+# IDSER-012-03-01 — Exact GHR body contract and authorized accepted-document resolver — split map
 
-- **State:** `planned`; GO not yet authorized.
+- **State:** `planned`; non-executable family/traceability map; GO not authorized.
 - **Batch:** `IDSER-BATCH-12-03-01`.
 - **Parent:** [IDSER-012-03](IDSER-012-03-semantic-batch-planner-ghr-contract-hard-stop.md).
 - **Dependencies:** approved IDSER-012-01 / PERC-RESET-008 acceptance and derived-asset authority, GHR Library v0.3 §5.1 **proposed** input shape.
-- **Outcome:** replaceable temporary **GHR-body fixture source** + production-quality receiving parser + authenticated read-only Atlas accepted-document resolver. **STOP before planning or any real GHR issue.**
+- **Outcome:** preserved family outcome: replaceable temporary **GHR-body fixture source** + production-quality receiving parser + authenticated read-only Atlas accepted-document resolver. **STOP before planning or any real GHR issue.**
+
+## Split decision and executable children
+
+The original leaf combines a body-contract/fixture seam with an Atlas authorization and source-redemption seam. A defect in the latter must not reopen the exact receiver syntax, and a parser correction must not reopen repository privilege and lifecycle proof. It is too large for one GO → CK → CFC → HMN cycle.
+
+| Order | Executable child | Sole implementation/proof seam | Frozen rows discharged |
+| --- | --- | --- | --- |
+| 1 | [IDSER-012-03-01-01](IDSER-012-03-01-01-strict-input-body-and-accepted-fixture.md) | Exact bounded five-field receiver parser and reproducible fixture derivation from persisted accepted facts | RC-0120301-01, RC-0120301-02, fixture/replacement portion of RC-0120301-04 |
+| 2 | [IDSER-012-03-01-02](IDSER-012-03-01-02-authorized-accepted-document-resolver.md) | Atlas-owned authenticated scoped redemption, lifecycle/grant verification, and real parser-to-resolver closure | RC-0120301-03, non-side-effect portion of RC-0120301-04, RC-0120301-05 |
+
+`-01-02` requires `-01-01` CK `PASS`; only its CK `PASS` closes this family. CFC repairs only the child owning the finding. HMN may resolve a specifically missing Atlas authority, never replace it with Bridge privilege or waive real persisted-fixture evidence.
+
+## Security Readiness
+
+- **Status:** `applicable`.
+- **Inherited boundaries:** Atlas owns accepted perception/cache/source/asset authority; future GHR owns issuance and routing.
+- **Trust boundaries:** `SR-0120301-T1` untrusted body → strict parser; `SR-0120301-T2` authenticated Atlas identity → scoped accepted-document redemption.
+- **Sensitive assets / prohibited couplings:** `SR-0120301-C1` prohibits a ref/hash as access grant, Bridge direct Atlas SQL, cache enumeration, raw media, and GHR issuer/route creation.
+- **Review bindings:** `SR-0120301-R1` proves parser strictness and accepted-fixture provenance; `SR-0120301-R2` proves scope/lifecycle/grant rechecks and zero state changes using the actual resolver.
+
+## Preserved family contract
+
+All sections below remain binding family authority. They allocate no GO to this map and are not weakened, reinterpreted, or replaced by its children.
 
 ## Exact receiver-owned body contract
 

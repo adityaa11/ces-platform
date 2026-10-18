@@ -1,9 +1,32 @@
-# IDSER-012-03-03 — Durable semantic batch handoff and proposed GHR output compatibility
+# IDSER-012-03-03 — Durable semantic batch handoff and proposed GHR output compatibility — split map
 
-- **State:** `planned`; GO requires independent CK PASS of IDSER-012-03-01/-02.
+- **State:** `planned`; non-executable family/traceability map. GO is not authorized.
 - **Batch:** `IDSER-BATCH-12-03-03`.
 - **Parent:** [IDSER-012-03](IDSER-012-03-semantic-batch-planner-ghr-contract-hard-stop.md).
-- **Outcome:** atomic immutable document plan and **one durable `PlannedSemanticCorpusHandoff` per batch**, validated proposed output contract in a **non-delivering fixture receiver**. **HARD STOP before GHR/SEM/BSS execution.**
+- **Outcome:** preserved family outcome: atomic immutable document plan and **one durable `PlannedSemanticCorpusHandoff` per batch**, validated proposed output contract in a **non-delivering fixture receiver**. **HARD STOP before GHR/SEM/BSS execution.**
+
+## Split decision and executable children
+
+The original leaf combines immutable transactional persistence/recovery with a separate proposed GHR output compatibility surface and its real composed hard-stop proof. Either can fail without changing the other. It is too large for one GO → CK → CFC → HMN cycle.
+
+| Order | Executable child | Sole implementation/proof seam | Frozen rows discharged |
+| --- | --- | --- | --- |
+| 1 | [IDSER-012-03-03-01](IDSER-012-03-03-01-immutable-plan-handoff-persistence.md) | Atlas-owned canonical identity/hash, atomic plan + N handoff persistence, idempotency, recovery and ancestry | Persistence portions of RC-0120303-01, RC-0120303-03, RC-0120303-04 |
+| 2 | [IDSER-012-03-03-02](IDSER-012-03-03-02-ghr-output-compatibility-composition.md) | Strict non-delivering proposed-output receiver plus real predecessor-to-persistence composition and forbidden-effect closure | RC-0120303-02, remaining RC-0120303-01/03/04, RC-0120303-05, RC-0120303-06 |
+
+`-03-03-01` requires `-03-02-03` CK `PASS`; `-03-03-02` requires `-03-03-01` CK `PASS` and is the only family closure. It may compose approved interfaces but may not repair their internals. CFC keeps persistence and output-compatibility findings isolated; HMN may resolve only a named unresolved Atlas/GHR authority and cannot activate a route.
+
+## Security Readiness
+
+- **Status:** `applicable`.
+- **Inherited boundaries:** Atlas owns immutable plan/handoff persistence; GHR owns issuance/delivery; BSS and SEM execution remain downstream.
+- **Trust boundaries:** `SR-0120303-T1` qualified unpublished plan → atomic immutable Atlas record; `SR-0120303-T2` persisted scoped refs → strict non-delivering output validation.
+- **Sensitive assets / prohibited couplings:** `SR-0120303-C1` prohibits raw corpus/media/prompt/credential persistence in routing metadata, Bridge truth writes, GHR outbox/route/ack, BSS work/reservation, and SEM/reconciliation effects.
+- **Review bindings:** `SR-0120303-R1` replays canonical identity, conflict, transaction and recovery fences; `SR-0120303-R2` verifies body/member scope and exact zero downstream effect counters on the real composed path.
+
+## Preserved family contract
+
+All sections below remain binding family authority. They allocate no GO to this map and are not weakened, reinterpreted, or replaced by its children.
 
 Persist a complete version/hash-bound document plan and N individual batch references atomically after qualifying -03-02's genuine accepted-source partition. Bind project/workspace/bundle/document, source SHA, accepted NormalizedDocument/cache/perception execution, granted assets/REL revisions, exact every eligible owned locator, context-only rights, deferred dependencies, semantic schema/estimator/provisional context limits and BSS source/enforcement/profile/plan versions. Every handoff binds its plan hash, batch ID, immutable scoped locator/media/REL refs/hashes and independently bounded `RequestResourceEnvelope`. No raw PDF/text, image bytes, prompt body, source storage keys, credentials or provider response in routing metadata.
 

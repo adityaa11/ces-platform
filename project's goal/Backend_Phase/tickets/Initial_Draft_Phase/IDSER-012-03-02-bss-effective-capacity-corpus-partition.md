@@ -1,9 +1,33 @@
-# IDSER-012-03-02 — BSS-effective-capacity semantic corpus partition
+# IDSER-012-03-02 — BSS-effective-capacity semantic corpus partition — split map
 
-- **State:** `planned`; GO requires IDSER-012-03-01 independent CK PASS and qualified **actual callable** BSS planning reader.
+- **State:** `planned`; non-executable family/traceability map. GO is not authorized.
 - **Batch:** `IDSER-BATCH-12-03-02`.
 - **Parent:** [IDSER-012-03](IDSER-012-03-semantic-batch-planner-ghr-contract-hard-stop.md).
-- **Outcome:** deterministic BSS-capacity-qualified **plan proposal**, per-batch owner/context/REL/media partition and resource envelopes; **STOP before durable publication**.
+- **Outcome:** preserved family outcome: deterministic BSS-capacity-qualified **plan proposal**, per-batch owner/context/REL/media partition and resource envelopes; **STOP before durable publication**.
+
+## Split decision and executable children
+
+This leaf combines an external BSS authenticated-read integration, a semantic source/estimator algorithm, and a policy-qualified partition/replan algorithm. Their owners, evidence and likely CFC findings are independent. It is too large for one GO → CK → CFC → HMN cycle.
+
+| Order | Executable child | Sole implementation/proof seam | Frozen rows discharged |
+| --- | --- | --- | --- |
+| 1 | [IDSER-012-03-02-01](IDSER-012-03-02-01-authorized-bss-prospective-snapshot-reader.md) | Actual authenticated BSS prospective snapshot consumer boundary and exact inactive-status acceptance | BSS-read portion of RC-0120302-01 |
+| 2 | [IDSER-012-03-02-02](IDSER-012-03-02-02-conservative-corpus-demand-estimator.md) | Pure canonical source-unit/locator handling and conservative request-demand estimator | RC-0120302-03 source fidelity, RC-0120302-04 estimator/envelope portions |
+| 3 | [IDSER-012-03-02-03](IDSER-012-03-02-03-structural-fit-corpus-partition-proposal.md) | Deterministic structural-fit partition/replan proposal composed only from the two approved surfaces | Remaining RC-0120302-01 through RC-0120302-06 |
+
+`-02-01` and `-02-02` each require `-03-01-02` CK `PASS` and may run independently. `-02-03` requires both to pass and is the only family closure. It reuses, never reimplements, the reader and estimator. CFC returns a read or estimator defect to its owning child; HMN may resolve only a named BSS/Atlas authority gap.
+
+## Security Readiness
+
+- **Status:** `applicable`.
+- **Inherited boundaries:** BSS owns capacity policy and prospective structural fit; Atlas owns accepted source and no BSS runtime admission is in scope.
+- **Trust boundaries:** `SR-0120302-T1` authenticated BSS principal → inactive planning snapshot; `SR-0120302-T2` resolved accepted source/grants → pure bounded demand; `SR-0120302-T3` pinned policy + demand → unpublished proposal.
+- **Prohibited couplings:** `SR-0120302-C1` prohibits direct BSS SQL, IDSER capacity-policy publication, runtime-quota read/reservation, synthetic limits, prompt/provider transport, and semantic truth writes.
+- **Review bindings:** `SR-0120302-R1` demonstrates callable authoritative read; `SR-0120302-R2` proves measured conservative bounds and locator fidelity; `SR-0120302-R3` proves stale/foreign/unknown failure and zero durable/execution effects.
+
+## Preserved family contract
+
+All sections below remain binding family authority. They allocate no GO to this map and are not weakened, reinterpreted, or replaced by its children.
 
 Consume the authorized resolved accepted NormalizedDocument from -03-01. Consume a real authenticated BSS-005 `CapacityPlanningSnapshot/v1` with server-owned prospective inactive semantic workload/process/route/quota identity, immutable provider source, effective enforcement selection and exact policy/profile/version, qualified structural maximum/estimator/output/media overhead, safety/headroom, background fair/protected interactive policy. There is **no BSS-006 `RuntimeCapacityConstraint/v1` runtime read in this scope**; the later admitted worker alone checks current window pressure. A caller cannot obtain a BSS send permit or shrink a stable batch merely because a current quota window is depleted.
 

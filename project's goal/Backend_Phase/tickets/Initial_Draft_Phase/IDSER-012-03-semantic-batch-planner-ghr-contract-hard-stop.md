@@ -26,7 +26,7 @@ The *fixture* substitutes only for **future GHR delivery**. It neither mocks acc
 
 ## Final design review — binding implementation clarifications (2026-10-19)
 
-**This section is the current owner precedence over ambiguous legacy wording; it is not GO authority.** Only the three planned leaves below own real implementation. In particular:
+**This section is the current owner precedence over ambiguous legacy wording; it is not GO authority.** Only the seven executable children linked by the three split maps below own real implementation. In particular:
 
 - **Input truth:** `NormalizedDocument v1` has page-scoped `textBlocks`, `tables` and `visualRegions`; it does **not** contain a qualified REL/provisional graph. Do not invent one, query an unapproved relational store, or treat speculative structure as accepted semantics. If authorized pre-existing REL revision context is available, bind its exact separate Atlas authority/version; otherwise partition conservatively (keep inseparable source/context together) or explicitly defer/BLOCK when a required dependency cannot be preserved. A known source locator must be canonical `document + page + source-kind + locator-id`, not a naked, possibly repeated block ID.
 - **Accepted input read:** `normalizedDocumentRef` is a SHA-256-derived cache key, **not** the `normalizedDocumentFingerprint` or access permission. The latter is the persisted completed-execution fingerprint over canonical accepted NormalizedDocument content. `-03-01` may implement a **narrow new Atlas-owned authenticated read-only resolver** in the existing Atlas trust/data boundary, with exact scope and SQL privilege guards; this is not authority for Bridge to read/write Atlas truth or to invent a second content store. See `-03-01` RC.
@@ -38,13 +38,15 @@ The *fixture* substitutes only for **future GHR delivery**. It neither mocks acc
 
 ## Bounded children and CK sequence
 
-| Ticket | Exclusive implemented boundary | Hard stop |
-| --- | --- | --- |
-| [IDSER-012-03-01](IDSER-012-03-01-ghr-body-contract-accepted-document-resolver.md) | Freeze exact five-field GHR v0.3 input body, strict semantic parser, fixture drawn from **actual persisted accepted** NormalizedDocument V1, authenticated scoped read-only resolver | Accepted resolved planner input; no partition |
-| [IDSER-012-03-02](IDSER-012-03-02-bss-effective-capacity-corpus-partition.md) | Consume BSS actual authorized planning read/effective dimension policy, deterministic complete source partition, context/REL/media bounds, per-batch resource envelopes | Immutable qualified plan proposal; no durable publication |
-| [IDSER-012-03-03](IDSER-012-03-03-durable-batch-handoff-ghr-output-compatibility.md) | Atomic versioned document plan + N durable handoffs; exact proposed GHR output body/fixture receiver validation and end-to-end negative proof | Published semantic batch handoff; no GHR/SEM/provider execution |
+The former three executable leaves each contain more than one independent authority, persistence, or compatibility seam. A CK finding in one of those seams would force CFC/HMN to reopen unrelated work. They are therefore retained below as **non-executable split maps**: all existing requirements remain frozen family authority, while the children listed in each map are the only executable GO/CK units.
 
-Each child needs explicit GO, evidence and independent CK. Parent is **never** an umbrella implementation GO.
+| Family map | Terminal executable closure | Hard stop |
+| --- | --- | --- |
+| [IDSER-012-03-01 split map](IDSER-012-03-01-ghr-body-contract-accepted-document-resolver.md) | [IDSER-012-03-01-02](IDSER-012-03-01-02-authorized-accepted-document-resolver.md): actual fixture → strict parser → authenticated scoped resolver | Accepted resolved planner input; no partition |
+| [IDSER-012-03-02 split map](IDSER-012-03-02-bss-effective-capacity-corpus-partition.md) | [IDSER-012-03-02-03](IDSER-012-03-02-03-structural-fit-corpus-partition-proposal.md): actual BSS structural read + qualified estimator → immutable proposal | Immutable qualified plan proposal; no durable publication |
+| [IDSER-012-03-03 split map](IDSER-012-03-03-durable-batch-handoff-ghr-output-compatibility.md) | [IDSER-012-03-03-02](IDSER-012-03-03-02-ghr-output-compatibility-composition.md): real prior outputs → durable records → non-delivering output body | Durable, unissued handoffs; no GHR/SEM/provider execution |
+
+Each executable child needs explicit GO, evidence and independent CK. The three family maps and this parent are **never** umbrella implementation GOs. A CFC finding returns only to the child that owns its mapped oracle; HMN can resolve only an exact unresolved authority in that child and cannot waive a sibling's evidence.
 
 ### Frozen Codex execution route (planning-only; do not invent an alternative)
 
@@ -67,6 +69,6 @@ Each child needs explicit GO, evidence and independent CK. Parent is **never** a
 
 ## GO/CK prerequisites and downstream ownership
 
-`-03-01` requires demonstrably authorized real accepted-document read and evidence provenance; `-03-02` requires a **callable** BSS-005 effective planning read with legitimate prospective inactive-workload identity (if absent STOP `BSS_CAPACITY_CONSUMER_READ_GAP` / `CAPACITY_PROFILE_BOOTSTRAP_GAP`, owned by BSS), not an isolated BSS fixture. Do not add a BSS-006 runtime-window/constraint read to this **planner-only** scope: current depletion and admission eligibility belong to future BSS execution, not corpus sizing. `-03-03` proves restart/rollback/duplicates/cancellation/conflicting hashes/foreign media/structural replan and exact forbidden zero effects. No predecessor CK grants future execution.
+`-03-01-02` requires demonstrably authorized real accepted-document read and evidence provenance. `-03-02-01` requires a **callable** BSS-005 effective planning read with legitimate prospective inactive-workload identity (if absent STOP `BSS_CAPACITY_CONSUMER_READ_GAP` / `CAPACITY_PROFILE_BOOTSTRAP_GAP`, owned by BSS), not an isolated BSS fixture. Do not add a BSS-006 runtime-window/constraint read to this **planner-only** scope: current depletion and admission eligibility belong to future BSS execution, not corpus sizing. `-03-03-01` proves persistence atomicity/idempotency; `-03-03-02` proves the non-delivering output contract, real composed path and exact forbidden zero effects. No predecessor CK grants future execution.
 
 Future separate GO/CK: GHR `semantic/batch-plan` real delivery and `semantic/batch-execution-intake` output delivery; SEM-owned batch intake/qualified stepwise engine; semantic BSS workload activation; one BSS-V2-006 per-attempt admitted outbound lane (no duplicate ordinary SEM provider sender); qualified batch acceptance/reconciliation preparation under unresolved `OPEN-A`. Superseded `IDSER-012-02-02..04` obligations are **deferred** to these future owners, not incorporated into the present planner scope.
