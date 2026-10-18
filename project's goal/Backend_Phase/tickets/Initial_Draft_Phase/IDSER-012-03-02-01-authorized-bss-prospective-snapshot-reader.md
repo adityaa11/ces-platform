@@ -1,6 +1,6 @@
 # IDSER-012-03-02-01 — Authorized BSS prospective snapshot reader
 
-- **State:** `awaiting_review`; GO consumed IDSER-012-03-01-03 CK `PASS`.
+- **State:** `approved`; GO consumed IDSER-012-03-01-03 CK `PASS`, and IDSER-012-03-02-01 CK verification `PASS` is recorded in `project's goal/feedback/IDSER-BATCH-12-03-02-01-c1eff7e-verification.md`.
 - **Batch:** `IDSER-BATCH-12-03-02-01`.
 - **Parent:** [IDSER-012-03-02 split map](IDSER-012-03-02-bss-effective-capacity-corpus-partition.md).
 - **Dependencies:** `-03-01-03` CK `PASS` (with approved `-03-01-01/02` retained); callable authenticated BSS `createCapacityPlanningSnapshotReader` / `bridge.read_capacity_planning_snapshot` and server-authorized prospective semantic workload identity.
