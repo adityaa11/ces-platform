@@ -1,6 +1,6 @@
 # IDSER-012-03-01-02 — Authorized accepted-document resolver
 
-- **State:** `planned`; GO requires IDSER-012-03-01-01 CK `PASS`.
+- **State:** `awaiting_review`; GO checkpoint `IDSER-BATCH-12-03-01-02-go-checkpoint.md` is ready for CK.
 - **Batch:** `IDSER-BATCH-12-03-01-02`.
 - **Parent:** [IDSER-012-03-01 split map](IDSER-012-03-01-ghr-body-contract-accepted-document-resolver.md).
 - **Dependencies:** `-03-01-01` CK `PASS`; existing Atlas auth/data/store conventions and accepted perception/cache/asset authority.
