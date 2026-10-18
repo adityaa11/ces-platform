@@ -2,6 +2,7 @@
 
 - **Ticket:** `project's goal/Backend_Phase/tickets/Initial_Draft_Phase/IDSER-012-03-01-02-authorized-accepted-document-resolver.md`
 - **State:** `awaiting_review`
+- **Implementation commit:** `5f441e0a` (`feat(idser): add accepted document resolver`)
 - **Predecessor:** `IDSER-012-03-01-01` CK `PASS` at `81c19e61b6e248f64542fddaf1e5be963c1bf7d5`, recorded in `IDSER-BATCH-12-03-01-01-81c19e6-review.md`.
 
 ## Bounded implementation
