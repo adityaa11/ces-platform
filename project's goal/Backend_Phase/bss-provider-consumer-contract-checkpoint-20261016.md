@@ -1,5 +1,8 @@
 # BSS external-provider consumer interfaces — planning/read and runtime/admission checkpoint (2026-10-16)
 
+> **SUPERSEDED CONSUMER POINTER (2026-10-19).** `IDSER-012-02` paths below are historical (their four planned leaves were superseded). Current implementation planning scope is [IDSER-012-03](tickets/Initial_Draft_Phase/IDSER-012-03-semantic-batch-planner-ghr-contract-hard-stop.md): GHR-body-compatible fixture → strict parser → Atlas read-only accepted NormDoc resolver → BSS effective prospective planning → durable batch handoffs → **HARD STOP**. The prior activation/admission descriptions below are obligations of *separate future successors*, not live tickets or permission to execute. BSS-V2-006-04 and -05 child CK evidence now exists; inspect the actual callable BSS interface and its prospective `inactive` semantics, not the historical `planned` text. This archival checkpoint is not an execution authority.
+
+
 - **Authority:** prospective user-directed BSS-V2-005-05 / BSS-V2-006-04 ticket realignment; documentation only, not implementation GO, runtime capability, or CK PASS.
 - **Owners:** BSS-V2-005 publishes and resolves **planning/structural policy**; BSS-V2-006 resolves **effective runtime eligibility, fair admission, attempt reservations, accounting and pressure**. Both are Bridge-owned operational boundaries, not Atlas trusted-state writers.
 - **Consumer examples:** IDSER-012-02-01 Semantic Batch Planner (read-only); IDSER-012-02-03 / SEM-CUTOVER batch execution (provider work + per-attempt admission + feedback); future interactive chat and CES (same generic contracts and server-authorized service classes).

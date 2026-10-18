@@ -1,5 +1,8 @@
 # Atlas Provider Admission and Staged Semantic Pipeline Implementation Context
 
+> **SUCCESSOR PRECEDENCE NOTE (2026-10-19).** This long architecture document contains archived `IDSER-012-02` drafts and historical `semantic_ready` / direct-continuation proposals. All five `IDSER-012-02` ticket files are now `superseded`. Current narrowly authorized *planning* direction: [IDSER-012-03](tickets/Initial_Draft_Phase/IDSER-012-03-semantic-batch-planner-ghr-contract-hard-stop.md) real accepted NormDoc → GHR-body fixture/parser → Atlas read-only resolver → BSS-effective capacity fit → durable planned handoffs, **STOP before GHR, SEM intake, provider work**. `IDSER-012-01` remains approved; real GHR, activation, BSS-admitted SEM and qualified lifecycle/OPEN-A are future independently gated work. When this historical context conflicts with the 012-03 ticket or the approved SEM-CUTOVER winner, defer to those newer owners; never run its old `IDSER-012-02` task graph.
+
+
 **Status:** Authorized planning context for ticket generation; no GO authorization is implied.  
 **Repository:** `adityaa11/ces-platform`  
 **Branch inspected:** `codex/new-atlas-backend`  

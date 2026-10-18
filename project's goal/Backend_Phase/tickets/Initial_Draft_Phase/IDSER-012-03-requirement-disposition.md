@@ -34,6 +34,10 @@ RC-0120203-01/02/03/04/05/06/07/08/09 are **deferred**, not proved or cancelled.
 
 RC-0120204-01/02/03/04/05/06 are **deferred**, not proved or cancelled. **Future owners:** Atlas/SEM acceptance, exact canonical/deferred source accounting, approved reconciliation preparation and workspace single-writer/fan-in. **OPEN-A remains unresolved**; no unconditional `semantic_ready`, automatic job, fake accepted truth or GHR-determined reconciliation. Respect existing SEM-007A partial/deferred acceptance CK and legacy behavior.
 
+## Final review disposition addendum (2026-10-19)
+
+The 13 carried planner RCs are **planned proof obligations, not inherited PASS**. Their complete replacement additionally requires exact real accepted-cache fingerprint resolution, authorized prospective BSS `inactive/prospective_planning_only` read, distinct numeric `dayUnits` request demand and provider RPD enforcement, qualified structural estimator, and source-locator canonicalization with no invented REL graph. These are binding in IDSER-012-03-01..03 final clarifications. Neither GHR v0.3's hypothetical delivery nor whole-document SEM execution counts as successful proof. Future activation/transport/OPEN-A deferred RCs remain untouched.
+
 ## Preservation/authority
 
 No changes to earlier approved contracts/commits/CK evidence or production semantics are authorized by this **documentation-only supersession**. GHR v0.3 input/output body contracts remain proposed until the specific receiving domain and eventual production GHR route independently freeze and qualify them. The superseded tickets themselves are **not** implementation authority.
