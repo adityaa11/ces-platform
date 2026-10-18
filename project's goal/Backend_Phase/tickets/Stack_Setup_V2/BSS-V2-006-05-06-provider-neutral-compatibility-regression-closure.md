@@ -1,6 +1,6 @@
 # BSS-V2-006-05-06 — Provider-neutral compatibility and regression closure
 
-- **State:** `planned`; executable leaf, not GO/CFC/HMN authority or CK PASS.
+- **State:** `awaiting_review`; GO implementation checkpoint `BSS-V2-BATCH-06-05-06-go-checkpoint.md` is ready for CK and is not a CK PASS.
 - **Review batch:** `BSS-V2-BATCH-06-05-06`.
 - **Parent:** [BSS-V2-006-05 split map](BSS-V2-006-05-policy-driven-optional-capacity-dimensions-anoman.md).
 - **Dependencies:** parent predecessors and CK `PASS` from `BSS-V2-006-05-02..05`.
