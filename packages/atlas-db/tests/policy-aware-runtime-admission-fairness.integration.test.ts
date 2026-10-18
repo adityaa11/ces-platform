@@ -4,7 +4,7 @@ import postgres from "postgres";
 
 const databaseUrl = process.env.DATABASE_URL;
 
-test("BSS-V2-006-05-04 proves masked runtime admission, fairness, and atomicity", { skip: !databaseUrl }, async () => {
+test("BSS-V2-006-05-04/05 proves masked admission, policy-revision recovery, and scoped 429 handling", { skip: !databaseUrl }, async () => {
   const suffix = `policy-runtime-${Date.now()}`;
   const url = new URL(databaseUrl!); url.username = "agents_bridge"; url.password = process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only";
   const sql = postgres(url.toString(), { max: 1 });
@@ -143,5 +143,52 @@ test("BSS-V2-006-05-04 proves masked runtime admission, fairness, and atomicity"
       assert.deepEqual(artifacts, { reservations: 0, ledgers: 0, dispatches: 0, jobs: 0, claims: 0 }, `${name} failure is atomic on the masked path`);
       await sql.unsafe("SELECT bridge.cancel_provider_work_attempt($1,1,'masked_fault_cleanup')", [id]);
     }
+
+    // BSS-V2-006-05-05 / RC-00605-05: a wakeup is a policy-revalidation
+    // boundary.  Revoking the policy after a replacement plan is activated
+    // cannot relabel waiting work or create a new send, while an already
+    // claimed reservation keeps its original immutable plan and three actual
+    // physical liabilities.
+    const revision = await setup("policy-revision", { rpm: 4, tpm: 40, concurrency: 2 });
+    const revisionRead = await read(revision, revision.processes.interactive, "interactive");
+    const oldFlight = await publicAdmit(revision, `${revision.domain}-old-flight`, revision.processes.interactive, "interactive", envelope(), revisionRead.effectiveConstraintRevision);
+    assert.equal(oldFlight.state, "dispatched_or_may_have_started");
+    await sql.unsafe("SELECT bridge.claim_fake_provider_transport($1)", [oldFlight.reservationId]);
+    await register(revision, `${revision.domain}-waiting`, revision.processes.interactive, "waiting");
+    await register(revision, `${revision.domain}-cancelled`, revision.processes.interactive, "cancelled");
+    await sql.unsafe("SELECT bridge.cancel_provider_work_attempt($1,1,'caller_cancelled')", [`${revision.domain}-cancelled`]);
+
+    const [{ policy: revisionPolicy }] = await sql.unsafe("SELECT bridge.derive_effective_enforcement_policy($1,'cap-v1',$2) AS policy", [revision.domain, revision.route]);
+    const [revisionPlan] = await sql.unsafe("SELECT profile FROM bridge.desired_admission_profile WHERE quota_domain_id=$1 AND profile_version='plan-v1'", [revision.domain]);
+    await sql.unsafe("INSERT INTO bridge.desired_admission_profile(quota_domain_id,profile_version,provider_capacity_profile_version,planner_version,effective_from,profile) VALUES($1,'plan-v2','cap-v1','planner-revision',now(),$2::jsonb)", [revision.domain, revisionPlan.profile]);
+    for (const processId of Object.values(revision.processes)) await sql.unsafe("INSERT INTO bridge.desired_admission_profile_input(quota_domain_id,desired_profile_version,process_id,process_profile_version,workload_id,workload_profile_version) VALUES($1,'plan-v2',$2,'v1',$3,'v1')", [revision.domain, processId, `${processId}-workload`]);
+    await sql.unsafe("INSERT INTO bridge.desired_admission_profile_policy_binding(quota_domain_id,desired_profile_version,provider_capacity_profile_version,route_id,policy_id,policy_version,effective_policy) VALUES($1,'plan-v2','cap-v1',$2,'policy','v1',$3::jsonb)", [revision.domain, revision.route, revisionPolicy]);
+    await sql.unsafe("INSERT INTO bridge.provider_enforcement_policy_revocation(quota_domain_id,provider_capacity_profile_version,route_id,policy_id,policy_version,revocation_ref,revoked_by) VALUES($1,'cap-v1',$2,'policy','v1',$3,'fixture')", [revision.domain, revision.route, `${revision.domain}-revoked`]);
+    await sql.unsafe("SELECT bridge.activate_desired_admission_profile($1,'plan-v2')", [revision.domain]);
+    const [blockedWakeup] = await sql.unsafe("SELECT bridge.consume_active_plan_wakeup($1,'active-plan:2') AS result", [revision.domain]);
+    assert.deepEqual(blockedWakeup.result, { claimed: true, staleActivation: false, policyBlocked: true, rebasedWaitingWork: 0, ownerReplanIntents: 0, capacityRevisionIntents: 0 });
+    const [wakeupReplay] = await sql.unsafe("SELECT bridge.consume_active_plan_wakeup($1,'active-plan:2') AS result", [revision.domain]);
+    assert.equal(wakeupReplay.result.claimed, false, "at-least-once wakeup replay cannot mint a second rebase");
+    assert.deepEqual((await sql.unsafe("SELECT desired_profile_version,activation_revision,state FROM bridge.provider_work_attempt WHERE logical_work_id=$1", [`${revision.domain}-waiting`]))[0], { desired_profile_version: "plan-v1", activation_revision: "1", state: "waiting" }, "revoked policy leaves waiting work blocked on its original revision");
+    assert.equal((await sql.unsafe("SELECT * FROM bridge.admit_interactive_provider_work_attempt($1,1)", [`${revision.domain}-waiting`]))[0].decision, "unavailable", "stale policy cannot create a new reservation or send");
+    assert.equal((await sql.unsafe("SELECT * FROM bridge.admit_interactive_provider_work_attempt($1,1)", [`${revision.domain}-cancelled`]))[0].decision, "unavailable", "cancellation remains a zero-send terminal fence");
+    assert.deepEqual((await sql.unsafe("SELECT work.desired_profile_version,work.activation_revision,reservation.desired_profile_version AS reservation_profile,reservation.activation_revision AS reservation_revision,reservation.state FROM bridge.provider_work_attempt work JOIN bridge.provider_work_reservation reservation USING(logical_work_id,attempt_number) WHERE work.logical_work_id=$1", [`${revision.domain}-old-flight`]))[0], { desired_profile_version: "plan-v1", activation_revision: "1", reservation_profile: "plan-v1", reservation_revision: "1", state: "live" }, "claimed historical work retains its original policy liability");
+    assert.deepEqual((await sql.unsafe("SELECT dimension_id FROM bridge.provider_window_usage_ledger WHERE reservation_id=$1 ORDER BY dimension_id", [oldFlight.reservationId])).map((row) => row.dimension_id), ["concurrency", "rpm", "tpm"], "historical masked liability is not relabeled or given an RPD row");
+
+    // RC-00605-06: ambiguous 429 is only a route-scoped pressure event.  It
+    // consumes the normal cooldown/probe/recovery seam, never invents a daily
+    // RPD value, and cannot publish a desired plan.
+    const pressure = await setup("masked-429", { rpm: 4, tpm: 40, concurrency: 2 });
+    await sql.unsafe("INSERT INTO bridge.runtime_pressure_safety_policy(policy_id,version,quota_domain_id,maximum_accepted_retry_after_seconds,metadata_free_cooldown_seconds,probe_eligibility_seconds) VALUES($1,'v1',$2,60,7,60)", [`${pressure.domain}-pressure`, pressure.domain]);
+    const pressureRead = await read(pressure, pressure.processes.interactive, "interactive");
+    const pressureWork = await publicAdmit(pressure, `${pressure.domain}-rate-limited`, pressure.processes.interactive, "interactive", envelope(), pressureRead.effectiveConstraintRevision);
+    assert.equal(pressureWork.state, "dispatched_or_may_have_started");
+    await sql.unsafe("SELECT bridge.claim_fake_provider_transport($1)", [pressureWork.reservationId]);
+    await sql.unsafe("SELECT bridge.ingest_provider_operational_feedback($1::jsonb)", [{ feedbackId: `${pressure.domain}-429`, reservationId: pressureWork.reservationId, attemptId: `${pressure.domain}-rate-limited:1`, routeId: pressure.route, quotaDomainId: pressure.domain, desiredProfileVersion: "plan-v1", qualificationVersion: "qualified", observationSource: "qualified_adapter", observationTrust: "qualified", observedAt: new Date().toISOString(), transportDisposition: "terminal_confirmed", operationalOutcome: "rate_limited", retryAfterSeconds: 2 }]);
+    assert.deepEqual((await sql.unsafe("SELECT scope_kind,route_id,dimension_id,numeric_remaining_units,policy_available FROM bridge.provider_operational_pressure_incident WHERE quota_domain_id=$1", [pressure.domain]))[0], { scope_kind: "route", route_id: pressure.route, dimension_id: null, numeric_remaining_units: null, policy_available: true }, "ambiguous 429 remains a scoped hold rather than an invented RPD quota");
+    assert.equal((await read(pressure, pressure.processes.interactive, "interactive")).reason, "temporarily_pressure_blocked", "the public constraint surfaces the scoped cooldown");
+    assert.deepEqual((await sql.unsafe("SELECT dimension_id FROM bridge.provider_window_usage_ledger WHERE reservation_id=$1 ORDER BY dimension_id", [pressureWork.reservationId])).map((row) => row.dimension_id), ["concurrency", "rpm", "tpm"], "429 feedback cannot fabricate a daily RPD ledger");
+    assert.equal((await sql.unsafe("SELECT count(*)::int AS count FROM bridge.desired_admission_profile WHERE quota_domain_id=$1", [pressure.domain]))[0].count, 1, "feedback cannot publish a new capacity plan");
+    assert.equal((await sql.unsafe("SELECT bridge.recover_provider_pressure_incident($1,$2,$3,'route',NULL,NULL,'qualified',clock_timestamp()) AS recovered", [pressure.domain, pressure.route, `${pressure.domain}-recovered`]))[0].recovered, true, "only the existing matching recovery clears the scoped hold");
   } finally { await sql.unsafe("ROLLBACK").catch(() => undefined); await sql.end(); }
 });
