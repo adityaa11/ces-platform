@@ -222,6 +222,48 @@ export class PostgresAcceptedSemanticBatchPlanDocumentResolver {
         AND member.state='perceived'
         AND bundle.state='processing'
       LIMIT 2`, [scope.callerUserId, scope.projectId, scope.workspaceId, scope.bundleId, scope.documentId, valid.normalizedDocumentRef, valid.perceptionExecutionId, valid.normalizedDocumentFingerprint, valid.sourceSha256, scope.callerSessionToken]);
+    return this.resolveAcceptedDocument({ projectId: scope.projectId, workspaceId: scope.workspaceId, bundleId: scope.bundleId, documentId: scope.documentId }, valid, rows);
+  }
+
+  /**
+   * Server-composed receiving-work redemption. Unlike the interactive path,
+   * this selector has no browser session or caller-provided resource scope:
+   * all returned scope fields come from the accepted persisted join.
+   */
+  async resolveBackground(input: SemanticBatchPlanInputV1): Promise<AcceptedDocumentPlannerResultV1> {
+    const valid = validate(input);
+    const rows = await this.sql.unsafe(`SELECT cache.normalized_document, cache.derived_assets,
+        member.project_id, member.workspace_id, member.bundle_id, member.document_id
+      FROM atlas.document_perception_execution execution
+      JOIN atlas.extraction_bundle_document member
+        ON member.perception_execution_id=execution.id
+        AND member.document_id=execution.artifact_id
+      JOIN atlas.extraction_bundle bundle
+        ON bundle.id=member.bundle_id AND bundle.project_id=member.project_id AND bundle.workspace_id=member.workspace_id
+      JOIN atlas.document document
+        ON document.id=member.document_id AND document.project_id=member.project_id AND document.workspace_id=member.workspace_id
+      JOIN atlas.normalized_document_cache cache
+        ON cache.cache_key=$1 AND cache.source_sha256=document.source_sha256
+        AND cache.contract_version='v1' AND cache.capability='atlas.document.perceive'
+        AND cache.capability_identity=execution.capability_identity AND cache.invalidated_at IS NULL
+      WHERE execution.id=$2 AND execution.state='completed' AND execution.contract_version='v1'
+        AND execution.completion_fingerprint=$3
+        AND execution.source_sha256=$4 AND document.source_sha256=$4
+        AND member.state='perceived' AND bundle.state='processing'
+      LIMIT 2`, [valid.normalizedDocumentRef, valid.perceptionExecutionId, valid.normalizedDocumentFingerprint, valid.sourceSha256]);
+    if (rows.length !== 1) throw new Error("Accepted normalized document is unavailable or unauthorized.");
+    const row = rows[0]!;
+    const scope = {
+      projectId: String(row.project_id),
+      workspaceId: String(row.workspace_id),
+      bundleId: String(row.bundle_id),
+      documentId: String(row.document_id),
+    };
+    if (!Object.values(scope).every((value) => opaqueIdentity.test(value))) throw new Error("Accepted normalized document scope is invalid.");
+    return this.resolveAcceptedDocument(scope, valid, rows);
+  }
+
+  private async resolveAcceptedDocument(scope: AcceptedDocumentPlannerResultV1["scope"], valid: SemanticBatchPlanInputV1, rows: readonly Row[]): Promise<AcceptedDocumentPlannerResultV1> {
     if (rows.length !== 1) throw new Error("Accepted normalized document is unavailable or unauthorized.");
     const normalized = parseNormalizedDocument(typeof rows[0]!.normalized_document === "string" ? JSON.parse(String(rows[0]!.normalized_document)) : rows[0]!.normalized_document);
     if (normalized.executionId !== valid.perceptionExecutionId || normalized.artifactId !== scope.documentId || normalized.sourceSha256 !== valid.sourceSha256 || normalized.version !== valid.normalizedDocumentVersion || normalizedFingerprint(normalized) !== valid.normalizedDocumentFingerprint) throw new Error("Accepted normalized document integrity binding is invalid.");
