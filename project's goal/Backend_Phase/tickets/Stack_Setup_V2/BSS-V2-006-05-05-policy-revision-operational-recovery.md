@@ -1,7 +1,6 @@
 # BSS-V2-006-05-05 — Policy-revision operational recovery
 
-- **State:** `awaiting_review`; executable leaf, not GO/CFC/HMN authority or CK PASS.
-- **Review batch:** `BSS-V2-BATCH-06-05-05`.
+- **State:** `approved` following CK `PASS` for reviewed commit `6b47d84`; **Review batch:** `BSS-V2-BATCH-06-05-05`.
 - **Parent:** [BSS-V2-006-05 split map](BSS-V2-006-05-policy-driven-optional-capacity-dimensions-anoman.md).
 - **Dependencies:** parent predecessors and `BSS-V2-006-05-04` CK `PASS`.
 
