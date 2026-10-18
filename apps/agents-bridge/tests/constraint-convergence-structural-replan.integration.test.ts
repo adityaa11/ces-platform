@@ -30,13 +30,19 @@ test("RC-BSSV2-00604-04/05/07/08 projects conservative convergence and a version
   const authenticator = { authenticate: (credential: string) => credential === principal.credential ? principal : null };
   const reader = createRuntimeCapacityConstraintReader(database, authenticator);
   const admission = createProviderWorkAdmissionService(database, authenticator);
-  let sends = 0;
-  const worker = createProductionBridgeWorker({
+  const sends = new Map<string, number>();
+  const createWorker = () => createProductionBridgeWorker({
     config: { databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 1, perceptionConcurrency: 1, timeoutSeconds: 5, retryLimit: 0, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 },
     runtime: new TestRuntime(), documentPerception: async () => undefined, semantic: async () => undefined,
     providerPayloadAdapter: { hydrate: async (input) => ({ ...input }) },
-    providerOutboundTransport: async () => { sends += 1; return { feedbackId: `${suffix}-feedback-${sends}`, transportDisposition: "terminal_confirmed" as const, operationalOutcome: "success" as const, usage: { rpm: 1, tpm: 1, rpd: 1 } }; },
+    providerOutboundTransport: async ({ payloadReference }) => {
+      const logicalWorkId = typeof payloadReference === "object" && payloadReference !== null && "logicalWorkId" in payloadReference ? String(payloadReference.logicalWorkId) : String(payloadReference);
+      const sendCount = (sends.get(logicalWorkId) ?? 0) + 1;
+      sends.set(logicalWorkId, sendCount);
+      return { feedbackId: `${suffix}-feedback-${logicalWorkId}-${sendCount}`, transportDisposition: "terminal_confirmed" as const, operationalOutcome: "success" as const, usage: { rpm: 1, tpm: 1, rpd: 1 } };
+    },
   });
+  let worker = createWorker();
   const app = createBridgeApp({ runtime: new TestRuntime(), version: "constraint-convergence-fixture", runtimeCapacityConstraintReader: reader, providerWorkAdmissionService: admission });
   const windows = { rpm: { kind: "fixed", windowSeconds: 60 }, tpm: { kind: "fixed", windowSeconds: 60 }, rpd: { kind: "fixed", windowSeconds: 60 }, concurrency: { kind: "fixed", windowSeconds: 60 } };
   const profile = (limit: number, backgroundLimit: number) => ({ usableGlobalCapacity: { rpm: limit, tpm: limit, rpd: limit, concurrency: limit }, hardInteractiveReserve: { rpm: 1, tpm: 1, rpd: 1, concurrency: 1 }, backgroundCapacity: { rpm: backgroundLimit, tpm: backgroundLimit, rpd: backgroundLimit, concurrency: backgroundLimit }, backgroundLanes: [] });
@@ -66,7 +72,7 @@ test("RC-BSSV2-00604-04/05/07/08 projects conservative convergence and a version
     assert.deepEqual(initial.effectiveCapacity, { rpm: 10, tpm: 10, rpd: 10, concurrency: 10 }, "the public ceiling begins at the active BSS-005 plan");
     const structuralWork = `${suffix}-immutable-work`;
     assert.equal((await post({ logicalWorkId: structuralWork, attemptNumber: 1, idempotencyKey: `${structuralWork}-key`, payloadReference: `${structuralWork}-payload`, payloadHash: "a".repeat(64), requestResourceEnvelope: { rpm: 2, tpm: 2, rpd: 2, concurrency: 2 }, expectedEffectiveConstraintRevision: initial.effectiveConstraintRevision })).state, "waiting", "the public command creates durable, unsent work when background capacity cannot yet fit it");
-    assert.equal(sends, 0);
+    assert.equal(sends.get(structuralWork) ?? 0, 0);
 
     await sql.unsafe("SELECT bridge.activate_desired_admission_profile($1,'plan-v2')", [domain]);
     for (const dimension of ["rpm", "tpm", "rpd", "concurrency"]) await sql.unsafe("INSERT INTO bridge.provider_quota_window_state(quota_domain_id,desired_profile_version,activation_revision,provider_capacity_profile_version,dimension_id,window_policy_identity,window_state,reset_semantics_known,reset_at) VALUES($1,'plan-v2',2,'cap-v2',$2,($3::jsonb)->$2,'{}',true,now()+interval '1 hour')", [domain, dimension, windows]);
@@ -78,13 +84,23 @@ test("RC-BSSV2-00604-04/05/07/08 projects conservative convergence and a version
     const replan = await outcome(structuralWork);
     assert.equal(replan.state, "consumer_replan_required");
     assert.deepEqual(replan.consumerReplan, { apiVersion: "ConsumerReplanRequired/v1", reason: "immutable_active_plan_capacity_downgrade", sourceDesiredProfileVersion: "plan-v1", sourceActivationRevision: 1, requiredDesiredProfileVersion: "plan-v2", requiredActivationRevision: 2 });
-    assert.equal(sends, 0, "a structural outcome never truncates, splits, or sends immutable consumer work");
+    assert.equal(sends.get(structuralWork) ?? 0, 0, "a structural outcome never truncates, splits, or sends immutable consumer work");
 
     await sql.unsafe("INSERT INTO bridge.runtime_pressure_safety_policy(policy_id,version,quota_domain_id,maximum_accepted_retry_after_seconds,metadata_free_cooldown_seconds,probe_eligibility_seconds) VALUES($1,'v1',$2,60,30,60)", [`${suffix}-pressure`, domain]);
+    const foreignDomain = `${suffix}-foreign-domain`;
+    const foreignRoute = `${suffix}-foreign-route`;
+    await sql.unsafe("INSERT INTO bridge.runtime_pressure_safety_policy(policy_id,version,quota_domain_id,maximum_accepted_retry_after_seconds,metadata_free_cooldown_seconds,probe_eligibility_seconds) VALUES($1,'v1',$2,60,30,60)", [`${suffix}-foreign-pressure`, foreignDomain]);
+    const eligibleControl = await read();
+    const controlWork = `${suffix}-eligible-control`;
+    assert.equal((await post({ logicalWorkId: controlWork, attemptNumber: 1, idempotencyKey: `${controlWork}-key`, payloadReference: `${controlWork}-payload`, payloadHash: "c".repeat(64), requestResourceEnvelope: { rpm: 1, tpm: 1, rpd: 1, concurrency: 1 }, expectedEffectiveConstraintRevision: eligibleControl.effectiveConstraintRevision })).state, "waiting", "the otherwise eligible public control enters its ordinary admission outcome without foreign feedback");
+    await sql.unsafe("SELECT bridge.record_provider_429_pressure($1,$2,$3,30,'domain','qualified','rpm',$4,2)", [foreignDomain, foreignRoute, `${suffix}-foreign-qualified`, `${suffix}-foreign-window`]);
+    assert.deepEqual(await read(), eligibleControl, "foreign-domain feedback leaves an otherwise eligible public control unchanged");
+    assert.equal((await outcome(controlWork)).state, "waiting", "foreign-domain feedback cannot alter the control admission outcome");
+    assert.equal((await sql.unsafe("SELECT bridge.recover_provider_pressure_incident($1,$2,$3,'domain','rpm',$4,'qualified',clock_timestamp()-interval '1 day') AS recovered", [foreignDomain, foreignRoute, `${suffix}-foreign-stale`, `${suffix}-foreign-window`]))[0].recovered, false, "stale foreign-domain feedback cannot release a newer incident");
+    assert.deepEqual(await read(), eligibleControl, "foreign-domain stale feedback leaves the public control constraint and admission eligibility unchanged");
+    assert.equal((await outcome(controlWork)).state, "waiting", "stale foreign-domain feedback cannot alter the control admission outcome");
     await sql.unsafe("SELECT bridge.record_provider_429_pressure($1,$2,$3,30,'route','untrusted','rpm',$4,NULL)", [domain, route, `${suffix}-429`, `${suffix}-window`]);
     assert.equal((await read()).reason, "temporarily_pressure_blocked", "ambiguous 429 projects only a transient conservative hold");
-    await sql.unsafe("SELECT bridge.record_provider_429_pressure($1,$2,$3,30,'route','qualified','rpm',$4,NULL)", [`${suffix}-foreign-domain`, `${suffix}-foreign-route`, `${suffix}-foreign-429`, `${suffix}-foreign-window`]);
-    assert.equal((await read()).reason, "temporarily_pressure_blocked", "foreign-domain feedback cannot change this domain");
     assert.equal((await sql.unsafe("SELECT bridge.recover_provider_pressure_incident($1,$2,$3,'route','rpm',$4,'qualified',clock_timestamp()-interval '1 day') AS recovered", [domain, route, `${suffix}-stale-recovery`, `${suffix}-window`]))[0].recovered, false, "stale recovery feedback cannot release current pressure");
     assert.equal((await sql.unsafe("SELECT bridge.recover_provider_pressure_incident($1,$2,$3,'route','rpm',$4,'qualified',clock_timestamp()) AS recovered", [domain, route, `${suffix}-recovery`, `${suffix}-window`]))[0].recovered, true);
 
@@ -93,17 +109,36 @@ test("RC-BSSV2-00604-04/05/07/08 projects conservative convergence and a version
     await eventually(async () => (await read()).plan.activationRevision === 3, "the public read must observe the separately activated increase");
     const increased = await read();
     assert.deepEqual(increased.effectiveCapacity, { rpm: 10, tpm: 10, rpd: 10, concurrency: 10 });
-    await sql.unsafe("SELECT bridge.record_provider_429_pressure($1,$2,$3,30,'domain','qualified','rpm',$4,2)", [domain, route, `${suffix}-trusted-low`, `${suffix}-trusted-window`]);
-    assert.equal((await read()).effectiveCapacity.rpm, 2, "a trusted domain observation immediately lowers the public effective ceiling");
-    await sql.unsafe("SELECT bridge.record_provider_429_pressure($1,$2,$3,30,'domain','qualified','rpm',$4,100)", [domain, route, `${suffix}-trusted-high`, `${suffix}-trusted-window`]);
-    assert.equal((await read()).effectiveCapacity.rpm, 2, "a later higher runtime observation cannot raise BSS-005 capacity");
-    assert.equal((await sql.unsafe("SELECT bridge.recover_provider_pressure_incident($1,$2,$3,'domain','rpm',$4,'qualified',clock_timestamp()) AS recovered", [domain, route, `${suffix}-trusted-recovery`, `${suffix}-trusted-window`]))[0].recovered, true);
-    const recovered = await read();
-    assert.equal(recovered.reason, "eligible_in_principle");
-    assert.equal(recovered.effectiveCapacity.rpm, 10, "only matched recovery returns the ceiling to the active BSS-005 plan");
+    const historicalIdentity = (await sql.unsafe("SELECT desired_profile_version,activation_revision::text AS activation_revision,state FROM bridge.provider_work_attempt WHERE logical_work_id=$1", [structuralWork]))[0];
+    const assertQualifiedClamp = async (dimension: "rpm" | "tpm" | "rpd", restart = false) => {
+      const window = `${suffix}-trusted-${dimension}-window`;
+      await sql.unsafe("SELECT bridge.record_provider_429_pressure($1,$2,$3,30,'domain','qualified',$4,$5,2)", [domain, route, `${suffix}-trusted-${dimension}-low`, dimension, window]);
+      const clamped = await read();
+      assert.equal(clamped.effectiveCapacity[dimension], 2, `a trusted ${dimension.toUpperCase()} observation immediately lowers the public effective ceiling`);
+      if (restart) {
+        await worker.stop();
+        worker = createWorker();
+        await worker.start();
+        const restarted = await read();
+        assert.equal(restarted.plan.activationRevision, 3, "the ordinary worker restart preserves the active plan revision");
+        assert.equal(restarted.effectiveCapacity[dimension], 2, "the ordinary worker restart preserves the conservative numeric clamp");
+        assert.equal((await sql.unsafe("SELECT count(*)::int AS count FROM bridge.provider_work_wakeup_dispatch WHERE quota_domain_id=$1 AND wakeup_key='active-plan:3'", [domain]))[0].count, 1, "restart cannot duplicate the activated-plan wakeup");
+        assert.deepEqual((await sql.unsafe("SELECT desired_profile_version,activation_revision::text AS activation_revision,state FROM bridge.provider_work_attempt WHERE logical_work_id=$1", [structuralWork]))[0], historicalIdentity, "restart retains the historical immutable reservation identity and liability");
+        assert.equal(sends.get(structuralWork) ?? 0, 0, "restart cannot create a duplicate historical send");
+      }
+      await sql.unsafe("SELECT bridge.record_provider_429_pressure($1,$2,$3,30,'domain','qualified',$4,$5,100)", [domain, route, `${suffix}-trusted-${dimension}-high`, dimension, window]);
+      assert.equal((await read()).effectiveCapacity[dimension], 2, `a later higher ${dimension.toUpperCase()} observation cannot raise BSS-005 capacity`);
+      assert.equal((await sql.unsafe("SELECT bridge.recover_provider_pressure_incident($1,$2,$3,'domain',$4,$5,'qualified',clock_timestamp()) AS recovered", [domain, route, `${suffix}-trusted-${dimension}-recovery`, dimension, window]))[0].recovered, true);
+      const recovered = await read();
+      assert.equal(recovered.reason, "eligible_in_principle");
+      assert.equal(recovered.effectiveCapacity[dimension], 10, `only matched ${dimension.toUpperCase()} recovery returns the ceiling to the active BSS-005 plan`);
+    };
+    await assertQualifiedClamp("rpm", true);
+    await assertQualifiedClamp("tpm");
+    await assertQualifiedClamp("rpd");
     const futureWork = `${suffix}-future-work`;
     assert.equal((await post({ logicalWorkId: futureWork, attemptNumber: 1, idempotencyKey: `${futureWork}-key`, payloadReference: `${futureWork}-payload`, payloadHash: "b".repeat(64), requestResourceEnvelope: { rpm: 1, tpm: 1, rpd: 1, concurrency: 1 }, expectedEffectiveConstraintRevision: increased.effectiveConstraintRevision })).state, "dispatched_or_may_have_started");
-    await eventually(async () => sends === 1, "only the newly eligible, versioned future work may send");
-    assert.equal(sends, 1);
+    await eventually(async () => (sends.get(futureWork) ?? 0) === 1, "only the newly eligible, versioned future work may send");
+    assert.equal(sends.get(futureWork), 1);
   } finally { await worker.stop().catch(() => undefined); await app.close(); await sql.end(); }
 });
