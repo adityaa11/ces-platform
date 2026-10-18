@@ -1,6 +1,6 @@
 # BSS-V2-006-05-04 — Policy-aware runtime admission and fairness
 
-- **State:** `awaiting_review`; executable leaf, not GO/CFC/HMN authority or CK PASS.
+- **State:** `approved` following CK `PASS` for remediation commit `bb36b32`; executable leaf.
 - **Review batch:** `BSS-V2-BATCH-06-05-04`.
 - **Parent:** [BSS-V2-006-05 split map](BSS-V2-006-05-policy-driven-optional-capacity-dimensions-anoman.md).
 - **Dependencies:** parent predecessors, `BSS-V2-006-05-02` CK `PASS`, and the independently approved BSS-V2-006-04 runtime contracts.
