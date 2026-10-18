@@ -51,6 +51,7 @@ migrations.push("0079_bssv20060502_effective_plan_timestamp_canonicalization");
 migrations.push("0080_bssv20060502_effective_plan_canonicalizer_execute");
 migrations.push("0081_bssv20060502_effective_plan_nested_vector_validation");
 migrations.push("0082_bssv20060503_authenticated_effective_capacity_snapshot");
+migrations.push("0083_bssv20060504_policy_aware_runtime_admission_fairness");
 const readMigration = async (name) => {
   let migration = await readFile(new URL(`../migrations/${name}.sql`, import.meta.url), "utf8");
   for (const [token, value] of Object.entries(replacements)) migration = migration.replaceAll(token, value.replaceAll("'", "''"));
