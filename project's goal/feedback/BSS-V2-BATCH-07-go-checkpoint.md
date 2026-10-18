@@ -3,7 +3,7 @@
 - **Ticket:** `BSS-V2-007` — Authenticated internal receiving boundary (narrow reusable contract)
 - **Batch:** `BSS-V2-BATCH-07`
 - **State:** `awaiting_review`
-- **Review target:** pending bounded implementation commit
+- **Review target:** `a87a31021b65d850d5c7df94c149051dab63d520` (`feat(bss): add internal receiving boundary`)
 - **Dependency:** current approved Atlas perception/semantic internal HTTP authentication convention, consumed only as an established credential-validation convention. No GHR or IDSER consumer implementation is consumed.
 
 ## Bounded implementation
