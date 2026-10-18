@@ -23,6 +23,14 @@ Plan from real per-request prompt/schema/REL/visual/context/input/output reserva
 
 **Empty corpus:** accepted `NormalizedDocument v1` may have pages but no eligible source units. Return typed `NO_ELIGIBLE_SOURCE` with verified coverage/zero batch records; neither `-03-02` nor `-03-03` may invent one empty batch to make the future GHR positive `batchCount` schema pass.
 
+## Frozen planning read/fit sequence — prevents duplicate BSS planning
+
+1. Receive only the authenticated `-03-01` resolved accepted source and a BSS **server-authorized** prospective process/workload principal. Invoke the existing BSS snapshot reader with `prospective:true` to obtain structural maximum, policy/enforcement, safety, estimator identity and authorized route/profile revision. An inactive response is usable **only** for exact `prospective_planning_only`; it is not provider/route activation.
+2. Produce a **pure, deterministic, conservative semantic corpus demand estimate** (real input text/tables/context/media, versioned prompt/schema/output allowance). Fit against immutable structural request maxima; the planner may split/adjust *owned/context source partitions*, **not** compute provider RPM/TPM window availability or publish a BSS plan.
+3. Submit bounded `requestBytes` and `inputTokens` candidate estimates to the **same** BSS snapshot reader for authoritative structural fit where exposed; require consistent qualified policy/profile/estimator/structural versions across reads, or mark stale and restart planning against a newly pinned version. If BSS returns `unfit` for the structural candidate, try a deterministic smaller corpus (retaining source coverage/context) or return typed BLOCKED on indivisible source. Never treat `status=inactive/prospective_planning_only` as an admitted send permit.
+4. Finish as an immutable, unpublished *semantic corpus plan proposal*. Provider rate-window pressure and current RPM/TPM remaining quotas are not planner inputs. Current BSS-006 runtime constraint reads are **not required nor to be added for this frozen planner-only scope**; later BSS admission owns live eligibility. A real profile change after proposal is fenced/revalidated by `-03-03` before persistence. BSS profile/route registration or unavailable estimator provenance is a **STOP to its owner**, not authority for IDSER to create a new BSS catalog.
+5. `RequestResourceEnvelope` is the existing BSS workload demand `{requestUnits,tokenUnits,dayUnits,concurrencyUnits}` with exact dimension semantics and versioning. Do not equate numeric `dayUnits` demand to unknown RPD provider limit or replace it with numeric limit/vector metadata. The later admitted-work API `{rpm,tpm,rpd,concurrency}` remains downstream and outside this ticket.
+
 ## Frozen Review Contract
 
 | ID | PASS iff |

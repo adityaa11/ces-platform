@@ -46,6 +46,16 @@ The *fixture* substitutes only for **future GHR delivery**. It neither mocks acc
 
 Each child needs explicit GO, evidence and independent CK. Parent is **never** an umbrella implementation GO.
 
+### Frozen Codex execution route (planning-only; do not invent an alternative)
+
+| Step | Reuse / only authorized extension | No alternative implementation |
+| --- | --- | --- |
+| `-03-01` | Atlas accepted perception/cache/source/derived-asset authority; implement narrowly scoped Atlas-owned read-only receiver/resolver if absent | No Bridge direct Atlas SQL; no fresh perception conversion, content store, issuer, GHR header authorizer, job or queue |
+| `-03-02` | Existing authenticated BSS `createCapacityPlanningSnapshotReader` / `bridge.read_capacity_planning_snapshot` via BSS-owned access, and only a qualified **pure semantic corpus estimator** within IDSER | No direct query to BSS tables from Atlas, new quota planner/fairness/window runtime, made-up profile/limit/active process, SEM packet builder or second provider adapter |
+| `-03-03` | Atlas-owned durable plan/handoff repository under Atlas's existing transaction/auth patterns; strict non-delivering output-body fixture | No GHR outbox/issuer/dispatcher, no pg-boss semantic task, no BSS work registration/reservation, no SEM execution/accepted truth |
+
+**Sequencing and return types are binding:** successful `-03-01` yields authorized resolved accepted source (not a batch); successful `-03-02` yields a deterministic **not-yet-persisted** corpus plan proposal (not BSS capacity policy); successful `-03-03` yields a durably stored immutable plan + N handoffs + a **validated, unissued** `SemanticBatchPlanReady/v1` body (not an actual GHR delivered message). Failed/unknown authority must return an explicit stop with the accountable owner—never satisfy a Review Contract by introducing an alternative route. Successful output contract validation does not signify GHR delivery, SEM-ready state or permission for a provider attempt.
+
 ## Frozen cross-owner rules
 
 1. **Actual source not fake acceptance:** `normalizedDocumentRef` is an opaque cache reference to an accepted Atlas record. Resolver verifies source SHA, perception execution/fingerprint, normalized version, trusted project/workspace/bundle/document, authorization, asset grants and allowed accepted lifecycle state. A read gap is `NORMALIZED_DOCUMENT_AUTHORIZED_READ_GAP`, never direct Bridge SQL or fabricated approved snapshot.

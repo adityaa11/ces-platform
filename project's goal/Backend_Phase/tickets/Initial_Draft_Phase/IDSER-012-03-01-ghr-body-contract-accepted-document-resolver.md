@@ -38,7 +38,7 @@ Parser returns a reference; **then** an Atlas-owned scoped resolver fetches the 
 | --- | --- |
 | RC-0120301-01 | Fixture fields are derived from **real persisted accepted NormalizedDocument v1** + `perceived`, correct execution/completion fingerprint and granted assets, with reproducible source identity. |
 | RC-0120301-02 | Exact v0.3 five-field `SemanticBatchPlanInput/v1` strict parser accepts qualified body and rejects missing/extra/duplicate/invalid/oversized/wrong-version bodies; no generic GHR header schema changes. |
-| RC-0120301-03 | Actual authenticated read-only resolver redeems ref into the accepted document, rechecks trusted scope and all hashes/execution/lifecycle/media/REL grants; stale, foreign, altered, unaccepted and cross-document cases fail closed. |
+| RC-0120301-03 | Actual authenticated read-only resolver redeems ref into the accepted document, rechecks trusted scope and source/execution/fingerprint/lifecycle/accepted-media grants; **REL is verified only if a separately accepted Atlas authority supplies it**, otherwise its absence is explicit and no graph is fabricated. Stale, foreign, altered, unaccepted and cross-document cases fail closed. |
 | RC-0120301-04 | Fixture delivery can later be replaced by GHR receiver adapter with same parser and resolver; no fake trusted issuer or active route and no state-changing cache/asset read. |
 | RC-0120301-05 | Non-inert test reads source; exactly zero planner publication, GHR issue/delivery, BSS attempt/reservation, SEM/provider call or Atlas semantic/reconciliation effects. |
 
