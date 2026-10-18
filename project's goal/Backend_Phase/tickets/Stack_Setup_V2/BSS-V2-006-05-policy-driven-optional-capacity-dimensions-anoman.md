@@ -1,12 +1,29 @@
-# BSS-V2-006-05 — Policy-driven optional capacity dimensions (Anoman-first, provider-neutral seam)
+# BSS-V2-006-05 — Policy-driven optional capacity dimensions (Anoman-first, provider-neutral seam) — split map
 
-- **State:** planned; **not** GO/CFC authority or CK PASS.
+- **State:** `planned`; **non-executable family/traceability map**. It is **not** GO, CFC, HMN authority or CK PASS.
 - **Review batch:** BSS-V2-BATCH-06-05.
 - **Parent:** [BSS-V2-006 durable fair external-provider runtime admission](BSS-V2-006-capability-admission-interactive-protection.md).
 - **Predecessors:** BSS-V2-005-01..04, BSS-V2-005-05-01..04, and BSS-V2-006-04-01..06 must retain their independently CK-approved contracts. This is a successor extension, **not** a reopening, weakening, or reassignment of prior CK PASS findings.
 - **Real input fixture:** [migration 0076 — canonical Anoman capacity](../../../../packages/atlas-db/migrations/0076_bssv200501_anoman_capacity_profile.sql); quota domain **anoman-shared-prod**, capacity profile **2026-10-18.1**, route **anoman-semantic**.
 - **Cross-owner authority:** this ticket is located under BSS-V2-006 for integration and review sequencing, but **BSS-V2-005 owns** provider-profile provenance, planner policy, immutable DesiredAdmissionProfile and authenticated CapacityPlanningSnapshot; **BSS-V2-006 owns** effective constraints, operational windows, fair admission, atomic reservation, transport claims and feedback. Before implementation GO, freeze the specific authorized BSS-005 policy-interface delta and the matching BSS-006 enforcement delta. Location under BSS-006 does not by itself grant unrestricted edits to BSS-005.
 - **Downstream handoff:** [IDSER-012-02-01 semantic batch planning](../Initial_Draft_Phase/IDSER-012-02-01-deterministic-semantic-batch-planning.md) (prospective read only), then [IDSER-012-02-02 semantic consumer activation](../Initial_Draft_Phase/IDSER-012-02-02-semantic-provider-profile-activation.md). This ticket **does not activate** either process or the Anoman provider route.
+
+## Split rationale and executable children
+
+The original leaf spans two independently owned authorities (BSS-V2-005 policy/planning and BSS-V2-006 runtime), three durable write/read contracts, SQL fairness/admission semantics, operational recovery, and cross-provider compatibility proof. A single GO → CK → CFC → HMN cycle cannot repair any one of those seams without reopening unrelated authority and evidence. The following leaves keep every requirement below as frozen family authority while making each review cycle bounded.
+
+| Order | Executable child | Sole implementation/proof seam | Frozen review rows discharged |
+| --- | --- | --- | --- |
+| 1 | [BSS-V2-006-05-01](BSS-V2-006-05-01-authorized-enforcement-policy-provenance.md) | BSS-V2-005 immutable authorized enforcement-selection policy and fail-closed effective-policy derivation | RC-00605-01 |
+| 2 | [BSS-V2-006-05-02](BSS-V2-006-05-02-effective-plan-publication-convergence.md) | BSS-V2-005 deterministic eligible-dimension planning, immutable DesiredAdmissionProfile versioning and existing activation/wakeup convergence | RC-00605-02 |
+| 3 | [BSS-V2-006-05-03](BSS-V2-006-05-03-authenticated-effective-capacity-snapshot.md) | BSS-V2-005 authenticated planning-only reader for source and enforcement metadata | RC-00605-08 |
+| 4 | [BSS-V2-006-05-04](BSS-V2-006-05-04-policy-aware-runtime-admission-fairness.md) | BSS-V2-006 effective-dimension DB admission, pressure and fair scheduling | RC-00605-03, RC-00605-04, admission portions of RC-00605-07 |
+| 5 | [BSS-V2-006-05-05](BSS-V2-006-05-05-policy-revision-operational-recovery.md) | BSS-V2-006 stale-policy, replay/retry and 429 lifecycle convergence | RC-00605-05, RC-00605-06 |
+| 6 | [BSS-V2-006-05-06](BSS-V2-006-05-06-provider-neutral-compatibility-regression-closure.md) | Schema-only future-provider compatibility plus full four-known-dimension and boundary regression closure | remaining RC-00605-07, RC-00605-09, RC-00605-10 |
+
+**Dependency and completion rule:** each child retains every predecessor named above. `-05-02` requires `-05-01` CK `PASS`; planning snapshot `-05-03` and runtime admission `-05-04` both require `-05-02` CK `PASS` and may then proceed independently; `-05-05` requires `-05-04` CK `PASS`; `-05-06` requires CK `PASS` from `-05-02..05`. Only `-05-06` CK `PASS`, with the sibling evidence it names, closes this family. No child may GO until its specific BSS-V2-005 or BSS-V2-006 delta, ownership, and direct negative controls are frozen. A failure is remediated only in the leaf owning that row; it does not reopen prior independent CK findings.
+
+**Authority preservation:** all Problem/evidence, Outcome, Scope A/B, extension seam, Frozen Review Contract, Evidence and execution gates, and Hard stop text below remains the complete, binding family contract. The child tickets allocate implementation and evidence; they do not delete, relax, reinterpret, or substitute any of those clauses. Parent references in a child mean this frozen text, including its explicit `STOP BLOCKED_AUTHORITY` condition.
 
 ## Problem / evidence anchor
 
