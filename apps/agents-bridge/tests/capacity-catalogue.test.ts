@@ -3,7 +3,7 @@ import test from "node:test";
 import { CapacityCatalogueError, isStructurallyUnavailable, parseProviderCapacityProfile, validateCapacityCatalogue } from "../src/capacity-catalogue.ts";
 
 const profile = (overrides: Record<string, unknown> = {}) => ({
-  quotaDomainId: "anoman-shared-prod", profileVersion: "2026-10-08.1", nonSecretProviderAccountAlias: "anoman-production-account-a",
+  quotaDomainId: "anoman-shared-prod", profileVersion: "2026-10-08.1", nonSecretProviderAccountAlias: "anoman-production-account-a", activeKeyCount: 1,
   associatedRoutes: [{ routeId: "semantic-extract-a", providerId: "anoman" }, { routeId: "semantic-extract-b", providerId: "anoman" }],
   limits: { rpm: { state: "known", value: 60 }, tpm: { state: "known", value: 90000 }, rpd: { state: "zero" }, concurrency: { state: "unknown" } },
   windowPolicies: { rpm: { policyId: "rpm-window", policyVersion: "v1", source: "provider_docs", kind: "fixed_window", parameters: { windowSeconds: 60 } }, tpm: { policyId: "tpm-refill", policyVersion: "v2", source: "provider_api", kind: "token_bucket", parameters: { refillUnitsPerSecond: 1500, burstUnits: 90000 } }, rpd: { policyId: "rpd-reset", policyVersion: "v1", source: "qualified_observation", kind: "provider_reset_observation", parameters: { resetObservationIdentity: "provider-rpd-reset-v1" } } },

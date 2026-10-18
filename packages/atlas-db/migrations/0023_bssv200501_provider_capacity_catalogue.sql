@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS bridge.provider_capacity_profile (
   quota_domain_id text NOT NULL CHECK (length(trim(quota_domain_id)) > 0),
   profile_version text NOT NULL CHECK (length(trim(profile_version)) > 0),
   provider_account_alias text NOT NULL CHECK (length(trim(provider_account_alias)) > 0),
+  active_key_count integer NOT NULL DEFAULT 1 CHECK (active_key_count > 0),
   associated_routes jsonb NOT NULL CHECK (jsonb_typeof(associated_routes) = 'array' AND jsonb_array_length(associated_routes) > 0),
   limits jsonb NOT NULL CHECK (jsonb_typeof(limits) = 'object'),
   window_policies jsonb NOT NULL CHECK (jsonb_typeof(window_policies) = 'object'),

@@ -19,6 +19,7 @@ export type ProviderCapacityProfile = Readonly<{
   quotaDomainId: string;
   profileVersion: string;
   nonSecretProviderAccountAlias: string;
+  activeKeyCount: number;
   associatedRoutes: readonly Readonly<{ routeId: string; providerId: string }>[];
   limits: Readonly<Record<CapacityDimension, CapacityState>>;
   windowPolicies: Readonly<Record<WindowedDimension, QuotaWindowPolicy>>;
@@ -47,6 +48,10 @@ const finiteTimestamp = (value: unknown, name: string): string => {
 const requiredString = (value: unknown, name: string): string => {
   if (!nonEmpty(value)) throw new CapacityCatalogueError(`${name} must be non-empty.`);
   return value;
+};
+const positiveSafeInteger = (value: unknown, name: string): number => {
+  if (!Number.isSafeInteger(value) || (value as number) <= 0) throw new CapacityCatalogueError(`${name} must be a positive safe integer.`);
+  return value as number;
 };
 const rejectUnexpected = (value: Record<string, unknown>, allowed: readonly string[], name: string): void => {
   for (const key of Object.keys(value)) if (!allowed.includes(key)) throw new CapacityCatalogueError(`${name} contains unsupported field ${key}.`);
@@ -93,10 +98,11 @@ function parseWindowPolicy(value: unknown, dimension: WindowedDimension): QuotaW
 /** Parses only secret-free, server-controlled planning input; it never resolves credentials or provider routes. */
 export function parseProviderCapacityProfile(value: unknown): ProviderCapacityProfile {
   const input = object(value, "capacity profile");
-  rejectUnexpected(input, ["quotaDomainId", "profileVersion", "nonSecretProviderAccountAlias", "associatedRoutes", "limits", "windowPolicies", "quotaAccountingPolicyId", "capacitySource", "sourceRef", "sourceVersion", "observedAt", "effectiveFrom"], "capacity profile");
+  rejectUnexpected(input, ["quotaDomainId", "profileVersion", "nonSecretProviderAccountAlias", "activeKeyCount", "associatedRoutes", "limits", "windowPolicies", "quotaAccountingPolicyId", "capacitySource", "sourceRef", "sourceVersion", "observedAt", "effectiveFrom"], "capacity profile");
   const quotaDomainId = requiredString(input.quotaDomainId, "quotaDomainId");
   const profileVersion = requiredString(input.profileVersion, "profileVersion");
   const nonSecretProviderAccountAlias = requiredString(input.nonSecretProviderAccountAlias, "nonSecretProviderAccountAlias");
+  const activeKeyCount = positiveSafeInteger(input.activeKeyCount, "activeKeyCount");
   const quotaAccountingPolicyId = requiredString(input.quotaAccountingPolicyId, "quotaAccountingPolicyId");
   const sourceRef = requiredString(input.sourceRef, "sourceRef");
   const sourceVersion = requiredString(input.sourceVersion, "sourceVersion");
@@ -115,7 +121,7 @@ export function parseProviderCapacityProfile(value: unknown): ProviderCapacityPr
   const limits = { rpm: parseCapacity(limitsInput.rpm, "rpm"), tpm: parseCapacity(limitsInput.tpm, "tpm"), rpd: parseCapacity(limitsInput.rpd, "rpd"), concurrency: parseCapacity(limitsInput.concurrency, "concurrency") };
   const windowsInput = object(input.windowPolicies, "windowPolicies"); rejectUnexpected(windowsInput, ["rpm", "tpm", "rpd"], "windowPolicies");
   const windowPolicies = { rpm: parseWindowPolicy(windowsInput.rpm, "rpm"), tpm: parseWindowPolicy(windowsInput.tpm, "tpm"), rpd: parseWindowPolicy(windowsInput.rpd, "rpd") };
-  return { quotaDomainId, profileVersion, nonSecretProviderAccountAlias, associatedRoutes, limits, windowPolicies, quotaAccountingPolicyId, capacitySource: input.capacitySource as CapacitySource, sourceRef, sourceVersion, observedAt: finiteTimestamp(input.observedAt, "observedAt"), effectiveFrom: finiteTimestamp(input.effectiveFrom, "effectiveFrom") };
+  return { quotaDomainId, profileVersion, nonSecretProviderAccountAlias, activeKeyCount, associatedRoutes, limits, windowPolicies, quotaAccountingPolicyId, capacitySource: input.capacitySource as CapacitySource, sourceRef, sourceVersion, observedAt: finiteTimestamp(input.observedAt, "observedAt"), effectiveFrom: finiteTimestamp(input.effectiveFrom, "effectiveFrom") };
 }
 
 /** Ensures a configured route maps to one domain while allowing many routes to share that domain. */
