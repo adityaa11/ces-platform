@@ -1,6 +1,6 @@
 # BSS-V2-007 — Authenticated internal receiving boundary (narrow reusable contract)
 
-- **State:** `planned`; implementation is NOT authorized by this planning document. Separate GO / CK required.
+- **State:** `awaiting_review`; GO implementation is complete and awaits independent CK.
 - **Review batch:** `BSS-V2-BATCH-07`.
 - **Dependency:** current approved Atlas perception/semantic internal HTTP authentication convention. Neither GHR nor IDSER-012-03-01-03 implementation is a prerequisite for qualifying this BSS library.
 - **Downstream:** `IDSER-012-03-01-03` owns the first domain-specific accepted-document read; `BSS-V2-008` is separately planned and NOT activated/implemented here.
