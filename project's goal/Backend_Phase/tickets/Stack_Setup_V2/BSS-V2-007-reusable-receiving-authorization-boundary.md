@@ -29,6 +29,14 @@ Provide **one reusable, fail-closed receiver authorization boundary** for handof
 | RC-BSSV2-007-04 | Resource access is still gated by the **resource owner**; a verified receiver cannot read an arbitrary accepted document or media, and cannot derive an accepted semantic truth or send permit merely from generic authorization. |
 | RC-BSSV2-007-05 | Existing Docling/perception and `IDSER-012-03-01-02` behavior has no direct regression; no GHR issuance/delivery, BSS admission, SEM execution, provider send, truth write or new runtime queue; positive and negative side-effect oracles are non-inert. |
 
+## Security Refactor Readiness
+
+- **Status:** `applicable`.
+- **Inherited boundary:** `BOUNDARY-BSSV2-007-ATLAS-WORK` — the Atlas owner decides durable work eligibility and resource scope; generic BSS receiving authentication is **not** a document/read grant.
+- **Trust transition:** `SEAM-BSSV2-007-VERIFIED-RECEIVER` — internal credential verification and server-derived work/purpose authorization must both succeed before entering the receiving domain.
+- **Prohibited coupling:** `COUPLING-BSSV2-007-UNIVERSAL-SERVICE-KEY` — no global Bridge credential, requester-chosen principal, or payload reference can imply resource authority.
+- **Review bindings:** `REV-READY-BSSV2-007-01` confirms session-independent approved background access and expired-interactive rejection; `REV-READY-BSSV2-007-02` confirms revoked/foreign work denial; `REV-READY-BSSV2-007-03` confirms no GHR, BSS, SEM or provider effects.
+
 ## Review and handoff
 
 Record principal derivation, durable work/source authority, verification policy, replay/revocation disposition and exact exercised fixture. Explicitly STOP `RECEIVING_WORK_AUTHORITY_GAP` when a qualified server-derived work permit for a receiving domain is missing; BSS must not invent an Atlas truth grant. CK `PASS` qualifies only the **shared mechanism**. `IDSER-012-03-01-03` alone owns the next semantic/batch-plan **domain adapter and existing resolver integration**; future SEM/reconciliation routes retain separate GO/CK. No current live GHR is asserted.

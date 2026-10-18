@@ -28,6 +28,14 @@ Define and qualify **one reusable authorization seam for a domain producer to pr
 | RC-BSSV2-008-04 | A second independent future-domain fixture shows that generic sender verification does not hard-code perception, NormalizedDocument or semantic payload fields. Receiver and GHR are not implicitly authorized by producer evidence. |
 | RC-BSSV2-008-05 | No live GHR issue/route/ack/outbox, no SEM/BSS admission/transport, no provider call, no Atlas semantic/reconciliation/publication mutation; positive domain-event proof and exact forbidden-effect oracles are non-inert. |
 
+## Security Refactor Readiness
+
+- **Status:** `applicable`.
+- **Inherited boundary:** `BOUNDARY-BSSV2-008-PRODUCER-WORK` — only the producing domain can attest to a committed eligible source event; BSS checks registered sender/route/purpose and cannot issue domain authority.
+- **Trust transition:** `SEAM-BSSV2-008-VERIFIED-SENDER` — exact authorized domain event, body hash/version and intended route identity become a verified **proposed** handoff intent.
+- **Prohibited coupling:** `COUPLING-BSSV2-008-FAKE-GHR-ISSUER` — no invented GHR signature, route, outbox, event, delivery or universal producer credential.
+- **Review bindings:** `REV-READY-BSSV2-008-01` checks actual persisted producer/event authority; `REV-READY-BSSV2-008-02` checks forged/foreign/conflicting-producer denial; `REV-READY-BSSV2-008-03` checks zero delivery/queue/provider effects.
+
 ## Hard stop / handoff
 
 A verified **proposed** intent is not a delivered GHR message and not a downstream resource permit. If a producer has no authorized persisted event, report `SENDER_EVENT_AUTHORITY_GAP` to that domain owner, rather than write or fake it. After CK PASS, the future GHR owner implements issuance/delivery and transactional origin binding in a separate GO; consumers integrate BSS-007 with their domain resolver in their own tickets. No other current or future BSS provider-capacity or usage-ledger ticket gains GHR delivery authority.
