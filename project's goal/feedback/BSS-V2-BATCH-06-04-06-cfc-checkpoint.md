@@ -5,7 +5,7 @@
 - **State:** `awaiting_review`
 - **Original CK artifact:** `project's goal/feedback/BSS-V2-BATCH-06-04-06-d2edbf1-review.md`
 - **Reviewed base:** `d2edbf1d4af325528223a4aa6ebf6e50540b2e0b`
-- **Bounded remediation commit:** `39fbc542` — `test(admission): complete multi-consumer closure evidence`
+- **Bounded remediation commit:** `c99da45a` — `test(admission): complete multi-consumer closure evidence`
 - **Authorized clauses:** `CK-001.a`, `CK-001.b`, and `CK-001.c`
 
 ## CFC working progress view
