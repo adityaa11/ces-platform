@@ -90,7 +90,7 @@ test("RC-00605-08 exposes an authenticated Anoman planning snapshot with zero op
     const idserConsumer = createIdserProspectiveCapacitySnapshotConsumer({ reader, serverCredential: principal.credential });
     const idserSnapshot = await idserConsumer.read({ requestBytes: 100, inputTokens: 100, requestResourceEnvelope: { requestUnits: 1, tokenUnits: 100, dayUnits: 1, concurrencyUnits: 1 } });
     assert.deepEqual(idserSnapshot.requestResourceEnvelope, { requestUnits: 1, tokenUnits: 100, dayUnits: 1, concurrencyUnits: 1 }, "positive day demand stays demand when BSS authorizes unknown/not-enforced RPD");
-    assert.deepEqual(idserSnapshot.eligibleDimensions, ["requestUnits", "tokenUnits", "dayUnits", "concurrencyUnits"]);
+    assert.deepEqual(idserSnapshot.eligibleDimensions, ["rpm", "tpm", "concurrency"], "the Anoman unknown/not-enforced RPD is excluded from the BSS provider mask");
     assert.equal(idserSnapshot.plan, null, "the IDSER consumer retains the planning read as non-admission evidence");
     assert.ok(Object.isFrozen(idserSnapshot), "the accepted structural-policy snapshot is immutable");
     assert.deepEqual(await counters(), before, "the production reader must be non-inert: no attempts, reservations, jobs, sends, or quota mutations");

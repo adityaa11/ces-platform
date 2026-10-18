@@ -12,14 +12,21 @@ const valid = (): CapacityPlanningSnapshot => ({
 });
 const input = { requestBytes: 100, inputTokens: 100, requestResourceEnvelope: { requestUnits: 1, tokenUnits: 100, dayUnits: 1, concurrencyUnits: 1 } };
 
-test("IDSER prospective consumer preserves the four demand dimensions without inventing an RPD limit", async () => {
+test("IDSER prospective consumer keeps the BSS dimension mask separate from the four-field demand envelope", async () => {
   const consumer = createIdserProspectiveCapacitySnapshotConsumer({ reader: { read: async () => valid() }, serverCredential: "server-owned" });
   const snapshot = await consumer.read(input);
-  assert.deepEqual(snapshot.eligibleDimensions, ["requestUnits", "tokenUnits", "dayUnits", "concurrencyUnits"]);
+  assert.deepEqual(snapshot.eligibleDimensions, ["rpm", "tpm", "concurrency"]);
   assert.deepEqual(snapshot.requestResourceEnvelope, input.requestResourceEnvelope);
   assert.equal(snapshot.enforcement.dimensions as unknown as Record<string, unknown> ? (snapshot.enforcement.dimensions as Record<string, any>).rpd.limit : undefined, undefined);
   assert.ok(Object.isFrozen(snapshot));
   assert.ok(Object.isFrozen(snapshot.requestResourceEnvelope));
+
+  const knownRpd = valid() as any;
+  knownRpd.source.limits.rpd = { state: "known", value: 1_000 };
+  knownRpd.enforcement.dimensions.rpd = { mode: "enforced", providerState: "known", limitSource: "provider", limit: 1_000 };
+  const knownRpdSnapshot = await createIdserProspectiveCapacitySnapshotConsumer({ reader: { read: async () => knownRpd }, serverCredential: "server-owned" }).read(input);
+  assert.deepEqual(knownRpdSnapshot.eligibleDimensions, ["rpm", "tpm", "rpd", "concurrency"]);
+  assert.deepEqual(knownRpdSnapshot.requestResourceEnvelope, input.requestResourceEnvelope);
 });
 
 test("IDSER prospective consumer fails closed for every non-exact inactive status and missing provenance", async () => {
@@ -34,6 +41,8 @@ test("IDSER prospective consumer fails closed for every non-exact inactive statu
     ["unsupported dimension", (snapshot) => { delete snapshot.enforcement.dimensions.concurrency; }],
     ["known zero", (snapshot) => { snapshot.source.limits.tpm = { state: "known", value: 0 }; snapshot.enforcement.dimensions.tpm.limit = 0; }],
     ["unauthorized RPD", (snapshot) => { snapshot.enforcement.dimensions.rpd.mode = "enforced"; }],
+    ["numeric unknown RPD source limit", (snapshot) => { snapshot.source.limits.rpd.value = 1_000; }],
+    ["numeric unknown RPD enforcement limit", (snapshot) => { snapshot.enforcement.dimensions.rpd.limit = 1_000; }],
   ];
   for (const [name, mutate] of mutations) {
     const snapshot: any = valid(); mutate(snapshot);

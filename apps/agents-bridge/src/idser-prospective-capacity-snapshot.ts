@@ -11,6 +11,8 @@ export type IdserProspectiveCapacitySnapshotRead = Readonly<{
   requestResourceEnvelope: RequestResourceEnvelope;
 }>;
 
+type BssEligibleDimension = "rpm" | "tpm" | "rpd" | "concurrency";
+
 export type IdserProspectiveCapacitySnapshot = Readonly<{
   apiVersion: "CapacityPlanningSnapshot/v1";
   status: "inactive";
@@ -22,8 +24,8 @@ export type IdserProspectiveCapacitySnapshot = Readonly<{
   enforcement: JsonRecord;
   process: JsonRecord;
   workload: JsonRecord;
-  /** BSS dimensions remain separate from the request-demand envelope. */
-  eligibleDimensions: readonly ["requestUnits", "tokenUnits", "dayUnits", "concurrencyUnits"];
+  /** BSS capacity dimensions remain separate from the request-demand envelope. */
+  eligibleDimensions: readonly BssEligibleDimension[];
   requestResourceEnvelope: RequestResourceEnvelope;
 }>;
 
@@ -32,7 +34,7 @@ type CapacityPlanningSnapshotReader = Readonly<{
 }>;
 
 const requiredDimensions = ["rpm", "tpm", "rpd", "concurrency"] as const;
-const eligibleDimensions = ["requestUnits", "tokenUnits", "dayUnits", "concurrencyUnits"] as const;
+const bssEligibleDimensions = ["rpm", "tpm", "rpd", "concurrency"] as const;
 
 function fail(message: string): never { throw new IdserProspectiveCapacitySnapshotError(`IDSER prospective capacity snapshot rejected: ${message}`); }
 function object(value: unknown, name: string): JsonRecord {
@@ -127,7 +129,12 @@ function validate(raw: CapacityPlanningSnapshot, requestResourceEnvelope: Reques
   const authorizedUnknownRpd = rpdLimit.state === "unknown" && rpdPolicy.mode === "not_enforced" && rpdPolicy.providerState === "unknown";
   if (!knownRpd && !authorizedUnknownRpd) fail("rpd is neither enforced known capacity nor authorized unknown/not-enforced capacity");
   if (knownRpd && rpdPolicy.limit !== positive(rpdLimit.value, "source rpd limit")) fail("rpd enforcement limit does not match source");
-  if (authorizedUnknownRpd) nonEmpty(rpdPolicy.approvalRef, "not-enforced rpd approvalRef");
+  if (authorizedUnknownRpd) {
+    if (typeof rpdLimit.value === "number" || typeof rpdPolicy.limit === "number") {
+      fail("unknown/not-enforced rpd must not carry a numeric provider limit");
+    }
+    nonEmpty(rpdPolicy.approvalRef, "not-enforced rpd approvalRef");
+  }
 
   nonEmpty(process.id, "process id");
   nonEmpty(process.profileVersion, "process profileVersion");
@@ -162,7 +169,7 @@ function validate(raw: CapacityPlanningSnapshot, requestResourceEnvelope: Reques
     enforcement: structuredClone(enforcement),
     process: structuredClone(process),
     workload: structuredClone(workload),
-    eligibleDimensions,
+    eligibleDimensions: bssEligibleDimensions.filter((dimension) => dimension !== "rpd" || knownRpd),
     requestResourceEnvelope: structuredClone(requestResourceEnvelope),
   });
 }
