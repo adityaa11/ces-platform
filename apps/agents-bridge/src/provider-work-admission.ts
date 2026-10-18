@@ -18,7 +18,7 @@ export type ProviderWorkAdmissionRequest = Readonly<{
 
 export type ProviderWorkAdmissionOutcome = Readonly<{
   apiVersion: "ProviderWorkAdmission/v1";
-  state: "waiting" | "reserved" | "dispatched_or_may_have_started" | "terminal_success" | "terminal_cancelled" | "terminal_provider_failure" | "pressure_limited" | "policy_or_resource_unfit";
+  state: "waiting" | "reserved" | "dispatched_or_may_have_started" | "terminal_success" | "terminal_cancelled" | "terminal_provider_failure" | "pressure_limited" | "policy_or_resource_unfit" | "consumer_replan_required";
   logicalWorkId?: string;
   attemptNumber?: number;
   reservationId?: string;
@@ -91,7 +91,7 @@ export function createProviderWorkAdmissionService(
         const outcome = (result.rows[0] as { outcome?: unknown } | undefined)?.outcome;
         if (!outcome || typeof outcome !== "object" || Array.isArray(outcome)) return unavailable();
         const value = outcome as Record<string, unknown>;
-        if (value.apiVersion !== "ProviderWorkAdmission/v1" || !["waiting", "reserved", "dispatched_or_may_have_started", "terminal_success", "terminal_cancelled", "terminal_provider_failure", "pressure_limited", "policy_or_resource_unfit"].includes(String(value.state))) return unavailable();
+        if (value.apiVersion !== "ProviderWorkAdmission/v1" || !["waiting", "reserved", "dispatched_or_may_have_started", "terminal_success", "terminal_cancelled", "terminal_provider_failure", "pressure_limited", "policy_or_resource_unfit", "consumer_replan_required"].includes(String(value.state))) return unavailable();
         return value as ProviderWorkAdmissionOutcome;
       } catch { return unavailable(); }
     },

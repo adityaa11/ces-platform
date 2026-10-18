@@ -43,6 +43,7 @@ migrations.push("0071_bssv20060403_operational_outcome_feedback_projection");
 migrations.push("0072_bssv20060403_cancelled_reservation_release");
 migrations.push("0073_bssv20060403_legacy_feedback_reason_compatibility");
 migrations.push("0074_bssv20060404_interactive_admitted_work_lifecycle");
+migrations.push("0075_bssv20060405_constraint_convergence_structural_replan_projection");
 const readMigration = async (name) => {
   let migration = await readFile(new URL(`../migrations/${name}.sql`, import.meta.url), "utf8");
   for (const [token, value] of Object.entries(replacements)) migration = migration.replaceAll(token, value.replaceAll("'", "''"));
