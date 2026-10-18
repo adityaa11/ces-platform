@@ -3,7 +3,7 @@
 - **Ticket:** `BSS-V2-006-04-06` — Generic multi-consumer compatibility closure
 - **Review batch:** `BSS-V2-BATCH-06-04-06`
 - **State:** `awaiting_review`
-- **Authorized checkpoint:** `PENDING_COMMIT`
+- **Authorized checkpoint:** `d2edbf1d4af325528223a4aa6ebf6e50540b2e0b`
 - **Ticket authority:** `project's goal/Backend_Phase/tickets/Stack_Setup_V2/BSS-V2-006-04-06-generic-multi-consumer-compatibility-closure.md`
 - **Dependency gate:** CK `PASS` is recorded for `BSS-V2-006-04-01` (`3ae601f` verification), `-02` (`6d00987` verification), `-03` (`28b2fd0` verification), `-04` (`10d3a93d` approval), and `-05` (`bb8c04c` verification). No awaiting-review predecessor was consumed.
 
