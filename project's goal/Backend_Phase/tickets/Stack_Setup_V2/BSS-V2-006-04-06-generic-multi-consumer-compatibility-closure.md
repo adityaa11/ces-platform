@@ -1,6 +1,6 @@
 # BSS-V2-006-04-06 — Generic multi-consumer compatibility closure
 
-- **State:** `planned`
+- **State:** `approved`
 - **Review batch:** `BSS-V2-BATCH-06-04-06`
 - **Parent:** [BSS-V2-006-04 split map](BSS-V2-006-04-integrated-provider-admission-runtime-checkpoint.md)
 - **Dependencies:** `BSS-V2-006-04-01..05` CK `PASS` and parent family dependencies.
