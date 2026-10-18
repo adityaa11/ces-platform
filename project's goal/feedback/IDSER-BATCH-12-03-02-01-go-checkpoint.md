@@ -3,7 +3,7 @@
 - **Ticket:** `IDSER-012-03-02-01` — Authorized BSS prospective snapshot reader.
 - **Batch:** `IDSER-BATCH-12-03-02-01`.
 - **State:** `awaiting_review`.
-- **Implementation commit:** `a16d423f` (`feat(idser): consume prospective BSS capacity snapshot`).
+- **Implementation commit:** `c80a819c` (`feat(idser): consume prospective BSS capacity snapshot`).
 - **Dependency consumed:** `IDSER-012-03-01-03` CK `PASS` at `719b9d121340a5388805d284d6263c2a549a6790`; its approved `-01-01/02` predecessors remain preserved.
 
 ## Bounded implementation
