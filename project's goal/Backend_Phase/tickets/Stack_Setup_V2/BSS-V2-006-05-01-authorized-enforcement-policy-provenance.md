@@ -1,6 +1,6 @@
 # BSS-V2-006-05-01 — Authorized enforcement-policy provenance
 
-- **State:** `awaiting_review`; executable leaf, not GO/CFC/HMN authority or CK PASS.
+- **State:** `approved`; executable leaf, not GO/CFC/HMN authority or CK PASS.
 - **Review batch:** `BSS-V2-BATCH-06-05-01`.
 - **Parent:** [BSS-V2-006-05 split map](BSS-V2-006-05-policy-driven-optional-capacity-dimensions-anoman.md).
 - **Dependencies:** all parent predecessors remain mandatory; no BSS-V2-006 runtime implementation is authorized by this leaf.
