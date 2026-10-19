@@ -86,6 +86,8 @@ test("fails closed before source redemption for foreign, cancelled, malformed, a
     { label: "foreign", data: fixture(), sqlRows: [] as readonly Record<string, unknown>[] },
     { label: "cancelled", data: fixture(undefined, true) },
     { label: "profile", data: fixture(({ handoff }) => { handoff.packetProfile = identity("foreign-packet"); }) },
+    { label: "foreign owned locator", data: fixture(({ handoff }) => { handoff.ownedLocators[0].documentId = "foreign-document"; }) },
+    { label: "foreign context-only locator", data: fixture(({ handoff }) => { handoff.contextOnlyLocators[0].documentId = "foreign-document"; }) },
     { label: "duplicate selection", data: fixture(({ handoff }) => { handoff.contextOnlyLocators = [handoff.ownedLocators[0]]; }) },
     { label: "deferred owner", data: fixture(({ plan }) => { plan.proposal.inventory[0].classification = "deferred"; plan.proposal.inventory[1].classification = "eligible"; }) },
   ];

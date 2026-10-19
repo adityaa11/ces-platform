@@ -59,12 +59,13 @@ function planInput(source: Record<string, unknown>): SemanticBatchPlanInputV1 {
   };
 }
 
-function selectedLocators(value: unknown): readonly StepwiseSourceLocator[] {
+function selectedLocators(value: unknown, documentId: string): readonly StepwiseSourceLocator[] {
   if (!Array.isArray(value)) fail("persisted locator selection is invalid");
   const locators = value as unknown[];
   return locators.map((locator) => {
     if (!record(locator)) fail("persisted locator selection is invalid");
     const persisted = locator as Record<string, unknown>;
+    if (typeof persisted.documentId !== "string" || persisted.documentId !== documentId) fail("persisted selection is foreign or duplicate");
     const pageNumber = persisted.pageNumber;
     const locatorType = persisted.sourceKind;
     const locatorId = persisted.localId;
@@ -140,8 +141,8 @@ export class PostgresSemanticBatchReconstructionResolver {
     const inventoryEntries = inventory as unknown[];
     const inventoryKeys = new Set(inventoryEntries.map((entry) => record(entry) && record(entry.locator) ? locatorKey(entry.locator) : ""));
     const eligibleKeys = new Set(inventoryEntries.map((entry) => record(entry) && entry.classification === "eligible" && record(entry.locator) ? locatorKey(entry.locator) : ""));
-    const owned = selectedLocators(handoff.ownedLocators);
-    const context = selectedLocators(handoff.contextOnlyLocators);
+    const owned = selectedLocators(handoff.ownedLocators, scope.documentId);
+    const context = selectedLocators(handoff.contextOnlyLocators, scope.documentId);
     const selected = [...owned, ...context];
     if (new Set(selected.map((locator) => `${scope.documentId}\u0000${locator.pageNumber}\u0000${locator.locatorType}\u0000${locator.locatorId}`)).size !== selected.length
       || selected.some((locator) => !inventoryKeys.has(`${scope.documentId}\u0000${locator.pageNumber}\u0000${locator.locatorType}\u0000${locator.locatorId}`))
