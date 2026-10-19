@@ -35,8 +35,10 @@ async function fixture(sql: ReturnType<typeof postgres>, plan: ImmutableSemantic
   await sql.unsafe("INSERT INTO atlas.project (id,stable_id,name,created_by_user_id) VALUES ($1,$2,'semantic plan fixture',$3)", [plan.scope.projectId, `stable-${randomUUID().slice(0, 12)}`, owner]);
   await sql.unsafe("INSERT INTO atlas.workspace (id,project_id,kind,state,display_name) VALUES ($1,$2,'initial_draft','draft','Draft')", [plan.scope.workspaceId, plan.scope.projectId]);
   await sql.unsafe("INSERT INTO atlas.document (id,project_id,workspace_id,original_filename,storage_key,source_sha256,byte_size,media_type,created_by_user_id) VALUES ($1,$2,$3,'plan.pdf','private/plan.pdf',$4,1,'application/pdf',$5)", [plan.scope.documentId, plan.scope.projectId, plan.scope.workspaceId, plan.source.sourceSha256, owner]);
+  await sql.unsafe("INSERT INTO atlas.document_perception_execution (id,artifact_id,document_storage_key,source_sha256,mime_type,byte_size,contract_version,state,idempotency_key,capability_identity,completion_fingerprint) VALUES ($1,$2,'private/plan.pdf',$3,'application/pdf',1,'v1','completed',$4,$5,$6)", [plan.source.perceptionExecutionId, plan.scope.documentId, plan.source.sourceSha256, `fixture-${randomUUID()}`, plan.source.perceptionCapability, plan.source.normalizedDocumentFingerprint]);
+  await sql.unsafe("INSERT INTO atlas.normalized_document_cache (cache_key,source_sha256,contract_version,capability,capability_identity,normalized_document,derived_assets) VALUES ($1,$2,'v1','atlas.document.perceive',$3,$4::jsonb,'[]'::jsonb)", [plan.source.normalizedDocumentRef, plan.source.sourceSha256, plan.source.perceptionCapability, {}]);
   await sql.unsafe("INSERT INTO atlas.extraction_bundle (id,project_id,workspace_id,state,semantic_contract_version,reconciliation_contract_version,expected_document_count) VALUES ($1,$2,$3,'waiting','v1','v1',1)", [plan.scope.bundleId, plan.scope.projectId, plan.scope.workspaceId]);
-  await sql.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id,document_id,project_id,workspace_id,sequence,state) VALUES ($1,$2,$3,$4,1,'perceived')", [plan.scope.bundleId, plan.scope.documentId, plan.scope.projectId, plan.scope.workspaceId]);
+  await sql.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id,document_id,project_id,workspace_id,sequence,state,perception_execution_id) VALUES ($1,$2,$3,$4,1,'perceived',$5)", [plan.scope.bundleId, plan.scope.documentId, plan.scope.projectId, plan.scope.workspaceId, plan.source.perceptionExecutionId]);
   await sql.unsafe("UPDATE atlas.extraction_bundle SET state='processing', started_at=now() WHERE id=$1", [plan.scope.bundleId]);
   return owner;
 }
@@ -81,6 +83,7 @@ test("atomically persists immutable plans and batch handoffs with replay, recove
     const conflicting = input(suffix, plan.proposal.proposalId);
     conflicting.proposal.bssSnapshot = { source: { sourceVersion: "v2" }, enforcement: { policyVersion: "v1" }, process: {}, workload: {} } as never;
     await assert.rejects(() => repository.persist(conflicting), ImmutableSemanticCorpusPlanError, "same proposal identity with different immutable content rejects");
+    await assert.rejects(() => repository.persist({ ...plan, scope: { ...plan.scope, projectId: `foreign-${suffix}` } }), /foreign, stale, or no longer accepted/, "a foreign scope cannot attach to the accepted source");
   } finally { try { if (owner) await cleanup(sql, plan, owner); } finally { await sql.end(); } }
 });
 
