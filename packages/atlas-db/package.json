@@ -29,7 +29,8 @@
     "test:qualified-deferred-acceptance": "jiti tests/qualified-deferred-acceptance.integration.test.ts",
     "test:extraction-acceptance": "jiti tests/extraction-acceptance.integration.test.ts",
     "test:reconciliation-acceptance": "jiti tests/reconciliation-acceptance.integration.test.ts",
-    "test:semantic-batch-plan-input": "jiti tests/semantic-batch-plan-input.integration.test.ts"
+    "test:semantic-batch-plan-input": "jiti tests/semantic-batch-plan-input.integration.test.ts",
+    "test:immutable-semantic-corpus-plan": "jiti tests/immutable-semantic-corpus-plan.integration.test.ts"
   },
   "dependencies": {
     "@atlas/contracts": "workspace:*",

@@ -1,6 +1,6 @@
 # IDSER-012-03-03-01 — Immutable plan/handoff persistence
 
-- **State:** `planned`; GO requires IDSER-012-03-02-03 CK `PASS`.
+- **State:** `awaiting_review`; GO consumed IDSER-012-03-02-03 CK `PASS` at `c0d3d1e1`.
 - **Batch:** `IDSER-BATCH-12-03-03-01`.
 - **Parent:** [IDSER-012-03-03 split map](IDSER-012-03-03-durable-batch-handoff-ghr-output-compatibility.md).
 - **Dependencies:** `-03-02-03` CK `PASS`; existing Atlas transaction/auth conventions.
