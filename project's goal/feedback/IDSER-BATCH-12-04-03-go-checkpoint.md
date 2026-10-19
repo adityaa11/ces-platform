@@ -3,7 +3,7 @@
 - **Ticket:** `IDSER-012-04-03` — BSS structural-fit corpus partition.
 - **Ticket authority:** `project's goal/Backend_Phase/tickets/Initial_Draft_Phase/IDSER-012-04-03-bss-structural-fit-corpus-partition.md`.
 - **Dependencies consumed:** `IDSER-012-04-01` CK `PASS` in `IDSER-BATCH-12-04-01-f530280-review.md`; `IDSER-012-04-02` CK `PASS` in `IDSER-BATCH-12-04-02-3de09b9-review.md`; the already-qualified authenticated BSS prospective-reader boundary.
-- **Implementation commit:** recorded with this checkpoint.
+- **Implementation commit:** `22ced704` (`feat(idser): compose complete structural fit partition`).
 - **Ticket state:** `awaiting_review`.
 
 ## Bounded implementation
