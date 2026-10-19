@@ -170,6 +170,8 @@ test("real accepted source composes into persisted, validated, and unissued Sema
     const persisted = await repository.persist(immutableInput);
     const replay = await repository.persist(immutableInput);
     assert.deepEqual(replay, persisted, "the exact accepted-source composition replays to the same immutable plan and handoffs");
+    const replayRows = await sql.unsafe("SELECT id, plan_hash, immutable_content FROM atlas.semantic_corpus_plan WHERE project_id=$1 AND workspace_id=$2 AND bundle_id=$3 AND document_id=$4", [projectId, workspaceId, bundleId, documentId]);
+    assert.equal(replayRows.length, 1, "identical accepted-source replay creates no duplicate persisted plan");
     const output = fixtureSemanticBatchPlanReadyV1(persisted);
     assert.deepEqual(await new PostgresSemanticBatchPlanReadyFixtureReceiver(sql).receive(output.canonicalJson), output.body, "the real persisted plan composes into a validated but unissued output body");
     const [storedPlan] = await sql.unsafe("SELECT immutable_content FROM atlas.semantic_corpus_plan WHERE id=$1", [persisted.planId]);
@@ -189,6 +191,7 @@ test("real accepted source composes into persisted, validated, and unissued Sema
       assert.deepEqual(content.contextOnlyLocators, expected.contextOnlyLocators, "each referenced handoff retains context locators");
       assert.deepEqual(content.requestResourceEnvelope, expected.requestResourceEnvelope, "each referenced handoff retains its bounded envelope");
     });
+    const originalHandoffSnapshot = JSON.parse(JSON.stringify(storedHandoffs.map((row) => row.immutable_content)));
     const changedComposition = (kind: string, source = immutableInput.source, proposal = immutableInput.proposal): ImmutableSemanticCorpusPlanInputV1 => ({
       ...immutableInput,
       source,
@@ -201,6 +204,53 @@ test("real accepted source composes into persisted, validated, and unissued Sema
     for (const changed of [changedAsset, changedProfile, changedStructural]) await repository.persist(changed);
     const [afterChanges] = await sql.unsafe("SELECT immutable_content FROM atlas.semantic_corpus_plan WHERE id=$1", [persisted.planId]);
     assert.deepEqual(afterChanges!.immutable_content, originalSnapshot, "changed accepted-source-derived asset, BSS profile, and structural versions cannot mutate the prior composed plan");
+    const originalHandoffsAfterChanges = await sql.unsafe("SELECT immutable_content FROM atlas.planned_semantic_corpus_handoff WHERE plan_id=$1 ORDER BY batch_slot", [persisted.planId]);
+    assert.deepEqual(originalHandoffsAfterChanges.map((row) => row.immutable_content), originalHandoffSnapshot, "changed approved versions cannot mutate prior handoff content or membership");
+
+    await assert.rejects(
+      () => repository.persist({ ...immutableInput, source: { ...immutableInput.source, sourceSha256: digest(`stale-${suffix}`) } }),
+      /foreign, stale, or no longer accepted/,
+      "a stale or mismatched binding for the accepted document fails closed at the approved persistence boundary",
+    );
+    await assert.rejects(
+      () => repository.persist({ ...immutableInput, source: { ...immutableInput.source, rel: { state: "fabricated" } as never } }),
+      /source binding is invalid/,
+      "fabricated REL states are rejected by the V1 persistence validation boundary",
+    );
+
+    const distinctDocumentId = `ready-compose-document-distinct-${suffix}`;
+    const distinctBundleId = `ready-compose-bundle-distinct-${suffix}`;
+    const distinctExecutionId = `ready-compose-execution-distinct-${suffix}`;
+    const distinctSourceSha256 = digest(`ready-compose-source-distinct-${suffix}`);
+    await sql.unsafe("INSERT INTO atlas.document (id,project_id,workspace_id,original_filename,storage_key,source_sha256,byte_size,media_type,created_by_user_id) VALUES ($1,$2,$3,'compose-distinct.pdf',$4,$5,64,'application/pdf',$6)", [distinctDocumentId, projectId, workspaceId, `private/distinct-${suffix}.pdf`, distinctSourceSha256, owner]);
+    await sql.unsafe("INSERT INTO atlas.extraction_bundle (id,project_id,workspace_id,state,semantic_contract_version,reconciliation_contract_version,expected_document_count,perception_admission_policy) VALUES ($1,$2,$3,'waiting','v1','v1',1,'staged-fair-local-v1')", [distinctBundleId, projectId, workspaceId]);
+    await sql.unsafe("INSERT INTO atlas.extraction_bundle_document (bundle_id,document_id,project_id,workspace_id,sequence,state,perception_execution_id) VALUES ($1,$2,$3,$4,1,'perception_queued',$5)", [distinctBundleId, distinctDocumentId, projectId, workspaceId, distinctExecutionId]);
+    const distinctRequest = await authority.create({ executionId: distinctExecutionId, artifactId: distinctDocumentId, storageKey: `private/distinct-${suffix}.pdf`, sourceSha256: distinctSourceSha256, mimeType: "application/pdf", byteSize: 64, idempotencyKey: `ready-compose-distinct-${suffix}`, capabilityIdentity });
+    await authority.redeem(distinctRequest);
+    const distinctAsset = await authority.handoffDerived(distinctRequest, { sourceSha256: distinctSourceSha256, profile: "atlas-digital-pdf-run-003-capture-v1", pageNumber: 1, locatorId: "compose-distinct-visual", mediaType: "image/png", width: 1, height: 1, byteLength: png.byteLength, sha256: createHash("sha256").update(png).digest("hex") }, png);
+    await authority.deliver(distinctRequest, { version: "v1", executionId: distinctExecutionId, artifactId: distinctDocumentId, sourceSha256: distinctSourceSha256, perception: distinctRequest.perception, provider: { name: "docling", processor: "run-003-capture", executionId: distinctExecutionId, processedAt: "2026-10-19T00:00:00.000Z" }, pages: [{ number: 1, textBlocks: [{ id: "compose-distinct-text", text: "A distinct accepted source-grounded composition fixture." }], tables: [], visualRegions: [{ id: "compose-distinct-visual", assetRef: distinctAsset.assetRef }] }] });
+    const distinctInputFixture = await new PostgresAcceptedSemanticBatchPlanInputFixtureRepository(sql).derive(distinctExecutionId);
+    const distinctAccepted = await receiving.receive(credential, distinctInputFixture.canonicalJson);
+    const distinctProposal = await proposeStructuralFitCorpusPartition({
+      acceptedDocument: distinctAccepted,
+      estimatorConfiguration: { bssRegisteredEstimator: { identity: "anoman-prospective-estimator", version: "v2" }, estimator: { identity: "anoman-prospective-estimator", version: "v2" }, modelRoute: { model: "qualified-semantic-model", route: "anoman-semantic" }, overheads: { systemPromptBytes: 10, schemaBytes: 10, contextPlaceholderBytes: 0, contextPlaceholderTokens: 0, reservedOutputBytes: 10, reservedOutputTokens: 1, mediaMetadataBytes: 0, mediaInputTokensPerByte: 0, inputBytesPerToken: 4, requestByteSafetyMargin: 0, inputTokenSafetyMargin: 0 } },
+      capacityConsumer: createIdserProspectiveCapacitySnapshotConsumer({ reader: snapshotReader, serverCredential: credential }),
+    });
+    assert.equal(distinctProposal.disposition, "READY", "a genuinely distinct accepted document resolves through the approved composition path");
+    if (distinctProposal.disposition !== "READY") throw new Error("expected a ready distinct structural proposal");
+    const distinctImmutableInput: ImmutableSemanticCorpusPlanInputV1 = {
+      scope: distinctAccepted.scope,
+      source: { sourceSha256: distinctSourceSha256, normalizedDocumentRef: distinctInputFixture.input.normalizedDocumentRef, perceptionExecutionId: distinctInputFixture.input.perceptionExecutionId, normalizedDocumentFingerprint: distinctInputFixture.input.normalizedDocumentFingerprint, normalizedDocumentVersion: "v1", perceptionCapability: distinctAccepted.normalizedDocument.perception.capability, perceptionContractVersion: distinctAccepted.normalizedDocument.perception.contractVersion, media: distinctAccepted.media, rel: distinctAccepted.rel },
+      proposal: { proposalId: distinctProposal.proposalId, proposalHash: distinctProposal.proposalHash, sourceHash: distinctProposal.sourceHash, policyHash: distinctProposal.policyHash, estimatorHash: distinctProposal.estimatorHash, structuralBound: distinctProposal.structuralBound, bssSnapshot: { source: { sourceId: String(distinctProposal.bssSnapshot.source.quotaDomainId), sourceVersion: String(distinctProposal.bssSnapshot.source.providerCapacityProfileVersion) }, enforcement: { policyId: String(distinctProposal.bssSnapshot.enforcement.policyId), policyVersion: String(distinctProposal.bssSnapshot.enforcement.policyVersion) }, process: { profileId: String(distinctProposal.bssSnapshot.process.id), profileVersion: String(distinctProposal.bssSnapshot.process.profileVersion) }, workload: { planId: String(distinctProposal.bssSnapshot.workload.id), planVersion: String(distinctProposal.bssSnapshot.workload.profileVersion), estimator: { identity: String((distinctProposal.bssSnapshot.workload.estimator as Record<string, unknown>).identity), version: String((distinctProposal.bssSnapshot.workload.estimator as Record<string, unknown>).version) } } }, eligibleDimensions: distinctProposal.eligibleDimensions, requestResourceEnvelope: distinctProposal.requestResourceEnvelope, units: distinctProposal.units, batches: distinctProposal.batches },
+    };
+    const distinctPersisted = await repository.persist(distinctImmutableInput);
+    assert.notEqual(distinctPersisted.planId, persisted.planId, "a distinct accepted document creates its own scoped plan");
+    const [originalAfterDistinct] = await sql.unsafe("SELECT immutable_content, predecessor_plan_id FROM atlas.semantic_corpus_plan WHERE id=$1", [persisted.planId]);
+    assert.deepEqual(originalAfterDistinct!.immutable_content, originalSnapshot, "the distinct accepted document does not mutate the original plan");
+    assert.equal(originalAfterDistinct!.predecessor_plan_id, null, "the original plan has no implicit successor relationship");
+    const [distinctRow] = await sql.unsafe("SELECT immutable_content, predecessor_plan_id FROM atlas.semantic_corpus_plan WHERE id=$1", [distinctPersisted.planId]);
+    assert.equal(distinctRow!.predecessor_plan_id, null, "the distinct document plan is not an implicit successor of the original");
+    assert.deepEqual((distinctRow!.immutable_content as { scope: unknown }).scope, distinctImmutableInput.scope, "the distinct plan retains only its own accepted-document scope");
     const after = await downstreamCounts(sql, documentId);
     assert.deepEqual(after, before, "the positive composition creates zero GHR, BSS execution, SEM, or reconciliation effects");
   } finally {
