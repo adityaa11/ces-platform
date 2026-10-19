@@ -40,7 +40,14 @@ export type StructuralFitProposal = Readonly<{
   sourceHash: string;
   policyHash: string;
   estimatorHash: string;
-  structuralBound: Readonly<{ identity: string; version: string; maxRequestBytes: number; maxInputTokens: number }>;
+  structuralBound: Readonly<{
+    identity: string;
+    version: string;
+    maxRequestBytes: number;
+    maxInputTokens: number;
+    maxPromptBytes: number;
+    maxContextTokens: number;
+  }>;
   eligibleDimensions: readonly ("rpm" | "tpm" | "rpd" | "concurrency")[];
   bssSnapshot: Readonly<{
     source: IdserProspectiveCapacitySnapshot["source"];
@@ -99,7 +106,11 @@ function structural(snapshot: IdserProspectiveCapacitySnapshot): StructuralFitPr
   const version = bound && typeof bound.version === "string" ? bound.version : undefined;
   const maxRequestBytes = bound && positive(bound.maxRequestBytes);
   const maxInputTokens = bound && positive(bound.maxInputTokens);
-  return identity && version && maxRequestBytes && maxInputTokens ? { identity, version, maxRequestBytes, maxInputTokens } : undefined;
+  const maxPromptBytes = bound && positive(bound.maxPromptBytes);
+  const maxContextTokens = bound && positive(bound.maxContextTokens);
+  return identity && version && maxRequestBytes && maxInputTokens && maxPromptBytes && maxContextTokens
+    ? { identity, version, maxRequestBytes, maxInputTokens, maxPromptBytes, maxContextTokens }
+    : undefined;
 }
 function estimator(snapshot: IdserProspectiveCapacitySnapshot): Readonly<{ identity: string; version: string }> | undefined {
   const value = object(object(snapshot.workload)?.estimator);
@@ -147,8 +158,10 @@ export async function proposeStructuralFitCorpusPartition(input: Readonly<{
 }>): Promise<StructuralFitCorpusPartitionResult> {
   let units: readonly StructuralFitCorpusUnit[];
   let assetIdentities: readonly StepwiseSourceAssetIdentity[];
-  try { units = unitsFor(input.acceptedDocument); assetIdentities = verifiedAssetIdentities(input.acceptedDocument); }
+  try { units = unitsFor(input.acceptedDocument); }
   catch { return frozen({ disposition: "BLOCKED", reason: "SEM_BATCH_ESTIMATOR_GAP", units: [], fitTrace: [] }); }
+  try { assetIdentities = verifiedAssetIdentities(input.acceptedDocument); }
+  catch { return frozen({ disposition: "BLOCKED", reason: "SEM_BATCH_ESTIMATOR_GAP", units, fitTrace: [] }); }
   let pinned: IdserProspectiveCapacitySnapshot;
   try { pinned = await input.capacityConsumer.read({ requestBytes: 0, inputTokens: 0, requestResourceEnvelope: { requestUnits: 0, tokenUnits: 0, dayUnits: 0, concurrencyUnits: 0 } }); }
   catch { return frozen({ disposition: "BLOCKED", reason: "BSS_CAPACITY_CONSUMER_READ_GAP", units, fitTrace: [] }); }
@@ -163,9 +176,23 @@ export async function proposeStructuralFitCorpusPartition(input: Readonly<{
   const initialPolicy = policyIdentity(pinned);
   let working: StructuralFitCorpusUnit[] = [];
   const candidate = (candidateUnits: readonly StructuralFitCorpusUnit[]): CompleteSemCandidateRequestEstimate => estimateCompleteSemCandidateRequest({ candidatePacket: buildStepwiseSourcePacket({ document: input.acceptedDocument.normalizedDocument, ownedLocators: candidateUnits.map((unit) => unit.locator), contextOnlyLocators: [], assetIdentities }), configuration: input.estimatorConfiguration });
-  const verifyFit = async (candidateUnits: readonly StructuralFitCorpusUnit[]): Promise<Readonly<{ outcome: "fit" | "unfit" | "blocked"; reason?: "SEM_BATCH_ESTIMATOR_GAP" | "STRUCTURAL_REVISION_CHANGED"; estimate?: CompleteSemCandidateRequestEstimate }>> => {
+  const verifyFit = async (candidateUnits: readonly StructuralFitCorpusUnit[]): Promise<Readonly<{ outcome: "fit" | "unfit" | "blocked"; reason?: "SEM_BATCH_ESTIMATOR_GAP" | "BSS_CAPACITY_CONSUMER_READ_GAP" | "STRUCTURAL_REVISION_CHANGED"; estimate?: CompleteSemCandidateRequestEstimate }>> => {
     let estimate: CompleteSemCandidateRequestEstimate;
     try { estimate = candidate(candidateUnits); } catch { return { outcome: "blocked", reason: "SEM_BATCH_ESTIMATOR_GAP" }; }
+    // `requestBytes` is the fully framed prompt measurement.  Context uses
+    // distinct input/output accounting: the BSS-owned output reservation is
+    // included exactly once and is never guessed by this consumer.
+    const outputReservation = object(object(pinned.workload)?.outputReservation);
+    const reservedOutputTokens = outputReservation && positive(outputReservation.maxOutputTokens);
+    if (!reservedOutputTokens) return { outcome: "blocked", reason: "BSS_CAPACITY_CONSUMER_READ_GAP" };
+    const exceedsStructuralBound = estimate.requestBytes > pinnedStructuralBound.maxRequestBytes
+      || estimate.inputTokens > pinnedStructuralBound.maxInputTokens
+      || estimate.requestBytes > pinnedStructuralBound.maxPromptBytes
+      || estimate.inputTokens + reservedOutputTokens > pinnedStructuralBound.maxContextTokens;
+    if (exceedsStructuralBound) {
+      trace.push({ requestBytes: estimate.requestBytes, inputTokens: estimate.inputTokens, sourceSpecificationSha256: estimate.provenance.sourcePacket.sourceSpecificationSha256, outcome: "unfit" });
+      return { outcome: "unfit", estimate };
+    }
     try {
       const result = await input.capacityConsumer.read({ requestBytes: estimate.requestBytes, inputTokens: estimate.inputTokens, requestResourceEnvelope: estimate.requestResourceEnvelope });
       if (!same(initialPolicy, policyIdentity(result))) return { outcome: "blocked", reason: "STRUCTURAL_REVISION_CHANGED" };
@@ -176,7 +203,7 @@ export async function proposeStructuralFitCorpusPartition(input: Readonly<{
         trace.push({ requestBytes: estimate.requestBytes, inputTokens: estimate.inputTokens, sourceSpecificationSha256: estimate.provenance.sourcePacket.sourceSpecificationSha256, outcome: "unfit" });
         return { outcome: "unfit", estimate };
       }
-      return { outcome: "blocked", reason: "STRUCTURAL_REVISION_CHANGED" };
+      return { outcome: "blocked", reason: "BSS_CAPACITY_CONSUMER_READ_GAP" };
     }
   };
   const addBatch = (batchUnits: readonly StructuralFitCorpusUnit[], estimate: CompleteSemCandidateRequestEstimate) => {

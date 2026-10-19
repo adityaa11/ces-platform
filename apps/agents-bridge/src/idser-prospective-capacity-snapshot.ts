@@ -154,6 +154,11 @@ function validate(raw: CapacityPlanningSnapshot, requestResourceEnvelope: Reques
   nonEmpty(structuralBound.version, "structuralBound version");
   positive(structuralBound.maxRequestBytes, "structuralBound maxRequestBytes");
   positive(structuralBound.maxInputTokens, "structuralBound maxInputTokens");
+  // These are BSS-owned route/profile constraints carried by the authenticated
+  // planning snapshot.  IDSER must not fall back to worker configuration or
+  // manufacture a context window when either field is absent.
+  positive(structuralBound.maxPromptBytes, "structuralBound maxPromptBytes");
+  positive(structuralBound.maxContextTokens, "structuralBound maxContextTokens");
   const estimator = object(workload.estimator, "workload estimator");
   nonEmpty(estimator.identity, "estimator identity");
   nonEmpty(estimator.version, "estimator version");
