@@ -1,6 +1,6 @@
 # IDSER-012-04-04 — Immutable v2 plan and handoff persistence
 
-- **State:** `awaiting_review`; implemented by `IDSER-BATCH-12-04-04` and pending independent CK review.
+- **State:** `approved` following CK `PASS` for reviewed remediation commit `66df38b5`; **Review record:** [IDSER-BATCH-12-04-04-66df38b-verification.md](../../../feedback/IDSER-BATCH-12-04-04-66df38b-verification.md).
 - **Batch:** `IDSER-BATCH-12-04-04`.
 - **Parent:** [IDSER-012-04 split map](IDSER-012-04-canonical-sem-request-sizing-immutable-locator-handoff-and-reconstruction.md).
 - **Dependencies:** `IDSER-012-04-03` CK `PASS`; existing Atlas immutable transaction, authorization, idempotency, cancellation, and replan boundaries.
