@@ -1,6 +1,6 @@
 # IDSER-012-04-01 — Canonical SEM batch packet builder
 
-- **State:** `awaiting_review`; GO implementation checkpoint `f5302803` is ready for CK.
+- **State:** `approved` following CK `PASS` for reviewed commit `f5302803038befd36efaf01c3e2d26ff531e9656`; **Review batch:** `IDSER-BATCH-12-04-01`.
 - **Batch:** `IDSER-BATCH-12-04-01`.
 - **Parent:** [IDSER-012-04 split map](IDSER-012-04-canonical-sem-request-sizing-immutable-locator-handoff-and-reconstruction.md).
 - **Dependencies:** approved IDSER-012 semantic-batch-planner terminal interfaces; accepted-document and existing SEM source-packet boundaries.
