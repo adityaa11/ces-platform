@@ -14,7 +14,9 @@ The original leaf combines immutable transactional persistence/recovery with a s
 | 1 | [IDSER-012-03-03-01](IDSER-012-03-03-01-immutable-plan-handoff-persistence.md) | Atlas-owned canonical identity/hash, atomic plan + N handoff persistence, idempotency, recovery and ancestry | Persistence portions of RC-0120303-01, RC-0120303-03, RC-0120303-04 |
 | 2 | [IDSER-012-03-03-02](IDSER-012-03-03-02-ghr-output-compatibility-composition.md) | Strict non-delivering proposed-output receiver plus real predecessor-to-persistence composition and forbidden-effect closure | RC-0120303-02, remaining RC-0120303-01/03/04, RC-0120303-05, RC-0120303-06 |
 
-`-03-03-01` requires `-03-02-03` CK `PASS`; `-03-03-02` requires `-03-03-01` CK `PASS` and is the only family closure. It may compose approved interfaces but may not repair their internals. CFC keeps persistence and output-compatibility findings isolated; HMN may resolve only a named unresolved Atlas/GHR authority and cannot activate a route.
+**Corrective dependency (2026-10-19):** [IDSER-012-03-03-01A](IDSER-012-03-03-01A-derived-media-ref-persistence-compatibility.md) is an independently GO/CK-reviewed *field-specific* compatibility amendment at the already-approved `-03-03-01` implementation. Real accepted `derived/<uuid>` refs from the approved resolver were rejected by the persistence `opaque()` validator. This amendment is interposed after `-03-03-01` and before `-03-03-02`; it neither opens a parallel persistence route nor changes the two family implementation/closure owners. `-03-03-02` is blocked until `-03-03-01A` CK `PASS`.
+
+`-03-03-01` requires `-03-02-03` CK `PASS`; `-03-03-02` requires `-03-03-01` **and the interposed `-03-03-01A`** CK `PASS` and is the only family closure. It may compose approved interfaces but may not repair their internals. CFC keeps persistence and output-compatibility findings isolated; HMN may resolve only a named unresolved Atlas/GHR authority and cannot activate a route.
 
 ## Security Readiness
 
