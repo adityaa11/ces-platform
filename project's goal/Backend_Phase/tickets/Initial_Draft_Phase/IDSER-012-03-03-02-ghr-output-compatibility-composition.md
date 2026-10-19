@@ -1,6 +1,6 @@
 # IDSER-012-03-03-02 — GHR output compatibility and composition closure
 
-- **State:** `planned` / `BLOCKED_PREDECESSOR_COMPATIBILITY`; GO requires both IDSER-012-03-03-01 historical CK `PASS` and the corrective [IDSER-012-03-03-01A](IDSER-012-03-03-01A-derived-media-ref-persistence-compatibility.md) independent CK `PASS`. This is not authority for this ticket to repair predecessor internals.
+- **State:** `awaiting_review`; GO consumed IDSER-012-03-03-01 historical CK `PASS` and the corrective [IDSER-012-03-03-01A](IDSER-012-03-03-01A-derived-media-ref-persistence-compatibility.md) independent CK `PASS`. This is not authority for this ticket to repair predecessor internals.
 - **Batch:** `IDSER-BATCH-12-03-03-02`.
 - **Parent:** [IDSER-012-03-03 split map](IDSER-012-03-03-durable-batch-handoff-ghr-output-compatibility.md).
 - **Dependencies:** CK `PASS` for every preceding `IDSER-012-03-01-01`, `-01-02`, `-01-03`, `-02-01`, `-02-02`, `-02-03`, and `-03-03-01` executable child, **plus** the interposed media-reference compatibility correction `IDSER-012-03-03-01A` CK `PASS` before this composition resumes.
