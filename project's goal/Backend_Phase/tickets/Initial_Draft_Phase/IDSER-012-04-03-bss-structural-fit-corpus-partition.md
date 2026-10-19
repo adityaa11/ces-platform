@@ -1,6 +1,6 @@
 # IDSER-012-04-03 — BSS structural-fit corpus partition
 
-- **State:** `awaiting_review`; GO implementation is ready for independent CK.
+- **State:** `approved` following CK `PASS` for reviewed remediation commit `f6a1c64697c7ce12f37acb05bf7e69d72213eea8`; **Review record:** [IDSER-BATCH-12-04-03-f6a1c64-verification.md](../../../feedback/IDSER-BATCH-12-04-03-f6a1c64-verification.md).
 - **Batch:** `IDSER-BATCH-12-04-03`.
 - **Parent:** [IDSER-012-04 split map](IDSER-012-04-canonical-sem-request-sizing-immutable-locator-handoff-and-reconstruction.md).
 - **Dependencies:** `IDSER-012-04-01` and `IDSER-012-04-02` CK `PASS`; existing authenticated BSS prospective reader.
