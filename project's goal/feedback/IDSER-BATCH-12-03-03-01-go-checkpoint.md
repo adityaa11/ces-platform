@@ -3,7 +3,7 @@
 - **Ticket:** `IDSER-012-03-03-01` — Immutable plan/handoff persistence.
 - **Ticket authority:** `project's goal/Backend_Phase/tickets/Initial_Draft_Phase/IDSER-012-03-03-01-immutable-plan-handoff-persistence.md`.
 - **Dependency consumed:** `IDSER-012-03-02-03` CK `PASS`, recorded at `c0d3d1e1`.
-- **Implementation commit:** `b2842e1b` (`feat(idser): persist immutable semantic corpus plans`).
+- **Implementation commits:** `b2842e1b` (`feat(idser): persist immutable semantic corpus plans`) and `670a5d0e` (`fix(idser): fence immutable plan source scope`).
 - **State:** `awaiting_review`.
 
 ## Bounded implementation
@@ -17,7 +17,7 @@
 | Row | Ticket authority and required proof | Evidence / command | Status |
 | --- | --- | --- | --- |
 | `RC-012030301-01` | One qualified N-batch proposal atomically produces one immutable scoped plan and exactly N handoffs; parent/child hashes are noncyclic and independently replayable. | `packages/atlas-db/src/immutable-semantic-corpus-plan.ts`; real PostgreSQL test `packages/atlas-db/tests/immutable-semantic-corpus-plan.integration.test.ts` proves two concurrent retries yield one plan/two handoffs and replays stored content hash. Command: `node --env-file=.env ./packages/atlas-db/node_modules/jiti/lib/jiti-cli.mjs packages/atlas-db/tests/immutable-semantic-corpus-plan.integration.test.ts` — PASS (2 tests). | `PROVEN` |
-| `RC-012030301-02` | Same accepted identity returns the same refs; divergent immutable content, invalid ownership, foreign/stale predecessor, and incomplete coverage reject or use an authorized distinct version. | Repository idempotency/proposal uniqueness, immutable-content comparison, scoped predecessor lock, and `canonicalImmutableSemanticCorpusPlanV1`; focused integration assertions cover replay, divergent content, and incomplete ownership. Same command — PASS. | `PROVEN` |
+| `RC-012030301-02` | Same accepted identity returns the same refs; divergent immutable content, invalid ownership, foreign/stale predecessor, and incomplete coverage reject or use an authorized distinct version. | Repository idempotency/proposal uniqueness, immutable-content comparison, scoped accepted-source/cache/perception query, predecessor lock, and `canonicalImmutableSemanticCorpusPlanV1`; focused integration assertions cover replay, divergent content, foreign scope, and incomplete ownership. Same command — PASS. | `PROVEN` |
 | `RC-012030301-03` | Concurrent claim, crash-before-commit, rollback, restart/lost acknowledgement, cancellation and replan ancestry never expose a completed parent without children or mutate its content. | Scoped `pg_advisory_xact_lock`, transaction body, append-only cancellation table; integration test exercises parallel persist, deliberate handoff-insert trigger failure, retry, cancellation, and predecessor record. Same command — PASS. | `PROVEN` |
 | `RC-012030301-04` | Durable writes are non-inert and create zero GHR, BSS, SEM, semantic-truth, or reconciliation effects. | Integration test reads durable plan/handoff rows and compares pg-boss/BSS counters to their pre-write values while requiring zero document-scoped semantic/reconciliation rows. No bridge queue, router, or downstream repository is imported. Same command — PASS. | `PROVEN` |
 
