@@ -1,9 +1,9 @@
 # IDSER-012-03-03-02 — GHR output compatibility and composition closure
 
-- **State:** `planned`; GO requires IDSER-012-03-03-01 CK `PASS`.
+- **State:** `planned` / `BLOCKED_PREDECESSOR_COMPATIBILITY`; GO requires both IDSER-012-03-03-01 historical CK `PASS` and the corrective [IDSER-012-03-03-01A](IDSER-012-03-03-01A-derived-media-ref-persistence-compatibility.md) independent CK `PASS`. This is not authority for this ticket to repair predecessor internals.
 - **Batch:** `IDSER-BATCH-12-03-03-02`.
 - **Parent:** [IDSER-012-03-03 split map](IDSER-012-03-03-durable-batch-handoff-ghr-output-compatibility.md).
-- **Dependencies:** CK `PASS` for every preceding `IDSER-012-03-01-01`, `-01-02`, `-01-03`, `-02-01`, `-02-02`, `-02-03`, and `-03-01` executable child.
+- **Dependencies:** CK `PASS` for every preceding `IDSER-012-03-01-01`, `-01-02`, `-01-03`, `-02-01`, `-02-02`, `-02-03`, and `-03-03-01` executable child, **plus** the interposed media-reference compatibility correction `IDSER-012-03-03-01A` CK `PASS` before this composition resumes.
 
 ## Outcome
 
@@ -23,6 +23,8 @@ type SemanticBatchPlanReadyV1 = Readonly<{
 ```
 
 Reject missing/extra/duplicate/oversized fields, nonpositive count, unequal count/array length, duplicate batch IDs, foreign/stale ref, wrong parent membership/hash/scope, incomplete owned coverage and nonpersisted records. A too-large array returns a typed blocker for a separately versioned manifest-pointer design; it does not invent a field. `NO_ELIGIBLE_SOURCE` emits no body.
+
+**Predecessor compatibility gate:** the real resolver's authorized RUN-003 `source.media[].assetRef` has canonical `derived/<lowercase-uuid>` shape. The corrective `IDSER-012-03-03-01A` permits that exact shape at the existing persistence predicate only. This ticket must consume that same fixed `PostgresImmutableSemanticCorpusPlanRepository.persist` interface unmodified; neither rewrite/strip refs nor add a second media resolver, persistence path, or fallback. `01A` proves field-format compatibility; the actual full accepted-media chain remains an independent RC-012030302-01/03/04 obligation here.
 
 The composition test uses the real approved parser/resolver, BSS snapshot reader, estimator, partition and persistence interfaces without changing their internals. It validates stored records through the fixture receiver only. Do not instantiate a GHR router, outbox, queue, route registry, SEM consumer, provider client or delivery acknowledgement.
 
