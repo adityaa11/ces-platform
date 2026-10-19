@@ -7,13 +7,19 @@ export class ImmutableSemanticCorpusPlanError extends Error {}
 
 export type SemanticCorpusLocatorV1 = Readonly<{ documentId: string; pageNumber: number; sourceKind: "text_block" | "table" | "visual_region"; localId: string }>;
 export type SemanticCorpusUnitV1 = Readonly<{ locator: SemanticCorpusLocatorV1; classification: "eligible" | "deferred" | "unexamined"; reason?: string; demand?: Readonly<{ requestBytes: number; inputTokens: number; envelope: Readonly<{ requestUnits: number; tokenUnits: number; dayUnits: number; concurrencyUnits: number }> }> }>;
+export type BssProvenanceSnapshotV1 = Readonly<{
+  source: Readonly<{ sourceId: string; sourceVersion: string }>;
+  enforcement: Readonly<{ policyId: string; policyVersion: string }>;
+  process: Readonly<{ profileId: string; profileVersion: string }>;
+  workload: Readonly<{ planId: string; planVersion: string; estimator: Readonly<{ identity: string; version: string }> }>;
+}>;
 export type ImmutableSemanticCorpusPlanInputV1 = Readonly<{
   scope: Readonly<{ projectId: string; workspaceId: string; bundleId: string; documentId: string }>;
   source: Readonly<{ sourceSha256: string; normalizedDocumentRef: string; perceptionExecutionId: string; normalizedDocumentFingerprint: string; normalizedDocumentVersion: "v1"; perceptionCapability: string; perceptionContractVersion: "v1"; media: readonly Readonly<{ assetRef: string; locatorId: string; pageNumber: number; mediaType: "image/png"; sha256: string; byteLength: number }>[]; rel: Readonly<{ state: "unavailable" }> }>;
   proposal: Readonly<{
     proposalId: string; proposalHash: string; sourceHash: string; policyHash: string; estimatorHash: string;
     structuralBound: Readonly<{ identity: string; version: string; maxRequestBytes: number; maxInputTokens: number }>;
-    bssSnapshot: Readonly<{ source: unknown; enforcement: unknown; process: unknown; workload: unknown }>;
+    bssSnapshot: BssProvenanceSnapshotV1;
     eligibleDimensions: readonly ("rpm" | "tpm" | "rpd" | "concurrency")[];
     requestResourceEnvelope: Readonly<{ requestUnits: number; tokenUnits: number; dayUnits: number; concurrencyUnits: number }>;
     units: readonly SemanticCorpusUnitV1[];
@@ -50,11 +56,28 @@ function validEnvelope(value: ImmutableSemanticCorpusPlanInputV1["proposal"]["re
   return nonNegative(value.requestUnits) && nonNegative(value.tokenUnits) && nonNegative(value.dayUnits) && nonNegative(value.concurrencyUnits);
 }
 
+function validBssProvenance(value: BssProvenanceSnapshotV1): boolean {
+  const snapshot = value as Record<string, unknown>;
+  const source = snapshot.source as Record<string, unknown>;
+  const enforcement = snapshot.enforcement as Record<string, unknown>;
+  const process = snapshot.process as Record<string, unknown>;
+  const workload = snapshot.workload as Record<string, unknown>;
+  const estimator = workload?.estimator as Record<string, unknown>;
+  return !!source && !!enforcement && !!process && !!workload && !!estimator
+    && Object.keys(snapshot).length === 4
+    && Object.keys(source).length === 2 && opaque(source.sourceId) && opaque(source.sourceVersion)
+    && Object.keys(enforcement).length === 2 && opaque(enforcement.policyId) && opaque(enforcement.policyVersion)
+    && Object.keys(process).length === 2 && opaque(process.profileId) && opaque(process.profileVersion)
+    && Object.keys(workload).length === 3 && opaque(workload.planId) && opaque(workload.planVersion)
+    && Object.keys(estimator).length === 2 && opaque(estimator.identity) && opaque(estimator.version);
+}
+
 /** Builds the parent before its child hashes, preventing a plan/handoff hash cycle. */
 export function canonicalImmutableSemanticCorpusPlanV1(input: ImmutableSemanticCorpusPlanInputV1): Readonly<{ planContent: unknown; planHash: string; idempotencyKey: string; handoffContents: readonly unknown[] }> {
   const { scope, source, proposal } = input;
   if (!Object.values(scope).every(opaque) || source.sourceSha256.length !== 64 || !sha(source.sourceSha256) || !opaque(source.normalizedDocumentRef) || !opaque(source.perceptionExecutionId) || !sha(source.normalizedDocumentFingerprint) || source.normalizedDocumentVersion !== "v1" || source.perceptionContractVersion !== "v1" || !opaque(source.perceptionCapability) || source.rel.state !== "unavailable") throw new ImmutableSemanticCorpusPlanError("Semantic corpus plan source binding is invalid.");
   if (!opaque(proposal.proposalId) || ![proposal.proposalHash, proposal.sourceHash, proposal.policyHash, proposal.estimatorHash].every(sha) || !positive(proposal.structuralBound.maxRequestBytes) || !positive(proposal.structuralBound.maxInputTokens) || !opaque(proposal.structuralBound.identity) || !opaque(proposal.structuralBound.version) || !validEnvelope(proposal.requestResourceEnvelope) || proposal.batches.length < 1) throw new ImmutableSemanticCorpusPlanError("Semantic corpus proposal is invalid.");
+  if (!validBssProvenance(proposal.bssSnapshot)) throw new ImmutableSemanticCorpusPlanError("Semantic corpus BSS provenance must contain only complete versioned references.");
   if (proposal.batches.some((batch, index) => !opaque(batch.batchId) || batch.batchId !== `batch-${String(index + 1).padStart(4, "0")}` || !positive(batch.requestBytes) || !positive(batch.inputTokens) || !validEnvelope(batch.requestResourceEnvelope))) throw new ImmutableSemanticCorpusPlanError("Semantic corpus batch identity is invalid.");
   if (new Set(proposal.batches.map((batch) => batch.batchId)).size !== proposal.batches.length || new Set(proposal.eligibleDimensions).size !== proposal.eligibleDimensions.length) throw new ImmutableSemanticCorpusPlanError("Semantic corpus proposal has duplicate identities.");
   if (source.media.some((media) => !opaque(media.assetRef) || !opaque(media.locatorId) || !positive(media.pageNumber) || media.mediaType !== "image/png" || !sha(media.sha256) || !positive(media.byteLength))) throw new ImmutableSemanticCorpusPlanError("Semantic corpus media metadata is invalid.");
@@ -88,7 +111,7 @@ export class PostgresImmutableSemanticCorpusPlanRepository {
       // complete immutable plan or the same idempotent replay, never a partial
       // parent/child set.
       await sql.unsafe("SELECT pg_advisory_xact_lock(hashtext($1))", [`${input.scope.projectId}:${input.scope.workspaceId}:${input.scope.bundleId}:${input.scope.documentId}:${canonical.idempotencyKey}`]);
-      const accepted = await sql.unsafe("SELECT 1 FROM atlas.extraction_bundle_document member JOIN atlas.extraction_bundle bundle ON bundle.id=member.bundle_id AND bundle.project_id=member.project_id AND bundle.workspace_id=member.workspace_id JOIN atlas.document document ON document.id=member.document_id AND document.project_id=member.project_id AND document.workspace_id=member.workspace_id JOIN atlas.document_perception_execution execution ON execution.id=member.perception_execution_id AND execution.artifact_id=member.document_id AND execution.source_sha256=document.source_sha256 JOIN atlas.normalized_document_cache cache ON cache.cache_key=$8 AND cache.source_sha256=document.source_sha256 AND cache.contract_version=$9 AND cache.capability=$10 AND cache.invalidated_at IS NULL WHERE member.bundle_id=$1 AND member.document_id=$2 AND member.project_id=$3 AND member.workspace_id=$4 AND document.source_sha256=$5 AND execution.id=$6 AND execution.state='completed' AND execution.completion_fingerprint=$7 AND member.state='perceived' AND bundle.state='processing' AND cache.capability_identity=execution.capability_identity FOR UPDATE OF member, bundle, document, execution, cache", [input.scope.bundleId, input.scope.documentId, input.scope.projectId, input.scope.workspaceId, input.source.sourceSha256, input.source.perceptionExecutionId, input.source.normalizedDocumentFingerprint, input.source.normalizedDocumentRef, input.source.normalizedDocumentVersion, input.source.perceptionCapability]);
+      const accepted = await sql.unsafe("SELECT 1 FROM atlas.extraction_bundle_document member JOIN atlas.extraction_bundle bundle ON bundle.id=member.bundle_id AND bundle.project_id=member.project_id AND bundle.workspace_id=member.workspace_id JOIN atlas.document document ON document.id=member.document_id AND document.project_id=member.project_id AND document.workspace_id=member.workspace_id JOIN atlas.document_perception_execution execution ON execution.id=member.perception_execution_id AND execution.artifact_id=member.document_id AND execution.source_sha256=document.source_sha256 JOIN atlas.normalized_document_cache cache ON cache.cache_key=$8 AND cache.source_sha256=document.source_sha256 AND cache.contract_version=$9 AND cache.capability=$10 AND cache.invalidated_at IS NULL WHERE member.bundle_id=$1 AND member.document_id=$2 AND member.project_id=$3 AND member.workspace_id=$4 AND document.source_sha256=$5 AND execution.id=$6 AND execution.state='completed' AND execution.completion_fingerprint=$7 AND execution.contract_version=$11 AND member.state='perceived' AND bundle.state='processing' AND cache.capability_identity=execution.capability_identity FOR UPDATE OF member, bundle, document, execution, cache", [input.scope.bundleId, input.scope.documentId, input.scope.projectId, input.scope.workspaceId, input.source.sourceSha256, input.source.perceptionExecutionId, input.source.normalizedDocumentFingerprint, input.source.normalizedDocumentRef, input.source.normalizedDocumentVersion, input.source.perceptionCapability, input.source.perceptionContractVersion]);
       if (accepted.length !== 1) throw new ImmutableSemanticCorpusPlanError("Semantic corpus plan source is foreign, stale, or no longer accepted.");
       const prior = await sql.unsafe("SELECT id, plan_hash, immutable_content FROM atlas.semantic_corpus_plan WHERE (project_id=$1 AND workspace_id=$2 AND bundle_id=$3 AND document_id=$4 AND idempotency_key=$5) OR (project_id=$1 AND workspace_id=$2 AND bundle_id=$3 AND document_id=$4 AND proposal_id=$6) FOR UPDATE", [input.scope.projectId, input.scope.workspaceId, input.scope.bundleId, input.scope.documentId, canonical.idempotencyKey, input.proposal.proposalId]);
       if (prior.length) {

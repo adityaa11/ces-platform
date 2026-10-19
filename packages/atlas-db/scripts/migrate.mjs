@@ -54,6 +54,7 @@ migrations.push("0082_bssv20060503_authenticated_effective_capacity_snapshot");
 migrations.push("0083_bssv20060504_policy_aware_runtime_admission_fairness");
 migrations.push("0084_bssv20060505_policy_revision_operational_recovery");
 migrations.push("0085_idser012_immutable_semantic_corpus_plan");
+migrations.push("0086_idser012_immutable_semantic_corpus_plan_cfc");
 const readMigration = async (name) => {
   let migration = await readFile(new URL(`../migrations/${name}.sql`, import.meta.url), "utf8");
   for (const [token, value] of Object.entries(replacements)) migration = migration.replaceAll(token, value.replaceAll("'", "''"));

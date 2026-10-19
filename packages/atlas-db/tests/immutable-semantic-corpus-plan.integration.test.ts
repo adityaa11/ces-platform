@@ -14,7 +14,7 @@ const input = (suffix: string, proposalId = `proposal-${suffix}`, predecessor?: 
   proposal: {
     proposalId, proposalHash: sha(`proposal-${suffix}`), sourceHash: sha(`source-hash-${suffix}`), policyHash: sha(`policy-${suffix}`), estimatorHash: sha(`estimator-${suffix}`),
     structuralBound: { identity: "semantic-bound", version: "v1", maxRequestBytes: 4096, maxInputTokens: 1024 },
-    bssSnapshot: { source: { sourceVersion: "v1" }, enforcement: { policyVersion: "v1", routeId: "anoman-semantic" }, process: { profileVersion: "v1" }, workload: { profileVersion: "v1", estimator: { identity: "estimator", version: "v1" } } },
+    bssSnapshot: { source: { sourceId: "anoman-capacity-source", sourceVersion: "v1" }, enforcement: { policyId: "anoman-semantic", policyVersion: "v1" }, process: { profileId: "semantic-process", profileVersion: "v1" }, workload: { planId: "semantic-workload", planVersion: "v1", estimator: { identity: "estimator", version: "v1" } } },
     eligibleDimensions: ["rpm", "tpm", "concurrency"], requestResourceEnvelope: { requestUnits: 2, tokenUnits: 12, dayUnits: 2, concurrencyUnits: 2 },
     units: [
       { locator: { documentId: `document-${suffix}`, pageNumber: 1, sourceKind: "text_block", localId: "one" }, classification: "eligible", demand: { requestBytes: 20, inputTokens: 6, envelope: { requestUnits: 1, tokenUnits: 6, dayUnits: 1, concurrencyUnits: 1 } } },
@@ -44,22 +44,47 @@ async function fixture(sql: ReturnType<typeof postgres>, plan: ImmutableSemantic
 }
 
 async function cleanup(sql: ReturnType<typeof postgres>, plan: ImmutableSemanticCorpusPlanInputV1, owner: string) {
-  await sql.unsafe("DELETE FROM atlas.semantic_corpus_plan_cancellation WHERE plan_id IN (SELECT id FROM atlas.semantic_corpus_plan WHERE project_id=$1)", [plan.scope.projectId]);
-  await sql.unsafe("DELETE FROM atlas.planned_semantic_corpus_handoff WHERE plan_id IN (SELECT id FROM atlas.semantic_corpus_plan WHERE project_id=$1)", [plan.scope.projectId]);
-  await sql.unsafe("DELETE FROM atlas.semantic_corpus_plan WHERE project_id=$1", [plan.scope.projectId]);
+  await sql.begin(async (transaction) => {
+    // Fixtures are removed by the database administrator only; product writes
+    // run as atlas_app and remain subject to the append-only triggers.
+    await transaction.unsafe("SET LOCAL session_replication_role = replica");
+    await transaction.unsafe("DELETE FROM atlas.semantic_corpus_plan_cancellation WHERE plan_id IN (SELECT id FROM atlas.semantic_corpus_plan WHERE project_id=$1)", [plan.scope.projectId]);
+    await transaction.unsafe("DELETE FROM atlas.planned_semantic_corpus_handoff WHERE plan_id IN (SELECT id FROM atlas.semantic_corpus_plan WHERE project_id=$1)", [plan.scope.projectId]);
+    await transaction.unsafe("DELETE FROM atlas.semantic_corpus_plan WHERE project_id=$1", [plan.scope.projectId]);
+  });
   await sql.unsafe("DELETE FROM atlas.project WHERE id=$1", [plan.scope.projectId]);
   await sql.unsafe('DELETE FROM auth."user" WHERE id=$1', [owner]);
 }
 
+test("requires a complete references-only BSS provenance snapshot", () => {
+  const plan = input("bounded-bss");
+  assert.doesNotThrow(() => canonicalImmutableSemanticCorpusPlanV1(plan));
+
+  const missingVersion = input("missing-bss");
+  missingVersion.proposal.bssSnapshot = { source: { sourceId: "source", sourceVersion: "v1" }, enforcement: { policyId: "policy", policyVersion: "v1" }, process: { profileId: "process", profileVersion: "v1" }, workload: { planId: "workload", planVersion: "v1", estimator: { identity: "estimator" } } } as never;
+  assert.throws(() => canonicalImmutableSemanticCorpusPlanV1(missingVersion), /complete versioned references/);
+
+  const rawPayload = input("raw-bss");
+  rawPayload.proposal.bssSnapshot = { source: { sourceId: "source", sourceVersion: "v1", customerMemo: "raw customer payload" }, enforcement: { policyId: "policy", policyVersion: "v1" }, process: { profileId: "process", profileVersion: "v1" }, workload: { planId: "workload", planVersion: "v1", estimator: { identity: "estimator", version: "v1" } } } as never;
+  assert.throws(() => canonicalImmutableSemanticCorpusPlanV1(rawPayload), /complete versioned references/);
+});
+
 test("atomically persists immutable plans and batch handoffs with replay, recovery, ancestry, and zero forbidden effects", { skip }, async () => {
   const sql = postgres(databaseUrl!, { max: 4 });
+  const atlasUrl = new URL(databaseUrl!); atlasUrl.username = "atlas_app"; atlasUrl.password = process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only";
+  const atlas = postgres(atlasUrl.toString(), { max: 2 });
   const suffix = randomUUID();
   const plan = input(suffix);
   let owner = "";
   try {
     owner = await fixture(sql, plan);
-    const repository = new PostgresImmutableSemanticCorpusPlanRepository(sql as any);
+    const repository = new PostgresImmutableSemanticCorpusPlanRepository(atlas as any);
     const [baseline] = await sql.unsafe("SELECT (SELECT count(*)::int FROM pgboss.job) AS ghr_or_queue, (SELECT count(*)::int FROM bridge.provider_work_admission_v1) AS bss_work, (SELECT count(*)::int FROM bridge.provider_work_attempt) AS bss_attempt, (SELECT count(*)::int FROM bridge.provider_work_reservation) AS bss_reservation");
+    await sql.unsafe("UPDATE atlas.document_perception_execution SET contract_version='v2' WHERE id=$1", [plan.source.perceptionExecutionId]);
+    await assert.rejects(() => repository.persist(plan), /foreign, stale, or no longer accepted/, "a completed execution under another perception contract cannot satisfy the frozen plan binding");
+    const [rejectedCount] = await sql.unsafe("SELECT count(*)::int AS plans FROM atlas.semantic_corpus_plan WHERE project_id=$1", [plan.scope.projectId]);
+    assert.equal(Number(rejectedCount!.plans), 0, "a perception-contract mismatch inserts neither a plan nor handoff");
+    await sql.unsafe("UPDATE atlas.document_perception_execution SET contract_version='v1' WHERE id=$1", [plan.source.perceptionExecutionId]);
     const [first, simultaneousRetry] = await Promise.all([repository.persist(plan), repository.persist(plan)]);
     assert.deepEqual(simultaneousRetry, first, "concurrent claims collapse to one immutable plan and its complete handoff set");
     const replay = await repository.persist(plan); // lost post-commit acknowledgement/restart replay
@@ -71,7 +96,12 @@ test("atomically persists immutable plans and batch handoffs with replay, recove
     assert.deepEqual({ plans: Number(counts.plans), handoffs: Number(counts.handoffs) }, { plans: 1, handoffs: 2 }, "one committed plan owns exactly its N handoffs");
     assert.deepEqual({ ghrOrQueue: Number(counts.ghr_or_queue), bssWork: Number(counts.bss_work), bssAttempt: Number(counts.bss_attempt), bssReservation: Number(counts.bss_reservation), sem: Number(counts.sem), candidate: Number(counts.candidate), reconciliation: Number(counts.reconciliation) }, { ghrOrQueue: Number(baseline!.ghr_or_queue), bssWork: Number(baseline!.bss_work), bssAttempt: Number(baseline!.bss_attempt), bssReservation: Number(baseline!.bss_reservation), sem: 0, candidate: 0, reconciliation: 0 }, "persistence writes no GHR, BSS, SEM, or reconciliation effect");
 
+    await assert.rejects(() => atlas.unsafe("UPDATE atlas.semantic_corpus_plan SET proposal_id='rewritten' WHERE id=$1", [first.planId]), /immutable/, "the normal Atlas role cannot update a persisted plan");
+    await assert.rejects(() => atlas.unsafe("DELETE FROM atlas.planned_semantic_corpus_handoff WHERE id=$1", [first.handoffs[0]!.handoffId]), /immutable/, "the normal Atlas role cannot delete a persisted handoff");
+
     await repository.cancel(first.planId, "source revision changed");
+    await assert.rejects(() => atlas.unsafe("UPDATE atlas.semantic_corpus_plan_cancellation SET reason='rewritten' WHERE plan_id=$1", [first.planId]), /immutable/, "the normal Atlas role cannot update cancellation ancestry");
+    await assert.rejects(() => atlas.unsafe("DELETE FROM atlas.semantic_corpus_plan_cancellation WHERE plan_id=$1", [first.planId]), /immutable/, "the normal Atlas role cannot delete cancellation ancestry");
     const revised = input(suffix, `replan-${suffix}`, { planId: first.planId, planHash: first.planHash });
     revised.proposal.proposalHash = sha(`replan-proposal-${suffix}`) as never;
     revised.proposal.policyHash = sha(`replan-policy-${suffix}`) as never;
@@ -81,10 +111,10 @@ test("atomically persists immutable plans and batch handoffs with replay, recove
     assert.deepEqual({ id: ancestry!.predecessor_plan_id, hash: ancestry!.predecessor_plan_hash }, { id: first.planId, hash: first.planHash }, "replan records its cancelled immutable predecessor");
 
     const conflicting = input(suffix, plan.proposal.proposalId);
-    conflicting.proposal.bssSnapshot = { source: { sourceVersion: "v2" }, enforcement: { policyVersion: "v1" }, process: {}, workload: {} } as never;
+    conflicting.proposal.bssSnapshot = { source: { sourceId: "anoman-capacity-source", sourceVersion: "v2" }, enforcement: { policyId: "anoman-semantic", policyVersion: "v1" }, process: { profileId: "semantic-process", profileVersion: "v1" }, workload: { planId: "semantic-workload", planVersion: "v1", estimator: { identity: "estimator", version: "v1" } } };
     await assert.rejects(() => repository.persist(conflicting), ImmutableSemanticCorpusPlanError, "same proposal identity with different immutable content rejects");
     await assert.rejects(() => repository.persist({ ...plan, scope: { ...plan.scope, projectId: `foreign-${suffix}` } }), /foreign, stale, or no longer accepted/, "a foreign scope cannot attach to the accepted source");
-  } finally { try { if (owner) await cleanup(sql, plan, owner); } finally { await sql.end(); } }
+  } finally { try { if (owner) await cleanup(sql, plan, owner); } finally { await atlas.end(); await sql.end(); } }
 });
 
 test("rejects incomplete ownership and rolls back a crash before any partial completed plan is visible", { skip }, async () => {
