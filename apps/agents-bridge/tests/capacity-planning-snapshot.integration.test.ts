@@ -58,7 +58,7 @@ test("RC-00605-08 exposes an authenticated Anoman planning snapshot with zero op
     await bridge.unsafe("INSERT INTO bridge.provider_enforcement_policy_approval(approval_ref,quota_domain_id,provider_capacity_profile_version,route_id,policy_id,policy_version,permitted_unknown_dimensions,approved_by,approved_at) VALUES($1,$2,'v1','anoman-semantic','fixture-policy','v1','{\"rpd\":{\"providerState\":\"unknown\",\"reason\":\"not_published\"}}'::jsonb,'test',clock_timestamp())", [`${suffix}-unavailable-approval`, `${suffix}-unavailable-policy`]);
     await bridge.unsafe("INSERT INTO bridge.provider_enforcement_policy(quota_domain_id,provider_capacity_profile_version,route_id,policy_id,policy_version,approval_ref,dimensions,effective_from) VALUES($1,'v1','anoman-semantic','fixture-policy','v1',$2,$3::jsonb,clock_timestamp())", [`${suffix}-unavailable-policy`, `${suffix}-unavailable-approval`, { rpm: { mode: "enforced", limitSource: "provider" }, tpm: { mode: "enforced", limitSource: "provider" }, rpd: { mode: "not_enforced", providerState: "unknown", reason: "not_published", approvalRef: `${suffix}-unavailable-approval` }, concurrency: { mode: "enforced", limitSource: "provider" } }]);
     await bridge.unsafe("INSERT INTO bridge.provider_enforcement_policy_revocation(quota_domain_id,provider_capacity_profile_version,route_id,policy_id,policy_version,revocation_ref,revoked_by) VALUES($1,'v1','anoman-semantic','fixture-policy','v1',$2,'test')", [`${suffix}-unavailable-policy`, `${suffix}-unavailable-revocation`]);
-    await bridge.unsafe("INSERT INTO bridge.workload_envelope_profile(workload_id,profile_version,active,compatible_process_kinds,structural_bound,estimator,quota_accounting_policy_id,output_reservation,safety_policy) VALUES($1,'v1',false,'[\"semantic\"]'::jsonb,$2::jsonb,$3::jsonb,'anoman-quota-v1',$4::jsonb,$5::jsonb)", [workloadId, { identity: "anoman-prospective-bound", version: "v1", maxRequestBytes: 10_000, maxInputTokens: 4_000 }, { identity: "anoman-prospective-estimator", version: "v2", media: { identity: "anoman-prospective-media", version: "v1" } }, { policyId: "anoman-output", policyVersion: "v1", maxOutputTokens: 100 }, { policyId: "anoman-safety", policyVersion: "v1" }]);
+    await bridge.unsafe("INSERT INTO bridge.workload_envelope_profile(workload_id,profile_version,active,compatible_process_kinds,structural_bound,estimator,quota_accounting_policy_id,output_reservation,safety_policy) VALUES($1,'v1',false,'[\"semantic\"]'::jsonb,$2::jsonb,$3::jsonb,'anoman-quota-v1',$4::jsonb,$5::jsonb)", [workloadId, { identity: "anoman-prospective-bound", version: "v1", maxRequestBytes: 100_000, maxInputTokens: 40_000 }, { identity: "anoman-prospective-estimator", version: "v2", media: { identity: "anoman-prospective-media", version: "v1" } }, { policyId: "anoman-output", policyVersion: "v1", maxOutputTokens: 100 }, { policyId: "anoman-safety", policyVersion: "v1" }]);
     await bridge.unsafe("INSERT INTO bridge.provider_process_profile(process_id,profile_version,process_kind,capability,service_class,fairness_scope,allocation_policy,active,eligible_route_ids,workload_id,workload_profile_version) VALUES($1,'v1','semantic','atlas.semantic.extract','background','{}'::jsonb,$2::jsonb,false,'[\"anoman-semantic\"]'::jsonb,$3,'v1')", [processId, { background: { weight: 1, mayBorrowIdleCapacity: false }, hardInteractiveProtection: { policyId: "anoman-reserve", policyVersion: "v1" } }, workloadId]);
     const before = await counters();
     const beforeDurableSideEffects = await durableSideEffects();
@@ -86,7 +86,7 @@ test("RC-00605-08 exposes an authenticated Anoman planning snapshot with zero op
       },
     });
     assert.deepEqual(body.process, { id: processId, profileVersion: "v1", serviceClass: "background", active: false });
-    assert.deepEqual(body.workload, { id: workloadId, profileVersion: "v1", active: false, structuralBound: { identity: "anoman-prospective-bound", version: "v1", maxRequestBytes: 10_000, maxInputTokens: 4_000 }, estimator: { identity: "anoman-prospective-estimator", version: "v2", media: { identity: "anoman-prospective-media", version: "v1" } }, outputReservation: { policyId: "anoman-output", policyVersion: "v1", maxOutputTokens: 100 }, safetyPolicy: { policyId: "anoman-safety", policyVersion: "v1" } });
+    assert.deepEqual(body.workload, { id: workloadId, profileVersion: "v1", active: false, structuralBound: { identity: "anoman-prospective-bound", version: "v1", maxRequestBytes: 100_000, maxInputTokens: 40_000 }, estimator: { identity: "anoman-prospective-estimator", version: "v2", media: { identity: "anoman-prospective-media", version: "v1" } }, outputReservation: { policyId: "anoman-output", policyVersion: "v1", maxOutputTokens: 100 }, safetyPolicy: { policyId: "anoman-safety", policyVersion: "v1" } });
     assert.equal(body.plan, null, "a prospective read cannot promote an inactive route into an active plan");
     const idserConsumer = createIdserProspectiveCapacitySnapshotConsumer({ reader, serverCredential: principal.credential });
     const idserSnapshot = await idserConsumer.read({ requestBytes: 100, inputTokens: 100, requestResourceEnvelope: { requestUnits: 1, tokenUnits: 100, dayUnits: 1, concurrencyUnits: 1 } });
@@ -106,21 +106,21 @@ test("RC-00605-08 exposes an authenticated Anoman planning snapshot with zero op
         }, media: [],
       } as any,
       estimatorConfiguration: {
-        bssRegisteredEstimator: { identity: "anoman-prospective-estimator", version: "v2" }, estimator: { identity: "anoman-prospective-estimator", version: "v2" },
-        modelRoute: { model: "qualified-semantic-model", route: "anoman-semantic" },
-        overheads: { systemPromptBytes: 10, schemaBytes: 10, contextPlaceholderBytes: 0, contextPlaceholderTokens: 0, reservedOutputBytes: 10, reservedOutputTokens: 1, mediaMetadataBytes: 0, mediaInputTokensPerByte: 0, inputBytesPerToken: 4, requestByteSafetyMargin: 0, inputTokenSafetyMargin: 0 },
+        estimator: { identity: "anoman-prospective-estimator", version: "v2" }, configuration: { identity: "anoman-prospective-accounting", version: "v1" },
+        inputBytesPerToken: 4, framingAllowanceBytes: 0, requestByteSafetyMargin: 0, inputTokenSafetyMargin: 0, reservedOutputTokens: 100,
+        requestResourceEnvelope: { requestUnits: 1, dayUnits: 1, concurrencyUnits: 1 },
       },
       capacityConsumer: idserConsumer,
     });
     assert.equal(structuralProposal.disposition, "READY", "the proposal composes the real authenticated prospective BSS reader with conservative demand");
     if (structuralProposal.disposition === "READY") {
-      assert.deepEqual(structuralProposal.batches.map((batch) => batch.ownedLocators.map((locator) => locator.localId)), [["source"]]);
+      assert.deepEqual(structuralProposal.batches.map((batch) => batch.ownedLocators.map((locator) => locator.locatorId)), [["source"]]);
       assert.deepEqual(structuralProposal.eligibleDimensions, ["rpm", "tpm", "concurrency"]);
       assert.equal(structuralProposal.requestResourceEnvelope.dayUnits, 1, "unknown/not-enforced RPD preserves day demand without fabricating a provider limit");
     }
     assert.deepEqual(await counters(), before, "the production reader must be non-inert: no attempts, reservations, jobs, sends, or quota mutations");
     assert.deepEqual(await durableSideEffects(), beforeDurableSideEffects, "IDSER planning reads do not write BSS profiles/plans, durable jobs, semantic results, or reconciliation state");
-    const oversized = JSON.parse((await app.inject({ method: "GET", url: "/v1/capacity-planning-snapshot?prospective=true&requestBytes=10001", headers: { authorization: `Bearer ${principal.credential}` } })).body);
+    const oversized = JSON.parse((await app.inject({ method: "GET", url: "/v1/capacity-planning-snapshot?prospective=true&requestBytes=100001", headers: { authorization: `Bearer ${principal.credential}` } })).body);
     assert.equal(oversized.status, "unfit");
     assert.equal(JSON.parse((await app.inject({ method: "GET", url: "/v1/capacity-planning-snapshot", headers: { authorization: "Bearer forged" } })).body).status, "inactive");
     assert.notEqual(JSON.parse((await app.inject({ method: "GET", url: "/v1/capacity-planning-snapshot", headers: { authorization: `Bearer ${suffix}-foreign` } })).body).status, "qualified");
