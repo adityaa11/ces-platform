@@ -1,6 +1,6 @@
 # IDSER-012-04-06 — Read-only SEM batch reconstruction
 
-- **State:** `planned`; GO is required.
+- **State:** `awaiting_review`; GO implementation checkpoint `afea35fa` is ready for CK review.
 - **Batch:** `IDSER-BATCH-12-04-06`.
 - **Parent:** [IDSER-012-04 split map](IDSER-012-04-canonical-sem-request-sizing-immutable-locator-handoff-and-reconstruction.md).
 - **Dependencies:** `IDSER-012-04-01` and `IDSER-012-04-04` CK `PASS`; established server-owned accepted-document resolver. `IDSER-012-04-05` CK `PASS` is required before family composition closure, but this child does not depend on GHR behavior.
