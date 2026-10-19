@@ -37,6 +37,9 @@ const stable = (value: unknown): string => {
 const digest = (value: unknown) => createHash("sha256").update(stable(value)).digest("hex");
 const immutable = <T>(value: T): T => JSON.parse(stable(value)) as T;
 const opaque = (value: unknown): value is string => typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/.test(value);
+const canonicalDerivedAssetRef = (value: unknown): value is string =>
+  typeof value === "string"
+  && /^derived\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(value);
 const sha = (value: unknown): value is string => typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
 const positive = (value: unknown): value is number => Number.isSafeInteger(value) && (value as number) > 0;
 const nonNegative = (value: unknown): value is number => Number.isSafeInteger(value) && (value as number) >= 0;
@@ -80,7 +83,7 @@ export function canonicalImmutableSemanticCorpusPlanV1(input: ImmutableSemanticC
   if (!validBssProvenance(proposal.bssSnapshot)) throw new ImmutableSemanticCorpusPlanError("Semantic corpus BSS provenance must contain only complete versioned references.");
   if (proposal.batches.some((batch, index) => !opaque(batch.batchId) || batch.batchId !== `batch-${String(index + 1).padStart(4, "0")}` || !positive(batch.requestBytes) || !positive(batch.inputTokens) || !validEnvelope(batch.requestResourceEnvelope))) throw new ImmutableSemanticCorpusPlanError("Semantic corpus batch identity is invalid.");
   if (new Set(proposal.batches.map((batch) => batch.batchId)).size !== proposal.batches.length || new Set(proposal.eligibleDimensions).size !== proposal.eligibleDimensions.length) throw new ImmutableSemanticCorpusPlanError("Semantic corpus proposal has duplicate identities.");
-  if (source.media.some((media) => !opaque(media.assetRef) || !opaque(media.locatorId) || !positive(media.pageNumber) || media.mediaType !== "image/png" || !sha(media.sha256) || !positive(media.byteLength))) throw new ImmutableSemanticCorpusPlanError("Semantic corpus media metadata is invalid.");
+  if (source.media.some((media) => !canonicalDerivedAssetRef(media.assetRef) || !opaque(media.locatorId) || !positive(media.pageNumber) || media.mediaType !== "image/png" || !sha(media.sha256) || !positive(media.byteLength))) throw new ImmutableSemanticCorpusPlanError("Semantic corpus media metadata is invalid.");
   const units = proposal.units.map((unit) => ({ ...unit, locator: { ...unit.locator }, ...(unit.demand ? { demand: { ...unit.demand, envelope: { ...unit.demand.envelope } } } : {}) }));
   if (units.some((unit) => !opaque(unit.locator.documentId) || unit.locator.documentId !== scope.documentId || !positive(unit.locator.pageNumber) || !opaque(unit.locator.localId) || !["text_block", "table", "visual_region"].includes(unit.locator.sourceKind) || !["eligible", "deferred", "unexamined"].includes(unit.classification) || (unit.classification === "eligible" && (!unit.demand || !positive(unit.demand.requestBytes) || !positive(unit.demand.inputTokens) || !validEnvelope(unit.demand.envelope))))) throw new ImmutableSemanticCorpusPlanError("Semantic corpus locator metadata is invalid.");
   const eligible = units.filter((unit) => unit.classification === "eligible").map((unit) => locatorKey(unit.locator));

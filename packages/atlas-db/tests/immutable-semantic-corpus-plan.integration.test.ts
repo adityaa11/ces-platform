@@ -29,6 +29,27 @@ const input = (suffix: string, proposalId = `proposal-${suffix}`, predecessor?: 
   },
 });
 
+const canonicalMedia = (assetRef = "derived/01234567-89ab-cdef-0123-456789abcdef") => ({
+  assetRef,
+  locatorId: "deferred",
+  pageNumber: 1,
+  mediaType: "image/png" as const,
+  sha256: sha("media-fixture"),
+  byteLength: 1,
+});
+
+const withMedia = (suffix: string, assetRef?: string): ImmutableSemanticCorpusPlanInputV1 => {
+  const plan = input(suffix);
+  return { ...plan, source: { ...plan.source, media: [canonicalMedia(assetRef)] } };
+};
+
+const assertMediaInvalid = (plan: ImmutableSemanticCorpusPlanInputV1) => {
+  assert.throws(
+    () => canonicalImmutableSemanticCorpusPlanV1(plan),
+    (error: unknown) => error instanceof ImmutableSemanticCorpusPlanError && error.message === "Semantic corpus media metadata is invalid.",
+  );
+};
+
 async function fixture(sql: ReturnType<typeof postgres>, plan: ImmutableSemanticCorpusPlanInputV1) {
   const owner = `owner-${randomUUID()}`;
   await sql.unsafe('INSERT INTO auth."user" (id,name,email,"emailVerified","createdAt","updatedAt") VALUES ($1,$1,$2,false,now(),now())', [owner, `${owner}@example.test`]);
@@ -67,6 +88,92 @@ test("requires a complete references-only BSS provenance snapshot", () => {
   const rawPayload = input("raw-bss");
   rawPayload.proposal.bssSnapshot = { source: { sourceId: "source", sourceVersion: "v1", customerMemo: "raw customer payload" }, enforcement: { policyId: "policy", policyVersion: "v1" }, process: { profileId: "process", profileVersion: "v1" }, workload: { planId: "workload", planVersion: "v1", estimator: { identity: "estimator", version: "v1" } } } as never;
   assert.throws(() => canonicalImmutableSemanticCorpusPlanV1(rawPayload), /complete versioned references/);
+});
+
+test("canonicalizes exact derived media references without rewriting metadata", () => {
+  const plan = withMedia("canonical-media");
+  const canonical = canonicalImmutableSemanticCorpusPlanV1(plan);
+  const replay = canonicalImmutableSemanticCorpusPlanV1(plan);
+  const content = canonical.planContent as { source: { media: unknown } };
+
+  assert.deepEqual(content.source.media, plan.source.media, "canonical content retains every supplied media value exactly");
+  assert.equal(replayImmutableSemanticCorpusPlanHashV1(canonical.planContent), canonical.planHash, "stored-style immutable content replays its hash");
+  assert.deepEqual(replay, canonical, "the same nonempty media input remains deterministic");
+  assert.doesNotThrow(() => canonicalImmutableSemanticCorpusPlanV1(input("zero-media")), "the existing zero-media baseline remains valid");
+});
+
+test("rejects malformed media references and retains existing media and opaque identity fences", () => {
+  const valid = withMedia("media-negative");
+  const uuid = "01234567-89ab-cdef-0123-456789abcdef";
+  const malformedRefs = [
+    uuid,
+    "derived",
+    "derived/",
+    `derived//${uuid}`,
+    `derivedx/${uuid}`,
+    `Derived/${uuid}`,
+    `derived/${uuid.toUpperCase()}`,
+    "derived/01234567-89ab-cdef-0123-456789abcde",
+    "derived/01234567-89ab-cdef-0123-456789abcdef0",
+    "derived/0123456789ab-cdef-0123-456789abcdef",
+    "derived/01234567-89ab-cdef-0123-456789abcdeg",
+    ` derived/${uuid}`,
+    `derived/${uuid} `,
+    `derived/${uuid}?query=1`,
+    `derived/${uuid}#fragment`,
+    `https://example.test/derived/${uuid}`,
+    `derived%2F${uuid}`,
+    `derived/../${uuid}`,
+    `derived\\${uuid}`,
+  ];
+  for (const assetRef of malformedRefs) {
+    assertMediaInvalid({ ...valid, source: { ...valid.source, media: [canonicalMedia(assetRef)] } });
+  }
+
+  assertMediaInvalid({ ...valid, source: { ...valid.source, media: [{ ...canonicalMedia(), locatorId: "invalid/locator" }] } });
+  assertMediaInvalid({ ...valid, source: { ...valid.source, media: [{ ...canonicalMedia(), pageNumber: 0 }] } });
+  assertMediaInvalid({ ...valid, source: { ...valid.source, media: [{ ...canonicalMedia(), mediaType: "image/jpeg" as never }] } });
+  assertMediaInvalid({ ...valid, source: { ...valid.source, media: [{ ...canonicalMedia(), sha256: "not-a-sha" }] } });
+  assertMediaInvalid({ ...valid, source: { ...valid.source, media: [{ ...canonicalMedia(), byteLength: 0 }] } });
+  assert.throws(
+    () => canonicalImmutableSemanticCorpusPlanV1({ ...valid, scope: { ...valid.scope, documentId: "document/with-slash" } }),
+    ImmutableSemanticCorpusPlanError,
+    "unrelated opaque identities remain fail-closed",
+  );
+});
+
+test("persists exact canonical media metadata immutably with no forbidden side effects", { skip }, async () => {
+  const sql = postgres(databaseUrl!, { max: 4 });
+  const atlasUrl = new URL(databaseUrl!); atlasUrl.username = "atlas_app"; atlasUrl.password = process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only";
+  const atlas = postgres(atlasUrl.toString(), { max: 2 });
+  const suffix = randomUUID();
+  const plan = withMedia(suffix, `derived/${randomUUID()}`);
+  const invalidPlan = withMedia(`invalid-media-${suffix}`, "derived/not-a-uuid");
+  let owner = "";
+  let invalidOwner = "";
+  try {
+    owner = await fixture(sql, plan);
+    invalidOwner = await fixture(sql, invalidPlan);
+    const repository = new PostgresImmutableSemanticCorpusPlanRepository(atlas as any);
+    const [baseline] = await sql.unsafe("SELECT (SELECT count(*)::int FROM pgboss.job) AS ghr_or_queue, (SELECT count(*)::int FROM bridge.provider_work_admission_v1) AS bss_work, (SELECT count(*)::int FROM bridge.provider_work_attempt) AS bss_attempt, (SELECT count(*)::int FROM bridge.provider_work_reservation) AS bss_reservation");
+    const first = await repository.persist(plan);
+    const replay = await repository.persist(plan);
+    assert.deepEqual(replay, first, "exact retry returns the existing parent and handoff identities");
+    assert.equal(first.handoffs.length, 2, "the N=2 proposal persists exactly two handoffs");
+    const [stored] = await sql.unsafe("SELECT immutable_content FROM atlas.semantic_corpus_plan WHERE id=$1", [first.planId]);
+    assert.deepEqual((stored!.immutable_content as { source: { media: unknown } }).source.media, plan.source.media, "PostgreSQL retains the exact nonempty media metadata");
+    assert.equal(replayImmutableSemanticCorpusPlanHashV1(stored!.immutable_content), first.planHash, "stored immutable content replays the returned parent hash");
+
+    const changedMedia = withMedia(suffix, `derived/${randomUUID()}`);
+    await assert.rejects(() => repository.persist(changedMedia), /conflicts with an immutable prior version/, "a changed media reference cannot rewrite a prior immutable plan");
+    await assert.rejects(() => repository.persist(invalidPlan), /Semantic corpus media metadata is invalid/, "malformed media is rejected before persistence");
+    const [invalidCounts] = await sql.unsafe("SELECT (SELECT count(*)::int FROM atlas.semantic_corpus_plan WHERE project_id=$1) AS plans, (SELECT count(*)::int FROM atlas.planned_semantic_corpus_handoff handoff JOIN atlas.semantic_corpus_plan plan ON plan.id=handoff.plan_id WHERE plan.project_id=$1) AS handoffs", [invalidPlan.scope.projectId]);
+    assert.deepEqual({ plans: Number(invalidCounts!.plans), handoffs: Number(invalidCounts!.handoffs) }, { plans: 0, handoffs: 0 }, "invalid media creates no plan or handoff rows");
+    const [after] = await sql.unsafe("SELECT (SELECT count(*)::int FROM pgboss.job) AS ghr_or_queue, (SELECT count(*)::int FROM bridge.provider_work_admission_v1) AS bss_work, (SELECT count(*)::int FROM bridge.provider_work_attempt) AS bss_attempt, (SELECT count(*)::int FROM bridge.provider_work_reservation) AS bss_reservation, (SELECT count(*)::int FROM atlas.semantic_execution WHERE document_id=$1) AS sem, (SELECT count(*)::int FROM atlas.semantic_candidate WHERE document_id=$1) AS candidate, (SELECT count(*)::int FROM atlas.semantic_reconciliation_result WHERE current_document_id=$1) AS reconciliation", [plan.scope.documentId]);
+    assert.deepEqual({ ghrOrQueue: Number(after!.ghr_or_queue), bssWork: Number(after!.bss_work), bssAttempt: Number(after!.bss_attempt), bssReservation: Number(after!.bss_reservation), sem: Number(after!.sem), candidate: Number(after!.candidate), reconciliation: Number(after!.reconciliation) }, { ghrOrQueue: Number(baseline!.ghr_or_queue), bssWork: Number(baseline!.bss_work), bssAttempt: Number(baseline!.bss_attempt), bssReservation: Number(baseline!.bss_reservation), sem: 0, candidate: 0, reconciliation: 0 }, "canonical media persistence causes no forbidden downstream effects");
+  } finally {
+    try { if (invalidOwner) await cleanup(sql, invalidPlan, invalidOwner); } finally { try { if (owner) await cleanup(sql, plan, owner); } finally { await atlas.end(); await sql.end(); } }
+  }
 });
 
 test("atomically persists immutable plans and batch handoffs with replay, recovery, ancestry, and zero forbidden effects", { skip }, async () => {
