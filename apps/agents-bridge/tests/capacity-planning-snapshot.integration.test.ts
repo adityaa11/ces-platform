@@ -4,6 +4,7 @@ import postgres from "postgres";
 import { createBridgeApp } from "../src/app.js";
 import { createCapacityPlanningSnapshotReader, type CapacityPlanningSnapshotPrincipal } from "../src/capacity-planning-snapshot.js";
 import { createIdserProspectiveCapacitySnapshotConsumer } from "../src/idser-prospective-capacity-snapshot.js";
+import { proposeStructuralFitCorpusPartition } from "../src/idser-structural-fit-corpus-partition.js";
 import { TestRuntime } from "../src/runtime.js";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -93,6 +94,30 @@ test("RC-00605-08 exposes an authenticated Anoman planning snapshot with zero op
     assert.deepEqual(idserSnapshot.eligibleDimensions, ["rpm", "tpm", "concurrency"], "the Anoman unknown/not-enforced RPD is excluded from the BSS provider mask");
     assert.equal(idserSnapshot.plan, null, "the IDSER consumer retains the planning read as non-admission evidence");
     assert.ok(Object.isFrozen(idserSnapshot), "the accepted structural-policy snapshot is immutable");
+    const structuralProposal = await proposeStructuralFitCorpusPartition({
+      acceptedDocument: {
+        scope: { projectId: "fixture-project", workspaceId: "fixture-workspace", bundleId: "fixture-bundle", documentId: "fixture-document" },
+        source: { documentId: "fixture-document", sourceSha256: "a".repeat(64) }, rel: { state: "unavailable" },
+        normalizedDocument: {
+          version: "v1", executionId: "fixture-execution", artifactId: "fixture-document", sourceSha256: "a".repeat(64),
+          perception: { capability: "atlas.document.perceive", contractVersion: "v1" },
+          provider: { name: "docling", processor: "pdf", executionId: "fixture-execution", processedAt: "2026-10-19T00:00:00.000Z" },
+          pages: [{ number: 1, textBlocks: [{ id: "source", text: "A source-grounded structural-fit fixture." }], tables: [], visualRegions: [] }],
+        }, media: [],
+      } as any,
+      estimatorConfiguration: {
+        bssRegisteredEstimator: { identity: "anoman-prospective-estimator", version: "v2" }, estimator: { identity: "anoman-prospective-estimator", version: "v2" },
+        modelRoute: { model: "qualified-semantic-model", route: "anoman-semantic" },
+        overheads: { systemPromptBytes: 10, schemaBytes: 10, contextPlaceholderBytes: 0, contextPlaceholderTokens: 0, reservedOutputBytes: 10, reservedOutputTokens: 1, mediaMetadataBytes: 0, mediaInputTokensPerByte: 0, inputBytesPerToken: 4, requestByteSafetyMargin: 0, inputTokenSafetyMargin: 0 },
+      },
+      capacityConsumer: idserConsumer,
+    });
+    assert.equal(structuralProposal.disposition, "READY", "the proposal composes the real authenticated prospective BSS reader with conservative demand");
+    if (structuralProposal.disposition === "READY") {
+      assert.deepEqual(structuralProposal.batches.map((batch) => batch.ownedLocators.map((locator) => locator.localId)), [["source"]]);
+      assert.deepEqual(structuralProposal.eligibleDimensions, ["rpm", "tpm", "concurrency"]);
+      assert.equal(structuralProposal.requestResourceEnvelope.dayUnits, 1, "unknown/not-enforced RPD preserves day demand without fabricating a provider limit");
+    }
     assert.deepEqual(await counters(), before, "the production reader must be non-inert: no attempts, reservations, jobs, sends, or quota mutations");
     assert.deepEqual(await durableSideEffects(), beforeDurableSideEffects, "IDSER planning reads do not write BSS profiles/plans, durable jobs, semantic results, or reconciliation state");
     const oversized = JSON.parse((await app.inject({ method: "GET", url: "/v1/capacity-planning-snapshot?prospective=true&requestBytes=10001", headers: { authorization: `Bearer ${principal.credential}` } })).body);

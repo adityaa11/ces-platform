@@ -3,7 +3,11 @@ import type { CapacityPlanningSnapshot, CapacityPlanningSnapshotRead } from "./c
 
 type JsonRecord = Record<string, unknown>;
 
-export class IdserProspectiveCapacitySnapshotError extends Error {}
+export class IdserProspectiveCapacitySnapshotError extends Error {
+  constructor(message: string, readonly disposition: "structurally_unfit" | "blocked" = "blocked") {
+    super(message);
+  }
+}
 
 export type IdserProspectiveCapacitySnapshotRead = Readonly<{
   requestBytes: number;
@@ -88,6 +92,9 @@ export function createIdserProspectiveCapacitySnapshotConsumer(options: Readonly
 
 function validate(raw: CapacityPlanningSnapshot, requestResourceEnvelope: RequestResourceEnvelope): IdserProspectiveCapacitySnapshot {
   const snapshot = object(raw, "snapshot");
+  if (snapshot.status === "unfit") {
+    throw new IdserProspectiveCapacitySnapshotError("IDSER prospective capacity snapshot rejected: BSS rejected the structural candidate as unfit", "structurally_unfit");
+  }
   if (snapshot.apiVersion !== "CapacityPlanningSnapshot/v1" || snapshot.status !== "inactive" || snapshot.reason !== "prospective_planning_only"
     || snapshot.view !== "prospective-planning-only" || snapshot.readIsNotAdmissionPermit !== true || snapshot.plan !== null) {
     fail("it is not the exact prospective-planning-only inactive view");
