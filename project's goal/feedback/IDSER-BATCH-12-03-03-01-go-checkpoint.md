@@ -3,7 +3,7 @@
 - **Ticket:** `IDSER-012-03-03-01` — Immutable plan/handoff persistence.
 - **Ticket authority:** `project's goal/Backend_Phase/tickets/Initial_Draft_Phase/IDSER-012-03-03-01-immutable-plan-handoff-persistence.md`.
 - **Dependency consumed:** `IDSER-012-03-02-03` CK `PASS`, recorded at `c0d3d1e1`.
-- **Implementation commit:** pending final GO commit amendment.
+- **Implementation commit:** `b2842e1b` (`feat(idser): persist immutable semantic corpus plans`).
 - **State:** `awaiting_review`.
 
 ## Bounded implementation
