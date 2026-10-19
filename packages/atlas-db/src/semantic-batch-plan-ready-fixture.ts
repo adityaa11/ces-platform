@@ -134,6 +134,7 @@ export class PostgresSemanticBatchPlanReadyFixtureReceiver {
     const storedIds = new Set<string>();
     const eligible = new Set<string>();
     const owned = new Set<string>();
+    const inventory = new Set<string>();
     for (let index = 0; index < rows.length; index += 1) {
       const row = rows[index]!;
       const member = expected.get(String(row.batch_id));
@@ -159,10 +160,13 @@ export class PostgresSemanticBatchPlanReadyFixtureReceiver {
       }
       const units = isV2 ? proposal.inventory : proposal.units;
       const ownedLocators = handoff.ownedLocators;
-      if (!Array.isArray(units) || !Array.isArray(ownedLocators)) fail("persisted ownership metadata is inconsistent");
+      const contextOnlyLocators = Array.isArray(handoff.contextOnlyLocators) ? handoff.contextOnlyLocators : null;
+      if (!Array.isArray(units) || !Array.isArray(ownedLocators) || (isV2 && !contextOnlyLocators)) fail("persisted ownership metadata is inconsistent");
       if (index === 0) for (const unit of units) {
-        if (!plain(unit) || unit.classification !== "eligible") continue;
+        if (!plain(unit)) continue;
         const key = locatorKey(unit.locator);
+        if (isV2 && key) inventory.add(key);
+        if (unit.classification !== "eligible") continue;
         if (!key || eligible.has(key)) fail("persisted eligible ownership is invalid");
         eligible.add(key);
       }
@@ -171,8 +175,13 @@ export class PostgresSemanticBatchPlanReadyFixtureReceiver {
         if (!key || owned.has(key)) fail("persisted handoff ownership is duplicate or invalid");
         owned.add(key);
       }
+      if (isV2) for (const locator of contextOnlyLocators!) {
+        const key = locatorKey(locator);
+        if (!plain(locator) || locator.documentId !== scope.documentId || !key || !inventory.has(key)) fail("persisted context-only locator is foreign or outside the parent inventory");
+      }
     }
     if (storedIds.size !== expected.size) fail("persisted handoff coverage is incomplete");
+    if (eligible.size === 0) fail("persisted plan has no eligible source");
     if (eligible.size !== owned.size || [...eligible].some((key) => !owned.has(key))) fail("persisted handoff ownership coverage is incomplete or foreign");
     return body;
   }

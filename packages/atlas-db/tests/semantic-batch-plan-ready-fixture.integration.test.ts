@@ -12,7 +12,7 @@ import { createIdserProspectiveCapacitySnapshotConsumer } from "../../../apps/ag
 import { proposeStructuralFitCorpusPartition } from "../../../apps/agents-bridge/src/idser-structural-fit-corpus-partition.ts";
 import { PostgresPerceptionAuthority } from "../src/perception-authority.ts";
 import { PostgresAcceptedSemanticBatchPlanDocumentResolver, PostgresAcceptedSemanticBatchPlanInputFixtureRepository, parseSemanticBatchPlanInputV1 } from "../src/semantic-batch-plan-input.ts";
-import { PostgresImmutableSemanticCorpusPlanRepository, type ImmutableSemanticCorpusPlanInputV1, type ImmutableSemanticCorpusPlanInputV2 } from "../src/immutable-semantic-corpus-plan.ts";
+import { PostgresImmutableSemanticCorpusPlanRepository, replayImmutableSemanticCorpusPlanHashV1, replayImmutableSemanticCorpusPlanHashV2, type ImmutableSemanticCorpusPlanInputV1, type ImmutableSemanticCorpusPlanInputV2 } from "../src/immutable-semantic-corpus-plan.ts";
 import { PostgresSemanticBatchPlanReadyFixtureReceiver, SemanticBatchPlanReadyFixtureError, SemanticBatchPlanReadyManifestRequiredError, fixtureSemanticBatchPlanReadyV1 } from "../src/semantic-batch-plan-ready-fixture.ts";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -50,6 +50,7 @@ function planInput(suffix: string): ImmutableSemanticCorpusPlanInputV1 {
 function planInputV2(suffix: string): ImmutableSemanticCorpusPlanInputV2 {
   const v1 = planInput(suffix);
   const [first, second] = v1.proposal.units;
+  const contextLocator = { documentId: v1.scope.documentId, pageNumber: 1, sourceKind: "visual_region", localId: "context" } as const;
   const firstPacketHash = digest(`ready-v2-packet-one-${suffix}`);
   const secondPacketHash = digest(`ready-v2-packet-two-${suffix}`);
   const identity = (name: string) => ({ identity: name, version: "v1" });
@@ -61,9 +62,9 @@ function planInputV2(suffix: string): ImmutableSemanticCorpusPlanInputV2 {
       proposalId: `ready-v2-proposal-${suffix}`, proposalHash: digest(`ready-v2-proposal-${suffix}`), sourceHash: digest(`ready-v2-source-${suffix}`), policyHash: digest(`ready-v2-policy-${suffix}`), estimatorHash: digest(`ready-v2-estimator-${suffix}`),
       structuralBound: { identity: "semantic-bound", version: "v1", maxRequestBytes: 4096, maxInputTokens: 1024, maxPromptBytes: 4096, maxContextTokens: 2048 },
       bssSnapshot: v1.proposal.bssSnapshot, packetProfile: identity("semantic-packet"), estimator: identity("semantic-estimator"), configuration: identity("semantic-configuration"), eligibleDimensions: ["rpm", "tpm", "concurrency"], requestResourceEnvelope: v1.proposal.requestResourceEnvelope,
-      inventory: [{ locator: first!.locator, classification: "eligible" }, { locator: second!.locator, classification: "eligible" }],
+      inventory: [{ locator: first!.locator, classification: "eligible" }, { locator: second!.locator, classification: "eligible" }, { locator: contextLocator, classification: "deferred" }],
       batches: [
-        { batchId: "batch-0001", ownedLocators: [first!.locator], contextOnlyLocators: [], sourceSpecificationSha256: firstPacketHash, packetProfile: identity("semantic-packet"), estimator: identity("semantic-estimator"), configuration: identity("semantic-configuration"), conservativeLogicalRequestBytes: { version: "ConservativeLogicalRequestBytes/v1", value: 20 }, requestBytes: 20, inputTokens: 6, reservedOutputTokens: 4, requestResourceEnvelope: { requestUnits: 1, tokenUnits: 6, dayUnits: 1, concurrencyUnits: 1 }, fitTrace: [{ sourceSpecificationSha256: firstPacketHash, requestBytes: 20, inputTokens: 6, reservedOutputTokens: 4, outcome: "fit" }] },
+        { batchId: "batch-0001", ownedLocators: [first!.locator], contextOnlyLocators: [contextLocator], sourceSpecificationSha256: firstPacketHash, packetProfile: identity("semantic-packet"), estimator: identity("semantic-estimator"), configuration: identity("semantic-configuration"), conservativeLogicalRequestBytes: { version: "ConservativeLogicalRequestBytes/v1", value: 20 }, requestBytes: 20, inputTokens: 6, reservedOutputTokens: 4, requestResourceEnvelope: { requestUnits: 1, tokenUnits: 6, dayUnits: 1, concurrencyUnits: 1 }, fitTrace: [{ sourceSpecificationSha256: firstPacketHash, requestBytes: 20, inputTokens: 6, reservedOutputTokens: 4, outcome: "fit" }] },
         { batchId: "batch-0002", ownedLocators: [second!.locator], contextOnlyLocators: [], sourceSpecificationSha256: secondPacketHash, packetProfile: identity("semantic-packet"), estimator: identity("semantic-estimator"), configuration: identity("semantic-configuration"), conservativeLogicalRequestBytes: { version: "ConservativeLogicalRequestBytes/v1", value: 20 }, requestBytes: 20, inputTokens: 6, reservedOutputTokens: 4, requestResourceEnvelope: { requestUnits: 1, tokenUnits: 6, dayUnits: 1, concurrencyUnits: 1 }, fitTrace: [{ sourceSpecificationSha256: secondPacketHash, requestBytes: 20, inputTokens: 6, reservedOutputTokens: 4, outcome: "fit" }] },
       ],
     },
@@ -135,6 +136,37 @@ test("strict non-delivering SemanticBatchPlanReady fixture validates real immuta
   } finally { try { if (owner) await cleanup(sql, plan, owner); } finally { await atlas.end(); await sql.end(); } }
 });
 
+test("a persisted v1 plan with no eligible source cannot produce a ready body", { skip: !databaseUrl }, async () => {
+  const sql = postgres(databaseUrl!, { max: 2 });
+  const atlasUrl = new URL(databaseUrl!); atlasUrl.username = "atlas_app"; atlasUrl.password = process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only";
+  const atlas = postgres(atlasUrl.toString(), { max: 1 });
+  const plan = planInput(randomUUID());
+  let owner = "";
+  try {
+    owner = await fixture(sql, plan);
+    const persisted = await new PostgresImmutableSemanticCorpusPlanRepository(atlas as never).persist(plan);
+    const fixtureBody = fixtureSemanticBatchPlanReadyV1(persisted);
+    const [storedPlan] = await sql.unsafe("SELECT immutable_content FROM atlas.semantic_corpus_plan WHERE id=$1", [persisted.planId]);
+    const emptyPlan = JSON.parse(JSON.stringify(storedPlan!.immutable_content)) as { proposal: { units: unknown[] } };
+    emptyPlan.proposal.units = [];
+    const emptyPlanHash = replayImmutableSemanticCorpusPlanHashV1(emptyPlan);
+    const storedHandoffs = await sql.unsafe("SELECT id, immutable_content FROM atlas.planned_semantic_corpus_handoff WHERE plan_id=$1", [persisted.planId]);
+    await sql.unsafe("SET session_replication_role = replica");
+    await sql.unsafe("UPDATE atlas.semantic_corpus_plan SET plan_hash=$1, immutable_content=$2::jsonb WHERE id=$3", [emptyPlanHash, emptyPlan, persisted.planId]);
+    for (const row of storedHandoffs) {
+      const handoff = JSON.parse(JSON.stringify(row.immutable_content)) as { planHash: string };
+      handoff.planHash = emptyPlanHash;
+      await sql.unsafe("UPDATE atlas.planned_semantic_corpus_handoff SET immutable_content=$1::jsonb WHERE id=$2", [handoff, row.id]);
+    }
+    await sql.unsafe("SET session_replication_role = origin");
+    await assert.rejects(
+      () => new PostgresSemanticBatchPlanReadyFixtureReceiver(sql).receive(JSON.stringify({ ...fixtureBody.body, planHash: emptyPlanHash })),
+      SemanticBatchPlanReadyFixtureError,
+      "a persisted v1 plan with an empty eligible inventory cannot produce a ready body",
+    );
+  } finally { try { if (owner) await cleanup(sql, plan, owner); } finally { await atlas.end(); await sql.end(); } }
+});
+
 test("v2 persisted records dispatch through the unchanged reference-only body and reject invalid membership", { skip: !databaseUrl }, async () => {
   const sql = postgres(databaseUrl!, { max: 2 });
   const atlasUrl = new URL(databaseUrl!); atlasUrl.username = "atlas_app"; atlasUrl.password = process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only";
@@ -148,6 +180,7 @@ test("v2 persisted records dispatch through the unchanged reference-only body an
     const receiver = new PostgresSemanticBatchPlanReadyFixtureReceiver(sql);
     const before = await downstreamCounts(sql, plan.scope.documentId);
     assert.deepEqual(await receiver.receive(output.canonicalJson), output.body, "an actual persisted v2 plan dispatches through the unchanged v1 body");
+    const [originalFirstHandoff] = await sql.unsafe("SELECT immutable_content FROM atlas.planned_semantic_corpus_handoff WHERE id=$1", [persisted.handoffs[0]!.handoffId]);
     const reject = async (label: string, body: unknown) => await assert.rejects(() => receiver.receive(JSON.stringify(body)), SemanticBatchPlanReadyFixtureError, label);
     await reject("missing plan hash", { ...output.body, planHash: undefined });
     await reject("extra body field", { ...output.body, unexpected: true });
@@ -159,10 +192,40 @@ test("v2 persisted records dispatch through the unchanged reference-only body an
     await reject("stale member hash", { ...output.body, batchHandoffRefs: [{ ...output.body.batchHandoffRefs[0]!, hash: "e".repeat(64) }, output.body.batchHandoffRefs[1]] });
     await assert.rejects(() => receiver.receive(JSON.stringify({ ...output.body, batchCount: 101, batchHandoffRefs: Array.from({ length: 101 }, (_, index) => ({ batchId: `batch-${String(index + 1).padStart(4, "0")}`, ref: `handoff-${index + 1}`, hash: "a".repeat(64) })) })), SemanticBatchPlanReadyManifestRequiredError, "oversized v1 bodies require a separately versioned manifest decision");
 
+    const foreignContext = { documentId: "foreign-document", pageNumber: 1, sourceKind: "text_block", localId: "foreign-context" };
+    await sql.unsafe("SET session_replication_role = replica");
+    await sql.unsafe("UPDATE atlas.planned_semantic_corpus_handoff SET immutable_content=jsonb_set(immutable_content, '{contextOnlyLocators}', $2::jsonb) WHERE id=$1", [persisted.handoffs[0]!.handoffId, JSON.stringify([foreignContext])]);
+    await sql.unsafe("SET session_replication_role = origin");
+    await assert.rejects(() => receiver.receive(output.canonicalJson), SemanticBatchPlanReadyFixtureError, "a foreign persisted v2 context-only locator is rejected");
+    const outOfInventoryContext = { documentId: plan.scope.documentId, pageNumber: 1, sourceKind: "text_block", localId: "out-of-inventory-context" };
+    await sql.unsafe("SET session_replication_role = replica");
+    await sql.unsafe("UPDATE atlas.planned_semantic_corpus_handoff SET immutable_content=jsonb_set(immutable_content, '{contextOnlyLocators}', $2::jsonb) WHERE id=$1", [persisted.handoffs[0]!.handoffId, JSON.stringify([outOfInventoryContext])]);
+    await sql.unsafe("SET session_replication_role = origin");
+    await assert.rejects(() => receiver.receive(output.canonicalJson), SemanticBatchPlanReadyFixtureError, "an in-scope but out-of-inventory persisted v2 context-only locator is rejected");
+    await sql.unsafe("SET session_replication_role = replica");
+    await sql.unsafe("UPDATE atlas.planned_semantic_corpus_handoff SET immutable_content=$2::jsonb WHERE id=$1", [persisted.handoffs[0]!.handoffId, originalFirstHandoff!.immutable_content]);
+    await sql.unsafe("SET session_replication_role = origin");
+    assert.deepEqual(await receiver.receive(output.canonicalJson), output.body, "an in-scope persisted v2 context-only locator remains accepted");
+
     await sql.unsafe("SET session_replication_role = replica");
     await sql.unsafe("UPDATE atlas.planned_semantic_corpus_handoff SET batch_slot=3 WHERE id=$1", [persisted.handoffs[1]!.handoffId]);
     await sql.unsafe("SET session_replication_role = origin");
     await assert.rejects(() => receiver.receive(output.canonicalJson), SemanticBatchPlanReadyFixtureError, "a wrong persisted v2 slot is rejected");
+    await sql.unsafe("SET session_replication_role = replica");
+    await sql.unsafe("UPDATE atlas.planned_semantic_corpus_handoff SET batch_slot=2 WHERE id=$1", [persisted.handoffs[1]!.handoffId]);
+    const [storedPlan] = await sql.unsafe("SELECT immutable_content FROM atlas.semantic_corpus_plan WHERE id=$1", [persisted.planId]);
+    const emptyPlan = JSON.parse(JSON.stringify(storedPlan!.immutable_content)) as { proposal: { inventory: { classification: string }[] } };
+    emptyPlan.proposal.inventory.forEach((entry) => { entry.classification = "deferred"; });
+    const emptyPlanHash = replayImmutableSemanticCorpusPlanHashV2(emptyPlan);
+    const storedHandoffs = await sql.unsafe("SELECT id, immutable_content FROM atlas.planned_semantic_corpus_handoff WHERE plan_id=$1", [persisted.planId]);
+    await sql.unsafe("UPDATE atlas.semantic_corpus_plan SET plan_hash=$1, immutable_content=$2::jsonb WHERE id=$3", [emptyPlanHash, emptyPlan, persisted.planId]);
+    for (const row of storedHandoffs) {
+      const handoff = JSON.parse(JSON.stringify(row.immutable_content)) as { planHash: string };
+      handoff.planHash = emptyPlanHash;
+      await sql.unsafe("UPDATE atlas.planned_semantic_corpus_handoff SET immutable_content=$1::jsonb WHERE id=$2", [handoff, row.id]);
+    }
+    await sql.unsafe("SET session_replication_role = origin");
+    await assert.rejects(() => receiver.receive(JSON.stringify({ ...output.body, planHash: emptyPlanHash })), SemanticBatchPlanReadyFixtureError, "a persisted v2 plan with no eligible inventory cannot produce a ready body");
     const after = await downstreamCounts(sql, plan.scope.documentId);
     assert.deepEqual(after, before, "v2 validation issues no GHR work and has zero BSS, SEM, or reconciliation effect");
   } finally { try { if (owner) await cleanup(sql, plan, owner); } finally { await atlas.end(); await sql.end(); } }
