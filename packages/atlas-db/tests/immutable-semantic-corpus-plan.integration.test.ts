@@ -287,6 +287,11 @@ test("v2 persists one immutable locator-only parent and N strict handoffs atomic
     await sql.unsafe("DROP TRIGGER idser012_v2_plan_crash ON atlas.planned_semantic_corpus_handoff"); await sql.unsafe("DROP FUNCTION atlas.idser012_v2_plan_crash()");
     const [rolledBack] = await sql.unsafe("SELECT (SELECT count(*)::int FROM atlas.semantic_corpus_plan WHERE project_id=$1) AS plans, (SELECT count(*)::int FROM atlas.planned_semantic_corpus_handoff handoff JOIN atlas.semantic_corpus_plan plan ON plan.id=handoff.plan_id WHERE plan.project_id=$1) AS handoffs", [plan.scope.projectId]);
     assert.deepEqual({ plans: Number(rolledBack!.plans), handoffs: Number(rolledBack!.handoffs) }, { plans: 0, handoffs: 0 }, "a v2 failure leaves no partial parent or handoff");
+    for (const version of ["ImmutableSemanticCorpusPlan/v3", "ImmutableSemanticCorpusPlan/future"]) {
+      await assert.rejects(() => repository.persist({ ...plan, version } as any), ImmutableSemanticCorpusPlanError, `${version} is rejected before a transaction starts`);
+    }
+    const [unknownVersionCounts] = await sql.unsafe("SELECT (SELECT count(*)::int FROM atlas.semantic_corpus_plan WHERE project_id=$1) AS plans, (SELECT count(*)::int FROM atlas.planned_semantic_corpus_handoff handoff JOIN atlas.semantic_corpus_plan plan ON plan.id=handoff.plan_id WHERE plan.project_id=$1) AS handoffs", [plan.scope.projectId]);
+    assert.deepEqual({ plans: Number(unknownVersionCounts!.plans), handoffs: Number(unknownVersionCounts!.handoffs) }, { plans: 0, handoffs: 0 }, "unknown versions create no immutable parent or handoff rows");
     const [first, replay] = await Promise.all([repository.persist(plan), repository.persist(plan)]);
     assert.deepEqual(replay, first, "concurrent v2 replay returns the one committed parent/child set");
     const [storedPlan] = await sql.unsafe("SELECT immutable_content FROM atlas.semantic_corpus_plan WHERE id=$1", [first.planId]);

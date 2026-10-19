@@ -70,6 +70,45 @@ test("v2 parser rejects unknown, corpus-content, invalid accounting, and coverag
   const badTrace = input("trace") as any;
   badTrace.proposal.batches[0].fitTrace[0].reservedOutputTokens = 9;
   assert.throws(() => canonicalImmutableSemanticCorpusPlanV2(badTrace), ImmutableSemanticCorpusPlanError);
+
+  for (const value of [0, -1, 1.5]) {
+    const invalidConservativeBytes = input(`conservative-${value}`) as any;
+    invalidConservativeBytes.proposal.batches[0].conservativeLogicalRequestBytes.value = value;
+    assert.throws(() => canonicalImmutableSemanticCorpusPlanV2(invalidConservativeBytes), ImmutableSemanticCorpusPlanError);
+  }
+
+  const inconsistentConservativeBytes = input("conservative-mismatch") as any;
+  inconsistentConservativeBytes.proposal.batches[0].conservativeLogicalRequestBytes.value = 1;
+  assert.throws(() => canonicalImmutableSemanticCorpusPlanV2(inconsistentConservativeBytes), ImmutableSemanticCorpusPlanError);
+});
+
+test("stored v2 records apply the complete strict parent and accounting validators", () => {
+  const canonical = canonicalImmutableSemanticCorpusPlanV2(input("stored"));
+  assert.doesNotThrow(() => parseImmutableSemanticCorpusPlanRecord(canonical.planContent));
+  assert.doesNotThrow(() => parsePlannedSemanticCorpusHandoffRecord(canonical.handoffContents[0]));
+
+  const invalidParent = (mutate: (record: any) => void) => {
+    const record = JSON.parse(JSON.stringify(canonical.planContent));
+    mutate(record);
+    assert.throws(() => parseImmutableSemanticCorpusPlanRecord(record), ImmutableSemanticCorpusPlanError);
+  };
+  invalidParent((record) => { record.proposal.structuralBound.maxRequestBytes = 0; });
+  invalidParent((record) => { record.proposal.structuralBound.raw = "unapproved"; });
+  invalidParent((record) => { record.proposal.eligibleDimensions = ["rpm", "rpm"]; });
+  invalidParent((record) => { record.proposal.eligibleDimensions = ["invalid"]; });
+  invalidParent((record) => { record.proposal.requestResourceEnvelope.requestUnits = 1.5; });
+  invalidParent((record) => { record.proposal.replanPredecessor = { planId: "prior", planHash: hash("prior"), extra: true }; });
+  invalidParent((record) => { record.proposal.inventory.push(record.proposal.inventory[0]); });
+  invalidParent((record) => { record.proposal.inventory = record.proposal.inventory.map((entry: any) => ({ ...entry, classification: "deferred" })); });
+
+  const invalidChild = (mutate: (record: any) => void) => {
+    const record = JSON.parse(JSON.stringify(canonical.handoffContents[0]));
+    mutate(record);
+    assert.throws(() => parsePlannedSemanticCorpusHandoffRecord(record), ImmutableSemanticCorpusPlanError);
+  };
+  invalidChild((record) => { record.conservativeLogicalRequestBytes.value = 1; });
+  for (const value of [0, -1, 1.5]) invalidChild((record) => { record.conservativeLogicalRequestBytes.value = value; });
+  invalidChild((record) => { record.fitTrace.at(-1).requestBytes = 99; });
 });
 
 test("version dispatch accepts historical v1 unchanged and fails closed for unknown records", () => {
