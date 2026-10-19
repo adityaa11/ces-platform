@@ -1,6 +1,6 @@
 # IDSER-012-04-02 — Complete SEM candidate-request estimator
 
-- **State:** `planned`; GO is required.
+- **State:** `awaiting_review`; GO implementation is recorded at `3de09b92996abef5bde7832530f3c12bdf0b2f5d` and awaits independent CK.
 - **Batch:** `IDSER-BATCH-12-04-02`.
 - **Parent:** [IDSER-012-04 split map](IDSER-012-04-canonical-sem-request-sizing-immutable-locator-handoff-and-reconstruction.md).
 - **Dependencies:** `IDSER-012-04-01` CK `PASS`; established SEM prompt/response-schema and BSS estimator-configuration identities.
