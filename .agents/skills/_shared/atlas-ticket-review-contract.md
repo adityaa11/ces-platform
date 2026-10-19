@@ -248,15 +248,97 @@ unresolved, directly ticket-traceable, and no product, scope, architecture, or
 policy decision remains. HMN authorizes only those unresolved supplemental
 clause IDs and references the supplemental CK artifact as the oracle source.
 
+### Replacement-contract recovery after an authority conflict
+
+This is a separate path from `REVIEW_CONTRACT_GAP`. It exists only for an
+original frozen CK clause that remains unresolved after CFC verification when
+the frozen oracle conflicts with approved implementation authority and the
+historical oracle cannot be satisfied without implementing unapproved
+functionality. It is not a general way to replace a failed, difficult, or
+unproven test.
+
+A replacement freeze is eligible only when all of these facts are durable and
+recorded in this order:
+
+1. The original CK clause remains unresolved after CFC verification.
+2. HMN records an explicit authority-conflict diagnosis naming the exact
+   frozen oracle, the approved implementation or dependency authority that it
+   conflicts with, and why satisfying the oracle would require unapproved
+   functionality. HMN must route this conflict to human/planning authority;
+   it must not authorize ordinary CFC for the conflicting original clause.
+3. A subsequent explicit planning amendment corrects the underlying ticket
+   Review Contract. The amendment identifies the exact superseded ticket
+   requirements, the replacement requirements, and the supersession reason.
+4. The amendment does not weaken or supersede unrelated original obligations,
+   and the replacement requirements remain within approved implementation
+   authority.
+
+An incomplete but achievable original oracle remains binding. Reviewer
+preference, test difficulty, missing evidence, or CFC failure alone never
+establishes eligibility.
+
+Original CK, CFC, and HMN artifacts remain immutable, and the original clause
+keeps its recorded historical outcome, including a historical unresolved
+result. CK's append-only replacement-contract freeze artifact MUST explicitly
+map:
+
+- the historical clause ID;
+- the original ticket authority;
+- the planning amendment and precise supersession reason;
+- stable replacement clause IDs in a distinct namespace such as `RCK-###.a`;
+- the exact active acceptance obligations after supersession; and
+- the required proof and binary closure oracle for every replacement clause.
+
+The mapping MUST state which portion of the original clause is superseded.
+Only that portion is replaced for effective acceptance; every other original
+obligation remains active. Replacement IDs must never reuse or renumber
+historical clause IDs.
+
+CK may create this append-only replacement freeze only after validating every
+eligibility and mapping prerequisite. The artifact is a contract freeze, not
+`PASS`, does not verify an implementation checkpoint, and does not authorize
+CFC. It does not create a new workflow lifecycle state.
+
+A fresh, explicit user `hmn` invocation after the replacement freeze is
+mandatory. HMN may then authorize exactly one bounded
+`AUTHORIZE_EVIDENCE_REMEDIATION` CFC cycle naming only unresolved replacement
+clause IDs. It must preserve historically resolved clauses and all active
+non-superseded original obligations. HMN cannot rewrite the replacement
+oracles, add criteria, or authorize the historical clause ID.
+
+CFC may consume only the exact frozen replacement artifact and that newer HMN
+authorization. It remediates and proves only the authorized replacement
+clause IDs, records both artifact references, protects all historical
+outcomes, and hands off one bounded checkpoint. CFC does not silently keep the
+superseded historical oracle as an impossible active gate and does not redesign
+approved production behavior.
+
+CK verifies only the authorized replacement clauses, their frozen proof, the
+bounded remediation diff, and direct regressions. A final `PASS` is permitted
+only when every still-applicable original obligation and every active
+replacement obligation is proven, with no direct regression. The superseded
+clause's historical failure remains visible in the artifact history even
+though it is not an active effective-acceptance gate.
+
+Missing planning amendment, missing authority-conflict diagnosis, an
+achievable-but-unproven oracle, a replacement that weakens unrelated
+obligations, a missing replacement oracle, or a missing fresh HMN
+authorization rejects this path and returns control to human/planning
+authority. Ordinary `REVIEW_CONTRACT_GAP`, `CHANGES_REQUIRED`, frozen-oracle
+stability, resolved-clause protection, and one explicit HMN authorization per
+additional CFC cycle remain independent and unchanged. No participant may
+autonomously retry or invoke another workflow command.
+
 ## 6. Bounded remediation and HMN
 
-CFC builds a working progress view before modifying code, keyed to the original
-CK clause IDs and linked to the CK artifact. It tracks status and evidence
-locations without copying or changing the closure oracles. CFC completes every
-authorized clause before `READY_FOR_CK` and preserves already proven rows. An
-interrupted execution window with in-scope uncommitted work, no remediation
-commit, and no CK handoff is incomplete current CFC work, not a failed or
-completed cycle. It may be resumed only with `CONTINUE_CURRENT_CFC` semantics.
+CFC builds a working progress view before modifying code, keyed to the
+authorized clause IDs and linked to the applicable original, supplemental, or
+replacement artifact. It tracks status and evidence locations without copying
+or changing the closure oracles. CFC completes every authorized clause before
+`READY_FOR_CK` and preserves already proven rows. An interrupted execution
+window with in-scope uncommitted work, no remediation commit, and no CK handoff
+is incomplete current CFC work, not a failed or completed cycle. It may be
+resumed only with `CONTINUE_CURRENT_CFC` semantics.
 
 HMN diagnoses the active tuple, Review Contract, frozen matrix, proven and
 unresolved rows, latest CFC state, direct regressions, and worktree. It
@@ -267,21 +349,23 @@ user `hmn` invocation and a new bounded authorization. No protocol participant
 may recursively invoke GO, CK, CFC, or HMN.
 
 For every post-CFC `CHANGES_REQUIRED`, HMN decides whether another bounded CFC
-is authorized and names only the exact unresolved CK clause IDs. The latest CK
-artifact remains the single source of the residual mismatch and closure
-oracle. HMN MUST NOT duplicate the clause text, closure oracle, repair steps,
-or test commands in a second contract. If CK did not record an objective
-mismatch or the clause cannot be traced to ticket authority, authorize no CFC
-for that item and route the review-contract/scope problem to human/planning.
+is authorized and names only the exact unresolved applicable clause IDs. The
+latest CK or replacement artifact remains the single source of the residual
+mismatch and closure oracle. HMN MUST NOT duplicate the clause text, closure
+oracle, repair steps, or test commands in a second contract. If CK did not
+record an objective mismatch or the clause cannot be traced to ticket
+authority, authorize no CFC for that item and route the review-contract/scope
+problem to human/planning.
 
-CFC reads the original CK finding and closure matrix directly, then uses HMN
-only to confirm authorization and its permitted clause IDs. Its readiness
-check is row-by-row: every authorized oracle must have a named assertion or
-evidence locator and an executed required command with a passing outcome. CK's
-post-CFC check reuses the original oracles. A failed oracle or direct
-regression is `CHANGES_REQUIRED`; every passed oracle with no direct
-regression is `PASS`. A new or stronger condition is never a reason to fail
-CFC.
+CFC reads the applicable original CK finding/closure matrix or replacement
+freeze directly, then uses HMN only to confirm authorization and its permitted
+clause IDs. Its readiness check is row-by-row: every authorized oracle must
+have a named assertion or evidence locator and an executed required command
+with a passing outcome. CK's post-CFC check reuses the applicable frozen
+oracles. A failed oracle or direct regression is `CHANGES_REQUIRED`; every
+passed oracle with no direct regression is `PASS` when all still-applicable
+original obligations and active replacement obligations are proven. A new or
+stronger condition is never a reason to fail CFC.
 
 ## Examples
 

@@ -94,9 +94,52 @@ oracle or direct regression and return control to human/planning authority
 under the existing bounded rules. This verification does not authorize another
 CFC cycle.
 
+### Replacement-contract freeze after an authority conflict
+
+The shared Review Contract's replacement path is distinct from
+`REVIEW_CONTRACT_GAP`. CK may write an append-only replacement-contract freeze
+only after it validates all durable prerequisites: the original clause is
+historically unresolved after CFC verification; HMN recorded the exact frozen
+oracle's conflict with approved implementation authority and routed it to
+human/planning authority; a subsequent explicit planning amendment identifies
+the exact superseded ticket requirements, replacement requirements, and reason;
+unrelated original obligations are not weakened; and satisfying the historical
+oracle would otherwise require unapproved functionality. A difficult,
+unproven, or failed test that remains achievable is not eligible.
+
+The freeze artifact must preserve the original CK/CFC/HMN artifacts and their
+outcomes, identify the historical clause and original ticket authority, cite
+the planning amendment and supersession reason, use stable replacement clause
+IDs in a distinct namespace such as `RCK-###.a`, and freeze exact active
+acceptance obligations, required proof, binary closure oracles, and direct-
+regression boundaries. It must state the superseded portion explicitly; all
+other original obligations remain binding. Do not reuse or renumber historical
+clause IDs.
+
+This artifact is not `PASS`, does not verify an implementation checkpoint, and
+does not authorize CFC. It is not a new workflow lifecycle state. If any
+prerequisite is absent, reject the replacement freeze and return the issue to
+human/planning authority. Preserve the existing supplemental
+`REVIEW_CONTRACT_GAP` path independently.
+
+After a valid replacement freeze, CK must stop for a fresh explicit user
+`hmn` invocation. A later HMN authorization may name only unresolved
+replacement clause IDs for one bounded `AUTHORIZE_EVIDENCE_REMEDIATION` cycle;
+it cannot authorize the historical clause or add acceptance criteria.
+
+When that CFC checkpoint is later reviewed, CK consumes the exact replacement
+freeze and newer HMN authorization. Verify only the authorized replacement
+clauses, their required evidence, the remediation diff, and direct regressions.
+Carry forward all historical outcomes, and do not silently retain the
+superseded original oracle as an active gate. Issue `PASS` only when every
+still-applicable original obligation and every active replacement obligation is
+proven and no direct regression remains. An unresolved replacement oracle is
+`CHANGES_REQUIRED`; a further cycle requires another fresh explicit user
+`hmn` invocation under the ordinary bounded rules.
+
 ## Review after an HMN-authorized CFC
 
-A newer explicit HMN authorization issued after control returned to human/planning authority establishes one new bounded remediation checkpoint. When its committed CFC remediation records the consumed HMN authorization ID, read the active HMN artifact and verify only its named unresolved original finding(s), the remediation diff, the contract's required evidence, and direct regressions introduced by that remediation. Do not restart broad review or add unrelated findings discovered outside this scope.
+A newer explicit HMN authorization issued after control returned to human/planning authority establishes one new bounded remediation checkpoint. When its committed CFC remediation records the consumed HMN authorization ID, read the active HMN artifact and verify only its named unresolved original finding(s), or its named unresolved replacement clause IDs under a valid replacement freeze, the remediation diff, the contract's required evidence, and direct regressions introduced by that remediation. Do not restart broad review or add unrelated findings discovered outside this scope.
 
 Treat the HMN artifact as a scope selector and handoff record, not as an
 acceptance source. Verify only ticket-authorized clauses in the original
@@ -104,14 +147,15 @@ frozen matrix. If HMN added a condition with no such authority, record it as a
 scope/contract error; do not enforce it to deny `PASS`.
 Use HMN only to confirm the user authorized another bounded cycle for the
 listed unresolved clause IDs. Read each closure oracle and residual mismatch
-from the original CK artifact; do not require HMN to retranscribe them and do
-not review against a second HMN checklist.
+from the original CK artifact, or from the exact replacement freeze when the
+authorization names replacement IDs; do not require HMN to retranscribe them
+and do not review against a second HMN checklist.
 
 The valid HMN decision satisfies the earlier handoff to human/planning authority; do not reject this verification merely because a previous post-CFC verification occurred. The result remains `PASS`, `CHANGES_REQUIRED`, or `REVIEW_CONTRACT_GAP`. If unresolved again, record the evidence and return control to human/planning authority. Do not authorize or invoke another CFC: a further remediation requires a fresh explicit user `hmn` invocation and new HMN authorization.
 
 ## Review record
 
-Write one consolidated artifact for the reviewed checkpoint under `project's goal/feedback/`, following the repository's batch/commit naming convention. Preserve prior artifacts. Include the ticket and batch, reviewed commit, frozen ticket reference, result, validation/evidence, findings traced to explicit ticket authority, any separate scope-change observations, and the decision. A post-CFC artifact must identify the original findings and state that it is verification. Record only checks actually performed.
+Write one consolidated artifact for the reviewed checkpoint under `project's goal/feedback/`, following the repository's batch/commit naming convention. Preserve prior artifacts. Include the ticket and batch, reviewed commit, frozen ticket reference, result, validation/evidence, findings traced to explicit ticket authority, any separate scope-change observations, and the decision. A post-CFC artifact must identify the original findings or the consumed replacement freeze and state that it is verification. Record only checks actually performed.
 
 For legacy artifacts without clause IDs, derive the matrix from the frozen
 ticket, existing finding, and evidence at the next applicable workflow event;

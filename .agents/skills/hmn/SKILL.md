@@ -99,6 +99,33 @@ and name only the unresolved supplemental clause IDs. Preserve all historical
 resolved original clauses. If these conditions are not met, return the issue
 to human/planning authority without CFC authorization.
 
+### Authority-conflict replacement eligibility
+
+HMN must distinguish a replacement-contract request from an ordinary
+`REVIEW_CONTRACT_GAP`. When the frozen CK oracle conflicts with approved
+implementation authority, HMN must first create a durable authority-conflict
+diagnosis naming the exact original clause/oracle, the approved authority, and
+the unapproved functionality that would be required to satisfy it. The correct
+decision before planning correction is `HUMAN_DECISION_REQUIRED`; HMN must not
+authorize CFC for that original clause.
+
+After a subsequent explicit planning amendment corrects the underlying ticket
+Review Contract, CK may validate and freeze the replacement contract. HMN must
+reject replacement eligibility when the amendment is absent, the oracle is
+merely difficult or unproven but achievable, or the proposed replacement
+weakens unrelated obligations. The amendment must identify the exact
+superseded requirements, replacement requirements, and reason, and must remain
+within approved implementation authority.
+
+Only a fresh explicit user `hmn` invocation after that replacement freeze may
+issue `AUTHORIZE_EVIDENCE_REMEDIATION` for one bounded CFC cycle. The durable
+authorization must cite the exact replacement freeze, name only its unresolved
+replacement clause IDs, preserve all historical outcomes and active
+non-superseded obligations, and not copy or rewrite the replacement oracles.
+The historical clause ID is not an authorization target. Missing freeze,
+non-supersession, or newer-HMN prerequisites route back to human/planning
+authority without CFC.
+
 For a post-CFC authorization, record the latest CK artifact reference and list
 exactly the unresolved CK clause IDs authorized for remediation. Do not copy
 the oracle, mismatch, test command, or repair plan into HMN. CFC reads those

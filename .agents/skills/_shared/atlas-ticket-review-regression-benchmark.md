@@ -104,8 +104,103 @@ return to human/planning authority without starting another CFC cycle.
 Benchmark result: **PASS** only if ordinary `REVIEW_CONTRACT_GAP` still cannot
 authorize CFC and every supplemental gate and scope boundary is enforced.
 
+## Case F: valid planning-authorized historical-oracle replacement
+
+Input state: an original CK clause remains unresolved after CFC verification;
+HMN durably records that its frozen oracle conflicts with approved
+implementation authority and that satisfying it would require unapproved
+functionality; a subsequent explicit planning amendment identifies the exact
+superseded ticket requirements, replacement requirements, and reason; and the
+amendment leaves unrelated obligations binding.
+
+Expected CK behavior: create an append-only replacement-contract freeze only
+after validating those prerequisites. The artifact maps the historical clause,
+original ticket authority, planning amendment, supersession reason, stable
+replacement IDs such as `RCK-001.a`, exact active obligations, required proof,
+and binary closure oracles. The freeze is not `PASS`, does not verify an
+implementation checkpoint, and does not authorize CFC.
+
+Expected HMN behavior: require a fresh explicit invocation after the freeze and
+authorize at most one `AUTHORIZE_EVIDENCE_REMEDIATION` cycle naming only
+unresolved replacement clause IDs. Historical outcomes and all unrelated
+original obligations remain protected.
+
+Expected CFC/CK behavior: consume the exact replacement freeze and newer HMN
+authorization, prove only the authorized replacement clauses, verify the
+remediation diff and direct regressions, and issue `PASS` only after every
+still-applicable original obligation and every active replacement obligation is
+proven.
+
+Benchmark result: **PASS** only if the historical failure remains visible, the
+superseded portion is no longer an impossible active gate, and no other
+original obligation is weakened.
+
+## Case G: replacement eligibility rejection
+
+Run these negative inputs independently:
+
+- no explicit planning amendment exists;
+- the frozen oracle is merely difficult, unproven, or failed but remains
+  achievable under approved authority;
+- the HMN authority-conflict diagnosis is missing or does not name the exact
+  oracle and unapproved functionality; or
+- the replacement artifact has no exact binary oracle, stable replacement ID,
+  or active-obligation mapping.
+
+Expected behavior: reject the replacement freeze and return control to
+human/planning authority. Do not authorize CFC, reinterpret the original
+clause, or create an automatic retry.
+
+Benchmark result: **PASS** only if every negative input is rejected.
+
+## Case H: unrelated-obligation and historical-ID protection
+
+Input state: the planning amendment attempts to weaken, omit, renumber, or
+replace an unrelated original obligation, or reuses a historical `CK-###` or
+`CK-###.a` identifier.
+
+Expected behavior: reject the replacement freeze. A valid replacement maps only
+the explicitly superseded portion, uses a distinct stable replacement namespace,
+and carries every other original obligation forward unchanged. HMN and CFC may
+not authorize the historical clause ID or reopen historically resolved clauses.
+
+Benchmark result: **PASS** only if unrelated requirements and historical IDs
+remain protected.
+
+## Case I: existing-path and final-proof regression protection
+
+Input state: exercise the existing `REVIEW_CONTRACT_GAP` supplemental path, an
+ordinary `CHANGES_REQUIRED` cycle, a frozen-oracle failure, a resolved-clause
+protection case, and a replacement cycle where one active replacement oracle
+is still false.
+
+Expected behavior: the supplemental path remains independent; ordinary
+`CHANGES_REQUIRED` still uses the original frozen oracle; resolved clauses are
+not reopened; each additional CFC cycle still needs one fresh explicit HMN
+authorization; and final `PASS` is denied until actual evidence proves every
+active replacement clause plus every still-applicable original obligation.
+There is no new lifecycle state and no autonomous retry.
+
+Benchmark result: **PASS** only if all existing behavior is preserved and a
+false active replacement oracle remains `CHANGES_REQUIRED`.
+
 ## Applying the benchmark
 
 When changing GO, CK, CFC, HMN, or the shared contract, review each case and
 record whether the current rules produce the expected outcome. A benchmark
 failure requires fixing the protocol before relying on it for another ticket.
+
+## Application record
+
+Run date: `2026-10-19` (Asia/Bangkok)
+
+| Case | Result | Evidence of replay |
+| --- | --- | --- |
+| A–E | **PASS** | Existing HMN, CFC, CK, false-oracle, direct-regression, and supplemental-gap rules remain stated and bounded. |
+| F | **PASS** | Valid replacement requires durable authority conflict, later planning amendment, append-only mapping, fresh HMN, exact replacement proof, and final active-obligation closure. |
+| G | **PASS** | Missing amendment, achievable oracle, incomplete diagnosis, or incomplete replacement matrix rejects the path. |
+| H | **PASS** | Unrelated obligations and historical clause IDs remain protected. |
+| I | **PASS** | Existing recovery behavior remains independent; a false active replacement oracle cannot produce `PASS`. |
+
+Complete benchmark result: **PASS**. This is a protocol regression replay; it
+does not execute or approve any IDSER workflow.

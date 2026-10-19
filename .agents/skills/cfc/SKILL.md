@@ -16,7 +16,7 @@ CFC MUST NOT substitute its own broader or narrower interpretation.
 
 ## Preflight
 
-Read the frozen current ticket and its explicitly incorporated source references, the latest consolidated CK artifact, the reviewed commit, and the current remediation base. Proceed only when CK returned `CHANGES_REQUIRED` and the artifact identifies implementation-repairable findings that trace to current-ticket requirements. Preserve unrelated user changes and stage only authorized paths.
+Read the frozen current ticket and its explicitly incorporated source references, the latest consolidated CK artifact, the reviewed commit, and the current remediation base. Proceed only when CK returned `CHANGES_REQUIRED` and the artifact identifies implementation-repairable findings that trace to current-ticket requirements, or when one of the shared contract's explicitly bounded supplemental or replacement recovery paths has all of its prerequisites. Preserve unrelated user changes and stage only authorized paths.
 
 The only result exception is the shared contract's supplemental
 `REVIEW_CONTRACT_GAP` recovery path. Before editing under that path, verify all
@@ -31,11 +31,34 @@ Use the supplemental CK artifact as the closure-oracle source, protect every
 historical resolved clause, remediate only the selected supplemental IDs, and
 record the consumed HMN authorization ID in the single bounded checkpoint.
 
+The replacement-contract authority-conflict path is separate from that
+supplemental recovery path. Before editing under replacement authority, verify
+all durable prerequisites in the shared contract: the original clause remains
+historically unresolved after CFC verification; HMN recorded the exact
+conflict between its frozen oracle and approved implementation authority; a
+subsequent explicit planning amendment identifies the exact superseded ticket
+requirements and replacements without weakening unrelated obligations; CK
+created the append-only replacement freeze with stable replacement clause IDs,
+exact active obligations, required proof, and binary oracles; and a newer
+explicit user `hmn` invocation authorizes only unresolved replacement clause
+IDs for `AUTHORIZE_EVIDENCE_REMEDIATION`. If any prerequisite is absent, this
+path is not CFC authority; return it to human/planning authority.
+
+Consume the exact replacement artifact and newer HMN authorization. Remediate
+and prove only the named replacement clauses, record both references, preserve
+all historical original outcomes and all active non-superseded obligations,
+and do not redesign approved production behavior to satisfy the superseded
+oracle. Do not reuse historical clause IDs or silently retain the superseded
+oracle as an active readiness gate. The replacement cycle is one bounded
+evidence-remediation cycle and cannot autonomously retry.
+
 Also resolve the active-ticket tuple and read the shared Review Contract and
-original frozen CK closure matrix. Do not operate from CK prose alone. Before
-changing code, create a working progress view keyed to the original CK clause
-IDs. For each authorized clause record its current status and evidence location;
-link back to the CK artifact for ticket authority, required behavior/proof,
+the applicable frozen CK closure matrix. Do not operate from CK prose alone.
+Before changing code, create a working progress view keyed to the authorized
+clause IDs: original CK IDs for ordinary or supplemental work, and replacement
+IDs for replacement-contract work. For each authorized clause record its
+current status and evidence location; link back to the applicable CK or
+replacement artifact for ticket authority, required behavior/proof,
 harness/scenario/observation, and closure oracle. Do not copy or rewrite those
 criteria. Normalize and freeze a legacy matrix when needed without rewriting
 old artifacts. Preserve already `PROVEN` rows and do not redesign them.
@@ -57,9 +80,10 @@ the authorization as out of scope for human/planning resolution.
 
 For post-CFC HMN work, use HMN only to confirm that the user authorized work on
 the named unresolved clause IDs. Read the closure oracle, CK-observed mismatch,
-and required evidence directly from the referenced CK artifact. If an
-authorized clause has no objective oracle or ticket trace, stop before editing
-and return that CK review-contract defect to human/planning authority.
+and required evidence directly from the referenced original CK artifact, or
+from the exact replacement freeze for replacement IDs. If an authorized clause
+has no objective oracle or ticket trace, stop before editing and return that
+review-contract defect to human/planning authority.
 
 For each finding, identify the ticket requirement it enforces. If no such requirement exists, do not implement it. If it requires changing the ticket, reopening an approved predecessor, adding a provider/runtime/deployment target, making an architecture/product/policy decision, or doing future dependency work, stop and return it to human/planning authority as a scope-change issue.
 
@@ -95,9 +119,10 @@ direct regressions checked, and record `Internal readiness: READY_FOR_CK` before
 
 For each clause, the checkpoint MUST name the test/assertion or other evidence
 locator, the exact required command and its outcome (or the explicit permitted
-environment limitation), and whether the frozen oracle passed. CK must be able
-to map the evidence directly to the original CK clause and its HMN authorization
-ID without inference.
+environment limitation), and whether the applicable frozen oracle passed. For
+replacement work, it must cite the replacement clause ID and replacement
+freeze as well as the HMN authorization. CK must be able to map the evidence
+directly to the applicable frozen clause and authorization without inference.
 
 ## Authority
 
