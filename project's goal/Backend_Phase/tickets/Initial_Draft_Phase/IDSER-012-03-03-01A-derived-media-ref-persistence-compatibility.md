@@ -1,6 +1,6 @@
 # IDSER-012-03-03-01A — Canonical RUN-003 derived-media reference compatibility at immutable plan persistence
 
-- **State:** `planned`; bounded executable implementation ticket, explicitly requested by the owner on 2026-10-19; eligible for a separate explicit `GO IDSER-012-03-03-01A`. This document is the frozen implementation/review oracle, **not** execution of GO, CK, or CFC.
+- **State:** `approved` following CK `PASS` for remediation commit `1db4f9cfba21f968dbaa11e8820fe316824078db`; **Review batch:** `IDSER-BATCH-12-03-03-01A`.
 - **Batch:** `IDSER-BATCH-12-03-03-01A` (independent review and remediation boundary).
 - **Position:** narrow compatibility successor to approved `IDSER-012-03-03-01`, inserted **before** `IDSER-012-03-03-02`. It is not a replacement persistence design, and does not invalidate the predecessor's recorded CK PASS.
 - **Prerequisite evidence:** `IDSER-012-03-01-02` accepted-document resolver CK PASS; `IDSER-012-03-03-01` CK PASS on `470e7958ce553bee68e44b60f757bc6e74f59b99`, approved after verification. Preserve those historical oracles.
