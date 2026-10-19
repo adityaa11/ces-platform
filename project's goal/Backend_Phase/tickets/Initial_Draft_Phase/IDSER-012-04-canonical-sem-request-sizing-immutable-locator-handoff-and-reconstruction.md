@@ -1,10 +1,30 @@
 # IDSER-012-04 — Canonical SEM request sizing, immutable locator handoff, and reconstruction
 
-- **State:** `planned`; implementation is not authorized until this ticket is frozen on the target branch and an explicit `GO IDSER-012-04` is issued.
-- **Review batch:** `IDSER-BATCH-12-04`.
+- **State:** `planned`; non-executable family/traceability map. No GO, CK, CFC, or HMN workflow may select this parent.
+- **Family batch:** `IDSER-BATCH-12-04`.
 - **Predecessors:** the IDSER-012 semantic-batch-planner implementation family at its independently CK-approved terminal interfaces; PERC-RESET accepted `NormalizedDocument V1` evidence in `atlas-canonical-perception`; established Atlas immutable persistence, SEM source-packet, and authenticated BSS prospective-reader boundaries.
 - **Source context:** [IDSER-012-04 implementation context](../../semantic-batch-planner-context/IDSER-012-04-implementation-context).
 - **Target branch:** `codex/new-atlas-backend`.
+
+## Split decision and executable children
+
+This original ticket crosses seven independently changeable authority and verification seams: SEM packet construction, complete request estimation, BSS structural-fit partitioning, immutable v2 persistence, GHR compatibility, SEM reconstruction, and protected real-data qualification. A CFC finding in any one would otherwise reopen unrelated work, and the real-data proof requires all earlier seams. It is therefore too large for one GO → CK → CFC → HMN cycle.
+
+| Order | Executable child | Sole implementation/proof seam | Frozen rows discharged |
+| --- | --- | --- | --- |
+| 1 | [IDSER-012-04-01](IDSER-012-04-01-canonical-sem-batch-packet-builder.md) | Additive shared SEM batch-packet construction, selection validation, and whole-document compatibility | `RC-01204-01` |
+| 2 | [IDSER-012-04-02](IDSER-012-04-02-complete-sem-candidate-request-estimator.md) | Pure complete-candidate request measurement and frozen input/output accounting | `RC-01204-02` |
+| 3 | [IDSER-012-04-03](IDSER-012-04-03-bss-structural-fit-corpus-partition.md) | Authenticated BSS structural-fit composition and deterministic partition/replan proposal | `RC-01204-03`, `RC-01204-04` |
+| 4 | [IDSER-012-04-04](IDSER-012-04-04-immutable-v2-plan-handoff-persistence.md) | Strict v2 plan/handoff contracts and atomic immutable Atlas persistence | `RC-01204-05` |
+| 5 | [IDSER-012-04-05](IDSER-012-04-05-ghr-reference-only-v2-compatibility.md) | Non-delivering GHR reference-body compatibility and v2 receiver dispatch | `RC-01204-06` |
+| 6 | [IDSER-012-04-06](IDSER-012-04-06-read-only-sem-batch-reconstruction.md) | Read-only authorized SEM reconstruction and planned-hash integrity | `RC-01204-07` |
+| 7 | [IDSER-012-04-07](IDSER-012-04-07-perc-reset-real-data-qualification.md) | Isolated PERC-RESET composition qualification and canonical no-mutation proof | `RC-01204-08` |
+
+Every child requires its listed predecessor CK `PASS`; `-04-07` is the only family closure and requires all six earlier children. A child may reuse approved predecessor interfaces but must not repair their internals. CFC returns findings to the child owning the failed seam. HMN may resolve only a named, unresolved authority within that child and cannot activate GHR, BSS admission, a provider, semantic acceptance, reconciliation, or publication.
+
+## Preserved family contract
+
+All remaining sections remain binding family authority. They are allocated to the children above, are not weakened or reinterpreted by the split, and grant no direct implementation authority to this map.
 
 ## Outcome
 
@@ -100,8 +120,8 @@ Never run destructive canonical Compose/volume operations, reset or clean the ca
 
 ## Completion and handoff
 
-CK must have implementation and integration evidence, not declarations alone: source/policy/profile/estimator identities; sizing and fit traces; plan/handoff IDs and hashes from the isolated database; reference-body validation; reconstruction hash comparisons; canonical no-mutation evidence; and explicit zero provider-call/live-GHR-dispatch evidence. Evidence excludes source text, image bytes, prompts, and credentials.
+Each child CK must have its allocated implementation evidence, not declarations alone. The terminal `-04-07` CK additionally requires source/policy/profile/estimator identities; sizing and fit traces; plan/handoff IDs and hashes from the isolated database; reference-body validation; reconstruction hash comparisons; canonical no-mutation evidence; and explicit zero provider-call/live-GHR-dispatch evidence. Evidence excludes source text, image bytes, prompts, and credentials.
 
 Completion requires one normalized-document truth, one SEM packet builder, one conservative sizing path, one immutable locator handoff, and one BSS admission runtime. IDSER decides what structurally fits; GHR carries an immutable reference; SEM reconstructs the same corpus; BSS alone decides whether execution is permitted.
 
-**Hard stop:** a CK `PASS` for this ticket does not authorize provider execution, GHR delivery, semantic acceptance, reconciliation, publication, Master, or CES. Those remain separately owned and require their own frozen scope and GO/CK authority.
+**Hard stop:** a CK `PASS` for any child, including the terminal family closure, does not authorize provider execution, GHR delivery, semantic acceptance, reconciliation, publication, Master, or CES. Those remain separately owned and require their own frozen scope and GO/CK authority.
