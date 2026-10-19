@@ -1,7 +1,7 @@
 # GO checkpoint: IDSER-012-04-07 / IDSER-BATCH-12-04-07
 
 - **Ticket:** `IDSER-012-04-07-perc-reset-real-data-qualification.md`
-- **Review target:** pending commit for this checkpoint.
+- **Implementation commit:** `73a4d63264b319c3ee6de180a6aa420accb3a84f` (`test(idser): qualify real PERC-RESET composition`).
 - **State:** `awaiting_review`.
 - **Dependencies consumed:** CK `PASS` records for `IDSER-012-04-01` through `-06`, plus the current RUN-003 PERC-RESET Safara Professional accepted-document record.
 
