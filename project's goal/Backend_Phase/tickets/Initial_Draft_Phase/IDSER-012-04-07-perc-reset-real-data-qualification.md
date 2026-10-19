@@ -1,6 +1,6 @@
 # IDSER-012-04-07 — PERC-RESET real-data qualification closure
 
-- **State:** `planned`; GO is required.
+- **State:** `awaiting_review`; GO qualification is complete and awaiting independent CK review.
 - **Batch:** `IDSER-BATCH-12-04-07`.
 - **Parent:** [IDSER-012-04 split map](IDSER-012-04-canonical-sem-request-sizing-immutable-locator-handoff-and-reconstruction.md).
 - **Dependencies:** CK `PASS` for `IDSER-012-04-01` through `IDSER-012-04-06`; protected PERC-RESET accepted `NormalizedDocument V1` evidence in `atlas-canonical-perception`.
