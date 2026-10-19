@@ -1,0 +1,781 @@
+# IDSER-012-04 — Canonical SEM Request Sizing, Immutable Locator Handoff, and Reconstruction
+
+**Final Implementation Context — v3**  
+**Target branch:** `codex/new-atlas-backend`  
+**Predecessor:** IDSER-012 approved implementation family  
+**Status:** Implementation scope defined; requires branch-controlled ticket freeze and explicit GO before execution  
+**Primary consumers:** GHR and SEM-CUTOVER  
+**Integration evidence source:** PERC-RESET accepted `NormalizedDocument V1` in the PostgreSQL volume of `atlas-canonical-perception`
+
+## 1. Purpose and authorization
+
+IDSER-012-04 completes the Semantic Batch Planner so that it measures **the complete prospective SEM request for each candidate batch**, rather than adding independent raw-locator estimates.
+
+The estimator remains simple, deterministic, conservative, and configurable. It does not need to predict the exact token usage subsequently reported by the model.
+
+The planner must construct canonical `sourceSpecification` content in memory, determine structurally fit batches using the existing BSS prospective reader, and persist only the metadata necessary to reconstruct those batches.
+
+GHR will carry immutable batch references. SEM-CUTOVER will later resolve the original NormalizedDocument V1 and reconstruct the exact planned `sourceSpecification`.
+
+### Explicit authorization scope
+
+Once this implementation context is committed, frozen under the Atlas ticket protocol, and explicitly authorized by `GO IDSER-012-04`, the following are **in-scope implementation work**, not prerequisites that must already exist:
+
+1. Implement the versioned `ImmutableSemanticCorpusPlan/v2` and `PlannedSemanticCorpusHandoff/v2` contracts, their parsers, persistence compatibility, and strict verification.
+2. Correct the current estimator and partitioner to measure complete serialized candidate requests.
+3. Extend the SEM-owned source-packet builder with batch/subset construction and provide a read-only SEM reconstruction compatibility boundary.
+4. Prove integration using the existing accepted PERC-RESET documents from `atlas-canonical-perception`, without damaging the canonical PostgreSQL data.
+
+A GO review must not require the implementation deliverables above to exist before their authorized implementation begins.
+
+Normal GO/CK authority rules still apply. This ticket grants no permission to implement outside its bounded scope.
+
+## 2. Existing baseline to reuse
+
+### IDSER
+
+- `apps/agents-bridge/src/idser-corpus-demand-estimator.ts`
+- `apps/agents-bridge/src/idser-structural-fit-corpus-partition.ts`
+- `apps/agents-bridge/src/idser-prospective-capacity-snapshot.ts`
+
+Keep accepted-source classification, deterministic locator ordering, BSS snapshot binding, blocked dispositions, and proposal/replan behavior.
+
+Replace the current incorrect per-locator sizing and additive candidate aggregation.
+
+### SEM
+
+- `packages/atlas-skills/src/semantic-prompt.ts`
+- `packages/atlas-skills/src/stepwise-source-packet.ts`
+- `packages/atlas-skills/src/stepwise-extraction-request.ts`
+- `apps/agents-bridge/src/semantic-offline-stepwise-composition.ts`
+- `apps/agents-bridge/src/semantic-stepwise-runtime.ts`
+
+Keep the canonical SEM methodology, source-packet serialization, profile identity, and response schema.
+
+The user-message text remains `StepwiseSourcePacket.sourceSpecification`.
+
+The existing whole-document construction path must remain compatible.
+
+### BSS
+
+- `apps/agents-bridge/src/capacity-planning-snapshot.ts`
+- `apps/agents-bridge/src/process-workload-catalogue.ts`
+- `apps/agents-bridge/src/provider-capabilities.ts`
+- `apps/agents-bridge/src/capacity-planner.ts`
+
+Keep `CapacityPlanningSnapshot/v1`, existing structural bounds, estimator identity, output reservation, multimodal capability checks, and fair-admission runtime.
+
+No BSS prospective API extension is authorized unless a proven incompatibility makes the existing contract unusable.
+
+### Persistence
+
+- `packages/atlas-db/src/immutable-semantic-corpus-plan.ts`
+- `packages/atlas-db/src/semantic-batch-plan-input.ts`
+- `packages/atlas-db/src/semantic-batch-plan-ready-fixture.ts`
+- Migration `0085_idser012_immutable_semantic_corpus_plan.sql`
+- Migration `0086_idser012_immutable_semantic_corpus_plan_cfc.sql`
+
+Keep Atlas-owned immutable parent/child persistence, historical v1 compatibility, source-scoped authorization, replay fencing, and append-only semantics.
+
+Do not introduce a parallel persistence subsystem.
+
+## 3. Workstream A — SEM batch-scoped canonical packet builder
+
+### Required implementation
+
+Extend the existing `buildStepwiseSourcePacket()` implementation with an additive batch-selection capability.
+
+It must accept:
+
+- The verified accepted NormalizedDocument V1.
+- An exact selection of owned source locators.
+- An exact selection of context-only locators when authorized.
+- Existing verified media/asset identities.
+- Applicable validated relationship inputs and requirements.
+- Deterministic ordering and validation inputs.
+
+The existing whole-document caller must continue to behave as before.
+
+### Required behavior
+
+For a selected batch, the builder must:
+
+1. Resolve each selected locator from the supplied NormalizedDocument.
+2. Reject foreign, missing, duplicated, or invalid locators.
+3. Include exactly the selected source units.
+4. Preserve original text/table content, including Docling grid metadata.
+5. Preserve visual identity metadata without hydrating or persisting image bytes.
+6. Apply valid ownership and relationship inputs without inventing authority.
+7. Assign deterministic source-slot identifiers.
+8. Produce the existing canonical `sourceSpecification` structure.
+9. Return its exact UTF-8 serialization and SHA-256.
+
+No independent IDSER source-packet serializer may be introduced.
+
+**The same implementation must serve IDSER candidate measurement and SEM execution-time reconstruction.**
+
+### Required compatibility proof
+
+The existing whole-document packet tests must remain passing.
+
+For the same input document, selected locators, media identities, and relationship authority, repeated batch-scoped calls must produce byte-identical `sourceSpecification` results.
+
+Changing the input selection must change the resulting serialized packet appropriately.
+
+## 4. Workstream B — Complete candidate-request estimation
+
+### Core rule
+
+The authoritative measurement unit is:
+
+**One fully composed prospective SEM request containing one candidate batch.**
+
+It is not:
+
+- One individual locator.
+- Raw NormalizedDocument text bytes.
+- A sum of independent locator request estimates.
+- An assumed exact provider token count.
+
+### Required composition
+
+For each candidate batch, obtain:
+
+1. Actual SEM system prompt.
+2. Actual canonical batch `sourceSpecification`.
+3. Applicable SEM response schema and framing allowance.
+4. Selected media descriptors and permitted media accounting.
+5. BSS estimator configuration and safety margin.
+
+All fixed overhead must be counted once per request.
+
+### Frozen input-token accounting
+
+Use the existing configurable conservative estimator.
+
+`estimatedTextTokens = ceil(textBearingRequestBytes / inputBytesPerToken)`
+
+`estimatedInputTokens = estimatedTextTokens + estimatedImageTokens + inputTokenSafetyMargin`
+
+`reservedOutputTokens = BSS.workload.outputReservation.maxOutputTokens`
+
+`prospectiveTokenDemand = estimatedInputTokens + reservedOutputTokens`
+
+`estimatedInputTokens` must exclude reserved output.
+
+The prospective BSS reader receives `estimatedInputTokens`, not `prospectiveTokenDemand`, in its `inputTokens` parameter.
+
+The resource-envelope planning token demand includes the applicable output reservation exactly once, subject to compatibility with the established BSS accounting policy.
+
+No output reservation may be counted twice by IDSER and a downstream adapter.
+
+### Frozen request-byte policy
+
+For IDSER-012-04, use `ConservativeLogicalRequestBytes/v1`:
+
+`estimatedRequestBytes = systemPromptBytes + sourceSpecificationBytes + schemaAllowanceBytes + framingAllowanceBytes + mediaTransportAllowanceBytes + requestByteSafetyMargin`
+
+Definitions:
+
+- `systemPromptBytes`: actual UTF-8 bytes from the SEM system prompt.
+- `sourceSpecificationBytes`: actual UTF-8 bytes from the canonical candidate packet.
+- `schemaAllowanceBytes`: canonical response-schema byte allowance when applicable to the selected request contract.
+- `framingAllowanceBytes`: configured, bounded request/message framing allowance.
+- `mediaTransportAllowanceBytes`: conservative allowance for actual selected media transport when applicable.
+- `requestByteSafetyMargin`: configured bounded safety margin.
+
+This is **logical request sizing**, not proof of exact HTTP wire bytes.
+
+The same source content must not be counted again after inclusion in `sourceSpecificationBytes`.
+
+Reserved output bytes must not be treated as incoming request content.
+
+### Structural-fit checks
+
+Each candidate must satisfy the applicable:
+
+- BSS `maxInputTokens`.
+- BSS `maxRequestBytes`.
+- SEM route `maxPromptBytes`.
+- Media count/size/capability constraints.
+- Separately established context-window constraints, if any.
+
+Use the existing authenticated BSS prospective reader as the structural-fit authority.
+
+A successful prospective fit does not authorize provider execution or guarantee current TPM availability.
+
+### Greedy deterministic partition
+
+For each eligible source unit or authorized indivisible group:
+
+1. Add its locator to the temporary working selection.
+2. Build the full candidate `sourceSpecification`.
+3. Calculate complete prospective request demand.
+4. Check structural fit.
+5. Keep the candidate if fit.
+6. Otherwise finalize the previous nonempty accepted batch and retry the addition in a fresh candidate.
+7. If the addition cannot fit on its own, return an explicit bounded structural failure.
+
+No source is silently truncated to fit.
+
+No per-locator full-request estimate may be used as the authoritative batch size.
+
+The existing deterministic source ordering and exact-ownership guarantees must remain.
+
+### Runtime responsibility
+
+IDSER only sizes and partitions.
+
+Temporary RPM/TPM pressure, admission waiting, durable retry, and recovery remain with BSS.
+
+An inaccurate estimate does not by itself require replan when the actual provider request succeeds.
+
+A genuine structural oversize is not treated as indefinitely retryable rate pressure.
+
+## 5. Workstream C — Immutable v2 plan and handoff
+
+### Contract decision
+
+Implement two versioned successors:
+
+- `ImmutableSemanticCorpusPlan/v2`
+- `PlannedSemanticCorpusHandoff/v2`
+
+These contracts are **deliverables authorized within IDSER-012-04**, not external implementation prerequisites.
+
+The exact TypeScript schemas, parsers, canonicalizers, and compatibility behavior must be implemented and verified in this ticket.
+
+### Parent plan v2
+
+Preserve the current parent structure:
+
+- `version`
+- `scope`
+- `source`
+- `proposal`
+
+Preserve existing proposal identity, source/policy/estimator hashes, structural bounds, BSS provenance, eligible dimensions, aggregate resource envelope, batch IDs, and optional replan predecessor.
+
+The v2 unit inventory must contain:
+
+- `locator`
+- `classification`
+- Optional bounded `reason`
+
+The supported classifications remain `eligible`, `deferred`, and `unexamined`.
+
+**Do not require a fabricated complete-request `demand` object on every eligible locator.**
+
+Authoritative request sizing is now stored per batch.
+
+### Child handoff v2
+
+The child reconstruction manifest must contain:
+
+| Field | Required meaning |
+|---|---|
+| `version` | `PlannedSemanticCorpusHandoff/v2` |
+| `planHash` | Immutable parent plan binding |
+| `batchId` | Deterministic batch ID |
+| `batchSlot` | Deterministic batch order |
+| `ownedLocators` | Exact independently owned source selection |
+| `contextOnlyLocators` | Context-only source selection, where authorized |
+| `sourceSpecificationSha256` | SHA-256 of the exact in-memory canonical SEM user prompt |
+| `sourcePacketVersion` | SEM source-packet contract version |
+| `semProfileSha256` | Identity/hash of the canonical SEM prompt and response-schema authority |
+| `estimatorIdentity` | BSS-compatible estimator identity |
+| `estimatorVersion` | Estimator version |
+| `estimatorConfigurationSha256` | Hash of the pinned sizing configuration |
+| `requestSizingPolicyVersion` | `ConservativeLogicalRequestBytes/v1` |
+| `requestBytes` | Estimated complete logical request bytes |
+| `inputTokens` | Estimated input tokens, excluding output reservation |
+| `reservedOutputTokens` | Output reservation from BSS workload |
+| `requestResourceEnvelope` | Applicable prospective planning demand |
+| `fitTrace` | Bounded structural-fit evidence |
+
+Use existing canonical serialization, SHA-256, source identity, and immutable storage conventions.
+
+Avoid additional redundant fields where the parent already provides their authoritative value.
+
+### Required parser behavior
+
+Both v2 parsers must:
+
+- Validate exact version-specific field sets and types.
+- Reject unknown and corpus-content fields.
+- Validate source locator shape and uniqueness.
+- Validate parent/child identity bindings.
+- Validate hash formats.
+- Validate batch order.
+- Validate eligible ownership coverage exactly once.
+- Validate numeric bounds and accounting consistency.
+- Reject malformed, duplicated, foreign, or stale references.
+
+The v2 `inputTokens`, `reservedOutputTokens`, and resource-envelope values must agree with the frozen sizing policy.
+
+### Legacy compatibility
+
+Historical `ImmutableSemanticCorpusPlan/v1` and `PlannedSemanticCorpusHandoff/v1` retain their original meaning.
+
+Do not mutate or rehash them.
+
+Use explicit version dispatch:
+
+- v1 records use the existing v1 parser and validators.
+- v2 records use the new v2 parser and validators.
+- Unknown versions fail closed.
+
+### Persistence implementation
+
+Prefer reusing:
+
+- `atlas.semantic_corpus_plan`
+- `atlas.planned_semantic_corpus_handoff`
+- Existing `immutable_content jsonb` storage.
+- Existing Atlas transaction and immutable-trigger behavior.
+- Existing idempotency and cancellation/replan rules.
+
+Any necessary migration must be additive.
+
+A new table is not required merely because the JSON contract version changes.
+
+No source text, table contents, serialized `sourceSpecification`, image bytes, or provider request bodies may be stored in these metadata records.
+
+### GHR contract
+
+Preserve the reference-only `SemanticBatchPlanReady/v1` body:
+
+- `documentPlanRef`
+- `planHash`
+- `batchCount`
+- `batchHandoffRefs`
+
+Extend the receiver's internal version dispatch to validate the new persisted v2 plan/handoff records.
+
+Do not modify the external body merely to carry additional corpus metadata.
+
+No live GHR issue, forwarding, acknowledgement, or outbox is authorized.
+
+## 6. SEM read-only reconstruction
+
+Implement the minimum read-only SEM-facing reconstruction compatibility boundary required to prove the new handoff works.
+
+Given an authorized batch reference, the consumer must:
+
+1. Resolve the exact persisted v2 handoff.
+2. Resolve and verify its parent plan.
+3. Derive the authorized document scope.
+4. Retrieve the original accepted NormalizedDocument V1 through the established server-owned resolver.
+5. Resolve the exact owned/context locator selection.
+6. Rebuild the packet using the shared SEM builder.
+7. Compute the canonical `sourceSpecification` SHA-256.
+8. Compare it against the persisted hash.
+9. Return the verified reconstruction result or fail closed.
+
+A hash mismatch is an integrity failure.
+
+Do not rebuild a different source selection.
+
+Do not re-run Docling to replace an unavailable accepted source.
+
+Do not repartition a completed batch.
+
+This ticket does not authorize production semantic worker activation or provider execution.
+
+The future executor must continue using existing SEM preflight and BSS fair admission.
+
+## 7. No-REL and contextual-source behavior
+
+The current accepted-document resolver returns:
+
+`rel: { state: "unavailable" }`
+
+Do not interpret this as proof that no relationships exist.
+
+For the presently authorized no-REL path:
+
+- Preserve full normalized text/table source units.
+- Do not fabricate accepted or provisional relationships.
+- Do not assign context-only ownership without valid supporting authority.
+- Use an empty `contextOnlyLocators` selection where no authorized context relationship exists.
+- Preserve explicit source-native headings, qualifiers, and metadata within the selected content.
+- Defer/block a source when a specifically established essential contextual dependency cannot be preserved.
+- Keep unresolved/deferred status visible to downstream consumers.
+
+Source partitioning must not be treated as proof that the entire document's semantics are complete.
+
+No new REL detection or acceptance workflow is part of IDSER-012-04.
+
+## 8. Visual handling
+
+The current production stepwise route has `imageTpm: { state: "unknown" }`.
+
+Preserve the existing fail-closed preflight semantics.
+
+### Text/table path
+
+Text/table-only batches may become structurally READY when the remaining constraints are satisfied.
+
+They do not require a qualified image-token estimate when the candidate contains no images.
+
+### Visual path
+
+A visual source requiring image input must not become READY when its selected route lacks usable image-token accounting.
+
+Keep such locators explicitly `unexamined` or deferred under the approved disposition rules.
+
+Do not remove them from the document's source inventory.
+
+Do not report whole-document semantic completion based only on successfully planned text/table batches.
+
+### Future compatibility
+
+Once the route has an authorized conservative image-token policy, the same batch composer and estimator can be used for visual candidates.
+
+No separate visual planner is authorized.
+
+## 9. Mandatory real-data integration — PERC-RESET canonical PostgreSQL
+
+### 9.1 Authoritative local source
+
+IDSER-012-04 integration qualification MUST use the existing accepted NormalizedDocument V1 data produced by PERC-RESET.
+
+Canonical Compose project:
+
+`atlas-canonical-perception`
+
+Canonical Compose file:
+
+`docker-compose.yml`
+
+Database service:
+
+`postgres`
+
+Compose volume key:
+
+`postgres-data`
+
+Expected Docker volume name under ordinary project naming:
+
+`atlas-canonical-perception_postgres-data`
+
+The exact volume and PostgreSQL mount must be confirmed from the running Compose configuration and Docker inspection before use.
+
+The baseline mounts the PostgreSQL data volume at `/var/lib/postgresql` for PostgreSQL 18.
+
+The historical canonical evidence is documented in:
+
+`project's goal/feedback/CANONICAL-PERCEPTION-BASELINE-v1.md`
+
+### 9.2 Mandatory safety constraints
+
+**The canonical PostgreSQL volume is protected source evidence.**
+
+IDSER-012-04 MUST NOT:
+
+- Run `docker compose down -v` on the canonical project.
+- Remove, prune, reinitialize, or overwrite its PostgreSQL volume.
+- Run destructive resets or fixture cleanup against the canonical database.
+- Change existing perception execution records or normalized-document cache content.
+- Apply unreviewed v2 migrations directly to the canonical source database.
+- Mount the live PostgreSQL data directory into another simultaneously running PostgreSQL instance.
+- Replace original accepted documents with new Docling conversions merely to make tests pass.
+- Commit database dumps or document contents into Git.
+
+Use authorized local database access without printing credentials or source contents into review logs.
+
+### 9.3 Required data-access procedure
+
+**Phase A — Inspect the canonical database without mutation**
+
+1. Verify the Compose project and PostgreSQL container identity.
+2. Inspect the actual named volume mounted by the canonical PostgreSQL service.
+3. Verify that the expected database and accepted document records remain available.
+4. Query only the required source identities, counts, hashes, versions, and accepted lifecycle states.
+5. Confirm that the selected records resolve through the established accepted-document boundary.
+
+This phase must be read-only.
+
+**Phase B — Prepare an isolated writable test database**
+
+Create a consistent logical database backup/snapshot from the canonical PostgreSQL instance using PostgreSQL-supported backup tooling.
+
+Restore the required database state into a separate, explicitly named, disposable qualification database/volume.
+
+The isolated database must not share the live canonical PostgreSQL data directory.
+
+Run IDSER-012-04 migrations, planning persistence, rollback tests, and replay tests against this isolated copy.
+
+If the canonical database lacks newer BSS configuration required by the current branch, apply migrations and establish approved test policy fixtures only in the isolated qualification environment.
+
+Do not modify the canonical source volume to compensate for missing qualification data.
+
+**Phase C — Execute integration tests**
+
+Use the recovered real accepted documents with the actual Atlas parsers, accepted-document resolver, SEM packet builder, estimator, BSS prospective reader, and Postgres immutable-plan repository.
+
+No live provider calls are required.
+
+### 9.4 Required PERC-RESET fixtures
+
+The historical baseline records these documents:
+
+**Fixture A — Safara Professional**
+
+Original PDF: `Safara_Buyer_Business_PRD_Professional.pdf`
+
+Source SHA-256:
+
+`2f537e8bb7ea4f69fb906af03d0265e2a986a0f15c2dbedbbace5328cd40e7df`
+
+Historical normalized content:
+
+- 254 text blocks.
+- 4 tables.
+- 5 visual regions.
+- 5 verified derived assets.
+
+Use this fixture to prove text/table source selection and preservation of visual non-ready dispositions under unknown image-token accounting.
+
+**Fixture B1 — Safara Foundation**
+
+Original PDF: `Safara_PRD_01_Foundation.pdf`
+
+Source SHA-256:
+
+`4a7aa8c90dd2f045ed1d37f73d69c5372fbdbeedc76edfa151cbd1ae88d370cc`
+
+Historical normalized content:
+
+- 73 text blocks.
+- 2 tables.
+- No visuals.
+
+**Fixture B2 — Safara Finance/Documents**
+
+Original PDF: `Safara_PRD_02_Finance_Documents.pdf`
+
+Source SHA-256:
+
+`527bcf9926fdb760e706b2505812531aacd6520b8d7f647a70b230983f48188c`
+
+Historical normalized content:
+
+- 68 text blocks.
+- 3 tables.
+- No visuals.
+
+**Fixture B3 — Safara Readiness/Manifest**
+
+Original PDF: `Safara_PRD_03_Readiness_Manifest_Reporting.pdf`
+
+Source SHA-256:
+
+`0b4944c0a1171223020a7e0c76e73cf4ff02e5513ae62fceb9e43d5fd8cb720f`
+
+Historical normalized content:
+
+- 88 text blocks.
+- 1 table.
+- No visuals.
+
+These source identities come from the recorded PERC-RESET baseline. Verify their current availability and fingerprints against the actual canonical database before treating them as executable fixtures.
+
+The text/table-only documents are the primary positive integration path.
+
+If an expected source is absent or stale, report the exact missing evidence. Do not fabricate a replacement fixture and present it as canonical proof.
+
+### 9.5 Required integration scenario
+
+At least one real accepted text/table document must demonstrate:
+
+1. Authentic source resolution from the PERC-RESET snapshot.
+2. Actual SEM system prompt and response-schema resolution.
+3. Candidate `sourceSpecification` construction using real table/text content.
+4. Progressive sizing with fixed overhead counted once.
+5. At least two batches under a deliberately bounded, valid BSS test workload configuration.
+6. Atomic v2 parent/handoff persistence in the isolated PostgreSQL database.
+7. GHR reference-body validation.
+8. Read-only SEM reconstruction of each persisted batch.
+9. Byte-identical `sourceSpecification` and matching SHA-256.
+10. Exact eligible locator ownership coverage with no corpus duplication.
+
+Use a test structural bound that is genuinely valid for the selected qualification configuration. Do not fabricate a passing outcome if no suitable authorized BSS test policy is available.
+
+The visual fixture must also prove that unqualified visuals remain explicitly non-ready while eligible text/table batches can still be planned where context rules permit.
+
+### 9.6 Required environmental evidence
+
+Record:
+
+- Repository commit under review.
+- Actual Compose project and PostgreSQL volume identity.
+- PostgreSQL image/version and relevant schema migration state.
+- Canonical source document identifiers and hashes.
+- Verified normalized unit counts.
+- Source resolver result.
+- SEM profile and packet version.
+- Estimator configuration identity/hash.
+- BSS structural bounds and output reservation.
+- Candidate and finalized batch sizing summaries.
+- Persisted v2 plan/handoff IDs and hashes from the isolated database.
+- GHR compatibility result.
+- SEM reconstructed hash comparison.
+- Canonical database no-mutation evidence.
+- Explicit zero provider-call and zero live GHR-dispatch evidence.
+
+Do not include raw corpus text, database credentials, or image bytes in the evidence artifact.
+
+## 10. Bounded implementation order
+
+The following are implementation workstreams within IDSER-012-04, not independent external prerequisites.
+
+### IDSER-012-04-A — Canonical batch composition
+
+Implement the batch-scoped SEM builder and deterministic source selection.
+
+Prove existing whole-document compatibility.
+
+### IDSER-012-04-B — Serialized-request estimator
+
+Replace per-locator additive sizing.
+
+Implement conservative complete candidate-request measurement, distinct input/output accounting, and BSS prospective fit.
+
+Prove text/table READY and visual non-ready behavior.
+
+### IDSER-012-04-C — Immutable v2 contracts
+
+Implement parent/handoff v2 schemas, canonicalizers, parsers, atomic persistence, replay, and reference-only GHR compatibility.
+
+Preserve historical v1 behavior.
+
+### IDSER-012-04-D — Real-data reconstruction qualification
+
+Use PERC-RESET canonical source data with isolated writable PostgreSQL qualification storage.
+
+Prove batch reconstruction and SHA-256 identity using real normalized documents.
+
+This workstream does not authorize provider execution.
+
+## 11. Required tests and CK evidence
+
+CK must verify the implementation, not merely the existence of contract declarations.
+
+Required evidence includes:
+
+**A. SEM builder**
+
+- Selected-locator construction works.
+- Whole-document behavior is preserved.
+- Deterministic slots, content, ordering, and hashes.
+- Foreign/duplicate/missing locators are rejected.
+- No second packet serializer exists.
+
+**B. Estimator**
+
+- Fixed overhead counted once.
+- Actual serialized `sourceSpecification` is measured.
+- Output reservation excluded from input tokens.
+- Prospective quota demand is internally consistent.
+- Complete request size satisfies structural bounds.
+- No additive per-locator sizing controls the final decision.
+- Conservative estimates do not require exact provider-token matching.
+
+**C. Partitioning**
+
+- Deterministic batch boundaries.
+- Exact eligible source coverage.
+- Oversized indivisible units fail explicitly.
+- Stale policy revisions fail closed.
+- Temporary runtime TPM pressure is not treated as a repartition signal.
+
+**D. v2 persistence**
+
+- Strict parent/handoff v2 validators.
+- No fake per-locator demand.
+- No persisted corpus-content duplication.
+- Atomic commit and rollback.
+- Replay/idempotency/cancellation safety.
+- Historical v1 parser and receiver compatibility.
+- No unapproved schema or storage mutation.
+
+**E. PERC-RESET integration**
+
+- Actual accepted NormalizedDocument V1 is consumed.
+- Real text/table content is serialized and sized.
+- Postgres persistence occurs in an isolated test environment.
+- GHR receives only references.
+- SEM reconstructs the exact source packet.
+- All reconstructed packet hashes match.
+- Canonical PostgreSQL source state remains unchanged.
+
+A test relying exclusively on synthetic NormalizedDocuments does not satisfy the mandatory real-data integration gate.
+
+## 12. Hard stop conditions
+
+Stop the affected operation and report precise evidence if:
+
+- The required accepted NormalizedDocument cannot be recovered.
+- The canonical PostgreSQL volume identity cannot be verified before access.
+- The only available test path would mutate or reset protected canonical data.
+- The selected BSS estimator/profile identity is inconsistent.
+- The established BSS accounting contract would double-count output reservation.
+- An essential context relationship requires authority that is unavailable.
+- An image-bearing batch requires unavailable image-token accounting.
+- The reconstructed source packet hash differs from the planned hash.
+- A historical immutable v1 record would need to be rewritten.
+- The implementation would require unauthorized GHR or provider execution.
+
+A hard stop must be scoped to the affected operation where possible. A blocked visual case does not invalidate a separately qualified text/table case.
+
+## 13. Completion and handoff
+
+IDSER-012-04 is complete when:
+
+1. The estimator measures complete canonical SEM candidate requests using the existing conservative approach.
+2. Batches are partitioned according to BSS structural bounds without treating transient runtime TPM as the batch-size authority.
+3. Original source content remains in NormalizedDocument V1 rather than being duplicated in batch storage.
+4. Immutable v2 parent/handoff records preserve exact reconstruction instructions.
+5. GHR can verify and carry batch references through the established reference-only contract.
+6. SEM can reconstruct exactly the packet that IDSER planned, with byte-identical `sourceSpecification`.
+7. Real PERC-RESET normalized documents from the canonical PostgreSQL dataset have been used for the integration proof.
+8. Canonical source data is unchanged after qualification.
+9. Existing BSS fair-admission and SEM execution seams remain intact.
+
+### Final architectural invariant
+
+**One source of normalized-document truth.**
+
+**One SEM canonical source-packet builder.**
+
+**One conservative request-sizing path.**
+
+**One immutable locator-based batch handoff.**
+
+**One BSS admission runtime.**
+
+IDSER determines which corpus fits into a request.
+
+GHR carries the immutable reference.
+
+SEM reconstructs and executes the same corpus.
+
+BSS determines when execution is permitted.
+
+---
+
+## 14. GO authority boundary
+
+This context authorizes the work described in Sections 3–10 **only after explicit GO under Atlas's current ticket protocol**.
+
+The v2 parser, estimator correction, and batch-scoped builder are intended implementation outcomes of IDSER-012-04. Their absence before GO is not itself a reason to demand their implementation in an earlier ticket.
+
+Before GO, the planning context must be committed and the implementation scope explicitly approved. Existing dirty or unrelated worktree changes must be preserved and excluded from the authorized change set.
+
+GO does not authorize modification or destruction of the canonical PERC-RESET PostgreSQL volume.
+
+GO also does not authorize live provider calls, production GHR forwarding, semantic acceptance, reconciliation, or publication.
+
+The required terminal state is **implementation ready for independent CK review**, supported by the real-data integration and no-mutation evidence above.
