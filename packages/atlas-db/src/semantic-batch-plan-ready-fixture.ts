@@ -39,6 +39,13 @@ function exactKeys(value: Record<string, unknown>, expected: readonly string[]):
   const keys = Object.keys(value);
   return keys.length === expected.length && expected.every((key) => Object.hasOwn(value, key));
 }
+function locatorKey(value: unknown): string | null {
+  if (!plain(value) || !exactKeys(value, ["documentId", "pageNumber", "sourceKind", "localId"])
+    || typeof value.documentId !== "string" || typeof value.pageNumber !== "number" || !Number.isSafeInteger(value.pageNumber)
+    || typeof value.sourceKind !== "string" || !["text_block", "table", "visual_region"].includes(value.sourceKind)
+    || typeof value.localId !== "string") return null;
+  return `${value.documentId}\u0000${value.pageNumber}\u0000${value.sourceKind}\u0000${value.localId}`;
+}
 function canonical(body: SemanticBatchPlanReadyV1): string {
   return JSON.stringify({
     documentPlanRef: body.documentPlanRef,
@@ -110,6 +117,8 @@ export class PostgresSemanticBatchPlanReadyFixtureReceiver {
 
     const expected = new Map(body.batchHandoffRefs.map((member) => [member.batchId, member]));
     const storedIds = new Set<string>();
+    const eligible = new Set<string>();
+    const owned = new Set<string>();
     for (let index = 0; index < rows.length; index += 1) {
       const row = rows[index]!;
       const member = expected.get(String(row.batch_id));
@@ -127,8 +136,23 @@ export class PostgresSemanticBatchPlanReadyFixtureReceiver {
         || !plain(handoff) || handoff.version !== "PlannedSemanticCorpusHandoff/v1" || handoff.planHash !== body.planHash || handoff.batchId !== member.batchId || handoff.batchSlot !== index + 1) {
         fail("persisted plan or handoff scope is inconsistent");
       }
+      const units = proposal.units;
+      const ownedLocators = handoff.ownedLocators;
+      if (!Array.isArray(units) || !Array.isArray(ownedLocators)) fail("persisted ownership metadata is inconsistent");
+      if (index === 0) for (const unit of units) {
+        if (!plain(unit) || unit.classification !== "eligible") continue;
+        const key = locatorKey(unit.locator);
+        if (!key || eligible.has(key)) fail("persisted eligible ownership is invalid");
+        eligible.add(key);
+      }
+      for (const locator of ownedLocators) {
+        const key = locatorKey(locator);
+        if (!key || owned.has(key)) fail("persisted handoff ownership is duplicate or invalid");
+        owned.add(key);
+      }
     }
     if (storedIds.size !== expected.size) fail("persisted handoff coverage is incomplete");
+    if (eligible.size !== owned.size || [...eligible].some((key) => !owned.has(key))) fail("persisted handoff ownership coverage is incomplete or foreign");
     return body;
   }
 }
