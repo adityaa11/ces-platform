@@ -1,6 +1,6 @@
 # IDSER-012-04-05 — GHR reference-only v2 compatibility
 
-- **State:** `awaiting_review`; implemented by GO at `72430455` and awaiting CK.
+- **State:** `approved` at `e7a6ec3ba3772f005fa08381a6aa6f0620e3d268`; **Review batch:** `IDSER-BATCH-12-04-05` (`PASS`).
 - **Batch:** `IDSER-BATCH-12-04-05`.
 - **Parent:** [IDSER-012-04 split map](IDSER-012-04-canonical-sem-request-sizing-immutable-locator-handoff-and-reconstruction.md).
 - **Dependencies:** `IDSER-012-04-04` CK `PASS`; existing proposed `SemanticBatchPlanReady/v1` fixture-receiver boundary.
