@@ -94,6 +94,47 @@ test("image-bearing input preserves exact asset identity, pending visual state, 
   assert.ok(!first.sourceSpecification.includes("non_fact"));
 });
 
+test("exact owned and context-only batch selection is deterministic and preserves canonical source evidence", () => {
+  const fixture = normalizedSourceFixture();
+  const document = {
+    ...fixture,
+    pages: fixture.pages.map((page) => page.number === 2 ? { ...page, tables: page.tables.map((table) => table.id === "table-b" ? { ...table, content: "B|2\n<!-- atlas-docling-grid-v1:[[{\"row\":0}]] -->" } : table) } : page),
+  };
+  const input = {
+    document,
+    assetIdentities: imageAssets,
+    ownedLocators: [
+      { pageNumber: 2, locatorType: "table" as const, locatorId: "table-b" },
+      { pageNumber: 1, locatorType: "text_block" as const, locatorId: "text-a" },
+    ],
+    contextOnlyLocators: [{ pageNumber: 1, locatorType: "visual_region" as const, locatorId: "legend" }],
+  };
+  const first = buildStepwiseSourcePacket(input);
+  const second = buildStepwiseSourcePacket({ ...input, ownedLocators: [...input.ownedLocators].reverse() });
+  assert.equal(first.sourceSpecification, second.sourceSpecification);
+  assert.equal(first.sourceSpecificationSha256, second.sourceSpecificationSha256);
+  assert.deepEqual(first.sourceSlots.map((slot) => ({ pageNumber: slot.pageNumber, locatorType: slot.locatorType, locatorId: slot.locatorId, ownership: slot.ownership, content: slot.content, assetIdentity: slot.assetIdentity })), [
+    { pageNumber: 1, locatorType: "text_block", locatorId: "text-a", ownership: "independently_owned", content: "First page text", assetIdentity: undefined },
+    { pageNumber: 1, locatorType: "visual_region", locatorId: "legend", ownership: "context_only_reference", content: "Legend for table A", assetIdentity: { assetRef: "derived/legend", sha256: "b".repeat(64), sourceSha256 } },
+    { pageNumber: 2, locatorType: "table", locatorId: "table-b", ownership: "independently_owned", content: "B|2\n<!-- atlas-docling-grid-v1:[[{\"row\":0}]] -->", assetIdentity: undefined },
+  ]);
+  assert.match(first.sourceSpecification, /atlas-docling-grid-v1/);
+  const changed = buildStepwiseSourcePacket({ ...input, ownedLocators: [{ pageNumber: 1, locatorType: "table", locatorId: "table-a" }] });
+  assert.notEqual(first.sourceSpecificationSha256, changed.sourceSpecificationSha256);
+});
+
+test("batch selection rejects foreign, duplicate, overlapping, malformed, unauthorized, and invalid media inputs before emission", () => {
+  const document = normalizedSourceFixture();
+  const selected = { document, ownedLocators: [{ pageNumber: 1, locatorType: "text_block" as const, locatorId: "text-a" }], contextOnlyLocators: [] as const };
+  assert.throws(() => buildStepwiseSourcePacket({ ...selected, ownedLocators: [{ pageNumber: 1, locatorType: "text_block", locatorId: "missing" }] }), /foreign or missing/);
+  assert.throws(() => buildStepwiseSourcePacket({ ...selected, ownedLocators: [selected.ownedLocators[0]!, selected.ownedLocators[0]!] }), /duplicate owned/);
+  assert.throws(() => buildStepwiseSourcePacket({ ...selected, contextOnlyLocators: [selected.ownedLocators[0]!] }), /both owned and context-only/);
+  assert.throws(() => buildStepwiseSourcePacket({ ...selected, ownedLocators: [{ pageNumber: 0, locatorType: "text_block", locatorId: "text-a" }] }), /malformed/);
+  assert.throws(() => buildStepwiseSourcePacket({ document, ownedLocators: [], contextOnlyLocators: [{ pageNumber: 1, locatorType: "visual_region", locatorId: "legend" }] }), /asset identity does not match/);
+  assert.throws(() => buildStepwiseSourcePacket({ ...selected, assetIdentities: [{ ...imageAssets[0], assetRef: "derived/foreign" }] }), /does not match/);
+  assert.throws(() => buildStepwiseSourcePacket({ document, assetIdentities: imageAssets, ownedLocators: [{ pageNumber: 1, locatorType: "visual_region", locatorId: "legend" }], contextOnlyLocators: [{ pageNumber: 1, locatorType: "table", locatorId: "table-a" }], provisionalRelationships: [provisionalLegend(document)] }), /ownership is not authorized/);
+});
+
 test("missing essential context is isolated to dependent provisional interpretation", () => {
   const document = normalizedSourceFixture();
   const relationship = provisionalLegend(document);
@@ -131,6 +172,10 @@ test("foreign, duplicate, expired, and mismatched relationships or assets fail c
 
 test("existing accepted and legacy packet boundaries remain unchanged", () => {
   const document = normalizedSourceFixture();
+  const wholeDocument = buildStepwiseSourcePacket({ document, assetIdentities: imageAssets });
+  const explicitWholeDocument = buildStepwiseSourcePacket({ document, assetIdentities: imageAssets, ownedLocators: wholeDocument.sourceSlots.map(({ pageNumber, locatorType, locatorId }) => ({ pageNumber, locatorType, locatorId })), contextOnlyLocators: [] });
+  assert.equal(explicitWholeDocument.sourceSpecification, wholeDocument.sourceSpecification);
+  assert.equal(explicitWholeDocument.sourceSpecificationSha256, wholeDocument.sourceSpecificationSha256);
   assert.equal(buildSemanticSourcePacket(document, semanticExtractionProfileId).semanticProfile, semanticExtractionProfileId);
   assert.throws(() => buildUnhydratedMultimodalSourcePacket({ document, authorizedRelationships: [], relationshipRequirements: [{ ownedSource: { pageNumber: 1, locatorType: "table", locatorId: "table-a" }, contextVisual: { pageNumber: 1, locatorId: "legend", assetRef: "derived/legend", derivedAssetSha256: "b".repeat(64) }, contextualRole: "legend", necessity: "essential" }] }), /missing essential authorized source relationship/);
 });

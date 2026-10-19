@@ -92,6 +92,13 @@ export type StepwiseSourcePacket = {
 
 export type StepwiseSourcePacketInput = {
   readonly document: NormalizedDocument;
+  /**
+   * Exact batch ownership. When neither selection list is supplied the
+   * established whole-document packet is emitted unchanged. When either is
+   * supplied, only the union of these locators can appear in the packet.
+   */
+  readonly ownedLocators?: readonly StepwiseSourceLocator[];
+  readonly contextOnlyLocators?: readonly StepwiseSourceLocator[];
   readonly assetIdentities?: readonly StepwiseSourceAssetIdentity[];
   readonly provisionalRelationships?: readonly StepwiseProvisionalRelationship[];
   readonly relationshipRequirements?: readonly StepwiseSourceRelationshipRequirement[];
@@ -114,7 +121,7 @@ const sha256 = (value: string) => createHash("sha256").update(value).digest("hex
 const sourceKey = (source: StepwiseSourceLocator) => `${source.pageNumber}\u0000${source.locatorType}\u0000${source.locatorId}`;
 const reject = (message: string): never => { throw new Error(`SOURCE_RELATIONSHIP_BLOCKED: ${message}`); };
 
-function validateAssetIdentities(document: NormalizedDocument, identities: readonly StepwiseSourceAssetIdentity[]) {
+function validateAssetIdentities(document: NormalizedDocument, identities: readonly StepwiseSourceAssetIdentity[], selectedVisualKeys?: ReadonlySet<string>) {
   const assets = new Map<string, StepwiseSourceAssetIdentity>();
   for (const identity of identities) {
     if (!Number.isSafeInteger(identity.pageNumber) || identity.pageNumber < 1 || !identity.locatorId || !identity.assetRef || !sha256Pattern.test(identity.sha256) || identity.sourceSha256 !== document.sourceSha256) reject("asset identity is foreign or malformed.");
@@ -128,11 +135,23 @@ function validateAssetIdentities(document: NormalizedDocument, identities: reado
     const key = sourceKey(locator);
     visualKeys.add(key);
     const identity = assets.get(key);
-    if (visual.assetRef !== undefined && (!identity || identity.assetRef !== visual.assetRef)) reject(`visual asset identity does not match ${visual.id}.`);
+    if (visual.assetRef !== undefined && ((selectedVisualKeys?.has(key) && !identity) || (identity !== undefined && identity.assetRef !== visual.assetRef))) reject(`visual asset identity does not match ${visual.id}.`);
     if (visual.assetRef === undefined && identity !== undefined) reject(`asset identity is not bound to visual ${visual.id}.`);
   }
   for (const key of assets.keys()) if (!visualKeys.has(key)) reject("asset identity references a foreign visual locator.");
   return assets;
+}
+
+function validateSelection(locators: readonly StepwiseSourceLocator[], name: string, available: ReadonlyMap<string, unknown>) {
+  const keys = new Set<string>();
+  for (const locator of locators) {
+    if (!Number.isSafeInteger(locator.pageNumber) || locator.pageNumber < 1 || !["text_block", "table", "visual_region"].includes(locator.locatorType) || !locator.locatorId) reject(`${name} locator is malformed.`);
+    const key = sourceKey(locator);
+    if (!available.has(key)) reject(`${name} locator is foreign or missing.`);
+    if (keys.has(key)) reject(`duplicate ${name} locator.`);
+    keys.add(key);
+  }
+  return keys;
 }
 
 function validateSnapshot(document: NormalizedDocument): StepwiseSourceSnapshot {
@@ -167,16 +186,14 @@ export function buildStepwiseSourcePacket(input: StepwiseSourcePacketInput): Ste
   const document = parseNormalizedDocument(input.document);
   if (input.acceptedRelationships?.length) reject("accepted context must be supplied through the accepted-relationship builder.");
   const snapshot = validateSnapshot(document);
-  const assets = validateAssetIdentities(document, input.assetIdentities ?? []);
-  const allSources: { locator: StepwiseSourceLocator; content?: string; assetIdentity?: StepwiseSourceSlot["assetIdentity"] }[] = [];
+  const allSources: { locator: StepwiseSourceLocator; content?: string }[] = [];
   const seen = new Set<string>();
   for (const page of [...document.pages].sort((left, right) => left.number - right.number)) {
     for (const block of [...page.textBlocks].sort((left, right) => left.id.localeCompare(right.id))) allSources.push({ locator: { pageNumber: page.number, locatorType: "text_block", locatorId: block.id }, content: block.text });
     for (const table of [...page.tables].sort((left, right) => left.id.localeCompare(right.id))) allSources.push({ locator: { pageNumber: page.number, locatorType: "table", locatorId: table.id }, content: table.content });
     for (const visual of [...page.visualRegions].sort((left, right) => left.id.localeCompare(right.id))) {
       const locator = { pageNumber: page.number, locatorType: "visual_region" as const, locatorId: visual.id };
-      const identity = assets.get(sourceKey(locator));
-      allSources.push({ locator, ...(visual.label === undefined || visual.label.trim().length === 0 ? {} : { content: visual.label }), ...(identity === undefined ? {} : { assetIdentity: { assetRef: identity.assetRef, sha256: identity.sha256, sourceSha256: identity.sourceSha256 } }) });
+      allSources.push({ locator, ...(visual.label === undefined || visual.label.trim().length === 0 ? {} : { content: visual.label }) });
     }
   }
   if (allSources.length > semanticSourcePacketLimits.maxSourceUnits) throw new Error(`Stepwise source packet exceeds ${semanticSourcePacketLimits.maxSourceUnits} source units.`);
@@ -185,9 +202,24 @@ export function buildStepwiseSourcePacket(input: StepwiseSourcePacketInput): Ste
     if (seen.has(key)) throw new Error(`Duplicate normalized source locator: ${source.locator.locatorType}/${source.locator.locatorId} on page ${source.locator.pageNumber}.`);
     seen.add(key);
   }
+  const availableSources = new Map(allSources.map((source) => [sourceKey(source.locator), source]));
+  const hasSelection = input.ownedLocators !== undefined || input.contextOnlyLocators !== undefined;
+  const ownedSelection = validateSelection(input.ownedLocators ?? [], "owned", availableSources);
+  const contextSelection = validateSelection(input.contextOnlyLocators ?? [], "context-only", availableSources);
+  for (const key of ownedSelection) if (contextSelection.has(key)) reject("a selected locator cannot be both owned and context-only.");
+  const selectedKeys = hasSelection ? new Set([...ownedSelection, ...contextSelection]) : new Set(availableSources.keys());
+  const selectedVisualKeys = new Set([...selectedKeys].filter((key) => availableSources.get(key)?.locator.locatorType === "visual_region"));
+  const assets = validateAssetIdentities(document, input.assetIdentities ?? [], selectedVisualKeys);
+  const selectedSources = allSources.filter((source) => selectedKeys.has(sourceKey(source.locator))).map((source) => {
+    const identity = assets.get(sourceKey(source.locator));
+    return { ...source, ...(identity === undefined ? {} : { assetIdentity: { assetRef: identity.assetRef, sha256: identity.sha256, sourceSha256: identity.sourceSha256 } }) };
+  });
   const provisionalRelationships = [...input.provisionalRelationships ?? []].sort((left, right) => `${left.relationshipLineageId}\u0000${left.revisionHash}`.localeCompare(`${right.relationshipLineageId}\u0000${right.revisionHash}`));
   const requirements = [...input.relationshipRequirements ?? []].sort((left, right) => sourceKey(left.ownedSource).localeCompare(sourceKey(right.ownedSource)) || sourceKey(left.contextSource).localeCompare(sourceKey(right.contextSource)) || left.contextualRole.localeCompare(right.contextualRole));
-  const baseSlots = allSources.map((source, index) => ({ slot: `slot-${String(index + 1).padStart(6, "0")}`, ...source.locator, ownership: "independently_owned" as const, role: source.locator.locatorType === "visual_region" && source.assetIdentity ? "pending_authorized_media" as const : "owned_source" as const, status: source.locator.locatorType === "visual_region" ? "pending_unexamined_visual" as const : "ready" as const, ...(source.content === undefined ? {} : { content: source.content }), ...(source.assetIdentity === undefined ? {} : { assetIdentity: source.assetIdentity }), ...(source.locator.locatorType === "visual_region" ? { pendingReason: source.assetIdentity === undefined ? "visual_asset_unavailable" as const : "visual_not_examined" as const } : {}) }));
+  const baseSlots = selectedSources.map((source, index) => {
+    const isContext = contextSelection.has(sourceKey(source.locator));
+    return { slot: `slot-${String(index + 1).padStart(6, "0")}`, ...source.locator, ownership: isContext ? "context_only_reference" as const : "independently_owned" as const, role: isContext ? "context_only_reference" as const : source.locator.locatorType === "visual_region" && source.assetIdentity ? "pending_authorized_media" as const : "owned_source" as const, status: source.locator.locatorType === "visual_region" ? "pending_unexamined_visual" as const : "ready" as const, ...(source.content === undefined ? {} : { content: source.content }), ...(source.assetIdentity === undefined ? {} : { assetIdentity: source.assetIdentity }), ...(source.locator.locatorType === "visual_region" ? { pendingReason: source.assetIdentity === undefined ? "visual_asset_unavailable" as const : "visual_not_examined" as const } : {}) };
+  });
   const available = new Map(baseSlots.map((slot) => [sourceKey(slot), slot]));
   const relationshipKeys = new Set<string>();
   const contextSlotKeys = new Set<string>();
@@ -197,6 +229,7 @@ export function buildStepwiseSourcePacket(input: StepwiseSourcePacketInput): Ste
     const key = `${owned.slot}\u0000${context.slot}\u0000${relationship.contextualRole}`;
     const revisionKey = `${relationship.relationshipLineageId}\u0000${relationship.revisionHash}`;
     if (relationshipKeys.has(revisionKey) || relationshipKeys.has(key)) reject("duplicate or over-bound relationship revision.");
+    if (hasSelection && (!ownedSelection.has(sourceKey(relationship.ownedSource)) || !contextSelection.has(sourceKey(relationship.contextSource)))) reject("relationship ownership is not authorized by the selected owned/context locators.");
     relationshipKeys.add(revisionKey); relationshipKeys.add(key); contextSlotKeys.add(context.slot); ownedSlotKeys.add(owned.slot);
     return { ownedSourceSlot: owned.slot, contextSourceSlot: context.slot, relationshipLineageId: relationship.relationshipLineageId, revisionHash: relationship.revisionHash, contextualRole: relationship.contextualRole, necessity: relationship.necessity, uncertainty: relationship.uncertainty, disposition: relationship.disposition, source_evidence_slots: [owned.slot, context.slot] as [string, string] };
   });
@@ -208,6 +241,7 @@ export function buildStepwiseSourcePacket(input: StepwiseSourcePacketInput): Ste
     if (!owned || !context || owned.slot === context.slot) reject("relationship requirement references a missing, foreign, or self source locator.");
     const ownedSlot = owned as StepwiseSourceSlot;
     const contextSlot = context as StepwiseSourceSlot;
+    if (hasSelection && (!ownedSelection.has(sourceKey(requirement.ownedSource)) || !contextSelection.has(sourceKey(requirement.contextSource)))) reject("relationship requirement ownership is not authorized by the selected owned/context locators.");
     const key = `${ownedSlot.slot}\u0000${contextSlot.slot}\u0000${requirement.contextualRole}`;
     if (requirementKeys.has(key)) reject("duplicate relationship requirement.");
     requirementKeys.add(key);
