@@ -1,6 +1,6 @@
 # IDSER-012-03-02-02 — Conservative corpus demand estimator
 
-- **State:** `awaiting_review`; GO implementation commit `e91993ce0980c813a66a50d88533c62cd0c9ad56`; IDSER-012-03-01-03 CK `PASS` was consumed.
+- **State:** `approved` following CK `PASS` for reviewed commit `e91993ce0980c813a66a50d88533c62cd0c9ad56`; **Review batch:** `IDSER-BATCH-12-03-02-02`. GO implementation commit `e91993ce0980c813a66a50d88533c62cd0c9ad56`; IDSER-012-03-01-03 CK `PASS` was consumed.
 - **Batch:** `IDSER-BATCH-12-03-02-02`.
 - **Parent:** [IDSER-012-03-02 split map](IDSER-012-03-02-bss-effective-capacity-corpus-partition.md).
 - **Dependencies:** `-03-01-03` CK `PASS` (with approved `-03-01-01/02` retained); a pinned qualified BSS workload-estimator identity supplied by `-03-02-01` evidence or an already approved equivalent.
