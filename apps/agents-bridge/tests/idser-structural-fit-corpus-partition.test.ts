@@ -81,6 +81,25 @@ test("returns typed no-source and indivisible block results without fabricating 
   assert.equal(indivisible.reason, "INDIVISIBLE_STRUCTURAL_UNIT");
 });
 
+test("blocks a foreign estimator route before proposing a structural partition", async () => {
+  const foreignRoute = configuration();
+  foreignRoute.modelRoute = { ...foreignRoute.modelRoute, route: "foreign-semantic" };
+  let reads = 0;
+  const result = await proposeStructuralFitCorpusPartition({
+    acceptedDocument: accepted(["a"]), estimatorConfiguration: foreignRoute,
+    capacityConsumer: { read: async () => { reads += 1; return snapshot() as any; } },
+  });
+  assert.deepEqual(result, {
+    disposition: "BLOCKED",
+    reason: "BSS_CAPACITY_CONSUMER_READ_GAP",
+    units: result.units,
+    fitTrace: [],
+  });
+  assert.equal(result.disposition, "BLOCKED");
+  assert.equal(result.reason, "BSS_CAPACITY_CONSUMER_READ_GAP");
+  assert.equal(reads, 1, "the foreign route cannot reach a candidate fit read or proposal");
+});
+
 test("fences changed BSS revisions and emits a new immutable replan instead of mutating a predecessor", async () => {
   let calls = 0;
   const stale = await proposeStructuralFitCorpusPartition({

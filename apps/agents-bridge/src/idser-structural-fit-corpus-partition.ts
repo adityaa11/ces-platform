@@ -151,6 +151,9 @@ export async function proposeStructuralFitCorpusPartition(input: Readonly<{
   });
   if (estimate.disposition === "SEM_BATCH_ESTIMATOR_GAP") return frozen({ disposition: "BLOCKED", reason: "SEM_BATCH_ESTIMATOR_GAP", units: estimate.units, fitTrace: [] });
   if (estimate.disposition === "NO_ELIGIBLE_SOURCE") return frozen({ disposition: "NO_ELIGIBLE_SOURCE", reason: "NO_ELIGIBLE_SOURCE", units: estimate.units, fitTrace: [] });
+  if (estimate.modelRoute.route !== pinned.enforcement.routeId) {
+    return frozen({ disposition: "BLOCKED", reason: "BSS_CAPACITY_CONSUMER_READ_GAP", units: estimate.units, fitTrace: [] });
+  }
 
   const trace: { requestBytes: number; inputTokens: number; outcome: "fit" | "unfit" }[] = [];
   const batches: StructuralFitProposal["batches"][number][] = [];
