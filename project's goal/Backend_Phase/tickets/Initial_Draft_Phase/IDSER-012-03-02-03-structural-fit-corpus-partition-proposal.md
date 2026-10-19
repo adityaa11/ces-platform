@@ -1,6 +1,6 @@
 # IDSER-012-03-02-03 — Structural-fit corpus partition proposal
 
-- **State:** `awaiting_review`; GO consumed the approved `IDSER-012-03-02-01` and `IDSER-012-03-02-02` CK results at implementation commit `fc310aca`.
+- **State:** `approved` following CK `PASS` for remediation commit `a3111a3`; **Review batch:** `IDSER-BATCH-12-03-02-03`. GO consumed the approved `IDSER-012-03-02-01` and `IDSER-012-03-02-02` CK results at implementation commit `fc310aca`.
 - **Batch:** `IDSER-BATCH-12-03-02-03`.
 - **Parent:** [IDSER-012-03-02 split map](IDSER-012-03-02-bss-effective-capacity-corpus-partition.md).
 - **Dependencies:** `-03-02-01` and `-03-02-02` CK `PASS`; their approved source/resolver, BSS-reader and estimator interfaces.
