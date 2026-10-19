@@ -1,5 +1,12 @@
 import { createHash } from "node:crypto";
-import type { PersistedSemanticCorpusPlanV1 } from "./immutable-semantic-corpus-plan.js";
+import {
+  parseImmutableSemanticCorpusPlanRecord,
+  parsePlannedSemanticCorpusHandoffRecord,
+  replayImmutableSemanticCorpusPlanHashV1,
+  replayImmutableSemanticCorpusPlanHashV2,
+  type PersistedSemanticCorpusPlanV1,
+  type PersistedSemanticCorpusPlanV2,
+} from "./immutable-semantic-corpus-plan.js";
 
 type Row = Record<string, unknown>;
 type ReadOnlySql = { unsafe(query: string, parameters?: readonly unknown[]): Promise<readonly Row[]> };
@@ -80,7 +87,7 @@ function validate(value: unknown): SemanticBatchPlanReadyV1 {
 }
 
 /** Produces only a canonical fixture body; it neither writes nor issues it. */
-export function fixtureSemanticBatchPlanReadyV1(plan: PersistedSemanticCorpusPlanV1): SemanticBatchPlanReadyFixtureV1 {
+export function fixtureSemanticBatchPlanReadyV1(plan: PersistedSemanticCorpusPlanV1 | PersistedSemanticCorpusPlanV2): SemanticBatchPlanReadyFixtureV1 {
   const body = validate({
     documentPlanRef: plan.planId,
     planHash: plan.planHash,
@@ -89,6 +96,14 @@ export function fixtureSemanticBatchPlanReadyV1(plan: PersistedSemanticCorpusPla
   });
   const canonicalJson = canonical(body);
   return { body, canonicalJson, canonicalJsonSha256: createHash("sha256").update(canonicalJson).digest("hex") };
+}
+
+function parsePersistedPlan(content: unknown): Readonly<{ version: "ImmutableSemanticCorpusPlan/v1" | "ImmutableSemanticCorpusPlan/v2"; content: unknown }> {
+  try { return parseImmutableSemanticCorpusPlanRecord(content); } catch { return fail("persisted plan record is invalid or unsupported"); }
+}
+
+function parsePersistedHandoff(content: unknown): Readonly<{ version: "PlannedSemanticCorpusHandoff/v1" | "PlannedSemanticCorpusHandoff/v2"; content: unknown }> {
+  try { return parsePlannedSemanticCorpusHandoffRecord(content); } catch { return fail("persisted handoff record is invalid or unsupported"); }
 }
 
 /**
@@ -126,17 +141,23 @@ export class PostgresSemanticBatchPlanReadyFixtureReceiver {
         || String(row.handoff_id) !== member.ref || String(row.handoff_hash) !== member.hash
         || Number(row.batch_slot) !== index + 1 || storedIds.has(String(row.handoff_id))) fail("persisted handoff membership is foreign, duplicate, or stale");
       storedIds.add(String(row.handoff_id));
-      const plan = row.plan_content as Record<string, unknown>;
-      const handoff = row.handoff_content as Record<string, unknown>;
+      const parsedPlan = parsePersistedPlan(row.plan_content);
+      const parsedHandoff = parsePersistedHandoff(row.handoff_content);
+      const plan = parsedPlan.content as Record<string, unknown>;
+      const handoff = parsedHandoff.content as Record<string, unknown>;
       const scope = plan?.scope as Record<string, unknown>;
       const proposal = plan?.proposal as Record<string, unknown>;
-      if (!plain(plan) || plan.version !== "ImmutableSemanticCorpusPlan/v1" || !plain(scope)
+      const isV2 = parsedPlan.version === "ImmutableSemanticCorpusPlan/v2";
+      if ((isV2 ? "PlannedSemanticCorpusHandoff/v2" : "PlannedSemanticCorpusHandoff/v1") !== parsedHandoff.version
+        || String(row.plan_hash) !== body.planHash
+        || (isV2 ? replayImmutableSemanticCorpusPlanHashV2(plan) : replayImmutableSemanticCorpusPlanHashV1(plan)) !== body.planHash
+        || !plain(plan) || plan.version !== parsedPlan.version || !plain(scope)
         || scope.projectId !== row.project_id || scope.workspaceId !== row.workspace_id || scope.bundleId !== row.bundle_id || scope.documentId !== row.document_id
         || !plain(proposal) || !Array.isArray(proposal.batchIds) || proposal.batchIds.length !== body.batchCount || proposal.batchIds[index] !== member.batchId
-        || !plain(handoff) || handoff.version !== "PlannedSemanticCorpusHandoff/v1" || handoff.planHash !== body.planHash || handoff.batchId !== member.batchId || handoff.batchSlot !== index + 1) {
+        || !plain(handoff) || handoff.version !== parsedHandoff.version || handoff.planHash !== body.planHash || handoff.batchId !== member.batchId || handoff.batchSlot !== index + 1) {
         fail("persisted plan or handoff scope is inconsistent");
       }
-      const units = proposal.units;
+      const units = isV2 ? proposal.inventory : proposal.units;
       const ownedLocators = handoff.ownedLocators;
       if (!Array.isArray(units) || !Array.isArray(ownedLocators)) fail("persisted ownership metadata is inconsistent");
       if (index === 0) for (const unit of units) {
