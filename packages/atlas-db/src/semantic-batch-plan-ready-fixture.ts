@@ -98,11 +98,11 @@ export function fixtureSemanticBatchPlanReadyV1(plan: PersistedSemanticCorpusPla
   return { body, canonicalJson, canonicalJsonSha256: createHash("sha256").update(canonicalJson).digest("hex") };
 }
 
-function parsePersistedPlan(content: unknown): Readonly<{ version: "ImmutableSemanticCorpusPlan/v1" | "ImmutableSemanticCorpusPlan/v2"; content: unknown }> {
+function parsePersistedPlan(content: unknown): Readonly<{ version: "ImmutableSemanticCorpusPlan/v1" | "ImmutableSemanticCorpusPlan/v2" | "ImmutableSemanticCorpusPlan/v3"; content: unknown }> {
   try { return parseImmutableSemanticCorpusPlanRecord(content); } catch { return fail("persisted plan record is invalid or unsupported"); }
 }
 
-function parsePersistedHandoff(content: unknown): Readonly<{ version: "PlannedSemanticCorpusHandoff/v1" | "PlannedSemanticCorpusHandoff/v2"; content: unknown }> {
+function parsePersistedHandoff(content: unknown): Readonly<{ version: "PlannedSemanticCorpusHandoff/v1" | "PlannedSemanticCorpusHandoff/v2" | "PlannedSemanticCorpusHandoff/v3"; content: unknown }> {
   try { return parsePlannedSemanticCorpusHandoffRecord(content); } catch { return fail("persisted handoff record is invalid or unsupported"); }
 }
 

@@ -1,6 +1,6 @@
 # IDSER-012-05-03-01 — Immutable v3 locator persistence
 
-- **State:** `planned`; executable only after explicit GO and `IDSER-012-05-02-02` CK PASS.
+- **State:** `awaiting_review`; implementation checkpoint pending independent CK after explicit GO and `IDSER-012-05-02-02` CK PASS.
 - **Parent map:** [IDSER-012-05-03](IDSER-012-05-03-immutable-v3-multimodal-handoff.md).
 
 ## Sole scope

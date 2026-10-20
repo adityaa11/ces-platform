@@ -31,6 +31,7 @@
     "test:reconciliation-acceptance": "jiti tests/reconciliation-acceptance.integration.test.ts",
     "test:semantic-batch-plan-input": "jiti tests/semantic-batch-plan-input.integration.test.ts",
     "test:immutable-semantic-corpus-plan": "jiti tests/immutable-semantic-corpus-plan.integration.test.ts",
+    "test:immutable-semantic-corpus-plan-v3": "jiti tests/immutable-semantic-corpus-plan-v3.test.ts",
     "test:semantic-batch-plan-ready": "jiti tests/semantic-batch-plan-ready-fixture.integration.test.ts"
   },
   "dependencies": {
