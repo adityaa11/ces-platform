@@ -1,6 +1,6 @@
 # IDSER-012-05-03-02 — V3 operational cutover and reference-only GHR validation
 
-- **State:** `awaiting_review`; implementation checkpoint pending CK. The active planning authority is [contract freeze 001](../../../feedback/IDSER-012-05-03-02-contract-freeze-001.md).
+- **State:** `approved`; effective acceptance passed under the ticket-specific procedural exception. See [final CK verification](../../../feedback/IDSER-BATCH-12-05-03-02-f92dc9b0-verification.md).
 - **Parent map:** [IDSER-012-05-03](IDSER-012-05-03-immutable-v3-multimodal-handoff.md).
 
 ## Sole scope
