@@ -55,7 +55,7 @@ Canonical volumes are protected. Only a PostgreSQL-supported logical snapshot re
 
 ## One active immutable plan/handoff version
 
-Only `ImmutableSemanticCorpusPlan/v3` and `PlannedSemanticCorpusHandoff/v3` remain operational. Remove/disable v1/v2 persistence and active validation/acceptance in the plan/GHR/reconstruction path. Reject mixed versions, never rewrite old immutable rows, and disposition in-flight old work through explicit authorized decision before cutover. Independent `NormalizedDocument V1`, Semantic V1 and the reference-only GHR body contract are separate namespaces; their `v1` labels do not imply legacy.
+Only `ImmutableSemanticCorpusPlan/v3` and `PlannedSemanticCorpusHandoff/v3` remain operational. Remove/disable v1/v2 persistence and active validation/acceptance in the plan/GHR/reconstruction path. Reject mixed versions and never rewrite old immutable rows. Under `IDSER-012-05-03-02`, only an exclusively verified disposable legacy-fixture population may be transactionally deleted; any non-fixture old record requires a separate explicit decision and does not justify a legacy runtime. Independent `NormalizedDocument V1`, Semantic V1 and the reference-only GHR body contract are separate namespaces; their `v1` labels do not imply legacy.
 
 ## SecurityReadiness and hard stops
 

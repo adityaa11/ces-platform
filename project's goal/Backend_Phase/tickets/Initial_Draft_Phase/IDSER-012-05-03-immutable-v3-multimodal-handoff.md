@@ -3,12 +3,12 @@
 - **State:** `planned`; non-executable split map. Do not invoke GO/CK/CFC/HMN here.
 - **Parent:** [IDSER-012-05](IDSER-012-05-multimodal-request-parity-and-sem-execution-completion.md).
 
-The former leaf mixed bounded new-record persistence with operational v1/v2 retirement and GHR active-boundary behavior. Cutover must not be repaired through the persistence contract, and vice versa.
+The former leaf mixed bounded new-record persistence with v1/v2 active-boundary retirement, disposable-fixture cleanup, and GHR active-boundary behavior. Cutover must not be repaired through the persistence contract, and vice versa.
 
 | Order | Executable child | Sole owned outcome |
 | --- | --- | --- |
 | 1 | [IDSER-012-05-03-01](IDSER-012-05-03-01-immutable-v3-locator-persistence.md) | Atomic, idempotent v3 locator/hash/measurement persistence only |
-| 2 | [IDSER-012-05-03-02](IDSER-012-05-03-02-v3-operational-cutover-and-reference-ghr-validation.md) | Explicit old-work disposition, v1/v2 retirement and reference-only v3 GHR validation |
+| 2 | [IDSER-012-05-03-02](IDSER-012-05-03-02-v3-operational-cutover-and-reference-ghr-validation.md) | Verified disposable legacy-fixture cleanup, v3-only active-boundary cutover, canonical Safara verification, and reference-only v3 GHR validation |
 
 Both children require `-05-02-02` CK PASS. Neither authorizes runtime SEM resolution, grants, hydration, transport, dispatch, BSS admission or production GHR delivery.
 
