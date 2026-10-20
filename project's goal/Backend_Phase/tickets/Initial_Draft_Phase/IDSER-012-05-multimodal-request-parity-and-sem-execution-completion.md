@@ -20,15 +20,15 @@ IDSER supplies a **read-only reference-only reconstruction verifier** as the dow
 
 | Sequence | Ticket | Work owned by IDSER |
 | --- | --- | --- |
-| 1 | [IDSER-012-05-01](IDSER-012-05-01-multimodal-canonical-composition-and-estimation.md) | Pure ephemeral image-aware canonical composition, owned/context selection, complete deterministic estimation |
-| 2 | [IDSER-012-05-02](IDSER-012-05-02-multimodal-structural-fit-partition.md) | Image-aware BSS prospective structural-fit and deterministic batch assignment/disposition |
-| 3 | [IDSER-012-05-03](IDSER-012-05-03-immutable-v3-multimodal-handoff.md) | Locator-only immutable plan/handoff v3; retire operational v1/v2; reference-only GHR validation |
-| 4 | [IDSER-012-05-04](IDSER-012-05-04-authorized-multimodal-reconstruction.md) | Read-only reference/locator reconstruction verifier and exact logical request parity |
-| 5 | [IDSER-012-05-07](IDSER-012-05-07-perc-reset-multimodal-terminal-qualification.md) | Real Safara canonical-data planner → v3 handoff → reference-only reconstruction qualification |
+| 1 | [IDSER-012-05-01 split map](IDSER-012-05-01-multimodal-canonical-composition-and-estimation.md) | Canonical composition, then conservative estimation/serialization-policy conformance |
+| 2 | [IDSER-012-05-02 split map](IDSER-012-05-02-multimodal-structural-fit-partition.md) | Inventory/candidate construction, then BSS prospective structural-fit partition |
+| 3 | [IDSER-012-05-03 split map](IDSER-012-05-03-immutable-v3-multimodal-handoff.md) | Bounded v3 persistence, then active-version cutover and reference-only GHR validation |
+| 4 | [IDSER-012-05-04 split map](IDSER-012-05-04-authorized-multimodal-reconstruction.md) | Authorized immutable-reference resolution, then transient parity reconstruction |
+| 5 | [IDSER-012-05-07 split map](IDSER-012-05-07-perc-reset-multimodal-terminal-qualification.md) | Canonical Safara source qualification, then isolated terminal parity qualification |
 
 The previous [IDSER-012-05-05](IDSER-012-05-05-execution-authority-media-hydration-and-preflight.md) and [IDSER-012-05-06](IDSER-012-05-06-visual-semantic-result-completion.md) are **superseded/non-executable in IDSER**, retained as explicit SEM-CUTOVER ownership notes. No GO/CK/CFC/HMN for those two IDSER tickets. Their former runtime and semantic-result rows are **not** IDSER acceptance conditions or proofs that SEM is implemented; the downstream SEM-CUTOVER owner must freeze its own acceptance before execution.
 
-Dependencies: `-05-02` after `-05-01` CK PASS; `-05-03` after `-05-02` PASS; `-05-04` after `-05-03` PASS; terminal `-05-07` after `-05-01` through `-05-04` PASS only. Parent remains non-executable. Each active child enters GO only by explicit invocation and is reviewed solely against its frozen rows; CFC/HMN remain bounded to child governance.
+The five maps above are non-executable. Their executable children form this sequence: `-01-01` → `-01-02` → `-02-01` → `-02-02` → `-03-01` → `-03-02` → `-04-01` → `-04-02` → `-07-01` → `-07-02`. A child enters GO only after its stated predecessor CK PASS. A CFC finding returns solely to the child that owns the failed seam; HMN may resolve only that child's declared authority/operational disposition and cannot waive a sibling's evidence. Parent and split maps remain non-executable.
 
 ## Terminal family acceptance — amended and authoritative
 

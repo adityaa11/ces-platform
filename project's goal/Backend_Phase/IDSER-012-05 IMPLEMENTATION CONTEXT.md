@@ -33,7 +33,7 @@ GHR remains a **reference-only** validation carrier (plan/handoff IDs/hashes) wi
 
 ## 4. Read-only consumer parity within IDSER
 
-`IDSER-012-05-04` supplies a read-only reference reconstruction proof boundary, *not a SEM runtime worker*. Given v3 plan ID/hash + handoff ID/hash and authorized source-read scope, it re-resolves the accepted normalized document and derived-media metadata and invokes the **same pinned shared composer/estimator** to reconstruct the planned request **transiently**. Verify:
+The `IDSER-012-05-04` split map supplies a read-only reference reconstruction proof boundary through `-04-01` authorized resolution and `-04-02` transient parity, *not a SEM runtime worker*. Given v3 plan ID/hash + handoff ID/hash and authorized source-read scope, it re-resolves the accepted normalized document and derived-media metadata and invokes the **same pinned shared composer/estimator** to reconstruct the planned request **transiently**. Verify:
 - Exact owned/context locators and deterministic slot/ordered media selection.
 - Source specification/hash; logical-request/hash; ordered image manifest/hash.
 - Composer/prompt/schema/route/estimator/config identity and exact conservative request bytes, image/text/total tokens, output reservation, resource envelope.
@@ -59,7 +59,7 @@ Terminal Safara proof is **in-memory mixed/image-aware planning -> v3 locator/ha
 
 ## 7. Exit criteria and scope safety
 
-IDSER-012-05 closes only once CK approves active `-05-01`, `-05-02`, `-05-03`, `-05-04` and terminal `-05-07`, using exact canonical Safara source where required. Report:
+IDSER-012-05 closes only once CK approves active executable children `-05-01-01` through `-05-04-02`, `-05-07-01`, and terminal `-05-07-02`, using exact canonical Safara source where required. The `-05-01/-02/-03/-04/-07` records are non-executable split maps. Report:
 - complete deterministic in-memory image-aware candidate sizing and BSS prospective fit;
 - no durable request body or corpus/media payload;
 - locator-only immutable v3 with old-version rejection;
