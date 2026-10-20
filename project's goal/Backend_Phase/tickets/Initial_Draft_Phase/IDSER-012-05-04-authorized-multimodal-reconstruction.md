@@ -7,6 +7,10 @@
 
 Replace the existing v2-only operational reconstruction path with one server-owned reconstruction boundary that accepts **only** an authorized v3 plan and matching v3 handoff, without an interactive browser session. Validate execution identity, project/workspace/bundle/document scope, immutable plan/batch binding, lifecycle/cancellation/stale state, then resolve accepted media metadata and rebuild the `-05-01` canonical request from the persisted selection. Recompute and compare source-specification, manifest, logical-request, estimator/configuration, measurements, and resource envelope before returning a reconstruction result. Do not hydrate media or dispatch.
 
+## Canonical Safara reconstruction oracle
+
+For real-data integration, the server-authorized resolver must redeem the v3 selected locators against the **existing** accepted Safara professional `NormalizedDocument V1` from `atlas-canonical-perception`, source SHA-256 `2f537e8bb7ea4f69fb906af03d0265e2a986a0f15c2dbedbbace5328cd40e7df`, and its five original accepted image manifests, through an isolated snapshot. Never replace source, re-perceive, synthesize media, or use another Compose volume. Reject source/mount/manifest mismatch rather than inventing reconstruction parity. Preserve background authority without a user browser session.
+
 ## Frozen review contract
 
 | ID | PASS iff |

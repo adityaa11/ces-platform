@@ -15,6 +15,10 @@ Add the narrowest `ImmutableSemanticCorpusPlan/v3` and `PlannedSemanticCorpusHan
 | `RC-01205-03-02` | Atomic persistence, rollback, cancellation, replay, and version dispatch remain within existing repository/tables; no media bytes, base64, source content, provider body, grant, or credential persists. |
 | `RC-01205-03-03` | All active plan/handoff writers, readers, dispatchers, and GHR receiver paths accept v3 only; v1/v2 records and mixed parent/child versions fail closed without changing any historical immutable rows/hashes. Text/table behavior is proven on v3, not a v2 compatibility branch. GHR remains reference-only. |
 
+## Protected canonical Safara source
+
+V3 persistence on real accepted source is exercised on a PostgreSQL-supported, isolated writable logical copy of the actual `atlas-canonical-perception` accepted Safara professional `NormalizedDocument V1`, source SHA-256 `2f537e8bb7ea4f69fb906af03d0265e2a986a0f15c2dbedbbace5328cd40e7df`; five original accepted visual manifest identities must remain unchanged. Verify the actual Compose-owned PostgreSQL/asset volumes read-only first. Never migrate, reseed, alter, or mount the canonical live PostgreSQL volume into a second DB server; no repository/golden/synthetic document can replace terminal fixture.
+
 ## Retirement prerequisite
 
 Before cutting over active APIs, run a read-only inventory of v1/v2 persisted plans/handoffs and linked in-flight work in the target environment. This repository review alone cannot prove that those rows are absent. Nonempty legacy inventory requires explicit authorized disposition (retire/cancel or replan from original accepted source) without rewriting immutable contents or creating a compatibility executor. Test that implicit v1 persistence, explicit v1/v2 persistence, mixed record versions, and legacy GHR acceptance are all rejected. Remove old-version support exports from production dependency surfaces.

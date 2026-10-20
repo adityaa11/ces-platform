@@ -7,6 +7,12 @@
 
 Complete the existing response parser, REL-03 projection, finalizer, staging, and composite replay path for authorized visual result slots. A selected independently owned visual is extraction-eligible and yields exactly one valid `candidate` or bounded `non_fact` accounting result; selected contextual media remains context-only. Permit image-only/unlabelled evidence without fabricated text: retain verified locator grounding and optional absent `source_wording`, plus normalized meaning, payload, uncertainty, questions, and `needs_resolution`.
 
+## Upstream contract and actual visual provenance
+
+-05-01 owns the *frozen* request/slot/manifest contract: independently owned selected visuals are extraction-eligible `owned_source` with verified media even while `pending_unexamined_visual` remains an examination state; selected contextual visuals remain context-only and may still be attached. Parser, REL-03 and finalizer must accept those specific source slots **without changing** packet bytes/hashes after -05-01/-05-03 qualification. No requirement for a fabricated label or trusted textual `source_wording` on visual-only candidates; use verified visual locator evidence. Selected contextual images may not produce independent candidate source_results.
+
+Terminal image acceptance must use the *original* five Safara professional PNGs from the existing accepted `NormalizedDocument V1` in `atlas-canonical-perception` (SHA-256 `2f537e8bb7ea4f69fb906af03d0265e2a986a0f15c2dbedbbace5328cd40e7df`) via an isolated qualification snapshot. Synthetic provider responses may test semantic result branches, but cannot substitute for the actual normalized source or original image attachments.
+
 ## Frozen review contract
 
 | ID | PASS iff |

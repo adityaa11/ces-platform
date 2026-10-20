@@ -7,6 +7,12 @@
 
 Project accepted derived-media dimensions and complete verified metadata into IDSER inventory. Replace only the unconditional visual `unexamined / image_accounting_unavailable` rule with the established structural-fit algorithm over the `-05-01` complete candidate request. Test full tokens, serialized bytes, media count, total media bytes, and dimensions through the existing BSS prospective structural-fit boundary. Split fitting batches deterministically; record one explicit disposition for every visual that cannot fit alone or lacks valid accepted identity.
 
+## Canonical Safara selection and provenance
+
+The five-visual real-data qualification must resolve the **existing**, accepted `NormalizedDocument V1` for `Safara_Buyer_Business_PRD_Professional.pdf`, SHA-256 `2f537e8bb7ea4f69fb906af03d0265e2a986a0f15c2dbedbbace5328cd40e7df`, from Compose project `atlas-canonical-perception` and its inspected actual PostgreSQL `postgres-data` and media `atlas-data` mounts. Expected historical recorded inventory is 12 pages/254 text blocks/4 tables/5 visuals and 5 accepted PNG assets, to be freshly verified read-only. Use a safe isolated copy for integration writes; no generated source or alternate Safara fixture can stand in. Source/mount/cache mismatch blocks real-data qualification. Synthetic fixtures remain unit-only.
+
+Apply -05-01's **frozen extraction-eligible owned versus context-only visual role and attachment selection**; count images independent of `pending_unexamined_visual` status, never route based on `pending_authorized_media` alone.
+
 ## Frozen review contract
 
 | ID | PASS iff |
