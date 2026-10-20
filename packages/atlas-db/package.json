@@ -33,6 +33,7 @@
     "test:immutable-semantic-corpus-plan": "jiti tests/immutable-semantic-corpus-plan.integration.test.ts",
     "test:immutable-semantic-corpus-plan-v3": "jiti tests/immutable-semantic-corpus-plan-v3.test.ts",
     "test:semantic-batch-v3-reference-resolution": "jiti tests/semantic-batch-v3-reference-resolution.test.ts",
+    "test:semantic-batch-v3-reference-resolution-integration": "jiti tests/semantic-batch-v3-reference-resolution.integration.test.ts",
     "test:semantic-batch-plan-ready": "jiti tests/semantic-batch-plan-ready-fixture.integration.test.ts"
   },
   "dependencies": {
