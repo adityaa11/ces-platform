@@ -1,7 +1,9 @@
 # GO checkpoint: IDSER-012-05-03-02
 
 - **Ticket:** [IDSER-012-05-03-02](../Backend_Phase/tickets/Initial_Draft_Phase/IDSER-012-05-03-02-v3-operational-cutover-and-reference-ghr-validation.md)
+- **Batch:** `IDSER-BATCH-12-05-03-02`
 - **State:** `awaiting_review`
+- **Implementation commit:** `aaf142a54ecb4bc354747b8c7053c7621604e6ae` (`feat(idser): complete v3 operational cutover`)
 - **Planning authority:** [contract freeze 001](IDSER-012-05-03-02-contract-freeze-001.md)
 - **Predecessor:** `IDSER-012-05-03-01` CK PASS, reviewed commit `ed07f338daf5e7158a5459b427f0fda2f329589b`.
 - **Maintenance authority:** operator decision `AUTHORIZE_BOUNDED_FIXTURE_CLEANUP` in this task, 2026-10-21. It authorized only the four verified v2 fixture plan/handoff pairs.
