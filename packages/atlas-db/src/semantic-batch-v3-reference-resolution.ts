@@ -127,7 +127,7 @@ export class PostgresSemanticBatchV3ReferenceResolver {
       JOIN atlas.extraction_bundle bundle ON bundle.id=member.bundle_id AND bundle.project_id=member.project_id AND bundle.workspace_id=member.workspace_id
       JOIN atlas.document document ON document.id=member.document_id AND document.project_id=member.project_id AND document.workspace_id=member.workspace_id
       JOIN atlas.document_perception_execution execution ON execution.id=plan.immutable_content->'source'->>'perceptionExecutionId' AND execution.artifact_id=document.id AND execution.source_sha256=document.source_sha256
-      JOIN atlas.normalized_document_cache cache ON cache.cache_key=plan.immutable_content->'source'->>'normalizedDocumentRef' AND cache.source_sha256=document.source_sha256 AND cache.invalidated_at IS NULL
+      JOIN atlas.normalized_document_cache cache ON cache.cache_key=plan.immutable_content->'source'->>'normalizedDocumentRef' AND cache.source_sha256=document.source_sha256 AND cache.capability_identity=execution.capability_identity AND cache.invalidated_at IS NULL
       LEFT JOIN atlas.semantic_corpus_plan_cancellation cancellation ON cancellation.plan_id=plan.id
       WHERE plan.id=$3 AND plan.plan_hash=$4 AND plan.project_id=$5 AND plan.workspace_id=$6 AND plan.bundle_id=$7 AND plan.document_id=$8
         AND handoff.id=$9 AND handoff.batch_id=$10 AND handoff.handoff_hash=$11
