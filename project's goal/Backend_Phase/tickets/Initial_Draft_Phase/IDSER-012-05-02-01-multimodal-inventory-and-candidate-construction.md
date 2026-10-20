@@ -1,6 +1,6 @@
 # IDSER-012-05-02-01 — Multimodal inventory and candidate construction
 
-- **State:** `planned`; executable only after explicit GO and `IDSER-012-05-01-02` CK PASS.
+- **State:** `awaiting_review`; implemented after explicit GO and `IDSER-012-05-01-02` CK PASS.
 - **Parent map:** [IDSER-012-05-02](IDSER-012-05-02-multimodal-structural-fit-partition.md).
 
 ## Sole scope
