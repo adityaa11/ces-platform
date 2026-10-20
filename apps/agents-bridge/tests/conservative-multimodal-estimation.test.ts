@@ -8,6 +8,7 @@ import { anomanMultipartSerializationPolicy, projectAnomanMultipartRequestBytes,
 const sourceSha256 = "a".repeat(64);
 const assetSha256 = "b".repeat(64);
 const visual = { pageNumber: 1, locatorId: "visual", assetRef: "derived/12345678-1234-1234-1234-123456789abc", sourceSha256, assetSha256, mediaType: "image/png" as const, width: 769, height: 768, byteLength: 10 };
+const contextVisual = { pageNumber: 1, locatorId: "context-visual", assetRef: "derived/87654321-4321-4321-4321-cba987654321", sourceSha256, assetSha256: "c".repeat(64), mediaType: "image/png" as const, width: 768, height: 769, byteLength: 11 };
 const document = () => ({
   version: "v1" as const,
   executionId: "accepted-execution",
@@ -15,7 +16,7 @@ const document = () => ({
   sourceSha256,
   perception: { capability: "atlas.document.perceive" as const, contractVersion: "v1" as const },
   provider: { name: "docling", processor: "pdf", executionId: "provider-execution", processedAt: "2026-10-20T00:00:00.000Z" },
-  pages: [{ number: 1, textBlocks: [{ id: "text", text: "Source-grounded scope." }], tables: [], visualRegions: [{ id: "visual", label: "Accepted visual", assetRef: visual.assetRef }] }],
+  pages: [{ number: 1, textBlocks: [{ id: "text", text: "Source-grounded scope." }], tables: [], visualRegions: [{ id: "visual", label: "Accepted visual", assetRef: visual.assetRef }, { id: "context-visual", label: "Accepted context visual", assetRef: contextVisual.assetRef }] }],
 });
 const configuration = (framingAllowanceBytes = 2_048) => ({
   estimator: { identity: "idser-multimodal-estimator", version: "v1" },
@@ -45,14 +46,19 @@ test("the pinned serializer projection equals the adapter's data-URL JSON bytes"
   assert.equal(projected, Buffer.byteLength(serializeAnomanMultipartRequest(serializerPolicy.model, messages), "utf8"));
 });
 
-function input(locators = [{ pageNumber: 1, locatorType: "visual_region" as const, locatorId: "visual" }]) {
+function input(
+  ownedLocators = [{ pageNumber: 1, locatorType: "visual_region" as const, locatorId: "visual" }],
+  contextOnlyLocators: readonly { pageNumber: number; locatorType: "visual_region"; locatorId: string }[] = [],
+) {
   const accepted = document();
-  const includesVisual = locators.some((locator) => locator.locatorType === "visual_region");
-  const composition = composeCanonicalMultimodalSource({ document: accepted, ownedLocators: locators, contextOnlyLocators: [], verifiedDerivedImages: includesVisual ? [visual] : [] });
+  const selectedLocators = [...ownedLocators, ...contextOnlyLocators];
+  const selectedVisuals = [visual, contextVisual].filter((candidate) => selectedLocators.some((locator) => locator.locatorType === "visual_region" && locator.locatorId === candidate.locatorId && locator.pageNumber === candidate.pageNumber));
+  const composition = composeCanonicalMultimodalSource({ document: accepted, ownedLocators, contextOnlyLocators, verifiedDerivedImages: selectedVisuals });
   const candidatePacket = buildStepwiseSourcePacket({
     document: accepted,
-    ownedLocators: locators,
-    assetIdentities: includesVisual ? [{ pageNumber: visual.pageNumber, locatorId: visual.locatorId, assetRef: visual.assetRef, sha256: visual.assetSha256, sourceSha256 }] : [],
+    ownedLocators,
+    contextOnlyLocators,
+    assetIdentities: selectedVisuals.map((candidate) => ({ pageNumber: candidate.pageNumber, locatorId: candidate.locatorId, assetRef: candidate.assetRef, sha256: candidate.assetSha256, sourceSha256 })),
   });
   return { composition, candidatePacket };
 }
@@ -73,6 +79,24 @@ test("measures image-only, mixed, and text-only canonical compositions exactly o
   assert.equal(measure(mixed).selectedImageCount, 1);
   assert.equal(measure(textOnly).selectedImageCount, 0);
   assert.equal(measure(textOnly).estimate.components.estimatedImageTokens, 0);
+});
+
+test("measures context-only and owned-plus-context PNGs exactly once", () => {
+  const contextOnly = input([], [{ pageNumber: 1, locatorType: "visual_region", locatorId: "context-visual" }]);
+  const ownedPlusContext = input(
+    [{ pageNumber: 1, locatorType: "visual_region", locatorId: "visual" }],
+    [{ pageNumber: 1, locatorType: "visual_region", locatorId: "context-visual" }],
+  );
+  const measure = (value: ReturnType<typeof input>) => estimateConservativeMultimodalRequest({ ...value, effectiveRoute: route(), serializerPolicy, configuration: configuration() });
+  const assertComplete = (estimate: ReturnType<typeof measure>, expectedCount: number, expectedBytes: number, expectedImageTokens: number) => {
+    assert.equal(estimate.selectedImageCount, expectedCount);
+    assert.equal(estimate.selectedImageBytes, expectedBytes);
+    assert.equal(estimate.estimate.components.estimatedImageTokens, expectedImageTokens);
+    assert.ok(estimate.estimate.requestBytes >= estimate.projectedTransportBytes);
+    assert.equal(estimate.estimate.requestResourceEnvelope.tokenUnits, estimate.estimate.inputTokens + estimate.estimate.reservedOutputTokens);
+  };
+  assertComplete(measure(contextOnly), 1, contextVisual.byteLength, 1_032);
+  assertComplete(measure(ownedPlusContext), 2, visual.byteLength + contextVisual.byteLength, 2_064);
 });
 
 test("rejects serializer undercount, drift, malformed canonical input, and route-bound violations", () => {

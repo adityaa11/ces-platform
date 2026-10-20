@@ -110,7 +110,11 @@ function validateConfiguration(configuration: CompleteSemCandidateRequestEstimat
 
 function selectedMediaAccounting(packet: StepwiseSourcePacket, selectedMedia: readonly SelectedSemMediaAllowance[]) {
   const expected = new Map(packet.sourceSlots
-    .filter((slot) => slot.role === "pending_authorized_media" && slot.assetIdentity)
+    // Canonical composition preserves both owned and context-only selected
+    // visuals.  Their ownership changes semantics upstream, not whether a
+    // selected PNG must be conservatively accounted for in this pure request
+    // estimate.
+    .filter((slot) => slot.locatorType === "visual_region" && slot.assetIdentity)
     .map((slot) => [slot.slot, slot.assetIdentity!]));
   const selected = new Map<string, SelectedSemMediaAllowance>();
   for (const media of selectedMedia) {
