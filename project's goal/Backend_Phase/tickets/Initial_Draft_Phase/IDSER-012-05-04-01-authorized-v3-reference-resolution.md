@@ -1,6 +1,6 @@
 # IDSER-012-05-04-01 — Authorized v3 reference resolution
 
-- **State:** `awaiting_review`; implementation commit and review evidence are recorded in the GO checkpoint.
+- **State:** `approved`; **Review batch:** `IDSER-BATCH-12-05-04-01` (`PASS`).
 - **Parent map:** [IDSER-012-05-04](IDSER-012-05-04-authorized-multimodal-reconstruction.md).
 
 ## Sole scope
