@@ -1,6 +1,6 @@
 # IDSER-012-05-02-01 — Multimodal inventory and candidate construction
 
-- **State:** `awaiting_review`; implemented after explicit GO and `IDSER-012-05-01-02` CK PASS.
+- **State:** `approved`; implemented after explicit GO and CK `PASS` for reviewed commit `5dd966200fc038af944badc9c497d1a414cd250a`.
 - **Parent map:** [IDSER-012-05-02](IDSER-012-05-02-multimodal-structural-fit-partition.md).
 
 ## Sole scope
