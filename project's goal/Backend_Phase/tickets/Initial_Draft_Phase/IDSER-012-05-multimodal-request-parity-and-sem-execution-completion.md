@@ -1,79 +1,73 @@
-# IDSER-012-05 — Multimodal request parity and SEM execution completion
+# IDSER-012-05 — Image-aware semantic batch planning and locator-only handoff
 
-- **State:** `planned`; non-executable family/traceability map. No GO, CK, CFC, or HMN workflow may select this parent.
+- **State:** `planned`; non-executable family/traceability map. Do not invoke GO/CK/CFC/HMN on the parent.
 - **Family batch:** `IDSER-BATCH-12-05`.
-- **Parent context:** [IDSER-012-05 implementation context](../../IDSER-012-05%20IMPLEMENTATION%20CONTEXT.md).
-- **Baseline:** `codex/new-atlas-backend` at `69807ac5d22f3a54ae22f2bed19c701be1aa6038`.
-- **Predecessors:** approved IDSER-012-04 text/table planning, immutable-v2 handoff, reconstruction, and PERC-RESET accepted `NormalizedDocument V1` / five-visual derived-media evidence.
+- **Authoritative context:** [IDSER-012-05 implementation context](../../IDSER-012-05%20IMPLEMENTATION%20CONTEXT.md).
+- **Planning baseline:** approved IDSER-012-04 shared source-packet, estimator, BSS prospective structural-fit, immutable persistence, GHR reference-only fixture, and read-only reconstruction.
+- **Source baseline:** approved PERC-RESET RUN-003 accepted `NormalizedDocument V1` and verified Safara-derived media.
 
-## Split decision and executable children
+## Non-negotiable ownership boundary
 
-This work crosses seven independently changeable authority and proof seams: canonical image composition/measurement, structural partitioning, immutable persistence, authorized reconstruction, execution authority/hydration/preflight, semantic result acceptance, and real-data composition qualification. A finding in any seam would otherwise force GO, CK, CFC, or HMN to reopen unrelated contracts and evidence. It is therefore too large for one bounded workflow cycle.
+**IDSER is the semantic batch planner, not the semantic executor.** For each proposed batch it assembles a complete, canonical *in-memory* SEM logical request, including selected text/table source slots and ordered selected visual descriptors; estimates request bytes, text/image input tokens, output reservation and BSS resource demand; determines structural fit; partitions; and persists **only reference-based immutable reconstruction metadata**.
 
-| Order | Executable child | Sole implementation/proof seam | Family obligations discharged |
-| --- | --- | --- | --- |
-| 1 | [IDSER-012-05-01](IDSER-012-05-01-multimodal-canonical-composition-and-estimation.md) | Pure canonical selected-media manifest, estimator, and complete request measurement | composer/estimator portions of `RC-01205-01`, `03`, `05` |
-| 2 | [IDSER-012-05-02](IDSER-012-05-02-multimodal-structural-fit-partition.md) | Planner inventory, deterministic structural-fit partitioning, and explicit visual disposition | `RC-01205-02` and planner portions of `RC-01205-01` |
-| 3 | [IDSER-012-05-03](IDSER-012-05-03-immutable-v3-multimodal-handoff.md) | Sole operational v3 record/persistence contract and v1/v2 retirement | persistence and legacy-rejection portions of `RC-01205-03`, `08` |
-| 4 | [IDSER-012-05-04](IDSER-012-05-04-authorized-multimodal-reconstruction.md) | Read-only, server-authorized reconstruction and parity verification | reconstruction portions of `RC-01205-03` |
-| 5 | [IDSER-012-05-05](IDSER-012-05-05-execution-authority-media-hydration-and-preflight.md) | Execution-bound authority, selected-media redemption/hydration, and preflight | `RC-01205-04`, execution portion of `RC-01205-05` |
-| 6 | [IDSER-012-05-06](IDSER-012-05-06-visual-semantic-result-completion.md) | Parser, REL-03, finalizer, staging, and replay for visual source results | `RC-01205-06` |
-| 7 | [IDSER-012-05-07](IDSER-012-05-07-perc-reset-multimodal-terminal-qualification.md) | PERC-RESET five-visual composition evidence and unchanged text/table regression | `RC-01205-07`, remaining `RC-01205-08`, terminal family proof |
+Persistent `ImmutableSemanticCorpusPlan/v3` and `PlannedSemanticCorpusHandoff/v3` contain selected owned/context locators, source and accepted-media references/commitments, versions, identities, hashes, conservative measurements, and structural-fit provenance. They **never** contain a serialized SEM request, compiled prompt, provider JSON body, source text, table content, media bytes, base64, grants, credentials, or unbounded corpus material. A media manifest is composed transiently and committed by deterministic identity/hash, not stored as a copied provider payload. Re-read authoritative accepted derived-asset metadata when reconstructing.
 
-`-05-01` is first. `-05-02` requires `-05-01` CK `PASS`; `-05-03` requires `-05-01` and `-05-02`; `-05-04` requires `-05-03`; `-05-05` requires `-05-04`; `-05-06` requires `-05-05`; and `-05-07` requires all six predecessors. The last child is the only family closure and composes approved interfaces only. It must return a defect to its owning child rather than repair it.
+IDSER supplies a **read-only reference-only reconstruction verifier** as the downstream handoff proof: under an authorized source-read boundary, a consumer can deterministically recompute the identical logical request, ordered selected visual manifest, hashes and resource measurements from persisted v3 locators and accepted `NormalizedDocument V1`. This is *not* SEM worker execution or authorization of provider send.
 
-Each child remains `planned` until an explicit GO. CK reviews only its frozen rows. CFC may remediate only a cited row within that child. HMN may resolve only a precise, unresolved authority or contract incompatibility in that child; it cannot waive evidence, transfer work to a sibling, activate a provider, change production routing, perform BSS admission, publish semantic truth, or change reconciliation, Master, or CES.
+**SEM-CUTOVER owns:** adopting v3 handoffs in the ordinary SEM runtime; server execution identity, BSS admitted-work linkage, scoped grants, image-byte hydration and attachment, provider preflight and dispatch, response-envelope/prompt execution semantics, REL-03, parser, visual semantic finalizer, staging and replay. IDSER requires a compatible stable *composition/serialization-policy contract* for conservative sizing but does not implement or test provider requests over HTTP. No pipeline, estimator, serializer, capacity controller, job or GHR route is duplicated.
 
-## Preserved family contract
+## Executable family and handoff disposition
 
-The terminal outcome remains: **IDSER planned request = SEM reconstructed request = SEM dispatched request**, except runtime-only execution authority, deadlines, and image-byte hydration. Every selected verified PNG retains identity, selected order, integrity metadata, resource accounting, and semantic source accounting. `imageTpm: unknown` remains provenance, never automatic multipart denial where route capability and structural bounds fit.
+| Sequence | Ticket | Work owned by IDSER |
+| --- | --- | --- |
+| 1 | [IDSER-012-05-01](IDSER-012-05-01-multimodal-canonical-composition-and-estimation.md) | Pure ephemeral image-aware canonical composition, owned/context selection, complete deterministic estimation |
+| 2 | [IDSER-012-05-02](IDSER-012-05-02-multimodal-structural-fit-partition.md) | Image-aware BSS prospective structural-fit and deterministic batch assignment/disposition |
+| 3 | [IDSER-012-05-03](IDSER-012-05-03-immutable-v3-multimodal-handoff.md) | Locator-only immutable plan/handoff v3; retire operational v1/v2; reference-only GHR validation |
+| 4 | [IDSER-012-05-04](IDSER-012-05-04-authorized-multimodal-reconstruction.md) | Read-only reference/locator reconstruction verifier and exact logical request parity |
+| 5 | [IDSER-012-05-07](IDSER-012-05-07-perc-reset-multimodal-terminal-qualification.md) | Real Safara canonical-data planner → v3 handoff → reference-only reconstruction qualification |
 
-No child may create a visual-only planner, second estimator, media queue, GHR route, capacity controller, semantic pipeline, durable media-byte store, raw source/provider-body persistence, or live-provider call. BSS remains capacity/admission authority; GHR remains reference-only; existing grants, lifecycle/replay protections, persistence tables, and canonical composition path remain authoritative. Historical v1/v2 record bytes and hashes remain immutable if already persisted, but production writers, operational readers, GHR receiver, reconstructor, and SEM dispatch must reject v1/v2 plan/handoff versions. No runtime backward-compatibility or fallback is authorized.
+The previous [IDSER-012-05-05](IDSER-012-05-05-execution-authority-media-hydration-and-preflight.md) and [IDSER-012-05-06](IDSER-012-05-06-visual-semantic-result-completion.md) are **superseded/non-executable in IDSER**, retained as explicit SEM-CUTOVER ownership notes. No GO/CK/CFC/HMN for those two IDSER tickets. Their former runtime and semantic-result rows are **not** IDSER acceptance conditions or proofs that SEM is implemented; the downstream SEM-CUTOVER owner must freeze its own acceptance before execution.
 
-Acceptance IDs `RC-01205-01` through `RC-01205-08`, the closure matrix, evidence exclusions, and hard stops remain binding as amended by the single-active-version rule below. This explicitly supersedes any prior requirement to execute, reconstruct, or accept v1/v2 corpus plans for backward compatibility; it does not waive source integrity or immutable historical evidence. `-05-07` proves every original row through child evidence plus its explicit five-visual composition observations; it does not make a transport-only success a PASS.
+Dependencies: `-05-02` after `-05-01` CK PASS; `-05-03` after `-05-02` PASS; `-05-04` after `-05-03` PASS; terminal `-05-07` after `-05-01` through `-05-04` PASS only. Parent remains non-executable. Each active child enters GO only by explicit invocation and is reviewed solely against its frozen rows; CFC/HMN remain bounded to child governance.
 
-| ID | Preserved PASS condition |
+## Terminal family acceptance — amended and authoritative
+
+| ID | PASS iff |
 | --- | --- |
-| `RC-01205-01` | Text-only behavior is unchanged; mixed and image-only requests have deterministic complete token/byte measurements, with output reservation counted exactly once. |
-| `RC-01205-02` | Valid visuals enter eligible inventory; five real fixture visuals receive explicit deterministic batch treatment; count/byte/dimension limits are respected; indivisible visuals receive explicit reasons. |
-| `RC-01205-03` | Every persisted multimodal batch proves equality of planned and reconstructed logical-request hash, media-manifest hash, source-specification hash, request bytes, input tokens, and resource envelope. Reordered, substituted, missing, duplicate, stale, foreign, and estimator-mismatched media fail closed. |
-| `RC-01205-04` | Under valid server execution authority, SEM redeems and transmits exactly the selected verified images in order, with matching SHA-256, dimensions, and byte lengths; no dispatch occurs if validation fails. |
-| `RC-01205-05` | `imageTpm: unknown` does not block a valid image-bearing request solely for being unknown; capability and structural violations still reject before dispatch. |
-| `RC-01205-06` | Image-only candidate, image-only `non_fact`, and mixed owned/contextual visual responses pass the production parser, REL-03 projection, finalizer, staging, and replay path with accurate evidence locators. Foreign or context-only-as-owned slots fail closed. |
-| `RC-01205-07` | Fresh read-only verification of the existing `atlas-canonical-perception` accepted Safara professional `NormalizedDocument V1`, exact source SHA, 5 accepted PNG assets, and actual Compose-owned data mounts precedes isolated-copy planning and ordinary-worker fake-transport execution. No substitute source satisfies qualification. |
-| `RC-01205-08` | Text/table functionality remains passing through the sole v3 plan/handoff path, as do authorization, BSS, grants, cancellation, and replay. Operational v1/v2 persistence, GHR acceptance, reconstruction, and dispatch are rejected with explicit negative tests; existing immutable old rows are not rewritten. |
+| `RC-01205-01` | In-memory text-only, mixed, and image-only requests are canonically composed; selected owned/context PNGs count once; token/byte demand is deterministic, overflow-safe and includes output reservation once. |
+| `RC-01205-02` | Accepted visuals are inventoried and deterministically allocated into fitting batches or explicitly fail-closed; no silent omission, duplicate ownership, count/size/dimension breach, or `imageTpm: unknown` auto-denial. |
+| `RC-01205-03` | Persist only immutable locator/reference/hash/measurement metadata; v3 reconstruction from accepted data produces exactly the planned logical-request, source-specification and media-manifest hashes, ordered selection and resource measurements. |
+| `RC-01205-04` | Read-only reconstruction verifies scope, source/asset integrity, profile/estimator/route policy identities, structural snapshot, immutable batch binding; stale, foreign, missing, reordered, changed or mixed-version input fails closed *before any SEM execution*. |
+| `RC-01205-05` | Provider-specific image TPM stays `unknown` when unknown; IDSER uses a versioned internal image-token estimation policy rather than fabricated provider quota; BSS prospective structural-fit remains the boundary. |
+| `RC-01205-06` | Formal downstream SEM-CUTOVER handoff is documented: exact v3 reference fields, reconstructed logical request/manifest contract, selected-only media expectation, and outstanding SEM-owned hydration/transport/semantic-result obligations. **No SEM execution PASS is implied.** |
+| `RC-01205-07` | On a protected isolated logical copy of the **existing canonical Safara professional** accepted `NormalizedDocument V1`, all five actual visual locators and their verified accepted derived-media identities receive explicit planner disposition, and every persisted selected batch passes read-only exact parity. Synthetic-only proof cannot PASS. |
+| `RC-01205-08` | Text/table planning, immutable replay/cancellation, source authorization, reference-only GHR validation, and BSS read-only policy protections continue; operational plan/handoff v1/v2 paths reject and v3 is sole active version. Zero live GHR/BSS admission, SEM work, provider calls, or canonical-volume writes. |
 
-The terminal evidence must record the reviewed commit; contract/record versions; estimator and route-capability identities; redacted request/manifest identities; request/resource measurements; BSS structural outcome; handoff/reconstruction comparisons; grant/hydration verification; parser/finalizer/replay results; and five-visual coverage. It excludes raw corpus, image bytes, base64, provider request bodies, grants, credentials, and source contents. A new production rejection condition must be added to the child closure evidence before CK.
+Terminal multimodal CK PASS requires at least one **actual accepted Safara PNG** selected in a fitting in-memory batch, with all five visuals dispositioned. If no verified real image fits under legitimate structural policy, report **BLOCKED_IMAGE_STRUCTURAL_FIT** (or the precise source/policy blocker), not CK PASS. No image hydration or SEM attachment is authorized.
 
-## Single Active Version — Binding Retirement Rule
+## Canonical Safara PERC-RESET data binding
 
-**One active immutable corpus-plan family:** `ImmutableSemanticCorpusPlan/v3` with `PlannedSemanticCorpusHandoff/v3`. The version transition is a one-time cutover before production multimodal activation, not a three-version runtime dispatcher. Once IDSER-012-05 is accepted, new planning, persistence, GHR validation/issuance, background reconstruction, SEM execution, and retry/replay for this record family must accept **v3 only**. v1 and v2 inputs are explicitly unsupported, not processed in a compatibility branch and not silently upgraded.
+The only terminal real-data oracle is the existing accepted RUN-003 `Safara_Buyer_Business_PRD_Professional.pdf` of project `safara-professional-perception`, source SHA-256 `2f537e8bb7ea4f69fb906af03d0265e2a986a0f15c2dbedbbace5328cd40e7df`. Recorded historical counts: **12 pages / 254 text blocks / 4 tables / 5 visuals / 5 accepted verified PNG assets**. Reverify the actual Docker environment before any PASS.
 
-**Retire, do not support:** remove/disable the active v1/v2 writers (`persistV1`, `persistV2`, implicit v1 default), version-switching parser acceptance, v1/v2 GHR validation, v2-specific reconstruction, and exports that keep them callable as a production alternative. Any old plan/handoff presented at an execution boundary must fail closed with a typed, observable unsupported/retired-plan-version disposition, before grants, reservations, GHR dispatch, or provider calls. No translation, relabeling, automatic replay, or new old-version writes.
+`atlas-canonical-perception` is the **Docker Compose project** (not a single volume): inspect actual Compose-owned `postgres-data` for accepted `NormalizedDocument V1` and manifest, plus `atlas-data` for original derived assets. Source/manifest/asset identity must match using authorized read-only access. Do not replace with `docs/example`, golden bundles, synthetic fixtures, another Safara PDF/volume, or a new Docling run. A missing/mismatched source, mount, accepted cache, or image asset => `BLOCKED_CANONICAL_SAFARA_SOURCE`, not PASS.
 
-**Historical records are not runtime compatibility:** never mutate/delete preexisting immutable v1/v2 contents or their hashes to pretend they are v3. Before cutover, inventory v1/v2 rows and unfinished dependent work in the actual target environment using authorized read-only checks. If such work exists, record an explicit operator/HMN disposition (cancel/retire or replan from accepted canonical source under v3) before activating the cutover. No migration that silently rewrites immutable plan contents. An archival/offline forensic record, if required, must not expose v1/v2 processing through operational APIs.
+Canonical volumes are protected. Only a PostgreSQL-supported logical snapshot restored to an isolated writable DB/volume may be used for v3 persistence/replay tests. Do not mount the live PG data directory in a second PG server, run `down -v`, migrate/reset canonical DB, or modify canonical image storage.
 
-**Version namespace is scoped:** the above retires only versions of `ImmutableSemanticCorpusPlan` and `PlannedSemanticCorpusHandoff`. `NormalizedDocument V1`, `Semantic V1`, `SemanticBatchPlanInput/v1`, `SemanticBatchPlanReady/v1`, and independent estimator/skill versions are separate contracts; their `v1` labels are not automatic evidence of legacy. Preserve them if they are the sole current contract. The reference-only GHR body may retain its own version provided it validates v3 plan/handoff only.
+## One active immutable plan/handoff version
 
-**No mixed-version active state:** validate the parent and every child version jointly. Treat wrong/mixed versions as unsupported even if hashes appear valid. Existing text/table jobs must execute through the v3 path, not old v2 reconstruction. This rule is part of terminal RC-01205-08 acceptance and is not deferable to another ticket.
+Only `ImmutableSemanticCorpusPlan/v3` and `PlannedSemanticCorpusHandoff/v3` remain operational. Remove/disable v1/v2 persistence and active validation/acceptance in the plan/GHR/reconstruction path. Reject mixed versions, never rewrite old immutable rows, and disposition in-flight old work through explicit authorized decision before cutover. Independent `NormalizedDocument V1`, Semantic V1 and the reference-only GHR body contract are separate namespaces; their `v1` labels do not imply legacy.
 
-## Binding image contract, ordinary SEM parity, and canonical Safara data
+## SecurityReadiness and hard stops
 
-The linked [IDSER-012-05 implementation context](../../IDSER-012-05%20IMPLEMENTATION%20CONTEXT.md) is an actual required file in this branch and binds every child. The **only real-data terminal qualification source** is the existing accepted PERC-RESET `NormalizedDocument V1` for `Safara_Buyer_Business_PRD_Professional.pdf`, project `safara-professional-perception`, SHA-256 `2f537e8bb7ea4f69fb906af03d0265e2a986a0f15c2dbedbbace5328cd40e7df`, historically recorded as 12 pages, 254 text blocks, 4 tables, 5 visual locators and 5 accepted PNG derived assets. Actual local existence must be reverified read-only before qualification.
+- `SR-01205-B1`: BSS owns capacity/admission; IDSER only reads prospective structural policy.
+- `SR-01205-B2`: Atlas accepted NormalizedDocument/media authority, immutable v3 locators and scope remain authoritative.
+- `SR-01205-B3`: GHR remains reference-only; SEM owns runtime authority/media and semantic results.
+- `SR-01205-T1`: accepted descriptors → transient sizing; `T2`: locators/hashes → authorized read-only reconstruction; `T3`: future SEM consumer boundary is an explicit unsatisfied downstream contract.
+- `SR-01205-C1`: forbid durable request/source/media bytes, duplicate processing paths and unapproved capacity policy.
+- `SR-01205-C2`: prohibit browser-session authority being treated as a durable SEM execution grant.
+- `SR-01205-R1`: deterministic mixed/visual planning; `R2`: v3 immutable/reconstruction negatives; `R3`: real Safara isolated parity and no-side-effect evidence.
+- `SR-01205-U1`: image token heuristic is internal accounting, never a stated Anoman quota.
 
-`atlas-canonical-perception` is the **Docker Compose project name**, not a single Docker volume. Inspect the real Compose-labelled `postgres-data` PostgreSQL mount and `atlas-data` derived-asset mount in the current Docker context. Real-data qualification reads canonical data without mutation and performs writes/migrations/worker fake-transport tests in an isolated PostgreSQL-supported logical copy with verified asset access. No alternate Safara PDF, repository golden fixture, generated NormalizedDocument, regenerated Docling run, other Compose project/volume or fabricated images can replace that source for PASS. If absent/mismatched, stop `BLOCKED_CANONICAL_SAFARA_SOURCE`; never auto-create a replacement.
+Evidence contains only redacted identifiers, code commit, hashes, versions, counts, demands, BSS structural outcomes, accepted source metadata and no-effect checks. Exclude provider body, prompt, raw corpus, media bytes, base64, grants and credentials.
 
-`-05-01` must **freeze selected owned/context image role, pending-examination status, source-slot hash and selection-based attachment accounting before -05-03**; `-05-06` consumes this exact contract without retroactively changing it. `-05-01` and `-05-05` prove full Anoman actual JSON serialization via fake fetch stays within conservative planned bytes, with exact adapter/route/config binding. `-05-05` must test the **ordinary SEM worker** consuming selected v3 batches, not merely a helper or whole-document rebuild. `-05-07` proves ordinary worker execution under fake transport against the real Safara snapshot, including route/capability/estimator drift negatives. These are non-waivable pre-CK obligations.
-
-## SecurityReadiness
-
-- **Status:** `applicable`.
-- **Inherited boundaries:** `SR-01205-B1` preserves BSS capacity/admission authority; `SR-01205-B2` preserves Atlas immutable plan/handoff and accepted-media authority; `SR-01205-B3` preserves GHR reference-only delivery and existing SEM semantic authority.
-- **Trust boundaries:** `SR-01205-T1` accepted media metadata to pure request measurement; `SR-01205-T2` persisted selection to server-authorized reconstruction; `SR-01205-T3` execution-bound grant to hydrated bytes; `SR-01205-T4` authorized visual slot to parser/finalizer/replay.
-- **Sensitive assets:** `SR-01205-A1` media references, hashes, dimensions, byte lengths, route/estimator identity, immutable plan identity, execution scope, and visual evidence locators.
-- **Prohibited couplings:** `SR-01205-C1` forbids duplicate planner/estimator/execution pipelines; `SR-01205-C2` forbids browser-session dependence for background execution and hash-only authority; `SR-01205-C3` forbids persisting bytes, base64, provider bodies, grants, credentials, or source content.
-- **Verification seams:** `SR-01205-V1` pure manifest/measurement parity; `SR-01205-V2` immutable version/reconstruction mismatch fences; `SR-01205-V3` exact scoped hydration-before-dispatch; `SR-01205-V4` source-slot and visual-grounding result accounting.
-- **Unresolved security policy:** `SR-01205-U1` provider image TPM is intentionally unknown; it is provenance, not a policy value. No child may invent a quota.
-- **Review bindings:** `SR-01205-R1` verifies `T1` with deterministic manifest/measurement tests; `SR-01205-R2` verifies `T2` with stale/foreign/reordered reconstruction negatives; `SR-01205-R3` verifies `T3` with fresh scoped-redemption and no-dispatch negatives; `SR-01205-R4` verifies `T4` with owned/context-only parser and replay negatives.
-
-**Hard stop:** creating this split authorizes no implementation, migration, GO, CK, CFC, HMN, provider call, BSS reservation, GHR dispatch, semantic publication, reconciliation, Master, or CES change.
+**Hard stop:** this family does not implement/authorize SEM hydration, provider call/preflight, parser/finalizer, worker dispatch, production GHR/BSS jobs, semantic publication, reconciliation, Master, or CES work.

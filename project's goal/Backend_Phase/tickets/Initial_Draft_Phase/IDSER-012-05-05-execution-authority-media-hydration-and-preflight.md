@@ -1,29 +1,23 @@
-# IDSER-012-05-05 — Execution authority, media hydration, and preflight
+# IDSER-012-05-05 — SUPERSEDED: SEM execution / media hydration
 
-- **State:** `planned`; executable leaf only after explicit GO and IDSER-012-05-04 CK `PASS`.
+- **State:** `superseded` / `non_executable` within the IDSER-012-05 family. **Not eligible for GO, CK, CFC or HMN.**
 - **Parent:** [IDSER-012-05](IDSER-012-05-multimodal-request-parity-and-sem-execution-completion.md).
+- **Disposition:** prior planner-family scope was incorrect; this file is an append-only ownership pointer, not an authorized implementation contract.
+- **Successor owner:** SEM-CUTOVER runtime integration (exact successor ticket/authority to be frozen by SEM governance; do not assume or silently re-open historical approved SEM tickets).
 
-## Scope
+## Out-of-scope work transferred to SEM ownership
 
-Consume only the verified **v3** `-05-04` reconstruction under existing execution lifecycle/replay protections. Do not accept old-version batch references or continue through a pre-IDSER whole-document fallback. For every authorized retry, issue fresh scoped derived-image redemptions for exactly the ordered selected manifest. Hydrate and validate asset reference, source identity, SHA-256, PNG MIME type, byte length, dimensions, and execution scope before attaching the selected images in manifest order to fake multipart transport. Correct preflight so `imageTpm: unknown` is provenance rather than multipart denial where route capability, internal demand, authorization, deadline, cancellation, and structural constraints are valid.
+SEM, **not IDSER**, must eventually consume verified locator-only `ImmutableSemanticCorpusPlan/v3` / `PlannedSemanticCorpusHandoff/v3` references and perform:
 
-## Ordinary SEM worker and exact selected-media transport
+- Execution-scoped server authorization, lifecycle/cancellation checks, BSS admitted-job linkage and replay safety.
+- Resolve and verify **exact** selected-owned/context locators against accepted `NormalizedDocument V1`.
+- Read-only reconstruct and validate the same logical request and ordered selected-media manifest that IDSER sized, without silently rebuilding the whole document.
+- Issue fresh scoped derived-image grants only at execution; hydrate actual selected PNG bytes; verify SHA-256, dimensions, byte length, MIME, source ownership and manifest order.
+- Route capability/preflight, honest handling of `imageTpm: unknown`, serialized provider request-size parity, adapter/estimator/policy drift rejection, provider dispatch.
+- Preserve no-legacy-fallback and no alternate media-store rules.
 
-Exercise the **ordinary SEM worker entrypoint and promoted composition**, not only `runStepwiseSemanticComposition` as an isolated helper. Supply the server-authorized v3 IDSER batch from an isolated snapshot of the existing canonical Safara professional accepted `NormalizedDocument V1`; require actual original verified selected PNG identities, fresh bound grants, selected-only hydration and exact attachment order. The worker must never rebuild the whole normalized document or redeem all five images unless that exact set was planned. Use fake provider transport; live provider, GHR dispatch and BSS reservation remain forbidden.
+IDSER-012-05 supplies the **planner-only prerequisite**, with `-05-01` transient sizing, `-05-02` image-aware partition, `-05-03` locator-only immutable v3 metadata and `-05-04` a verified read-only reconstruction contract. **No image attachment, fake fetch, ordinary SEM worker integration, provider invocation or runtime grant test is required for IDSER CK PASS.**
 
-The adapter's actual JSON serializer is authoritative for outbound byte comparison. Capture only the byte count and redacted request identity from fake fetch. Every batch satisfies `actualSerializedRequestBytes <= plannedConservativeRequestBytes`; changed route, adapter, media capability, estimator, policy or configuration rejects/replans *before* hydration/outbound effects. No alternate image-less/legacy execution fallback.
+## Governance
 
-## Frozen review contract
-
-| ID | PASS iff |
-| --- | --- |
-| `RC-01205-05-01` | Valid server-bound execution redeems, verifies, and attaches exactly the selected assets in order; no whole-document rebuild, omission, substitution, or extra attachment occurs. |
-| `RC-01205-05-02` | v1/v2 or mixed-version plan/handoff, invalid grant/scope/integrity/metadata, cancellation, deadline expiry, unsupported media, or structural excess prevents all provider dispatch. No legacy whole-document or image-less fallback is invoked. |
-| `RC-01205-05-03` | Fresh retry grants preserve immutable selected identities without persisting a grant or creating unbounded retries. |
-| `RC-01205-05-04` | Unknown image TPM alone does not block a measured structurally valid request; known capability and structural violations still fail before dispatch. |
-| `RC-01205-05-05` | Actual ordinary SEM worker path executes exactly selected v3 batch through server-bound reconstruction and fake provider transport, redeeming no unplanned image, including with five-visual source and smaller selected batches. |
-| `RC-01205-05-06` | Fake-fetch observes the adapter's actual serialized body byte count within the immutable conservative estimate; route/adapter/image capability/estimator/config changes fail closed without provider effects. |
-
-## Boundaries and workflow
-
-No live provider call, production routing change, BSS reservation, replanning, persistence redesign, or semantic result acceptance is authorized. CFC may repair only execution/hydration/preflight rows with fake transport. HMN is required for an actual incompatibility in the established grant/lifecycle boundary; it cannot authorize a browser credential, alternate media store, or a provider call.
+The former rows `RC-01205-05-01` through `RC-01205-05-06` are **retired as IDSER acceptance gates**. This does not waive their functional concerns: record them as downstream SEM-CUTOVER handoff obligations with their own future frozen acceptance. The IDSER family terminal `-05-07` must not depend on CK PASS for this superseded file. No code implementation or SEM modification authorized by this note.

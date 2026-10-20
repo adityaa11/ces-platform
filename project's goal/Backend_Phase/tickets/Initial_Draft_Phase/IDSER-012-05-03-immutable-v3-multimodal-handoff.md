@@ -1,28 +1,35 @@
-# IDSER-012-05-03 — Immutable v3 multimodal handoff
+# IDSER-012-05-03 — Locator-only immutable v3 plan/handoff
 
-- **State:** `planned`; executable leaf only after explicit GO and IDSER-012-05-01/-02 CK `PASS`.
+- **State:** `planned`; executable only after explicit GO and `IDSER-012-05-01` / `-05-02` CK PASS.
 - **Parent:** [IDSER-012-05](IDSER-012-05-multimodal-request-parity-and-sem-execution-completion.md).
 
-## Scope
+## Sole scope
 
-Add the narrowest `ImmutableSemanticCorpusPlan/v3` and `PlannedSemanticCorpusHandoff/v3` shapes needed to bind the complete selected logical request: ordered media descriptors or independently reconstructible equivalent, owned/context-only selection, source-specification/manifest/logical-request hashes, estimator identity/configuration, complete measurements, and resource envelope. Reuse existing tables, transactions, cancellation/replay rules, parser dispatch, and reference-only GHR body. Do not mutate historical v1/v2 persisted record bytes or hashes. Retire production v1/v2 writers, parsers used for operational acceptance, public exports, and version dispatch, so only v3 can be persisted, read for execution, validated by GHR, or reconstructed. Neither backward-compatible execution nor a legacy fallback is authorized.
+Introduce **one active operational** `ImmutableSemanticCorpusPlan/v3` with `PlannedSemanticCorpusHandoff/v3` in the existing immutable Atlas plan/handoff tables and reference-only GHR receiver. This is an explicit cutover from operational plan/handoff v1/v2; historical rows/hashes remain immutable but are not runnable or automatically translated. Before cutover, read-only inventory old plans/unfinished work; obtain authorized retirement/cancel/replan disposition when necessary.
 
-## Frozen review contract
+Persist **only minimal durable reconstruction references and commitments**:
+- Plan/batch IDs, source snapshot identity (`project/workspace/bundle/document`, source SHA, accepted normalized document/perception execution reference and fingerprint).
+- Ordered `ownedLocators` and `contextOnlyLocators` (including selected visual locators), with source ownership and deterministic attachment ordering recoverable from canonical composition rules.
+- A resolvable accepted-media locator/reference *where necessary*, and a canonical **ordered media-manifest hash** to commit asset identity/order/integrity; accepted manifest supplies asset SHA, MIME, dimensions and byte length at reconstruction. Do not store a duplicate full media manifest/payload if independently reconstructible from accepted records.
+- Frozen prompt/schema/composer/route-capability/adapter-serialization/estimator/configuration identities and hashes, logical-request hash, source-specification hash, conservative byte and token measurements, output reservation, resource envelope, BSS prospective structural provenance and plan ancestry/cancellation identity.
+
+**Never persist** the materialized complete request, compiled prompt/schema payload, source specification/body, text/table contents, media bytes/base64, full adapter JSON, provider response, grants, credentials or a second corpus copy. Re-read accepted immutable sources when SEM later reconstructs.
+
+No second table, queue, request-body store, media cache or GHR path. GHR message remains reference-only and validates **v3 plan and v3 handoff** against immutable membership; no dispatch in IDSER.
+
+## Frozen CK contract
 
 | ID | PASS iff |
 | --- | --- |
-| `RC-01205-03-01` | v3 immutable records strictly accept the complete selected-media identity and reject unknown fields, duplicated/reordered/foreign descriptors, inconsistent hashes, measurements, or estimator configuration. |
-| `RC-01205-03-02` | Atomic persistence, rollback, cancellation, replay, and version dispatch remain within existing repository/tables; no media bytes, base64, source content, provider body, grant, or credential persists. |
-| `RC-01205-03-03` | All active plan/handoff writers, readers, dispatchers, and GHR receiver paths accept v3 only; v1/v2 records and mixed parent/child versions fail closed without changing any historical immutable rows/hashes. Text/table behavior is proven on v3, not a v2 compatibility branch. GHR remains reference-only. |
+| `RC-01205-03-01` | Strict v3 record schema stores only bounded scope/locator/identity/hash/measurement commitments; v3 parent-child, manifest/request identities, ownership/coverage and estimates are internally consistent, unknown fields/duplicates/foreign data rejected. |
+| `RC-01205-03-02` | Atomic persistence, rollback, idempotent replay, cancellation/ancestry and reference-only GHR validation operate in the existing tables. DB inspection proves no complete request, prompt, source/media bytes, base64 or provider body persisted. |
+| `RC-01205-03-03` | Operational plan/handoff v1/v2 writer/parser/GHR alternatives and implicit v1 defaults are retired; v1/v2/mixed-version records fail at active boundaries without rewriting immutable historical rows. Text/table planning persists through v3. |
+| `RC-01205-03-04` | Every persisted locator/metadata reference is sufficient for `-05-04` to rederive exact transient request/manifest identity and resource measurements without needing any serialized request from DB. |
 
-## Protected canonical Safara source
+## Canonical-data/retirement constraints
 
-V3 persistence on real accepted source is exercised on a PostgreSQL-supported, isolated writable logical copy of the actual `atlas-canonical-perception` accepted Safara professional `NormalizedDocument V1`, source SHA-256 `2f537e8bb7ea4f69fb906af03d0265e2a986a0f15c2dbedbbace5328cd40e7df`; five original accepted visual manifest identities must remain unchanged. Verify the actual Compose-owned PostgreSQL/asset volumes read-only first. Never migrate, reseed, alter, or mount the canonical live PostgreSQL volume into a second DB server; no repository/golden/synthetic document can replace terminal fixture.
+Use a protected read-only inspection of existing `atlas-canonical-perception` accepted Safara professional `NormalizedDocument V1` (source SHA-256 `2f537e8bb7ea4f69fb906af03d0265e2a986a0f15c2dbedbbace5328cd40e7df`). Test v3 writes only against a PostgreSQL-supported, isolated logical copy with original accepted media identities. Do not mutate or mount the canonical live PG data directory elsewhere. For nonempty old v1/v2 in-flight inventory require explicit operator/HMN disposition; no silent conversion.
 
-## Retirement prerequisite
+## Boundaries
 
-Before cutting over active APIs, run a read-only inventory of v1/v2 persisted plans/handoffs and linked in-flight work in the target environment. This repository review alone cannot prove that those rows are absent. Nonempty legacy inventory requires explicit authorized disposition (retire/cancel or replan from original accepted source) without rewriting immutable contents or creating a compatibility executor. Test that implicit v1 persistence, explicit v1/v2 persistence, mixed record versions, and legacy GHR acceptance are all rejected. Remove old-version support exports from production dependency surfaces.
-
-## Boundaries and workflow
-
-No reconstruction, execution authority, hydration, provider transport, or semantic parsing belongs here. CFC is limited to v3 canonicalization/persistence/version dispatch. HMN is required for an unavoidable conflict with established immutable storage or GHR authority; it cannot create a new table, queue, or delivery path.
+No runtime SEM resolver adoption, browser-session delegation, execution grant, image hydration, provider transport, parser, finalizer, new production GHR delivery or BSS admission. CFC/HMN confined to v3 locator persistence and active-version retirement.

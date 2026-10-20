@@ -1,27 +1,27 @@
-# IDSER-012-05-02 — Multimodal structural-fit partition
+# IDSER-012-05-02 — Image-aware structural-fit corpus partition
 
-- **State:** `planned`; executable leaf only after explicit GO and IDSER-012-05-01 CK `PASS`.
+- **State:** `planned`; executable only after explicit GO and `IDSER-012-05-01` CK PASS.
 - **Parent:** [IDSER-012-05](IDSER-012-05-multimodal-request-parity-and-sem-execution-completion.md).
 
-## Scope
+## Sole scope
 
-Project accepted derived-media dimensions and complete verified metadata into IDSER inventory. Replace only the unconditional visual `unexamined / image_accounting_unavailable` rule with the established structural-fit algorithm over the `-05-01` complete candidate request. Test full tokens, serialized bytes, media count, total media bytes, and dimensions through the existing BSS prospective structural-fit boundary. Split fitting batches deterministically; record one explicit disposition for every visual that cannot fit alone or lacks valid accepted identity.
+Project verified, accepted `NormalizedDocument V1` text/table/visual locators into the existing IDSER inventory. Replace unconditional `unexamined / image_accounting_unavailable` treatment for valid PNGs with actual image-token and conservative-byte accounting from `-05-01`. For every prospective candidate batch, construct **only a transient complete logical SEM request**, compare request bytes, total input tokens, reserved output, image count/aggregate bytes/dimensions and resource demand with the effective BSS **read-only prospective structural-fit** boundary and route capability; partition deterministically.
 
-## Canonical Safara selection and provenance
+Produce exact batch-ordered `ownedLocators`, `contextOnlyLocators`, image selection commitments, in-memory request/manifest hashes and per-batch measurements for `-05-03`. Every accepted visual receives an explicit eligible owner/batch or structurally unavailable/rejected reason. Do not duplicate images into every batch or silently treat an unsupported image as text. Unknown provider image TPM is not an automatic refusal when internally estimated demand and known structural bounds fit.
 
-The five-visual real-data qualification must resolve the **existing**, accepted `NormalizedDocument V1` for `Safara_Buyer_Business_PRD_Professional.pdf`, SHA-256 `2f537e8bb7ea4f69fb906af03d0265e2a986a0f15c2dbedbbace5328cd40e7df`, from Compose project `atlas-canonical-perception` and its inspected actual PostgreSQL `postgres-data` and media `atlas-data` mounts. Expected historical recorded inventory is 12 pages/254 text blocks/4 tables/5 visuals and 5 accepted PNG assets, to be freshly verified read-only. Use a safe isolated copy for integration writes; no generated source or alternate Safara fixture can stand in. Source/mount/cache mismatch blocks real-data qualification. Synthetic fixtures remain unit-only.
+## Canonical data requirement
 
-Apply -05-01's **frozen extraction-eligible owned versus context-only visual role and attachment selection**; count images independent of `pending_unexamined_visual` status, never route based on `pending_authorized_media` alone.
+The terminal real-data case must come from the **existing** PERC-RESET Safara professional accepted `NormalizedDocument V1` (source SHA-256 `2f537e8bb7ea4f69fb906af03d0265e2a986a0f15c2dbedbbace5328cd40e7df`) in Compose project `atlas-canonical-perception`, using actual verified project-owned `postgres-data` and `atlas-data` mounts. Historical acceptance records five visuals/PNG assets. Unit mocks may test edge cases, but cannot substitute for this real source at family closure.
 
-## Frozen review contract
+## Frozen CK contract
 
 | ID | PASS iff |
 | --- | --- |
-| `RC-01205-02-01` | Valid selected PNG visuals enter eligible inventory; malformed/foreign/unsupported metadata and indivisible structural excess have explicit fail-closed disposition. |
-| `RC-01205-02-02` | Candidate fit uses the complete shared composed request, effective capability, and BSS structural boundary; no visual is silently omitted, double-counted, or attached to every batch. |
-| `RC-01205-02-03` | Five fixture visuals receive stable deterministic batch treatment; count, byte, dimension, text/table compatibility, and once-only owned coverage are proven. |
-| `RC-01205-02-04` | `imageTpm: unknown` alone does not create an unexamined or blocked visual when internally measured demand and structural limits fit. |
+| `RC-01205-02-01` | Every accepted visual is accounted for; verified fitting visuals enter inventory, and malformed/foreign/unavailable/indivisible cases carry explicit reasons instead of silent omission. |
+| `RC-01205-02-02` | BSS structural-fit reads use full composed in-memory request demand, effective route media limits and output reservation; no BSS reservation/admission, duplicate estimator or whole-document image attachment. |
+| `RC-01205-02-03` | Deterministic partitioning and once-only owned coverage hold for text-only, mixed, image-only, and all five real Safara visuals; each batch has stable locator/manifest identity and measurements. |
+| `RC-01205-02-04` | `imageTpm: unknown` alone does not classify verified structural-fit images as `unexamined` or `blocked`. Config/route structural changes produce explicit replan or fail-closed disposition. |
 
-## Boundaries and workflow
+## Boundaries
 
-This leaf neither persists a plan nor reserves/adopts BSS capacity. It cannot hydrate, dispatch, or interpret images. CFC repairs only inventory/partition behavior. HMN is required only for a real BSS structural-boundary incompatibility or missing accepted metadata authority; no synthetic limit, second partitioner, or capacity controller is permitted.
+Planner only: no persistence (owned by -03), no provider execution, media hydration/attachment, grants, GHR sending, BSS admission or semantic result interpretation. CFC/HMN limited to inventory and structural-fit authority.
