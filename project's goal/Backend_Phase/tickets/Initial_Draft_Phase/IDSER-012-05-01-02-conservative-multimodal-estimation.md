@@ -1,6 +1,6 @@
 # IDSER-012-05-01-02 — Conservative multimodal estimation and serializer-policy conformance
 
-- **State:** `awaiting_review`; implemented at `9279bd51a81594c443ad2aeef8e23d6f835b5669` after explicit GO and `IDSER-012-05-01-01` CK PASS.
+- **State:** `approved`; implemented at `9279bd51a81594c443ad2aeef8e23d6f835b5669` after explicit GO and `IDSER-012-05-01-01` CK PASS, with final CK PASS recorded at `230239b30383d3557bd7599c7037b51750c3c4a1`.
 - **Parent map:** [IDSER-012-05-01](IDSER-012-05-01-multimodal-canonical-composition-and-estimation.md).
 - **GO checkpoint:** [IDSER-012-05-01-02 GO checkpoint](../../../feedback/IDSER-BATCH-12-05-01-02-go-checkpoint.md).
 
