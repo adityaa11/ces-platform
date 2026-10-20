@@ -1,6 +1,6 @@
 # IDSER-012-05-01-01 — Canonical multimodal composition
 
-- **State:** `awaiting_review`; GO implementation checkpoint recorded for CK.
+- **State:** `approved` following CK `PASS` for reviewed commit `2c6be30f32d28895939e77d1bffd636a55f5b192`; **Review batch:** `IDSER-BATCH-12-05-01-01`.
 - **Parent map:** [IDSER-012-05-01](IDSER-012-05-01-multimodal-canonical-composition-and-estimation.md).
 - **GO checkpoint:** [IDSER-012-05-01-01 GO checkpoint](../../../feedback/IDSER-BATCH-12-05-01-01-go-checkpoint.md).
 
