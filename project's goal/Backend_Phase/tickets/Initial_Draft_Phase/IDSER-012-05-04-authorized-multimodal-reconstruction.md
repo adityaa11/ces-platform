@@ -5,16 +5,16 @@
 
 ## Scope
 
-Extend the existing server-owned reconstruction boundary to accept an authorized v3 handoff without an interactive browser session. Validate execution identity, project/workspace/bundle/document scope, immutable plan/batch binding, lifecycle/cancellation/stale state, then resolve accepted media metadata and rebuild the `-05-01` canonical request from the persisted selection. Recompute and compare source-specification, manifest, logical-request, estimator/configuration, measurements, and resource envelope before returning a reconstruction result. Do not hydrate media or dispatch.
+Replace the existing v2-only operational reconstruction path with one server-owned reconstruction boundary that accepts **only** an authorized v3 plan and matching v3 handoff, without an interactive browser session. Validate execution identity, project/workspace/bundle/document scope, immutable plan/batch binding, lifecycle/cancellation/stale state, then resolve accepted media metadata and rebuild the `-05-01` canonical request from the persisted selection. Recompute and compare source-specification, manifest, logical-request, estimator/configuration, measurements, and resource envelope before returning a reconstruction result. Do not hydrate media or dispatch.
 
 ## Frozen review contract
 
 | ID | PASS iff |
 | --- | --- |
 | `RC-01205-04-01` | Authorized v3 selection reconstructs the identical complete logical request and all persisted identities/measurements from accepted document/media metadata. |
-| `RC-01205-04-02` | Reordered, substituted, missing, duplicate, stale, foreign, changed-metadata, or estimator-mismatched media/records fail before hydration. |
+| `RC-01205-04-02` | v1/v2, mixed-version parent/child, reordered, substituted, missing, duplicate, stale, foreign, changed-metadata, or estimator-mismatched media/records fail before hydration. The resolver has no old-version execution branch or fallback. |
 | `RC-01205-04-03` | Background execution uses existing server-owned authority and rejects anonymous, client-controlled, hash-only, browser-session-dependent, cancelled, expired, or out-of-scope access. |
 
 ## Boundaries and workflow
 
-This is a read-only reconstruction leaf. It cannot issue grants, consume bytes, reserve BSS work, call a provider, or finalize semantics. CFC repairs only resolver/authorization/reconstruction parity evidence. HMN is required for a genuine missing execution-authority seam; it cannot mint a new trusted principal or weaken scope/lifecycle checks.
+This is a read-only reconstruction leaf. Historical immutable bytes are not rewritten, but v1/v2 plan/handoff requests must be explicitly rejected, not reconstructed through a compatibility path. It cannot issue grants, consume bytes, reserve BSS work, call a provider, or finalize semantics. CFC repairs only resolver/authorization/reconstruction parity evidence. HMN is required for a genuine missing execution-authority seam; it cannot mint a new trusted principal or weaken scope/lifecycle checks.

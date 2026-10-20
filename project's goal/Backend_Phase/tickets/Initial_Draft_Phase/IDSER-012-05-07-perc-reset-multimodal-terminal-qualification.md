@@ -6,7 +6,7 @@
 
 ## Scope
 
-Using the accepted PERC-RESET fixture's actual persisted five-visual metadata and isolated/offline qualification boundary, prove the already approved surfaces compose: inventory, deterministic partition/disposition, v3 persistence, server-authorized reconstruction, fresh scoped hydration/attachment through fake multipart transport, and synthetic response parsing/finalization/replay. Preserve text/table, authorization, BSS, media-grant, cancellation, replay, and historical v2 results.
+Using the accepted PERC-RESET fixture's actual persisted five-visual metadata and isolated/offline qualification boundary, prove the already approved surfaces compose: inventory, deterministic partition/disposition, v3 persistence, server-authorized reconstruction, fresh scoped hydration/attachment through fake multipart transport, and synthetic response parsing/finalization/replay. Preserve text/table behavior through v3 and retain authorization, BSS, media-grant, cancellation, and replay protections. Prove that historical v1/v2 plans cannot enter operational issuance, reconstruction, or execution; do not require their old runtime tests to keep passing.
 
 ## Frozen review contract
 
@@ -14,8 +14,8 @@ Using the accepted PERC-RESET fixture's actual persisted five-visual metadata an
 | --- | --- |
 | `RC-01205-07-01` | All five fixture visuals are inventoried from actual accepted metadata; each has explicit selection or structural/authority disposition, and valid selections are measured and reconstructed. |
 | `RC-01205-07-02` | The authorized test boundary attaches exactly planned assets with matching identity/hash/dimensions/bytes; planned = reconstructed = dispatched logical request except runtime authority/deadline/byte hydration. |
-| `RC-01205-07-03` | Image-only candidate, image-only `non_fact`, and mixed visual results pass parser through replay without fabricated wording; text/table and v2 regressions remain passing. |
-| `RC-01205-07-04` | Every original `RC-01205-01` through `RC-01205-08` and closure-matrix boundary has child evidence plus a concrete composition observation; unavailable accepted media/cache is reported as an unresolved prerequisite, never replaced with invented identities. |
+| `RC-01205-07-03` | Image-only candidate, image-only `non_fact`, and mixed visual results pass parser through replay without fabricated wording; text/table behavior through v3 and legacy-version rejection regressions remain passing. |
+| `RC-01205-07-04` | Every amended family RC and closure-matrix boundary has child evidence plus composition observation; v1/v2 old writers, GHR receiver acceptance, reconstruction, mixed-version handoffs, and SEM execution are explicitly rejected. Legacy inventory/in-flight work has authorized disposition without rewriting immutable contents. Missing accepted media/cache remains an unresolved prerequisite, never replaced with invented identities. |
 
 ## Evidence, hard stop, and workflow
 
