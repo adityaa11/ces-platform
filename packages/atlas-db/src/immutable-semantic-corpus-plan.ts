@@ -312,6 +312,9 @@ export function canonicalImmutableSemanticCorpusPlanV3(input: ImmutableSemanticC
 
 export function replayImmutableSemanticCorpusPlanHashV3(content: unknown): string { return digest(content); }
 
+/** Replays the immutable v3 child commitment used for `handoff_hash`. */
+export function replayPlannedSemanticCorpusHandoffHashV3(content: unknown): string { return digest(content); }
+
 function validV3ParentRecord(content: Record<string, unknown>): boolean {
   if (!exactKeys(content, ["version", "scope", "source", "proposal"]) || !exactKeys(content.scope, ["projectId", "workspaceId", "bundleId", "documentId"]) || !Object.values(content.scope).every(opaque)
     || !isRecord(content.source) || !Object.keys(content.source).every((key) => v3SourceKeys.includes(key as typeof v3SourceKeys[number])) || Object.keys(content.source).length !== v3SourceKeys.length
@@ -388,7 +391,10 @@ export class PostgresImmutableSemanticCorpusPlanRepository {
   async persistV3(input: ImmutableSemanticCorpusPlanInputV3): Promise<PersistedSemanticCorpusPlanV3> {
     const canonical = canonicalImmutableSemanticCorpusPlanV3(input);
     const planId = `semantic-plan-${canonical.planHash}`;
-    const handoffs = canonical.handoffContents.map((content, index) => ({ batchId: input.proposal.batches[index]!.batchId, handoffHash: digest(content), handoffId: `semantic-handoff-${digest(content)}` }));
+    const handoffs = canonical.handoffContents.map((content, index) => {
+      const handoffHash = replayPlannedSemanticCorpusHandoffHashV3(content);
+      return { batchId: input.proposal.batches[index]!.batchId, handoffHash, handoffId: `semantic-handoff-${handoffHash}` };
+    });
     return this.sql.begin(async (sql) => {
       await sql.unsafe("SELECT pg_advisory_xact_lock(hashtext($1))", [`${input.scope.projectId}:${input.scope.workspaceId}:${input.scope.bundleId}:${input.scope.documentId}:${canonical.idempotencyKey}`]);
       const accepted = await sql.unsafe("SELECT 1 FROM atlas.extraction_bundle_document member JOIN atlas.extraction_bundle bundle ON bundle.id=member.bundle_id AND bundle.project_id=member.project_id AND bundle.workspace_id=member.workspace_id JOIN atlas.document document ON document.id=member.document_id AND document.project_id=member.project_id AND document.workspace_id=member.workspace_id JOIN atlas.document_perception_execution execution ON execution.id=member.perception_execution_id AND execution.artifact_id=member.document_id AND execution.source_sha256=document.source_sha256 JOIN atlas.normalized_document_cache cache ON cache.cache_key=$8 AND cache.source_sha256=document.source_sha256 AND cache.contract_version=$9 AND cache.capability=$10 AND cache.invalidated_at IS NULL WHERE member.bundle_id=$1 AND member.document_id=$2 AND member.project_id=$3 AND member.workspace_id=$4 AND document.source_sha256=$5 AND execution.id=$6 AND execution.state='completed' AND execution.completion_fingerprint=$7 AND execution.contract_version=$11 AND member.state='perceived' AND bundle.state='processing' AND cache.capability_identity=execution.capability_identity FOR UPDATE OF member, bundle, document, execution, cache", [input.scope.bundleId, input.scope.documentId, input.scope.projectId, input.scope.workspaceId, input.source.sourceSha256, input.source.perceptionExecutionId, input.source.normalizedDocumentFingerprint, input.source.normalizedDocumentRef, input.source.normalizedDocumentVersion, input.source.perceptionCapability, input.source.perceptionContractVersion]);

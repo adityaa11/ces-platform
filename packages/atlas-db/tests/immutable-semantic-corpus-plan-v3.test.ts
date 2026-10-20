@@ -9,6 +9,7 @@ import {
   parseImmutableSemanticCorpusPlanRecord,
   parsePlannedSemanticCorpusHandoffRecord,
   replayImmutableSemanticCorpusPlanHashV3,
+  replayPlannedSemanticCorpusHandoffHashV3,
   type ImmutableSemanticCorpusPlanInputV3,
 } from "../src/immutable-semantic-corpus-plan.ts";
 import { PostgresSemanticBatchPlanReadyFixtureReceiver, fixtureSemanticBatchPlanReadyV1 } from "../src/semantic-batch-plan-ready-fixture.ts";
@@ -96,7 +97,7 @@ test("the active writer and reference-only receiver accept only internally consi
   const persisted = {
     planId: `semantic-plan-${canonical.planHash}`,
     planHash: canonical.planHash,
-    handoffs: [{ batchId: "batch-0001", handoffId: `semantic-handoff-${hash("active-boundary-handoff")}`, handoffHash: hash("active-boundary-handoff") }],
+    handoffs: [{ batchId: "batch-0001", handoffId: `semantic-handoff-${replayPlannedSemanticCorpusHandoffHashV3(canonical.handoffContents[0])}`, handoffHash: replayPlannedSemanticCorpusHandoffHashV3(canonical.handoffContents[0]) }],
   };
   const fixture = fixtureSemanticBatchPlanReadyV1(persisted);
   const [handoff] = persisted.handoffs;
@@ -110,6 +111,18 @@ test("the active writer and reference-only receiver accept only internally consi
     }],
   });
   assert.deepEqual(await receiver.receive(fixture.canonicalJson), fixture.body, "validation returns the unchanged reference body without a delivery API");
+  const tamperedHandoff = structuredClone(canonical.handoffContents[0]) as { requestSha256: string };
+  tamperedHandoff.requestSha256 = hash("tampered-request");
+  const tamperedReceiver = new PostgresSemanticBatchPlanReadyFixtureReceiver({
+    unsafe: async () => [{
+      plan_id: persisted.planId, plan_hash: persisted.planHash,
+      project_id: plan.scope.projectId, workspace_id: plan.scope.workspaceId, bundle_id: plan.scope.bundleId, document_id: plan.scope.documentId,
+      plan_content: canonical.planContent,
+      handoff_id: handoff!.handoffId, handoff_plan_id: persisted.planId, batch_id: handoff!.batchId, batch_slot: 1, handoff_hash: handoff!.handoffHash,
+      handoff_content: tamperedHandoff, cancelled_plan_id: null,
+    }],
+  });
+  await assert.rejects(() => tamperedReceiver.receive(fixture.canonicalJson), /persisted plan or handoff scope is inconsistent/, "a persisted handoff whose immutable content no longer matches its stored hash is rejected before any delivery API");
 
   const unavailableSql = { unsafe: async () => { throw new Error("old inputs must fail before database access"); }, begin: async () => { throw new Error("old inputs must fail before a transaction"); } };
   const writer = new PostgresImmutableSemanticCorpusPlanRepository(unavailableSql as never);

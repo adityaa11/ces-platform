@@ -3,6 +3,7 @@ import {
   parseImmutableSemanticCorpusPlanRecord,
   parsePlannedSemanticCorpusHandoffRecord,
   replayImmutableSemanticCorpusPlanHashV3,
+  replayPlannedSemanticCorpusHandoffHashV3,
   type PersistedSemanticCorpusPlanV1,
   type PersistedSemanticCorpusPlanV2,
   type PersistedSemanticCorpusPlanV3,
@@ -154,6 +155,7 @@ export class PostgresSemanticBatchPlanReadyFixtureReceiver {
       if (row.cancelled_plan_id !== null && row.cancelled_plan_id !== undefined
         || String(row.plan_hash) !== body.planHash
         || replayImmutableSemanticCorpusPlanHashV3(plan) !== body.planHash
+        || replayPlannedSemanticCorpusHandoffHashV3(handoff) !== String(row.handoff_hash)
         || !plain(plan) || plan.version !== parsedPlan.version || !plain(scope)
         || scope.projectId !== row.project_id || scope.workspaceId !== row.workspace_id || scope.bundleId !== row.bundle_id || scope.documentId !== row.document_id
         || !plain(proposal) || !Array.isArray(proposal.batchIds) || proposal.batchIds.length !== body.batchCount || proposal.batchIds[index] !== member.batchId

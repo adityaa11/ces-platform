@@ -142,7 +142,7 @@ test("strict non-delivering SemanticBatchPlanReady fixture validates real immuta
     await assert.rejects(() => receiver.receive(JSON.stringify({ ...fixtureBody.body, batchCount: 101, batchHandoffRefs: Array.from({ length: 101 }, (_, index) => ({ batchId: `batch-${String(index + 1).padStart(4, "0")}`, ref: `handoff-${index + 1}`, hash: "a".repeat(64) })) })), SemanticBatchPlanReadyManifestRequiredError, "more than 100 handoffs requires a separately versioned manifest");
     await assert.rejects(() => receiver.receive(`${fixtureBody.canonicalJson.slice(0, -1)},"extra":true}`), /not exact|not canonical/, "duplicate/extra JSON does not become a body");
     await sql.unsafe("SET session_replication_role = replica");
-    await sql.unsafe("UPDATE atlas.planned_semantic_corpus_handoff SET immutable_content=jsonb_set(immutable_content, '{ownedLocators}', '[]'::jsonb) WHERE id=$1", [persisted.handoffs[0]!.handoffId]);
+    await sql.unsafe("UPDATE atlas.planned_semantic_corpus_handoff SET immutable_content=jsonb_set(immutable_content, '{requestSha256}', to_jsonb($2::text)) WHERE id=$1", [persisted.handoffs[0]!.handoffId, digest("tampered-v3-handoff-request")]);
     await sql.unsafe("SET session_replication_role = origin");
     await assert.rejects(() => receiver.receive(fixtureBody.canonicalJson), SemanticBatchPlanReadyFixtureError, "missing persisted owned coverage is rejected by the receiver");
     const [after] = await sql.unsafe("SELECT (SELECT count(*)::int FROM pgboss.job) AS jobs, (SELECT count(*)::int FROM bridge.provider_work_attempt) AS attempts, (SELECT count(*)::int FROM bridge.provider_work_reservation) AS reservations, (SELECT count(*)::int FROM atlas.semantic_execution WHERE document_id=$1) AS semantic_execution, (SELECT count(*)::int FROM atlas.semantic_candidate WHERE document_id=$1) AS candidates, (SELECT count(*)::int FROM atlas.semantic_reconciliation_result WHERE current_document_id=$1) AS reconciliation", [plan.scope.documentId]);
@@ -257,6 +257,10 @@ test("v3 persisted records validate exact immutable membership with zero deliver
     const persisted = await new PostgresImmutableSemanticCorpusPlanRepository(atlas as never).persist(plan);
     const output = fixtureSemanticBatchPlanReadyV1(persisted);
     assert.deepEqual(await new PostgresSemanticBatchPlanReadyFixtureReceiver(sql).receive(output.canonicalJson), output.body, "only the real persisted v3 parent/handoffs validate");
+    await sql.unsafe("SET session_replication_role = replica");
+    await sql.unsafe("UPDATE atlas.planned_semantic_corpus_handoff SET immutable_content=jsonb_set(immutable_content, '{ownedLocators}', '[]'::jsonb) WHERE id=$1", [persisted.handoffs[0]!.handoffId]);
+    await sql.unsafe("SET session_replication_role = origin");
+    await assert.rejects(() => new PostgresSemanticBatchPlanReadyFixtureReceiver(sql).receive(output.canonicalJson), SemanticBatchPlanReadyFixtureError, "a v3 handoff whose immutable content no longer matches its stored hash is rejected");
     await assert.rejects(() => new PostgresSemanticBatchPlanReadyFixtureReceiver(sql).receive(JSON.stringify({ ...output.body, planHash: digest("wrong-v3-plan") })), SemanticBatchPlanReadyFixtureError, "wrong v3 membership fails closed");
     assert.deepEqual(await downstreamCounts(sql, plan.scope.documentId), before, "v3 validation creates no GHR, queue, BSS, SEM, or reconciliation effect");
   } finally { try { if (owner) await cleanup(sql, plan, owner); } finally { await atlas.end(); await sql.end(); } }
