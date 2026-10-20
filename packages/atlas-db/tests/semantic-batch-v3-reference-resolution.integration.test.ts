@@ -7,7 +7,7 @@ import { tmpdir } from "node:os";
 import postgres from "postgres";
 import { PerceptionSourceGrantIssuer } from "@atlas/core";
 import { LocalFilesystemDocumentStore } from "@atlas/document-store";
-import { PostgresImmutableSemanticCorpusPlanRepository, type ImmutableSemanticCorpusPlanInputV3 } from "../src/immutable-semantic-corpus-plan.ts";
+import { PostgresImmutableSemanticCorpusPlanRepository, replayImmutableSemanticCorpusPlanHashV3, replayPlannedSemanticCorpusHandoffHashV3, type ImmutableSemanticCorpusPlanInputV3 } from "../src/immutable-semantic-corpus-plan.ts";
 import { PostgresPerceptionAuthority } from "../src/perception-authority.ts";
 import { canonicalSemanticBatchV3Reference, createSemanticBatchV3ReferenceReceivingBoundary, PostgresSemanticBatchV3ReferenceResolver } from "../src/semantic-batch-v3-reference-resolution.ts";
 
@@ -69,6 +69,26 @@ test("v3 background reference resolution uses persisted PostgreSQL facts and has
     assert.ok(immutableRows, "fixture has one immutable persisted plan/handoff pair");
     const originalPlanContent = immutableRows!.plan_content;
     const originalHandoffContent = immutableRows!.handoff_content;
+    const installImmutableFixture = async (
+      planContent: Record<string, unknown>,
+      handoffContent: Record<string, unknown>,
+      batchId = handoff.batchId,
+      batchSlot = 1,
+    ) => {
+      const planHash = replayImmutableSemanticCorpusPlanHashV3(planContent);
+      const replacementHandoff = structuredClone(handoffContent) as Record<string, unknown>;
+      replacementHandoff.planHash = planHash;
+      replacementHandoff.batchId = batchId;
+      replacementHandoff.batchSlot = batchSlot;
+      const handoffHash = replayPlannedSemanticCorpusHandoffHashV3(replacementHandoff);
+      await sql.begin(async (transaction) => {
+        await transaction.unsafe("SET LOCAL session_replication_role = replica");
+        await transaction.unsafe("UPDATE atlas.semantic_corpus_plan SET plan_hash=$2, immutable_content=$3::jsonb WHERE id=$1", [persisted!.planId, planHash, planContent]);
+        await transaction.unsafe("UPDATE atlas.planned_semantic_corpus_handoff SET batch_id=$2, batch_slot=$3, handoff_hash=$4, immutable_content=$5::jsonb WHERE id=$1", [handoff.handoffId, batchId, batchSlot, handoffHash, replacementHandoff]);
+      });
+      return { documentPlanRef: persisted!.planId, planHash, batchId, batchHandoffRef: handoff.handoffId, batchHandoffHash: handoffHash };
+    };
+    const restoreImmutableFixture = () => installImmutableFixture(originalPlanContent, originalHandoffContent);
     const resolver = new PostgresSemanticBatchV3ReferenceResolver(sql);
     const credential = "v".repeat(32);
     const receiver = createSemanticBatchV3ReferenceReceivingBoundary(credential, resolver);
@@ -100,6 +120,24 @@ test("v3 background reference resolution uses persisted PostgreSQL facts and has
     await sql.begin(async (transaction) => { await transaction.unsafe("SET LOCAL session_replication_role = replica"); await transaction.unsafe("UPDATE atlas.planned_semantic_corpus_handoff SET immutable_content=$2::jsonb WHERE id=$1", [handoff.handoffId, reordered]); });
     await assert.rejects(() => receiver.receive(credential, body), /unavailable|invalid/i, "reordered persisted locators fail closed through their immutable handoff hash");
     await sql.begin(async (transaction) => { await transaction.unsafe("SET LOCAL session_replication_role = replica"); await transaction.unsafe("UPDATE atlas.planned_semantic_corpus_handoff SET immutable_content=$2::jsonb WHERE id=$1", [handoff.handoffId, originalHandoffContent]); });
+    const missingLocatorPlan = structuredClone(originalPlanContent) as Record<string, any>;
+    missingLocatorPlan.proposal.inventory = missingLocatorPlan.proposal.inventory.filter((entry: { locator: { localId: string } }) => entry.locator.localId !== text.localId);
+    const missingLocatorReference = await installImmutableFixture(missingLocatorPlan, originalHandoffContent);
+    await assert.rejects(() => receiver.receive(credential, canonicalSemanticBatchV3Reference(missingLocatorReference)), /foreign|missing|substituted|invalid/i, "missing persisted locator membership fails closed");
+    await restoreImmutableFixture();
+    const substitutedLocatorHandoff = structuredClone(originalHandoffContent) as Record<string, any>;
+    substitutedLocatorHandoff.ownedLocators[1] = { ...substitutedLocatorHandoff.ownedLocators[1], localId: "v3-substituted-locator" };
+    const substitutedLocatorReference = await installImmutableFixture(originalPlanContent, substitutedLocatorHandoff);
+    await assert.rejects(() => receiver.receive(credential, canonicalSemanticBatchV3Reference(substitutedLocatorReference)), /foreign|missing|substituted|invalid/i, "substituted persisted locator membership fails closed");
+    await restoreImmutableFixture();
+    const corruptInventoryPlan = structuredClone(originalPlanContent) as Record<string, any>;
+    corruptInventoryPlan.proposal.inventory.find((entry: { locator: { localId: string } }) => entry.locator.localId === text.localId).classification = "deferred";
+    const corruptInventoryReference = await installImmutableFixture(corruptInventoryPlan, originalHandoffContent);
+    await assert.rejects(() => receiver.receive(credential, canonicalSemanticBatchV3Reference(corruptInventoryReference)), /foreign|missing|substituted|invalid/i, "corrupt persisted inventory membership fails closed");
+    await restoreImmutableFixture();
+    const invalidBatchReference = await installImmutableFixture(originalPlanContent, originalHandoffContent, "batch-0002", 2);
+    await assert.rejects(() => receiver.receive(credential, canonicalSemanticBatchV3Reference(invalidBatchReference)), /membership|order|invalid/i, "invalid persisted batch membership and order fail closed");
+    await restoreImmutableFixture();
     await sql.unsafe("UPDATE atlas.document_perception_derived_manifest SET accepted_at=NULL WHERE execution_id=$1 AND asset_ref=$2", [executionId, asset.assetRef]);
     await assert.rejects(() => receiver.receive(credential, body), /missing|substituted|invalid/i, "missing accepted image fails closed");
     await sql.unsafe("UPDATE atlas.document_perception_derived_manifest SET accepted_at=now() WHERE execution_id=$1 AND asset_ref=$2", [executionId, asset.assetRef]);
