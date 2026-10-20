@@ -4,7 +4,7 @@
 - **Batch:** `IDSER-BATCH-12-05-04-01`
 - **State:** `awaiting_review`
 - **Predecessor:** `IDSER-012-05-03-02` CK PASS at `1aec9f22`; its ticket-specific historical-evidence exception is limited to that predecessor and is not reused here.
-- **Implementation commit:** `8cc581de` (`feat(idser): resolve authorized v3 references`)
+- **Implementation commits:** `8cc581de` (`feat(idser): resolve authorized v3 references`), `8f017f7c` (`fix(idser): bind v3 resolution to accepted cache identity`)
 
 ## Review Contract Closure
 
