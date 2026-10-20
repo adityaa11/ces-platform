@@ -1,4 +1,5 @@
 import { BridgeProviderError, dispatchMultipartStructured, type ChatMessage, type MultipartChatMessage, type MultipartImageCapability, type ProviderProvenance, type ProviderUsage, type StructuredReasoningProvider } from "../provider-capabilities.js";
+import { serializeAnomanMultipartRequest } from "./anoman-multipart-serialization.js";
 
 export type AnomanProviderConfig = {
   readonly apiKey?: string;
@@ -69,15 +70,6 @@ function metadataOf(payload: JsonRecord, requestedModel: string): Readonly<Recor
   return metadata;
 }
 
-function multipartMessages(messages: readonly MultipartChatMessage[]): readonly { readonly role: MultipartChatMessage["role"]; readonly content: readonly ({ readonly type: "text"; readonly text: string } | { readonly type: "image_url"; readonly image_url: { readonly url: string } })[] }[] {
-  return messages.map((message) => ({
-    role: message.role,
-    content: message.parts.map((part) => part.type === "text"
-      ? { type: "text" as const, text: part.text }
-      : { type: "image_url" as const, image_url: { url: `data:${part.media.mimeType};base64,${Buffer.from(part.media.bytes).toString("base64")}` } }),
-  }));
-}
-
 /**
  * Concrete Anoman transport for already-prepared neutral reasoning messages.
  * It deliberately treats the supplied schema as an Atlas-local hint: object
@@ -123,10 +115,12 @@ export class AnomanProvider implements StructuredReasoningProvider {
     throw new BridgeProviderError("malformed_response", "Anoman returned invalid JSON.");
   }
 
-  private async execute(input: { readonly messages: unknown; readonly signal: AbortSignal; readonly requireZeroDataRetention?: boolean }): Promise<{ readonly value: unknown; readonly provenance: ProviderProvenance }> {
+  private async execute(input: { readonly messages: readonly ChatMessage[] | readonly MultipartChatMessage[]; readonly multipart?: boolean; readonly signal: AbortSignal; readonly requireZeroDataRetention?: boolean }): Promise<{ readonly value: unknown; readonly provenance: ProviderProvenance }> {
     const model = this.preflight(input.requireZeroDataRetention);
     const body = { model, messages: input.messages, temperature: 0, stream: false, response_format: { type: "json_object" } };
-    const serialized = JSON.stringify(body);
+    const serialized = input.multipart
+      ? serializeAnomanMultipartRequest(model, input.messages as readonly MultipartChatMessage[])
+      : JSON.stringify(body);
     if (Buffer.byteLength(serialized) > this.config.maxRequestBytes) throw new BridgeProviderError("invalid_request", "Anoman request exceeded the configured byte limit.");
     const deadline = AbortSignal.timeout(this.config.timeoutMilliseconds);
     const signal = AbortSignal.any([input.signal, deadline]);
@@ -170,7 +164,8 @@ export class AnomanProvider implements StructuredReasoningProvider {
       signal: input.signal,
       capabilities: { image: anomanMultipartImageCapability },
     }, async (messages) => this.execute({
-      messages: multipartMessages(messages),
+      messages,
+      multipart: true,
       signal: input.signal,
       requireZeroDataRetention: input.requireZeroDataRetention,
     }));
