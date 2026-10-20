@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "exports": "./src/index.ts",
-  "scripts": { "typecheck": "tsc -p tsconfig.json", "test": "jiti tests/semantic-skills.test.ts" },
+  "scripts": { "typecheck": "tsc -p tsconfig.json", "test": "jiti tests/semantic-skills.test.ts", "test:canonical-multimodal-composition": "jiti tests/canonical-multimodal-composition.test.ts" },
   "dependencies": { "@atlas/contracts": "workspace:*", "zod": "4.4.3" },
   "devDependencies": { "@types/node": "22.19.19", "jiti": "2.7.0" }
 }
