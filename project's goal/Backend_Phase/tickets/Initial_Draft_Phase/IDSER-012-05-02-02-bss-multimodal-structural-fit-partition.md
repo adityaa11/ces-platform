@@ -1,6 +1,6 @@
 # IDSER-012-05-02-02 — BSS multimodal structural-fit partition
 
-- **State:** `awaiting_review`; implemented after explicit GO and `IDSER-012-05-02-01` CK PASS.
+- **State:** `approved`; CK `PASS` recorded at `0fb9052a6c5be44e0c11708a9d628bbabaa7b3b1` after explicit GO and `IDSER-012-05-02-01` CK PASS.
 - **Parent map:** [IDSER-012-05-02](IDSER-012-05-02-multimodal-structural-fit-partition.md).
 
 ## Sole scope
