@@ -1,7 +1,8 @@
 # IDSER-012-05-01-01 — Canonical multimodal composition
 
-- **State:** `planned`; executable after explicit GO.
+- **State:** `awaiting_review`; GO implementation checkpoint recorded for CK.
 - **Parent map:** [IDSER-012-05-01](IDSER-012-05-01-multimodal-canonical-composition-and-estimation.md).
+- **GO checkpoint:** [IDSER-012-05-01-01 GO checkpoint](../../../feedback/IDSER-BATCH-12-05-01-01-go-checkpoint.md).
 
 ## Sole scope
 
