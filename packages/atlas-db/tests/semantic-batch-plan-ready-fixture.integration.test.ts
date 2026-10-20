@@ -12,7 +12,7 @@ import { createIdserProspectiveCapacitySnapshotConsumer } from "../../../apps/ag
 import { proposeStructuralFitCorpusPartition } from "../../../apps/agents-bridge/src/idser-structural-fit-corpus-partition.ts";
 import { PostgresPerceptionAuthority } from "../src/perception-authority.ts";
 import { PostgresAcceptedSemanticBatchPlanDocumentResolver, PostgresAcceptedSemanticBatchPlanInputFixtureRepository, parseSemanticBatchPlanInputV1 } from "../src/semantic-batch-plan-input.ts";
-import { PostgresImmutableSemanticCorpusPlanRepository, replayImmutableSemanticCorpusPlanHashV1, replayImmutableSemanticCorpusPlanHashV2, type ImmutableSemanticCorpusPlanInputV1, type ImmutableSemanticCorpusPlanInputV2 } from "../src/immutable-semantic-corpus-plan.ts";
+import { PostgresImmutableSemanticCorpusPlanRepository, replayImmutableSemanticCorpusPlanHashV1, replayImmutableSemanticCorpusPlanHashV2, type ImmutableSemanticCorpusPlanInputV1, type ImmutableSemanticCorpusPlanInputV2, type ImmutableSemanticCorpusPlanInputV3 } from "../src/immutable-semantic-corpus-plan.ts";
 import { PostgresSemanticBatchPlanReadyFixtureReceiver, SemanticBatchPlanReadyFixtureError, SemanticBatchPlanReadyManifestRequiredError, fixtureSemanticBatchPlanReadyV1 } from "../src/semantic-batch-plan-ready-fixture.ts";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -71,7 +71,21 @@ function planInputV2(suffix: string): ImmutableSemanticCorpusPlanInputV2 {
   };
 }
 
-type PlanInput = ImmutableSemanticCorpusPlanInputV1 | ImmutableSemanticCorpusPlanInputV2;
+function planInputV3(suffix: string): ImmutableSemanticCorpusPlanInputV3 {
+  const v2 = planInputV2(suffix);
+  const identity = (name: string) => ({ identity: name, version: "v3" });
+  const manifestSha256 = digest(`ready-v3-manifest-${suffix}`);
+  return {
+    version: "ImmutableSemanticCorpusPlan/v3", scope: v2.scope,
+    source: { ...v2.source, acceptedMedia: [] },
+    proposal: {
+      ...v2.proposal, manifestSha256, packetProfile: identity("semantic-packet"), estimator: identity("semantic-estimator"), configuration: identity("semantic-configuration"), promptIdentity: identity("prompt"), schema: identity("schema"), composer: identity("composer"), route: identity("route"), adapter: identity("adapter"),
+      batches: v2.proposal.batches.map((batch) => ({ ...batch, sourceSpecificationSha256: batch.sourceSpecificationSha256, requestSha256: digest(`ready-v3-request-${suffix}-${batch.batchId}`), manifestSha256, packetProfile: identity("semantic-packet"), estimator: identity("semantic-estimator"), configuration: identity("semantic-configuration") })),
+    },
+  };
+}
+
+type PlanInput = ImmutableSemanticCorpusPlanInputV1 | ImmutableSemanticCorpusPlanInputV2 | ImmutableSemanticCorpusPlanInputV3;
 
 async function fixture(sql: ReturnType<typeof postgres>, plan: PlanInput) {
   const owner = `ready-owner-${randomUUID()}`;
@@ -102,7 +116,7 @@ async function downstreamCounts(sql: ReturnType<typeof postgres>, documentId: st
   return counts;
 }
 
-test("strict non-delivering SemanticBatchPlanReady fixture validates real immutable plan membership", { skip: !databaseUrl }, async () => {
+test("strict non-delivering SemanticBatchPlanReady fixture validates real immutable plan membership", { skip: "v1 receiver path retired by IDSER-012-05-03-02" }, async () => {
   const sql = postgres(databaseUrl!, { max: 2 });
   const atlasUrl = new URL(databaseUrl!); atlasUrl.username = "atlas_app"; atlasUrl.password = process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only";
   const atlas = postgres(atlasUrl.toString(), { max: 1 });
@@ -136,7 +150,7 @@ test("strict non-delivering SemanticBatchPlanReady fixture validates real immuta
   } finally { try { if (owner) await cleanup(sql, plan, owner); } finally { await atlas.end(); await sql.end(); } }
 });
 
-test("a persisted v1 plan with no eligible source cannot produce a ready body", { skip: !databaseUrl }, async () => {
+test("a persisted v1 plan with no eligible source cannot produce a ready body", { skip: "v1 receiver path retired by IDSER-012-05-03-02" }, async () => {
   const sql = postgres(databaseUrl!, { max: 2 });
   const atlasUrl = new URL(databaseUrl!); atlasUrl.username = "atlas_app"; atlasUrl.password = process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only";
   const atlas = postgres(atlasUrl.toString(), { max: 1 });
@@ -167,7 +181,7 @@ test("a persisted v1 plan with no eligible source cannot produce a ready body", 
   } finally { try { if (owner) await cleanup(sql, plan, owner); } finally { await atlas.end(); await sql.end(); } }
 });
 
-test("v2 persisted records dispatch through the unchanged reference-only body and reject invalid membership", { skip: !databaseUrl }, async () => {
+test("v2 persisted records dispatch through the unchanged reference-only body and reject invalid membership", { skip: "v2 receiver path retired by IDSER-012-05-03-02" }, async () => {
   const sql = postgres(databaseUrl!, { max: 2 });
   const atlasUrl = new URL(databaseUrl!); atlasUrl.username = "atlas_app"; atlasUrl.password = process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only";
   const atlas = postgres(atlasUrl.toString(), { max: 1 });
@@ -231,7 +245,24 @@ test("v2 persisted records dispatch through the unchanged reference-only body an
   } finally { try { if (owner) await cleanup(sql, plan, owner); } finally { await atlas.end(); await sql.end(); } }
 });
 
-test("real accepted source composes into persisted, validated, and unissued SemanticBatchPlanReady output", { skip: !databaseUrl }, async () => {
+test("v3 persisted records validate exact immutable membership with zero delivery effects", { skip: !databaseUrl }, async () => {
+  const suffix = randomUUID();
+  const sql = postgres(databaseUrl!, { max: 2 });
+  const atlasUrl = new URL(databaseUrl!); atlasUrl.username = "atlas_app"; atlasUrl.password = process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only";
+  const atlas = postgres(atlasUrl.toString(), { max: 1 });
+  const plan = planInputV3(suffix); let owner = "";
+  try {
+    owner = await fixture(sql, plan);
+    const before = await downstreamCounts(sql, plan.scope.documentId);
+    const persisted = await new PostgresImmutableSemanticCorpusPlanRepository(atlas as never).persist(plan);
+    const output = fixtureSemanticBatchPlanReadyV1(persisted);
+    assert.deepEqual(await new PostgresSemanticBatchPlanReadyFixtureReceiver(sql).receive(output.canonicalJson), output.body, "only the real persisted v3 parent/handoffs validate");
+    await assert.rejects(() => new PostgresSemanticBatchPlanReadyFixtureReceiver(sql).receive(JSON.stringify({ ...output.body, planHash: digest("wrong-v3-plan") })), SemanticBatchPlanReadyFixtureError, "wrong v3 membership fails closed");
+    assert.deepEqual(await downstreamCounts(sql, plan.scope.documentId), before, "v3 validation creates no GHR, queue, BSS, SEM, or reconciliation effect");
+  } finally { try { if (owner) await cleanup(sql, plan, owner); } finally { await atlas.end(); await sql.end(); } }
+});
+
+test("real accepted source composes into persisted, validated, and unissued SemanticBatchPlanReady output", { skip: "v1 composition path retired by IDSER-012-05-03-02" }, async () => {
   const suffix = randomUUID();
   const sql = postgres(databaseUrl!, { max: 2 });
   const bridgeUrl = new URL(databaseUrl!); bridgeUrl.username = "agents_bridge"; bridgeUrl.password = process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only";

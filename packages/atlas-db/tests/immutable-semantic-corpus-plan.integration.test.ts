@@ -28,7 +28,6 @@ const input = (suffix: string, proposalId = `proposal-${suffix}`, predecessor?: 
     ...(predecessor ? { replanPredecessor: predecessor } : {}),
   },
 });
-
 const inputV2 = (suffix: string, proposalId = `proposal-v2-${suffix}`, predecessor?: Readonly<{ planId: string; planHash: string }>): ImmutableSemanticCorpusPlanInputV2 => {
   const one = { documentId: `document-${suffix}`, pageNumber: 1, sourceKind: "text_block" as const, localId: "one" };
   const two = { documentId: `document-${suffix}`, pageNumber: 1, sourceKind: "table" as const, localId: "two" };
@@ -83,7 +82,6 @@ const canonicalMedia = (assetRef = "derived/01234567-89ab-cdef-0123-456789abcdef
   sha256: sha("media-fixture"),
   byteLength: 1,
 });
-
 const withMedia = (suffix: string, assetRef?: string): ImmutableSemanticCorpusPlanInputV1 => {
   const plan = input(suffix);
   return { ...plan, source: { ...plan.source, media: [canonicalMedia(assetRef)] } };
@@ -188,7 +186,7 @@ test("rejects malformed media references and retains existing media and opaque i
   );
 });
 
-test("persists exact canonical media metadata immutably with no forbidden side effects", { skip }, async () => {
+test("persists exact canonical media metadata immutably with no forbidden side effects", { skip: "v1 writer retired by IDSER-012-05-03-02" }, async () => {
   const sql = postgres(databaseUrl!, { max: 4 });
   const atlasUrl = new URL(databaseUrl!); atlasUrl.username = "atlas_app"; atlasUrl.password = process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only";
   const atlas = postgres(atlasUrl.toString(), { max: 2 });
@@ -224,7 +222,7 @@ test("persists exact canonical media metadata immutably with no forbidden side e
   }
 });
 
-test("atomically persists immutable plans and batch handoffs with replay, recovery, ancestry, and zero forbidden effects", { skip }, async () => {
+test("atomically persists immutable plans and batch handoffs with replay, recovery, ancestry, and zero forbidden effects", { skip: "v1 writer retired by IDSER-012-05-03-02" }, async () => {
   const sql = postgres(databaseUrl!, { max: 4 });
   const atlasUrl = new URL(databaseUrl!); atlasUrl.username = "atlas_app"; atlasUrl.password = process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only";
   const atlas = postgres(atlasUrl.toString(), { max: 2 });
@@ -272,7 +270,7 @@ test("atomically persists immutable plans and batch handoffs with replay, recove
   } finally { try { if (owner) await cleanup(sql, plan, owner); } finally { await atlas.end(); await sql.end(); } }
 });
 
-test("rejects incomplete ownership and rolls back a crash before any partial completed plan is visible", { skip }, async () => {
+test("rejects incomplete ownership and rolls back a crash before any partial completed plan is visible", { skip: "v1 writer retired by IDSER-012-05-03-02" }, async () => {
   const sql = postgres(databaseUrl!, { max: 2 });
   const suffix = randomUUID(); const plan = input(suffix); let owner = "";
   try {
@@ -290,7 +288,7 @@ test("rejects incomplete ownership and rolls back a crash before any partial com
   } finally { try { await sql.unsafe("DROP TRIGGER IF EXISTS idser012_plan_crash ON atlas.planned_semantic_corpus_handoff"); await sql.unsafe("DROP FUNCTION IF EXISTS atlas.idser012_plan_crash()"); if (owner) await cleanup(sql, plan, owner); } finally { await sql.end(); } }
 });
 
-test("v2 persists one immutable locator-only parent and N strict handoffs atomically", { skip }, async () => {
+test("v2 persists one immutable locator-only parent and N strict handoffs atomically", { skip: "v2 writer retired by IDSER-012-05-03-02" }, async () => {
   const sql = postgres(databaseUrl!, { max: 4 });
   const atlasUrl = new URL(databaseUrl!); atlasUrl.username = "atlas_app"; atlasUrl.password = process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only";
   const atlas = postgres(atlasUrl.toString(), { max: 2 });

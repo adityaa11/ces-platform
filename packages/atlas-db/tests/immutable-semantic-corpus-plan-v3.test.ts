@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import test from "node:test";
 import {
   ImmutableSemanticCorpusPlanError,
+  PostgresImmutableSemanticCorpusPlanRepository,
   canonicalImmutableSemanticCorpusPlanV3,
   parseImmutableSemanticCorpusPlanInputV3,
   parseImmutableSemanticCorpusPlanRecord,
@@ -10,6 +11,7 @@ import {
   replayImmutableSemanticCorpusPlanHashV3,
   type ImmutableSemanticCorpusPlanInputV3,
 } from "../src/immutable-semantic-corpus-plan.ts";
+import { PostgresSemanticBatchPlanReadyFixtureReceiver, fixtureSemanticBatchPlanReadyV1 } from "../src/semantic-batch-plan-ready-fixture.ts";
 
 const hash = (value: string) => createHash("sha256").update(value).digest("hex");
 const identity = (name: string) => ({ identity: name, version: "v3" });
@@ -86,4 +88,32 @@ test("v3 persisted records reject post-canonical payload injection and broken pa
   assert.doesNotThrow(() => parsePlannedSemanticCorpusHandoffRecord(child), "a request hash is self-contained; parent/child equality is checked by the persistence/reconstruction consumer");
   child.providerBody = "forbidden";
   assert.throws(() => parsePlannedSemanticCorpusHandoffRecord(child), ImmutableSemanticCorpusPlanError);
+});
+
+test("the active writer and reference-only receiver accept only internally consistent v3 commitments", async () => {
+  const plan = input("active-boundary");
+  const canonical = canonicalImmutableSemanticCorpusPlanV3(plan);
+  const persisted = {
+    planId: `semantic-plan-${canonical.planHash}`,
+    planHash: canonical.planHash,
+    handoffs: [{ batchId: "batch-0001", handoffId: `semantic-handoff-${hash("active-boundary-handoff")}`, handoffHash: hash("active-boundary-handoff") }],
+  };
+  const fixture = fixtureSemanticBatchPlanReadyV1(persisted);
+  const [handoff] = persisted.handoffs;
+  const receiver = new PostgresSemanticBatchPlanReadyFixtureReceiver({
+    unsafe: async () => [{
+      plan_id: persisted.planId, plan_hash: persisted.planHash,
+      project_id: plan.scope.projectId, workspace_id: plan.scope.workspaceId, bundle_id: plan.scope.bundleId, document_id: plan.scope.documentId,
+      plan_content: canonical.planContent,
+      handoff_id: handoff!.handoffId, handoff_plan_id: persisted.planId, batch_id: handoff!.batchId, batch_slot: 1, handoff_hash: handoff!.handoffHash,
+      handoff_content: canonical.handoffContents[0], cancelled_plan_id: null,
+    }],
+  });
+  assert.deepEqual(await receiver.receive(fixture.canonicalJson), fixture.body, "validation returns the unchanged reference body without a delivery API");
+
+  const unavailableSql = { unsafe: async () => { throw new Error("old inputs must fail before database access"); }, begin: async () => { throw new Error("old inputs must fail before a transaction"); } };
+  const writer = new PostgresImmutableSemanticCorpusPlanRepository(unavailableSql as never);
+  await assert.rejects(() => writer.persist({ ...plan, version: "ImmutableSemanticCorpusPlan/v2" } as never), /v3 is accepted at the active persistence boundary/);
+  await assert.rejects(() => writer.persist(({ ...plan, version: undefined } as unknown) as never), /v3 is accepted at the active persistence boundary/);
+  await assert.rejects(() => writer.persist(({ ...plan, version: "mixed" } as unknown) as never), /v3 is accepted at the active persistence boundary/);
 });

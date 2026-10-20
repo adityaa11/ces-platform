@@ -2,10 +2,10 @@ import { createHash } from "node:crypto";
 import {
   parseImmutableSemanticCorpusPlanRecord,
   parsePlannedSemanticCorpusHandoffRecord,
-  replayImmutableSemanticCorpusPlanHashV1,
-  replayImmutableSemanticCorpusPlanHashV2,
+  replayImmutableSemanticCorpusPlanHashV3,
   type PersistedSemanticCorpusPlanV1,
   type PersistedSemanticCorpusPlanV2,
+  type PersistedSemanticCorpusPlanV3,
 } from "./immutable-semantic-corpus-plan.js";
 
 type Row = Record<string, unknown>;
@@ -87,7 +87,7 @@ function validate(value: unknown): SemanticBatchPlanReadyV1 {
 }
 
 /** Produces only a canonical fixture body; it neither writes nor issues it. */
-export function fixtureSemanticBatchPlanReadyV1(plan: PersistedSemanticCorpusPlanV1 | PersistedSemanticCorpusPlanV2): SemanticBatchPlanReadyFixtureV1 {
+export function fixtureSemanticBatchPlanReadyV1(plan: PersistedSemanticCorpusPlanV1 | PersistedSemanticCorpusPlanV2 | PersistedSemanticCorpusPlanV3): SemanticBatchPlanReadyFixtureV1 {
   const body = validate({
     documentPlanRef: plan.planId,
     planHash: plan.planHash,
@@ -107,8 +107,8 @@ function parsePersistedHandoff(content: unknown): Readonly<{ version: "PlannedSe
 }
 
 /**
- * The fixture receiver validates only persisted Atlas plan/handoff facts. It
- * has no route, queue, outbox, scheduler, acknowledgement, or delivery API.
+ * The active receiver validates only immutable v3 plan/handoff facts. It has
+ * no route, queue, outbox, scheduler, acknowledgement, or delivery API.
  */
 export class PostgresSemanticBatchPlanReadyFixtureReceiver {
   constructor(private readonly sql: ReadOnlySql) {}
@@ -123,9 +123,11 @@ export class PostgresSemanticBatchPlanReadyFixtureReceiver {
 
     const rows = await this.sql.unsafe(`SELECT
         plan.id AS plan_id, plan.plan_hash, plan.project_id, plan.workspace_id, plan.bundle_id, plan.document_id, plan.immutable_content AS plan_content,
-        handoff.id AS handoff_id, handoff.plan_id AS handoff_plan_id, handoff.batch_id, handoff.batch_slot, handoff.handoff_hash, handoff.immutable_content AS handoff_content
+        handoff.id AS handoff_id, handoff.plan_id AS handoff_plan_id, handoff.batch_id, handoff.batch_slot, handoff.handoff_hash, handoff.immutable_content AS handoff_content,
+        cancellation.plan_id AS cancelled_plan_id
       FROM atlas.semantic_corpus_plan plan
       LEFT JOIN atlas.planned_semantic_corpus_handoff handoff ON handoff.plan_id=plan.id
+      LEFT JOIN atlas.semantic_corpus_plan_cancellation cancellation ON cancellation.plan_id=plan.id
       WHERE plan.id=$1 AND plan.plan_hash=$2
       ORDER BY handoff.batch_slot`, [body.documentPlanRef, body.planHash]);
     if (rows.length !== body.batchCount) fail("persisted plan is missing handoffs or is stale");
@@ -144,28 +146,28 @@ export class PostgresSemanticBatchPlanReadyFixtureReceiver {
       storedIds.add(String(row.handoff_id));
       const parsedPlan = parsePersistedPlan(row.plan_content);
       const parsedHandoff = parsePersistedHandoff(row.handoff_content);
+      if (parsedPlan.version !== "ImmutableSemanticCorpusPlan/v3" || parsedHandoff.version !== "PlannedSemanticCorpusHandoff/v3") fail("v1/v2 plan or handoff paths are retired at the active receiver");
       const plan = parsedPlan.content as Record<string, unknown>;
       const handoff = parsedHandoff.content as Record<string, unknown>;
       const scope = plan?.scope as Record<string, unknown>;
       const proposal = plan?.proposal as Record<string, unknown>;
-      const isV2 = parsedPlan.version === "ImmutableSemanticCorpusPlan/v2";
-      if ((isV2 ? "PlannedSemanticCorpusHandoff/v2" : "PlannedSemanticCorpusHandoff/v1") !== parsedHandoff.version
+      if (row.cancelled_plan_id !== null && row.cancelled_plan_id !== undefined
         || String(row.plan_hash) !== body.planHash
-        || (isV2 ? replayImmutableSemanticCorpusPlanHashV2(plan) : replayImmutableSemanticCorpusPlanHashV1(plan)) !== body.planHash
+        || replayImmutableSemanticCorpusPlanHashV3(plan) !== body.planHash
         || !plain(plan) || plan.version !== parsedPlan.version || !plain(scope)
         || scope.projectId !== row.project_id || scope.workspaceId !== row.workspace_id || scope.bundleId !== row.bundle_id || scope.documentId !== row.document_id
         || !plain(proposal) || !Array.isArray(proposal.batchIds) || proposal.batchIds.length !== body.batchCount || proposal.batchIds[index] !== member.batchId
         || !plain(handoff) || handoff.version !== parsedHandoff.version || handoff.planHash !== body.planHash || handoff.batchId !== member.batchId || handoff.batchSlot !== index + 1) {
         fail("persisted plan or handoff scope is inconsistent");
       }
-      const units = isV2 ? proposal.inventory : proposal.units;
+      const units = proposal.inventory;
       const ownedLocators = handoff.ownedLocators;
       const contextOnlyLocators = Array.isArray(handoff.contextOnlyLocators) ? handoff.contextOnlyLocators : null;
-      if (!Array.isArray(units) || !Array.isArray(ownedLocators) || (isV2 && !contextOnlyLocators)) fail("persisted ownership metadata is inconsistent");
+      if (!Array.isArray(units) || !Array.isArray(ownedLocators) || !contextOnlyLocators || handoff.manifestSha256 !== proposal.manifestSha256) fail("persisted ownership or manifest membership is inconsistent");
       if (index === 0) for (const unit of units) {
         if (!plain(unit)) continue;
         const key = locatorKey(unit.locator);
-        if (isV2 && key) inventory.add(key);
+        if (key) inventory.add(key);
         if (unit.classification !== "eligible") continue;
         if (!key || eligible.has(key)) fail("persisted eligible ownership is invalid");
         eligible.add(key);
@@ -175,7 +177,7 @@ export class PostgresSemanticBatchPlanReadyFixtureReceiver {
         if (!key || owned.has(key)) fail("persisted handoff ownership is duplicate or invalid");
         owned.add(key);
       }
-      if (isV2) for (const locator of contextOnlyLocators!) {
+      for (const locator of contextOnlyLocators) {
         const key = locatorKey(locator);
         if (!plain(locator) || locator.documentId !== scope.documentId || !key || !inventory.has(key)) fail("persisted context-only locator is foreign or outside the parent inventory");
       }
