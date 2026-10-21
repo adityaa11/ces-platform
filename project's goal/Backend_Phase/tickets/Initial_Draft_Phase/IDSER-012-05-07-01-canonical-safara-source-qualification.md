@@ -1,6 +1,6 @@
 # IDSER-012-05-07-01 — Canonical Safara source qualification
 
-- **State:** `planned`; executable only after explicit GO and CK PASS for `IDSER-012-05-01-01` through `-05-04-02`.
+- **State:** `approved`; CK `PASS` recorded in `../../../feedback/IDSER-BATCH-12-05-07-01-a1c40d05-review.md` for reviewed checkpoint commit `a1c40d0587be49ae10fa43155b94bd637873760e`.
 - **Parent map:** [IDSER-012-05-07](IDSER-012-05-07-perc-reset-multimodal-terminal-qualification.md).
 
 ## Sole scope
