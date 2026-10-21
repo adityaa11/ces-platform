@@ -364,12 +364,12 @@ test("v3 atomically persists references-only commitments with policy sidecars, i
     owner = await fixture(sql, plan as unknown as ImmutableSemanticCorpusPlanInputV1);
     const repository = new PostgresImmutableSemanticCorpusPlanRepository(atlas as any);
     const [baseline] = await sql.unsafe("SELECT (SELECT count(*)::int FROM pgboss.job) AS queue, (SELECT count(*)::int FROM bridge.provider_work_admission_v1) AS bss_work, (SELECT count(*)::int FROM bridge.provider_work_attempt) AS bss_attempt, (SELECT count(*)::int FROM bridge.provider_work_reservation) AS bss_reservation, (SELECT count(*)::int FROM atlas.semantic_execution WHERE document_id=$1) AS sem", [plan.scope.documentId]);
-    await sql.unsafe("CREATE OR REPLACE FUNCTION atlas.idser012_v3_plan_crash() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'controlled v3 plan crash'; END; $$");
-    await sql.unsafe("CREATE TRIGGER idser012_v3_plan_crash BEFORE INSERT ON atlas.planned_semantic_corpus_handoff FOR EACH ROW EXECUTE FUNCTION atlas.idser012_v3_plan_crash()");
-    await assert.rejects(() => repository.persistV3(plan, policyBindingsV3(plan)), /controlled v3 plan crash/);
-    await sql.unsafe("DROP TRIGGER idser012_v3_plan_crash ON atlas.planned_semantic_corpus_handoff"); await sql.unsafe("DROP FUNCTION atlas.idser012_v3_plan_crash()");
-    const [rolledBack] = await sql.unsafe("SELECT (SELECT count(*)::int FROM atlas.semantic_corpus_plan WHERE project_id=$1) AS plans, (SELECT count(*)::int FROM atlas.planned_semantic_corpus_handoff handoff JOIN atlas.semantic_corpus_plan plan ON plan.id=handoff.plan_id WHERE plan.project_id=$1) AS handoffs", [plan.scope.projectId]);
-    assert.deepEqual({ plans: Number(rolledBack!.plans), handoffs: Number(rolledBack!.handoffs) }, { plans: 0, handoffs: 0 }, "a child failure leaves no partial v3 parent or handoff");
+    await sql.unsafe("CREATE OR REPLACE FUNCTION atlas.idser012_v3_plan_crash() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'controlled v3 sidecar crash'; END; $$");
+    await sql.unsafe("CREATE TRIGGER idser012_v3_plan_crash BEFORE INSERT ON atlas.semantic_multimodal_reconstruction_policy_binding FOR EACH ROW EXECUTE FUNCTION atlas.idser012_v3_plan_crash()");
+    await assert.rejects(() => repository.persistV3(plan, policyBindingsV3(plan)), /controlled v3 sidecar crash/);
+    await sql.unsafe("DROP TRIGGER idser012_v3_plan_crash ON atlas.semantic_multimodal_reconstruction_policy_binding"); await sql.unsafe("DROP FUNCTION atlas.idser012_v3_plan_crash()");
+    const [rolledBack] = await sql.unsafe("SELECT (SELECT count(*)::int FROM atlas.semantic_corpus_plan WHERE project_id=$1) AS plans, (SELECT count(*)::int FROM atlas.planned_semantic_corpus_handoff handoff JOIN atlas.semantic_corpus_plan plan ON plan.id=handoff.plan_id WHERE plan.project_id=$1) AS handoffs, (SELECT count(*)::int FROM atlas.semantic_multimodal_reconstruction_policy_binding binding JOIN atlas.semantic_corpus_plan plan ON plan.id=binding.plan_id WHERE plan.project_id=$1) AS sidecars", [plan.scope.projectId]);
+    assert.deepEqual({ plans: Number(rolledBack!.plans), handoffs: Number(rolledBack!.handoffs), sidecars: Number(rolledBack!.sidecars) }, { plans: 0, handoffs: 0, sidecars: 0 }, "a sidecar-insertion failure leaves no partial v3 parent, handoff, or sidecar");
     const [first, replay] = await Promise.all([repository.persistV3(plan, policyBindingsV3(plan)), repository.persistV3(plan, policyBindingsV3(plan))]);
     assert.deepEqual(replay, first, "simultaneous v3 retries return the same immutable parent and children");
     assert.deepEqual(await repository.persist(plan, policyBindingsV3(plan)), first, "the version dispatcher preserves v3 idempotency");
@@ -379,6 +379,39 @@ test("v3 atomically persists references-only commitments with policy sidecars, i
     assert.equal(children.length, plan.proposal.batches.length);
     const sidecars = await sql.unsafe("SELECT binding_sha256 FROM atlas.semantic_multimodal_reconstruction_policy_binding WHERE plan_id=$1 ORDER BY batch_slot", [first.planId]);
     assert.equal(sidecars.length, plan.proposal.batches.length, "each committed v3 handoff has one same-transaction immutable policy binding");
+    const [storedBinding] = await sql.unsafe("SELECT handoff_id, batch_id, batch_slot, binding_sha256, binding_content FROM atlas.semantic_multimodal_reconstruction_policy_binding WHERE plan_id=$1", [first.planId]);
+    assert.ok(storedBinding, "the valid writer persists an insert-guarded sidecar");
+    await sql.begin(async (transaction) => {
+      await transaction.unsafe("SET LOCAL session_replication_role = replica");
+      await transaction.unsafe("DELETE FROM atlas.semantic_multimodal_reconstruction_policy_binding WHERE plan_id=$1", [first.planId]);
+    });
+    await assert.rejects(
+      () => atlas.unsafe("INSERT INTO atlas.semantic_multimodal_reconstruction_policy_binding (plan_id,handoff_id,batch_id,batch_slot,binding_sha256,binding_content) VALUES ($1,$2,$3,$4,$5,$6::jsonb)", [first.planId, storedBinding!.handoff_id, storedBinding!.batch_id, storedBinding!.batch_slot, storedBinding!.binding_sha256, storedBinding!.binding_content]),
+      /transaction/i,
+      "a later sidecar cannot reuse matching historical parents and timestamp",
+    );
+    const malformed = [
+      { ...structuredClone(storedBinding!.binding_content as Record<string, unknown>), unexpected: true },
+      { ...structuredClone(storedBinding!.binding_content as Record<string, unknown>), estimatorBinding: { ...(storedBinding!.binding_content as any).estimatorBinding, inputBytesPerToken: 0 } },
+      { ...structuredClone(storedBinding!.binding_content as Record<string, unknown>), bindingSha256: "0".repeat(64) },
+    ];
+    for (const content of malformed) await assert.rejects(
+      () => sql.begin(async (transaction) => {
+        await transaction.unsafe("SET LOCAL session_replication_role = replica");
+        await transaction.unsafe("UPDATE atlas.semantic_corpus_plan SET created_at=transaction_timestamp() WHERE id=$1", [first.planId]);
+        await transaction.unsafe("UPDATE atlas.planned_semantic_corpus_handoff SET created_at=transaction_timestamp() WHERE id=$1", [storedBinding!.handoff_id]);
+        await transaction.unsafe("SET LOCAL session_replication_role = origin");
+        await assert.rejects(
+          () => transaction.unsafe("INSERT INTO atlas.semantic_multimodal_reconstruction_policy_binding (plan_id,handoff_id,batch_id,batch_slot,binding_sha256,binding_content) VALUES ($1,$2,$3,$4,$5,$6::jsonb)", [first.planId, storedBinding!.handoff_id, storedBinding!.batch_id, storedBinding!.batch_slot, content.bindingSha256, content]),
+          /schema|commitment/i,
+          "a direct malformed or hash-inconsistent sidecar is rejected at the insert guard",
+        );
+        throw new Error("rollback malformed sidecar fixture");
+      }),
+      /rollback malformed sidecar fixture/,
+    );
+    const [directInsertCount] = await sql.unsafe("SELECT count(*)::int AS count FROM atlas.semantic_multimodal_reconstruction_policy_binding WHERE plan_id=$1", [first.planId]);
+    assert.equal(Number(directInsertCount!.count), 0, "rejected direct sidecars leave no readable persisted row");
     const persisted = JSON.stringify([storedPlan!.immutable_content, ...children.map((row) => row.immutable_content)]);
     for (const forbidden of ["rawRequest", "promptBody", "schemaBody", "sourceText", "mediaBytes", "base64", "adapterJson", "providerResponse", "credentials"]) assert.equal(persisted.includes(forbidden), false, `${forbidden} is not stored`);
     assert.equal(canonicalImmutableSemanticCorpusPlanV3(plan).planHash, first.planHash, "the DB row has the rederivable v3 commitment hash");
@@ -390,5 +423,5 @@ test("v3 atomically persists references-only commitments with policy sidecars, i
     assert.deepEqual({ planId: ancestry!.predecessor_plan_id, planHash: ancestry!.predecessor_plan_hash }, { planId: first.planId, planHash: first.planHash }, "v3 retains only the cancelled predecessor identity");
     const [after] = await sql.unsafe("SELECT (SELECT count(*)::int FROM pgboss.job) AS queue, (SELECT count(*)::int FROM bridge.provider_work_admission_v1) AS bss_work, (SELECT count(*)::int FROM bridge.provider_work_attempt) AS bss_attempt, (SELECT count(*)::int FROM bridge.provider_work_reservation) AS bss_reservation, (SELECT count(*)::int FROM atlas.semantic_execution WHERE document_id=$1) AS sem", [plan.scope.documentId]);
     assert.deepEqual(after, baseline, "v3 persistence creates no queue, BSS admission, provider, or semantic execution effect");
-  } finally { try { await sql.unsafe("DROP TRIGGER IF EXISTS idser012_v3_plan_crash ON atlas.planned_semantic_corpus_handoff"); await sql.unsafe("DROP FUNCTION IF EXISTS atlas.idser012_v3_plan_crash()"); if (owner) await cleanup(sql, plan as unknown as ImmutableSemanticCorpusPlanInputV1, owner); } finally { await atlas.end(); await sql.end(); } }
+  } finally { try { await sql.unsafe("DROP TRIGGER IF EXISTS idser012_v3_plan_crash ON atlas.semantic_multimodal_reconstruction_policy_binding"); await sql.unsafe("DROP FUNCTION IF EXISTS atlas.idser012_v3_plan_crash()"); if (owner) await cleanup(sql, plan as unknown as ImmutableSemanticCorpusPlanInputV1, owner); } finally { await atlas.end(); await sql.end(); } }
 });

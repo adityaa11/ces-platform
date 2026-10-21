@@ -192,6 +192,11 @@ export class PostgresSemanticBatchV3ReferenceResolver {
     const selected = [...ownedLocators, ...contextOnlyLocators];
     if (new Set(selected.map(locatorKey)).size !== selected.length || selected.some((locator) => !inventoryKeys.has(locatorKey(locator))) || ownedLocators.some((locator) => !eligibleKeys.has(locatorKey(locator)))) fail("selected locator membership is foreign, missing, reordered, or substituted");
 
+    // A handoff may select a strict subset of the accepted document images.
+    // The source-level accepted manifest is deliberately broader than this
+    // reconstruction input, so validate and project only selected visuals.
+    const selectedVisualLocators = selected.filter((locator) => locator.sourceKind === "visual_region");
+    const selectedVisualKeys = new Set(selectedVisualLocators.map(locatorKey));
     const acceptedMedia = Array.isArray(source.acceptedMedia) ? (source.acceptedMedia as unknown[]).map((media) => {
       const parsedMedia = media as Record<string, unknown>;
       const parsedLocator = parsedMedia.locator as Record<string, unknown>;
@@ -200,14 +205,19 @@ export class PostgresSemanticBatchV3ReferenceResolver {
       if (typeof parsedMedia.assetRef !== "string" || typeof parsedMedia.sha256 !== "string" || !hash.test(parsedMedia.sha256) || parsedMedia.mediaType !== "image/png" || !Number.isSafeInteger(parsedMedia.byteLength) || (parsedMedia.byteLength as number) <= 0 || !inventoryKeys.has(locatorKey(locator))) fail("accepted derived-media reference is foreign or invalid");
       return { assetRef: parsedMedia.assetRef as string, locator, sha256: parsedMedia.sha256 as string, mediaType: "image/png" as const, byteLength: parsedMedia.byteLength as number };
     }) : fail("accepted derived-media references are missing");
-    if (new Set(acceptedMedia.map((media) => media.assetRef)).size !== acceptedMedia.length || new Set(acceptedMedia.map((media) => locatorKey(media.locator))).size !== acceptedMedia.length) fail("accepted derived-media references are duplicate");
-    const mediaRows = acceptedMedia.length ? await this.sql.unsafe(`SELECT manifest.asset_ref, manifest.locator_id, manifest.page_number, manifest.media_type, manifest.sha256, manifest.byte_size, manifest.width, manifest.height
+    const selectedMedia = acceptedMedia.filter((media) => selectedVisualKeys.has(locatorKey(media.locator)));
+    if (selectedMedia.length !== selectedVisualLocators.length
+      || new Set(selectedMedia.map((media) => media.assetRef)).size !== selectedMedia.length
+      || new Set(selectedMedia.map((media) => locatorKey(media.locator))).size !== selectedMedia.length) fail("selected accepted derived-media references are missing or duplicate");
+    const selectedByLocator = new Map(selectedMedia.map((media) => [locatorKey(media.locator), media]));
+    const orderedSelectedMedia = selectedVisualLocators.map((locator) => selectedByLocator.get(locatorKey(locator)) ?? fail("selected accepted derived-media reference is missing"));
+    const mediaRows = orderedSelectedMedia.length ? await this.sql.unsafe(`SELECT manifest.asset_ref, manifest.locator_id, manifest.page_number, manifest.media_type, manifest.sha256, manifest.byte_size, manifest.width, manifest.height
       FROM atlas.document_perception_derived_manifest manifest
       JOIN atlas.document_perception_derived_asset asset ON asset.cache_key=$1 AND asset.asset_ref=manifest.asset_ref AND asset.deleted_at IS NULL
       WHERE manifest.execution_id=$2 AND manifest.artifact_id=$3 AND manifest.source_sha256=$4 AND manifest.accepted_at IS NOT NULL
-        AND manifest.asset_ref=ANY($5::text[])`, [source.normalizedDocumentRef, source.perceptionExecutionId, resolvedScope.documentId, source.sourceSha256, acceptedMedia.map((media) => media.assetRef)]) : [];
-    if (mediaRows.length !== acceptedMedia.length || mediaRows.some((asset) => !acceptedMedia.some((media) => media.assetRef === asset.asset_ref && media.locator.localId === asset.locator_id && media.locator.pageNumber === Number(asset.page_number) && media.mediaType === asset.media_type && media.sha256 === asset.sha256 && media.byteLength === Number(asset.byte_size) && Number.isSafeInteger(Number(asset.width)) && Number(asset.width) > 0 && Number.isSafeInteger(Number(asset.height)) && Number(asset.height) > 0))) fail("accepted derived-media reference is missing, dimensionless, or substituted");
-    const mediaWithDimensions = acceptedMedia.map((media) => {
+        AND manifest.asset_ref=ANY($5::text[])`, [source.normalizedDocumentRef, source.perceptionExecutionId, resolvedScope.documentId, source.sourceSha256, orderedSelectedMedia.map((media) => media.assetRef)]) : [];
+    if (mediaRows.length !== orderedSelectedMedia.length || mediaRows.some((asset) => !orderedSelectedMedia.some((media) => media.assetRef === asset.asset_ref && media.locator.localId === asset.locator_id && media.locator.pageNumber === Number(asset.page_number) && media.mediaType === asset.media_type && media.sha256 === asset.sha256 && media.byteLength === Number(asset.byte_size) && Number.isSafeInteger(Number(asset.width)) && Number(asset.width) > 0 && Number.isSafeInteger(Number(asset.height)) && Number(asset.height) > 0))) fail("selected accepted derived-media reference is missing, dimensionless, or substituted");
+    const mediaWithDimensions = orderedSelectedMedia.map((media) => {
       const row = mediaRows.find((asset) => media.assetRef === asset.asset_ref);
       if (!row) return fail("accepted derived-media reference is missing");
       return { ...media, width: Number(row.width), height: Number(row.height) };

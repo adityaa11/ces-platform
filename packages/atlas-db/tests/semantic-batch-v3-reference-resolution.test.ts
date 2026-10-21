@@ -21,17 +21,21 @@ const identity = (name: string) => ({ identity: name, version: "v3" });
 
 function input(): ImmutableSemanticCorpusPlanInputV3 {
   const owned = { documentId: scope.documentId, pageNumber: 1, sourceKind: "text_block" as const, localId: "owned" };
+  const selectedImage = { documentId: scope.documentId, pageNumber: 1, sourceKind: "visual_region" as const, localId: "selected-image" };
+  const unselectedImage = { documentId: scope.documentId, pageNumber: 2, sourceKind: "visual_region" as const, localId: "unselected-image" };
+  const selectedAsset = { assetRef: "derived/00000000-0000-0000-0000-000000000001", locator: selectedImage, sha256: digest("selected-image"), mediaType: "image/png" as const, byteLength: 10 };
+  const unselectedAsset = { assetRef: "derived/00000000-0000-0000-0000-000000000002", locator: unselectedImage, sha256: digest("unselected-image"), mediaType: "image/png" as const, byteLength: 11 };
   const estimatorConfiguration = { estimator: identity("estimator"), configuration: identity("configuration"), inputBytesPerToken: 4, framingAllowanceBytes: 0, requestByteSafetyMargin: 0, inputTokenSafetyMargin: 0, reservedOutputTokens: 10, requestResourceEnvelope: { requestUnits: 1, dayUnits: 1, concurrencyUnits: 1 } };
   return {
     version: "ImmutableSemanticCorpusPlan/v3", scope: { projectId: scope.projectId, workspaceId: scope.workspaceId, bundleId: scope.bundleId, documentId: scope.documentId },
-    source: { sourceSha256: digest("source"), normalizedDocumentRef: digest("cache"), perceptionExecutionId: "v3-execution", normalizedDocumentFingerprint: digest("fingerprint"), normalizedDocumentVersion: "v1", perceptionCapability: "atlas.document.perceive", perceptionContractVersion: "v1", rel: { state: "unavailable" }, acceptedMedia: [] },
+    source: { sourceSha256: digest("source"), normalizedDocumentRef: digest("cache"), perceptionExecutionId: "v3-execution", normalizedDocumentFingerprint: digest("fingerprint"), normalizedDocumentVersion: "v1", perceptionCapability: "atlas.document.perceive", perceptionContractVersion: "v1", rel: { state: "unavailable" }, acceptedMedia: [selectedAsset, unselectedAsset] },
     proposal: {
       proposalId: "v3-proposal", proposalHash: digest("proposal"), sourceHash: digest("source-hash"), policyHash: digest("policy"), estimatorHash: canonicalMultimodalSha256(estimatorConfiguration), manifestSha256: digest("manifest"),
       structuralBound: { identity: "v3-bound", version: "v3", maxRequestBytes: 4096, maxInputTokens: 1024, maxPromptBytes: 2048, maxContextTokens: 1024 },
       bssSnapshot: { source: { sourceId: "capacity", sourceVersion: "v1" }, enforcement: { policyId: "policy", policyVersion: "v1" }, process: { profileId: "semantic", profileVersion: "v1" }, workload: { planId: "workload", planVersion: "v1", estimator: identity("estimator") } },
       packetProfile: identity("packet"), estimator: identity("estimator"), configuration: identity("configuration"), promptIdentity: identity("prompt"), schema: identity("schema"), composer: identity("composer"), route: identity("route"), adapter: identity("adapter"), eligibleDimensions: ["rpm", "tpm"], requestResourceEnvelope: { requestUnits: 1, tokenUnits: 20, dayUnits: 1, concurrencyUnits: 1 },
-      inventory: [{ locator: owned, classification: "eligible" }],
-      batches: [{ batchId: "batch-0001", ownedLocators: [owned], contextOnlyLocators: [], sourceSpecificationSha256: digest("source-spec"), requestSha256: digest("request"), manifestSha256: digest("manifest"), packetProfile: identity("packet"), estimator: identity("estimator"), configuration: identity("configuration"), conservativeLogicalRequestBytes: { version: "ConservativeLogicalRequestBytes/v1", value: 100 }, requestBytes: 100, inputTokens: 20, reservedOutputTokens: 10, requestResourceEnvelope: { requestUnits: 1, tokenUnits: 20, dayUnits: 1, concurrencyUnits: 1 }, fitTrace: [{ sourceSpecificationSha256: digest("source-spec"), requestBytes: 100, inputTokens: 20, reservedOutputTokens: 10, outcome: "fit" }] }],
+      inventory: [{ locator: owned, classification: "eligible" }, { locator: selectedImage, classification: "eligible" }, { locator: unselectedImage, classification: "deferred", reason: "not selected" }],
+      batches: [{ batchId: "batch-0001", ownedLocators: [owned, selectedImage], contextOnlyLocators: [], sourceSpecificationSha256: digest("source-spec"), requestSha256: digest("request"), manifestSha256: digest("manifest"), packetProfile: identity("packet"), estimator: identity("estimator"), configuration: identity("configuration"), conservativeLogicalRequestBytes: { version: "ConservativeLogicalRequestBytes/v1", value: 100 }, requestBytes: 100, inputTokens: 20, reservedOutputTokens: 10, requestResourceEnvelope: { requestUnits: 1, tokenUnits: 20, dayUnits: 1, concurrencyUnits: 1 }, fitTrace: [{ sourceSpecificationSha256: digest("source-spec"), requestBytes: 100, inputTokens: 20, reservedOutputTokens: 10, outcome: "fit" }] }],
     },
   };
 }
@@ -64,12 +68,12 @@ function fixture(mutator?: (row: Record<string, unknown>) => void) {
 test("resolves only immutable v3 references from persisted scope and returns no execution authority", async () => {
   const data = fixture();
   const statements: string[] = [];
-  const result = await new PostgresSemanticBatchV3ReferenceResolver({ unsafe: async (statement) => { statements.push(statement); return [data.row]; } }).resolveBackground(data.reference);
+  const result = await new PostgresSemanticBatchV3ReferenceResolver({ unsafe: async (statement) => { statements.push(statement); return statements.length === 1 ? [data.row] : [{ asset_ref: "derived/00000000-0000-0000-0000-000000000001", locator_id: "selected-image", page_number: 1, media_type: "image/png", sha256: digest("selected-image"), byte_size: 10, width: 1, height: 1 }]; } }).resolveBackground(data.reference);
   assert.deepEqual(result.reference, data.reference);
-  assert.deepEqual(result.selection.ownedLocators, [{ documentId: scope.documentId, pageNumber: 1, sourceKind: "text_block", localId: "owned" }]);
-  assert.deepEqual(result.acceptedMedia, []);
+  assert.deepEqual(result.selection.ownedLocators, [{ documentId: scope.documentId, pageNumber: 1, sourceKind: "text_block", localId: "owned" }, { documentId: scope.documentId, pageNumber: 1, sourceKind: "visual_region", localId: "selected-image" }]);
+  assert.deepEqual(result.acceptedMedia.map((media) => media.locator.localId), ["selected-image"], "an accepted but unselected image is excluded from reconstruction");
   assert.equal(result.commitments.requestSha256, digest("request"));
-  assert.equal(statements.length, 1);
+  assert.equal(statements.length, 2);
   assert.match(statements[0]!, /^SELECT/i, "the resolver has no write path");
   assert.doesNotMatch(statements[0]!, /normalized_document\s+AS/i, "the resolver does not hydrate normalized content");
 });
@@ -87,7 +91,10 @@ test("fails closed for cancelled, tampered, foreign, and mixed-version inputs", 
 test("the internal receiver authenticates before parsing or v3 background redemption", async () => {
   const data = fixture();
   let sqlCalls = 0;
-  const resolver = new PostgresSemanticBatchV3ReferenceResolver({ unsafe: async () => { sqlCalls += 1; return [data.row]; } });
+  const resolver = new PostgresSemanticBatchV3ReferenceResolver({ unsafe: async () => {
+    sqlCalls += 1;
+    return sqlCalls === 1 ? [data.row] : [{ asset_ref: "derived/00000000-0000-0000-0000-000000000001", locator_id: "selected-image", page_number: 1, media_type: "image/png", sha256: digest("selected-image"), byte_size: 10, width: 1, height: 1 }];
+  } });
   const credential = "v".repeat(32);
   const receiver = createSemanticBatchV3ReferenceReceivingBoundary(credential, resolver);
   const body = canonicalSemanticBatchV3Reference(data.reference);
@@ -95,5 +102,5 @@ test("the internal receiver authenticates before parsing or v3 background redemp
   await assert.rejects(() => receiver.receive("invalid", body), /unauthorized internal service request/i);
   assert.equal(sqlCalls, 0, "unauthenticated input never reaches parser or resolver");
   assert.deepEqual((await receiver.receive(credential, body)).scope, scope);
-  assert.equal(sqlCalls, 1);
+  assert.equal(sqlCalls, 2);
 });
