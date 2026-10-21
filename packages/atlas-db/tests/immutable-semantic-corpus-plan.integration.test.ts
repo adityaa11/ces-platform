@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import { createHash, randomUUID } from "node:crypto";
 import test from "node:test";
+import { canonicalMultimodalSha256 } from "@atlas/skills";
 import postgres from "postgres";
-import { ImmutableSemanticCorpusPlanError, PostgresImmutableSemanticCorpusPlanRepository, canonicalImmutableSemanticCorpusPlanV1, canonicalImmutableSemanticCorpusPlanV2, canonicalImmutableSemanticCorpusPlanV3, replayImmutableSemanticCorpusPlanHashV1, type ImmutableSemanticCorpusPlanInputV1, type ImmutableSemanticCorpusPlanInputV2, type ImmutableSemanticCorpusPlanInputV3 } from "../src/immutable-semantic-corpus-plan.ts";
+import { ImmutableSemanticCorpusPlanError, PostgresImmutableSemanticCorpusPlanRepository, canonicalImmutableSemanticCorpusPlanV1, canonicalImmutableSemanticCorpusPlanV2, canonicalImmutableSemanticCorpusPlanV3, replayImmutableSemanticCorpusPlanHashV1, replayPlannedSemanticCorpusHandoffHashV3, type ImmutableSemanticCorpusPlanInputV1, type ImmutableSemanticCorpusPlanInputV2, type ImmutableSemanticCorpusPlanInputV3 } from "../src/immutable-semantic-corpus-plan.ts";
+import { bindSemanticMultimodalReconstructionPolicyV1 } from "../src/semantic-multimodal-reconstruction-policy-binding.ts";
 
 const databaseUrl = process.env.DATABASE_URL;
 const skip = !databaseUrl;
@@ -58,6 +60,7 @@ const inputV2 = (suffix: string, proposalId = `proposal-v2-${suffix}`, predecess
 
 const inputV3 = (suffix: string, proposalId = `proposal-v3-${suffix}`, predecessor?: Readonly<{ planId: string; planHash: string }>): ImmutableSemanticCorpusPlanInputV3 => {
   const v2 = inputV2(suffix, proposalId, predecessor);
+  const estimatorConfiguration = { estimator: v2.proposal.estimator, configuration: v2.proposal.configuration, inputBytesPerToken: 4, framingAllowanceBytes: 0, requestByteSafetyMargin: 0, inputTokenSafetyMargin: 0, reservedOutputTokens: 4, requestResourceEnvelope: { requestUnits: 1, dayUnits: 1, concurrencyUnits: 1 } };
   const manifestSha256 = sha(`v3-manifest-${suffix}`);
   const promptIdentity = { identity: "semantic-prompt", version: "v3" };
   const schema = { identity: "semantic-schema", version: "v3" };
@@ -67,11 +70,26 @@ const inputV3 = (suffix: string, proposalId = `proposal-v3-${suffix}`, predecess
   return {
     version: "ImmutableSemanticCorpusPlan/v3", scope: v2.scope, source: { ...v2.source, acceptedMedia: [] },
     proposal: {
-      ...v2.proposal, manifestSha256, promptIdentity, schema, composer, route, adapter,
+      ...v2.proposal, estimatorHash: canonicalMultimodalSha256(estimatorConfiguration), manifestSha256, promptIdentity, schema, composer, route, adapter,
       batches: v2.proposal.batches.map((batch, index) => ({ ...batch, requestSha256: sha(`v3-request-${suffix}-${index}`), manifestSha256 })),
       ...(predecessor ? { replanPredecessor: { ...predecessor, cancellationPlanId: predecessor.planId } } : {}),
     },
   };
+};
+
+const policyBindingsV3 = (plan: ImmutableSemanticCorpusPlanInputV3) => {
+  const canonical = canonicalImmutableSemanticCorpusPlanV3(plan);
+  return canonical.handoffContents.map((content, index) => {
+    const handoff = content as Record<string, any>;
+    const handoffHash = replayPlannedSemanticCorpusHandoffHashV3(content);
+    return bindSemanticMultimodalReconstructionPolicyV1({
+      bindingVersion: "SemanticMultimodalReconstructionPolicyBinding/v1", planRef: `semantic-plan-${canonical.planHash}`, handoffRef: `semantic-handoff-${handoffHash}`, planHash: canonical.planHash, handoffHash, batchId: handoff.batchId, batchSlot: index + 1,
+      identityBinding: { prompt: plan.proposal.promptIdentity, schema: plan.proposal.schema, composer: plan.proposal.composer, route: plan.proposal.route, adapter: plan.proposal.adapter },
+      estimatorBinding: { estimator: plan.proposal.estimator, configuration: plan.proposal.configuration, configurationSha256: plan.proposal.estimatorHash, inputBytesPerToken: 4, framingAllowanceBytes: 0, requestByteSafetyMargin: 0, inputTokenSafetyMargin: 0, reservedOutputTokens: handoff.reservedOutputTokens, requestResourceEnvelope: { requestUnits: handoff.requestResourceEnvelope.requestUnits, dayUnits: handoff.requestResourceEnvelope.dayUnits, concurrencyUnits: handoff.requestResourceEnvelope.concurrencyUnits }, imageTokenPolicy: { identity: "atlas.multimodal-image-grid-estimate", version: "v1", policySha256: sha("image-policy") } },
+      routeBinding: { routeId: "route", profileId: "profile", profileVersion: "v1", maxPromptBytes: 4096, image: { version: "v1", mediaTypes: ["image/png"], maxImageCount: 1, maxImageBytes: 1024, maxImageWidth: 64, maxImageHeight: 64 }, imageTpm: { state: "unknown" } },
+      serializerBinding: { identity: "anoman.openai-chat.multipart-data-url", version: "v1", model: "model", policySha256: sha("serializer-policy") },
+    });
+  });
 };
 
 const canonicalMedia = (assetRef = "derived/01234567-89ab-cdef-0123-456789abcdef") => ({
@@ -114,6 +132,7 @@ async function cleanup(sql: ReturnType<typeof postgres>, plan: ImmutableSemantic
     // run as atlas_app and remain subject to the append-only triggers.
     await transaction.unsafe("SET LOCAL session_replication_role = replica");
     await transaction.unsafe("DELETE FROM atlas.semantic_corpus_plan_cancellation WHERE plan_id IN (SELECT id FROM atlas.semantic_corpus_plan WHERE project_id=$1)", [plan.scope.projectId]);
+    await transaction.unsafe("DELETE FROM atlas.semantic_multimodal_reconstruction_policy_binding WHERE plan_id IN (SELECT id FROM atlas.semantic_corpus_plan WHERE project_id=$1)", [plan.scope.projectId]);
     await transaction.unsafe("DELETE FROM atlas.planned_semantic_corpus_handoff WHERE plan_id IN (SELECT id FROM atlas.semantic_corpus_plan WHERE project_id=$1)", [plan.scope.projectId]);
     await transaction.unsafe("DELETE FROM atlas.semantic_corpus_plan WHERE project_id=$1", [plan.scope.projectId]);
   });
@@ -336,7 +355,7 @@ test("v2 persists one immutable locator-only parent and N strict handoffs atomic
   } finally { try { await sql.unsafe("DROP TRIGGER IF EXISTS idser012_v2_plan_crash ON atlas.planned_semantic_corpus_handoff"); await sql.unsafe("DROP FUNCTION IF EXISTS atlas.idser012_v2_plan_crash()"); if (owner) await cleanup(sql, plan as unknown as ImmutableSemanticCorpusPlanInputV1, owner); } finally { await atlas.end(); await sql.end(); } }
 });
 
-test("v3 atomically persists references-only commitments with idempotency, cancellation ancestry, and no dispatch", { skip }, async () => {
+test("v3 atomically persists references-only commitments with policy sidecars, idempotency, cancellation ancestry, and no dispatch", { skip: !databaseUrl }, async () => {
   const sql = postgres(databaseUrl!, { max: 4 });
   const atlasUrl = new URL(databaseUrl!); atlasUrl.username = "atlas_app"; atlasUrl.password = process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only";
   const atlas = postgres(atlasUrl.toString(), { max: 2 });
@@ -347,24 +366,26 @@ test("v3 atomically persists references-only commitments with idempotency, cance
     const [baseline] = await sql.unsafe("SELECT (SELECT count(*)::int FROM pgboss.job) AS queue, (SELECT count(*)::int FROM bridge.provider_work_admission_v1) AS bss_work, (SELECT count(*)::int FROM bridge.provider_work_attempt) AS bss_attempt, (SELECT count(*)::int FROM bridge.provider_work_reservation) AS bss_reservation, (SELECT count(*)::int FROM atlas.semantic_execution WHERE document_id=$1) AS sem", [plan.scope.documentId]);
     await sql.unsafe("CREATE OR REPLACE FUNCTION atlas.idser012_v3_plan_crash() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'controlled v3 plan crash'; END; $$");
     await sql.unsafe("CREATE TRIGGER idser012_v3_plan_crash BEFORE INSERT ON atlas.planned_semantic_corpus_handoff FOR EACH ROW EXECUTE FUNCTION atlas.idser012_v3_plan_crash()");
-    await assert.rejects(() => repository.persistV3(plan), /controlled v3 plan crash/);
+    await assert.rejects(() => repository.persistV3(plan, policyBindingsV3(plan)), /controlled v3 plan crash/);
     await sql.unsafe("DROP TRIGGER idser012_v3_plan_crash ON atlas.planned_semantic_corpus_handoff"); await sql.unsafe("DROP FUNCTION atlas.idser012_v3_plan_crash()");
     const [rolledBack] = await sql.unsafe("SELECT (SELECT count(*)::int FROM atlas.semantic_corpus_plan WHERE project_id=$1) AS plans, (SELECT count(*)::int FROM atlas.planned_semantic_corpus_handoff handoff JOIN atlas.semantic_corpus_plan plan ON plan.id=handoff.plan_id WHERE plan.project_id=$1) AS handoffs", [plan.scope.projectId]);
     assert.deepEqual({ plans: Number(rolledBack!.plans), handoffs: Number(rolledBack!.handoffs) }, { plans: 0, handoffs: 0 }, "a child failure leaves no partial v3 parent or handoff");
-    const [first, replay] = await Promise.all([repository.persistV3(plan), repository.persistV3(plan)]);
+    const [first, replay] = await Promise.all([repository.persistV3(plan, policyBindingsV3(plan)), repository.persistV3(plan, policyBindingsV3(plan))]);
     assert.deepEqual(replay, first, "simultaneous v3 retries return the same immutable parent and children");
-    assert.deepEqual(await repository.persist(plan), first, "the version dispatcher preserves v3 idempotency");
+    assert.deepEqual(await repository.persist(plan, policyBindingsV3(plan)), first, "the version dispatcher preserves v3 idempotency");
     const [storedPlan] = await sql.unsafe("SELECT immutable_content FROM atlas.semantic_corpus_plan WHERE id=$1", [first.planId]);
     const children = await sql.unsafe("SELECT immutable_content FROM atlas.planned_semantic_corpus_handoff WHERE plan_id=$1 ORDER BY batch_slot", [first.planId]);
     assert.equal((storedPlan!.immutable_content as { version: string }).version, "ImmutableSemanticCorpusPlan/v3");
     assert.equal(children.length, plan.proposal.batches.length);
+    const sidecars = await sql.unsafe("SELECT binding_sha256 FROM atlas.semantic_multimodal_reconstruction_policy_binding WHERE plan_id=$1 ORDER BY batch_slot", [first.planId]);
+    assert.equal(sidecars.length, plan.proposal.batches.length, "each committed v3 handoff has one same-transaction immutable policy binding");
     const persisted = JSON.stringify([storedPlan!.immutable_content, ...children.map((row) => row.immutable_content)]);
     for (const forbidden of ["rawRequest", "promptBody", "schemaBody", "sourceText", "mediaBytes", "base64", "adapterJson", "providerResponse", "credentials"]) assert.equal(persisted.includes(forbidden), false, `${forbidden} is not stored`);
     assert.equal(canonicalImmutableSemanticCorpusPlanV3(plan).planHash, first.planHash, "the DB row has the rederivable v3 commitment hash");
     await repository.cancel(first.planId, "v3 source revision");
     const successor = inputV3(suffix, `replan-v3-${suffix}`, { planId: first.planId, planHash: first.planHash });
     successor.proposal.proposalHash = sha(`replan-v3-proposal-${suffix}`) as never;
-    const next = await repository.persistV3(successor);
+    const next = await repository.persistV3(successor, policyBindingsV3(successor));
     const [ancestry] = await sql.unsafe("SELECT predecessor_plan_id, predecessor_plan_hash FROM atlas.semantic_corpus_plan WHERE id=$1", [next.planId]);
     assert.deepEqual({ planId: ancestry!.predecessor_plan_id, planHash: ancestry!.predecessor_plan_hash }, { planId: first.planId, planHash: first.planHash }, "v3 retains only the cancelled predecessor identity");
     const [after] = await sql.unsafe("SELECT (SELECT count(*)::int FROM pgboss.job) AS queue, (SELECT count(*)::int FROM bridge.provider_work_admission_v1) AS bss_work, (SELECT count(*)::int FROM bridge.provider_work_attempt) AS bss_attempt, (SELECT count(*)::int FROM bridge.provider_work_reservation) AS bss_reservation, (SELECT count(*)::int FROM atlas.semantic_execution WHERE document_id=$1) AS sem", [plan.scope.documentId]);

@@ -2,12 +2,14 @@ import assert from "node:assert/strict";
 import { createHash, randomUUID } from "node:crypto";
 import { mkdtemp, rm } from "node:fs/promises";
 import test from "node:test";
+import { canonicalMultimodalSha256 } from "@atlas/skills";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import postgres from "postgres";
 import { PerceptionSourceGrantIssuer } from "@atlas/core";
 import { LocalFilesystemDocumentStore } from "@atlas/document-store";
-import { PostgresImmutableSemanticCorpusPlanRepository, replayImmutableSemanticCorpusPlanHashV3, replayPlannedSemanticCorpusHandoffHashV3, type ImmutableSemanticCorpusPlanInputV3 } from "../src/immutable-semantic-corpus-plan.ts";
+import { PostgresImmutableSemanticCorpusPlanRepository, canonicalImmutableSemanticCorpusPlanV3, replayImmutableSemanticCorpusPlanHashV3, replayPlannedSemanticCorpusHandoffHashV3, type ImmutableSemanticCorpusPlanInputV3 } from "../src/immutable-semantic-corpus-plan.ts";
+import { bindSemanticMultimodalReconstructionPolicyV1 } from "../src/semantic-multimodal-reconstruction-policy-binding.ts";
 import { PostgresPerceptionAuthority } from "../src/perception-authority.ts";
 import { canonicalSemanticBatchV3Reference, createSemanticBatchV3ReferenceReceivingBoundary, PostgresSemanticBatchV3ReferenceResolver } from "../src/semantic-batch-v3-reference-resolution.ts";
 
@@ -49,12 +51,13 @@ test("v3 background reference resolution uses persisted PostgreSQL facts and has
     const visual = { documentId, pageNumber: 1, sourceKind: "visual_region" as const, localId: "v3-visual-1" };
     const text = { documentId, pageNumber: 1, sourceKind: "text_block" as const, localId: "v3-text-1" };
     const identity = (name: string) => ({ identity: name, version: "v3" });
+    const estimatorConfiguration = { estimator: identity("estimator"), configuration: identity("configuration"), inputBytesPerToken: 4, framingAllowanceBytes: 0, requestByteSafetyMargin: 0, inputTokenSafetyMargin: 0, reservedOutputTokens: 10, requestResourceEnvelope: { requestUnits: 1, dayUnits: 1, concurrencyUnits: 1 } };
     const plan: ImmutableSemanticCorpusPlanInputV3 = {
       version: "ImmutableSemanticCorpusPlan/v3",
       scope: { projectId, workspaceId, bundleId, documentId },
       source: { sourceSha256, normalizedDocumentRef: String(accepted!.cache_key), perceptionExecutionId: executionId, normalizedDocumentFingerprint: String(accepted!.completion_fingerprint), normalizedDocumentVersion: "v1", perceptionCapability: "atlas.document.perceive", perceptionContractVersion: "v1", rel: { state: "unavailable" }, acceptedMedia: [{ assetRef: asset.assetRef, locator: visual, sha256: assetSha256, mediaType: "image/png", byteLength: png.byteLength }] },
       proposal: {
-        proposalId: `v3-proposal-${suffix}`, proposalHash: digest(`v3-proposal-${suffix}`), sourceHash: digest(`v3-source-${suffix}`), policyHash: digest(`v3-policy-${suffix}`), estimatorHash: digest(`v3-estimator-${suffix}`), manifestSha256: digest(`v3-manifest-${suffix}`),
+        proposalId: `v3-proposal-${suffix}`, proposalHash: digest(`v3-proposal-${suffix}`), sourceHash: digest(`v3-source-${suffix}`), policyHash: digest(`v3-policy-${suffix}`), estimatorHash: canonicalMultimodalSha256(estimatorConfiguration), manifestSha256: digest(`v3-manifest-${suffix}`),
         structuralBound: { identity: "v3-bound", version: "v3", maxRequestBytes: 4096, maxInputTokens: 1024, maxPromptBytes: 2048, maxContextTokens: 1024 },
         bssSnapshot: { source: { sourceId: "capacity", sourceVersion: "v1" }, enforcement: { policyId: "policy", policyVersion: "v1" }, process: { profileId: "semantic", profileVersion: "v1" }, workload: { planId: "workload", planVersion: "v1", estimator: identity("estimator") } },
         packetProfile: identity("packet"), estimator: identity("estimator"), configuration: identity("configuration"), promptIdentity: identity("prompt"), schema: identity("schema"), composer: identity("composer"), route: identity("route"), adapter: identity("adapter"), eligibleDimensions: ["rpm", "tpm"], requestResourceEnvelope: { requestUnits: 1, tokenUnits: 20, dayUnits: 1, concurrencyUnits: 1 },
@@ -62,7 +65,17 @@ test("v3 background reference resolution uses persisted PostgreSQL facts and has
         batches: [{ batchId: "batch-0001", ownedLocators: [visual, text], contextOnlyLocators: [], sourceSpecificationSha256: digest(`v3-source-spec-${suffix}`), requestSha256: digest(`v3-request-${suffix}`), manifestSha256: digest(`v3-manifest-${suffix}`), packetProfile: identity("packet"), estimator: identity("estimator"), configuration: identity("configuration"), conservativeLogicalRequestBytes: { version: "ConservativeLogicalRequestBytes/v1", value: 100 }, requestBytes: 100, inputTokens: 20, reservedOutputTokens: 10, requestResourceEnvelope: { requestUnits: 1, tokenUnits: 20, dayUnits: 1, concurrencyUnits: 1 }, fitTrace: [{ sourceSpecificationSha256: digest(`v3-source-spec-${suffix}`), requestBytes: 100, inputTokens: 20, reservedOutputTokens: 10, outcome: "fit" }] }],
       },
     };
-    persisted = await new PostgresImmutableSemanticCorpusPlanRepository(atlas as never).persist(plan);
+    const canonical = canonicalImmutableSemanticCorpusPlanV3(plan);
+    const canonicalHandoff = canonical.handoffContents[0]!;
+    const canonicalHandoffHash = replayPlannedSemanticCorpusHandoffHashV3(canonicalHandoff);
+    const binding = bindSemanticMultimodalReconstructionPolicyV1({
+      bindingVersion: "SemanticMultimodalReconstructionPolicyBinding/v1", planRef: `semantic-plan-${canonical.planHash}`, handoffRef: `semantic-handoff-${canonicalHandoffHash}`, planHash: canonical.planHash, handoffHash: canonicalHandoffHash, batchId: "batch-0001", batchSlot: 1,
+      identityBinding: { prompt: identity("prompt"), schema: identity("schema"), composer: identity("composer"), route: identity("route"), adapter: identity("adapter") },
+      estimatorBinding: { ...estimatorConfiguration, configurationSha256: plan.proposal.estimatorHash, imageTokenPolicy: { identity: "atlas.multimodal-image-grid-estimate", version: "v1", policySha256: digest("image-policy") } },
+      routeBinding: { routeId: "route", profileId: "profile", profileVersion: "v1", maxPromptBytes: 2048, image: { version: "v1", mediaTypes: ["image/png"], maxImageCount: 1, maxImageBytes: 1024, maxImageWidth: 64, maxImageHeight: 64 }, imageTpm: { state: "unknown" } },
+      serializerBinding: { identity: "anoman.openai-chat.multipart-data-url", version: "v1", model: "model", policySha256: digest("serializer-policy") },
+    });
+    persisted = await new PostgresImmutableSemanticCorpusPlanRepository(atlas as never).persist(plan, [binding]);
     const handoff = persisted.handoffs[0]!;
     const reference = { documentPlanRef: persisted.planId, planHash: persisted.planHash, batchId: handoff.batchId, batchHandoffRef: handoff.handoffId, batchHandoffHash: handoff.handoffHash };
     const [immutableRows] = await sql.unsafe("SELECT plan.immutable_content AS plan_content, handoff.immutable_content AS handoff_content FROM atlas.semantic_corpus_plan plan JOIN atlas.planned_semantic_corpus_handoff handoff ON handoff.plan_id=plan.id WHERE plan.id=$1 AND handoff.id=$2", [persisted.planId, handoff.handoffId]);
@@ -152,7 +165,7 @@ test("v3 background reference resolution uses persisted PostgreSQL facts and has
     const after = (await sql.unsafe("SELECT (SELECT count(*)::int FROM pgboss.job) AS jobs, (SELECT count(*)::int FROM bridge.provider_work_admission_v1) AS admissions, (SELECT count(*)::int FROM bridge.provider_work_attempt) AS attempts, (SELECT count(*)::int FROM bridge.provider_work_reservation) AS reservations, (SELECT count(*)::int FROM atlas.semantic_execution WHERE document_id=$1) AS semantic_execution, (SELECT count(*)::int FROM atlas.semantic_extraction_result WHERE document_id=$1) AS semantic_results, (SELECT count(*)::int FROM atlas.semantic_reconciliation_result WHERE current_document_id=$1) AS reconciliation", [documentId]))[0]!;
     assert.deepEqual(after, before, "background resolution neither hydrates nor creates GHR, BSS, SEM, or reconciliation effects");
   } finally {
-    if (persisted) await sql.begin(async (transaction) => { await transaction.unsafe("SET LOCAL session_replication_role = replica"); await transaction.unsafe("DELETE FROM atlas.semantic_corpus_plan_cancellation WHERE plan_id=$1", [persisted!.planId]); await transaction.unsafe("DELETE FROM atlas.planned_semantic_corpus_handoff WHERE plan_id=$1", [persisted!.planId]); await transaction.unsafe("DELETE FROM atlas.semantic_corpus_plan WHERE id=$1", [persisted!.planId]); });
+    if (persisted) await sql.begin(async (transaction) => { await transaction.unsafe("SET LOCAL session_replication_role = replica"); await transaction.unsafe("DELETE FROM atlas.semantic_corpus_plan_cancellation WHERE plan_id=$1", [persisted!.planId]); await transaction.unsafe("DELETE FROM atlas.semantic_multimodal_reconstruction_policy_binding WHERE plan_id=$1", [persisted!.planId]); await transaction.unsafe("DELETE FROM atlas.planned_semantic_corpus_handoff WHERE plan_id=$1", [persisted!.planId]); await transaction.unsafe("DELETE FROM atlas.semantic_corpus_plan WHERE id=$1", [persisted!.planId]); });
     await sql.unsafe("DELETE FROM atlas.project WHERE id=$1", [projectId]).catch(() => undefined);
     await sql.unsafe('DELETE FROM auth."user" WHERE id=$1', [owner]).catch(() => undefined);
     await atlas.end(); await sql.end(); await rm(root, { recursive: true, force: true });

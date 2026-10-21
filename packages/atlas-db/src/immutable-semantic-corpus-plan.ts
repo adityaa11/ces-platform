@@ -1,4 +1,8 @@
 import { createHash } from "node:crypto";
+import {
+  parseSemanticMultimodalReconstructionPolicyBindingV1,
+  type SemanticMultimodalReconstructionPolicyBindingV1,
+} from "./semantic-multimodal-reconstruction-policy-binding.js";
 
 type Row = Record<string, unknown>;
 type Sql = { unsafe(query: string, parameters?: readonly unknown[]): Promise<readonly Row[]>; begin<T>(work: (transaction: Sql) => Promise<T>): Promise<T> };
@@ -84,6 +88,7 @@ export type ImmutableSemanticCorpusPlanInputV3 = Readonly<{
   }>;
 }>;
 export type PersistedSemanticCorpusPlanV3 = PersistedSemanticCorpusPlanV1;
+export type SemanticCorpusPlanV3PolicyBindings = readonly SemanticMultimodalReconstructionPolicyBindingV1[];
 
 const stable = (value: unknown): string => {
   if (Array.isArray(value)) return `[${value.map(stable).join(",")}]`;
@@ -380,20 +385,41 @@ export class PostgresImmutableSemanticCorpusPlanRepository {
   constructor(private readonly sql: Sql) {}
 
   /** Historical v1/v2 rows cannot be resumed or replayed through this v3-only persistence boundary. */
-  async persist(input: ImmutableSemanticCorpusPlanInputV3): Promise<PersistedSemanticCorpusPlanV3> {
+  async persist(input: ImmutableSemanticCorpusPlanInputV3, policyBindings: SemanticCorpusPlanV3PolicyBindings): Promise<PersistedSemanticCorpusPlanV3> {
     if (!input || typeof input !== "object") throw new ImmutableSemanticCorpusPlanError("Immutable semantic corpus plan input is invalid.");
     const version = (input as { version?: unknown }).version;
-    if (version === "ImmutableSemanticCorpusPlan/v3") return this.persistV3(input as ImmutableSemanticCorpusPlanInputV3);
+    if (version === "ImmutableSemanticCorpusPlan/v3") return this.persistV3(input as ImmutableSemanticCorpusPlanInputV3, policyBindings);
     throw new ImmutableSemanticCorpusPlanError("Only ImmutableSemanticCorpusPlan/v3 is accepted at the active persistence boundary.");
   }
 
   /** Persists v3 commitments atomically; this method has no dispatch, grant, or resolver side effect. */
-  async persistV3(input: ImmutableSemanticCorpusPlanInputV3): Promise<PersistedSemanticCorpusPlanV3> {
+  async persistV3(input: ImmutableSemanticCorpusPlanInputV3, policyBindings: SemanticCorpusPlanV3PolicyBindings): Promise<PersistedSemanticCorpusPlanV3> {
     const canonical = canonicalImmutableSemanticCorpusPlanV3(input);
     const planId = `semantic-plan-${canonical.planHash}`;
     const handoffs = canonical.handoffContents.map((content, index) => {
       const handoffHash = replayPlannedSemanticCorpusHandoffHashV3(content);
       return { batchId: input.proposal.batches[index]!.batchId, handoffHash, handoffId: `semantic-handoff-${handoffHash}` };
+    });
+    if (!Array.isArray(policyBindings) || policyBindings.length !== handoffs.length) throw new ImmutableSemanticCorpusPlanError("Every v3 handoff requires one immutable reconstruction policy binding.");
+    const bindings = policyBindings.map((value, index) => {
+      let binding: SemanticMultimodalReconstructionPolicyBindingV1;
+      try { binding = parseSemanticMultimodalReconstructionPolicyBindingV1(value); }
+      catch { throw new ImmutableSemanticCorpusPlanError("Semantic multimodal reconstruction policy binding is malformed."); }
+      const handoff = handoffs[index]!;
+      if (binding.planRef !== planId || binding.handoffRef !== handoff.handoffId || binding.planHash !== canonical.planHash || binding.handoffHash !== handoff.handoffHash
+        || binding.batchId !== handoff.batchId || binding.batchSlot !== index + 1
+        || !sameCanonical(binding.identityBinding.prompt, input.proposal.promptIdentity) || !sameCanonical(binding.identityBinding.schema, input.proposal.schema)
+        || !sameCanonical(binding.identityBinding.composer, input.proposal.composer) || !sameCanonical(binding.identityBinding.route, input.proposal.route)
+        || !sameCanonical(binding.identityBinding.adapter, input.proposal.adapter)
+        || !sameCanonical(binding.estimatorBinding.estimator, input.proposal.estimator) || !sameCanonical(binding.estimatorBinding.configuration, input.proposal.configuration)
+        || binding.estimatorBinding.configurationSha256 !== input.proposal.estimatorHash
+        || binding.estimatorBinding.reservedOutputTokens !== (canonical.handoffContents[index] as Record<string, unknown>).reservedOutputTokens
+        || !sameCanonical(binding.estimatorBinding.requestResourceEnvelope, {
+          requestUnits: (input.proposal.batches[index]!.requestResourceEnvelope).requestUnits,
+          dayUnits: (input.proposal.batches[index]!.requestResourceEnvelope).dayUnits,
+          concurrencyUnits: (input.proposal.batches[index]!.requestResourceEnvelope).concurrencyUnits,
+        })) throw new ImmutableSemanticCorpusPlanError("Semantic multimodal reconstruction policy binding conflicts with v3 commitments.");
+      return binding;
     });
     return this.sql.begin(async (sql) => {
       await sql.unsafe("SELECT pg_advisory_xact_lock(hashtext($1))", [`${input.scope.projectId}:${input.scope.workspaceId}:${input.scope.bundleId}:${input.scope.documentId}:${canonical.idempotencyKey}`]);
@@ -405,6 +431,8 @@ export class PostgresImmutableSemanticCorpusPlanRepository {
         if (String(row.plan_hash) !== canonical.planHash || !sameCanonical(row.immutable_content, canonical.planContent)) throw new ImmutableSemanticCorpusPlanError("Semantic corpus plan conflicts with an immutable prior version.");
         const stored = await sql.unsafe("SELECT id, batch_id, handoff_hash, immutable_content FROM atlas.planned_semantic_corpus_handoff WHERE plan_id=$1 ORDER BY batch_slot", [String(row.id)]);
         if (stored.length !== handoffs.length || stored.some((value, index) => value.batch_id !== handoffs[index]!.batchId || value.handoff_hash !== handoffs[index]!.handoffHash || !sameCanonical(value.immutable_content, canonical.handoffContents[index]))) throw new ImmutableSemanticCorpusPlanError("Persisted semantic corpus plan is incomplete or conflicts with its handoffs.");
+        const storedBindings = await sql.unsafe("SELECT handoff_id, binding_sha256, binding_content FROM atlas.semantic_multimodal_reconstruction_policy_binding WHERE plan_id=$1 ORDER BY batch_slot", [String(row.id)]);
+        if (storedBindings.length !== bindings.length || storedBindings.some((value, index) => String(value.handoff_id) !== handoffs[index]!.handoffId || String(value.binding_sha256) !== bindings[index]!.bindingSha256 || !sameCanonical(value.binding_content, bindings[index]))) throw new ImmutableSemanticCorpusPlanError("Persisted semantic corpus plan is missing or conflicts with its policy bindings.");
         return { planId: String(row.id), planHash: canonical.planHash, handoffs: stored.map((row) => ({ batchId: String(row.batch_id), handoffId: String(row.id), handoffHash: String(row.handoff_hash) })) };
       }
       if (input.proposal.replanPredecessor) {
@@ -415,6 +443,7 @@ export class PostgresImmutableSemanticCorpusPlanRepository {
       }
       await sql.unsafe("INSERT INTO atlas.semantic_corpus_plan (id,project_id,workspace_id,bundle_id,document_id,proposal_id,idempotency_key,plan_hash,source_sha256,source_fingerprint,predecessor_plan_id,predecessor_plan_hash,immutable_content) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13::jsonb)", [planId, input.scope.projectId, input.scope.workspaceId, input.scope.bundleId, input.scope.documentId, input.proposal.proposalId, canonical.idempotencyKey, canonical.planHash, input.source.sourceSha256, input.source.normalizedDocumentFingerprint, input.proposal.replanPredecessor?.planId ?? null, input.proposal.replanPredecessor?.planHash ?? null, canonical.planContent]);
       for (let index = 0; index < handoffs.length; index += 1) await sql.unsafe("INSERT INTO atlas.planned_semantic_corpus_handoff (id,plan_id,batch_id,batch_slot,handoff_hash,immutable_content) VALUES ($1,$2,$3,$4,$5,$6::jsonb)", [handoffs[index]!.handoffId, planId, handoffs[index]!.batchId, index + 1, handoffs[index]!.handoffHash, canonical.handoffContents[index]]);
+      for (let index = 0; index < bindings.length; index += 1) await sql.unsafe("INSERT INTO atlas.semantic_multimodal_reconstruction_policy_binding (plan_id,handoff_id,batch_id,batch_slot,binding_sha256,binding_content) VALUES ($1,$2,$3,$4,$5,$6::jsonb)", [planId, handoffs[index]!.handoffId, handoffs[index]!.batchId, index + 1, bindings[index]!.bindingSha256, bindings[index]]);
       return { planId, planHash: canonical.planHash, handoffs };
     });
   }

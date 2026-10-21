@@ -4,6 +4,10 @@ import {
   replayImmutableSemanticCorpusPlanHashV3,
   replayPlannedSemanticCorpusHandoffHashV3,
 } from "./immutable-semantic-corpus-plan.js";
+import {
+  parseSemanticMultimodalReconstructionPolicyBindingV1,
+  type SemanticMultimodalReconstructionPolicyBindingV1,
+} from "./semantic-multimodal-reconstruction-policy-binding.js";
 import { createInternalReceivingBoundary, type InternalReceivingBoundary } from "@atlas/core";
 
 type Row = Record<string, unknown>;
@@ -38,8 +42,9 @@ export type ResolvedSemanticBatchV3References = Readonly<{
     perceptionCapability: string;
     perceptionContractVersion: "v1";
   }>;
-  acceptedMedia: readonly Readonly<{ assetRef: string; locator: Locator; sha256: string; mediaType: "image/png"; byteLength: number }>[];
+  acceptedMedia: readonly Readonly<{ assetRef: string; locator: Locator; sha256: string; mediaType: "image/png"; byteLength: number; width: number; height: number }>[];
   selection: Readonly<{ ownedLocators: readonly Locator[]; contextOnlyLocators: readonly Locator[] }>;
+  policyBinding: SemanticMultimodalReconstructionPolicyBindingV1;
   commitments: Readonly<{
     sourceSpecificationSha256: string;
     requestSha256: string;
@@ -118,11 +123,13 @@ export class PostgresSemanticBatchV3ReferenceResolver {
     const rows = await this.sql.unsafe(`SELECT
         plan.id AS plan_id, plan.plan_hash, plan.project_id, plan.workspace_id, plan.bundle_id, plan.document_id, plan.source_sha256 AS persisted_source_sha256, plan.source_fingerprint AS persisted_source_fingerprint, plan.immutable_content AS plan_content,
         handoff.id AS handoff_id, handoff.plan_id AS handoff_plan_id, handoff.batch_id, handoff.batch_slot, handoff.handoff_hash, handoff.immutable_content AS handoff_content,
+        policy.binding_sha256, policy.binding_content,
         cancellation.plan_id AS cancelled_plan_id,
         execution.id AS perception_execution_id, execution.source_sha256 AS execution_source_sha256, execution.completion_fingerprint, execution.contract_version AS execution_contract_version,
         cache.cache_key AS normalized_document_ref, cache.source_sha256 AS cache_source_sha256, cache.contract_version AS cache_contract_version, cache.capability AS cache_capability
       FROM atlas.semantic_corpus_plan plan
       JOIN atlas.planned_semantic_corpus_handoff handoff ON handoff.plan_id=plan.id
+      JOIN atlas.semantic_multimodal_reconstruction_policy_binding policy ON policy.plan_id=plan.id AND policy.handoff_id=handoff.id AND policy.batch_id=handoff.batch_id AND policy.batch_slot=handoff.batch_slot
       JOIN atlas.extraction_bundle_document member ON member.bundle_id=plan.bundle_id AND member.document_id=plan.document_id AND member.project_id=plan.project_id AND member.workspace_id=plan.workspace_id
       JOIN atlas.extraction_bundle bundle ON bundle.id=member.bundle_id AND bundle.project_id=member.project_id AND bundle.workspace_id=member.workspace_id
       JOIN atlas.document document ON document.id=member.document_id AND document.project_id=member.project_id AND document.workspace_id=member.workspace_id
@@ -144,6 +151,9 @@ export class PostgresSemanticBatchV3ReferenceResolver {
     try { parsedPlan = parseImmutableSemanticCorpusPlanRecord(row.plan_content); parsedHandoff = parsePlannedSemanticCorpusHandoffRecord(row.handoff_content); }
     catch { return fail("persisted records are malformed or unsupported"); }
     if (parsedPlan.version !== "ImmutableSemanticCorpusPlan/v3" || parsedHandoff.version !== "PlannedSemanticCorpusHandoff/v3") fail("v1, v2, or mixed-version records are retired");
+    let policyBinding: SemanticMultimodalReconstructionPolicyBindingV1;
+    try { policyBinding = parseSemanticMultimodalReconstructionPolicyBindingV1(row.binding_content); }
+    catch { return fail("policy binding is missing, malformed, or hash-inconsistent"); }
     const plan = parsedPlan.content as Record<string, unknown>;
     const handoff = parsedHandoff.content as Record<string, unknown>;
     const planScope = plan.scope as Record<string, unknown>;
@@ -162,6 +172,13 @@ export class PostgresSemanticBatchV3ReferenceResolver {
       || proposal.packetProfile.identity !== handoff.packetProfile.identity || proposal.packetProfile.version !== handoff.packetProfile.version
       || proposal.estimator.identity !== handoff.estimator.identity || proposal.estimator.version !== handoff.estimator.version
       || proposal.configuration.identity !== handoff.configuration.identity || proposal.configuration.version !== handoff.configuration.version) fail("accepted source or immutable binding is inconsistent");
+    if (String(row.binding_sha256) !== policyBinding.bindingSha256 || policyBinding.planRef !== requested.documentPlanRef || policyBinding.handoffRef !== requested.batchHandoffRef
+      || policyBinding.planHash !== requested.planHash || policyBinding.handoffHash !== requested.batchHandoffHash || policyBinding.batchId !== requested.batchId || policyBinding.batchSlot !== Number(row.batch_slot)
+      || JSON.stringify(policyBinding.identityBinding.prompt) !== JSON.stringify(proposal.promptIdentity) || JSON.stringify(policyBinding.identityBinding.schema) !== JSON.stringify(proposal.schema)
+      || JSON.stringify(policyBinding.identityBinding.composer) !== JSON.stringify(proposal.composer) || JSON.stringify(policyBinding.identityBinding.route) !== JSON.stringify(proposal.route)
+      || JSON.stringify(policyBinding.identityBinding.adapter) !== JSON.stringify(proposal.adapter) || JSON.stringify(policyBinding.estimatorBinding.estimator) !== JSON.stringify(handoff.estimator)
+      || JSON.stringify(policyBinding.estimatorBinding.configuration) !== JSON.stringify(handoff.configuration) || policyBinding.estimatorBinding.configurationSha256 !== proposal.estimatorHash
+      || policyBinding.estimatorBinding.reservedOutputTokens !== Number(handoff.reservedOutputTokens)) fail("policy binding conflicts with immutable v3 commitments");
 
     const resolvedScope = { projectId: String(row.project_id), workspaceId: String(row.workspace_id), bundleId: String(row.bundle_id), documentId: String(row.document_id) };
     if (!Object.values(resolvedScope).every((value) => opaque.test(value))) fail("persisted scope is invalid");
@@ -184,12 +201,17 @@ export class PostgresSemanticBatchV3ReferenceResolver {
       return { assetRef: parsedMedia.assetRef as string, locator, sha256: parsedMedia.sha256 as string, mediaType: "image/png" as const, byteLength: parsedMedia.byteLength as number };
     }) : fail("accepted derived-media references are missing");
     if (new Set(acceptedMedia.map((media) => media.assetRef)).size !== acceptedMedia.length || new Set(acceptedMedia.map((media) => locatorKey(media.locator))).size !== acceptedMedia.length) fail("accepted derived-media references are duplicate");
-    const mediaRows = acceptedMedia.length ? await this.sql.unsafe(`SELECT manifest.asset_ref, manifest.locator_id, manifest.page_number, manifest.media_type, manifest.sha256, manifest.byte_size
+    const mediaRows = acceptedMedia.length ? await this.sql.unsafe(`SELECT manifest.asset_ref, manifest.locator_id, manifest.page_number, manifest.media_type, manifest.sha256, manifest.byte_size, manifest.width, manifest.height
       FROM atlas.document_perception_derived_manifest manifest
       JOIN atlas.document_perception_derived_asset asset ON asset.cache_key=$1 AND asset.asset_ref=manifest.asset_ref AND asset.deleted_at IS NULL
       WHERE manifest.execution_id=$2 AND manifest.artifact_id=$3 AND manifest.source_sha256=$4 AND manifest.accepted_at IS NOT NULL
         AND manifest.asset_ref=ANY($5::text[])`, [source.normalizedDocumentRef, source.perceptionExecutionId, resolvedScope.documentId, source.sourceSha256, acceptedMedia.map((media) => media.assetRef)]) : [];
-    if (mediaRows.length !== acceptedMedia.length || mediaRows.some((asset) => !acceptedMedia.some((media) => media.assetRef === asset.asset_ref && media.locator.localId === asset.locator_id && media.locator.pageNumber === Number(asset.page_number) && media.mediaType === asset.media_type && media.sha256 === asset.sha256 && media.byteLength === Number(asset.byte_size)))) fail("accepted derived-media reference is missing or substituted");
+    if (mediaRows.length !== acceptedMedia.length || mediaRows.some((asset) => !acceptedMedia.some((media) => media.assetRef === asset.asset_ref && media.locator.localId === asset.locator_id && media.locator.pageNumber === Number(asset.page_number) && media.mediaType === asset.media_type && media.sha256 === asset.sha256 && media.byteLength === Number(asset.byte_size) && Number.isSafeInteger(Number(asset.width)) && Number(asset.width) > 0 && Number.isSafeInteger(Number(asset.height)) && Number(asset.height) > 0))) fail("accepted derived-media reference is missing, dimensionless, or substituted");
+    const mediaWithDimensions = acceptedMedia.map((media) => {
+      const row = mediaRows.find((asset) => media.assetRef === asset.asset_ref);
+      if (!row) return fail("accepted derived-media reference is missing");
+      return { ...media, width: Number(row.width), height: Number(row.height) };
+    });
 
     const commitments = {
       sourceSpecificationSha256: String(handoff.sourceSpecificationSha256), requestSha256: String(handoff.requestSha256), manifestSha256: String(handoff.manifestSha256),
@@ -198,7 +220,7 @@ export class PostgresSemanticBatchV3ReferenceResolver {
       conservativeLogicalRequestBytes: handoff.conservativeLogicalRequestBytes as { version: "ConservativeLogicalRequestBytes/v1"; value: number }, requestBytes: Number(handoff.requestBytes), inputTokens: Number(handoff.inputTokens), reservedOutputTokens: Number(handoff.reservedOutputTokens), requestResourceEnvelope: handoff.requestResourceEnvelope as { requestUnits: number; tokenUnits: number; dayUnits: number; concurrencyUnits: number },
     };
     if (![commitments.sourceSpecificationSha256, commitments.requestSha256, commitments.manifestSha256].every((value) => hash.test(value)) || commitments.manifestSha256 !== proposal.manifestSha256) fail("bounded commitments are inconsistent");
-    return { reference: requested, scope: resolvedScope, source: { sourceSha256: String(source.sourceSha256), normalizedDocumentRef: String(source.normalizedDocumentRef), perceptionExecutionId: String(source.perceptionExecutionId), normalizedDocumentFingerprint: String(source.normalizedDocumentFingerprint), normalizedDocumentVersion: "v1", perceptionCapability: String(source.perceptionCapability), perceptionContractVersion: "v1" }, acceptedMedia, selection: { ownedLocators, contextOnlyLocators }, commitments };
+    return { reference: requested, scope: resolvedScope, source: { sourceSha256: String(source.sourceSha256), normalizedDocumentRef: String(source.normalizedDocumentRef), perceptionExecutionId: String(source.perceptionExecutionId), normalizedDocumentFingerprint: String(source.normalizedDocumentFingerprint), normalizedDocumentVersion: "v1", perceptionCapability: String(source.perceptionCapability), perceptionContractVersion: "v1" }, acceptedMedia: mediaWithDimensions, selection: { ownedLocators, contextOnlyLocators }, policyBinding, commitments };
   }
 }
 

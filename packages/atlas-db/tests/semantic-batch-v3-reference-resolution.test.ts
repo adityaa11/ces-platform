@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import test from "node:test";
+import { canonicalMultimodalSha256 } from "@atlas/skills";
 import {
   canonicalImmutableSemanticCorpusPlanV3,
   replayPlannedSemanticCorpusHandoffHashV3,
@@ -12,6 +13,7 @@ import {
   PostgresSemanticBatchV3ReferenceResolver,
   SemanticBatchV3ReferenceResolutionError,
 } from "../src/semantic-batch-v3-reference-resolution.ts";
+import { bindSemanticMultimodalReconstructionPolicyV1 } from "../src/semantic-multimodal-reconstruction-policy-binding.ts";
 
 const digest = (value: string) => createHash("sha256").update(value).digest("hex");
 const scope = { projectId: "v3-project", workspaceId: "v3-workspace", bundleId: "v3-bundle", documentId: "v3-document" };
@@ -19,11 +21,12 @@ const identity = (name: string) => ({ identity: name, version: "v3" });
 
 function input(): ImmutableSemanticCorpusPlanInputV3 {
   const owned = { documentId: scope.documentId, pageNumber: 1, sourceKind: "text_block" as const, localId: "owned" };
+  const estimatorConfiguration = { estimator: identity("estimator"), configuration: identity("configuration"), inputBytesPerToken: 4, framingAllowanceBytes: 0, requestByteSafetyMargin: 0, inputTokenSafetyMargin: 0, reservedOutputTokens: 10, requestResourceEnvelope: { requestUnits: 1, dayUnits: 1, concurrencyUnits: 1 } };
   return {
     version: "ImmutableSemanticCorpusPlan/v3", scope: { projectId: scope.projectId, workspaceId: scope.workspaceId, bundleId: scope.bundleId, documentId: scope.documentId },
     source: { sourceSha256: digest("source"), normalizedDocumentRef: digest("cache"), perceptionExecutionId: "v3-execution", normalizedDocumentFingerprint: digest("fingerprint"), normalizedDocumentVersion: "v1", perceptionCapability: "atlas.document.perceive", perceptionContractVersion: "v1", rel: { state: "unavailable" }, acceptedMedia: [] },
     proposal: {
-      proposalId: "v3-proposal", proposalHash: digest("proposal"), sourceHash: digest("source-hash"), policyHash: digest("policy"), estimatorHash: digest("estimator-hash"), manifestSha256: digest("manifest"),
+      proposalId: "v3-proposal", proposalHash: digest("proposal"), sourceHash: digest("source-hash"), policyHash: digest("policy"), estimatorHash: canonicalMultimodalSha256(estimatorConfiguration), manifestSha256: digest("manifest"),
       structuralBound: { identity: "v3-bound", version: "v3", maxRequestBytes: 4096, maxInputTokens: 1024, maxPromptBytes: 2048, maxContextTokens: 1024 },
       bssSnapshot: { source: { sourceId: "capacity", sourceVersion: "v1" }, enforcement: { policyId: "policy", policyVersion: "v1" }, process: { profileId: "semantic", profileVersion: "v1" }, workload: { planId: "workload", planVersion: "v1", estimator: identity("estimator") } },
       packetProfile: identity("packet"), estimator: identity("estimator"), configuration: identity("configuration"), promptIdentity: identity("prompt"), schema: identity("schema"), composer: identity("composer"), route: identity("route"), adapter: identity("adapter"), eligibleDimensions: ["rpm", "tpm"], requestResourceEnvelope: { requestUnits: 1, tokenUnits: 20, dayUnits: 1, concurrencyUnits: 1 },
@@ -39,11 +42,20 @@ function fixture(mutator?: (row: Record<string, unknown>) => void) {
   const handoffHash = replayPlannedSemanticCorpusHandoffHashV3(handoff);
   const reference = { documentPlanRef: `semantic-plan-${canonical.planHash}`, planHash: canonical.planHash, batchId: "batch-0001", batchHandoffRef: `semantic-handoff-${handoffHash}`, batchHandoffHash: handoffHash };
   const source = (canonical.planContent as any).source;
+  const estimatorConfiguration = { estimator: identity("estimator"), configuration: identity("configuration"), inputBytesPerToken: 4, framingAllowanceBytes: 0, requestByteSafetyMargin: 0, inputTokenSafetyMargin: 0, reservedOutputTokens: 10, requestResourceEnvelope: { requestUnits: 1, dayUnits: 1, concurrencyUnits: 1 } };
+  const binding = bindSemanticMultimodalReconstructionPolicyV1({
+    bindingVersion: "SemanticMultimodalReconstructionPolicyBinding/v1", planRef: reference.documentPlanRef, handoffRef: reference.batchHandoffRef, planHash: reference.planHash, handoffHash: reference.batchHandoffHash, batchId: reference.batchId, batchSlot: 1,
+    identityBinding: { prompt: identity("prompt"), schema: identity("schema"), composer: identity("composer"), route: identity("route"), adapter: identity("adapter") },
+    estimatorBinding: { ...estimatorConfiguration, configurationSha256: canonicalMultimodalSha256(estimatorConfiguration), imageTokenPolicy: { identity: "atlas.multimodal-image-grid-estimate", version: "v1", policySha256: digest("image-policy") } },
+    routeBinding: { routeId: "route", profileId: "profile", profileVersion: "v1", maxPromptBytes: 2048, image: { version: "v1", mediaTypes: ["image/png"], maxImageCount: 1, maxImageBytes: 1024, maxImageWidth: 64, maxImageHeight: 64 }, imageTpm: { state: "unknown" } },
+    serializerBinding: { identity: "anoman.openai-chat.multipart-data-url", version: "v1", model: "model", policySha256: digest("serializer-policy") },
+  });
   const row: Record<string, unknown> = {
     plan_id: reference.documentPlanRef, plan_hash: reference.planHash, project_id: scope.projectId, workspace_id: scope.workspaceId, bundle_id: scope.bundleId, document_id: scope.documentId, persisted_source_sha256: source.sourceSha256, persisted_source_fingerprint: source.normalizedDocumentFingerprint, plan_content: canonical.planContent,
     handoff_id: reference.batchHandoffRef, handoff_plan_id: reference.documentPlanRef, batch_id: reference.batchId, batch_slot: 1, handoff_hash: reference.batchHandoffHash, handoff_content: handoff, cancelled_plan_id: null,
     perception_execution_id: source.perceptionExecutionId, execution_source_sha256: source.sourceSha256, completion_fingerprint: source.normalizedDocumentFingerprint, execution_contract_version: source.perceptionContractVersion,
     normalized_document_ref: source.normalizedDocumentRef, cache_source_sha256: source.sourceSha256, cache_contract_version: source.normalizedDocumentVersion, cache_capability: source.perceptionCapability,
+    binding_sha256: binding.bindingSha256, binding_content: binding,
   };
   mutator?.(row);
   return { row, reference };

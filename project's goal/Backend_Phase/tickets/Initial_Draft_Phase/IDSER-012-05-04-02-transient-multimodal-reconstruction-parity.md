@@ -1,6 +1,6 @@
 # IDSER-012-05-04-02 — Transient multimodal reconstruction parity
 
-- **State:** `planned`; executable only after explicit GO and `IDSER-012-05-04-01` CK PASS.
+- **State:** `awaiting_review`; implemented under explicit GO after `IDSER-012-05-04-01` CK PASS.
 - **Parent map:** [IDSER-012-05-04](IDSER-012-05-04-authorized-multimodal-reconstruction.md).
 
 ## Sole scope

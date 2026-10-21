@@ -55,16 +55,29 @@ const sha256 = (value: string): string => createHash("sha256").update(value).dig
 const positiveSafeInteger = (value: unknown): value is number => Number.isSafeInteger(value) && typeof value === "number" && value > 0;
 const locatorKey = (pageNumber: number, locatorId: string): string => `${pageNumber}\u0000${locatorId}`;
 
-const stableJson = (value: unknown): string => {
-  if (value === null || typeof value === "boolean" || typeof value === "number" || typeof value === "string") return JSON.stringify(value);
-  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
+/**
+ * Canonical JSON and SHA-256 used by the multimodal composition boundary.
+ * Policy bindings reuse this authority rather than creating a second local
+ * serializer with subtly different key or number semantics.
+ */
+export const canonicalMultimodalJson = (value: unknown): string => {
+  if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) throw new Error("CANONICAL_MULTIMODAL_COMPOSITION_REJECTED: non-finite number.");
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) return `[${value.map(canonicalMultimodalJson).join(",")}]`;
   if (value && typeof value === "object") {
     return `{${Object.entries(value as Record<string, unknown>)
       .sort(([left], [right]) => left.localeCompare(right))
-      .map(([key, child]) => `${JSON.stringify(key)}:${stableJson(child)}`).join(",")}}`;
+      .map(([key, child]) => {
+        if (child === undefined) throw new Error("CANONICAL_MULTIMODAL_COMPOSITION_REJECTED: undefined value.");
+        return `${JSON.stringify(key)}:${canonicalMultimodalJson(child)}`;
+      }).join(",")}}`;
   }
   throw new Error("CANONICAL_MULTIMODAL_COMPOSITION_REJECTED: value is not JSON-serializable.");
 };
+export const canonicalMultimodalSha256 = (value: unknown): string => sha256(canonicalMultimodalJson(value));
 
 const reject = (message: string): never => {
   throw new Error(`CANONICAL_MULTIMODAL_COMPOSITION_REJECTED: ${message}`);
@@ -140,13 +153,13 @@ export function composeCanonicalMultimodalSource(input: CanonicalMultimodalCompo
         byteLength: metadata.byteLength,
       };
     });
-  const descriptorManifestSha256 = sha256(stableJson(descriptorManifest));
-  const requestCompositionSha256 = sha256(stableJson({
+  const descriptorManifestSha256 = canonicalMultimodalSha256(descriptorManifest);
+  const requestCompositionSha256 = canonicalMultimodalSha256({
     version: canonicalMultimodalCompositionVersion,
     sourceSpecificationSha256: packet.sourceSpecificationSha256,
     sourceSlots: packet.sourceSlots,
     descriptorManifestSha256,
-  }));
+  });
   return Object.freeze({
     version: canonicalMultimodalCompositionVersion,
     sourceSlots: Object.freeze([...packet.sourceSlots]),
