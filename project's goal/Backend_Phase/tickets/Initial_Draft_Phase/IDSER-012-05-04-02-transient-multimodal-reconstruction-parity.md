@@ -1,6 +1,6 @@
 # IDSER-012-05-04-02 — Transient multimodal reconstruction parity
 
-- **State:** `awaiting_review`; implemented under explicit GO after `IDSER-012-05-04-01` CK PASS.
+- **State:** `approved`; CK PASS recorded in `IDSER-BATCH-12-05-04-02-26508622-verification.md` after the bounded CFC verification.
 - **Parent map:** [IDSER-012-05-04](IDSER-012-05-04-authorized-multimodal-reconstruction.md).
 
 ## Sole scope
