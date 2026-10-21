@@ -4,6 +4,7 @@
 - **Batch:** `IDSER-BATCH-12-05-04-02`
 - **State:** `awaiting_review`
 - **Authority:** `IDSER-012-05-04-02-policy-binding-contract-freeze-001.md`
+- **Review target commit:** `e2fe1373100239e836ab4519f39ddcb87f515185` (`feat(idser): bind v3 reconstruction policy sidecars`)
 - **Predecessor:** `IDSER-012-05-04-01` remains `PASS` at `2e777963`; no predecessor production code, ticket contract, or historical review result was reopened.
 
 ## Bounded implementation
