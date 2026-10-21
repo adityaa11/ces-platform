@@ -44,6 +44,7 @@ export type ResolvedSemanticBatchV3References = Readonly<{
     sourceSpecificationSha256: string;
     requestSha256: string;
     manifestSha256: string;
+    structuralBound: Readonly<{ identity: string; version: string; maxRequestBytes: number; maxInputTokens: number; maxPromptBytes: number; maxContextTokens: number }>;
     packetProfile: Identity;
     estimator: Identity;
     configuration: Identity;
@@ -155,7 +156,12 @@ export class PostgresSemanticBatchV3ReferenceResolver {
       || String(row.perception_execution_id) !== source.perceptionExecutionId || String(row.execution_source_sha256) !== source.sourceSha256 || String(row.completion_fingerprint) !== source.normalizedDocumentFingerprint
       || row.execution_contract_version !== source.perceptionContractVersion
       || String(row.normalized_document_ref) !== source.normalizedDocumentRef || String(row.cache_source_sha256) !== source.sourceSha256 || row.cache_contract_version !== source.normalizedDocumentVersion || row.cache_capability !== source.perceptionCapability
-      || handoff.planHash !== requested.planHash || handoff.batchId !== requested.batchId || handoff.batchSlot !== row.batch_slot) fail("accepted source or immutable binding is inconsistent");
+      || handoff.planHash !== requested.planHash || handoff.batchId !== requested.batchId || handoff.batchSlot !== row.batch_slot
+      || !plain(proposal.structuralBound) || !plain(proposal.packetProfile) || !plain(proposal.estimator) || !plain(proposal.configuration)
+      || !plain(handoff.packetProfile) || !plain(handoff.estimator) || !plain(handoff.configuration)
+      || proposal.packetProfile.identity !== handoff.packetProfile.identity || proposal.packetProfile.version !== handoff.packetProfile.version
+      || proposal.estimator.identity !== handoff.estimator.identity || proposal.estimator.version !== handoff.estimator.version
+      || proposal.configuration.identity !== handoff.configuration.identity || proposal.configuration.version !== handoff.configuration.version) fail("accepted source or immutable binding is inconsistent");
 
     const resolvedScope = { projectId: String(row.project_id), workspaceId: String(row.workspace_id), bundleId: String(row.bundle_id), documentId: String(row.document_id) };
     if (!Object.values(resolvedScope).every((value) => opaque.test(value))) fail("persisted scope is invalid");
@@ -187,6 +193,7 @@ export class PostgresSemanticBatchV3ReferenceResolver {
 
     const commitments = {
       sourceSpecificationSha256: String(handoff.sourceSpecificationSha256), requestSha256: String(handoff.requestSha256), manifestSha256: String(handoff.manifestSha256),
+      structuralBound: proposal.structuralBound as { identity: string; version: string; maxRequestBytes: number; maxInputTokens: number; maxPromptBytes: number; maxContextTokens: number },
       packetProfile: identity(handoff.packetProfile), estimator: identity(handoff.estimator), configuration: identity(handoff.configuration),
       conservativeLogicalRequestBytes: handoff.conservativeLogicalRequestBytes as { version: "ConservativeLogicalRequestBytes/v1"; value: number }, requestBytes: Number(handoff.requestBytes), inputTokens: Number(handoff.inputTokens), reservedOutputTokens: Number(handoff.reservedOutputTokens), requestResourceEnvelope: handoff.requestResourceEnvelope as { requestUnits: number; tokenUnits: number; dayUnits: number; concurrencyUnits: number },
     };
