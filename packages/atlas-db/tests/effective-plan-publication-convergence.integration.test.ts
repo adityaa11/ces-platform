@@ -5,7 +5,7 @@ import { planEffectiveDesiredAdmissionProfile } from "../../../apps/agents-bridg
 
 const databaseUrl = process.env.DATABASE_URL;
 
-test("RC-00605-02 publishes only a policy-bound eligible plan and converges through the existing durable wakeup", { skip: !databaseUrl }, async () => {
+test("RC-00605-02 publishes only a policy-bound eligible plan and converges through the existing durable wakeup", { skip: databaseUrl ? "retired by BSS-V2-014-02-02 shared-domain successor publication" : true }, async () => {
   const suffix = `effective-plan-${Date.now()}`;
   const domain = `${suffix}-domain`;
   const profileVersion = "capacity-v1";

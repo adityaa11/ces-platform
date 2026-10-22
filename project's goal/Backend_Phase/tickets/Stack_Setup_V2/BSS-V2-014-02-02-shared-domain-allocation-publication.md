@@ -1,6 +1,6 @@
 # BSS-V2-014-02-02 — Shared-domain calculated-allocation publication
 
-- **State:** `planned`; executable BSS-V2-005 successor. No GO, admission, provider operation, or route enablement is authorized.
+- **State:** `awaiting_review`; executable BSS-V2-005 successor. No CK, admission, provider operation, or route enablement is authorized.
 - **Parent:** [BSS-V2-014-02 split map](BSS-V2-014-02-model-route-shared-domain-publication.md).
 - **Dependencies:** BSS-V2-014-01 and BSS-V2-014-02-01 CK `PASS`; approved BSS-V2-005 immutable desired-plan publication/activation and BSS-V2-006-05 effective-policy provenance contracts. Production activation additionally requires the parent-owned BSS-V2-014 activation/cutover gate; this child does not grant it.
 
