@@ -1,6 +1,6 @@
 # BSS-V2-014-02-01 — Model-bound durable qualified-route authority
 
-- **State:** `awaiting_review`; contract freeze: [BSS-V2-014-02-01 contract freeze 001](../../../feedback/BSS-V2-014-02-01-contract-freeze-001.md); implementation checkpoint: [BSS-V2-014-02-01 GO checkpoint](../../../feedback/BSS-V2-014-02-01-go-checkpoint.md). Executable BSS-V2-005 successor. No activation, plan publication, admission, or provider operation is authorized.
+- **State:** `approved`; contract freeze: [BSS-V2-014-02-01 contract freeze 001](../../../feedback/BSS-V2-014-02-01-contract-freeze-001.md); implementation checkpoint: [BSS-V2-014-02-01 GO checkpoint](../../../feedback/BSS-V2-014-02-01-go-checkpoint.md). Executable BSS-V2-005 successor. No activation, plan publication, admission, or provider operation is authorized.
 - **Parent:** [BSS-V2-014-02 split map](BSS-V2-014-02-model-route-shared-domain-publication.md).
 - **Dependencies:** BSS-V2-014-01 CK `PASS`; approved qualified-registry and effective-policy provenance predecessors.
 
