@@ -6,7 +6,7 @@
 
 ## Exact scope
 
-Extend only the already-proven atomic baseline path for a background attempt that exceeds its remaining baseline. Under the same domain lock and same process usage projection, admit the excess only when the pinned profile enables `mayBorrowIdleCapacity`, every effective process/class/domain resource fits, idle entitlement exists in other background peers, and eligible waiting lenders are not denied their entitlement. Borrowing is a one-admission runtime opportunity; it never changes immutable request sizing, allocation, cap, process weight, or historical liability.
+Extend only the already-proven atomic baseline path for a background attempt that exceeds its remaining baseline. Under the same domain lock and same process usage projection, admit the excess only when the pinned profile enables `mayBorrowIdleCapacity`, every effective process/class/domain resource fits, idle entitlement exists in other background peers, and eligible waiting lenders are not denied their entitlement. Existing in-flight borrower liabilities MUST be included in every resource-availability and borrowing calculation. An existing in-flight request alone MUST NOT prohibit another borrow when remaining process, background-class, domain, and concurrency resources permit it. Borrowing is a one-admission runtime opportunity; it never changes immutable request sizing, allocation, cap, process weight, or historical liability.
 
 This child does not change process accounting schema, route/model authority, desired-plan publication, reader, selection algorithm, interactive priority, or recovery ownership. It adds no queue/scheduler/reservation/send lane and never borrows interactive protection or headroom.
 
@@ -14,7 +14,7 @@ This child does not change process accounting schema, route/model authority, des
 
 | ID | PASS iff / direct negative | Required validation and evidence |
 | --- | --- | --- |
-| `RC-0140403-01` | An enabled borrower exceeds baseline only when another background peer's unused entitlement is proven from the same locked held/spent counters and all enforced resources fit. Disabled borrower, active lender, exhausted peer, borrower in-flight, or non-fitting resource is denied/deferred. | Two-background-process positive/negative matrix. |
+| `RC-0140403-01` | An enabled borrower exceeds baseline only when another background peer's unused entitlement is proven from the same locked held/spent counters and all enforced resources fit. Existing borrower liabilities are included in every calculation, and a borrower already in flight is admitted again when remaining process/background-class/domain/concurrency vectors allow it. Disabled borrower, active lender demand, exhausted peer, or saturation of any enforced resource is denied/deferred. | Two-background-process positive/negative matrix including simultaneous allowed borrowing and each independent-resource saturation. |
 | `RC-0140403-02` | No background request borrows interactive reserve or headroom. A returning lender receives fair subsequent admission without preempting in-flight borrower; weighted dominant-resource fairness and existing interactive priority remain correct. | Background/interactive contention and lender-return integration fixtures. |
 | `RC-0140403-03` | Borrowing preserves route/model/policy/allocation revision fencing, exact physical liabilities, typed stale/replan behavior, and the sole atomic reservation/pg-boss/transport chain. | Revision/recovery fixture plus source-entrypoint inventory and zero forbidden-send assertion. |
 

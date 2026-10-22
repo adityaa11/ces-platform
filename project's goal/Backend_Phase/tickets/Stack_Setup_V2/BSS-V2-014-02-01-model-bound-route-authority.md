@@ -6,7 +6,9 @@
 
 ## Exact scope
 
-Evolve the existing qualified registry publication path and `bridge.qualified_provider_route_authority` in place. Each append-only authority version must retain the server-qualified `routeId`, `providerId`, `modelOrProcessorId`, `adapterVersion`, `qualificationRef`, `qualificationVersion`, and an `authorityVersion`. The existing runtime publisher passes those already-qualified values; stale, forged, mismatched, foreign-domain, or revoked identity cannot replace or create a durable authority record.
+Evolve the existing qualified registry publication path and `bridge.qualified_provider_route_authority` in place. The current route-keyed row and `bridge.publish_qualified_provider_route_authority` are a successor-migration input, not sufficient authority by themselves. Each append-only authority version must retain the server-qualified `routeId`, `providerId`, `modelOrProcessorId`, `adapterVersion`, `qualificationRef`, `qualificationVersion`, and an `authorityVersion`, with the complete tuple immutable and addressable by the version. The existing `QualifiedRouteRuntime`/route registry publisher passes those already-qualified values; stale, forged, mismatched, foreign-domain, or revoked identity cannot replace or create a durable authority record.
+
+`-02-01` owns durable publication only. It supplies the immutable authority reference and full tuple to `-02-02`; the latter binds it to a desired plan, and `-04-02` alone carries that pinned reference through `bridge.bind_provider_work_route`, `bridge.provider_work_route_binding`, reservation, and `bridge.claim_provider_admitted_transport`. No child may re-resolve a model from a route id after authority has been published.
 
 This child creates neither a desired plan nor a route binding, allocation, activation, reservation, job, transport claim, provider call, resolver, or model fallback. The successor publication relation belongs only to `-02-02`.
 
@@ -14,9 +16,10 @@ This child creates neither a desired plan nor a route binding, allocation, activ
 
 | ID | PASS iff / direct negative | Required validation and evidence |
 | --- | --- | --- |
-| `RC-0140201-01` | Registry → existing runtime publisher → durable authority retains the exact route, provider, model, adapter, qualification reference/version, domain, and append-only authority version. | Isolated PostgreSQL integration fixture plus `provider-operational-runtime` integration test. |
+| `RC-0140201-01` | Registry → existing runtime publisher → durable authority retains the exact route, provider, model/processor, adapter, qualification reference/version, domain, and append-only authority version; a route id alone cannot identify a successor authority row. | Isolated PostgreSQL integration fixture plus `provider-operational-runtime` integration test. |
 | `RC-0140201-02` | Forged, stale, mismatched, foreign-domain, revoked, or non-qualified model identity is rejected before durable authority publication; it cannot overwrite a prior authority version. | Negative SQL and runtime-publisher fixtures; historical-row immutability assertion. |
 | `RC-0140201-03` | The existing qualified registry and publisher remain the sole route-authority seam. No resolver, plan table/binding, quota copy, scheduler, sender, dual write, provider activation, job, or transport is introduced. | Source/DDL entrypoint inventory and zero-effect counters. |
+| `RC-0140201-04` | The exact immutable authority tuple and version supplied to `-02-02` can be joined unchanged to the desired-plan binding, attempt binding, reservation, and final transport claim; a substituted tuple or version fails before reservation. | Cross-ticket `-02-01/-02-02/-04-02` integration fixture with claim-payload equality assertions. |
 
 ## Freeze-time validation commands
 
@@ -32,7 +35,7 @@ pnpm --filter @atlas/agents-bridge typecheck
 - `SR-0140201-T1`: server-qualified registry identity crosses into durable route authority.
 - `SR-0140201-A1`: model/adapter/qualification identity and append-only authority version.
 - `SR-0140201-C1`: prohibit caller-supplied identity, mutable overwrite, alternate registry/resolver, and provider fallback.
-- `SR-0140201-R1`: `RC-0140201-01..03` verify exact provenance, rejection, and sole-entrypoint evidence.
+- `SR-0140201-R1`: `RC-0140201-01..04` verify exact provenance, rejection, sole-entrypoint evidence, and the preserved downstream identity seam.
 
 ## Hard stop
 

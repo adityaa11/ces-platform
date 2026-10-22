@@ -13,8 +13,8 @@ The original leaf combined a new durable per-process accounting projection, the 
 
 | Order | Child | Sole implementation/proof seam | Requires |
 | --- | --- | --- | --- |
-| D1 | [BSS-V2-014-04-01](BSS-V2-014-04-01-process-window-usage-projection.md) | Reconciled `ProcessCapacityWindowUsage/v1` projection from existing reservation/window facts; no admission decision | `-02-02` CK `PASS` |
-| D2 | [BSS-V2-014-04-02](BSS-V2-014-04-02-atomic-process-baseline-enforcement.md) | Process baseline/cap/class and route/model revision gates in the existing atomic admission; no borrowing | `-04-01` CK `PASS` |
+| D1 | [BSS-V2-014-04-01](BSS-V2-014-04-01-process-window-usage-projection.md) | Prefer read-derived process usage from authoritative reservation/window facts; any necessary persistence stays in the same lifecycle transaction; no admission decision | `-02-02` CK `PASS` |
+| D2 | [BSS-V2-014-04-02](BSS-V2-014-04-02-atomic-process-baseline-enforcement.md) | Process baseline/cap/class and complete route-authority revision gates in the existing atomic admission through final claim; no borrowing | `-04-01` CK `PASS` |
 | D3 | [BSS-V2-014-04-03](BSS-V2-014-04-03-background-idle-borrowing.md) | Verified-idle background borrowing and lender-return fairness in that same atomic transaction | `-04-02` CK `PASS` |
 
 Only `-04-03` CK `PASS`, after both prior children, completes this family. Any CFC correction belongs to the child owning the failed binary row and does not re-open an independently passed predecessor.
@@ -22,7 +22,7 @@ Only `-04-03` CK `PASS`, after both prior children, completes this family. Any C
 ## Preserved frozen authority
 
 - The sole execution path remains `admit_next_provider_work_attempt` → `admit_route_aware_provider_work_attempt` → exact reservation/window ledger → pg-boss admitted job → transport claim.
-- Process accounting is a projection of authoritative reservation/window facts, not a second quota ledger, scheduler, queue, send lane, or physical-liability source.
+- Process accounting is a read-derived projection of authoritative reservation/window facts unless a concrete SQL limitation proves persistence necessary. A persisted form may mutate only inside the same authorized reservation/window lifecycle transaction; it is not a second quota ledger, writer, worker, reconciliation transaction, out-of-lifecycle trigger, scheduler, queue, send lane, or physical-liability source.
 - Enforced dimensions are independent; approved Anoman `rpd: unknown/not_enforced` creates neither a numeric process allocation nor a process/provider RPD window row. Missing/revoked/mismatched approval fails closed.
 - Background cannot borrow interactive protection or headroom. Held/claimed work is never rebased, recalled, or preempted; recovery remains the existing `0084` pathway.
 

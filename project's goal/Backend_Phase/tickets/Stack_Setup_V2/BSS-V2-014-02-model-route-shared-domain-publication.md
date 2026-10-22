@@ -13,8 +13,8 @@ The original leaf combined two durable authority transitions: qualified registry
 
 | Order | Child | Sole implementation/proof seam | Requires |
 | --- | --- | --- | --- |
-| B1 | [BSS-V2-014-02-01](BSS-V2-014-02-01-model-bound-route-authority.md) | Existing qualified registry → append-only durable route/model/qualification authority | `-01` CK `PASS` |
-| B2 | [BSS-V2-014-02-02](BSS-V2-014-02-02-shared-domain-allocation-publication.md) | Existing desired-plan publication/activation → one shared-domain multi-route relation and one allocation identity | `-02-01` and `-01` CK `PASS` |
+| B1 | [BSS-V2-014-02-01](BSS-V2-014-02-01-model-bound-route-authority.md) | Existing qualified registry → append-only complete route/model/qualification authority version | `-01` CK `PASS` |
+| B2 | [BSS-V2-014-02-02](BSS-V2-014-02-02-shared-domain-allocation-publication.md) | Existing desired-plan publication/activation → one shared-domain multi-route relation, one allocation identity, and retirement of the legacy single-route publisher | `-02-01` and `-01` CK `PASS` |
 
 Only `-02-02` CK `PASS`, after `-02-01` CK `PASS`, completes this family and satisfies the `-03` and `-04-01` dependencies. A remediation stays in the child owning its failed row; it must not reopen an independently passed sibling.
 
@@ -22,12 +22,13 @@ Only `-02-02` CK `PASS`, after `-02-01` CK `PASS`, completes this family and sat
 
 - The existing `qualified_provider_route_authority` is evolved in place; no second registry, resolver, provider route fan-out, client-selected model/route, or provider-specific path is permitted.
 - A shared quota domain has one provider capacity and one calculated process allocation. Route bindings reference them; they never clone them.
-- Successor writes are append-only and activate only a complete immutable plan through the existing activation epoch. Historical plans, bindings, reservations and liabilities remain readable but are not a compatibility path.
+- Successor writes are append-only. Candidate data may be published and qualified, but production activation occurs only through the parent BSS-V2-014 gate and existing activation epoch. Historical plans, bindings, reservations and liabilities remain readable but are not a compatibility path.
+- The `publish_effective_policy_converged_desired_admission_profile` caller/signature/grant/dependent-object inventory is complete before cutover. Its legacy single-route callable, including `_v1` where present, is retired in the same cutover; no overload or historical reference remains executable as a publisher.
 - Existing one-enabled-route-per-capability behavior remains unchanged. This family neither qualifies/enables a provider nor supplies absent model/context limits.
 
 ## Original review-contract coverage
 
-`RC-01402-01` is discharged by `RC-0140201-01..03` and the admission identity gate in `RC-0140402-01`; `RC-01402-02/03` by `RC-0140202-01/02`; `RC-01402-04` by `RC-0140202-03`; and `RC-01402-05` by `RC-0140202-04`. The combined evidence remains the original requirement that a forged/stale identity cannot publish, bind, reserve, or reach transport claim—each gate is proven by its owner rather than asserted by publication alone.
+`RC-01402-01` is discharged by `RC-0140201-01..04` and the admission identity gate in `RC-0140402-01`; `RC-01402-02/03` by `RC-0140202-01/02`; `RC-01402-04` by `RC-0140202-03`; and `RC-01402-05` by `RC-0140202-04/05`. The combined evidence remains the original requirement that a forged/stale identity cannot publish, bind, reserve, or reach transport claim—each gate is proven by its owner rather than asserted by publication alone.
 
 ## Family SecurityReadiness
 
