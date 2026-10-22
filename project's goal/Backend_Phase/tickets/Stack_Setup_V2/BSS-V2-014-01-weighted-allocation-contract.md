@@ -1,6 +1,6 @@
 # BSS-V2-014-01 — Versioned weighted class/process allocation contract
 
-- **State:** `awaiting_review`; contract freeze: [BSS-V2-014-01 contract freeze 001](../../../feedback/BSS-V2-014-01-contract-freeze-001.md); implementation checkpoint: [BSS-V2-014-01 GO checkpoint](../../../feedback/BSS-V2-014-01-go-checkpoint.md). BSS-V2-005 successor. No migration, plan activation, or provider operation is authorized.
+- **State:** `approved`; contract freeze: [BSS-V2-014-01 contract freeze 001](../../../feedback/BSS-V2-014-01-contract-freeze-001.md); implementation checkpoint: [BSS-V2-014-01 GO checkpoint](../../../feedback/BSS-V2-014-01-go-checkpoint.md); CK review: [BSS-V2-014-01-15c5a73 review](../../../feedback/BSS-V2-014-01-15c5a73-review.md). BSS-V2-005 successor. No migration, plan activation, or provider operation is authorized.
 - **Parent:** [BSS-V2-014 ticket set](BSS-V2-014-weighted-capacity-ticket-set.md).
 - **Dependencies:** approved BSS-V2-005 planner/registry/publication predecessors, including BSS-V2-005-05-04; approved BSS-V2-006-05 effective-enforcement authority. It does not depend on IDSER or an isolated qualification database.
 
