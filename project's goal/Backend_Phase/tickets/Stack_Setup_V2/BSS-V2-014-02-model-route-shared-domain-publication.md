@@ -28,7 +28,7 @@ Only `-02-02` CK `PASS`, after `-02-01` CK `PASS`, completes this family and sat
 
 ## Original review-contract coverage
 
-`RC-01402-01` is discharged by `RC-0140201-01..04` and the admission identity gate in `RC-0140402-01`; `RC-01402-02/03` by `RC-0140202-01/02`; `RC-01402-04` by `RC-0140202-03`; and `RC-01402-05` by `RC-0140202-04/05`. The combined evidence remains the original requirement that a forged/stale identity cannot publish, bind, reserve, or reach transport claim—each gate is proven by its owner rather than asserted by publication alone.
+`RC-01402-01` is discharged by `RC-0140201-01..04` for publication and `RC-0140402-02` for the later bind/reservation/claim/outbound-transport proof; `RC-01402-02/03` by `RC-0140202-01/02`; `RC-01402-04` by `RC-0140202-03`; and `RC-01402-05` by `RC-0140202-04/05`. The combined evidence remains the original requirement that a forged/stale identity cannot publish, bind, reserve, claim, or reach send—each gate is proven by its owner rather than asserted by publication alone.
 
 ## Family SecurityReadiness
 

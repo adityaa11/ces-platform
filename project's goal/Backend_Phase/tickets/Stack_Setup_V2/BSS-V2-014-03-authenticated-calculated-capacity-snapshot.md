@@ -36,7 +36,7 @@ Only mutually consistent active plan, process, route/model authority, policy, al
 | `RC-01403-02` | Foreign principal, mismatched process/class/route/model, stale authority/plan, missing allocation, revoked policy, absent required structural/model bound, or route-to-workload version mismatch returns typed non-qualified status with no numeric fallback. | Negative principal/plan/model fixtures and zero-effect counters. |
 | `RC-01403-03` | The Anoman positive fixture returns `rpm,tpm,concurrency` allocations and carries approved unknown-RPD provenance without numeric RPD. Missing/revoked/mismatched approval fails closed. | WCA-15 read-only positive/negative fixture. |
 | `RC-01403-04` | A v2 maximum eligible request is bounded by full request demand, process TPM/RPM baseline, request bytes, model context/input/output, reservation, and estimator identity; it never derives a per-slot token ceiling. | Complete-request text/image/output fixture and too-large typed `unfit` assertion. |
-| `RC-01403-05` | The current endpoint/reader remains the sole BSS planning reader. Production v2 activation is rejected until the parent gate records the exact `-05` replacement against the same schema, route/model identity, allocation, and revision. The cutover leaves no active v1 reader, dual read/write, v1→v2 shim, prospective-to-active relabeling, or IDSER implementation in this ticket. | Entrypoint inventory, parent-gate negative/positive cutover fixture, contract-reference check, and static source-boundary test. |
+| `RC-01403-05` | The current endpoint/reader remains the sole BSS planning reader. `-03` qualifies v2 only in isolation and rejects any attempt to production-activate it before the parent gate has the later `-05` replacement and `-04` readiness evidence. No duplicate reader, dual read/write, v1→v2 shim, prospective-to-active relabeling, or IDSER implementation is introduced by this ticket. | Isolated v2 reader fixture, premature-activation negative with zero active-reader change, entrypoint inventory, contract-reference check, and static source-boundary test. No implemented IDSER consumer or positive production-cutover evidence is required for this CK. |
 
 ## Freeze-time validation commands
 
@@ -53,7 +53,7 @@ pnpm --filter @atlas/agents-bridge typecheck
 - `SR-01403-T1`: authenticated principal → server-bound domain/process/route/model projection.
 - `SR-01403-A1`: calculated capacity, model bounds, policy provenance, and canonical fingerprint are planning authority; request content, credentials, and live counters are excluded.
 - `SR-01403-C1`: prohibit foreign-scope selection, direct SQL, admission implication, runtime-counter leakage, fallback to prospective/v1, and a new endpoint.
-- `SR-01403-R1`: `RC-01403-01..05` require principal negatives, exact plan/structural equality, zero-effect counters, reader-entrypoint inventory, and coordinated-cutover evidence.
+- `SR-01403-R1`: `RC-01403-01..05` require principal negatives, exact plan/structural equality, zero-effect counters, reader-entrypoint inventory, and pre-cutover activation rejection.
 
 ## Hard stop
 
