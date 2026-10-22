@@ -1,15 +1,21 @@
 import { randomUUID } from "node:crypto";
 import type { Db } from "pg-boss";
 import type { ProviderAdmittedExecutionHandler, ProviderAdmittedJob } from "./provider-admitted-worker.js";
-import type { AtlasCapability } from "./route-registry.js";
+import type { AtlasCapability, QualifiedRoute } from "./route-registry.js";
 
 export type QualifiedRouteResolver = Readonly<{
-  resolve(capability: AtlasCapability): Readonly<{
-    routeId: string;
-    capability: AtlasCapability;
-    adapterVersion: string;
-    qualificationVersion: string;
-  }>;
+  resolve(capability: AtlasCapability): QualifiedRoute;
+}>;
+
+export type QualifiedRouteAuthorityReference = Readonly<{
+  authorityVersion: string;
+  routeId: string;
+  quotaDomainId: string;
+  providerId: string;
+  modelOrProcessorId: string;
+  adapterVersion: string;
+  qualificationRef: string;
+  qualificationVersion: string;
 }>;
 
 type SqlExecutor = Pick<Db, "executeSql">;
@@ -74,9 +80,9 @@ export async function bindProviderWorkRouteFromResolver(
   database: SqlExecutor,
   resolver: QualifiedRouteResolver,
   input: Readonly<{ logicalWorkId: string; attemptNumber: number }>,
-): Promise<void> {
+): Promise<QualifiedRouteAuthorityReference> {
   const attempt = await database.executeSql(
-    `SELECT process.capability
+    `SELECT process.capability, work.quota_domain_id
        FROM bridge.provider_work_attempt work
        JOIN bridge.provider_process_profile process
          ON process.process_id=work.process_id
@@ -84,18 +90,37 @@ export async function bindProviderWorkRouteFromResolver(
       WHERE work.logical_work_id=$1 AND work.attempt_number=$2`,
     [input.logicalWorkId, input.attemptNumber],
   );
-  const capability = (attempt.rows[0] as { capability?: unknown } | undefined)?.capability;
-  if (typeof capability !== "string") throw new Error("Provider work attempt has no server-authorized capability.");
+  const attemptIdentity = attempt.rows[0] as { capability?: unknown; quota_domain_id?: unknown } | undefined;
+  const capability = attemptIdentity?.capability;
+  const quotaDomainId = attemptIdentity?.quota_domain_id;
+  if (typeof capability !== "string" || typeof quotaDomainId !== "string") throw new Error("Provider work attempt has no server-authorized capability and quota domain.");
   const route = resolver.resolve(capability as AtlasCapability);
   if (route.capability !== capability) throw new Error("Qualified route resolver returned a mismatched capability.");
-  await database.executeSql(
-    "SELECT bridge.publish_qualified_provider_route_authority($1,$2,$3,$4)",
-    [route.routeId, route.capability, route.adapterVersion, route.qualificationVersion],
+  for (const value of [route.routeId, route.providerId, route.modelOrProcessorId, route.adapterVersion, route.qualificationRef, route.qualificationVersion]) {
+    if (!value.trim()) throw new Error("Qualified route resolver returned incomplete route authority.");
+  }
+  const published = await database.executeSql(
+    "SELECT * FROM bridge.publish_qualified_provider_route_authority($1,$2,$3,$4,$5,$6,$7,$8)",
+    [route.routeId, quotaDomainId, route.providerId, route.modelOrProcessorId, route.adapterVersion, route.qualificationRef, route.qualificationVersion, route.capability],
   );
+  const authority = published.rows[0] as Record<string, unknown> | undefined;
+  if (!authority || !["authority_version", "route_id", "quota_domain_id", "provider_id", "model_or_processor_id", "adapter_version", "qualification_ref", "qualification_version"].every((key) => typeof authority[key] === "string" || typeof authority[key] === "number")) throw new Error("Qualified route authority publisher returned an invalid immutable reference.");
+  const reference: QualifiedRouteAuthorityReference = {
+    authorityVersion: String(authority.authority_version),
+    routeId: String(authority.route_id),
+    quotaDomainId: String(authority.quota_domain_id),
+    providerId: String(authority.provider_id),
+    modelOrProcessorId: String(authority.model_or_processor_id),
+    adapterVersion: String(authority.adapter_version),
+    qualificationRef: String(authority.qualification_ref),
+    qualificationVersion: String(authority.qualification_version),
+  };
+  if (reference.routeId !== route.routeId || reference.quotaDomainId !== quotaDomainId || reference.providerId !== route.providerId || reference.modelOrProcessorId !== route.modelOrProcessorId || reference.adapterVersion !== route.adapterVersion || reference.qualificationRef !== route.qualificationRef || reference.qualificationVersion !== route.qualificationVersion || !/^\d+$/u.test(reference.authorityVersion)) throw new Error("Qualified route authority publisher returned a substituted reference.");
   await database.executeSql(
     "SELECT bridge.bind_provider_work_route($1,$2,$3)",
     [input.logicalWorkId, input.attemptNumber, route.routeId],
   );
+  return reference;
 }
 
 const claim = async (database: Db, reservationId: string): Promise<ClaimedTransport> => {

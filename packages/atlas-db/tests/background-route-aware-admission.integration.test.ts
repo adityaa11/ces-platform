@@ -45,7 +45,7 @@ test("BSS-V2-006-03A-05 admits background through the route-aware authority with
     await sql.unsafe("INSERT INTO bridge.desired_admission_profile(quota_domain_id,profile_version,provider_capacity_profile_version,planner_version,effective_from,profile) VALUES($1,'plan-v1','cap-v1','fixture',now(),$2)", [domain, profile]);
     for (const processId of Object.values(processes)) await sql.unsafe("INSERT INTO bridge.desired_admission_profile_input(quota_domain_id,desired_profile_version,process_id,process_profile_version,workload_id,workload_profile_version) VALUES($1,'plan-v1',$2,'v1',$2,'v1')", [domain, processId]);
     await sql.unsafe("SELECT bridge.activate_desired_admission_profile($1,'plan-v1')", [domain]);
-    await sql.unsafe("SELECT bridge.publish_qualified_provider_route_authority($1,'atlas.chat.default','adapter-v1','qualification-v1')", [route]);
+    await sql.unsafe("SELECT * FROM bridge.publish_qualified_provider_route_authority($1,$2,'fixture','fixture-model-v1','adapter-v1','qualification://fixture','qualification-v1','atlas.chat.default')", [route, domain]);
 
     const firstBackground = `${domain}-background-a`;
     await register(firstBackground, processes.a, "a-1");
