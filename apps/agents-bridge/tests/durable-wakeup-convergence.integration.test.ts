@@ -72,6 +72,10 @@ test("BSS-V2-005-05-04 routes qualified process and capacity revisions through t
     { processId: semantic, processProfileVersion: semanticVersion, workloadId: semanticWorkload, workloadProfileVersion: semanticVersion },
     { processId: chat, processProfileVersion: "v1", workloadId: chatWorkload, workloadProfileVersion: "v1" },
   ];
+  const qualifiedRoutes = [
+    { routeId: semanticRoute, providerId: "fixture", modelOrProcessorId: "fixture-semantic-model", adapterVersion: "fixture-adapter-v1", qualificationRef: "qualification://fixture-semantic", qualificationVersion: "fixture-v1", capability: "atlas.semantic.extract" },
+    { routeId: chatRoute, providerId: "fixture", modelOrProcessorId: "fixture-chat-model", adapterVersion: "fixture-adapter-v1", qualificationRef: "qualification://fixture-chat", qualificationVersion: "fixture-v1", capability: "atlas.chat.default" },
+  ];
   const publish = (expectedRevision: number | null, capacityVersion: string, semanticVersion: string, semanticTokens: number) => sql.unsafe(
     "SELECT * FROM bridge.publish_converged_desired_admission_profile($1,$2,$3,'planner-v1','2026-10-17T00:00:00.000Z',$4::jsonb,$5::jsonb)",
     [domain, expectedRevision, capacityVersion, profile(capacityVersion, semanticVersion, semanticTokens), inputs(semanticVersion)],
@@ -81,7 +85,7 @@ test("BSS-V2-005-05-04 routes qualified process and capacity revisions through t
     assert.equal(worker.boss.getWipData().filter((entry) => entry.name === providerWakeupQueue && entry.state === "active").length, 1, "the production composition must own exactly one active wakeup consumer");
 
     for (const [version, tpm] of [["capacity-v1", 10_000], ["capacity-v2", 5_000]] as const) {
-      await sql.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,$2,'fixture',$3::jsonb,$4::jsonb,$5::jsonb,'quota-v1','qualified_observation','fixture://qualified-capacity',$2,now(),now())", [domain, version, [{ routeId: semanticRoute, providerId: "anoman" }, { routeId: chatRoute, providerId: "anoman" }], limits(tpm), windows]);
+      await sql.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,$2,'fixture',$3::jsonb,$4::jsonb,$5::jsonb,'quota-v1','qualified_observation','fixture://qualified-capacity',$2,now(),now())", [domain, version, qualifiedRoutes, limits(tpm), windows]);
     }
     for (const [workloadId, version, tokens, kinds] of [[semanticWorkload, "v1", 4_000, ["semantic"]], [semanticWorkload, "v2", 100, ["semantic"]], [chatWorkload, "v1", 500, ["chat"]]] as const) {
       await sql.unsafe("INSERT INTO bridge.workload_envelope_profile(workload_id,profile_version,active,compatible_process_kinds,structural_bound,estimator,quota_accounting_policy_id,output_reservation,safety_policy) VALUES($1,$2,true,$3::jsonb,$4::jsonb,'{\"identity\":\"estimator\",\"version\":\"v1\"}'::jsonb,'quota-v1','{\"policyId\":\"output\",\"policyVersion\":\"v1\",\"maxOutputTokens\":100}'::jsonb,'{\"policyId\":\"safety\",\"policyVersion\":\"v1\"}'::jsonb)", [workloadId, version, kinds, { identity: `${workloadId}-${version}`, version, maxRequestBytes: 10_000, maxInputTokens: tokens }]);
@@ -90,6 +94,9 @@ test("BSS-V2-005-05-04 routes qualified process and capacity revisions through t
     await addProcess(semantic, "v1", "semantic", "background", semanticRoute, semanticWorkload, "v1");
     await addProcess(semantic, "v2", "semantic", "background", semanticRoute, semanticWorkload, "v2");
     await addProcess(chat, "v1", "chat", "interactive", chatRoute, chatWorkload, "v1");
+    for (const route of qualifiedRoutes) {
+      await sql.unsafe("SELECT * FROM bridge.publish_qualified_provider_route_authority($1,$2,$3,$4,$5,$6,$7,$8)", [route.routeId, domain, route.providerId, route.modelOrProcessorId, route.adapterVersion, route.qualificationRef, route.qualificationVersion, route.capability]);
+    }
 
     const [initial] = await publish(null, "capacity-v1", "v1", 4_000);
     assert.deepEqual({ status: initial.status, revision: initial.activation_revision }, { status: "published", revision: "1" });
@@ -98,6 +105,7 @@ test("BSS-V2-005-05-04 routes qualified process and capacity revisions through t
 
     for (const [work, envelope] of [[waiting, { rpm: 1, tpm: 10, rpd: 1, concurrency: 1 }], [inflight, { rpm: 1, tpm: 1, rpd: 1, concurrency: 1 }]] as const) {
       await sql.unsafe("SELECT bridge.register_provider_work_attempt($1,1,$2,$3,'v1','fixture',$4,$5,1,now()+interval '1 hour',now()+interval '1 hour')", [work, domain, semantic, envelope, initial.desired_profile_version]);
+      await sql.unsafe("SELECT bridge.bind_provider_work_route($1,1,$2)", [work, semanticRoute]);
     }
     await sql.unsafe("UPDATE bridge.provider_work_attempt SET state='reserved' WHERE logical_work_id=$1", [inflight]);
     await sql.unsafe("INSERT INTO bridge.provider_work_reservation(logical_work_id,attempt_number,desired_profile_version,activation_revision,request_resource_envelope) VALUES($1,1,$2,1,$3)", [inflight, initial.desired_profile_version, { rpm: 1, tpm: 1, rpd: 1, concurrency: 1 }]);
@@ -126,6 +134,7 @@ test("BSS-V2-005-05-04 routes qualified process and capacity revisions through t
     // capacity revision must revalidate it under the new active plan instead
     // of rewriting the historical v1 work above.
     await sql.unsafe("SELECT bridge.register_provider_work_attempt($1,1,$2,$3,'v2','fixture',$4,$5,2,now()+interval '1 hour',now()+interval '1 hour')", [capacityWaiting, domain, semantic, { rpm: 1, tpm: 10, rpd: 1, concurrency: 1 }, processRevision.desired_profile_version]);
+    await sql.unsafe("SELECT bridge.bind_provider_work_route($1,1,$2)", [capacityWaiting, semanticRoute]);
 
     // A separately provenance-bound, lower capacity profile uses the same
     // publication fence and the same real worker; it is not a 03A intent.

@@ -64,6 +64,7 @@ migrations.push("0092_bssv20140202_publication_fixture_observation");
 migrations.push("0093_bssv20140202_candidate_fingerprint_resolution");
 migrations.push("0094_bssv20140202_candidate_revision_resolution");
 migrations.push("0095_bssv20140202_activation_gate_column_resolution");
+migrations.push("0096_bssv20140202_activation_revision_resolution");
 const readMigration = async (name) => {
   let migration = await readFile(new URL(`../migrations/${name}.sql`, import.meta.url), "utf8");
   for (const [token, value] of Object.entries(replacements)) migration = migration.replaceAll(token, value.replaceAll("'", "''"));

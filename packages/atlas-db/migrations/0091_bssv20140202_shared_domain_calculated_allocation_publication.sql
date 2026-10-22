@@ -261,7 +261,9 @@ BEGIN
     RAISE EXCEPTION 'desired admission profile %:% has no valid version-bound process/workload inputs', p_quota_domain_id, p_desired_profile_version;
   END IF;
   IF EXISTS (SELECT 1 FROM bridge.desired_admission_profile_activation activation WHERE activation.quota_domain_id=p_quota_domain_id AND activation.desired_profile_version=p_desired_profile_version) THEN RAISE EXCEPTION 'desired admission profile %:% was already activated', p_quota_domain_id,p_desired_profile_version; END IF;
-  SELECT COALESCE(max(activation_revision),0)+1 INTO next_revision FROM bridge.desired_admission_profile_activation WHERE quota_domain_id=p_quota_domain_id;
+  SELECT COALESCE(max(activation.activation_revision),0)+1 INTO next_revision
+    FROM bridge.desired_admission_profile_activation AS activation
+    WHERE activation.quota_domain_id = p_quota_domain_id;
   INSERT INTO bridge.desired_admission_profile_activation(quota_domain_id,activation_revision,desired_profile_version,effective_from) VALUES(p_quota_domain_id,next_revision,p_desired_profile_version,profile_effective_from);
   INSERT INTO bridge.active_desired_admission_profile(quota_domain_id,desired_profile_version,activation_revision,effective_from) VALUES(p_quota_domain_id,p_desired_profile_version,next_revision,profile_effective_from)
     ON CONFLICT ON CONSTRAINT active_desired_admission_profile_pkey DO UPDATE SET desired_profile_version=EXCLUDED.desired_profile_version,activation_revision=EXCLUDED.activation_revision,effective_from=EXCLUDED.effective_from,activated_at=now();
