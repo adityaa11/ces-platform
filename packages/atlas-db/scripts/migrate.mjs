@@ -58,6 +58,7 @@ migrations.push("0086_idser012_immutable_semantic_corpus_plan_cfc");
 migrations.push("0087_idser012_semantic_multimodal_reconstruction_policy_binding");
 migrations.push("0088_bssv20140201_model_bound_route_authority");
 migrations.push("0089_bssv20140201_authority_publisher_lookup_fix");
+migrations.push("0090_bssv20140201_qualified_tuple_publication_guard");
 const readMigration = async (name) => {
   let migration = await readFile(new URL(`../migrations/${name}.sql`, import.meta.url), "utf8");
   for (const [token, value] of Object.entries(replacements)) migration = migration.replaceAll(token, value.replaceAll("'", "''"));

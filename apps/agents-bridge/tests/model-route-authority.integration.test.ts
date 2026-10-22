@@ -44,7 +44,10 @@ test("BSS-V2-014-02-01 publishes one complete immutable authority version and re
   };
   try {
     await sql.unsafe("BEGIN");
-    await sql.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'v1','fixture-provider',$2::jsonb,'{}'::jsonb,'{}'::jsonb,'fixture-quota','operator_config','fixture','v1',now(),now())", [domain, [{ routeId: route }]]);
+    await sql.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'v1','fixture-provider',$2::jsonb,'{}'::jsonb,'{}'::jsonb,'fixture-quota','operator_config','fixture','v1',now(),now())", [domain, [
+      qualifiedRoute(route),
+      { ...qualifiedRoute(route), modelOrProcessorId: "fixture-model-v2" },
+    ]]);
 
     const [first] = await publish();
     assert.deepEqual({
@@ -67,6 +70,32 @@ test("BSS-V2-014-02-01 publishes one complete immutable authority version and re
       capability: "atlas.chat.default",
     });
     assert.match(String(first.authority_version), /^\d+$/u);
+
+    const authorityHistory = async () => sql.unsafe(
+      "SELECT authority_version, route_id, quota_domain_id, provider_id, model_or_processor_id, adapter_version, qualification_ref, qualification_version, capability FROM bridge.qualified_provider_route_authority WHERE authority_kind='qualified_v1' AND route_id=$1 ORDER BY authority_version",
+      [route],
+    );
+    const historyBeforeForgedPublication = await authorityHistory();
+    await rejectsAtBoundary("forged_complete_tuple", () => publish({
+      ...qualifiedRoute(route),
+      modelOrProcessorId: "forged-model",
+      adapterVersion: "forged-adapter",
+      qualificationRef: "qualification://forged",
+      qualificationVersion: "forged-v1",
+    }), /foreign, revoked, or mismatched.*non-qualified/i);
+    assert.deepEqual(await authorityHistory(), historyBeforeForgedPublication, "a rejected complete forged tuple cannot create or mutate authority history");
+
+    const runtimePublisherCalls: Array<readonly unknown[] | undefined> = [];
+    const nonQualifiedRuntimeResolver: QualifiedRouteResolver = { resolve: () => ({ ...qualifiedRoute(route), modelOrProcessorId: "forged-model" }) };
+    await rejectsAtBoundary("runtime_non_qualified_tuple", () => bindProviderWorkRouteFromResolver({
+      executeSql: async (query: string, values?: readonly unknown[]) => {
+        if (!query.includes("publish_qualified_provider_route_authority")) return { rows: [{ capability: "atlas.chat.default", quota_domain_id: domain }] };
+        runtimePublisherCalls.push(values);
+        return { rows: await sql.unsafe(query, values as never) };
+      },
+    } as never, nonQualifiedRuntimeResolver, { logicalWorkId: "non-qualified", attemptNumber: 1 }), /foreign, revoked, or mismatched.*non-qualified/i);
+    assert.deepEqual(runtimePublisherCalls, [[route, domain, "fixture-provider", "forged-model", "fixture-adapter-v1", "qualification://model-route-authority-fixture", "fixture-qualification-v1", "atlas.chat.default"]]);
+    assert.deepEqual(await authorityHistory(), historyBeforeForgedPublication, "a runtime-publisher rejection cannot create or mutate authority history");
 
     const [sameTuple] = await publish();
     assert.equal(String(sameTuple.authority_version), String(first.authority_version), "a stale duplicate cannot mint or overwrite an authority version");
@@ -111,12 +140,15 @@ test("BSS-V2-014-02-01 keeps publication on the existing resolver/runtime seam",
   const expired = createRouteRegistry([{ ...route, effectiveUntil: "2000-01-01T00:00:00.000Z" }], "development", new Set(["fixture-provider"]));
   assert.throws(() => expired.resolve(route.capability), RouteResolutionError);
 
-  const [runtimeSource, migrationSource] = await Promise.all([
+  const [runtimeSource, initialMigrationSource, remediationMigrationSource] = await Promise.all([
     readFile(new URL("../src/provider-operational-runtime.ts", import.meta.url), "utf8"),
     readFile(new URL("../../../packages/atlas-db/migrations/0088_bssv20140201_model_bound_route_authority.sql", import.meta.url), "utf8"),
+    readFile(new URL("../../../packages/atlas-db/migrations/0090_bssv20140201_qualified_tuple_publication_guard.sql", import.meta.url), "utf8"),
   ]);
   assert.match(runtimeSource, /QualifiedRouteResolver/);
   assert.match(runtimeSource, /publish_qualified_provider_route_authority\(\$1,\$2,\$3,\$4,\$5,\$6,\$7,\$8\)/);
-  assert.doesNotMatch(migrationSource, /CREATE (?:OR REPLACE )?FUNCTION bridge\.bind_provider_work_route/u, "this ticket does not alter the later binding owner");
-  assert.doesNotMatch(migrationSource, /provider_work_reservation|provider_transport_claim|provider_work_dispatch/u, "this ticket has no reservation, claim, or transport effect");
+  for (const migrationSource of [initialMigrationSource, remediationMigrationSource]) {
+    assert.doesNotMatch(migrationSource, /CREATE (?:OR REPLACE )?FUNCTION bridge\.bind_provider_work_route/u, "this ticket does not alter the later binding owner");
+    assert.doesNotMatch(migrationSource, /provider_work_reservation|provider_transport_claim|provider_work_dispatch/u, "this ticket has no reservation, claim, or transport effect");
+  }
 });
