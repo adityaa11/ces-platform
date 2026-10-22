@@ -2,7 +2,7 @@
 
 - **State:** `planned`; BSS-V2-005 successor. No GO, implementation, migration, activation, admission, or provider operation is authorized.
 - **Parent:** [BSS-V2-014 ticket set](BSS-V2-014-weighted-capacity-ticket-set.md).
-- **Dependencies:** BSS-V2-014-02 CK `PASS`; BSS-V2-014-05's IDSER consumer contract frozen; approved BSS-V2-005-05-02 read-boundary security properties.
+- **Dependencies:** BSS-V2-014-02-02 CK `PASS`; BSS-V2-014-05's IDSER consumer contract frozen; approved BSS-V2-005-05-02 read-boundary security properties.
 
 ## Exact scope
 

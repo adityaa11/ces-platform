@@ -1,62 +1,43 @@
-# BSS-V2-014-04 — Atomic process baselines, caps, and background borrowing
+# BSS-V2-014-04 — Atomic process admission and borrowing — split map
 
-- **State:** `planned`; BSS-V2-006 successor. No GO, implementation, migration, provider operation, or route activation is authorized.
+- **State:** `planned`; non-executable BSS-V2-006 family/traceability map. It is not GO, CK, CFC, HMN, migration, admission, or provider authority.
 - **Parent:** [BSS-V2-014 ticket set](BSS-V2-014-weighted-capacity-ticket-set.md).
-- **Dependencies:** BSS-V2-014-01 allocation contract and BSS-V2-014-02 publication CK `PASS`; approved BSS-V2-006-05-04 policy-aware fairness, BSS-V2-006-05-05 recovery, and BSS-V2-006-05-06 regression authority. It does not depend on IDSER environment repair.
+- **Authority:** [implementation context r2](../../atlas-bss-weighted-capacity-implementation-context-DRAFT-r2.md) §§3.1A, 6, 8.1, and 9–10.
+- **Dependencies:** BSS-V2-014-02-02 CK `PASS`, BSS-V2-014-01 allocation contract, and approved BSS-V2-006-05-04/05/06 fairness, recovery, and regression authority.
 
-## Exact scope
+## Why the original leaf cannot complete one review flow
 
-Extend the existing domain-locked atomic path `admit_next_provider_work_attempt` → `admit_route_aware_provider_work_attempt` with process-level checks. It remains the sole fairness/reservation/pg-boss/claimed-transport path.
+The original leaf combined a new durable per-process accounting projection, the first baseline/cap rejection decision inside the atomic transaction, and exceptional above-baseline borrowing/fairness recovery. These are three separately diagnosable operational seams. A ledger reconciliation correction must not reopen an admission-policy review, and a borrowing/fairness CFC must not risk the baseline no-borrow proof. All three retain the same domain lock, transaction, reservation family, pg-boss job, and transport claim.
 
-For every active attempt and each effective enforced dimension, the transaction must independently verify:
+## Executable children and dependency fence
 
-1. exact active plan, process/profile, route/model authority, and request sizing identity;
-2. process remaining baseline and explicit process cap;
-3. background-class remaining capacity (or interactive protection for interactive work);
-4. domain physical quota, held/spent window liabilities, exact concurrency seats, pressure, cancellation, and existing fairness eligibility.
+| Order | Child | Sole implementation/proof seam | Requires |
+| --- | --- | --- | --- |
+| D1 | [BSS-V2-014-04-01](BSS-V2-014-04-01-process-window-usage-projection.md) | Reconciled `ProcessCapacityWindowUsage/v1` projection from existing reservation/window facts; no admission decision | `-02-02` CK `PASS` |
+| D2 | [BSS-V2-014-04-02](BSS-V2-014-04-02-atomic-process-baseline-enforcement.md) | Process baseline/cap/class and route/model revision gates in the existing atomic admission; no borrowing | `-04-01` CK `PASS` |
+| D3 | [BSS-V2-014-04-03](BSS-V2-014-04-03-background-idle-borrowing.md) | Verified-idle background borrowing and lender-return fairness in that same atomic transaction | `-04-02` CK `PASS` |
 
-Add `ProcessCapacityWindowUsage/v1` as a transactionally maintained projection of existing reservation/window facts, keyed by reservation, process profile, effective dimension, and window identity. It must reconcile exactly to the existing domain ledger; it is not a second quota ledger or scheduler. Omitted dimensions have no process projection or provider window row.
+Only `-04-03` CK `PASS`, after both prior children, completes this family. Any CFC correction belongs to the child owning the failed binary row and does not re-open an independently passed predecessor.
 
-When a background attempt exceeds its remaining baseline, it may proceed only if the exact active profile enables `mayBorrowIdleCapacity`, all enforced process/class/domain checks still fit, the projection proves idle entitlement of other background peers, and eligible waiting lenders are not deprived. No borrowing crosses into interactive protection or headroom. A returning lender affects future grants only; no admitted work is preempted. Borrowing does not enlarge immutable request sizing.
+## Preserved frozen authority
 
-## Affected existing interfaces and required change
+- The sole execution path remains `admit_next_provider_work_attempt` → `admit_route_aware_provider_work_attempt` → exact reservation/window ledger → pg-boss admitted job → transport claim.
+- Process accounting is a projection of authoritative reservation/window facts, not a second quota ledger, scheduler, queue, send lane, or physical-liability source.
+- Enforced dimensions are independent; approved Anoman `rpd: unknown/not_enforced` creates neither a numeric process allocation nor a process/provider RPD window row. Missing/revoked/mismatched approval fails closed.
+- Background cannot borrow interactive protection or headroom. Held/claimed work is never rebased, recalled, or preempted; recovery remains the existing `0084` pathway.
 
-| Existing interface | Required successor change |
-| --- | --- |
-| `admit_next_provider_work_attempt` / `admit_route_aware_provider_work_attempt` | Add process baseline/cap/borrow checks inside the existing domain lock and transaction, before existing reservation/job creation. |
-| Existing reservation/window accounting | Write/reconcile `ProcessCapacityWindowUsage/v1` from the same reservation facts and preserve spent TPM until reset and concurrency release semantics. |
-| `backgroundLanes` / weighted virtual-time selection | Consume the same immutable allocation weight as `-01`; preserve interactive priority and dominant-resource fairness. |
-| Recovery/replan path | Preserve `0084`-style historical-liability behavior; an incompatible waiting request returns typed `REPLAN_REQUIRED`/`UNFIT`, never a silent resend or infinite wait. |
+## Original review-contract coverage
 
-## Binary Review Contract
+`RC-01404-01` is discharged by `RC-0140402-01`; `RC-01404-02` by `RC-0140401-01..03`; `RC-01404-03/04` by `RC-0140403-01..03`; `RC-01404-05` by `RC-0140401-03` and `RC-0140402-03`; and `RC-01404-06` by `RC-0140402-02/04` plus `RC-0140403-03`. This preserves every original acceptance condition while assigning projection, baseline enforcement, and above-baseline fairness to exactly one CK leaf.
 
-| ID | PASS iff / direct negative | Required validation and evidence |
-| --- | --- | --- |
-| `RC-01404-01` | Process RPM, TPM, concurrency baseline, explicit cap, background class, and domain quota are independently enforced within one SQL transaction. Saturating any one enforced resource creates no reservation, job, or send. | Isolated PostgreSQL admission fixture with exact reservation/window/job counts. |
-| `RC-01404-02` | Process projection totals reconcile exactly to existing domain held/spent ledger across reserve, completion, release, reset, cancellation, retry, ack loss, and restart. TPM remains spent until reset; releasing a seat does not refund TPM. | Integration test with per-window reconciliation query and recovery fixtures. |
-| `RC-01404-03` | Enabled borrower can exceed its baseline only when idle background peer share is proven under the same lock; disabled borrower, active lender, exhausted peer, or non-fitting resource is denied/deferred. | Two-background-process positive/negative matrix. |
-| `RC-01404-04` | No background request borrows interactive reserve or headroom. Returning lender receives fair subsequent admission without preempting an in-flight borrower; existing interactive priority and weighted fairness remain correct. | Background/interactive contention and lender-return integration fixtures. |
-| `RC-01404-05` | Anoman's authorized excluded RPD produces no RPD process/window ledger or admission check while RPM/TPM/concurrency remain exact. Missing/revoked/mismatched exclusion approval fails closed with no fallback. | WCA-15 positive and negative DB admission fixtures. |
-| `RC-01404-06` | Route/model/policy/allocation revisions retain old held/claimed liabilities; stale or oversized waiting work is replanned/stopped through the existing recovery path. No alternate queue, scheduler, reservation family, direct transport, or provider call exists. | Revision/recovery fixture; source-entrypoint inventory and zero forbidden-send assertion. |
-
-## Freeze-time validation commands
-
-```text
-pnpm --filter @atlas/db migration:check
-pnpm --filter @atlas/agents-bridge exec jiti tests/weighted-process-admission.integration.test.ts
-pnpm --filter @atlas/agents-bridge exec jiti tests/weighted-process-borrowing.integration.test.ts
-pnpm --filter @atlas/agents-bridge exec jiti tests/provider-admitted-worker.integration.test.ts
-pnpm --filter @atlas/agents-bridge typecheck
-```
-
-## SecurityReadiness
+## Family SecurityReadiness
 
 - **Status:** `applicable`.
-- `SR-01404-T1`: immutable allocation/model identity crosses into the existing atomic reservation authority.
-- `SR-01404-A1`: process baseline/cap, per-window held/spent projection, lender demand, reservation identity, and concurrency seats are sensitive runtime assets.
-- `SR-01404-C1`: prohibit per-process accounting outside the transaction, weighted-fairness-only proof of idle share, cross-class borrowing, per-slot TPM limits, and direct/supplemental sends.
-- `SR-01404-R1`: `RC-01404-01..06` require role-constrained SQL integration evidence, reconciliation totals, negative no-send counters, and recovery proof.
+- `SR-01404-T1`: immutable allocation/model identity → existing atomic reservation authority.
+- `SR-01404-A1`: baseline/cap, process usage, lender demand, reservation identity, concurrency seats, and held/spent liabilities.
+- `SR-01404-C1`: no off-transaction accounting, virtual-time-only proof of idle share, cross-class loan, TPM/seat conversion, preemption, or supplemental send.
+- `SR-01404-R1`: `-04-01` proves exact reconciliation, `-04-02` proves no-borrow atomic denial and revision fencing, and `-04-03` proves borrowing/fairness negatives.
 
 ## Hard stop
 
-Stop if process accounting cannot reconcile to the existing domain ledger in the same transaction, if lender demand cannot be observed under the existing lock, or if preserving recovery needs a second scheduler/queue/reservation lane. Do not approximate concurrency from RPM, free spent TPM on completion, preempt work, or invent RPD accounting for the authorized Anoman exclusion.
+Stop the affected child for HMN/new planning authority if required accounting cannot reconcile under the existing transaction fence, lender demand cannot be observed under that lock, or the proposed remedy requires a second scheduler/queue/reservation/send lane. Do not merge children merely to make an integration test convenient.

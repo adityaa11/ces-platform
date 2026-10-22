@@ -16,12 +16,15 @@ The resulting successor has one planner, one authenticated read seam, one atomic
 | Order | Ticket | Owner | Bounded result | Depends on |
 | --- | --- | --- | --- | --- |
 | A | [BSS-V2-014-01](BSS-V2-014-01-weighted-allocation-contract.md) | BSS-V2-005 | Pure, versioned 10/20/70 class/process allocation and versioned interactive weight registration. | Approved BSS-V2-005 planning/registry predecessors; authorized effective-policy seam. |
-| B | [BSS-V2-014-02](BSS-V2-014-02-model-route-shared-domain-publication.md) | BSS-V2-005 | Durable model-bound route authority and immutable multi-route shared-domain publication of the allocation. | `-01` CK PASS. |
-| C | [BSS-V2-014-03](BSS-V2-014-03-authenticated-calculated-capacity-snapshot.md) | BSS-V2-005 | `CapacityPlanningSnapshot/v2` on the existing read seam, with server-bound calculated allocation. | `-02` CK PASS and `-05` contract frozen. |
-| D | [BSS-V2-014-04](BSS-V2-014-04-atomic-process-admission-and-borrowing.md) | BSS-V2-006 | Atomic baseline/cap enforcement and background-only idle borrowing in the existing admission chain. | `-02` CK PASS; `-01` allocation contract; approved BSS-V2-006 recovery/fairness predecessors. |
-| E | [BSS-V2-014-05](BSS-V2-014-05-idser-calculated-capacity-consumer-handoff.md) | Future IDSER successor, **not BSS** | Consumer contract/cutover for BSS v2 full-request sizing. | `-03` CK PASS and `-04` CK PASS for production acceptance. |
+| B1 | [BSS-V2-014-02-01](BSS-V2-014-02-01-model-bound-route-authority.md) | BSS-V2-005 | Append-only durable model/adapter/qualification route authority; no plan publication. | `-01` CK PASS. |
+| B2 | [BSS-V2-014-02-02](BSS-V2-014-02-02-shared-domain-allocation-publication.md) | BSS-V2-005 | Immutable shared-domain multi-route binding and one calculated allocation publication/activation. | `-02-01` CK PASS and `-01` CK PASS. |
+| C | [BSS-V2-014-03](BSS-V2-014-03-authenticated-calculated-capacity-snapshot.md) | BSS-V2-005 | `CapacityPlanningSnapshot/v2` on the existing read seam, with server-bound calculated allocation. | `-02-02` CK PASS and `-05` contract frozen. |
+| D1 | [BSS-V2-014-04-01](BSS-V2-014-04-01-process-window-usage-projection.md) | BSS-V2-006 | Transactional, reconcilable per-process usage projection from the existing reservation/window facts; no new admission decision. | `-02-02` CK PASS; approved BSS-V2-006 recovery/fairness predecessors. |
+| D2 | [BSS-V2-014-04-02](BSS-V2-014-04-02-atomic-process-baseline-enforcement.md) | BSS-V2-006 | Atomic process baseline/cap/class enforcement in the existing admission transaction; above-baseline borrowing remains denied. | `-04-01` CK PASS and `-02-02` CK PASS. |
+| D3 | [BSS-V2-014-04-03](BSS-V2-014-04-03-background-idle-borrowing.md) | BSS-V2-006 | Background-only verified-idle borrowing and lender-return fairness in that same transaction. | `-04-02` CK PASS. |
+| E | [BSS-V2-014-05](BSS-V2-014-05-idser-calculated-capacity-consumer-handoff.md) | Future IDSER successor, **not BSS** | Consumer contract/cutover for BSS v2 full-request sizing. | `-03` CK PASS and `-04-03` CK PASS for production acceptance. |
 
-`-03` and `-04` are independent after `-02`; `-05` may freeze its contract alongside them, but cannot GO before its declared BSS predecessors. This has no dependency on repair of the isolated IDSER qualification environment recorded at `IDSER-012-05-07-02`.
+`-03` and `-04-01` are independent after `-02-02`; `-05` may freeze its contract alongside them, but cannot GO before its declared BSS predecessors. `-02` and `-04` are retained as non-executable split maps so prior references stay resolvable. This has no dependency on repair of the isolated IDSER qualification environment recorded at `IDSER-012-05-07-02`.
 
 ## Non-negotiable contract rules inherited by every child
 
@@ -30,7 +33,11 @@ The resulting successor has one planner, one authenticated read seam, one atomic
 3. Request sizing is Maximum Eligible Request: complete text, selected images, framing, and reserved output must fit the immutable process baseline and each qualified model/workload bound. TPM is never divided by concurrency.
 4. Background may borrow only at atomic admission time from proven-idle background peers. Interactive protection and headroom are never background loans; historical reservations and physical liabilities are never rebased.
 5. Existing route registry, desired-plan activation, authenticated snapshot reader, `admit_next_provider_work_attempt` → `admit_route_aware_provider_work_attempt` → reservation → pg-boss → transport-claim chain are evolved in place. No alternate planner, reader, scheduler, queue, send lane, payload store, legacy adapter, dual read/write, or fallback is permitted.
-6. Each child remains `planned` until its full contract is reviewed and frozen. A later GO may implement only that child and its named rows.
+6. Each executable child remains `planned` until its full contract is reviewed and frozen. A later GO may implement only that child and its named rows; a split map is never GO/CK/CFC/HMN authority.
+
+## Coverage preservation after sizing split
+
+No acceptance obligation is deleted or weakened by the two splits. `-01` owns WCA-01..04; `-02-01` and `-02-02` together own WCA-05 and the durable-authority portion of WCA-06; `-03` owns WCA-07/08; `-04-01` owns process-ledger reconciliation, `-04-02` owns WCA-09 plus the admission gate of WCA-06/12, and `-04-03` owns WCA-10/11; `-05` owns WCA-13. WCA-14 is a required negative boundary proof in every executable child. WCA-15 is apportioned only to the owners that can prove it: `-01` policy derivation, `-03` read, `-04-01/-02` projection and actual atomic admission, and `-05` consumer fit.
 
 ## Cross-owner seam disposition
 
@@ -43,7 +50,7 @@ There is no unresolved architectural contradiction in the r2 baseline. The one m
 - **Trust boundaries:** `SR-014-T1` registry route/model qualification → durable publication; `SR-014-T2` immutable calculated plan → authenticated read; `SR-014-T3` authenticated work → atomic reservation and sole transport claim.
 - **Sensitive assets:** `SR-014-A1` provider bounds, enforcement approval/provenance, allocations, model qualification, held/spent window liabilities, and activation revisions.
 - **Prohibited couplings:** `SR-014-C1` prohibits client-selected route/model/domain or direct table access; `SR-014-C2` prohibits a bypass send/limiter/scheduler; `SR-014-C3` prohibits payload/content/credential persistence in planning or allocation state.
-- **Review bindings:** `SR-014-R1` through `R4` are carried by the child tickets' named binary rows and require isolated PostgreSQL evidence, source-boundary inspection, and zero-effect counters where applicable.
+- **Review bindings:** `SR-014-R1` is bound to `-02-01/-02-02` authority/publication negatives; `SR-014-R2` to `-03` authenticated zero-effect evidence; `SR-014-R3` to `-04-01/-02/-03` SQL/reconciliation/admission evidence; `SR-014-R4` to `-05` consumer zero-effect evidence. Each binding is independently CK-reviewable and together preserves the original end-to-end proof.
 
 ## Global hard stop
 

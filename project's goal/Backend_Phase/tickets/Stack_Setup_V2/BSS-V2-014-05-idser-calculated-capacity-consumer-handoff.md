@@ -2,7 +2,7 @@
 
 - **State:** `planned`; **future IDSER successor ownership, not BSS-V2-005/006 implementation scope**. This is a frozen handoff candidate, not GO, BSS implementation authority, isolated-environment repair, or provider authorization.
 - **Parent:** [BSS-V2-014 ticket set](BSS-V2-014-weighted-capacity-ticket-set.md).
-- **Dependencies:** freeze this contract before BSS-V2-014-03 GO; implementation requires BSS-V2-014-03 CK `PASS`. Production acceptance additionally requires BSS-V2-014-04 CK `PASS`. It does **not** depend on the `IDSER-012-05-07-02` isolated qualification-environment repair.
+- **Dependencies:** freeze this contract before BSS-V2-014-03 GO; implementation requires BSS-V2-014-03 CK `PASS`. Production acceptance additionally requires BSS-V2-014-04-03 CK `PASS` (including the `-04-01/-02` predecessor evidence). It does **not** depend on the `IDSER-012-05-07-02` isolated qualification-environment repair.
 
 ## Purpose and ownership boundary
 

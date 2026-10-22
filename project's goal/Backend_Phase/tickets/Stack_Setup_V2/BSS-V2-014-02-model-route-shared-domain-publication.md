@@ -1,59 +1,42 @@
-# BSS-V2-014-02 — Model-bound route authority and shared-domain allocation publication
+# BSS-V2-014-02 — Model-route authority and shared-domain publication — split map
 
-- **State:** `planned`; BSS-V2-005 successor. No GO, implementation, migration, route activation, or provider call is authorized.
+- **State:** `planned`; non-executable BSS-V2-005 family/traceability map. It is not GO, CK, CFC, HMN, migration, activation, or provider authority.
 - **Parent:** [BSS-V2-014 ticket set](BSS-V2-014-weighted-capacity-ticket-set.md).
+- **Authority:** [implementation context r2](../../atlas-bss-weighted-capacity-implementation-context-DRAFT-r2.md) §§2, 3.3, 5, and 7–10.
 - **Dependencies:** BSS-V2-014-01 CK `PASS`; approved BSS-V2-005 immutable-plan publication and BSS-V2-006-05 effective-policy provenance contracts.
 
-## Exact scope
+## Why the original leaf cannot complete one review flow
 
-Replace the active single-route desired-plan binding with a single shared-domain publication that can bind one or more already-qualified routes without multiplying quota or allocation. The successor must use the existing registry and publication path, not create a resolver or admission lane.
+The original leaf combined two durable authority transitions: qualified registry → model-bound route authority, and authority/allocation → immutable multi-route desired-plan publication and activation. The first can be corrected without changing an active plan; the second changes a plan relation, allocation persistence, activation and historical-liability proof. A CFC finding in either transition would otherwise force CK to re-open evidence for the other. The split retains one planner, one registry and one activation seam.
 
-### Frozen successor contracts
+## Executable children and dependency fence
 
-1. Extend the existing durable qualified-route authority projection, sourced only from the existing qualified registry, with immutable `modelOrProcessorId`, `qualificationRef`, `adapterVersion`, `qualificationVersion`, and `authorityVersion`. A route authority version is append-only; a stale/forged/mismatched version cannot bind a new plan or attempt. This is an evolution of `qualified_provider_route_authority`, not a second registry.
-2. Replace the active single-row plan-policy association with `DesiredAdmissionProfileRouteBinding/v2`, keyed by `(quotaDomainId, desiredProfileVersion, routeId, authorityVersion)`. It carries the exact qualified model identity and the policy/capacity-profile version that produced the domain-wide effective mask. All bindings in one plan must have the same domain, capacity-profile version, and effective dimension policy; conflicting bindings fail closed.
-3. Persist one immutable `CalculatedClassProcessAllocation/v1` produced by `-01`, keyed by the desired-plan identity. Route bindings reference it; they never copy or multiply its process or provider quotas.
-4. Change the existing publication function and its callers atomically: the active writer emits only the successor binding model, and the existing activation/epoch mechanism activates the complete immutable plan. Historical plans, reservations, and route bindings remain readable as historical records but are not an active compatibility path.
+| Order | Child | Sole implementation/proof seam | Requires |
+| --- | --- | --- | --- |
+| B1 | [BSS-V2-014-02-01](BSS-V2-014-02-01-model-bound-route-authority.md) | Existing qualified registry → append-only durable route/model/qualification authority | `-01` CK `PASS` |
+| B2 | [BSS-V2-014-02-02](BSS-V2-014-02-02-shared-domain-allocation-publication.md) | Existing desired-plan publication/activation → one shared-domain multi-route relation and one allocation identity | `-02-01` and `-01` CK `PASS` |
 
-Existing resolver behavior remains one enabled route per capability. This ticket does not authorize multiple active routes for a capability, provider discovery, a provider profile change, or an Anoman route enablement.
+Only `-02-02` CK `PASS`, after `-02-01` CK `PASS`, completes this family and satisfies the `-03` and `-04-01` dependencies. A remediation stays in the child owning its failed row; it must not reopen an independently passed sibling.
 
-## Affected existing interfaces and required change
+## Preserved frozen authority
 
-| Existing interface | Required successor change |
-| --- | --- |
-| `route-registry.ts` / `provider-operational-runtime.ts` | Propagate existing pinned `modelOrProcessorId` and qualification reference to the durable authority publication; no alternate resolver. |
-| `bridge.qualified_provider_route_authority` and `publish_qualified_provider_route_authority` | Add model-qualified immutable authority version and reject stale/forged route/model identity before binding/admission. |
-| `desired_admission_profile_policy_binding` / `publish_effective_policy_converged_desired_admission_profile` | Retire the single-route active binding from successor writes; publish the multi-route relation and one domain allocation atomically. |
-| `desired_admission_profile_input` and activation revision | Bind active registered processes exactly once to the allocation and preserve existing immutable activation behavior. |
+- The existing `qualified_provider_route_authority` is evolved in place; no second registry, resolver, provider route fan-out, client-selected model/route, or provider-specific path is permitted.
+- A shared quota domain has one provider capacity and one calculated process allocation. Route bindings reference them; they never clone them.
+- Successor writes are append-only and activate only a complete immutable plan through the existing activation epoch. Historical plans, bindings, reservations and liabilities remain readable but are not a compatibility path.
+- Existing one-enabled-route-per-capability behavior remains unchanged. This family neither qualifies/enables a provider nor supplies absent model/context limits.
 
-## Binary Review Contract
+## Original review-contract coverage
 
-| ID | PASS iff / direct negative | Required validation and evidence |
-| --- | --- | --- |
-| `RC-01402-01` | Registry → durable authority → plan binding retains exact route, provider, model, adapter, qualification reference/version, and authority version. A forged/stale/mismatched model identity cannot publish, bind, reserve, or reach transport claim. | Isolated PostgreSQL integration fixture and `provider-operational-runtime` integration test. |
-| `RC-01402-02` | Two qualified routes in one quota domain bind one capacity profile and one calculated process allocation. The provider quota and each process baseline are represented once, not once per route. | Shared-domain two-route SQL fixture; exact row/fingerprint/vector assertions. |
-| `RC-01402-03` | Different effective masks, capacity profile versions, foreign domains, inactive process/route binding, or duplicated canonical binding fail closed before activation. | Negative SQL publication fixture. |
-| `RC-01402-04` | A route/model/process/weight/policy revision produces a new immutable desired-plan identity and activation revision. Existing reserved/claimed work retains its prior route/model and physical liabilities. | Publication plus existing recovery fixture; historical-row immutability assertion. |
-| `RC-01402-05` | The active publication path is the existing desired-plan/activation seam. No second resolver, plan table, quota copy, scheduler, sender, legacy dual write, or provider activation is introduced. | Source/DDL entrypoint inventory and zero provider/job counters. |
+`RC-01402-01` is discharged by `RC-0140201-01..03` and the admission identity gate in `RC-0140402-01`; `RC-01402-02/03` by `RC-0140202-01/02`; `RC-01402-04` by `RC-0140202-03`; and `RC-01402-05` by `RC-0140202-04`. The combined evidence remains the original requirement that a forged/stale identity cannot publish, bind, reserve, or reach transport claim—each gate is proven by its owner rather than asserted by publication alone.
 
-## Freeze-time validation commands
-
-```text
-pnpm --filter @atlas/db migration:check
-pnpm --filter @atlas/db exec jiti tests/weighted-capacity-publication.integration.test.ts
-pnpm --filter @atlas/agents-bridge exec jiti tests/model-route-authority.integration.test.ts
-pnpm --filter @atlas/agents-bridge typecheck
-```
-
-## SecurityReadiness
+## Family SecurityReadiness
 
 - **Status:** `applicable`.
-- `SR-01402-T1`: configured qualified registry → durable model-bound authority is a privileged trust transition.
-- `SR-01402-T2`: immutable plan publication → activation is the sole authority transition for calculated allocations.
-- `SR-01402-A1`: model/adapter/qualification identity, effective policy provenance, route bindings, fingerprints, and historical liabilities are sensitive durable assets.
-- `SR-01402-C1`: prohibit client route/model selection, policy-mask conflicts, mutable overwrite of historical route identity, quota cloning, and resolver fan-out.
-- `SR-01402-R1`: `RC-01402-01..05` bind identity provenance, shared-domain arithmetic, database role constraints, and zero alternate-path evidence.
+- `SR-01402-T1`: qualified registry to durable authority; `SR-01402-T2`: authority/allocation to immutable activation.
+- `SR-01402-A1`: model, adapter, qualification, policy provenance, bindings, allocation fingerprints, and historical liabilities.
+- `SR-01402-C1`: no client selection, mutable history, quota cloning, resolver fan-out, dual write, or alternate activation path.
+- `SR-01402-R1`: `-02-01` proves the first transition, `-02-02` proves publication/activation, and `-04-02` proves the resulting route/model fence before reservation/send.
 
 ## Hard stop
 
-Stop for HMN/new planning authority if the current publication primitive cannot be evolved without a parallel active binding model, route fan-out, legacy dual write, or a new resolver. Do not solve a missing qualified model/context bound by using provider TPM, a default model, or a route-specific fallback.
+Stop the affected child for HMN/new planning authority if the existing publication primitive cannot be evolved without a parallel active binding model, route fan-out, legacy dual write, new resolver, or provider-capacity fallback. Do not fold the other child into the repair.
