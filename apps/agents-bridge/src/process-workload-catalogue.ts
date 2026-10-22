@@ -24,6 +24,8 @@ export type ProviderProcessProfile = Readonly<{
   fairnessScope: Readonly<{ kind: "bundle" | "project" | "conversation" | "global"; identityVersion: string }>;
   allocationPolicy: Readonly<{
     background?: Readonly<{ weight: number; mayBorrowIdleCapacity: boolean; capPolicyId: string }>;
+    /** Versioned through the registered process profile and server registry. */
+    interactive?: Readonly<{ weight: number }>;
     hardInteractiveProtection: Readonly<{ policyId: string; policyVersion: string }>;
   }>;
   active: boolean;
@@ -112,22 +114,29 @@ export function parseProviderProcessProfile(value: unknown, registeredProcessKin
   rejectUnexpected(scope, ["kind", "identityVersion"], "fairnessScope");
   if (!scopeKinds.has(scope.kind as string)) throw new ProcessWorkloadCatalogueError("fairnessScope kind is unsupported.");
   const allocation = object(input.allocationPolicy, "allocationPolicy");
-  rejectUnexpected(allocation, ["background", "hardInteractiveProtection"], "allocationPolicy");
+  rejectUnexpected(allocation, ["background", "interactive", "hardInteractiveProtection"], "allocationPolicy");
   const protection = object(allocation.hardInteractiveProtection, "hardInteractiveProtection");
   rejectUnexpected(protection, ["policyId", "policyVersion"], "hardInteractiveProtection");
   let background: ProviderProcessProfile["allocationPolicy"]["background"];
+  let interactive: ProviderProcessProfile["allocationPolicy"]["interactive"];
   if (serviceClass === "background") {
     const raw = object(allocation.background, "background allocation policy");
     rejectUnexpected(raw, ["weight", "mayBorrowIdleCapacity", "capPolicyId"], "background allocation policy");
     if (typeof raw.weight !== "number" || !Number.isFinite(raw.weight) || raw.weight <= 0 || typeof raw.mayBorrowIdleCapacity !== "boolean") throw new ProcessWorkloadCatalogueError("background allocation policy needs a positive weight and borrow flag.");
     background = { weight: raw.weight, mayBorrowIdleCapacity: raw.mayBorrowIdleCapacity, capPolicyId: requiredString(raw.capPolicyId, "background capPolicyId") };
-  } else if (allocation.background !== undefined) throw new ProcessWorkloadCatalogueError("interactive profiles cannot declare background allocation policy.");
+    if (allocation.interactive !== undefined) throw new ProcessWorkloadCatalogueError("background profiles cannot declare interactive allocation policy.");
+  } else {
+    if (allocation.background !== undefined) throw new ProcessWorkloadCatalogueError("interactive profiles cannot declare background allocation policy.");
+    const raw = object(allocation.interactive, "interactive allocation policy");
+    rejectUnexpected(raw, ["weight"], "interactive allocation policy");
+    interactive = { weight: positiveSafeInteger(raw.weight, "interactive allocation weight") };
+  }
   const eligibleRouteIds = input.eligibleRouteIds;
   if (!Array.isArray(eligibleRouteIds) || eligibleRouteIds.some((route) => !nonEmpty(route)) || new Set(eligibleRouteIds).size !== eligibleRouteIds.length) throw new ProcessWorkloadCatalogueError("eligibleRouteIds must contain unique non-empty route IDs.");
   if (input.active === true && eligibleRouteIds.length === 0) throw new ProcessWorkloadCatalogueError("an active process profile needs an eligible route.");
   const workload = object(input.workloadProfile, "workloadProfile");
   rejectUnexpected(workload, ["workloadId", "profileVersion"], "workloadProfile");
-  return { processId: requiredString(input.processId, "processId"), profileVersion: requiredString(input.profileVersion, "profileVersion"), processKind: processKind as ProcessKind, capability: capability as AtlasCapability, serviceClass: serviceClass as ServiceClass, fairnessScope: { kind: scope.kind as ProviderProcessProfile["fairnessScope"]["kind"], identityVersion: requiredString(scope.identityVersion, "fairnessScope identityVersion") }, allocationPolicy: { ...(background ? { background } : {}), hardInteractiveProtection: { policyId: requiredString(protection.policyId, "hardInteractiveProtection policyId"), policyVersion: requiredString(protection.policyVersion, "hardInteractiveProtection policyVersion") } }, active: input.active, eligibleRouteIds, workloadProfile: { workloadId: requiredString(workload.workloadId, "workloadProfile workloadId"), profileVersion: requiredString(workload.profileVersion, "workloadProfile profileVersion") } };
+  return { processId: requiredString(input.processId, "processId"), profileVersion: requiredString(input.profileVersion, "profileVersion"), processKind: processKind as ProcessKind, capability: capability as AtlasCapability, serviceClass: serviceClass as ServiceClass, fairnessScope: { kind: scope.kind as ProviderProcessProfile["fairnessScope"]["kind"], identityVersion: requiredString(scope.identityVersion, "fairnessScope identityVersion") }, allocationPolicy: { ...(background ? { background } : {}), ...(interactive ? { interactive } : {}), hardInteractiveProtection: { policyId: requiredString(protection.policyId, "hardInteractiveProtection policyId"), policyVersion: requiredString(protection.policyVersion, "hardInteractiveProtection policyVersion") } }, active: input.active, eligibleRouteIds, workloadProfile: { workloadId: requiredString(workload.workloadId, "workloadProfile workloadId"), profileVersion: requiredString(workload.profileVersion, "workloadProfile profileVersion") } };
 }
 
 /** Requires an actual structural bound and versioned estimator/accounting/safety identities; averages are not a bound. */

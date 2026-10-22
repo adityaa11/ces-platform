@@ -14,7 +14,7 @@ const policy = (processId: string, processKind: string, capability: string, serv
   process: {
     processId, profileVersion, processKind, capability, serviceClass,
     fairnessScope: { kind: "global", identityVersion: "v1" },
-    allocationPolicy: { ...(serviceClass === "background" ? { background: { weight: processId === "synthetic" ? 2 : 1, mayBorrowIdleCapacity: true, capPolicyId: `${processId}-cap-v1` } } : {}), hardInteractiveProtection: { policyId: "interactive-reserve", policyVersion: "v1" } },
+    allocationPolicy: { ...(serviceClass === "background" ? { background: { weight: processId === "synthetic" ? 2 : 1, mayBorrowIdleCapacity: true, capPolicyId: `${processId}-cap-v1` } } : { interactive: { weight: 1 } }), hardInteractiveProtection: { policyId: "interactive-reserve", policyVersion: "v1" } },
     active, eligibleRouteIds: [routeId], workloadProfile: { workloadId, profileVersion: workloadProfileVersion },
   },
 });

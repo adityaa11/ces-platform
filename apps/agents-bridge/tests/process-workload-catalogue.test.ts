@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { ProcessWorkloadCatalogueError, parseProviderProcessProfile, parseRequestResourceEnvelope, parseWorkloadEnvelopeProfile, validateProcessWorkloadCatalogue } from "../src/process-workload-catalogue.ts";
+import { ProcessWorkloadCatalogueError, parseProviderProcessProfile, parseRequestResourceEnvelope, parseServerProcessRegistry, parseWorkloadEnvelopeProfile, validateProcessWorkloadCatalogue } from "../src/process-workload-catalogue.ts";
 
 const workload = (overrides: Record<string, unknown> = {}) => ({ workloadId: "semantic-bounded", profileVersion: "v1", active: true, compatibleProcessKinds: ["semantic"], structuralBound: { identity: "semantic-source-units", version: "v1", maxRequestBytes: 100_000, maxInputTokens: 20_000 }, estimator: { identity: "semantic-estimator", version: "v2" }, quotaAccountingPolicyId: "anoman-quota-tokens-v1", outputReservation: { policyId: "semantic-output", policyVersion: "v1", maxOutputTokens: 2_000 }, safetyPolicy: { policyId: "semantic-safety", policyVersion: "v1" }, ...overrides });
 const process = (overrides: Record<string, unknown> = {}) => ({ processId: "semantic-extraction", profileVersion: "v1", processKind: "semantic", capability: "atlas.semantic.extract", serviceClass: "background", fairnessScope: { kind: "bundle", identityVersion: "v1" }, allocationPolicy: { background: { weight: 1, mayBorrowIdleCapacity: true, capPolicyId: "semantic-cap-v1" }, hardInteractiveProtection: { policyId: "interactive-reserve", policyVersion: "v1" } }, active: true, eligibleRouteIds: ["anoman-semantic"], workloadProfile: { workloadId: "semantic-bounded", profileVersion: "v1" }, ...overrides });
@@ -11,6 +11,19 @@ test("process policy is operational and unknown or entitlement-shaped input fail
   assert.throws(() => parseProviderProcessProfile(process({ capability: "unknown.capability" })), /unknown process kind/);
   assert.throws(() => parseProviderProcessProfile({ ...process(), customerPlan: "premium" }), /unsupported field/);
   assert.throws(() => parseProviderProcessProfile(process({ active: true, eligibleRouteIds: [] })), /eligible route/);
+});
+
+test("RC-01401-04: interactive weight exists only in the versioned server registry path", () => {
+  const interactive = {
+    ...process({ processId: "interactive-chat", processKind: "chat", capability: "atlas.chat.default", serviceClass: "interactive", workloadProfile: { workloadId: "chat-bounded", profileVersion: "v1" } }),
+    allocationPolicy: { interactive: { weight: 3 }, hardInteractiveProtection: { policyId: "interactive-reserve", policyVersion: "v1" } },
+  };
+  assert.deepEqual(parseProviderProcessProfile(interactive).allocationPolicy.interactive, { weight: 3 });
+  assert.throws(() => parseProviderProcessProfile({ ...interactive, allocationPolicy: { hardInteractiveProtection: { policyId: "interactive-reserve", policyVersion: "v1" } } }), /interactive allocation policy/);
+  assert.throws(() => parseProviderProcessProfile({ ...interactive, allocationPolicy: { interactive: { weight: 1 }, background: { weight: 1, mayBorrowIdleCapacity: true, capPolicyId: "wrong-class" }, hardInteractiveProtection: { policyId: "interactive-reserve", policyVersion: "v1" } } }), /interactive profiles cannot declare background/);
+  assert.throws(() => parseProviderProcessProfile({ ...process(), allocationPolicy: { background: { weight: 1, mayBorrowIdleCapacity: true, capPolicyId: "background" }, interactive: { weight: 1 }, hardInteractiveProtection: { policyId: "interactive-reserve", policyVersion: "v1" } } }), /background profiles cannot declare interactive/);
+  const registry = parseServerProcessRegistry({ registryId: "process-registry", registryVersion: "v2", policies: [{ quotaDomainId: "anoman", process: interactive }] });
+  assert.deepEqual(registry.policies[0]?.process.allocationPolicy.interactive, { weight: 3 });
 });
 
 test("workloads require concrete bounds and versioned estimator, accounting, output, and safety policies", () => {
