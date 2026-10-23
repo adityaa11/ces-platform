@@ -3,12 +3,14 @@ import { documentPerceptionContractVersion, parseDocumentPerceptionRequest, pars
 import type { DocumentPerceptionTechnicalFailure } from "@atlas/contracts";
 import type { PerceptionAuthority, PerceptionExecutionInput, AuthorityRedeemedPerceptionSource, DerivedAssetAuthority, DerivedAssetDescriptor } from "@atlas/core";
 import type { DerivedAssetStore } from "@atlas/document-store";
+import { PostgresGenericHandoffIssuer } from "./generic-handoff-issuer.js";
 
 type Row = Record<string, unknown>;
 type Sql = { unsafe(query: string, parameters?: readonly unknown[]): Promise<readonly Row[]>; begin<T>(work: (transaction: Sql) => Promise<T>): Promise<T> };
 type GrantSigner = { issue(input: PerceptionExecutionInput): string; verify(grant: string): string; format(grantId: string): string };
 type SemanticKickoffQueue = { enqueue(transaction: Sql, job: { readonly idempotencyKey: string; readonly execution: { readonly version: "v1"; readonly executionId: string; readonly mode: "background"; readonly skill: { readonly id: "atlas.semantic.extract"; readonly version: "v1" }; readonly input: { readonly contextCapability: string }; readonly context: { readonly boundary: string; readonly items: readonly [] } } }): Promise<string | null> };
 type PerceptionKickoffQueue = { enqueue(transaction: Sql, job: { readonly idempotencyKey: string; readonly request: DocumentPerceptionRequest }): Promise<string | null> };
+type GenericHandoffQueue = { enqueue(transaction: Sql, job: { readonly handoffId: string; readonly idempotencyKey: string }): Promise<string | null> };
 const cacheKey = (sourceSha256: string, version: string, capability: string, identity: string) => createHash("sha256").update(`${sourceSha256}:${version}:${capability}:${identity}`).digest("hex");
 const canonicalize = (value: unknown): unknown => {
   if (Array.isArray(value)) return value.map(canonicalize);
@@ -22,6 +24,7 @@ const run003CapabilityMarker = "atlas-digital-pdf-run-003-capture-v1";
 const run003AssetProfile = "atlas-digital-pdf-run-003-capture-v1";
 const isRun003Identity = (identity: string) => identity.includes(run003CapabilityMarker);
 const requestFrom = (input: PerceptionExecutionInput, grant: string): DocumentPerceptionRequest => parseDocumentPerceptionRequest({ version: documentPerceptionContractVersion, executionId: input.executionId, artifact: { id: input.artifactId, sourceSha256: input.sourceSha256, mimeType: input.mimeType, byteSize: input.byteSize }, source: { grant }, perception: { capability: "atlas.document.perceive", contractVersion: documentPerceptionContractVersion } });
+const ghrIdentity = (prefix: string, values: readonly string[]): string => `${prefix}-${createHash("sha256").update(values.join("\u0000")).digest("hex")}`;
 
 export function collectVerifiedRun003Assets(pages: NormalizedDocument["pages"]): readonly { readonly assetRef: string; readonly locatorId: string; readonly pageNumber: number }[] {
   const visualRegions = pages.flatMap((page) => page.visualRegions.map((region) => ({ assetRef: region.assetRef, locatorId: region.id, pageNumber: page.number })));
@@ -31,7 +34,7 @@ export function collectVerifiedRun003Assets(pages: NormalizedDocument["pages"]):
 
 /** PostgreSQL adapter; only the Atlas process is given this connection. */
 export class PostgresPerceptionAuthority implements PerceptionAuthority, DerivedAssetAuthority {
-  constructor(private readonly sql: Sql, private readonly grants: GrantSigner, private readonly semanticQueue?: SemanticKickoffQueue, private readonly terminalCapabilityIdentity?: string, private readonly stagedQueue?: PerceptionKickoffQueue, private readonly derivedStore?: DerivedAssetStore) {}
+  constructor(private readonly sql: Sql, private readonly grants: GrantSigner, private readonly semanticQueue?: SemanticKickoffQueue, private readonly terminalCapabilityIdentity?: string, private readonly stagedQueue?: PerceptionKickoffQueue, private readonly derivedStore?: DerivedAssetStore, private readonly genericHandoffQueue?: GenericHandoffQueue) {}
 
   async handoffDerived(request: DocumentPerceptionRequest, descriptor: DerivedAssetDescriptor, bytes: Uint8Array): Promise<{ readonly assetRef: string }> {
     if (!this.derivedStore) throw new Error("Derived asset persistence is unavailable.");
@@ -218,6 +221,20 @@ export class PostgresPerceptionAuthority implements PerceptionAuthority, Derived
           // later-ticket concern.
           await sql.unsafe("UPDATE atlas.extraction_bundle_document SET state='perceived', completed_at=now() WHERE bundle_id=$1 AND document_id=$2 AND perception_execution_id=$3 AND state IN ('perception_queued','perceiving')", [bundle.bundle_id, request.artifact.id, request.executionId]);
           await sql.unsafe("UPDATE atlas.document_perception_execution SET state='completed', completion_fingerprint=$2, updated_at=now() WHERE id=$1 AND state NOT IN ('completed','cancelled','failed')", [request.executionId, digest]);
+          if (this.genericHandoffQueue) {
+            const identityParts = [String(bundle.project_id), String(bundle.workspace_id), String(bundle.bundle_id), request.artifact.id, request.executionId];
+            const issued = await new PostgresGenericHandoffIssuer().issue(sql, {
+              producer: { processKey: "perception.acceptance", event: "NormalizedDocumentAccepted/v1", executionId: request.executionId },
+              scope: { projectId: String(bundle.project_id), workspaceId: String(bundle.workspace_id), bundleId: String(bundle.bundle_id), documentId: request.artifact.id },
+              payload: { normalizedDocumentRef: key, perceptionExecutionId: request.executionId, sourceSha256: accepted.sourceSha256, normalizedDocumentVersion: "v1", normalizedDocumentFingerprint: digest },
+              idempotencyKey: ghrIdentity("ghr-ndv1-v1", identityParts),
+              handoffId: ghrIdentity("ghr-handoff-v1", identityParts),
+              workflowId: ghrIdentity("ghr-workflow-v1", [String(bundle.project_id), String(bundle.workspace_id), String(bundle.bundle_id)]),
+              issuedAt: new Date().toISOString(),
+            });
+            const queued = await this.genericHandoffQueue.enqueue(sql, { handoffId: issued.handoffId, idempotencyKey: issued.idempotencyKey });
+            if (queued === null) throw new Error("Generic handoff publication was deduplicated before perception committed.");
+          }
           return;
         }
         // BSS-V2-004-02 is a deliberately terminal D1 perception checkpoint.

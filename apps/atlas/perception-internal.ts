@@ -97,14 +97,15 @@ export function createAtlasPerceptionInternalPlugin(): Plugin {
       const sql = postgres(databaseUrl, { max: 4 });
       const semanticQueue = await backgroundQueue.createTransactionalQueueProducer(databaseUrl);
       const perceptionQueue = await backgroundQueue.createTransactionalPerceptionQueueProducer(databaseUrl);
+      const genericHandoffQueue = await backgroundQueue.createTransactionalGenericHandoffQueueProducer(databaseUrl);
       server.httpServer?.once("close", () => {
-        void Promise.allSettled([semanticQueue.close(), perceptionQueue.close(), sql.end({ timeout: 1 })]);
+        void Promise.allSettled([semanticQueue.close(), perceptionQueue.close(), genericHandoffQueue.close(), sql.end({ timeout: 1 })]);
       });
       // pg-boss's Drizzle transaction type is narrower than the Atlas
       // persistence port, while both adapters receive this same SQL transaction.
       const atlasSemanticQueue = { enqueue: (transaction: unknown, job: BackgroundExecutionJob) => semanticQueue.enqueue(transaction as never, job) };
       const sources = new documentStore.LocalFilesystemDocumentStore(process.env.ATLAS_DOCUMENT_STORE_ROOT ?? resolve(process.cwd(), ".atlas-data"));
-      const authority = new database.PostgresPerceptionAuthority(sql, new core.PerceptionSourceGrantIssuer(credential), atlasSemanticQueue, process.env.ATLAS_D1_PERCEPTION_CAPABILITY_IDENTITY, perceptionQueue, sources);
+      const authority = new database.PostgresPerceptionAuthority(sql, new core.PerceptionSourceGrantIssuer(credential), atlasSemanticQueue, process.env.ATLAS_D1_PERCEPTION_CAPABILITY_IDENTITY, perceptionQueue, sources, genericHandoffQueue);
       const routes = core.createPerceptionInternalRoutes({ authority, sources, serviceCredential: credential, maximumSourceBytes: sourceLimit, maximumResultBytes: resultLimit });
       const semanticMediaIdentity = "atlas.semantic-bridge/v1";
       const semanticMediaAuthority = new semanticDatabase.PostgresSemanticDerivedImageAuthority(sql, sources);

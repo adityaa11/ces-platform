@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { PgBoss, type Db } from "pg-boss";
 import type { DocumentPerceptionRequest, ReasoningRuntime } from "@atlas/contracts";
-import { backgroundExecutionQueue, parseBackgroundExecutionJob } from "./queue.js";
+import { backgroundExecutionQueue, genericHandoffQueue, parseBackgroundExecutionJob } from "./queue.js";
 import { documentPerceptionQueue, parseDocumentPerceptionJob } from "./perception-job.js";
 import { parseSemanticBackgroundJob } from "@atlas/contracts";
 import type { WorkerConfig } from "./worker-config.js";
@@ -36,6 +36,10 @@ export async function initializePgBossInfrastructure(boss: PgBoss, config: Worke
     await boss.createQueue(perceptionQueueName, queueOptions);
     await boss.updateQueue(perceptionQueueName, queueOptions);
   }
+  // GHR-02B publishes only an opaque pointer.  This declares the durable
+  // queue for that publisher; it deliberately registers no consumer.
+  await boss.createQueue(genericHandoffQueue, queueOptions);
+  await boss.updateQueue(genericHandoffQueue, queueOptions);
   // The admission transaction is the producer, but the Bridge still owns the
   // queue declaration that makes its durable consumer eligible after restart.
   await boss.createQueue(providerAdmittedExecutionQueue, queueOptions);

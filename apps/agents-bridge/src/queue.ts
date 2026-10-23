@@ -5,10 +5,18 @@ import { fromDrizzle, PgBoss, type DrizzleTransactionLike } from "pg-boss";
 import { parseExecutionRequest, type ExecutionRequest } from "@atlas/contracts";
 
 export const backgroundExecutionQueue = "bridge-background-execution-v1";
+export const genericHandoffQueue = "atlas-generic-handoff-v1";
 
 export type BackgroundExecutionJob = {
   readonly idempotencyKey: string;
   readonly execution: ExecutionRequest;
+};
+
+/** The GHR producer publishes an opaque pointer only.  Delivery, receipts,
+ * leases, and all payload loading remain owned by the later Bridge slice. */
+export type GenericHandoffJobV1 = {
+  readonly handoffId: string;
+  readonly idempotencyKey: string;
 };
 
 export type TransactionalQueueProducer = {
@@ -51,6 +59,26 @@ export type TransactionalPerceptionQueueProducer = {
   enqueue(transaction: unknown, job: DocumentPerceptionJob): Promise<string | null>;
   close(): Promise<void>;
 };
+
+export type TransactionalGenericHandoffQueueProducer = {
+  enqueue(transaction: unknown, job: GenericHandoffJobV1): Promise<string | null>;
+  close(): Promise<void>;
+};
+
+export async function createTransactionalGenericHandoffQueueProducer(databaseUrl: string, queueName = genericHandoffQueue): Promise<TransactionalGenericHandoffQueueProducer> {
+  const boss = new PgBoss({ connectionString: databaseUrl, schema: "pgboss", migrate: false, supervise: false, schedule: false, createSchema: false, application_name: "atlas-generic-handoff-producer" });
+  await boss.start();
+  return {
+    async enqueue(transaction, job) {
+      if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/.test(job.handoffId) || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/.test(job.idempotencyKey)) throw new Error("Generic handoff job identity is invalid.");
+      return boss.send(queueName, { type: "GenericHandoffJob/v1", handoffId: job.handoffId }, {
+        db: fromDrizzle(drizzleTransaction(transaction), sql),
+        singletonKey: job.idempotencyKey,
+      });
+    },
+    async close() { await boss.stop({ graceful: false }); },
+  };
+}
 
 export async function createTransactionalPerceptionQueueProducer(databaseUrl: string, queueName = documentPerceptionQueue): Promise<TransactionalPerceptionQueueProducer> {
   const boss = new PgBoss({ connectionString: databaseUrl, schema: "pgboss", migrate: false, supervise: false, schedule: false, createSchema: false, application_name: "atlas-perception-kickoff-producer" });
