@@ -1,6 +1,6 @@
 # GHR-02B — Atomic NDV1 acceptance integration and pointer-only pg-boss publication
 
-- **State:** `awaiting_review`; not CK PASS, Bridge consumption, receipt/lease implementation, or authority to alter approved predecessor contracts.
+- **State:** `approved` following CK `PASS` for reviewed commit `dde68c56`; **Review batch:** `GHR-02B`. See [the CK verification](../../../feedback/GHR-02B-b4279a18-verification.md) and [GO checkpoint](../../../feedback/GHR-02B-go-checkpoint.md). This ticket remains acceptance-to-publication integration only; approval is not Bridge consumption, receipt/lease implementation, or authority to alter approved predecessor contracts.
 - **Dependency:** GHR-02A CK PASS; consume its immutable issuer and dispatch-read seam without widening them.
 - **Successor:** GHR-03B owns Bridge consumption, delivery retry, lease fencing, and durable receipt.
 - **Source:** [GHR v0.6 implementation context](../../atlas-generic-handoff-router-implementation-context-v0.6-review.md), §§5.1, 6, 8–10.
