@@ -68,6 +68,7 @@ migrations.push("0096_bssv20140202_activation_revision_resolution");
 migrations.push("0097_bssv201403_authenticated_calculated_capacity_snapshot");
 migrations.push("0098_bssv20140401_process_capacity_window_usage_projection");
 migrations.push("0099_bssv20140401_process_capacity_window_usage_cfc");
+migrations.push("0100_bssv20140402_atomic_process_baseline_enforcement");
 const readMigration = async (name) => {
   let migration = await readFile(new URL(`../migrations/${name}.sql`, import.meta.url), "utf8");
   for (const [token, value] of Object.entries(replacements)) migration = migration.replaceAll(token, value.replaceAll("'", "''"));

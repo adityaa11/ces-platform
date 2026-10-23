@@ -30,6 +30,10 @@ type ClaimedTransport = Readonly<{
   qualificationVersion: string;
   quotaDomainId: string;
   desiredProfileVersion: string;
+  authorityVersion: string;
+  providerId: string;
+  modelOrProcessorId: string;
+  qualificationRef: string;
 }>;
 
 export type ProviderOperationalOutcome = Readonly<{
@@ -48,6 +52,10 @@ export type ProviderOutboundTransport = (input: Readonly<{
   capability: string;
   adapterVersion: string;
   qualificationVersion: string;
+  authorityVersion: string;
+  providerId: string;
+  modelOrProcessorId: string;
+  qualificationRef: string;
   /** Hydrated only after the durable 03A transport claim. */
   payloadReference: unknown;
   signal: AbortSignal;
@@ -117,8 +125,8 @@ export async function bindProviderWorkRouteFromResolver(
   };
   if (reference.routeId !== route.routeId || reference.quotaDomainId !== quotaDomainId || reference.providerId !== route.providerId || reference.modelOrProcessorId !== route.modelOrProcessorId || reference.adapterVersion !== route.adapterVersion || reference.qualificationRef !== route.qualificationRef || reference.qualificationVersion !== route.qualificationVersion || !/^\d+$/u.test(reference.authorityVersion)) throw new Error("Qualified route authority publisher returned a substituted reference.");
   await database.executeSql(
-    "SELECT bridge.bind_provider_work_route($1,$2,$3)",
-    [input.logicalWorkId, input.attemptNumber, route.routeId],
+    "SELECT bridge.bind_provider_work_route($1,$2,$3::bigint)",
+    [input.logicalWorkId, input.attemptNumber, reference.authorityVersion],
   );
   return reference;
 }
@@ -128,8 +136,8 @@ const claim = async (database: Db, reservationId: string): Promise<ClaimedTransp
   const value = (result.rows[0] as { claimed?: unknown } | undefined)?.claimed;
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Provider transport claim did not return a bounded route identity.");
   const route = value as Record<string, unknown>;
-  if (!["logicalWorkId", "attemptNumber", "reservationId", "routeId", "capability", "adapterVersion", "qualificationVersion", "quotaDomainId", "desiredProfileVersion"].every((key) => typeof route[key] === "string" || (key === "attemptNumber" && Number.isInteger(route[key])))) throw new Error("Provider transport claim returned invalid route metadata.");
-  return route as unknown as ClaimedTransport;
+  if (!["logicalWorkId", "attemptNumber", "reservationId", "routeId", "capability", "adapterVersion", "qualificationVersion", "quotaDomainId", "desiredProfileVersion", "authorityVersion", "providerId", "modelOrProcessorId", "qualificationRef"].every((key) => typeof route[key] === "string" || ((key === "attemptNumber" || key === "authorityVersion") && Number.isInteger(route[key])))) throw new Error("Provider transport claim returned invalid route metadata.");
+  return { ...route, authorityVersion: String(route.authorityVersion) } as unknown as ClaimedTransport;
 };
 
 const ingress = async (database: Db, claimed: ClaimedTransport, outcome: ProviderOperationalOutcome): Promise<void> => {
@@ -168,7 +176,7 @@ export function createProviderAdmittedExecutionHandler(transport: ProviderOutbou
           return payloadAdapter.hydrate({ ...payloadIdentity, signal });
         })()
         : { kind: "bss-v2-006-03a-operational-fixture" };
-      const outcome = await transport({ routeId: claimed.routeId, capability: claimed.capability, adapterVersion: claimed.adapterVersion, qualificationVersion: claimed.qualificationVersion, payloadReference, signal });
+      const outcome = await transport({ routeId: claimed.routeId, capability: claimed.capability, adapterVersion: claimed.adapterVersion, qualificationVersion: claimed.qualificationVersion, authorityVersion: claimed.authorityVersion, providerId: claimed.providerId, modelOrProcessorId: claimed.modelOrProcessorId, qualificationRef: claimed.qualificationRef, payloadReference, signal });
       await ingress(database, claimed, outcome);
     } catch (error) {
       await ingress(database, claimed, { transportDisposition: "may_have_started" });

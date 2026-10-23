@@ -106,8 +106,10 @@ test("BSS-V2-006-03A consumes an admitted pg-boss job once and feeds the product
   };
   let sends = 0;
   let crashAfterClaim = false;
-  const providerOutboundTransport = async (input: { routeId: string; payloadReference: { kind: "bss-v2-006-03a-operational-fixture" } }) => {
+  const providerOutboundTransport = async (input: { routeId: string; adapterVersion: string; qualificationVersion: string; authorityVersion: string; providerId: string; modelOrProcessorId: string; qualificationRef: string; payloadReference: { kind: "bss-v2-006-03a-operational-fixture" } }) => {
     assert.equal(input.routeId, route);
+    assert.deepEqual({ adapterVersion: input.adapterVersion, qualificationVersion: input.qualificationVersion, authorityVersion: input.authorityVersion, providerId: input.providerId, modelOrProcessorId: input.modelOrProcessorId, qualificationRef: input.qualificationRef }, { adapterVersion: "adapter-v1", qualificationVersion: "qualification-v1", authorityVersion: input.authorityVersion, providerId: "fixture", modelOrProcessorId: "fixture-model", qualificationRef: "qualification://03a-fixture" });
+    assert.match(input.authorityVersion, /^\d+$/u);
     assert.equal(input.payloadReference.kind, "bss-v2-006-03a-operational-fixture");
     sends += 1;
     if (crashAfterClaim) {
