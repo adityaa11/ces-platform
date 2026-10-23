@@ -34,6 +34,7 @@
     "test:ghr-02a-boundary": "node --test tests/ghr-02a-boundary.test.mjs",
     "test:ghr-02b": "jiti tests/ghr-02b-atomic-publication.integration.test.ts",
     "test:ghr-02b-boundary": "node --test tests/ghr-02b-boundary.test.mjs",
+    "test:ghr-03b-boundary": "node --test tests/ghr-03b-boundary.test.mjs",
     "test:immutable-semantic-corpus-plan": "jiti tests/immutable-semantic-corpus-plan.integration.test.ts",
     "test:immutable-semantic-corpus-plan-v3": "jiti tests/immutable-semantic-corpus-plan-v3.test.ts",
     "test:semantic-batch-v3-reference-resolution": "jiti tests/semantic-batch-v3-reference-resolution.test.ts",

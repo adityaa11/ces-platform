@@ -7,6 +7,7 @@ import { parseSemanticBackgroundJob } from "@atlas/contracts";
 import type { WorkerConfig } from "./worker-config.js";
 import { parseProviderAdmittedJob, type ProviderAdmittedExecutionHandler } from "./provider-admitted-worker.js";
 import { parseProviderWakeupJob, type ProviderWakeupHandler } from "./provider-wakeup-worker.js";
+import { deliverGenericHandoffJob } from "./ghr/delivery-worker.js";
 
 export const providerAdmittedExecutionQueue = "bridge-provider-admitted-execution-v1";
 export const providerWakeupQueue = "bridge-provider-work-wakeup-v1";
@@ -36,8 +37,9 @@ export async function initializePgBossInfrastructure(boss: PgBoss, config: Worke
     await boss.createQueue(perceptionQueueName, queueOptions);
     await boss.updateQueue(perceptionQueueName, queueOptions);
   }
-  // GHR-02B publishes only an opaque pointer.  This declares the durable
-  // queue for that publisher; it deliberately registers no consumer.
+  // GHR-03B owns the sole consumer. Its handler loads only the known pointer
+  // through the narrow dispatch function and never accepts queue JSON as
+  // routing or body authority.
   await boss.createQueue(genericHandoffQueue, queueOptions);
   await boss.updateQueue(genericHandoffQueue, queueOptions);
   // The admission transaction is the producer, but the Bridge still owns the
@@ -158,6 +160,14 @@ export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningR
           // not a cleanup precondition; exact execution identity remains so.
           ? () => boss.getDb().executeSql("DELETE FROM bridge.semantic_result_delivery WHERE idempotency_key=$1 AND execution_id=$2", [backgroundJob.idempotencyKey, backgroundJob.execution.executionId]).then(() => undefined)
           : undefined);
+      });
+      await boss.work(genericHandoffQueue, backgroundWorkOptions, async ([job]) => {
+        await deliverGenericHandoffJob({
+          database: boss.getDb(),
+          job: job.data,
+          leaseSeconds: config.timeoutSeconds,
+          finalAttempt: job.retryCount >= job.retryLimit,
+        });
       });
       if (documentPerception) {
         const perceptionWorkOptions = { ...backgroundWorkOptions, localConcurrency: config.perceptionConcurrency };

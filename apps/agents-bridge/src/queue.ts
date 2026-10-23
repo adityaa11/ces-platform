@@ -16,8 +16,13 @@ export type BackgroundExecutionJob = {
  * leases, and all payload loading remain owned by the later Bridge slice. */
 export type GenericHandoffJobV1 = {
   readonly handoffId: string;
-  readonly idempotencyKey: string;
 };
+
+/** Producer-only metadata. The idempotency key is pg-boss metadata, never
+ * part of the pointer job payload consumed by GHR-03B. */
+export type GenericHandoffQueuePublish = GenericHandoffJobV1 & Readonly<{
+  readonly idempotencyKey: string;
+}>;
 
 export type TransactionalQueueProducer = {
   enqueue(transaction: DrizzleTransactionLike, job: BackgroundExecutionJob): Promise<string | null>;
@@ -61,7 +66,7 @@ export type TransactionalPerceptionQueueProducer = {
 };
 
 export type TransactionalGenericHandoffQueueProducer = {
-  enqueue(transaction: unknown, job: GenericHandoffJobV1): Promise<string | null>;
+  enqueue(transaction: unknown, job: GenericHandoffQueuePublish): Promise<string | null>;
   close(): Promise<void>;
 };
 
