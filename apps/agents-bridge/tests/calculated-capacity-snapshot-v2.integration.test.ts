@@ -15,9 +15,12 @@ test("RC-01403-01..05 qualifies a calculated v2 candidate through the sole authe
   const workloadId = `${suffix}-workload`;
   const routeId = `${suffix}-route`;
   const effectiveFrom = "2026-10-23 00:00:00+00";
-  const bridgeUrl = new URL(databaseUrl!); bridgeUrl.username = "agents_bridge"; bridgeUrl.password = process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only";
-  const bridge = postgres(bridgeUrl.toString(), { max: 1 });
   const admin = postgres(databaseUrl!, { max: 1 });
+  // This fixture creates deliberately inconsistent historical rows to prove
+  // the read seam fails closed.  Those mutations must remain transactional and
+  // use the privileged test connection because the production tables are
+  // append-only by design.
+  const bridge = admin;
   const principal: CapacityPlanningSnapshotPrincipal = { principalId: `${suffix}-reader`, quotaDomainId: domain, processId, processProfileVersion: "v1", routeId, serviceClass: "background", prospective: false, qualificationVersion: "v2" };
   const principals = new Map<string, CapacityPlanningSnapshotPrincipal>([
     [`${suffix}-credential`, principal],
@@ -44,6 +47,7 @@ test("RC-01403-01..05 qualifies a calculated v2 candidate through the sole authe
   })).body) as Record<string, unknown>;
   try {
     await bridge.unsafe("BEGIN");
+    await bridge.unsafe("SET LOCAL session_replication_role = replica");
     const route = { routeId, providerId: "anoman", modelOrProcessorId: "gemini-2.5-flash", adapterVersion: "anoman-adapter-v1", qualificationRef: `qualification://${suffix}`, qualificationVersion: "v1", capability: "atlas.semantic.extract" };
     await bridge.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'capacity-v1','anoman',$2::jsonb,$3::jsonb,$4::jsonb,'quota-v1','provider_api','fixture://anoman','v1',clock_timestamp(),$5::timestamptz)", [domain, [route], { rpm: { state: "known", value: 20 }, tpm: { state: "known", value: 40_000 }, rpd: { state: "unknown" }, concurrency: { state: "known", value: 25 } }, { rpm: { kind: "fixed_window" }, tpm: { kind: "fixed_window" }, rpd: { kind: "unknown" } }, effectiveFrom]);
     const approvalRef = `${suffix}-rpd-approval`;
@@ -69,8 +73,8 @@ test("RC-01403-01..05 qualifies a calculated v2 candidate through the sole authe
     assert.deepEqual(body.policyProvenance.dimensions.rpd, { mode: "not_enforced", providerState: "unknown", reason: "not_published", approvalRef }, "approved unknown RPD remains provenance only");
     assert.ok(!Object.hasOwn(body.allocation.baseline, "rpd"), "the unknown RPD has no numeric allocation");
     const [persisted] = await bridge.unsafe(`SELECT
-      candidate.profile_version AS desired_profile_version,
-      candidate.provider_capacity_profile_version,
+      candidate.desired_profile_version,
+      desired.provider_capacity_profile_version,
       candidate.candidate_activation_revision,
       workload.profile_version AS workload_profile_version,
       workload.structural_bound,
@@ -81,7 +85,7 @@ test("RC-01403-01..05 qualifies a calculated v2 candidate through the sole authe
       allocation.allocation_fingerprint,
       allocation.allocation,
       binding.effective_mask,
-      bridge.derive_effective_enforcement_policy($1, candidate.provider_capacity_profile_version, $2) AS effective_policy,
+      bridge.derive_effective_enforcement_policy($1, desired.provider_capacity_profile_version, $2) AS effective_policy,
       md5(jsonb_build_object(
         'candidate', candidate.effective_input_fingerprint,
         'allocation', allocation.allocation_fingerprint,
@@ -90,6 +94,8 @@ test("RC-01403-01..05 qualifies a calculated v2 candidate through the sole authe
         'effectiveMask', binding.effective_mask
       )::text) AS canonical_fingerprint
       FROM bridge.desired_admission_profile_candidate candidate
+      JOIN bridge.desired_admission_profile desired
+        ON (desired.quota_domain_id, desired.profile_version) = (candidate.quota_domain_id, candidate.desired_profile_version)
       JOIN bridge.desired_admission_profile_route_binding_v2 binding
         ON (binding.quota_domain_id, binding.desired_profile_version) = (candidate.quota_domain_id, candidate.desired_profile_version)
       JOIN bridge.qualified_provider_route_authority authority ON authority.authority_version = binding.authority_version
@@ -182,7 +188,7 @@ test("RC-01403-01..05 qualifies a calculated v2 candidate through the sole authe
     await assertNonQualified("revoked policy");
   } finally {
     await bridge.unsafe("ROLLBACK").catch(() => undefined);
-    await Promise.all([app.close(), bridge.end(), admin.end()]);
+    await Promise.all([app.close(), admin.end()]);
   }
 });
 
