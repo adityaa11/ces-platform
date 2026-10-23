@@ -1,6 +1,6 @@
 # GHR-01A — Generic envelope, raw ingress, and byte-integrity contract
 
-- **State:** `awaiting_review`; first replacement for [GHR-01 split manifest](GHR-01-generic-envelope-and-main-branch-registry.md). Derived from [GHR implementation context v0.6](../../atlas-generic-handoff-router-implementation-context-v0.6-review.md). This GO checkpoint is ready for CK; it is not a CK PASS, issuance, route activation, or authorization to alter predecessor contracts.
+- **State:** `approved` following CK `PASS` for reviewed commit `900373cc`; **Review batch:** `GHR-01A`. See the [CK review](../../../feedback/GHR-01A-900373c-review.md). This ticket remains a contract foundation only; approval is not issuance, route activation, or authorization to alter predecessor contracts. It is the first replacement for [GHR-01 split manifest](GHR-01-generic-envelope-and-main-branch-registry.md), derived from [GHR implementation context v0.6](../../atlas-generic-handoff-router-implementation-context-v0.6-review.md).
 - **Phase:** GHR Test 1 foundation; the only current mode is `can_continue=false`.
 - **Dependencies:** existing `@atlas/contracts` Zod `4.4.3`. The existing `@atlas/db` `SemanticBatchPlanInput/v1` parser/serializer is preserved but is not imported by this ticket.
 - **Successor:** GHR-01B consumes only the exported generic contract/types after this ticket CK PASS.
