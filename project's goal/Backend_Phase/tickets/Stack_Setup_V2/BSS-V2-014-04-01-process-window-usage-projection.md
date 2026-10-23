@@ -1,6 +1,6 @@
 # BSS-V2-014-04-01 — Reconciled process-capacity window-usage projection
 
-- **State:** `planned`; executable BSS-V2-006 successor. No GO, admission-policy change, borrowing, provider operation, or route activation is authorized.
+- **State:** `awaiting_review`; executable BSS-V2-006 successor. No admission-policy change, borrowing, provider operation, or route activation is authorized.
 - **Parent:** [BSS-V2-014-04 split map](BSS-V2-014-04-atomic-process-admission-and-borrowing.md).
 - **Dependencies:** BSS-V2-014-02-02 CK `PASS`; approved BSS-V2-006 reservation/window, recovery, and effective-policy predecessors. `-04-02` may consume this result only after its reconciliation contract passes.
 
