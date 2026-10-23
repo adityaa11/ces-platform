@@ -1,6 +1,6 @@
 # BSS-V2-014-04-03 — Atomic background idle-capacity borrowing
 
-- **State:** `awaiting_review`; post-blocker validation is complete and the existing immutable GO checkpoint is ready for fresh CK review. No new GO implementation, provider operation, route activation, or new admission lane is authorized.
+- **State:** `approved`; post-CFC CK verification passed. No new GO implementation, provider operation, route activation, or new admission lane is authorized.
 - **Parent:** [BSS-V2-014-04 split map](BSS-V2-014-04-atomic-process-admission-and-borrowing.md).
 - **Dependencies:** BSS-V2-014-04-02 CK `PASS`; approved BSS-V2-006 weighted-fairness and recovery predecessors.
 
