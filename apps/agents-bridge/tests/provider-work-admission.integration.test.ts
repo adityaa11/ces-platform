@@ -412,6 +412,19 @@ test("RC-00606-02 authority matrix admits only the immutable calculated-v2 route
   const authenticator = { authenticate: (credential: string) => credential === principal.credential ? principal : null };
   const reader = createRuntimeCapacityConstraintReader(database, authenticator);
   const admission = createProviderWorkAdmissionService(database, authenticator);
+  const bridgeUrl = new URL(databaseUrl!);
+  bridgeUrl.username = "agents_bridge";
+  bridgeUrl.password = process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only";
+  let providerTransportSends = 0;
+  const worker = createProductionBridgeWorker({
+    config: { databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 1, perceptionConcurrency: 1, timeoutSeconds: 5, retryLimit: 0, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 },
+    runtime: new TestRuntime(), documentPerception: async () => undefined, semantic: async () => undefined,
+    providerPayloadAdapter: { hydrate: async (input) => input.payloadReference },
+    providerOutboundTransport: async () => {
+      providerTransportSends += 1;
+      return { feedbackId: `${suffix}-transport-${providerTransportSends}`, transportDisposition: "terminal_confirmed" as const, usage: { rpm: 1, tpm: 5, rpd: 1 } };
+    },
+  });
   const app = createBridgeApp({ runtime: new TestRuntime(), version: "public-admission-authority-fixture", runtimeCapacityConstraintReader: reader, providerWorkAdmissionService: admission });
   try {
     await sql.unsafe("BEGIN");
@@ -434,25 +447,50 @@ test("RC-00606-02 authority matrix admits only the immutable calculated-v2 route
     await sql.unsafe("INSERT INTO bridge.active_desired_admission_profile(quota_domain_id,desired_profile_version,activation_revision,effective_from) VALUES($1,'plan-v2',1,clock_timestamp())", [domain]);
     for (const dimension of ["rpm", "tpm", "concurrency"]) await sql.unsafe("INSERT INTO bridge.provider_quota_window_state(quota_domain_id,desired_profile_version,activation_revision,provider_capacity_profile_version,dimension_id,window_policy_identity,window_state,reset_semantics_known,reset_at) VALUES($1,'plan-v2',1,'cap-v2',$2,($3::jsonb)->$2,'{}'::jsonb,true,clock_timestamp()+interval '1 hour')", [domain, dimension, windowPolicies]);
     await app.listen({ host: "127.0.0.1", port: 0 });
+    await worker.start();
     const address = app.server.address(); assert.ok(address && typeof address !== "string");
     const base = `http://127.0.0.1:${address.port}`;
     const constraint = await (await fetch(`${base}/v1/runtime-capacity-constraint`, { headers: { authorization: `Bearer ${principal.credential}` } })).json() as { effectiveConstraintRevision: string; reason: string };
     assert.equal(constraint.reason, "eligible_in_principle");
-    const post = async (logicalWorkId: string) => (await fetch(`${base}/v1/provider-work-admissions`, { method: "POST", headers: { authorization: `Bearer ${principal.credential}`, "content-type": "application/json" }, body: JSON.stringify({ logicalWorkId, attemptNumber: 1, idempotencyKey: `${logicalWorkId}-key`, payloadReference: `${logicalWorkId}-payload`, payloadHash: "a".repeat(64), requestResourceEnvelope: { rpm: 1, tpm: 5, rpd: 1, concurrency: 1 }, expectedEffectiveConstraintRevision: constraint.effectiveConstraintRevision }) })).json() as Promise<ProviderWorkAdmissionOutcome>;
+    let expectedEffectiveConstraintRevision = constraint.effectiveConstraintRevision;
+    const post = async (logicalWorkId: string) => (await fetch(`${base}/v1/provider-work-admissions`, { method: "POST", headers: { authorization: `Bearer ${principal.credential}`, "content-type": "application/json" }, body: JSON.stringify({ logicalWorkId, attemptNumber: 1, idempotencyKey: `${logicalWorkId}-key`, payloadReference: `${logicalWorkId}-payload`, payloadHash: "a".repeat(64), requestResourceEnvelope: { rpm: 1, tpm: 5, rpd: 1, concurrency: 1 }, expectedEffectiveConstraintRevision }) })).json() as Promise<ProviderWorkAdmissionOutcome>;
     const accepted = await post(`${suffix}-positive`);
     assert.equal(accepted.state, "dispatched_or_may_have_started", "the public API admits a calculated-v2 plan only through its exact binding");
     assert.deepEqual((await sql.unsafe("SELECT to_regprocedure('bridge.bind_provider_work_route(text,integer,text)') AS legacy_binder,to_regprocedure('bridge.bind_provider_work_route(text,integer,bigint)') AS bigint_binder"))[0], { legacy_binder: null, bigint_binder: "bridge.bind_provider_work_route(text,integer,bigint)" }, "the cutover retains only the established bigint binder");
     assert.deepEqual((await sql.unsafe("SELECT authority_version,selected_route_id,provider_id,model_or_processor_id,adapter_version,qualification_ref,qualification_version,capability FROM bridge.provider_work_route_binding WHERE logical_work_id=$1", [`${suffix}-positive`]))[0], { authority_version: authority.authority_version, selected_route_id: route, provider_id: identity.providerId, model_or_processor_id: identity.modelOrProcessorId, adapter_version: identity.adapterVersion, qualification_ref: identity.qualificationRef, qualification_version: identity.qualificationVersion, capability: identity.capability }, "the durable binding carries exactly the publisher-issued bigint and complete tuple");
-    const assertZeroArtifacts = async (logicalWorkId: string) => assert.deepEqual((await sql.unsafe("SELECT (SELECT count(*)::int FROM bridge.provider_work_reservation WHERE logical_work_id=$1) reservations,(SELECT count(*)::int FROM bridge.provider_work_dispatch WHERE logical_work_id=$1) dispatches,(SELECT count(*)::int FROM pgboss.job WHERE data->>'logicalWorkId'=$1) jobs,(SELECT count(*)::int FROM bridge.provider_transport_claim WHERE logical_work_id=$1) claims", [logicalWorkId]))[0], { reservations: 0, dispatches: 0, jobs: 0, claims: 0 }, `${logicalWorkId} creates no reservation, dispatch, pg-boss job, transport claim, or transport artifact`);
+
+    // RC-00606-03: a successful historical plan-v1 admission cannot lend its
+    // authority to the subsequently active calculated-v2 plan.
+    await sql.unsafe("INSERT INTO bridge.desired_admission_profile(quota_domain_id,profile_version,provider_capacity_profile_version,planner_version,effective_from,profile) VALUES($1,'plan-v1','cap-v2','fixture-historical',clock_timestamp(),$2::jsonb)", [domain, profile]);
+    await sql.unsafe("INSERT INTO bridge.desired_admission_profile_input(quota_domain_id,desired_profile_version,process_id,process_profile_version,workload_id,workload_profile_version) VALUES($1,'plan-v1',$2,'v1',$3,'v1')", [domain, processId, `${processId}-workload`]);
+    await sql.unsafe("INSERT INTO bridge.desired_admission_profile_policy_binding(quota_domain_id,desired_profile_version,provider_capacity_profile_version,route_id,policy_id,policy_version,effective_policy) VALUES($1,'plan-v1','cap-v2',$2,'policy','v2',$3::jsonb)", [domain, route, policy]);
+    await sql.unsafe("INSERT INTO bridge.desired_admission_profile_activation(quota_domain_id,activation_revision,desired_profile_version,effective_from) VALUES($1,2,'plan-v1',clock_timestamp())", [domain]);
+    await sql.unsafe("UPDATE bridge.active_desired_admission_profile SET desired_profile_version='plan-v1',activation_revision=2,effective_from=clock_timestamp() WHERE quota_domain_id=$1", [domain]);
+    for (const dimension of ["rpm", "tpm", "concurrency"]) await sql.unsafe("INSERT INTO bridge.provider_quota_window_state(quota_domain_id,desired_profile_version,activation_revision,provider_capacity_profile_version,dimension_id,window_policy_identity,window_state,reset_semantics_known,reset_at) VALUES($1,'plan-v1',2,'cap-v2',$2,($3::jsonb)->$2,'{}'::jsonb,true,clock_timestamp()+interval '1 hour')", [domain, dimension, windowPolicies]);
+    const historicalConstraint = await (await fetch(`${base}/v1/runtime-capacity-constraint`, { headers: { authorization: `Bearer ${principal.credential}` } })).json() as { effectiveConstraintRevision: string; reason: string };
+    assert.equal(historicalConstraint.reason, "eligible_in_principle");
+    expectedEffectiveConstraintRevision = historicalConstraint.effectiveConstraintRevision;
+    assert.equal((await post(`${suffix}-historical-plan-v1`)).state, "dispatched_or_may_have_started", "the corrected historical plan-v1 fixture succeeds through the bigint binder");
+    await sql.unsafe("UPDATE bridge.active_desired_admission_profile SET desired_profile_version='plan-v2',activation_revision=1,effective_from=clock_timestamp() WHERE quota_domain_id=$1", [domain]);
+    const restoredCalculatedConstraint = await (await fetch(`${base}/v1/runtime-capacity-constraint`, { headers: { authorization: `Bearer ${principal.credential}` } })).json() as { effectiveConstraintRevision: string; reason: string };
+    assert.equal(restoredCalculatedConstraint.reason, "eligible_in_principle");
+    expectedEffectiveConstraintRevision = restoredCalculatedConstraint.effectiveConstraintRevision;
+    const assertZeroArtifacts = async (logicalWorkId: string, sendsBefore: number) => {
+      await sleep(100);
+      assert.deepEqual((await sql.unsafe("SELECT (SELECT count(*)::int FROM bridge.provider_work_reservation WHERE logical_work_id=$1) reservations,(SELECT count(*)::int FROM bridge.provider_work_dispatch WHERE logical_work_id=$1) dispatches,(SELECT count(*)::int FROM pgboss.job WHERE data->>'logicalWorkId'=$1) jobs,(SELECT count(*)::int FROM bridge.provider_transport_claim WHERE logical_work_id=$1) claims", [logicalWorkId]))[0], { reservations: 0, dispatches: 0, jobs: 0, claims: 0 }, `${logicalWorkId} creates no reservation, dispatch, pg-boss job, or transport claim`);
+      assert.equal(providerTransportSends, sendsBefore, `${logicalWorkId} leaves the ticket-authorized fake provider transport send counter unchanged`);
+    };
     const reject = async (label: string, mutate: () => Promise<unknown>) => {
       const work = `${suffix}-${label}`;
-      const savepoint = `authority_${label.replaceAll("-", "_")}`;
+      const savepoint = "authority_case";
       await sql.unsafe(`SAVEPOINT ${savepoint}`);
       await mutate();
+      const sendsBefore = providerTransportSends;
       assert.equal((await post(work)).state, "policy_or_resource_unfit", `${label} is rejected by the public API before admission`);
-      await assertZeroArtifacts(work);
+      await assertZeroArtifacts(work, sendsBefore);
       await sql.unsafe(`ROLLBACK TO SAVEPOINT ${savepoint}`);
     };
+    await reject("mixed-historical-success-active-calculated-v2-incomplete", async () => { await sql.unsafe("ALTER TABLE bridge.provider_capacity_profile DISABLE TRIGGER ALL"); await sql.unsafe("UPDATE bridge.provider_capacity_profile SET associated_routes=$2::jsonb WHERE quota_domain_id=$1 AND profile_version='cap-v2'", [domain, [{ routeId: route }]]); });
     await reject("missing", async () => { await sql.unsafe("ALTER TABLE bridge.desired_admission_profile_route_binding_v2 DISABLE TRIGGER ALL"); await sql.unsafe("DELETE FROM bridge.desired_admission_profile_route_binding_v2 WHERE quota_domain_id=$1 AND desired_profile_version='plan-v2'", [domain]); });
     await reject("foreign", async () => { await sql.unsafe("ALTER TABLE bridge.qualified_provider_route_authority DISABLE TRIGGER ALL"); await sql.unsafe("UPDATE bridge.qualified_provider_route_authority SET quota_domain_id=$2 WHERE authority_version=$1", [authority.authority_version, `${domain}-foreign`]); });
     await reject("revoked", async () => { await sql.unsafe("ALTER TABLE bridge.qualified_provider_route_authority DISABLE TRIGGER ALL"); await sql.unsafe("UPDATE bridge.qualified_provider_route_authority SET authority_kind='legacy_incomplete' WHERE authority_version=$1", [authority.authority_version]); });
@@ -467,6 +505,7 @@ test("RC-00606-02 authority matrix admits only the immutable calculated-v2 route
       await sql.unsafe("INSERT INTO bridge.qualified_provider_route_authority(route_id,capability,adapter_version,qualification_version,quota_domain_id,provider_id,model_or_processor_id,qualification_ref,authority_kind) SELECT route_id,capability,adapter_version,qualification_version,quota_domain_id,provider_id,model_or_processor_id,qualification_ref,authority_kind FROM bridge.qualified_provider_route_authority WHERE authority_version=$1", [authority.authority_version]);
     });
   } finally {
+    await worker.stop().catch(() => undefined);
     await app.close().catch(() => undefined);
     await sql.unsafe("ROLLBACK").catch(() => undefined);
     await sql.end();
