@@ -94,8 +94,10 @@ test("BSS-V2-005-05-04 routes qualified process and capacity revisions through t
     await addProcess(semantic, "v1", "semantic", "background", semanticRoute, semanticWorkload, "v1");
     await addProcess(semantic, "v2", "semantic", "background", semanticRoute, semanticWorkload, "v2");
     await addProcess(chat, "v1", "chat", "interactive", chatRoute, chatWorkload, "v1");
+    const authorityVersions = new Map<string, string>();
     for (const route of qualifiedRoutes) {
-      await sql.unsafe("SELECT * FROM bridge.publish_qualified_provider_route_authority($1,$2,$3,$4,$5,$6,$7,$8)", [route.routeId, domain, route.providerId, route.modelOrProcessorId, route.adapterVersion, route.qualificationRef, route.qualificationVersion, route.capability]);
+      const [authority] = await sql.unsafe("SELECT * FROM bridge.publish_qualified_provider_route_authority($1,$2,$3,$4,$5,$6,$7,$8)", [route.routeId, domain, route.providerId, route.modelOrProcessorId, route.adapterVersion, route.qualificationRef, route.qualificationVersion, route.capability]);
+      authorityVersions.set(route.routeId, String(authority.authority_version));
     }
 
     const [initial] = await publish(null, "capacity-v1", "v1", 4_000);
@@ -105,10 +107,22 @@ test("BSS-V2-005-05-04 routes qualified process and capacity revisions through t
 
     for (const [work, envelope] of [[waiting, { rpm: 1, tpm: 10, rpd: 1, concurrency: 1 }], [inflight, { rpm: 1, tpm: 1, rpd: 1, concurrency: 1 }]] as const) {
       await sql.unsafe("SELECT bridge.register_provider_work_attempt($1,1,$2,$3,'v1','fixture',$4,$5,1,now()+interval '1 hour',now()+interval '1 hour')", [work, domain, semantic, envelope, initial.desired_profile_version]);
-      await sql.unsafe("SELECT bridge.bind_provider_work_route($1,1,$2)", [work, semanticRoute]);
+      await sql.unsafe("SELECT bridge.bind_provider_work_route($1,1,$2::bigint)", [work, authorityVersions.get(semanticRoute)]);
     }
     await sql.unsafe("UPDATE bridge.provider_work_attempt SET state='reserved' WHERE logical_work_id=$1", [inflight]);
     await sql.unsafe("INSERT INTO bridge.provider_work_reservation(logical_work_id,attempt_number,desired_profile_version,activation_revision,request_resource_envelope) VALUES($1,1,$2,1,$3)", [inflight, initial.desired_profile_version, { rpm: 1, tpm: 1, rpd: 1, concurrency: 1 }]);
+    const historicalLiability = async () => (await sql.unsafe(`
+      SELECT jsonb_build_object(
+        'attempt', jsonb_build_object('plan',work.desired_profile_version,'revision',work.activation_revision,'state',work.state),
+        'reservation', jsonb_build_object('plan',reservation.desired_profile_version,'revision',reservation.activation_revision,'envelope',reservation.request_resource_envelope,'state',reservation.state),
+        'claimIdentity', jsonb_build_object('routeId',binding.selected_route_id,'providerId',binding.provider_id,'modelOrProcessorId',binding.model_or_processor_id,'adapterVersion',binding.adapter_version,'qualificationRef',binding.qualification_ref,'qualificationVersion',binding.qualification_version,'authorityVersion',binding.authority_version),
+        'transportClaims', (SELECT count(*)::int FROM bridge.provider_transport_claim claim WHERE claim.logical_work_id=work.logical_work_id AND claim.attempt_number=work.attempt_number)
+      ) AS snapshot
+      FROM bridge.provider_work_attempt work
+      JOIN bridge.provider_work_reservation reservation USING(logical_work_id,attempt_number)
+      JOIN bridge.provider_work_route_binding binding USING(logical_work_id,attempt_number)
+      WHERE work.logical_work_id=$1`, [inflight]))[0].snapshot;
+    const beforeRevisionLiability = await historicalLiability();
 
     // An already-qualified v2 process/workload policy is an effective planning
     // input change. It must use the same 005-04 activation trigger and worker.
@@ -120,6 +134,7 @@ test("BSS-V2-005-05-04 routes qualified process and capacity revisions through t
     assert.deepEqual((await sql.unsafe("SELECT desired_profile_version,activation_revision,state FROM bridge.provider_work_attempt WHERE logical_work_id=$1", [waiting]))[0], { desired_profile_version: initial.desired_profile_version, activation_revision: "1", state: "waiting" }, "a waiting attempt whose exact immutable process membership changed is held for its owner rather than silently rebound");
     assert.deepEqual((await sql.unsafe("SELECT intent_kind FROM bridge.provider_admission_convergence_intent WHERE quota_domain_id=$1", [domain])).map((row) => row.intent_kind), ["owner_replan_required"], "the real worker preserves the existing membership-based owner replan intent");
     assert.deepEqual((await sql.unsafe("SELECT desired_profile_version,activation_revision,state FROM bridge.provider_work_attempt WHERE logical_work_id=$1", [inflight]))[0], { desired_profile_version: initial.desired_profile_version, activation_revision: "1", state: "reserved" }, "an in-flight reservation retains its historical plan identity");
+    assert.deepEqual(await historicalLiability(), beforeRevisionLiability, "the process revision cannot rewrite the historical reservation, complete claim tuple, or retained liability");
     assert.deepEqual((await sql.unsafe("SELECT fairness_epoch,virtual_time,next_turn FROM bridge.provider_admission_domain_state WHERE quota_domain_id=$1", [domain]))[0], { fairness_epoch: `${processRevision.desired_profile_version}:2`, virtual_time: "0", next_turn: "1" }, "wakeup consumption starts the activation's fairness epoch");
 
     const [identical] = await publish(2, "capacity-v1", "v2", 100);
@@ -134,7 +149,7 @@ test("BSS-V2-005-05-04 routes qualified process and capacity revisions through t
     // capacity revision must revalidate it under the new active plan instead
     // of rewriting the historical v1 work above.
     await sql.unsafe("SELECT bridge.register_provider_work_attempt($1,1,$2,$3,'v2','fixture',$4,$5,2,now()+interval '1 hour',now()+interval '1 hour')", [capacityWaiting, domain, semantic, { rpm: 1, tpm: 10, rpd: 1, concurrency: 1 }, processRevision.desired_profile_version]);
-    await sql.unsafe("SELECT bridge.bind_provider_work_route($1,1,$2)", [capacityWaiting, semanticRoute]);
+    await sql.unsafe("SELECT bridge.bind_provider_work_route($1,1,$2::bigint)", [capacityWaiting, authorityVersions.get(semanticRoute)]);
 
     // A separately provenance-bound, lower capacity profile uses the same
     // publication fence and the same real worker; it is not a 03A intent.
@@ -145,6 +160,7 @@ test("BSS-V2-005-05-04 routes qualified process and capacity revisions through t
     await waitForWakeup(sql, capacityDispatch.job_id, domain, "active-plan:3");
     assert.deepEqual((await sql.unsafe("SELECT desired_profile_version,activation_revision,state FROM bridge.provider_work_attempt WHERE logical_work_id=$1", [capacityWaiting]))[0], { desired_profile_version: capacityRevision.desired_profile_version, activation_revision: "3", state: "waiting" }, "an exact-membership waiting attempt is revalidated through the lower-capacity activation");
     assert.deepEqual((await sql.unsafe("SELECT desired_profile_version,activation_revision,state FROM bridge.provider_work_attempt WHERE logical_work_id=$1", [inflight]))[0], { desired_profile_version: initial.desired_profile_version, activation_revision: "1", state: "reserved" }, "capacity convergence cannot rewrite an in-flight reservation liability");
+    assert.deepEqual(await historicalLiability(), beforeRevisionLiability, "the capacity revision preserves the historical plan, reservation, claim identity, and no-send liability exactly");
     assert.equal((await sql.unsafe("SELECT count(*)::int AS count FROM pgboss.job WHERE name=$1 AND data->>'quotaDomainId'=$2", [providerAdmittedExecutionQueue, domain]))[0].count, 0, "plan convergence must not enqueue provider work");
     assert.equal(outboundSends, 0, "plan convergence must not send to a provider");
   } finally {

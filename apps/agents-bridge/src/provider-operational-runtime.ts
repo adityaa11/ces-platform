@@ -131,13 +131,16 @@ export async function bindProviderWorkRouteFromResolver(
   return reference;
 }
 
-const claim = async (database: Db, reservationId: string): Promise<ClaimedTransport> => {
-  const result = await database.executeSql("SELECT bridge.claim_provider_admitted_transport($1) AS claimed", [reservationId]);
-  const value = (result.rows[0] as { claimed?: unknown } | undefined)?.claimed;
+export const parseClaimedTransport = (value: unknown): ClaimedTransport => {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Provider transport claim did not return a bounded route identity.");
   const route = value as Record<string, unknown>;
   if (!["logicalWorkId", "attemptNumber", "reservationId", "routeId", "capability", "adapterVersion", "qualificationVersion", "quotaDomainId", "desiredProfileVersion", "authorityVersion", "providerId", "modelOrProcessorId", "qualificationRef"].every((key) => typeof route[key] === "string" || ((key === "attemptNumber" || key === "authorityVersion") && Number.isInteger(route[key])))) throw new Error("Provider transport claim returned invalid route metadata.");
   return { ...route, authorityVersion: String(route.authorityVersion) } as unknown as ClaimedTransport;
+};
+
+const claim = async (database: Db, reservationId: string): Promise<ClaimedTransport> => {
+  const result = await database.executeSql("SELECT bridge.claim_provider_admitted_transport($1) AS claimed", [reservationId]);
+  return parseClaimedTransport((result.rows[0] as { claimed?: unknown } | undefined)?.claimed);
 };
 
 const ingress = async (database: Db, claimed: ClaimedTransport, outcome: ProviderOperationalOutcome): Promise<void> => {

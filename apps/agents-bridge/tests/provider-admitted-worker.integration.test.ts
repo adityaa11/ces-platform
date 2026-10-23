@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import postgres from "postgres";
-import { bindProviderWorkRouteFromResolver } from "../src/provider-operational-runtime.ts";
+import { bindProviderWorkRouteFromResolver, parseClaimedTransport } from "../src/provider-operational-runtime.ts";
 import { TestRuntime } from "../src/runtime.ts";
 import { createRouteRegistry } from "../src/route-registry.ts";
 import { createBackgroundWorker, providerAdmittedExecutionQueue } from "../src/worker.ts";
@@ -14,6 +14,21 @@ const databaseUrl = process.env.DATABASE_URL;
 const deliveryTimeoutMilliseconds = 10_000;
 
 const sleep = (milliseconds: number) => new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
+
+test("BSS-V2-014-04-02 rejects incomplete claimed authority before outbound dispatch", () => {
+  const claimed = {
+    logicalWorkId: "claim-negative", attemptNumber: 1, reservationId: "00000000-0000-0000-0000-000000000000",
+    routeId: "route", capability: "atlas.semantic.extract", adapterVersion: "adapter", qualificationVersion: "qualification",
+    quotaDomainId: "domain", desiredProfileVersion: "plan", authorityVersion: 1, providerId: "provider",
+    modelOrProcessorId: "model", qualificationRef: "qualification://fixture",
+  };
+  assert.doesNotThrow(() => parseClaimedTransport(claimed));
+  for (const requiredField of ["routeId", "providerId", "modelOrProcessorId", "adapterVersion", "qualificationRef", "qualificationVersion", "authorityVersion"] as const) {
+    const incomplete = { ...claimed } as Record<string, unknown>;
+    delete incomplete[requiredField];
+    assert.throws(() => parseClaimedTransport(incomplete), /invalid route metadata/i, `missing ${requiredField} is rejected before outbound dispatch`);
+  }
+});
 
 async function readDeliverySnapshot(sql: postgres.Sql, worker: ReturnType<typeof createBackgroundWorker>, jobId: string, reservationId: string, work: string) {
   const [job] = await sql.unsafe("SELECT state, created_on, start_after, started_on, completed_on, retry_count, retry_limit FROM pgboss.job WHERE id=$1", [jobId]);
