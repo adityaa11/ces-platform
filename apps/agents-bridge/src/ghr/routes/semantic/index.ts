@@ -1,4 +1,13 @@
 import { createBranchRegistry } from "../../core/branch-registry.js";
+import { semanticBatchPlanRoute } from "./branches/batch-plan.route.js";
 
-/** Semantic owns its branch composition; GHR-01B intentionally registers none. */
-export const semanticRegistry = createBranchRegistry([]);
+/** Semantic owns its exact Test-1 branch composition. */
+export const semanticRegistry = createBranchRegistry([semanticBatchPlanRoute]);
+
+export { semanticBatchPlanRoute } from "./branches/batch-plan.route.js";
+export {
+  BatchPlanReceiverError,
+  receiveVerifiedBatchPlan,
+  type BatchPlanParseOnlyDecision,
+  type VerifiedBatchPlanDeliveryCommand,
+} from "./receivers/batch-plan.receiver.js";

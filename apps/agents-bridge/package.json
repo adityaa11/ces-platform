@@ -11,6 +11,7 @@
     "test:conservative-multimodal-estimation": "jiti tests/conservative-multimodal-estimation.test.ts",
     "test:idser-v3-reconstruction-parity": "jiti tests/idser-v3-reconstruction-parity.test.ts",
     "test:ghr-01b": "jiti tests/ghr-branch-registry.test.ts",
+    "test:ghr-03a": "jiti tests/ghr-03a-semantic-receiver.test.ts",
     "test:idser-multimodal-inventory-candidates": "jiti tests/idser-multimodal-inventory-candidates.test.ts",
     "test:idser-multimodal-structural-fit-partition": "jiti tests/idser-multimodal-structural-fit-partition.test.ts",
     "test:provider-admitted-worker": "jiti tests/provider-admitted-worker.test.ts && jiti tests/provider-admitted-worker.integration.test.ts && jiti tests/provider-work-admission.integration.test.ts && jiti tests/interactive-provider-work-admission.integration.test.ts",
