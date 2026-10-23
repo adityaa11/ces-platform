@@ -2,7 +2,7 @@
 
 - **Ticket:** GHR-02B — Atomic NDV1 acceptance integration and pointer-only pg-boss publication
 - **State:** `awaiting_review`
-- **Implementation/review target:** pending commit
+- **Implementation/review target:** `dde68c56` — `feat(ghr): publish accepted NDV1 handoff pointer`
 - **Authority:** [GHR-02B frozen ticket](../Backend_Phase/tickets/GHR_Phase/GHR-02B-atomic-ndv1-acceptance-and-pg-boss-publication.md) and its incorporated [GHR v0.6 §§5.1, 6, 8–10](../Backend_Phase/atlas-generic-handoff-router-implementation-context-v0.6-review.md); GHR-02A CK PASS at `5bdac8c2`.
 - **Runtime evidence exception:** the user explicitly authorized writes to the canonical database/volume after the clone-only Atlas server failed to expose a port. The fresh manual project-card/PDF proof below is therefore canonical, not a substitute silently labelled as clone evidence. The isolated clone remains the PostgreSQL/pg-boss commit/replay/rollback harness.
 
