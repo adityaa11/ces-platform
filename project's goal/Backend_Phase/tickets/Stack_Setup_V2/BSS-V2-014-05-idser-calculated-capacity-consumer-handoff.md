@@ -1,6 +1,6 @@
 # BSS-V2-014-05 — IDSER calculated-capacity consumer handoff
 
-- **State:** `planned`; **future IDSER successor ownership, not BSS-V2-005/006 implementation scope**. This is a frozen handoff candidate, not GO, BSS implementation authority, isolated-environment repair, or provider authorization.
+- **State:** `frozen`; contract freeze: [BSS-V2-014-05 contract freeze 001](../../../feedback/BSS-V2-014-05-contract-freeze-001.md). **Future IDSER successor ownership, not BSS-V2-005/006 implementation scope.** This is not GO, BSS implementation authority, isolated-environment repair, or provider authorization.
 - **Parent:** [BSS-V2-014 ticket set](BSS-V2-014-weighted-capacity-ticket-set.md).
 - **Dependencies:** freeze this contract before BSS-V2-014-03 GO; implementation requires BSS-V2-014-03 CK `PASS`. Production acceptance additionally requires BSS-V2-014-04-03 CK `PASS` (including the `-04-01/-02` predecessor evidence) and the parent-owned BSS-V2-014 coordinated activation/readiness gate. It does **not** depend on the `IDSER-012-05-07-02` isolated qualification-environment repair.
 
