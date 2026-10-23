@@ -17,7 +17,8 @@ test("BSS-V2-014-04-03 borrows only a proven idle background entitlement under t
     await sql.unsafe("SELECT bridge.bind_provider_work_route($1,1,$2)", [id, authorityVersion]);
   };
   const admit = async (id: string, serviceClass: "background" | "interactive") => (await sql.unsafe("SELECT * FROM bridge.admit_route_aware_provider_work_attempt($1,1,$2)", [id, serviceClass]))[0];
-  const artifacts = async (id: string) => (await sql.unsafe("SELECT (SELECT count(*)::int FROM bridge.provider_work_reservation WHERE logical_work_id=$1) reservations,(SELECT count(*)::int FROM bridge.provider_window_usage_ledger ledger JOIN bridge.provider_work_reservation reservation USING(reservation_id) WHERE reservation.logical_work_id=$1) ledgers,(SELECT count(*)::int FROM bridge.provider_work_dispatch WHERE logical_work_id=$1) dispatches,(SELECT count(*)::int FROM pgboss.job WHERE data->>'logicalWorkId'=$1) jobs", [id]))[0];
+  const admitNext = async () => (await sql.unsafe("SELECT * FROM bridge.admit_next_provider_work_attempt($1)", [domain]))[0];
+  const artifacts = async (id: string) => (await sql.unsafe("SELECT (SELECT count(*)::int FROM bridge.provider_work_reservation WHERE logical_work_id=$1) reservations,(SELECT count(*)::int FROM bridge.provider_window_usage_ledger ledger JOIN bridge.provider_work_reservation reservation USING(reservation_id) WHERE reservation.logical_work_id=$1) ledgers,(SELECT count(*)::int FROM bridge.provider_work_dispatch WHERE logical_work_id=$1) dispatches,(SELECT count(*)::int FROM pgboss.job WHERE data->>'logicalWorkId'=$1) jobs,(SELECT count(*)::int FROM bridge.provider_transport_claim WHERE logical_work_id=$1) claims", [id]))[0];
 
   try {
     await sql.unsafe("BEGIN");
@@ -52,6 +53,7 @@ test("BSS-V2-014-04-03 borrows only a proven idle background entitlement under t
     await sql.unsafe("INSERT INTO bridge.desired_admission_profile_route_binding_v2(quota_domain_id,desired_profile_version,route_id,authority_version,provider_capacity_profile_version,effective_mask,allocation_version) VALUES($1,'plan-v2',$2,$3,'cap-v2',$4::jsonb,'v1')", [domain, route, authority.authority_version, allocation.effectiveMask]);
     await sql.unsafe("INSERT INTO bridge.desired_admission_profile_activation(quota_domain_id,activation_revision,desired_profile_version,effective_from) VALUES($1,1,'plan-v2',clock_timestamp())", [domain]);
     await sql.unsafe("INSERT INTO bridge.active_desired_admission_profile(quota_domain_id,desired_profile_version,activation_revision,effective_from) VALUES($1,'plan-v2',1,clock_timestamp())", [domain]);
+    await sql.unsafe("SAVEPOINT borrowing_matrix");
 
     await register(`${suffix}-initial`, borrower, 5, authority.authority_version);
     assert.equal((await admit(`${suffix}-initial`, "background")).decision, "admitted");
@@ -60,19 +62,46 @@ test("BSS-V2-014-04-03 borrows only a proven idle background entitlement under t
     await register(`${suffix}-interactive`, interactive, 2, authority.authority_version);
     assert.equal((await admit(`${suffix}-interactive`, "interactive")).decision, "admitted", "borrowing never consumes interactive protection or headroom");
 
-    await sql.unsafe("SAVEPOINT borrower_negatives");
+    await sql.unsafe("SAVEPOINT disabled_borrower");
     await sql.unsafe("ALTER TABLE bridge.desired_admission_profile DISABLE TRIGGER ALL");
     await sql.unsafe("UPDATE bridge.desired_admission_profile SET profile=jsonb_set(profile,'{backgroundLanes,0,mayBorrowIdleCapacity}','false'::jsonb) WHERE quota_domain_id=$1 AND profile_version='plan-v2'", [domain]);
     await register(`${suffix}-disabled`, borrower, 1, authority.authority_version);
     assert.equal((await admit(`${suffix}-disabled`, "background")).decision, "unavailable");
-    assert.deepEqual(await artifacts(`${suffix}-disabled`), { reservations: 0, ledgers: 0, dispatches: 0, jobs: 0 });
-    await sql.unsafe("ROLLBACK TO SAVEPOINT borrower_negatives");
+    assert.deepEqual(await artifacts(`${suffix}-disabled`), { reservations: 0, ledgers: 0, dispatches: 0, jobs: 0, claims: 0 });
+    await sql.unsafe("ROLLBACK TO SAVEPOINT disabled_borrower");
 
     await register(`${suffix}-lender-demand`, lender, 1, authority.authority_version);
     await register(`${suffix}-blocked-by-demand`, borrower, 1, authority.authority_version);
     assert.equal((await admit(`${suffix}-blocked-by-demand`, "background")).decision, "unavailable", "an eligible waiting lender retains its own idle entitlement");
-    assert.deepEqual(await artifacts(`${suffix}-blocked-by-demand`), { reservations: 0, ledgers: 0, dispatches: 0, jobs: 0 });
+    assert.deepEqual(await artifacts(`${suffix}-blocked-by-demand`), { reservations: 0, ledgers: 0, dispatches: 0, jobs: 0, claims: 0 });
     assert.equal((await admit(`${suffix}-lender-demand`, "background")).decision, "admitted", "the lender is subsequently admitted without preempting either borrower");
+
+    await sql.unsafe("ROLLBACK TO SAVEPOINT borrowing_matrix");
+    await register(`${suffix}-exhausted-borrower-baseline`, borrower, 5, authority.authority_version);
+    assert.equal((await admit(`${suffix}-exhausted-borrower-baseline`, "background")).decision, "admitted");
+    await register(`${suffix}-exhausted-lender`, lender, 5, authority.authority_version);
+    assert.equal((await admit(`${suffix}-exhausted-lender`, "background")).decision, "admitted", "the peer's entire same-lock baseline is held before the borrow attempt");
+    await register(`${suffix}-exhausted-peer-denial`, borrower, 1, authority.authority_version);
+    assert.equal((await admit(`${suffix}-exhausted-peer-denial`, "background")).decision, "unavailable", "an exhausted peer has no lendable entitlement");
+    assert.deepEqual(await artifacts(`${suffix}-exhausted-peer-denial`), { reservations: 0, ledgers: 0, dispatches: 0, jobs: 0, claims: 0 }, "the exhausted-peer denial creates no reservation, ledger, dispatch, job, or transport claim");
+
+    await sql.unsafe("ROLLBACK TO SAVEPOINT borrowing_matrix");
+    await register(`${suffix}-selector-baseline`, borrower, 5, authority.authority_version);
+    const borrowerBaseline = await admit(`${suffix}-selector-baseline`, "background");
+    assert.equal(borrowerBaseline.decision, "admitted");
+    await register(`${suffix}-selector-borrowed`, borrower, 2, authority.authority_version);
+    const borrowerBorrowed = await admit(`${suffix}-selector-borrowed`, "background");
+    assert.equal(borrowerBorrowed.decision, "admitted");
+    const borrowerLiabilities = await sql.unsafe("SELECT reservation_id::text AS reservation_id,request_resource_envelope FROM bridge.provider_work_reservation WHERE reservation_id=$1", [borrowerBorrowed.reservation_id]);
+    await register(`${suffix}-selector-borrower`, borrower, 1, authority.authority_version);
+    await register(`${suffix}-selector-lender`, lender, 1, authority.authority_version);
+    await register(`${suffix}-selector-interactive`, interactive, 2, authority.authority_version);
+    const selectedInteractive = await admitNext();
+    assert.equal(selectedInteractive.logical_work_id, `${suffix}-selector-interactive`, "the fair selector retains protected interactive priority");
+    const selectedLender = await admitNext();
+    assert.equal(selectedLender.logical_work_id, `${suffix}-selector-lender`, "the fair selector excludes the above-baseline borrower while the lender is waiting and admits the lender on the next fair turn");
+    assert.deepEqual(await sql.unsafe("SELECT reservation_id::text AS reservation_id,request_resource_envelope FROM bridge.provider_work_reservation WHERE reservation_id=$1", [borrowerBorrowed.reservation_id]), borrowerLiabilities, "selector admission neither changes nor preempts the in-flight borrower liability");
+    assert.deepEqual(await artifacts(`${suffix}-selector-borrower`), { reservations: 0, ledgers: 0, dispatches: 0, jobs: 0, claims: 0 }, "the excluded above-baseline borrower creates no forbidden reservation or send artifact");
   } finally {
     await sql.unsafe("ROLLBACK").catch(() => undefined);
     await sql.end();
