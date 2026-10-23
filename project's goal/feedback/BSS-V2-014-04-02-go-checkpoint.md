@@ -2,6 +2,7 @@
 
 - **Ticket / batch:** `BSS-V2-014-04-02` / `BSS-V2-014`
 - **Authorized action:** explicit `GO BSS-V2-014-04-02` on 2026-10-23.
+- **Committed review target:** `5e3cf7a24b75f0b172a93d400b572cc57b7ef77e` (`feat(bss-v2): enforce atomic process baselines`).
 - **Ticket authority:** [frozen ticket](../Backend_Phase/tickets/Stack_Setup_V2/BSS-V2-014-04-02-atomic-process-baseline-enforcement.md).
 - **Dependencies consumed:** `BSS-V2-014-04-01` CK `PASS` at `a60bc7c49544d7dc0a099ee5e5970a8edeed846c`; `BSS-V2-014-02-02` CK `PASS` at `7d7612b55cf49ba071ea3eb89d86f8aaff3992ce`; established BSS-V2-006 reservation, recovery, effective-policy, and sole-worker boundaries are consumed unchanged.
 - **Scope:** migration `0100` evolves the existing binding, atomic admission, reservation fence, claim, and existing outbound transport DTO only. No borrowing, resolver, queue, scheduler, reservation family, provider send lane, or production activation was added.
