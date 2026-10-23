@@ -1,6 +1,6 @@
 # GHR-03B — Bridge delivery, lease fencing, and durable parsed-only ACK
 
-- **State:** `awaiting_review`; GO implementation/evidence is complete, but this is not a CK `PASS`, source redemption, planning activation, or authority to alter approved predecessor contracts.
+- **State:** `approved` following CK `PASS` for reviewed commit `c84b9df`; **Review batch:** `GHR-03B`. See [the CK review](../../../feedback/GHR-03B-c84b9df-review.md) and [GO checkpoint](../../../feedback/GHR-03B-go-checkpoint.md). This ticket remains Bridge delivery, lease fencing, and durable parsed-only receipt only; approval is not future `can_continue=true` behavior, source redemption, downstream semantic work, manual replay/promotion, or authority to alter approved predecessor contracts.
 - **Dependencies:** GHR-02B and GHR-03A CK PASS. Consume GHR-02A's read-only dispatch seam and GHR-03A's real semantic receiver without widening either boundary.
 - **Source:** [GHR v0.6 implementation context](../../atlas-generic-handoff-router-implementation-context-v0.6-review.md), §§3.1–3.2, 5.1, 6, 8–10.
 

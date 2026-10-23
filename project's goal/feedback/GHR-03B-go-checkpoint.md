@@ -2,6 +2,7 @@
 
 - **Ticket:** `GHR-03B` — Bridge delivery, lease fencing, and durable parsed-only ACK
 - **Authority:** [frozen GHR-03B ticket](../Backend_Phase/tickets/GHR_Phase/GHR-03B-bridge-delivery-fencing-and-parsed-only-ack.md), its incorporated GHR v0.6 §§3.1–3.2, 5.1, 6, 8–10, and predecessor CK PASS artifacts for GHR-02B and GHR-03A.
+- **Implementation/review target:** `c84b9dfac8cf04ad8bfdc8901b3fa3ad2134a67a` — `test(ghr): complete bridge delivery qualification`
 - **Checkpoint state:** `awaiting_review`; the bounded GO change is ready for CK. This is not a self-issued `PASS`.
 - **Database boundary:** an isolated writable PostgreSQL logical clone, `atlas-ghr03b-qualification-postgres` on host port `15435`, was derived from the read-only Compose source `atlas-canonical-perception-postgres-1`. The canonical Compose database and volumes were not modified.
 
