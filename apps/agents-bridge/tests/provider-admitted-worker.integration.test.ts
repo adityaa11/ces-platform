@@ -86,6 +86,24 @@ test("BSS-V2-006-03A consumes an admitted pg-boss job once and feeds the product
     backgroundCapacity: { rpm: 9, tpm: 90, rpd: 9, concurrency: 1 },
     backgroundLanes: [],
   };
+  const capacityLimits = {
+    rpm: { state: "known", value: 10 },
+    tpm: { state: "known", value: 100 },
+    rpd: { state: "known", value: 10 },
+    concurrency: { state: "known", value: 1 },
+  };
+  const capacityWindows = {
+    rpm: { kind: "fixed", windowSeconds: 60 },
+    tpm: { kind: "fixed", windowSeconds: 60 },
+    rpd: { kind: "fixed", windowSeconds: 86_400 },
+    concurrency: { kind: "fixed", windowSeconds: 60 },
+  };
+  const enforcedDimensions = {
+    rpm: { mode: "enforced", limitSource: "provider" },
+    tpm: { mode: "enforced", limitSource: "provider" },
+    rpd: { mode: "enforced", limitSource: "provider" },
+    concurrency: { mode: "enforced", limitSource: "provider" },
+  };
   let sends = 0;
   let crashAfterClaim = false;
   const providerOutboundTransport = async (input: { routeId: string; payloadReference: { kind: "bss-v2-006-03a-operational-fixture" } }) => {
@@ -130,7 +148,9 @@ test("BSS-V2-006-03A consumes an admitted pg-boss job once and feeds the product
     assert.equal(registered.length, 1, "the admitted execution worker must be registered before fixture admission");
     assert.equal(registered[0]?.state, "active", "the admitted execution worker must be active before fixture admission");
     await sql.unsafe("BEGIN");
-    await sql.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'cap-v1','fixture',$2,'{}',$3,'quota','operator_config','fixture','v1',now(),now())", [domain, [{ routeId: route, providerId: "fixture", modelOrProcessorId: "fixture-model", adapterVersion: "adapter-v1", qualificationRef: "qualification://03a-fixture", qualificationVersion: "qualification-v1", capability: "atlas.chat.default" }], { rpm: { kind: "fixed", windowSeconds: 60, limitUnits: 10 }, tpm: { kind: "fixed", windowSeconds: 60, limitUnits: 100 }, rpd: { kind: "fixed", windowSeconds: 86_400, limitUnits: 10 }, concurrency: { kind: "fixed", windowSeconds: 60, limitUnits: 1 } }]);
+    await sql.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'cap-v1','fixture',$2,$3::jsonb,$4::jsonb,'quota','operator_config','fixture','v1',now(),now())", [domain, [{ routeId: route, providerId: "fixture", modelOrProcessorId: "fixture-model", adapterVersion: "adapter-v1", qualificationRef: "qualification://03a-fixture", qualificationVersion: "qualification-v1", capability: "atlas.chat.default" }], capacityLimits, capacityWindows]);
+    await sql.unsafe("INSERT INTO bridge.provider_enforcement_policy_approval(approval_ref,quota_domain_id,provider_capacity_profile_version,route_id,policy_id,policy_version,permitted_unknown_dimensions,approved_by,approved_at) VALUES($1,$2,'cap-v1',$3,'policy','v1','{}'::jsonb,'fixture',now())", [`${suffix}-policy-approval`, domain, route]);
+    await sql.unsafe("INSERT INTO bridge.provider_enforcement_policy(quota_domain_id,provider_capacity_profile_version,route_id,policy_id,policy_version,approval_ref,dimensions,effective_from) VALUES($1,'cap-v1',$2,'policy','v1',$3,$4::jsonb,now())", [domain, route, `${suffix}-policy-approval`, enforcedDimensions]);
     await sql.unsafe("INSERT INTO bridge.workload_envelope_profile(workload_id,profile_version,active,compatible_process_kinds,structural_bound,estimator,quota_accounting_policy_id,output_reservation,safety_policy) VALUES($1,'v1',true,'[\"chat\"]','{}','{}','quota','{}','{}')", [`${suffix}-workload`]);
     await sql.unsafe("INSERT INTO bridge.provider_process_profile(process_id,profile_version,process_kind,capability,service_class,fairness_scope,allocation_policy,active,eligible_route_ids,workload_id,workload_profile_version) VALUES($1,'v1','chat','atlas.chat.default','interactive','{}','{}',true,$2,$3,'v1')", [`${suffix}-process`, [route], `${suffix}-workload`]);
     await sql.unsafe("INSERT INTO bridge.desired_admission_profile(quota_domain_id,profile_version,provider_capacity_profile_version,planner_version,effective_from,profile) VALUES($1,'plan-v1','cap-v1','fixture',now(),$2)", [domain, profile]);
@@ -202,6 +222,11 @@ test("BSS-V2-006-03A consumes an admitted pg-boss job once and feeds the product
     await worker.start();
     await waitForDurableDelivery(sql, worker, beforeClaimAdmission.job_id, beforeClaimAdmission.reservation_id, beforeClaimWork);
     assert.equal(sends, 3, "the restarted worker sends the pre-claim durable delivery once");
+    const restartedProjection = await sql.unsafe("SELECT * FROM bridge.read_process_capacity_window_usage_v1($1)", [domain]);
+    assert.ok(restartedProjection.some((row) => row.reservation_id === beforeClaimAdmission.reservation_id), "the restarted Bridge process leaves its durable reservation visible to the read-derived process projection");
+    const [restartedReconciliation] = await sql.unsafe("SELECT jsonb_object_agg(dimension_id,units) AS value FROM (SELECT dimension_id,sum(GREATEST(held_units,spent_units)) AS units FROM bridge.read_process_capacity_window_usage_v1($1) WHERE window_is_open GROUP BY dimension_id) usage", [domain]);
+    const [restartedDomainUsage] = await sql.unsafe("SELECT bridge.current_provider_operational_usage($1,'cap-v1',ARRAY['rpm','tpm','rpd','concurrency']) AS value", [domain]);
+    assert.deepEqual(restartedReconciliation.value, restartedDomainUsage.value, "after Bridge restart the process projection remains exactly reconciled to the held/spent domain ledger");
 
     // Competing admission calls serialize through the production SQL fence;
     // the one actual queue delivery is then consumed by the real worker.
@@ -224,7 +249,9 @@ test("BSS-V2-006-03A consumes an admitted pg-boss job once and feeds the product
     // The production worker also consumes the activation queue. No separate
     // scheduler is involved: activation materializes the pg-boss job and the
     // same Bridge runtime claims its durable wakeup dispatch.
-    await sql.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'cap-v2','fixture',$2,'{}',$3,'quota','operator_config','fixture','v2',now(),now())", [domain, [{ routeId: route }], { rpm: { kind: "fixed", windowSeconds: 60, limitUnits: 10 }, tpm: { kind: "fixed", windowSeconds: 60, limitUnits: 100 }, rpd: { kind: "fixed", windowSeconds: 86_400, limitUnits: 10 }, concurrency: { kind: "fixed", windowSeconds: 60, limitUnits: 1 } }]);
+    await sql.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'cap-v2','fixture',$2,$3::jsonb,$4::jsonb,'quota','operator_config','fixture','v2',now(),now())", [domain, [{ routeId: route }], capacityLimits, capacityWindows]);
+    await sql.unsafe("INSERT INTO bridge.provider_enforcement_policy_approval(approval_ref,quota_domain_id,provider_capacity_profile_version,route_id,policy_id,policy_version,permitted_unknown_dimensions,approved_by,approved_at) VALUES($1,$2,'cap-v2',$3,'policy','v1','{}'::jsonb,'fixture',now())", [`${suffix}-policy-approval-v2`, domain, route]);
+    await sql.unsafe("INSERT INTO bridge.provider_enforcement_policy(quota_domain_id,provider_capacity_profile_version,route_id,policy_id,policy_version,approval_ref,dimensions,effective_from) VALUES($1,'cap-v2',$2,'policy','v1',$3,$4::jsonb,now())", [domain, route, `${suffix}-policy-approval-v2`, enforcedDimensions]);
     await sql.unsafe("INSERT INTO bridge.desired_admission_profile(quota_domain_id,profile_version,provider_capacity_profile_version,planner_version,effective_from,profile) VALUES($1,'plan-v2','cap-v2','fixture',now(),$2)", [domain, profile]);
     await sql.unsafe("INSERT INTO bridge.desired_admission_profile_input(quota_domain_id,desired_profile_version,process_id,process_profile_version,workload_id,workload_profile_version) VALUES($1,'plan-v2',$2,'v1',$3,'v1')", [domain, `${suffix}-process`, `${suffix}-workload`]);
     await sql.unsafe("SELECT bridge.activate_desired_admission_profile($1,'plan-v2')", [domain]);

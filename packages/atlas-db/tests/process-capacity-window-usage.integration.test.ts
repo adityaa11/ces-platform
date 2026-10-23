@@ -27,6 +27,37 @@ test("BSS-V2-014-04-01 derives exact per-process window usage from the reservati
     concurrency: { kind: "fixed", windowSeconds: 60 },
   };
   const read = async () => sql.unsafe("SELECT * FROM bridge.read_process_capacity_window_usage_v1($1)", [domain]);
+  const reconcile = async () => {
+    const [reconciled] = await sql.unsafe("SELECT jsonb_object_agg(dimension_id,units) AS value FROM (SELECT dimension_id,sum(GREATEST(held_units,spent_units)) AS units FROM bridge.read_process_capacity_window_usage_v1($1) WHERE window_is_open GROUP BY dimension_id) usage", [domain]);
+    const [domainUsage] = await sql.unsafe("SELECT bridge.current_provider_operational_usage($1,'cap-v1',ARRAY['rpm','tpm','concurrency']) AS value", [domain]);
+    assert.deepEqual(reconciled.value, domainUsage.value, "process projection reconciles exactly to the existing domain held/spent ledger");
+  };
+  const readEffects = async () => {
+    const [effects] = await sql.unsafe(`
+      WITH reservations AS (
+        SELECT ledger.reservation_id
+        FROM bridge.provider_window_usage_ledger ledger
+        WHERE ledger.quota_domain_id = $1
+      )
+      SELECT
+        (SELECT count(*)::int FROM pgboss.job job WHERE job.data->>'reservationId' IN (SELECT reservation_id::text FROM reservations)) AS jobs,
+        (SELECT count(*)::int FROM bridge.provider_transport_claim claim WHERE claim.reservation_id IN (SELECT reservation_id FROM reservations)) AS transports,
+        (SELECT count(*)::int FROM bridge.provider_operational_feedback_event feedback WHERE feedback.reservation_id IN (SELECT reservation_id FROM reservations)) AS provider_calls,
+        (SELECT jsonb_build_object('rows', count(*), 'held', COALESCE(sum(held_units), 0), 'spent', COALESCE(sum(spent_units), 0)) FROM bridge.provider_window_usage_ledger ledger WHERE ledger.quota_domain_id = $1) AS accounting,
+        (SELECT count(*)::int FROM bridge.provider_work_wakeup_dispatch dispatch WHERE dispatch.quota_domain_id = $1) AS scheduler
+    `, [domain]);
+    return effects;
+  };
+  const lifecycleTrace = async () => (await sql.unsafe(`
+    SELECT reservation.reservation_id, reservation.state AS reservation_state,
+      work.logical_work_id, work.attempt_number, work.state AS work_state,
+      ledger.dimension_id, ledger.held_units, ledger.spent_units, ledger.state AS ledger_state
+    FROM bridge.provider_window_usage_ledger ledger
+    JOIN bridge.provider_work_reservation reservation ON reservation.reservation_id = ledger.reservation_id
+    JOIN bridge.provider_work_attempt work ON (work.logical_work_id, work.attempt_number) = (reservation.logical_work_id, reservation.attempt_number)
+    WHERE ledger.quota_domain_id = $1
+    ORDER BY reservation.reservation_id, ledger.dimension_id
+  `, [domain]));
   const feedback = (id: string, reservationId: string, disposition: "may_have_started" | "terminal_confirmed", usage?: object) => ({
     feedbackId: `${id}-feedback`, reservationId, attemptId: `${id}:1`, routeId: route, quotaDomainId: domain,
     desiredProfileVersion: "plan-v1", qualificationVersion: "qualified", observationSource: "qualified_adapter",
@@ -80,14 +111,40 @@ test("BSS-V2-014-04-01 derives exact per-process window usage from the reservati
     const retryReservation = await admit(unknown, 2);
     assert.notEqual(retryReservation, unknownReservation, "a retry receives a new reservation identity without rewriting the first attempt");
 
-    const [reconciled] = await sql.unsafe("SELECT jsonb_object_agg(dimension_id,units) AS value FROM (SELECT dimension_id,sum(GREATEST(held_units,spent_units)) AS units FROM bridge.read_process_capacity_window_usage_v1($1) WHERE window_is_open GROUP BY dimension_id) usage", [domain]);
-    const [domainUsage] = await sql.unsafe("SELECT bridge.current_provider_operational_usage($1,'cap-v1',ARRAY['rpm','tpm','concurrency']) AS value", [domain]);
-    assert.deepEqual(reconciled.value, domainUsage.value, "process projection reconciles exactly to the existing domain held/spent ledger");
+    await reconcile();
+    // A new projection-reader pass after the lifecycle's durable retry/restart
+    // boundary must observe the exact same ledger-derived state.  The separate
+    // worker fixture exercises the actual Bridge process restart.
+    const beforeRestartRows = await read();
+    const beforeRestartTrace = await lifecycleTrace();
+    const beforeRestartEffects = await readEffects();
+    const restartedRows = await read();
+    assert.deepEqual(restartedRows, beforeRestartRows, "the restart-scoped projection read retains the exact settled, released, and held-unknown rows");
+    await reconcile();
+    assert.deepEqual(await lifecycleTrace(), beforeRestartTrace, "a projection read does not mutate the reservation/window lifecycle trace");
+    assert.deepEqual(await readEffects(), beforeRestartEffects, "a projection read has zero job, transport, provider-call, accounting, and scheduler effects");
     await sql.unsafe("UPDATE bridge.provider_window_usage_ledger SET window_ends_at=clock_timestamp()-interval '1 second' WHERE reservation_id=$1", [completedReservation]);
     assert.ok((await read()).filter((row) => row.reservation_id === completedReservation).every((row) => !row.window_is_open), "window reset/expiry changes the read-derived eligibility without rewriting spent history");
 
-    const [inventory] = await sql.unsafe("SELECT to_regclass('bridge.process_capacity_window_usage_v1') AS projection_table, (SELECT count(*)::int FROM pg_proc WHERE pronamespace='bridge'::regnamespace AND proname='read_process_capacity_window_usage_v1') AS readers, (SELECT count(*)::int FROM pg_trigger WHERE tgrelid='bridge.provider_window_usage_ledger'::regclass AND NOT tgisinternal AND tgname ILIKE '%process_capacity%') AS projection_triggers");
-    assert.deepEqual(inventory, { projection_table: null, readers: 1, projection_triggers: 0 }, "the projection adds no table, writer, trigger, worker, counter, or second ledger");
+    const [inventory] = await sql.unsafe("SELECT to_regclass('bridge.process_capacity_window_usage_v1') AS projection_table, (SELECT count(*)::int FROM pg_proc WHERE pronamespace='bridge'::regnamespace AND proname='read_process_capacity_window_usage_v1') AS readers, (SELECT count(*)::int FROM pg_proc WHERE pronamespace='bridge'::regnamespace AND proname ILIKE '%process_capacity_window_usage%') AS projection_entrypoints, (SELECT count(*)::int FROM pg_trigger WHERE tgrelid='bridge.provider_window_usage_ledger'::regclass AND NOT tgisinternal AND tgname ILIKE '%process_capacity%') AS projection_triggers");
+    assert.deepEqual(inventory, { projection_table: null, readers: 1, projection_entrypoints: 1, projection_triggers: 0 }, "the source/DDL inventory identifies one reader and no projection table, writer, trigger, worker, counter, or second ledger");
+
+    const baselineRows = await read();
+    await sql.unsafe("SAVEPOINT stale_plan_identity");
+    await sql.unsafe("UPDATE bridge.provider_work_reservation SET activation_revision=activation_revision+99 WHERE reservation_id=$1", [retryReservation]);
+    await assert.rejects(read, /missing, stale, or foreign authoritative identity/i);
+    await sql.unsafe("ROLLBACK TO SAVEPOINT stale_plan_identity");
+    assert.deepEqual(await read(), baselineRows, "a stale reservation plan identity rolls back without changing the projection");
+    await sql.unsafe("SAVEPOINT stale_activation_identity");
+    await sql.unsafe("UPDATE bridge.provider_work_attempt SET activation_revision=activation_revision+99 WHERE logical_work_id=$1 AND attempt_number=2", [unknown]);
+    await assert.rejects(read, /missing, stale, or foreign authoritative identity/i);
+    await sql.unsafe("ROLLBACK TO SAVEPOINT stale_activation_identity");
+    assert.deepEqual(await read(), baselineRows, "a stale work activation identity rolls back without changing the projection");
+    await sql.unsafe("SAVEPOINT stale_capacity_identity");
+    await sql.unsafe("UPDATE bridge.provider_window_usage_ledger SET provider_capacity_profile_version='cap-stale' WHERE reservation_id=$1", [retryReservation]);
+    await assert.rejects(read, /missing, stale, or foreign authoritative identity/i);
+    await sql.unsafe("ROLLBACK TO SAVEPOINT stale_capacity_identity");
+    assert.deepEqual(await read(), baselineRows, "a stale provider-capacity identity rolls back without changing the projection");
 
     await sql.unsafe("SAVEPOINT missing_identity");
     await sql.unsafe("DELETE FROM bridge.provider_work_route_binding WHERE logical_work_id=$1 AND attempt_number=1", [unknown]);
@@ -101,6 +158,27 @@ test("BSS-V2-014-04-01 derives exact per-process window usage from the reservati
     await assert.rejects(() => sql.unsafe("INSERT INTO bridge.provider_window_usage_ledger SELECT * FROM bridge.provider_window_usage_ledger WHERE reservation_id=$1 LIMIT 1", [retryReservation]), /duplicate key/i);
     await sql.unsafe("ROLLBACK TO SAVEPOINT duplicate_identity");
     assert.equal((await read()).length, 12, "negative identity checks leave no partial projection row");
+
+    await sql.unsafe("SAVEPOINT missing_exclusion_approval");
+    await sql.unsafe("ALTER TABLE bridge.provider_enforcement_policy DISABLE TRIGGER provider_enforcement_policy_immutable");
+    await sql.unsafe("DELETE FROM bridge.desired_admission_profile_policy_binding WHERE quota_domain_id=$1 AND provider_capacity_profile_version='cap-v1' AND route_id=$2", [domain, route]);
+    await sql.unsafe("DELETE FROM bridge.provider_enforcement_policy WHERE quota_domain_id=$1 AND provider_capacity_profile_version='cap-v1' AND route_id=$2", [domain, route]);
+    await assert.rejects(read, /authorized enforcement policy is missing or stale/i);
+    await sql.unsafe("ROLLBACK TO SAVEPOINT missing_exclusion_approval");
+    assert.ok((await read()).every((row) => row.dimension_id !== "rpd"), "missing exclusion approval rolls back with no accepted RPD projection");
+
+    await sql.unsafe("SAVEPOINT revoked_exclusion_approval");
+    await sql.unsafe("INSERT INTO bridge.provider_enforcement_policy_revocation(quota_domain_id,provider_capacity_profile_version,route_id,policy_id,policy_version,revocation_ref,revoked_by) VALUES($1,'cap-v1',$2,'policy','v1',$3,'fixture')", [domain, route, `${domain}-rpd-revoked`]);
+    await assert.rejects(read, /authorized enforcement policy is revoked/i);
+    await sql.unsafe("ROLLBACK TO SAVEPOINT revoked_exclusion_approval");
+    assert.ok((await read()).every((row) => row.dimension_id !== "rpd"), "revoked exclusion approval rolls back with no accepted RPD projection");
+
+    await sql.unsafe("SAVEPOINT mismatched_exclusion_approval");
+    await sql.unsafe("ALTER TABLE bridge.provider_enforcement_policy_approval DISABLE TRIGGER provider_enforcement_policy_approval_immutable");
+    await sql.unsafe("UPDATE bridge.provider_enforcement_policy_approval SET permitted_unknown_dimensions=$3::jsonb WHERE approval_ref=$1 AND quota_domain_id=$2", [`${domain}-rpd-approval`, domain, { rpd: { providerState: "unknown", reason: "wrong_reason" } }]);
+    await assert.rejects(read, /unknown provider dimension rpd lacks its exact authorized exclusion/i);
+    await sql.unsafe("ROLLBACK TO SAVEPOINT mismatched_exclusion_approval");
+    assert.ok((await read()).every((row) => row.dimension_id !== "rpd"), "mismatched exclusion approval rolls back with no accepted RPD projection");
   } finally {
     await sql.unsafe("ROLLBACK").catch(() => undefined);
     await sql.end();
