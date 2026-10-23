@@ -11,7 +11,7 @@ Close GHR Test-1: the authenticated Bridge worker consumes the real GHR-02B poin
 ## Exact scope
 
 1. Add Bridge-owned `bridge.generic_handoff_delivery` runtime state with immutable handoff binding, lease owner/generation/expiry, terminal disposition, and bounded sanitized error class. `agents_bridge` alone may claim/ACK it; `atlas_app` has no receipt/lease writes.
-2. Add the existing pg-boss consumer path for `GenericHandoffJob/v1` / `handoffId` only. Authenticate the protected delivery context, load only that known handoff through GHR-02A's read seam, and reject any job payload as routing/body authority.
+2. Add the existing pg-boss consumer path for `GenericHandoffJob/v1` / `handoffId` only. Authenticate the protected service/DB-role delivery context, never a Better Auth user session, browser session, `callerSessionToken`, or user-session fallback; load only that known handoff through GHR-02A's read seam, and reject any job payload as routing/body authority.
 3. Before dispatch validate generic raw limits and strict fixed header/wrapper, exact persisted bytes/hash/encoding, current policy/revocation status, exact route/handler/body-contract pins, and GHR-03A's exact registration. The generic layer does not parse semantic fields.
 4. Invoke GHR-03A with a verified delivery command. Persist `parsed_only` only after its canonical parser accepts `false`; then stop. A fake receiver or mocked ACK is insufficient.
 5. Implement at-least-once physical delivery with exactly-once-like logical receipt through idempotency and lease fencing. Restart, lost ACK, duplicate/reordered job, concurrent claim, and stale/expired lease preserve one logical handoff and one terminal receipt.
@@ -28,11 +28,17 @@ Close GHR Test-1: the authenticated Bridge worker consumes the real GHR-02B poin
 - No `can_continue=true`, NDV1 redemption, normal source/grant/lifecycle checks for continuation, planner/provider work, future route, second activation gate, or semantic payload contract change.
 - No mutation of Atlas intent/policy or Perception acceptance, broad cross-role grant, scheduler/outbox/poller/trigger, manual terminal replay/reissue/promotion, or fallback/latest handler.
 
+## Required real-source end-to-end evidence
+
+- The GHR-03B E2E proof consumes the GHR-02B intent and pointer-only job produced from the real-source validation environment; it must not substitute a fixture job, synthetic handoff row, direct receiver invocation, or mocked receipt.
+- Use the explicitly named isolated writable clone derived from the read-only `atlas-canonical-perception` Compose source for GHR writes and worker delivery. The canonical Compose project and its volumes remain untouched. The actual Atlas/Bridge processes must use that clone's database URL and the protected service/DB-role context described above.
+- If GHR-02B had to create a new accepted NDV1, GHR-03B must consume that resulting job through the normal worker path. The final evidence binds the real project/workspace/bundle/document/execution identity, handoff ID, pg-boss job, real receiver invocation, and durable `parsed_only` receipt.
+
 ## Binary Review Contract
 
 | ID | PASS iff / direct negative | Required evidence |
 | --- | --- | --- |
-| GHR-03B-RC-01 | A genuine accepted NDV1 reaches the real GHR-03A receiver through the GHR-02B pointer-only job, parses the existing five-field payload, and produces one durable `parsed_only` receipt. | Isolated real PostgreSQL/pg-boss E2E proof with actual route, receiver, and receipt records. |
+| GHR-03B-RC-01 | A genuine accepted NDV1 reaches the real GHR-03A receiver through the GHR-02B pointer-only job, parses the existing five-field payload, and produces one durable `parsed_only` receipt. | Isolated real PostgreSQL/pg-boss E2E run on the protected logical clone, continuing the normal project-card/PDF acceptance path from GHR-02B, with actual route, receiver, and receipt records. |
 | GHR-03B-RC-02 | Forged issuer/producer, invalid header/wrapper, wrong route/scope/policy/handler/contract, disabled policy, duplicate-key/raw-body corruption, changed bytes/hash, and receiver false-only rejection become sanitized durable `blocked`/`quarantined` outcomes as classified. | False-only end-to-end negative tests, including GHR-03A adapter evidence. |
 | GHR-03B-RC-03 | Restart, lost ACK, duplicate/reordered jobs, concurrent claims, and stale/expired leases preserve one original false-only handoff and one terminal receipt; only classified transient faults retry and exhaustion is `retry_exhausted`. | Real queue/restart/lease-fence integration tests. |
 | GHR-03B-RC-04 | Every positive and negative delivery path has zero resolver, IDSER, BSS, SEM, provider, reconciliation, projection, and downstream queue effects. | Database/queue spies plus static dependency boundary test. |

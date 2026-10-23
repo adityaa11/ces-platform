@@ -7,7 +7,7 @@
 
 ## Outcome
 
-Bind the GHR-02A issuer to the real `staged-fair-local-v1` branch of `PostgresPerceptionAuthority.deliver()`. After the accepted cache/manifests and document member/execution lifecycle become durable, the same PostgreSQL transaction creates/reuses one false-only intent and sends one pointer-only `atlas-generic-handoff-v1` pg-boss job. Acceptance, intent, and publication commit or roll back together.
+Bind the GHR-02A issuer to the real `staged-fair-local-v1` branch of `PostgresPerceptionAuthority.deliver()`. After the accepted cache/manifests and document member/execution lifecycle facts are transactionally established and verified within the still-open PostgreSQL transaction, the trusted issuer persists the handoff intent and transactionally publishes the pg-boss job before the same transaction commits. Acceptance, intent, and publication commit or roll back together.
 
 ## Exact scope
 
@@ -27,11 +27,18 @@ Bind the GHR-02A issuer to the real `staged-fair-local-v1` branch of `PostgresPe
 - No Bridge worker, receipt/lease/fence state, job delivery retry, terminal disposition, route activation, semantic parser/receiver, ACK, or downstream effect.
 - No `can_continue=true`, reissue/manual replay/promotion, provider/BSS/IDSER/SEM/reconciliation/projection work, or cross-role write grant.
 
+## Required real-source validation environment
+
+- The source of real accepted-NDV1 evidence is the running Docker Compose project `atlas-canonical-perception`, not a fixture. Inspect its actual Postgres container and mounted `postgres-data` volume read-only to identify an eligible accepted record and its exact project/workspace/bundle/document/execution/fingerprint facts. `DATABASE_URL` or `ATLAS_DATABASE_URL` is a connection string to that running database; it is not obtained from, or a replacement for, the Docker volume identity.
+- Do not delete, reset, recreate, prune, migrate, or write to the canonical Compose volumes. Before exercising the issuer, transactional pg-boss publication, or a new acceptance flow, make a PostgreSQL-supported logical snapshot and restore it into an explicitly named isolated writable qualification database/volume. Atlas and Bridge test processes must use that isolated database URL.
+- A pre-existing completed NDV1 may be inspected to establish the real source facts, but it must never be reissued or replayed merely to make GHR run; it cannot prove a new atomic acceptance-to-issuance invocation. Create a new project through the normal project-card creation flow in the isolated environment, using a PDF from `docs/example/`, whenever fresh acceptance proof is required; let the normal Perception flow create the project, workspace, bundle, document, execution, and accepted NDV1. Seeding rows, copying a JSON fixture, or invoking the issuer directly is not substitute evidence.
+- Record the source/clone identities and prove that the observed intent and pointer-only job came from this normal acceptance path. The runtime behavior under review must be the same behavior reachable by a manual project-card/PDF run, not a test-only wiring path.
+
 ## Binary Review Contract
 
 | ID | PASS iff / direct negative | Required evidence |
 | --- | --- | --- |
-| GHR-02B-RC-01 | A real eligible accepted NDV1 commits accepted state, exactly one GHR-02A intent, and exactly one pointer-only job in one transaction; injected failure rolls back all three. | Isolated real PostgreSQL/pg-boss commit and rollback integration tests. |
+| GHR-02B-RC-01 | A real eligible accepted NDV1 commits accepted state, exactly one GHR-02A intent, and exactly one pointer-only job in one transaction; injected failure rolls back all three. | Isolated real PostgreSQL/pg-boss commit and rollback integration run on the protected logical clone, through the normal project-card/PDF acceptance path; record canonical-source and clone identities. |
 | GHR-02B-RC-02 | Live Perception-derived facts produce the sole frozen producer/route/pins/scope/body contract and exact false-only bytes; producer- or fact-shape tampering cannot alter the issued intent. | Source-boundary plus actual-issuance parity/negative tests. |
 | GHR-02B-RC-03 | Repeated completed execution or producer restart preserves the original logical handoff and singleton job identity, with no second intent, regenerated pins, polling, or mode change. | Real pg-boss producer-dedup/restart tests and source-boundary assertions. |
 | GHR-02B-RC-04 | Queue metadata contains only `GenericHandoffJob/v1` and `handoffId`; no consumer/receipt/lease state is created. | Queue inspection and static no-consumer/no-Bridge-write oracle. |
