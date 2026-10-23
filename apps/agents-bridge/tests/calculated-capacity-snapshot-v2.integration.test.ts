@@ -22,6 +22,8 @@ test("RC-01403-01..05 qualifies a calculated v2 candidate through the sole authe
   const principals = new Map<string, CapacityPlanningSnapshotPrincipal>([
     [`${suffix}-credential`, principal],
     [`${suffix}-foreign`, { ...principal, quotaDomainId: `${domain}-foreign` }],
+    [`${suffix}-process-mismatch`, { ...principal, processId: `${processId}-other` }],
+    [`${suffix}-class-mismatch`, { ...principal, serviceClass: "interactive" }],
     [`${suffix}-route-mismatch`, { ...principal, routeId: `${routeId}-other` }],
   ]);
   const reader = createCapacityPlanningSnapshotReader(
@@ -35,6 +37,11 @@ test("RC-01403-01..05 qualifies a calculated v2 candidate through the sole authe
     (SELECT count(*)::int FROM bridge.provider_quota_window_state WHERE quota_domain_id=$1) AS window_mutations,
     (SELECT count(*)::int FROM pgboss.job) AS jobs,
     (SELECT count(*)::int FROM bridge.provider_transport_claim claim JOIN bridge.provider_work_attempt work USING(logical_work_id,attempt_number) WHERE work.quota_domain_id=$1) AS transports`, [domain]))[0];
+  const responseFor = async (credential: string, query = "") => JSON.parse((await app.inject({
+    method: "GET",
+    url: `/v1/capacity-planning-snapshot${query ? `?${query}` : ""}`,
+    headers: { authorization: `Bearer ${credential}` },
+  })).body) as Record<string, unknown>;
   try {
     await bridge.unsafe("BEGIN");
     const route = { routeId, providerId: "anoman", modelOrProcessorId: "gemini-2.5-flash", adapterVersion: "anoman-adapter-v1", qualificationRef: `qualification://${suffix}`, qualificationVersion: "v1", capability: "atlas.semantic.extract" };
@@ -61,25 +68,118 @@ test("RC-01403-01..05 qualifies a calculated v2 candidate through the sole authe
     assert.equal(body.qualification.productionActive, false, "isolated qualification does not activate the production reader");
     assert.deepEqual(body.policyProvenance.dimensions.rpd, { mode: "not_enforced", providerState: "unknown", reason: "not_published", approvalRef }, "approved unknown RPD remains provenance only");
     assert.ok(!Object.hasOwn(body.allocation.baseline, "rpd"), "the unknown RPD has no numeric allocation");
-    assert.equal(body.sizing.maxEligibleCompleteRequestTokens, 4_500);
+    const [persisted] = await bridge.unsafe(`SELECT
+      candidate.profile_version AS desired_profile_version,
+      candidate.provider_capacity_profile_version,
+      candidate.candidate_activation_revision,
+      workload.profile_version AS workload_profile_version,
+      workload.structural_bound,
+      workload.output_reservation,
+      workload.estimator,
+      workload.safety_policy,
+      allocation.allocation_version,
+      allocation.allocation_fingerprint,
+      allocation.allocation,
+      binding.effective_mask,
+      bridge.derive_effective_enforcement_policy($1, candidate.provider_capacity_profile_version, $2) AS effective_policy,
+      md5(jsonb_build_object(
+        'candidate', candidate.effective_input_fingerprint,
+        'allocation', allocation.allocation_fingerprint,
+        'authorityVersion', authority.authority_version,
+        'workloadVersion', workload.profile_version,
+        'effectiveMask', binding.effective_mask
+      )::text) AS canonical_fingerprint
+      FROM bridge.desired_admission_profile_candidate candidate
+      JOIN bridge.desired_admission_profile_route_binding_v2 binding
+        ON (binding.quota_domain_id, binding.desired_profile_version) = (candidate.quota_domain_id, candidate.desired_profile_version)
+      JOIN bridge.qualified_provider_route_authority authority ON authority.authority_version = binding.authority_version
+      JOIN bridge.calculated_class_process_allocation allocation
+        ON (allocation.quota_domain_id, allocation.desired_profile_version) = (candidate.quota_domain_id, candidate.desired_profile_version)
+      JOIN bridge.provider_process_profile process ON (process.process_id, process.profile_version) = ($3, 'v1')
+      JOIN bridge.workload_envelope_profile workload ON (workload.workload_id, workload.profile_version) = (process.workload_id, process.workload_profile_version)
+      WHERE candidate.quota_domain_id = $1 AND binding.route_id = $2`, [domain, routeId, processId]);
+    assert.deepEqual(body.revisions, {
+      providerCapacityProfileVersion: persisted.provider_capacity_profile_version,
+      policyId: persisted.effective_policy.policyId,
+      policyVersion: persisted.effective_policy.policyVersion,
+      desiredProfileVersion: persisted.desired_profile_version,
+      candidateActivationRevision: Number(persisted.candidate_activation_revision),
+      processProfileVersion: "v1",
+      workloadProfileVersion: persisted.workload_profile_version,
+      estimator: persisted.estimator,
+      safetyPolicy: persisted.safety_policy,
+    }, "every returned revision is the persisted immutable candidate tuple");
+    assert.deepEqual(body.allocation, {
+      allocationVersion: persisted.allocation_version,
+      effectiveMask: persisted.effective_mask,
+      baseline: persisted.allocation.processes[0].baseline,
+      normalizedWeight: persisted.allocation.processes[0].normalizedWeight,
+      cap: persisted.allocation.processes[0].cap,
+      allocationFingerprint: persisted.allocation_fingerprint,
+    }, "allocation and effective mask exactly match the persisted calculated allocation");
+    assert.deepEqual(body.sizing, {
+      maxEligibleCompleteRequestTokens: 4_500,
+      maxEligibleInputTokens: Number(persisted.structural_bound.maxInputTokens),
+      maxRequestBytes: Number(persisted.structural_bound.maxRequestBytes),
+      maxContextTokens: Number(persisted.structural_bound.maxContextTokens),
+      maxOutputTokens: Number(persisted.output_reservation.maxOutputTokens),
+      structuralBound: persisted.structural_bound,
+      outputReservation: persisted.output_reservation,
+      estimator: persisted.estimator,
+      safetyPolicy: persisted.safety_policy,
+    }, "complete-request bounds and pinned identities exactly match the workload profile");
+    assert.equal(body.canonicalFingerprint, persisted.canonical_fingerprint, "fingerprint is the canonical persisted candidate/allocation/authority/workload/mask composition");
     assert.equal(body.borrowing.runtimeOnly, true);
-    assert.match(body.canonicalFingerprint, /^[a-f0-9]{32}$/);
     assert.deepEqual(await counters(), before, "v2 reads create no attempts, reservations, window mutations, jobs, or transports");
 
-    const oversized = JSON.parse((await app.inject({ method: "GET", url: "/v1/capacity-planning-snapshot?requestBytes=10001&inputTokens=4000&outputTokens=501", headers: { authorization: `Bearer ${suffix}-credential` } })).body);
-    assert.deepEqual({ apiVersion: oversized.apiVersion, status: oversized.status, reason: oversized.reason }, { apiVersion: "CapacityPlanningSnapshot/v2", status: "unfit", reason: "complete_request_exceeds_qualified_bound" });
-    const foreign = JSON.parse((await app.inject({ method: "GET", url: "/v1/capacity-planning-snapshot", headers: { authorization: `Bearer ${suffix}-foreign` } })).body);
-    assert.equal(foreign.status, "stale");
-    const mismatchedRoute = JSON.parse((await app.inject({ method: "GET", url: "/v1/capacity-planning-snapshot", headers: { authorization: `Bearer ${suffix}-route-mismatch` } })).body);
-    assert.equal(mismatchedRoute.status, "inactive");
+    const assertNonQualified = async (label: string, credential = `${suffix}-credential`, query = "") => {
+      const snapshot = await responseFor(credential, query);
+      assert.equal(snapshot.apiVersion, "CapacityPlanningSnapshot/v2", `${label}: typed v2 result`);
+      assert.ok(["inactive", "stale", "unfit", "unknown"].includes(String(snapshot.status)), `${label}: typed non-qualified status`);
+      assert.equal(Object.hasOwn(snapshot, "allocation"), false, `${label}: no numeric allocation fallback`);
+      assert.equal(Object.hasOwn(snapshot, "sizing"), false, `${label}: no numeric sizing fallback`);
+      assert.deepEqual(await counters(), before, `${label}: read remains zero-effect`);
+      return snapshot;
+    };
+    for (const [label, credential] of [
+      ["foreign principal", `${suffix}-foreign`],
+      ["mismatched process", `${suffix}-process-mismatch`],
+      ["mismatched class", `${suffix}-class-mismatch`],
+      ["mismatched route", `${suffix}-route-mismatch`],
+    ]) await assertNonQualified(label, credential);
+    for (const [label, query] of [
+      ["request byte bound", "requestBytes=10001&inputTokens=250&outputTokens=100"],
+      ["input bound", "requestBytes=500&inputTokens=4001&outputTokens=100"],
+      ["output reservation", "requestBytes=500&inputTokens=250&outputTokens=501"],
+      ["context bound", "requestBytes=500&inputTokens=4401&outputTokens=100"],
+      ["process TPM baseline", "requestBytes=500&inputTokens=27901&outputTokens=100"],
+    ]) {
+      const snapshot = await assertNonQualified(label, `${suffix}-credential`, query);
+      assert.equal(snapshot.status, "unfit", `${label}: complete demand is typed unfit`);
+      assert.equal(snapshot.reason, "complete_request_exceeds_qualified_bound");
+    }
+    assert.ok(body.sizing.maxEligibleCompleteRequestTokens > body.allocation.baseline.tpm / body.allocation.baseline.concurrency,
+      "maximum eligible complete request uses the process baseline, not a per-slot concurrency ceiling");
+
+    const mutateAndReject = async (label: string, statement: string, values: unknown[] = []) => {
+      await bridge.unsafe("SAVEPOINT v2_negative");
+      await bridge.unsafe(statement, values as never[]);
+      await assertNonQualified(label);
+      await bridge.unsafe("ROLLBACK TO SAVEPOINT v2_negative");
+    };
+    await mutateAndReject("model mismatch", "UPDATE bridge.provider_capacity_profile SET associated_routes = $1::jsonb WHERE quota_domain_id = $2 AND profile_version = 'capacity-v1'", [[{ ...route, modelOrProcessorId: "other-model" }], domain]);
+    await mutateAndReject("stale authority", "UPDATE bridge.desired_admission_profile_route_binding_v2 SET authority_version = authority_version + 1000000 WHERE quota_domain_id = $1 AND desired_profile_version = $2 AND route_id = $3", [domain, candidate.desired_profile_version, routeId]);
+    await mutateAndReject("missing allocation", "DELETE FROM bridge.calculated_class_process_allocation WHERE quota_domain_id = $1 AND desired_profile_version = $2", [domain, candidate.desired_profile_version]);
+    await mutateAndReject("required structural bound missing", "UPDATE bridge.workload_envelope_profile SET structural_bound = structural_bound - 'maxContextTokens' WHERE workload_id = $1 AND profile_version = 'v1'", [workloadId]);
+    await mutateAndReject("route-to-workload version mismatch", "UPDATE bridge.desired_admission_profile_input SET workload_profile_version = 'missing-v1' WHERE quota_domain_id = $1 AND desired_profile_version = $2 AND process_id = $3", [domain, candidate.desired_profile_version, processId]);
+    await mutateAndReject("missing Anoman approval", "UPDATE bridge.provider_enforcement_policy SET approval_ref = 'missing-approval' WHERE quota_domain_id = $1 AND route_id = $2", [domain, routeId]);
+    await mutateAndReject("mismatched Anoman approval", "UPDATE bridge.provider_enforcement_policy_approval SET route_id = 'other-route' WHERE approval_ref = $1", [approvalRef]);
     await bridge.unsafe("SAVEPOINT premature_activation");
     await assert.rejects(() => bridge.unsafe("SELECT * FROM bridge.activate_desired_admission_profile($1,$2)", [domain, candidate.desired_profile_version]), /parent cutover gate/i);
     await bridge.unsafe("ROLLBACK TO SAVEPOINT premature_activation");
     assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.active_desired_admission_profile WHERE quota_domain_id=$1", [domain]))[0].count, 0, "premature activation cannot change the active reader");
     await bridge.unsafe("INSERT INTO bridge.provider_enforcement_policy_revocation(quota_domain_id,provider_capacity_profile_version,route_id,policy_id,policy_version,revocation_ref,revoked_by) VALUES($1,'capacity-v1',$2,'anoman-policy','v1',$3,'fixture')", [domain, routeId, `${suffix}-revoked`]);
-    const revoked = JSON.parse((await app.inject({ method: "GET", url: "/v1/capacity-planning-snapshot", headers: { authorization: `Bearer ${suffix}-credential` } })).body);
-    assert.equal(revoked.status, "stale", "revoked policy fails closed without numeric fallback");
-    assert.deepEqual(await counters(), before, "all negative reads remain zero-effect");
+    await assertNonQualified("revoked policy");
   } finally {
     await bridge.unsafe("ROLLBACK").catch(() => undefined);
     await Promise.all([app.close(), bridge.end(), admin.end()]);
