@@ -1,6 +1,6 @@
 # BSS-V2-014-04-02 — Atomic process baseline and cap enforcement
 
-- **State:** `awaiting_review`; GO implementation is committed at `5e3cf7a24b75f0b172a93d400b572cc57b7ef77e` and is pending CK. Borrowing, provider operation, and route activation remain unauthorized.
+- **State:** `approved` following CK `PASS` for remediation commit `e4d4dae`; **Review batch:** `BSS-V2-014`. Borrowing, provider operation, and route activation remain unauthorized.
 - **Parent:** [BSS-V2-014-04 split map](BSS-V2-014-04-atomic-process-admission-and-borrowing.md).
 - **Dependencies:** BSS-V2-014-04-01 CK `PASS`, BSS-V2-014-02-02 CK `PASS`, and approved BSS-V2-006 fairness/recovery predecessors.
 
