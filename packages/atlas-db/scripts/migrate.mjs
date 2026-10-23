@@ -71,6 +71,8 @@ migrations.push("0099_bssv20140401_process_capacity_window_usage_cfc");
 migrations.push("0100_bssv20140402_atomic_process_baseline_enforcement");
 migrations.push("0101_bssv20140403_background_idle_borrowing");
 migrations.push("0102_bssv200606_public_admission_authority_cutover");
+migrations.push("0103_ghr02a_immutable_issuance");
+migrations.push("0104_ghr02a_dispatch_function_schema_access");
 const readMigration = async (name) => {
   let migration = await readFile(new URL(`../migrations/${name}.sql`, import.meta.url), "utf8");
   for (const [token, value] of Object.entries(replacements)) migration = migration.replaceAll(token, value.replaceAll("'", "''"));

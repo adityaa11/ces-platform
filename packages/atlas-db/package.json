@@ -30,6 +30,8 @@
     "test:extraction-acceptance": "jiti tests/extraction-acceptance.integration.test.ts",
     "test:reconciliation-acceptance": "jiti tests/reconciliation-acceptance.integration.test.ts",
     "test:semantic-batch-plan-input": "jiti tests/semantic-batch-plan-input.integration.test.ts",
+    "test:ghr-02a": "jiti tests/ghr-02a-immutable-issuance.integration.test.ts",
+    "test:ghr-02a-boundary": "node --test tests/ghr-02a-boundary.test.mjs",
     "test:immutable-semantic-corpus-plan": "jiti tests/immutable-semantic-corpus-plan.integration.test.ts",
     "test:immutable-semantic-corpus-plan-v3": "jiti tests/immutable-semantic-corpus-plan-v3.test.ts",
     "test:semantic-batch-v3-reference-resolution": "jiti tests/semantic-batch-v3-reference-resolution.test.ts",
