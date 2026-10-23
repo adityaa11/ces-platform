@@ -1,6 +1,6 @@
 # GHR-03A — Semantic batch-plan receiver adapter and parse-only decision
 
-- **State:** `awaiting_review` following GO implementation commit `f5532b5f`; see [GO checkpoint](../../../feedback/GHR-03A-go-checkpoint.md). This is not CK PASS, queue consumption, trusted-dispatch authentication, durable receipt, or authority to alter an approved predecessor contract.
+- **State:** `approved` following CK `PASS` for reviewed commit `f5532b5f`; **Review batch:** `GHR-03A`. See the [CK review](../../../feedback/GHR-03A-f5532b5-review.md) and [GO checkpoint](../../../feedback/GHR-03A-go-checkpoint.md). This ticket remains the pure semantic receiver/parse-only boundary; approval is not queue consumption, trusted-dispatch authentication, durable receipt, or authority to alter an approved predecessor contract.
 - **Dependency:** GHR-02B CK PASS. Consume its sole Test-1 pins and the approved GHR-01A/B generic and registry foundations.
 - **Successor:** GHR-03B alone makes this receiver reachable through Bridge delivery and persists its outcome.
 - **Source:** [GHR v0.6 implementation context](../../atlas-generic-handoff-router-implementation-context-v0.6-review.md), §§3.1–3.2, 4, 5.1, 8–10.
