@@ -1,8 +1,34 @@
-# GHR-03 — Real semantic/batch-plan receiver ingress and parsed-only ACK
+# GHR-03 — Superseded split manifest: semantic receiver and durable delivery ACK
 
-- **State:** `planned`; not GO, CFC, CK PASS, or authority to expand the GHR Test-1 boundary.
-- **Predecessors:** [GHR-01 — generic envelope and main → branch registry](GHR-01-generic-envelope-and-main-branch-registry.md) and GHR-02 same-transaction issuance/dispatch must be complete at their approved scopes.
+- **State:** `superseded-by-split`; this manifest is planning-only. It is not GO, CFC, CK PASS, route activation, or authority to expand the GHR Test-1 boundary.
 - **Source:** [Generic Handoff Router (GHR) — Implementation Context v0.6](../../atlas-generic-handoff-router-implementation-context-v0.6-review.md), §§3.1–3.2, 5.1, 6, 8–10.
+- **Reason:** the former ticket coupled the semantic-owned payload interpretation boundary with Bridge-owned authenticated delivery, durable lease/fence state, retries, and terminal receipts. Those have independent failure modes and review evidence, and cannot be safely remediated as one GO → CK → CFC → HMN unit.
+
+## Replacement tickets and fixed dependency order
+
+1. [GHR-03A — Semantic batch-plan receiver adapter and parse-only decision](GHR-03A-semantic-batch-plan-receiver-adapter.md), after GHR-02B CK PASS.
+2. [GHR-03B — Bridge delivery, lease fencing, and durable parsed-only ACK](GHR-03B-bridge-delivery-fencing-and-parsed-only-ack.md), after GHR-02B and GHR-03A CK PASS.
+
+GHR-03A makes the exact first branch and receiver-owned canonical parser/false-only parse decision available, but has no queue, trusted-dispatch lookup, Bridge state, or durable ACK. GHR-03B is the only ticket that consumes a job, authenticates/validates the persisted handoff, claims a lease, invokes the actual GHR-03A receiver, and writes `parsed_only`. Its CK contains the complete real Test-1 E2E proof; no fake-only ACK can close the set.
+
+## Preserved Test-1 contract
+
+The split preserves the sole positive flow: accepted NDV1 → GHR-02B pointer-only pg-boss job → authenticated exact `semantic/batch-plan` route → existing five-field canonical parse → one durable idempotent `parsed_only` receipt → STOP. `false` remains the only mode. Neither successor may redeem source, call `resolveBackground()`, plan, use BSS/SEM/provider/reconciliation/projection, add a second activation gate, fallback/latest-route selection, manual replay/reissue/promotion, sensitive diagnostics, or any future route.
+
+## Original-review mapping
+
+| Former control | Replacement owner |
+| --- | --- |
+| GHR-03-RC-01 | GHR-03B-RC-01, using GHR-03A's real receiver |
+| GHR-03-RC-02 | GHR-03A-RC-02 and GHR-03B-RC-02 |
+| GHR-03-RC-03 | GHR-03B-RC-03 |
+| GHR-03-RC-04 | GHR-03A-RC-03 and GHR-03B-RC-02 |
+| GHR-03-RC-05 | GHR-03A-RC-04 and GHR-03B-RC-04 |
+| GHR-03-RC-06 | GHR-03B-RC-05 |
+
+## Historical source contract — non-executable
+
+The material below is preserved only for audit/mapping. It has been superseded by the two tickets above and must not be used as GO/CK/CFC/HMN authority.
 
 ## Outcome
 

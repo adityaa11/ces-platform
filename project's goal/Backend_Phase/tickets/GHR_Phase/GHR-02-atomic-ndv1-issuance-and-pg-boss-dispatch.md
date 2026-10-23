@@ -1,9 +1,36 @@
-# GHR-02 — Same-transaction accepted-NDV1 issuance and pointer-only pg-boss dispatch
+# GHR-02 — Superseded split manifest: trusted issuance and atomic publication
 
-- **State:** `planned`; not GO, CFC, CK PASS, or authority to alter approved predecessor contracts.
-- **Parent / predecessor:** [GHR-01 — generic envelope and main → branch registry](GHR-01-generic-envelope-and-main-branch-registry.md) must be complete at its approved scope.
+- **State:** `superseded-by-split`; this manifest is planning-only. It is not GO, CFC, CK PASS, route activation, or authority to alter an approved predecessor contract.
 - **Source:** [Generic Handoff Router (GHR) — Implementation Context v0.6](../../atlas-generic-handoff-router-implementation-context-v0.6-review.md), §§5.1, 6, 8–10.
-- **Successor:** GHR-03 owns the real `semantic/batch-plan` receiving ingress and `parsed_only` ACK.
+- **Reason:** the former ticket coupled two independently reviewable authority boundaries: Atlas-owned policy/immutable issuance truth and the Perception-owned acceptance-transaction integration. It also mixed producer idempotency with Bridge delivery recovery, which belongs to the receiver-side successor.
+
+## Replacement tickets and fixed dependency order
+
+1. [GHR-02A — Immutable trusted issuance records and false-only route-policy authority](GHR-02A-immutable-issuance-and-route-policy.md), after GHR-01B CK PASS.
+2. [GHR-02B — Atomic NDV1 acceptance integration and pointer-only pg-boss publication](GHR-02B-atomic-ndv1-acceptance-and-pg-boss-publication.md), after GHR-02A CK PASS.
+3. [GHR-03A — Semantic batch-plan receiver adapter and parse-only decision](GHR-03A-semantic-batch-plan-receiver-adapter.md), after GHR-02B CK PASS.
+4. [GHR-03B — Bridge delivery, lease fencing, and durable parsed-only ACK](GHR-03B-bridge-delivery-fencing-and-parsed-only-ack.md), after GHR-02B and GHR-03A CK PASS.
+
+GHR-02A owns durable Atlas issuance truth and a narrow read-only dispatch seam, but no source acceptance change or queue publication. GHR-02B alone binds that issuer to the real accepted-NDV1 transaction and publishes the pointer-only job. It has no Bridge consumer, receipt, lease, or delivery retry. GHR-03A alone owns the semantic route adapter and false-only parse decision. GHR-03B alone owns Bridge consumption, durable delivery state, retry/fencing, and the real Test-1 E2E proof.
+
+## Preserved Test-1 contract
+
+The split changes none of the former outcome: an eligible `staged-fair-local-v1` accepted NDV1 produces one immutable, trusted, `can_continue=false` intent and one pointer-only pg-boss job in the same transaction; the real `semantic/batch-plan` receiver strictly parses the existing five-field payload and ends in one durable `parsed_only` receipt. No successor may issue/test `true`, redeem the source, run a resolver/planner/BSS/SEM/provider path, add a scheduler/outbox/poller/trigger, introduce fallback routing, or create replay/reissue/promotion surface.
+
+## Original-review mapping
+
+| Former control | Replacement owner |
+| --- | --- |
+| GHR-02-RC-01 | GHR-02B-RC-01 |
+| GHR-02-RC-02 | GHR-02A-RC-01 and GHR-02B-RC-02 |
+| GHR-02-RC-03 | GHR-02A-RC-02 and GHR-02B-RC-02 |
+| GHR-02-RC-04 | GHR-02B-RC-03; Bridge delivery retry/lease evidence moves to GHR-03B-RC-03 |
+| GHR-02-RC-05 | GHR-02A-RC-03 and GHR-02B-RC-04 |
+| GHR-02-RC-06 | GHR-02B-RC-05 |
+
+## Historical source contract — non-executable
+
+The material below is preserved only for audit/mapping. It has been superseded by the four tickets above and must not be used as GO/CK/CFC/HMN authority.
 
 ## Outcome
 

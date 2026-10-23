@@ -7,8 +7,8 @@
 
 1. [GHR-01A — Generic envelope, raw ingress, and byte-integrity contract](GHR-01A-generic-envelope-raw-ingress-and-byte-integrity.md)
 2. [GHR-01B — Directory-modular main → branch registry foundation](GHR-01B-directory-modular-main-branch-registry.md), after GHR-01A CK PASS
-3. GHR-02 — same-transaction accepted-NDV1 issuance and pointer-only pg-boss dispatch, after GHR-01B CK PASS
-4. GHR-03 — actual `semantic/batch-plan` receiver ingress and durable `parsed_only` ACK, after GHR-02
+3. [GHR-02 split manifest](GHR-02-atomic-ndv1-issuance-and-pg-boss-dispatch.md): GHR-02A immutable issuance/policy authority, then GHR-02B atomic accepted-NDV1 publication, after GHR-01B CK PASS
+4. [GHR-03 split manifest](GHR-03-semantic-batch-plan-receiver-parsed-only-ack.md): GHR-03A semantic receiver adapter, then GHR-03B durable Bridge delivery/`parsed_only` ACK, after GHR-02B
 
 The split changes neither the Test-1 boundary nor the architecture. It preserves `can_continue=false` only, no active route, no issuance or dispatch in either replacement ticket, the receiver-owned `SemanticBatchPlanInput/v1` parser, and the separation from provider/model and BSS registries.
 
