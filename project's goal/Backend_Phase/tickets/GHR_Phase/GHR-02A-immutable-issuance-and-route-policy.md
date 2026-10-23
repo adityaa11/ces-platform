@@ -1,6 +1,6 @@
 # GHR-02A — Immutable trusted issuance records and false-only route-policy authority
 
-- **State:** `awaiting_review` for implementation commit `5bdac8c2`; not CK PASS, acceptance-path activation, queue publication, or authority to alter approved predecessor contracts. See the [GO checkpoint](../../../feedback/GHR-02A-go-checkpoint.md).
+- **State:** `approved` following CK `PASS` for reviewed commit `5bdac8c2`; **Review batch:** `GHR-02A`. See the [CK review](../../../feedback/GHR-02A-5bdac8c2-review.md) and [GO checkpoint](../../../feedback/GHR-02A-go-checkpoint.md). This ticket remains an immutable issuance/read-only dispatch seam only; approval is not acceptance-path activation, queue publication, or authority to alter approved predecessor contracts.
 - **Dependency:** GHR-01B CK PASS. Consume GHR-01A's generic contract and GHR-01B's exact registration metadata; do not reopen their raw-ingress, hashing, or registry foundations.
 - **Successor:** GHR-02B alone binds this issuance seam to `PostgresPerceptionAuthority.deliver()` and sends pg-boss work.
 - **Source:** [GHR v0.6 implementation context](../../atlas-generic-handoff-router-implementation-context-v0.6-review.md), §§5.1, 6, 8–10.
