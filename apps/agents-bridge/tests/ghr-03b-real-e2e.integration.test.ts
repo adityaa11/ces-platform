@@ -82,19 +82,25 @@ test("GHR-03B delivery code has no downstream domain dependency", async () => {
   assert.match(delivery, /read_generic_handoff_dispatch_v1/);
 });
 
-test("GHR-03B durably classifies corruption, policy blocking, duplicate acknowledgement, and an expired fence", { skip: !enabled || !databaseUrl }, async () => {
+test("GHR-03B proves the complete RC-02 negative matrix without downstream effects", { skip: !enabled || !databaseUrl }, async () => {
   const admin = postgres(databaseUrl!, { max: 1 });
   const bridgeUrl = new URL(databaseUrl!);
   bridgeUrl.username = "agents_bridge";
   bridgeUrl.password = process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only";
   const boss = new PgBoss({ connectionString: bridgeUrl.toString(), schema: "pgboss", migrate: false, supervise: false, schedule: false, createSchema: false });
   const suffix = randomUUID();
-  const makeIssued = async (kind: "valid" | "corrupt") => {
-    const handoffId = `ghr-03b-${kind}-${suffix}-${randomUUID()}`;
+  const makeIssued = async (label: string, options: {
+    readonly body?: string;
+    readonly hashBody?: string;
+    readonly alterHeader?: (header: any) => void;
+    readonly trustedHeader?: unknown;
+  } = {}) => {
+    const handoffId = `ghr-03b-${label}-${suffix}-${randomUUID()}`;
     const payload = canonicalSemanticBatchPlanInputV1({ normalizedDocumentRef: "a".repeat(64), perceptionExecutionId: `execution-${suffix}`, sourceSha256: "b".repeat(64), normalizedDocumentVersion: "v1", normalizedDocumentFingerprint: "c".repeat(64) });
-    const body = `{"can_continue":false,"payload":${payload}}`;
-    const bodyBytes = Buffer.from(kind === "corrupt" ? `${body} ` : body, "utf8");
-    const expectedHash = createHash("sha256").update(Buffer.from(body, "utf8")).digest("hex");
+    const canonicalBody = `{"can_continue":false,"payload":${payload}}`;
+    const body = options.body ?? canonicalBody;
+    const bodyBytes = Buffer.from(body, "utf8");
+    const expectedHash = createHash("sha256").update(Buffer.from(options.hashBody ?? body, "utf8")).digest("hex");
     const header = {
       protocol: "GenericHandoffEnvelope/v1", handoffId, idempotencyKey: `key-${handoffId}`,
       producer: { processKey: "perception.acceptance", executionId: `execution-${suffix}` },
@@ -103,9 +109,10 @@ test("GHR-03B durably classifies corruption, policy blocking, duplicate acknowle
       scope: { projectId: `project-${suffix}`, workspaceId: `workspace-${suffix}`, bundleId: `bundle-${suffix}`, documentId: `document-${suffix}` },
       correlation: { workflowId: `workflow-${suffix}` }, integrity: { bodyEncoding: "canonical-json-v1", bodySha256: expectedHash }, issuedAt: "2026-10-24T00:00:00.000Z",
     };
+    options.alterHeader?.(header);
     await admin.unsafe(`INSERT INTO atlas.generic_handoff_intent(
       handoff_id,idempotency_key,producer_execution_id,project_id,workspace_id,bundle_id,document_id,policy_version,handler_version,body_contract_type,body_contract_version,route_main,route_branch,can_continue,body_encoding,body_bytes,body_sha256,trusted_header,issued_at
-    ) VALUES ($1,$2,$3,$4,$5,$6,$7,'v1','v1','SemanticBatchPlanInput','v1','semantic','batch-plan',false,'canonical-json-v1',$8,$9,$10::jsonb,now())`, [handoffId, header.idempotencyKey, header.producer.executionId, header.scope.projectId, header.scope.workspaceId, header.scope.bundleId, header.scope.documentId, bodyBytes, expectedHash, JSON.stringify(header)]);
+    ) VALUES ($1,$2,$3,$4,$5,$6,$7,'v1','v1','SemanticBatchPlanInput','v1','semantic','batch-plan',false,'canonical-json-v1',$8,$9,$10::jsonb,now())`, [handoffId, header.idempotencyKey, header.producer.executionId, header.scope.projectId ?? `project-${suffix}`, header.scope.workspaceId ?? `workspace-${suffix}`, header.scope.bundleId ?? `bundle-${suffix}`, header.scope.documentId ?? `document-${suffix}`, bodyBytes, expectedHash, JSON.stringify(options.trustedHeader ?? header)]);
     return handoffId;
   };
   try {
@@ -117,14 +124,24 @@ test("GHR-03B durably classifies corruption, policy blocking, duplicate acknowle
     assert.equal(await deliverGenericHandoffJob({ database, job: { type: "GenericHandoffJob/v1", handoffId: valid }, leaseSeconds: 10, finalAttempt: false }), "parsed_only", "a lost acknowledgement/reordered duplicate observes the terminal receipt");
     assert.equal((await admin.unsafe("SELECT count(*)::int AS count FROM bridge.generic_handoff_delivery WHERE handoff_id=$1 AND disposition='parsed_only'", [valid]))[0]!.count, 1);
 
-    const stale = await makeIssued("valid");
-    await admin.unsafe("INSERT INTO bridge.generic_handoff_delivery(handoff_id,idempotency_key,body_sha256,producer_execution_id,route_main,route_branch,policy_version,handler_version,body_contract_type,body_contract_version,lease_owner,lease_generation,lease_expires_at,claimed_at) SELECT handoff_id,idempotency_key,body_sha256,producer_execution_id,route_main,route_branch,policy_version,handler_version,body_contract_type,body_contract_version,'00000000-0000-0000-0000-000000000001',1,now()-interval '1 second',now()-interval '11 seconds' FROM atlas.generic_handoff_intent WHERE handoff_id=$1", [stale]);
-    assert.equal(await deliverGenericHandoffJob({ database, job: { type: "GenericHandoffJob/v1", handoffId: stale }, leaseSeconds: 10, finalAttempt: false }), "parsed_only");
-    assert.equal((await admin.unsafe("SELECT lease_generation FROM bridge.generic_handoff_delivery WHERE handoff_id=$1", [stale]))[0]!.lease_generation, 2, "expired claimant is fenced by a newer generation");
-
-    const corrupt = await makeIssued("corrupt");
-    assert.equal(await deliverGenericHandoffJob({ database, job: { type: "GenericHandoffJob/v1", handoffId: corrupt }, leaseSeconds: 10, finalAttempt: false }), "quarantined");
-    assert.deepEqual((await admin.unsafe("SELECT disposition,error_class FROM bridge.generic_handoff_delivery WHERE handoff_id=$1", [corrupt]))[0], { disposition: "quarantined", error_class: "corrupt_envelope" });
+    const negativeCases = [
+      { name: "forged-producer", expected: "blocked", errorClass: "invalid_policy", options: { alterHeader: (header: any) => { header.producer.processKey = "forged.producer"; } } },
+      { name: "wrong-route", expected: "quarantined", errorClass: "corrupt_envelope", options: { alterHeader: (header: any) => { header.route.main = "forged"; } } },
+      { name: "wrong-policy", expected: "blocked", errorClass: "invalid_policy", options: { alterHeader: (header: any) => { header.route.policyVersion = "v999"; } } },
+      { name: "wrong-handler", expected: "blocked", errorClass: "invalid_policy", options: { alterHeader: (header: any) => { header.route.handlerVersion = "v999"; } } },
+      { name: "wrong-contract", expected: "blocked", errorClass: "invalid_policy", options: { alterHeader: (header: any) => { header.bodyContract.version = "v999"; } } },
+      { name: "missing-scope", expected: "quarantined", errorClass: "corrupt_envelope", options: { alterHeader: (header: any) => { delete header.scope.bundleId; } } },
+      { name: "invalid-header", expected: "quarantined", errorClass: "corrupt_envelope", options: { trustedHeader: {} } },
+      { name: "invalid-wrapper", expected: "quarantined", errorClass: "corrupt_envelope", options: { body: "{\"can_continue\":false}" } },
+      { name: "duplicate-key", expected: "quarantined", errorClass: "corrupt_envelope", options: { body: `{"can_continue":false,"can_continue":false,"payload":${canonicalSemanticBatchPlanInputV1({ normalizedDocumentRef: "a".repeat(64), perceptionExecutionId: `execution-${suffix}`, sourceSha256: "b".repeat(64), normalizedDocumentVersion: "v1", normalizedDocumentFingerprint: "c".repeat(64) })}` } },
+      { name: "changed-bytes", expected: "quarantined", errorClass: "corrupt_envelope", options: { body: `{"can_continue":false,"payload":${canonicalSemanticBatchPlanInputV1({ normalizedDocumentRef: "a".repeat(64), perceptionExecutionId: `execution-${suffix}`, sourceSha256: "b".repeat(64), normalizedDocumentVersion: "v1", normalizedDocumentFingerprint: "c".repeat(64) })} `, hashBody: `{"can_continue":false,"payload":${canonicalSemanticBatchPlanInputV1({ normalizedDocumentRef: "a".repeat(64), perceptionExecutionId: `execution-${suffix}`, sourceSha256: "b".repeat(64), normalizedDocumentVersion: "v1", normalizedDocumentFingerprint: "c".repeat(64) })}` } },
+      { name: "receiver-rejection", expected: "quarantined", errorClass: "receiver_rejected", options: { body: "{\"can_continue\":false,\"payload\":{\"normalizedDocumentRef\":\"not-a-hash\"}}" } },
+    ] as const;
+    for (const scenario of negativeCases) {
+      const handoffId = await makeIssued(scenario.name, scenario.options);
+      assert.equal(await deliverGenericHandoffJob({ database, job: { type: "GenericHandoffJob/v1", handoffId }, leaseSeconds: 10, finalAttempt: false }), scenario.expected, scenario.name);
+      assert.deepEqual((await admin.unsafe("SELECT disposition,error_class FROM bridge.generic_handoff_delivery WHERE handoff_id=$1", [handoffId]))[0], { disposition: scenario.expected, error_class: scenario.errorClass }, `${scenario.name} is sanitized and terminal`);
+    }
 
     const blocked = await makeIssued("valid");
     await admin.unsafe("UPDATE atlas.generic_handoff_route_policy SET enabled=false WHERE policy_version='v1' AND producer_process_key='perception.acceptance' AND producer_event='NormalizedDocumentAccepted/v1' AND route_main='semantic' AND route_branch='batch-plan' AND handler_version='v1' AND body_contract_type='SemanticBatchPlanInput' AND body_contract_version='v1'");
@@ -139,5 +156,110 @@ test("GHR-03B durably classifies corruption, policy blocking, duplicate acknowle
   } finally {
     await boss.stop({ graceful: false }).catch(() => undefined);
     await admin.end();
+  }
+});
+
+test("GHR-03B proves restart, concurrent fencing, and classified retry exhaustion", { skip: !enabled || !databaseUrl }, async () => {
+  const admin = postgres(databaseUrl!, { max: 2 });
+  const bridgeUrl = new URL(databaseUrl!);
+  bridgeUrl.username = "agents_bridge";
+  bridgeUrl.password = process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only";
+  const boss = new PgBoss({ connectionString: bridgeUrl.toString(), schema: "pgboss", migrate: false, supervise: false, schedule: false, createSchema: false });
+  let worker: ReturnType<typeof createBackgroundWorker> | undefined;
+  const suffix = randomUUID();
+  const makeIssued = async (label: string) => {
+    const handoffId = `ghr-03b-${label}-${suffix}-${randomUUID()}`;
+    const payload = canonicalSemanticBatchPlanInputV1({ normalizedDocumentRef: "a".repeat(64), perceptionExecutionId: `execution-${suffix}`, sourceSha256: "b".repeat(64), normalizedDocumentVersion: "v1", normalizedDocumentFingerprint: "c".repeat(64) });
+    const body = `{"can_continue":false,"payload":${payload}}`;
+    const bodySha256 = createHash("sha256").update(body).digest("hex");
+    const header = { protocol: "GenericHandoffEnvelope/v1", handoffId, idempotencyKey: `key-${handoffId}`, producer: { processKey: "perception.acceptance", executionId: `execution-${suffix}` }, route: { main: "semantic", branch: "batch-plan", policyVersion: "v1", handlerVersion: "v1" }, bodyContract: { type: "SemanticBatchPlanInput", version: "v1" }, scope: { projectId: `project-${suffix}`, workspaceId: `workspace-${suffix}`, bundleId: `bundle-${suffix}`, documentId: `document-${suffix}` }, correlation: { workflowId: `workflow-${suffix}` }, integrity: { bodyEncoding: "canonical-json-v1", bodySha256 }, issuedAt: "2026-10-24T00:00:00.000Z" };
+    await admin.unsafe("INSERT INTO atlas.generic_handoff_intent(handoff_id,idempotency_key,producer_execution_id,project_id,workspace_id,bundle_id,document_id,policy_version,handler_version,body_contract_type,body_contract_version,route_main,route_branch,can_continue,body_encoding,body_bytes,body_sha256,trusted_header,issued_at) VALUES ($1,$2,$3,$4,$5,$6,$7,'v1','v1','SemanticBatchPlanInput','v1','semantic','batch-plan',false,'canonical-json-v1',$8,$9,$10::jsonb,now())", [handoffId, header.idempotencyKey, header.producer.executionId, header.scope.projectId, header.scope.workspaceId, header.scope.bundleId, header.scope.documentId, Buffer.from(body), bodySha256, JSON.stringify(header)]);
+    return handoffId;
+  };
+  try {
+    await boss.start();
+    const database = boss.getDb();
+    const awaitTerminal = async (handoffId: string) => {
+      for (let attempt = 0; attempt < 50; attempt += 1) {
+        const [receipt] = await admin.unsafe("SELECT disposition FROM bridge.generic_handoff_delivery WHERE handoff_id=$1", [handoffId]);
+        if (receipt?.disposition) return receipt;
+        await pause(100);
+      }
+      throw new Error("Bridge worker did not persist the expected terminal receipt.");
+    };
+    const queued = await makeIssued("queue-restart");
+    worker = createBackgroundWorker({ databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 2, perceptionConcurrency: 1, timeoutSeconds: 1, retryLimit: 1, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 }, new TestRuntime());
+    await worker.start();
+    const firstJobId = await boss.send(genericHandoffQueue, { type: "GenericHandoffJob/v1", handoffId: queued });
+    assert.equal((await awaitTerminal(queued)).disposition, "parsed_only", "the normal pg-boss worker consumes the pointer-only job");
+    assert.equal((await admin.unsafe("SELECT state FROM pgboss.job WHERE id=$1", [firstJobId]))[0]!.state, "completed");
+    await worker.stop();
+    worker = undefined;
+    const secondJobId = await boss.send(genericHandoffQueue, { type: "GenericHandoffJob/v1", handoffId: queued });
+    worker = createBackgroundWorker({ databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 2, perceptionConcurrency: 1, timeoutSeconds: 1, retryLimit: 1, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 }, new TestRuntime());
+    await worker.start();
+    for (let attempt = 0; attempt < 50; attempt += 1) {
+      const [job] = await admin.unsafe("SELECT state FROM pgboss.job WHERE id=$1", [secondJobId]);
+      if (job?.state === "completed") break;
+      await pause(100);
+    }
+    assert.equal((await admin.unsafe("SELECT state FROM pgboss.job WHERE id=$1", [secondJobId]))[0]!.state, "completed", "a restarted worker acknowledges the duplicate pointer job");
+    assert.equal((await admin.unsafe("SELECT count(*)::int AS count FROM bridge.generic_handoff_delivery WHERE handoff_id=$1 AND disposition='parsed_only'", [queued]))[0]!.count, 1, "restart and lost acknowledgement retain one logical receipt");
+    await worker.stop();
+    worker = undefined;
+
+    const stale = await makeIssued("restart");
+    await admin.unsafe("INSERT INTO bridge.generic_handoff_delivery(handoff_id,idempotency_key,body_sha256,producer_execution_id,route_main,route_branch,policy_version,handler_version,body_contract_type,body_contract_version,lease_owner,lease_generation,lease_expires_at,claimed_at) SELECT handoff_id,idempotency_key,body_sha256,producer_execution_id,route_main,route_branch,policy_version,handler_version,body_contract_type,body_contract_version,'00000000-0000-0000-0000-000000000001',1,now()-interval '1 second',now()-interval '11 seconds' FROM atlas.generic_handoff_intent WHERE handoff_id=$1", [stale]);
+    assert.equal(await deliverGenericHandoffJob({ database, job: { type: "GenericHandoffJob/v1", handoffId: stale }, leaseSeconds: 1, finalAttempt: false }), "parsed_only", "a restart reclaims only an expired fenced lease");
+    assert.equal((await admin.unsafe("SELECT lease_generation FROM bridge.generic_handoff_delivery WHERE handoff_id=$1", [stale]))[0]!.lease_generation, 2);
+
+    const concurrent = await makeIssued("concurrent");
+    const results = await Promise.allSettled([1, 2].map(() => deliverGenericHandoffJob({ database, job: { type: "GenericHandoffJob/v1", handoffId: concurrent }, leaseSeconds: 10, finalAttempt: false })));
+    assert.ok(results.some((result) => result.status === "fulfilled" && result.value === "parsed_only"), "one claimant reaches the real receiver");
+    assert.equal((await admin.unsafe("SELECT count(*)::int AS count FROM bridge.generic_handoff_delivery WHERE handoff_id=$1 AND disposition='parsed_only'", [concurrent]))[0]!.count, 1, "concurrent delivery has one terminal logical receipt");
+
+    const exhausted = await makeIssued("retry-exhausted");
+    let remainingTerminalFaults = 2;
+    const faultingDatabase = {
+      async executeSql(statement: string, values?: readonly unknown[]) {
+        if (remainingTerminalFaults > 0 && statement.startsWith("UPDATE bridge.generic_handoff_delivery SET disposition=")) {
+          remainingTerminalFaults -= 1;
+          throw new Error("simulated transient receipt persistence fault");
+        }
+        return database.executeSql(statement, values);
+      },
+    };
+    await assert.rejects(() => deliverGenericHandoffJob({ database: faultingDatabase, job: { type: "GenericHandoffJob/v1", handoffId: exhausted }, leaseSeconds: 1, finalAttempt: false }), /receipt persistence failed/, "a classified transient leaves the pointer job retryable");
+    await admin.unsafe("UPDATE bridge.generic_handoff_delivery SET lease_expires_at=now()-interval '1 second' WHERE handoff_id=$1", [exhausted]);
+    assert.equal(await deliverGenericHandoffJob({ database: faultingDatabase, job: { type: "GenericHandoffJob/v1", handoffId: exhausted }, leaseSeconds: 1, finalAttempt: true }), "retry_exhausted");
+    assert.deepEqual((await admin.unsafe("SELECT disposition,error_class FROM bridge.generic_handoff_delivery WHERE handoff_id=$1", [exhausted]))[0], { disposition: "retry_exhausted", error_class: "transient_delivery" });
+  } finally {
+    await worker?.stop().catch(() => undefined);
+    await boss.stop({ graceful: false }).catch(() => undefined);
+    await admin.end();
+  }
+});
+
+test("GHR-03B exposes neither delivery replay controls nor sensitive Bridge state", { skip: !enabled || !databaseUrl }, async () => {
+  const delivery = await readFile(new URL("../src/ghr/delivery-worker.ts", import.meta.url), "utf8");
+  assert.doesNotMatch(delivery, /replay|reissue|promotion|route migration|fallback/iu, "delivery exposes no manual recovery or route-migration surface");
+  const admin = postgres(databaseUrl!, { max: 1 });
+  const bridgeUrl = new URL(databaseUrl!);
+  bridgeUrl.username = "agents_bridge";
+  bridgeUrl.password = process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only";
+  const atlasUrl = new URL(databaseUrl!);
+  atlasUrl.username = "atlas_app";
+  atlasUrl.password = process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only";
+  const bridge = postgres(bridgeUrl.toString(), { max: 1 });
+  const atlas = postgres(atlasUrl.toString(), { max: 1 });
+  try {
+    await assert.rejects(() => bridge.unsafe("SELECT * FROM atlas.generic_handoff_intent LIMIT 1"), /permission denied|must be owner/u, "Bridge cannot read raw Atlas issuance rows");
+    await assert.rejects(() => bridge.unsafe("UPDATE atlas.generic_handoff_route_policy SET enabled=false"), /permission denied|must be owner/u, "Bridge cannot mutate Atlas policy");
+    await assert.rejects(() => atlas.unsafe("SELECT * FROM bridge.generic_handoff_delivery LIMIT 1"), /permission denied|must be owner/u, "Atlas cannot read Bridge receipt state");
+    const columns = await admin.unsafe("SELECT column_name FROM information_schema.columns WHERE table_schema='bridge' AND table_name='generic_handoff_delivery'");
+    const names = new Set(columns.map((column) => String(column.column_name)));
+    for (const sensitive of ["body_bytes", "trusted_header", "payload", "diagnostic", "error_detail"]) assert.equal(names.has(sensitive), false, `receipt has no ${sensitive} surface`);
+  } finally {
+    await Promise.all([admin.end(), bridge.end(), atlas.end()]);
   }
 });

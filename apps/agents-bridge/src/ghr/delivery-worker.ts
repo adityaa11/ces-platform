@@ -125,7 +125,16 @@ async function claim(database: SqlDatabase, header: GenericHandoffHeaderV1, leas
 }
 
 async function terminalize(database: SqlDatabase, handoffId: string, claim: Claim, disposition: DeliveryDisposition, errorClass: DeliveryErrorClass | null): Promise<void> {
-  const result = await database.executeSql("UPDATE bridge.generic_handoff_delivery SET disposition=$4,error_class=$5,completed_at=now(),lease_expires_at=NULL WHERE handoff_id=$1 AND lease_owner=$2 AND lease_generation=$3 AND disposition IS NULL RETURNING handoff_id", [handoffId, claim.owner, claim.generation, disposition, errorClass]);
+  let result: { readonly rows: readonly Record<string, unknown>[] };
+  try {
+    result = await database.executeSql("UPDATE bridge.generic_handoff_delivery SET disposition=$4,error_class=$5,completed_at=now(),lease_expires_at=NULL WHERE handoff_id=$1 AND lease_owner=$2 AND lease_generation=$3 AND disposition IS NULL RETURNING handoff_id", [handoffId, claim.owner, claim.generation, disposition, errorClass]);
+  } catch {
+    // A receipt-write transport/database fault is the narrow retryable case.
+    // It never exposes the underlying error and pg-boss retains the original
+    // pointer job; the final configured attempt records the sanitized terminal
+    // outcome through the existing fence.
+    throw new GenericHandoffDeliveryError("Generic handoff receipt persistence failed.", "transient", "transient_delivery");
+  }
   if (result.rows.length !== 1) throw new GenericHandoffDeliveryError("Generic handoff delivery lease was superseded.", "transient", "transient_delivery");
 }
 

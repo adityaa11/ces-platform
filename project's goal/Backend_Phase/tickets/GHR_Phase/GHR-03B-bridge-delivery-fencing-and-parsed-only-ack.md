@@ -1,6 +1,6 @@
 # GHR-03B — Bridge delivery, lease fencing, and durable parsed-only ACK
 
-- **State:** `planned`; not GO, CFC, CK PASS, source redemption, planning activation, or authority to alter approved predecessor contracts.
+- **State:** `awaiting_review`; GO implementation/evidence is complete, but this is not a CK `PASS`, source redemption, planning activation, or authority to alter approved predecessor contracts.
 - **Dependencies:** GHR-02B and GHR-03A CK PASS. Consume GHR-02A's read-only dispatch seam and GHR-03A's real semantic receiver without widening either boundary.
 - **Source:** [GHR v0.6 implementation context](../../atlas-generic-handoff-router-implementation-context-v0.6-review.md), §§3.1–3.2, 5.1, 6, 8–10.
 
