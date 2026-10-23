@@ -15,6 +15,15 @@ test("BSS-V2-006-05-04/05 proves masked admission, policy-revision recovery, and
 
   const setup = async (name: string, capacity = { rpm: 2, tpm: 20, concurrency: 2 }, bindPolicy = true) => {
     const domain = `${suffix}-${name}`, route = `${domain}-route`;
+    const routeAuthority = {
+      routeId: route,
+      providerId: "fixture",
+      modelOrProcessorId: "fixture-model-v1",
+      adapterVersion: "adapter",
+      qualificationRef: "qualification://fixture",
+      qualificationVersion: "qualified",
+      capability: "atlas.semantic.extract",
+    };
     const processes = { backgroundA: `${domain}-background-a`, backgroundB: `${domain}-background-b`, backgroundC: `${domain}-background-c`, interactive: `${domain}-interactive` };
     const profile = {
       usableGlobalCapacity: capacity,
@@ -26,7 +35,7 @@ test("BSS-V2-006-05-04/05 proves masked admission, policy-revision recovery, and
         { processId: processes.backgroundC, profileVersion: "v1", normalizedWeight: .25 },
       ],
     };
-    await sql.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'cap-v1','fixture',$2::jsonb,$3::jsonb,$4::jsonb,'quota','provider_api','fixture','v1',now(),now())", [domain, [{ routeId: route }], { rpm: { state: "known", value: capacity.rpm }, tpm: { state: "known", value: capacity.tpm }, rpd: { state: "unknown" }, concurrency: { state: "known", value: capacity.concurrency } }, windowPolicies]);
+    await sql.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'cap-v1','fixture',$2::jsonb,$3::jsonb,$4::jsonb,'quota','provider_api','fixture','v1',now(),now())", [domain, [routeAuthority], { rpm: { state: "known", value: capacity.rpm }, tpm: { state: "known", value: capacity.tpm }, rpd: { state: "unknown" }, concurrency: { state: "known", value: capacity.concurrency } }, windowPolicies]);
     if (bindPolicy) {
       await sql.unsafe("INSERT INTO bridge.provider_enforcement_policy_approval(approval_ref,quota_domain_id,provider_capacity_profile_version,route_id,policy_id,policy_version,permitted_unknown_dimensions,approved_by,approved_at) VALUES($1,$2,'cap-v1',$3,'policy','v1',$4::jsonb,'fixture',now())", [`${domain}-approval`, domain, route, { rpd: { providerState: "unknown", reason: "not_published" } }]);
       const policy = { ...dimensions, rpd: { ...dimensions.rpd, approvalRef: `${domain}-approval` } };
@@ -36,7 +45,8 @@ test("BSS-V2-006-05-04/05 proves masked admission, policy-revision recovery, and
       await sql.unsafe("INSERT INTO bridge.workload_envelope_profile(workload_id,profile_version,active,compatible_process_kinds,structural_bound,estimator,quota_accounting_policy_id,output_reservation,safety_policy) VALUES($1,'v1',true,'[\"semantic\"]','{}','{}','quota','{}','{}')", [`${id}-workload`]);
       await sql.unsafe("INSERT INTO bridge.provider_process_profile(process_id,profile_version,process_kind,capability,service_class,fairness_scope,allocation_policy,active,eligible_route_ids,workload_id,workload_profile_version) VALUES($1,'v1','semantic','atlas.semantic.extract',$2,'{}','{}',true,$3::jsonb,$4,'v1')", [id, service, [route], `${id}-workload`]);
     }
-    await sql.unsafe("SELECT * FROM bridge.publish_qualified_provider_route_authority($1,$2,'fixture','fixture-model-v1','adapter','qualification://fixture','qualified','atlas.semantic.extract')", [route, domain]);
+    const [publishedAuthority] = await sql.unsafe("SELECT * FROM bridge.publish_qualified_provider_route_authority($1,$2,'fixture','fixture-model-v1','adapter','qualification://fixture','qualified','atlas.semantic.extract')", [route, domain]);
+    const authorityVersion = BigInt(publishedAuthority.authority_version);
     await sql.unsafe("INSERT INTO bridge.desired_admission_profile(quota_domain_id,profile_version,provider_capacity_profile_version,planner_version,effective_from,profile) VALUES($1,'plan-v1','cap-v1','planner',now(),$2::jsonb)", [domain, profile]);
     for (const id of Object.values(processes)) await sql.unsafe("INSERT INTO bridge.desired_admission_profile_input(quota_domain_id,desired_profile_version,process_id,process_profile_version,workload_id,workload_profile_version) VALUES($1,'plan-v1',$2,'v1',$3,'v1')", [domain, id, `${id}-workload`]);
     if (bindPolicy) {
@@ -45,7 +55,7 @@ test("BSS-V2-006-05-04/05 proves masked admission, policy-revision recovery, and
     }
     await sql.unsafe("SELECT bridge.activate_desired_admission_profile($1,'plan-v1')", [domain]);
     for (const dimension of ["rpm", "tpm", "concurrency"]) await sql.unsafe("INSERT INTO bridge.provider_quota_window_state(quota_domain_id,desired_profile_version,activation_revision,provider_capacity_profile_version,dimension_id,window_policy_identity,window_state,reset_semantics_known,reset_at) VALUES($1,'plan-v1',1,'cap-v1',$2,($3::jsonb)->$2,'{}',true,now()+interval '1 hour')", [domain, dimension, windowPolicies]);
-    return { domain, route, processes, capacity };
+    return { domain, route, authorityVersion, processes, capacity };
   };
 
   const read = async (fixture: Awaited<ReturnType<typeof setup>>, process: string, service: "background" | "interactive") => (await sql.unsafe("SELECT bridge.read_runtime_capacity_constraint($1,$2,'v1',$3,$4) AS value", [fixture.domain, process, fixture.route, service]))[0].value;
@@ -63,7 +73,7 @@ test("BSS-V2-006-05-04/05 proves masked admission, policy-revision recovery, and
   };
   const register = async (fixture: Awaited<ReturnType<typeof setup>>, id: string, process: string, key: string, requestEnvelope = envelope()) => {
     await sql.unsafe("SELECT bridge.register_provider_work_attempt($1,1,$2,$3,'v1',$4,$5::jsonb,'plan-v1',1,$6,$6)", [id, fixture.domain, process, key, requestEnvelope, future()]);
-    await sql.unsafe("SELECT bridge.bind_provider_work_route($1,1,$2)", [id, fixture.route]);
+    await sql.unsafe("SELECT bridge.bind_provider_work_route($1,1,$2)", [id, fixture.authorityVersion]);
   };
   const release = async (fixture: Awaited<ReturnType<typeof setup>>, row: { reservation_id?: string; reservationId?: string; logical_work_id?: string; logicalWorkId?: string; attempt_number?: number; attemptNumber?: number }) => {
     const reservationId = row.reservation_id ?? row.reservationId;

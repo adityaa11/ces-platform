@@ -15,6 +15,8 @@ test("RC-BSSV2-00604-01/12a/14a drive authenticated background admission through
   const domain = `${suffix}-domain`;
   const route = `${suffix}-route`;
   const secondaryRoute = `${suffix}-secondary-route`;
+  const routeAuthority = { routeId: route, providerId: "fixture", modelOrProcessorId: "fixture-model-v1", adapterVersion: "adapter-v1", qualificationRef: "qualification://fixture", qualificationVersion: "qualified-v1", capability: "atlas.semantic.extract" };
+  const secondaryRouteAuthority = { routeId: secondaryRoute, providerId: "fixture", modelOrProcessorId: "fixture-model-v1", adapterVersion: "adapter-v1", qualificationRef: "qualification://fixture", qualificationVersion: "qualified-v1", capability: "atlas.document.perceive" };
   const processId = `${suffix}-process`;
   const principal = { credential: `${suffix}-credential`, principalId: `${suffix}-consumer`, quotaDomainId: domain, processId, processProfileVersion: "v1", routeId: route, serviceClass: "background" as const };
   const bridgeUrl = new URL(databaseUrl!);
@@ -62,11 +64,11 @@ test("RC-BSSV2-00604-01/12a/14a drive authenticated background admission through
   let worker = createWorker();
   const app = createBridgeApp({ runtime: new TestRuntime(), version: "provider-work-admission-fixture", runtimeCapacityConstraintReader: reader, providerWorkAdmissionService: admission });
   try {
-    await sql.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'cap-v1','fixture',$2::jsonb,'{}'::jsonb,$3::jsonb,'quota-v1','operator_config','fixture','v1',now(),now())", [domain, [{ routeId: route }, { routeId: secondaryRoute }], { rpm: { kind: "fixed", windowSeconds: 60 }, tpm: { kind: "fixed", windowSeconds: 60 }, rpd: { kind: "fixed", windowSeconds: 60 }, concurrency: { kind: "fixed", windowSeconds: 60 } }]);
+    await sql.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'cap-v1','fixture',$2::jsonb,'{}'::jsonb,$3::jsonb,'quota-v1','operator_config','fixture','v1',now(),now())", [domain, [routeAuthority, secondaryRouteAuthority], { rpm: { kind: "fixed", windowSeconds: 60 }, tpm: { kind: "fixed", windowSeconds: 60 }, rpd: { kind: "fixed", windowSeconds: 60 }, concurrency: { kind: "fixed", windowSeconds: 60 } }]);
     await sql.unsafe("INSERT INTO bridge.workload_envelope_profile(workload_id,profile_version,active,compatible_process_kinds,structural_bound,estimator,quota_accounting_policy_id,output_reservation,safety_policy) VALUES($1,'v1',true,'[\"semantic\"]','{}','{}','quota-v1','{}','{}')", [`${processId}-workload`]);
     await sql.unsafe("INSERT INTO bridge.provider_process_profile(process_id,profile_version,process_kind,capability,service_class,fairness_scope,allocation_policy,active,eligible_route_ids,workload_id,workload_profile_version) VALUES($1,'v1','semantic','atlas.semantic.extract','background','{}','{}',true,$2::jsonb,$3,'v1')", [processId, [route], `${processId}-workload`]);
-    await sql.unsafe("SELECT * FROM bridge.publish_qualified_provider_route_authority($1,$2,'fixture','fixture-model-v1','adapter-v1','qualification://fixture','qualified-v1',$3)", [route, domain, "atlas.semantic.extract"]);
-    await sql.unsafe("SELECT * FROM bridge.publish_qualified_provider_route_authority($1,$2,'fixture','fixture-model-v1','adapter-v1','qualification://fixture','qualified-v1',$3)", [secondaryRoute, domain, "atlas.document.perceive"]);
+    await sql.unsafe("SELECT * FROM bridge.publish_qualified_provider_route_authority($1,$2,$3,$4,$5,$6,$7,$8)", [route, domain, routeAuthority.providerId, routeAuthority.modelOrProcessorId, routeAuthority.adapterVersion, routeAuthority.qualificationRef, routeAuthority.qualificationVersion, routeAuthority.capability]);
+    await sql.unsafe("SELECT * FROM bridge.publish_qualified_provider_route_authority($1,$2,$3,$4,$5,$6,$7,$8)", [secondaryRoute, domain, secondaryRouteAuthority.providerId, secondaryRouteAuthority.modelOrProcessorId, secondaryRouteAuthority.adapterVersion, secondaryRouteAuthority.qualificationRef, secondaryRouteAuthority.qualificationVersion, secondaryRouteAuthority.capability]);
     const profile = { usableGlobalCapacity: { rpm: 10, tpm: 100, rpd: 10, concurrency: 2 }, hardInteractiveReserve: { rpm: 1, tpm: 10, rpd: 1, concurrency: 1 }, backgroundCapacity: { rpm: 9, tpm: 90, rpd: 9, concurrency: 1 }, backgroundLanes: [] };
     await sql.unsafe("INSERT INTO bridge.desired_admission_profile(quota_domain_id,profile_version,provider_capacity_profile_version,planner_version,effective_from,profile) VALUES($1,'plan-v1','cap-v1','fixture',now(),$2::jsonb)", [domain, profile]);
     await sql.unsafe("INSERT INTO bridge.desired_admission_profile_input(quota_domain_id,desired_profile_version,process_id,process_profile_version,workload_id,workload_profile_version) VALUES($1,'plan-v1',$2,'v1',$3,'v1')", [domain, processId, `${processId}-workload`]);
@@ -396,4 +398,77 @@ test("RC-BSSV2-00604-01/12a/14a drive authenticated background admission through
     });
 
   } finally { await worker.stop().catch(() => undefined); await app.close(); await sql.end(); }
+});
+
+test("RC-00606-02 authority matrix admits only the immutable calculated-v2 route binding", { skip: !databaseUrl }, async () => {
+  const sql = postgres(databaseUrl!, { max: 1 });
+  const suffix = `public-admission-authority-${Date.now()}`;
+  const domain = `${suffix}-domain`;
+  const route = `${suffix}-route`;
+  const processId = `${suffix}-process`;
+  const identity = { routeId: route, providerId: "fixture", modelOrProcessorId: "fixture-model-v2", adapterVersion: "adapter-v2", qualificationRef: `qualification://${suffix}`, qualificationVersion: "qualified-v2", capability: "atlas.semantic.extract" };
+  const principal = { credential: `${suffix}-credential`, principalId: `${suffix}-consumer`, quotaDomainId: domain, processId, processProfileVersion: "v1", routeId: route, serviceClass: "background" as const };
+  const database = { executeSql: async (statement: string, values?: readonly unknown[]) => ({ rows: await sql.unsafe(statement, values as unknown[] | undefined) }) };
+  const authenticator = { authenticate: (credential: string) => credential === principal.credential ? principal : null };
+  const reader = createRuntimeCapacityConstraintReader(database, authenticator);
+  const admission = createProviderWorkAdmissionService(database, authenticator);
+  const app = createBridgeApp({ runtime: new TestRuntime(), version: "public-admission-authority-fixture", runtimeCapacityConstraintReader: reader, providerWorkAdmissionService: admission });
+  try {
+    await sql.unsafe("BEGIN");
+    const profile = { usableGlobalCapacity: { rpm: 10, tpm: 100, concurrency: 10 }, hardInteractiveReserve: { rpm: 1, tpm: 10, concurrency: 1 }, backgroundCapacity: { rpm: 9, tpm: 90, concurrency: 9 }, backgroundLanes: [] };
+    const allocation = { allocationVersion: "v1", effectiveMask: ["rpm", "tpm", "concurrency"], classAllocations: { background: { rpm: 10, tpm: 100, concurrency: 10 } }, processes: [{ processId, profileVersion: "v1", serviceClass: "background", baseline: { rpm: 5, tpm: 50, concurrency: 5 }, cap: { rpm: 5, tpm: 50, concurrency: 5 }, normalizedWeight: { numerator: 1, denominator: 1 } }] };
+    const windowPolicies = { rpm: { kind: "fixed", windowSeconds: 60 }, tpm: { kind: "fixed", windowSeconds: 60 }, rpd: { kind: "unknown" }, concurrency: { kind: "fixed", windowSeconds: 60 } };
+    await sql.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'cap-v2','fixture',$2::jsonb,$3::jsonb,$4::jsonb,'quota','provider_api','fixture','v2',clock_timestamp(),clock_timestamp())", [domain, [identity], { rpm: { state: "known", value: 10 }, tpm: { state: "known", value: 100 }, rpd: { state: "unknown" }, concurrency: { state: "known", value: 10 } }, windowPolicies]);
+    await sql.unsafe("INSERT INTO bridge.provider_enforcement_policy_approval(approval_ref,quota_domain_id,provider_capacity_profile_version,route_id,policy_id,policy_version,permitted_unknown_dimensions,approved_by,approved_at) VALUES($1,$2,'cap-v2',$3,'policy','v2',$4::jsonb,'fixture',clock_timestamp())", [`${suffix}-approval`, domain, route, { rpd: { providerState: "unknown", reason: "not_published" } }]);
+    await sql.unsafe("INSERT INTO bridge.provider_enforcement_policy(quota_domain_id,provider_capacity_profile_version,route_id,policy_id,policy_version,approval_ref,dimensions,effective_from) VALUES($1,'cap-v2',$2,'policy','v2',$3,$4::jsonb,clock_timestamp())", [domain, route, `${suffix}-approval`, { rpm: { mode: "enforced", limitSource: "provider" }, tpm: { mode: "enforced", limitSource: "provider" }, rpd: { mode: "not_enforced", providerState: "unknown", reason: "not_published", approvalRef: `${suffix}-approval` }, concurrency: { mode: "enforced", limitSource: "provider" } }]);
+    await sql.unsafe("INSERT INTO bridge.workload_envelope_profile(workload_id,profile_version,active,compatible_process_kinds,structural_bound,estimator,quota_accounting_policy_id,output_reservation,safety_policy) VALUES($1,'v1',true,'[\"semantic\"]','{}','{}','quota','{}','{}')", [`${processId}-workload`]);
+    await sql.unsafe("INSERT INTO bridge.provider_process_profile(process_id,profile_version,process_kind,capability,service_class,fairness_scope,allocation_policy,active,eligible_route_ids,workload_id,workload_profile_version) VALUES($1,'v1','semantic',$2,'background','{}','{}',true,$3::jsonb,$4,'v1')", [processId, identity.capability, [route], `${processId}-workload`]);
+    const [authority] = await sql.unsafe("SELECT * FROM bridge.publish_qualified_provider_route_authority($1,$2,$3,$4,$5,$6,$7,$8)", [route, domain, identity.providerId, identity.modelOrProcessorId, identity.adapterVersion, identity.qualificationRef, identity.qualificationVersion, identity.capability]);
+    await sql.unsafe("INSERT INTO bridge.desired_admission_profile(quota_domain_id,profile_version,provider_capacity_profile_version,planner_version,effective_from,profile) VALUES($1,'plan-v2','cap-v2','fixture',clock_timestamp(),$2::jsonb)", [domain, profile]);
+    await sql.unsafe("INSERT INTO bridge.desired_admission_profile_input(quota_domain_id,desired_profile_version,process_id,process_profile_version,workload_id,workload_profile_version) VALUES($1,'plan-v2',$2,'v1',$3,'v1')", [domain, processId, `${processId}-workload`]);
+    const [{ policy }] = await sql.unsafe("SELECT bridge.derive_effective_enforcement_policy($1,'cap-v2',$2) AS policy", [domain, route]);
+    await sql.unsafe("INSERT INTO bridge.desired_admission_profile_policy_binding(quota_domain_id,desired_profile_version,provider_capacity_profile_version,route_id,policy_id,policy_version,effective_policy) VALUES($1,'plan-v2','cap-v2',$2,'policy','v2',$3::jsonb)", [domain, route, policy]);
+    await sql.unsafe("INSERT INTO bridge.calculated_class_process_allocation(quota_domain_id,desired_profile_version,allocation_version,effective_mask,allocation,allocation_fingerprint) VALUES($1,'plan-v2','v1',$2::jsonb,$3::jsonb,md5($3::jsonb::text))", [domain, allocation.effectiveMask, allocation]);
+    await sql.unsafe("INSERT INTO bridge.desired_admission_profile_route_binding_v2(quota_domain_id,desired_profile_version,route_id,authority_version,provider_capacity_profile_version,effective_mask,allocation_version) VALUES($1,'plan-v2',$2,$3,'cap-v2',$4::jsonb,'v1')", [domain, route, authority.authority_version, allocation.effectiveMask]);
+    await sql.unsafe("INSERT INTO bridge.desired_admission_profile_activation(quota_domain_id,activation_revision,desired_profile_version,effective_from) VALUES($1,1,'plan-v2',clock_timestamp())", [domain]);
+    await sql.unsafe("INSERT INTO bridge.active_desired_admission_profile(quota_domain_id,desired_profile_version,activation_revision,effective_from) VALUES($1,'plan-v2',1,clock_timestamp())", [domain]);
+    for (const dimension of ["rpm", "tpm", "concurrency"]) await sql.unsafe("INSERT INTO bridge.provider_quota_window_state(quota_domain_id,desired_profile_version,activation_revision,provider_capacity_profile_version,dimension_id,window_policy_identity,window_state,reset_semantics_known,reset_at) VALUES($1,'plan-v2',1,'cap-v2',$2,($3::jsonb)->$2,'{}'::jsonb,true,clock_timestamp()+interval '1 hour')", [domain, dimension, windowPolicies]);
+    await app.listen({ host: "127.0.0.1", port: 0 });
+    const address = app.server.address(); assert.ok(address && typeof address !== "string");
+    const base = `http://127.0.0.1:${address.port}`;
+    const constraint = await (await fetch(`${base}/v1/runtime-capacity-constraint`, { headers: { authorization: `Bearer ${principal.credential}` } })).json() as { effectiveConstraintRevision: string; reason: string };
+    assert.equal(constraint.reason, "eligible_in_principle");
+    const post = async (logicalWorkId: string) => (await fetch(`${base}/v1/provider-work-admissions`, { method: "POST", headers: { authorization: `Bearer ${principal.credential}`, "content-type": "application/json" }, body: JSON.stringify({ logicalWorkId, attemptNumber: 1, idempotencyKey: `${logicalWorkId}-key`, payloadReference: `${logicalWorkId}-payload`, payloadHash: "a".repeat(64), requestResourceEnvelope: { rpm: 1, tpm: 5, rpd: 1, concurrency: 1 }, expectedEffectiveConstraintRevision: constraint.effectiveConstraintRevision }) })).json() as Promise<ProviderWorkAdmissionOutcome>;
+    const accepted = await post(`${suffix}-positive`);
+    assert.equal(accepted.state, "dispatched_or_may_have_started", "the public API admits a calculated-v2 plan only through its exact binding");
+    assert.deepEqual((await sql.unsafe("SELECT to_regprocedure('bridge.bind_provider_work_route(text,integer,text)') AS legacy_binder,to_regprocedure('bridge.bind_provider_work_route(text,integer,bigint)') AS bigint_binder"))[0], { legacy_binder: null, bigint_binder: "bridge.bind_provider_work_route(text,integer,bigint)" }, "the cutover retains only the established bigint binder");
+    assert.deepEqual((await sql.unsafe("SELECT authority_version,selected_route_id,provider_id,model_or_processor_id,adapter_version,qualification_ref,qualification_version,capability FROM bridge.provider_work_route_binding WHERE logical_work_id=$1", [`${suffix}-positive`]))[0], { authority_version: authority.authority_version, selected_route_id: route, provider_id: identity.providerId, model_or_processor_id: identity.modelOrProcessorId, adapter_version: identity.adapterVersion, qualification_ref: identity.qualificationRef, qualification_version: identity.qualificationVersion, capability: identity.capability }, "the durable binding carries exactly the publisher-issued bigint and complete tuple");
+    const assertZeroArtifacts = async (logicalWorkId: string) => assert.deepEqual((await sql.unsafe("SELECT (SELECT count(*)::int FROM bridge.provider_work_reservation WHERE logical_work_id=$1) reservations,(SELECT count(*)::int FROM bridge.provider_work_dispatch WHERE logical_work_id=$1) dispatches,(SELECT count(*)::int FROM pgboss.job WHERE data->>'logicalWorkId'=$1) jobs,(SELECT count(*)::int FROM bridge.provider_transport_claim WHERE logical_work_id=$1) claims", [logicalWorkId]))[0], { reservations: 0, dispatches: 0, jobs: 0, claims: 0 }, `${logicalWorkId} creates no reservation, dispatch, pg-boss job, transport claim, or transport artifact`);
+    const reject = async (label: string, mutate: () => Promise<unknown>) => {
+      const work = `${suffix}-${label}`;
+      const savepoint = `authority_${label.replaceAll("-", "_")}`;
+      await sql.unsafe(`SAVEPOINT ${savepoint}`);
+      await mutate();
+      assert.equal((await post(work)).state, "policy_or_resource_unfit", `${label} is rejected by the public API before admission`);
+      await assertZeroArtifacts(work);
+      await sql.unsafe(`ROLLBACK TO SAVEPOINT ${savepoint}`);
+    };
+    await reject("missing", async () => { await sql.unsafe("ALTER TABLE bridge.desired_admission_profile_route_binding_v2 DISABLE TRIGGER ALL"); await sql.unsafe("DELETE FROM bridge.desired_admission_profile_route_binding_v2 WHERE quota_domain_id=$1 AND desired_profile_version='plan-v2'", [domain]); });
+    await reject("foreign", async () => { await sql.unsafe("ALTER TABLE bridge.qualified_provider_route_authority DISABLE TRIGGER ALL"); await sql.unsafe("UPDATE bridge.qualified_provider_route_authority SET quota_domain_id=$2 WHERE authority_version=$1", [authority.authority_version, `${domain}-foreign`]); });
+    await reject("revoked", async () => { await sql.unsafe("ALTER TABLE bridge.qualified_provider_route_authority DISABLE TRIGGER ALL"); await sql.unsafe("UPDATE bridge.qualified_provider_route_authority SET authority_kind='legacy_incomplete' WHERE authority_version=$1", [authority.authority_version]); });
+    await reject("stale", async () => { await sql.unsafe("ALTER TABLE bridge.provider_capacity_profile DISABLE TRIGGER ALL"); await sql.unsafe("UPDATE bridge.provider_capacity_profile SET associated_routes=$2::jsonb WHERE quota_domain_id=$1 AND profile_version='cap-v2'", [domain, [{ ...identity, qualificationVersion: "stale" }]]); });
+    await reject("mismatched", async () => { await sql.unsafe("ALTER TABLE bridge.qualified_provider_route_authority DISABLE TRIGGER ALL"); await sql.unsafe("UPDATE bridge.qualified_provider_route_authority SET model_or_processor_id='wrong-model' WHERE authority_version=$1", [authority.authority_version]); });
+    await reject("incomplete", async () => { await sql.unsafe("ALTER TABLE bridge.provider_capacity_profile DISABLE TRIGGER ALL"); await sql.unsafe("UPDATE bridge.provider_capacity_profile SET associated_routes=$2::jsonb WHERE quota_domain_id=$1 AND profile_version='cap-v2'", [domain, [{ routeId: route }]]); });
+    await reject("ambiguous-historical", async () => {
+      await sql.unsafe("ALTER TABLE bridge.calculated_class_process_allocation DISABLE TRIGGER ALL");
+      await sql.unsafe("DELETE FROM bridge.calculated_class_process_allocation WHERE quota_domain_id=$1 AND desired_profile_version='plan-v2'", [domain]);
+      await sql.unsafe("DROP INDEX bridge.qualified_provider_route_authority_complete_identity");
+      await sql.unsafe("ALTER TABLE bridge.qualified_provider_route_authority DISABLE TRIGGER ALL");
+      await sql.unsafe("INSERT INTO bridge.qualified_provider_route_authority(route_id,capability,adapter_version,qualification_version,quota_domain_id,provider_id,model_or_processor_id,qualification_ref,authority_kind) SELECT route_id,capability,adapter_version,qualification_version,quota_domain_id,provider_id,model_or_processor_id,qualification_ref,authority_kind FROM bridge.qualified_provider_route_authority WHERE authority_version=$1", [authority.authority_version]);
+    });
+  } finally {
+    await app.close().catch(() => undefined);
+    await sql.unsafe("ROLLBACK").catch(() => undefined);
+    await sql.end();
+  }
 });
