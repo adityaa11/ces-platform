@@ -57,14 +57,15 @@ export function createBridgeApp(options: {
   app.get("/v1/capacity-planning-snapshot", async (request, reply) => {
     const credential = bearerCredential(request.headers.authorization);
     if (!credential) return unavailablePlanningSnapshot();
-    const query = request.query as { prospective?: unknown; requestBytes?: unknown; inputTokens?: unknown };
+    const query = request.query as { prospective?: unknown; requestBytes?: unknown; inputTokens?: unknown; outputTokens?: unknown };
     const parseOptionalInteger = (value: unknown) => value === undefined ? undefined : typeof value === "string" && /^\d+$/u.test(value) ? Number(value) : null;
     const requestBytes = parseOptionalInteger(query.requestBytes);
     const inputTokens = parseOptionalInteger(query.inputTokens);
-    if ((query.prospective !== undefined && query.prospective !== "true" && query.prospective !== "false") || requestBytes === null || inputTokens === null) {
+    const outputTokens = parseOptionalInteger(query.outputTokens);
+    if ((query.prospective !== undefined && query.prospective !== "true" && query.prospective !== "false") || requestBytes === null || inputTokens === null || outputTokens === null) {
       return reply.code(400).send({ error: "prospective must be true or false and sizing values must be non-negative integers." });
     }
-    return (options.capacityPlanningSnapshotReader ?? { read: async () => unavailablePlanningSnapshot() }).read(credential, { prospective: query.prospective === "true", requestBytes, inputTokens });
+    return (options.capacityPlanningSnapshotReader ?? { read: async () => unavailablePlanningSnapshot() }).read(credential, { prospective: query.prospective === "true", requestBytes, inputTokens, outputTokens });
   });
   app.post("/v1/provider-work-admissions", async (request, reply) => {
     const credential = bearerCredential(request.headers.authorization);

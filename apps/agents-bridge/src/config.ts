@@ -94,10 +94,11 @@ function capacityPlanningSnapshotBindings(value: string | undefined): readonly C
     for (const field of fields) if (typeof principal[field] !== "string" || principal[field].length === 0) throw new Error(`Capacity planning snapshot principal ${index} has an invalid ${field}.`);
     if (principal.serviceClass !== "background" && principal.serviceClass !== "interactive") throw new Error(`Capacity planning snapshot principal ${index} has an invalid serviceClass.`);
     if (principal.prospective !== undefined && typeof principal.prospective !== "boolean") throw new Error(`Capacity planning snapshot principal ${index} has an invalid prospective flag.`);
+    if (principal.qualificationVersion !== undefined && principal.qualificationVersion !== "v2") throw new Error(`Capacity planning snapshot principal ${index} has an invalid qualificationVersion.`);
     const credential = principal.credential as string;
     if (credentials.has(credential)) throw new Error("Capacity planning snapshot credentials must be unique.");
     credentials.add(credential);
-    return { credential, principalId: principal.principalId as string, quotaDomainId: principal.quotaDomainId as string, processId: principal.processId as string, processProfileVersion: principal.processProfileVersion as string, routeId: principal.routeId as string, serviceClass: principal.serviceClass, prospective: principal.prospective === true };
+    return { credential, principalId: principal.principalId as string, quotaDomainId: principal.quotaDomainId as string, processId: principal.processId as string, processProfileVersion: principal.processProfileVersion as string, routeId: principal.routeId as string, serviceClass: principal.serviceClass, prospective: principal.prospective === true, qualificationVersion: principal.qualificationVersion as "v2" | undefined };
   });
 }
 
