@@ -1,6 +1,6 @@
 # BSS-V2-014-03 — Authenticated calculated-capacity handoff
 
-- **State:** `awaiting_review`; contract freeze: [BSS-V2-014-03 contract freeze 001](../../../feedback/BSS-V2-014-03-contract-freeze-001.md); implementation checkpoint: [BSS-V2-014-03 GO checkpoint](../../../feedback/BSS-V2-014-03-go-checkpoint.md). BSS-V2-005 successor. This ticket has isolated qualification evidence only; it does not authorize production activation, admission, provider operation, IDSER implementation, or the parent cutover.
+- **State:** `approved`; contract freeze: [BSS-V2-014-03 contract freeze 001](../../../feedback/BSS-V2-014-03-contract-freeze-001.md); implementation checkpoint: [BSS-V2-014-03 GO checkpoint](../../../feedback/BSS-V2-014-03-go-checkpoint.md). BSS-V2-005 successor. This ticket has isolated qualification evidence only; it does not authorize production activation, admission, provider operation, IDSER implementation, or the parent cutover.
 - **Parent:** [BSS-V2-014 ticket set](BSS-V2-014-weighted-capacity-ticket-set.md).
 - **Dependencies:** BSS-V2-014-02-02 CK `PASS`; BSS-V2-014-05's IDSER consumer contract frozen; approved BSS-V2-005-05-02 read-boundary security properties. This ticket can qualify v2 in isolation, but production activation is solely the parent-owned coordinated `-03/-05` cutover gate.
 
