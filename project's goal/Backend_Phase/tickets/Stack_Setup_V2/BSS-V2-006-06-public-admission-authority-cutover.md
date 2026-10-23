@@ -1,6 +1,6 @@
 # BSS-V2-006-06 — Public admission authority cutover
 
-- **State:** `awaiting_review`; GO implementation is complete and pending independent CK review.
+- **State:** `approved`; independent CK verification passed after the bounded CFC remediation.
 - **Owner:** BSS-V2-006.
 - **Dependencies (frozen):** BSS-V2-006-04-02 CK `PASS`; BSS-V2-006-04-06 CK `PASS`; and BSS-V2-014-04-02 CK `PASS` / its accepted bigint route-authority contract.
 - **Explicit non-dependency:** BSS-V2-014-04-03. This ticket neither changes nor waits on that blocked borrowing ticket, and BSS-V2-014-04-03 does not depend on this ticket. Its release condition is instead this ticket's independent CK `PASS` followed by a successful rerun of the corrected historical fairness validation.
