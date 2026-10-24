@@ -3,6 +3,7 @@
 - **Ticket:** `GHR-04A` — Registered HTTP transport contract and dispatcher
 - **Authority:** [frozen GHR-04A ticket](../Backend_Phase/tickets/GHR_Phase/GHR-04A-registered-http-transport-contract-and-dispatcher.md), its incorporated GHR HTTP connector context §§2–3, 5–6, and 9, plus the approved [GHR-03B CK review](GHR-03B-c84b9df-review.md).
 - **Predecessor:** GHR-03B is `PASS` at reviewed commit `c84b9dfac8cf04ad8bfdc8901b3fa3ad2134a67a`.
+- **Implementation/review target:** `c4ad7a57b30b96e078bf7457ad631b9bb2d54c89` — `feat(ghr): add registered HTTP dispatcher contract`.
 - **Checkpoint state:** `awaiting_review`. This is implementer readiness only, not a self-issued `PASS`.
 
 ## Bounded change set
