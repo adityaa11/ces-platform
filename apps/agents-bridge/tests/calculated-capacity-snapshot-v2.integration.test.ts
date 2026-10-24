@@ -4,7 +4,7 @@ import test from "node:test";
 import postgres from "postgres";
 import { createBridgeApp } from "../src/app.js";
 import { createCapacityPlanningSnapshotReader, type CapacityPlanningSnapshotPrincipal } from "../src/capacity-planning-snapshot.js";
-import { createIdserCapacityPlanningSnapshotV2Consumer } from "../src/idser-capacity-planning-snapshot-v2.js";
+import { createIdserCapacityPlanningSnapshotV2Consumer, IdserCapacityPlanningSnapshotV2Error } from "../src/idser-capacity-planning-snapshot-v2.js";
 import { TestRuntime } from "../src/runtime.js";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -150,6 +150,20 @@ test("RC-01403-01..05 qualifies a calculated v2 candidate through the sole authe
     assert.equal((idserSnapshot.workload.structuralBound as Record<string, unknown>).maxPromptBytes, 9_500, "the actual qualified reader supplies the prompt-byte bound needed by IDSER");
     assert.deepEqual(await counters(), before, "the composed IDSER read remains side-effect-free");
 
+    const assertConsumerStops = async (label: string, credential = `${suffix}-credential`) => {
+      const consumer = createIdserCapacityPlanningSnapshotV2Consumer({
+        reader,
+        serverCredential: credential,
+        expectedIdentity: { quotaDomainId: domain, processId, processProfileVersion: "v1", routeId, serviceClass: "background" },
+      });
+      await assert.rejects(
+        () => consumer.read({ requestBytes: 500, inputTokens: 250, reservedOutputTokens: 100, requestResourceEnvelope: { requestUnits: 1, tokenUnits: 350, dayUnits: 1, concurrencyUnits: 1 } }),
+        (error: unknown) => error instanceof IdserCapacityPlanningSnapshotV2Error && (error.disposition === "blocked" || error.disposition === "structurally_unfit"),
+        `${label}: the composed consumer returns a typed stop/replan result`,
+      );
+      assert.deepEqual(await counters(), before, `${label}: composed consumer has no fallback effect`);
+    };
+
     const assertNonQualified = async (label: string, credential = `${suffix}-credential`, query = "") => {
       const snapshot = await responseFor(credential, query);
       assert.equal(snapshot.apiVersion, "CapacityPlanningSnapshot/v2", `${label}: typed v2 result`);
@@ -165,6 +179,12 @@ test("RC-01403-01..05 qualifies a calculated v2 candidate through the sole authe
       ["mismatched class", `${suffix}-class-mismatch`],
       ["mismatched route", `${suffix}-route-mismatch`],
     ]) await assertNonQualified(label, credential);
+    for (const [label, credential] of [
+      ["foreign principal", `${suffix}-foreign`],
+      ["mismatched process", `${suffix}-process-mismatch`],
+      ["mismatched class", `${suffix}-class-mismatch`],
+      ["mismatched route", `${suffix}-route-mismatch`],
+    ]) await assertConsumerStops(label, credential);
     for (const [label, query] of [
       ["request byte bound", "requestBytes=10001&inputTokens=250&outputTokens=100"],
       ["input bound", "requestBytes=500&inputTokens=4001&outputTokens=100"],
@@ -183,6 +203,7 @@ test("RC-01403-01..05 qualifies a calculated v2 candidate through the sole authe
       await bridge.unsafe("SAVEPOINT v2_negative");
       await bridge.unsafe(statement, values as never[]);
       await assertNonQualified(label);
+      await assertConsumerStops(label);
       await bridge.unsafe("ROLLBACK TO SAVEPOINT v2_negative");
     };
     await mutateAndReject("model mismatch", "UPDATE bridge.provider_capacity_profile SET associated_routes = $1::jsonb WHERE quota_domain_id = $2 AND profile_version = 'capacity-v1'", [[{ ...route, modelOrProcessorId: "other-model" }], domain]);
@@ -198,6 +219,7 @@ test("RC-01403-01..05 qualifies a calculated v2 candidate through the sole authe
     assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.active_desired_admission_profile WHERE quota_domain_id=$1", [domain]))[0].count, 0, "premature activation cannot change the active reader");
     await bridge.unsafe("INSERT INTO bridge.provider_enforcement_policy_revocation(quota_domain_id,provider_capacity_profile_version,route_id,policy_id,policy_version,revocation_ref,revoked_by) VALUES($1,'capacity-v1',$2,'anoman-policy','v1',$3,'fixture')", [domain, routeId, `${suffix}-revoked`]);
     await assertNonQualified("revoked policy");
+    await assertConsumerStops("revoked policy");
   } finally {
     await bridge.unsafe("ROLLBACK").catch(() => undefined);
     await Promise.all([app.close(), admin.end()]);

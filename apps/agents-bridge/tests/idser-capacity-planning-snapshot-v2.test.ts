@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { createIdserCapacityPlanningSnapshotV2Consumer, IdserCapacityPlanningSnapshotV2Error } from "../src/idser-capacity-planning-snapshot-v2.ts";
+import { createIdserCapacityPlanningSnapshotV2ProductionComposition } from "../src/idser-capacity-planning-snapshot-v2-composition.ts";
 import { proposeStructuralFitCorpusPartition } from "../src/idser-structural-fit-corpus-partition.ts";
 
 const identity = { quotaDomainId: "anoman", processId: "semantic", processProfileVersion: "v1", routeId: "anoman-semantic", serviceClass: "background" as const };
@@ -91,6 +92,8 @@ test("has no legacy reader, direct database, admission, or execution dependency"
 
 test("the production IDSER fitting seams name one v2 consumer and no v1/adapter/fallback capacity path", () => {
   const consumer = readFileSync(new URL("../src/idser-capacity-planning-snapshot-v2.ts", import.meta.url), "utf8");
+  const composition = readFileSync(new URL("../src/idser-capacity-planning-snapshot-v2-composition.ts", import.meta.url), "utf8");
+  const main = readFileSync(new URL("../src/main.ts", import.meta.url), "utf8");
   const structural = readFileSync(new URL("../src/idser-structural-fit-corpus-partition.ts", import.meta.url), "utf8");
   const multimodal = readFileSync(new URL("../src/idser-multimodal-structural-fit-partition.ts", import.meta.url), "utf8");
   assert.equal((consumer.match(/export function createIdserCapacityPlanningSnapshotV2Consumer/g) ?? []).length, 1);
@@ -98,4 +101,19 @@ test("the production IDSER fitting seams name one v2 consumer and no v1/adapter/
     assert.match(source, /idser-capacity-planning-snapshot-v2/);
     assert.doesNotMatch(source, /idser-prospective-capacity-snapshot|CapacityPlanningSnapshot\/v1|fallback|adapter|postgres|drizzle/i);
   }
+  assert.match(main, /createIdserCapacityPlanningSnapshotV2ProductionComposition/);
+  assert.equal((main.match(/createIdserCapacityPlanningSnapshotV2ProductionComposition\(/g) ?? []).length, 1, "the production entrypoint creates one v2 composition");
+  assert.doesNotMatch(main, /idser-prospective-capacity-snapshot|CapacityPlanningSnapshot\/v1|fallback/i);
+  assert.match(composition, /binding\.prospective === false && binding\.qualificationVersion === "v2"/);
+  assert.match(composition, /v2Bindings\.length !== 1/);
+  assert.doesNotMatch(composition, /idser-prospective-capacity-snapshot|CapacityPlanningSnapshot\/v1|fallback|adapter|postgres|drizzle/i);
+});
+
+test("production composition binds exactly one non-prospective v2 credential and fails closed when ambiguous", async () => {
+  const binding = { credential: "server-owned", principalId: "idser", quotaDomainId: "anoman", processId: "semantic", processProfileVersion: "v1", routeId: "anoman-semantic", serviceClass: "background" as const, prospective: false, qualificationVersion: "v2" as const };
+  const consumer = createIdserCapacityPlanningSnapshotV2ProductionComposition({ reader: { read: async () => qualified() as any }, bindings: [binding] });
+  assert.ok(consumer, "one qualified v2 credential creates the sole production composition");
+  await consumer.read(input);
+  assert.equal(createIdserCapacityPlanningSnapshotV2ProductionComposition({ reader: { read: async () => qualified() as any }, bindings: [] }), undefined, "no v2 credential creates no fallback consumer");
+  assert.throws(() => createIdserCapacityPlanningSnapshotV2ProductionComposition({ reader: { read: async () => qualified() as any }, bindings: [binding, { ...binding, credential: "second" }] }), /Exactly one non-prospective/);
 });
