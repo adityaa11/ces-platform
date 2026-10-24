@@ -1,6 +1,6 @@
 # GHR-04C — Worker HTTP cutover and durable receipt fencing
 
-- **State:** `proposed`; this is the sole GHR-04 activation/cutover ticket. It is not authority to change predecessor contracts or activate `can_continue=true`/downstream semantic work.
+- **State:** `awaiting_review`; implementation is recorded at `8089b773b69e7094dc964daba144e8eb7063b3ae` and awaits CK. This is the sole GHR-04 activation/cutover ticket; it is not authority to change predecessor contracts or activate `can_continue=true`/downstream semantic work.
 - **Dependencies:** GHR-03B, GHR-04A, and GHR-04B CK `PASS`.
 - **Parent:** [GHR-04 split record](GHR-04-semantic-batch-plan-http-connector.md).
 - **Source:** [GHR HTTP Delivery to Semantic Batch Plan implementation context](../../GHR-IDSER-Semantic-batch-plan-connector.md), §§5–11.
