@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { createHash, randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import Fastify from "fastify";
 import postgres from "postgres";
 import { PgBoss } from "pg-boss";
 import { TestRuntime } from "../src/runtime.ts";
@@ -16,17 +17,52 @@ const enabled = process.env.GHR03B_REAL_E2E === "1";
 const pause = (milliseconds: number) => new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
 const credential = "g".repeat(32);
 
-async function startReceiver() {
+async function startReceiver(options: Readonly<{ delayFirstAcknowledgementMilliseconds?: number }> = {}) {
   const app = createBridgeApp({
     runtime: new TestRuntime(),
     version: "ghr-04c-test",
     genericHandoffHttpTransport: { origin: "http://127.0.0.1:3002", credential, timeoutMilliseconds: 1_000, maximumResponseBytes: 8_192 },
+  });
+  let acknowledgements = 0;
+  app.addHook("onSend", async (_request, reply, payload) => {
+    if (reply.statusCode === 200) {
+      acknowledgements += 1;
+      if (acknowledgements === 1 && options.delayFirstAcknowledgementMilliseconds) {
+        await pause(options.delayFirstAcknowledgementMilliseconds);
+      }
+    }
+    return payload;
   });
   await app.listen({ host: "127.0.0.1", port: 0 });
   const address = app.server.address();
   assert.ok(address && typeof address !== "string");
   return {
     configuration: { origin: `http://127.0.0.1:${address.port}`, credential, timeoutMilliseconds: 1_000, maximumResponseBytes: 8_192 },
+    acknowledgements: () => acknowledgements,
+    close: () => app.close(),
+  };
+}
+
+async function startFaultReceiver(mode: "422" | "403" | "404" | "405" | "redirect" | "timeout" | "server_error" | "malformed_acknowledgement" | "mismatched_acknowledgement" | "oversized_acknowledgement") {
+  const app = Fastify({ logger: false });
+  app.post("/internal/semantic/batch-plan", async (_request, reply) => {
+    if (mode === "422" || mode === "403" || mode === "404" || mode === "405" || mode === "server_error") {
+      return reply.code(Number(mode)).send({ error: "transport_fault" });
+    }
+    if (mode === "redirect") return reply.code(302).header("location", "/untrusted").send();
+    if (mode === "timeout") {
+      await pause(100);
+      return reply.code(200).send({ handoffId: "late", bodySha256: "late", disposition: "parsed_only" });
+    }
+    if (mode === "malformed_acknowledgement") return reply.code(200).type("application/json").send("{");
+    if (mode === "mismatched_acknowledgement") return reply.code(200).send({ handoffId: "mismatched", bodySha256: "mismatched", disposition: "parsed_only" });
+    return reply.code(200).header("content-length", "8193").type("application/json").send("{}".padEnd(8_193, " "));
+  });
+  await app.listen({ host: "127.0.0.1", port: 0 });
+  const address = app.server.address();
+  assert.ok(address && typeof address !== "string");
+  return {
+    configuration: { origin: `http://127.0.0.1:${address.port}`, credential, timeoutMilliseconds: 25, maximumResponseBytes: 8_192 },
     close: () => app.close(),
   };
 }
@@ -166,7 +202,8 @@ test("GHR-03B proves the complete RC-02 negative matrix without downstream effec
     const [effectsBefore] = await admin.unsafe("SELECT (SELECT count(*)::int FROM atlas.semantic_execution) AS semantic, (SELECT count(*)::int FROM atlas.semantic_candidate) AS candidates, (SELECT count(*)::int FROM bridge.provider_work_admission_v1) AS bss");
     const valid = await makeIssued("valid");
     assert.equal(await deliverGenericHandoffJob({ database, job: { type: "GenericHandoffJob/v1", handoffId: valid }, leaseSeconds: 10, finalAttempt: false, httpTransportConfiguration: receiver.configuration }), "parsed_only");
-    assert.equal(await deliverGenericHandoffJob({ database, job: { type: "GenericHandoffJob/v1", handoffId: valid }, leaseSeconds: 10, finalAttempt: false, httpTransportConfiguration: receiver.configuration }), "parsed_only", "a lost acknowledgement/reordered duplicate observes the terminal receipt");
+    assert.equal(await deliverGenericHandoffJob({ database, job: { type: "GenericHandoffJob/v1", handoffId: valid }, leaseSeconds: 10, finalAttempt: false, httpTransportConfiguration: receiver.configuration }), "parsed_only", "a duplicate observes the terminal receipt without a second receiver dispatch");
+    assert.equal(receiver.acknowledgements(), 1, "the duplicate does not execute a local or HTTP compatibility delivery path");
     assert.equal((await admin.unsafe("SELECT count(*)::int AS count FROM bridge.generic_handoff_delivery WHERE handoff_id=$1 AND disposition='parsed_only'", [valid]))[0]!.count, 1);
 
     const negativeCases = [
@@ -192,6 +229,37 @@ test("GHR-03B proves the complete RC-02 negative matrix without downstream effec
     assert.equal(await deliverGenericHandoffJob({ database, job: { type: "GenericHandoffJob/v1", handoffId: invalidCredential }, leaseSeconds: 10, finalAttempt: false, httpTransportConfiguration: { ...receiver.configuration, credential: "x".repeat(32) } }), "blocked");
     assert.deepEqual((await admin.unsafe("SELECT disposition,error_class FROM bridge.generic_handoff_delivery WHERE handoff_id=$1", [invalidCredential]))[0], { disposition: "blocked", error_class: "invalid_route" }, "a Fastify authentication rejection cannot create a successful receipt");
 
+    for (const fault of [
+      { mode: "422", disposition: "quarantined", errorClass: "receiver_rejected", transient: false },
+      { mode: "403", disposition: "blocked", errorClass: "invalid_route", transient: false },
+      { mode: "404", disposition: "blocked", errorClass: "invalid_route", transient: false },
+      { mode: "405", disposition: "blocked", errorClass: "invalid_route", transient: false },
+      { mode: "redirect", disposition: "blocked", errorClass: "invalid_route", transient: false },
+      { mode: "malformed_acknowledgement", disposition: "quarantined", errorClass: "corrupt_envelope", transient: false },
+      { mode: "mismatched_acknowledgement", disposition: "quarantined", errorClass: "corrupt_envelope", transient: false },
+      { mode: "oversized_acknowledgement", disposition: "quarantined", errorClass: "corrupt_envelope", transient: false },
+      { mode: "timeout", disposition: "retry_exhausted", errorClass: "transient_delivery", transient: true },
+      { mode: "server_error", disposition: "retry_exhausted", errorClass: "transient_delivery", transient: true },
+    ] as const) {
+      const faultReceiver = await startFaultReceiver(fault.mode);
+      const handoffId = await makeIssued(`http-${fault.mode}`);
+      try {
+        const input = { database, job: { type: "GenericHandoffJob/v1" as const, handoffId }, leaseSeconds: 1, finalAttempt: false, httpTransportConfiguration: faultReceiver.configuration };
+        if (fault.transient) {
+          await assert.rejects(() => deliverGenericHandoffJob(input), /HTTP delivery is unavailable/u, `${fault.mode} retains the pointer for a bounded retry`);
+          await admin.unsafe("UPDATE bridge.generic_handoff_delivery SET lease_expires_at=now()-interval '1 second' WHERE handoff_id=$1", [handoffId]);
+          assert.equal(await deliverGenericHandoffJob({ ...input, finalAttempt: true }), fault.disposition, `${fault.mode} terminalizes only at the fenced final attempt`);
+        } else {
+          assert.equal(await deliverGenericHandoffJob(input), fault.disposition, `${fault.mode} follows the frozen worker transport classification`);
+        }
+        assert.deepEqual((await admin.unsafe("SELECT disposition,error_class FROM bridge.generic_handoff_delivery WHERE handoff_id=$1", [handoffId]))[0], { disposition: fault.disposition, error_class: fault.errorClass }, `${fault.mode} records only its sanitized durable outcome`);
+        assert.equal((await admin.unsafe("SELECT count(*)::int AS count FROM bridge.generic_handoff_delivery WHERE handoff_id=$1 AND disposition='parsed_only'", [handoffId]))[0]!.count, 0, `${fault.mode} cannot create a parsed-only receipt`);
+        assert.deepEqual((await admin.unsafe("SELECT (SELECT count(*)::int FROM atlas.semantic_execution) AS semantic, (SELECT count(*)::int FROM atlas.semantic_candidate) AS candidates, (SELECT count(*)::int FROM bridge.provider_work_admission_v1) AS bss"))[0], effectsBefore, `${fault.mode} cannot create downstream work`);
+      } finally {
+        await faultReceiver.close();
+      }
+    }
+
     const unavailable = await makeIssued("unavailable");
     const unavailableTransport = { ...receiver.configuration, origin: "http://127.0.0.1:1" };
     await assert.rejects(() => deliverGenericHandoffJob({ database, job: { type: "GenericHandoffJob/v1", handoffId: unavailable }, leaseSeconds: 1, finalAttempt: false, httpTransportConfiguration: unavailableTransport }), /HTTP delivery is unavailable/u);
@@ -209,6 +277,48 @@ test("GHR-03B proves the complete RC-02 negative matrix without downstream effec
     }
     const [effectsAfter] = await admin.unsafe("SELECT (SELECT count(*)::int FROM atlas.semantic_execution) AS semantic, (SELECT count(*)::int FROM atlas.semantic_candidate) AS candidates, (SELECT count(*)::int FROM bridge.provider_work_admission_v1) AS bss");
     assert.deepEqual(effectsAfter, effectsBefore, "every positive and classified negative delivery stays parse-only with zero downstream effects");
+  } finally {
+    await boss.stop({ graceful: false }).catch(() => undefined);
+    await Promise.all([admin.end(), receiver.close()]);
+  }
+});
+
+test("GHR-04C retries a receiver-accepted acknowledgement loss without changing the durable receipt identity", { skip: !enabled || !databaseUrl }, async () => {
+  const admin = postgres(databaseUrl!, { max: 1 });
+  const bridgeUrl = new URL(databaseUrl!);
+  bridgeUrl.username = "agents_bridge";
+  bridgeUrl.password = process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only";
+  const boss = new PgBoss({ connectionString: bridgeUrl.toString(), schema: "pgboss", migrate: false, supervise: false, schedule: false, createSchema: false });
+  const receiver = await startReceiver({ delayFirstAcknowledgementMilliseconds: 100 });
+  const suffix = randomUUID();
+  const handoffId = `ghr-04c-lost-ack-${suffix}`;
+  const idempotencyKey = `key-${handoffId}`;
+  const body = `{"can_continue":false,"payload":${canonicalSemanticBatchPlanInputV1({ normalizedDocumentRef: "a".repeat(64), perceptionExecutionId: `execution-${suffix}`, sourceSha256: "b".repeat(64), normalizedDocumentVersion: "v1", normalizedDocumentFingerprint: "c".repeat(64) })}}`;
+  const bodySha256 = createHash("sha256").update(body).digest("hex");
+  const header = {
+    protocol: "GenericHandoffEnvelope/v1", handoffId, idempotencyKey,
+    producer: { processKey: "perception.acceptance", executionId: `execution-${suffix}` },
+    route: { main: "semantic", branch: "batch-plan", policyVersion: "v1", handlerVersion: "v1" },
+    bodyContract: { type: "SemanticBatchPlanInput", version: "v1" },
+    scope: { projectId: `project-${suffix}`, workspaceId: `workspace-${suffix}`, bundleId: `bundle-${suffix}`, documentId: `document-${suffix}` },
+    correlation: { workflowId: `workflow-${suffix}` }, integrity: { bodyEncoding: "canonical-json-v1", bodySha256 }, issuedAt: "2026-10-25T00:00:00.000Z",
+  };
+  try {
+    await boss.start();
+    const database = boss.getDb();
+    const [effectsBefore] = await admin.unsafe("SELECT (SELECT count(*)::int FROM atlas.semantic_execution) AS semantic, (SELECT count(*)::int FROM atlas.semantic_candidate) AS candidates, (SELECT count(*)::int FROM bridge.provider_work_admission_v1) AS bss");
+    await admin.unsafe("INSERT INTO atlas.generic_handoff_intent(handoff_id,idempotency_key,producer_execution_id,project_id,workspace_id,bundle_id,document_id,policy_version,handler_version,body_contract_type,body_contract_version,route_main,route_branch,can_continue,body_encoding,body_bytes,body_sha256,trusted_header,issued_at) VALUES ($1,$2,$3,$4,$5,$6,$7,'v1','v1','SemanticBatchPlanInput','v1','semantic','batch-plan',false,'canonical-json-v1',$8,$9,$10::jsonb,now())", [handoffId, idempotencyKey, header.producer.executionId, header.scope.projectId, header.scope.workspaceId, header.scope.bundleId, header.scope.documentId, Buffer.from(body), bodySha256, JSON.stringify(header)]);
+    const retryingInput = { database, job: { type: "GenericHandoffJob/v1" as const, handoffId }, leaseSeconds: 1, finalAttempt: false, httpTransportConfiguration: { ...receiver.configuration, timeoutMilliseconds: 25 } };
+    await assert.rejects(() => deliverGenericHandoffJob(retryingInput), /HTTP delivery is unavailable/u, "the worker loses the accepted acknowledgement before receipt terminalization");
+    await pause(125);
+    assert.equal(receiver.acknowledgements(), 1, "the existing Fastify receiver accepted the first original immutable request");
+    assert.deepEqual((await admin.unsafe("SELECT handoff_id,idempotency_key,body_sha256,disposition FROM bridge.generic_handoff_delivery WHERE handoff_id=$1", [handoffId]))[0], { handoff_id: handoffId, idempotency_key: idempotencyKey, body_sha256: bodySha256, disposition: null }, "the lost acknowledgement cannot terminalize a receipt");
+    await admin.unsafe("UPDATE bridge.generic_handoff_delivery SET lease_expires_at=now()-interval '1 second' WHERE handoff_id=$1", [handoffId]);
+    assert.equal(await deliverGenericHandoffJob({ ...retryingInput, httpTransportConfiguration: receiver.configuration }), "parsed_only", "the fenced retry sends the original verified pointer to the same receiver");
+    assert.equal(receiver.acknowledgements(), 2, "the only retry is a second real HTTP request to the Fastify receiver");
+    assert.deepEqual((await admin.unsafe("SELECT handoff_id,idempotency_key,body_sha256,disposition,error_class,lease_generation FROM bridge.generic_handoff_delivery WHERE handoff_id=$1", [handoffId]))[0], { handoff_id: handoffId, idempotency_key: idempotencyKey, body_sha256: bodySha256, disposition: "parsed_only", error_class: null, lease_generation: 2 }, "the retry preserves the immutable identity and writes one fenced terminal receipt");
+    assert.equal((await admin.unsafe("SELECT count(*)::int AS count FROM bridge.generic_handoff_delivery WHERE handoff_id=$1 AND disposition='parsed_only'", [handoffId]))[0]!.count, 1, "exactly one logical parsed-only receipt exists after acknowledgement loss");
+    assert.deepEqual((await admin.unsafe("SELECT (SELECT count(*)::int FROM atlas.semantic_execution) AS semantic, (SELECT count(*)::int FROM atlas.semantic_candidate) AS candidates, (SELECT count(*)::int FROM bridge.provider_work_admission_v1) AS bss"))[0], effectsBefore, "acknowledgement-loss recovery remains false-only");
   } finally {
     await boss.stop({ graceful: false }).catch(() => undefined);
     await Promise.all([admin.end(), receiver.close()]);
