@@ -15,6 +15,10 @@ import { runSemanticJob } from "./semantic-worker.js";
 import { assertConfiguredRouteAdapter, capabilityForSkill, createRouteRegistry } from "./route-registry.js";
 import type { ProviderAdmittedPayloadAdapter, ProviderOutboundTransport } from "./provider-operational-runtime.js";
 import { createProductionBridgeWorker } from "./production-worker-composition.js";
+import { PostgresAcceptedSemanticBatchPlanDocumentResolver } from "@atlas/db";
+import { createCapacityPlanningSnapshotReader } from "./capacity-planning-snapshot.js";
+import { createIdserCapacityPlanningSnapshotV2ProductionComposition } from "./idser-capacity-planning-snapshot-v2-composition.js";
+import { runSemanticBatchPlanJob } from "./idser-semantic-batch-plan-job.js";
 
 const readinessPath = "/tmp/agents-bridge-worker.ready";
 // A container can be restarted without its writable layer being discarded.
@@ -54,6 +58,16 @@ const providerOutboundTransport: ProviderOutboundTransport = async () => {
 const providerPayloadAdapter: ProviderAdmittedPayloadAdapter = {
   hydrate: async () => { throw new Error("No qualified provider-work payload adapter is configured for the admitted-execution slice."); },
 };
+const semanticBatchPlan = config.semanticBatchPlanPlanning && config.capacityPlanningSnapshot
+  ? async (handoffId: string, database: { executeSql(statement: string, values?: readonly unknown[]): Promise<{ readonly rows: readonly Record<string, unknown>[] }> }) => {
+    const databaseAdapter = { executeSql: database.executeSql.bind(database) };
+    const snapshotReader = createCapacityPlanningSnapshotReader(databaseAdapter, { authenticate: (credential) => config.capacityPlanningSnapshot?.bindings.find((binding) => binding.credential === credential) ?? null });
+    const capacityConsumer = createIdserCapacityPlanningSnapshotV2ProductionComposition({ reader: snapshotReader, bindings: config.capacityPlanningSnapshot.bindings });
+    if (!capacityConsumer) throw new Error("IDSER semantic batch-planning capacity consumer is unavailable.");
+    const resolver = new PostgresAcceptedSemanticBatchPlanDocumentResolver({ unsafe: async (statement, values) => (await database.executeSql(statement, values)).rows as Record<string, unknown>[] });
+    await runSemanticBatchPlanJob({ database, handoffId, planning: { acceptedDocumentResolver: resolver, estimatorConfiguration: config.semanticBatchPlanPlanning!.estimatorConfiguration, capacityConsumer } });
+  }
+  : undefined;
 const worker = createProductionBridgeWorker({ config: loadWorkerConfig(), runtime, documentPerception: async (request, signal, context) => {
   const route = registry.resolve("atlas.document.perceive");
   assertConfiguredRouteAdapter(route, config);
@@ -72,7 +86,7 @@ const worker = createProductionBridgeWorker({ config: loadWorkerConfig(), runtim
     },
   };
   await runSemanticJob(job, capabilities[route.providerId as "mistral" | "gemini" | "anoman"].structured, semanticClient, createSemanticResultReplay(context.database), context.idempotencyKey, signal, { owner: context.leaseOwner, generation: context.leaseGeneration }, undefined, stepwise);
-}, providerOutboundTransport, providerPayloadAdapter, genericHandoffHttpTransport: config.genericHandoffHttpTransport });
+}, providerOutboundTransport, providerPayloadAdapter, genericHandoffHttpTransport: config.genericHandoffHttpTransport, semanticBatchPlan });
 await worker.start();
 await writeFile(readinessPath, "ready\n");
 

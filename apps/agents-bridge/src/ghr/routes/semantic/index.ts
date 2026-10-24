@@ -8,6 +8,7 @@ export { semanticBatchPlanRoute } from "./branches/batch-plan.route.js";
 export {
   BatchPlanReceiverError,
   receiveVerifiedBatchPlan,
-  type BatchPlanParseOnlyDecision,
+  type BatchPlanAcceptanceStore,
+  type BatchPlanAcceptedDecision,
   type VerifiedBatchPlanDeliveryCommand,
 } from "./receivers/batch-plan.receiver.js";

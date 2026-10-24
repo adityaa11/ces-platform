@@ -4,6 +4,7 @@ import type { RuntimeCapacityConstraintRead, RuntimeCapacityConstraint } from ".
 import { parseProviderWorkAdmissionRequest, type ProviderWorkAdmissionOutcome } from "./provider-work-admission.js";
 import type { CapacityPlanningSnapshot, CapacityPlanningSnapshotRead } from "./capacity-planning-snapshot.js";
 import type { GenericHandoffHttpTransportConfig } from "./ghr/http-transport-config.js";
+import type { BatchPlanAcceptanceStore } from "./ghr/routes/semantic/receivers/batch-plan.receiver.js";
 import { registerAuthenticatedBatchPlanHttpReceiver } from "./ghr/authenticated-batch-plan-http-receiver.js";
 
 type RuntimeCapacityConstraintReader = Readonly<{
@@ -38,11 +39,13 @@ export function createBridgeApp(options: {
   readonly runtimeCapacityConstraintReader?: RuntimeCapacityConstraintReader;
   readonly capacityPlanningSnapshotReader?: CapacityPlanningSnapshotReader;
   readonly providerWorkAdmissionService?: ProviderWorkAdmissionService;
+  /** Durable IDSER planning-acceptance store. */
+  readonly batchPlanAcceptance?: BatchPlanAcceptanceStore;
   /** Deployment-owned internal receiver configuration. Missing credentials fail closed. */
   readonly genericHandoffHttpTransport?: GenericHandoffHttpTransportConfig;
 }) {
   const app = Fastify({ logger: false });
-  registerAuthenticatedBatchPlanHttpReceiver(app, { credential: options.genericHandoffHttpTransport?.credential });
+  registerAuthenticatedBatchPlanHttpReceiver(app, { credential: options.genericHandoffHttpTransport?.credential, acceptance: options.batchPlanAcceptance });
   app.get("/healthz", async () => ({ status: "ok" }));
   app.get("/readyz", async (_request, reply) => {
     const ready = options.ready?.() ?? true;

@@ -4,6 +4,7 @@ import type { AnomanProviderConfig } from "./providers/anoman.js";
 import type { RuntimeCapacityConstraintPrincipal } from "./runtime-capacity-constraint.js";
 import type { CapacityPlanningSnapshotPrincipal } from "./capacity-planning-snapshot.js";
 import { loadGenericHandoffHttpTransportConfig, type GenericHandoffHttpTransportConfig } from "./ghr/http-transport-config.js";
+import type { CompleteSemCandidateRequestEstimatorConfiguration } from "./complete-sem-candidate-request-estimator.js";
 
 export type RuntimeCapacityConstraintBinding = RuntimeCapacityConstraintPrincipal & Readonly<{
   credential: string;
@@ -57,6 +58,7 @@ export type BridgeConfig = {
   }>;
   /** Server-owned registrations for the BSS-V2-005 planning-only read API. */
   readonly capacityPlanningSnapshot?: Readonly<{ databaseUrl: string; bindings: readonly CapacityPlanningSnapshotBinding[] }>;
+  readonly semanticBatchPlanPlanning?: Readonly<{ databaseUrl: string; estimatorConfiguration: CompleteSemCandidateRequestEstimatorConfiguration }>;
 };
 
 function boundedPositiveInteger(value: string | undefined, fallback: number, name: string): number {
@@ -105,6 +107,29 @@ function capacityPlanningSnapshotBindings(value: string | undefined): readonly C
   });
 }
 
+function semanticBatchPlanEstimator(value: string | undefined): CompleteSemCandidateRequestEstimatorConfiguration | undefined {
+  if (value === undefined || value === "") return undefined;
+  let parsed: unknown;
+  try { parsed = JSON.parse(value); } catch { throw new Error("AGENTS_BRIDGE_SEMANTIC_BATCH_PLANNER_ESTIMATOR must be valid JSON."); }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("AGENTS_BRIDGE_SEMANTIC_BATCH_PLANNER_ESTIMATOR must be an object.");
+  const config = parsed as Record<string, unknown>;
+  const identity = (value: unknown, label: string) => {
+    if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`${label} must be an object.`);
+    const item = value as Record<string, unknown>;
+    if (typeof item.identity !== "string" || item.identity.length === 0 || typeof item.version !== "string" || item.version.length === 0) throw new Error(`${label} requires identity and version.`);
+    return { identity: item.identity, version: item.version };
+  };
+  const integer = (name: string) => {
+    if (!Number.isSafeInteger(config[name]) || (config[name] as number) < 0) throw new Error(`AGENTS_BRIDGE_SEMANTIC_BATCH_PLANNER_ESTIMATOR ${name} must be a non-negative safe integer.`);
+    return config[name] as number;
+  };
+  const envelope = config.requestResourceEnvelope;
+  if (!envelope || typeof envelope !== "object" || Array.isArray(envelope)) throw new Error("AGENTS_BRIDGE_SEMANTIC_BATCH_PLANNER_ESTIMATOR requestResourceEnvelope must be an object.");
+  const resources = envelope as Record<string, unknown>;
+  for (const name of ["requestUnits", "dayUnits", "concurrencyUnits"] as const) if (!Number.isSafeInteger(resources[name]) || (resources[name] as number) < 0) throw new Error(`AGENTS_BRIDGE_SEMANTIC_BATCH_PLANNER_ESTIMATOR requestResourceEnvelope.${name} must be a non-negative safe integer.`);
+  return { estimator: identity(config.estimator, "estimator"), configuration: identity(config.configuration, "configuration"), inputBytesPerToken: integer("inputBytesPerToken"), framingAllowanceBytes: integer("framingAllowanceBytes"), requestByteSafetyMargin: integer("requestByteSafetyMargin"), inputTokenSafetyMargin: integer("inputTokenSafetyMargin"), reservedOutputTokens: integer("reservedOutputTokens"), requestResourceEnvelope: { requestUnits: resources.requestUnits as number, dayUnits: resources.dayUnits as number, concurrencyUnits: resources.concurrencyUnits as number } };
+}
+
 export function loadBridgeConfig(environment: NodeJS.ProcessEnv = process.env): BridgeConfig {
   const port = Number(environment.AGENTS_BRIDGE_PORT ?? "3002");
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error("AGENTS_BRIDGE_PORT must be a valid TCP port.");
@@ -127,7 +152,10 @@ export function loadBridgeConfig(environment: NodeJS.ProcessEnv = process.env): 
   const runtimeConstraintBindings = runtimeCapacityConstraintBindings(environment.AGENTS_BRIDGE_RUNTIME_CAPACITY_CONSTRAINT_PRINCIPALS);
   const planningSnapshotBindings = capacityPlanningSnapshotBindings(environment.AGENTS_BRIDGE_CAPACITY_PLANNING_SNAPSHOT_PRINCIPALS);
   const runtimeConstraintDatabaseUrl = environment.AGENTS_BRIDGE_DATABASE_URL;
-  if ((runtimeConstraintBindings || planningSnapshotBindings) && !runtimeConstraintDatabaseUrl) throw new Error("AGENTS_BRIDGE_DATABASE_URL is required when capacity-read principals are configured.");
+  const genericHandoffHttpTransport = loadGenericHandoffHttpTransportConfig(environment);
+  const estimatorConfiguration = semanticBatchPlanEstimator(environment.AGENTS_BRIDGE_SEMANTIC_BATCH_PLANNER_ESTIMATOR);
+  if ((runtimeConstraintBindings || planningSnapshotBindings || genericHandoffHttpTransport) && !runtimeConstraintDatabaseUrl) throw new Error("AGENTS_BRIDGE_DATABASE_URL is required when capacity-read principals or GHR delivery are configured.");
+  if (genericHandoffHttpTransport && (!estimatorConfiguration || !planningSnapshotBindings || planningSnapshotBindings.filter((binding) => binding.prospective === false && binding.qualificationVersion === "v2").length !== 1)) throw new Error("GHR async batch planning requires one non-prospective CapacityPlanningSnapshot/v2 principal and AGENTS_BRIDGE_SEMANTIC_BATCH_PLANNER_ESTIMATOR.");
   return {
     host: environment.AGENTS_BRIDGE_HOST ?? "0.0.0.0",
     port,
@@ -173,8 +201,9 @@ export function loadBridgeConfig(environment: NodeJS.ProcessEnv = process.env): 
       zeroDataRetentionApproved: environment.ANOMAN_ZDR_APPROVED === "true",
     },
     docling: { baseUrl: doclingBaseUrl.replace(/\/$/u, ""), timeoutMilliseconds: boundedPositiveInteger(environment.DOCLING_TIMEOUT_MS, 20_000, "DOCLING_TIMEOUT_MS"), maxDocumentBytes: boundedPositiveInteger(environment.DOCLING_MAX_DOCUMENT_BYTES, 20 * 1024 * 1024, "DOCLING_MAX_DOCUMENT_BYTES"), maxResponseBytes: boundedPositiveInteger(environment.DOCLING_MAX_RESPONSE_BYTES, 10 * 1024 * 1024, "DOCLING_MAX_RESPONSE_BYTES"), serviceVersion: environment.DOCLING_SERVE_VERSION ?? doclingServeVersion, doclingSlimVersion: environment.DOCLING_SLIM_VERSION ?? doclingSlimVersion, optionProfile: environment.DOCLING_OPTION_PROFILE ?? doclingOptionProfile },
-    genericHandoffHttpTransport: loadGenericHandoffHttpTransportConfig(environment),
+    genericHandoffHttpTransport,
     runtimeCapacityConstraint: runtimeConstraintBindings && runtimeConstraintDatabaseUrl ? { databaseUrl: runtimeConstraintDatabaseUrl, bindings: runtimeConstraintBindings } : undefined,
     capacityPlanningSnapshot: planningSnapshotBindings && runtimeConstraintDatabaseUrl ? { databaseUrl: runtimeConstraintDatabaseUrl, bindings: planningSnapshotBindings } : undefined,
+    semanticBatchPlanPlanning: genericHandoffHttpTransport && runtimeConstraintDatabaseUrl && estimatorConfiguration ? { databaseUrl: runtimeConstraintDatabaseUrl, estimatorConfiguration } : undefined,
   };
 }

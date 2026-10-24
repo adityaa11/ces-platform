@@ -9,6 +9,7 @@ import { createRuntimeCapacityConstraintReader } from "./runtime-capacity-constr
 import { createProviderWorkAdmissionService } from "./provider-work-admission.js";
 import { createCapacityPlanningSnapshotReader } from "./capacity-planning-snapshot.js";
 import { createIdserCapacityPlanningSnapshotV2ProductionComposition } from "./idser-capacity-planning-snapshot-v2-composition.js";
+import { createPostgresSemanticBatchPlanAcceptanceStore } from "./idser-semantic-batch-plan-job.js";
 
 const config = loadBridgeConfig();
 const availableAdapters = new Set<string>();
@@ -23,7 +24,7 @@ const gemini = createGeminiCapabilities(config.gemini);
 const runtime = config.deploymentProfile === "test"
   ? new TestRuntime()
   : new QualifiedRouteRuntime((capability) => registry.resolve(capability), { mistral: mistral.streaming, gemini: gemini.streaming });
-const capacityReadDatabaseUrl = config.runtimeCapacityConstraint?.databaseUrl ?? config.capacityPlanningSnapshot?.databaseUrl;
+const capacityReadDatabaseUrl = config.runtimeCapacityConstraint?.databaseUrl ?? config.capacityPlanningSnapshot?.databaseUrl ?? config.semanticBatchPlanPlanning?.databaseUrl;
 const runtimeConstraintDatabase = capacityReadDatabaseUrl ? postgres(capacityReadDatabaseUrl, { max: 2 }) : undefined;
 const runtimeCapacityConstraintReader = config.runtimeCapacityConstraint && runtimeConstraintDatabase
   ? createRuntimeCapacityConstraintReader(
@@ -49,7 +50,10 @@ const providerWorkAdmissionService = config.runtimeCapacityConstraint && runtime
     { authenticate: (credential) => config.runtimeCapacityConstraint?.bindings.find((binding) => binding.credential === credential) ?? null },
   )
   : undefined;
-const app = createBridgeApp({ runtime, version: config.version, ready: () => registry.ready, runtimeCapacityConstraintReader, capacityPlanningSnapshotReader, providerWorkAdmissionService, genericHandoffHttpTransport: config.genericHandoffHttpTransport });
+const batchPlanAcceptance = config.semanticBatchPlanPlanning && runtimeConstraintDatabase
+  ? createPostgresSemanticBatchPlanAcceptanceStore({ executeSql: async (statement, values) => ({ rows: await runtimeConstraintDatabase.unsafe(statement, values as never[]) }) })
+  : undefined;
+const app = createBridgeApp({ runtime, version: config.version, ready: () => registry.ready, runtimeCapacityConstraintReader, capacityPlanningSnapshotReader, providerWorkAdmissionService, batchPlanAcceptance, genericHandoffHttpTransport: config.genericHandoffHttpTransport });
 const stop = async () => { await app.close(); await runtimeConstraintDatabase?.end(); process.exit(0); };
 process.once("SIGINT", stop);
 process.once("SIGTERM", stop);
