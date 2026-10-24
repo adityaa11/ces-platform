@@ -196,7 +196,11 @@ function validate(raw: CapacityPlanningSnapshot, request: IdserCapacityPlanningS
   const canonicalFingerprint = nonEmpty(snapshot.canonicalFingerprint, "canonicalFingerprint");
   if (!md5.test(canonicalFingerprint)) fail("canonicalFingerprint is malformed");
   const qualification = object(snapshot.qualification, "qualification");
-  if (positive(qualification.candidateActivationRevision, "qualification candidateActivationRevision") !== revisions.candidateActivationRevision || typeof qualification.productionActive !== "boolean" || qualification.isolated !== true) fail("qualification provenance is malformed");
+  if (positive(qualification.candidateActivationRevision, "qualification candidateActivationRevision") !== revisions.candidateActivationRevision
+    || typeof qualification.productionActive !== "boolean"
+    || qualification.isolated !== !qualification.productionActive
+    || (qualification.productionActive === true && positive(qualification.activationRevision, "qualification activationRevision") < 1)
+    || (qualification.productionActive === false && "activationRevision" in qualification)) fail("qualification provenance is malformed");
   const borrowing = object(snapshot.borrowing, "borrowing");
   if (borrowing.runtimeOnly !== true || typeof borrowing.mayBorrowIdleCapacity !== "boolean" || typeof borrowing.sameBackgroundClass !== "boolean") fail("borrowing metadata is malformed");
 

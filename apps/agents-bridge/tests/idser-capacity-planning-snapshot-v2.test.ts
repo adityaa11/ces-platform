@@ -40,6 +40,8 @@ test("fails closed for identity, revision/fingerprint, structural, and unknown-R
     ["fingerprint", (snapshot) => { snapshot.canonicalFingerprint = "not-a-fingerprint"; }],
     ["missing prompt bound", (snapshot) => { delete snapshot.sizing.structuralBound.maxPromptBytes; }],
     ["unapproved unknown rpd", (snapshot) => { delete snapshot.policyProvenance.dimensions.rpd.approvalRef; }],
+    ["candidate marked active without an exact activation revision", (snapshot) => { snapshot.qualification = { ...snapshot.qualification, productionActive: true, isolated: false }; }],
+    ["candidate includes an activation revision", (snapshot) => { snapshot.qualification.activationRevision = 1; }],
   ];
   for (const [label, mutate] of cases) {
     const malformed = qualified(); mutate(malformed);

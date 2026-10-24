@@ -173,6 +173,24 @@ test("RC-01403-01..05 qualifies a calculated v2 candidate through the sole authe
       assert.deepEqual(await counters(), before, `${label}: read remains zero-effect`);
       return snapshot;
     };
+    // This is an existing-epoch read fixture, not a positive activation test:
+    // it never calls the fenced activation function and rolls back entirely.
+    // It proves that a later candidate cannot replace the exact active pointer.
+    await bridge.unsafe("INSERT INTO bridge.desired_admission_profile_activation(quota_domain_id,activation_revision,desired_profile_version,effective_from) VALUES($1,91,$2,$3::timestamptz)", [domain, candidate.desired_profile_version, effectiveFrom]);
+    await bridge.unsafe("INSERT INTO bridge.active_desired_admission_profile(quota_domain_id,desired_profile_version,activation_revision,effective_from) VALUES($1,$2,91,$3::timestamptz)", [domain, candidate.desired_profile_version, effectiveFrom]);
+    const [newerCandidate] = await bridge.unsafe("SELECT * FROM bridge.publish_shared_domain_calculated_desired_admission_profile($1,91,$2,$3,$4::timestamptz,$5::jsonb,$6::jsonb,$7::jsonb,$8::jsonb)", [domain, "capacity-v1", "weighted-v2", effectiveFrom, { ...profile, plannerVersion: "weighted-v2" }, [{ processId, processProfileVersion: "v1", workloadId, workloadProfileVersion: "v1" }], [{ routeId, authorityVersion: String(authority.authority_version) }], allocation]);
+    assert.notEqual(newerCandidate.desired_profile_version, candidate.desired_profile_version, "the fixture has a newer inactive candidate");
+    const activeBody = await responseFor(`${suffix}-credential`, "requestBytes=500&inputTokens=250&outputTokens=100");
+    assert.equal(activeBody.revisions.desiredProfileVersion, candidate.desired_profile_version, "the same reader resolves the exact active profile, never the latest candidate");
+    assert.equal(activeBody.revisions.candidateActivationRevision, Number(candidate.candidate_activation_revision));
+    assert.deepEqual(activeBody.qualification, { candidateActivationRevision: Number(candidate.candidate_activation_revision), activationRevision: 91, productionActive: true, isolated: false });
+    const activeIdserSnapshot = await idserConsumer.read({ requestBytes: 500, inputTokens: 250, reservedOutputTokens: 100, requestResourceEnvelope: { requestUnits: 1, tokenUnits: 350, dayUnits: 1, concurrencyUnits: 1 } });
+    assert.equal(activeIdserSnapshot.revisions.desiredProfileVersion, candidate.desired_profile_version, "the existing v2-only IDSER composition accepts the exact authenticated active view");
+    await bridge.unsafe("SAVEPOINT active_pointer_without_epoch");
+    await bridge.unsafe("UPDATE bridge.active_desired_admission_profile SET activation_revision=92 WHERE quota_domain_id=$1", [domain]);
+    const brokenActive = await assertNonQualified("active pointer without its exact activation row");
+    assert.equal(brokenActive.reason, "active_profile_binding_missing");
+    await bridge.unsafe("ROLLBACK TO SAVEPOINT active_pointer_without_epoch");
     for (const [label, credential] of [
       ["foreign principal", `${suffix}-foreign`],
       ["mismatched process", `${suffix}-process-mismatch`],
@@ -216,7 +234,7 @@ test("RC-01403-01..05 qualifies a calculated v2 candidate through the sole authe
     await bridge.unsafe("SAVEPOINT premature_activation");
     await assert.rejects(() => bridge.unsafe("SELECT * FROM bridge.activate_desired_admission_profile($1,$2)", [domain, candidate.desired_profile_version]), /parent cutover gate/i);
     await bridge.unsafe("ROLLBACK TO SAVEPOINT premature_activation");
-    assert.equal((await bridge.unsafe("SELECT count(*)::int AS count FROM bridge.active_desired_admission_profile WHERE quota_domain_id=$1", [domain]))[0].count, 0, "premature activation cannot change the active reader");
+    assert.deepEqual((await bridge.unsafe("SELECT desired_profile_version,activation_revision FROM bridge.active_desired_admission_profile WHERE quota_domain_id=$1", [domain]))[0], { desired_profile_version: candidate.desired_profile_version, activation_revision: "91" }, "the rejected successor activation leaves the pre-existing active pointer unchanged");
     await bridge.unsafe("INSERT INTO bridge.provider_enforcement_policy_revocation(quota_domain_id,provider_capacity_profile_version,route_id,policy_id,policy_version,revocation_ref,revoked_by) VALUES($1,'capacity-v1',$2,'anoman-policy','v1',$3,'fixture')", [domain, routeId, `${suffix}-revoked`]);
     await assertNonQualified("revoked policy");
     await assertConsumerStops("revoked policy");
