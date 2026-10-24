@@ -63,7 +63,7 @@ export function createBranchRegistry<const TRegistration extends BranchRegistrat
     if (!registration.branch || !registration.producerProcessKey || !registration.policyVersion || !registration.handlerVersion || !registration.bodyContractType || !registration.bodyContractVersion || !registration.receiverIdentity) {
       throw new BranchRegistryResolutionError("Branch registrations require every exact selector and a symbolic receiver identity.");
     }
-    if (registration.receiver.transport !== "http" || registration.receiver.method !== "POST" || !/^\/[A-Za-z0-9/_-]{1,199}$/u.test(registration.receiver.path)) {
+    if (registration.receiver.transport !== "http" || registration.receiver.method !== "POST" || !/^\/(?!\/)[A-Za-z0-9/_-]{1,199}$/u.test(registration.receiver.path)) {
       throw new BranchRegistryResolutionError("Branch registrations require one bounded absolute HTTP POST receiver path.");
     }
     if (!Number.isInteger(registration.payloadByteLimit) || registration.payloadByteLimit < 0 || !Number.isInteger(registration.wrappedBodyByteLimit) || registration.wrappedBodyByteLimit < registration.payloadByteLimit) {

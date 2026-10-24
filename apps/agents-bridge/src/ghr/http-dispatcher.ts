@@ -1,5 +1,5 @@
 import { isTrustedBranchRegistration, type BranchRegistration } from "./core/branch-registry.js";
-import type { GenericHandoffHttpTransportConfig } from "./http-transport-config.js";
+import { isValidGenericHandoffHttpTransportConfig, type GenericHandoffHttpTransportConfig } from "./http-transport-config.js";
 
 type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 
@@ -22,7 +22,10 @@ export type VerifiedGenericHandoffHttpRequest = Readonly<{
 export class GenericHandoffHttpDispatcherConfigurationError extends Error {}
 
 function endpoint(origin: string, receiver: BranchRegistration["receiver"]): string {
-  return new URL(receiver.path, `${origin}/`).toString();
+  const base = new URL(origin);
+  const target = new URL(receiver.path, base);
+  if (target.origin !== base.origin) throw new GenericHandoffHttpDispatcherConfigurationError("Registered receiver path must remain within the configured private origin.");
+  return target.toString();
 }
 
 async function readBoundedBytes(response: Response, maximumBytes: number): Promise<Uint8Array | undefined> {
@@ -67,10 +70,14 @@ export function createGenericHandoffHttpDispatcher(
   registration: BranchRegistration,
   fetcher: FetchLike = fetch,
 ) {
-  if (!configuration) throw new GenericHandoffHttpDispatcherConfigurationError("Generic handoff HTTP transport configuration is required.");
+  if (!isValidGenericHandoffHttpTransportConfig(configuration)) throw new GenericHandoffHttpDispatcherConfigurationError("Generic handoff HTTP transport configuration is invalid or missing.");
   if (!isTrustedBranchRegistration(registration)) throw new GenericHandoffHttpDispatcherConfigurationError("Generic handoff HTTP transport requires a trusted registered receiver.");
   if (registration.receiver.transport !== "http" || registration.receiver.method !== "POST") throw new GenericHandoffHttpDispatcherConfigurationError("Generic handoff HTTP transport requires a registered HTTP POST receiver.");
-  const target = endpoint(configuration.origin, registration.receiver);
+  let target: string;
+  try { target = endpoint(configuration.origin, registration.receiver); } catch (error) {
+    if (error instanceof GenericHandoffHttpDispatcherConfigurationError) throw error;
+    throw new GenericHandoffHttpDispatcherConfigurationError("Generic handoff HTTP transport could not compose a registered receiver destination.");
+  }
 
   return Object.freeze({
     async dispatch(request: VerifiedGenericHandoffHttpRequest): Promise<GenericHandoffHttpDispatchResult> {

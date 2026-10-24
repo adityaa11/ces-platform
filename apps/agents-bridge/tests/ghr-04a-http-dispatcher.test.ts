@@ -14,10 +14,12 @@ const request = Object.freeze({
 });
 const registration = resolveMainRouteBinding({ ...semanticBatchPlanRoute, main: "semantic" });
 
-async function withListener(run: (origin: string, state: { mode: string; requests: number; authorization?: string; body?: Uint8Array }) => Promise<void>): Promise<void> {
-  const state: { mode: string; requests: number; authorization?: string; body?: Uint8Array } = { mode: "success", requests: 0 };
+async function withListener(run: (origin: string, state: { mode: string; requests: number; method?: string; url?: string; authorization?: string; body?: Uint8Array }) => Promise<void>): Promise<void> {
+  const state: { mode: string; requests: number; method?: string; url?: string; authorization?: string; body?: Uint8Array } = { mode: "success", requests: 0 };
   const server: Server = createServer((incoming, outgoing) => {
     state.requests += 1;
+    state.method = incoming.method;
+    state.url = incoming.url;
     state.authorization = incoming.headers.authorization;
     const chunks: Buffer[] = [];
     incoming.on("data", (chunk: Buffer) => chunks.push(chunk));
@@ -56,6 +58,9 @@ test("GHR-04A configuration is deployment-owned, private-origin-only, and fails 
 
 test("GHR-04A dispatcher rejects untrusted receiver data before it can perform I/O", () => {
   const configuration = { origin: "http://127.0.0.1:3002", credential, timeoutMilliseconds: 25, maximumResponseBytes: 8_192 } as const;
+  assert.throws(() => createGenericHandoffHttpDispatcher({ origin: "https://public.example", credential, timeoutMilliseconds: 25, maximumResponseBytes: 8_192 } as never, registration), GenericHandoffHttpDispatcherConfigurationError);
+  assert.throws(() => createGenericHandoffHttpDispatcher({ origin: "http://127.0.0.1:3002", credential: "short", timeoutMilliseconds: 25, maximumResponseBytes: 8_192 } as never, registration), GenericHandoffHttpDispatcherConfigurationError);
+  assert.throws(() => createGenericHandoffHttpDispatcher({ origin: "http://127.0.0.1:3002", credential, timeoutMilliseconds: 0, maximumResponseBytes: 0 } as never, registration), GenericHandoffHttpDispatcherConfigurationError);
   assert.throws(
     () => createGenericHandoffHttpDispatcher(configuration, { ...registration, receiver: { ...registration.receiver } }),
     GenericHandoffHttpDispatcherConfigurationError,
@@ -68,6 +73,8 @@ test("GHR-04A dispatcher preserves verified bytes and accepts only a matching bo
     const dispatcher = createGenericHandoffHttpDispatcher({ origin, credential, timeoutMilliseconds: 250, maximumResponseBytes: 8_192 }, registration);
     assert.deepEqual(await dispatcher.dispatch(request), { status: "acknowledged", acknowledgement: { handoffId: request.handoffId, bodySha256: request.bodySha256, disposition: "parsed_only" } });
     assert.equal(state.requests, 1);
+    assert.equal(state.method, "POST");
+    assert.equal(state.url, "/internal/semantic/batch-plan");
     assert.equal(state.authorization, `Bearer ${credential}`);
     assert.deepEqual(state.body, Buffer.from(request.serializedEnvelopeBytes));
 
@@ -76,6 +83,7 @@ test("GHR-04A dispatcher preserves verified bytes and accepts only a matching bo
       assert.deepEqual(await dispatcher.dispatch(request), { status: expected });
     }
     state.mode = "timeout";
-    assert.notEqual((await dispatcher.dispatch(request)).status, "acknowledged");
+    const timeoutDispatcher = createGenericHandoffHttpDispatcher({ origin, credential, timeoutMilliseconds: 25, maximumResponseBytes: 8_192 }, registration);
+    assert.deepEqual(await timeoutDispatcher.dispatch(request), { status: "unavailable" });
   });
 });

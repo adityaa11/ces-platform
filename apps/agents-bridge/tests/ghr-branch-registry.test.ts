@@ -43,6 +43,7 @@ test("the prospective Test-1 binding is exact, false-only metadata", () => {
 test("a local registry rejects duplicate exact pins and invalid bounds", () => {
   assert.throws(() => createBranchRegistry([testOneRegistration, testOneRegistration]), /Duplicate exact branch registration/u);
   assert.throws(() => createBranchRegistry([{ ...testOneRegistration, wrappedBodyByteLimit: 2_047 }]), /wrapper bounds/u);
+  assert.throws(() => createBranchRegistry([{ ...testOneRegistration, receiver: { ...testOneRegistration.receiver, path: "//evil" } }]), /receiver path/u);
 });
 
 test("directory composition and registry core remain inert and domain-isolated", async () => {
