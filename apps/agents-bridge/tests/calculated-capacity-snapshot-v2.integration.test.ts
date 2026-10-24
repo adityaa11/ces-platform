@@ -85,6 +85,7 @@ test("RC-01403-01..05 qualifies a calculated v2 candidate through the sole authe
       allocation.allocation_version,
       allocation.allocation_fingerprint,
       allocation.allocation,
+      authority.authority_version,
       binding.effective_mask,
       bridge.derive_effective_enforcement_policy($1, desired.provider_capacity_profile_version, $2) AS effective_policy,
       md5(jsonb_build_object(
@@ -184,6 +185,25 @@ test("RC-01403-01..05 qualifies a calculated v2 candidate through the sole authe
     assert.equal(activeBody.revisions.desiredProfileVersion, candidate.desired_profile_version, "the same reader resolves the exact active profile, never the latest candidate");
     assert.equal(activeBody.revisions.candidateActivationRevision, Number(candidate.candidate_activation_revision));
     assert.deepEqual(activeBody.qualification, { candidateActivationRevision: Number(candidate.candidate_activation_revision), activationRevision: 91, productionActive: true, isolated: false });
+    assert.deepEqual({
+      desiredProfileVersion: activeBody.revisions.desiredProfileVersion,
+      candidateActivationRevision: activeBody.revisions.candidateActivationRevision,
+      activationRevision: activeBody.qualification.activationRevision,
+      allocationVersion: activeBody.allocation.allocationVersion,
+      allocationFingerprint: activeBody.allocation.allocationFingerprint,
+      routeAuthorityRevision: activeBody.identity.authorityVersion,
+      canonicalFingerprint: activeBody.canonicalFingerprint,
+    }, {
+      desiredProfileVersion: persisted.desired_profile_version,
+      candidateActivationRevision: Number(persisted.candidate_activation_revision),
+      activationRevision: 91,
+      allocationVersion: persisted.allocation_version,
+      allocationFingerprint: persisted.allocation_fingerprint,
+      routeAuthorityRevision: Number(persisted.authority_version),
+      canonicalFingerprint: persisted.canonical_fingerprint,
+    }, "the active view exposes only the persisted active profile/allocation/authority tuple");
+    assert.notEqual(activeBody.revisions.desiredProfileVersion, newerCandidate.desired_profile_version, "the newer candidate is absent from the active desired-profile identity");
+    assert.notEqual(activeBody.revisions.candidateActivationRevision, Number(newerCandidate.candidate_activation_revision), "the newer candidate is absent from the active candidate identity");
     const activeIdserSnapshot = await idserConsumer.read({ requestBytes: 500, inputTokens: 250, reservedOutputTokens: 100, requestResourceEnvelope: { requestUnits: 1, tokenUnits: 350, dayUnits: 1, concurrencyUnits: 1 } });
     assert.equal(activeIdserSnapshot.revisions.desiredProfileVersion, candidate.desired_profile_version, "the existing v2-only IDSER composition accepts the exact authenticated active view");
     await bridge.unsafe("SAVEPOINT active_pointer_without_epoch");
@@ -227,6 +247,8 @@ test("RC-01403-01..05 qualifies a calculated v2 candidate through the sole authe
     await mutateAndReject("model mismatch", "UPDATE bridge.provider_capacity_profile SET associated_routes = $1::jsonb WHERE quota_domain_id = $2 AND profile_version = 'capacity-v1'", [[{ ...route, modelOrProcessorId: "other-model" }], domain]);
     await mutateAndReject("stale authority", "UPDATE bridge.desired_admission_profile_route_binding_v2 SET authority_version = authority_version + 1000000 WHERE quota_domain_id = $1 AND desired_profile_version = $2 AND route_id = $3", [domain, candidate.desired_profile_version, routeId]);
     await mutateAndReject("missing allocation", "DELETE FROM bridge.calculated_class_process_allocation WHERE quota_domain_id = $1 AND desired_profile_version = $2", [domain, candidate.desired_profile_version]);
+    await mutateAndReject("candidate fingerprint mismatch", "UPDATE bridge.desired_admission_profile_candidate SET effective_input_fingerprint = md5('mismatched-candidate') WHERE quota_domain_id = $1 AND desired_profile_version = $2", [domain, candidate.desired_profile_version]);
+    await mutateAndReject("allocation fingerprint mismatch", "UPDATE bridge.calculated_class_process_allocation SET allocation_fingerprint = md5('mismatched-allocation') WHERE quota_domain_id = $1 AND desired_profile_version = $2", [domain, candidate.desired_profile_version]);
     await mutateAndReject("required structural bound missing", "UPDATE bridge.workload_envelope_profile SET structural_bound = structural_bound - 'maxContextTokens' WHERE workload_id = $1 AND profile_version = 'v1'", [workloadId]);
     await mutateAndReject("route-to-workload version mismatch", "UPDATE bridge.desired_admission_profile_input SET workload_profile_version = 'missing-v1' WHERE quota_domain_id = $1 AND desired_profile_version = $2 AND process_id = $3", [domain, candidate.desired_profile_version, processId]);
     await mutateAndReject("missing Anoman approval", "UPDATE bridge.provider_enforcement_policy SET approval_ref = 'missing-approval' WHERE quota_domain_id = $1 AND route_id = $2", [domain, routeId]);
