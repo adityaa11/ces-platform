@@ -1,6 +1,6 @@
 # BSS-V2-014-06 — Parent release/activation closure
 
-- **State:** `planned / contract-frozen pending independent review`; this is the one parent-owned executable closure ticket. It is not GO, a production activation, an environment promotion, or authorization for a new IDSER scheduler, GHR continuation, SEM execution, or provider send.
+- **State:** `approved` following post-CFC CK `PASS` for remediation commit `daf15184`; this is the one parent-owned executable closure ticket. It is not GO, a production activation, an environment promotion, or authorization for a new IDSER scheduler, GHR continuation, SEM execution, or provider send.
 - **Parent:** [BSS-V2-014](BSS-V2-014-weighted-capacity-ticket-set.md).
 - **Frozen child input:** BSS-V2-014-01 through -05 CK `PASS`, preserved as accepted predecessor evidence. This ticket does not reopen a child except for a concrete defect in the integration seam it consumes.
 - **Contract freeze:** [BSS-V2-014-06 parent-release closure freeze 001](../../../feedback/BSS-V2-014-06-parent-release-closure-contract-freeze-001.md).
