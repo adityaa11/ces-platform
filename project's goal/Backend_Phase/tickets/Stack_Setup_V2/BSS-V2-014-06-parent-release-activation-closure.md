@@ -92,3 +92,11 @@ The record is proof and activation input; it does not grant admission or provide
 ## GO boundary
 
 Independent review must first confirm the two precise ownership findings, the immutable record/evidence design, epoch-lock preservation, single-reader active resolution, and all GHR exclusions. Only after the non-GHR invocation and attestation authority are independently established may a separate explicit GO authorize implementation. Environment-specific production activation remains a separate post-CK release operation.
+
+## Amendment 001 — corrected BSS implementation and activation dependencies
+
+**Effective authority:** [BSS-V2-014-06 GO-dependency planning amendment 001](../../../feedback/BSS-V2-014-06-go-dependency-planning-amendment-001.md), issued under [HMN-BSS-V2-014-06-001](../../../feedback/BSS-V2-014-06-hmn-001.md) and frozen by [replacement contract freeze 001](../../../feedback/BSS-V2-014-06-go-dependency-replacement-contract-freeze-001.md). This append-only amendment supersedes only the historical separate-IDSER-trigger GO dependency and the treatment of missing release-attestation authority as a blanket BSS implementation blocker.
+
+The approved v2-only IDSER-to-BSS authenticated-reader composition and its exact candidate-read readiness are sufficient BSS integration evidence. It does not claim that IDSER live planning is executing. Future GHR-to-IDSER initiation remains separately owned, inactive, and outside this ticket; neither GHR nor a new scheduler, fake entrypoint, or alternate consumer may be used to manufacture a trigger.
+
+BSS implementation may, after independent review and a separate explicit GO, implement only the replacement freeze's release-capable rows: one-reader candidate/active semantics, exact active-profile resolution, composition/readiness proof, and fail-closed rejection of absent or self-asserted activation evidence. `RELEASE_ATTESTATION_AUTHORITY_GAP` remains a production-activation `BLOCKED_AUTHORITY`: until a real controlled attestation authority is independently authorized and proven, the existing epoch must reject the v2 successor and no positive activation or production-active claim is allowed.

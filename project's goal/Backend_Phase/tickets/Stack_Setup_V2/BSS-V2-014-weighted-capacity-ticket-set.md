@@ -25,6 +25,10 @@ The resulting successor has one planner, one authenticated read seam, one atomic
 | E | [BSS-V2-014-05](BSS-V2-014-05-idser-calculated-capacity-consumer-handoff.md) | Future IDSER successor, **not BSS** | Consumer replacement and one-reader cutover for BSS v2 full-request sizing. | `-03` CK PASS and `-04-03` CK PASS for production acceptance. |
 | F | [BSS-V2-014-06](BSS-V2-014-06-parent-release-activation-closure.md) | Parent release closure | Release-record-gated use of the existing activation epoch and exact active-reader proof; implementation is blocked until the separately owned non-GHR IDSER invocation and promotion-attestation authorities exist. | Child CK PASS and independent review of the parent freeze. |
 
+### Amendment 002 — BSS-V2-014-06 dependency correction
+
+Per [BSS-V2-014-06 GO-dependency planning amendment 001](../../../feedback/BSS-V2-014-06-go-dependency-planning-amendment-001.md) and its [replacement contract freeze 001](../../../feedback/BSS-V2-014-06-go-dependency-replacement-contract-freeze-001.md), the historical row F is superseded only as to GO dependencies. The direct authenticated IDSER-to-BSS v2 composition is valid readiness evidence without a live IDSER trigger. The absence of verified promotion attestation blocks positive environment activation, not the bounded BSS release-capable implementation rows. No GO or activation is granted by this amendment.
+
 `-03` and `-04-01` are independent after `-02-02`; `-05` freezes its contract before `-03` GO, then implements only after `-03` CK PASS. This is intentionally acyclic. `-02` and `-04` are retained as non-executable split maps so prior references stay resolvable. This has no dependency on repair of the isolated IDSER qualification environment recorded at `IDSER-012-05-07-02`.
 
 ## Parent-owned production activation and cutover gate
