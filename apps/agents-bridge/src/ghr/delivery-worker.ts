@@ -6,7 +6,8 @@ import {
   type GenericHandoffHeaderV1,
 } from "@atlas/contracts";
 import { resolveMainRouteBinding } from "./main-route-index.js";
-import { receiveVerifiedBatchPlan } from "./routes/semantic/index.js";
+import { createGenericHandoffHttpDispatcher } from "./http-dispatcher.js";
+import type { GenericHandoffHttpTransportConfig } from "./http-transport-config.js";
 
 export type SqlDatabase = Readonly<{
   executeSql(statement: string, values?: readonly unknown[]): Promise<{ readonly rows: readonly Record<string, unknown>[] }>;
@@ -57,7 +58,7 @@ function envelopeFromPersisted(row: LoadedHandoff) {
     if (parsed.envelope.header.handoffId !== row.handoffId || parsed.envelope.header.integrity.bodySha256 !== row.bodySha256 || createHash("sha256").update(row.bodyBytes).digest("hex") !== row.bodySha256) {
       throw new GenericHandoffDeliveryError("Persisted generic handoff identity or integrity does not match.", "quarantined", "corrupt_envelope");
     }
-    return parsed;
+    return Object.freeze({ ...parsed, serializedEnvelopeBytes: Buffer.from(serialized, "utf8") });
   } catch (error) {
     if (error instanceof GenericHandoffDeliveryError) throw error;
     if (error instanceof GenericHandoffIngressError) throw new GenericHandoffDeliveryError("Persisted generic handoff envelope is invalid.", "quarantined", "corrupt_envelope");
@@ -139,7 +140,13 @@ async function terminalize(database: SqlDatabase, handoffId: string, claim: Clai
 }
 
 /** Delivers a pointer-only job without interpreting the domain payload. */
-export async function deliverGenericHandoffJob(input: Readonly<{ database: SqlDatabase; job: unknown; leaseSeconds: number; finalAttempt: boolean }>): Promise<DeliveryDisposition> {
+export async function deliverGenericHandoffJob(input: Readonly<{
+  database: SqlDatabase;
+  job: unknown;
+  leaseSeconds: number;
+  finalAttempt: boolean;
+  httpTransportConfiguration?: GenericHandoffHttpTransportConfig;
+}>): Promise<DeliveryDisposition> {
   let job: GenericHandoffDeliveryJob;
   try { job = parseJob(input.job); } catch (error) {
     if (error instanceof GenericHandoffDeliveryError) return "quarantined";
@@ -185,10 +192,24 @@ export async function deliverGenericHandoffJob(input: Readonly<{ database: SqlDa
   if (activeClaim === "busy") throw new GenericHandoffDeliveryError("Generic handoff delivery lease is active.", "transient", "transient_delivery");
   if (typeof activeClaim === "string") return activeClaim;
   try {
-    const payload = parsed.envelope.body.payload;
-    const rawPayload = JSON.stringify(payload);
-    if (Buffer.byteLength(rawPayload, "utf8") > registration.payloadByteLimit) throw new GenericHandoffDeliveryError("Generic handoff payload exceeds the registered bound.", "quarantined", "corrupt_envelope");
-    receiveVerifiedBatchPlan({ selector: selector(header), canContinue: parsed.envelope.body.can_continue, payload: rawPayload });
+    const dispatcher = createGenericHandoffHttpDispatcher(input.httpTransportConfiguration, registration);
+    const result = await dispatcher.dispatch({
+      serializedEnvelopeBytes: parsed.serializedEnvelopeBytes,
+      handoffId: header.handoffId,
+      bodySha256: header.integrity.bodySha256,
+    });
+    if (result.status === "unavailable") {
+      throw new GenericHandoffDeliveryError("Generic handoff HTTP delivery is unavailable.", "transient", "transient_delivery");
+    }
+    if (result.status === "rejected") {
+      throw new GenericHandoffDeliveryError("Generic handoff HTTP receiver rejected the verified handoff.", "quarantined", "receiver_rejected");
+    }
+    if (result.status === "failed_closed") {
+      throw new GenericHandoffDeliveryError("Generic handoff HTTP destination failed closed.", "blocked", "invalid_route");
+    }
+    if (result.status === "invalid_acknowledgement") {
+      throw new GenericHandoffDeliveryError("Generic handoff HTTP acknowledgement is invalid.", "quarantined", "corrupt_envelope");
+    }
     await terminalize(input.database, header.handoffId, activeClaim, "parsed_only", null);
     return "parsed_only";
   } catch (error) {
@@ -196,7 +217,8 @@ export async function deliverGenericHandoffJob(input: Readonly<{ database: SqlDa
       if (input.finalAttempt) { await terminalize(input.database, header.handoffId, activeClaim, "retry_exhausted", "transient_delivery"); return "retry_exhausted"; }
       throw error;
     }
-    await terminalize(input.database, header.handoffId, activeClaim, "quarantined", error instanceof GenericHandoffDeliveryError ? error.errorClass : "receiver_rejected");
-    return "quarantined";
+    const disposition = error instanceof GenericHandoffDeliveryError && error.classification === "blocked" ? "blocked" : "quarantined";
+    await terminalize(input.database, header.handoffId, activeClaim, disposition, error instanceof GenericHandoffDeliveryError ? error.errorClass : "receiver_rejected");
+    return disposition;
   }
 }

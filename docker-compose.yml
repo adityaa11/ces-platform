@@ -129,6 +129,8 @@ services:
       AGENTS_BRIDGE_PORT: 3002
       AGENTS_BRIDGE_VERSION: 0.1.0
       AGENTS_BRIDGE_DEPLOYMENT_PROFILE: ${AGENTS_BRIDGE_DEPLOYMENT_PROFILE:-development}
+      AGENTS_BRIDGE_GHR_HTTP_ORIGIN: http://agents-bridge:3002
+      AGENTS_BRIDGE_SERVICE_CREDENTIAL: ${AGENTS_BRIDGE_SERVICE_CREDENTIAL:-agents_bridge_service_local_dev_only_32}
       # D1 resolves this exact server-controlled route before it redeems a
       # BSS-009 source grant or contacts Docling.
       AGENTS_BRIDGE_QUALIFIED_ROUTES: *docling-qualified-route
@@ -183,6 +185,7 @@ services:
       AGENTS_BRIDGE_DATABASE_URL: postgresql://agents_bridge:${AGENTS_BRIDGE_PASSWORD:-agents_bridge_local_dev_only}@postgres:5432/${POSTGRES_DB:-atlas_dev}
       AGENTS_BRIDGE_ATLAS_URL: http://atlas:3001
       AGENTS_BRIDGE_SERVICE_CREDENTIAL: ${AGENTS_BRIDGE_SERVICE_CREDENTIAL:-agents_bridge_service_local_dev_only_32}
+      AGENTS_BRIDGE_GHR_HTTP_ORIGIN: http://agents-bridge:3002
       AGENTS_BRIDGE_ATLAS_SOURCE_PATH: /internal/perception/source
       AGENTS_BRIDGE_ATLAS_RESULT_PATH: /internal/perception/result
       AGENTS_BRIDGE_MAX_SOURCE_BYTES: ${AGENTS_BRIDGE_MAX_SOURCE_BYTES:-20971520}

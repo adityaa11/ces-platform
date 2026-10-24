@@ -48,7 +48,7 @@ export type BridgeConfig = {
   };
   readonly anoman: AnomanProviderConfig;
   readonly docling: DoclingProviderConfig;
-  /** Inactive until GHR-04C composes the dispatcher into the worker. */
+  /** Deployment-owned internal GHR delivery transport configuration. */
   readonly genericHandoffHttpTransport?: GenericHandoffHttpTransportConfig;
   /** Optional server-owned registrations for the versioned runtime read API. */
   readonly runtimeCapacityConstraint?: Readonly<{

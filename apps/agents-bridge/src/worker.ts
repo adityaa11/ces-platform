@@ -8,6 +8,7 @@ import type { WorkerConfig } from "./worker-config.js";
 import { parseProviderAdmittedJob, type ProviderAdmittedExecutionHandler } from "./provider-admitted-worker.js";
 import { parseProviderWakeupJob, type ProviderWakeupHandler } from "./provider-wakeup-worker.js";
 import { deliverGenericHandoffJob } from "./ghr/delivery-worker.js";
+import type { GenericHandoffHttpTransportConfig } from "./ghr/http-transport-config.js";
 
 export const providerAdmittedExecutionQueue = "bridge-provider-admitted-execution-v1";
 export const providerWakeupQueue = "bridge-provider-work-wakeup-v1";
@@ -114,7 +115,7 @@ async function executeOnce(idempotencyKey: string, executionId: string, leaseSec
   }
 }
 
-export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningRuntime, queueName = backgroundExecutionQueue, documentPerception?: DocumentPerceptionQueueHandler, perceptionQueueName = documentPerceptionQueue, semantic?: SemanticQueueHandler, providerAdmitted?: ProviderAdmittedExecutionHandler, providerWakeup?: ProviderWakeupHandler): BackgroundWorker {
+export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningRuntime, queueName = backgroundExecutionQueue, documentPerception?: DocumentPerceptionQueueHandler, perceptionQueueName = documentPerceptionQueue, semantic?: SemanticQueueHandler, providerAdmitted?: ProviderAdmittedExecutionHandler, providerWakeup?: ProviderWakeupHandler, genericHandoffHttpTransport?: GenericHandoffHttpTransportConfig): BackgroundWorker {
   let stopping = false;
   const shutdown = new AbortController();
   const boss = new PgBoss({
@@ -167,6 +168,7 @@ export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningR
           job: job.data,
           leaseSeconds: config.timeoutSeconds,
           finalAttempt: job.retryCount >= job.retryLimit,
+          httpTransportConfiguration: genericHandoffHttpTransport,
         });
       });
       if (documentPerception) {

@@ -78,7 +78,7 @@ test("GHR-04A dispatcher preserves verified bytes and accepts only a matching bo
     assert.equal(state.authorization, `Bearer ${credential}`);
     assert.deepEqual(state.body, Buffer.from(request.serializedEnvelopeBytes));
 
-    for (const [mode, expected] of [["redirect", "unavailable"], ["oversized", "invalid_acknowledgement"], ["malformed", "invalid_acknowledgement"], ["mismatch", "invalid_acknowledgement"], ["server_error", "unavailable"]] as const) {
+    for (const [mode, expected] of [["redirect", "failed_closed"], ["oversized", "invalid_acknowledgement"], ["malformed", "invalid_acknowledgement"], ["mismatch", "invalid_acknowledgement"], ["server_error", "unavailable"]] as const) {
       state.mode = mode;
       assert.deepEqual(await dispatcher.dispatch(request), { status: expected });
     }

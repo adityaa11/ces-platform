@@ -99,13 +99,13 @@ test("GHR-04B rejects forged integrity or pins and all noncanonical or true-mode
   });
 });
 
-test("GHR-04B remains raw-byte/parser-only and leaves GHR-03B's local delivery boundary untouched", async () => {
+test("GHR-04B remains raw-byte/parser-only after GHR-04C retires the local delivery boundary", async () => {
   const receiver = await readFile(new URL("../src/ghr/authenticated-batch-plan-http-receiver.ts", import.meta.url), "utf8");
   const worker = await readFile(new URL("../src/ghr/delivery-worker.ts", import.meta.url), "utf8");
   assert.match(receiver, /semanticBatchPlanRoute\.receiver\.path/);
   assert.match(receiver, /parseGenericHandoffEnvelopeV1/);
   assert.match(receiver, /rawPayloadBytes/);
   assert.doesNotMatch(receiver, /\b(resolveBackground|PgBoss|executeSql|resolveMainRouteBinding\([^)]*\)\.receiver|createHash|console\.)\b/u);
-  assert.match(worker, /receiveVerifiedBatchPlan/);
-  assert.doesNotMatch(worker, /createGenericHandoffHttpDispatcher/);
+  assert.doesNotMatch(worker, /receiveVerifiedBatchPlan/);
+  assert.match(worker, /createGenericHandoffHttpDispatcher/);
 });

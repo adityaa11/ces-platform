@@ -72,7 +72,7 @@ const worker = createProductionBridgeWorker({ config: loadWorkerConfig(), runtim
     },
   };
   await runSemanticJob(job, capabilities[route.providerId as "mistral" | "gemini" | "anoman"].structured, semanticClient, createSemanticResultReplay(context.database), context.idempotencyKey, signal, { owner: context.leaseOwner, generation: context.leaseGeneration }, undefined, stepwise);
-}, providerOutboundTransport, providerPayloadAdapter });
+}, providerOutboundTransport, providerPayloadAdapter, genericHandoffHttpTransport: config.genericHandoffHttpTransport });
 await worker.start();
 await writeFile(readinessPath, "ready\n");
 

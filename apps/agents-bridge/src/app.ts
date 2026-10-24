@@ -38,7 +38,7 @@ export function createBridgeApp(options: {
   readonly runtimeCapacityConstraintReader?: RuntimeCapacityConstraintReader;
   readonly capacityPlanningSnapshotReader?: CapacityPlanningSnapshotReader;
   readonly providerWorkAdmissionService?: ProviderWorkAdmissionService;
-  /** Optional until GHR-04C activates worker delivery; ingress still rejects without it. */
+  /** Deployment-owned internal receiver configuration. Missing credentials fail closed. */
   readonly genericHandoffHttpTransport?: GenericHandoffHttpTransportConfig;
 }) {
   const app = Fastify({ logger: false });

@@ -11,7 +11,7 @@ export type GenericHandoffAcknowledgement = Readonly<{
 
 export type GenericHandoffHttpDispatchResult =
   | Readonly<{ status: "acknowledged"; acknowledgement: GenericHandoffAcknowledgement }>
-  | Readonly<{ status: "rejected" | "unavailable" | "invalid_acknowledgement" }>;
+  | Readonly<{ status: "rejected" | "unavailable" | "invalid_acknowledgement" | "failed_closed" }>;
 
 export type VerifiedGenericHandoffHttpRequest = Readonly<{
   serializedEnvelopeBytes: Uint8Array;
@@ -89,7 +89,9 @@ export function createGenericHandoffHttpDispatcher(
       try {
         response = await fetcher(target, {
           method: "POST",
-          redirect: "error",
+          // Observe redirects as a terminal protocol violation. Following one
+          // could turn the registered path into an untrusted destination.
+          redirect: "manual",
           headers: { authorization: `Bearer ${configuration.credential}`, "content-type": "application/json" },
           body: Buffer.from(request.serializedEnvelopeBytes),
           signal: timeout,
@@ -97,7 +99,11 @@ export function createGenericHandoffHttpDispatcher(
       } catch {
         return { status: "unavailable" };
       }
-      if (response.status !== 200) return { status: response.status >= 500 || response.status === 408 || response.status === 429 ? "unavailable" : "rejected" };
+      if (response.status !== 200) {
+        if (response.status >= 500 || response.status === 408 || response.status === 429) return { status: "unavailable" };
+        if (response.status === 400 || response.status === 422) return { status: "rejected" };
+        return { status: "failed_closed" };
+      }
       let bytes: Uint8Array | undefined;
       try { bytes = await readBoundedBytes(response, configuration.maximumResponseBytes); } catch { return { status: timeout.aborted ? "unavailable" : "invalid_acknowledgement" }; }
       if (!bytes) return { status: "invalid_acknowledgement" };
