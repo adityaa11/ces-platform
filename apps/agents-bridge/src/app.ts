@@ -3,6 +3,8 @@ import { parseExecutionRequest, type ReasoningRuntime } from "@atlas/contracts";
 import type { RuntimeCapacityConstraintRead, RuntimeCapacityConstraint } from "./runtime-capacity-constraint.js";
 import { parseProviderWorkAdmissionRequest, type ProviderWorkAdmissionOutcome } from "./provider-work-admission.js";
 import type { CapacityPlanningSnapshot, CapacityPlanningSnapshotRead } from "./capacity-planning-snapshot.js";
+import type { GenericHandoffHttpTransportConfig } from "./ghr/http-transport-config.js";
+import { registerAuthenticatedBatchPlanHttpReceiver } from "./ghr/authenticated-batch-plan-http-receiver.js";
 
 type RuntimeCapacityConstraintReader = Readonly<{
   read(credential: string, request?: RuntimeCapacityConstraintRead): Promise<RuntimeCapacityConstraint>;
@@ -36,8 +38,11 @@ export function createBridgeApp(options: {
   readonly runtimeCapacityConstraintReader?: RuntimeCapacityConstraintReader;
   readonly capacityPlanningSnapshotReader?: CapacityPlanningSnapshotReader;
   readonly providerWorkAdmissionService?: ProviderWorkAdmissionService;
+  /** Optional until GHR-04C activates worker delivery; ingress still rejects without it. */
+  readonly genericHandoffHttpTransport?: GenericHandoffHttpTransportConfig;
 }) {
   const app = Fastify({ logger: false });
+  registerAuthenticatedBatchPlanHttpReceiver(app, { credential: options.genericHandoffHttpTransport?.credential });
   app.get("/healthz", async () => ({ status: "ok" }));
   app.get("/readyz", async (_request, reply) => {
     const ready = options.ready?.() ?? true;

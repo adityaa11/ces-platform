@@ -49,7 +49,7 @@ const providerWorkAdmissionService = config.runtimeCapacityConstraint && runtime
     { authenticate: (credential) => config.runtimeCapacityConstraint?.bindings.find((binding) => binding.credential === credential) ?? null },
   )
   : undefined;
-const app = createBridgeApp({ runtime, version: config.version, ready: () => registry.ready, runtimeCapacityConstraintReader, capacityPlanningSnapshotReader, providerWorkAdmissionService });
+const app = createBridgeApp({ runtime, version: config.version, ready: () => registry.ready, runtimeCapacityConstraintReader, capacityPlanningSnapshotReader, providerWorkAdmissionService, genericHandoffHttpTransport: config.genericHandoffHttpTransport });
 const stop = async () => { await app.close(); await runtimeConstraintDatabase?.end(); process.exit(0); };
 process.once("SIGINT", stop);
 process.once("SIGTERM", stop);

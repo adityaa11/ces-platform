@@ -1,6 +1,6 @@
 # GHR-04B — Authenticated semantic batch-plan HTTP receiver
 
-- **State:** `proposed`; receiving-boundary preparation only. This ticket does not cut GHR worker delivery over to HTTP.
+- **State:** `awaiting_review`; receiving-boundary preparation only. This ticket does not cut GHR worker delivery over to HTTP.
 - **Dependencies:** GHR-03B CK `PASS`; GHR-04A CK `PASS`.
 - **Parent:** [GHR-04 split record](GHR-04-semantic-batch-plan-http-connector.md).
 - **Source:** [GHR HTTP Delivery to Semantic Batch Plan implementation context](../../GHR-IDSER-Semantic-batch-plan-connector.md), §§2, 4, 7, and 9.

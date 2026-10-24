@@ -232,6 +232,8 @@ export type GenericHandoffRawIngress = {
   readonly value: GenericHandoffJsonValue;
   readonly headerBytes: Uint8Array;
   readonly bodyBytes: Uint8Array;
+  /** Present only when the generic wrapper contains a raw payload member. */
+  readonly payloadBytes?: Uint8Array;
 };
 
 /** Performs the bounded duplicate-key-safe raw JSON guard before any Zod parsing. */
@@ -245,9 +247,11 @@ export function guardGenericHandoffEnvelopeV1Raw(input: string | Uint8Array): Ge
   if (!header || !body) throw new GenericHandoffIngressError("Generic handoff envelope requires raw header and body values.");
   const headerBytes = bytesFor(source, header.start, header.end);
   const bodyBytes = bytesFor(source, body.start, body.end);
+  const payload = body.members?.get("payload");
+  const payloadBytes = payload ? bytesFor(source, payload.start, payload.end) : undefined;
   if (headerBytes.byteLength > genericHandoffIngressLimits.headerBytes) throw new GenericHandoffIngressError("Generic handoff header exceeds the frozen UTF-8 byte limit.");
   if (bodyBytes.byteLength > genericHandoffIngressLimits.bodyBytes) throw new GenericHandoffIngressError("Generic handoff body exceeds the frozen UTF-8 byte limit.");
-  return { value: root.value, headerBytes, bodyBytes };
+  return { value: root.value, headerBytes, bodyBytes, payloadBytes };
 }
 
 export function sha256GenericHandoffBody(bodyBytes: Uint8Array): string {
@@ -257,6 +261,8 @@ export function sha256GenericHandoffBody(bodyBytes: Uint8Array): string {
 export type ParsedGenericHandoffEnvelopeV1 = {
   readonly envelope: GenericHandoffEnvelopeV1;
   readonly rawBodyBytes: Uint8Array;
+  /** The original JSON bytes for the opaque routed payload, never reserialized. */
+  readonly rawPayloadBytes: Uint8Array;
 };
 
 /** Validates raw safety first, then strict GHR syntax, then exact wrapped-body integrity. */
@@ -264,6 +270,7 @@ export function parseGenericHandoffEnvelopeV1(input: string | Uint8Array): Parse
   const raw = guardGenericHandoffEnvelopeV1Raw(input);
   const parsed = ghrEnvelopeV1Schema.safeParse(raw.value);
   if (!parsed.success) throw new GenericHandoffIngressError("Generic handoff envelope does not match the strict v1 contract.");
+  if (!raw.payloadBytes) throw new GenericHandoffIngressError("Generic handoff envelope requires raw payload bytes.");
   if (sha256GenericHandoffBody(raw.bodyBytes) !== parsed.data.header.integrity.bodySha256) throw new GenericHandoffIngressError("Generic handoff body SHA-256 does not match the original wrapped-body bytes.");
-  return { envelope: parsed.data, rawBodyBytes: raw.bodyBytes };
+  return { envelope: parsed.data, rawBodyBytes: raw.bodyBytes, rawPayloadBytes: raw.payloadBytes };
 }

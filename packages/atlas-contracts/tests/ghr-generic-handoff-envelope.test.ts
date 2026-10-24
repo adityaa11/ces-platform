@@ -33,6 +33,7 @@ test("GHR strict schemas retain the v0.6 fixed header, exact wrapper, and docume
   const envelope = parseGenericHandoffEnvelopeV1(rawEnvelope());
   assert.equal(envelope.envelope.header.protocol, "GenericHandoffEnvelope/v1");
   assert.equal(new TextDecoder().decode(envelope.rawBodyBytes), '{"can_continue":false,"payload":{"accepted":"value"}}');
+  assert.equal(new TextDecoder().decode(envelope.rawPayloadBytes), '{"accepted":"value"}');
   assert.equal(ghrEnvelopeV1Schema.safeParse({ header: envelope.envelope.header, body: { can_continue: false, payload: [] } }).success, false);
   assert.equal(ghrEnvelopeV1Schema.safeParse({ header: envelope.envelope.header, body: { payload: {} } }).success, false);
   assert.equal(ghrEnvelopeV1Schema.safeParse({ header: { ...envelope.envelope.header, unexpected: "rejected" }, body: envelope.envelope.body }).success, false);
