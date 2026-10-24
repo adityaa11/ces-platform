@@ -1,14 +1,14 @@
 import { createHash } from "node:crypto";
 import type { StepwiseSourceLocator } from "@atlas/skills";
 import type { RequestResourceEnvelope } from "./process-workload-catalogue.js";
-import type { IdserProspectiveCapacitySnapshot, IdserProspectiveCapacitySnapshotRead } from "./idser-prospective-capacity-snapshot.js";
-import { IdserProspectiveCapacitySnapshotError } from "./idser-prospective-capacity-snapshot.js";
+import type { IdserCapacityPlanningSnapshotV2, IdserCapacityPlanningSnapshotV2Read } from "./idser-capacity-planning-snapshot-v2.js";
+import { IdserCapacityPlanningSnapshotV2Error } from "./idser-capacity-planning-snapshot-v2.js";
 import type { MultimodalInventoryAndCandidates, TransientMultimodalCandidate } from "./idser-multimodal-inventory-candidates.js";
 import type { MultimodalRequestProfile } from "./provider-capabilities.js";
 
-/** The BSS boundary remains a prospective read; this interface has no write or admission capability. */
+/** The BSS boundary is an authenticated v2 read; this interface has no write or admission capability. */
 export type MultimodalStructuralFitCapacityConsumer = Readonly<{
-  read(input: IdserProspectiveCapacitySnapshotRead): Promise<IdserProspectiveCapacitySnapshot>;
+  read(input: IdserCapacityPlanningSnapshotV2Read): Promise<IdserCapacityPlanningSnapshotV2>;
 }>;
 
 export type MultimodalStructuralFitReason =
@@ -79,7 +79,7 @@ const opaque = (value: unknown): value is string => typeof value === "string" &&
 const same = (left: unknown, right: unknown): boolean => stable(left) === stable(right);
 const locatorKey = (locator: StepwiseSourceLocator): string => `${locator.pageNumber}\u0000${locator.locatorType}\u0000${locator.locatorId}`;
 
-function structural(snapshot: IdserProspectiveCapacitySnapshot): MultimodalStructuralFitProposal["structuralBound"] | undefined {
+function structural(snapshot: IdserCapacityPlanningSnapshotV2): MultimodalStructuralFitProposal["structuralBound"] | undefined {
   const bound = snapshot.workload.structuralBound;
   if (!bound || typeof bound !== "object" || Array.isArray(bound)) return undefined;
   const value = bound as Record<string, unknown>;
@@ -87,8 +87,11 @@ function structural(snapshot: IdserProspectiveCapacitySnapshot): MultimodalStruc
   return { identity: value.identity, version: value.version, maxRequestBytes: value.maxRequestBytes, maxInputTokens: value.maxInputTokens, maxPromptBytes: value.maxPromptBytes, maxContextTokens: value.maxContextTokens };
 }
 
-function policyIdentity(snapshot: IdserProspectiveCapacitySnapshot): unknown {
-  return { source: snapshot.source, enforcement: snapshot.enforcement, process: snapshot.process, workload: snapshot.workload, eligibleDimensions: snapshot.eligibleDimensions };
+function policyIdentity(snapshot: IdserCapacityPlanningSnapshotV2): unknown {
+  const v2Evidence = snapshot.identity && snapshot.revisions && snapshot.allocation && snapshot.sizing && snapshot.policyProvenance && snapshot.canonicalFingerprint && snapshot.qualification
+    ? { identity: snapshot.identity, revisions: snapshot.revisions, allocation: snapshot.allocation, sizing: snapshot.sizing, policyProvenance: snapshot.policyProvenance, canonicalFingerprint: snapshot.canonicalFingerprint, qualification: snapshot.qualification }
+    : {};
+  return { ...v2Evidence, source: snapshot.source, enforcement: snapshot.enforcement, process: snapshot.process, workload: snapshot.workload, eligibleDimensions: snapshot.eligibleDimensions };
 }
 
 function validEnvelope(value: RequestResourceEnvelope): boolean {
@@ -179,8 +182,8 @@ export async function partitionMultimodalStructuralFit(input: Readonly<{
   if (new Set(candidates.map((candidate) => candidate.candidateId)).size !== candidates.length || candidates.some((candidate) => !candidateMatchesRoute(candidate, input.effectiveRoute))) return frozen({ disposition: "BLOCKED", reason: "EFFECTIVE_ROUTE_REJECTED", rejected: [] });
   if (candidates.length === 0) return frozen({ disposition: "NO_ELIGIBLE_CANDIDATE", reason: "NO_ELIGIBLE_CANDIDATE", rejected: [] });
 
-  let pinned: IdserProspectiveCapacitySnapshot;
-  try { pinned = await input.capacityConsumer.read({ requestBytes: 0, inputTokens: 0, requestResourceEnvelope: { requestUnits: 0, tokenUnits: 0, dayUnits: 0, concurrencyUnits: 0 } }); }
+  let pinned: IdserCapacityPlanningSnapshotV2;
+  try { pinned = await input.capacityConsumer.read({ requestBytes: 0, inputTokens: 0, reservedOutputTokens: 0, requestResourceEnvelope: { requestUnits: 0, tokenUnits: 0, dayUnits: 0, concurrencyUnits: 0 } }); }
   catch { return frozen({ disposition: "BLOCKED", reason: "BSS_CAPACITY_CONSUMER_READ_GAP", rejected: [] }); }
   const bound = structural(pinned);
   if (!bound) return frozen({ disposition: "BLOCKED", reason: "BSS_CAPACITY_CONSUMER_READ_GAP", rejected: [] });
@@ -196,10 +199,10 @@ export async function partitionMultimodalStructuralFit(input: Readonly<{
       || demand.inputTokens + demand.reservedOutputTokens > bound.maxContextTokens;
     if (localUnfit) { rejected.push({ candidateId: candidate.candidateId, reason: "STRUCTURALLY_UNAVAILABLE" }); continue; }
     try {
-      const result = await input.capacityConsumer.read({ requestBytes: demand.requestBytes, inputTokens: demand.inputTokens, requestResourceEnvelope: demand.requestResourceEnvelope });
+      const result = await input.capacityConsumer.read({ requestBytes: demand.requestBytes, inputTokens: demand.inputTokens, reservedOutputTokens: demand.reservedOutputTokens, requestResourceEnvelope: demand.requestResourceEnvelope });
       if (!same(initialPolicy, policyIdentity(result))) return frozen({ disposition: "BLOCKED", reason: "STRUCTURAL_REVISION_CHANGED", rejected });
     } catch (error) {
-      if ((error instanceof IdserProspectiveCapacitySnapshotError || (error && typeof error === "object" && "disposition" in error)) && (error as { disposition?: unknown }).disposition === "structurally_unfit") { rejected.push({ candidateId: candidate.candidateId, reason: "STRUCTURALLY_UNAVAILABLE" }); continue; }
+      if ((error instanceof IdserCapacityPlanningSnapshotV2Error || (error && typeof error === "object" && "disposition" in error)) && (error as { disposition?: unknown }).disposition === "structurally_unfit") { rejected.push({ candidateId: candidate.candidateId, reason: "STRUCTURALLY_UNAVAILABLE" }); continue; }
       return frozen({ disposition: "BLOCKED", reason: "BSS_CAPACITY_CONSUMER_READ_GAP", rejected });
     }
     batches.push({ batchId: `batch-${String(batches.length + 1).padStart(4, "0")}`, candidateId: candidate.candidateId, ownedLocators: [...candidate.ownedLocators], contextOnlyLocators: [...candidate.contextOnlyLocators], selectedMedia: candidate.selectedMedia.map((item) => ({ ...item })), requestBytes: demand.requestBytes, inputTokens: demand.inputTokens, reservedOutputTokens: demand.reservedOutputTokens, requestResourceEnvelope: { ...demand.requestResourceEnvelope } });

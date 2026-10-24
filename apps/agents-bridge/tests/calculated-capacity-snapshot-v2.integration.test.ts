@@ -4,6 +4,7 @@ import test from "node:test";
 import postgres from "postgres";
 import { createBridgeApp } from "../src/app.js";
 import { createCapacityPlanningSnapshotReader, type CapacityPlanningSnapshotPrincipal } from "../src/capacity-planning-snapshot.js";
+import { createIdserCapacityPlanningSnapshotV2Consumer } from "../src/idser-capacity-planning-snapshot-v2.js";
 import { TestRuntime } from "../src/runtime.js";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -53,7 +54,7 @@ test("RC-01403-01..05 qualifies a calculated v2 candidate through the sole authe
     const approvalRef = `${suffix}-rpd-approval`;
     await bridge.unsafe("INSERT INTO bridge.provider_enforcement_policy_approval(approval_ref,quota_domain_id,provider_capacity_profile_version,route_id,policy_id,policy_version,permitted_unknown_dimensions,approved_by,approved_at) VALUES($1,$2,'capacity-v1',$3,'anoman-policy','v1',$4::jsonb,'fixture',clock_timestamp())", [approvalRef, domain, routeId, { rpd: { providerState: "unknown", reason: "not_published" } }]);
     await bridge.unsafe("INSERT INTO bridge.provider_enforcement_policy(quota_domain_id,provider_capacity_profile_version,route_id,policy_id,policy_version,approval_ref,dimensions,effective_from) VALUES($1,$2,$3,'anoman-policy','v1',$4,$5::jsonb,$6::timestamptz)", [domain, "capacity-v1", routeId, approvalRef, { rpm: { mode: "enforced", limitSource: "provider" }, tpm: { mode: "enforced", limitSource: "provider" }, rpd: { mode: "not_enforced", providerState: "unknown", reason: "not_published", approvalRef }, concurrency: { mode: "enforced", limitSource: "provider" } }, effectiveFrom]);
-    await bridge.unsafe("INSERT INTO bridge.workload_envelope_profile(workload_id,profile_version,active,compatible_process_kinds,structural_bound,estimator,quota_accounting_policy_id,output_reservation,safety_policy) VALUES($1,'v1',true,'[\"semantic\"]'::jsonb,$2::jsonb,$3::jsonb,'quota-v1',$4::jsonb,$5::jsonb)", [workloadId, { identity: `${suffix}-bound`, version: "v1", maxRequestBytes: 10_000, maxInputTokens: 4_000, maxContextTokens: 4_500 }, { identity: `${suffix}-estimator`, version: "v2" }, { policyId: `${suffix}-output`, policyVersion: "v1", maxOutputTokens: 500 }, { policyId: `${suffix}-safety`, policyVersion: "v1" }]);
+    await bridge.unsafe("INSERT INTO bridge.workload_envelope_profile(workload_id,profile_version,active,compatible_process_kinds,structural_bound,estimator,quota_accounting_policy_id,output_reservation,safety_policy) VALUES($1,'v1',true,'[\"semantic\"]'::jsonb,$2::jsonb,$3::jsonb,'quota-v1',$4::jsonb,$5::jsonb)", [workloadId, { identity: `${suffix}-bound`, version: "v1", maxRequestBytes: 10_000, maxPromptBytes: 9_500, maxInputTokens: 4_000, maxContextTokens: 4_500 }, { identity: `${suffix}-estimator`, version: "v2" }, { policyId: `${suffix}-output`, policyVersion: "v1", maxOutputTokens: 500 }, { policyId: `${suffix}-safety`, policyVersion: "v1" }]);
     await bridge.unsafe("INSERT INTO bridge.provider_process_profile(process_id,profile_version,process_kind,capability,service_class,fairness_scope,allocation_policy,active,eligible_route_ids,workload_id,workload_profile_version) VALUES($1,'v1','semantic','atlas.semantic.extract','background','{}'::jsonb,$2::jsonb,true,$3::jsonb,$4,'v1')", [processId, { background: { weight: 1, mayBorrowIdleCapacity: true, capPolicyId: `${suffix}-cap` }, hardInteractiveProtection: { policyId: `${suffix}-protection`, policyVersion: "v1" } }, [routeId], workloadId]);
     const [authority] = await bridge.unsafe("SELECT * FROM bridge.publish_qualified_provider_route_authority($1,$2,$3,$4,$5,$6,$7,$8)", [routeId, domain, route.providerId, route.modelOrProcessorId, route.adapterVersion, route.qualificationRef, route.qualificationVersion, route.capability]);
     const allocation = { allocationVersion: "v1", effectiveMask: ["rpm", "tpm", "concurrency"], classTotals: { background: { rpm: 14, tpm: 28_000, concurrency: 17 } }, processes: [{ processId, profileVersion: "v1", serviceClass: "background", normalizedWeight: { numerator: 1, denominator: 1 }, baseline: { rpm: 14, tpm: 28_000, concurrency: 17 }, cap: { tpm: 28_000 } }] };
@@ -137,6 +138,17 @@ test("RC-01403-01..05 qualifies a calculated v2 candidate through the sole authe
     assert.equal(body.canonicalFingerprint, persisted.canonical_fingerprint, "fingerprint is the canonical persisted candidate/allocation/authority/workload/mask composition");
     assert.equal(body.borrowing.runtimeOnly, true);
     assert.deepEqual(await counters(), before, "v2 reads create no attempts, reservations, window mutations, jobs, or transports");
+
+    const idserConsumer = createIdserCapacityPlanningSnapshotV2Consumer({
+      reader,
+      serverCredential: `${suffix}-credential`,
+      expectedIdentity: { quotaDomainId: domain, processId, processProfileVersion: "v1", routeId, serviceClass: "background" },
+    });
+    const idserSnapshot = await idserConsumer.read({ requestBytes: 500, inputTokens: 250, reservedOutputTokens: 100, requestResourceEnvelope: { requestUnits: 1, tokenUnits: 350, dayUnits: 1, concurrencyUnits: 1 } });
+    assert.equal(idserSnapshot.canonicalFingerprint, persisted.canonical_fingerprint, "the composed IDSER consumer accepts only the exact authenticated BSS v2 candidate");
+    assert.equal(idserSnapshot.sizing.maxEligibleCompleteRequestTokens, 4_500, "IDSER receives the complete-request ceiling without TPM/concurrency division");
+    assert.equal((idserSnapshot.workload.structuralBound as Record<string, unknown>).maxPromptBytes, 9_500, "the actual qualified reader supplies the prompt-byte bound needed by IDSER");
+    assert.deepEqual(await counters(), before, "the composed IDSER read remains side-effect-free");
 
     const assertNonQualified = async (label: string, credential = `${suffix}-credential`, query = "") => {
       const snapshot = await responseFor(credential, query);

@@ -9,15 +9,15 @@ import {
 } from "./complete-sem-candidate-request-estimator.js";
 import type { RequestResourceEnvelope } from "./process-workload-catalogue.js";
 import {
-  IdserProspectiveCapacitySnapshotError,
-  type IdserProspectiveCapacitySnapshot,
-  type IdserProspectiveCapacitySnapshotRead,
-} from "./idser-prospective-capacity-snapshot.js";
+  IdserCapacityPlanningSnapshotV2Error,
+  type IdserCapacityPlanningSnapshotV2,
+  type IdserCapacityPlanningSnapshotV2Read,
+} from "./idser-capacity-planning-snapshot-v2.js";
 
 export class IdserStructuralFitCorpusPartitionError extends Error {}
 
 export type StructuralFitCapacityConsumer = Readonly<{
-  read(input: IdserProspectiveCapacitySnapshotRead): Promise<IdserProspectiveCapacitySnapshot>;
+  read(input: IdserCapacityPlanningSnapshotV2Read): Promise<IdserCapacityPlanningSnapshotV2>;
 }>;
 
 export type StructuralFitCorpusUnit = Readonly<{
@@ -50,10 +50,10 @@ export type StructuralFitProposal = Readonly<{
   }>;
   eligibleDimensions: readonly ("rpm" | "tpm" | "rpd" | "concurrency")[];
   bssSnapshot: Readonly<{
-    source: IdserProspectiveCapacitySnapshot["source"];
-    enforcement: IdserProspectiveCapacitySnapshot["enforcement"];
-    process: IdserProspectiveCapacitySnapshot["process"];
-    workload: IdserProspectiveCapacitySnapshot["workload"];
+    source: IdserCapacityPlanningSnapshotV2["source"];
+    enforcement: IdserCapacityPlanningSnapshotV2["enforcement"];
+    process: IdserCapacityPlanningSnapshotV2["process"];
+    workload: IdserCapacityPlanningSnapshotV2["workload"];
   }>;
   requestResourceEnvelope: RequestResourceEnvelope;
   units: readonly StructuralFitCorpusUnit[];
@@ -100,7 +100,7 @@ const object = (value: unknown): Record<string, unknown> | undefined => value &&
 const positive = (value: unknown): number | undefined => Number.isSafeInteger(value) && (value as number) > 0 ? value as number : undefined;
 const same = (left: unknown, right: unknown): boolean => stable(left) === stable(right);
 
-function structural(snapshot: IdserProspectiveCapacitySnapshot): StructuralFitProposal["structuralBound"] | undefined {
+function structural(snapshot: IdserCapacityPlanningSnapshotV2): StructuralFitProposal["structuralBound"] | undefined {
   const bound = object(object(snapshot.workload)?.structuralBound);
   const identity = bound && typeof bound.identity === "string" ? bound.identity : undefined;
   const version = bound && typeof bound.version === "string" ? bound.version : undefined;
@@ -112,7 +112,7 @@ function structural(snapshot: IdserProspectiveCapacitySnapshot): StructuralFitPr
     ? { identity, version, maxRequestBytes, maxInputTokens, maxPromptBytes, maxContextTokens }
     : undefined;
 }
-function estimator(snapshot: IdserProspectiveCapacitySnapshot): Readonly<{ identity: string; version: string }> | undefined {
+function estimator(snapshot: IdserCapacityPlanningSnapshotV2): Readonly<{ identity: string; version: string }> | undefined {
   const value = object(object(snapshot.workload)?.estimator);
   return value && typeof value.identity === "string" && typeof value.version === "string" ? { identity: value.identity, version: value.version } : undefined;
 }
@@ -142,14 +142,14 @@ function verifiedAssetIdentities(acceptedDocument: AcceptedDocumentPlannerResult
   }
   return identities;
 }
-function policyIdentity(snapshot: IdserProspectiveCapacitySnapshot): unknown {
-  return { source: snapshot.source, enforcement: snapshot.enforcement, process: snapshot.process, workload: snapshot.workload, eligibleDimensions: snapshot.eligibleDimensions };
+function policyIdentity(snapshot: IdserCapacityPlanningSnapshotV2): unknown {
+  return { identity: snapshot.identity, revisions: snapshot.revisions, allocation: snapshot.allocation, sizing: snapshot.sizing, policyProvenance: snapshot.policyProvenance, canonicalFingerprint: snapshot.canonicalFingerprint, qualification: snapshot.qualification, source: snapshot.source, enforcement: snapshot.enforcement, process: snapshot.process, workload: snapshot.workload, eligibleDimensions: snapshot.eligibleDimensions };
 }
-function proposalIdentity(input: Readonly<{ acceptedDocument: AcceptedDocumentPlannerResultV1; estimatorConfiguration: CompleteSemCandidateRequestEstimatorConfiguration }>, snapshot: IdserProspectiveCapacitySnapshot, units: readonly StructuralFitCorpusUnit[]) {
+function proposalIdentity(input: Readonly<{ acceptedDocument: AcceptedDocumentPlannerResultV1; estimatorConfiguration: CompleteSemCandidateRequestEstimatorConfiguration }>, snapshot: IdserCapacityPlanningSnapshotV2, units: readonly StructuralFitCorpusUnit[]) {
   return { sourceHash: hash({ source: input.acceptedDocument.source, normalizedDocument: input.acceptedDocument.normalizedDocument, media: input.acceptedDocument.media, units }), policyHash: hash(policyIdentity(snapshot)), estimatorHash: hash(input.estimatorConfiguration) };
 }
 
-/** Composes only the canonical packet builder, complete estimator, and authenticated prospective BSS reader. */
+/** Composes only the canonical packet builder, complete estimator, and authenticated v2 BSS reader. */
 export async function proposeStructuralFitCorpusPartition(input: Readonly<{
   acceptedDocument: AcceptedDocumentPlannerResultV1;
   estimatorConfiguration: CompleteSemCandidateRequestEstimatorConfiguration;
@@ -162,8 +162,8 @@ export async function proposeStructuralFitCorpusPartition(input: Readonly<{
   catch { return frozen({ disposition: "BLOCKED", reason: "SEM_BATCH_ESTIMATOR_GAP", units: [], fitTrace: [] }); }
   try { assetIdentities = verifiedAssetIdentities(input.acceptedDocument); }
   catch { return frozen({ disposition: "BLOCKED", reason: "SEM_BATCH_ESTIMATOR_GAP", units, fitTrace: [] }); }
-  let pinned: IdserProspectiveCapacitySnapshot;
-  try { pinned = await input.capacityConsumer.read({ requestBytes: 0, inputTokens: 0, requestResourceEnvelope: { requestUnits: 0, tokenUnits: 0, dayUnits: 0, concurrencyUnits: 0 } }); }
+  let pinned: IdserCapacityPlanningSnapshotV2;
+  try { pinned = await input.capacityConsumer.read({ requestBytes: 0, inputTokens: 0, reservedOutputTokens: 0, requestResourceEnvelope: { requestUnits: 0, tokenUnits: 0, dayUnits: 0, concurrencyUnits: 0 } }); }
   catch { return frozen({ disposition: "BLOCKED", reason: "BSS_CAPACITY_CONSUMER_READ_GAP", units, fitTrace: [] }); }
   const pinnedEstimator = estimator(pinned);
   const pinnedStructuralBound = structural(pinned);
@@ -179,12 +179,13 @@ export async function proposeStructuralFitCorpusPartition(input: Readonly<{
   const verifyFit = async (candidateUnits: readonly StructuralFitCorpusUnit[]): Promise<Readonly<{ outcome: "fit" | "unfit" | "blocked"; reason?: "SEM_BATCH_ESTIMATOR_GAP" | "BSS_CAPACITY_CONSUMER_READ_GAP" | "STRUCTURAL_REVISION_CHANGED"; estimate?: CompleteSemCandidateRequestEstimate }>> => {
     let estimate: CompleteSemCandidateRequestEstimate;
     try { estimate = candidate(candidateUnits); } catch { return { outcome: "blocked", reason: "SEM_BATCH_ESTIMATOR_GAP" }; }
-    // `requestBytes` is the fully framed prompt measurement.  Context uses
-    // distinct input/output accounting: the BSS-owned output reservation is
-    // included exactly once and is never guessed by this consumer.
+    // `requestBytes` is the fully framed prompt measurement.  IDSER owns the
+    // deterministic reservation selected by its estimator; BSS supplies the
+    // upper bound and validates the resulting complete request.
     const outputReservation = object(object(pinned.workload)?.outputReservation);
-    const reservedOutputTokens = outputReservation && positive(outputReservation.maxOutputTokens);
-    if (!reservedOutputTokens) return { outcome: "blocked", reason: "BSS_CAPACITY_CONSUMER_READ_GAP" };
+    const maxOutputTokens = outputReservation && positive(outputReservation.maxOutputTokens);
+    const reservedOutputTokens = estimate.reservedOutputTokens;
+    if (!maxOutputTokens || !positive(reservedOutputTokens) || reservedOutputTokens > maxOutputTokens) return { outcome: "blocked", reason: "BSS_CAPACITY_CONSUMER_READ_GAP" };
     const exceedsStructuralBound = estimate.requestBytes > pinnedStructuralBound.maxRequestBytes
       || estimate.inputTokens > pinnedStructuralBound.maxInputTokens
       || estimate.requestBytes > pinnedStructuralBound.maxPromptBytes
@@ -194,12 +195,12 @@ export async function proposeStructuralFitCorpusPartition(input: Readonly<{
       return { outcome: "unfit", estimate };
     }
     try {
-      const result = await input.capacityConsumer.read({ requestBytes: estimate.requestBytes, inputTokens: estimate.inputTokens, requestResourceEnvelope: estimate.requestResourceEnvelope });
+      const result = await input.capacityConsumer.read({ requestBytes: estimate.requestBytes, inputTokens: estimate.inputTokens, reservedOutputTokens, requestResourceEnvelope: estimate.requestResourceEnvelope });
       if (!same(initialPolicy, policyIdentity(result))) return { outcome: "blocked", reason: "STRUCTURAL_REVISION_CHANGED" };
       trace.push({ requestBytes: estimate.requestBytes, inputTokens: estimate.inputTokens, sourceSpecificationSha256: estimate.provenance.sourcePacket.sourceSpecificationSha256, outcome: "fit" });
       return { outcome: "fit", estimate };
     } catch (error) {
-      if ((error instanceof IdserProspectiveCapacitySnapshotError || (error && typeof error === "object" && "disposition" in error)) && (error as { disposition?: unknown }).disposition === "structurally_unfit") {
+      if ((error instanceof IdserCapacityPlanningSnapshotV2Error || (error && typeof error === "object" && "disposition" in error)) && (error as { disposition?: unknown }).disposition === "structurally_unfit") {
         trace.push({ requestBytes: estimate.requestBytes, inputTokens: estimate.inputTokens, sourceSpecificationSha256: estimate.provenance.sourcePacket.sourceSpecificationSha256, outcome: "unfit" });
         return { outcome: "unfit", estimate };
       }

@@ -5,6 +5,7 @@ import { anomanMultipartSerializationPolicy } from "../src/providers/anoman-mult
 import { inventoryMultimodalCandidates } from "../src/idser-multimodal-inventory-candidates.ts";
 import { partitionMultimodalStructuralFit } from "../src/idser-multimodal-structural-fit-partition.ts";
 import { IdserProspectiveCapacitySnapshotError } from "../src/idser-prospective-capacity-snapshot.ts";
+import { createIdserCapacityPlanningSnapshotV2Consumer } from "../src/idser-capacity-planning-snapshot-v2.ts";
 
 const sourceSha256 = "a".repeat(64);
 const asset = (suffix: string) => `derived/12345678-1234-1234-1234-${suffix}`;
@@ -30,10 +31,22 @@ const snapshot = (sourceVersion = "v1") => ({
   requestResourceEnvelope: { requestUnits: 1, tokenUnits: 1, dayUnits: 1, concurrencyUnits: 1 },
 });
 
-test("uses the prospective BSS reader for complete multimodal demand while unknown image TPM remains non-blocking", async () => {
+const v2Snapshot = () => ({
+  apiVersion: "CapacityPlanningSnapshot/v2" as const, status: "qualified" as const, readIsNotAdmissionPermit: true as const,
+  identity: { quotaDomainId: "anoman", processId: "semantic", processProfileVersion: "v1", routeId: "anoman-semantic", serviceClass: "background", processKind: "semantic", capability: "atlas.semantic.extract", providerId: "anoman", modelOrProcessorId: "gemini-2.5-flash", adapterVersion: "anoman-v1", qualificationRef: "qualification://anoman", qualificationVersion: "v1", authorityVersion: 1 },
+  revisions: { providerCapacityProfileVersion: "capacity-v1", policyId: "policy", policyVersion: "v1", desiredProfileVersion: "desired-v1", candidateActivationRevision: 1, processProfileVersion: "v1", workloadProfileVersion: "workload-v1", estimator: { identity: "idser-multimodal-estimator", version: "v1" }, safetyPolicy: { policyId: "safety", policyVersion: "v1" } },
+  allocation: { allocationVersion: "v1", effectiveMask: ["rpm", "tpm", "concurrency"], baseline: { rpm: 14, tpm: 50_000, concurrency: 17 }, normalizedWeight: { numerator: 1, denominator: 1 }, cap: { tpm: 50_000 }, allocationFingerprint: "allocation-v1" },
+  sizing: { maxEligibleCompleteRequestTokens: 20_000, maxEligibleInputTokens: 19_000, maxRequestBytes: 50_000, maxContextTokens: 20_000, maxOutputTokens: 1_000, structuralBound: { identity: "semantic-bound", version: "v1", maxRequestBytes: 50_000, maxPromptBytes: 49_000, maxInputTokens: 19_000, maxContextTokens: 20_000 }, outputReservation: { policyId: "output", policyVersion: "v1", maxOutputTokens: 1_000 }, estimator: { identity: "idser-multimodal-estimator", version: "v1" }, safetyPolicy: { policyId: "safety", policyVersion: "v1" } },
+  borrowing: { mayBorrowIdleCapacity: true, sameBackgroundClass: true, runtimeOnly: true },
+  policyProvenance: { policyId: "policy", policyVersion: "v1", routeId: "anoman-semantic", providerProfileProvenance: { capacitySource: "provider_api", sourceRef: "provider://anoman", sourceVersion: "v1" }, dimensions: { rpm: { mode: "enforced", providerState: "known", limitSource: "provider", limit: 20 }, tpm: { mode: "enforced", providerState: "known", limitSource: "provider", limit: 50_000 }, rpd: { mode: "not_enforced", providerState: "unknown", approvalRef: "approved-rpd-unknown" }, concurrency: { mode: "enforced", providerState: "known", limitSource: "provider", limit: 25 } } },
+  canonicalFingerprint: "a".repeat(32), qualification: { candidateActivationRevision: 1, productionActive: false, isolated: true },
+});
+
+test("uses the v2-only BSS consumer for complete multimodal demand while unknown image TPM remains non-blocking", async () => {
   const reads: { requestBytes: number; inputTokens: number; tokenUnits: number }[] = [];
   let forbiddenEffects = 0;
-  const result = await partitionMultimodalStructuralFit({ inventory: inventory(), effectiveRoute: route(), capacityConsumer: { read: async (input) => { reads.push({ requestBytes: input.requestBytes, inputTokens: input.inputTokens, tokenUnits: input.requestResourceEnvelope.tokenUnits }); return snapshot() as any; } } });
+  const consumer = createIdserCapacityPlanningSnapshotV2Consumer({ reader: { read: async (_credential, input) => { reads.push({ requestBytes: input?.requestBytes ?? -1, inputTokens: input?.inputTokens ?? -1, tokenUnits: (input?.inputTokens ?? 0) + (input?.outputTokens ?? 0) }); return v2Snapshot(); } }, serverCredential: "server-owned", expectedIdentity: { quotaDomainId: "anoman", processId: "semantic", processProfileVersion: "v1", routeId: "anoman-semantic", serviceClass: "background" } });
+  const result = await partitionMultimodalStructuralFit({ inventory: inventory(), effectiveRoute: route(), capacityConsumer: consumer });
   assert.equal(forbiddenEffects, 0, "the partitioner has no BSS write, persistence, provider, hydration, or execution surface");
   assert.equal(result.disposition, "READY", JSON.stringify(result));
   if (result.disposition !== "READY") return;
@@ -43,7 +56,7 @@ test("uses the prospective BSS reader for complete multimodal demand while unkno
   assert.deepEqual(reads[0], { requestBytes: 0, inputTokens: 0, tokenUnits: 0 });
   assert.ok(reads[1]!.requestBytes > 0 && reads[1]!.inputTokens > 0 && reads[1]!.tokenUnits > reads[1]!.inputTokens, "full request demand and reserved output reach the read-only consumer");
   assert.equal(Object.isFrozen(result), true);
-  const repeat = await partitionMultimodalStructuralFit({ inventory: inventory(), effectiveRoute: route(), capacityConsumer: { read: async () => snapshot() as any } });
+  const repeat = await partitionMultimodalStructuralFit({ inventory: inventory(), effectiveRoute: route(), capacityConsumer: consumer });
   assert.deepEqual(repeat, result, "candidate ordering and owned coverage yield a stable proposal identity");
 });
 
