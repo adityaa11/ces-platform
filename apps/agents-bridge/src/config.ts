@@ -3,6 +3,7 @@ import { doclingOptionProfile, doclingServeVersion, doclingSlimVersion, type Doc
 import type { AnomanProviderConfig } from "./providers/anoman.js";
 import type { RuntimeCapacityConstraintPrincipal } from "./runtime-capacity-constraint.js";
 import type { CapacityPlanningSnapshotPrincipal } from "./capacity-planning-snapshot.js";
+import { loadGenericHandoffHttpTransportConfig, type GenericHandoffHttpTransportConfig } from "./ghr/http-transport-config.js";
 
 export type RuntimeCapacityConstraintBinding = RuntimeCapacityConstraintPrincipal & Readonly<{
   credential: string;
@@ -47,6 +48,8 @@ export type BridgeConfig = {
   };
   readonly anoman: AnomanProviderConfig;
   readonly docling: DoclingProviderConfig;
+  /** Inactive until GHR-04C composes the dispatcher into the worker. */
+  readonly genericHandoffHttpTransport?: GenericHandoffHttpTransportConfig;
   /** Optional server-owned registrations for the versioned runtime read API. */
   readonly runtimeCapacityConstraint?: Readonly<{
     databaseUrl: string;
@@ -170,6 +173,7 @@ export function loadBridgeConfig(environment: NodeJS.ProcessEnv = process.env): 
       zeroDataRetentionApproved: environment.ANOMAN_ZDR_APPROVED === "true",
     },
     docling: { baseUrl: doclingBaseUrl.replace(/\/$/u, ""), timeoutMilliseconds: boundedPositiveInteger(environment.DOCLING_TIMEOUT_MS, 20_000, "DOCLING_TIMEOUT_MS"), maxDocumentBytes: boundedPositiveInteger(environment.DOCLING_MAX_DOCUMENT_BYTES, 20 * 1024 * 1024, "DOCLING_MAX_DOCUMENT_BYTES"), maxResponseBytes: boundedPositiveInteger(environment.DOCLING_MAX_RESPONSE_BYTES, 10 * 1024 * 1024, "DOCLING_MAX_RESPONSE_BYTES"), serviceVersion: environment.DOCLING_SERVE_VERSION ?? doclingServeVersion, doclingSlimVersion: environment.DOCLING_SLIM_VERSION ?? doclingSlimVersion, optionProfile: environment.DOCLING_OPTION_PROFILE ?? doclingOptionProfile },
+    genericHandoffHttpTransport: loadGenericHandoffHttpTransportConfig(environment),
     runtimeCapacityConstraint: runtimeConstraintBindings && runtimeConstraintDatabaseUrl ? { databaseUrl: runtimeConstraintDatabaseUrl, bindings: runtimeConstraintBindings } : undefined,
     capacityPlanningSnapshot: planningSnapshotBindings && runtimeConstraintDatabaseUrl ? { databaseUrl: runtimeConstraintDatabaseUrl, bindings: planningSnapshotBindings } : undefined,
   };

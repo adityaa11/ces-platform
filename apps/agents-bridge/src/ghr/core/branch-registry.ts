@@ -23,7 +23,22 @@ export type BranchRegistration = ExactBranchSelector & Readonly<{
   payloadByteLimit: number;
   wrappedBodyByteLimit: number;
   receiverIdentity: string;
+  receiver: Readonly<{
+    transport: "http";
+    method: "POST";
+    path: string;
+  }>;
 }>;
+
+const trustedRegistrations = new WeakSet<object>();
+
+/**
+ * Only registry-resolution results may cross into a generic transport.  This
+ * prevents a handoff, job, or body-shaped object from supplying a destination.
+ */
+export function isTrustedBranchRegistration(value: unknown): value is BranchRegistration {
+  return typeof value === "object" && value !== null && trustedRegistrations.has(value);
+}
 
 export class BranchRegistryResolutionError extends Error {
   constructor(message: string) {
@@ -48,12 +63,17 @@ export function createBranchRegistry<const TRegistration extends BranchRegistrat
     if (!registration.branch || !registration.producerProcessKey || !registration.policyVersion || !registration.handlerVersion || !registration.bodyContractType || !registration.bodyContractVersion || !registration.receiverIdentity) {
       throw new BranchRegistryResolutionError("Branch registrations require every exact selector and a symbolic receiver identity.");
     }
+    if (registration.receiver.transport !== "http" || registration.receiver.method !== "POST" || !/^\/[A-Za-z0-9/_-]{1,199}$/u.test(registration.receiver.path)) {
+      throw new BranchRegistryResolutionError("Branch registrations require one bounded absolute HTTP POST receiver path.");
+    }
     if (!Number.isInteger(registration.payloadByteLimit) || registration.payloadByteLimit < 0 || !Number.isInteger(registration.wrappedBodyByteLimit) || registration.wrappedBodyByteLimit < registration.payloadByteLimit) {
       throw new BranchRegistryResolutionError("Branch registrations require non-negative integral payload and wrapper bounds.");
     }
     const key = selectorKey(registration);
     if (entries.has(key)) throw new BranchRegistryResolutionError("Duplicate exact branch registration.");
-    entries.set(key, Object.freeze({ ...registration }));
+    const trusted = Object.freeze({ ...registration, receiver: Object.freeze({ ...registration.receiver }) });
+    trustedRegistrations.add(trusted);
+    entries.set(key, trusted);
   }
 
   return Object.freeze({

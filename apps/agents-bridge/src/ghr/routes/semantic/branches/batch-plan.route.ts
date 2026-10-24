@@ -16,6 +16,7 @@ export const semanticBatchPlanRoute = Object.freeze({
   payloadByteLimit: 2_048,
   wrappedBodyByteLimit: 2_081,
   receiverIdentity: "semantic.batch-plan",
+  receiver: { transport: "http", method: "POST", path: "/internal/semantic/batch-plan" },
 } as const satisfies BranchRegistration);
 
 export function isSemanticBatchPlanSelector(selector: ExactBranchSelector): boolean {
