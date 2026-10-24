@@ -1,6 +1,6 @@
 # GHR-04A — Registered HTTP transport contract and dispatcher
 
-- **State:** `awaiting_review`; preparation only. See [the GO checkpoint](../../../feedback/GHR-04A-go-checkpoint.md). This ticket does not activate HTTP worker delivery or alter GHR-03B's local receiver invocation.
+- **State:** `approved`; GHR-04A CK `PASS` is recorded in [the post-CFC verification](../../../feedback/GHR-04A-e919b672-verification.md). This remains preparation only: it does not activate HTTP worker delivery or alter GHR-03B's local receiver invocation.
 - **Dependencies:** GHR-03B CK `PASS`.
 - **Parent:** [GHR-04 split record](GHR-04-semantic-batch-plan-http-connector.md).
 - **Source:** [GHR HTTP Delivery to Semantic Batch Plan implementation context](../../GHR-IDSER-Semantic-batch-plan-connector.md), §§2–3, 5–6, and 9.
