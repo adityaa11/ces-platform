@@ -39,3 +39,13 @@ This document deliberately does not create a BSS implementation task, a BSS migr
 ## Hard stop
 
 Stop for new planning authority if replacing the active consumer requires a compatibility adapter, simultaneous active v1/v2 read, a fake active plan, a provider fallback, or repair of the isolated IDSER environment as a condition of BSS contract work. The environment repair is separately owned and cannot be silently folded into this successor.
+
+## Amendment 001 — initial v2 consumer activation
+
+**Effective authority:** [BSS-V2-014-05 initial v2 activation planning amendment 001](../../../feedback/BSS-V2-014-05-initial-v2-activation-planning-amendment-001.md), explicitly approved by the human/planning owner on 2026-10-24 and frozen by [replacement contract freeze 001](../../../feedback/BSS-V2-014-05-replacement-contract-freeze-001.md). This append-only amendment supersedes only the old-active-v1-replacement and unsupported atomicity portions of this document; historical text, evidence, and `RC-01405-01..04` remain preserved.
+
+There is no active production IDSER v1 capacity consumer to replace. `-05` is the initial activation of one IDSER v2 read-only planning consumer using the existing authenticated BSS read seam. Historical v1 code and fixtures may remain in the repository but must have no executable production binding, credential binding, adapter, fallback, dual read, or prospective-to-qualified conversion.
+
+`RC-01405-05` is superseded by replacement clauses `RRC-01405-05.a` through `RRC-01405-05.e` in the replacement freeze. In effect, the required positive proof is one v2-only IDSER consumer composition reading only authenticated, qualified `CapacityPlanningSnapshot/v2`; there is no fabricated v1 removal event. Its exact complete-request ceiling is `sizing.maxEligibleCompleteRequestTokens`: IDSER must satisfy `inputTokens + reservedOutputTokens <= maxEligibleCompleteRequestTokens` as well as all qualified input, output, context, request-byte, and applicable media bounds. IDSER alone estimates output reservation/buffer and packs batches; BSS alone allocates, qualifies, and admits capacity. TPM/concurrency division, borrow-dependent immutable sizing, capacity synthesis, and a second tokenizer remain prohibited.
+
+This amendment does not authorize GO, production activation, a BSS plan change, GHR work, NDV1 redemption, Better Auth, SEM execution, provider execution, or a downstream semantic workflow. GHR retains its existing `can_continue: false` and `parsed_only` boundary.

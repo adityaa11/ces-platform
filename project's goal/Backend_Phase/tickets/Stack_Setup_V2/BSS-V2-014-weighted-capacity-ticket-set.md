@@ -66,3 +66,18 @@ The material cross-owner seams are intentionally owned: `-02-01` owns the public
 ## Global hard stop
 
 Stop the affected child for HMN/new planning decision if a required acceptance row needs a second operational lane, consumer-specific allocator, multi-active-route resolver, v1/v2 compatibility service, provider capacity fallback, or modification of an approved predecessor contract. Do not turn the separate IDSER environment bootstrap gap into a BSS-V2-014 prerequisite or repair scope.
+
+## Amendment 001 — parent initial-v2 activation gate
+
+**Effective authority:** [BSS-V2-014-05 initial v2 activation planning amendment 001](../../../feedback/BSS-V2-014-05-initial-v2-activation-planning-amendment-001.md) and its [replacement contract freeze 001](../../../feedback/BSS-V2-014-05-replacement-contract-freeze-001.md), approved by the human/planning owner on 2026-10-24. This append-only amendment supersedes only the parent gate’s assumption of an active v1 IDSER consumer and its claim that database activation and application composition are atomic. All other parent requirements and child ownership remain unchanged.
+
+The parent gate is a verifiable fail-closed release sequence, not a distributed transaction:
+
+1. Prepare exactly one v2-only IDSER capacity-consumer composition without enabling production processing. The composition must contain no v1 consumer, v1 credential binding, adapter, fallback, dual read, alternate BSS reader, direct BSS SQL, or independent capacity authority.
+2. Authenticate and qualify the exact BSS v2 candidate through the existing read seam. During this pre-activation observation, `qualification.productionActive: false` is expected candidate readiness, not a failure and not traffic-bearing activation.
+3. Verify the consumer’s exact snapshot identity, revisions, policy provenance, allocation, structural bounds, canonical fingerprint, full-request sizing invariant, and zero forbidden effects; retain an inventory proving the v2-only composition.
+4. Verify the accepted `-03` reader evidence and accepted `-04-03` BSS runtime-enforcement evidence. A failed, stale, foreign, non-qualified, unavailable, or mismatched observation blocks the release.
+5. Only after those observations may the existing `bridge.activate_desired_admission_profile(...)` epoch and authority activate the successor. No new activation epoch, registry, table, service, scheduler, or compatibility lane is introduced by this gate.
+6. The release record must bind readiness to the activated profile/revision and canonical fingerprint. After activation, the consumer must fail closed to typed stop/replan on any unavailable, stale, foreign, non-qualified, or mismatched v2 read.
+
+This gate does not change GHR. Its established `can_continue: false`, route registration, handler versions, delivery/acknowledgement behavior, and `parsed_only` terminal result remain outside both parent and `-05` implementation scope.
