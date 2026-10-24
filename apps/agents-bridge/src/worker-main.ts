@@ -58,14 +58,16 @@ const providerOutboundTransport: ProviderOutboundTransport = async () => {
 const providerPayloadAdapter: ProviderAdmittedPayloadAdapter = {
   hydrate: async () => { throw new Error("No qualified provider-work payload adapter is configured for the admitted-execution slice."); },
 };
-const semanticBatchPlan = config.semanticBatchPlanPlanning && config.capacityPlanningSnapshot
+const semanticBatchPlanPlanning = config.semanticBatchPlanPlanning;
+const capacityPlanningSnapshot = config.capacityPlanningSnapshot;
+const semanticBatchPlan = semanticBatchPlanPlanning && capacityPlanningSnapshot
   ? async (handoffId: string, database: { executeSql(statement: string, values?: readonly unknown[]): Promise<{ readonly rows: readonly Record<string, unknown>[] }> }) => {
     const databaseAdapter = { executeSql: database.executeSql.bind(database) };
-    const snapshotReader = createCapacityPlanningSnapshotReader(databaseAdapter, { authenticate: (credential) => config.capacityPlanningSnapshot?.bindings.find((binding) => binding.credential === credential) ?? null });
-    const capacityConsumer = createIdserCapacityPlanningSnapshotV2ProductionComposition({ reader: snapshotReader, bindings: config.capacityPlanningSnapshot.bindings });
+    const snapshotReader = createCapacityPlanningSnapshotReader(databaseAdapter, { authenticate: (credential) => capacityPlanningSnapshot.bindings.find((binding) => binding.credential === credential) ?? null });
+    const capacityConsumer = createIdserCapacityPlanningSnapshotV2ProductionComposition({ reader: snapshotReader, bindings: capacityPlanningSnapshot.bindings });
     if (!capacityConsumer) throw new Error("IDSER semantic batch-planning capacity consumer is unavailable.");
     const resolver = new PostgresAcceptedSemanticBatchPlanDocumentResolver({ unsafe: async (statement, values) => (await database.executeSql(statement, values)).rows as Record<string, unknown>[] });
-    await runSemanticBatchPlanJob({ database, handoffId, planning: { acceptedDocumentResolver: resolver, estimatorConfiguration: config.semanticBatchPlanPlanning!.estimatorConfiguration, capacityConsumer } });
+    await runSemanticBatchPlanJob({ database, handoffId, planning: { acceptedDocumentResolver: resolver, estimatorConfiguration: semanticBatchPlanPlanning.estimatorConfiguration, capacityConsumer } });
   }
   : undefined;
 const worker = createProductionBridgeWorker({ config: loadWorkerConfig(), runtime, documentPerception: async (request, signal, context) => {

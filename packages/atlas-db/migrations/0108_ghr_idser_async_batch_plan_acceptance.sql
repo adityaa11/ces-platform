@@ -11,8 +11,34 @@ ALTER TABLE atlas.generic_handoff_route_policy
   );
 
 ALTER TABLE atlas.generic_handoff_intent
-  DROP CONSTRAINT IF EXISTS generic_handoff_intent_can_continue_check,
-  DROP CONSTRAINT IF EXISTS generic_handoff_intent_policy_version_handler_version_check;
+  DROP CONSTRAINT IF EXISTS generic_handoff_intent_can_continue_check;
+
+-- 0103 left this combined CHECK unnamed. PostgreSQL therefore generated the
+-- relation-local name (currently `generic_handoff_intent_check1`), rather
+-- than the guessed name previously used here. Locate the legacy predicate by
+-- its definition so an upgraded database cannot retain the v1-only guard.
+DO $$
+DECLARE
+  legacy_constraint record;
+BEGIN
+  FOR legacy_constraint IN
+    SELECT constraint_row.conname
+    FROM pg_constraint AS constraint_row
+    WHERE constraint_row.conrelid = 'atlas.generic_handoff_intent'::regclass
+      AND constraint_row.contype = 'c'
+      AND pg_get_expr(constraint_row.conbin, constraint_row.conrelid) ~
+        'policy_version[[:space:]]*=[[:space:]]*''v1''::text'
+      AND pg_get_expr(constraint_row.conbin, constraint_row.conrelid) ~
+        'handler_version[[:space:]]*=[[:space:]]*''v1''::text'
+  LOOP
+    EXECUTE format(
+      'ALTER TABLE atlas.generic_handoff_intent DROP CONSTRAINT %I',
+      legacy_constraint.conname
+    );
+  END LOOP;
+END;
+$$;
+
 ALTER TABLE atlas.generic_handoff_intent
   ADD CONSTRAINT generic_handoff_intent_planning_transition_check CHECK (
     (policy_version='v1' AND handler_version='v1' AND can_continue=false)

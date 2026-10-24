@@ -45,7 +45,7 @@ export function createPostgresSemanticBatchPlanAcceptanceStore(database: SqlData
     async accept(acceptance) {
       const canonicalInput = canonicalSemanticBatchPlanInputV1(acceptance.input);
       try {
-        await database.executeSql("SELECT bridge.accept_semantic_batch_plan($1,$2,$3,$4::jsonb)", [acceptance.handoffId, acceptance.bodySha256, canonicalInput, JSON.stringify(acceptance.trustedScope)]);
+        await database.executeSql("SELECT bridge.accept_semantic_batch_plan($1,$2,$3,$4::jsonb)", [acceptance.handoffId, acceptance.bodySha256, canonicalInput, acceptance.trustedScope]);
       } catch (error) {
         if (error instanceof Error && /different immutable planning handoff/i.test(error.message)) throw new BatchPlanAcceptanceConflictError();
         throw new BatchPlanAcceptanceUnavailableError();
@@ -83,6 +83,6 @@ export async function runSemanticBatchPlanJob(input: Readonly<{
 }
 
 async function persistOutcome(database: SqlDatabase, handoffId: string, outcome: StructuralFitCorpusPartitionResult): Promise<void> {
-  const completed = await database.executeSql("SELECT bridge.complete_semantic_batch_plan($1,$2,$3::jsonb) AS completed", [handoffId, outcome.disposition, JSON.stringify(outcome)]);
+  const completed = await database.executeSql("SELECT bridge.complete_semantic_batch_plan($1,$2,$3::jsonb) AS completed", [handoffId, outcome.disposition, outcome]);
   if (completed.rows[0]?.completed !== true) throw new Error("semantic batch-plan job completion was not durably persisted");
 }
