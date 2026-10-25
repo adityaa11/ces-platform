@@ -2,6 +2,8 @@ import { headers } from "next/headers";
 import { forbidden, redirect } from "next/navigation";
 import { AtlasAdminAccessError, createAtlasAdminGuard, createPersistedAdminAuthorizationReader } from "@/lib/admin-guard";
 import { getAtlasAuthService, isWorkerAuthRuntime } from "@/lib/auth-server";
+import { AdminShell } from "@/components/admin/AdminShell";
+import { DashboardWelcome } from "@/components/admin/DashboardWelcome";
 
 /**
  * The authorization boundary deliberately lives on the page rather than an
@@ -26,11 +28,14 @@ export default async function AdminDashboardPage() {
     if (isWorkerAuthRuntime()) await service.close();
   }
 
-  // AAD-002 replaces this bounded placeholder with the reusable Admin shell.
   return (
-    <main>
-      <h1>Atlas Admin Console</h1>
-      <p>Welcome, {identity.name}.</p>
-    </main>
+    <AdminShell name={identity.name}>
+      <header className="admin-page-heading">
+        <p>Atlas / Administration</p>
+        <h1>Dashboard</h1>
+        <span>Atlas Admin Console</span>
+      </header>
+      <DashboardWelcome name={identity.name} />
+    </AdminShell>
   );
 }

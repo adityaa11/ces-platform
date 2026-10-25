@@ -13,6 +13,8 @@ const moduleSubstitutions = new Map([
   ["next/navigation", new URL("next-navigation.mjs", harnessRoot)],
   ["@/lib/admin-guard", new URL("admin-guard.mjs", harnessRoot)],
   ["@/lib/auth-server", new URL("auth-server.mjs", harnessRoot)],
+  ["@/components/admin/AdminShell", new URL("admin-dashboard-components.mjs", harnessRoot)],
+  ["@/components/admin/DashboardWelcome", new URL("admin-dashboard-components.mjs", harnessRoot)],
 ]);
 const compiledPage = ts.transpileModule(pageSource, {
   compilerOptions: {
