@@ -1,6 +1,6 @@
 # AA-003: Bootstrap coordinator and controlled recovery
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `AA-BATCH-03`
 - **Depends on:** AA-001 `PASS`
 - **Baseline:** [Admin Auth Foundation](../../atlas-admin-auth-foundation.md) §§5.3, 6–7, 9–13
