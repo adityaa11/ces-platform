@@ -88,4 +88,4 @@ Status: applicable
 ## Review checkpoint
 
 - **Review question:** Does real CLI bootstrap → Better Auth sign-in → issued cookie → protected Admin access, plus durability, regression evidence, and the runbook, prove the completed foundation without changing its authorities?
-- **Implementation commit:** pending GO checkpoint commit.
+- **Implementation commit:** `3e1e8bb0` (`test(auth): add AA-005 round-trip evidence`)
