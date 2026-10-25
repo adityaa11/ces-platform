@@ -35,9 +35,10 @@ Do not add frontend middleware as the security boundary, custom JWTs/admin token
 
 ## Validation
 
-- Add focused request-level tests for `401`, `403`, and success behavior.
-- Exercise the guard with a real Better Auth session cookie where the database-backed environment is available.
+- Add focused request-level tests for `401`, `403`, and success behavior. This ticket owns AUTH-04 through AUTH-06; the final CLI-issued-cookie success assertion is deliberately owned by AA-005.
+- Exercise AUTH-04 through AUTH-06 against the actual PostgreSQL-backed Better Auth configuration and a real Better Auth session cookie; focused doubles are regression support, not final acceptance evidence.
 - Verify revoked and expired sessions are rejected.
+- A test-only sealed-state/role fixture may establish the accepted AA-001 persistence precondition for this guard test, but may not recreate bootstrap provisioning logic or substitute for AA-003/AA-004 evidence.
 - Verify the endpoint response contains no password/hash/token/secret fields.
 - Run directly affected app/auth typechecks and existing auth lifecycle tests.
 
