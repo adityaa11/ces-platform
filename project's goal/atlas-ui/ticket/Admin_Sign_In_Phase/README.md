@@ -34,9 +34,26 @@ Admin entry point in public navigation, or creates any other Admin route.
 
 | Order | Ticket | Outcome |
 | --- | --- | --- |
-| 1 | [ASI-001](ASI-001-isolated-admin-sign-in-ui.md) | A complete, isolated UI-only `/admin/sign-in` vertical slice. |
-| 2 | [ASI-002](ASI-002-admin-sign-in-ui-boundary-tests.md) | Automated proof that the page stays local, theme-integrated, and navigation-isolated. |
-| 3 | [ASI-003](ASI-003-admin-sign-in-visual-accessibility-review.md) | Rendered desktop/mobile and light/dark accessibility and fidelity review. |
+| 1 | [ASI-001](ASI-001-isolated-admin-sign-in-ui.md) | Directly renderable Admin route, approved visual frame, and shared-theme presentation. |
+| 2 | [ASI-002](ASI-002-admin-sign-in-local-form-behavior.md) | Local form behavior only: validation, password visibility, and neutral informational result. |
+| 3 | [ASI-003](ASI-003-admin-sign-in-ui-boundary-tests.md) | Automated route, theme-authority, and public-navigation isolation proof. |
+| 4 | [ASI-004](ASI-004-admin-sign-in-visual-accessibility-review.md) | Rendered desktop/mobile and light/dark accessibility and fidelity review. |
+
+## One-flow sizing decision
+
+The original implementation ticket joined two independently reviewable
+surfaces: the route's responsive visual frame and all client-side credential
+form states. It also deferred its executable boundary evidence to a later
+ticket. That made a single correction cycle ambiguous: a visual calibration
+finding and a local-form behavior finding could both require changes to the
+same large implementation scope.
+
+ASI-001 and ASI-002 therefore divide the work at the only stable UI seam:
+presentation/theme frame first, then local form behavior. ASI-003 is evidence
+only and does not alter product behavior; ASI-004 is a final rendered quality
+gate. The split preserves every requirement in the supplied sources, but gives
+each ticket one implementation or review concern, a finite evidence set, and
+a clear correction boundary.
 
 ## Frontend contract for this phase
 
@@ -82,7 +99,7 @@ character. Do not derive a separate Admin design system.
 
 ## Review gate
 
-ASI-003 must record PASS, PASS WITH FINDINGS, or FAIL against the frontend
+ASI-004 must record PASS, PASS WITH FINDINGS, or FAIL against the frontend
 review dimensions: Atlas visual-language conformance, hierarchy, token and
 surface discipline, typography, one-action hierarchy, interaction states,
 responsive composition, accessibility, density, decoration purpose, and

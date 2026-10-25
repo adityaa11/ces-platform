@@ -1,4 +1,4 @@
-# ASI-001: Implement the isolated Atlas Admin Sign-In UI
+# ASI-001: Establish the isolated Atlas Admin Sign-In route and visual frame
 
 - **State:** proposed
 - **Depends on:** [Admin Sign-In Phase contract](README.md)
@@ -7,10 +7,10 @@
 
 ## Outcome
 
-Implement a complete, presentation-only Admin Console login screen at
-`/admin/sign-in`. Direct navigation and refresh render the isolated interface;
-the screen has no authentication or Admin-route behavior beyond local UI
-interactions.
+Implement the directly renderable, presentation-only Admin Console route at
+`/admin/sign-in`. This ticket establishes the approved desktop/mobile visual
+frame and shared Atlas-theme presentation. Local credential-form behavior is
+deliberately completed by ASI-002.
 
 ## Scope
 
@@ -31,12 +31,12 @@ interactions.
   Admin-specific visual presentation of the light/dark controls if the shared
   text selector cannot faithfully reproduce the supplied icon control, but
   make it call the existing provider rather than introducing another authority.
-- Bind form data to component-local state only. Support typing, email-format
-  and required-field validation, field-error clearing while editing, password
-  show/hide, keyboard navigation, and a local informational result after valid
-  submit. Submission always prevents default.
-- Preserve the prototype’s intent for the informational result: state plainly
-  that this is a UI-only screen and that credentials were not sent or stored.
+- Render semantic, editable email and password controls with their approved
+  labels, autocomplete values, icons, password-visibility control, and one
+  visually dominant Sign in action. Before ASI-002, the form action must not
+  submit, navigate, or perform any request.
+- Render the neutral UI-only informational-result region in its hidden state;
+  ASI-002 owns revealing it and all validation/error state.
 - Use scoped styles or an Admin-specific namespace. The implementation must
   not depend on or modify the ordinary auth page's generic `.auth-card`,
   `.sign-in-form`, `.topbar`, or `.brand` rules.
@@ -66,19 +66,15 @@ interactions.
 ### Form and interaction states
 
 - Email and password each have a visible text label, required indication, and
-  semantic input type/autocomplete value.
-- Invalid email and missing fields receive readable text errors, `aria-invalid`,
-  and focus moves to the first invalid field on submit.
-- Password visibility control updates its accessible name, pressed state, icon,
-  and input type, then returns focus to the password input.
-- Editing either field clears its own error and removes the informational
-  result; no value is logged, persisted, transmitted, or exposed outside the
-  browser form control.
-- The only post-submit success-like state is the prototype's neutral
-  informational message. It must never imply that sign-in succeeded.
-- Define visible default, hover, focus-visible, active, selected, error, and
-  informational states. Loading/disabled states are not required because the
-  form performs no asynchronous work.
+  semantic input type/autocomplete value. The password control and primary
+  action have accessible names.
+- Theme controls are the only active control in this ticket. They must reflect
+  the current explicit Atlas selection with `aria-pressed` and call the shared
+  provider.
+- ASI-002 owns validation, `aria-invalid`, field errors, password show/hide,
+  submit behavior, focus restoration, and revealing/clearing the informational
+  result. Neither ticket may create a loading, authentication-success, or
+  authenticated state.
 
 ### Responsive and visual fit
 
@@ -102,16 +98,18 @@ interactions.
   spacing, and responsive omissions.
 - Theme controls use the existing Atlas theme behavior; changing theme updates
   the page and remains consistent with the rest of Atlas.
-- Empty email/password, malformed email, valid local submission, password
-  show/hide, tab order, and visible focus all behave as specified without any
-  network request or navigation.
+- The pre-interaction form is keyboard reachable and has the correct native
+  semantics, but it performs no submission or password-mode change until
+  ASI-002.
 - Existing `/sign-in`, `/sign-up`, `/`, and `/home` presentation and navigation
   are not changed, and none display an Admin sign-in link.
 - No Admin route other than `/admin/sign-in` is introduced.
 
 ## Validation handoff
 
-Provide the implementation needed by [ASI-002](ASI-002-admin-sign-in-ui-boundary-tests.md)
-and [ASI-003](ASI-003-admin-sign-in-visual-accessibility-review.md). Record
-files changed, route rendered, reused tokens/provider, and any unavoidable
-visual deviation from the supplied sources.
+Provide the presentation frame consumed by
+[ASI-002](ASI-002-admin-sign-in-local-form-behavior.md),
+[ASI-003](ASI-003-admin-sign-in-ui-boundary-tests.md), and
+[ASI-004](ASI-004-admin-sign-in-visual-accessibility-review.md). Record files
+changed, route rendered, reused tokens/provider, and any unavoidable visual
+deviation from the supplied sources.
