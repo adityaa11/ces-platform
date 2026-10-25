@@ -1,6 +1,6 @@
 # ASI-002: Complete local Admin Sign-In form behavior
 
-- **State:** awaiting_review
+- **State:** approved
 - **Depends on:** [ASI-001](ASI-001-isolated-admin-sign-in-ui.md)
 - **Application:** `apps/atlas`
 - **Primary source:** [implementation brief, sections 5–6 and 9](../../atlas-admin-sign-in-ui.md); [standalone interaction reference](../../atlas-admin-login-standalone.html)
