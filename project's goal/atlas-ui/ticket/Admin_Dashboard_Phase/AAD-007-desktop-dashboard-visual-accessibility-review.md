@@ -1,6 +1,6 @@
 # AAD-007: Review desktop Dashboard fidelity, theme, and accessibility
 
-- **State:** proposed
+- **State:** awaiting_review
 - **Depends on:** [AAD-002](AAD-002-admin-shell-and-welcome-ui.md), [AAD-005](AAD-005-dashboard-route-authorization-tests.md)
 - **Application:** `apps/atlas`
 - **Primary source:** [dashboard brief, sections 4–5 and 8](../../Atlas-admin-dashboard.md); [dashboard standalone prototype](../../Atlas_Admin_Dashboard_Standalone.html)
