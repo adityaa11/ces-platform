@@ -12,6 +12,12 @@ export const authUser = authSchema.table("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("emailVerified").notNull(),
   image: text("image"),
+  // Persisted by Better Auth's installed admin plugin. `admin` is the sole
+  // Atlas Platform Super Admin role; ordinary identities receive `user`.
+  role: text("role").notNull().default("user"),
+  banned: boolean("banned").notNull().default(false),
+  banReason: text("banReason"),
+  banExpires: timestamp("banExpires", { withTimezone: true }),
   createdAt: timestamp("createdAt", { withTimezone: true }).notNull(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).notNull(),
 });
@@ -24,6 +30,7 @@ export const authSession = authSchema.table("session", {
   updatedAt: timestamp("updatedAt", { withTimezone: true }).notNull(),
   ipAddress: text("ipAddress"),
   userAgent: text("userAgent"),
+  impersonatedBy: text("impersonatedBy"),
   userId: text("userId").notNull().references(() => authUser.id, { onDelete: "cascade" }),
 }, (table) => [index("session_user_id_idx").on(table.userId)]);
 
@@ -51,6 +58,21 @@ export const authVerification = authSchema.table("verification", {
   createdAt: timestamp("createdAt", { withTimezone: true }),
   updatedAt: timestamp("updatedAt", { withTimezone: true }),
 }, (table) => [index("verification_identifier_idx").on(table.identifier)]);
+
+/**
+ * Atlas-owned coordination state for the one-time first Super Admin bootstrap.
+ * It deliberately holds attempt identity and non-secret recovery metadata only;
+ * Better Auth remains responsible for user identity, credentials, and sessions.
+ */
+export const atlasAdminBootstrapState = atlasSchema.table("admin_bootstrap_state", {
+  bootstrapKey: text("bootstrap_key").primaryKey(),
+  state: text("state").notNull(),
+  attemptId: text("attempt_id"),
+  attemptEmail: text("attempt_email"),
+  initialUserId: text("initial_user_id").references(() => authUser.id, { onDelete: "restrict" }),
+  reservedAt: timestamp("reserved_at", { withTimezone: true }),
+  sealedAt: timestamp("sealed_at", { withTimezone: true }),
+});
 
 /** Atlas-owned project metadata. Immutable source bytes belong to DocumentStore. */
 export const atlasProject = atlasSchema.table("project", {

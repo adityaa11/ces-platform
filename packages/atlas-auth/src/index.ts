@@ -1,5 +1,6 @@
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { betterAuth } from "better-auth";
+import { admin } from "better-auth/plugins/admin";
 import { authAccount, authSession, authUser, authVerification, createDatabase } from "@atlas/db/auth";
 import { loadAtlasAuthConfig, type AtlasAuthConfig, type AtlasAuthEnvironment } from "./config.js";
 
@@ -19,6 +20,9 @@ export function createAtlasAuth(config: AtlasAuthConfig) {
         schema: { user: authUser, session: authSession, account: authAccount, verification: authVerification },
       }),
       emailAndPassword: { enabled: true },
+      // `admin` is the single persisted Atlas Platform Super Admin authority.
+      // Public Better Auth sign-up stays on the plugin's ordinary `user` role.
+      plugins: [admin({ defaultRole: "user", adminRoles: ["admin"] })],
     }),
     close: database.close,
   };

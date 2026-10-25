@@ -1,6 +1,6 @@
 # AA-001: Admin authority and durable bootstrap state
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `AA-BATCH-01`
 - **Depends on:** BSS-004 `approved`
 - **Baseline:** [Admin Auth Foundation](../../atlas-admin-auth-foundation.md) §§2, 4.1–4.2, 6, 9, 12; [BSS-004 Better Auth persistence](../Stack_Setup/BSS-004-better-auth-persistence.md)
@@ -91,4 +91,4 @@ Status: applicable
 ## Review checkpoint
 
 - **Review question:** Does this batch establish exactly one persisted admin authority and one durable bootstrap-state authority without changing Better Auth ownership?
-- **Implementation commit:** not yet implemented.
+- **Implementation commit:** `HEAD` (AA-BATCH-01 GO checkpoint; awaiting CK review).

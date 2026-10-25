@@ -11,6 +11,7 @@
     "typecheck": "tsc -p tsconfig.json",
     "migrate": "node scripts/migrate.mjs",
     "migration:check": "node scripts/migrate.mjs --check",
+    "test:admin-bootstrap-state": "node --test tests/admin-bootstrap-state.test.mjs",
     "test:permissions": "node --test tests/permissions.test.mjs",
     "test:perception-authority": "jiti tests/perception-authority.integration.test.ts",
     "test:derived-assets": "jiti tests/derived-assets.integration.test.ts",

@@ -34,8 +34,9 @@ test("email sign-up creates a durable session and sign-out invalidates it", { sk
     service = createAtlasAuth(config);
     const session = await service.auth.handler(new Request("http://localhost:3001/api/auth/get-session", { headers: { cookie: cookies } }));
     assert.equal(session.status, 200);
-    const established = await session.json() as { user?: { email?: string } };
+    const established = await session.json() as { user?: { email?: string; role?: string } };
     assert.equal(established.user?.email, email);
+    assert.equal(established.user?.role, "user", "public Better Auth sign-up receives only the ordinary role");
 
     const signOut = await service.auth.handler(new Request("http://localhost:3001/api/auth/sign-out", {
       method: "POST",

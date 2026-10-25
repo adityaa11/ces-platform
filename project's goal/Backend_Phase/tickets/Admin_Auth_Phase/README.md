@@ -1,6 +1,6 @@
 # Atlas Admin Auth Ticket Set
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Primary baseline:** [Admin Auth Foundation + First Super Admin CLI Bootstrap](../../atlas-admin-auth-foundation.md)
 - **Accepted dependency:** [BSS-004 Better Auth persistence](../Stack_Setup/BSS-004-better-auth-persistence.md)
 - **Target branch:** `codex/new-atlas-backend`
@@ -42,7 +42,7 @@ Each ticket is a separate review batch. A dependent ticket cannot begin until th
 
 | Order | Ticket / batch | State | Depends on | Review question |
 |---:|---|---|---|---|
-| 1 | [AA-001](AA-001-admin-authority-and-bootstrap-state.md) / `AA-BATCH-01` | `planned` | BSS-004 `approved` | Does Atlas add only the persisted admin role and minimal durable bootstrap state while preserving Better Auth as the identity/session authority? |
+| 1 | [AA-001](AA-001-admin-authority-and-bootstrap-state.md) / `AA-BATCH-01` | `awaiting_review` | BSS-004 `approved` | Does Atlas add only the persisted admin role and minimal durable bootstrap state while preserving Better Auth as the identity/session authority? |
 | 2 | [AA-002](AA-002-server-admin-guard-and-identity-endpoint.md) / `AA-BATCH-02` | `planned` | AA-001 `PASS` | Does one reusable server guard enforce session validity, completed bootstrap state, and persisted Super Admin authority at the API boundary? |
 | 3 | [AA-003](AA-003-bootstrap-coordinator-and-recovery.md) / `AA-BATCH-03` | `planned` | AA-001 `PASS` | Does the server-side coordinator enforce one durable reservation → provision → verify → seal/reconcile protocol without a parallel identity or credential authority? |
 | 4 | [AA-004](AA-004-first-super-admin-bootstrap-cli.md) / `AA-BATCH-04` | `planned` | AA-003 `PASS` | Can an infrastructure operator invoke the approved coordinator through one password-safe native CLI, with no HTTP server or public sign-up path? |
