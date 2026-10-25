@@ -1,6 +1,6 @@
 # AAD-008: Review compact Dashboard navigation fidelity and accessibility
 
-- **State:** awaiting_review
+- **State:** approved
 - **Depends on:** [AAD-004](AAD-004-compact-admin-navigation.md), [AAD-005](AAD-005-dashboard-route-authorization-tests.md)
 - **Application:** `apps/atlas`
 - **Primary source:** [dashboard brief, sections 4–5 and 8](../../Atlas-admin-dashboard.md); [dashboard standalone prototype](../../Atlas_Admin_Dashboard_Standalone.html)
