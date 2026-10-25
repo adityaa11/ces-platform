@@ -1,6 +1,6 @@
 # ASI-001: Establish the isolated Atlas Admin Sign-In route and visual frame
 
-- **State:** proposed
+- **State:** awaiting_review
 - **Depends on:** [Admin Sign-In Phase contract](README.md)
 - **Application:** `apps/atlas`
 - **Primary source:** [implementation brief](../../atlas-admin-sign-in-ui.md), [standalone prototype](../../atlas-admin-login-standalone.html), [light preview](../../atlas-admin-login-light-preview.png), [mobile preview](../../atlas-admin-login-mobile-preview.png)
@@ -113,3 +113,12 @@ Provide the presentation frame consumed by
 [ASI-004](ASI-004-admin-sign-in-visual-accessibility-review.md). Record files
 changed, route rendered, reused tokens/provider, and any unavoidable visual
 deviation from the supplied sources.
+
+## GO checkpoint
+
+Implementation commit: `HEAD` (ASI-001 implementation checkpoint; awaiting
+CK review). The route and presentation frame are complete; ASI-002 behavior,
+ASI-003 automated boundary tests, and ASI-004 visual/accessibility review
+remain separately scoped. See the
+[GO checkpoint record](../../../../feedback/ASI-001-go-checkpoint.md) for the
+frozen Review Contract Closure and rendered-state evidence.
