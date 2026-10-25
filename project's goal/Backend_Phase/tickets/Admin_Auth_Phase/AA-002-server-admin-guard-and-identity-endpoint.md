@@ -1,6 +1,6 @@
 # AA-002: Server-side Admin guard and protected identity endpoint
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `AA-BATCH-02`
 - **Depends on:** AA-001 `PASS`
 - **Baseline:** [Admin Auth Foundation](../../atlas-admin-auth-foundation.md) §§4.3–4.4, 7–8, 12
@@ -93,4 +93,4 @@ Status: applicable
 ## Review checkpoint
 
 - **Review question:** Does the API boundary enforce Better Auth session validity, completed bootstrap state, and persisted Super Admin authority with the required `401`/`403` behavior?
-- **Implementation commit:** not yet implemented.
+- **Implementation commit:** recorded in the AA-BATCH-02 GO checkpoint; awaiting CK review.

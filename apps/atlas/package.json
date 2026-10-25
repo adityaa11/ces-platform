@@ -24,6 +24,7 @@
     "@atlas/db": "workspace:*",
     "@atlas/document-store": "workspace:*",
     "@atlas/fixtures": "workspace:*",
+    "drizzle-orm": "0.45.2",
     "postgres": "3.4.7",
     "pdfjs-dist": "^6.3.289",
     "react": "19.2.6",

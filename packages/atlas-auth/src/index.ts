@@ -24,6 +24,10 @@ export function createAtlasAuth(config: AtlasAuthConfig) {
       // Public Better Auth sign-up stays on the plugin's ordinary `user` role.
       plugins: [admin({ defaultRole: "user", adminRoles: ["admin"] })],
     }),
+    // Consumers may read persisted authorization state through the same
+    // application database connection, while Better Auth remains the sole
+    // authority for identities, credentials, and session validity.
+    db: database.db,
     close: database.close,
   };
 }

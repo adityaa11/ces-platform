@@ -82,6 +82,9 @@ importers:
       '@atlas/fixtures':
         specifier: workspace:*
         version: link:../../packages/atlas-fixtures
+      drizzle-orm:
+        specifier: 0.45.2
+        version: 0.45.2(kysely@0.29.5)(pg@8.23.0)(postgres@3.4.7)
       pdfjs-dist:
         specifier: ^6.3.289
         version: 6.3.289
