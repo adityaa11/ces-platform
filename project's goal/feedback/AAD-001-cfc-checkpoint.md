@@ -5,7 +5,7 @@
 - **Source CK review:** `project's goal/feedback/AAD-001-652af9b-review.md`
 - **Reviewed implementation:** `652af9ba6666469da2e863d4b6e748291ce1dedf`
 - **CFC authority:** explicit user `cfc AAD-001` invocation; first bounded remediation of the frozen `CHANGES_REQUIRED` review; no HMN authorization consumed
-- **Remediation commit:** `0f016a8c` (`test(atlas): add AAD-001 dashboard route evidence`)
+- **Remediation commit:** `33292e88` (`test(atlas): add AAD-001 dashboard route evidence`)
 - **Checkpoint state:** `awaiting_review`
 
 ## Bounded remediation
