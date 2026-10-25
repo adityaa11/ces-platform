@@ -26,13 +26,40 @@ resource cleanup.
 | Ticket | Outcome | Depends on |
 | --- | --- | --- |
 | [AAD-001](AAD-001-protected-dashboard-route.md) | Server-authorized protected dashboard route | AA-006 |
-| [AAD-002](AAD-002-admin-shell-and-welcome-ui.md) | Reusable Admin shell and responsive welcome composition | AAD-001 |
+| [AAD-002](AAD-002-admin-shell-and-welcome-ui.md) | Reusable desktop Admin shell and authorized welcome composition | AAD-001 |
 | [AAD-003](AAD-003-verified-sign-in-dashboard-handoff.md) | Redirect only after verified Admin identity | AAD-001 |
-| [AAD-004](AAD-004-dashboard-route-and-navigation-tests.md) | Focused route, authorization, redirect, and regression evidence | AAD-001, AAD-002, AAD-003 |
-| [AAD-005](AAD-005-dashboard-visual-accessibility-review.md) | Rendered visual, responsive, theme, and accessibility review | AAD-002, AAD-003, AAD-004 |
+| [AAD-004](AAD-004-compact-admin-navigation.md) | Focus-managed compact drawer for the accepted Admin shell | AAD-002 |
+| [AAD-005](AAD-005-dashboard-route-authorization-tests.md) | Focused route authorization and protected-render evidence | AAD-001, AAD-002 |
+| [AAD-006](AAD-006-verified-sign-in-navigation-tests.md) | Focused verified-sign-in redirect and public-auth regression evidence | AAD-003 |
+| [AAD-007](AAD-007-desktop-dashboard-visual-accessibility-review.md) | Desktop visual, theme, and accessibility review | AAD-002, AAD-005 |
+| [AAD-008](AAD-008-compact-navigation-visual-accessibility-review.md) | Compact-navigation visual and accessibility review | AAD-004, AAD-005 |
 
 AAD-002 and AAD-003 may proceed in parallel once AAD-001 provides the route
-contract. AAD-004 and AAD-005 close the phase only after their dependencies.
+contract. AAD-004 and AAD-005 may proceed after AAD-002; AAD-006 may proceed
+after AAD-003. AAD-007 and AAD-008 are separate final review lanes: neither
+may widen its remediation into the other's desktop or compact interaction
+contract.
+
+## Workflow sizing and preservation
+
+Each ticket has one implementation or evidence concern so its Review Contract
+can be frozen, reviewed, and—if necessary—remediated in one bounded
+`GO -> CK -> CFC -> CK` path. HMN remains the explicit human/planning escape
+hatch only after that bounded path stops; it is not a delivery stage to bundle
+into a ticket.
+
+| Original concern | Preserved by |
+| --- | --- |
+| AAD-002 desktop shell, authorized identity, shared themes, and welcome surface | AAD-002, then desktop evidence in AAD-007 |
+| AAD-002 responsive drawer, focus, backdrop, Escape, body lock, and reduced motion | AAD-004, then compact evidence in AAD-008 |
+| AAD-004 direct-route authorization, denied paths, protected-render absence, identity, and no data fetch | AAD-005 |
+| AAD-004 verified sign-in redirect, non-navigation failures, duplicate submission, and public-auth regression | AAD-006 |
+| AAD-005 desktop/theme/long-name review | AAD-007 |
+| AAD-005 compact drawer, keyboard, focus, motion, and narrow-width review | AAD-008 |
+
+No acceptance requirement was removed. The split only assigns each requirement
+to the smallest component, interaction, or evidence seam that can be reviewed
+and corrected without reopening unrelated work.
 
 ## Shared implementation contract
 
@@ -88,6 +115,7 @@ quiet; the `Dashboard` heading and one welcome composition dominate.
 ## Phase completion
 
 The phase is ready for independent review only when the protected route,
-reusable shell, real authorized identity, verified sign-in redirect, focused
-automated evidence, production build/lint results, and rendered frontend
-review have all been recorded. A successful build alone is insufficient.
+reusable desktop shell and compact drawer, real authorized identity, verified
+sign-in redirect, focused authorization and navigation evidence, production
+build/lint results, and both rendered frontend review lanes have all been
+recorded. A successful build alone is insufficient.

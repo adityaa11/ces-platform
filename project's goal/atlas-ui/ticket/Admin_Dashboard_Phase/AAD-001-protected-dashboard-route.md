@@ -55,6 +55,6 @@ content until persisted Super Admin authority succeeds.
 
 ## Validation handoff
 
-Add or identify the smallest server-route tests necessary for AAD-004 to
+Add or identify the smallest server-route tests necessary for AAD-005 to
 exercise the success, redirect, forbidden, and fail-closed paths. Record the
 actual source files changed and any framework-specific forbidden behavior.

@@ -1,4 +1,4 @@
-# AAD-002: Build the reusable Admin shell and welcome workspace
+# AAD-002: Build the desktop Admin shell and welcome workspace
 
 - **State:** proposed
 - **Depends on:** [AAD-001](AAD-001-protected-dashboard-route.md)
@@ -7,10 +7,11 @@
 
 ## Outcome
 
-Adapt the approved standalone composition into reusable React presentation
-components for a server-authorized Admin identity. Deliver the first minimal
-Admin workspace without importing standalone scripts, static identity, mock
-content, or a second theme authority.
+Adapt the approved desktop standalone composition into reusable React
+presentation components for a server-authorized Admin identity. Deliver the
+first minimal Admin workspace without importing standalone scripts, static
+identity, mock content, or a second theme authority. Compact navigation is a
+separate AAD-004 concern.
 
 ## Scope
 
@@ -29,28 +30,22 @@ content, or a second theme authority.
   ADMINISTRATION`, `Dashboard`, `Atlas Admin Console`, and one welcome
   surface containing `ADMINISTRATION WORKSPACE`, `Welcome, [Admin Name].`,
   and `Welcome to the Atlas administration console.`
-- Implement compact navigation as presentation-only client state. At the
-  approved compact breakpoint, use a menu button, overlay drawer, dismissible
-  backdrop, Escape close, and body-scroll lock. Closing must restore sensible
-  focus to the menu button; opening must keep keyboard navigation usable.
 - Add Admin-scoped CSS using existing semantic tokens and established type
-  roles. Preserve both themes through the shared provider. Include
-  focus-visible, hover, selected, disabled, open, and reduced-motion states.
+  roles. Preserve both themes through the shared provider. Include the desktop
+  focus-visible, hover, selected, and disabled states; AAD-004 owns the
+  compact open/drawer and reduced-motion interaction states.
 
 ## Responsive and accessibility contract
 
-- Desktop uses the persistent rail; compact layouts use a drawer plus one
-  main column. The transformation happens before controls or type are reduced
-  below readable/usable sizes.
+- Desktop uses the persistent rail, topbar, and bounded content region. The
+  exact compact transformation is deliberately deferred to AAD-004 rather
+  than being improvised here.
 - The content region must remain bounded rather than stretching sparse welcome
   content indefinitely. The welcome heading wraps with `overflow-wrap` or an
   equivalent policy for realistic long Admin names.
 - Use semantic `header`, `aside`, `nav`, `main`, links/buttons, accessible
   names, `aria-current="page"`, and appropriate disabled semantics. The
   coming-soon destinations must not masquerade as live navigation.
-- The drawer's visible state must have a non-color cue, keyboard dismissal,
-  visible focus, and a readable overlay in both themes. Honor
-  `prefers-reduced-motion`.
 
 ## Explicitly out of scope
 
@@ -59,26 +54,30 @@ content, or a second theme authority.
 - Independent `localStorage`/cookie theme code, prototype DOM scripts,
   hard-coded light/dark colors, new UI framework, global selector broadening,
   or public-shell edits.
-- Authentication/authorization changes and post-sign-in navigation changes.
+- Authentication/authorization changes, post-sign-in navigation changes,
+  compact drawer state, menu/backdrop controls, body-scroll locking, or
+  compact focus management.
 
 ## Acceptance criteria
 
 - The authenticated Admin name and initials appear consistently in the
   welcome heading, header avatar, and sidebar footer from the one
   server-authorized identity input.
-- Desktop and compact compositions match the prototype's hierarchy, shell
-  proportions, restrained welcome accent, surfaces, and information density;
+- The desktop composition matches the prototype's hierarchy, 64 px topbar,
+  224 px rail, restrained welcome accent, surfaces, and information density;
   prototype labels/disclaimer/sample identity are absent.
 - Changing theme calls the established `ThemeProvider`; both themes preserve
-  equivalent hierarchy, selection, focus, hover, disabled, and open-drawer
-  states.
-- At narrow widths there is no horizontal overflow, critical copy or control
-  clipping, or inaccessible navigation. Long names remain reachable and
-  understandable.
+  equivalent desktop hierarchy, selection, focus, hover, and disabled states,
+  and retain the provider's existing preference-persistence behavior.
+- Long names remain reachable and understandable in the welcome surface; the
+  shell is structured so AAD-004 can add a compact layout without duplicating
+  identity or navigation markup.
 - The shell is reusable without embedding a fake provider page or a second
   dashboard surface.
 
 ## Validation handoff
 
-Record component boundaries, token/type roles reused, desktop/compact layout
-rules, and an initial list of visual/a11y states for AAD-004 and AAD-005.
+Record component boundaries, reused token/type roles, desktop width bounds,
+and render assertions for the authorized identity, landmarks, live Dashboard
+link, non-live destinations, and absence of prototype copy. Hand the compact
+layout seam to AAD-004 and desktop review evidence to AAD-007.

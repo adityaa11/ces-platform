@@ -54,5 +54,5 @@ Dashboard remains independently protected by AAD-001.
 ## Validation handoff
 
 Update the old sign-in expectation that deliberately remained on
-`/admin/sign-in`. Supply AAD-004 with evidence for success redirect, failed
+`/admin/sign-in`. Supply AAD-006 with evidence for success redirect, failed
 verification non-navigation, and duplicate-submission behavior.
