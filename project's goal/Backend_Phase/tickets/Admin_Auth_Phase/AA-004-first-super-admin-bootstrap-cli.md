@@ -1,6 +1,6 @@
 # AA-004: First Super Admin bootstrap CLI
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `AA-BATCH-04`
 - **Depends on:** AA-003 `PASS`
 - **Baseline:** [Admin Auth Foundation](../../atlas-admin-auth-foundation.md) §§5.1–5.2, 5.4, 8, 11–13
