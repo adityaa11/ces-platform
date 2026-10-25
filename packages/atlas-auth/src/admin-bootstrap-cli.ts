@@ -74,17 +74,27 @@ function terminalPrompt(): AtlasCliPrompt {
           process.stdin.pause();
         };
         const onData = (chunk: string) => {
-          if (chunk === "\r" || chunk === "\n") {
-            restore();
-            process.stdout.write("\n");
-            resolve(value);
-          } else if (chunk === "\u0003") {
-            restore();
-            reject(new AtlasCliError("INPUT_CANCELLED"));
-          } else if (chunk === "\u007f" || chunk === "\b") {
-            value = value.slice(0, -1);
-          } else if (!/\u001b/.test(chunk)) {
-            value += chunk;
+          // TTY streams may coalesce a complete password and its line ending
+          // into one data event. Process the event character-by-character so
+          // line control characters never become password material.
+          if (chunk.includes("\u001b")) return;
+          for (const character of chunk) {
+            if (character === "\r" || character === "\n") {
+              restore();
+              process.stdout.write("\n");
+              resolve(value);
+              return;
+            }
+            if (character === "\u0003") {
+              restore();
+              reject(new AtlasCliError("INPUT_CANCELLED"));
+              return;
+            }
+            if (character === "\u007f" || character === "\b") {
+              value = Array.from(value).slice(0, -1).join("");
+              continue;
+            }
+            value += character;
           }
         };
         process.stdin.on("data", onData);

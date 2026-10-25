@@ -1,9 +1,28 @@
 import assert from "node:assert/strict";
+import { EventEmitter } from "node:events";
 import test from "node:test";
 import { AtlasBootstrapError, type AtlasBootstrapCoordinator } from "../src/bootstrap-coordinator.ts";
 import { runAtlasAdminCommand, type AtlasAdminCliDependencies } from "../src/admin-bootstrap-cli.ts";
 
 const testPassword = "test-only-cli-password";
+
+class FakeTty extends EventEmitter {
+  readonly isTTY = true;
+  readonly output: string[] = [];
+  setRawMode(_enabled: boolean) { return this; }
+  resume() { return this; }
+  pause() { return this; }
+  setEncoding(_encoding: BufferEncoding) { return this; }
+  write(value: string) { this.output.push(value); return true; }
+}
+
+async function waitForPasswordListener(tty: FakeTty): Promise<void> {
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    if (tty.listenerCount("data") === 1) return;
+    await new Promise<void>((resolve) => setImmediate(resolve));
+  }
+  assert.fail("terminal prompt did not begin listening for password input");
+}
 
 function harness(overrides: Partial<AtlasAdminCliDependencies> = {}) {
   const output: string[] = [];
@@ -43,6 +62,36 @@ test("AA-004 rejects unsafe or incomplete input before privileged delegation", a
     assert.equal(await runAtlasAdminCommand(args, subject.dependencies), 1);
     assert.deepEqual(subject.calls(), { provisionCalls: 0, reconcileCalls: 0 });
     assert.doesNotMatch(subject.output.join("\n"), /forbidden|mismatch/);
+  }
+});
+
+test("AA-004 native TTY prompt accepts password plus each line ending in one chunk without echoing it", async () => {
+  const stdinDescriptor = Object.getOwnPropertyDescriptor(process, "stdin")!;
+  const stdoutDescriptor = Object.getOwnPropertyDescriptor(process, "stdout")!;
+  try {
+    for (const lineEnding of ["\r", "\n", "\r\n"]) {
+      const input = new FakeTty();
+      const output = new FakeTty();
+      Object.defineProperty(process, "stdin", { configurable: true, value: input });
+      Object.defineProperty(process, "stdout", { configurable: true, value: output });
+      const subject = harness({ prompt: undefined });
+      const result = runAtlasAdminCommand(
+        ["admin", "bootstrap", "--email", "admin@example.test", "--name", "Atlas Administrator"],
+        subject.dependencies,
+      );
+      await waitForPasswordListener(input);
+      input.emit("data", `${testPassword}${lineEnding}`);
+      await waitForPasswordListener(input);
+      input.emit("data", `${testPassword}${lineEnding}`);
+
+      assert.equal(await result, 0, `native prompt should accept ${JSON.stringify(lineEnding)} in a combined data chunk`);
+      assert.deepEqual(subject.calls(), { provisionCalls: 1, reconcileCalls: 0 });
+      assert.match(subject.output.join("\n"), /Bootstrap state sealed/);
+      assert.doesNotMatch([...output.output, ...subject.output].join("\n"), new RegExp(testPassword));
+    }
+  } finally {
+    Object.defineProperty(process, "stdin", stdinDescriptor);
+    Object.defineProperty(process, "stdout", stdoutDescriptor);
   }
 });
 
