@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import { atlasAdminBootstrapState, authUser, createDatabase } from "@atlas/db";
+import { atlasAdminBootstrapState, authUser, createDatabase } from "@atlas/db/auth";
 
 type AtlasDatabase = ReturnType<typeof createDatabase>["db"];
 

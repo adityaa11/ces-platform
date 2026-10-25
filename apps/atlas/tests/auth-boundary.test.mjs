@@ -155,6 +155,70 @@ test("sign-in delegates credentials to Better Auth and navigates only after succ
   assert.equal(await networkFailure.submit(payload), null);
 });
 
+test("Admin sign-in verifies the guarded identity before success and cleans up forbidden sessions", async () => {
+  const [screen, submissionSource] = await Promise.all([
+    readFile(new URL("../components/AdminSignIn.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/admin-sign-in-submission.ts", import.meta.url), "utf8"),
+  ]);
+  const { createAdminSignInSubmission } = await jiti.import("../components/admin-sign-in-submission.ts");
+
+  assert.match(screen, /fetch\("\/api\/auth\/sign-out"/);
+  assert.match(screen, /disabled=\{submitState === "loading"\}/);
+  assert.match(screen, /role=\{submitState === "error" \? "alert" : "status"\}/);
+  assert.doesNotMatch(`${screen}\n${submissionSource}`, /localStorage|sessionStorage|document\.cookie|console\.(?:log|error|warn)/i);
+
+  const calls = [];
+  const signOutCalls = [];
+  const request = async (input, init) => {
+    calls.push([input, init]);
+    if (input === "/api/auth/sign-in/email") return new Response("{}", { status: 200 });
+    return new Response(JSON.stringify({ user: { id: "admin-1", email: "admin@example.test", name: "Atlas Administrator" }, role: "admin" }), { status: 200 });
+  };
+  const authorized = createAdminSignInSubmission(request, async () => {
+    signOutCalls.push(true);
+    return new Response("{}", { status: 200 });
+  });
+  const payload = { email: "admin@example.test", password: "in-memory-only" };
+  const first = authorized.submit(payload);
+  const duplicate = authorized.submit(payload);
+  assert.strictEqual(first, duplicate);
+  assert.deepEqual(await first, { kind: "authorized", identity: { user: { id: "admin-1", email: "admin@example.test", name: "Atlas Administrator" }, role: "admin" } });
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0][0], "/api/auth/sign-in/email");
+  assert.equal(calls[0][1].credentials, "same-origin");
+  assert.equal(calls[1][0], "/api/admin/identity");
+  assert.equal(calls[1][1].cache, "no-store");
+  assert.deepEqual(signOutCalls, []);
+
+  const forbidden = createAdminSignInSubmission(async (input) => input === "/api/auth/sign-in/email"
+    ? new Response("{}", { status: 200 })
+    : new Response("{}", { status: 403 }), async () => {
+    signOutCalls.push(true);
+    throw new Error("cleanup unavailable");
+  });
+  assert.deepEqual(await forbidden.submit(payload), { kind: "error", message: "This account is not authorized for Atlas administration." });
+  assert.deepEqual(signOutCalls, [true]);
+
+  const unauthorized = createAdminSignInSubmission(async (input) => input === "/api/auth/sign-in/email"
+    ? new Response("{}", { status: 200 })
+    : new Response("{}", { status: 401 }), async () => {
+    signOutCalls.push(true);
+    return new Response("{}", { status: 200 });
+  });
+  assert.deepEqual(await unauthorized.submit(payload), { kind: "error", message: "Your Admin session could not be verified. Please sign in again." });
+  assert.deepEqual(signOutCalls, [true]);
+
+  const ordinary = createAdminSignInSubmission(async (input) => input === "/api/auth/sign-in/email"
+    ? new Response("{}", { status: 200 })
+    : new Response(JSON.stringify({ user: { id: "ordinary-1", email: "user@example.test", name: "Ordinary User" }, role: "user" }), { status: 200 }), async () => {
+    signOutCalls.push(true);
+    return new Response("{}", { status: 200 });
+  });
+  const ordinaryResult = await ordinary.submit(payload);
+  assert.equal(ordinaryResult.kind, "error");
+  assert.equal(signOutCalls.length, 1, "a malformed/non-admin identity never reaches Admin success or cleanup assumptions");
+});
+
 test("sign-out submission uses the approved endpoint, navigates after success, and stays retryable on failure", async () => {
   const [submissionSource] = await Promise.all([
     readFile(new URL("../components/sign-out-submission.ts", import.meta.url), "utf8"),

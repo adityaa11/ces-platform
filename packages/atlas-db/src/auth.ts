@@ -5,4 +5,4 @@
  * authentication code does not initialize unrelated application subsystems.
  */
 export { createDatabase } from "./client.js";
-export { authAccount, authSession, authUser, authVerification } from "./schema.js";
+export { atlasAdminBootstrapState, authAccount, authSession, authUser, authVerification } from "./schema.js";

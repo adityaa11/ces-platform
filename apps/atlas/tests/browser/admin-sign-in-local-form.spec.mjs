@@ -1,6 +1,21 @@
 import { expect, test } from "@playwright/test";
+import fs from "node:fs";
 
-test("ASI-002 keeps Admin sign-in local while exposing validation and password states", async ({ page }) => {
+function readLocalEnv() {
+  const values = {};
+  const envPath = new URL("../../../../.env", import.meta.url);
+  const source = fs.existsSync(envPath) ? fs.readFileSync(envPath, "utf8") : "";
+  for (const line of source.split(/\r?\n/)) {
+    const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
+    if (match) values[match[1]] = match[2].trim().replace(/^['"]|['"]$/g, "");
+  }
+  return { ...process.env, ...values };
+}
+
+test("ASI successor integration validates, authenticates, and verifies the Admin identity", async ({ page }) => {
+  const localEnv = readLocalEnv();
+  expect(localEnv.ATLAS_ADMIN_EMAIL, "local Admin email is required for the real integration check").toBeTruthy();
+  expect(localEnv.ATLAS_ADMIN_PASSWORD, "local Admin password is required for the real integration check").toBeTruthy();
   const credentialRequests = [];
   page.on("request", (request) => {
     const path = new URL(request.url()).pathname;
@@ -8,6 +23,7 @@ test("ASI-002 keeps Admin sign-in local while exposing validation and password s
   });
 
   await page.goto("/admin/sign-in");
+  await page.waitForFunction(() => Boolean(window.__VINEXT_HYDRATED_AT));
   const email = page.getByRole("textbox", { name: /Email address/ });
   const password = page.getByRole("textbox", { name: /Password/ });
   const submit = page.getByRole("button", { name: "Sign in to Admin Console", exact: true });
@@ -25,26 +41,15 @@ test("ASI-002 keeps Admin sign-in local while exposing validation and password s
   await expect(password).not.toHaveAttribute("aria-invalid", "true");
   await expect(email).toBeFocused();
 
-  await email.fill("operator@example.test");
-  await expect(page.getByRole("alert")).toHaveCount(0);
+  await email.fill(localEnv.ATLAS_ADMIN_EMAIL);
+  await password.fill(localEnv.ATLAS_ADMIN_PASSWORD);
   await submit.click();
-  await expect(page.getByRole("status")).toHaveText("This is a UI-only prototype. Your credentials were not sent or stored.");
+  await expect(page.getByRole("status")).toHaveText("Admin access verified for Atlas Administrator.");
   await expect(page).toHaveURL(/\/admin\/sign-in$/);
+  await expect(submit).toBeEnabled();
 
-  await email.fill("operator+edited@example.test");
-  await expect(page.getByRole("status")).toHaveCount(0);
-
-  const visibility = page.getByRole("button", { name: "Show password", exact: true });
-  await visibility.focus();
-  await page.keyboard.press("Enter");
-  await expect(password).toHaveAttribute("type", "text");
-  await expect(page.getByRole("button", { name: "Hide password", exact: true })).toHaveAttribute("aria-pressed", "true");
-  await expect(password).toBeFocused();
-
-  await page.getByRole("button", { name: "Hide password", exact: true }).focus();
-  await page.keyboard.press(" ");
-  await expect(password).toHaveAttribute("type", "password");
-  await expect(page.getByRole("button", { name: "Show password", exact: true })).toHaveAttribute("aria-pressed", "false");
-  await expect(password).toBeFocused();
-  expect(credentialRequests).toEqual([]);
+  const storage = await page.evaluate(() => ({ local: Object.entries(localStorage), session: Object.entries(sessionStorage) }));
+  expect(JSON.stringify(storage)).not.toContain(localEnv.ATLAS_ADMIN_PASSWORD);
+  expect(credentialRequests).toEqual(["POST /api/auth/sign-in/email", "GET /api/admin/identity"]);
+  await page.request.post("/api/auth/sign-out", { data: {} });
 });

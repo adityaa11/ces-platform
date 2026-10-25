@@ -2,6 +2,8 @@
 
 import { useRef, useState, type FormEvent } from "react";
 import { useTheme } from "./ThemeProvider";
+import { createAdminSignInSubmission, type AdminSignInSubmission } from "./admin-sign-in-submission";
+import { validateSignInPayload } from "./sign-in-submission";
 
 const styles = {
   page: "admin-sign-in-page", header: "admin-sign-in-header", headerBrand: "admin-sign-in-header-brand", headerRight: "admin-sign-in-header-right", themeToggle: "admin-sign-in-theme-toggle", themeButton: "admin-sign-in-theme-button", mark: "admin-sign-in-mark", brandName: "admin-sign-in-brand-name", brandDivider: "admin-sign-in-brand-divider", brandContext: "admin-sign-in-brand-context", privateAccess: "admin-sign-in-private-access", main: "admin-sign-in-main", mainInner: "admin-sign-in-main-inner", supra: "admin-sign-in-supra", card: "admin-sign-in-card", overline: "admin-sign-in-overline", description: "admin-sign-in-description", form: "admin-sign-in-form", field: "admin-sign-in-field", fieldWrap: "admin-sign-in-field-wrap", fieldIcon: "admin-sign-in-field-icon", iconButton: "admin-sign-in-icon-button", signIn: "admin-sign-in-submit", formResult: "admin-sign-in-result", accessNotice: "admin-sign-in-access-notice", underCard: "admin-sign-in-under-card", footer: "admin-sign-in-footer",
@@ -43,27 +45,48 @@ export function AdminSignIn() {
   const { theme, setTheme } = useTheme();
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
+  const submissionRef = useRef<AdminSignInSubmission | null>(null);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [showResult, setShowResult] = useState(false);
+  const [submitState, setSubmitState] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [resultMessage, setResultMessage] = useState<string | null>(null);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitState === "loading") return;
 
     const email = emailRef.current?.value.trim() ?? "";
     const password = passwordRef.current?.value ?? "";
-    const nextErrors: { email?: string; password?: string } = {};
-
+    const validation = validateSignInPayload({ email, password });
+    const nextErrors: { email?: string; password?: string } = { ...validation.fieldErrors };
     if (!email) nextErrors.email = "Enter your email address.";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) nextErrors.email = "Enter a valid email address.";
-    if (!password) nextErrors.password = "Enter your password.";
 
     setErrors(nextErrors);
-    setShowResult(false);
+    setResultMessage(null);
+    setSubmitState("idle");
 
     if (nextErrors.email) emailRef.current?.focus();
     else if (nextErrors.password) passwordRef.current?.focus();
-    else setShowResult(true);
+    else {
+      setSubmitState("loading");
+      submissionRef.current ??= createAdminSignInSubmission(
+        (input, init) => fetch(input, init),
+        () => fetch("/api/auth/sign-out", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({}),
+        }),
+      );
+      const result = await submissionRef.current.submit({ email, password });
+      if (result.kind === "authorized") {
+        setSubmitState("success");
+        setResultMessage(`Admin access verified for ${result.identity.user.name}.`);
+      } else {
+        setSubmitState("error");
+        setResultMessage(result.message);
+      }
+    }
   }
 
   function handleFieldEdit(field: "email" | "password") {
@@ -73,7 +96,8 @@ export function AdminSignIn() {
       delete nextErrors[field];
       return nextErrors;
     });
-    setShowResult(false);
+    setResultMessage(null);
+    setSubmitState("idle");
   }
 
   function togglePasswordVisibility() {
@@ -125,8 +149,8 @@ export function AdminSignIn() {
                 </div>
                 {errors.password ? <p className="admin-sign-in-field-error" id="admin-password-error" role="alert">{errors.password}</p> : null}
               </div>
-              <button className={styles.signIn} type="submit">Sign in to Admin Console <ArrowIcon /></button>
-              <div aria-live="polite" className={styles.formResult} hidden={!showResult} role="status">This is a UI-only prototype. Your credentials were not sent or stored.</div>
+              <button aria-busy={submitState === "loading"} aria-describedby={submitState === "error" ? "admin-sign-in-result" : undefined} className={styles.signIn} disabled={submitState === "loading"} type="submit">{submitState === "loading" ? "Signing in…" : "Sign in to Admin Console"} <ArrowIcon /></button>
+              {resultMessage ? <div aria-live={submitState === "error" ? "assertive" : "polite"} className={`${styles.formResult}${submitState === "error" ? " admin-sign-in-result-error" : ""}`} id="admin-sign-in-result" role={submitState === "error" ? "alert" : "status"}>{resultMessage}</div> : null}
             </form>
 
             <aside className={styles.accessNotice}><ShieldIcon /><p><strong>Restricted platform access.</strong> Administrator accounts are provisioned through the authorized Atlas CLI—not public registration.</p></aside>
