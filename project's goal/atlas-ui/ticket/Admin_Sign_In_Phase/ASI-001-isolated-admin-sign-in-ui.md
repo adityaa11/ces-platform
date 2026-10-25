@@ -1,6 +1,6 @@
 # ASI-001: Establish the isolated Atlas Admin Sign-In route and visual frame
 
-- **State:** awaiting_review
+- **State:** approved
 - **Depends on:** [Admin Sign-In Phase contract](README.md)
 - **Application:** `apps/atlas`
 - **Primary source:** [implementation brief](../../atlas-admin-sign-in-ui.md), [standalone prototype](../../atlas-admin-login-standalone.html), [light preview](../../atlas-admin-login-light-preview.png), [mobile preview](../../atlas-admin-login-mobile-preview.png)
