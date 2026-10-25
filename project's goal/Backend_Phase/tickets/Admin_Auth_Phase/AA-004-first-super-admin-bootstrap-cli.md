@@ -88,4 +88,4 @@ Status: applicable
 ## Review checkpoint
 
 - **Review question:** Can an infrastructure operator invoke exactly one approved bootstrap coordinator through a password-safe native CLI with no web-facing provisioning path?
-- **Implementation commit:** pending bounded AA-BATCH-04 implementation commit.
+- **Implementation commit:** `6492643c`
