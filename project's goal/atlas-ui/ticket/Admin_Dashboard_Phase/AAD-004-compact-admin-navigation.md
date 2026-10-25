@@ -1,6 +1,6 @@
 # AAD-004: Add compact Admin navigation
 
-- **State:** awaiting_review
+- **State:** approved
 - **Depends on:** [AAD-002](AAD-002-admin-shell-and-welcome-ui.md)
 - **Application:** `apps/atlas`
 - **Primary source:** [dashboard brief, sections 4–5 and 8](../../Atlas-admin-dashboard.md); [standalone prototype](../../Atlas_Admin_Dashboard_Standalone.html)
