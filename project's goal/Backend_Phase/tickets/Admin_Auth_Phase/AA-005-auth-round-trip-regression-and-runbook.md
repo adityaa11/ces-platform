@@ -1,6 +1,6 @@
 # AA-005: Auth round-trip regression evidence and operator runbook
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `AA-BATCH-05`
 - **Depends on:** AA-002, AA-003, AA-004 `PASS`
 - **Baseline:** [Admin Auth Foundation](../../atlas-admin-auth-foundation.md) §§8, 10–13 and Definition of Done
@@ -88,4 +88,4 @@ Status: applicable
 ## Review checkpoint
 
 - **Review question:** Does real CLI bootstrap → Better Auth sign-in → issued cookie → protected Admin access, plus durability, regression evidence, and the runbook, prove the completed foundation without changing its authorities?
-- **Implementation commit:** not yet implemented.
+- **Implementation commit:** pending GO checkpoint commit.
