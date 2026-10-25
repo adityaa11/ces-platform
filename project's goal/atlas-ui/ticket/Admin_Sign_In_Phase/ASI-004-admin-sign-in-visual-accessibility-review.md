@@ -1,6 +1,6 @@
 # ASI-004: Review Admin Sign-In fidelity, responsive fit, and accessibility
 
-- **State:** awaiting_review
+- **State:** approved
 - **Depends on:** [ASI-001](ASI-001-isolated-admin-sign-in-ui.md), [ASI-002](ASI-002-admin-sign-in-local-form-behavior.md), [ASI-003](ASI-003-admin-sign-in-ui-boundary-tests.md)
 - **Application:** `apps/atlas`
 - **Primary source:** [light desktop preview](../../atlas-admin-login-light-preview.png), [dark mobile preview](../../atlas-admin-login-mobile-preview.png), [standalone prototype](../../atlas-admin-login-standalone.html)
