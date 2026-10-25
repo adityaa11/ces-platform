@@ -1,6 +1,6 @@
 # ASI-003: Prove the Admin Sign-In UI stays local and isolated
 
-- **State:** awaiting_review
+- **State:** approved
 - **Depends on:** [ASI-001](ASI-001-isolated-admin-sign-in-ui.md), [ASI-002](ASI-002-admin-sign-in-local-form-behavior.md)
 - **Application:** `apps/atlas`
 - **Primary source:** [implementation brief, sections 3 and 6–9](../../atlas-admin-sign-in-ui.md); [standalone interaction reference](../../atlas-admin-login-standalone.html)
