@@ -5,6 +5,14 @@ import { authAccount, authSession, authUser, authVerification, createDatabase } 
 import { loadAtlasAuthConfig, type AtlasAuthConfig, type AtlasAuthEnvironment } from "./config.js";
 
 export { loadAtlasAuthConfig, type AtlasAuthConfig, type AtlasAuthEnvironment } from "./config.js";
+export {
+  AtlasBootstrapError,
+  createAtlasBootstrapCoordinator,
+  type AtlasBootstrapCoordinator,
+  type AtlasBootstrapCoordinatorOptions,
+  type AtlasBootstrapPhase,
+  type AtlasBootstrapResult,
+} from "./bootstrap-coordinator.js";
 
 /** Creates the identity-only Better Auth boundary; it owns no Atlas authorization data. */
 export function createAtlasAuth(config: AtlasAuthConfig) {
@@ -28,6 +36,7 @@ export function createAtlasAuth(config: AtlasAuthConfig) {
     // application database connection, while Better Auth remains the sole
     // authority for identities, credentials, and session validity.
     db: database.db,
+    sql: database.sql,
     close: database.close,
   };
 }

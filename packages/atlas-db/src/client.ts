@@ -4,7 +4,11 @@ import type { RepositoryTransaction, TransactionRunner } from "@atlas/core";
 
 export function createDatabase(url: string) {
   const client = postgres(url, { max: 1 });
-  return { db: drizzle(client), close: () => client.end() };
+  // Auth-adjacent infrastructure operations occasionally need one explicit
+  // PostgreSQL transaction spanning a durable Atlas coordination transition.
+  // Keep the raw client private to the server-side package boundary; callers
+  // still use Better Auth for identities, credentials, and sessions.
+  return { db: drizzle(client), sql: client, close: () => client.end() };
 }
 
 /** Adapts a PostgreSQL transaction without exposing Drizzle to Atlas Core. */
