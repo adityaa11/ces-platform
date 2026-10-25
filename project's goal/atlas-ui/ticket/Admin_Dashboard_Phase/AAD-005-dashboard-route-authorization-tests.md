@@ -1,6 +1,6 @@
 # AAD-005: Prove Dashboard route authorization and protected rendering
 
-- **State:** awaiting_review
+- **State:** approved
 - **Depends on:** [AAD-001](AAD-001-protected-dashboard-route.md), [AAD-002](AAD-002-admin-shell-and-welcome-ui.md)
 - **Application:** `apps/atlas`
 - **Primary source:** [dashboard brief, sections 3 and 8](../../Atlas-admin-dashboard.md)
