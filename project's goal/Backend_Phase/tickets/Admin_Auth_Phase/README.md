@@ -34,7 +34,12 @@ real sign-in -> session -> protected Admin API evidence
 
 In scope are the persisted Better Auth Admin `admin` role used as Atlas Platform Super Admin, the PostgreSQL bootstrap state machine, a server-side bootstrap coordinator with explicit same-attempt recovery, a repository-native password-prompting CLI, a reusable server-side authorization guard, one protected identity endpoint, integration tests AUTH-01 through AUTH-15, and an operator runbook.
 
-Out of scope are Admin UI, dashboard or provider-profile UI, public administrator registration, invitations, multiple admin tiers, permission-management UI, mandatory MFA, password-recovery UI, a new auth service, unrelated BSS/GHR/IDSER/Semantic runtime changes, and changes to domain approval or activation authority.
+Out of scope are Admin UI beyond the bounded AA-006 `/admin/sign-in` integration bridge, Admin Home, dashboard or provider-profile UI, public administrator registration, invitations, multiple admin tiers, permission-management UI, mandatory MFA, password-recovery UI, a new auth service, unrelated BSS/GHR/IDSER/Semantic runtime changes, and changes to domain approval or activation authority.
+
+AA-006 is a cross-phase integration ticket. It consumes the accepted AA
+foundation and completed ASI Admin Sign-In presentation phase; it does not
+redefine either authority boundary or turn local development credential
+authorization into a product or production requirement.
 
 ## Delivery order
 
@@ -47,6 +52,7 @@ Each ticket is a separate review batch. A dependent ticket cannot begin until th
 | 3 | [AA-003](AA-003-bootstrap-coordinator-and-recovery.md) / `AA-BATCH-03` | `planned` | AA-001 `PASS` | Does the server-side coordinator enforce one durable reservation → provision → verify → seal/reconcile protocol without a parallel identity or credential authority? |
 | 4 | [AA-004](AA-004-first-super-admin-bootstrap-cli.md) / `AA-BATCH-04` | `approved` | AA-003 `PASS` | Can an infrastructure operator invoke the approved coordinator through one password-safe native CLI, with no HTTP server or public sign-up path? |
 | 5 | [AA-005](AA-005-auth-round-trip-regression-and-runbook.md) / `AA-BATCH-05` | `approved` | AA-002, AA-003, AA-004 `PASS` | Does the actual CLI → Better Auth sign-in → session cookie → protected Admin API round trip, restart/isolation regression evidence, and runbook prove the completed contract? |
+| 6 | [AA-006](AA-006-admin-sign-in-integration.md) / `AA-BATCH-06` | `awaiting_review` | AA-005, ASI-001–ASI-004 `PASS` | Does the existing Admin Sign-In UI compose Better Auth sign-in and the protected Admin identity contract without introducing a second authority or leaking credentials? |
 
 ## Workflow sizing decision
 
