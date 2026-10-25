@@ -35,7 +35,7 @@ const identity = {
   role: "admin",
 };
 
-function configure(outcome) {
+function configure(outcome, authorizedIdentity = identity) {
   const service = {
     auth: { api: { getSession: async () => ({ user: { id: "admin-user" } }) } },
     db: {},
@@ -46,7 +46,7 @@ function configure(outcome) {
   };
   const state = {
     outcome,
-    identity,
+    identity: authorizedIdentity,
     cookie: `better-auth.session_token=${outcome}`,
     headerReads: 0,
     service,
@@ -55,8 +55,8 @@ function configure(outcome) {
   return state;
 }
 
-async function request(outcome) {
-  const state = configure(outcome);
+async function request(outcome, authorizedIdentity) {
+  const state = configure(outcome, authorizedIdentity);
   try {
     const page = await AdminDashboardPage();
     return { kind: "render", html: renderToStaticMarkup(page), state };
@@ -68,12 +68,15 @@ async function request(outcome) {
   }
 }
 
-test("the dashboard page renders the authorized identity on direct GET and refresh", async () => {
+test("the dashboard page renders the persisted identity on direct GET and refresh", async () => {
   for (const navigation of ["direct GET", "refresh"]) {
-    const result = await request("valid");
+    const result = await request("valid", { ...identity, name: "Persisted Atlas Admin" });
     assert.equal(result.kind, "render", navigation);
     assert.match(result.html, /Atlas Admin Console/);
-    assert.match(result.html, /Welcome, Atlas Admin\./);
+    assert.match(result.html, /Welcome, Persisted Atlas Admin\./, `${navigation} renders the persisted welcome name`);
+    assert.match(result.html, /aria-label="Persisted Atlas Admin avatar"/, `${navigation} renders the persisted header avatar label`);
+    assert.match(result.html, /<strong>Persisted Atlas Admin<\/strong>/, `${navigation} renders the persisted sidebar identity`);
+    assert.doesNotMatch(result.html, /Welcome, Atlas Admin\./, `${navigation} does not substitute the fixture or prototype welcome identity`);
     assert.equal(result.state.headerReads, 1, `${navigation} reads request headers once`);
     assert.equal(result.state.service.closeCount, 1, `${navigation} closes the Worker auth service`);
   }

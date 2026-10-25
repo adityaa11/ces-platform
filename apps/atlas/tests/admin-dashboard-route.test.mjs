@@ -19,3 +19,21 @@ test("the Admin Dashboard page applies the persisted server-side Admin guard bef
   assert.match(page, /if \(isWorkerAuthRuntime\(\)\) await service\.close\(\)/);
   assert.doesNotMatch(page, /localStorage|sessionStorage|fetch\(|\/api\/admin\/identity|mock|fixture/i);
 });
+
+test("public routes do not expose an Admin entry point and the dashboard page has no data-client dependency", async () => {
+  const root = new URL("../", import.meta.url);
+  const read = (path) => readFile(new URL(path, root), "utf8");
+  const [dashboard, publicHeader, landing, home, signIn, signUp] = await Promise.all([
+    read("app/admin/dashboard/page.tsx"),
+    read("components/PublicHeader.tsx"),
+    read("app/page.tsx"),
+    read("app/home/page.tsx"),
+    read("app/sign-in/page.tsx"),
+    read("app/sign-up/page.tsx"),
+  ]);
+
+  assert.doesNotMatch(dashboard, /fetch\(|BSS|project-management|project.*api/i);
+  for (const [surface, source] of Object.entries({ publicHeader, landing, home, signIn, signUp })) {
+    assert.doesNotMatch(source, /\/admin\/(?:dashboard|sign-in)|Admin Console/i, `${surface} does not publish an Admin route`);
+  }
+});
