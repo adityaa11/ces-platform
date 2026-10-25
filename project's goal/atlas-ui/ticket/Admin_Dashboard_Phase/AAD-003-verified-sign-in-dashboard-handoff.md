@@ -1,6 +1,6 @@
 # AAD-003: Navigate to Dashboard only after verified Admin authorization
 
-- **State:** proposed
+- **State:** awaiting_review
 - **Depends on:** [AAD-001](AAD-001-protected-dashboard-route.md)
 - **Application:** `apps/atlas`
 - **Primary source:** [dashboard brief, section 6](../../Atlas-admin-dashboard.md)

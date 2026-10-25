@@ -163,6 +163,10 @@ test("Admin sign-in verifies the guarded identity before success and cleans up f
   const { createAdminSignInSubmission } = await jiti.import("../components/admin-sign-in-submission.ts");
 
   assert.match(screen, /fetch\("\/api\/auth\/sign-out"/);
+  assert.match(screen, /import \{ useRouter \} from "next\/navigation"/);
+  assert.match(screen, /const router = useRouter\(\);/);
+  assert.match(screen, /if \(result\.kind === "authorized"\) \{\s*router\.replace\("\/admin\/dashboard"\);\s*\} else \{/s);
+  assert.doesNotMatch(screen, /setSubmitState\("success"\)|Admin access verified/);
   assert.match(screen, /disabled=\{submitState === "loading"\}/);
   assert.match(screen, /role=\{submitState === "error" \? "alert" : "status"\}/);
   assert.doesNotMatch(`${screen}\n${submissionSource}`, /localStorage|sessionStorage|document\.cookie|console\.(?:log|error|warn)/i);

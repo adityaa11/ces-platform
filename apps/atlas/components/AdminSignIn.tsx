@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { useTheme } from "./ThemeProvider";
 import { createAdminSignInSubmission, type AdminSignInSubmission } from "./admin-sign-in-submission";
 import { validateSignInPayload } from "./sign-in-submission";
@@ -42,6 +43,7 @@ function ShieldIcon() {
 }
 
 export function AdminSignIn() {
+  const router = useRouter();
   const { theme, setTheme } = useTheme();
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
@@ -80,8 +82,7 @@ export function AdminSignIn() {
       );
       const result = await submissionRef.current.submit({ email, password });
       if (result.kind === "authorized") {
-        setSubmitState("success");
-        setResultMessage(`Admin access verified for ${result.identity.user.name}.`);
+        router.replace("/admin/dashboard");
       } else {
         setSubmitState("error");
         setResultMessage(result.message);
