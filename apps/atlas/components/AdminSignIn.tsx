@@ -1,6 +1,6 @@
 "use client";
 
-import type { FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { useTheme } from "./ThemeProvider";
 
 const styles = {
@@ -27,6 +27,10 @@ function EyeIcon() {
   return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /></svg>;
 }
 
+function EyeOffIcon() {
+  return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 3l18 18" /><path d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6.5 0 10 6 10 6a18.2 18.2 0 0 1-3.1 3.7M6.2 6.2C3.5 8 2 12 2 12s3.5 6 10 6c1.3 0 2.5-.2 3.6-.7" /><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" /></svg>;
+}
+
 function ArrowIcon() {
   return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 12h15m-6-6 6 6-6 6" /></svg>;
 }
@@ -37,10 +41,44 @@ function ShieldIcon() {
 
 export function AdminSignIn() {
   const { theme, setTheme } = useTheme();
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [showResult, setShowResult] = useState(false);
 
-  function preventSubmission(event: FormEvent<HTMLFormElement>) {
-    // ASI-002 owns all submit feedback and validation behavior.
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    const email = emailRef.current?.value.trim() ?? "";
+    const password = passwordRef.current?.value ?? "";
+    const nextErrors: { email?: string; password?: string } = {};
+
+    if (!email) nextErrors.email = "Enter your email address.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) nextErrors.email = "Enter a valid email address.";
+    if (!password) nextErrors.password = "Enter your password.";
+
+    setErrors(nextErrors);
+    setShowResult(false);
+
+    if (nextErrors.email) emailRef.current?.focus();
+    else if (nextErrors.password) passwordRef.current?.focus();
+    else setShowResult(true);
+  }
+
+  function handleFieldEdit(field: "email" | "password") {
+    setErrors((current) => {
+      if (!current[field]) return current;
+      const nextErrors = { ...current };
+      delete nextErrors[field];
+      return nextErrors;
+    });
+    setShowResult(false);
+  }
+
+  function togglePasswordVisibility() {
+    setPasswordVisible((visible) => !visible);
+    passwordRef.current?.focus();
   }
 
   return (
@@ -69,24 +107,26 @@ export function AdminSignIn() {
             <h1 id="admin-sign-in-title">Welcome back.</h1>
             <p className={styles.description}>Sign in with your administrator account to access the Atlas platform console.</p>
 
-            <form className={styles.form} noValidate onSubmit={preventSubmission}>
+            <form className={styles.form} noValidate onSubmit={handleSubmit}>
               <div className={styles.field}>
                 <label htmlFor="admin-email">Email address <span aria-hidden="true">*</span></label>
                 <div className={styles.fieldWrap}>
                   <span className={styles.fieldIcon}><MailIcon /></span>
-                  <input autoComplete="username" id="admin-email" inputMode="email" name="email" placeholder="admin@company.com" required spellCheck={false} type="email" />
+                  <input aria-describedby={errors.email ? "admin-email-error" : undefined} aria-invalid={errors.email ? true : undefined} autoComplete="username" id="admin-email" inputMode="email" name="email" onChange={() => handleFieldEdit("email")} placeholder="admin@company.com" ref={emailRef} required spellCheck={false} type="email" />
                 </div>
+                {errors.email ? <p className="admin-sign-in-field-error" id="admin-email-error" role="alert">{errors.email}</p> : null}
               </div>
               <div className={styles.field}>
                 <label htmlFor="admin-password">Password <span aria-hidden="true">*</span></label>
                 <div className={styles.fieldWrap}>
                   <span className={styles.fieldIcon}><LockIcon /></span>
-                  <input autoComplete="current-password" id="admin-password" name="password" placeholder="Enter your password" required type="password" />
-                  <button aria-label="Show password" aria-pressed="false" className={styles.iconButton} type="button"><EyeIcon /></button>
+                  <input aria-describedby={errors.password ? "admin-password-error" : undefined} aria-invalid={errors.password ? true : undefined} autoComplete="current-password" id="admin-password" name="password" onChange={() => handleFieldEdit("password")} placeholder="Enter your password" ref={passwordRef} required type={passwordVisible ? "text" : "password"} />
+                  <button aria-label={passwordVisible ? "Hide password" : "Show password"} aria-pressed={passwordVisible} className={styles.iconButton} onClick={togglePasswordVisibility} type="button">{passwordVisible ? <EyeOffIcon /> : <EyeIcon />}</button>
                 </div>
+                {errors.password ? <p className="admin-sign-in-field-error" id="admin-password-error" role="alert">{errors.password}</p> : null}
               </div>
               <button className={styles.signIn} type="submit">Sign in to Admin Console <ArrowIcon /></button>
-              <div aria-live="polite" className={styles.formResult} hidden role="status" />
+              <div aria-live="polite" className={styles.formResult} hidden={!showResult} role="status">This is a UI-only prototype. Your credentials were not sent or stored.</div>
             </form>
 
             <aside className={styles.accessNotice}><ShieldIcon /><p><strong>Restricted platform access.</strong> Administrator accounts are provisioned through the authorized Atlas CLI—not public registration.</p></aside>

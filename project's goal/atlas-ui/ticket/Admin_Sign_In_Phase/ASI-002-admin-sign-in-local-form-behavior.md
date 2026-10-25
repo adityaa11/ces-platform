@@ -1,6 +1,6 @@
 # ASI-002: Complete local Admin Sign-In form behavior
 
-- **State:** proposed
+- **State:** awaiting_review
 - **Depends on:** [ASI-001](ASI-001-isolated-admin-sign-in-ui.md)
 - **Application:** `apps/atlas`
 - **Primary source:** [implementation brief, sections 5–6 and 9](../../atlas-admin-sign-in-ui.md); [standalone interaction reference](../../atlas-admin-login-standalone.html)
@@ -67,3 +67,9 @@ Record the local states exercised, focused test command/results, and any
 source-grounded deviation. Hand the completed local behavior to
 [ASI-003](ASI-003-admin-sign-in-ui-boundary-tests.md) and
 [ASI-004](ASI-004-admin-sign-in-visual-accessibility-review.md).
+
+## GO checkpoint
+
+Implementation commit: `HEAD` (ASI-002 implementation checkpoint; awaiting CK
+review). See the [GO checkpoint record](../../../../feedback/ASI-002-go-checkpoint.md)
+for the frozen Review Contract Closure and validation evidence.
