@@ -1,6 +1,6 @@
 # AAD-002: Build the desktop Admin shell and welcome workspace
 
-- **State:** awaiting_review
+- **State:** approved
 - **Depends on:** [AAD-001](AAD-001-protected-dashboard-route.md)
 - **Application:** `apps/atlas`
 - **Primary source:** [dashboard brief, sections 4–5](../../Atlas-admin-dashboard.md); [standalone prototype](../../Atlas_Admin_Dashboard_Standalone.html)
