@@ -219,6 +219,19 @@ test("Admin sign-in verifies the guarded identity before success and cleans up f
   assert.equal(signOutCalls.length, 1, "a malformed/non-admin identity never reaches Admin success or cleanup assumptions");
 });
 
+test("Admin sign-in denies a malformed 200 identity response", async () => {
+  const { createAdminSignInSubmission } = await jiti.import("../components/admin-sign-in-submission.ts");
+  const payload = { email: "admin@example.test", password: "in-memory-only" };
+  const malformedIdentity = createAdminSignInSubmission(async (input) => input === "/api/auth/sign-in/email"
+    ? new Response("{}", { status: 200 })
+    : new Response(JSON.stringify({ user: { id: "admin-1", email: "admin@example.test", name: "Atlas Administrator" } }), { status: 200 }), async () => new Response("{}", { status: 200 }));
+
+  assert.deepEqual(await malformedIdentity.submit(payload), {
+    kind: "error",
+    message: "Atlas couldn't verify your Admin session right now. Please try again.",
+  });
+});
+
 test("sign-out submission uses the approved endpoint, navigates after success, and stays retryable on failure", async () => {
   const [submissionSource] = await Promise.all([
     readFile(new URL("../components/sign-out-submission.ts", import.meta.url), "utf8"),
