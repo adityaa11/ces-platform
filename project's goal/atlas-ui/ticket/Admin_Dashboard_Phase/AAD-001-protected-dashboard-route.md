@@ -1,6 +1,6 @@
 # AAD-001: Establish the server-authorized Admin Dashboard route
 
-- **State:** awaiting_review
+- **State:** approved
 - **Depends on:** AA-006; [phase contract](README.md)
 - **Application:** `apps/atlas`
 - **Primary source:** [dashboard brief, sections 1–3 and 7](../../Atlas-admin-dashboard.md)
