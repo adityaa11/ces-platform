@@ -1,6 +1,6 @@
 # AA-002: Server-side Admin guard and protected identity endpoint
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `AA-BATCH-02`
 - **Depends on:** AA-001 `PASS`
 - **Baseline:** [Admin Auth Foundation](../../atlas-admin-auth-foundation.md) §§4.3–4.4, 7–8, 12
