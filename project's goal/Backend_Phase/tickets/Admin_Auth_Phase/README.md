@@ -46,7 +46,7 @@ Each ticket is a separate review batch. A dependent ticket cannot begin until th
 | 2 | [AA-002](AA-002-server-admin-guard-and-identity-endpoint.md) / `AA-BATCH-02` | `awaiting_review` | AA-001 `PASS` | Does one reusable server guard enforce session validity, completed bootstrap state, and persisted Super Admin authority at the API boundary? |
 | 3 | [AA-003](AA-003-bootstrap-coordinator-and-recovery.md) / `AA-BATCH-03` | `planned` | AA-001 `PASS` | Does the server-side coordinator enforce one durable reservation → provision → verify → seal/reconcile protocol without a parallel identity or credential authority? |
 | 4 | [AA-004](AA-004-first-super-admin-bootstrap-cli.md) / `AA-BATCH-04` | `approved` | AA-003 `PASS` | Can an infrastructure operator invoke the approved coordinator through one password-safe native CLI, with no HTTP server or public sign-up path? |
-| 5 | [AA-005](AA-005-auth-round-trip-regression-and-runbook.md) / `AA-BATCH-05` | `awaiting_review` | AA-002, AA-003, AA-004 `PASS` | Does the actual CLI → Better Auth sign-in → session cookie → protected Admin API round trip, restart/isolation regression evidence, and runbook prove the completed contract? |
+| 5 | [AA-005](AA-005-auth-round-trip-regression-and-runbook.md) / `AA-BATCH-05` | `approved` | AA-002, AA-003, AA-004 `PASS` | Does the actual CLI → Better Auth sign-in → session cookie → protected Admin API round trip, restart/isolation regression evidence, and runbook prove the completed contract? |
 
 ## Workflow sizing decision
 

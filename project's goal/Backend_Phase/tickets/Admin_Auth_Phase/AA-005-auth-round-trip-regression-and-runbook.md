@@ -1,6 +1,6 @@
 # AA-005: Auth round-trip regression evidence and operator runbook
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `AA-BATCH-05`
 - **Depends on:** AA-002, AA-003, AA-004 `PASS`
 - **Baseline:** [Admin Auth Foundation](../../atlas-admin-auth-foundation.md) §§8, 10–13 and Definition of Done
