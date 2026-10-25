@@ -1,6 +1,6 @@
 # AA-003: Bootstrap coordinator and controlled recovery
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `AA-BATCH-03`
 - **Depends on:** AA-001 `PASS`
 - **Baseline:** [Admin Auth Foundation](../../atlas-admin-auth-foundation.md) §§5.3, 6–7, 9–13
@@ -91,4 +91,4 @@ Status: applicable
 ## Review checkpoint
 
 - **Review question:** Does one private coordinator make the required non-atomic first-operator state transition and recovery safe without creating a parallel authentication authority?
-- **Implementation commit:** not yet implemented.
+- **Implementation commit:** `22cea9fb7097291c9fe29d3b3a68618b1556cd52`
