@@ -15,7 +15,7 @@ test("the Admin dashboard composes the authorized identity into reusable shell a
   assert.match(page, /<AdminShell name=\{identity\.name\}>/);
   assert.match(page, /<DashboardWelcome name=\{identity\.name\} \/>/);
   assert.match(shell, /<header className="admin-topbar">/);
-  assert.match(shell, /<aside aria-label="Admin Console navigation" className="admin-sidebar">/);
+  assert.match(shell, /aria-label="Admin Console navigation" className=\{`admin-sidebar\$\{drawerOpen \? " admin-sidebar-open" : ""\}`\}/);
   assert.match(shell, /<main className="admin-main">\{children\}<\/main>/);
   assert.match(shell, /aria-current="page"/);
   assert.match(shell, /href="\/admin\/dashboard"/);
@@ -33,7 +33,7 @@ test("Admin presentation uses the shared theme provider and scoped semantic-toke
     read("components/admin/AdminThemeControls.tsx"),
     read("app/globals.css"),
   ]);
-  const adminCss = css.slice(css.indexOf("/* AAD-002:"));
+  const adminCss = css.slice(css.indexOf("/* AAD-002 establishes"));
 
   assert.match(themeControls, /import \{ useTheme \} from "\.\.\/ThemeProvider"/);
   assert.match(themeControls, /setTheme\("light"\)/);
