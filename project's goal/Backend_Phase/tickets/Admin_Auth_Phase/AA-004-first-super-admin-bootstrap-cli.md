@@ -1,6 +1,6 @@
 # AA-004: First Super Admin bootstrap CLI
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `AA-BATCH-04`
 - **Depends on:** AA-003 `PASS`
 - **Baseline:** [Admin Auth Foundation](../../atlas-admin-auth-foundation.md) §§5.1–5.2, 5.4, 8, 11–13
@@ -88,4 +88,4 @@ Status: applicable
 ## Review checkpoint
 
 - **Review question:** Can an infrastructure operator invoke exactly one approved bootstrap coordinator through a password-safe native CLI with no web-facing provisioning path?
-- **Implementation commit:** not yet implemented.
+- **Implementation commit:** pending bounded AA-BATCH-04 implementation commit.
