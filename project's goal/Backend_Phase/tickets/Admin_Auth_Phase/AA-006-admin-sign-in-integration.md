@@ -1,6 +1,6 @@
 # AA-006: Admin Sign-In authentication integration
 
-- **State:** `awaiting_review`
+- **State:** `approved`
 - **Review batch:** `AA-BATCH-06`
 - **Depends on:** AA-001, AA-002, AA-003, AA-004, AA-005 `PASS`; ASI-001 through ASI-004 `PASS`
 - **Baseline:** [Admin Auth Foundation](../../atlas-admin-auth-foundation.md); [AA-005 auth round-trip regression and runbook](AA-005-auth-round-trip-regression-and-runbook.md); [Admin Sign-In Phase](../../../atlas-ui/ticket/Admin_Sign_In_Phase/README.md)
