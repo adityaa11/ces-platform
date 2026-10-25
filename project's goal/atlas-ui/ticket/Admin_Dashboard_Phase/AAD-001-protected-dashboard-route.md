@@ -1,6 +1,6 @@
 # AAD-001: Establish the server-authorized Admin Dashboard route
 
-- **State:** proposed
+- **State:** awaiting_review
 - **Depends on:** AA-006; [phase contract](README.md)
 - **Application:** `apps/atlas`
 - **Primary source:** [dashboard brief, sections 1–3 and 7](../../Atlas-admin-dashboard.md)
@@ -58,3 +58,30 @@ content until persisted Super Admin authority succeeds.
 Add or identify the smallest server-route tests necessary for AAD-005 to
 exercise the success, redirect, forbidden, and fail-closed paths. Record the
 actual source files changed and any framework-specific forbidden behavior.
+
+## GO validation record
+
+### Changed shared components and primitives
+
+| Component / primitive | Why changed | Routes and features using it | Intentional variants |
+|---|---|---|---|
+| None | AAD-001 adds only its own server page and does not change shared presentation primitives. | `/admin/dashboard` | AAD-002 owns the reusable Admin shell. |
+
+### Rendered-state inspection
+
+| Component / screen | Interaction states checked | Themes checked | Breakpoints checked | Text rhythm checked | Accessibility behavior checked | Result / evidence |
+|---|---|---|---|---|---|---|
+| AAD-001 protected placeholder | Not applicable: no client interaction or shell is introduced. | Not applicable. | Not applicable. | Not applicable. | Semantic `main`/`h1` placeholder only; AAD-002/AAD-007 own visual and interactive review. | `apps/atlas/tests/admin-dashboard-route.test.mjs` and the production route inventory confirm the route composition. |
+
+### Design-quality check
+
+- **Reference or approved pattern used:** The existing server-page and auth-service lifecycle pattern from `apps/atlas/app/home/page.tsx` and the accepted Admin guard.
+- **Visual direction:** Deliberately deferred to AAD-002; the placeholder prevents duplicating the future shell.
+- **Hierarchy, density, navigation, whitespace, and control-placement result:** Not applicable to this route-boundary ticket.
+- **Known limitations or intentional omissions:** No shared Admin shell, theme control, navigation, or sign-in redirect is implemented here.
+
+### Regression learning
+
+- **Any visual defect found after an earlier check:** None; no new visual component is in scope.
+- **Previously missed state:** None.
+- **New mandatory state for this component:** AAD-005 must exercise the route's success, redirect, forbidden, and fail-closed server outcomes with real route-level coverage.

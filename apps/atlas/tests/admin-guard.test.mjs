@@ -13,6 +13,13 @@ test("the reusable guard distinguishes invalid sessions from denied Atlas author
   });
   await assert.rejects(() => missing(headers), (error) => error instanceof AtlasAdminAccessError && error.status === 401);
 
+  const failedLookup = createAtlasAdminGuard(async () => {
+    throw new Error("session service unavailable");
+  }, async () => {
+    throw new Error("authorization must not run when session lookup fails");
+  });
+  await assert.rejects(() => failedLookup(headers), (error) => error instanceof AtlasAdminAccessError && error.status === 401);
+
   const ordinary = createAtlasAdminGuard(async ({ headers: received }) => {
     assert.strictEqual(received, headers);
     return { user: { id: "ordinary-user" } };
@@ -24,6 +31,11 @@ test("the reusable guard distinguishes invalid sessions from denied Atlas author
     return { id: userId, email: "admin@example.test", name: "Atlas Admin", role: "admin" };
   });
   assert.deepEqual(await admin(headers), { id: "admin-user", email: "admin@example.test", name: "Atlas Admin", role: "admin" });
+
+  const failedAuthorization = createAtlasAdminGuard(async () => ({ user: { id: "admin-user" } }), async () => {
+    throw new Error("database unavailable");
+  });
+  await assert.rejects(() => failedAuthorization(headers), /database unavailable/);
 });
 
 test("the identity endpoint returns only the minimal guarded identity contract", async () => {
