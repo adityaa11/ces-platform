@@ -12,7 +12,7 @@ function readLocalEnv() {
   return { ...process.env, ...values };
 }
 
-test("ASI successor integration validates, authenticates, and verifies the Admin identity", async ({ page }) => {
+test("AAD-006 validates, verifies, and replaces Admin sign-in with the protected Dashboard", async ({ page }) => {
   const localEnv = readLocalEnv();
   expect(localEnv.ATLAS_ADMIN_EMAIL, "local Admin email is required for the real integration check").toBeTruthy();
   expect(localEnv.ATLAS_ADMIN_PASSWORD, "local Admin password is required for the real integration check").toBeTruthy();
@@ -44,9 +44,10 @@ test("ASI successor integration validates, authenticates, and verifies the Admin
   await email.fill(localEnv.ATLAS_ADMIN_EMAIL);
   await password.fill(localEnv.ATLAS_ADMIN_PASSWORD);
   await submit.click();
-  await expect(page.getByRole("status")).toHaveText("Admin access verified for Atlas Administrator.");
-  await expect(page).toHaveURL(/\/admin\/sign-in$/);
-  await expect(submit).toBeEnabled();
+  await expect(page).toHaveURL(/\/admin\/dashboard$/);
+  await expect(page.getByRole("heading", { name: "Dashboard", exact: true })).toBeVisible();
+  await expect(page.getByText(/Welcome,\s*Atlas Administrator\./)).toBeVisible();
+  await expect(page.getByRole("status")).toHaveCount(0);
 
   const storage = await page.evaluate(() => ({ local: Object.entries(localStorage), session: Object.entries(sessionStorage) }));
   expect(JSON.stringify(storage)).not.toContain(localEnv.ATLAS_ADMIN_PASSWORD);

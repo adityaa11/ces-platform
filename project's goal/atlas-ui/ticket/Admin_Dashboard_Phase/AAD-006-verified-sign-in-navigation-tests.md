@@ -1,6 +1,6 @@
 # AAD-006: Prove verified Admin sign-in navigation
 
-- **State:** proposed
+- **State:** awaiting_review
 - **Depends on:** [AAD-003](AAD-003-verified-sign-in-dashboard-handoff.md)
 - **Application:** `apps/atlas`
 - **Primary source:** [dashboard brief, sections 6 and 8](../../Atlas-admin-dashboard.md)

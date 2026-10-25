@@ -236,6 +236,69 @@ test("Admin sign-in denies a malformed 200 identity response", async () => {
   });
 });
 
+test("AAD-006 keeps every unverified Admin sign-in outcome on the error path and coalesces duplicate verification", async () => {
+  const { createAdminSignInSubmission } = await jiti.import("../components/admin-sign-in-submission.ts");
+  const payload = { email: "admin@example.test", password: "in-memory-only" };
+  const expectedMessages = {
+    authentication: "Atlas couldn't sign you in right now. Check your email and password, then try again.",
+    verification: "Atlas couldn't verify your Admin session right now. Please try again.",
+    unauthenticated: "Your Admin session could not be verified. Please sign in again.",
+    forbidden: "This account is not authorized for Atlas administration.",
+  };
+
+  async function resultFor(request, signOut = async () => new Response("{}", { status: 200 })) {
+    return createAdminSignInSubmission(request, signOut).submit(payload);
+  }
+
+  const invalidCredentials = await resultFor(async () => new Response("{}", { status: 401 }));
+  assert.deepEqual(invalidCredentials, { kind: "error", message: expectedMessages.authentication });
+
+  const signInNetworkFailure = await resultFor(async () => { throw new Error("network unavailable"); });
+  assert.deepEqual(signInNetworkFailure, { kind: "error", message: expectedMessages.authentication });
+
+  const identityScenarios = [
+    ["identity 401", new Response("{}", { status: 401 }), expectedMessages.unauthenticated],
+    ["identity server error", new Response("{}", { status: 500 }), expectedMessages.verification],
+    ["identity malformed payload", new Response(JSON.stringify({ role: "admin" }), { status: 200 }), expectedMessages.verification],
+  ];
+  for (const [label, identityResponse, message] of identityScenarios) {
+    const result = await resultFor(async (input) => input === "/api/auth/sign-in/email"
+      ? new Response("{}", { status: 200 })
+      : identityResponse);
+    assert.deepEqual(result, { kind: "error", message }, label);
+  }
+
+  const identityNetworkFailure = await resultFor(async (input) => {
+    if (input === "/api/auth/sign-in/email") return new Response("{}", { status: 200 });
+    throw new Error("network unavailable");
+  });
+  assert.deepEqual(identityNetworkFailure, { kind: "error", message: expectedMessages.verification });
+
+  let cleanupCount = 0;
+  const forbidden = await resultFor(async (input) => input === "/api/auth/sign-in/email"
+    ? new Response("{}", { status: 200 })
+    : new Response("{}", { status: 403 }), async () => {
+    cleanupCount += 1;
+    return new Response("{}", { status: 200 });
+  });
+  assert.deepEqual(forbidden, { kind: "error", message: expectedMessages.forbidden });
+  assert.equal(cleanupCount, 1, "identity 403 retains best-effort sign-out cleanup");
+
+  let resolveIdentity;
+  let requestCount = 0;
+  const pendingIdentity = new Promise((resolve) => { resolveIdentity = resolve; });
+  const duplicateSubmission = createAdminSignInSubmission(async (input) => {
+    requestCount += 1;
+    return input === "/api/auth/sign-in/email" ? new Response("{}", { status: 200 }) : pendingIdentity;
+  }, async () => new Response("{}", { status: 200 }));
+  const firstAttempt = duplicateSubmission.submit(payload);
+  const secondAttempt = duplicateSubmission.submit(payload);
+  assert.strictEqual(firstAttempt, secondAttempt, "duplicate submit shares the verification attempt");
+  resolveIdentity(new Response(JSON.stringify({ user: { id: "admin-1", email: "admin@example.test", name: "Atlas Administrator" }, role: "admin" }), { status: 200 }));
+  assert.equal((await firstAttempt).kind, "authorized");
+  assert.equal(requestCount, 2, "the coalesced attempt makes one sign-in request and one identity request");
+});
+
 test("sign-out submission uses the approved endpoint, navigates after success, and stays retryable on failure", async () => {
   const [submissionSource] = await Promise.all([
     readFile(new URL("../components/sign-out-submission.ts", import.meta.url), "utf8"),
