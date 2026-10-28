@@ -281,5 +281,19 @@ REVOKE ALL ON FUNCTION bridge.publish_shared_domain_calculated_desired_admission
 GRANT EXECUTE ON FUNCTION bridge.publish_shared_domain_calculated_desired_admission_profile(text,bigint,text,text,timestamptz,jsonb,jsonb,jsonb,jsonb) TO agents_bridge;
 REVOKE ALL ON FUNCTION bridge.activate_desired_admission_profile(text,text) FROM PUBLIC, atlas_app;
 GRANT EXECUTE ON FUNCTION bridge.activate_desired_admission_profile(text,text) TO agents_bridge;
+-- Candidate publication is SECURITY DEFINER under the protected Atlas owner.
+-- Grant only the Bridge-owned predecessor reads and the two durable plan
+-- writes required by that single transaction; protected allocation, binding,
+-- candidate and route-authority tables remain owned by atlas.
+-- FOR KEY SHARE requires UPDATE privilege in PostgreSQL, even though this
+-- function does not issue UPDATE statements.  It is granted solely to the
+-- NOLOGIN definer role so its immutable predecessor reads retain their
+-- transaction fence.
+GRANT SELECT, UPDATE ON TABLE bridge.provider_capacity_profile, bridge.provider_process_profile,
+  bridge.workload_envelope_profile, bridge.active_desired_admission_profile,
+  bridge.desired_admission_profile, bridge.desired_admission_profile_input TO atlas;
+GRANT INSERT ON TABLE bridge.desired_admission_profile,
+  bridge.desired_admission_profile_input TO atlas;
+GRANT EXECUTE ON FUNCTION bridge.derive_effective_enforcement_policy(text,text,text) TO atlas;
 
 INSERT INTO atlas.schema_migrations(name) VALUES('0091_bssv20140202_shared_domain_calculated_allocation_publication') ON CONFLICT DO NOTHING;

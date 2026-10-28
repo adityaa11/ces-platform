@@ -18,6 +18,7 @@
     "test:project-repository": "jiti tests/project-repository.integration.test.ts",
     "test:staged-perception-admission": "jiti tests/staged-perception-admission.integration.test.ts",
     "test:provider-capacity-catalogue": "jiti tests/provider-capacity-catalogue.integration.test.ts",
+    "test:bss-fresh-install-contract": "jiti tests/bss-fresh-install-contract.integration.test.ts",
     "test:process-workload-catalogue": "jiti tests/process-workload-catalogue.integration.test.ts",
     "test:desired-admission-profile-publication": "jiti tests/desired-admission-profile-publication.integration.test.ts",
     "test:authorized-desired-plan-convergence": "jiti tests/authorized-desired-plan-convergence.integration.test.ts",

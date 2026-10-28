@@ -192,31 +192,17 @@ BEGIN
 END;
 $$;
 
-INSERT INTO bridge.provider_enforcement_policy_approval(
-  approval_ref, quota_domain_id, provider_capacity_profile_version, route_id, policy_id, policy_version,
-  permitted_unknown_dimensions, approved_by, approved_at
-) VALUES (
-  'anoman-rpd-not-published-approval-2026-10-18', 'anoman-shared-prod', '2026-10-18.1', 'anoman-semantic',
-  'capacity-dimension-enforcement', 'anoman-v1',
-  '{"rpd":{"providerState":"unknown","reason":"not_published"}}'::jsonb,
-  'bss-v2-005-policy-owner', '2026-10-18T00:00:00Z'
-) ON CONFLICT (approval_ref) DO NOTHING;
-
-INSERT INTO bridge.provider_enforcement_policy(
-  quota_domain_id, provider_capacity_profile_version, route_id, policy_id, policy_version, approval_ref, dimensions, effective_from
-) VALUES (
-  'anoman-shared-prod', '2026-10-18.1', 'anoman-semantic', 'capacity-dimension-enforcement', 'anoman-v1',
-  'anoman-rpd-not-published-approval-2026-10-18',
-  '{"rpm":{"mode":"enforced","limitSource":"provider"},"tpm":{"mode":"enforced","limitSource":"provider"},"rpd":{"mode":"not_enforced","providerState":"unknown","reason":"not_published","approvalRef":"anoman-rpd-not-published-approval-2026-10-18"},"concurrency":{"mode":"enforced","limitSource":"provider"}}'::jsonb,
-  '2026-10-18T00:00:00Z'
-) ON CONFLICT (quota_domain_id, provider_capacity_profile_version, route_id, policy_id, policy_version) DO NOTHING;
-
 ALTER TABLE bridge.provider_enforcement_policy_approval OWNER TO agents_bridge;
 ALTER TABLE bridge.provider_enforcement_policy OWNER TO agents_bridge;
 ALTER TABLE bridge.provider_enforcement_policy_revocation OWNER TO agents_bridge;
 ALTER FUNCTION bridge.reject_provider_enforcement_policy_mutation() OWNER TO agents_bridge;
 ALTER FUNCTION bridge.reject_conflicting_provider_enforcement_policy() OWNER TO agents_bridge;
 ALTER FUNCTION bridge.derive_effective_enforcement_policy(text,text,text) OWNER TO agents_bridge;
+-- Candidate publication calls this verifier under the distinct NOLOGIN
+-- ownership role.  Keep policy rows Bridge-owned and expose only the
+-- fail-closed derivation through its fixed, trusted search path.
+ALTER FUNCTION bridge.derive_effective_enforcement_policy(text,text,text) SECURITY DEFINER;
+ALTER FUNCTION bridge.derive_effective_enforcement_policy(text,text,text) SET search_path = pg_catalog, bridge;
 REVOKE ALL ON TABLE bridge.provider_enforcement_policy_approval, bridge.provider_enforcement_policy, bridge.provider_enforcement_policy_revocation FROM PUBLIC, atlas_app;
 REVOKE ALL ON FUNCTION bridge.derive_effective_enforcement_policy(text,text,text) FROM PUBLIC, atlas_app;
 GRANT EXECUTE ON FUNCTION bridge.derive_effective_enforcement_policy(text,text,text) TO agents_bridge;

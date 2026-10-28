@@ -20,6 +20,7 @@ test("RC-BSSV2-00604-11 exposes an authenticated, conservative runtime read with
   atlasUrl.username = "atlas_app";
   atlasUrl.password = process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only";
   const atlas = postgres(atlasUrl.toString(), { max: 1 });
+  const authorityVersions = new Map<string, number>();
   let sends = 0;
   const principals = new Map<string, RuntimeCapacityConstraintPrincipal>([
     [background.credential, background], [interactive.credential, interactive],
@@ -53,13 +54,23 @@ test("RC-BSSV2-00604-11 exposes an authenticated, conservative runtime read with
     };
     const profile = { usableGlobalCapacity: { rpm: 10, tpm: 100, rpd: 10, concurrency: 2 }, hardInteractiveReserve: { rpm: 2, tpm: 20, rpd: 2, concurrency: 1 }, backgroundCapacity: { rpm: 8, tpm: 80, rpd: 8, concurrency: 1 } };
     const windows = { rpm: { kind: "fixed", windowSeconds: 60 }, tpm: { kind: "fixed", windowSeconds: 60 }, rpd: { kind: "fixed", windowSeconds: 60 }, concurrency: { kind: "fixed", windowSeconds: 60 } };
-    await bridge.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'capacity-v1','fixture',$2::jsonb,'{}'::jsonb,$3::jsonb,'quota-v1','operator_config','fixture','v1',now(),now())", [domain, [{ routeId: background.routeId }, { routeId: interactive.routeId }], windows]);
+    const associatedRoutes = [background, interactive].map((subject) => ({
+      routeId: subject.routeId,
+      providerId: "fixture",
+      modelOrProcessorId: "fixture-model-v1",
+      adapterVersion: "adapter-v1",
+      qualificationRef: "qualification://fixture",
+      qualificationVersion: "qualified-v1",
+      capability: subject.serviceClass === "background" ? "atlas.semantic.extract" : "atlas.chat.default",
+    }));
+    await bridge.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'capacity-v1','fixture',$2::jsonb,'{}'::jsonb,$3::jsonb,'quota-v1','operator_config','fixture','v1',now(),now())", [domain, associatedRoutes, windows]);
     for (const subject of [background, interactive]) {
       const kind = subject.serviceClass === "background" ? "semantic" : "chat";
       const capability = subject.serviceClass === "background" ? "atlas.semantic.extract" : "atlas.chat.default";
       await bridge.unsafe("INSERT INTO bridge.workload_envelope_profile(workload_id,profile_version,active,compatible_process_kinds,structural_bound,estimator,quota_accounting_policy_id,output_reservation,safety_policy) VALUES($1,'v1',true,$2::jsonb,'{}'::jsonb,'{}'::jsonb,'quota-v1','{}'::jsonb,'{}'::jsonb)", [`${subject.processId}-workload`, [kind]]);
       await bridge.unsafe("INSERT INTO bridge.provider_process_profile(process_id,profile_version,process_kind,capability,service_class,fairness_scope,allocation_policy,active,eligible_route_ids,workload_id,workload_profile_version) VALUES($1,'v1',$2,$3,$4,'{}'::jsonb,$5::jsonb,true,$6::jsonb,$7,'v1')", [subject.processId, kind, capability, subject.serviceClass, subject.serviceClass === "background" ? { background: { weight: 1, mayBorrowIdleCapacity: false }, hardInteractiveProtection: { policyId: "reserve", policyVersion: "v1" } } : { hardInteractiveProtection: { policyId: "reserve", policyVersion: "v1" } }, [subject.routeId], `${subject.processId}-workload`]);
-      await bridge.unsafe("SELECT * FROM bridge.publish_qualified_provider_route_authority($1,$2,'fixture','fixture-model-v1','adapter-v1','qualification://fixture','qualified-v1',$3)", [subject.routeId, domain, capability]);
+      const [authority] = await bridge.unsafe("SELECT * FROM bridge.publish_qualified_provider_route_authority($1,$2,'fixture','fixture-model-v1','adapter-v1','qualification://fixture','qualified-v1',$3)", [subject.routeId, domain, capability]);
+      authorityVersions.set(subject.routeId, Number(authority.authority_version));
     }
     await bridge.unsafe("INSERT INTO bridge.desired_admission_profile(quota_domain_id,profile_version,provider_capacity_profile_version,planner_version,effective_from,profile) VALUES($1,'plan-v1','capacity-v1','planner-v1',now(),$2::jsonb)", [domain, profile]);
     for (const subject of [background, interactive]) await bridge.unsafe("INSERT INTO bridge.desired_admission_profile_input(quota_domain_id,desired_profile_version,process_id,process_profile_version,workload_id,workload_profile_version) VALUES($1,'plan-v1',$2,'v1',$3,'v1')", [domain, subject.processId, `${subject.processId}-workload`]);
@@ -68,7 +79,7 @@ test("RC-BSSV2-00604-11 exposes an authenticated, conservative runtime read with
 
     // Establish real, non-inert 03A state before the external readers run.
     await bridge.unsafe("SELECT bridge.register_provider_work_attempt($1,1,$2,$3,'v1','baseline',$4::jsonb,'plan-v1',1,now()+interval '1 hour',now()+interval '1 hour')", [`${suffix}-baseline-work`, domain, background.processId, { rpm: 1, tpm: 1, rpd: 1, concurrency: 1 }]);
-    await bridge.unsafe("SELECT bridge.bind_provider_work_route($1,1,$2)", [`${suffix}-baseline-work`, background.routeId]);
+    await bridge.unsafe("SELECT bridge.bind_provider_work_route($1,1,$2::bigint)", [`${suffix}-baseline-work`, authorityVersions.get(background.routeId)]);
     const [admission] = await bridge.unsafe("SELECT * FROM bridge.admit_route_aware_provider_work_attempt($1,1,'background')", [`${suffix}-baseline-work`]);
     await bridge.unsafe("SELECT bridge.claim_provider_admitted_transport($1)", [admission.reservation_id]);
     const before = await counters();

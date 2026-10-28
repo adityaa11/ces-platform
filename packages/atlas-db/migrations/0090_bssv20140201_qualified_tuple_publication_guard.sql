@@ -42,7 +42,6 @@ BEGIN
       FROM bridge.provider_capacity_profile capacity,
            jsonb_array_elements(capacity.associated_routes) associated_route
      WHERE capacity.quota_domain_id = p_quota_domain_id
-       AND capacity.provider_account_alias = p_provider_id
        AND associated_route ->> 'routeId' = p_route_id
        AND associated_route ->> 'providerId' = p_provider_id
        AND associated_route ->> 'modelOrProcessorId' = p_model_or_processor_id
@@ -87,5 +86,10 @@ $$;
 ALTER FUNCTION bridge.publish_qualified_provider_route_authority(text,text,text,text,text,text,text,text) OWNER TO atlas;
 REVOKE ALL ON FUNCTION bridge.publish_qualified_provider_route_authority(text,text,text,text,text,text,text,text) FROM PUBLIC, atlas_app;
 GRANT EXECUTE ON FUNCTION bridge.publish_qualified_provider_route_authority(text,text,text,text,text,text,text,text) TO agents_bridge;
+-- The protected publisher runs as the dedicated Atlas ownership role.  It may
+-- read the immutable capacity association, but receives no write access to
+-- that Bridge-owned catalogue.
+GRANT USAGE ON SCHEMA bridge TO atlas;
+GRANT SELECT ON TABLE bridge.provider_capacity_profile TO atlas;
 
 INSERT INTO atlas.schema_migrations(name) VALUES('0090_bssv20140201_qualified_tuple_publication_guard') ON CONFLICT DO NOTHING;

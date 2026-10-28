@@ -11,6 +11,7 @@ test("BSS-V2-006-02 CFC closes fair admission and atomic dispatch oracles", { sk
   const route = `${domain}-route`;
   const profile = { usableGlobalCapacity: { rpm: 4, tpm: 40, rpd: 4, concurrency: 2 }, hardInteractiveReserve: { rpm: 1, tpm: 10, rpd: 1, concurrency: 1 }, backgroundCapacity: { rpm: 3, tpm: 30, rpd: 3, concurrency: 1 }, backgroundLanes: [{ processId: `${domain}-a`, profileVersion: "v1", normalizedWeight: .5 }, { processId: `${domain}-b`, profileVersion: "v1", normalizedWeight: .25 }, { processId: `${domain}-c`, profileVersion: "v1", normalizedWeight: .25 }] };
   const physicalWindows = { rpm: { kind: "fixed", windowSeconds: 60, limitUnits: 4 }, tpm: { kind: "fixed", windowSeconds: 60, limitUnits: 40 }, rpd: { kind: "fixed", windowSeconds: 86_400, limitUnits: 4 }, concurrency: { kind: "fixed", windowSeconds: 60, limitUnits: 2 } };
+  let authorityVersion = 0;
   const future = () => new Date(Date.now() + 60_000).toISOString();
   const vector = (dimension: string, value: number) => ({ rpm: 0, tpm: 0, rpd: 0, concurrency: 0, [dimension]: value });
   const addProcess = async (id: string, serviceClass: "interactive" | "background") => {
@@ -19,7 +20,7 @@ test("BSS-V2-006-02 CFC closes fair admission and atomic dispatch oracles", { sk
   };
   const register = async (id: string, process: string, key: string, envelope = { rpm: 1, tpm: 10, rpd: 1, concurrency: 1 }, deadline = future(), attempt = 1) => {
     await sql.unsafe("SELECT bridge.register_provider_work_attempt($1,$2,$3,$4,'v1',$5,$6,'plan-v1',1,$7,$7)", [id, attempt, domain, process, key, envelope, deadline]);
-    await sql.unsafe("SELECT bridge.bind_provider_work_route($1,$2,$3)", [id, attempt, route]);
+    await sql.unsafe("SELECT bridge.bind_provider_work_route($1,$2,$3::bigint)", [id, attempt, authorityVersion]);
   };
   const admit = async () => { const rows = await sql.unsafe("SELECT * FROM bridge.admit_next_provider_work_attempt($1)", [domain]); assert.equal(rows.length, 1); return rows[0]; };
   const decision = async (id: string, attempt = 1) => (await sql.unsafe("SELECT * FROM bridge.admit_interactive_provider_work_attempt($1,$2)", [id, attempt]))[0];
@@ -35,12 +36,13 @@ test("BSS-V2-006-02 CFC closes fair admission and atomic dispatch oracles", { sk
   const dispatches = async (id: string, attempt = 1) => (await sql.unsafe("SELECT count(*)::int AS count FROM bridge.provider_work_dispatch WHERE logical_work_id=$1 AND attempt_number=$2", [id, attempt]))[0].count;
   try {
     await sql.unsafe("BEGIN");
-    await sql.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'cap-v1','account',$2,'{}',$3,'quota','provider_docs','ref','v1',now(),now())", [domain, [{ routeId: route }], physicalWindows]);
+    await sql.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'cap-v1','account',$2,'{}',$3,'quota','provider_docs','ref','v1',now(),now())", [domain, [{ routeId: route, providerId: "account", modelOrProcessorId: "fixture-model-v1", adapterVersion: "adapter-v1", qualificationRef: "qualification://fixture", qualificationVersion: "qualification-v1", capability: "cap" }], physicalWindows]);
     for (const [id, service] of [[`${domain}-interactive`, "interactive"], [`${domain}-a`, "background"], [`${domain}-b`, "background"], [`${domain}-c`, "background"]] as const) await addProcess(id, service);
     await sql.unsafe("INSERT INTO bridge.desired_admission_profile(quota_domain_id,profile_version,provider_capacity_profile_version,planner_version,effective_from,profile) VALUES($1,'plan-v1','cap-v1','planner',now(),$2)", [domain, profile]);
     for (const process of [`${domain}-interactive`, `${domain}-a`, `${domain}-b`, `${domain}-c`]) await sql.unsafe("INSERT INTO bridge.desired_admission_profile_input(quota_domain_id,desired_profile_version,process_id,process_profile_version,workload_id,workload_profile_version) VALUES($1,'plan-v1',$2,'v1',$2,'v1')", [domain, process]);
     await sql.unsafe("SELECT bridge.activate_desired_admission_profile($1,'plan-v1')", [domain]);
-    await sql.unsafe("SELECT * FROM bridge.publish_qualified_provider_route_authority($1,$2,'account','fixture-model-v1','adapter-v1','qualification://fixture','qualification-v1','cap')", [route, domain]);
+    const [authority] = await sql.unsafe("SELECT * FROM bridge.publish_qualified_provider_route_authority($1,$2,'account','fixture-model-v1','adapter-v1','qualification://fixture','qualification-v1','cap')", [route, domain]);
+    authorityVersion = Number(authority.authority_version);
 
     // CK-002.a: each capacity dimension independently denies one more request with zero dispatch.
     for (const [dimension, limit] of Object.entries(profile.usableGlobalCapacity)) {

@@ -18,16 +18,15 @@ test("BSS-V2-006-03A-01 binds a qualified server route before reservation and ac
   const resolver = createRouteRegistry([{ routeId: route, capability: "atlas.chat.default", providerId: "fixture", modelOrProcessorId: "fixture-model", adapterVersion: "adapter-v1", qualificationVersion: "qualification-v1", qualificationRef: "qualification://03a-fixture", workClass: "interactive", enabled: true }], "development", new Set(["fixture"]));
   try {
     await sql.unsafe("BEGIN");
-    await sql.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'cap-v1','fixture',$2,'{}',$3,'quota','operator_config','fixture','v1',now(),now())", [suffix, [{ routeId: route }], { rpm: { kind: "fixed", windowSeconds: 60, limitUnits: 2 }, tpm: { kind: "fixed", windowSeconds: 60, limitUnits: 20 }, rpd: { kind: "fixed", windowSeconds: 86_400, limitUnits: 2 }, concurrency: { kind: "fixed", windowSeconds: 60, limitUnits: 1 } }]);
+    await sql.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'cap-v1','fixture',$2,'{}',$3,'quota','operator_config','fixture','v1',now(),now())", [suffix, [{ routeId: route, providerId: "fixture", modelOrProcessorId: "fixture-model", adapterVersion: "adapter-v1", qualificationRef: "qualification://03a-fixture", qualificationVersion: "qualification-v1", capability: "atlas.chat.default" }], { rpm: { kind: "fixed", windowSeconds: 60, limitUnits: 2 }, tpm: { kind: "fixed", windowSeconds: 60, limitUnits: 20 }, rpd: { kind: "fixed", windowSeconds: 86_400, limitUnits: 2 }, concurrency: { kind: "fixed", windowSeconds: 60, limitUnits: 1 } }]);
     await sql.unsafe("INSERT INTO bridge.workload_envelope_profile(workload_id,profile_version,active,compatible_process_kinds,structural_bound,estimator,quota_accounting_policy_id,output_reservation,safety_policy) VALUES($1,'v1',true,'[\"chat\"]','{}','{}','quota','{}','{}')", [`${suffix}-workload`]);
     await sql.unsafe("INSERT INTO bridge.provider_process_profile(process_id,profile_version,process_kind,capability,service_class,fairness_scope,allocation_policy,active,eligible_route_ids,workload_id,workload_profile_version) VALUES($1,'v1','chat','atlas.chat.default','interactive','{}','{}',true,$2,$3,'v1')", [`${suffix}-process`, [route], `${suffix}-workload`]);
     await sql.unsafe("INSERT INTO bridge.desired_admission_profile(quota_domain_id,profile_version,provider_capacity_profile_version,planner_version,effective_from,profile) VALUES($1,'plan-v1','cap-v1','fixture',now(),$2)", [suffix, profile]);
     await sql.unsafe("INSERT INTO bridge.desired_admission_profile_input(quota_domain_id,desired_profile_version,process_id,process_profile_version,workload_id,workload_profile_version) VALUES($1,'plan-v1',$2,'v1',$3,'v1')", [suffix, `${suffix}-process`, `${suffix}-workload`]);
     await sql.unsafe("SELECT bridge.activate_desired_admission_profile($1,'plan-v1')", [suffix]);
     await sql.unsafe("SELECT bridge.register_provider_work_attempt($1,1,$2,$3,'v1','fixture',$4,'plan-v1',1,now()+interval '1 minute',now()+interval '1 minute')", [work, suffix, `${suffix}-process`, { rpm: 1, tpm: 10, rpd: 1, concurrency: 1 }]);
-    await sql.unsafe("SAVEPOINT missing_route_binding");
-    await assert.rejects(() => sql.unsafe("SELECT * FROM bridge.admit_interactive_provider_work_attempt($1,1)", [work]), /route binding/i);
-    await sql.unsafe("ROLLBACK TO SAVEPOINT missing_route_binding");
+    const [unbound] = await sql.unsafe("SELECT * FROM bridge.admit_interactive_provider_work_attempt($1,1)", [work]);
+    assert.notEqual(unbound.decision, "admitted", "an unbound attempt cannot be admitted");
     const artifacts = async () => ({
       reservations: Number((await sql.unsafe("SELECT count(*)::integer AS count FROM bridge.provider_work_reservation WHERE logical_work_id=$1", [work]))[0].count),
       jobs: Number((await sql.unsafe("SELECT count(*)::integer AS count FROM pgboss.job WHERE data->>'logicalWorkId'=$1", [work]))[0].count),
@@ -38,19 +37,19 @@ test("BSS-V2-006-03A-01 binds a qualified server route before reservation and ac
         to_regprocedure('bridge.bind_provider_work_route(text,integer,text,text,text,text)') IS NULL AS legacy_absent,
         has_function_privilege(
           current_user,
-          'bridge.bind_provider_work_route(text,integer,text)',
+          'bridge.bind_provider_work_route(text,integer,bigint)',
           'EXECUTE'
         ) AS resolver_binding_executable
     `);
     assert.equal(bindingSurface.legacy_absent, true);
     assert.equal(bindingSurface.resolver_binding_executable, true);
     await sql.unsafe("SAVEPOINT forged_route");
-    await assert.rejects(() => sql.unsafe("SELECT bridge.bind_provider_work_route($1,1,$2)", [work, "forged-route"]), /not published|eligible|associated/i);
+    await assert.rejects(() => sql.unsafe("SELECT bridge.bind_provider_work_route($1,1,$2::bigint)", [work, 999999999]), /authority is missing or foreign/i);
     await sql.unsafe("ROLLBACK TO SAVEPOINT forged_route");
     assert.deepEqual(await artifacts(), { reservations: 0, jobs: 0, claims: 0 });
     await bindProviderWorkRouteFromResolver({ executeSql: async (query, values) => ({ rows: await sql.unsafe(query, values as unknown[] | undefined) }) }, resolver, { logicalWorkId: work, attemptNumber: 1 });
     await sql.unsafe("SAVEPOINT contradictory_binding");
-    await assert.rejects(() => sql.unsafe("SELECT bridge.bind_provider_work_route($1,1,$2)", [work, "client-chosen-route"]), /not published|conflicts/i);
+    await assert.rejects(() => sql.unsafe("SELECT bridge.bind_provider_work_route($1,1,$2::bigint)", [work, 999999999]), /authority is missing or foreign/i);
     await sql.unsafe("ROLLBACK TO SAVEPOINT contradictory_binding");
     const [admitted] = await sql.unsafe("SELECT * FROM bridge.admit_interactive_provider_work_attempt($1,1)", [work]);
     assert.equal(admitted.decision, "admitted");

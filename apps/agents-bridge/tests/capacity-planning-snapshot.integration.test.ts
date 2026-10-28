@@ -11,6 +11,7 @@ const databaseUrl = process.env.DATABASE_URL;
 
 test("RC-00605-08 exposes an authenticated Anoman planning snapshot with zero operational effects", { skip: !databaseUrl }, async () => {
   const suffix = `effective-capacity-snapshot-${Date.now()}`;
+  const anomanApprovalRef = `${suffix}-anoman-approval`;
   const processId = `${suffix}-process`;
   const workloadId = `${suffix}-workload`;
   const principal = { credential: `${suffix}-credential`, principalId: `${suffix}-reader`, quotaDomainId: "anoman-shared-prod", processId, processProfileVersion: "v1", routeId: "anoman-semantic", serviceClass: "background" as const, prospective: true };
@@ -52,6 +53,8 @@ test("RC-00605-08 exposes an authenticated Anoman planning snapshot with zero op
     (SELECT count(*)::int FROM pgboss.job) AS durable_jobs`))[0];
   try {
     await bridge.unsafe("BEGIN");
+    await bridge.unsafe("INSERT INTO bridge.provider_enforcement_policy_approval(approval_ref,quota_domain_id,provider_capacity_profile_version,route_id,policy_id,policy_version,permitted_unknown_dimensions,approved_by,approved_at) VALUES($1,'anoman-shared-prod','2026-10-18.1','anoman-semantic','capacity-dimension-enforcement','anoman-v1','{\"rpd\":{\"providerState\":\"unknown\",\"reason\":\"not_published\"}}'::jsonb,'fixture',clock_timestamp())", [anomanApprovalRef]);
+    await bridge.unsafe("INSERT INTO bridge.provider_enforcement_policy(quota_domain_id,provider_capacity_profile_version,route_id,policy_id,policy_version,approval_ref,dimensions,effective_from) VALUES('anoman-shared-prod','2026-10-18.1','anoman-semantic','capacity-dimension-enforcement','anoman-v1',$1,$2::jsonb,'2026-10-18T00:00:00Z')", [anomanApprovalRef, { rpm: { mode: "enforced", limitSource: "provider" }, tpm: { mode: "enforced", limitSource: "provider" }, rpd: { mode: "not_enforced", providerState: "unknown", reason: "not_published", approvalRef: anomanApprovalRef }, concurrency: { mode: "enforced", limitSource: "provider" } }]);
     for (const domain of [`${suffix}-missing-policy`, `${suffix}-unavailable-policy`]) {
       await bridge.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'v1','fixture','[{\"routeId\":\"anoman-semantic\",\"providerId\":\"fixture\"}]'::jsonb,'{\"rpm\":{\"state\":\"known\",\"value\":1},\"tpm\":{\"state\":\"known\",\"value\":1},\"rpd\":{\"state\":\"unknown\"},\"concurrency\":{\"state\":\"known\",\"value\":1}}'::jsonb,'{\"rpm\":{\"kind\":\"fixed_window\"},\"tpm\":{\"kind\":\"fixed_window\"},\"rpd\":{\"kind\":\"unknown\"}}'::jsonb,'fixture','provider_api','fixture://capacity','v1',clock_timestamp(),clock_timestamp())", [domain]);
     }
@@ -81,7 +84,7 @@ test("RC-00605-08 exposes an authenticated Anoman planning snapshot with zero op
       dimensions: {
         rpm: { mode: "enforced", providerState: "known", limitSource: "provider", limit: 20, windowPolicy: { policyId: "anoman-rpm-v1", policyVersion: "v1", source: "provider_api", kind: "fixed_window", parameters: { windowSeconds: 60 } } },
         tpm: { mode: "enforced", providerState: "known", limitSource: "provider", limit: 40_000, windowPolicy: { policyId: "anoman-tpm-v1", policyVersion: "v1", source: "provider_api", kind: "fixed_window", parameters: { windowSeconds: 60 } } },
-        rpd: { mode: "not_enforced", providerState: "unknown", reason: "not_published", approvalRef: "anoman-rpd-not-published-approval-2026-10-18" },
+        rpd: { mode: "not_enforced", providerState: "unknown", reason: "not_published", approvalRef: anomanApprovalRef },
         concurrency: { mode: "enforced", providerState: "known", limitSource: "provider", limit: 25, windowPolicy: null },
       },
     });

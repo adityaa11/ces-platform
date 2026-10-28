@@ -4,7 +4,7 @@ import postgres from "postgres";
 
 const databaseUrl = process.env.DATABASE_URL;
 
-test("BSS-V2-006-05-01 derives only a provenance-bound, fail-closed Anoman effective policy", { skip: !databaseUrl }, async () => {
+test("BSS-V2-006-05-01 derives only explicitly fixture-authorized, provenance-bound effective policy", { skip: !databaseUrl }, async () => {
   const bridgeUrl = new URL(databaseUrl!);
   bridgeUrl.username = "agents_bridge";
   bridgeUrl.password = process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only";
@@ -37,13 +37,10 @@ test("BSS-V2-006-05-01 derives only a provenance-bound, fail-closed Anoman effec
   try {
     await bridge.unsafe("BEGIN");
 
-    const anoman = await bridge.unsafe("SELECT bridge.derive_effective_enforcement_policy('anoman-shared-prod','2026-10-18.1','anoman-semantic') AS policy");
-    const policy = anoman[0].policy;
-    assert.equal(policy.dimensions.rpm.limit, 20);
-    assert.equal(policy.dimensions.tpm.limit, 40000);
-    assert.equal(policy.dimensions.concurrency.limit, 25);
-    assert.deepEqual(policy.dimensions.rpd, { mode: "not_enforced", providerState: "unknown", reason: "not_published", approvalRef: "anoman-rpd-not-published-approval-2026-10-18" });
-    assert.equal(policy.providerCapacityProfileVersion, "2026-10-18.1");
+    await expectRejected(
+      () => bridge.unsafe("SELECT bridge.derive_effective_enforcement_policy('anoman-shared-prod','2026-10-18.1','anoman-semantic')"),
+      /authorized enforcement policy is missing or stale/,
+    );
     assert.equal((await bridge.unsafe("SELECT limits->'rpd' AS rpd FROM bridge.provider_capacity_profile WHERE quota_domain_id='anoman-shared-prod' AND profile_version='2026-10-18.1'"))[0].rpd.state, "unknown");
 
     await insertCapacity();
