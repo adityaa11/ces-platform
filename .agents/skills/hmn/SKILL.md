@@ -103,19 +103,24 @@ to human/planning authority without CFC authorization.
 
 HMN must distinguish a replacement-contract request from an ordinary
 `REVIEW_CONTRACT_GAP`. When the frozen CK oracle conflicts with approved
-implementation authority, HMN must first create a durable authority-conflict
-diagnosis naming the exact original clause/oracle, the approved authority, and
-the unapproved functionality that would be required to satisfy it. The correct
-decision before planning correction is `HUMAN_DECISION_REQUIRED`; HMN must not
-authorize CFC for that original clause.
+implementation or environment authority, HMN must first create a durable
+authority-conflict diagnosis naming the exact original clause/oracle, the
+approved authority, and the unapproved functionality or evidence that would be
+required to satisfy it. The correct decision before planning correction is
+`HUMAN_DECISION_REQUIRED`; HMN must not authorize CFC for that original clause.
 
 After a subsequent explicit planning amendment corrects the underlying ticket
-Review Contract, CK may validate and freeze the replacement contract. HMN must
-reject replacement eligibility when the amendment is absent, the oracle is
-merely difficult or unproven but achievable, or the proposed replacement
-weakens unrelated obligations. The amendment must identify the exact
-superseded requirements, replacement requirements, and reason, and must remain
-within approved implementation authority.
+Review Contract, CK may validate and freeze the replacement contract through
+the shared-contract Route A or Route B. Route B additionally requires that an
+original CK artifact froze the clause unresolved and CFC durably recorded
+`CFC_NOT_READY_FOR_CK` without a remediation commit or CK handoff because the
+oracle conflicts with approved authority. HMN must reject replacement
+eligibility when the amendment is absent, the required Route A or Route B facts
+are absent, the oracle is merely unavailable, difficult, unproven, failed, or
+unexecuted but achievable, or the proposed replacement weakens unrelated
+obligations. The amendment must identify the exact superseded requirements,
+replacement requirements, and reason, and must remain within approved
+implementation authority.
 
 Only a fresh explicit user `hmn` invocation after that replacement freeze may
 issue `AUTHORIZE_EVIDENCE_REMEDIATION` for one bounded CFC cycle. The durable

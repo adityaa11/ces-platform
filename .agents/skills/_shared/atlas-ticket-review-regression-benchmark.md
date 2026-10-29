@@ -104,7 +104,7 @@ return to human/planning authority without starting another CFC cycle.
 Benchmark result: **PASS** only if ordinary `REVIEW_CONTRACT_GAP` still cannot
 authorize CFC and every supplemental gate and scope boundary is enforced.
 
-## Case F: valid planning-authorized historical-oracle replacement
+## Case F: valid Route A planning-authorized historical-oracle replacement
 
 Input state: an original CK clause remains unresolved after CFC verification;
 HMN durably records that its frozen oracle conflicts with approved
@@ -147,6 +147,15 @@ Run these negative inputs independently:
 - the replacement artifact has no exact binary oracle, stable replacement ID,
   or active-obligation mapping.
 
+The following Route B-specific inputs must also be rejected:
+
+- no original CK artifact froze the clause unresolved;
+- CFC did not durably record `CFC_NOT_READY_FOR_CK`, or created a remediation
+  commit or CK handoff instead;
+- no independent HMN authority-conflict diagnosis exists; or
+- the claimed conflict is only missing environment evidence, an unexecuted
+  check, or an achievable but failed test.
+
 Expected behavior: reject the replacement freeze and return control to
 human/planning authority. Do not authorize CFC, reinterpret the original
 clause, or create an automatic retry.
@@ -166,6 +175,31 @@ not authorize the historical clause ID or reopen historically resolved clauses.
 
 Benchmark result: **PASS** only if unrelated requirements and historical IDs
 remain protected.
+
+## Case J: valid Route B pre-CFC non-remediable authority conflict
+
+Input state: an original CK artifact froze one clause unresolved. CFC attempted
+that clause and durably recorded `CFC_NOT_READY_FOR_CK` without a remediation
+commit or CK handoff because its frozen oracle requires behavior or evidence
+outside approved authority. HMN independently recorded the exact conflict and
+returned it to human/planning authority. A subsequent planning amendment maps
+only the superseded portion, preserves unrelated obligations, and identifies
+replacement requirements.
+
+Expected CK behavior: independently validate all six Route B prerequisites,
+then create an append-only replacement freeze with stable `RCK-###.a` IDs,
+exact active obligations, required proof, and binary closure oracles. The
+freeze is not `PASS`, is not an implementation checkpoint, and does not
+authorize CFC.
+
+Expected HMN/CFC behavior: a fresh explicit user `hmn` invocation is still
+required after the freeze. It may authorize only unresolved replacement IDs;
+the historical clause ID is never an authorization target. CFC does not run
+from the incomplete progress record or the freeze alone.
+
+Benchmark result: **PASS** only if Route B resolves the circular prerequisite
+without changing ordinary Route A, supplemental-gap, CK, CFC, HMN, or R3
+boundaries.
 
 ## Case I: existing-path and final-proof regression protection
 
@@ -192,15 +226,17 @@ failure requires fixing the protocol before relying on it for another ticket.
 
 ## Application record
 
-Run date: `2026-10-19` (Asia/Bangkok)
+Run date: `2026-10-29` (Asia/Bangkok)
 
 | Case | Result | Evidence of replay |
 | --- | --- | --- |
 | A–E | **PASS** | Existing HMN, CFC, CK, false-oracle, direct-regression, and supplemental-gap rules remain stated and bounded. |
-| F | **PASS** | Valid replacement requires durable authority conflict, later planning amendment, append-only mapping, fresh HMN, exact replacement proof, and final active-obligation closure. |
-| G | **PASS** | Missing amendment, achievable oracle, incomplete diagnosis, or incomplete replacement matrix rejects the path. |
+| F | **PASS** | Route A remains unchanged: valid replacement requires durable authority conflict, later planning amendment, append-only mapping, fresh HMN, exact replacement proof, and final active-obligation closure. |
+| G | **PASS** | Missing amendment, achievable oracle, incomplete diagnosis/matrix, or any missing/unsafe Route B prerequisite rejects the path. |
 | H | **PASS** | Unrelated obligations and historical clause IDs remain protected. |
 | I | **PASS** | Existing recovery behavior remains independent; a false active replacement oracle cannot produce `PASS`. |
+| J | **PASS** | Route B permits CK to independently freeze only a demonstrated pre-CFC non-remediable authority conflict; a fresh HMN authorization remains required before CFC. |
 
 Complete benchmark result: **PASS**. This is a protocol regression replay; it
-does not execute or approve any IDSER workflow.
+does not execute or approve any IDSER workflow, BSS-QAP replacement freeze, or
+R3 action.

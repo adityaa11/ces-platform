@@ -32,17 +32,16 @@ historical resolved clause, remediate only the selected supplemental IDs, and
 record the consumed HMN authorization ID in the single bounded checkpoint.
 
 The replacement-contract authority-conflict path is separate from that
-supplemental recovery path. Before editing under replacement authority, verify
-all durable prerequisites in the shared contract: the original clause remains
-historically unresolved after CFC verification; HMN recorded the exact
-conflict between its frozen oracle and approved implementation authority; a
-subsequent explicit planning amendment identifies the exact superseded ticket
-requirements and replacements without weakening unrelated obligations; CK
-created the append-only replacement freeze with stable replacement clause IDs,
-exact active obligations, required proof, and binary oracles; and a newer
-explicit user `hmn` invocation authorizes only unresolved replacement clause
-IDs for `AUTHORIZE_EVIDENCE_REMEDIATION`. If any prerequisite is absent, this
-path is not CFC authority; return it to human/planning authority.
+supplemental recovery path. CK alone may establish replacement eligibility
+through either shared-contract Route A (the existing post-CFC verification
+route) or Route B (the bounded pre-CFC non-remediable authority-conflict route).
+Before editing under either replacement authority, CFC must verify the exact
+CK-created append-only replacement freeze with stable replacement clause IDs,
+active obligations, required proof, and binary oracles, plus a newer explicit
+user `hmn` authorization for only unresolved replacement IDs under
+`AUTHORIZE_EVIDENCE_REMEDIATION`. Route B's prior `CFC_NOT_READY_FOR_CK` record
+does not itself authorize CFC. If any prerequisite is absent, this path is not
+CFC authority; return it to human/planning authority.
 
 Consume the exact replacement artifact and newer HMN authorization. Remediate
 and prove only the named replacement clauses, record both references, preserve

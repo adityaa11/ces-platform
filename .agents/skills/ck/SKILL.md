@@ -98,14 +98,15 @@ CFC cycle.
 
 The shared Review Contract's replacement path is distinct from
 `REVIEW_CONTRACT_GAP`. CK may write an append-only replacement-contract freeze
-only after it validates all durable prerequisites: the original clause is
-historically unresolved after CFC verification; HMN recorded the exact frozen
-oracle's conflict with approved implementation authority and routed it to
-human/planning authority; a subsequent explicit planning amendment identifies
-the exact superseded ticket requirements, replacement requirements, and reason;
-unrelated original obligations are not weakened; and satisfying the historical
-oracle would otherwise require unapproved functionality. A difficult,
-unproven, or failed test that remains achievable is not eligible.
+only after it independently validates one shared-contract eligibility route:
+Route A retains the existing post-CFC verification prerequisite; Route B is the
+bounded pre-CFC non-remediable authority-conflict route. Route B requires an
+original frozen unresolved clause, an attempted `CFC_NOT_READY_FOR_CK` record
+with no remediation commit or CK handoff, an exact HMN authority-conflict
+diagnosis, a subsequent explicit planning amendment, and CK validation that
+satisfying the historical oracle would require behavior or evidence outside
+approved authority. Unrelated obligations must remain binding. An unavailable,
+difficult, unproven, failed, or merely unexecuted test is not eligible.
 
 The freeze artifact must preserve the original CK/CFC/HMN artifacts and their
 outcomes, identify the historical clause and original ticket authority, cite
@@ -117,10 +118,10 @@ other original obligations remain binding. Do not reuse or renumber historical
 clause IDs.
 
 This artifact is not `PASS`, does not verify an implementation checkpoint, and
-does not authorize CFC. It is not a new workflow lifecycle state. If any
-prerequisite is absent, reject the replacement freeze and return the issue to
-human/planning authority. Preserve the existing supplemental
-`REVIEW_CONTRACT_GAP` path independently.
+does not authorize CFC. It is not a new workflow lifecycle state. If the
+selected Route A or Route B prerequisite is absent, reject the replacement
+freeze and return the issue to human/planning authority. Preserve the existing
+supplemental `REVIEW_CONTRACT_GAP` path independently.
 
 After a valid replacement freeze, CK must stop for a fresh explicit user
 `hmn` invocation. A later HMN authorization may name only unresolved

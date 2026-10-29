@@ -250,32 +250,43 @@ clause IDs and references the supplemental CK artifact as the oracle source.
 
 ### Replacement-contract recovery after an authority conflict
 
-This is a separate path from `REVIEW_CONTRACT_GAP`. It exists only for an
-original frozen CK clause that remains unresolved after CFC verification when
-the frozen oracle conflicts with approved implementation authority and the
-historical oracle cannot be satisfied without implementing unapproved
-functionality. It is not a general way to replace a failed, difficult, or
-unproven test.
+This is a separate path from `REVIEW_CONTRACT_GAP`. It exists only when a
+frozen CK oracle conflicts with approved implementation or environment
+authority and cannot be satisfied without unapproved functionality or evidence.
+It is not a general way to replace a failed, difficult, or unproven test.
 
-A replacement freeze is eligible only when all of these facts are durable and
-recorded in this order:
+A replacement freeze is eligible through exactly one of these routes:
 
-1. The original CK clause remains unresolved after CFC verification.
-2. HMN records an explicit authority-conflict diagnosis naming the exact
-   frozen oracle, the approved implementation or dependency authority that it
-   conflicts with, and why satisfying the oracle would require unapproved
-   functionality. HMN must route this conflict to human/planning authority;
-   it must not authorize ordinary CFC for the conflicting original clause.
-3. A subsequent explicit planning amendment corrects the underlying ticket
-   Review Contract. The amendment identifies the exact superseded ticket
-   requirements, the replacement requirements, and the supersession reason.
-4. The amendment does not weaken or supersede unrelated original obligations,
-   and the replacement requirements remain within approved implementation
-   authority.
+- **Route A — post-CFC conflict (existing route):** the original frozen CK
+  clause remains unresolved after a valid post-CFC CK verification.
+- **Route B — pre-CFC non-remediable authority conflict:** CFC cannot create a
+  reviewable checkpoint because satisfying the frozen oracle would require
+  behavior or evidence outside approved authority. Every fact below must be
+  durable and recorded in this order:
+  1. an original CK artifact already froze the exact clause and recorded it
+     unresolved;
+  2. CFC attempted that clause and recorded `CFC_NOT_READY_FOR_CK`, with no
+     remediation commit and no CK handoff;
+  3. the record demonstrates a conflict between the frozen oracle and approved
+     implementation or environment authority, rather than an unavailable,
+     difficult, failed, or merely unexecuted test;
+  4. HMN independently recorded an exact authority-conflict diagnosis and
+     returned control to human/planning authority;
+  5. a subsequent explicit planning amendment identifies the exact superseded
+     ticket requirements, replacement requirements, and supersession reason;
+     it does not weaken or supersede unrelated obligations, and the
+     replacements remain within approved implementation authority; and
+  6. CK independently validates every preceding fact and the amendment before
+     freezing any replacement clause.
 
-An incomplete but achievable original oracle remains binding. Reviewer
-preference, test difficulty, missing evidence, or CFC failure alone never
-establishes eligibility.
+For either route, the authority-conflict diagnosis must name the exact frozen
+oracle, the approved authority it conflicts with, and why satisfying it would
+require unapproved functionality or evidence. An incomplete but achievable
+original oracle remains binding. Reviewer preference, test difficulty, missing
+evidence, environment unavailability alone, or CFC failure alone never
+establishes eligibility. Route B is an alternate eligibility prerequisite only:
+it does not create a lifecycle state, approve implementation, or weaken the
+independent CK replacement-freeze review.
 
 Original CK, CFC, and HMN artifacts remain immutable, and the original clause
 keeps its recorded historical outcome, including a historical unresolved
@@ -295,9 +306,9 @@ obligation remains active. Replacement IDs must never reuse or renumber
 historical clause IDs.
 
 CK may create this append-only replacement freeze only after validating every
-eligibility and mapping prerequisite. The artifact is a contract freeze, not
-`PASS`, does not verify an implementation checkpoint, and does not authorize
-CFC. It does not create a new workflow lifecycle state.
+Route A or Route B eligibility and mapping prerequisite. The artifact is a
+contract freeze, not `PASS`, does not verify an implementation checkpoint, and
+does not authorize CFC. It does not create a new workflow lifecycle state.
 
 A fresh, explicit user `hmn` invocation after the replacement freeze is
 mandatory. HMN may then authorize exactly one bounded
@@ -320,14 +331,15 @@ replacement obligation is proven, with no direct regression. The superseded
 clause's historical failure remains visible in the artifact history even
 though it is not an active effective-acceptance gate.
 
-Missing planning amendment, missing authority-conflict diagnosis, an
-achievable-but-unproven oracle, a replacement that weakens unrelated
-obligations, a missing replacement oracle, or a missing fresh HMN
-authorization rejects this path and returns control to human/planning
-authority. Ordinary `REVIEW_CONTRACT_GAP`, `CHANGES_REQUIRED`, frozen-oracle
-stability, resolved-clause protection, and one explicit HMN authorization per
-additional CFC cycle remain independent and unchanged. No participant may
-autonomously retry or invoke another workflow command.
+Missing Route A verification or any Route B prerequisite, a missing planning
+amendment or authority-conflict diagnosis, an achievable-but-unproven oracle,
+a replacement that weakens unrelated obligations, a missing replacement
+oracle, or a missing fresh HMN authorization rejects this path and returns
+control to human/planning authority. Ordinary `REVIEW_CONTRACT_GAP`,
+`CHANGES_REQUIRED`, frozen-oracle stability, resolved-clause protection, and
+one explicit HMN authorization per additional CFC cycle remain independent and
+unchanged. No participant may autonomously retry or invoke another workflow
+command.
 
 ## 6. Bounded remediation and HMN
 
