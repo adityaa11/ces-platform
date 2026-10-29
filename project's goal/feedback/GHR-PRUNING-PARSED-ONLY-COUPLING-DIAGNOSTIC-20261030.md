@@ -189,15 +189,11 @@ removal requires a separate reference audit.
 
 ## Tests and historical evidence
 
-Current source/test references still prove the v2 continuation path:
-
-- `apps/agents-bridge/tests/ghr-04c-v2-durable-acceptance.integration.test.ts`
-  expects v2, `can_continue=true`, durable acceptance, and planner delivery.
-- `apps/agents-bridge/tests/ghr-03a-semantic-receiver.test.ts` and related
-  receiver/dispatcher tests contain parsed-only-era assumptions and need to be
-  realigned with the retained v1 contract.
-- Historical source at `94ba8bfa^` contains the exact false-only receiver,
-  issuer, route, and dispatcher behavior that matches this target.
+The former v2 continuation test and planner-specific source references were
+removed with the subtree. The remaining GHR tests cover the retained v1
+receiver, authenticated endpoint, dispatch, and real-e2e boundary. Historical
+source at `94ba8bfa^` still contains the exact false-only receiver, issuer,
+route, and dispatcher behavior that matches this target.
 
 No tests were run in this diagnostic. The deleted migrations make a fresh
 database run unavailable until the migration rebuild is authored.
@@ -230,6 +226,19 @@ The parsed-only pruning was applied after this diagnostic:
   were removed;
 - the deleted migration runner entry for `0108_ghr_idser_async_batch_plan_acceptance`
   was removed as well.
+
+The follow-up cleanup now removes the remaining semantic planner/reconstruction
+subtree rather than leaving dormant continuation code behind:
+
+- semantic corpus planning, reconstruction, v3 reference resolution, ready
+  fixtures, and multimodal reconstruction policy binding were deleted;
+- IDSER capacity/corpus estimation, structural-fit partitioning, prospective
+  capacity snapshots, and reconstruction parity helpers were deleted;
+- their tests, package exports, and package test-script entries were deleted;
+- `semantic-batch-plan-input.ts` is retained only as the five-field canonical
+  parser used by the receiver-owned GHR body contract;
+- the public capacity-planning snapshot reader remains because it is an
+  independent admission/read surface, not part of semantic batch planning.
 
 The future rebuilt `atlas.is_generic_handoff_dispatch_policy_active_v1` function
 must match this boundary too: it should authorize from the persisted header

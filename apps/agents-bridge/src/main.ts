@@ -8,7 +8,6 @@ import postgres from "postgres";
 import { createRuntimeCapacityConstraintReader } from "./runtime-capacity-constraint.js";
 import { createProviderWorkAdmissionService } from "./provider-work-admission.js";
 import { createCapacityPlanningSnapshotReader } from "./capacity-planning-snapshot.js";
-import { createIdserCapacityPlanningSnapshotV2ProductionComposition } from "./idser-capacity-planning-snapshot-v2-composition.js";
 
 const config = loadBridgeConfig();
 const availableAdapters = new Set<string>();
@@ -37,12 +36,6 @@ const capacityPlanningSnapshotReader = config.capacityPlanningSnapshot && runtim
     { authenticate: (credential) => config.capacityPlanningSnapshot?.bindings.find((binding) => binding.credential === credential) ?? null },
   )
   : undefined;
-const idserCapacityPlanningSnapshotV2Consumer = capacityPlanningSnapshotReader && config.capacityPlanningSnapshot
-  ? createIdserCapacityPlanningSnapshotV2ProductionComposition({ reader: capacityPlanningSnapshotReader, bindings: config.capacityPlanningSnapshot.bindings })
-  : undefined;
-// The v2 binding is assembled at the production entrypoint but intentionally
-// has no execution/activation sink in this ticket.
-void idserCapacityPlanningSnapshotV2Consumer;
 const providerWorkAdmissionService = config.runtimeCapacityConstraint && runtimeConstraintDatabase
   ? createProviderWorkAdmissionService(
     { executeSql: async (statement, values) => ({ rows: await runtimeConstraintDatabase.unsafe(statement, values as never[]) }) },

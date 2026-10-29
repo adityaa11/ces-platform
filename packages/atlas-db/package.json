@@ -32,17 +32,11 @@
     "test:qualified-deferred-acceptance": "jiti tests/qualified-deferred-acceptance.integration.test.ts",
     "test:extraction-acceptance": "jiti tests/extraction-acceptance.integration.test.ts",
     "test:reconciliation-acceptance": "jiti tests/reconciliation-acceptance.integration.test.ts",
-    "test:semantic-batch-plan-input": "jiti tests/semantic-batch-plan-input.integration.test.ts",
     "test:ghr-02a": "jiti tests/ghr-02a-immutable-issuance.integration.test.ts",
     "test:ghr-02a-boundary": "node --test tests/ghr-02a-boundary.test.mjs",
     "test:ghr-02b": "jiti tests/ghr-02b-atomic-publication.integration.test.ts",
     "test:ghr-02b-boundary": "node --test tests/ghr-02b-boundary.test.mjs",
-    "test:ghr-03b-boundary": "node --test tests/ghr-03b-boundary.test.mjs",
-    "test:immutable-semantic-corpus-plan": "jiti tests/immutable-semantic-corpus-plan.integration.test.ts",
-    "test:immutable-semantic-corpus-plan-v3": "jiti tests/immutable-semantic-corpus-plan-v3.test.ts",
-    "test:semantic-batch-v3-reference-resolution": "jiti tests/semantic-batch-v3-reference-resolution.test.ts",
-    "test:semantic-batch-v3-reference-resolution-integration": "jiti tests/semantic-batch-v3-reference-resolution.integration.test.ts",
-    "test:semantic-batch-plan-ready": "jiti tests/semantic-batch-plan-ready-fixture.integration.test.ts"
+    "test:ghr-03b-boundary": "node --test tests/ghr-03b-boundary.test.mjs"
   },
   "dependencies": {
     "@atlas/contracts": "workspace:*",

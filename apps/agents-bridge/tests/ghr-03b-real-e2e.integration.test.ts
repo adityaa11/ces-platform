@@ -156,7 +156,7 @@ test("GHR-03B consumes the real pointer job through pg-boss and records one pars
 
 test("GHR-03B delivery code has no downstream domain dependency", async () => {
   const delivery = await readFile(new URL("../src/ghr/delivery-worker.ts", import.meta.url), "utf8");
-  assert.doesNotMatch(delivery, /resolveBackground|PostgresAcceptedSemanticBatchPlanDocumentResolver|provider|reconciliation|projection|semantic-worker|backgroundExecutionQueue/u);
+  assert.doesNotMatch(delivery, /resolveBackground|provider|reconciliation|projection|semantic-worker|backgroundExecutionQueue/u);
   assert.match(delivery, /createGenericHandoffHttpDispatcher/);
   assert.doesNotMatch(delivery, /receiveVerifiedBatchPlan/);
   assert.match(delivery, /read_generic_handoff_dispatch_v1/);
