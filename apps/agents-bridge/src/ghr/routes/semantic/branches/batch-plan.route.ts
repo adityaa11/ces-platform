@@ -8,11 +8,10 @@ import type { BranchRegistration, ExactBranchSelector } from "../../../core/bran
 export const semanticBatchPlanRoute = Object.freeze({
   branch: "batch-plan",
   producerProcessKey: "perception.acceptance",
-  policyVersion: "v2",
-  handlerVersion: "v2",
+  policyVersion: "v1",
+  handlerVersion: "v1",
   bodyContractType: "SemanticBatchPlanInput",
   bodyContractVersion: "v1",
-  canContinue: true,
   payloadByteLimit: 2_048,
   wrappedBodyByteLimit: 2_081,
   receiverIdentity: "semantic.batch-plan",

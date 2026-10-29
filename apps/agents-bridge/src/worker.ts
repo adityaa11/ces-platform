@@ -9,11 +9,9 @@ import { parseProviderAdmittedJob, type ProviderAdmittedExecutionHandler } from 
 import { parseProviderWakeupJob, type ProviderWakeupHandler } from "./provider-wakeup-worker.js";
 import { deliverGenericHandoffJob } from "./ghr/delivery-worker.js";
 import type { GenericHandoffHttpTransportConfig } from "./ghr/http-transport-config.js";
-import { parseSemanticBatchPlanJob, semanticBatchPlanQueue } from "./idser-semantic-batch-plan-job.js";
 
 export const providerAdmittedExecutionQueue = "bridge-provider-admitted-execution-v1";
 export const providerWakeupQueue = "bridge-provider-work-wakeup-v1";
-export type SemanticBatchPlanQueueHandler = (handoffId: string, database: Db) => Promise<void>;
 
 export type BackgroundWorker = {
   start(): Promise<void>;
@@ -45,8 +43,6 @@ export async function initializePgBossInfrastructure(boss: PgBoss, config: Worke
   // routing or body authority.
   await boss.createQueue(genericHandoffQueue, queueOptions);
   await boss.updateQueue(genericHandoffQueue, queueOptions);
-  await boss.createQueue(semanticBatchPlanQueue, queueOptions);
-  await boss.updateQueue(semanticBatchPlanQueue, queueOptions);
   // The admission transaction is the producer, but the Bridge still owns the
   // queue declaration that makes its durable consumer eligible after restart.
   await boss.createQueue(providerAdmittedExecutionQueue, queueOptions);
@@ -119,7 +115,7 @@ async function executeOnce(idempotencyKey: string, executionId: string, leaseSec
   }
 }
 
-export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningRuntime, queueName = backgroundExecutionQueue, documentPerception?: DocumentPerceptionQueueHandler, perceptionQueueName = documentPerceptionQueue, semantic?: SemanticQueueHandler, providerAdmitted?: ProviderAdmittedExecutionHandler, providerWakeup?: ProviderWakeupHandler, genericHandoffHttpTransport?: GenericHandoffHttpTransportConfig, semanticBatchPlan?: SemanticBatchPlanQueueHandler): BackgroundWorker {
+export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningRuntime, queueName = backgroundExecutionQueue, documentPerception?: DocumentPerceptionQueueHandler, perceptionQueueName = documentPerceptionQueue, semantic?: SemanticQueueHandler, providerAdmitted?: ProviderAdmittedExecutionHandler, providerWakeup?: ProviderWakeupHandler, genericHandoffHttpTransport?: GenericHandoffHttpTransportConfig): BackgroundWorker {
   let stopping = false;
   const shutdown = new AbortController();
   const boss = new PgBoss({
@@ -175,12 +171,6 @@ export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningR
           httpTransportConfiguration: genericHandoffHttpTransport,
         });
       });
-      if (semanticBatchPlan) {
-        await boss.work(semanticBatchPlanQueue, backgroundWorkOptions, async ([job]) => {
-          const planningJob = parseSemanticBatchPlanJob(job.data);
-          await semanticBatchPlan(planningJob.handoffId, boss.getDb());
-        });
-      }
       if (documentPerception) {
         const perceptionWorkOptions = { ...backgroundWorkOptions, localConcurrency: config.perceptionConcurrency };
         await boss.work(perceptionQueueName, perceptionWorkOptions, async ([job]) => {

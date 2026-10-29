@@ -19,7 +19,6 @@ export type ExactBranchSelector = Readonly<{
  * must establish authority and execution separately from this registry.
  */
 export type BranchRegistration = ExactBranchSelector & Readonly<{
-  canContinue: boolean;
   payloadByteLimit: number;
   wrappedBodyByteLimit: number;
   receiverIdentity: string;

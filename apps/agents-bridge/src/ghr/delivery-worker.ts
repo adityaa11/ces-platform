@@ -14,13 +14,13 @@ export type SqlDatabase = Readonly<{
 }>;
 
 export type GenericHandoffDeliveryJob = Readonly<{ handoffId: string }>;
-export type DeliveryDisposition = "accepted" | "blocked" | "quarantined" | "retry_exhausted";
+export type DeliveryDisposition = "parsed_only" | "blocked" | "quarantined" | "retry_exhausted";
 type DeliveryErrorClass = "invalid_job" | "corrupt_envelope" | "invalid_policy" | "invalid_route" | "receiver_rejected" | "transient_delivery";
 type LoadedHandoff = Readonly<{ handoffId: string; header: unknown; bodyBytes: Uint8Array; bodySha256: string; bodyEncoding: string }>;
 type Claim = Readonly<{ owner: string; generation: number }>;
 
 const identity = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/;
-const terminal = new Set<DeliveryDisposition>(["accepted", "blocked", "quarantined", "retry_exhausted"]);
+const terminal = new Set<DeliveryDisposition>(["parsed_only", "blocked", "quarantined", "retry_exhausted"]);
 
 export class GenericHandoffDeliveryError extends Error {
   constructor(message: string, readonly classification: "quarantined" | "blocked" | "transient", readonly errorClass: DeliveryErrorClass) {
@@ -170,23 +170,23 @@ export async function deliverGenericHandoffJob(input: Readonly<{
   if (!header.scope.bundleId || !header.scope.documentId) {
     const activeClaim = await claim(input.database, header, input.leaseSeconds);
     if (typeof activeClaim === "object") await terminalize(input.database, header.handoffId, activeClaim, "quarantined", "corrupt_envelope");
-    return activeClaim === "accepted" || activeClaim === "blocked" || activeClaim === "retry_exhausted" ? activeClaim : "quarantined";
+    return activeClaim === "parsed_only" || activeClaim === "blocked" || activeClaim === "retry_exhausted" ? activeClaim : "quarantined";
   }
   if (!(await policyIsActive(input.database, header))) {
     const activeClaim = await claim(input.database, header, input.leaseSeconds);
     if (typeof activeClaim === "object") await terminalize(input.database, header.handoffId, activeClaim, "blocked", "invalid_policy");
-    return activeClaim === "accepted" || activeClaim === "quarantined" || activeClaim === "retry_exhausted" ? activeClaim : "blocked";
+    return activeClaim === "parsed_only" || activeClaim === "quarantined" || activeClaim === "retry_exhausted" ? activeClaim : "blocked";
   }
   let registration: ReturnType<typeof resolveMainRouteBinding>;
   try { registration = resolveMainRouteBinding(selector(header)); } catch {
     const activeClaim = await claim(input.database, header, input.leaseSeconds);
     if (typeof activeClaim === "object") await terminalize(input.database, header.handoffId, activeClaim, "blocked", "invalid_route");
-    return activeClaim === "accepted" || activeClaim === "quarantined" || activeClaim === "retry_exhausted" ? activeClaim : "blocked";
+    return activeClaim === "parsed_only" || activeClaim === "quarantined" || activeClaim === "retry_exhausted" ? activeClaim : "blocked";
   }
-  if (parsed.rawBodyBytes.byteLength > registration.wrappedBodyByteLimit || parsed.envelope.body.can_continue !== registration.canContinue) {
+  if (parsed.rawBodyBytes.byteLength > registration.wrappedBodyByteLimit) {
     const activeClaim = await claim(input.database, header, input.leaseSeconds);
     if (typeof activeClaim === "object") await terminalize(input.database, header.handoffId, activeClaim, "quarantined", "corrupt_envelope");
-    return activeClaim === "accepted" || activeClaim === "blocked" || activeClaim === "retry_exhausted" ? activeClaim : "quarantined";
+    return activeClaim === "parsed_only" || activeClaim === "blocked" || activeClaim === "retry_exhausted" ? activeClaim : "quarantined";
   }
   const activeClaim = await claim(input.database, header, input.leaseSeconds);
   if (activeClaim === "busy") throw new GenericHandoffDeliveryError("Generic handoff delivery lease is active.", "transient", "transient_delivery");
@@ -210,8 +210,8 @@ export async function deliverGenericHandoffJob(input: Readonly<{
     if (result.status === "invalid_acknowledgement") {
       throw new GenericHandoffDeliveryError("Generic handoff HTTP acknowledgement is invalid.", "quarantined", "corrupt_envelope");
     }
-    await terminalize(input.database, header.handoffId, activeClaim, "accepted", null);
-    return "accepted";
+    await terminalize(input.database, header.handoffId, activeClaim, "parsed_only", null);
+    return "parsed_only";
   } catch (error) {
     if (error instanceof GenericHandoffDeliveryError && error.classification === "transient") {
       if (input.finalAttempt) { await terminalize(input.database, header.handoffId, activeClaim, "retry_exhausted", "transient_delivery"); return "retry_exhausted"; }

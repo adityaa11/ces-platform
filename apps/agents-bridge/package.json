@@ -15,7 +15,6 @@
     "test:ghr-03b": "jiti tests/ghr-03b-real-e2e.integration.test.ts",
     "test:ghr-04a": "jiti tests/ghr-04a-http-dispatcher.test.ts",
     "test:ghr-04b": "jiti tests/ghr-04b-authenticated-http-receiver.test.ts",
-    "test:ghr-04c": "jiti tests/ghr-04c-v2-durable-acceptance.integration.test.ts",
     "test:idser-multimodal-inventory-candidates": "jiti tests/idser-multimodal-inventory-candidates.test.ts",
     "test:idser-multimodal-structural-fit-partition": "jiti tests/idser-multimodal-structural-fit-partition.test.ts",
     "test:provider-admitted-worker": "jiti tests/provider-admitted-worker.test.ts && jiti tests/provider-admitted-worker.integration.test.ts && jiti tests/provider-work-admission.integration.test.ts && jiti tests/interactive-provider-work-admission.integration.test.ts",

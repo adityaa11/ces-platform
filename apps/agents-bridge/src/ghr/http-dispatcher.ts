@@ -6,7 +6,7 @@ type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 export type GenericHandoffAcknowledgement = Readonly<{
   handoffId: string;
   bodySha256: string;
-  disposition: "planning_accepted";
+  disposition: "parsed_only";
 }>;
 
 export type GenericHandoffHttpDispatchResult =
@@ -56,8 +56,8 @@ async function readBoundedBytes(response: Response, maximumBytes: number): Promi
 function acknowledgement(value: unknown, request: VerifiedGenericHandoffHttpRequest): GenericHandoffAcknowledgement | undefined {
   if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
   const record = value as Record<string, unknown>;
-  if (Object.keys(record).length !== 3 || record.handoffId !== request.handoffId || record.bodySha256 !== request.bodySha256 || record.disposition !== "planning_accepted") return undefined;
-  return { handoffId: request.handoffId, bodySha256: request.bodySha256, disposition: "planning_accepted" };
+  if (Object.keys(record).length !== 3 || record.handoffId !== request.handoffId || record.bodySha256 !== request.bodySha256 || record.disposition !== "parsed_only") return undefined;
+  return { handoffId: request.handoffId, bodySha256: request.bodySha256, disposition: "parsed_only" };
 }
 
 /**
@@ -99,7 +99,7 @@ export function createGenericHandoffHttpDispatcher(
       } catch {
         return { status: "unavailable" };
       }
-      if (response.status !== 202) {
+      if (response.status !== 200) {
         if (response.status >= 500 || response.status === 408 || response.status === 429) return { status: "unavailable" };
         if (response.status === 400 || response.status === 422) return { status: "rejected" };
         return { status: "failed_closed" };

@@ -76,7 +76,6 @@ migrations.push("0104_ghr02a_dispatch_function_schema_access");
 migrations.push("0105_ghr03b_bridge_delivery");
 migrations.push("0106_bssv201406_candidate_active_authenticated_snapshot");
 migrations.push("0107_bssv201406_candidate_allocation_fingerprint_fencing");
-migrations.push("0108_ghr_idser_async_batch_plan_acceptance");
 migrations.push("0109_aa001_admin_authority_and_bootstrap_state");
 migrations.push("0110_aa001_bootstrap_reservation_fence");
 migrations.push("0111_aa001_bootstrap_conflict_and_sealed_fence");

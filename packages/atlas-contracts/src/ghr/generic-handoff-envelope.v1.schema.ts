@@ -54,7 +54,7 @@ export const ghrHeaderV1Schema = z.strictObject({
 }).describe("GenericHandoffEnvelope/v1 fixed header: syntax is validated here while issuer provenance and route authority remain external boundaries.");
 
 export const ghrRoutedBodyV1Schema = z.strictObject({
-  can_continue: z.boolean().describe("Required hop-local continuation indicator supplied and pinned by a trusted issuer; no default or coercion, and this generic package performs no continuation work."),
+  can_continue: z.boolean().describe("Required hop-local continuation indicator carried unchanged to the selected receiver; no default or coercion, and generic GHR does not interpret it."),
   payload: z.record(z.string(), z.json()).describe("Opaque bounded JSON object owned by the selected receiving body contract; generic GHR does not inspect semantic fields."),
 }).describe("Exact two-field generic transport wrapper whose original bytes are covered by the immutable body digest.");
 

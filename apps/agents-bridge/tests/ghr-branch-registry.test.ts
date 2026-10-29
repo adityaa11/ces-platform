@@ -12,19 +12,17 @@ const testOneRegistration = {
   handlerVersion: "v1",
   bodyContractType: "SemanticBatchPlanInput",
   bodyContractVersion: "v1",
-  canContinue: false,
   payloadByteLimit: 2_048,
   wrappedBodyByteLimit: 2_081,
   receiverIdentity: "semantic.batch-plan",
   receiver: { transport: "http", method: "POST", path: "/internal/semantic/batch-plan" },
 } as const;
 
-test("the prospective Test-1 binding is exact, false-only metadata", () => {
+test("the prospective Test-1 binding is exact header metadata", () => {
   const registry = createBranchRegistry([testOneRegistration]);
   assert.deepEqual(registry.resolve(testOneRegistration), testOneRegistration);
   assert.equal(registry.resolve(testOneRegistration).payloadByteLimit, 2_048);
   assert.equal(registry.resolve(testOneRegistration).wrappedBodyByteLimit, 2_081);
-  assert.equal(registry.resolve(testOneRegistration).canContinue, false);
   assert.deepEqual(registry.resolve(testOneRegistration).receiver, { transport: "http", method: "POST", path: "/internal/semantic/batch-plan" });
 
   for (const mismatch of [
