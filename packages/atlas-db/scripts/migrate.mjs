@@ -81,6 +81,7 @@ migrations.push("0109_aa001_admin_authority_and_bootstrap_state");
 migrations.push("0110_aa001_bootstrap_reservation_fence");
 migrations.push("0111_aa001_bootstrap_conflict_and_sealed_fence");
 migrations.push("0112_bssv2_quota_accounting_policy_deprecation");
+migrations.push("0113_bssv2_quota_accounting_policy_removal");
 const readMigration = async (name) => {
   let migration = await readFile(new URL(`../migrations/${name}.sql`, import.meta.url), "utf8");
   for (const [token, value] of Object.entries(replacements)) migration = migration.replaceAll(token, value.replaceAll("'", "''"));
