@@ -23,7 +23,6 @@ export type ProviderCapacityProfile = Readonly<{
   associatedRoutes: readonly Readonly<{ routeId: string; providerId: string }>[];
   limits: Readonly<Record<CapacityDimension, CapacityState>>;
   windowPolicies: Readonly<Record<WindowedDimension, QuotaWindowPolicy>>;
-  quotaAccountingPolicyId: string;
   capacitySource: CapacitySource;
   sourceRef: string;
   sourceVersion: string;
@@ -98,12 +97,11 @@ function parseWindowPolicy(value: unknown, dimension: WindowedDimension): QuotaW
 /** Parses only secret-free, server-controlled planning input; it never resolves credentials or provider routes. */
 export function parseProviderCapacityProfile(value: unknown): ProviderCapacityProfile {
   const input = object(value, "capacity profile");
-  rejectUnexpected(input, ["quotaDomainId", "profileVersion", "nonSecretProviderAccountAlias", "activeKeyCount", "associatedRoutes", "limits", "windowPolicies", "quotaAccountingPolicyId", "capacitySource", "sourceRef", "sourceVersion", "observedAt", "effectiveFrom"], "capacity profile");
+  rejectUnexpected(input, ["quotaDomainId", "profileVersion", "nonSecretProviderAccountAlias", "activeKeyCount", "associatedRoutes", "limits", "windowPolicies", "capacitySource", "sourceRef", "sourceVersion", "observedAt", "effectiveFrom"], "capacity profile");
   const quotaDomainId = requiredString(input.quotaDomainId, "quotaDomainId");
   const profileVersion = requiredString(input.profileVersion, "profileVersion");
   const nonSecretProviderAccountAlias = requiredString(input.nonSecretProviderAccountAlias, "nonSecretProviderAccountAlias");
   const activeKeyCount = positiveSafeInteger(input.activeKeyCount, "activeKeyCount");
-  const quotaAccountingPolicyId = requiredString(input.quotaAccountingPolicyId, "quotaAccountingPolicyId");
   const sourceRef = requiredString(input.sourceRef, "sourceRef");
   const sourceVersion = requiredString(input.sourceVersion, "sourceVersion");
   if (credentialShapedAlias.test(nonSecretProviderAccountAlias) || /api.?key|secret|credential|authorization|bearer|token/iu.test(nonSecretProviderAccountAlias)) throw new CapacityCatalogueError("nonSecretProviderAccountAlias must be an opaque non-secret alias.");
@@ -121,7 +119,7 @@ export function parseProviderCapacityProfile(value: unknown): ProviderCapacityPr
   const limits = { rpm: parseCapacity(limitsInput.rpm, "rpm"), tpm: parseCapacity(limitsInput.tpm, "tpm"), rpd: parseCapacity(limitsInput.rpd, "rpd"), concurrency: parseCapacity(limitsInput.concurrency, "concurrency") };
   const windowsInput = object(input.windowPolicies, "windowPolicies"); rejectUnexpected(windowsInput, ["rpm", "tpm", "rpd"], "windowPolicies");
   const windowPolicies = { rpm: parseWindowPolicy(windowsInput.rpm, "rpm"), tpm: parseWindowPolicy(windowsInput.tpm, "tpm"), rpd: parseWindowPolicy(windowsInput.rpd, "rpd") };
-  return { quotaDomainId, profileVersion, nonSecretProviderAccountAlias, activeKeyCount, associatedRoutes, limits, windowPolicies, quotaAccountingPolicyId, capacitySource: input.capacitySource as CapacitySource, sourceRef, sourceVersion, observedAt: finiteTimestamp(input.observedAt, "observedAt"), effectiveFrom: finiteTimestamp(input.effectiveFrom, "effectiveFrom") };
+  return { quotaDomainId, profileVersion, nonSecretProviderAccountAlias, activeKeyCount, associatedRoutes, limits, windowPolicies, capacitySource: input.capacitySource as CapacitySource, sourceRef, sourceVersion, observedAt: finiteTimestamp(input.observedAt, "observedAt"), effectiveFrom: finiteTimestamp(input.effectiveFrom, "effectiveFrom") };
 }
 
 /** Ensures a configured route maps to one domain while allowing many routes to share that domain. */

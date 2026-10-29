@@ -13,7 +13,7 @@ Remove the obsolete `quota_accounting_policy_id` metadata from BSS without rewri
 | Order | Ticket / batch | State | Depends on | Review question |
 | ---: | --- | --- | --- | --- |
 | 1 | [BSS-QAP-001](BSS-QAP-001-r1-nullable-deprecation-migration.md) / `BSS-QAP-BATCH-01` | `approved` | Closed Scope 01B replay history remains immutable; target catalog preflight before DDL | Does R1 add and register only `0112`, making the obsolete columns nullable and removing only the publisher equality predicate while retaining all existing protections? |
-| 2 | [BSS-QAP-002](BSS-QAP-002-r2-id-free-writer-contract.md) / `BSS-QAP-BATCH-02` | `planned` | BSS-QAP-001 `PASS` | Does R2 remove every application, fixture, and operational-writer dependency on the obsolete IDs while the nullable R1 schema remains compatible with old writers? |
+| 2 | [BSS-QAP-002](BSS-QAP-002-r2-id-free-writer-contract.md) / `BSS-QAP-BATCH-02` | `awaiting_review` | BSS-QAP-001 `PASS` | Does R2 remove every application, fixture, and operational-writer dependency on the obsolete IDs while the nullable R1 schema remains compatible with old writers? |
 | 3 | [BSS-QAP-003](BSS-QAP-003-r3-physical-column-removal.md) / `BSS-QAP-BATCH-03` | `planned` | BSS-QAP-001 and BSS-QAP-002 `PASS`; explicit R3 GO after its evidence gate | Does R3 register and execute only `0113` after zero-writer and catalog proof, leaving both final tables column-free without changing runtime or public contracts? |
 
 `0113_bssv2_quota_accounting_policy_removal` must not be registered, shipped to any migration executor, or executed before BSS-QAP-003 is explicitly authorized. An `0113` source file may be prepared/reviewed only within its own ticket; its runner registration remains R3-only.

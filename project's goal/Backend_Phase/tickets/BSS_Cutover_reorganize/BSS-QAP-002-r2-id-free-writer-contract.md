@@ -1,6 +1,6 @@
 # BSS-QAP-002: R2 ID-free writer contract cutover
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `BSS-QAP-BATCH-02`
 - **Depends on:** BSS-QAP-001 `PASS`
 - **Source authority:** [Removal Mechanism Audit](../../BSS-Re-organize/BSS_QUOTA_ACCOUNTING_POLICY_MIGRATION_REMOVAL_MECHANISM_AUDIT.md) §§1, 9, 11–12

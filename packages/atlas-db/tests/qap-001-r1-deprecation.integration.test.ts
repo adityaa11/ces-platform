@@ -23,20 +23,8 @@ test("BSS-QAP-001 R1 preserves publisher authority and permits ID-free rows", { 
   const profile = { quotaDomainId: domain, providerCapacityProfileVersion: "idfree-v1", plannerVersion: "qap-r1", effectiveFrom };
   const allocation = { allocationVersion: "v1", effectiveMask: ["rpm", "tpm", "rpd", "concurrency"], processBaselines: { [processId]: { rpm: 10, tpm: 1000, rpd: 100, concurrency: 10 } } };
   try {
-    const columns = await admin.unsafe(`
-      SELECT table_name, is_nullable
-      FROM information_schema.columns
-      WHERE table_schema='bridge' AND column_name='quota_accounting_policy_id'
-        AND table_name IN ('provider_capacity_profile','workload_envelope_profile')
-      ORDER BY table_name
-    `);
-    assert.deepEqual(Array.from(columns), [
-      { table_name: "provider_capacity_profile", is_nullable: "YES" },
-      { table_name: "workload_envelope_profile", is_nullable: "YES" },
-    ]);
     const [catalog] = await admin.unsafe(`
       SELECT
-        (SELECT count(*)::int FROM pg_constraint WHERE conname IN ('provider_capacity_profile_quota_accounting_policy_id_check','workload_envelope_profile_quota_accounting_policy_id_check')) AS nonblank_checks,
         (SELECT pg_get_userbyid(proowner) FROM pg_proc WHERE oid=$1::regprocedure) AS convergence_owner,
         (SELECT prosecdef FROM pg_proc WHERE oid=$1::regprocedure) AS convergence_definer,
         (SELECT pg_get_userbyid(proowner) FROM pg_proc WHERE oid=$2::regprocedure) AS shared_owner,
@@ -45,13 +33,10 @@ test("BSS-QAP-001 R1 preserves publisher authority and permits ID-free rows", { 
         has_function_privilege('agents_bridge',$2::regprocedure,'EXECUTE') AS shared_granted,
         has_function_privilege('public',$1::regprocedure,'EXECUTE') AS convergence_public,
         has_function_privilege('public',$2::regprocedure,'EXECUTE') AS shared_public,
-        pg_get_functiondef($1::regprocedure) ILIKE '%quota_accounting_policy_id IS DISTINCT FROM%' AS convergence_has_removed_operand,
-        pg_get_functiondef($2::regprocedure) ILIKE '%quota_accounting_policy_id IS DISTINCT FROM%' AS shared_has_removed_operand,
         pg_get_functiondef($1::regprocedure) ILIKE '%pg_advisory_xact_lock%' AS convergence_keeps_lock,
         pg_get_functiondef($2::regprocedure) ILIKE '%derive_effective_enforcement_policy%' AS shared_keeps_effective_policy
     `, [convergencePublisher, sharedPublisher]);
     assert.deepEqual(catalog, {
-      nonblank_checks: 2,
       convergence_owner: "agents_bridge",
       convergence_definer: false,
       shared_owner: "atlas",
@@ -60,18 +45,12 @@ test("BSS-QAP-001 R1 preserves publisher authority and permits ID-free rows", { 
       shared_granted: true,
       convergence_public: false,
       shared_public: false,
-      convergence_has_removed_operand: false,
-      shared_has_removed_operand: false,
       convergence_keeps_lock: true,
       shared_keeps_effective_policy: true,
     });
 
     await bridge.unsafe("BEGIN");
-    // R1 accepts historical nonempty values without modifying historical rows.
-    await bridge.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'legacy-v1','fixture',$2::jsonb,$3::jsonb,$4::jsonb,'legacy-qap','qualified_observation','fixture://legacy','v1',now(),now())", [domain, [{ routeId: route, providerId: "fixture", modelOrProcessorId: "fixture-model", adapterVersion: "v1", qualificationRef: "qualification://qap-r1", qualificationVersion: "v1", capability: "atlas.semantic.extract" }], limits, windows]);
-    await bridge.unsafe("INSERT INTO bridge.workload_envelope_profile(workload_id,profile_version,active,compatible_process_kinds,structural_bound,estimator,quota_accounting_policy_id,output_reservation,safety_policy) VALUES($1,'legacy-v1',true,'[\"semantic\"]','{}','{}','legacy-qap','{}','{}')", [workloadId]);
-
-    // New compatible rows omit the deprecated metadata altogether.
+    // R1-compatible rows omit the deprecated metadata altogether.
     await bridge.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'idfree-v1','fixture',$2::jsonb,$3::jsonb,$4::jsonb,'qualified_observation','fixture://idfree','v1',now(),now())", [domain, [{ routeId: route, providerId: "fixture", modelOrProcessorId: "fixture-model", adapterVersion: "v1", qualificationRef: "qualification://qap-r1", qualificationVersion: "v1", capability: "atlas.semantic.extract" }], limits, windows]);
     await bridge.unsafe("INSERT INTO bridge.workload_envelope_profile(workload_id,profile_version,active,compatible_process_kinds,structural_bound,estimator,output_reservation,safety_policy) VALUES($1,'idfree-v1',true,'[\"semantic\"]','{}','{}','{}','{}')", [workloadId]);
     await bridge.unsafe("INSERT INTO bridge.provider_process_profile(process_id,profile_version,process_kind,capability,service_class,fairness_scope,allocation_policy,active,eligible_route_ids,workload_id,workload_profile_version) VALUES($1,'v1','semantic','atlas.semantic.extract','background','{}','{}',true,$2::jsonb,$3,'idfree-v1')", [processId, [route], workloadId]);

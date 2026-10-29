@@ -12,15 +12,14 @@ const capacity = (limits: unknown, profileVersion = "v1") => parseProviderCapaci
     rpm: { policyId: "rpm", policyVersion: "v1", source: "provider_docs", kind: "fixed_window", parameters: { windowSeconds: 60 } },
     tpm: { policyId: "tpm", policyVersion: "v1", source: "provider_docs", kind: "fixed_window", parameters: { windowSeconds: 60 } },
     rpd: { policyId: "rpd", policyVersion: "v1", source: "provider_docs", kind: "unknown" },
-  },
-  quotaAccountingPolicyId: "quota-v1", capacitySource: "provider_docs", sourceRef: "fixture://weighted", sourceVersion: "v1",
+  }, capacitySource: "provider_docs", sourceRef: "fixture://weighted", sourceVersion: "v1",
   observedAt: "2026-10-23T00:00:00.000Z", effectiveFrom: "2026-10-23T00:00:00.000Z",
 });
 
 const workload = (id: string, kind: "semantic" | "reconciliation" | "chat") => parseWorkloadEnvelopeProfile({
   workloadId: id, profileVersion: "v1", active: true, compatibleProcessKinds: [kind],
   structuralBound: { identity: `${id}-bound`, version: "v1", maxRequestBytes: 10_000, maxInputTokens: 100 },
-  estimator: { identity: `${id}-estimator`, version: "v1" }, quotaAccountingPolicyId: "quota-v1",
+  estimator: { identity: `${id}-estimator`, version: "v1" },
   outputReservation: { policyId: `${id}-output`, policyVersion: "v1", maxOutputTokens: 100 },
   safetyPolicy: { policyId: `${id}-safety`, policyVersion: "v1" },
 });

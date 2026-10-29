@@ -15,14 +15,14 @@ test("BSS-V2-006-03A-04 deduplicates activation wakeups and emits only bounded c
   const capacityPolicy = { rpm: { kind: "fixed", windowSeconds: 60, limitUnits: 10 }, tpm: { kind: "fixed", windowSeconds: 60, limitUnits: 20 }, rpd: { kind: "fixed", windowSeconds: 86_400, limitUnits: 10 }, concurrency: { kind: "fixed", windowSeconds: 60, limitUnits: 2 } };
   const plan = (tpm: number) => ({ usableGlobalCapacity: { rpm: 10, tpm, rpd: 10, concurrency: 2 }, hardInteractiveReserve: { rpm: 1, tpm: 1, rpd: 1, concurrency: 1 }, backgroundCapacity: { rpm: 9, tpm: Math.max(0, tpm - 1), rpd: 9, concurrency: 1 }, backgroundLanes: [] });
   const addPlan = async (version: string, capacityVersion: string, profile: object, inputs: readonly [string, string][]) => {
-    await sql.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,$2,'fixture',$3,'{}',$4,'quota','operator_config','fixture',$2,now(),now())", [domain, capacityVersion, [{ routeId: `${domain}-route` }], capacityPolicy]);
+    await sql.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,$2,'fixture',$3,'{}',$4,'operator_config','fixture',$2,now(),now())", [domain, capacityVersion, [{ routeId: `${domain}-route` }], capacityPolicy]);
     await sql.unsafe("INSERT INTO bridge.desired_admission_profile(quota_domain_id,profile_version,provider_capacity_profile_version,planner_version,effective_from,profile) VALUES($1,$2,$3,'fixture',now(),$4)", [domain, version, capacityVersion, profile]);
     for (const [processId, workloadId] of inputs) await sql.unsafe("INSERT INTO bridge.desired_admission_profile_input(quota_domain_id,desired_profile_version,process_id,process_profile_version,workload_id,workload_profile_version) VALUES($1,$2,$3,'v1',$4,'v1')", [domain, version, processId, workloadId]);
   };
   try {
     await sql.unsafe("BEGIN");
     for (const [processId, workloadId, capability] of [[processA, workloadA, "atlas.chat.default"], [processB, workloadB, "atlas.chat.deep"]] as const) {
-      await sql.unsafe("INSERT INTO bridge.workload_envelope_profile(workload_id,profile_version,active,compatible_process_kinds,structural_bound,estimator,quota_accounting_policy_id,output_reservation,safety_policy) VALUES($1,'v1',true,'[\"chat\"]','{}','{}','quota','{}','{}')", [workloadId]);
+      await sql.unsafe("INSERT INTO bridge.workload_envelope_profile(workload_id,profile_version,active,compatible_process_kinds,structural_bound,estimator,output_reservation,safety_policy) VALUES($1,'v1',true,'[\"chat\"]','{}','{}','{}','{}')", [workloadId]);
       await sql.unsafe("INSERT INTO bridge.provider_process_profile(process_id,profile_version,process_kind,capability,service_class,fairness_scope,allocation_policy,active,eligible_route_ids,workload_id,workload_profile_version) VALUES($1,'v1','chat',$2,'interactive','{}','{}',true,'[]',$3,'v1')", [processId, capability, workloadId]);
     }
     await addPlan("plan-v1", "cap-v1", plan(20), [[processA, workloadA]]);

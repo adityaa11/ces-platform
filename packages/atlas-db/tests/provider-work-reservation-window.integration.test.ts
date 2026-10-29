@@ -13,6 +13,7 @@ test("BSS-V2-006-01 persists idempotent work, fenced reservations, exact windows
   const interactive2 = `interactive-2-${domain}`;
   const interactive3 = `interactive-3-${domain}`;
   const interactive4 = `interactive-4-${domain}`;
+  let authorityVersion: bigint;
   let rejectionNumber = 0;
   const rejects = async (action: () => Promise<unknown>, expected: RegExp) => {
     const savepoint = `expected_failure_${rejectionNumber++}`;
@@ -20,18 +21,24 @@ test("BSS-V2-006-01 persists idempotent work, fenced reservations, exact windows
     await assert.rejects(action, expected);
     await bridge.unsafe(`ROLLBACK TO SAVEPOINT ${savepoint}`);
   };
-  const work = (logicalWorkId: string, attempt: number, deadline: string | null = null) => bridge.unsafe(
-    "SELECT (bridge.register_provider_work_attempt($1,$2,$3,$3,'v1','fairness-a','{}',$4,1,$5,NULL)).*",
-    [logicalWorkId, attempt, domain, "plan-v1", deadline],
-  );
+  const work = async (logicalWorkId: string, attempt: number, deadline: string | null = null) => {
+    const result = await bridge.unsafe(
+      "SELECT (bridge.register_provider_work_attempt($1,$2,$3,$3,'v1','fairness-a','{}',$4,1,$5,NULL)).*",
+      [logicalWorkId, attempt, domain, "plan-v1", deadline],
+    );
+    await bridge.unsafe("SELECT bridge.bind_provider_work_route($1,$2,$3)", [logicalWorkId, attempt, authorityVersion]);
+    return result;
+  };
   try {
     await bridge.unsafe("BEGIN");
-    await bridge.unsafe("INSERT INTO bridge.provider_capacity_profile (quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES ($1,'capacity-v1','account','[{\"routeId\":\"route-a\"}]','{}','{\"requests\":{\"kind\":\"fixed\",\"windowSeconds\":60,\"limitUnits\":5}}','quota-v1','provider_docs','provider-docs://limits','v1',now(),now())", [domain]);
-    await bridge.unsafe("INSERT INTO bridge.workload_envelope_profile (workload_id,profile_version,active,compatible_process_kinds,structural_bound,estimator,quota_accounting_policy_id,output_reservation,safety_policy) VALUES ($1,'v1',true,'[\"chat\"]','{}','{}','quota-v1','{}','{}')", [domain]);
-    await bridge.unsafe("INSERT INTO bridge.provider_process_profile (process_id,profile_version,process_kind,capability,service_class,fairness_scope,allocation_policy,active,eligible_route_ids,workload_id,workload_profile_version) VALUES ($1,'v1','chat','atlas.chat.respond','interactive','{}','{}',true,'[]',$1,'v1')", [domain]);
+    await bridge.unsafe("INSERT INTO bridge.provider_capacity_profile (quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES ($1,'capacity-v1','account','[{\"routeId\":\"route-a\",\"providerId\":\"fixture\",\"modelOrProcessorId\":\"fixture-model\",\"adapterVersion\":\"v1\",\"qualificationRef\":\"qualification://fixture\",\"qualificationVersion\":\"v1\",\"capability\":\"atlas.chat.respond\"}]','{}','{\"requests\":{\"kind\":\"fixed\",\"windowSeconds\":60,\"limitUnits\":5}}','provider_docs','provider-docs://limits','v1',now(),now())", [domain]);
+    await bridge.unsafe("INSERT INTO bridge.workload_envelope_profile (workload_id,profile_version,active,compatible_process_kinds,structural_bound,estimator,output_reservation,safety_policy) VALUES ($1,'v1',true,'[\"chat\"]','{}','{}','{}','{}')", [domain]);
+    await bridge.unsafe("INSERT INTO bridge.provider_process_profile (process_id,profile_version,process_kind,capability,service_class,fairness_scope,allocation_policy,active,eligible_route_ids,workload_id,workload_profile_version) VALUES ($1,'v1','chat','atlas.chat.respond','interactive','{}','{}',true,'[\"route-a\"]',$1,'v1')", [domain]);
     await bridge.unsafe("INSERT INTO bridge.desired_admission_profile (quota_domain_id,profile_version,provider_capacity_profile_version,planner_version,effective_from,profile) VALUES ($1,'plan-v1','capacity-v1','planner-v1',now(),'{}')", [domain]);
     await bridge.unsafe("INSERT INTO bridge.desired_admission_profile_input (quota_domain_id,desired_profile_version,process_id,process_profile_version,workload_id,workload_profile_version) VALUES ($1,'plan-v1',$1,'v1',$1,'v1')", [domain]);
     await bridge.unsafe("SELECT * FROM bridge.activate_desired_admission_profile($1,'plan-v1')", [domain]);
+    const [authority] = await bridge.unsafe("SELECT * FROM bridge.publish_qualified_provider_route_authority('route-a',$1,'fixture','fixture-model','v1','qualification://fixture','v1','atlas.chat.respond')", [domain]);
+    authorityVersion = BigInt(authority.authority_version);
 
     const deadline = new Date(Date.now() + 60_000).toISOString();
     await work(interactive1, 1, deadline); await work(interactive1, 1, deadline);
@@ -108,7 +115,7 @@ test("BSS-V2-006-01 persists idempotent work, fenced reservations, exact windows
     await bridge.unsafe("SAVEPOINT stale_wakeup");
     await assert.rejects(() => bridge.unsafe("SELECT * FROM bridge.request_provider_work_wakeup($1,'window:stale',now(),'missing-plan',999)", [domain]), /active desired admission/i);
     await bridge.unsafe("ROLLBACK TO SAVEPOINT stale_wakeup");
-    await bridge.unsafe("INSERT INTO bridge.provider_capacity_profile (quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES ($1,'capacity-v2','account','[{\"routeId\":\"route-a\"}]','{}','{\"requests\":{\"kind\":\"rolling\",\"windowSeconds\":60,\"limitUnits\":4}}','quota-v2','provider_docs','provider-docs://limits','v2',now(),now())", [domain]);
+    await bridge.unsafe("INSERT INTO bridge.provider_capacity_profile (quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES ($1,'capacity-v2','account','[{\"routeId\":\"route-a\"}]','{}','{\"requests\":{\"kind\":\"rolling\",\"windowSeconds\":60,\"limitUnits\":4}}','provider_docs','provider-docs://limits','v2',now(),now())", [domain]);
     await bridge.unsafe("INSERT INTO bridge.desired_admission_profile (quota_domain_id,profile_version,provider_capacity_profile_version,planner_version,effective_from,profile) VALUES ($1,'plan-v2','capacity-v2','planner-v2',now(),'{}')", [domain]);
     await bridge.unsafe("INSERT INTO bridge.desired_admission_profile_input (quota_domain_id,desired_profile_version,process_id,process_profile_version,workload_id,workload_profile_version) VALUES ($1,'plan-v2',$1,'v1',$1,'v1')", [domain]);
     await bridge.unsafe("SELECT * FROM bridge.activate_desired_admission_profile($1,'plan-v2')", [domain]);
@@ -118,7 +125,7 @@ test("BSS-V2-006-01 persists idempotent work, fenced reservations, exact windows
     await bridge.unsafe("SELECT bridge.put_provider_quota_window_state($1,'requests',jsonb_build_object('requestStartedAt',jsonb_build_array((now() - interval '2 minutes')::text,now()::text)),true,now())", [domain]);
     const [rollingRollover] = await bridge.unsafe("SELECT window_state FROM bridge.advance_provider_quota_window_state($1,'requests',now())", [domain]);
     assert.deepEqual(rollingRollover.window_state.remaining, 3);
-    await bridge.unsafe("INSERT INTO bridge.provider_capacity_profile (quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES ($1,'capacity-v3','account','[{\"routeId\":\"route-a\"}]','{}','{\"requests\":{\"kind\":\"refill\",\"limitUnits\":5,\"refillUnits\":2,\"refillIntervalSeconds\":10}}','quota-v3','provider_docs','provider-docs://limits','v3',now(),now())", [domain]);
+    await bridge.unsafe("INSERT INTO bridge.provider_capacity_profile (quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES ($1,'capacity-v3','account','[{\"routeId\":\"route-a\"}]','{}','{\"requests\":{\"kind\":\"refill\",\"limitUnits\":5,\"refillUnits\":2,\"refillIntervalSeconds\":10}}','provider_docs','provider-docs://limits','v3',now(),now())", [domain]);
     await bridge.unsafe("INSERT INTO bridge.desired_admission_profile (quota_domain_id,profile_version,provider_capacity_profile_version,planner_version,effective_from,profile) VALUES ($1,'plan-v3','capacity-v3','planner-v3',now(),'{}')", [domain]);
     await bridge.unsafe("INSERT INTO bridge.desired_admission_profile_input (quota_domain_id,desired_profile_version,process_id,process_profile_version,workload_id,workload_profile_version) VALUES ($1,'plan-v3',$1,'v1',$1,'v1')", [domain]);
     await bridge.unsafe("SELECT * FROM bridge.activate_desired_admission_profile($1,'plan-v3')", [domain]);

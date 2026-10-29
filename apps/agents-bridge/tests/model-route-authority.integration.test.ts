@@ -44,7 +44,7 @@ test("BSS-V2-014-02-01 publishes one complete immutable authority version and re
   };
   try {
     await sql.unsafe("BEGIN");
-    await sql.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'v1','fixture-provider',$2::jsonb,'{}'::jsonb,'{}'::jsonb,'fixture-quota','operator_config','fixture','v1',now(),now())", [domain, [
+    await sql.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'v1','fixture-provider',$2::jsonb,'{}'::jsonb,'{}'::jsonb,'operator_config','fixture','v1',now(),now())", [domain, [
       qualifiedRoute(route),
       { ...qualifiedRoute(route), modelOrProcessorId: "fixture-model-v2" },
     ]]);

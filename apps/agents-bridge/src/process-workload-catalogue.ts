@@ -40,7 +40,6 @@ export type WorkloadEnvelopeProfile = Readonly<{
   compatibleProcessKinds: readonly ProcessKind[];
   structuralBound: Readonly<{ identity: string; version: string; maxRequestBytes: number; maxInputTokens: number }>;
   estimator: Readonly<{ identity: string; version: string }>;
-  quotaAccountingPolicyId: string;
   outputReservation: Readonly<{ policyId: string; policyVersion: string; maxOutputTokens: number }>;
   safetyPolicy: Readonly<{ policyId: string; policyVersion: string }>;
 }>;
@@ -72,7 +71,6 @@ export type RegisteredProcessAuthorities = Readonly<{
   /** Server-qualified route identity, including the capability it is qualified to serve. */
   qualifiedRouteCapabilities: ReadonlyMap<string, AtlasCapability>;
   workloads: readonly WorkloadEnvelopeProfile[];
-  quotaAccountingPolicyIds: ReadonlySet<string>;
 }>;
 
 export class ProcessWorkloadCatalogueError extends Error {}
@@ -139,16 +137,16 @@ export function parseProviderProcessProfile(value: unknown, registeredProcessKin
   return { processId: requiredString(input.processId, "processId"), profileVersion: requiredString(input.profileVersion, "profileVersion"), processKind: processKind as ProcessKind, capability: capability as AtlasCapability, serviceClass: serviceClass as ServiceClass, fairnessScope: { kind: scope.kind as ProviderProcessProfile["fairnessScope"]["kind"], identityVersion: requiredString(scope.identityVersion, "fairnessScope identityVersion") }, allocationPolicy: { ...(background ? { background } : {}), ...(interactive ? { interactive } : {}), hardInteractiveProtection: { policyId: requiredString(protection.policyId, "hardInteractiveProtection policyId"), policyVersion: requiredString(protection.policyVersion, "hardInteractiveProtection policyVersion") } }, active: input.active, eligibleRouteIds, workloadProfile: { workloadId: requiredString(workload.workloadId, "workloadProfile workloadId"), profileVersion: requiredString(workload.profileVersion, "workloadProfile profileVersion") } };
 }
 
-/** Requires an actual structural bound and versioned estimator/accounting/safety identities; averages are not a bound. */
+/** Requires an actual structural bound and versioned estimator/output/safety identities; averages are not a bound. */
 export function parseWorkloadEnvelopeProfile(value: unknown, registeredProcessKinds: ReadonlySet<ProcessKind> = legacyProcessKinds): WorkloadEnvelopeProfile {
   const input = object(value, "workload envelope profile");
-  rejectUnexpected(input, ["workloadId", "profileVersion", "active", "compatibleProcessKinds", "structuralBound", "estimator", "quotaAccountingPolicyId", "outputReservation", "safetyPolicy"], "workload envelope profile");
+  rejectUnexpected(input, ["workloadId", "profileVersion", "active", "compatibleProcessKinds", "structuralBound", "estimator", "outputReservation", "safetyPolicy"], "workload envelope profile");
   if (typeof input.active !== "boolean" || !Array.isArray(input.compatibleProcessKinds) || input.compatibleProcessKinds.length === 0 || input.compatibleProcessKinds.some((kind) => !registeredProcessKinds.has(kind as ProcessKind)) || new Set(input.compatibleProcessKinds).size !== input.compatibleProcessKinds.length) throw new ProcessWorkloadCatalogueError("workload profile requires known compatible process kinds.");
   const bound = object(input.structuralBound, "structuralBound"); rejectUnexpected(bound, ["identity", "version", "maxRequestBytes", "maxInputTokens"], "structuralBound");
   const estimator = object(input.estimator, "estimator"); rejectUnexpected(estimator, ["identity", "version"], "estimator");
   const output = object(input.outputReservation, "outputReservation"); rejectUnexpected(output, ["policyId", "policyVersion", "maxOutputTokens"], "outputReservation");
   const safety = object(input.safetyPolicy, "safetyPolicy"); rejectUnexpected(safety, ["policyId", "policyVersion"], "safetyPolicy");
-  return { workloadId: requiredString(input.workloadId, "workloadId"), profileVersion: requiredString(input.profileVersion, "profileVersion"), active: input.active, compatibleProcessKinds: input.compatibleProcessKinds as ProcessKind[], structuralBound: { identity: requiredString(bound.identity, "structuralBound identity"), version: requiredString(bound.version, "structuralBound version"), maxRequestBytes: positiveSafeInteger(bound.maxRequestBytes, "structuralBound maxRequestBytes"), maxInputTokens: positiveSafeInteger(bound.maxInputTokens, "structuralBound maxInputTokens") }, estimator: { identity: requiredString(estimator.identity, "estimator identity"), version: requiredString(estimator.version, "estimator version") }, quotaAccountingPolicyId: requiredString(input.quotaAccountingPolicyId, "quotaAccountingPolicyId"), outputReservation: { policyId: requiredString(output.policyId, "outputReservation policyId"), policyVersion: requiredString(output.policyVersion, "outputReservation policyVersion"), maxOutputTokens: positiveSafeInteger(output.maxOutputTokens, "outputReservation maxOutputTokens") }, safetyPolicy: { policyId: requiredString(safety.policyId, "safetyPolicy policyId"), policyVersion: requiredString(safety.policyVersion, "safetyPolicy policyVersion") } };
+  return { workloadId: requiredString(input.workloadId, "workloadId"), profileVersion: requiredString(input.profileVersion, "profileVersion"), active: input.active, compatibleProcessKinds: input.compatibleProcessKinds as ProcessKind[], structuralBound: { identity: requiredString(bound.identity, "structuralBound identity"), version: requiredString(bound.version, "structuralBound version"), maxRequestBytes: positiveSafeInteger(bound.maxRequestBytes, "structuralBound maxRequestBytes"), maxInputTokens: positiveSafeInteger(bound.maxInputTokens, "structuralBound maxInputTokens") }, estimator: { identity: requiredString(estimator.identity, "estimator identity"), version: requiredString(estimator.version, "estimator version") }, outputReservation: { policyId: requiredString(output.policyId, "outputReservation policyId"), policyVersion: requiredString(output.policyVersion, "outputReservation policyVersion"), maxOutputTokens: positiveSafeInteger(output.maxOutputTokens, "outputReservation maxOutputTokens") }, safetyPolicy: { policyId: requiredString(safety.policyId, "safetyPolicy policyId"), policyVersion: requiredString(safety.policyVersion, "safetyPolicy policyVersion") } };
 }
 
 /** Validates the four admission dimensions independently; no scalar capacity surrogate is representable. */
@@ -159,7 +157,7 @@ export function parseRequestResourceEnvelope(value: unknown): RequestResourceEnv
 }
 
 /** Resolves only active, compatible, versioned operational profiles. Unknown and placeholder profiles fail closed. */
-export function validateProcessWorkloadCatalogue(processes: readonly ProviderProcessProfile[], workloads: readonly WorkloadEnvelopeProfile[], qualifiedRouteIds: ReadonlySet<string>, quotaAccountingPolicyIds: ReadonlySet<string>): void {
+export function validateProcessWorkloadCatalogue(processes: readonly ProviderProcessProfile[], workloads: readonly WorkloadEnvelopeProfile[], qualifiedRouteIds: ReadonlySet<string>): void {
   const workloadIndex = new Map(workloads.map((profile) => [`${profile.workloadId}:${profile.profileVersion}`, profile]));
   const processKeys = new Set<string>();
   for (const process of processes) {
@@ -171,7 +169,6 @@ export function validateProcessWorkloadCatalogue(processes: readonly ProviderPro
     if (!workload.compatibleProcessKinds.includes(process.processKind)) throw new ProcessWorkloadCatalogueError(`process ${key} is incompatible with its workload profile.`);
     if (process.active && (!workload.active || process.eligibleRouteIds.some((routeId) => !qualifiedRouteIds.has(routeId)))) throw new ProcessWorkloadCatalogueError(`active process ${key} has an inactive workload or unknown route.`);
   }
-  for (const workload of workloads) if (!quotaAccountingPolicyIds.has(workload.quotaAccountingPolicyId)) throw new ProcessWorkloadCatalogueError(`workload ${workload.workloadId}:${workload.profileVersion} has no explicit quota-accounting authority.`);
 }
 
 /**
@@ -225,7 +222,7 @@ export function resolveRegisteredProcessPolicy(registry: ServerProcessRegistry, 
   const policy = registry.policies.find((candidate) => candidate.quotaDomainId === reference.quotaDomainId && candidate.process.processId === reference.processId && candidate.process.profileVersion === reference.profileVersion);
   if (!policy) throw new ProcessWorkloadCatalogueError("registered process policy is unknown for the quota domain.");
   if (!authorities.qualifiedQuotaDomainIds.has(policy.quotaDomainId)) throw new ProcessWorkloadCatalogueError("registered process policy has an unqualified quota domain.");
-  validateProcessWorkloadCatalogue([policy.process], authorities.workloads, authorities.qualifiedRouteIds, authorities.quotaAccountingPolicyIds);
+  validateProcessWorkloadCatalogue([policy.process], authorities.workloads, authorities.qualifiedRouteIds);
   if (policy.process.active && policy.process.eligibleRouteIds.some((routeId) => authorities.qualifiedRouteCapabilities.get(routeId) !== policy.process.capability)) {
     throw new ProcessWorkloadCatalogueError("registered process policy has a route not qualified for its capability.");
   }

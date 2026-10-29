@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { ProcessWorkloadCatalogueError, parseProviderProcessProfile, parseRequestResourceEnvelope, parseServerProcessRegistry, parseWorkloadEnvelopeProfile, validateProcessWorkloadCatalogue } from "../src/process-workload-catalogue.ts";
 
-const workload = (overrides: Record<string, unknown> = {}) => ({ workloadId: "semantic-bounded", profileVersion: "v1", active: true, compatibleProcessKinds: ["semantic"], structuralBound: { identity: "semantic-source-units", version: "v1", maxRequestBytes: 100_000, maxInputTokens: 20_000 }, estimator: { identity: "semantic-estimator", version: "v2" }, quotaAccountingPolicyId: "anoman-quota-tokens-v1", outputReservation: { policyId: "semantic-output", policyVersion: "v1", maxOutputTokens: 2_000 }, safetyPolicy: { policyId: "semantic-safety", policyVersion: "v1" }, ...overrides });
+const workload = (overrides: Record<string, unknown> = {}) => ({ workloadId: "semantic-bounded", profileVersion: "v1", active: true, compatibleProcessKinds: ["semantic"], structuralBound: { identity: "semantic-source-units", version: "v1", maxRequestBytes: 100_000, maxInputTokens: 20_000 }, estimator: { identity: "semantic-estimator", version: "v2" }, outputReservation: { policyId: "semantic-output", policyVersion: "v1", maxOutputTokens: 2_000 }, safetyPolicy: { policyId: "semantic-safety", policyVersion: "v1" }, ...overrides });
 const process = (overrides: Record<string, unknown> = {}) => ({ processId: "semantic-extraction", profileVersion: "v1", processKind: "semantic", capability: "atlas.semantic.extract", serviceClass: "background", fairnessScope: { kind: "bundle", identityVersion: "v1" }, allocationPolicy: { background: { weight: 1, mayBorrowIdleCapacity: true, capPolicyId: "semantic-cap-v1" }, hardInteractiveProtection: { policyId: "interactive-reserve", policyVersion: "v1" } }, active: true, eligibleRouteIds: ["anoman-semantic"], workloadProfile: { workloadId: "semantic-bounded", profileVersion: "v1" }, ...overrides });
 
 test("process policy is operational and unknown or entitlement-shaped input fails closed", () => {
@@ -26,7 +26,7 @@ test("RC-01401-04: interactive weight exists only in the versioned server regist
   assert.deepEqual(registry.policies[0]?.process.allocationPolicy.interactive, { weight: 3 });
 });
 
-test("workloads require concrete bounds and versioned estimator, accounting, output, and safety policies", () => {
+test("workloads require concrete bounds and versioned estimator, output, and safety policies", () => {
   const parsed = parseWorkloadEnvelopeProfile(workload());
   assert.equal(parsed.structuralBound.maxInputTokens, 20_000);
   assert.throws(() => parseWorkloadEnvelopeProfile(workload({ structuralBound: { identity: "x", version: "v1", maxRequestBytes: 1 } })), /maxInputTokens/);
@@ -42,12 +42,11 @@ test("resource envelopes preserve separate request, token, day, and concurrency 
   assert.throws(() => parseRequestResourceEnvelope({ scalar: 4 }), /unsupported field/);
 });
 
-test("activation uses explicit quota accounting, immutable version references, and never billing weights", () => {
+test("activation keeps immutable version references and never accepts billing weights", () => {
   const v1 = parseWorkloadEnvelopeProfile(workload());
   const v2 = parseWorkloadEnvelopeProfile(workload({ profileVersion: "v2", estimator: { identity: "semantic-estimator", version: "v3" } }));
   const active = parseProviderProcessProfile(process());
-  assert.doesNotThrow(() => validateProcessWorkloadCatalogue([active], [v1, v2], new Set(["anoman-semantic"]), new Set(["anoman-quota-tokens-v1"])));
-  assert.throws(() => validateProcessWorkloadCatalogue([active], [v1], new Set(["anoman-semantic"]), new Set()), /quota-accounting authority/);
+  assert.doesNotThrow(() => validateProcessWorkloadCatalogue([active], [v1, v2], new Set(["anoman-semantic"])));
   assert.throws(() => parseWorkloadEnvelopeProfile({ ...workload(), weightedTokens: 5 }), /unsupported field/);
-  assert.throws(() => validateProcessWorkloadCatalogue([active], [v1], new Set(), new Set(["anoman-quota-tokens-v1"])), /unknown route/);
+  assert.throws(() => validateProcessWorkloadCatalogue([active], [v1], new Set()), /unknown route/);
 });

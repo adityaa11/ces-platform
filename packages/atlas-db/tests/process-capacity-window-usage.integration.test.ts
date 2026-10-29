@@ -20,6 +20,7 @@ test("BSS-V2-014-04-01 derives exact per-process window usage from the reservati
     backgroundCapacity: { rpm: 19, tpm: 199, concurrency: 24 },
     backgroundLanes: [{ processId, profileVersion: "v1", normalizedWeight: 1 }],
   };
+  let authorityVersion: bigint;
   const windows = {
     rpm: { kind: "fixed_window", parameters: { windowSeconds: 60 } },
     tpm: { kind: "fixed_window", parameters: { windowSeconds: 60 } },
@@ -66,7 +67,7 @@ test("BSS-V2-014-04-01 derives exact per-process window usage from the reservati
   });
   const admit = async (id: string, attempt = 1) => {
     await sql.unsafe("SELECT bridge.register_provider_work_attempt($1,$2,$3,$4,'v1','fixture',$5::jsonb,'plan-v1',1,NULL,now()+interval '1 hour')", [id, attempt, domain, processId, envelope]);
-    await sql.unsafe("SELECT bridge.bind_provider_work_route($1,$2,$3)", [id, attempt, route]);
+    await sql.unsafe("SELECT bridge.bind_provider_work_route($1,$2,$3)", [id, attempt, authorityVersion]);
     const [result] = await sql.unsafe("SELECT * FROM bridge.admit_route_aware_provider_work_attempt($1,$2,'background')", [id, attempt]);
     assert.equal(result.decision, "admitted");
     return result.reservation_id as string;
@@ -74,12 +75,13 @@ test("BSS-V2-014-04-01 derives exact per-process window usage from the reservati
 
   try {
     await sql.unsafe("BEGIN");
-    await sql.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,quota_accounting_policy_id,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'cap-v1','anoman',$2::jsonb,$3::jsonb,$4::jsonb,'quota','provider_api','fixture','v1',now(),now())", [domain, [{ routeId: route, providerId: "anoman", modelOrProcessorId: "fixture-model", adapterVersion: "adapter", qualificationRef: "qualification://fixture", qualificationVersion: "qualified", capability: "atlas.semantic.extract" }], { rpm: { state: "known", value: 20 }, tpm: { state: "known", value: 200 }, rpd: { state: "unknown" }, concurrency: { state: "known", value: 25 } }, windows]);
+    await sql.unsafe("INSERT INTO bridge.provider_capacity_profile(quota_domain_id,profile_version,provider_account_alias,associated_routes,limits,window_policies,capacity_source,source_ref,source_version,observed_at,effective_from) VALUES($1,'cap-v1','anoman',$2::jsonb,$3::jsonb,$4::jsonb,'provider_api','fixture','v1',now(),now())", [domain, [{ routeId: route, providerId: "anoman", modelOrProcessorId: "fixture-model", adapterVersion: "adapter", qualificationRef: "qualification://fixture", qualificationVersion: "qualified", capability: "atlas.semantic.extract" }], { rpm: { state: "known", value: 20 }, tpm: { state: "known", value: 200 }, rpd: { state: "unknown" }, concurrency: { state: "known", value: 25 } }, windows]);
     await sql.unsafe("INSERT INTO bridge.provider_enforcement_policy_approval(approval_ref,quota_domain_id,provider_capacity_profile_version,route_id,policy_id,policy_version,permitted_unknown_dimensions,approved_by,approved_at) VALUES($1,$2,'cap-v1',$3,'policy','v1',$4::jsonb,'fixture',now())", [`${domain}-rpd-approval`, domain, route, { rpd: { providerState: "unknown", reason: "not_published" } }]);
     await sql.unsafe("INSERT INTO bridge.provider_enforcement_policy(quota_domain_id,provider_capacity_profile_version,route_id,policy_id,policy_version,approval_ref,dimensions,effective_from) VALUES($1,'cap-v1',$2,'policy','v1',$3,$4::jsonb,now())", [domain, route, `${domain}-rpd-approval`, { rpm: { mode: "enforced", limitSource: "provider" }, tpm: { mode: "enforced", limitSource: "provider" }, rpd: { mode: "not_enforced", providerState: "unknown", reason: "not_published", approvalRef: `${domain}-rpd-approval` }, concurrency: { mode: "enforced", limitSource: "provider" } }]);
-    await sql.unsafe("INSERT INTO bridge.workload_envelope_profile(workload_id,profile_version,active,compatible_process_kinds,structural_bound,estimator,quota_accounting_policy_id,output_reservation,safety_policy) VALUES($1,'v1',true,'[\"semantic\"]','{}','{}','quota','{}','{}')", [workloadId]);
+    await sql.unsafe("INSERT INTO bridge.workload_envelope_profile(workload_id,profile_version,active,compatible_process_kinds,structural_bound,estimator,output_reservation,safety_policy) VALUES($1,'v1',true,'[\"semantic\"]','{}','{}','{}','{}')", [workloadId]);
     await sql.unsafe("INSERT INTO bridge.provider_process_profile(process_id,profile_version,process_kind,capability,service_class,fairness_scope,allocation_policy,active,eligible_route_ids,workload_id,workload_profile_version) VALUES($1,'v1','semantic','atlas.semantic.extract','background','{}','{}',true,$2::jsonb,$3,'v1')", [processId, [route], workloadId]);
-    await sql.unsafe("SELECT * FROM bridge.publish_qualified_provider_route_authority($1,$2,'anoman','fixture-model','adapter','qualification://fixture','qualified','atlas.semantic.extract')", [route, domain]);
+    const [authority] = await sql.unsafe("SELECT * FROM bridge.publish_qualified_provider_route_authority($1,$2,'anoman','fixture-model','adapter','qualification://fixture','qualified','atlas.semantic.extract')", [route, domain]);
+    authorityVersion = BigInt(authority.authority_version);
     await sql.unsafe("INSERT INTO bridge.desired_admission_profile(quota_domain_id,profile_version,provider_capacity_profile_version,planner_version,effective_from,profile) VALUES($1,'plan-v1','cap-v1','fixture',now(),$2::jsonb)", [domain, profile]);
     await sql.unsafe("INSERT INTO bridge.desired_admission_profile_input(quota_domain_id,desired_profile_version,process_id,process_profile_version,workload_id,workload_profile_version) VALUES($1,'plan-v1',$2,'v1',$3,'v1')", [domain, processId, workloadId]);
     const [effective] = await sql.unsafe("SELECT bridge.derive_effective_enforcement_policy($1,'cap-v1',$2) AS policy", [domain, route]);
