@@ -24,11 +24,6 @@ export type GenericHandoffQueuePublish = GenericHandoffJobV1 & Readonly<{
   readonly idempotencyKey: string;
 }>;
 
-export type TransactionalQueueProducer = {
-  enqueue(transaction: DrizzleTransactionLike, job: BackgroundExecutionJob): Promise<string | null>;
-  close(): Promise<void>;
-};
-
 /**
  * pg-boss's Drizzle adapter only needs a client with `unsafe()` and driver
  * codecs. A postgres.js transaction scope has the former but deliberately
@@ -57,11 +52,17 @@ function drizzleTransaction(transaction: unknown): DrizzleTransactionLike {
   });
   return drizzle(adapter as never) as DrizzleTransactionLike;
 }
-
 /** IDSER-003 adapter: pg-boss receives the caller's postgres.js transaction,
  * so the initial perception job can never commit separately from Atlas state. */
 export type TransactionalPerceptionQueueProducer = {
   enqueue(transaction: unknown, job: DocumentPerceptionJob): Promise<string | null>;
+  close(): Promise<void>;
+};
+
+/** Legacy producer retained for database acceptance fixtures; no production
+ * Bridge worker consumes this queue after the semantic/background route cut. */
+export type TransactionalQueueProducer = {
+  enqueue(transaction: DrizzleTransactionLike, job: BackgroundExecutionJob): Promise<string | null>;
   close(): Promise<void>;
 };
 
@@ -84,7 +85,6 @@ export async function createTransactionalGenericHandoffQueueProducer(databaseUrl
     async close() { await boss.stop({ graceful: false }); },
   };
 }
-
 export async function createTransactionalPerceptionQueueProducer(databaseUrl: string, queueName = documentPerceptionQueue): Promise<TransactionalPerceptionQueueProducer> {
   const boss = new PgBoss({ connectionString: databaseUrl, schema: "pgboss", migrate: false, supervise: false, schedule: false, createSchema: false, application_name: "atlas-perception-kickoff-producer" });
   await boss.start();
@@ -96,7 +96,6 @@ export async function createTransactionalPerceptionQueueProducer(databaseUrl: st
     async close() { await boss.stop({ graceful: false }); },
   };
 }
-
 export async function createTransactionalQueueProducer(databaseUrl: string, queueName = backgroundExecutionQueue): Promise<TransactionalQueueProducer> {
   const boss = new PgBoss({ connectionString: databaseUrl, schema: "pgboss", migrate: false, supervise: false, schedule: false, createSchema: false, application_name: "atlas-queue-producer" });
   await boss.start();
@@ -105,26 +104,9 @@ export async function createTransactionalQueueProducer(databaseUrl: string, queu
       if (!job.idempotencyKey || job.idempotencyKey.length > 200) throw new Error("idempotencyKey must be between 1 and 200 characters.");
       const execution = parseExecutionRequest(job.execution);
       if (execution.mode !== "background") throw new Error("Background queue requires mode background.");
-      return boss.send(queueName, { idempotencyKey: job.idempotencyKey, execution }, {
-        // Atlas adapters use postgres.js transactions; pg-boss's Drizzle
-        // bridge must receive the corresponding Drizzle transaction wrapper.
-        db: fromDrizzle(drizzleTransaction(transaction), sql),
-        singletonKey: job.idempotencyKey,
-      });
+      return boss.send(queueName, { idempotencyKey: job.idempotencyKey, execution }, { db: fromDrizzle(drizzleTransaction(transaction), sql), singletonKey: job.idempotencyKey });
     },
-    async close() {
-      await boss.stop({ graceful: false });
-    },
+    async close() { await boss.stop({ graceful: false }); },
   };
 }
 
-export function parseBackgroundExecutionJob(value: unknown): BackgroundExecutionJob {
-  if (!value || typeof value !== "object") throw new Error("Background job payload must be an object.");
-  const candidate = value as { idempotencyKey?: unknown; execution?: unknown };
-  if (typeof candidate.idempotencyKey !== "string" || candidate.idempotencyKey.length < 1 || candidate.idempotencyKey.length > 200) {
-    throw new Error("Background job idempotencyKey must be between 1 and 200 characters.");
-  }
-  const execution = parseExecutionRequest(candidate.execution);
-  if (execution.mode !== "background") throw new Error("Background queue requires mode background.");
-  return { idempotencyKey: candidate.idempotencyKey, execution };
-}

@@ -2,12 +2,6 @@ import { doclingCapabilityIdentity, doclingRun003OptionProfile } from "./provide
 
 export const atlasCapabilities = [
   "atlas.document.perceive",
-  "atlas.semantic.extract",
-  "atlas.semantic.reconcile",
-  "atlas.ces.assess",
-  "atlas.chat.default",
-  "atlas.chat.deep",
-  "atlas.addendum.compose",
 ] as const;
 
 export type AtlasCapability = typeof atlasCapabilities[number];
@@ -90,7 +84,7 @@ export function createRouteRegistry(routes: readonly QualifiedRoute[], profile: 
     active.set(route.capability, route);
   }
   if (profile === "live") {
-    for (const capability of ["atlas.chat.default", "atlas.document.perceive", "atlas.semantic.extract", "atlas.semantic.reconcile"] as const) {
+    for (const capability of ["atlas.document.perceive"] as const) {
       if (!active.has(capability)) errors.push(`Live profile is missing an enabled qualified route for ${capability}.`);
     }
   }
@@ -99,7 +93,7 @@ export function createRouteRegistry(routes: readonly QualifiedRoute[], profile: 
     ready: profile !== "live" || errors.length === 0,
     errors: Object.freeze(errors),
     resolve(capability: AtlasCapability): QualifiedRoute {
-      if (profile === "test") throw new RouteResolutionError("route_unavailable", "Test profile uses TestRuntime and does not resolve live routes.");
+      if (profile === "test") throw new RouteResolutionError("route_unavailable", "Test profile does not resolve live routes.");
       const route = active.get(capability);
       if (!route) throw new RouteResolutionError("route_unavailable", `No enabled qualified route is available for ${capability}.`);
       if (profile === "live" && errors.length) throw new RouteResolutionError("invalid_profile", "Live deployment profile is not ready.");
@@ -108,45 +102,7 @@ export function createRouteRegistry(routes: readonly QualifiedRoute[], profile: 
   };
 }
 
-export function capabilityForSkill(skillId: string): AtlasCapability {
-  if (skillId === "atlas.semantic.extract" || skillId === "atlas.semantic.reconcile" || skillId === "atlas.ces.assess" || skillId === "atlas.addendum.compose" || skillId === "atlas.chat.deep") return skillId;
-  return "atlas.chat.default";
-}
-
-export function mistralModelForCapability(capability: AtlasCapability, models: { readonly structuredModel: string; readonly chatModel: string; readonly ocrModel: string }): string | undefined {
-  if (capability === "atlas.document.perceive") return models.ocrModel;
-  if (capability === "atlas.semantic.extract" || capability === "atlas.semantic.reconcile" || capability === "atlas.ces.assess" || capability === "atlas.addendum.compose") return models.structuredModel;
-  if (capability === "atlas.chat.default" || capability === "atlas.chat.deep") return models.chatModel;
-  return undefined;
-}
-
-export function assertRouteAdapter(route: QualifiedRoute, models: { readonly structuredModel: string; readonly chatModel: string; readonly ocrModel: string }): void {
-  if (route.providerId === "mistral") {
-    if (route.adapterVersion !== "mistral-adapter-v1") throw new RouteResolutionError("invalid_route", `Route ${route.routeId} names an unavailable adapter version.`);
-    if (mistralModelForCapability(route.capability, models) !== route.modelOrProcessorId) throw new RouteResolutionError("invalid_route", `Route ${route.routeId} model identity does not match pinned adapter configuration.`);
-    return;
-  }
-  throw new RouteResolutionError("invalid_route", `Route ${route.routeId} names an unavailable adapter.`);
-}
-
-export function assertGeminiRouteAdapter(route: QualifiedRoute, models: { readonly structuredModel: string; readonly chatModel: string; readonly perceptionModel: string }): void {
-  if (route.providerId !== "gemini") throw new RouteResolutionError("invalid_route", `Route ${route.routeId} does not name Gemini.`);
-  if (route.adapterVersion !== "gemini-adapter-v1") throw new RouteResolutionError("invalid_route", `Route ${route.routeId} names an unavailable Gemini adapter version.`);
-  const expected = route.capability === "atlas.document.perceive" ? models.perceptionModel
-    : route.capability === "atlas.chat.default" || route.capability === "atlas.chat.deep" ? models.chatModel : models.structuredModel;
-  if (!expected || expected !== route.modelOrProcessorId) throw new RouteResolutionError("invalid_route", `Route ${route.routeId} model identity does not match pinned Gemini adapter configuration.`);
-}
-
-export function assertAnomanRouteAdapter(route: QualifiedRoute, model: "gemini-2.5-flash"): void {
-  if (route.providerId !== "anoman") throw new RouteResolutionError("invalid_route", `Route ${route.routeId} does not name Anoman.`);
-  if (route.capability !== "atlas.semantic.extract" || route.adapterVersion !== "anoman-adapter-v1" || route.modelOrProcessorId !== model) throw new RouteResolutionError("invalid_route", `Route ${route.routeId} does not name the pinned Anoman semantic adapter.`);
-  if (route.enabled) throw new RouteResolutionError("invalid_route", `Route ${route.routeId} cannot enable Anoman semantic execution before BSS-V2-004-03-06 qualification.`);
-}
-
-export function assertConfiguredRouteAdapter(route: QualifiedRoute, config: { readonly mistral: { readonly structuredModel: string; readonly chatModel: string; readonly ocrModel: string }; readonly gemini: { readonly structuredModel: string; readonly chatModel: string; readonly perceptionModel: string }; readonly anoman: { readonly structuredModel: "gemini-2.5-flash" }; readonly docling: { readonly serviceVersion: string; readonly doclingSlimVersion: string; readonly optionProfile: string }; readonly qualificationOnly?: boolean }): void {
-  if (route.providerId === "mistral") return assertRouteAdapter(route, config.mistral);
-  if (route.providerId === "gemini") return assertGeminiRouteAdapter(route, config.gemini);
-  if (route.providerId === "anoman") return assertAnomanRouteAdapter(route, config.anoman.structuredModel);
+export function assertConfiguredRouteAdapter(route: QualifiedRoute, config: { readonly docling: { readonly serviceVersion: string; readonly doclingSlimVersion: string; readonly optionProfile: string }; readonly qualificationOnly?: boolean }): void {
   if (route.providerId === "docling") {
     if (route.capability !== "atlas.document.perceive" || route.adapterVersion !== "docling-serve-adapter-v1" || route.modelOrProcessorId !== `docling-slim-${config.docling.doclingSlimVersion}` || route.extensions?.serviceVersion !== config.docling.serviceVersion || route.extensions?.optionProfile !== config.docling.optionProfile || route.extensions?.capabilityIdentity !== doclingCapabilityIdentity(config.docling.optionProfile) || route.extensions?.imageDigest !== "sha256:4ba36cb322283e3851d2a6c5f347dd1cc515d7afb8ea5cc1577da8b5bfe2fea7") throw new RouteResolutionError("invalid_route", `Route ${route.routeId} does not name the pinned qualified Docling service profile and cache identity.`);
     if (config.qualificationOnly !== true && (route.qualificationVersion !== "idser-012-01-03-02-local" || route.qualificationRef !== "qualification://idser-012-01-03-02-local")) throw new RouteResolutionError("invalid_route", `Route ${route.routeId} does not name the approved RUN-003 qualification.`);

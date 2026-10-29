@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import postgres from "postgres";
-import { BridgeProviderError } from "../src/providers/mistral.ts";
+import { BridgeProviderError } from "../src/provider-capabilities.js";
 import { createAtlasPerceptionClients } from "../src/atlas-perception-client.ts";
 import { runDocumentPerception } from "../src/document-perception-worker.ts";
 import { createPerceptionInternalRoutes, PerceptionSourceGrantIssuer, type DocumentPerceptionRequest, type NormalizedDocument, type PerceptionExecutionInput } from "@atlas/core";
@@ -15,7 +15,7 @@ import { LocalFilesystemDocumentStore } from "@atlas/document-store";
 const databaseUrl = process.env.DATABASE_URL;
 const skip = !databaseUrl;
 const serviceCredential = "service-credential-that-is-at-least-32-bytes-long";
-const capabilityIdentity = "mistral-ocr:test-negative-matrix";
+const capabilityIdentity = "docling-digital-pdf:test-negative-matrix";
 
 type Fixture = {
   readonly input: PerceptionExecutionInput;
@@ -29,7 +29,7 @@ function resultFor(request: DocumentPerceptionRequest, text = "Synthetic negativ
     artifactId: request.artifact.id,
     sourceSha256: request.artifact.sourceSha256,
     perception: request.perception,
-    provider: { name: "mistral", processor: "ocr-qualified", executionId: request.executionId, processedAt: "2026-09-16T00:00:00.000Z" },
+    provider: { name: "docling", processor: "run-003", executionId: request.executionId, processedAt: "2026-09-16T00:00:00.000Z" },
     pages: [{ number: 1, textBlocks: [{ id: "block-1", text }], tables: [], visualRegions: [] }],
   };
 }
@@ -158,7 +158,7 @@ test("the Compose PostgreSQL perception authority rejects the complete negative 
     const cancellationProvider = {
       perceive: async () => {
         cancellation.abort();
-        return { providerResult: { pages: [{ index: 0, markdown: "late result" }] }, provenance: { provider: "mistral" as const, model: "ocr-qualified", endpoint: "/v1/ocr" as const, latencyMilliseconds: 1, attempt: 1 } };
+        return { providerResult: { pages: [{ index: 0, markdown: "late result" }] }, provenance: { provider: "docling" as const, model: "run-003", endpoint: "/v1/convert" as const, latencyMilliseconds: 1, attempt: 1 } };
       },
     };
     await assert.rejects(() => runDocumentPerception(cancelled.request, cancellationProvider as never, clientsFor().source, clientsFor().results, cancellation.signal), /cancelled/u);
@@ -166,7 +166,7 @@ test("the Compose PostgreSQL perception authority rejects the complete negative 
 
     const malformedProvider = await makeFixture("malformed-provider");
     const malformed = {
-      perceive: async () => ({ providerResult: { pages: [{ index: 0, images: [{ assetRef: "https://provider.example/private.png" }] }] }, provenance: { provider: "mistral" as const, model: "ocr-qualified", endpoint: "/v1/ocr" as const, latencyMilliseconds: 1, attempt: 1 } }),
+      perceive: async () => ({ providerResult: { pages: [{ index: 0, images: [{ assetRef: "https://provider.example/private.png" }] }] }, provenance: { provider: "docling" as const, model: "run-003", endpoint: "/v1/convert" as const, latencyMilliseconds: 1, attempt: 1 } }),
     };
     await runDocumentPerception(malformedProvider.request, malformed as never, clientsFor().source, clientsFor().results, new AbortController().signal);
     await assertNoTrustedCompletion(malformedProvider, "invalid provider normalization");

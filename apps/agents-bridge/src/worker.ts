@@ -1,9 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { PgBoss, type Db } from "pg-boss";
-import type { DocumentPerceptionRequest, ReasoningRuntime } from "@atlas/contracts";
-import { backgroundExecutionQueue, genericHandoffQueue, parseBackgroundExecutionJob } from "./queue.js";
+import type { DocumentPerceptionRequest } from "@atlas/contracts";
+import { genericHandoffQueue } from "./queue.js";
 import { documentPerceptionQueue, parseDocumentPerceptionJob } from "./perception-job.js";
-import { parseSemanticBackgroundJob } from "@atlas/contracts";
 import type { WorkerConfig } from "./worker-config.js";
 import { deliverGenericHandoffJob } from "./ghr/delivery-worker.js";
 import type { GenericHandoffHttpTransportConfig } from "./ghr/http-transport-config.js";
@@ -20,15 +19,13 @@ export type BackgroundWorker = {
  * long-running worker reapplies it at every start so its effective queue
  * policy remains observable and durable.
  */
-export async function initializePgBossInfrastructure(boss: PgBoss, config: WorkerConfig, queueName = backgroundExecutionQueue, perceptionQueueName = documentPerceptionQueue, includePerceptionQueue = true): Promise<void> {
+export async function initializePgBossInfrastructure(boss: PgBoss, config: WorkerConfig, perceptionQueueName = documentPerceptionQueue, includePerceptionQueue = true): Promise<void> {
   const queueOptions = {
     retryLimit: config.retryLimit,
     retryDelay: config.retryDelaySeconds,
     retryBackoff: true,
     expireInSeconds: config.timeoutSeconds,
   };
-  await boss.createQueue(queueName, queueOptions);
-  await boss.updateQueue(queueName, queueOptions);
   if (includePerceptionQueue) {
     await boss.createQueue(perceptionQueueName, queueOptions);
     await boss.updateQueue(perceptionQueueName, queueOptions);
@@ -53,7 +50,6 @@ export async function initializePgBossInfrastructure(boss: PgBoss, config: Worke
  * It deliberately has no Atlas repository or cache dependency.
  */
 export type DocumentPerceptionQueueHandler = (request: DocumentPerceptionRequest, signal: AbortSignal, context: { readonly idempotencyKey: string; readonly database: Db; readonly finalAttempt: boolean }) => Promise<void>;
-export type SemanticQueueHandler = (job: ReturnType<typeof parseSemanticBackgroundJob>, signal: AbortSignal, context: { readonly idempotencyKey: string; readonly database: Db; readonly leaseOwner: string; readonly leaseGeneration: number; readonly deadlineEpochMilliseconds: number }) => Promise<void>;
 
 const wait = (milliseconds: number) => new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
 
@@ -104,7 +100,7 @@ async function executeOnce(idempotencyKey: string, executionId: string, leaseSec
   }
 }
 
-export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningRuntime, queueName = backgroundExecutionQueue, documentPerception?: DocumentPerceptionQueueHandler, perceptionQueueName = documentPerceptionQueue, semantic?: SemanticQueueHandler, genericHandoffHttpTransport?: GenericHandoffHttpTransportConfig): BackgroundWorker {
+export function createBackgroundWorker(config: WorkerConfig, documentPerception?: DocumentPerceptionQueueHandler, genericHandoffHttpTransport?: GenericHandoffHttpTransportConfig, perceptionQueueName = documentPerceptionQueue): BackgroundWorker {
   let stopping = false;
   const shutdown = new AbortController();
   const boss = new PgBoss({
@@ -121,37 +117,14 @@ export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningR
     boss,
     async start() {
       await boss.start();
-      await initializePgBossInfrastructure(boss, config, queueName, perceptionQueueName, Boolean(documentPerception));
-      const backgroundWorkOptions = {
+      await initializePgBossInfrastructure(boss, config, perceptionQueueName, Boolean(documentPerception));
+      const workOptions = {
         transactional: false,
         includeMetadata: true as const,
         localConcurrency: config.backgroundConcurrency,
         pollingIntervalSeconds: 0.5,
       };
-      await boss.work(queueName, backgroundWorkOptions, async ([job]) => {
-        const signal = AbortSignal.any([job.signal, shutdown.signal]);
-        const backgroundJob = parseBackgroundExecutionJob(job.data);
-        const isSemantic = backgroundJob.execution.skill.id.startsWith("atlas.semantic.");
-        await executeOnce(backgroundJob.idempotencyKey, backgroundJob.execution.executionId, config.timeoutSeconds, async (lease) => {
-          if (isSemantic) {
-            if (!semantic) throw new Error("Production semantic dispatcher is unavailable.");
-            const semanticJob = parseSemanticBackgroundJob({ version: backgroundJob.execution.version, executionId: backgroundJob.execution.executionId, skill: backgroundJob.execution.skill, ...backgroundJob.execution.input });
-            await semantic(semanticJob, signal, { idempotencyKey: backgroundJob.idempotencyKey, database: boss.getDb(), leaseOwner: lease.owner, leaseGeneration: lease.generation, deadlineEpochMilliseconds: Date.now() + config.timeoutSeconds * 1_000 });
-            return;
-          }
-          for await (const event of runtime.execute(backgroundJob.execution, { signal })) {
-            if (signal.aborted) throw new Error("Background execution was cancelled.");
-            if (event.type === "error") throw new Error(event.message);
-          }
-        }, boss.getDb(), isSemantic
-          // `executeOnce` invokes this only after this claimant has fenced the
-          // logical Bridge completion. The staged envelope can belong to an
-          // earlier claimant after acknowledgement loss, so its stage fence is
-          // not a cleanup precondition; exact execution identity remains so.
-          ? () => boss.getDb().executeSql("DELETE FROM bridge.semantic_result_delivery WHERE idempotency_key=$1 AND execution_id=$2", [backgroundJob.idempotencyKey, backgroundJob.execution.executionId]).then(() => undefined)
-          : undefined);
-      });
-      await boss.work(genericHandoffQueue, backgroundWorkOptions, async ([job]) => {
+      await boss.work(genericHandoffQueue, workOptions, async ([job]) => {
         await deliverGenericHandoffJob({
           database: boss.getDb(),
           job: job.data,
@@ -161,7 +134,7 @@ export function createBackgroundWorker(config: WorkerConfig, runtime: ReasoningR
         });
       });
       if (documentPerception) {
-        const perceptionWorkOptions = { ...backgroundWorkOptions, localConcurrency: config.perceptionConcurrency };
+        const perceptionWorkOptions = { ...workOptions, localConcurrency: config.perceptionConcurrency };
         await boss.work(perceptionQueueName, perceptionWorkOptions, async ([job]) => {
           const perceptionJob = parseDocumentPerceptionJob(job.data);
           const cleanup = () => boss.getDb().executeSql("DELETE FROM bridge.document_perception_result_delivery WHERE idempotency_key=$1 AND execution_id=$2", [perceptionJob.idempotencyKey, perceptionJob.request.executionId]).then(() => undefined);

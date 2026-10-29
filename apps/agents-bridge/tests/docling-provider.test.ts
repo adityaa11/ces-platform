@@ -107,11 +107,11 @@ test("Docling adapter sends only PDF bytes and a fixed no-OCR JSON profile", asy
 });
 
 test("Docling route requires its immutable service, runtime, adapter, and profile identity", () => {
-  const route = { routeId: "docling-digital-pdf", capability: "atlas.document.perceive" as const, providerId: "docling", modelOrProcessorId: `docling-slim-${doclingSlimVersion}`, adapterVersion: doclingAdapterVersion, qualificationVersion: "bss-v2-004-01", qualificationRef: "qualification://bss-v2-004-01", workClass: "local_processor", enabled: true, extensions: { serviceVersion: doclingServeVersion, optionProfile: doclingOptionProfile, capabilityIdentity: doclingCapabilityIdentity(doclingOptionProfile), imageDigest: "sha256:4ba36cb322283e3851d2a6c5f347dd1cc515d7afb8ea5cc1577da8b5bfe2fea7" } };
-  const all = { mistral: { structuredModel: "s", chatModel: "c", ocrModel: "o" }, gemini: { structuredModel: "s", chatModel: "c", perceptionModel: "p" }, docling: config };
+  const route = { routeId: "docling-run-003-capture", capability: "atlas.document.perceive" as const, providerId: "docling", modelOrProcessorId: `docling-slim-${doclingSlimVersion}`, adapterVersion: doclingAdapterVersion, qualificationVersion: "idser-012-01-03-02-local", qualificationRef: "qualification://idser-012-01-03-02-local", workClass: "local_processor", enabled: true, extensions: { serviceVersion: doclingServeVersion, optionProfile: doclingRun003OptionProfile, capabilityIdentity: doclingCapabilityIdentity(doclingRun003OptionProfile), imageDigest: "sha256:4ba36cb322283e3851d2a6c5f347dd1cc515d7afb8ea5cc1577da8b5bfe2fea7" } };
+  const all = { docling: { ...config, optionProfile: doclingRun003OptionProfile } };
   assert.doesNotThrow(() => assertConfiguredRouteAdapter(route, all));
   assert.throws(() => assertConfiguredRouteAdapter({ ...route, extensions: { ...route.extensions, imageDigest: "latest" } }, all), /pinned qualified/u);
-  assert.throws(() => assertConfiguredRouteAdapter({ ...route, extensions: { ...route.extensions, capabilityIdentity: doclingCapabilityIdentity(doclingRun003OptionProfile) } }, all), /cache identity/u);
+  assert.throws(() => assertConfiguredRouteAdapter({ ...route, extensions: { ...route.extensions, capabilityIdentity: doclingCapabilityIdentity(doclingOptionProfile) } }, all), /cache identity/u);
   assert.notEqual(doclingCapabilityIdentity(doclingRun003OptionProfile), doclingCapabilityIdentity(doclingOptionProfile));
   const run003Route = { ...route, routeId: "docling-run-003-capture", qualificationVersion: "idser-012-01-03-02-local", qualificationRef: "qualification://idser-012-01-03-02-local", extensions: { ...route.extensions, optionProfile: doclingRun003OptionProfile, capabilityIdentity: doclingCapabilityIdentity(doclingRun003OptionProfile) } };
   const run003Config = { ...all, docling: { ...config, optionProfile: doclingRun003OptionProfile } };

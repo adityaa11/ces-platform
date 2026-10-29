@@ -5,7 +5,6 @@ import test from "node:test";
 import Fastify from "fastify";
 import postgres from "postgres";
 import { PgBoss } from "pg-boss";
-import { TestRuntime } from "../src/runtime.ts";
 import { createBackgroundWorker } from "../src/worker.ts";
 import { genericHandoffQueue } from "../src/queue.ts";
 import { canonicalSemanticBatchPlanInputV1 } from "@atlas/db";
@@ -19,7 +18,6 @@ const credential = "g".repeat(32);
 
 async function startReceiver(options: Readonly<{ delayFirstAcknowledgementMilliseconds?: number }> = {}) {
   const app = createBridgeApp({
-    runtime: new TestRuntime(),
     version: "ghr-04c-test",
     genericHandoffHttpTransport: { origin: "http://127.0.0.1:3002", credential, timeoutMilliseconds: 1_000, maximumResponseBytes: 8_192 },
   });
@@ -118,7 +116,7 @@ test("GHR-03B consumes the real pointer job through pg-boss and records one pars
       (SELECT count(*)::int FROM atlas.semantic_candidate) AS candidates,
       (SELECT count(*)::int FROM pgboss.job WHERE name<>$1 AND state IN ('created','active','retry')) AS downstream`, [genericHandoffQueue]);
     if (!candidate.disposition) {
-      worker = createBackgroundWorker({ databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 1, perceptionConcurrency: 1, timeoutSeconds: 10, retryLimit: 2, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 }, new TestRuntime(), undefined, undefined, undefined, undefined, receiver.configuration);
+      worker = createBackgroundWorker({ databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 1, perceptionConcurrency: 1, timeoutSeconds: 10, retryLimit: 2, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 }, undefined, receiver.configuration);
       await worker.start();
       if (createdCandidate) {
         await worker.boss.send(genericHandoffQueue, { type: "GenericHandoffJob/v1", handoffId: candidate.handoff_id });
@@ -353,7 +351,7 @@ test("GHR-03B proves restart, concurrent fencing, and classified retry exhaustio
       throw new Error("Bridge worker did not persist the expected terminal receipt.");
     };
     const queued = await makeIssued("queue-restart");
-    worker = createBackgroundWorker({ databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 2, perceptionConcurrency: 1, timeoutSeconds: 1, retryLimit: 1, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 }, new TestRuntime(), undefined, undefined, undefined, undefined, receiver.configuration);
+    worker = createBackgroundWorker({ databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 2, perceptionConcurrency: 1, timeoutSeconds: 1, retryLimit: 1, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 }, undefined, receiver.configuration);
     await worker.start();
     const firstJobId = await boss.send(genericHandoffQueue, { type: "GenericHandoffJob/v1", handoffId: queued });
     assert.equal((await awaitTerminal(queued)).disposition, "parsed_only", "the normal pg-boss worker consumes the pointer-only job");
@@ -361,7 +359,7 @@ test("GHR-03B proves restart, concurrent fencing, and classified retry exhaustio
     await worker.stop();
     worker = undefined;
     const secondJobId = await boss.send(genericHandoffQueue, { type: "GenericHandoffJob/v1", handoffId: queued });
-    worker = createBackgroundWorker({ databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 2, perceptionConcurrency: 1, timeoutSeconds: 1, retryLimit: 1, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 }, new TestRuntime(), undefined, undefined, undefined, undefined, receiver.configuration);
+    worker = createBackgroundWorker({ databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 2, perceptionConcurrency: 1, timeoutSeconds: 1, retryLimit: 1, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 }, undefined, receiver.configuration);
     await worker.start();
     for (let attempt = 0; attempt < 50; attempt += 1) {
       const [job] = await admin.unsafe("SELECT state FROM pgboss.job WHERE id=$1", [secondJobId]);

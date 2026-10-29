@@ -30,9 +30,9 @@ function authenticated(authorization: unknown, credential: string | undefined): 
 }
 
 /**
- * Registers the dormant GHR ingress inside the existing Fastify app.  Its
- * encapsulated parser preserves request bytes without changing parsing for
- * the app's unrelated public routes.
+ * Registers the GHR-only semantic/batch-plan ingress inside the existing
+ * Fastify app. It accepts only an authenticated, route-pinned GHR envelope;
+ * it never exposes a general semantic API or invokes a semantic worker.
  */
 export function registerAuthenticatedBatchPlanHttpReceiver(app: FastifyInstance, options: ReceiverOptions): void {
   app.register((receiver, _options, done) => {

@@ -5,23 +5,13 @@ import type { Plugin } from "vite";
 
 type AtlasCoreModule = typeof import("../../packages/atlas-core/src/index");
 type AtlasDbModule = typeof import("../../packages/atlas-db/src/perception-authority");
-type SemanticDbModule = typeof import("../../packages/atlas-db/src/semantic-authority");
-type ExtractionAcceptanceModule = typeof import("../../packages/atlas-db/src/extraction-acceptance");
-type ReconciliationAcceptanceModule = typeof import("../../packages/atlas-db/src/reconciliation-acceptance");
-type ReconciliationSelectorModule = typeof import("../../packages/atlas-db/src/reconciliation-selector");
 type BackgroundQueue = typeof import("../agents-bridge/src/queue");
-type BackgroundExecutionJob = import("../agents-bridge/src/queue").BackgroundExecutionJob;
 type DocumentStoreModule = typeof import("../../packages/document-store/src/local-filesystem-document-store");
 
 const sourcePath = "/internal/perception/source";
 const resultPath = "/internal/perception/result";
 const perceptionFailurePath = "/internal/perception/failure";
 const derivedAssetPath = "/internal/perception/derived";
-const semanticContextPath = "/internal/semantic/context";
-const semanticMediaPath = "/internal/semantic/derived-media";
-const semanticResultPath = "/internal/semantic/result";
-const semanticQualifiedResultPath = "/internal/semantic/qualified-result";
-const semanticFailurePath = "/internal/semantic/failure";
 const requestLimit = 16 * 1024;
 const sourceLimit = 20 * 1024 * 1024;
 const resultLimit = 10 * 1024 * 1024;
@@ -76,7 +66,6 @@ export function createAtlasPerceptionInternalPlugin(): Plugin {
       // This read-only probe is enabled only by the disposable Compose harness.
       // It records the already-authenticated result request at this Atlas
       // boundary, rather than reconstructing it from Bridge persistence.
-      const semanticResultObservationPath = process.env.ATLAS_SEMANTIC_RESULT_OBSERVATION_PATH;
       if (!databaseUrl && !credential) return;
       if (!databaseUrl || !credential) throw new Error("ATLAS_DATABASE_URL and AGENTS_BRIDGE_SERVICE_CREDENTIAL are required together.");
 
@@ -84,53 +73,25 @@ export function createAtlasPerceptionInternalPlugin(): Plugin {
       // Vite's Node-side config loader needs the workspace TypeScript resolver
       // so the local Compose process can execute those same sources directly.
       const jiti = createJiti(import.meta.url);
-      const [core, database, semanticDatabase, extractionAcceptance, reconciliationAcceptance, reconciliationSelector, documentStore, backgroundQueue] = await Promise.all([
+      const [core, database, documentStore, backgroundQueue] = await Promise.all([
         jiti.import<AtlasCoreModule>("../../packages/atlas-core/src/index.ts"),
         jiti.import<AtlasDbModule>("../../packages/atlas-db/src/perception-authority.ts"),
-        jiti.import<SemanticDbModule>("../../packages/atlas-db/src/semantic-authority.ts"),
-        jiti.import<ExtractionAcceptanceModule>("../../packages/atlas-db/src/extraction-acceptance.ts"),
-        jiti.import<ReconciliationAcceptanceModule>("../../packages/atlas-db/src/reconciliation-acceptance.ts"),
-        jiti.import<ReconciliationSelectorModule>("../../packages/atlas-db/src/reconciliation-selector.ts"),
         jiti.import<DocumentStoreModule>("../../packages/document-store/src/local-filesystem-document-store.ts"),
         jiti.import<BackgroundQueue>("../agents-bridge/src/queue.ts"),
       ]);
       const sql = postgres(databaseUrl, { max: 4 });
-      const semanticQueue = await backgroundQueue.createTransactionalQueueProducer(databaseUrl);
       const perceptionQueue = await backgroundQueue.createTransactionalPerceptionQueueProducer(databaseUrl);
       const genericHandoffQueue = await backgroundQueue.createTransactionalGenericHandoffQueueProducer(databaseUrl);
       server.httpServer?.once("close", () => {
-        void Promise.allSettled([semanticQueue.close(), perceptionQueue.close(), genericHandoffQueue.close(), sql.end({ timeout: 1 })]);
+        void Promise.allSettled([perceptionQueue.close(), genericHandoffQueue.close(), sql.end({ timeout: 1 })]);
       });
-      // pg-boss's Drizzle transaction type is narrower than the Atlas
-      // persistence port, while both adapters receive this same SQL transaction.
-      const atlasSemanticQueue = { enqueue: (transaction: unknown, job: BackgroundExecutionJob) => semanticQueue.enqueue(transaction as never, job) };
       const sources = new documentStore.LocalFilesystemDocumentStore(process.env.ATLAS_DOCUMENT_STORE_ROOT ?? resolve(process.cwd(), ".atlas-data"));
-      const authority = new database.PostgresPerceptionAuthority(sql, new core.PerceptionSourceGrantIssuer(credential), atlasSemanticQueue, process.env.ATLAS_D1_PERCEPTION_CAPABILITY_IDENTITY, perceptionQueue, sources, genericHandoffQueue);
+      const authority = new database.PostgresPerceptionAuthority(sql, new core.PerceptionSourceGrantIssuer(credential), undefined, process.env.ATLAS_D1_PERCEPTION_CAPABILITY_IDENTITY, perceptionQueue, sources, genericHandoffQueue);
       const routes = core.createPerceptionInternalRoutes({ authority, sources, serviceCredential: credential, maximumSourceBytes: sourceLimit, maximumResultBytes: resultLimit });
-      const semanticMediaIdentity = "atlas.semantic-bridge/v1";
-      const semanticMediaAuthority = new semanticDatabase.PostgresSemanticDerivedImageAuthority(sql, sources);
-      const semanticMediaGrants = new core.DerivedImageGrantIssuer(credential, semanticMediaIdentity);
-      const semanticMediaHydrator = new core.EphemeralDerivedImageHydrator(semanticMediaGrants, semanticMediaAuthority, semanticMediaAuthority);
-      const semanticAuthority = new semanticDatabase.PostgresSemanticAuthority(sql, new reconciliationSelector.PostgresReconciliationSelector(sql), { serviceIdentity: semanticMediaIdentity, issue: (scope) => semanticMediaGrants.issue(scope, semanticMediaAuthority) });
-      const extractionHandler = new extractionAcceptance.PostgresExtractionAcceptanceHandler(atlasSemanticQueue);
-      const reconciliationHandler = new reconciliationAcceptance.PostgresReconciliationAcceptanceHandler({ authority, queue: perceptionQueue });
-      const semanticRoutes = core.createSemanticInternalRoutes({ authority: semanticAuthority, serviceCredential: credential, qualifiedHandler: extractionHandler, handler: { accept: async (input, transaction) => {
-        const skill = (input.envelope as { skill?: { id?: string } }).skill?.id;
-        if (skill === "atlas.semantic.extract") await extractionHandler.accept(input, transaction);
-        else if (skill === "atlas.semantic.reconcile") await reconciliationHandler.accept(input, transaction);
-        else throw new Error("Semantic acceptance handler is unavailable for this stage.");
-      } } });
-      const semanticResultObservations: unknown[] = [];
 
       server.middlewares.use(async (request, response, next) => {
         const pathname = new URL(request.url ?? "/", "http://atlas.local").pathname;
-        if (semanticResultObservationPath && pathname === semanticResultObservationPath) {
-          if (request.method !== "GET") { response.statusCode = 405; response.setHeader("allow", "GET"); response.end(); return; }
-          if (bridgeCredential(request) !== credential) { response.statusCode = 401; response.end(); return; }
-          sendJson(response, 200, { observations: semanticResultObservations });
-          return;
-        }
-        if (pathname !== sourcePath && pathname !== resultPath && pathname !== perceptionFailurePath && pathname !== derivedAssetPath && pathname !== semanticContextPath && pathname !== semanticMediaPath && pathname !== semanticResultPath && pathname !== semanticQualifiedResultPath && pathname !== semanticFailurePath) return next();
+        if (pathname !== sourcePath && pathname !== resultPath && pathname !== perceptionFailurePath && pathname !== derivedAssetPath) return next();
         if (request.method !== "POST") { response.statusCode = 405; response.setHeader("allow", "POST"); response.end(); return; }
         try {
           if (pathname === derivedAssetPath) {
@@ -142,31 +103,8 @@ export function createAtlasPerceptionInternalPlugin(): Plugin {
             const asset = await authority.handoffDerived(requestValue, descriptor, await readBytes(request, request.headers["content-length"], resultLimit));
             sendJson(response, 200, asset); return;
           }
-          const body = await readJson(request, request.headers["content-length"], pathname === sourcePath || pathname === semanticContextPath || pathname === semanticFailurePath ? requestLimit : resultLimit + requestLimit);
+          const body = await readJson(request, request.headers["content-length"], pathname === sourcePath || pathname === perceptionFailurePath ? requestLimit : resultLimit + requestLimit);
           const credentialValue = bridgeCredential(request);
-          if (pathname === semanticContextPath) { const result = await semanticRoutes.context(credentialValue, body); sendJson(response, result.status, result.body); return; }
-          if (pathname === semanticMediaPath) {
-            if (credentialValue !== credential) { response.statusCode = 401; response.end(); return; }
-            const image = await semanticMediaHydrator.hydrate(body, new AbortController().signal);
-            response.statusCode = 200;
-            response.setHeader("content-type", image.mediaType);
-            response.setHeader("content-length", image.byteLength);
-            response.setHeader("cache-control", "no-store");
-            response.setHeader("x-content-type-options", "nosniff");
-            response.end(Buffer.from(image.bytes));
-            return;
-          }
-          if (pathname === semanticResultPath) {
-            const result = await semanticRoutes.deliver(credentialValue, body);
-            if (result.status === 204) {
-              semanticResultObservations.push(body);
-              response.statusCode = 204;
-              response.end();
-            } else sendJson(response, result.status, result.body);
-            return;
-          }
-          if (pathname === semanticQualifiedResultPath) { const result = await semanticRoutes.deliverQualified(credentialValue, body); if (result.status === 204) { response.statusCode = 204; response.end(); } else sendJson(response, result.status, result.body); return; }
-          if (pathname === semanticFailurePath) { const result = await semanticRoutes.fail(credentialValue, body); if (result.status === 204) { response.statusCode = 204; response.end(); } else sendJson(response, result.status, result.body); return; }
           if (pathname === sourcePath) {
             const result = await routes.redeem(credentialValue, body);
             if (result.body instanceof Uint8Array) {

@@ -14,7 +14,6 @@ import { documentPerceptionQueue } from "../src/perception-job.ts";
 import { runDocumentPerception } from "../src/document-perception-worker.ts";
 import { createPerceptionResultReplay } from "../src/perception-result-replay.ts";
 import { createBackgroundWorker } from "../src/worker.ts";
-import { createTransactionalQueueProducer } from "../src/queue.ts";
 import type { WorkerConfig } from "../src/worker-config.ts";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -111,7 +110,6 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
       };
     },
   };
-  const queueName = `atlas-perception-integration-${randomUUID()}`;
   const perceptionQueueName = `${documentPerceptionQueue}-test-${randomUUID()}`;
   // These one-shot database faults occur after Atlas has accepted the result.
   // They prove that a pg-boss retry replays the staged result, rather than
@@ -125,7 +123,7 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
   await admin.unsafe(`CREATE FUNCTION ${cleanupFault}_fn() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public AS $$ BEGIN IF nextval('atlas.${cleanupFault}') = 1 THEN RAISE EXCEPTION 'synthetic replay cleanup loss'; END IF; RETURN OLD; END $$`);
   await admin.unsafe(`CREATE TRIGGER ${cleanupFault}_trigger BEFORE DELETE ON bridge.document_perception_result_delivery FOR EACH ROW EXECUTE FUNCTION ${cleanupFault}_fn()`);
   const config: WorkerConfig = { databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 1, perceptionConcurrency: 1, timeoutSeconds: 5, retryLimit: 8, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 };
-  const worker = createBackgroundWorker(config, { async *execute() { yield { type: "complete" as const }; } }, queueName, async (queuedRequest, signal, context) => {
+  const worker = createBackgroundWorker(config, async (queuedRequest, signal, context) => {
     const persisted = createPerceptionResultReplay(context.database);
     const replay = {
       load: async (idempotencyKey: string, execution: string) => {
@@ -139,7 +137,7 @@ test("the queued PDF perception path crosses Atlas authority and completes idemp
       acknowledge: persisted.acknowledge,
     };
     await runDocumentPerception(queuedRequest, provider as never, clients.source, clients.results, signal, { idempotencyKey: context.idempotencyKey, store: replay, finalAttempt: context.finalAttempt });
-  }, perceptionQueueName);
+  }, undefined, perceptionQueueName);
   try {
     const lifecycleSnapshot = async (bundleId: string, documentId: string) => (await atlas.unsafe("SELECT b.state AS bundle_state, b.started_at::text AS bundle_started_at, b.completed_document_count, m.state AS member_state, m.started_at::text AS member_started_at FROM atlas.extraction_bundle b JOIN atlas.extraction_bundle_document m ON m.bundle_id=b.id WHERE b.id=$1 AND m.document_id=$2", [bundleId, documentId]))[0];
     const targetBefore = await lifecycleSnapshot(bundle, artifactId);
@@ -241,10 +239,8 @@ test("the Compose perception worker exhausts retries, bounds expired grants, and
   const sourceRoot = await mkdtemp(join(tmpdir(), "atlas-perception-lifecycle-"));
   const store = new LocalFilesystemDocumentStore(sourceRoot);
   const serviceCredential = "service-credential-that-is-at-least-32-bytes-long";
-  const backgroundQueue = `background-perception-lifecycle-${randomUUID()}`;
   const queue = `${documentPerceptionQueue}-lifecycle-${randomUUID()}`;
-  const semanticQueue = await createTransactionalQueueProducer(databaseUrl!, backgroundQueue);
-  const authority = new PostgresPerceptionAuthority(atlas, new PerceptionSourceGrantIssuer(serviceCredential), semanticQueue);
+  const authority = new PostgresPerceptionAuthority(atlas, new PerceptionSourceGrantIssuer(serviceCredential));
   const routes = createPerceptionInternalRoutes({ authority, sources: store, serviceCredential, maximumSourceBytes: 20 * 1024 * 1024, maximumResultBytes: 10 * 1024 * 1024 });
   const suffix = randomUUID(); const owner = `perception-lifecycle-owner-${suffix}`; const project = `perception-lifecycle-project-${suffix}`; const workspace = `perception-lifecycle-workspace-${suffix}`;
   const executions: string[] = []; const keys: string[] = []; const bundles: string[] = []; const documents: string[] = [];
@@ -267,14 +263,14 @@ test("the Compose perception worker exhausts retries, bounds expired grants, and
     const response = await routes.deliver(credential, body.request, body.result);
     return new Response(response.status === 204 ? null : JSON.stringify(response.body), { status: response.status, headers: { "content-type": response.contentType } });
   });
-  const worker = createBackgroundWorker({ databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 1, perceptionConcurrency: 1, timeoutSeconds: 5, retryLimit: 2, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 }, { async *execute() { yield { type: "complete" as const }; } }, backgroundQueue, async (request, signal, context) => {
+  const worker = createBackgroundWorker({ databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 1, perceptionConcurrency: 1, timeoutSeconds: 5, retryLimit: 2, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 }, async (request, signal, context) => {
     const replay = createPerceptionResultReplay(context.database);
     const provider = { perceive: async () => {
-      if (request.executionId.includes("exhaustion")) throw new (await import("../src/providers/mistral.ts")).BridgeProviderError("timeout", "synthetic retryable provider timeout");
-      return { providerResult: { pages: [{ index: 0, markdown: "worker lifecycle evidence" }] }, provenance: { provider: "mistral" as const, model: "test", endpoint: "/test", latencyMilliseconds: 1, attempt: 1 } };
+      if (request.executionId.includes("exhaustion")) throw new (await import("../src/provider-capabilities.js")).BridgeProviderError("timeout", "synthetic retryable provider timeout");
+      return { providerResult: { pages: [{ index: 0, markdown: "worker lifecycle evidence" }] }, provenance: { provider: "docling" as const, model: "test", endpoint: "/test", latencyMilliseconds: 1, attempt: 1 } };
     } };
     await runDocumentPerception(request, provider as never, clients.source, clients.results, signal, { idempotencyKey: context.idempotencyKey, store: replay, finalAttempt: context.finalAttempt });
-  }, queue);
+  }, undefined, queue);
   try {
     await admin.unsafe('INSERT INTO auth."user" (id,name,email,"emailVerified","createdAt","updatedAt") VALUES ($1,$1,$2,false,now(),now())', [owner, `${owner}@example.test`]);
     await atlas.unsafe("INSERT INTO atlas.project (id,stable_id,name,created_by_user_id) VALUES ($1,$2,'perception lifecycle',$3)", [project, `perception-lifecycle-${suffix.slice(0, 12)}`, owner]);
@@ -297,6 +293,6 @@ test("the Compose perception worker exhausts retries, bounds expired grants, and
     await worker.stop().catch(() => undefined);
     await bridge.unsafe("DELETE FROM bridge.document_perception_result_delivery WHERE idempotency_key = ANY($1::text[])", [keys]).catch(() => undefined); await bridge.unsafe("DELETE FROM bridge.background_effects WHERE idempotency_key = ANY($1::text[])", [keys]).catch(() => undefined);
     await atlas.unsafe("DELETE FROM atlas.semantic_execution_context WHERE execution_id IN (SELECT id FROM atlas.semantic_execution WHERE bundle_id = ANY($1::text[]))", [bundles]).catch(() => undefined); await atlas.unsafe("DELETE FROM atlas.semantic_execution WHERE bundle_id = ANY($1::text[])", [bundles]).catch(() => undefined); await atlas.unsafe("DELETE FROM atlas.extraction_bundle_document WHERE bundle_id = ANY($1::text[])", [bundles]).catch(() => undefined); await atlas.unsafe("DELETE FROM atlas.document_perception_execution WHERE id = ANY($1::text[])", [executions]).catch(() => undefined); await atlas.unsafe("DELETE FROM atlas.extraction_bundle WHERE id = ANY($1::text[])", [bundles]).catch(() => undefined); await atlas.unsafe("DELETE FROM atlas.document WHERE id = ANY($1::text[])", [documents]).catch(() => undefined); await atlas.unsafe("DELETE FROM atlas.workspace WHERE id=$1", [workspace]).catch(() => undefined); await atlas.unsafe("DELETE FROM atlas.project WHERE id=$1", [project]).catch(() => undefined); await admin.unsafe('DELETE FROM auth."user" WHERE id=$1', [owner]).catch(() => undefined);
-    await Promise.all([semanticQueue.close(), admin.end(), atlas.end(), bridge.end()]); await rm(sourceRoot, { recursive: true, force: true });
+    await Promise.all([admin.end(), atlas.end(), bridge.end()]); await rm(sourceRoot, { recursive: true, force: true });
   }
 });

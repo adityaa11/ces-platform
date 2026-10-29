@@ -1,5 +1,4 @@
-import type { ReasoningRuntime } from "@atlas/contracts";
-import type { DocumentPerceptionQueueHandler, SemanticQueueHandler } from "./worker.js";
+import type { DocumentPerceptionQueueHandler } from "./worker.js";
 import { createBackgroundWorker, type BackgroundWorker } from "./worker.js";
 import type { WorkerConfig } from "./worker-config.js";
 import type { GenericHandoffHttpTransportConfig } from "./ghr/http-transport-config.js";
@@ -12,18 +11,12 @@ import type { GenericHandoffHttpTransportConfig } from "./ghr/http-transport-con
  */
 export function createProductionBridgeWorker(input: Readonly<{
   config: WorkerConfig;
-  runtime: ReasoningRuntime;
   documentPerception: DocumentPerceptionQueueHandler;
-  semantic: SemanticQueueHandler;
   genericHandoffHttpTransport?: GenericHandoffHttpTransportConfig;
 }>): BackgroundWorker {
   return createBackgroundWorker(
     input.config,
-    input.runtime,
-    undefined,
     input.documentPerception,
-    undefined,
-    input.semantic,
     input.genericHandoffHttpTransport,
   );
 }

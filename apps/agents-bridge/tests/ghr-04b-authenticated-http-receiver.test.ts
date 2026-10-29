@@ -4,7 +4,6 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { canonicalSemanticBatchPlanInputV1 } from "@atlas/db";
 import { createBridgeApp } from "../src/app.ts";
-import { TestRuntime } from "../src/runtime.ts";
 import { semanticBatchPlanRoute } from "../src/ghr/routes/semantic/branches/batch-plan.route.ts";
 
 const credential = "r".repeat(32);
@@ -36,7 +35,6 @@ function envelope(body: string, override: Record<string, unknown> = {}): string 
 
 async function withReceiver(run: (origin: string) => Promise<void>): Promise<void> {
   const app = createBridgeApp({
-    runtime: new TestRuntime(),
     version: "test",
     genericHandoffHttpTransport: { origin: "http://127.0.0.1:3002", credential, timeoutMilliseconds: 1_000, maximumResponseBytes: 8_192 },
   });

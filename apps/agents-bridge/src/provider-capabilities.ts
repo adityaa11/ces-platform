@@ -215,19 +215,12 @@ export async function dispatchMultipartStructured<T>(request: MultipartStructure
   if (request.signal.aborted) throw new BridgeProviderError("cancelled", "The multipart request was cancelled before dispatch.");
   return dispatch(request.messages);
 }
-export type ChatTool = { readonly name: string; readonly description?: string; readonly parameters: Readonly<Record<string, unknown>> };
-export type ChatStreamEvent = { readonly type: "text"; readonly text: string } | { readonly type: "tool_call"; readonly id: string; readonly name: string; readonly arguments: string } | { readonly type: "complete"; readonly provenance: ProviderProvenance };
-
 export type StructuredReasoningProvider = {
   structured(input: { readonly messages: readonly ChatMessage[]; readonly schema: Readonly<Record<string, unknown>>; readonly signal: AbortSignal; readonly requireZeroDataRetention?: boolean }): Promise<{ readonly value: unknown; readonly provenance: ProviderProvenance }>;
 };
 
 export type DocumentPerceptionProvider = {
   perceive(input: { readonly bytes: Uint8Array; readonly mimeType: string; readonly sourceSha256?: string; readonly options?: { readonly includeBlocks?: boolean; readonly includeImageBase64?: boolean; readonly tableFormat?: "markdown" | "html"; readonly confidenceScoresGranularity?: "page" | "block" | "word"; readonly requireZeroDataRetention?: boolean } }, signal: AbortSignal): Promise<{ readonly providerResult: Readonly<Record<string, unknown>>; readonly provenance: ProviderProvenance; readonly requiresAssetHandoff?: boolean; readonly transientVisualDescriptors?: readonly TransientDerivedVisual[] }>;
-};
-
-export type StreamingChatProvider = {
-  streamChat(input: { readonly messages: readonly ChatMessage[]; readonly tools?: readonly ChatTool[]; readonly signal: AbortSignal; readonly requireZeroDataRetention?: boolean }): AsyncIterable<ChatStreamEvent>;
 };
 
 /** Reserved vocabulary for a later qualified embedding capability. */

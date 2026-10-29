@@ -1,27 +1,16 @@
 import { createHash, randomUUID } from "node:crypto";
 import { readFile, rm } from "node:fs/promises";
 import { resolve } from "node:path";
-import { createJiti } from "jiti";
 import postgres from "postgres";
 
 const databaseUrl = process.env.ATLAS_DATABASE_URL;
 const rootDirectory = process.env.ATLAS_DOCUMENT_STORE_ROOT ?? resolve(process.cwd(), ".atlas-data");
 const bridgePassword = process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only";
-const queueName = "atlas-document-perception-v1";
-
 if (!databaseUrl) throw new Error("ATLAS_DATABASE_URL is required.");
 
 const bridgeUrl = new URL(process.env.DATABASE_URL ?? databaseUrl);
 bridgeUrl.username = "agents_bridge";
 bridgeUrl.password = bridgePassword;
-
-const jiti = createJiti(import.meta.url);
-const [{ PostgresPerceptionAuthority }, { PerceptionSourceGrantIssuer }, { LocalFilesystemDocumentStore }, { PgBoss }] = await Promise.all([
-  jiti.import("../../../packages/atlas-db/src/perception-authority.ts"),
-  jiti.import("../../../packages/atlas-core/src/source-grant.ts"),
-  jiti.import("../../../packages/document-store/src/local-filesystem-document-store.ts"),
-  jiti.import("../../../apps/agents-bridge/node_modules/pg-boss/dist/index.js"),
-]);
 
 const atlas = postgres(databaseUrl, { max: 2 });
 const bridge = postgres(bridgeUrl.toString(), { max: 2 });
@@ -39,25 +28,19 @@ try {
     if (projectId) await atlas.unsafe("DELETE FROM atlas.project WHERE id=$1", [projectId]);
     await rm(resolve(rootDirectory, storageKey), { force: true });
   } else {
-    const useDocling = process.argv[2] === "docling";
+    if (process.argv[2] !== "docling") throw new Error("the Compose perception seed only supports the active Docling route");
     const expectedState = process.env.PERCEPTION_EXPECT_STATE ?? "completed";
     if (expectedState !== "completed" && expectedState !== "failed") throw new Error("PERCEPTION_EXPECT_STATE must be completed or failed.");
-    // The Docling lifecycle smoke uses the same repository-owned,
-    // non-confidential PDF that warms the resident worker route. The default
-    // remains the synthetic Mistral smoke fixture.
-    const bytes = useDocling
-      // A trailing PDF comment leaves the fixture valid while giving every
-      // scoped run its own source identity and cache key.
-      ? new Uint8Array(Buffer.concat([await readFile("docs/example/Safara_PRD_03_Readiness_Manifest_Reporting.pdf"), Buffer.from(`\n% BSS-V2-004-02 ${randomUUID()}\n`)]))
-      : new Uint8Array(Buffer.from("%PDF-compose-smoke-synthetic%"));
-    const store = new LocalFilesystemDocumentStore(rootDirectory);
+    // A trailing PDF comment leaves the repository-owned fixture valid while
+    // giving every scoped run its own source identity and cache key.
+    const bytes = new Uint8Array(Buffer.concat([await readFile("docs/example/Safara_PRD_03_Readiness_Manifest_Reporting.pdf"), Buffer.from(`\n% BSS-V2-004-02 ${randomUUID()}\n`)]));
     const startedAt = Date.now();
     let executionId = "compose-smoke-" + randomUUID();
     let artifactId = "compose-smoke-artifact-" + randomUUID();
     let sourceSha256 = createHash("sha256").update(bytes).digest("hex");
     let idempotencyKey = "compose-smoke-" + randomUUID();
-    let projectId = useDocling ? `compose-docling-${randomUUID().slice(0, 12)}` : undefined;
-    if (projectId) {
+    let projectId = `compose-docling-${randomUUID().slice(0, 12)}`;
+    {
       const email = `compose-docling-${randomUUID()}@example.test`;
       const password = "a-tested-local-password";
       const origin = "http://localhost:3001";
@@ -93,19 +76,6 @@ try {
       if (observation[0]?.state !== expectedState) throw new Error(`IDSER-003 D1 kickoff did not reach ${expectedState} within two minutes.`);
       process.stdout.write(JSON.stringify({ phase: "completed", projectId, executionId, idempotencyKey, sourceSha256, elapsedMilliseconds: Date.now() - startedAt, ...observation[0] }) + "\n");
       }
-    } else {
-      const stored = await store.put({ bytes, mediaType: "application/pdf" });
-      const input = { executionId, artifactId, storageKey: stored.storageKey, sourceSha256, mimeType: "application/pdf", byteSize: bytes.byteLength, idempotencyKey, capabilityIdentity: "mistral-ocr:compose-smoke" };
-      const authority = new PostgresPerceptionAuthority(atlas, new PerceptionSourceGrantIssuer(process.env.AGENTS_BRIDGE_SERVICE_CREDENTIAL ?? "agents_bridge_service_local_dev_only_32"));
-      const request = await authority.create(input);
-      const boss = new PgBoss({ connectionString: bridgeUrl.toString(), schema: "pgboss", migrate: false, schedule: false, createSchema: false, application_name: "atlas-perception-compose-seed" });
-      await boss.start();
-      try {
-        await boss.send(queueName, { idempotencyKey, request }, { singletonKey: idempotencyKey });
-      } finally {
-        await boss.stop({ graceful: false });
-      }
-      process.stdout.write(JSON.stringify({ executionId, idempotencyKey, artifactId, sourceSha256, storageKey: stored.storageKey, projectId }) + "\n");
     }
   }
 } finally {

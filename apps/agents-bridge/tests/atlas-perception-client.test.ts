@@ -17,7 +17,7 @@ const result: NormalizedDocument = {
   artifactId: request.artifact.id,
   sourceSha256: request.artifact.sourceSha256,
   perception: request.perception,
-  provider: { name: "mistral", processor: "ocr-qualified", executionId: request.executionId, processedAt: "2026-09-16T00:00:00.000Z" },
+  provider: { name: "docling", processor: "run-003", executionId: request.executionId, processedAt: "2026-09-16T00:00:00.000Z" },
   pages: [{ number: 1, textBlocks: [], tables: [], visualRegions: [] }],
 };
 
