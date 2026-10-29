@@ -22,6 +22,7 @@
     "test:process-workload-catalogue": "jiti tests/process-workload-catalogue.integration.test.ts",
     "test:desired-admission-profile-publication": "jiti tests/desired-admission-profile-publication.integration.test.ts",
     "test:authorized-desired-plan-convergence": "jiti tests/authorized-desired-plan-convergence.integration.test.ts",
+    "test:qap-001-r1": "jiti tests/qap-001-r1-deprecation.integration.test.ts",
     "test:capacity-planning-snapshot": "jiti tests/capacity-planning-snapshot.integration.test.ts",
     "test:provider-work-reservation-window": "jiti tests/provider-work-reservation-window.integration.test.ts",
     "test:fair-admission-atomic-dispatch": "jiti tests/fair-admission-atomic-dispatch.integration.test.ts",

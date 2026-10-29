@@ -1,6 +1,6 @@
 # BSS-QAP-001: R1 nullable deprecation migration and publisher preservation
 
-- **State:** `planned`
+- **State:** `awaiting_review`
 - **Review batch:** `BSS-QAP-BATCH-01`
 - **Depends on:** closed Scope 01B replay history; target-database catalog preflight before DDL
 - **Source authority:** [Removal Mechanism Audit](../../BSS-Re-organize/BSS_QUOTA_ACCOUNTING_POLICY_MIGRATION_REMOVAL_MECHANISM_AUDIT.md) §§1–8, 11–12, and its [BSS-QAP-001 Publisher Blocker-Resolution Addendum](../../BSS-Re-organize/BSS_QAP_001_PUBLISHER_BLOCKER_RESOLUTION_ADDENDUM.md)
