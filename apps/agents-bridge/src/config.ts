@@ -1,14 +1,7 @@
 import { parseDeploymentProfile, parseQualifiedRoutes, type DeploymentProfile, type QualifiedRoute } from "./route-registry.js";
 import { doclingOptionProfile, doclingServeVersion, doclingSlimVersion, type DoclingProviderConfig } from "./providers/docling.js";
 import type { AnomanProviderConfig } from "./providers/anoman.js";
-import type { RuntimeCapacityConstraintPrincipal } from "./runtime-capacity-constraint.js";
-import type { CapacityPlanningSnapshotPrincipal } from "./capacity-planning-snapshot.js";
 import { loadGenericHandoffHttpTransportConfig, type GenericHandoffHttpTransportConfig } from "./ghr/http-transport-config.js";
-
-export type RuntimeCapacityConstraintBinding = RuntimeCapacityConstraintPrincipal & Readonly<{
-  credential: string;
-}>;
-export type CapacityPlanningSnapshotBinding = CapacityPlanningSnapshotPrincipal & Readonly<{ credential: string }>;
 
 export type BridgeConfig = {
   readonly host: string;
@@ -50,59 +43,12 @@ export type BridgeConfig = {
   readonly docling: DoclingProviderConfig;
   /** Deployment-owned internal GHR delivery transport configuration. */
   readonly genericHandoffHttpTransport?: GenericHandoffHttpTransportConfig;
-  /** Optional server-owned registrations for the versioned runtime read API. */
-  readonly runtimeCapacityConstraint?: Readonly<{
-    databaseUrl: string;
-    bindings: readonly RuntimeCapacityConstraintBinding[];
-  }>;
-  /** Server-owned registrations for the BSS-V2-005 planning-only read API. */
-  readonly capacityPlanningSnapshot?: Readonly<{ databaseUrl: string; bindings: readonly CapacityPlanningSnapshotBinding[] }>;
 };
 
 function boundedPositiveInteger(value: string | undefined, fallback: number, name: string): number {
   const parsed = Number(value ?? fallback);
   if (!Number.isInteger(parsed) || parsed < 1) throw new Error(`${name} must be a positive integer.`);
   return parsed;
-}
-
-function runtimeCapacityConstraintBindings(value: string | undefined): readonly RuntimeCapacityConstraintBinding[] | undefined {
-  if (value === undefined || value === "") return undefined;
-  let input: unknown;
-  try { input = JSON.parse(value); } catch { throw new Error("AGENTS_BRIDGE_RUNTIME_CAPACITY_CONSTRAINT_PRINCIPALS must be valid JSON."); }
-  if (!Array.isArray(input) || input.length === 0) throw new Error("AGENTS_BRIDGE_RUNTIME_CAPACITY_CONSTRAINT_PRINCIPALS must be a non-empty array.");
-  const credentials = new Set<string>();
-  return input.map((candidate, index) => {
-    if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) throw new Error(`Runtime capacity constraint principal ${index} must be an object.`);
-    const value = candidate as Record<string, unknown>;
-    const fields = ["credential", "principalId", "quotaDomainId", "processId", "processProfileVersion", "routeId"] as const;
-    for (const field of fields) if (typeof value[field] !== "string" || value[field].length === 0) throw new Error(`Runtime capacity constraint principal ${index} has an invalid ${field}.`);
-    if (value.serviceClass !== "background" && value.serviceClass !== "interactive") throw new Error(`Runtime capacity constraint principal ${index} has an invalid serviceClass.`);
-    const credential = value.credential as string;
-    if (credentials.has(credential)) throw new Error("Runtime capacity constraint credentials must be unique.");
-    credentials.add(credential);
-    return { credential, principalId: value.principalId as string, quotaDomainId: value.quotaDomainId as string, processId: value.processId as string, processProfileVersion: value.processProfileVersion as string, routeId: value.routeId as string, serviceClass: value.serviceClass };
-  });
-}
-
-function capacityPlanningSnapshotBindings(value: string | undefined): readonly CapacityPlanningSnapshotBinding[] | undefined {
-  if (value === undefined || value === "") return undefined;
-  let input: unknown;
-  try { input = JSON.parse(value); } catch { throw new Error("AGENTS_BRIDGE_CAPACITY_PLANNING_SNAPSHOT_PRINCIPALS must be valid JSON."); }
-  if (!Array.isArray(input) || input.length === 0) throw new Error("AGENTS_BRIDGE_CAPACITY_PLANNING_SNAPSHOT_PRINCIPALS must be a non-empty array.");
-  const credentials = new Set<string>();
-  return input.map((candidate, index) => {
-    if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) throw new Error(`Capacity planning snapshot principal ${index} must be an object.`);
-    const principal = candidate as Record<string, unknown>;
-    const fields = ["credential", "principalId", "quotaDomainId", "processId", "processProfileVersion", "routeId"] as const;
-    for (const field of fields) if (typeof principal[field] !== "string" || principal[field].length === 0) throw new Error(`Capacity planning snapshot principal ${index} has an invalid ${field}.`);
-    if (principal.serviceClass !== "background" && principal.serviceClass !== "interactive") throw new Error(`Capacity planning snapshot principal ${index} has an invalid serviceClass.`);
-    if (principal.prospective !== undefined && typeof principal.prospective !== "boolean") throw new Error(`Capacity planning snapshot principal ${index} has an invalid prospective flag.`);
-    if (principal.qualificationVersion !== undefined && principal.qualificationVersion !== "v2") throw new Error(`Capacity planning snapshot principal ${index} has an invalid qualificationVersion.`);
-    const credential = principal.credential as string;
-    if (credentials.has(credential)) throw new Error("Capacity planning snapshot credentials must be unique.");
-    credentials.add(credential);
-    return { credential, principalId: principal.principalId as string, quotaDomainId: principal.quotaDomainId as string, processId: principal.processId as string, processProfileVersion: principal.processProfileVersion as string, routeId: principal.routeId as string, serviceClass: principal.serviceClass, prospective: principal.prospective === true, qualificationVersion: principal.qualificationVersion as "v2" | undefined };
-  });
 }
 
 export function loadBridgeConfig(environment: NodeJS.ProcessEnv = process.env): BridgeConfig {
@@ -124,10 +70,6 @@ export function loadBridgeConfig(environment: NodeJS.ProcessEnv = process.env): 
   const parsedDoclingUrl = new URL(doclingBaseUrl);
   const testFaultProxy = environment.DOCLING_ALLOW_TEST_FAULT_PROXY === "true" && parsedDoclingUrl.hostname === "docling-fault";
   if (parsedDoclingUrl.protocol !== "http:" || (!testFaultProxy && parsedDoclingUrl.hostname !== "docling-serve") || parsedDoclingUrl.username || parsedDoclingUrl.password || parsedDoclingUrl.search || parsedDoclingUrl.hash) throw new Error("DOCLING_BASE_URL must be the credential-free Compose-private http://docling-serve endpoint.");
-  const runtimeConstraintBindings = runtimeCapacityConstraintBindings(environment.AGENTS_BRIDGE_RUNTIME_CAPACITY_CONSTRAINT_PRINCIPALS);
-  const planningSnapshotBindings = capacityPlanningSnapshotBindings(environment.AGENTS_BRIDGE_CAPACITY_PLANNING_SNAPSHOT_PRINCIPALS);
-  const runtimeConstraintDatabaseUrl = environment.AGENTS_BRIDGE_DATABASE_URL;
-  if ((runtimeConstraintBindings || planningSnapshotBindings) && !runtimeConstraintDatabaseUrl) throw new Error("AGENTS_BRIDGE_DATABASE_URL is required when capacity-read principals are configured.");
   return {
     host: environment.AGENTS_BRIDGE_HOST ?? "0.0.0.0",
     port,
@@ -174,7 +116,5 @@ export function loadBridgeConfig(environment: NodeJS.ProcessEnv = process.env): 
     },
     docling: { baseUrl: doclingBaseUrl.replace(/\/$/u, ""), timeoutMilliseconds: boundedPositiveInteger(environment.DOCLING_TIMEOUT_MS, 20_000, "DOCLING_TIMEOUT_MS"), maxDocumentBytes: boundedPositiveInteger(environment.DOCLING_MAX_DOCUMENT_BYTES, 20 * 1024 * 1024, "DOCLING_MAX_DOCUMENT_BYTES"), maxResponseBytes: boundedPositiveInteger(environment.DOCLING_MAX_RESPONSE_BYTES, 10 * 1024 * 1024, "DOCLING_MAX_RESPONSE_BYTES"), serviceVersion: environment.DOCLING_SERVE_VERSION ?? doclingServeVersion, doclingSlimVersion: environment.DOCLING_SLIM_VERSION ?? doclingSlimVersion, optionProfile: environment.DOCLING_OPTION_PROFILE ?? doclingOptionProfile },
     genericHandoffHttpTransport: loadGenericHandoffHttpTransportConfig(environment),
-    runtimeCapacityConstraint: runtimeConstraintBindings && runtimeConstraintDatabaseUrl ? { databaseUrl: runtimeConstraintDatabaseUrl, bindings: runtimeConstraintBindings } : undefined,
-    capacityPlanningSnapshot: planningSnapshotBindings && runtimeConstraintDatabaseUrl ? { databaseUrl: runtimeConstraintDatabaseUrl, bindings: planningSnapshotBindings } : undefined,
   };
 }

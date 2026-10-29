@@ -4,10 +4,6 @@ import { createMistralCapabilities } from "./providers/mistral.js";
 import { createGeminiCapabilities } from "./providers/gemini.js";
 import { QualifiedRouteRuntime, TestRuntime } from "./runtime.js";
 import { assertConfiguredRouteAdapter, createRouteRegistry } from "./route-registry.js";
-import postgres from "postgres";
-import { createRuntimeCapacityConstraintReader } from "./runtime-capacity-constraint.js";
-import { createProviderWorkAdmissionService } from "./provider-work-admission.js";
-import { createCapacityPlanningSnapshotReader } from "./capacity-planning-snapshot.js";
 
 const config = loadBridgeConfig();
 const availableAdapters = new Set<string>();
@@ -22,28 +18,8 @@ const gemini = createGeminiCapabilities(config.gemini);
 const runtime = config.deploymentProfile === "test"
   ? new TestRuntime()
   : new QualifiedRouteRuntime((capability) => registry.resolve(capability), { mistral: mistral.streaming, gemini: gemini.streaming });
-const capacityReadDatabaseUrl = config.runtimeCapacityConstraint?.databaseUrl ?? config.capacityPlanningSnapshot?.databaseUrl;
-const runtimeConstraintDatabase = capacityReadDatabaseUrl ? postgres(capacityReadDatabaseUrl, { max: 2 }) : undefined;
-const runtimeCapacityConstraintReader = config.runtimeCapacityConstraint && runtimeConstraintDatabase
-  ? createRuntimeCapacityConstraintReader(
-    { executeSql: async (statement, values) => ({ rows: await runtimeConstraintDatabase.unsafe(statement, values as never[]) }) },
-    { authenticate: (credential) => config.runtimeCapacityConstraint?.bindings.find((binding) => binding.credential === credential) ?? null },
-  )
-  : undefined;
-const capacityPlanningSnapshotReader = config.capacityPlanningSnapshot && runtimeConstraintDatabase
-  ? createCapacityPlanningSnapshotReader(
-    { executeSql: async (statement, values) => ({ rows: await runtimeConstraintDatabase.unsafe(statement, values as never[]) }) },
-    { authenticate: (credential) => config.capacityPlanningSnapshot?.bindings.find((binding) => binding.credential === credential) ?? null },
-  )
-  : undefined;
-const providerWorkAdmissionService = config.runtimeCapacityConstraint && runtimeConstraintDatabase
-  ? createProviderWorkAdmissionService(
-    { executeSql: async (statement, values) => ({ rows: await runtimeConstraintDatabase.unsafe(statement, values as never[]) }) },
-    { authenticate: (credential) => config.runtimeCapacityConstraint?.bindings.find((binding) => binding.credential === credential) ?? null },
-  )
-  : undefined;
-const app = createBridgeApp({ runtime, version: config.version, ready: () => registry.ready, runtimeCapacityConstraintReader, capacityPlanningSnapshotReader, providerWorkAdmissionService, genericHandoffHttpTransport: config.genericHandoffHttpTransport });
-const stop = async () => { await app.close(); await runtimeConstraintDatabase?.end(); process.exit(0); };
+const app = createBridgeApp({ runtime, version: config.version, ready: () => registry.ready, genericHandoffHttpTransport: config.genericHandoffHttpTransport });
+const stop = async () => { await app.close(); process.exit(0); };
 process.once("SIGINT", stop);
 process.once("SIGTERM", stop);
 await app.listen({ host: config.host, port: config.port });

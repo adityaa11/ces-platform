@@ -116,10 +116,9 @@ test("GHR-03B consumes the real pointer job through pg-boss and records one pars
     const [before] = await admin.unsafe(`SELECT
       (SELECT count(*)::int FROM atlas.semantic_execution) AS semantic,
       (SELECT count(*)::int FROM atlas.semantic_candidate) AS candidates,
-      (SELECT count(*)::int FROM bridge.provider_work_admission_v1) AS bss,
       (SELECT count(*)::int FROM pgboss.job WHERE name<>$1 AND state IN ('created','active','retry')) AS downstream`, [genericHandoffQueue]);
     if (!candidate.disposition) {
-      worker = createBackgroundWorker({ databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 1, perceptionConcurrency: 1, timeoutSeconds: 10, retryLimit: 2, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 }, new TestRuntime(), undefined, undefined, undefined, undefined, undefined, undefined, receiver.configuration);
+      worker = createBackgroundWorker({ databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 1, perceptionConcurrency: 1, timeoutSeconds: 10, retryLimit: 2, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 }, new TestRuntime(), undefined, undefined, undefined, undefined, receiver.configuration);
       await worker.start();
       if (createdCandidate) {
         await worker.boss.send(genericHandoffQueue, { type: "GenericHandoffJob/v1", handoffId: candidate.handoff_id });
@@ -142,9 +141,8 @@ test("GHR-03B consumes the real pointer job through pg-boss and records one pars
     const [after] = await admin.unsafe(`SELECT
       (SELECT count(*)::int FROM atlas.semantic_execution) AS semantic,
       (SELECT count(*)::int FROM atlas.semantic_candidate) AS candidates,
-      (SELECT count(*)::int FROM bridge.provider_work_admission_v1) AS bss,
       (SELECT count(*)::int FROM pgboss.job WHERE name<>$1 AND state IN ('created','active','retry')) AS downstream`, [genericHandoffQueue]);
-    assert.deepEqual(after, before, "false-only receipt creates no semantic, BSS, or downstream queue effect");
+    assert.deepEqual(after, before, "false-only receipt creates no semantic or downstream queue effect");
     assert.equal((await admin.unsafe("SELECT count(*)::int AS count FROM bridge.generic_handoff_delivery WHERE handoff_id=$1 AND disposition='parsed_only'", [candidate.handoff_id]))[0]!.count, 1, "one terminal logical receipt exists");
     await assert.rejects(() => atlas.unsafe("INSERT INTO bridge.generic_handoff_delivery(handoff_id,body_sha256) VALUES ('forbidden-atlas-write','aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')"), /permission denied|must be owner/u, "atlas_app has no Bridge receipt write authority");
     console.log(JSON.stringify({ projectId: candidate.project_id, workspaceId: candidate.workspace_id, bundleId: candidate.bundle_id, documentId: candidate.document_id, executionId: candidate.producer_execution_id, handoffId: candidate.handoff_id, receipt: receipt!.disposition }));
@@ -199,7 +197,7 @@ test("GHR-03B proves the complete RC-02 negative matrix without downstream effec
   try {
     await boss.start();
     const database = boss.getDb();
-    const [effectsBefore] = await admin.unsafe("SELECT (SELECT count(*)::int FROM atlas.semantic_execution) AS semantic, (SELECT count(*)::int FROM atlas.semantic_candidate) AS candidates, (SELECT count(*)::int FROM bridge.provider_work_admission_v1) AS bss");
+    const [effectsBefore] = await admin.unsafe("SELECT (SELECT count(*)::int FROM atlas.semantic_execution) AS semantic, (SELECT count(*)::int FROM atlas.semantic_candidate) AS candidates");
     const valid = await makeIssued("valid");
     assert.equal(await deliverGenericHandoffJob({ database, job: { type: "GenericHandoffJob/v1", handoffId: valid }, leaseSeconds: 10, finalAttempt: false, httpTransportConfiguration: receiver.configuration }), "parsed_only");
     assert.equal(await deliverGenericHandoffJob({ database, job: { type: "GenericHandoffJob/v1", handoffId: valid }, leaseSeconds: 10, finalAttempt: false, httpTransportConfiguration: receiver.configuration }), "parsed_only", "a duplicate observes the terminal receipt without a second receiver dispatch");
@@ -254,7 +252,7 @@ test("GHR-03B proves the complete RC-02 negative matrix without downstream effec
         }
         assert.deepEqual((await admin.unsafe("SELECT disposition,error_class FROM bridge.generic_handoff_delivery WHERE handoff_id=$1", [handoffId]))[0], { disposition: fault.disposition, error_class: fault.errorClass }, `${fault.mode} records only its sanitized durable outcome`);
         assert.equal((await admin.unsafe("SELECT count(*)::int AS count FROM bridge.generic_handoff_delivery WHERE handoff_id=$1 AND disposition='parsed_only'", [handoffId]))[0]!.count, 0, `${fault.mode} cannot create a parsed-only receipt`);
-        assert.deepEqual((await admin.unsafe("SELECT (SELECT count(*)::int FROM atlas.semantic_execution) AS semantic, (SELECT count(*)::int FROM atlas.semantic_candidate) AS candidates, (SELECT count(*)::int FROM bridge.provider_work_admission_v1) AS bss"))[0], effectsBefore, `${fault.mode} cannot create downstream work`);
+        assert.deepEqual((await admin.unsafe("SELECT (SELECT count(*)::int FROM atlas.semantic_execution) AS semantic, (SELECT count(*)::int FROM atlas.semantic_candidate) AS candidates"))[0], effectsBefore, `${fault.mode} cannot create downstream work`);
       } finally {
         await faultReceiver.close();
       }
@@ -275,7 +273,7 @@ test("GHR-03B proves the complete RC-02 negative matrix without downstream effec
     } finally {
       await admin.unsafe("UPDATE atlas.generic_handoff_route_policy SET enabled=true WHERE policy_version='v1' AND producer_process_key='perception.acceptance' AND producer_event='NormalizedDocumentAccepted/v1' AND route_main='semantic' AND route_branch='batch-plan' AND handler_version='v1' AND body_contract_type='SemanticBatchPlanInput' AND body_contract_version='v1'");
     }
-    const [effectsAfter] = await admin.unsafe("SELECT (SELECT count(*)::int FROM atlas.semantic_execution) AS semantic, (SELECT count(*)::int FROM atlas.semantic_candidate) AS candidates, (SELECT count(*)::int FROM bridge.provider_work_admission_v1) AS bss");
+    const [effectsAfter] = await admin.unsafe("SELECT (SELECT count(*)::int FROM atlas.semantic_execution) AS semantic, (SELECT count(*)::int FROM atlas.semantic_candidate) AS candidates");
     assert.deepEqual(effectsAfter, effectsBefore, "every positive and classified negative delivery stays parse-only with zero downstream effects");
   } finally {
     await boss.stop({ graceful: false }).catch(() => undefined);
@@ -306,7 +304,7 @@ test("GHR-04C retries a receiver-accepted acknowledgement loss without changing 
   try {
     await boss.start();
     const database = boss.getDb();
-    const [effectsBefore] = await admin.unsafe("SELECT (SELECT count(*)::int FROM atlas.semantic_execution) AS semantic, (SELECT count(*)::int FROM atlas.semantic_candidate) AS candidates, (SELECT count(*)::int FROM bridge.provider_work_admission_v1) AS bss");
+    const [effectsBefore] = await admin.unsafe("SELECT (SELECT count(*)::int FROM atlas.semantic_execution) AS semantic, (SELECT count(*)::int FROM atlas.semantic_candidate) AS candidates");
     await admin.unsafe("INSERT INTO atlas.generic_handoff_intent(handoff_id,idempotency_key,producer_execution_id,project_id,workspace_id,bundle_id,document_id,policy_version,handler_version,body_contract_type,body_contract_version,route_main,route_branch,can_continue,body_encoding,body_bytes,body_sha256,trusted_header,issued_at) VALUES ($1,$2,$3,$4,$5,$6,$7,'v1','v1','SemanticBatchPlanInput','v1','semantic','batch-plan',false,'canonical-json-v1',$8,$9,$10::jsonb,now())", [handoffId, idempotencyKey, header.producer.executionId, header.scope.projectId, header.scope.workspaceId, header.scope.bundleId, header.scope.documentId, Buffer.from(body), bodySha256, JSON.stringify(header)]);
     const retryingInput = { database, job: { type: "GenericHandoffJob/v1" as const, handoffId }, leaseSeconds: 1, finalAttempt: false, httpTransportConfiguration: { ...receiver.configuration, timeoutMilliseconds: 25 } };
     await assert.rejects(() => deliverGenericHandoffJob(retryingInput), /HTTP delivery is unavailable/u, "the worker loses the accepted acknowledgement before receipt terminalization");
@@ -318,7 +316,7 @@ test("GHR-04C retries a receiver-accepted acknowledgement loss without changing 
     assert.equal(receiver.acknowledgements(), 2, "the only retry is a second real HTTP request to the Fastify receiver");
     assert.deepEqual((await admin.unsafe("SELECT handoff_id,idempotency_key,body_sha256,disposition,error_class,lease_generation FROM bridge.generic_handoff_delivery WHERE handoff_id=$1", [handoffId]))[0], { handoff_id: handoffId, idempotency_key: idempotencyKey, body_sha256: bodySha256, disposition: "parsed_only", error_class: null, lease_generation: 2 }, "the retry preserves the immutable identity and writes one fenced terminal receipt");
     assert.equal((await admin.unsafe("SELECT count(*)::int AS count FROM bridge.generic_handoff_delivery WHERE handoff_id=$1 AND disposition='parsed_only'", [handoffId]))[0]!.count, 1, "exactly one logical parsed-only receipt exists after acknowledgement loss");
-    assert.deepEqual((await admin.unsafe("SELECT (SELECT count(*)::int FROM atlas.semantic_execution) AS semantic, (SELECT count(*)::int FROM atlas.semantic_candidate) AS candidates, (SELECT count(*)::int FROM bridge.provider_work_admission_v1) AS bss"))[0], effectsBefore, "acknowledgement-loss recovery remains false-only");
+    assert.deepEqual((await admin.unsafe("SELECT (SELECT count(*)::int FROM atlas.semantic_execution) AS semantic, (SELECT count(*)::int FROM atlas.semantic_candidate) AS candidates"))[0], effectsBefore, "acknowledgement-loss recovery remains false-only");
   } finally {
     await boss.stop({ graceful: false }).catch(() => undefined);
     await Promise.all([admin.end(), receiver.close()]);
@@ -355,7 +353,7 @@ test("GHR-03B proves restart, concurrent fencing, and classified retry exhaustio
       throw new Error("Bridge worker did not persist the expected terminal receipt.");
     };
     const queued = await makeIssued("queue-restart");
-    worker = createBackgroundWorker({ databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 2, perceptionConcurrency: 1, timeoutSeconds: 1, retryLimit: 1, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 }, new TestRuntime(), undefined, undefined, undefined, undefined, undefined, undefined, receiver.configuration);
+    worker = createBackgroundWorker({ databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 2, perceptionConcurrency: 1, timeoutSeconds: 1, retryLimit: 1, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 }, new TestRuntime(), undefined, undefined, undefined, undefined, receiver.configuration);
     await worker.start();
     const firstJobId = await boss.send(genericHandoffQueue, { type: "GenericHandoffJob/v1", handoffId: queued });
     assert.equal((await awaitTerminal(queued)).disposition, "parsed_only", "the normal pg-boss worker consumes the pointer-only job");
@@ -363,7 +361,7 @@ test("GHR-03B proves restart, concurrent fencing, and classified retry exhaustio
     await worker.stop();
     worker = undefined;
     const secondJobId = await boss.send(genericHandoffQueue, { type: "GenericHandoffJob/v1", handoffId: queued });
-    worker = createBackgroundWorker({ databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 2, perceptionConcurrency: 1, timeoutSeconds: 1, retryLimit: 1, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 }, new TestRuntime(), undefined, undefined, undefined, undefined, undefined, undefined, receiver.configuration);
+    worker = createBackgroundWorker({ databaseUrl: bridgeUrl.toString(), backgroundConcurrency: 2, perceptionConcurrency: 1, timeoutSeconds: 1, retryLimit: 1, retryDelaySeconds: 1, shutdownTimeoutMilliseconds: 1_000 }, new TestRuntime(), undefined, undefined, undefined, undefined, receiver.configuration);
     await worker.start();
     for (let attempt = 0; attempt < 50; attempt += 1) {
       const [job] = await admin.unsafe("SELECT state FROM pgboss.job WHERE id=$1", [secondJobId]);

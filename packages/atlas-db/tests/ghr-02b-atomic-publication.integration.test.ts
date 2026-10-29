@@ -49,7 +49,6 @@ test("GHR-02B atomically publishes exactly one pointer-only handoff from accepte
     publisher = await createTransactionalGenericHandoffQueueProducer(atlasUrl.toString());
     const authority = new PostgresPerceptionAuthority(atlas, new PerceptionSourceGrantIssuer("g".repeat(32)), undefined, undefined, undefined, undefined, publisher);
     const fixture = await stagedFixture(atlas, authority, randomUUID());
-    const [effectsBefore] = await admin.unsafe("SELECT (SELECT count(*)::int FROM bridge.provider_work_admission_v1) AS bss");
     await authority.deliver(fixture.request, fixture.result);
 
     const [accepted] = await atlas.unsafe("SELECT execution.state AS execution_state, execution.completion_fingerprint, member.state AS member_state FROM atlas.document_perception_execution execution JOIN atlas.extraction_bundle_document member ON member.perception_execution_id=execution.id WHERE execution.id=$1", [fixture.executionId]);
@@ -67,7 +66,7 @@ test("GHR-02B atomically publishes exactly one pointer-only handoff from accepte
     assert.deepEqual((header as { producer: unknown; route: unknown; scope: unknown }).producer, { processKey: "perception.acceptance", executionId: fixture.executionId });
     assert.deepEqual((header as { producer: unknown; route: unknown; scope: unknown }).route, { main: "semantic", branch: "batch-plan", policyVersion: "v1", handlerVersion: "v1" });
     assert.deepEqual((header as { producer: unknown; route: unknown; scope: unknown }).scope, { projectId: fixture.project, workspaceId: fixture.workspace, bundleId: fixture.bundle, documentId: fixture.documentId });
-    assert.deepEqual((await admin.unsafe("SELECT (SELECT count(*)::int FROM atlas.semantic_execution WHERE document_id=$1) AS semantic, (SELECT count(*)::int FROM bridge.provider_work_admission_v1) AS bss, to_regclass('bridge.generic_handoff_delivery') AS delivery", [fixture.documentId]))[0], { semantic: 0, bss: effectsBefore!.bss, delivery: null }, "publication creates no receiver, delivery, planner, or BSS state");
+    assert.deepEqual((await admin.unsafe("SELECT (SELECT count(*)::int FROM atlas.semantic_execution WHERE document_id=$1) AS semantic, to_regclass('bridge.generic_handoff_delivery') AS delivery", [fixture.documentId]))[0], { semantic: 0, delivery: null }, "publication creates no receiver or delivery state");
 
     const restarted = new PostgresPerceptionAuthority(atlas, new PerceptionSourceGrantIssuer("g".repeat(32)), undefined, undefined, undefined, undefined, publisher);
     await restarted.deliver(fixture.request, fixture.result);

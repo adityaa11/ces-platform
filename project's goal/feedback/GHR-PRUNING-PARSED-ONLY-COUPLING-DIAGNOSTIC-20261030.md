@@ -183,9 +183,10 @@ cannot be deleted solely because execution planning is pruned. Either retain a
 narrow parser for the GHR body contract or replace it with a new GHR-owned
 parsed-only contract before deleting the semantic-named module.
 
-`capacity-planning-snapshot.ts` and its HTTP endpoint are not required by the
-parsed-only GHR transport itself. They may have other BSS consumers, so their
-removal requires a separate reference audit.
+The provider-capacity/read and provider-work-admission surfaces are not
+required by the parsed-only GHR transport. They were audited separately and
+are now removed from the Bridge composition; staged local perception admission
+remains a distinct Atlas lifecycle gate.
 
 ## Tests and historical evidence
 
@@ -237,8 +238,15 @@ subtree rather than leaving dormant continuation code behind:
 - their tests, package exports, and package test-script entries were deleted;
 - `semantic-batch-plan-input.ts` is retained only as the five-field canonical
   parser used by the receiver-owned GHR body contract;
-- the public capacity-planning snapshot reader remains because it is an
-  independent admission/read surface, not part of semantic batch planning.
+- the public capacity-planning snapshot reader and provider admission surfaces
+  were subsequently removed as part of the separate BSS provider-capacity
+  pruning.
+
+The subsequent BSS provider-capacity/admission pruning removed that reader and
+the related provider profile, capacity planner, runtime constraint, provider
+work admission, reservation/transport worker, wakeup worker, and associated
+test surfaces. The local `staged-fair-local-v1` perception gate was retained;
+it is not the provider BSS admission path.
 
 The future rebuilt `atlas.is_generic_handoff_dispatch_policy_active_v1` function
 must match this boundary too: it should authorize from the persisted header

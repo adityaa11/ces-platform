@@ -13,7 +13,6 @@ import { createAtlasSemanticClient, loadAtlasSemanticClientConfig } from "./atla
 import { createSemanticResultReplay } from "./semantic-result-replay.js";
 import { runSemanticJob } from "./semantic-worker.js";
 import { assertConfiguredRouteAdapter, capabilityForSkill, createRouteRegistry } from "./route-registry.js";
-import type { ProviderAdmittedPayloadAdapter, ProviderOutboundTransport } from "./provider-operational-runtime.js";
 import { createProductionBridgeWorker } from "./production-worker-composition.js";
 
 const readinessPath = "/tmp/agents-bridge-worker.ready";
@@ -44,16 +43,6 @@ if (config.qualifiedRoutes.some((route) => route.enabled && route.providerId ===
 }
 const semanticClient = createAtlasSemanticClient(loadAtlasSemanticClientConfig());
 const runtime = config.deploymentProfile === "test" ? new TestRuntime() : new QualifiedRouteRuntime((capability) => registry.resolve(capability), { mistral: mistral.streaming, gemini: gemini.streaming });
-// This vertical slice owns the durable claim and feedback boundary, but not a
-// provider-specific payload contract. Keep the production port fail-closed
-// until a later ticket supplies that separately-qualified transport; tests
-// replace only this port to exercise the real worker composition.
-const providerOutboundTransport: ProviderOutboundTransport = async () => {
-  throw new Error("No qualified provider outbound transport is configured for the admitted-execution slice.");
-};
-const providerPayloadAdapter: ProviderAdmittedPayloadAdapter = {
-  hydrate: async () => { throw new Error("No qualified provider-work payload adapter is configured for the admitted-execution slice."); },
-};
 const worker = createProductionBridgeWorker({ config: loadWorkerConfig(), runtime, documentPerception: async (request, signal, context) => {
   const route = registry.resolve("atlas.document.perceive");
   assertConfiguredRouteAdapter(route, config);
@@ -72,7 +61,7 @@ const worker = createProductionBridgeWorker({ config: loadWorkerConfig(), runtim
     },
   };
   await runSemanticJob(job, capabilities[route.providerId as "mistral" | "gemini" | "anoman"].structured, semanticClient, createSemanticResultReplay(context.database), context.idempotencyKey, signal, { owner: context.leaseOwner, generation: context.leaseGeneration }, undefined, stepwise);
-}, providerOutboundTransport, providerPayloadAdapter, genericHandoffHttpTransport: config.genericHandoffHttpTransport });
+}, genericHandoffHttpTransport: config.genericHandoffHttpTransport });
 await worker.start();
 await writeFile(readinessPath, "ready\n");
 
