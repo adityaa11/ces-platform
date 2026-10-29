@@ -281,3 +281,18 @@ Thus: **Scope 02B implementation work can proceed only in a contract-isolated fo
 Implement Option C as **R1, R2, and R3 independently controlled releases**. Register and execute `0112` only in R1; deploy/prove the ID-free writer cutover in R2; and register/execute `0113` only in R3 after the explicit six-item R3 evidence set is complete. Preserve all historical migrations—including `0076`—and every proven operational safety mechanism.
 
 Do not register `0113` during R1 or R2. Do not start the physical-drop phase until the catalog and deployment preflights pass. Do not reintroduce a hardcoded ID, compatibility resolver, policy registry, or any automatic authority creation.
+
+## 16. BSS-QAP-001 blocker-resolution amendment (2026-10-29)
+
+The target-database preflight subsequently found the still-supported Bridge
+publisher `bridge.publish_converged_desired_admission_profile(...)`, introduced
+by `0067`, which this audit had incorrectly treated as superseded. The bounded
+resolution is recorded in
+[BSS_QAP_001_PUBLISHER_BLOCKER_RESOLUTION_ADDENDUM.md](BSS_QAP_001_PUBLISHER_BLOCKER_RESOLUTION_ADDENDUM.md).
+
+That addendum corrects R1's publisher inventory without changing historical
+migrations: `0112` must explicitly redefine both supported publisher bodies,
+removing only the obsolete accounting-policy equality operand from each while
+retaining their distinct existing authority models. It also expands the R1
+catalog proof to inspect procedural bodies rather than relying on `pg_depend`.
+`0113` remains R3-only.
