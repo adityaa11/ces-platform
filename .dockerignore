@@ -1,4 +1,5 @@
 .git
+.codex-tools
 .pnpm-store
 node_modules
 .venv-*

@@ -26,7 +26,7 @@ async function startComposeReconciliationWorker(queueName: string, perceptionQue
   const bridgeUrl = new URL(databaseUrl!);
   bridgeUrl.username = "agents_bridge";
   bridgeUrl.password = process.env.AGENTS_BRIDGE_PASSWORD ?? "agents_bridge_local_dev_only";
-  const child = spawn(process.execPath, [jitiCliPath, restartWorkerPath], { cwd: process.cwd(), env: { ...process.env, AGENTS_BRIDGE_DATABASE_URL: bridgeUrl.toString(), ATLAS_RECONCILIATION_RESTART_QUEUE: queueName, ATLAS_RECONCILIATION_RESTART_PERCEPTION_QUEUE: perceptionQueueName }, stdio: ["ignore", "pipe", "pipe", "ipc"] });
+  const child = spawn(process.execPath, [jitiCliPath, restartWorkerPath], { cwd: process.cwd(), env: { ...process.env, DATABASE_URL: databaseUrl!, ATLAS_APP_PASSWORD: process.env.ATLAS_APP_PASSWORD ?? "atlas_app_local_dev_only", AGENTS_BRIDGE_DATABASE_URL: bridgeUrl.toString(), ATLAS_RECONCILIATION_RESTART_QUEUE: queueName, ATLAS_RECONCILIATION_RESTART_PERCEPTION_QUEUE: perceptionQueueName }, stdio: ["ignore", "pipe", "pipe", "ipc"] });
   let stdout = "";
   let stderr = "";
   child.stdout!.setEncoding("utf8").on("data", (chunk: string) => { stdout += chunk; });
