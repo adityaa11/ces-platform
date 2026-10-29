@@ -1,6 +1,6 @@
 # BSS-QAP-003: R3 physical quota-accounting-policy column removal
 
-- **State:** `planned`
+- **State:** `approved`
 - **Review batch:** `BSS-QAP-BATCH-03`
 - **Depends on:** BSS-QAP-001 and BSS-QAP-002 `PASS`; explicit R3 GO after all six preconditions below are recorded
 - **Source authority:** [Removal Mechanism Audit](../../BSS-Re-organize/BSS_QUOTA_ACCOUNTING_POLICY_MIGRATION_REMOVAL_MECHANISM_AUDIT.md) §§1, 7, 10–12, 15
