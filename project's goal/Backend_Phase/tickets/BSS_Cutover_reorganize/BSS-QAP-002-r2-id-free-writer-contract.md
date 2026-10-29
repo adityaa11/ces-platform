@@ -4,6 +4,7 @@
 - **Review batch:** `BSS-QAP-BATCH-02`
 - **Depends on:** BSS-QAP-001 `PASS`
 - **Source authority:** [Removal Mechanism Audit](../../BSS-Re-organize/BSS_QUOTA_ACCOUNTING_POLICY_MIGRATION_REMOVAL_MECHANISM_AUDIT.md) §§1, 9, 11–12
+- **Active bounded amendment:** [Local Docker acceptance-boundary amendment 001](../../../feedback/BSS-QAP-LOCAL-DOCKER-ACCEPTANCE-AMENDMENT-001.md). It supersedes only the production-wide evidence portion of `RC-QAP-002-04` for the confirmed local-development environment; the historical CK result remains unchanged.
 
 ## Outcome
 

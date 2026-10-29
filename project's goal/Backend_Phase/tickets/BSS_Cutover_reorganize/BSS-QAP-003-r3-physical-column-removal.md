@@ -4,6 +4,7 @@
 - **Review batch:** `BSS-QAP-BATCH-03`
 - **Depends on:** BSS-QAP-001 and BSS-QAP-002 `PASS`; explicit R3 GO after all six preconditions below are recorded
 - **Source authority:** [Removal Mechanism Audit](../../BSS-Re-organize/BSS_QUOTA_ACCOUNTING_POLICY_MIGRATION_REMOVAL_MECHANISM_AUDIT.md) §§1, 7, 10–12, 15
+- **Active bounded amendment:** [Local Docker acceptance-boundary amendment 001](../../../feedback/BSS-QAP-LOCAL-DOCKER-ACCEPTANCE-AMENDMENT-001.md). It replaces only the production-wide portion of Mandatory R3 GO precondition 2 with a local-writer retirement gate; all other R3 preconditions remain in force.
 
 ## Outcome
 
